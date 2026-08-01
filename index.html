@@ -718,8 +718,9 @@ cv.addEventListener('wheel',e=>{ e.preventDefault();
   clampPan(); positionProps(); markDirty();
 },{passive:false});
 
-let dwellTimer=null, arcState=null;   // arcState={cx,cy,r} nach Schritt 1 des Zirkels
-function startAction(e){ drawId=e.pointerId; const w=toWorld(e.clientX,e.clientY);
+let dwellTimer=null, dwellAnchor=null, arcState=null;   // arcState={cx,cy,r} nach Schritt 1 des Zirkels
+const DWELL_TOL=14;   // Toleranz (px) für „ruhig halten" → gerade Strecke (großzügig, damit's auch mit dem Stift klappt)
+function startAction(e){ drawId=e.pointerId; dwellAnchor=null; const w=toWorld(e.clientX,e.clientY);
   if(tool==='laser'){ laser.push({x:e.clientX,y:e.clientY,t:performance.now()}); markDirty(); return; }
   if(tool==='lasso'){ closeLassoMenu(); lassoPts=[{x:w.x,y:w.y}]; markDirty(); return; }
   if(tool==='eraser'){ eraseAt(w.x,w.y); return; }
@@ -749,7 +750,9 @@ function moveAction(e){ const w=toWorld(e.clientX,e.clientY);
     else { const ang=Math.atan2(w.y-cur.y0,w.x-cur.x0); let d=ang-cur._prev; while(d>Math.PI)d-=2*Math.PI; while(d<-Math.PI)d+=2*Math.PI; cur.a1+=d; cur._prev=ang; showMeasure(e,'φ = '+Math.round(Math.abs(cur.a1-cur.a0)*180/Math.PI)+'°'); markDirty(); }
     return; }
   if(tool==='shape'||tool==='arrow'){ if(cur){cur.x1=w.x;cur.y1=w.y;markDirty();} return; }
-  if(cur){ const pr=(doc.settings.usePressure&&e.pointerType==='pen'&&e.pressure>0)?e.pressure:.5; addPoint(w.x,w.y,pr,e); if(cur.type==='stroke'&&!cur.rulerSnap&&!cur._straight) scheduleStraighten(); } }
+  if(cur){ const pr=(doc.settings.usePressure&&e.pointerType==='pen'&&e.pressure>0)?e.pressure:.5; addPoint(w.x,w.y,pr,e);
+    if(cur.type==='stroke'&&!cur.rulerSnap&&!cur._straight){ // Timer nur zurücksetzen, wenn der Stift die Toleranz verlässt (Jitter zählt als „ruhig")
+      if(!dwellAnchor || Math.hypot(e.clientX-dwellAnchor.x, e.clientY-dwellAnchor.y) > DWELL_TOL){ dwellAnchor={x:e.clientX,y:e.clientY}; scheduleStraighten(); } } } }
 function endAction(e){ clearTimeout(dwellTimer); hideMeasure(); if(tool==='select'){ endSelect(e); return; }
   if(tool==='lasso'){ finishLasso(); return; }
   if(cur){ if(cur.type==='shape'){
