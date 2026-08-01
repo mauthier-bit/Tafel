@@ -6,7 +6,9 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
 ## Funktionen
 
 - **Schreiben:** Stift (mit Apple-Pencil-Druckstärke), Marker; **eigener Farb-Button**
-  (Farbe & Dicke) – der Stift zeichnet in der zuletzt gewählten Farbe (Standard: Schwarz)
+  (Farbe & Dicke) – der Stift zeichnet in der zuletzt gewählten Farbe (Standard: Schwarz).
+  Neben den festen Farben gibt es einen **bunten Punkt** – ein Tipp öffnet den vollen Farbwähler
+  für beliebige Farben (auch bei der Objektfarbe im Kontextmenü).
 - **Formen:** Linie, Rechteck, **Quadrat**, Ellipse, Dreieck, **rechtwinkliges Dreieck**,
   **allgemeines Dreieck**, **Parallelogramm**, **Trapez**, Pfeil (auch gefüllt), **Drachenviereck**
   sowie **Schrägbilder** von **Quader, vierseitiger Pyramide, Zylinder und Kegel** (mit
@@ -20,8 +22,10 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
 - **Pfeil** (Werkzeug): Pfeile ziehen.
 - **Koordinatensystem** (Werkzeug): fügt ein **transparentes** Achsenkreuz mit x/y-Achsen-
   beschriftung und Zahlenskala als bewegliches Objekt ein – man kann direkt darauf zeichnen. Im
-  Kontextmenü lässt sich der **x- und y-Bereich** (Ausschnitt) einstellen sowie **Gitterlinien
-  ein-/ausschalten** (standardmäßig **aus** – meist reicht das Karogitter des Hintergrunds).
+  Kontextmenü lässt sich der **x- und y-Bereich** (Ausschnitt) über **＋/−-Buttons** einstellen sowie
+  **Gitterlinien** und **Achsenbeschriftung** ein-/ausschalten (Gitter standardmäßig **aus** – meist
+  reicht das Karogitter des Hintergrunds). Achsen sind kräftig mit großen Pfeilspitzen und gut
+  lesbaren Beschriftungen.
 - **Lineal** und **Geodreieck:** über ihren Knopf einblenden – sie **bleiben aktiv**, während der
   Stift zeichnet. Mit dem Finger am **unteren** Teil verschieben / am Griff (Ecke bzw. Spitze)
   drehen; mit dem Stift **an der Kante** eine saubere gerade Linie ziehen. Das Geodreieck hat
@@ -61,9 +65,9 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   Seiten **und** eine eigene Klassenliste. Alles wird automatisch im Browser gesichert.
 - Tabellen-Funktionen zusätzlich: **SUMME / MITTELWERT** (auch über Bereiche wie `A1:A5`),
   MAX, MIN, ANZAHL, **ZUFALL()**, ZUFALLSBEREICH(a;b)
-- **Hintergrundfarben** (Einstellungen): Weiß, **Tafelgrün**, Schwarz, Dunkelgrau, Hellblau –
-  getrennt einstellbar vom **Muster** (Kein / Karo / Linien / Punkte). Gitterlinien passen sich
-  hell/dunkel an.
+- **Hintergrundfarben** (Einstellungen): Weiß, **Tafelgrün**, Schwarz, Dunkelgrau, Hellblau sowie
+  **helles Gelb / Grün / Rot / Orange / Lila** – getrennt einstellbar vom **Muster**
+  (Kein / Karo / Linien / Punkte). Gitterlinien passen sich hell/dunkel an.
 - **Text:** Textfelder anlegen; **Doppeltipp** auf einen Text zum Nachbearbeiten
 - **Gleichungslöser** (Werkzeug neben dem Textfeld): bewegliches Objekt, in das man eine
   Gleichung **tippt** (z. B. `2x+3=7` oder `x^2-5x+6=0`). **Lineare und quadratische**
