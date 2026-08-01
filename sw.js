@@ -1,5 +1,5 @@
 /* Service Worker – macht die Tafel offline-fähig (App-Shell + Bibliotheken cachen). */
-const CACHE = 'tafel-v25';
+const CACHE = 'tafel-v33';
 const ASSETS = [
   './',
   'index.html',
@@ -12,6 +12,11 @@ const ASSETS = [
   'gleichung.html',
   'tabelle.html',
   'geogebra.html',
+  'wuerfel.html',
+  'gluecksrad.html',
+  'bruch.html',
+  'stellenwerttafel.html',
+  'umrechner.html',
   'pptx.js',
   'manifest.webmanifest',
   'icon.svg',

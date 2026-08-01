@@ -8,8 +8,10 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
 - **Schreiben:** Stift (mit Apple-Pencil-Druckstärke), Marker; **eigener Farb-Button**
   (Farbe & Dicke) – der Stift zeichnet in der zuletzt gewählten Farbe (Standard: Schwarz)
 - **Formen:** Linie, Rechteck, **Quadrat**, Ellipse, Dreieck, **rechtwinkliges Dreieck**,
-  **allgemeines Dreieck**, **Parallelogramm**, **Trapez**, Pfeil (auch gefüllt)
-- **Freihand → gerade Strecke:** Beim normalen Schreiben am Ende einer Linie **2 Sekunden
+  **allgemeines Dreieck**, **Parallelogramm**, **Trapez**, Pfeil (auch gefüllt), **Drachenviereck**
+  sowie **Schrägbilder** von **Quader, vierseitiger Pyramide, Zylinder und Kegel** (mit
+  gestrichelten verdeckten Kanten). Alle im **Formen**-Popover.
+- **Freihand → gerade Strecke:** Beim normalen Schreiben am Ende einer Linie **1 Sekunde
   ruhig halten** → aus der Linie wird eine gerade Strecke (Anfang → gehaltener Punkt).
   Sonst bleibt es die Freihandlinie.
 - **Konstruktionswerkzeuge:** **Kreis** (erster Punkt = Mittelpunkt – bleibt als Punkt sichtbar –,
@@ -42,6 +44,10 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   blaues **Ausfüllkästchen** – nach unten oder zur Seite ziehen füllt die Formel/den Wert in die
   überstrichenen Zellen; **relative Bezüge (A1) werden angepasst, absolute ($A$1) bleiben fest**
   (touch-optimiert fürs iPad).
+- **Finger-Modus (Tabelle):** Umschalter **„👆 Auswählen ⇄ ✋ Scrollen"** oben in der Tabelle.
+  Standard **Auswählen** – der Finger markiert Bereiche und bedient das Ausfüllkästchen (statt zu
+  scrollen); zum Blättern großer Tabellen einmal auf **Scrollen**. (Voraussetzung: oben
+  **„Einbettungen bedienen"** aktiviert; der Stift funktioniert in beiden Modi.)
 - **Import & Einfügen (Tabelle):** Button **„📥 Import"** liest **CSV**- (Komma/Semikolon/Tab,
   auch Anführungszeichen) oder **Excel-Dateien (.xlsx)** ein (offline; ab A1). Button **„📋 Einfügen"**
   fügt tabellarische Daten **aus der Zwischenablage** (z. B. aus Excel/Sheets kopiert) ab der
@@ -79,16 +85,23 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   in der **Einstellungs-Leiste (oben links)** einen eigenen Knopf **„Aus der Zwischenablage einfügen"**.
 - **Radierer:** radiert Teile von Strichen weg (nicht nur ganze Striche)
 - **Lineal:** einblendbar, mit Pencil verschieben/drehen, Striche schnappen an die Kante
+- **Lasso-Auswahl** (Werkzeug): einen Bereich mit dem Stift **einrahmen** (ist die Kurve nicht
+  geschlossen, wird sie automatisch mit einer geraden Strecke geschlossen). Nach dem Loslassen
+  erscheint ein Menü mit **Kopieren · Ausschneiden · Gruppieren · Löschen** für alle eingerahmten
+  Objekte. (Die Rechteck-Auswahl im Auswahl-Modus bleibt zusätzlich erhalten.)
 - **Auswählen, Verschieben, Skalieren, Drehen:** Objekt antippen → Rahmen mit Griffen
   (Eckgriffe = Größe, Kreis oben = drehen); ein **Kontext-Panel** erscheint zum
   nachträglichen Ändern von Farbe, Dicke/Größe und Füllung
 - **Gruppieren / Duplizieren / Löschen** im Kontext-Panel
 - **Laserpointer** und **Scheinwerferspot**
-- **Zoom/Verschieben:** zwei Finger zoomen, ein Finger schiebt (Pencil schreibt weiter)
+- **Zoom/Verschieben:** zwei Finger zoomen, ein Finger schiebt (Pencil schreibt weiter). Die Seite
+  ist **oben und links fest begrenzt** (Ursprung oben-links) und **nach unten und rechts unbegrenzt** –
+  man schiebt also nur nach unten/rechts.
 - **Seiten:** hinzufügen, löschen, blättern
 - **Einbetten als bewegliches Objekt:** Bilder, **YouTube/Video**, **Webseiten/HTML**, **GeoGebra**
   und die **Tabellenkalkulation** – verschieben/skalieren/drehen wie jedes andere Objekt. Zum
-  Bedienen (Video abspielen, GeoGebra ziehen …) unten auf **„Einbettungen bedienen"** tippen.
+  Bedienen (Video abspielen, Zellen auswählen, GeoGebra ziehen …) **oben in der Mitte** auf
+  **„Einbettungen bedienen"** tippen (schaltet zwischen Zeichnen und Bedienen um).
   In die Link-Felder kann man per **📋-Knopf aus der Zwischenablage** einfügen. Mit der Option
   **„Als eigene Seite einfügen"** kommt das Eingebettete stattdessen groß auf eine neue Seite.
   (PDF wird weiter als ganze Seite(n) eingefügt.)
@@ -129,12 +142,34 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
 
 Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimieren**:
 
-1. **Hauptleiste (unten, mittig):** links **nebeneinander** vier immer sichtbare Buttons –
+1. **Hauptleiste (links, senkrecht):** am **linken Rand vertikal** angeordnet (damit man beim
+   Schreiben nicht versehentlich etwas auslöst). Oben **untereinander** vier immer sichtbare Buttons –
    die **Schwunglinie** = Schreiben (Stiftwerkzeuge), der **Auswahl-Cursor** = Auswählen &
-   Werkzeuge (Objekte auswählen/verschieben + Timer/Stoppuhr/Uhr, Lärmampel, Umfrage, QR,
+   Werkzeuge (Objekte auswählen/verschieben + Zeit, Klasse & Interaktion, Lärmampel, QR,
    Namensziehung, Taschenrechner, Einfügen …), der **Laserpointer** und der **Scheinwerfer**.
-   Ein **Trennstrich** trennt diese Buttons vom jeweiligen Werkzeugmenü. Ganz rechts der
-   Minimieren-Knopf – minimiert sieht man nur diese Buttons und den Aufklapp-Knopf.
+   Ein **Trennstrich** trennt diese Buttons vom jeweiligen Werkzeugmenü (das bei Bedarf **scrollt**).
+   Unten der Minimieren-Knopf. Die Leiste beginnt **unter der oberen Einstellungs-Leiste** und
+   wächst nach unten. Verwandte Werkzeuge sind zur Übersicht in **Gruppen-Popovers**
+   zusammengefasst (wie „Formen"): der **Formen**-Button enthält Linie/Rechteck/Ellipse/Dreiecke/Pfeil
+   **und** Kreis, Gerade, Zirkel, Koordinatensystem; ein **Zeit**-Button (Uhr, Stoppuhr, Timer);
+   ein **Klasse & Interaktion**-Button (Sozialform, Gruppen bilden, Umfrage, Zufälliger Name, Punktestand)
+   und ein **Mathe & Physik**-Button (Gleichungslöser, Funktionsplotter, Vierfeldertafel, Baumdiagramm,
+   Wahrscheinlichkeitsrechner, GeoGebra-App, Messwert-Analyse, **Würfel** und **Glücksrad**).
+- **Würfel** (Zufallsgenerator, Mathe & Physik): 1–6 Würfel mit wählbarer Seitenzahl (2–20),
+  Antippen/„Würfeln" rollt, Summe wird angezeigt.
+- **Glücksrad** (Zufallsgenerator, Mathe & Physik): dreht auf einen zufälligen Sektor. **Anzahl der
+  Sektoren sowie Beschriftung (Zahl) und Farbe je Sektor** lassen sich im **Kontextmenü** einstellen.
+- **Bruch** (Mathe & Physik): Zähler und Nenner eingeben → der Bruch wird angezeigt und als **Kreis
+  mit gleich großen Sektoren** dargestellt (Zähler-viele Sektoren gefüllt), plus Dezimalwert.
+- **Stellenwerttafel** (Mathe & Physik): umschaltbar **Längen / Flächen / Volumen / Massen** mit den
+  üblichen Einheiten. Ziffern eintippen; ein Tipp auf eine Einheit **verschiebt das Komma** (Umrechnung) –
+  **Komma und die zugehörige Einheit werden rot hervorgehoben**. Mit **„＋ Zeile"** lassen sich
+  weitere Zahlen-Zeilen hinzufügen; jede Zeile zeigt ihren Wert in der gewählten Einheit.
+- **Einheitenumrechner** (Mathe & Physik): rechnet gängige physikalische Größen des Schulbetriebs um –
+  **Dichte, Stromstärke, Spannung, Widerstand, Länge, Fläche, Volumen, Masse, Geschwindigkeit,
+  Beschleunigung, Kraft, Temperatur (°C/K/°F), Impuls, Wärmekapazität, Kapazität, Ladung, Leistung,
+  Magnetische Flussdichte, Energie**. Größe wählen,
+  Wert + Ausgangseinheit eingeben → alle Einheiten werden live angezeigt.
 2. **Seiten-Leiste (unten rechts, senkrecht):** blättern (‹ ›), Seite hinzufügen/löschen, Zoom
    zurücksetzen. Der **Minimier-Pfeil zeigt nach unten** (⌄) – klar unterscheidbar von den
    Blätter-Pfeilen. Minimiert bleiben Minimier-Pfeil und **+** (neue Seite) sichtbar.
@@ -176,6 +211,11 @@ messwert.html         ← eingebundenes Messwert-Analyse-Tool (nutzt CDN → Int
 gleichung.html        ← eingebetteter Gleichungslöser (linear/quadratisch)
 tabelle.html          ← eingebettete gewöhnliche Tabelle (Zeilen/Spalten im Kontextmenü)
 geogebra.html         ← eingebettete GeoGebra-App (nutzt CDN → Internet nötig)
+wuerfel.html          ← Würfel-Zufallsgenerator (Objekt)
+gluecksrad.html       ← Glücksrad (Sektoren im Kontextmenü einstellbar)
+bruch.html            ← Bruch mit Kreis-Sektoren-Darstellung
+stellenwerttafel.html ← Stellenwerttafel (Längen/Flächen/Volumen/Massen, Komma verschieben)
+umrechner.html        ← Einheitenumrechner (physikalische Größen)
 pptx.js               ← einfacher PPTX-Renderer (Folien → Bilder, offline)
 manifest.webmanifest  ← PWA-Manifest
 sw.js                 ← Service Worker (Offline-Cache)

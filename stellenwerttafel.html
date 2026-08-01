@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Stellenwerttafel</title>
+<style>
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#1f2430;overflow:hidden;-webkit-user-select:none;user-select:none;}
+  #wrap{height:100%;display:flex;flex-direction:column;padding:10px;gap:8px;}
+  #types{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+  .tbtn{padding:7px 12px;border:1px solid #cfd6e0;border-radius:9px;background:#fff;font-size:14px;font-family:inherit;cursor:pointer;font-weight:600;}
+  .tbtn.on{background:#3b82f6;color:#fff;border-color:#3b82f6;}
+  .hint{font-size:12px;color:#8a93a2;}
+  #tafelWrap{flex:1;min-height:0;overflow:auto;}
+  #tafel{display:inline-flex;flex-direction:column;min-width:100%;}
+  .row{display:flex;align-items:stretch;}
+  .ugroup{display:flex;flex-direction:column;flex:none;}
+  .uhead{text-align:center;font-size:14px;padding:5px 4px;cursor:pointer;white-space:nowrap;color:#334155;font-weight:700;border-radius:8px 8px 0 0;}
+  .ugroup.sel .uhead{color:#fff;background:#dc2626;}
+  .udigits{display:flex;}
+  .dc{width:36px;height:48px;text-align:center;font-size:23px;border:1px solid #cbd3df;border-left:none;border-top:none;font-family:inherit;background:#fff;color:#1f2430;padding:0;}
+  .ugroup .udigits .dc:first-child{border-left:1px solid #cbd3df;}
+  .ugroup.sel .dc{border-color:#dc2626;}
+  .comma{width:16px;flex:none;display:flex;align-items:flex-end;justify-content:center;font-size:40px;font-weight:900;color:#dc2626;line-height:.5;padding-bottom:4px;}
+  .comma.head{align-items:flex-end;color:#dc2626;font-size:16px;}
+  .rowend{display:flex;align-items:center;gap:8px;padding-left:12px;flex:none;}
+  .rval{font-size:16px;font-weight:800;white-space:nowrap;}
+  .rval b{color:#dc2626;}
+  .del{border:none;background:#f1f3f7;border-radius:8px;width:30px;height:30px;font-size:16px;cursor:pointer;color:#64748b;}
+  #foot{display:flex;gap:10px;align-items:center;}
+  #add{padding:8px 14px;border:none;border-radius:10px;background:#3b82f6;color:#fff;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="types">
+    <button class="tbtn" id="t-laenge">Längen</button>
+    <button class="tbtn" id="t-flaeche">Flächen</button>
+    <button class="tbtn" id="t-volumen">Volumen</button>
+    <button class="tbtn" id="t-masse">Massen</button>
+    <span class="hint">Ziffern eintippen · auf eine Einheit tippen verschiebt das Komma</span>
+  </div>
+  <div id="tafelWrap"><div id="tafel"></div></div>
+  <div id="foot"><button id="add">＋ Zeile</button></div>
+</div>
+<script>
+"use strict";
+const $=id=>document.getElementById(id);
+const UNITS={
+  laenge:[['km',1],['hm',1],['dam',1],['m',1],['dm',1],['cm',1],['mm',1]],
+  flaeche:[['km²',2],['ha',2],['a',2],['m²',2],['dm²',2],['cm²',2],['mm²',2]],
+  volumen:[['m³',3],['dm³',3],['cm³',3],['mm³',3]],
+  masse:[['t',3],['kg',3],['g',3],['mg',3]]
+};
+const DEFIDX={ laenge:3, flaeche:3, volumen:0, masse:1 };   // m / m² / m³ / kg
+let data={ type:'laenge', unitIndex:3, rows:[{dig:{}}] };
+function rowValue(dig){ const units=UNITS[data.type]; let intP='',fracP='',col=0;
+  units.forEach((u,ui)=>{ for(let k=0;k<u[1];k++){ const d=dig[col]||'0'; if(ui<=data.unitIndex)intP+=d; else fracP+=d; col++; } });
+  intP=intP.replace(/^0+(?=\d)/,''); if(intP==='')intP='0'; fracP=fracP.replace(/0+$/,'');
+  return intP+(fracP?(','+fracP):''); }
+function render(){
+  ['laenge','flaeche','volumen','masse'].forEach(t=>$('t-'+t).classList.toggle('on',data.type===t));
+  const units=UNITS[data.type]; const wrap=$('tafel'); wrap.innerHTML='';
+  // Kopfzeile
+  const head=document.createElement('div'); head.className='row';
+  units.forEach((u,ui)=>{ const g=document.createElement('div'); g.className='ugroup'+(ui===data.unitIndex?' sel':'');
+    const h=document.createElement('div'); h.className='uhead'; h.style.width=(u[1]*36)+'px'; h.innerHTML=u[0]; h.onclick=()=>{ data.unitIndex=ui; render(); sync(); };
+    g.appendChild(h); head.appendChild(g);
+    if(ui===data.unitIndex){ const cm=document.createElement('div'); cm.className='comma head'; cm.textContent='▾'; head.appendChild(cm); } });
+  wrap.appendChild(head);
+  // Datenzeilen
+  data.rows.forEach((rw,ri)=>{ let col=0; const row=document.createElement('div'); row.className='row';
+    units.forEach((u,ui)=>{ const g=document.createElement('div'); g.className='ugroup'+(ui===data.unitIndex?' sel':'');
+      const dg=document.createElement('div'); dg.className='udigits';
+      for(let k=0;k<u[1];k++){ const c=col; const inp=document.createElement('input'); inp.className='dc'; inp.type='text'; inp.inputMode='numeric'; inp.maxLength=1; inp.value=rw.dig[c]||'';
+        inp.oninput=()=>{ inp.value=inp.value.replace(/[^0-9]/g,'').slice(0,1); if(inp.value)rw.dig[c]=inp.value; else delete rw.dig[c]; updateVals(); sync(); };
+        dg.appendChild(inp); col++; }
+      g.appendChild(dg); row.appendChild(g);
+      if(ui===data.unitIndex){ const cm=document.createElement('div'); cm.className='comma'; cm.textContent=','; row.appendChild(cm); } });
+    const end=document.createElement('div'); end.className='rowend';
+    const val=document.createElement('div'); val.className='rval'; val.dataset.ri=ri; end.appendChild(val);
+    const del=document.createElement('button'); del.className='del'; del.textContent='×'; del.title='Zeile löschen'; del.onclick=()=>{ if(data.rows.length>1){ data.rows.splice(ri,1); render(); sync(); } };
+    end.appendChild(del); row.appendChild(end); wrap.appendChild(row); });
+  updateVals();
+}
+function updateVals(){ const units=UNITS[data.type]; document.querySelectorAll('.rval').forEach(el=>{ const rw=data.rows[+el.dataset.ri]; if(rw) el.innerHTML='= '+rowValue(rw.dig)+' <b>'+units[data.unitIndex][0]+'</b>'; }); }
+['laenge','flaeche','volumen','masse'].forEach(t=>$('t-'+t).onclick=()=>{ data.type=t; data.unitIndex=DEFIDX[t]; data.rows=data.rows.map(()=>({dig:{}})); render(); sync(); });
+$('add').onclick=()=>{ data.rows.push({dig:{}}); render(); sync(); };
+function sync(){ try{ parent.postMessage({type:'embed-data',data},'*'); }catch(e){} }
+addEventListener('message',e=>{ if(e.data&&e.data.type==='embed-data'&&e.data.data){ const d=e.data.data;
+  data={ type:UNITS[d.type]?d.type:'laenge', unitIndex:(d.unitIndex|0), rows:(Array.isArray(d.rows)&&d.rows.length?d.rows.map(r=>({dig:(r&&r.dig)||{}})):[{dig:{}}]) };
+  if(data.unitIndex>=UNITS[data.type].length||data.unitIndex<0) data.unitIndex=DEFIDX[data.type]; render(); } });
+window.addEventListener('load',()=>{ render(); try{ parent.postMessage({type:'embed-ready'},'*'); }catch(e){} });
+</script>
+</body>
+</html>
