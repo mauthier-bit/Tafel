@@ -68,7 +68,9 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
 - **Hintergrundfarben** (Einstellungen): Weiß, **Tafelgrün**, Schwarz, Dunkelgrau, Hellblau sowie
   **helles Gelb / Grün / Rot / Orange / Lila** – getrennt einstellbar vom **Muster**
   (Kein / Karo / Linien / Punkte). Gitterlinien passen sich hell/dunkel an.
-- **Text:** Textfelder anlegen; **Doppeltipp** auf einen Text zum Nachbearbeiten
+- **Text:** Textfelder anlegen; **Doppeltipp** auf einen Text zum Nachbearbeiten. Bei ausgewähltem
+  Text bietet das **Kontextmenü** zusätzlich **Fett, Kursiv, Aufzählung (Liste)** und eine
+  **Schriftgrößen-Einstellung** (＋/−).
 - **Gleichungslöser** (Werkzeug neben dem Textfeld): bewegliches Objekt, in das man eine
   Gleichung **tippt** (z. B. `2x+3=7` oder `x^2-5x+6=0`). **Lineare und quadratische**
   Gleichungen werden mit Lösungsweg gelöst; andere werden ehrlich als „nicht lösbar" gemeldet.
@@ -94,8 +96,9 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   erscheint ein Menü mit **Kopieren · Ausschneiden · Gruppieren · Löschen** für alle eingerahmten
   Objekte. (Die Rechteck-Auswahl im Auswahl-Modus bleibt zusätzlich erhalten.)
 - **Auswählen, Verschieben, Skalieren, Drehen:** Objekt antippen → Rahmen mit Griffen
-  (Eckgriffe = Größe, Kreis oben = drehen); ein **Kontext-Panel** erscheint zum
-  nachträglichen Ändern von Farbe, Dicke/Größe und Füllung
+  (Eckgriffe = Größe, Kreis oben = drehen). Am Objekt erscheint ein **kleiner Button (☰)** –
+  ein Tipp klappt das **Kontext-Panel** auf/zu (Farbe, Dicke/Größe, Füllung, Kopieren usw.),
+  damit es nicht ständig im Weg ist.
 - **Gruppieren / Duplizieren / Löschen** im Kontext-Panel
 - **Laserpointer** und **Scheinwerferspot**
 - **Zoom/Verschieben:** zwei Finger zoomen, ein Finger schiebt (Pencil schreibt weiter). Die Seite
@@ -160,7 +163,9 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
    und ein **Mathe & Physik**-Button (Gleichungslöser, Funktionsplotter, Vierfeldertafel, Baumdiagramm,
    Wahrscheinlichkeitsrechner, GeoGebra-App, Messwert-Analyse, **Würfel** und **Glücksrad**).
 - **Würfel** (Zufallsgenerator, Mathe & Physik): 1–6 Würfel mit wählbarer Seitenzahl (2–20),
-  Antippen/„Würfeln" rollt, Summe wird angezeigt.
+  „Würfeln" rollt, Summe wird angezeigt. **Antippen eines Würfels wechselt seine Farbe**
+  (durch eine Palette) – so kann man mehrere Würfel zur Unterscheidung einfärben; die Farben
+  bleiben beim Würfeln erhalten. (Nur die **Würfelfläche** wird gefärbt, die Augen bleiben schwarz.)
 - **Glücksrad** (Zufallsgenerator, Mathe & Physik): dreht auf einen zufälligen Sektor. **Anzahl der
   Sektoren sowie Beschriftung (Zahl) und Farbe je Sektor** lassen sich im **Kontextmenü** einstellen.
 - **Bruch** (Mathe & Physik): Zähler und Nenner eingeben → der Bruch wird angezeigt und als **Kreis
