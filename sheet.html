@@ -157,6 +157,10 @@ function build(){ let html='<thead><tr><th></th>'; for(let c=0;c<COLS;c++)html+=
   recompute();
 }
 document.addEventListener('pointerup',()=>{ dragging=false; });
+/* Finger-Auswahl: pointerenter feuert bei Touch nicht (impliziter Pointer-Capture) → per elementFromPoint verfolgen */
+document.addEventListener('pointermove',e=>{ if(!dragging||filling)return;
+  const el=document.elementFromPoint(e.clientX,e.clientY); const td=el&&el.closest?el.closest('td[data-cell]'):null; if(!td)return;
+  const cell=td.dataset.cell; if(cell!==selFocus){ selFocus=cell; if(document.activeElement&&document.activeElement.blur)document.activeElement.blur(); renderRange(); } });
 /* ---------- Bereichs-Markierung ---------- */
 function cellCR(id){ return {c:colIdx(id.match(/[A-Z]+/)[0]), r:parseInt(id.match(/[0-9]+/)[0])}; }
 function selRect(){ const a=cellCR(selAnchor||active), b=cellCR(selFocus||active);
@@ -216,7 +220,11 @@ function paste(target){ let raw=copyBuf.raw; if(raw[0]==='=') raw='='+adjustRefs
 /* ---------- Sync mit Tafel ---------- */
 function sync(){ try{ parent.postMessage({type:'embed-data',data},'*'); }catch(e){} }
 addEventListener('message',e=>{ if(e.data&&e.data.type==='embed-data'){ data=e.data.data||{}; recompute(); } });
-document.getElementById('fx').addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); const inp=inputOf(active); if(inp){ inp.focus(); inp.value=document.getElementById('fx').value; inp.blur(); } } });
+document.getElementById('fx').addEventListener('keydown',e=>{ if(e.key!=='Enter')return; e.preventDefault();
+  const cell=active, val=document.getElementById('fx').value;      // Wert direkt übernehmen (ohne fragilen Fokus/Blur-Umweg)
+  if(val==='') delete data[cell]; else data[cell]=val; recompute(); sync();
+  const c=colIdx(cell.match(/[A-Z]+/)[0]), r=parseInt(cell.match(/[0-9]+/)[0]);
+  if(r<ROWS) setActive(colName(c)+(r+1)); });
 
 /* ---------- Diagramme (Säulen / Boxplot) ---------- */
 const $=id=>document.getElementById(id);

@@ -135,7 +135,11 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   in einstellbarer Größe; „Auf Tafel" schreibt die Gruppen auf die Tafel.
 - **Uhr** (Werkzeug): fügt eine live laufende Analoguhr als bewegliches Objekt ein.
 - **Funktionsplotter** (Werkzeug): Funktionsterm eingeben (mit Parametern **a, b, c** → Schieberegler),
-  der Graph wird gezeichnet; im Bedien-Modus mit **Fingergeste zoom-/verschiebbar**.
+  der Graph wird gezeichnet; im Bedien-Modus mit **Fingergeste zoom-/verschiebbar**. Über **„＋ Funktion"**
+  lassen sich **mehrere Funktionen gleichzeitig** anzeigen (je eigene Farbe, eigene Eingabezeile, mit „×"
+  entfernbar); die **Parameter a/b/c wirken auf alle Funktionen gemeinsam**. **Farbe und Linienstärke**
+  im **Kontextmenü** wirken auf den **aktiven Graphen** (die farblich hervorgehobene Eingabezeile –
+  im Bedien-Modus die Zeile antippen, um sie auszuwählen).
 - **Vierfeldertafel** (Werkzeug): 2×2-Tabelle mit editierbaren Beschriftungen; Zeilen-/Spaltensummen
   werden automatisch berechnet.
 - **Baumdiagramm** (Werkzeug): Stufen und Verzweigungen einstellbar, Wahrscheinlichkeiten an die

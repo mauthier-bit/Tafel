@@ -1020,11 +1020,17 @@ shapeDefs.forEach(([k,svg],i)=>{const b=document.createElement('button');b.class
 $('shapeFill').onclick=function(){this.classList.toggle('on');shapeFill=this.classList.contains('on');};
 
 /* ============ Kontext-Panel ============ */
-buildSwatches($('propColors'),c=>{ selection.forEach(o=>{if(o.type!=='image')o.color=c;}); scheduleAutosave(); markDirty(); refreshPropActive(); });
-addRainbow($('propColors'),c=>{ selection.forEach(o=>{if(o.type!=='image')o.color=c;}); scheduleAutosave(); markDirty(); refreshPropActive(); });
+function plotSel(){ return (selection.length===1&&selection[0].type==='embed'&&selection[0].etype==='plotter')?selection[0]:null; }
+function plotApply(fn){ const po=plotSel(); if(!po)return false; po.data=po.data||{};
+  if(!Array.isArray(po.data.funcs)) po.data.funcs=[{term:po.data.term||''}];
+  const i=Math.min(po.data.activeIdx||0, po.data.funcs.length-1); fn(po.data.funcs[Math.max(0,i)]);
+  postToEmbed(po,po.data); markDirty(); scheduleAutosave(); return true; }
+function propColorPick(c){ if(plotApply(f=>f.color=c))return; selection.forEach(o=>{if(o.type!=='image')o.color=c;}); scheduleAutosave(); markDirty(); refreshPropActive(); }
+buildSwatches($('propColors'),propColorPick);
+addRainbow($('propColors'),propColorPick);
 const pwEl=$('propWidths');
 widths.forEach(w=>{const b=document.createElement('button');b.className='wbtn';b.dataset.w=w;const dot=document.createElement('i');dot.style.width=dot.style.height=Math.min(w+4,20)+'px';b.appendChild(dot);
-  b.onclick=()=>{ selection.forEach(o=>{ if(o.type==='stroke'||o.type==='shape')o.width=w; else if(o.type==='text')o.size=Math.round(14+w*4); }); scheduleAutosave(); markDirty(); }; pwEl.appendChild(b);});
+  b.onclick=()=>{ if(plotApply(f=>f.width=w)){return;} selection.forEach(o=>{ if(o.type==='stroke'||o.type==='shape')o.width=w; else if(o.type==='text')o.size=Math.round(14+w*4); }); scheduleAutosave(); markDirty(); }; pwEl.appendChild(b);});
 $('propFill').onclick=function(){ this.classList.toggle('on'); const on=this.classList.contains('on'); selection.forEach(o=>{if(o.type==='shape')o.fill=on;}); scheduleAutosave(); markDirty(); };
 $('pr-group').onclick=()=>{ if(selection.length<2)return; const g=uid(); selection.forEach(o=>o.groupId=g); scheduleAutosave(); markDirty(); };
 $('pr-ungroup').onclick=()=>{ selection.forEach(o=>o.groupId=null); scheduleAutosave(); markDirty(); };
@@ -1369,7 +1375,7 @@ function addCoordObject(){ const sz=Math.min(W,H)*0.5/scale, c=toWorld(W/2,H/2);
 setInterval(()=>{ if(doc.pages[doc.cur].objects.some(o=>o.type==='clock')) markDirty(); },1000);   // Uhr lebendig halten
 
 /* ---- Funktionsplotter / Vierfeldertafel / Baumdiagramm (als Embed-Objekte) ---- */
-$('w-plot').onclick=()=>addEmbedObject('plotter','plotter.html','Funktionsplotter',{term:'a*x^2+b*x+c',params:{a:1,b:0,c:0}});
+$('w-plot').onclick=()=>addEmbedObject('plotter','plotter.html','Funktionsplotter',{funcs:[{term:'a*x^2+b*x+c'}],params:{a:1,b:0,c:0},activeIdx:0});
 $('w-vier').onclick=()=>addEmbedObject('vierfelder','vierfelder.html','Vierfeldertafel',{});
 $('w-baum').onclick=()=>addEmbedObject('baum','baum.html','Baumdiagramm',{stages:2,branches:2,probs:{}});
 function askInsert(etype,src,label,data){ const asPage=confirm('„'+label+'" als EIGENE SEITE einfügen?\n\nOK = eigene Seite   ·   Abbrechen = bewegliches Objekt'); addEmbedObject(etype,src,label,data,asPage); }
