@@ -24,8 +24,8 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   beschriftung und Zahlenskala als bewegliches Objekt ein – man kann direkt darauf zeichnen. Im
   Kontextmenü lässt sich der **x- und y-Bereich** (Ausschnitt) über **＋/−-Buttons** einstellen sowie
   **Gitterlinien** und **Achsenbeschriftung** ein-/ausschalten (Gitter standardmäßig **aus** – meist
-  reicht das Karogitter des Hintergrunds). Achsen sind kräftig mit großen Pfeilspitzen und gut
-  lesbaren Beschriftungen.
+  reicht das Karogitter des Hintergrunds) sowie die **Schriftgröße der Beschriftung** (＋/−). Achsen
+  sind kräftig mit großen Pfeilspitzen und gut lesbaren Beschriftungen.
 - **Lineal** und **Geodreieck:** über ihren Knopf einblenden – sie **bleiben aktiv**, während der
   Stift zeichnet. Mit dem Finger am **unteren** Teil verschieben / am Griff (Ecke bzw. Spitze)
   drehen; mit dem Stift **an der Kante** eine saubere gerade Linie ziehen. Das Geodreieck hat
@@ -40,6 +40,9 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
 - **Tabellenkalkulation** einfügen (eigene Seite): Zellbezüge **relativ (A1) und absolut ($A$1)**,
   Grundrechenarten, Potenz `^`, `sqrt`, `sin`, `cos` (Bogenmaß); Kopieren/Einfügen passt
   relative Bezüge an. Die Tabelle wird im Projekt gespeichert.
+- **Schriftgröße vieler Werkzeuge im Kontextmenü einstellbar** (＋/−): Tabelle, Funktionsplotter,
+  Vierfeldertafel, Baumdiagramm, Wahrscheinlichkeitsrechner und Stellenwerttafel.
+- Beim Wechsel auf die **Schreibwerkzeuge** ist immer der **Stift** aktiv.
 - **Diagramme aus der Tabelle:** einen **Zellbereich markieren** (mit gedrücktem Finger/Maus über
   die Zellen ziehen) und auf **„📊 Diagramm"** tippen – die markierten Zahlen werden wahlweise als
   **Säulendiagramm**, **Kreisdiagramm** oder **Boxplot** (mit Min/Q₁/Median/Q₃/Max) angezeigt.
