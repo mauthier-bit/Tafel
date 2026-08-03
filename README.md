@@ -51,6 +51,8 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   blaues **Ausfüllkästchen** – nach unten oder zur Seite ziehen füllt die Formel/den Wert in die
   überstrichenen Zellen; **relative Bezüge (A1) werden angepasst, absolute ($A$1) bleiben fest**
   (touch-optimiert fürs iPad).
+- **Tabelle (als Objekt):** im Kontextmenü **Zeilen-, Spalten-**, **Schrift-** und **Linienstärke**
+  per ＋/− einstellbar.
 - **Finger-Modus (Tabelle):** Umschalter **„👆 Auswählen ⇄ ✋ Scrollen"** oben in der Tabelle.
   Standard **Auswählen** – der Finger markiert Bereiche und bedient das Ausfüllkästchen (statt zu
   scrollen); zum Blättern großer Tabellen einmal auf **Scrollen**. (Voraussetzung: oben
@@ -68,9 +70,10 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   Seiten **und** eine eigene Klassenliste. Alles wird automatisch im Browser gesichert.
 - Tabellen-Funktionen zusätzlich: **SUMME / MITTELWERT** (auch über Bereiche wie `A1:A5`),
   MAX, MIN, ANZAHL, **ZUFALL()**, ZUFALLSBEREICH(a;b)
-- **Hintergrundfarben** (Einstellungen): Weiß, **Tafelgrün**, Schwarz, Dunkelgrau, Hellblau sowie
-  **helles Gelb / Grün / Rot / Orange / Lila** – getrennt einstellbar vom **Muster**
-  (Kein / Karo / Linien / Punkte). Gitterlinien passen sich hell/dunkel an.
+- **Hintergrundfarben** (Einstellungen): Weiß, **Tafelgrün**, Schwarz, Dunkelgrau, **Dunkelblau**,
+  **dunkles Weinrot**, Hellblau sowie **helles Gelb / Grün / Rot / Orange / Lila** und ein
+  **Regenbogen-Button** für eine **beliebige Farbe** (Farbwähler) – getrennt einstellbar vom **Muster**
+  (Kein / Karo / Linien / Punkte). Bei dunklem Hintergrund schreibt der Stift automatisch weiß.
 - **Text:** Textfelder anlegen; **Doppeltipp** auf einen Text zum Nachbearbeiten. Bei ausgewähltem
   Text bietet das **Kontextmenü** zusätzlich **Fett, Kursiv, Aufzählung (Liste)** und eine
   **Schriftgrößen-Einstellung** (＋/−).
@@ -139,8 +142,9 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
 - **Seitenübersicht:** auf die **Seitenzahl** (z. B. „2/5") tippen → Miniaturen aller Seiten,
   eine antippen wechselt direkt dorthin (und Seiten löschen).
 - **QR-Code-Generator**
-- **Klassenlisten:** CSV importieren (Name in der 1. Spalte), pro Projekt gespeichert;
-  Button „Zufälliger Name" zieht per Zufall eine Person (ohne Wiederholung)
+- **Klassenlisten:** pro Projekt – **Namen direkt eintippen** (ein Name pro Zeile im Einstellungen-
+  Fenster) oder **CSV importieren** (Name in der 1. Spalte); Button „Zufälliger Name" zieht per Zufall
+  eine Person (ohne Wiederholung)
 - **PDF-Export** der ganzen Tafel
 - **Vollbild-Button** (oben links in der Einstellungs-Leiste; wird beim **Minimieren** der Leiste
   mit ausgeblendet)
@@ -186,9 +190,10 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
    zurücksetzen. Der **Minimier-Pfeil zeigt nach unten** (⌄) – klar unterscheidbar von den
    Blätter-Pfeilen. Minimiert bleiben Minimier-Pfeil und **+** (neue Seite) sichtbar.
 2b. **Seiten-Leiste (oben rechts, waagrecht):** blättern, Seite +/−, Zoom, Seitenzahl (= Übersicht).
-   Minimiert bleiben Seitenzahl und **+** sichtbar.
-3. **Einstellungs-Leiste (oben links):** **Projekt-Auswahl** und **Vollbild** (bleiben auch
-   minimiert sichtbar) sowie Einstellungen (Hintergrund, Klassenlisten), Speichern, Laden, **PDF-Export**.
+   Lässt sich **vollständig einklappen** – dann bleibt nur der Aufklapp-Pfeil.
+3. **Einstellungs-Leiste (oben links):** Projekt-Auswahl, Vollbild, Einstellungen (Hintergrund,
+   Klassenlisten), Speichern, Laden, **PDF-Export**. Lässt sich ebenfalls **vollständig einklappen**
+   (nur der Aufklapp-Pfeil bleibt).
 
 Oben rechts liegt der **Vollbild-Knopf**.
 

@@ -51,6 +51,7 @@
   /* ---- Seiten-Leiste unten rechts ---- */
   #pagebar{position:fixed;right:12px;top:12px;z-index:21;display:flex;flex-direction:row;gap:6px;align-items:center;background:var(--bar);border-radius:14px;padding:6px;box-shadow:var(--shadow);max-width:calc(100vw - 24px);}
   #pagebar.min .pmin{display:none;}
+  #pagebar.min #pageInfo, #pagebar.min #p-add{display:none;}
   #pageMin svg{transition:transform .15s;}
   #pageInfo{font-size:14px;padding:0 8px;min-width:52px;text-align:center;white-space:nowrap;cursor:pointer;font-weight:600;border-radius:8px;}
   #pageInfo:hover{background:var(--bar2);}
@@ -58,6 +59,7 @@
   #settingsbar{position:fixed;left:12px;top:12px;z-index:20;display:flex;gap:6px;align-items:center;background:var(--bar);border-radius:14px;padding:6px;box-shadow:var(--shadow);}
   #settingsbar.min .sbody{display:none;}
   #settingsbar.min #fs{display:none;}
+  #settingsbar.min #barProject{display:none;}
   .sbody{display:flex;gap:6px;align-items:center;}
   #barProject{max-width:150px;height:44px;border:none;border-radius:10px;background:var(--bar2);color:var(--text);font-size:13px;font-family:inherit;padding:0 8px;cursor:pointer;}
   /* ---- Seiten-Vorschau ---- */
@@ -83,7 +85,9 @@
   input.sw.rainbow::-webkit-color-swatch{border:none;border-radius:50%;opacity:0;}
   .sw{width:26px;height:26px;border-radius:50%;border:2px solid #fff3;cursor:pointer;}
   .sw.active{outline:3px solid #fff;outline-offset:1px;}
-  .sw.rainbow{background:conic-gradient(from 0deg,#ef4444,#f97316,#eab308,#22c55e,#06b6d4,#3b82f6,#a855f7,#ec4899,#ef4444)!important;}
+  .sw.rainbow{background:conic-gradient(from 0deg,#ef4444,#f97316,#eab308,#22c55e,#06b6d4,#3b82f6,#a855f7,#ec4899,#ef4444)!important;-webkit-appearance:none;appearance:none;padding:0;overflow:hidden;cursor:pointer;}
+  .sw.rainbow::-webkit-color-swatch-wrapper{padding:0;}
+  .sw.rainbow::-webkit-color-swatch{border:none;border-radius:50%;opacity:0;}
   .widths{display:flex;gap:8px;align-items:center;justify-content:center;}
   .wbtn{background:var(--bar2);border:none;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;width:34px;height:34px;}
   .wbtn.active{background:var(--accent);}
@@ -326,6 +330,7 @@
   <div class="prow" id="tableRow" style="display:none;flex-direction:column;align-items:stretch;gap:6px;font-size:13px">
     <div style="display:flex;gap:6px;align-items:center;flex-wrap:nowrap"><b style="width:56px">Zeilen:</b><button class="p step" id="tblRowsM">−</button><span class="stepv" id="tblRowsV">3</span><button class="p step" id="tblRowsP">+</button></div>
     <div style="display:flex;gap:6px;align-items:center;flex-wrap:nowrap"><b style="width:56px">Spalten:</b><button class="p step" id="tblColsM">−</button><span class="stepv" id="tblColsV">3</span><button class="p step" id="tblColsP">+</button></div>
+    <div style="display:flex;gap:6px;align-items:center;flex-wrap:nowrap"><b style="width:56px">Linien:</b><button class="p step" id="tblLineM">−</button><span class="stepv" id="tblLineV">1</span><button class="p step" id="tblLineP">+</button></div>
   </div>
   <div class="prow" id="pageRow" style="display:none"><button class="p" id="pr-topage" style="width:100%">📄 Als eigene Seite anzeigen</button></div>
   <div class="prow" id="wheelRow" style="display:none;flex-direction:column;align-items:stretch;gap:6px;font-size:12px">
@@ -429,9 +434,10 @@
     <label class="lbl">Projekt / Klasse</label>
     <select id="projectSelect"></select>
     <div class="row" style="justify-content:flex-start;gap:6px;margin-top:8px"><button class="btn" id="projNew">Neu</button><button class="btn" id="projRename">Umbenennen</button><button class="btn dang" id="projClose">Schließen</button></div>
-    <label class="lbl">Klassenliste dieses Projekts (CSV)</label>
-    <div class="row" style="justify-content:flex-start;gap:6px"><button class="btn" id="csvBtn">CSV wählen</button><button class="btn" id="csvClear">Liste leeren</button></div>
-    <div class="hint" id="classInfo">Keine Namen. CSV: eine Zeile pro Person, Name in der ersten Spalte.</div>
+    <label class="lbl">Klassenliste dieses Projekts</label>
+    <textarea id="classText" rows="5" placeholder="Namen direkt eingeben – ein Name pro Zeile" style="width:100%;box-sizing:border-box;padding:8px;border:1px solid #cfd6e0;border-radius:8px;font-family:inherit;font-size:14px;resize:vertical;color:#1f2430"></textarea>
+    <div class="row" style="justify-content:flex-start;gap:6px;margin-top:6px"><button class="btn" id="csvBtn">CSV importieren</button><button class="btn" id="csvClear">Liste leeren</button></div>
+    <div class="hint" id="classInfo">Keine Namen. Namen direkt eintippen (eine Zeile pro Person) oder CSV importieren.</div>
     <hr style="border:none;border-top:1px solid #e3e7ee;margin:12px 0">
     <div class="hint">Jedes Projekt (z. B. „Mathe 6a") hat eigene Seiten und eine eigene Klassenliste. Alles wird automatisch im Browser gesichert; „Speichern"/„Laden" exportiert/importiert ein Projekt als Datei.</div>
   </div></div>
@@ -455,9 +461,11 @@ const cv=document.getElementById('board'), ctx=cv.getContext('2d');
 let dpr=Math.max(1,window.devicePixelRatio||1), W=0,H=0;
 function newPage(){ return {objects:[], redo:[], bg:null, _img:null, embed:null}; }
 let doc={ pages:[newPage()], cur:0, settings:{bgColor:'white',pattern:'none',penOnly:true,usePressure:true}, name:'Projekt 1', students:[] };
-const BG={white:'#ffffff',green:'#31614c',black:'#161819',darkgray:'#3a3f47',lightblue:'#dcedfb',lightyellow:'#fef9c3',lightgreen:'#dcfce7',lightred:'#fee2e2',lightorange:'#ffedd5',lightpurple:'#f3e8ff'};
-const BGDARK={green:1,black:1,darkgray:1};
-const bgHex=()=>BG[doc.settings.bgColor]||'#ffffff';
+const BG={white:'#ffffff',green:'#31614c',black:'#161819',darkgray:'#3a3f47',lightblue:'#dcedfb',lightyellow:'#fef9c3',lightgreen:'#dcfce7',lightred:'#fee2e2',lightorange:'#ffedd5',lightpurple:'#f3e8ff',darkblue:'#1e3a5f',winered:'#5a1626'};
+const BGDARK={green:1,black:1,darkgray:1,darkblue:1,winered:1};
+const isHex=v=>/^#[0-9a-fA-F]{6}$/.test(v||'');
+const bgHex=()=>BG[doc.settings.bgColor]||(isHex(doc.settings.bgColor)?doc.settings.bgColor:'#ffffff');
+function isBgDark(){ const b=doc.settings.bgColor; if(BGDARK[b])return true; if(isHex(b)){ const r=parseInt(b.slice(1,3),16),g=parseInt(b.slice(3,5),16),bl=parseInt(b.slice(5,7),16); return (0.299*r+0.587*g+0.114*bl)<128; } return false; }
 let scale=1, ox=0, oy=0; const MINS=0.2, MAXS=8;
 let tool='pen', color='#111111', penWidth=3, markerWidth=22, textSize=28;
 let shapeKind='rect', shapeFill=false;
@@ -477,7 +485,7 @@ const toScreen=(x,y)=>({x:x*scale+ox, y:y*scale+oy});
 /* ============ Zeichnen ============ */
 function drawBackground(){ const pat=doc.settings.pattern; if(!pat||pat==='none')return;
   const x0=(0-ox)/scale,y0=(0-oy)/scale,x1=(W-ox)/scale,y1=(H-oy)/scale,g=40; ctx.lineWidth=1/scale;
-  const dark=BGDARK[doc.settings.bgColor]; const lc=dark?'rgba(255,255,255,.20)':'#c9d6e8', dc=dark?'rgba(255,255,255,.28)':'#b9c6da';
+  const dark=isBgDark(); const lc=dark?'rgba(255,255,255,.20)':'#c9d6e8', dc=dark?'rgba(255,255,255,.28)':'#b9c6da';
   if(pat==='grid'||pat==='lines'){ ctx.strokeStyle=lc; ctx.beginPath();
     if(pat==='grid') for(let x=Math.floor(x0/g)*g;x<x1;x+=g){ctx.moveTo(x,y0);ctx.lineTo(x,y1);}
     for(let y=Math.floor(y0/g)*g;y<y1;y+=g){ctx.moveTo(x0,y);ctx.lineTo(x1,y);} ctx.stroke();
@@ -1048,7 +1056,7 @@ function refreshProps(){ const has=selection.length>0 && tool==='select';
     const co=(selection.length===1&&selection[0].type==='coord')?selection[0]:null; $('coordRow').style.display=co?'flex':'none';
     if(co){ $('cxMinV').textContent=co.xMin??-5; $('cxMaxV').textContent=co.xMax??5; $('cyMinV').textContent=co.yMin??-5; $('cyMaxV').textContent=co.yMax??5; $('coordGrid').classList.toggle('on',!!co.grid); $('coordLabels').classList.toggle('on',co.labels!==false); $('coordFsV').textContent=co.labelSize||14; }
     const to=(selection.length===1&&selection[0].type==='embed'&&selection[0].etype==='tabelle')?selection[0]:null; $('tableRow').style.display=to?'flex':'none';
-    if(to){ const d=to.data||{}; $('tblRowsV').textContent=d.rows||3; $('tblColsV').textContent=d.cols||3; }
+    if(to){ const d=to.data||{}; $('tblRowsV').textContent=d.rows||3; $('tblColsV').textContent=d.cols||3; $('tblLineV').textContent=d.lineWidth||1; }
     const fo=(selection.length===1&&selection[0].type==='embed'&&FONT_DEF[selection[0].etype]!==undefined)?selection[0]:null; $('fontRow').style.display=fo?'flex':'none';
     if(fo){ $('embFsV').textContent=(fo.data&&fo.data.fontSize)||FONT_DEF[fo.etype]; }
     const po=(selection.length===1&&selection[0].type==='embed'&&['verteilung','mess','ggbapp'].includes(selection[0].etype))?selection[0]:null; $('pageRow').style.display=po?'flex':'none';
@@ -1089,6 +1097,9 @@ function tblStep(which,delta){ const o=selection[0]; if(!o||o.type!=='embed'||o.
   $('tblRowsV').textContent=o.data.rows||3; $('tblColsV').textContent=o.data.cols||3; postToEmbed(o,o.data); markDirty(); scheduleAutosave(); }
 $('tblRowsM').onclick=()=>tblStep('rows',-1); $('tblRowsP').onclick=()=>tblStep('rows',1);
 $('tblColsM').onclick=()=>tblStep('cols',-1); $('tblColsP').onclick=()=>tblStep('cols',1);
+function tblLineStep(delta){ const o=selection[0]; if(!o||o.type!=='embed'||o.etype!=='tabelle')return; o.data=o.data||{cells:{}};
+  o.data.lineWidth=Math.max(1,Math.min(8,(o.data.lineWidth||1)+delta)); $('tblLineV').textContent=o.data.lineWidth; postToEmbed(o,o.data); markDirty(); scheduleAutosave(); }
+$('tblLineM').onclick=()=>tblLineStep(-1); $('tblLineP').onclick=()=>tblLineStep(1);
 function coordStep(key,elId,delta){ const co=selection[0]; if(!co||co.type!=='coord')return;
   const def=(key==='xMin'||key==='yMin')?-5:5; let v=(co[key]??def)+delta; v=Math.max(-100,Math.min(100,v));
   if(key==='xMin'&&v>=(co.xMax??5)) v=(co.xMax??5)-1; if(key==='xMax'&&v<=(co.xMin??-5)) v=(co.xMin??-5)+1;
@@ -1202,10 +1213,14 @@ $('s-settings').onclick=()=>toggleWin('win-settings');
 
 /* ============ Einstellungen ============ */
 function applyBg(){ $('bgLayer').style.background=bgHex(); markDirty(); }
-function autoPenColor(k){ const c=BGDARK[k]?'#ffffff':'#111111'; color=c; $('colorDot').style.background=c; $('swatches').querySelectorAll('.sw').forEach(s=>s.classList.toggle('active',(s.dataset.c||'').toLowerCase()===c)); if(editing)TE.style.color=c; }
-const bgColEl=$('bgColors'); [['white','Weiß'],['green','Tafelgrün'],['black','Schwarz'],['darkgray','Dunkelgrau'],['lightblue','Hellblau'],['lightyellow','Helles Gelb'],['lightgreen','Helles Grün'],['lightred','Helles Rot'],['lightorange','Helles Orange'],['lightpurple','Helles Lila']].forEach(([k,t])=>{
+function autoPenColor(){ const c=isBgDark()?'#ffffff':'#111111'; color=c; $('colorDot').style.background=c; $('swatches').querySelectorAll('.sw').forEach(s=>s.classList.toggle('active',(s.dataset.c||'').toLowerCase()===c)); if(editing)TE.style.color=c; }
+const bgColEl=$('bgColors'); [['white','Weiß'],['green','Tafelgrün'],['black','Schwarz'],['darkgray','Dunkelgrau'],['darkblue','Dunkelblau'],['winered','Dunkles Weinrot'],['lightblue','Hellblau'],['lightyellow','Helles Gelb'],['lightgreen','Helles Grün'],['lightred','Helles Rot'],['lightorange','Helles Orange'],['lightpurple','Helles Lila']].forEach(([k,t])=>{
   const d=document.createElement('div'); d.className='sw'; d.dataset.bg=k; d.title=t; d.style.background=BG[k];
-  d.onclick=()=>{ doc.settings.bgColor=k; bgColEl.querySelectorAll('.sw').forEach(s=>s.classList.remove('active')); d.classList.add('active'); applyBg(); autoPenColor(k); scheduleAutosave(); }; bgColEl.appendChild(d); });
+  d.onclick=()=>{ doc.settings.bgColor=k; bgColEl.querySelectorAll('.sw').forEach(s=>s.classList.remove('active')); d.classList.add('active'); applyBg(); autoPenColor(); scheduleAutosave(); }; bgColEl.appendChild(d); });
+// Regenbogen: beliebige Hintergrundfarbe per Farbwähler
+const bgRb=document.createElement('input'); bgRb.type='color'; bgRb.className='sw rainbow'; bgRb.title='Beliebige Hintergrundfarbe'; bgRb.value='#3b82f6';
+bgRb.oninput=()=>{ doc.settings.bgColor=bgRb.value; bgColEl.querySelectorAll('.sw').forEach(s=>s.classList.remove('active')); bgRb.classList.add('active'); applyBg(); autoPenColor(); scheduleAutosave(); };
+bgColEl.appendChild(bgRb);
 $('patSeg').querySelectorAll('button').forEach(b=>b.onclick=()=>{$('patSeg').querySelectorAll('button').forEach(x=>x.classList.remove('active'));b.classList.add('active');doc.settings.pattern=b.dataset.pat;markDirty();scheduleAutosave();});
 $('penOnly').onclick=function(){this.classList.toggle('on');doc.settings.penOnly=this.classList.contains('on');scheduleAutosave();};
 $('usePressure').onclick=function(){this.classList.toggle('on');doc.settings.usePressure=this.classList.contains('on');scheduleAutosave();};
@@ -1297,13 +1312,13 @@ renderScore();
 /* ---- Gruppenmanager ---- */
 let lastGroups=[];
 $('w-groups').onclick=()=>toggleWin('win-groups');
-$('grpMake').onclick=()=>{ const st=(doc.students||[]).slice(); if(!st.length){ $('grpResult').innerHTML='Keine Klassenliste – bitte in den Einstellungen eine CSV importieren.'; lastGroups=[]; return; }
+$('grpMake').onclick=()=>{ const st=(doc.students||[]).slice(); if(!st.length){ $('grpResult').innerHTML='Keine Klassenliste – bitte in den Einstellungen Namen eingeben.'; lastGroups=[]; return; }
   for(let i=st.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [st[i],st[j]]=[st[j],st[i]]; }   // mischen
   const g=Math.max(2,+$('grpSize').value||3), num=Math.max(1,Math.round(st.length/g));
   const groups=Array.from({length:num},()=>[]); st.forEach((s,i)=>groups[i%num].push(s));   // Round-Robin → ausgewogen
   lastGroups=groups; renderGroups(); };
 function renderGroups(){ $('grpResult').innerHTML=lastGroups.map((g,i)=>'<b>Gruppe '+(i+1)+':</b> '+g.join(', ')).join('<br>'); }
-$('grpToBoard').onclick=()=>{ if(!lastGroups.length){toast('Erst Gruppen bilden');return;} const txt='Gruppen ('+curProjName()+')\n'+lastGroups.map((g,i)=>'Gruppe '+(i+1)+': '+g.join(', ')).join('\n'); const c=toWorld(W/2,H/2); setMode('write'); commit({type:'text',id:uid(),x:c.x-220,y:c.y-100,text:txt,color:(BGDARK[doc.settings.bgColor]?'#ffffff':'#111111'),size:26,rot:0,groupId:null}); markDirty(); toast('Gruppen auf die Tafel gelegt'); $('win-groups').classList.remove('show'); };
+$('grpToBoard').onclick=()=>{ if(!lastGroups.length){toast('Erst Gruppen bilden');return;} const txt='Gruppen ('+curProjName()+')\n'+lastGroups.map((g,i)=>'Gruppe '+(i+1)+': '+g.join(', ')).join('\n'); const c=toWorld(W/2,H/2); setMode('write'); commit({type:'text',id:uid(),x:c.x-220,y:c.y-100,text:txt,color:(isBgDark()?'#ffffff':'#111111'),size:26,rot:0,groupId:null}); markDirty(); toast('Gruppen auf die Tafel gelegt'); $('win-groups').classList.remove('show'); };
 
 /* ---- Uhr als Objekt ---- */
 function addClockObject(){ const sz=Math.min(W,H)*0.3/scale, c=toWorld(W/2,H/2); const o={type:'clock',id:uid(),x:c.x-sz/2,y:c.y-sz/2,w:sz,h:sz,rot:0,groupId:null}; page().objects.push(o); page().redo.length=0; setMode('write'); setTool('select'); selection=[o]; refreshProps(); markDirty(); scheduleAutosave(); toast('Uhr eingefügt'); }
@@ -1375,7 +1390,9 @@ const DEFSET=()=>({bgColor:'white',pattern:'none',penOnly:true,usePressure:true}
 const curProjName=()=>{ const p=projects.find(x=>x.id===activeId); return p?p.name:'Projekt'; };
 function saveIndex(){ try{ localStorage.setItem('tafel_index',JSON.stringify({activeId,list:projects})); }catch(e){} }
 function saveCurrentProject(){ if(activeId){ try{ localStorage.setItem(projKey(activeId),serialize()); }catch(e){} } }
-function renderStudentsInfo(){ const n=(doc.students||[]).length; $('classInfo').textContent=n?(n+' Namen in „'+curProjName()+'"'):('Keine Namen in „'+curProjName()+'". CSV: eine Zeile pro Person, Name in der 1. Spalte.'); }
+function renderStudentsInfo(){ const n=(doc.students||[]).length; $('classInfo').textContent=n?(n+' Namen in „'+curProjName()+'"'):('Keine Namen in „'+curProjName()+'". Direkt eintippen oder CSV importieren.');
+  if(document.activeElement!==$('classText')) $('classText').value=(doc.students||[]).join('\n'); }
+$('classText').addEventListener('input',()=>{ doc.students=$('classText').value.split('\n').map(s=>s.trim()).filter(Boolean); nameUsed=new Set(); const n=doc.students.length; $('classInfo').textContent=n?(n+' Namen in „'+curProjName()+'"'):('Keine Namen in „'+curProjName()+'".'); scheduleAutosave(); });
 function renderProjects(){ [ 'projectSelect','barProject' ].forEach(id=>{ const sel=$(id); if(!sel)return; sel.innerHTML=''; projects.forEach(p=>{const o=document.createElement('option');o.value=p.id;o.textContent=p.name;sel.appendChild(o);}); sel.value=activeId; }); renderStudentsInfo(); }
 function blankDoc(name){ doc.pages=[newPage()]; doc.cur=0; doc.settings=DEFSET(); doc.students=[]; doc.name=name; nameUsed=new Set(); applySettingsUI(); }
 function loadProject(id){ const s=localStorage.getItem(projKey(id)); activeId=id; if(s){ deserialize(s); } else { blankDoc((projects.find(p=>p.id===id)||{}).name||'Projekt'); } nameUsed=new Set(); }
@@ -1399,7 +1416,7 @@ fileCsv.onchange=async e=>{ const f=e.target.files[0]; if(!f)return; const text=
   if(names[0]&&/name|vorname|schüler/i.test(names[0])) names.shift();
   if(!names.length){ toast('Keine Namen gefunden'); return; }
   doc.students=names; nameUsed=new Set(); renderStudentsInfo(); scheduleAutosave(); toast(names.length+' Namen in „'+curProjName()+'" importiert'); e.target.value=''; };
-$('w-name').onclick=()=>{ if(!(doc.students&&doc.students.length)){ toast('Erst Klassenliste importieren (Einstellungen)'); return; } pickName(); $('namePick').classList.add('show'); };
+$('w-name').onclick=()=>{ if(!(doc.students&&doc.students.length)){ toast('Erst Klassenliste in den Einstellungen eingeben'); return; } pickName(); $('namePick').classList.add('show'); };
 function pickName(){ const st=doc.students||[]; if(!st.length){$('nameBig').textContent='–';return;}
   let pool=st.filter(n=>!nameUsed.has(n)); if(!pool.length){ nameUsed=new Set(); pool=st.slice(); }
   const n=pool[Math.floor(Math.random()*pool.length)]; nameUsed.add(n); $('nameBig').textContent=n; $('nameInfo').textContent=nameUsed.size+' / '+st.length+' gezogen'; }
@@ -1480,7 +1497,7 @@ function deserialize(str){ const o=JSON.parse(str); const os=o.settings||{}; doc
   doc.pages.forEach(p=>{ if(p.embed){ const em=p.embed; const ob={type:'embed',id:uid(),etype:em.type,src:em.src,label:em.label||em.type,x:80,y:80,w:900,h:560,rot:0,groupId:null}; if(em.data)ob.data=em.data; p.objects.push(ob); p.embed=null; } });
   if(!doc.pages.length)doc.pages=[newPage()]; doc.cur=Math.min(o.cur||0,doc.pages.length-1);
   applySettingsUI(); ensureImgs(); refreshPage(); selection=[];refreshProps(); markDirty(); }
-function applySettingsUI(){ $('bgColors').querySelectorAll('.sw').forEach(x=>x.classList.toggle('active',x.dataset.bg===doc.settings.bgColor)); $('patSeg').querySelectorAll('button').forEach(x=>x.classList.toggle('active',x.dataset.pat===doc.settings.pattern)); $('penOnly').classList.toggle('on',doc.settings.penOnly); $('usePressure').classList.toggle('on',doc.settings.usePressure); applyBg(); }
+function applySettingsUI(){ const custom=isHex(doc.settings.bgColor); $('bgColors').querySelectorAll('.sw').forEach(x=>x.classList.toggle('active', x.classList.contains('rainbow')?custom:(x.dataset.bg===doc.settings.bgColor))); $('patSeg').querySelectorAll('button').forEach(x=>x.classList.toggle('active',x.dataset.pat===doc.settings.pattern)); $('penOnly').classList.toggle('on',doc.settings.penOnly); $('usePressure').classList.toggle('on',doc.settings.usePressure); applyBg(); }
 $('s-save').onclick=()=>{ saveCurrentProject(); const blob=new Blob([serialize()],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=(doc.name||'tafel').replace(/[^\w\-]+/g,'_')+'.tafel';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000);toast('Projekt „'+(doc.name||'')+'" gespeichert');};
 const fileLoad=$('fileLoad'); $('s-load').onclick=()=>fileLoad.click();
 fileLoad.onchange=async e=>{ const f=e.target.files[0]; if(!f)return; try{ const txt=await f.text(); saveCurrentProject(); const id=uid(); const nm=(f.name.replace(/\.[^.]+$/,'')||'Projekt'); projects.push({id,name:nm}); activeId=id; deserialize(txt); doc.name=nm; goPage(0); saveCurrentProject(); saveIndex(); renderProjects(); toast('Projekt „'+nm+'" geladen'); }catch(err){ toast('Konnte Datei nicht lesen'); } e.target.value=''; };
