@@ -73,7 +73,8 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
 - **Hintergrundfarben** (Einstellungen): Weiß, **Tafelgrün**, Schwarz, Dunkelgrau, **Dunkelblau**,
   **dunkles Weinrot**, Hellblau sowie **helles Gelb / Grün / Rot / Orange / Lila** und ein
   **Regenbogen-Button** für eine **beliebige Farbe** (Farbwähler) – getrennt einstellbar vom **Muster**
-  (Kein / Karo / Linien / Punkte). Bei dunklem Hintergrund schreibt der Stift automatisch weiß.
+  (Kein / Karo / Linien / Punkte / **Notenlinien** / **Dreiecke** – gleichseitiges 60°-Raster).
+  Bei dunklem Hintergrund schreibt der Stift automatisch weiß.
 - **Text:** Textfelder anlegen; **Doppeltipp** auf einen Text zum Nachbearbeiten. Bei ausgewähltem
   Text bietet das **Kontextmenü** zusätzlich **Fett, Kursiv, Aufzählung (Liste)** und eine
   **Schriftgrößen-Einstellung** (＋/−).
@@ -105,6 +106,11 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   (Eckgriffe = Größe, Kreis oben = drehen). Am Objekt erscheint ein **kleiner Button (☰)** –
   ein Tipp klappt das **Kontext-Panel** auf/zu (Farbe, Dicke/Größe, Füllung, Kopieren usw.),
   damit es nicht ständig im Weg ist.
+- **Finger-Bedienung im Auswahl-Modus** (Einstellungen, standardmäßig **aus**): ist der Schalter
+  **„Finger wählt aus (Auswahl-Modus)"** aktiv, kann man bei gewähltem **Auswahl-Cursor** auch
+  **mit dem Finger** Objekte antippen und verschieben; eine **Zwei-Finger-Geste auf einem
+  ausgewählten Objekt** skaliert (aufziehen/zusammenziehen) und **dreht** es. Ist der Schalter aus,
+  bleibt alles wie gewohnt (Finger schiebt/zoomt nur das Blatt, Auswählen nur mit dem Stift).
 - **Gruppieren / Duplizieren / Löschen** im Kontext-Panel
 - **Laserpointer** und **Scheinwerferspot**
 - **Zoom/Verschieben:** zwei Finger zoomen, ein Finger schiebt (Pencil schreibt weiter). Die Seite
@@ -150,7 +156,7 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   mit ausgeblendet)
 - **Speichern/Laden** als `.tafel`-Datei + automatische Sicherung im Browser
 - **Widgets:** Lärmampel (Mikrofon), Stoppuhr, Timer, Sozialform (Still-/Partner-/Gruppenarbeit), Umfrage
-- **Hintergrund:** Weiß / Karo / Linien / Punkte (Einstellungen)
+- **Hintergrund:** Weiß / Karo / Linien / Punkte / Notenlinien / Dreiecke (Einstellungen)
 
 ## Leisten (Bedienung)
 
