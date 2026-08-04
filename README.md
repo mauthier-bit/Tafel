@@ -123,6 +123,12 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   **„Einbettungen bedienen"** tippen (schaltet zwischen Zeichnen und Bedienen um).
   In die Link-Felder kann man per **📋-Knopf aus der Zwischenablage** einfügen. Mit der Option
   **„Als eigene Seite einfügen"** kommt das Eingebettete stattdessen groß auf eine neue Seite.
+  Beim Webseiten-Feld darf auch ein **kompletter `<iframe src="…">`-Einbettungscode** eingefügt
+  werden – die URL wird automatisch herausgezogen. **Hinweis:** Manche Websites (z. B. leifiphysik.de)
+  verbieten das Einbetten technisch (`X-Frame-Options` / CSP) – das lässt sich nicht umgehen. Statt
+  eines leeren weißen Kastens zeigt das Objekt dann eine **Info-Karte mit der Domain**; über
+  **„Einbettungen bedienen" → „↗ Öffnen"** (oben links am Objekt) lässt sich die Seite im Browser öffnen.
+  Direkte Inhalts-URLs (z. B. **PhET-Simulationen**) funktionieren dagegen problemlos.
   (PDF wird weiter als ganze Seite(n) eingefügt.)
 - **PowerPoint (.pptx) einfügen:** über **„PDF / Bild / PowerPoint"** – jede Folie wird als Bild
   dargestellt (einfache Darstellung: **Text & Bilder**, keine Animationen/Themes/SmartArt) und

@@ -20,6 +20,13 @@
   #bgLayer{position:fixed;inset:0;z-index:0;background:#fff;pointer-events:none;}
   #embedLayer{position:fixed;inset:0;z-index:1;pointer-events:none;overflow:hidden;}
   #embedLayer iframe{position:absolute;left:0;top:0;border:0;transform-origin:0 0;background:#fff;box-shadow:0 1px 6px rgba(0,0,0,.15);}
+  #embedBarLayer{position:fixed;inset:0;z-index:14;pointer-events:none;overflow:hidden;display:none;}
+  .embedCard{position:absolute;left:0;top:0;transform-origin:0 0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:#f4f6fa;color:#5b6472;text-align:center;padding:14px;overflow:hidden;}
+  .embedCard .ec-ico{font-size:42px;line-height:1;}
+  .embedCard .ec-host{font-size:18px;font-weight:700;color:#2b3444;word-break:break-all;}
+  .embedCard .ec-sub{font-size:13px;}
+  .embedCard .ec-hint{font-size:12px;color:#8a93a2;max-width:90%;}
+  .embedPill{position:absolute;left:0;top:0;transform-origin:0 0;pointer-events:auto;background:rgba(31,36,48,.85);color:#fff;border:none;border-radius:0 0 10px 0;font-size:13px;padding:6px 11px;cursor:pointer;box-shadow:0 1px 5px rgba(0,0,0,.3);white-space:nowrap;font-family:inherit;}
 
   .tbtn{width:44px;height:44px;flex:none;border:none;border-radius:12px;background:var(--bar2);color:var(--text);
     font-size:19px;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;}
@@ -197,6 +204,7 @@
 <div id="bgLayer"></div>
 <div id="embedLayer"></div>
 <canvas id="board"></canvas>
+<div id="embedBarLayer"></div>
 <div id="spot"></div>
 <div id="measure"></div>
 <textarea id="textEditor" spellcheck="false"></textarea>
@@ -1202,17 +1210,33 @@ const pageHasEmbeds=()=>page().objects.some(o=>o.type==='embed');
 function refreshEmbedUI(){ const has=pageHasEmbeds(); $('annoToggle').classList.toggle('show',has); if(!has)embedInteract=false; applyEmbedMode(); }
 function applyEmbedMode(){ cv.style.pointerEvents=embedInteract?'none':'auto'; $('annoToggle').classList.toggle('on',embedInteract);
   $('annoToggle').textContent=embedInteract?'✋ Bedienen aktiv (tippen = zurück)':'👆 Einbettungen bedienen';
+  $('embedBarLayer').style.display=embedInteract?'block':'none';
   for(const[,fr] of embedEls) fr.style.pointerEvents=embedInteract?'auto':'none'; }
 $('annoToggle').onclick=()=>{ embedInteract=!embedInteract; applyEmbedMode(); };
+const embedCards=new Map(), embedPills=new Map();
+function hostOf(u){ try{ return new URL(u).hostname.replace(/^www\./,'')||u; }catch(e){ return (u||'').replace(/^https?:\/\//,'').split('/')[0]||u; } }
+function buildWebExtras(o,fr){
+  const card=document.createElement('div'); card.className='embedCard';
+  card.innerHTML='<div class="ec-ico">🌐</div><div class="ec-host"></div><div class="ec-sub">Website</div><div class="ec-hint">Falls die Seite weiß bleibt, erlaubt sie kein Einbetten – oben „Einbettungen bedienen" antippen und dann „↗ Öffnen".</div>';
+  card.querySelector('.ec-host').textContent=hostOf(o.src);
+  embedLayer.insertBefore(card, fr); embedCards.set(o.id,card);
+  const pill=document.createElement('button'); pill.className='embedPill'; pill.textContent='↗ Öffnen'; pill.title='Website im Browser öffnen';
+  pill.onclick=e=>{ e.stopPropagation(); window.open(o.src,'_blank','noopener'); };
+  embedBarLayer.appendChild(pill); embedPills.set(o.id,pill);
+}
 function syncEmbeds(){ const p=page(), wanted=new Set();
   for(const o of p.objects){ if(o.type!=='embed')continue; wanted.add(o.id);
     let fr=embedEls.get(o.id);
-    if(!fr){ fr=document.createElement('iframe'); fr.setAttribute('allow','autoplay; fullscreen; clipboard-write'); fr.allowFullscreen=true; fr.dataset.oid=o.id; fr.src=o.src; fr.style.background='#fff'; fr.style.pointerEvents=embedInteract?'auto':'none'; embedLayer.appendChild(fr); embedEls.set(o.id,fr); }
+    if(!fr){ fr=document.createElement('iframe'); fr.setAttribute('allow','autoplay; fullscreen; clipboard-write'); fr.allowFullscreen=true; fr.dataset.oid=o.id; fr.src=o.src; fr.style.background=(o.etype==='html')?'transparent':'#fff'; fr.style.pointerEvents=embedInteract?'auto':'none'; embedLayer.appendChild(fr); embedEls.set(o.id,fr);
+      if(o.etype==='html') buildWebExtras(o,fr); }
     const cx=o.x+o.w/2, cy=o.y+o.h/2, s=toScreen(cx,cy);
-    fr.style.width=o.w+'px'; fr.style.height=o.h+'px';
-    fr.style.transform='translate('+s.x+'px,'+s.y+'px) rotate('+(o.rot||0)+'rad) scale('+scale+') translate('+(-o.w/2)+'px,'+(-o.h/2)+'px)';
+    const tf='translate('+s.x+'px,'+s.y+'px) rotate('+(o.rot||0)+'rad) scale('+scale+') translate('+(-o.w/2)+'px,'+(-o.h/2)+'px)';
+    fr.style.width=o.w+'px'; fr.style.height=o.h+'px'; fr.style.transform=tf;
+    const card=embedCards.get(o.id); if(card){ card.style.width=o.w+'px'; card.style.height=o.h+'px'; card.style.transform=tf; }
+    const pill=embedPills.get(o.id); if(pill){ const c=toScreen(o.x,o.y); pill.style.transform='translate('+c.x+'px,'+c.y+'px)'; }
   }
-  for(const[id,fr] of embedEls){ if(!wanted.has(id)){ fr.remove(); embedEls.delete(id); } }
+  for(const[id,fr] of embedEls){ if(!wanted.has(id)){ fr.remove(); embedEls.delete(id);
+    const c=embedCards.get(id); if(c){c.remove();embedCards.delete(id);} const pl=embedPills.get(id); if(pl){pl.remove();embedPills.delete(id);} } }
 }
 /* Sync mit eingebetteten Apps (Tabelle/Plotter/Vierfeldertafel/Baum) – Objekt über iframe-Quelle finden */
 addEventListener('message',e=>{ if(!e.data)return; let obj=null; for(const[id,fr] of embedEls){ if(fr.contentWindow===e.source){ obj=page().objects.find(o=>o.id===id); break; } }
@@ -1493,7 +1517,14 @@ document.querySelectorAll('.pastebtn[data-paste]').forEach(b=>b.onclick=async()=
 const fileToDataURL=f=>new Promise(r=>{const fr=new FileReader();fr.onload=()=>r(fr.result);fr.readAsDataURL(f);});
 function addBgPage(url,replaceEmpty=true){ let t; if(replaceEmpty&&!page().objects.length&&!page().bg&&!page().embed)t=page(); else{const np=newPage();doc.pages.splice(doc.cur+1,0,np);doc.cur++;t=np;} t.bg=url;t._img=null;ensurePageImg(t);refreshPage();markDirty(); }
 $('ins-video-go').onclick=()=>{const v=$('ins-video').value.trim();if(!v)return;addEmbedObject('video',ytEmbed(v),'Video');$('win-insert').classList.remove('show');toast('Video eingefügt');};
-$('ins-html-go').onclick=()=>{let v=$('ins-html').value.trim();if(!v)return;if(!/^https?:/.test(v))v='https://'+v;addEmbedObject('html',v,'Webseite');$('win-insert').classList.remove('show');toast('Webseite eingefügt');};
+function extractUrl(v){ v=(v||'').trim(); if(!v)return '';
+  const m=v.match(/src\s*=\s*["']([^"']+)["']/i);            // ganzer <iframe src="…"> -Schnipsel
+  if(m) v=m[1].trim();
+  else { const m2=v.match(/https?:\/\/[^\s"'<>]+/i); if(m2) v=m2[0]; }   // sonst erste http(s)-URL im Text
+  v=v.replace(/^["'<>]+|["'<>]+$/g,'').trim();
+  if(v && !/^https?:/i.test(v)) v='https://'+v;
+  return v; }
+$('ins-html-go').onclick=()=>{const v=extractUrl($('ins-html').value);if(!v){toast('Bitte eine gültige Webadresse eingeben');return;}addEmbedObject('html',v,'Webseite');$('win-insert').classList.remove('show');toast('Webseite eingefügt');};
 $('ins-ggb-go').onclick=()=>{const v=$('ins-ggb').value.trim();if(!v)return;addEmbedObject('geogebra',ggbEmbed(v),'GeoGebra');$('win-insert').classList.remove('show');toast('GeoGebra eingefügt');};
 $('ins-sheet').onclick=()=>{ addEmbedObject('sheet','sheet.html','Tabelle',{}); $('win-insert').classList.remove('show'); toast('Tabellenkalkulation eingefügt'); };
 async function importPDF(f){ showBusy(true,'PDF wird eingelesen…'); try{ const buf=await f.arrayBuffer(); const pdf=await pdfjsLib.getDocument({data:buf}).promise;
