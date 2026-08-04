@@ -160,7 +160,8 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
 - **QR-Code-Generator**
 - **Klassenlisten:** pro Projekt – **Namen direkt eintippen** (ein Name pro Zeile im Einstellungen-
   Fenster) oder **CSV importieren** (Name in der 1. Spalte); Button „Zufälliger Name" zieht per Zufall
-  eine Person (ohne Wiederholung)
+  eine Person (ohne Wiederholung) – **animiert wie ein Spielautomat**: die Namen laufen im Slot-Fenster
+  durch, werden langsamer und bleiben auf dem gezogenen Namen stehen.
 - **PDF-Export** der ganzen Tafel
 - **Vollbild-Button** (oben links in der Einstellungs-Leiste; wird beim **Minimieren** der Leiste
   mit ausgeblendet)

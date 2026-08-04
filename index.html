@@ -167,8 +167,17 @@
 
   #namePick{position:fixed;inset:0;z-index:36;display:none;align-items:center;justify-content:center;background:rgba(17,20,26,.92);flex-direction:column;gap:24px;color:#fff;}
   #namePick.show{display:flex;}
-  #nameBig{font-size:10vmin;font-weight:800;text-align:center;padding:0 20px;}
+  #nameWin{position:relative;overflow:hidden;width:min(84vw,760px);height:24vmin;min-height:120px;display:flex;align-items:center;justify-content:center;border-radius:20px;background:rgba(255,255,255,.06);box-shadow:inset 0 0 0 2px rgba(255,255,255,.16);}
+  #nameWin::before,#nameWin::after{content:"";position:absolute;left:0;right:0;height:36%;pointer-events:none;z-index:2;}
+  #nameWin::before{top:0;background:linear-gradient(rgba(20,23,30,.96),rgba(20,23,30,0));}
+  #nameWin::after{bottom:0;background:linear-gradient(rgba(20,23,30,0),rgba(20,23,30,.96));}
+  #nameBig{font-size:9vmin;font-weight:800;text-align:center;padding:0 24px;line-height:1.05;max-width:100%;word-break:break-word;}
+  @keyframes namedrop{ from{transform:translateY(-95%);opacity:0;} 55%{opacity:1;} to{transform:translateY(0);opacity:1;} }
+  #nameBig.nm-flip{ animation:namedrop .13s linear; }
+  @keyframes namepop{ 0%{transform:scale(.6);opacity:.3;} 60%{transform:scale(1.14);} 100%{transform:scale(1);opacity:1;} }
+  #nameBig.nm-pop{ animation:namepop .5s cubic-bezier(.2,1.3,.4,1); color:#ffd34d; }
   #namePick .row{margin-top:10px;}
+  #namePick .btn[disabled]{opacity:.5;pointer-events:none;}
 
   .poll-opt{display:flex;align-items:center;gap:8px;margin:8px 0;}
   .poll-opt .name{width:70px;font-size:14px;}
@@ -370,7 +379,7 @@
 <!-- Sozialform -->
 <div id="social"><div id="social-icon"></div><div class="label" id="social-label"></div><div class="hint2">Tippen zum Schließen</div></div>
 <!-- Namensziehung -->
-<div id="namePick"><div id="nameBig">–</div><div class="row"><button class="btn pri" id="nameAgain">Nochmal</button><button class="btn" id="nameReset">Zurücksetzen</button><button class="btn" id="nameClose">Schließen</button></div><div class="hint" id="nameInfo" style="color:#bbb"></div></div>
+<div id="namePick"><div id="nameWin"><div id="nameBig">–</div></div><div class="row"><button class="btn pri" id="nameAgain">Nochmal</button><button class="btn" id="nameReset">Zurücksetzen</button><button class="btn" id="nameClose">Schließen</button></div><div class="hint" id="nameInfo" style="color:#bbb"></div></div>
 <div id="pagePreview"><div class="pp-inner"><div class="pp-head"><span>Seiten</span><span class="x" id="ppClose">×</span></div><div class="pp-grid" id="ppGrid"></div></div></div>
 
 <!-- Fenster -->
@@ -1489,9 +1498,24 @@ fileCsv.onchange=async e=>{ const f=e.target.files[0]; if(!f)return; const text=
   if(!names.length){ toast('Keine Namen gefunden'); return; }
   doc.students=names; nameUsed=new Set(); renderStudentsInfo(); scheduleAutosave(); toast(names.length+' Namen in „'+curProjName()+'" importiert'); e.target.value=''; };
 $('w-name').onclick=()=>{ if(!(doc.students&&doc.students.length)){ toast('Erst Klassenliste in den Einstellungen eingeben'); return; } pickName(); $('namePick').classList.add('show'); };
+let spinning=false;
 function pickName(){ const st=doc.students||[]; if(!st.length){$('nameBig').textContent='–';return;}
+  if(spinning)return;
   let pool=st.filter(n=>!nameUsed.has(n)); if(!pool.length){ nameUsed=new Set(); pool=st.slice(); }
-  const n=pool[Math.floor(Math.random()*pool.length)]; nameUsed.add(n); $('nameBig').textContent=n; $('nameInfo').textContent=nameUsed.size+' / '+st.length+' gezogen'; }
+  const winner=pool[Math.floor(Math.random()*pool.length)];
+  spinName(winner, st, ()=>{ nameUsed.add(winner); $('nameInfo').textContent=nameUsed.size+' / '+st.length+' gezogen'; }); }
+function spinName(winner, all, done){ spinning=true; const big=$('nameBig'); big.classList.remove('nm-pop','nm-flip');
+  $('nameAgain').disabled=true; $('nameInfo').textContent='…';
+  const reel = all.length>1 ? all : [winner];
+  let interval=45; const maxInterval=340, growth=1.14;
+  (function tick(){
+    big.textContent = reel[Math.floor(Math.random()*reel.length)];
+    big.classList.remove('nm-flip'); void big.offsetWidth; big.classList.add('nm-flip');   // Namen „fällt" von oben ins Fenster
+    interval*=growth;
+    if(interval<maxInterval){ setTimeout(tick, interval); }
+    else { big.textContent=winner; big.classList.remove('nm-flip'); void big.offsetWidth; big.classList.add('nm-pop');
+      spinning=false; $('nameAgain').disabled=false; if(done)done(); }
+  })(); }
 $('nameAgain').onclick=pickName; $('nameReset').onclick=()=>{nameUsed=new Set();$('nameInfo').textContent='zurückgesetzt';}; $('nameClose').onclick=()=>$('namePick').classList.remove('show');
 
 /* ============ QR ============ */
