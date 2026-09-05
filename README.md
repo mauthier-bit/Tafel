@@ -119,7 +119,7 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
 - **Seiten:** hinzufügen, löschen, blättern
 - **Einbetten als bewegliches Objekt:** Bilder, **YouTube/Video**, **Webseiten/HTML**, **GeoGebra**
   und die **Tabellenkalkulation** – verschieben/skalieren/drehen wie jedes andere Objekt. Zum
-  Bedienen (Video abspielen, Zellen auswählen, GeoGebra ziehen …) **oben in der Mitte** auf
+  Bedienen (Video abspielen, Zellen auswählen, GeoGebra ziehen …) **unten in der Mitte** auf
   **„Einbettungen bedienen"** tippen (schaltet zwischen Zeichnen und Bedienen um).
   In die Link-Felder kann man per **📋-Knopf aus der Zwischenablage** einfügen. Mit der Option
   **„Als eigene Seite einfügen"** kommt das Eingebettete stattdessen groß auf eine neue Seite.
@@ -156,7 +156,11 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
 - **Messwert-Analyse** (Werkzeug): bindet das Messdaten-Tool ein (als Objekt oder eigene Seite;
   fragt beim Einfügen nach). Braucht Internet (nutzt Chart.js u. a. per CDN).
 - **Seitenübersicht:** auf die **Seitenzahl** (z. B. „2/5") tippen → Miniaturen aller Seiten,
-  eine antippen wechselt direkt dorthin (und Seiten löschen).
+  eine antippen wechselt direkt dorthin. Jede Miniatur hat ein **⋮-Menü** mit **Umbenennen,
+  Duplizieren, Kopieren, Ausschneiden, Einfügen, Löschen** sowie **Seitenstil** (Muster
+  Kein/Karo/Linien/Punkte/Noten/Dreiecke **und** Hintergrundfarbe) – **je Seite einzeln** einstellbar
+  (der Seitenname erscheint auch in der Kopfzeile). **Bedienung der Miniaturen:** **antippen** springt
+  zur Seite, **streichen** scrollt die Übersicht, **lange gedrückt halten** und ziehen ordnet die Seiten neu.
 - **QR-Code-Generator**
 - **Klassenlisten:** pro Projekt – **Namen direkt eintippen** (ein Name pro Zeile im Einstellungen-
   Fenster) oder **CSV importieren** (Name in der 1. Spalte); Button „Zufälliger Name" zieht per Zufall
@@ -166,7 +170,9 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
 - **Vollbild-Button** (oben links in der Einstellungs-Leiste; wird beim **Minimieren** der Leiste
   mit ausgeblendet)
 - **Speichern/Laden** als `.tafel`-Datei + automatische Sicherung im Browser
-- **Widgets:** Lärmampel (Mikrofon), Stoppuhr, Timer, Sozialform (Still-/Partner-/Gruppenarbeit), Umfrage
+- **Widgets:** Lärmampel (Mikrofon), Stoppuhr, Timer, **Sozialform** (Auswahl-Bildschirm: Stillarbeit /
+  Partnerarbeit / Gruppenarbeit antippen → große Anzeige mit gut erkennbaren Symbolen; in der Anzeige
+  lassen sich **optional ein Timer** für die Dauer **und die Lärmampel** einblenden), Umfrage
 - **Hintergrund:** Weiß / Karo / Linien / Punkte / Notenlinien / Dreiecke (Einstellungen)
 
 ## Leisten (Bedienung)
@@ -208,9 +214,9 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
    Blätter-Pfeilen. Minimiert bleiben Minimier-Pfeil und **+** (neue Seite) sichtbar.
 2b. **Seiten-Leiste (oben rechts, waagrecht):** blättern, Seite +/−, Zoom, Seitenzahl (= Übersicht).
    Lässt sich **vollständig einklappen** – dann bleibt nur der Aufklapp-Pfeil.
-3. **Einstellungs-Leiste (oben links):** Projekt-Auswahl, Vollbild, Einstellungen (Hintergrund,
-   Klassenlisten), Speichern, Laden, **PDF-Export**. Lässt sich ebenfalls **vollständig einklappen**
-   (nur der Aufklapp-Pfeil bleibt).
+3. **Einstellungs-Leiste (oben links):** Projekt-Auswahl, Vollbild, **Zurück/Vor (Rückgängig)**,
+   **Seite leeren**, Einstellungen (Hintergrund, Klassenlisten), Speichern, Laden, **PDF-Export**.
+   Lässt sich ebenfalls **vollständig einklappen** (nur der Aufklapp-Pfeil bleibt).
 
 Oben rechts liegt der **Vollbild-Knopf**.
 
