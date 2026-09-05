@@ -119,8 +119,10 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
 - **Seiten:** hinzufügen, löschen, blättern
 - **Einbetten als bewegliches Objekt:** Bilder, **YouTube/Video**, **Webseiten/HTML**, **GeoGebra**
   und die **Tabellenkalkulation** – verschieben/skalieren/drehen wie jedes andere Objekt. Zum
-  Bedienen (Video abspielen, Zellen auswählen, GeoGebra ziehen …) **unten in der Mitte** auf
-  **„Einbettungen bedienen"** tippen (schaltet zwischen Zeichnen und Bedienen um).
+  Bedienen (Video abspielen, Zellen auswählen, GeoGebra ziehen …) **oben** auf
+  **„Einbettung bedienen"** tippen (schaltet zwischen Zeichnen und Bedienen um). Der Knopf sitzt
+  **mittig oben**, wenn die oberen Leisten eingeklappt sind, und rutscht in die **Lücke zwischen
+  den Leisten**, wenn sie ausgeklappt sind – immer vollständig sichtbar.
   In die Link-Felder kann man per **📋-Knopf aus der Zwischenablage** einfügen. Mit der Option
   **„Als eigene Seite einfügen"** kommt das Eingebettete stattdessen groß auf eine neue Seite.
   Beim Webseiten-Feld darf auch ein **kompletter `<iframe src="…">`-Einbettungscode** eingefügt
@@ -159,8 +161,10 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   eine antippen wechselt direkt dorthin. Jede Miniatur hat ein **⋮-Menü** mit **Umbenennen,
   Duplizieren, Kopieren, Ausschneiden, Einfügen, Löschen** sowie **Seitenstil** (Muster
   Kein/Karo/Linien/Punkte/Noten/Dreiecke **und** Hintergrundfarbe) – **je Seite einzeln** einstellbar
-  (der Seitenname erscheint auch in der Kopfzeile). **Bedienung der Miniaturen:** **antippen** springt
-  zur Seite, **streichen** scrollt die Übersicht, **lange gedrückt halten** und ziehen ordnet die Seiten neu.
+  (der Seitenname erscheint auch in der Kopfzeile). Die Miniaturen behalten immer **dieselbe Größe**
+  (werden bei vielen Seiten nicht gequetscht) – bei Bedarf wird die Übersicht **scrollbar**.
+  **Bedienung der Miniaturen:** **antippen** springt zur Seite, **streichen** scrollt die Übersicht,
+  **lange gedrückt halten** und ziehen ordnet die Seiten neu.
 - **QR-Code-Generator**
 - **Klassenlisten:** pro Projekt – **Namen direkt eintippen** (ein Name pro Zeile im Einstellungen-
   Fenster) oder **CSV importieren** (Name in der 1. Spalte); Button „Zufälliger Name" zieht per Zufall

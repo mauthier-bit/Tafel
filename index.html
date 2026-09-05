@@ -75,7 +75,7 @@
   .pp-inner{background:var(--panel);color:var(--panelText);border-radius:16px;box-shadow:var(--shadow);max-width:90vw;max-height:86vh;display:flex;flex-direction:column;overflow:hidden;}
   .pp-head{padding:12px 16px;font-size:16px;font-weight:700;display:flex;justify-content:space-between;align-items:center;background:#f1f3f7;}
   .pp-head .x{cursor:pointer;font-size:20px;padding:0 6px;color:#666;}
-  .pp-grid{padding:14px;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;overflow-y:auto;max-height:calc(86vh - 52px);align-content:start;}
+  .pp-grid{padding:14px;display:grid;grid-template-columns:repeat(auto-fill,170px);justify-content:center;gap:12px;overflow-y:auto;max-height:calc(86vh - 52px);align-content:start;}
   .pp-thumb{border:2px solid #d5dbe6;border-radius:10px;overflow:hidden;cursor:pointer;background:#fff;position:relative;touch-action:none;}
   .pp-thumb.cur{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent);}
   .pp-thumb.pm-drag{opacity:.55;outline:2px dashed var(--accent);outline-offset:-2px;}
@@ -239,7 +239,7 @@
   #spot{position:fixed;inset:0;z-index:15;display:none;pointer-events:none;}
   #textEditor{position:fixed;z-index:45;display:none;background:transparent;border:1px dashed #3b82f6;outline:none;resize:none;color:#111;overflow:hidden;padding:2px;line-height:1.2;}
   #measure{position:fixed;z-index:32;background:#1f2430;color:#fff;padding:4px 9px;border-radius:8px;font-size:13px;pointer-events:none;display:none;font-variant-numeric:tabular-nums;box-shadow:var(--shadow);}
-  #annoToggle{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);z-index:30;display:none;background:var(--bar);color:#fff;border:none;border-radius:20px;padding:10px 18px;font-size:14px;box-shadow:var(--shadow);cursor:pointer;white-space:nowrap;max-width:92vw;overflow:hidden;text-overflow:ellipsis;}
+  #annoToggle{position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:30;display:none;background:var(--bar);color:#fff;border:none;border-radius:20px;padding:9px 16px;font-size:14px;box-shadow:var(--shadow);cursor:pointer;white-space:nowrap;}
   #annoToggle.show{display:block;} #annoToggle.on{background:var(--accent);}
   #toast{position:fixed;bottom:70px;left:50%;transform:translateX(-50%);background:#1f2430;color:#fff;padding:10px 16px;border-radius:10px;z-index:60;font-size:14px;opacity:0;transition:.25s;pointer-events:none;}
   #toast.show{opacity:1;}
@@ -1283,10 +1283,17 @@ function addEmbedObject(etype,src,label,data,asPage){
 const pageHasEmbeds=()=>page().objects.some(o=>o.type==='embed');
 function refreshEmbedUI(){ const has=pageHasEmbeds(); $('annoToggle').classList.toggle('show',has); if(!has)embedInteract=false; applyEmbedMode(); }
 function applyEmbedMode(){ cv.style.pointerEvents=embedInteract?'none':'auto'; $('annoToggle').classList.toggle('on',embedInteract);
-  $('annoToggle').textContent=embedInteract?'✋ Bedienen aktiv (tippen = zurück)':'👆 Einbettungen bedienen';
+  $('annoToggle').textContent=embedInteract?'Bedienen beenden':'Einbettung bedienen';
   $('embedBarLayer').style.display=embedInteract?'block':'none';
-  for(const[,fr] of embedEls) fr.style.pointerEvents=embedInteract?'auto':'none'; }
-function positionAnnoToggle(){}   /* fixe Position unten-mittig (per CSS) – kein dynamisches Setzen mehr nötig */
+  for(const[,fr] of embedEls) fr.style.pointerEvents=embedInteract?'auto':'none'; positionAnnoToggle(); }
+/* Oben mittig, wenn Leisten minimiert; rutscht in die Lücke, wenn sie ausgeklappt sind; passt es nicht, knapp unter die Leisten. Immer ganz sichtbar. */
+function positionAnnoToggle(){ const at=$('annoToggle'); if(!at.classList.contains('show'))return;
+  const w=at.offsetWidth;
+  const sb=$('settingsbar').getBoundingClientRect(), pb=$('pagebar').getBoundingClientRect();
+  const gapL=sb.right+5, gapR=pb.left-5;
+  if(w<=gapR-gapL){ at.style.top='14px'; at.style.left=Math.round((gapL+gapR)/2)+'px'; }        // passt in die Lücke (bei minimierten Leisten = Bildmitte)
+  else { at.style.top=(Math.round(Math.max(sb.bottom,pb.bottom))+8)+'px'; at.style.left=Math.round(innerWidth/2)+'px'; }   // zu eng → knapp unter die Leisten
+}
 $('annoToggle').onclick=()=>{ embedInteract=!embedInteract; applyEmbedMode(); };
 const embedCards=new Map(), embedPills=new Map();
 function hostOf(u){ try{ return new URL(u).hostname.replace(/^www\./,'')||u; }catch(e){ return (u||'').replace(/^https?:\/\//,'').split('/')[0]||u; } }
@@ -1328,6 +1335,10 @@ $('pageMin').onclick=()=>{ $('pagebar').classList.toggle('min'); pageChev($('pag
 /* ---- Seiten-Vorschau (Klick auf die Seitenzahl) ---- */
 function ensureAllImages(){ doc.pages.forEach(p=>{ ensurePageImg(p); (p.objects||[]).forEach(ensureImg); }); }
 function renderThumbs(){ const grid=$('ppGrid'); grid.innerHTML='';
+  const TW=170, GAP=12, PAD=28;   // feste Miniaturbreite; Grid-Breite an Seitenzahl anpassen (mehrspaltig, ohne Quetschen)
+  const maxCols=Math.max(1, Math.floor((innerWidth*0.92 - PAD + GAP) / (TW+GAP)));
+  const cols=Math.max(1, Math.min(doc.pages.length, maxCols));
+  grid.style.width=(cols*TW + (cols-1)*GAP + PAD)+'px';
   doc.pages.forEach((p,i)=>{ const cell=document.createElement('div'); cell.className='pp-thumb'+(i===doc.cur?' cur':''); cell.dataset.idx=i;
     let url=''; try{ url=renderPageToCanvas(p,320).toDataURL('image/jpeg',0.72); }catch(e){}
     cell.innerHTML='<img src="'+url+'"><div class="lbl"></div><button class="pmBtn" title="Seiten-Menü">⋮</button>';
