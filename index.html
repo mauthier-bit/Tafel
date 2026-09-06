@@ -124,7 +124,9 @@
   input.sw.rainbow::-webkit-color-swatch-wrapper{padding:0;}
   input.sw.rainbow::-webkit-color-swatch{border:none;border-radius:50%;opacity:0;}
   .sw{width:26px;height:26px;border-radius:50%;border:2px solid #fff3;cursor:pointer;}
-  #bgColors .sw{width:20px;height:20px;flex:0 0 auto;}
+  #bgColors{align-items:center;}
+  #bgColors .sw{width:auto;height:auto;flex:1 1 22px;min-width:0;max-width:30px;aspect-ratio:1;border:2px solid rgba(0,0,0,.14);}
+  #bgColors .sw.active{outline:3px solid var(--accent);outline-offset:2px;}
   .sw.active{outline:3px solid #fff;outline-offset:1px;}
   .sw.rainbow{background:conic-gradient(from 0deg,#ef4444,#f97316,#eab308,#22c55e,#06b6d4,#3b82f6,#a855f7,#ec4899,#ef4444)!important;-webkit-appearance:none;appearance:none;padding:0;overflow:hidden;cursor:pointer;}
   .sw.rainbow::-webkit-color-swatch-wrapper{padding:0;}
@@ -183,6 +185,8 @@
   .sw2.on{background:var(--accent);}
   .sw2::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;background:#fff;border-radius:50%;transition:.2s;}
   .sw2.on::after{left:23px;}
+  .win .stepbtn{width:34px;padding:6px 0;font-size:18px;font-weight:800;line-height:1;border:1px solid #cfd6e0;background:#fff;border-radius:8px;cursor:pointer;font-family:inherit;color:#1f2430;}
+  .win .stepv{display:inline-block;min-width:36px;text-align:center;font-weight:800;font-size:15px;font-variant-numeric:tabular-nums;}
   .seg{display:flex;border:1px solid #cfd6e0;border-radius:8px;overflow:hidden;flex-wrap:wrap;}
   .seg button{flex:1;border:none;background:#fff;padding:8px;font-size:13px;cursor:pointer;min-width:60px;}
   .seg button.active{background:var(--accent);color:#fff;}
@@ -520,16 +524,21 @@
 <div class="win" id="win-settings" style="left:70px;top:70px;min-width:300px;"><h3>Einstellungen <span class="x" data-close="win-settings">×</span></h3>
   <div class="body">
     <label class="lbl">Hintergrundfarbe</label>
-    <div class="swatches" id="bgColors" style="display:flex;flex-wrap:nowrap;gap:4px"></div>
+    <div class="swatches" id="bgColors" style="display:flex;flex-wrap:nowrap;gap:6px"></div>
     <label class="lbl">Muster</label>
     <div class="seg" id="patSeg"><button data-pat="none" class="active">Kein</button><button data-pat="grid">Karo</button><button data-pat="lines">Linien</button><button data-pat="dots">Punkte</button><button data-pat="staff">Notenlinien</button><button data-pat="triangles">Dreiecke</button></div>
+    <div id="patSizeRow" style="display:none;align-items:center;gap:6px;margin-top:7px;font-size:13px">
+      <b id="patSizeLab" style="flex:1;font-weight:600">Kästchenweite</b>
+      <button class="stepbtn" id="patSizeM">−</button><span class="stepv" id="patSizeV">30</span><button class="stepbtn" id="patSizeP">+</button>
+      <button class="stepbtn" id="patSizeR" title="Standardgröße" style="width:auto;padding:6px 9px;font-size:13px;font-weight:600">Standard</button>
+    </div>
     <div class="toggle"><span>Nur mit Stift schreiben<br><small style="color:#888">(Finger schiebt & zoomt)</small></span><div class="sw2 on" id="penOnly"></div></div>
     <div class="toggle"><span>Finger wählt aus (Auswahl-Modus)<br><small style="color:#888">(1 Finger verschiebt Objekte, 2 Finger zoomen & drehen)</small></span><div class="sw2" id="fingerSelect"></div></div>
     <div class="toggle"><span>Druckstärke des Pencils</span><div class="sw2 on" id="usePressure"></div></div>
     <hr style="border:none;border-top:1px solid #e3e7ee;margin:12px 0">
     <label class="lbl">Projekt / Klasse</label>
     <select id="projectSelect"></select>
-    <div class="row" style="justify-content:flex-start;gap:6px;margin-top:8px"><button class="btn" id="projNew">Neu</button><button class="btn" id="projRename">Umbenennen</button><button class="btn dang" id="projClose">Schließen</button></div>
+    <div class="row" style="justify-content:flex-start;gap:6px;margin-top:8px"><button class="btn" id="projNew">Neu</button><button class="btn" id="projRename">Umbenennen</button><button class="btn" id="projSaveClose">Speichern und schließen</button><button class="btn dang" id="projClose">Schließen</button></div>
     <label class="lbl">Klassenliste dieses Projekts</label>
     <textarea id="classText" rows="5" placeholder="Namen direkt eingeben – ein Name pro Zeile" style="width:100%;box-sizing:border-box;padding:8px;border:1px solid #cfd6e0;border-radius:8px;font-family:inherit;font-size:14px;resize:vertical;color:#1f2430"></textarea>
     <div class="row" style="justify-content:flex-start;gap:6px;margin-top:6px"><button class="btn" id="csvBtn">CSV importieren</button><button class="btn" id="csvClear">Liste leeren</button></div>
@@ -556,7 +565,7 @@ if(window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc='vendor/pdf.worker.mi
 const cv=document.getElementById('board'), ctx=cv.getContext('2d');
 let dpr=Math.max(1,window.devicePixelRatio||1), W=0,H=0;
 function newPage(){ return {objects:[], redo:[], bg:null, _img:null, embed:null, name:null, bgColor:null, pattern:null}; }
-let doc={ pages:[newPage()], cur:0, settings:{bgColor:'white',pattern:'none',penOnly:true,usePressure:true,fingerSelect:false}, name:'Projekt 1', students:[] };
+let doc={ pages:[newPage()], cur:0, settings:{bgColor:'white',pattern:'none',penOnly:true,usePressure:true,fingerSelect:false,patSize:{}}, name:'Projekt 1', students:[] };
 const BG={white:'#ffffff',green:'#31614c',black:'#161819',darkgray:'#3a3f47',lightblue:'#dcedfb',lightyellow:'#fef9c3',lightgreen:'#dcfce7',lightred:'#fee2e2',lightorange:'#ffedd5',lightpurple:'#f3e8ff',darkblue:'#1e3a5f',winered:'#5a1626'};
 const BGDARK={green:1,black:1,darkgray:1,darkblue:1,winered:1};
 const isHex=v=>/^#[0-9a-fA-F]{6}$/.test(v||'');
@@ -585,16 +594,24 @@ const toWorld=(x,y)=>({x:(x-ox)/scale, y:(y-oy)/scale});
 const toScreen=(x,y)=>({x:x*scale+ox, y:y*scale+oy});
 
 /* ============ Zeichnen ============ */
+/* Muster: Standardgröße, Grenzen, Schrittweite und Beschriftung je Musterart */
+const PATCFG={ grid:{def:30,min:10,max:120,step:5,lab:'Kästchenweite'},
+  lines:{def:40,min:12,max:140,step:4,lab:'Linienabstand'},
+  dots:{def:40,min:12,max:140,step:4,lab:'Punktabstand'},
+  staff:{def:12,min:6,max:36,step:1,lab:'Notenlinienabstand'},
+  triangles:{def:40,min:12,max:140,step:4,lab:'Seitenlänge'} };
+function patGap(pat){ const cfg=PATCFG[pat]; if(!cfg)return 40;
+  const v=(doc.settings.patSize||{})[pat]; return (typeof v==='number'&&isFinite(v))?Math.min(cfg.max,Math.max(cfg.min,v)):cfg.def; }
 function paintPattern(c, x0,y0,x1,y1, pat, dark, uscale){ if(!pat||pat==='none')return;
-  const g=40; c.lineWidth=1/uscale;
+  const g=patGap(pat); c.lineWidth=1/uscale;
   const lc=dark?'rgba(255,255,255,.20)':'#c9d6e8', dc=dark?'rgba(255,255,255,.28)':'#b9c6da';
   if(pat==='grid'||pat==='lines'){ c.strokeStyle=lc; c.beginPath();
     if(pat==='grid') for(let x=Math.floor(x0/g)*g;x<x1;x+=g){c.moveTo(x,y0);c.lineTo(x,y1);}
     for(let y=Math.floor(y0/g)*g;y<y1;y+=g){c.moveTo(x0,y);c.lineTo(x1,y);} c.stroke();
-  } else if(pat==='dots'){ c.fillStyle=dc; const r=1.6/uscale;
+  } else if(pat==='dots'){ c.fillStyle=dc; const r=Math.max(1,1.6*g/40)/uscale;
     for(let x=Math.floor(x0/g)*g;x<x1;x+=g)for(let y=Math.floor(y0/g)*g;y<y1;y+=g){c.beginPath();c.arc(x,y,r,0,7);c.fill();}
   } else if(pat==='staff'){ c.strokeStyle=lc; c.beginPath();
-    const ls=12, period=4*ls+3*ls;   // je 5 Notenlinien (Abstand ls) + Lücke bis zum nächsten System
+    const ls=g, period=4*ls+3*ls;   // je 5 Notenlinien (Abstand ls) + Lücke bis zum nächsten System
     for(let base=Math.floor(y0/period)*period; base<y1; base+=period)
       for(let i=0;i<5;i++){ const y=base+i*ls; c.moveTo(x0,y); c.lineTo(x1,y); }
     c.stroke();
@@ -1228,6 +1245,7 @@ function buildWheelEditor(o){ o.data=o.data||{}; if(!Array.isArray(o.data.sector
   o.data.sectors.forEach((s,i)=>{ const row=document.createElement('div'); row.style.cssText='display:flex;gap:5px;align-items:center';
     const lab=document.createElement('input'); lab.type='text'; lab.value=s.label==null?'':s.label; lab.style.cssText='flex:1;min-width:0;padding:3px 5px;border:1px solid #cfd6e0;border-radius:6px;font-size:12px';
     lab.oninput=()=>{ s.label=lab.value; postToEmbed(o,o.data); markDirty(); scheduleAutosave(); };
+    lab.onkeydown=e=>e.stopPropagation();   // Rücktaste/Entf löscht hier Text, nicht das Glücksrad
     const col=document.createElement('input'); col.type='color'; col.value=s.color||WHPAL[i%WHPAL.length]; col.style.cssText='width:34px;height:28px;border:none;background:none;padding:0';
     col.oninput=()=>{ s.color=col.value; postToEmbed(o,o.data); markDirty(); scheduleAutosave(); };
     row.appendChild(document.createTextNode((i+1)+'.')); row.appendChild(lab); row.appendChild(col); list.appendChild(row); }); }
@@ -1500,7 +1518,18 @@ const bgColEl=$('bgColors'); [['white','Weiß'],['green','Tafelgrün'],['black',
 const bgRb=document.createElement('input'); bgRb.type='color'; bgRb.className='sw rainbow'; bgRb.title='Beliebige Hintergrundfarbe'; bgRb.value='#3b82f6';
 bgRb.oninput=()=>{ doc.settings.bgColor=bgRb.value; bgColEl.querySelectorAll('.sw').forEach(s=>s.classList.remove('active')); bgRb.classList.add('active'); applyBg(); autoPenColor(); scheduleAutosave(); };
 bgColEl.appendChild(bgRb);
-$('patSeg').querySelectorAll('button').forEach(b=>b.onclick=()=>{$('patSeg').querySelectorAll('button').forEach(x=>x.classList.remove('active'));b.classList.add('active');doc.settings.pattern=b.dataset.pat;markDirty();scheduleAutosave();});
+$('patSeg').querySelectorAll('button').forEach(b=>b.onclick=()=>{$('patSeg').querySelectorAll('button').forEach(x=>x.classList.remove('active'));b.classList.add('active');doc.settings.pattern=b.dataset.pat;refreshPatSize();markDirty();scheduleAutosave();});
+/* Größe des aktuell gewählten Musters (Karoweite, Linienabstand …) */
+function refreshPatSize(){ const pat=doc.settings.pattern, cfg=PATCFG[pat];
+  $('patSizeRow').style.display=cfg?'flex':'none'; if(!cfg)return;
+  $('patSizeLab').textContent=cfg.lab; $('patSizeV').textContent=patGap(pat); }
+function patSizeStep(d){ const pat=doc.settings.pattern, cfg=PATCFG[pat]; if(!cfg)return;
+  doc.settings.patSize=doc.settings.patSize||{};
+  doc.settings.patSize[pat]=Math.min(cfg.max,Math.max(cfg.min,patGap(pat)+d*cfg.step));
+  refreshPatSize(); markDirty(); scheduleAutosave(); }
+$('patSizeM').onclick=()=>patSizeStep(-1); $('patSizeP').onclick=()=>patSizeStep(1);
+$('patSizeR').onclick=()=>{ const pat=doc.settings.pattern; if(!PATCFG[pat])return;
+  if(doc.settings.patSize) delete doc.settings.patSize[pat]; refreshPatSize(); markDirty(); scheduleAutosave(); };
 $('penOnly').onclick=function(){this.classList.toggle('on');doc.settings.penOnly=this.classList.contains('on');scheduleAutosave();};
 $('fingerSelect').onclick=function(){this.classList.toggle('on');doc.settings.fingerSelect=this.classList.contains('on');scheduleAutosave();};
 $('usePressure').onclick=function(){this.classList.toggle('on');doc.settings.usePressure=this.classList.contains('on');scheduleAutosave();};
@@ -1684,7 +1713,7 @@ function calcParse(src,deg){ const t=[]; let i=0;
 /* ============ Projekte (Klassen) + Klassenliste + Zufallsname ============ */
 let projects=[], activeId=null, nameUsed=new Set();
 const projKey=id=>'tafel_proj_'+id;
-const DEFSET=()=>({bgColor:'white',pattern:'none',penOnly:true,usePressure:true,fingerSelect:false});
+const DEFSET=()=>({bgColor:'white',pattern:'none',penOnly:true,usePressure:true,fingerSelect:false,patSize:{}});
 const curProjName=()=>{ const p=projects.find(x=>x.id===activeId); return p?p.name:'Projekt'; };
 function saveIndex(){ try{ localStorage.setItem('tafel_index',JSON.stringify({activeId,list:projects})); }catch(e){} }
 function saveCurrentProject(){ if(activeId){ try{ localStorage.setItem(projKey(activeId),serialize()); }catch(e){} } }
@@ -1698,13 +1727,17 @@ function switchProject(id){ if(id===activeId)return; saveCurrentProject(); loadP
 function newProject(){ const inp=prompt('Name des neuen Projekts (z. B. Mathe 6a):',''); if(inp===null)return; const nm=(inp.trim()||('Projekt '+(projects.length+1)));
   saveCurrentProject(); const id=uid(); projects.push({id,name:nm}); activeId=id; blankDoc(nm); goPage(0); saveCurrentProject(); saveIndex(); renderProjects(); toast('Projekt „'+nm+'" angelegt'); }
 function renameProject(){ const p=projects.find(x=>x.id===activeId); if(!p)return; const n=prompt('Projektname:',p.name); if(n===null)return; p.name=n.trim()||p.name; doc.name=p.name; saveIndex(); saveCurrentProject(); renderProjects(); }
-function closeProject(){ if(!activeId)return; if(!confirm('Projekt „'+curProjName()+'" schließen und aus dieser App entfernen?\n(Vorher ggf. über „Speichern" als Datei sichern.)'))return;
+function closeProject(force){ if(!activeId)return; if(!force && !confirm('Projekt „'+curProjName()+'" schließen und aus dieser App entfernen?\n(Vorher ggf. über „Speichern" als Datei sichern.)'))return;
   localStorage.removeItem(projKey(activeId)); projects=projects.filter(p=>p.id!==activeId);
   if(projects.length){ loadProject(projects[0].id); } else { const id=uid(); projects=[{id,name:'Projekt 1'}]; activeId=id; blankDoc('Projekt 1'); }
   goPage(0); saveIndex(); saveCurrentProject(); renderProjects(); toast('Projekt geschlossen'); }
 $('projectSelect').onchange=function(){ switchProject(this.value); };
 $('barProject').onchange=function(){ switchProject(this.value); };
-$('projNew').onclick=newProject; $('projRename').onclick=renameProject; $('projClose').onclick=closeProject;
+$('projNew').onclick=newProject; $('projRename').onclick=renameProject; $('projClose').onclick=()=>closeProject(false);
+/* Erst als Datei sichern, dann (nach Rückfrage) aus der App entfernen */
+$('projSaveClose').onclick=()=>{ const nm=curProjName(); exportProject();
+  if(confirm('„'+nm+'" wurde als Datei gespeichert.\nJetzt aus der App entfernen?\n(Zum Weiterarbeiten später über „Laden" wieder öffnen.)')) closeProject(true);
+  else toast('Projekt „'+nm+'" gespeichert'); };
 
 const fileCsv=$('fileCsv');
 $('csvBtn').onclick=()=>fileCsv.click();
@@ -1811,7 +1844,7 @@ function exportPDF(){ if(!window.jspdf){toast('PDF-Bibliothek fehlt');return;} s
 function stripObj(o){ const c={...o}; delete c._img; delete c._hidden; delete c._lock; delete c._prev; delete c._guide; delete c._straight; return c; }
 function serialize(){ return JSON.stringify({v:4,name:doc.name,settings:doc.settings,cur:doc.cur,students:doc.students||[],
   pages:doc.pages.map(p=>({objects:p.objects.map(stripObj),bg:p.bg,embed:p.embed,name:p.name||null,bgColor:p.bgColor||null,pattern:p.pattern||null}))}); }
-function deserialize(str){ const o=JSON.parse(str); const os=o.settings||{}; doc.settings=Object.assign({bgColor:'white',pattern:'none',penOnly:true,usePressure:true,fingerSelect:false},os);
+function deserialize(str){ const o=JSON.parse(str); const os=o.settings||{}; doc.settings=Object.assign({bgColor:'white',pattern:'none',penOnly:true,usePressure:true,fingerSelect:false},os); doc.settings.patSize=Object.assign({},os.patSize||{});
   if(os.background!==undefined && os.pattern===undefined){ doc.settings.pattern=(os.background&&os.background!=='white')?os.background:'none'; doc.settings.bgColor='white'; }
   doc.name=o.name||'Projekt'; doc.students=o.students || (o.classes&&o.classes[0]&&o.classes[0].students) || [];
   doc.pages=(o.pages||[{}]).map(p=>({objects:(p.objects||p.strokes||[]).map(x=>({...x,_img:null})),redo:[],bg:p.bg||null,_img:null,embed:p.embed||null,name:p.name||null,bgColor:p.bgColor||null,pattern:p.pattern||null}));
@@ -1819,8 +1852,9 @@ function deserialize(str){ const o=JSON.parse(str); const os=o.settings||{}; doc
   doc.pages.forEach(p=>{ if(p.embed){ const em=p.embed; const ob={type:'embed',id:uid(),etype:em.type,src:em.src,label:em.label||em.type,x:80,y:80,w:900,h:560,rot:0,groupId:null}; if(em.data)ob.data=em.data; p.objects.push(ob); p.embed=null; } });
   if(!doc.pages.length)doc.pages=[newPage()]; doc.cur=Math.min(o.cur||0,doc.pages.length-1);
   applySettingsUI(); ensureImgs(); refreshPage(); selection=[];refreshProps(); markDirty(); }
-function applySettingsUI(){ const custom=isHex(doc.settings.bgColor); $('bgColors').querySelectorAll('.sw').forEach(x=>x.classList.toggle('active', x.classList.contains('rainbow')?custom:(x.dataset.bg===doc.settings.bgColor))); $('patSeg').querySelectorAll('button').forEach(x=>x.classList.toggle('active',x.dataset.pat===doc.settings.pattern)); $('penOnly').classList.toggle('on',doc.settings.penOnly); $('fingerSelect').classList.toggle('on',!!doc.settings.fingerSelect); $('usePressure').classList.toggle('on',doc.settings.usePressure); applyBg(); }
-$('s-save').onclick=()=>{ saveCurrentProject(); const blob=new Blob([serialize()],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=(doc.name||'tafel').replace(/[^\w\-]+/g,'_')+'.tafel';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000);toast('Projekt „'+(doc.name||'')+'" gespeichert');};
+function applySettingsUI(){ const custom=isHex(doc.settings.bgColor); $('bgColors').querySelectorAll('.sw').forEach(x=>x.classList.toggle('active', x.classList.contains('rainbow')?custom:(x.dataset.bg===doc.settings.bgColor))); $('patSeg').querySelectorAll('button').forEach(x=>x.classList.toggle('active',x.dataset.pat===doc.settings.pattern)); refreshPatSize(); $('penOnly').classList.toggle('on',doc.settings.penOnly); $('fingerSelect').classList.toggle('on',!!doc.settings.fingerSelect); $('usePressure').classList.toggle('on',doc.settings.usePressure); applyBg(); }
+function exportProject(){ saveCurrentProject(); const blob=new Blob([serialize()],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=(doc.name||'tafel').replace(/[^\w\-]+/g,'_')+'.tafel';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000); }
+$('s-save').onclick=()=>{ exportProject(); toast('Projekt „'+(doc.name||'')+'" gespeichert'); };
 const fileLoad=$('fileLoad'); $('s-load').onclick=()=>fileLoad.click();
 fileLoad.onchange=async e=>{ const f=e.target.files[0]; if(!f)return; try{ const txt=await f.text(); saveCurrentProject(); const id=uid(); const nm=(f.name.replace(/\.[^.]+$/,'')||'Projekt'); projects.push({id,name:nm}); activeId=id; deserialize(txt); doc.name=nm; goPage(0); saveCurrentProject(); saveIndex(); renderProjects(); toast('Projekt „'+nm+'" geladen'); }catch(err){ toast('Konnte Datei nicht lesen'); } e.target.value=''; };
 let autosaveTimer=null; function scheduleAutosave(){ clearTimeout(autosaveTimer); autosaveTimer=setTimeout(runAutosave,1200); }
@@ -1846,12 +1880,14 @@ function updateSpot(){ const ps=[...pointers.values()]; if(!ps.length)return;
 addEventListener('pointermove',e=>{ if(tool==='spot'&&pointers.size===0) moveSpot(e.clientX,e.clientY); }); moveSpot(W/2,H/2);
 addEventListener('contextmenu',e=>{ if(!/^(INPUT|TEXTAREA)$/.test(e.target.tagName)) e.preventDefault(); }); // Einfügen-Menü in Eingabefeldern zulassen
 document.addEventListener('gesturestart',e=>e.preventDefault());
+function isTypingTarget(el){ return !!el && (/^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName||'') || el.isContentEditable); }
 addEventListener('keydown',e=>{ if(editing)return;
+  // In Eingabefeldern (z. B. Sektor-Beschriftung des Glücksrads) keine Tafel-Kürzel: Backspace löscht dort Text, nicht das Objekt.
+  if(isTypingTarget(e.target)||isTypingTarget(document.activeElement))return;
   if((e.metaKey||e.ctrlKey)&&e.key==='z'){e.preventDefault();$('t-undo').click();}
   if((e.metaKey||e.ctrlKey)&&(e.key==='y'||(e.shiftKey&&e.key==='z'))){e.preventDefault();$('t-redo').click();}
   if((e.key==='Delete'||e.key==='Backspace')&&selection.length&&tool==='select'){$('pr-del').click();}
-  const inField=/^(INPUT|TEXTAREA|SELECT)$/.test((document.activeElement||{}).tagName||'');
-  if((e.metaKey||e.ctrlKey)&&!inField){
+  if(e.metaKey||e.ctrlKey){
     if(e.key==='c'&&selection.length){ e.preventDefault(); copySelection(false); }
     else if(e.key==='x'&&selection.length){ e.preventDefault(); copySelection(true); }
     else if(e.key==='v'){ e.preventDefault(); pasteClipboard(); }

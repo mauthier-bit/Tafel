@@ -68,12 +68,17 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
 - **Projekte / Klassen** (Einstellungen): mehrere Projekte (z. B. „Mathe 6a", „Physik 11c")
   anlegen, **umbenennen**, dazwischen **wechseln** und **schließen**. Jedes Projekt hat eigene
   Seiten **und** eine eigene Klassenliste. Alles wird automatisch im Browser gesichert.
+  **„Speichern und schließen"** sichert das Projekt zuerst als `.tafel`-Datei und entfernt es
+  danach (nach Rückfrage) aus der App – später einfach über „Laden" wieder öffnen.
 - Tabellen-Funktionen zusätzlich: **SUMME / MITTELWERT** (auch über Bereiche wie `A1:A5`),
   MAX, MIN, ANZAHL, **ZUFALL()**, ZUFALLSBEREICH(a;b)
 - **Hintergrundfarben** (Einstellungen): Weiß, **Tafelgrün**, Schwarz, Dunkelgrau, **Dunkelblau**,
   **dunkles Weinrot**, Hellblau sowie **helles Gelb / Grün / Rot / Orange / Lila** und ein
-  **Regenbogen-Button** für eine **beliebige Farbe** (Farbwähler) – getrennt einstellbar vom **Muster**
+  **Regenbogen-Button** für eine **beliebige Farbe** (Farbwähler) – die Farbkreise sind größer und
+  die aktive Farbe ist am blauen Ring erkennbar – getrennt einstellbar vom **Muster**
   (Kein / Karo / Linien / Punkte / **Notenlinien** / **Dreiecke** – gleichseitiges 60°-Raster).
+  Die **Größe des Musters** ist direkt darunter einstellbar (＋/− und „Standard"): Kästchenweite,
+  Linien-/Punktabstand, Notenlinienabstand bzw. Seitenlänge der Dreiecke – je Musterart gespeichert.
   Bei dunklem Hintergrund schreibt der Stift automatisch weiß.
 - **Text:** Textfelder anlegen; **Doppeltipp** auf einen Text zum Nachbearbeiten. Bei ausgewähltem
   Text bietet das **Kontextmenü** zusätzlich **Fett, Kursiv, Aufzählung (Liste)** und eine
