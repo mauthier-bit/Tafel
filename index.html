@@ -32,7 +32,6 @@
     font-size:19px;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;}
   .tbtn svg{width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
   .tbtn.active{background:var(--accent);color:#fff;}
-  .tbtn.pnav{background:var(--accent);color:#fff;}
   .tbtn.pnav svg{fill:currentColor;stroke:none;width:18px;height:18px;}
   .tbtn:active{filter:brightness(1.2);}
   .tbtn small{position:absolute;bottom:2px;right:4px;font-size:8px;opacity:.7;}
@@ -69,6 +68,19 @@
   #settingsbar.min #barProject{display:none;}
   .sbody{display:flex;gap:6px;align-items:center;}
   #barProject{max-width:150px;height:44px;border:none;border-radius:10px;background:var(--bar2);color:var(--text);font-size:13px;font-family:inherit;padding:0 8px;cursor:pointer;}
+  /* ---- Leisten ein-/ausblenden per Wischgeste ---- */
+  #mainbar,#settingsbar,#pagebar{transition:transform .28s ease;}
+  body.mainbar-right #mainbar{left:auto;right:12px;}
+  body.bars-hidden #mainbar{transform:translateX(calc(-100% - 30px));}
+  body.bars-hidden.mainbar-right #mainbar{transform:translateX(calc(100% + 30px));}
+  body.bars-hidden #settingsbar,body.bars-hidden #pagebar{transform:translateY(calc(-100% - 34px));}
+  body.bars-hidden #annoToggle{display:none!important;}
+  .edgezone{position:fixed;top:0;bottom:0;width:24px;z-index:16;pointer-events:none;}
+  #edgeL{left:0;} #edgeR{right:0;}
+  body.bars-hidden .edgezone{pointer-events:auto;}
+  .edgegrip{position:absolute;top:50%;transform:translateY(-50%);width:6px;height:56px;border-radius:6px;background:rgba(120,130,150,.5);opacity:0;transition:opacity .2s;pointer-events:none;}
+  #edgeL .edgegrip{left:4px;} #edgeR .edgegrip{right:4px;}
+  body.bars-hidden .edgegrip{opacity:1;}
   /* ---- Seiten-Vorschau ---- */
   #pagePreview{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.45);}
   #pagePreview.show{display:flex;}
@@ -82,9 +94,14 @@
   .pp-thumb img{display:block;width:100%;height:110px;object-fit:contain;background:#fff;pointer-events:none;}
   .pp-thumb .lbl{font-size:12px;text-align:center;padding:4px;color:#555;background:#f7f9fc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .pp-thumb .pmBtn{position:absolute;top:4px;right:4px;background:rgba(31,36,48,.82);color:#fff;border:none;border-radius:7px;width:28px;height:24px;font-size:17px;line-height:1;cursor:pointer;padding:0;}
+  .pp-thumb .pmDel{position:absolute;top:4px;left:4px;background:#ef4444;color:#fff;border:none;border-radius:7px;width:26px;height:24px;font-size:17px;line-height:1;cursor:pointer;padding:0;}
+  .pp-thumb .pmDel:hover{background:#dc2626;}
   #pageMenu{position:fixed;z-index:52;display:none;background:var(--panel);color:var(--panelText);border-radius:14px;box-shadow:var(--shadow);padding:10px;min-width:214px;max-width:264px;flex-direction:column;gap:8px;}
   #pageMenu.show{display:flex;}
-  #pageMenu .pm-title{font-weight:700;font-size:14px;padding:0 2px 6px;border-bottom:1px solid #e3e7ee;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  #pageMenu .pm-title{font-weight:700;font-size:14px;padding:0 2px 6px;border-bottom:1px solid #e3e7ee;display:flex;align-items:center;justify-content:space-between;gap:8px;}
+  #pageMenu .pm-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
+  #pageMenu .pm-x{cursor:pointer;font-size:20px;line-height:1;color:#8a93a2;padding:0 2px;flex:none;}
+  #pageMenu .pm-x:hover{color:#c0342b;}
   #pageMenu .pm-acts{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
   #pageMenu .pm-acts button{border:1px solid #cfd6e0;background:#fff;border-radius:8px;padding:7px 8px;font-size:13px;cursor:pointer;font-family:inherit;text-align:left;}
   #pageMenu .pm-acts button:hover{background:#eef2f8;}
@@ -253,6 +270,8 @@
 <div id="embedLayer"></div>
 <canvas id="board"></canvas>
 <div id="embedBarLayer"></div>
+<div id="edgeL" class="edgezone"><div class="edgegrip"></div></div>
+<div id="edgeR" class="edgezone"><div class="edgegrip"></div></div>
 <div id="spot"></div>
 <div id="measure"></div>
 <textarea id="textEditor" spellcheck="false"></textarea>
@@ -551,6 +570,7 @@ const bgHex=()=>bgHexOf(pageBg(page()));
 const isBgDark=()=>isBgDarkOf(pageBg(page()));
 let scale=1, ox=0, oy=0; const MINS=0.2, MAXS=8;
 let tool='pen', color='#111111', penWidth=3, markerWidth=22, textSize=28;
+let barsHidden=false, mainbarSide='left';   // Leisten ein-/ausblendbar per Wischgeste; Hauptleiste links oder rechts
 let shapeKind='rect', shapeFill=false;
 const palette=['#111111','#ffffff','#ef4444','#f97316','#eab308','#22c55e','#3b82f6','#a855f7'];
 const widths=[2,4,8,14];
@@ -1050,8 +1070,10 @@ function setMode(m){ const write=(m==='write'); closeAllPops();
   placePopovers(); }
 $('mode-write').onclick=()=>setMode('write'); $('mode-select').onclick=()=>setMode('select');
 
-function place(el,anchor){ const r=anchor.getBoundingClientRect();   // Popover rechts neben der linken Leiste
-  el.style.left=Math.min(r.right+8, innerWidth-el.offsetWidth-8)+'px';
+function place(el,anchor){ const r=anchor.getBoundingClientRect();   // Popover neben der Hauptleiste (links davon, wenn Leiste rechts)
+  let left = mainbarSide==='right' ? (r.left-el.offsetWidth-8) : (r.right+8);
+  left = Math.max(8, Math.min(left, innerWidth-el.offsetWidth-8));
+  el.style.left=left+'px';
   el.style.top=Math.max(8, Math.min(r.top, innerHeight-el.offsetHeight-8))+'px'; }
 function placePopovers(){ if($('penpop').classList.contains('show')) place($('penpop'),$('t-color')); if($('shapepop').classList.contains('show')) place($('shapepop'),$('t-shape')); }
 function setTool(t){ tool=t; commitText(); closeLassoMenu();
@@ -1288,6 +1310,7 @@ function applyEmbedMode(){ cv.style.pointerEvents=embedInteract?'none':'auto'; $
   for(const[,fr] of embedEls) fr.style.pointerEvents=embedInteract?'auto':'none'; positionAnnoToggle(); }
 /* Oben mittig, wenn Leisten minimiert; rutscht in die Lücke, wenn sie ausgeklappt sind; passt es nicht, knapp unter die Leisten. Immer ganz sichtbar. */
 function positionAnnoToggle(){ const at=$('annoToggle'); if(!at.classList.contains('show'))return;
+  if(barsHidden){ at.style.top='14px'; at.style.left=Math.round(innerWidth/2)+'px'; return; }   // Leisten weg → Bildmitte (Button selbst ist ausgeblendet)
   const w=at.offsetWidth;
   const sb=$('settingsbar').getBoundingClientRect(), pb=$('pagebar').getBoundingClientRect();
   const gapL=sb.right+5, gapR=pb.left-5;
@@ -1341,9 +1364,10 @@ function renderThumbs(){ const grid=$('ppGrid'); grid.innerHTML='';
   grid.style.width=(cols*TW + (cols-1)*GAP + PAD)+'px';
   doc.pages.forEach((p,i)=>{ const cell=document.createElement('div'); cell.className='pp-thumb'+(i===doc.cur?' cur':''); cell.dataset.idx=i;
     let url=''; try{ url=renderPageToCanvas(p,320).toDataURL('image/jpeg',0.72); }catch(e){}
-    cell.innerHTML='<img src="'+url+'"><div class="lbl"></div><button class="pmBtn" title="Seiten-Menü">⋮</button>';
+    cell.innerHTML='<img src="'+url+'"><div class="lbl"></div><button class="pmDel" title="Seite löschen">×</button><button class="pmBtn" title="Seiten-Menü">⋮</button>';
     cell.querySelector('.lbl').textContent = p.name ? p.name : ('Seite '+(i+1));
     cell.querySelector('.pmBtn').onclick=ev=>{ ev.stopPropagation(); openPageMenu(i, ev.currentTarget); };
+    cell.querySelector('.pmDel').onclick=ev=>{ ev.stopPropagation(); closePageMenu(); pageAction('del', i, null); };
     cell.onclick=()=>{ if(pmSuppressClick){ pmSuppressClick=false; return; } closePageMenu(); goPage(i); $('pagePreview').classList.remove('show'); };
     attachThumbDrag(cell, i);
     grid.appendChild(cell); }); }
@@ -1355,8 +1379,11 @@ let pageClip=null, pmIdx=-1;
 const PMPATS=[['none','Kein'],['grid','Karo'],['lines','Linien'],['dots','Punkte'],['staff','Noten'],['triangles','Dreiecke']];
 function closePageMenu(){ $('pageMenu').classList.remove('show'); pmIdx=-1; }
 function openPageMenu(idx, anchor){ pmIdx=idx; const p=doc.pages[idx]; const m=$('pageMenu'); m.innerHTML='';
-  const title=document.createElement('div'); title.className='pm-title'; title.textContent=(p.name||('Seite '+(idx+1))); m.appendChild(title);
-  const acts=[['rename','✏️ Umbenennen'],['dup','⧉ Duplizieren'],['copy','📄 Kopieren'],['cut','✂️ Ausschneiden'],['paste','📋 Einfügen'],['del','🗑 Löschen']];
+  const title=document.createElement('div'); title.className='pm-title';
+  const nm=document.createElement('span'); nm.className='pm-name'; nm.textContent=(p.name||('Seite '+(idx+1))); title.appendChild(nm);
+  const cx=document.createElement('span'); cx.className='pm-x'; cx.textContent='×'; cx.title='Menü schließen'; cx.onclick=e=>{ e.stopPropagation(); closePageMenu(); }; title.appendChild(cx);
+  m.appendChild(title);
+  const acts=[['rename','✏️ Umbenennen'],['dup','⧉ Duplizieren'],['copy','📄 Kopieren'],['cut','✂️ Ausschneiden'],['paste','📋 Einfügen']];
   const ag=document.createElement('div'); ag.className='pm-acts';
   acts.forEach(([a,lbl])=>{ const b=document.createElement('button'); b.textContent=lbl; if(a==='del')b.className='danger'; if(a==='paste'&&!pageClip)b.disabled=true; b.onclick=()=>pageAction(a,idx,anchor); ag.appendChild(b); });
   m.appendChild(ag);
@@ -1388,7 +1415,7 @@ function pageAction(a, idx, anchor){ const p=doc.pages[idx], curPage=doc.pages[d
   closePageMenu(); ensureAllImages(); selection=[]; refreshProps(); refreshPage(); renderThumbs(); markDirty(); scheduleAutosave(); }
 /* ---- Vorschau lang drücken = verschieben ---- */
 let pmDragging=false, pmDragIdx=-1, pmLongTimer=null, pmStart=null, pmSuppressClick=false, pmScrolling=false, pmLastY=0;
-function attachThumbDrag(cell, idx){ cell.addEventListener('pointerdown', e=>{ if(e.target.closest('.pmBtn'))return;
+function attachThumbDrag(cell, idx){ cell.addEventListener('pointerdown', e=>{ if(e.target.closest('.pmBtn')||e.target.closest('.pmDel'))return;
   pmStart={x:e.clientX,y:e.clientY}; pmLastY=e.clientY; pmScrolling=false; clearTimeout(pmLongTimer);
   pmLongTimer=setTimeout(()=>{ startThumbDrag(cell); }, 320); }); }
 function startThumbDrag(cell){ if(pmScrolling)return; pmDragging=true; pmStart=null; closePageMenu(); cell.classList.add('pm-drag'); $('ppGrid').classList.add('reordering'); try{navigator.vibrate&&navigator.vibrate(12);}catch(_){} }
@@ -1410,7 +1437,9 @@ document.addEventListener('pointerup', ()=>{ clearTimeout(pmLongTimer);
   if(pmDragging) endThumbDrag();
   else if(pmScrolling){ pmSuppressClick=true; setTimeout(()=>pmSuppressClick=false,400); }
   pmStart=null; pmScrolling=false; });
-function openPagePreview(){ closePageMenu(); ensureAllImages(); renderThumbs(); $('pagePreview').classList.add('show'); setTimeout(()=>{ if($('pagePreview').classList.contains('show')) renderThumbs(); },320); }
+function fitPreviewHeight(){ const grid=$('ppGrid'), head=document.querySelector('.pp-head'); if(!grid||!head)return;
+  grid.style.maxHeight=(Math.round(innerHeight*0.86)-head.offsetHeight)+'px'; }   // exakte Scroll-Höhe (statt fester Schätzung)
+function openPagePreview(){ closePageMenu(); ensureAllImages(); renderThumbs(); $('pagePreview').classList.add('show'); fitPreviewHeight(); setTimeout(()=>{ if($('pagePreview').classList.contains('show')){ renderThumbs(); fitPreviewHeight(); } },320); }
 $('pageInfo').onclick=openPagePreview;
 $('ppClose').onclick=()=>{ closePageMenu(); $('pagePreview').classList.remove('show'); };
 $('pagePreview').onclick=e=>{ if(e.target.id==='pagePreview'){ closePageMenu(); $('pagePreview').classList.remove('show'); } };
@@ -1418,8 +1447,31 @@ $('pageMenu').addEventListener('pointerdown',e=>e.stopPropagation());
 document.addEventListener('pointerdown',e=>{ if($('pageMenu').classList.contains('show') && !e.target.closest('#pageMenu') && !e.target.closest('.pmBtn')) closePageMenu(); }, true);
 $('setMin').onclick=()=>{ $('settingsbar').classList.toggle('min'); rotateChev('setMin',$('settingsbar').classList.contains('min'),true); saveUI(); positionAnnoToggle(); };
 function rotateChev(id,min){ $(id).querySelector('svg').style.transform=min?'scaleX(-1)':''; }
-function saveUI(){ try{ localStorage.setItem('tafel_ui',JSON.stringify({main:$('mainbar').classList.contains('min'),page:$('pagebar').classList.contains('min'),set:$('settingsbar').classList.contains('min')})); }catch(e){} }
-function restoreUI(){ try{ const u=JSON.parse(localStorage.getItem('tafel_ui')||'{}'); if(u.main){$('mainbar').classList.add('min');mainChev(true);} if(u.page){$('pagebar').classList.add('min');pageChev(true);} if(u.set){$('settingsbar').classList.add('min');rotateChev('setMin',true);} }catch(e){} }
+function saveUI(){ try{ localStorage.setItem('tafel_ui',JSON.stringify({main:$('mainbar').classList.contains('min'),page:$('pagebar').classList.contains('min'),set:$('settingsbar').classList.contains('min'),side:mainbarSide})); }catch(e){} }
+function restoreUI(){ try{ const u=JSON.parse(localStorage.getItem('tafel_ui')||'{}'); if(u.main){$('mainbar').classList.add('min');mainChev(true);} if(u.page){$('pagebar').classList.add('min');pageChev(true);} if(u.set){$('settingsbar').classList.add('min');rotateChev('setMin',true);} if(u.side==='right')mainbarSide='right'; applyBarsState(); }catch(e){} }
+
+/* ---- Leisten per Wischgeste weg/hervor (Präsentationsmodus) ---- */
+function applyBarsState(){ document.body.classList.toggle('bars-hidden',barsHidden); document.body.classList.toggle('mainbar-right',mainbarSide==='right'); positionAnnoToggle(); placePopovers(); }
+function hideBars(){ if(barsHidden)return; barsHidden=true; applyBarsState(); }
+function showBars(side){ if(side&&side!==mainbarSide){ mainbarSide=side; saveUI(); } if(!barsHidden){ applyBarsState(); return; } barsHidden=false; applyBarsState(); }
+/* Hauptleiste zur äußeren Kante wischen = ausblenden (Tippen auf Knöpfe bleibt unberührt) */
+let mbSwipe=null, barClickBlock=false;
+$('mainbar').style.touchAction='pan-y';
+$('mainbar').addEventListener('pointerdown',e=>{ mbSwipe={x:e.clientX,y:e.clientY,id:e.pointerId,done:false}; });
+$('mainbar').addEventListener('click',e=>{ if(barClickBlock){ e.stopPropagation(); e.preventDefault(); } },true);
+/* Rand-Zonen (nur aktiv, wenn Leisten weg): von links/rechts einwischen = Leisten zeigen */
+let edgeSwipe=null;
+$('edgeL').addEventListener('pointerdown',e=>{ edgeSwipe={x:e.clientX,id:e.pointerId,side:'left'}; });
+$('edgeR').addEventListener('pointerdown',e=>{ edgeSwipe={x:e.clientX,id:e.pointerId,side:'right'}; });
+document.addEventListener('pointermove',e=>{
+  if(mbSwipe&&e.pointerId===mbSwipe.id&&!mbSwipe.done){ const dx=e.clientX-mbSwipe.x, dy=e.clientY-mbSwipe.y;
+    if(Math.abs(dx)>50 && Math.abs(dx)>Math.abs(dy)*1.3 && ((mainbarSide==='left'&&dx<0)||(mainbarSide==='right'&&dx>0))){
+      mbSwipe.done=true; hideBars(); barClickBlock=true; setTimeout(()=>barClickBlock=false,500); } }
+  if(edgeSwipe&&e.pointerId===edgeSwipe.id){ const dx=e.clientX-edgeSwipe.x;
+    if(edgeSwipe.side==='left'&&dx>40){ showBars('left'); edgeSwipe=null; }
+    else if(edgeSwipe.side==='right'&&dx<-40){ showBars('right'); edgeSwipe=null; } }
+},{passive:true});
+document.addEventListener('pointerup',e=>{ if(mbSwipe&&e.pointerId===mbSwipe.id)mbSwipe=null; if(edgeSwipe&&e.pointerId===edgeSwipe.id)edgeSwipe=null; });
 
 /* ============ Vollbild ============ */
 $('fs').onclick=()=>{ const d=document.documentElement; if(!document.fullscreenElement&&!document.webkitFullscreenElement){ (d.requestFullscreen||d.webkitRequestFullscreen||(()=>toast('Vollbild wird hier nicht unterstützt – auf iPad: „Zum Home-Bildschirm"'))).call(d); } else { (document.exitFullscreen||document.webkitExitFullscreen||(()=>{})).call(document); } };

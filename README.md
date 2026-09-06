@@ -158,9 +158,10 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
 - **Messwert-Analyse** (Werkzeug): bindet das Messdaten-Tool ein (als Objekt oder eigene Seite;
   fragt beim Einfügen nach). Braucht Internet (nutzt Chart.js u. a. per CDN).
 - **Seitenübersicht:** auf die **Seitenzahl** (z. B. „2/5") tippen → Miniaturen aller Seiten,
-  eine antippen wechselt direkt dorthin. Jede Miniatur hat ein **⋮-Menü** mit **Umbenennen,
-  Duplizieren, Kopieren, Ausschneiden, Einfügen, Löschen** sowie **Seitenstil** (Muster
-  Kein/Karo/Linien/Punkte/Noten/Dreiecke **und** Hintergrundfarbe) – **je Seite einzeln** einstellbar
+  eine antippen wechselt direkt dorthin. Jede Miniatur hat oben rechts ein **⋮-Menü** (mit **×** zum
+  Schließen) mit **Umbenennen, Duplizieren, Kopieren, Ausschneiden, Einfügen** sowie **Seitenstil** (Muster
+  Kein/Karo/Linien/Punkte/Noten/Dreiecke **und** Hintergrundfarbe) – **je Seite einzeln** einstellbar –
+  und oben links ein **rotes ×** zum **Löschen** der Seite
   (der Seitenname erscheint auch in der Kopfzeile). Die Miniaturen behalten immer **dieselbe Größe**
   (werden bei vielen Seiten nicht gequetscht) – bei Bedarf wird die Übersicht **scrollbar**.
   **Bedienung der Miniaturen:** **antippen** springt zur Seite, **streichen** scrollt die Übersicht,
@@ -221,6 +222,12 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
 3. **Einstellungs-Leiste (oben links):** Projekt-Auswahl, Vollbild, **Zurück/Vor (Rückgängig)**,
    **Seite leeren**, Einstellungen (Hintergrund, Klassenlisten), Speichern, Laden, **PDF-Export**.
    Lässt sich ebenfalls **vollständig einklappen** (nur der Aufklapp-Pfeil bleibt).
+
+**Alle Leisten weg-/hervorwischen (Präsentation):** Die **vertikale Leiste zur äußeren Kante
+hinauswischen** blendet **alle** Leisten aus (die vertikale zur Seite, die beiden oberen nach oben).
+Am Rand erscheinen dann kleine Griffe. **Von links in die App wischen** holt alle Leisten zurück
+(vertikale Leiste **links**); **von rechts hereinwischen** holt sie zurück mit der vertikalen Leiste
+**rechts** (dort auch wieder hinauswischbar). Die gewählte Seite bleibt gespeichert.
 
 Oben rechts liegt der **Vollbild-Knopf**.
 
