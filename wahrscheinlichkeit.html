@@ -16,7 +16,7 @@
   .row label{font-weight:600;}
   input,select{padding:6px 8px;border:1px solid #cfd6e0;border-radius:7px;font-size:15px;font-family:inherit;-webkit-user-select:text;user-select:text;}
   input{width:76px;text-align:center;}
-  #res{font-size:calc(var(--fs,13px)*1.5);font-weight:700;font-style:var(--fi,normal);color:#2563eb;}
+  #res{font-size:calc(var(--fs,13px)*1.5);font-weight:var(--fwh,700);font-style:var(--fi,normal);color:#2563eb;}
   #stat{font-size:12px;color:#8a93a2;}
   #chartWrap{flex:1;position:relative;min-height:0;border-top:1px solid #eef1f6;}
   canvas{position:absolute;inset:0;width:100%;height:100%;}
@@ -24,7 +24,7 @@
   .vt{width:100%;border-collapse:collapse;font-size:var(--fs,13px);font-weight:var(--fw,400);font-style:var(--fi,normal);}
   .vt th{position:sticky;top:0;background:#f4f6fa;padding:6px;border-bottom:1px solid #e2e7ef;font-size:calc(var(--fs,13px)*0.9);color:#5b6472;}
   .vt td{padding:4px 6px;text-align:center;border-bottom:1px solid #f0f3f8;font-variant-numeric:tabular-nums;}
-  .vt tr.hl td{background:#e8f0fe;font-weight:600;color:#1e40af;}
+  .vt tr.hl td{background:#e8f0fe;font-weight:var(--fwm,600);color:#1e40af;}
 </style>
 </head>
 <body>
@@ -51,7 +51,7 @@
 "use strict";
 const $=id=>document.getElementById(id);
 let mode='B', fontSize=13, fontBold=false, fontItalic=false;
-function applyFont(){ const r=document.documentElement.style; r.setProperty('--fs',(fontSize||13)+'px'); r.setProperty('--fw',fontBold?'700':'400'); r.setProperty('--fi',fontItalic?'italic':'normal'); }
+function applyFont(){ const r=document.documentElement.style; r.setProperty('--fs',(fontSize||13)+'px'); r.setProperty('--fw',fontBold?'700':'400'); r.setProperty('--fwh',fontBold?'900':'700'); r.setProperty('--fwm',fontBold?'800':'600'); r.setProperty('--fi',fontItalic?'italic':'normal'); }
 const fontPrefix=()=>(fontItalic?'italic ':'')+(fontBold?'bold ':'');
 const cv=$('chart'), ctx=cv.getContext('2d'); let dpr=Math.max(1,window.devicePixelRatio||1);
 function lgamma(z){ const g=7,c=[0.99999999999980993,676.5203681218851,-1259.1392167224028,771.32342877765313,-176.61502916214059,12.507343278686905,-0.13857109526572012,9.9843695780195716e-6,1.5056327351493116e-7];
@@ -90,25 +90,35 @@ function compute(){
   sync();
 }
 function sz(){ dpr=Math.max(1,window.devicePixelRatio||1); cv.width=Math.round(cv.clientWidth*dpr); cv.height=Math.round(cv.clientHeight*dpr); }
+const labFont=()=>Math.max(9,fontSize-3);
+const padBot=()=>Math.max(22, labFont()+14);        // Platz für die Achsenbeschriftung – wächst mit der Schrift
 function drawBin(n,p){ sz(); const W=cv.clientWidth,H=cv.clientHeight; ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,W,H); ctx.fillStyle='#fff'; ctx.fillRect(0,0,W,H);
-  const pad=22, bw=(W-2*pad)/(n+1); let mx=0; const pm=[]; for(let k=0;k<=n;k++){ pm[k]=binPmf(n,k,p); mx=Math.max(mx,pm[k]); }
-  for(let k=0;k<=n;k++){ const h=(pm[k]/mx)*(H-2*pad); const x=pad+k*bw, y=H-pad-h;
+  const pad=22, pb=padBot(), base=H-pb, bw=(W-2*pad)/(n+1); let mx=0; const pm=[]; for(let k=0;k<=n;k++){ pm[k]=binPmf(n,k,p); mx=Math.max(mx,pm[k]); }
+  for(let k=0;k<=n;k++){ const h=(pm[k]/mx)*Math.max(4,base-pad); const x=pad+k*bw, y=base-h;
     ctx.fillStyle=(k>=region.a&&k<=region.b)?'#2563eb':'#c3d4ef'; ctx.fillRect(x+1,y,Math.max(1,bw-2),h); }
-  ctx.strokeStyle='#c9d2df'; ctx.beginPath(); ctx.moveTo(pad,H-pad); ctx.lineTo(W-pad,H-pad); ctx.stroke();
-  ctx.fillStyle='#8a93a2'; ctx.font=fontPrefix()+Math.max(9,fontSize-3)+'px sans-serif'; ctx.textAlign='center';
-  const stepK=Math.max(1,Math.ceil((n+1)/12)); for(let k=0;k<=n;k+=stepK) ctx.fillText(k, pad+k*bw+bw/2, H-pad+11); }
+  ctx.strokeStyle='#c9d2df'; ctx.beginPath(); ctx.moveTo(pad,base); ctx.lineTo(W-pad,base); ctx.stroke();
+  ctx.fillStyle='#8a93a2'; ctx.font=fontPrefix()+labFont()+'px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='top';
+  // Schrittweite so wählen, dass sich die Zahlen auch bei großer Schrift nicht überlappen
+  const wLab=ctx.measureText(String(n)).width+8;
+  const stepK=Math.max(1, Math.ceil((n+1)/12), Math.ceil(wLab/bw));
+  for(let k=0;k<=n;k+=stepK) ctx.fillText(k, pad+k*bw+bw/2, base+6);
+  ctx.textBaseline='alphabetic'; }
 function drawNorm(mu,sig){ sz(); const W=cv.clientWidth,H=cv.clientHeight; ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,W,H); ctx.fillStyle='#fff'; ctx.fillRect(0,0,W,H);
-  const pad=22, xmin=mu-4*sig, xmax=mu+4*sig, mxY=normPdf(mu,mu,sig);
-  const X=x=>pad+(x-xmin)/(xmax-xmin)*(W-2*pad), Y=y=>H-pad-(y/mxY)*(H-2*pad);
+  const pad=22, pb=padBot(), base=H-pb, xmin=mu-4*sig, xmax=mu+4*sig, mxY=normPdf(mu,mu,sig);
+  const X=x=>pad+(x-xmin)/(xmax-xmin)*(W-2*pad), Y=y=>base-(y/mxY)*Math.max(4,base-pad);
   // Fläche
   ctx.fillStyle='rgba(37,99,235,.22)'; ctx.beginPath(); const a=Math.max(xmin,region.a), b=Math.min(xmax,region.b);
   ctx.moveTo(X(a),Y(0)); for(let x=a;x<=b;x+=(xmax-xmin)/300) ctx.lineTo(X(x),Y(normPdf(x,mu,sig))); ctx.lineTo(X(b),Y(0)); ctx.closePath(); ctx.fill();
   // Kurve
   ctx.strokeStyle='#2563eb'; ctx.lineWidth=2; ctx.beginPath(); for(let px=0;px<=(W-2*pad);px++){ const x=xmin+px/(W-2*pad)*(xmax-xmin); const yy=Y(normPdf(x,mu,sig)); if(px===0)ctx.moveTo(pad+px,yy); else ctx.lineTo(pad+px,yy); } ctx.stroke();
-  ctx.strokeStyle='#c9d2df'; ctx.beginPath(); ctx.moveTo(pad,H-pad); ctx.lineTo(W-pad,H-pad); ctx.stroke();
-  ctx.strokeStyle='#e0e6ef'; ctx.beginPath(); ctx.moveTo(X(mu),pad); ctx.lineTo(X(mu),H-pad); ctx.stroke();
-  ctx.fillStyle='#8a93a2'; ctx.font=fontPrefix()+Math.max(9,fontSize-3)+'px sans-serif'; ctx.textAlign='center';
-  for(let i=-3;i<=3;i++){ const x=mu+i*sig; ctx.fillText(fmt(x), X(x), H-pad+11); } }
+  ctx.strokeStyle='#c9d2df'; ctx.beginPath(); ctx.moveTo(pad,base); ctx.lineTo(W-pad,base); ctx.stroke();
+  ctx.strokeStyle='#e0e6ef'; ctx.beginPath(); ctx.moveTo(X(mu),pad); ctx.lineTo(X(mu),base); ctx.stroke();
+  ctx.fillStyle='#8a93a2'; ctx.font=fontPrefix()+labFont()+'px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='top';
+  // nur so viele σ-Marken beschriften, wie nebeneinander Platz haben
+  let wMax=0; for(let i=-3;i<=3;i++) wMax=Math.max(wMax, ctx.measureText(fmt(mu+i*sig)).width);
+  const stepI=Math.max(1, Math.ceil((wMax+8)/((W-2*pad)/8)));   // die Skala umfasst 8σ über die Breite
+  for(let i=-3;i<=3;i++){ if(i%stepI)continue; const x=mu+i*sig; ctx.fillText(fmt(x), X(x), base+6); }
+  ctx.textBaseline='alphabetic'; }
 
 function buildBinTable(n,p){ let cum=0, h='<table class="vt"><tr><th>k</th><th>P(X=k)</th><th>P(X≤k)</th></tr>';
   for(let k=0;k<=n;k++){ const pk=binPmf(n,k,p); cum+=pk; const hl=(k>=region.a&&k<=region.b)?' class="hl"':'';

@@ -41,7 +41,7 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   Grundrechenarten, Potenz `^`, `sqrt`, `sin`, `cos` (Bogenmaß); Kopieren/Einfügen passt
   relative Bezüge an. Die Tabelle wird im Projekt gespeichert. Neu: Formel **`=zufallszahl(1;6)`** (ganze Zufallszahl im Bereich; ohne Klammern 0–1), ein **✓-Button** neben der Eingabezeile übernimmt die Eingabe (wie Enter), und im Kontextmenü lassen sich **Schriftgröße, Fett und Kursiv** für Zellen und Spalten-/Zeilenköpfe einstellen.
 - **Schriftgröße vieler Werkzeuge im Kontextmenü einstellbar** (＋/−): Tabelle, Funktionsplotter,
-  Vierfeldertafel, Baumdiagramm, Wahrscheinlichkeitsrechner und Stellenwerttafel. Neben ＋/− gibt es dort jeweils einen Button für **Fett (F)** und **Kursiv (K)** – auch beim Koordinatensystem und der Tabellenkalkulation.
+  Vierfeldertafel, Baumdiagramm, Wahrscheinlichkeitsrechner und Stellenwerttafel. Neben ＋/− gibt es dort jeweils einen Button für **Fett (F)** und **Kursiv (K)** – auch beim Koordinatensystem und der Tabellenkalkulation. „Fett" wirkt auch auf Teile, die ohnehin schon halbfett sind (Tabellen-/Spaltenköpfe, Ereignisnamen, Summenzeile, Ergebniszeile): sie werden dann noch kräftiger gesetzt.
 - Beim Wechsel auf die **Schreibwerkzeuge** ist immer der **Stift** aktiv.
 - **Diagramme aus der Tabelle:** einen **Zellbereich markieren** (mit gedrücktem Finger/Maus über
   die Zellen ziehen) und auf **„📊 Diagramm"** tippen – die markierten Zahlen werden wahlweise als
@@ -71,7 +71,9 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   **„Speichern und schließen"** sichert das Projekt zuerst als `.tafel`-Datei und entfernt es
   danach (nach Rückfrage) aus der App – später einfach über „Laden" wieder öffnen.
 - Tabellen-Funktionen zusätzlich: **SUMME / MITTELWERT** (auch über Bereiche wie `A1:A5`),
-  MAX, MIN, ANZAHL, **ZUFALL()**, ZUFALLSBEREICH(a;b)
+  MAX, MIN, ANZAHL, **ZUFALL()**, ZUFALLSBEREICH(a;b), **ZÄHLENWENN(Bereich;Kriterium)** –
+  Kriterium als Zahl (`=zählenwenn(A1:A9;5)`), Vergleich (`">3"`, `">=5"`, `"<>0"`) oder Text
+  (`"ja"`, Groß-/Kleinschreibung egal).
 - **Hintergrundfarben** (Einstellungen): Weiß, **Tafelgrün**, Schwarz, Dunkelgrau, **Dunkelblau**,
   **dunkles Weinrot**, Hellblau sowie **helles Gelb / Grün / Rot / Orange / Lila** und ein
   **Regenbogen-Button** für eine **beliebige Farbe** (Farbwähler) – die Farbkreise sind größer und
@@ -147,7 +149,13 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   wahlweise als **Objekt** oder als **eigene Seite** eingefügt. Läuft offline (entpackt die .pptx
   im Browser). Für **exakte** Darstellung die Präsentation als **PDF** exportieren und einfügen.
 - **Kamera** (Werkzeug): Live-Bild in einem Fenster (z. B. für Versuche), Kamera umschaltbar,
-  „Foto auf Tafel" legt einen Schnappschuss als bewegliches Objekt ab. (Nur über https.)
+  „Foto auf Tafel" legt einen Schnappschuss als bewegliches Objekt ab. **„Video auf Tafel"** nimmt
+  einen Clip auf (nochmal antippen = beenden, mit laufender Zeitanzeige) und legt ihn als abspielbares
+  Videoobjekt auf die Tafel – wahlweise **mit Ton** (Schalter „Video mit Ton"; ohne Mikrofonfreigabe
+  wird stumm aufgenommen). Zum Abspielen oben „Einbettung bedienen" antippen. Clips gelten nur für die
+  laufende Sitzung: im gespeicherten Projekt bleibt ein Platzhalter statt der Videodaten – wer eine
+  Aufnahme behalten will, wählt den Clip aus und tippt im **Kontextmenü** auf **„🎬 Video speichern"**
+  (.mp4 bzw. .webm). (Nur über https.)
 - **Punktestand** (Werkzeug): Score-Board für Spiele – Teams mit Namen, hoch-/runterzählen.
 - **Gruppen bilden** (Werkzeug): erzeugt aus der Klassenliste zufällige, ausgewogene Gruppen
   in einstellbarer Größe; „Auf Tafel" schreibt die Gruppen auf die Tafel.

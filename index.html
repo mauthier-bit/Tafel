@@ -19,7 +19,8 @@
   #board{position:fixed;inset:0;touch-action:none;display:block;background:transparent;z-index:2;}
   #bgLayer{position:fixed;inset:0;z-index:0;background:#fff;pointer-events:none;}
   #embedLayer{position:fixed;inset:0;z-index:1;pointer-events:none;overflow:hidden;}
-  #embedLayer iframe{position:absolute;left:0;top:0;border:0;transform-origin:0 0;background:#fff;box-shadow:0 1px 6px rgba(0,0,0,.15);}
+  #embedLayer iframe,#embedLayer video{position:absolute;left:0;top:0;border:0;transform-origin:0 0;background:#fff;box-shadow:0 1px 6px rgba(0,0,0,.15);}
+  #embedLayer video{background:#000;object-fit:contain;}
   #embedBarLayer{position:fixed;inset:0;z-index:14;pointer-events:none;overflow:hidden;display:none;}
   .embedCard{position:absolute;left:0;top:0;transform-origin:0 0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:#f4f6fa;color:#5b6472;text-align:center;padding:14px;overflow:hidden;}
   .embedCard .ec-ico{font-size:42px;line-height:1;}
@@ -425,6 +426,7 @@
     <div style="display:flex;gap:6px;align-items:center;flex-wrap:nowrap"><b style="width:56px">Linien:</b><button class="p step" id="tblLineM">−</button><span class="stepv" id="tblLineV">1</span><button class="p step" id="tblLineP">+</button></div>
   </div>
   <div class="prow" id="pageRow" style="display:none"><button class="p" id="pr-topage" style="width:100%">📄 Als eigene Seite anzeigen</button></div>
+  <div class="prow" id="clipRow" style="display:none"><button class="p" id="pr-clipsave" style="width:100%">🎬 Video speichern</button></div>
   <div class="prow" id="wheelRow" style="display:none;flex-direction:column;align-items:stretch;gap:6px;font-size:12px">
     <div style="display:flex;gap:6px;align-items:center"><b>Sektoren:</b><input id="whCount" type="number" min="2" max="12" style="width:52px"><span style="color:#888">Zahl &amp; Farbe je Sektor:</span></div>
     <div id="whList" style="display:flex;flex-direction:column;gap:4px;max-height:150px;overflow:auto"></div>
@@ -507,8 +509,10 @@
   <div class="body">
     <video id="camVideo" playsinline autoplay muted style="width:100%;border-radius:8px;background:#000;aspect-ratio:4/3;object-fit:cover;"></video>
     <div class="row"><button class="btn pri" id="camStart">Kamera starten</button><button class="btn" id="camSwitch">Wechseln</button></div>
-    <div class="row"><button class="btn" id="camSnap">Foto auf Tafel</button></div>
+    <div class="row"><button class="btn" id="camSnap">Foto auf Tafel</button><button class="btn" id="camClip">● Video auf Tafel</button></div>
+    <div class="toggle"><span>Video mit Ton<br><small style="color:#888">(fragt beim ersten Mal nach dem Mikrofon)</small></span><div class="sw2" id="camSound"></div></div>
     <div class="hint" id="camHint">Kamera geht nur über <b>https</b> (z. B. GitHub Pages) – Zugriff erlauben.</div>
+    <div class="hint">Der Videoclip wird als bewegliches Objekt auf die Tafel gelegt; zum Abspielen oben „Einbettung bedienen" antippen. Clips bleiben nur in dieser Sitzung erhalten (nicht im gespeicherten Projekt).</div>
   </div></div>
 <div class="win" id="win-score" style="left:70px;top:70px;min-width:290px;"><h3>Punktestand <span class="x" data-close="win-score">×</span></h3>
   <div class="body"><div id="scoreList"></div>
@@ -1247,6 +1251,7 @@ function refreshProps(){ const has=selection.length>0 && tool==='select';
     const fo=(selection.length===1&&selection[0].type==='embed'&&FONT_DEF[selection[0].etype]!==undefined)?selection[0]:null; $('fontRow').style.display=fo?'flex':'none';
     if(fo){ $('embFsV').textContent=(fo.data&&fo.data.fontSize)||FONT_DEF[fo.etype]; $('embBold').classList.toggle('on',!!(fo.data&&fo.data.fontBold)); $('embItalic').classList.toggle('on',!!(fo.data&&fo.data.fontItalic)); }
     const po=(selection.length===1&&selection[0].type==='embed'&&['verteilung','mess','ggbapp'].includes(selection[0].etype))?selection[0]:null; $('pageRow').style.display=po?'flex':'none';
+    const cl=(selection.length===1&&selection[0].type==='embed'&&selection[0].etype==='clip')?selection[0]:null; $('clipRow').style.display=cl?'flex':'none';
     const wo=(selection.length===1&&selection[0].type==='embed'&&selection[0].etype==='gluecksrad')?selection[0]:null; $('wheelRow').style.display=wo?'flex':'none';
     if(wo) buildWheelEditor(wo); }
   if(has) positionProps();
@@ -1272,6 +1277,12 @@ function buildWheelEditor(o){ o.data=o.data||{}; if(!Array.isArray(o.data.sector
 $('whCount').oninput=()=>{ const o=selection[0]; if(!o||o.etype!=='gluecksrad')return; const n=Math.max(2,Math.min(12,+$('whCount').value||6));
   const cur=o.data.sectors||[]; const next=[]; for(let i=0;i<n;i++) next.push(cur[i]||{label:String(i+1),color:WHPAL[i%WHPAL.length]});
   o.data.sectors=next; buildWheelEditor(o); postToEmbed(o,o.data); markDirty(); scheduleAutosave(); };
+/* Videoclip der Kamera als Datei sichern */
+$('pr-clipsave').onclick=()=>{ const o=singleSel(); if(!o||o.etype!=='clip')return;
+  if(!o.src){ toast('Dieser Clip ist nach dem Neuladen nicht mehr verfügbar'); return; }
+  const a=document.createElement('a'); a.href=o.src;
+  a.download='tafel-clip-'+new Date().toISOString().slice(0,16).replace(/[:T]/g,'-')+'.'+(o.ext||'webm'); a.click();
+  toast('Video gespeichert'); };
 $('pr-topage').onclick=()=>{ const o=singleSel(); if(!o||o.type!=='embed')return;
   page().objects=page().objects.filter(x=>x!==o);
   doc.pages.splice(doc.cur+1,0,newPage()); goPage(doc.cur+1);
@@ -1373,7 +1384,13 @@ function buildWebExtras(o,fr){
 function syncEmbeds(){ const p=page(), wanted=new Set();
   for(const o of p.objects){ if(o.type!=='embed')continue; wanted.add(o.id);
     let fr=embedEls.get(o.id);
-    if(!fr){ fr=document.createElement('iframe'); fr.setAttribute('allow','autoplay; fullscreen; clipboard-write'); fr.allowFullscreen=true; fr.dataset.oid=o.id; fr.src=o.src; fr.style.background=(o.etype==='html')?'transparent':'#fff'; fr.style.pointerEvents=embedInteract?'auto':'none'; embedLayer.appendChild(fr); embedEls.set(o.id,fr);
+    if(!fr){
+      if(o.etype==='clip'){                                    // Videoclip aus dem Kamera-Werkzeug
+        if(o.src){ fr=document.createElement('video'); fr.setAttribute('playsinline',''); fr.playsInline=true; fr.controls=true; fr.preload='metadata'; fr.src=o.src; if(!o.sound)fr.muted=true; }
+        else { fr=document.createElement('div'); fr.className='embedCard';
+          fr.innerHTML='<div class="ec-ico">🎬</div><div class="ec-sub">Videoclip</div><div class="ec-hint">Clips werden nicht mitgespeichert – nach dem Neuladen ist die Aufnahme weg.</div>'; }
+      } else { fr=document.createElement('iframe'); fr.setAttribute('allow','autoplay; fullscreen; clipboard-write'); fr.allowFullscreen=true; fr.src=o.src; fr.style.background=(o.etype==='html')?'transparent':'#fff'; }
+      fr.dataset.oid=o.id; fr.style.pointerEvents=embedInteract?'auto':'none'; embedLayer.appendChild(fr); embedEls.set(o.id,fr);
       if(o.etype==='html') buildWebExtras(o,fr); }
     const cx=o.x+o.w/2, cy=o.y+o.h/2, s=toScreen(cx,cy);
     const tf='translate('+s.x+'px,'+s.y+'px) rotate('+(o.rot||0)+'rad) scale('+scale+') translate('+(-o.w/2)+'px,'+(-o.h/2)+'px)';
@@ -1639,13 +1656,49 @@ $('recToggle').onclick=()=>{ if(mediaRec&&mediaRec.state==='recording') stopRec(
 /* ---- Kamera (Live-Bild) ---- */
 let camStream=null, camFacing='environment';
 $('w-cam').onclick=()=>toggleWin('win-cam');
-async function camStartFn(){ try{ if(camStream)camStream.getTracks().forEach(t=>t.stop());
+async function camStartFn(){ try{ camClipStop(); if(camStream)camStream.getTracks().forEach(t=>t.stop());
     camStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:camFacing},audio:false}); $('camVideo').srcObject=camStream; $('camStart').textContent='Neu starten'; $('camHint').style.display='none';
   }catch(e){ $('camHint').innerHTML='<b>Kein Kamerazugriff.</b> Bitte über https öffnen und Zugriff erlauben.'; } }
 $('camStart').onclick=camStartFn;
 $('camSwitch').onclick=()=>{ camFacing=camFacing==='environment'?'user':'environment'; if(camStream)camStartFn(); };
 $('camSnap').onclick=()=>{ const v=$('camVideo'); if(!v.videoWidth){toast('Erst Kamera starten');return;} const cc=document.createElement('canvas'); cc.width=v.videoWidth; cc.height=v.videoHeight; cc.getContext('2d').drawImage(v,0,0); placeImageObject(cc.toDataURL('image/jpeg',0.9)); toast('Foto auf die Tafel gelegt'); };
-function camStop(){ if(camStream){camStream.getTracks().forEach(t=>t.stop());camStream=null;$('camVideo').srcObject=null;$('camStart').textContent='Kamera starten';} }
+
+/* ---- Videoclip der Kamera auf die Tafel legen (wahlweise mit Ton) ---- */
+let camWithSound=false, camRec=null, camChunks=[], camMicStream=null, camRecTimer=null, camRecStart=0;
+$('camSound').onclick=()=>{ camWithSound=!camWithSound; $('camSound').classList.toggle('on',camWithSound); };
+const camRecording=()=>!!(camRec&&camRec.state==='recording');
+function camClipUI(){ const b=$('camClip');
+  if(camRecording()){ const s=Math.floor((performance.now()-camRecStart)/1000);
+    b.textContent='■ Aufnahme beenden ('+String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')+')'; b.classList.add('dang'); }
+  else { b.textContent='● Video auf Tafel'; b.classList.remove('dang'); } }
+async function camClipStart(){
+  if(!camStream||!$('camVideo').videoWidth){ toast('Erst Kamera starten'); return; }
+  if(!window.MediaRecorder){ toast('Videoaufnahme wird von diesem Browser nicht unterstützt'); return; }
+  let audio=[];
+  if(camWithSound){ const at=camStream.getAudioTracks();
+    if(at.length) audio=at;
+    else { try{ camMicStream=await navigator.mediaDevices.getUserMedia({audio:true}); audio=camMicStream.getAudioTracks(); }catch(e){ toast('Ohne Ton (kein Mikrofonzugriff)'); } } }
+  let mime=''; ['video/mp4;codecs=avc1.42E01E,mp4a.40.2','video/mp4;codecs=avc1','video/mp4;codecs=h264','video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm','video/mp4'].forEach(m=>{ if(!mime && MediaRecorder.isTypeSupported(m)) mime=m; });
+  try{ const st=new MediaStream([...camStream.getVideoTracks(),...audio]);
+    camChunks=[]; camRec=new MediaRecorder(st, mime?{mimeType:mime}:undefined);
+    camRec.ondataavailable=e=>{ if(e.data&&e.data.size) camChunks.push(e.data); };
+    camRec.onstop=()=>camClipFinish(camRec.mimeType||mime, audio.length>0);
+    camRec.start(1000); camRecStart=performance.now();
+  }catch(err){ toast('Aufnahme-Fehler: '+err.message); camRec=null; return; }
+  camClipUI(); camRecTimer=setInterval(camClipUI,500); }
+function camClipStop(){ try{ if(camRec&&camRec.state!=='inactive') camRec.stop(); }catch(e){}
+  clearInterval(camRecTimer); camRecTimer=null;
+  if(camMicStream){ camMicStream.getTracks().forEach(t=>t.stop()); camMicStream=null; } }
+function camClipFinish(mime, hadSound){ camRec=null; camClipUI();
+  if(!camChunks.length){ toast('Keine Aufnahme aufgezeichnet'); return; }
+  const type=(mime||'video/webm').split(';')[0], ext=type.includes('mp4')?'mp4':'webm';
+  const blob=new Blob(camChunks,{type}); camChunks=[];
+  const v=$('camVideo'), ar=(v.videoWidth?v.videoHeight/v.videoWidth:0.75);
+  addEmbedObject('clip', URL.createObjectURL(blob), 'Videoclip', undefined, false);
+  const o=selection[0]; if(o&&o.etype==='clip'){ const h0=o.h; o.h=o.w*ar; o.y+=(h0-o.h)/2; o.sound=!!hadSound; o.ext=ext; markDirty(); }
+  toast((hadSound?'Videoclip (mit Ton) auf der Tafel':'Videoclip auf der Tafel')+' – Speichern über das Kontextmenü'); }
+$('camClip').onclick=()=>{ if(camRecording()) camClipStop(); else camClipStart(); };
+function camStop(){ camClipStop(); if(camStream){camStream.getTracks().forEach(t=>t.stop());camStream=null;$('camVideo').srcObject=null;$('camStart').textContent='Kamera starten';} }
 $('win-cam').querySelector('.x').addEventListener('click',camStop);
 
 /* ---- Punktestand (Score-Board) ---- */
@@ -1869,7 +1922,7 @@ function exportPDF(){ if(!window.jspdf){toast('PDF-Bibliothek fehlt');return;} s
   }catch(err){ toast('Export-Fehler: '+err.message); } showBusy(false); },50); }
 
 /* ============ Speichern / Laden ============ */
-function stripObj(o){ const c={...o}; delete c._img; delete c._hidden; delete c._lock; delete c._prev; delete c._guide; delete c._straight; return c; }
+function stripObj(o){ const c={...o}; delete c._img; delete c._hidden; delete c._lock; delete c._prev; delete c._guide; delete c._straight; if(c.type==='embed'&&c.etype==='clip')c.src=''; return c; }
 function serialize(){ return JSON.stringify({v:4,name:doc.name,settings:doc.settings,cur:doc.cur,students:doc.students||[],
   pages:doc.pages.map(p=>({objects:p.objects.map(stripObj),bg:p.bg,embed:p.embed,name:p.name||null,bgColor:p.bgColor||null,pattern:p.pattern||null}))}); }
 function deserialize(str){ const o=JSON.parse(str); const os=o.settings||{}; doc.settings=Object.assign({bgColor:'white',pattern:'none',penOnly:true,usePressure:true,fingerSelect:false},os); doc.settings.patSize=Object.assign({},os.patSize||{});

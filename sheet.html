@@ -14,7 +14,7 @@
   #wrap{position:absolute;top:44px;left:0;right:0;bottom:0;overflow:auto;}
   table{border-collapse:collapse;}
   th,td{border:1px solid #e2e7ef;padding:0;height:28px;}
-  th{background:#f7f9fc;color:#5b6472;font-weight:600;font-size:calc(var(--fs,14px)*0.86);position:sticky;z-index:2;text-align:center;min-width:82px;}
+  th{background:#f7f9fc;color:#5b6472;font-weight:var(--fwm,600);font-size:calc(var(--fs,14px)*0.86);position:sticky;z-index:2;text-align:center;min-width:82px;}
   thead th{top:0;}
   tbody th{left:0;min-width:40px;width:40px;background:#f7f9fc;}
   td input{width:100%;height:100%;border:0;outline:0;padding:2px 6px;font-size:var(--fs,14px);font-weight:var(--fw,400);font-style:var(--fi,normal);font-family:inherit;background:transparent;color:inherit;}
@@ -46,7 +46,7 @@
 <body>
 <div id="bar">
   <span class="cellref" id="cellref">A1</span>
-  <input id="fx" placeholder="Wert oder =Formel (z. B. =A1+B2*2, =sqrt(2), =zufallszahl(1;6))">
+  <input id="fx" placeholder="Wert oder =Formel (z. B. =A1+B2*2, =summe(A1:A5), =zählenwenn(A1:A9;&quot;&gt;3&quot;))">
   <button class="cbtn" id="fxGo" title="Eingabe übernehmen (wie Enter)">✓</button>
   <button class="cbtn on" id="btnTouch" title="Finger: Zellen auswählen/ausfüllen  ⇄  Tabelle scrollen">👆 Auswählen</button>
   <button class="cbtn" id="btnImport" title="Daten aus CSV- oder Excel-Datei (.xlsx) importieren">📥 Import</button>
@@ -85,8 +85,9 @@ function tokenize(str){ const t=[]; let i=0;
   while(i<str.length){ const c=str[i];
     if(c===' '){i++;continue;}
     if('+-*/^(),:;'.includes(c)){ t.push({k:c}); i++; continue; }
+    if(c==='"'){ let j=i+1, v=''; while(j<str.length&&str[j]!=='"'){ v+=str[j]; j++; } t.push({k:'str',v}); i=j+1; continue; }   // Kriterium wie ">3" oder "ja"
     if(/[0-9.]/.test(c)){ let j=i; while(j<str.length&&/[0-9.]/.test(str[j]))j++; t.push({k:'num',v:parseFloat(str.slice(i,j))}); i=j; continue; }
-    if(/[A-Za-z$]/.test(c)){ let j=i; while(j<str.length&&/[A-Za-z0-9$]/.test(str[j]))j++; const s=str.slice(i,j); i=j;
+    if(/[A-Za-zÄÖÜäöüß$]/.test(c)){ let j=i; while(j<str.length&&/[A-Za-zÄÖÜäöüß0-9$]/.test(str[j]))j++; const s=str.slice(i,j); i=j;
       if(/^\$?[A-Za-z]{1,2}\$?[0-9]+$/.test(s)) t.push({k:'ref',v:s.replace(/\$/g,'').toUpperCase()});
       else t.push({k:'fn',v:s.toLowerCase()}); continue; }
     throw new Error('token'); }
@@ -100,6 +101,24 @@ function evalFormula(src, resolve){ const t=tokenize(src); let p=0;
   function rangeVals(a,b){ const ac=colIdx(a.match(/[A-Z]+/)[0]),ar=+a.match(/[0-9]+/)[0],bc=colIdx(b.match(/[A-Z]+/)[0]),br=+b.match(/[0-9]+/)[0];
     const c0=Math.min(ac,bc),c1=Math.max(ac,bc),r0=Math.min(ar,br),r1=Math.max(ar,br),out=[];
     for(let c=c0;c<=c1;c++)for(let r=r0;r<=r1;r++) out.push(resolve(colName(c)+r)); return out; }
+  function rangeCells(a,b){ const ac=colIdx(a.match(/[A-Z]+/)[0]),ar=+a.match(/[0-9]+/)[0],bc=colIdx(b.match(/[A-Z]+/)[0]),br=+b.match(/[0-9]+/)[0];
+    const c0=Math.min(ac,bc),c1=Math.max(ac,bc),r0=Math.min(ar,br),r1=Math.max(ar,br),out=[];
+    for(let c=c0;c<=c1;c++)for(let r=r0;r<=r1;r++) out.push(colName(c)+r); return out; }
+  /* ZÄHLENWENN(Bereich;Kriterium) – Kriterium: Zahl, Text ("ja") oder Vergleich (">3", "<=2", "<>0") */
+  function countIf(cells, crit){ let op='=', cmp=crit;
+    if(typeof crit==='string'){ const m=crit.trim().match(/^(>=|<=|<>|=|>|<)?\s*([\s\S]*)$/); op=m[1]||'='; cmp=m[2]; }
+    const cmpNum=Number(String(cmp).replace(',','.')), critIsNum=String(cmp).trim()!==''&&!isNaN(cmpNum);
+    let n=0;
+    for(const cell of cells){ const raw=(data[cell]||'').trim(); if(raw==='')continue;
+      const isFormula=raw[0]==='=', cellNum=isFormula?resolve(cell):Number(raw.replace(',','.'));
+      const cellIsNum=isFormula||!isNaN(cellNum);
+      let ok=false;
+      if(critIsNum&&cellIsNum){ const d=cellNum-cmpNum;
+        ok = op==='=' ? d===0 : op==='<>' ? d!==0 : op==='>' ? d>0 : op==='<' ? d<0 : op==='>=' ? d>=0 : d<=0; }
+      else { const a=(isFormula?String(cellNum):raw).trim().toLowerCase(), b=String(cmp).trim().toLowerCase();
+        ok = op==='=' ? a===b : op==='<>' ? a!==b : false; }          // Text nur auf (Un-)Gleichheit prüfen
+      if(ok)n++; }
+    return n; }
   function argList(){ const out=[];
     do{ if(peek()&&peek().k==='ref'&&t[p+1]&&t[p+1].k===':'){ const a=next().v; next(); const b=next().v; out.push(...rangeVals(a,b)); }
         else out.push(expr());
@@ -124,8 +143,16 @@ function evalFormula(src, resolve){ const t=tokenize(src); let p=0;
     if(tk.k==='num'){ next(); return tk.v; }
     if(tk.k==='ref'){ next(); return resolve(tk.v); }
     if(tk.k==='('){ next(); const v=expr(); if(peek()&&peek().k===')')next(); return v; }
+    if(tk.k==='str'){ next(); return tk.v; }
     if(tk.k==='fn'){ next(); const name=tk.v;
       const consts={pi:Math.PI,e:Math.E}; if(name in consts && (!peek()||peek().k!=='(')) return consts[name];
+      if(name==='zählenwenn'||name==='zaehlenwenn'||name==='countif'){        // braucht die Zellen selbst, nicht nur ihre Zahlenwerte
+        let cells=[], crit=null;
+        if(peek()&&peek().k==='('){ next();
+          if(peek()&&peek().k==='ref'){ const a=next().v; let b=a; if(peek()&&peek().k===':'){ next(); b=next().v; } cells=rangeCells(a,b); }
+          if(peek()&&(peek().k===','||peek().k===';')){ next(); crit=expr(); }
+          if(peek()&&peek().k===')')next(); }
+        return countIf(cells,crit); }
       let a=[]; if(peek()&&peek().k==='('){ next(); if(peek()&&peek().k!==')') a=argList(); if(peek()&&peek().k===')')next(); }
       return callFn(name,a); }
     throw new Error('primary'); }
@@ -220,7 +247,7 @@ function paste(target){ let raw=copyBuf.raw; if(raw[0]==='=') raw='='+adjustRefs
 
 /* ---------- Sync mit Tafel ---------- */
 function sync(){ try{ parent.postMessage({type:'embed-data',data},'*'); }catch(e){} }
-function applyFont(){ const r=document.documentElement.style; r.setProperty('--fs',(+data.fontSize||14)+'px'); r.setProperty('--fw',data.fontBold?'700':'400'); r.setProperty('--fi',data.fontItalic?'italic':'normal'); }
+function applyFont(){ const r=document.documentElement.style; r.setProperty('--fs',(+data.fontSize||14)+'px'); r.setProperty('--fw',data.fontBold?'700':'400'); r.setProperty('--fwh',data.fontBold?'900':'700'); r.setProperty('--fwm',data.fontBold?'800':'600'); r.setProperty('--fi',data.fontItalic?'italic':'normal'); }
 addEventListener('message',e=>{ if(e.data&&e.data.type==='embed-data'){ data=e.data.data||{}; applyFont(); recompute(); } });
 function fxCommit(){ const cell=active, val=document.getElementById('fx').value;      // Wert direkt übernehmen (ohne fragilen Fokus/Blur-Umweg)
   if(val==='') delete data[cell]; else data[cell]=val; recompute(); sync();
