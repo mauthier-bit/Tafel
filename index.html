@@ -87,7 +87,7 @@
   .pp-inner{background:var(--panel);color:var(--panelText);border-radius:16px;box-shadow:var(--shadow);max-width:90vw;max-height:86vh;display:flex;flex-direction:column;overflow:hidden;}
   .pp-head{padding:12px 16px;font-size:16px;font-weight:700;display:flex;justify-content:space-between;align-items:center;background:#f1f3f7;}
   .pp-head .x{cursor:pointer;font-size:20px;padding:0 6px;color:#666;}
-  .pp-grid{padding:14px;display:grid;grid-template-columns:repeat(auto-fill,170px);justify-content:center;gap:12px;overflow-y:auto;max-height:calc(86vh - 52px);align-content:start;}
+  .pp-grid{padding:14px;display:grid;grid-template-columns:repeat(auto-fill,170px);justify-content:center;gap:12px;overflow-y:auto;max-height:calc(86vh - 52px);align-content:start;touch-action:pan-y;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;}
   .pp-thumb{border:2px solid #d5dbe6;border-radius:10px;overflow:hidden;cursor:pointer;background:#fff;position:relative;touch-action:none;}
   .pp-thumb.cur{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent);}
   .pp-thumb.pm-drag{opacity:.55;outline:2px dashed var(--accent);outline-offset:-2px;}
@@ -312,7 +312,6 @@
     <div class="sep"></div>
     <button class="tbtn" id="w-insert" title="Einfügen (PDF/Bild/Video/HTML/GeoGebra)"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M12 8v8M8 12h8"/></svg></button>
   </div>
-  <button class="barmin" id="mainMin" title="Leiste ein-/ausklappen"><svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>
 </div>
 
 <!-- Stift-/Formen-Popover -->
@@ -355,7 +354,7 @@
 
 <!-- ===== Seiten-Leiste (unten rechts) ===== -->
 <div id="pagebar">
-  <button class="tbtn" id="pageMin" title="Leiste ein-/ausklappen"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button>
+  <button class="tbtn" id="pageMin" title="Leiste ein-/ausklappen"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
   <button class="tbtn pmin pnav" id="p-prev" title="vorige Seite"><svg viewBox="0 0 24 24"><path d="M16 5 8 12l8 7Z"/></svg></button>
   <span id="pageInfo" title="Seitenübersicht (tippen)">1 / 1</span>
   <button class="tbtn pmin pnav" id="p-next" title="nächste Seite"><svg viewBox="0 0 24 24"><path d="M8 5l8 7-8 7Z"/></svg></button>
@@ -1350,8 +1349,6 @@ addEventListener('message',e=>{ if(!e.data)return; let obj=null; for(const[id,fr
   else if(e.data.type==='embed-data'){ obj.data=e.data.data; scheduleAutosave(); } });
 
 /* ============ Leisten minimieren ============ */
-function mainChev(min){ $('mainMin').querySelector('svg').style.transform=min?'rotate(180deg)':''; }
-$('mainMin').onclick=()=>{ $('mainbar').classList.toggle('min'); mainChev($('mainbar').classList.contains('min')); placePopovers(); saveUI(); };
 function pageChev(min){ const s=$('pageMin').querySelector('svg'); s.style.transform=min?'rotate(180deg)':''; }
 $('pageMin').onclick=()=>{ $('pagebar').classList.toggle('min'); pageChev($('pagebar').classList.contains('min')); saveUI(); positionAnnoToggle(); };
 
@@ -1437,6 +1434,8 @@ document.addEventListener('pointerup', ()=>{ clearTimeout(pmLongTimer);
   if(pmDragging) endThumbDrag();
   else if(pmScrolling){ pmSuppressClick=true; setTimeout(()=>pmSuppressClick=false,400); }
   pmStart=null; pmScrolling=false; });
+/* Auch Streichen in Lücken/Rändern des Grids scrollt per JS (iPad: body hat touch-action:none, natives Touch-Scrollen greift dort nicht) */
+$('ppGrid').addEventListener('pointerdown', e=>{ if(e.target.closest('.pp-thumb'))return; pmStart={x:e.clientX,y:e.clientY}; pmLastY=e.clientY; pmScrolling=false; clearTimeout(pmLongTimer); });
 function fitPreviewHeight(){ const grid=$('ppGrid'), head=document.querySelector('.pp-head'); if(!grid||!head)return;
   grid.style.maxHeight=(Math.round(innerHeight*0.86)-head.offsetHeight)+'px'; }   // exakte Scroll-Höhe (statt fester Schätzung)
 function openPagePreview(){ closePageMenu(); ensureAllImages(); renderThumbs(); $('pagePreview').classList.add('show'); fitPreviewHeight(); setTimeout(()=>{ if($('pagePreview').classList.contains('show')){ renderThumbs(); fitPreviewHeight(); } },320); }
@@ -1447,8 +1446,8 @@ $('pageMenu').addEventListener('pointerdown',e=>e.stopPropagation());
 document.addEventListener('pointerdown',e=>{ if($('pageMenu').classList.contains('show') && !e.target.closest('#pageMenu') && !e.target.closest('.pmBtn')) closePageMenu(); }, true);
 $('setMin').onclick=()=>{ $('settingsbar').classList.toggle('min'); rotateChev('setMin',$('settingsbar').classList.contains('min'),true); saveUI(); positionAnnoToggle(); };
 function rotateChev(id,min){ $(id).querySelector('svg').style.transform=min?'scaleX(-1)':''; }
-function saveUI(){ try{ localStorage.setItem('tafel_ui',JSON.stringify({main:$('mainbar').classList.contains('min'),page:$('pagebar').classList.contains('min'),set:$('settingsbar').classList.contains('min'),side:mainbarSide})); }catch(e){} }
-function restoreUI(){ try{ const u=JSON.parse(localStorage.getItem('tafel_ui')||'{}'); if(u.main){$('mainbar').classList.add('min');mainChev(true);} if(u.page){$('pagebar').classList.add('min');pageChev(true);} if(u.set){$('settingsbar').classList.add('min');rotateChev('setMin',true);} if(u.side==='right')mainbarSide='right'; applyBarsState(); }catch(e){} }
+function saveUI(){ try{ localStorage.setItem('tafel_ui',JSON.stringify({page:$('pagebar').classList.contains('min'),set:$('settingsbar').classList.contains('min'),side:mainbarSide})); }catch(e){} }
+function restoreUI(){ try{ const u=JSON.parse(localStorage.getItem('tafel_ui')||'{}'); if(u.page){$('pagebar').classList.add('min');pageChev(true);} if(u.set){$('settingsbar').classList.add('min');rotateChev('setMin',true);} if(u.side==='right')mainbarSide='right'; applyBarsState(); }catch(e){} }
 
 /* ---- Leisten per Wischgeste weg/hervor (Präsentationsmodus) ---- */
 function applyBarsState(){ document.body.classList.toggle('bars-hidden',barsHidden); document.body.classList.toggle('mainbar-right',mainbarSide==='right'); positionAnnoToggle(); placePopovers(); }

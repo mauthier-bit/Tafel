@@ -190,7 +190,7 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
    Werkzeuge (Objekte auswählen/verschieben + Zeit, Klasse & Interaktion, Lärmampel, QR,
    Namensziehung, Taschenrechner, Einfügen …), der **Laserpointer** und der **Scheinwerfer**.
    Ein **Trennstrich** trennt diese Buttons vom jeweiligen Werkzeugmenü (das bei Bedarf **scrollt**).
-   Unten der Minimieren-Knopf. Die Leiste beginnt **unter der oberen Einstellungs-Leiste** und
+   Die Leiste beginnt **unter der oberen Einstellungs-Leiste** und
    wächst nach unten. Verwandte Werkzeuge sind zur Übersicht in **Gruppen-Popovers**
    zusammengefasst (wie „Formen"): der **Formen**-Button enthält Linie/Rechteck/Ellipse/Dreiecke/Pfeil
    **und** Kreis, Gerade, Zirkel, Koordinatensystem; ein **Zeit**-Button (Uhr, Stoppuhr, Timer);
