@@ -79,6 +79,11 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   (Kein / Karo / Linien / Punkte / **Notenlinien** / **Dreiecke** – gleichseitiges 60°-Raster).
   Die **Größe des Musters** ist direkt darunter einstellbar (＋/− und „Standard"): Kästchenweite,
   Linien-/Punktabstand, Notenlinienabstand bzw. Seitenlänge der Dreiecke – je Musterart gespeichert.
+- **Erscheinung der Leisten** (Einstellungen → „Leisten"): **Dunkel** (Standard) oder **Hell** – bei Hell
+  cremeweiße Knöpfe mit schwarzen Symbolen und Beschriftungen. Darunter stehen je Variante mehrere
+  **Farbtöne** zur Wahl: dunkel = Graphit, Dunkelblau, dunkles Weinrot, Dunkelbraun, Dunkelgrün;
+  hell = Cremeweiß, Hellblau, Hellgelb, Beige, Hellgrau. Gilt für alle drei Leisten samt Stift-/Formen-
+  Popovers; jede Variante merkt sich ihren Farbton. Die Einstellung gilt geräteweit (projektübergreifend).
   Bei dunklem Hintergrund schreibt der Stift automatisch weiß.
 - **Text:** Textfelder anlegen; **Doppeltipp** auf einen Text zum Nachbearbeiten. Bei ausgewähltem
   Text bietet das **Kontextmenü** zusätzlich **Fett, Kursiv, Aufzählung (Liste)** und eine
