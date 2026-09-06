@@ -72,6 +72,11 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   H.264-**MP4**, sonst WEBM) und speicherbar. Während der Aufnahme **verschwindet das Fenster**;
   oben in der Mitte bleibt nur ein rotes **„■ Aufnahme stoppen"** mit laufender Zeit. Die Statuszeile
   sagt, ob **mit Ton** aufgenommen wird (bei verweigertem Mikrofon läuft die Aufnahme stumm weiter).
+- **Screenshot** (Werkzeug, direkt vor der Aufnahme): nimmt einen **Ausschnitt der Tafelfläche** auf. Vorher
+  wählt man im Fenster das **Ziel** (auf die Tafel legen · in die Zwischenablage · als PNG
+  speichern) und die **Form**: **Rechteck, Oval oder Lasso**. Danach den Bereich ziehen – der Rest des
+  Bildschirms wird abgedunkelt; „Abbrechen" (oder Esc) bricht ab. Bei Oval und Lasso ist alles außerhalb
+  der Form transparent. Leisten und eingebettete Web-/Video-Seiten sind nicht im Bild.
 - **Projekte / Klassen** (Einstellungen): mehrere Projekte (z. B. „Mathe 6a", „Physik 11c")
   anlegen, **umbenennen**, dazwischen **wechseln** und **schließen**. Jedes Projekt hat eigene
   Seiten **und** eine eigene Klassenliste. Alles wird automatisch im Browser gesichert.
