@@ -72,6 +72,9 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   H.264-**MP4**, sonst WEBM) und speicherbar. Während der Aufnahme **verschwindet das Fenster**;
   oben in der Mitte bleibt nur ein rotes **„■ Aufnahme stoppen"** mit laufender Zeit. Die Statuszeile
   sagt, ob **mit Ton** aufgenommen wird (bei verweigertem Mikrofon läuft die Aufnahme stumm weiter).
+  Nach dem Stoppen prüft die Tafel die fertige Datei und schreibt in die Statuszeile, ob wirklich eine
+  **Tonspur** drin ist – steht dort „mit Ton" und man hört trotzdem nichts, liegt es am Gerät
+  (iPad: Lautstärke bzw. Stummschalter im Kontrollzentrum).
 - **Screenshot** (Werkzeug, direkt vor der Aufnahme): nimmt einen **Ausschnitt der Tafelfläche** auf. Vorher
   wählt man im Fenster das **Ziel** (auf die Tafel legen · in die Zwischenablage · als PNG
   speichern) und die **Form**: **Rechteck, Oval oder Lasso**. Danach den Bereich ziehen – der Rest des
@@ -203,7 +206,9 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   (werden bei vielen Seiten nicht gequetscht) – bei Bedarf wird die Übersicht **scrollbar**.
   **Bedienung der Miniaturen:** **antippen** springt zur Seite, **streichen** scrollt die Übersicht
   (auch direkt auf einer Miniatur), **lange gedrückt halten** (ca. eine halbe Sekunde) und ziehen
-  ordnet die Seiten neu.
+  ordnet die Seiten neu. Zusätzlich gibt es oben rechts **▲/▼-Knöpfe** zum seitenweisen Scrollen
+  (sie erscheinen nur, wenn es etwas zu scrollen gibt). Die Höhe richtet sich nach dem **wirklich
+  sichtbaren** Bereich, damit am iPad nichts hinter den Safari-Leisten verschwindet.
 - **QR-Code-Generator**
 - **Klassenlisten:** pro Projekt – **Namen direkt eintippen** (ein Name pro Zeile im Einstellungen-
   Fenster) oder **CSV importieren** (Name in der 1. Spalte); Button „Zufälliger Name" zieht per Zufall
