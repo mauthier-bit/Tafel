@@ -1240,8 +1240,11 @@ function layerMove(mode){ const p=page(), objs=p.objects, isSel=o=>selection.inc
   layerReorderEmbeds(); markDirty(); scheduleAutosave(); }
 $('pr-fwd').onclick=()=>layerMove('fwd'); $('pr-bwd').onclick=()=>layerMove('bwd');
 $('pr-front').onclick=()=>layerMove('front'); $('pr-back').onclick=()=>layerMove('back');
-$('pr-group').onclick=()=>{ if(selection.length<2)return; const g=uid(); selection.forEach(o=>o.groupId=g); scheduleAutosave(); markDirty(); };
-$('pr-ungroup').onclick=()=>{ selection.forEach(o=>o.groupId=null); scheduleAutosave(); markDirty(); };
+$('pr-group').onclick=()=>{ if(selection.length<2){ toast('Mindestens 2 Objekte zum Gruppieren'); return; }
+  const g=uid(); selection.forEach(o=>o.groupId=g); toast('Gruppiert'); scheduleAutosave(); markDirty(); };
+$('pr-ungroup').onclick=()=>{ if(!selection.some(o=>o.groupId)){ toast('Keine Gruppe ausgewählt'); return; }
+  selection.forEach(o=>o.groupId=null); selection=[]; refreshProps();   // Auswahl aufheben, sonst hängen die Objekte beim nächsten Ziehen weiter zusammen
+  toast('Gruppierung gelöst'); scheduleAutosave(); markDirty(); };
 $('pr-del').onclick=()=>{ page().objects=page().objects.filter(o=>!selection.includes(o)); selection=[]; refreshProps(); refreshEmbedUI(); scheduleAutosave(); markDirty(); };
 $('pr-dup').onclick=()=>{ const copies=selection.map(o=>{const c=JSON.parse(JSON.stringify(stripObj(o)));c.id=uid();
     if(c.type==='stroke')c.points.forEach(p=>{p.x+=20;p.y+=20;});else if(c.type==='shape'){c.x0+=20;c.x1+=20;c.y0+=20;c.y1+=20;}else{c.x+=20;c.y+=20;} return c;});
@@ -1574,7 +1577,7 @@ function pageAction(a, idx, anchor){ const p=doc.pages[idx], curPage=doc.pages[d
 let pmDragging=false, pmDragIdx=-1, pmLongTimer=null, pmStart=null, pmSuppressClick=false, pmScrolling=false, pmLastY=0;
 function attachThumbDrag(cell, idx){ cell.addEventListener('pointerdown', e=>{ if(e.target.closest('.pmBtn')||e.target.closest('.pmDel'))return;
   pmStart={x:e.clientX,y:e.clientY}; pmLastY=e.clientY; pmScrolling=false; clearTimeout(pmLongTimer);
-  pmLongTimer=setTimeout(()=>{ startThumbDrag(cell); }, 320); }); }
+  pmLongTimer=setTimeout(()=>{ startThumbDrag(cell); }, 500); }); }
 function startThumbDrag(cell){ if(pmScrolling)return; pmDragging=true; pmStart=null; closePageMenu(); cell.classList.add('pm-drag'); $('ppGrid').classList.add('reordering'); try{navigator.vibrate&&navigator.vibrate(12);}catch(_){} }
 function onThumbDragMove(e){ const grid=$('ppGrid'); const drag=grid.querySelector('.pm-drag'); if(!drag)return;
   const el=document.elementFromPoint(e.clientX,e.clientY); const over=el&&el.closest?el.closest('.pp-thumb'):null;
@@ -1587,13 +1590,24 @@ function endThumbDrag(){ const grid=$('ppGrid'); const drag=grid.querySelector('
   refreshPage(); renderThumbs(); scheduleAutosave(); }
 document.addEventListener('pointermove', e=>{
   if(pmDragging){ e.preventDefault(); onThumbDragMove(e); return; }
-  if(pmStart && !pmScrolling && Math.hypot(e.clientX-pmStart.x,e.clientY-pmStart.y)>12){ clearTimeout(pmLongTimer); pmScrolling=true; }   // Streichen = scrollen (Miniatur hat touch-action:none, daher selbst scrollen)
+  if(ppTouchY!=null)return;                                                   // Finger-Scrollen läuft über die Touch-Handler unten
+  if(pmStart && !pmScrolling && Math.hypot(e.clientX-pmStart.x,e.clientY-pmStart.y)>8){ clearTimeout(pmLongTimer); pmScrolling=true; }   // Streichen = scrollen (Miniatur hat touch-action:none, daher selbst scrollen)
   if(pmScrolling){ $('ppGrid').scrollTop-=(e.clientY-pmLastY); pmLastY=e.clientY; e.preventDefault(); }
 }, {passive:false});
 document.addEventListener('pointerup', ()=>{ clearTimeout(pmLongTimer);
   if(pmDragging) endThumbDrag();
   else if(pmScrolling){ pmSuppressClick=true; setTimeout(()=>pmSuppressClick=false,400); }
   pmStart=null; pmScrolling=false; });
+/* iPad: Scrollen der Vorschau direkt über Touch-Events – funktioniert auch auf den Miniaturen (touch-action:none) */
+let ppTouchY=null;
+$('ppGrid').addEventListener('touchstart',e=>{ if(e.touches.length!==1){ ppTouchY=null; return; } ppTouchY=e.touches[0].clientY; },{passive:true});
+$('ppGrid').addEventListener('touchmove',e=>{ if(ppTouchY==null||pmDragging)return;
+  const y=e.touches[0].clientY, dy=y-ppTouchY;
+  if(!pmScrolling && Math.abs(dy)<6) return;                                   // kleine Wackler ignorieren (Tippen/Langdruck)
+  pmScrolling=true; clearTimeout(pmLongTimer); pmStart=null;
+  $('ppGrid').scrollTop-=dy; ppTouchY=y; if(e.cancelable)e.preventDefault(); },{passive:false});
+['touchend','touchcancel'].forEach(ev=>$('ppGrid').addEventListener(ev,()=>{ ppTouchY=null;
+  if(pmScrolling){ pmSuppressClick=true; setTimeout(()=>pmSuppressClick=false,400); pmScrolling=false; } },{passive:true}));
 /* Auch Streichen in Lücken/Rändern des Grids scrollt per JS (iPad: body hat touch-action:none, natives Touch-Scrollen greift dort nicht) */
 $('ppGrid').addEventListener('pointerdown', e=>{ if(e.target.closest('.pp-thumb'))return; pmStart={x:e.clientX,y:e.clientY}; pmLastY=e.clientY; pmScrolling=false; clearTimeout(pmLongTimer); });
 function fitPreviewHeight(){ const grid=$('ppGrid'), head=document.querySelector('.pp-head'); if(!grid||!head)return;

@@ -139,7 +139,8 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   **mit dem Finger** Objekte antippen und verschieben; eine **Zwei-Finger-Geste auf einem
   ausgewählten Objekt** skaliert (aufziehen/zusammenziehen) und **dreht** es. Ist der Schalter aus,
   bleibt alles wie gewohnt (Finger schiebt/zoomt nur das Blatt, Auswählen nur mit dem Stift).
-- **Gruppieren / Duplizieren / Löschen** im Kontext-Panel
+- **Gruppieren / Lösen / Duplizieren / Löschen** im Kontext-Panel („Lösen" hebt die Gruppe auf und
+  die Auswahl auf, damit die Objekte danach wirklich einzeln beweglich sind)
 - **Laserpointer** und **Scheinwerferspot**
 - **Zoom/Verschieben:** zwei Finger zoomen, ein Finger schiebt (Pencil schreibt weiter). Die Seite
   ist **oben und links fest begrenzt** (Ursprung oben-links) und **nach unten und rechts unbegrenzt** –
@@ -200,8 +201,9 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   und oben links ein **rotes ×** zum **Löschen** der Seite
   (der Seitenname erscheint auch in der Kopfzeile). Die Miniaturen behalten immer **dieselbe Größe**
   (werden bei vielen Seiten nicht gequetscht) – bei Bedarf wird die Übersicht **scrollbar**.
-  **Bedienung der Miniaturen:** **antippen** springt zur Seite, **streichen** scrollt die Übersicht,
-  **lange gedrückt halten** und ziehen ordnet die Seiten neu.
+  **Bedienung der Miniaturen:** **antippen** springt zur Seite, **streichen** scrollt die Übersicht
+  (auch direkt auf einer Miniatur), **lange gedrückt halten** (ca. eine halbe Sekunde) und ziehen
+  ordnet die Seiten neu.
 - **QR-Code-Generator**
 - **Klassenlisten:** pro Projekt – **Namen direkt eintippen** (ein Name pro Zeile im Einstellungen-
   Fenster) oder **CSV importieren** (Name in der 1. Spalte); Button „Zufälliger Name" zieht per Zufall
