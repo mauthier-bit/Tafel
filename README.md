@@ -26,6 +26,11 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   **Gitterlinien** und **Achsenbeschriftung** ein-/ausschalten (Gitter standardmäßig **aus** – meist
   reicht das Karogitter des Hintergrunds) sowie die **Schriftgröße der Beschriftung** (＋/−). Achsen
   sind kräftig mit großen Pfeilspitzen und gut lesbaren Beschriftungen.
+- **Zahlenstrahl** (im Formen-Popover): waagerechter Strahl mit Pfeilspitze, Teilstrichen und Zahlen
+  als bewegliches Objekt. Im Kontextmenü einstellbar: **Beginn, Ende, Beschriftungsintervall**
+  (0,1 bis 1000), **Zahlen an/aus** sowie **Schriftgröße, Fett und Kursiv**; **Farbe und Liniendicke**
+  kommen aus den Farbpunkten bzw. „Dicke/Größe" oben im selben Kontextmenü. Wird die Teilung sehr fein,
+  bleiben alle Striche stehen, aber nur jede n-te Zahl wird beschriftet, damit nichts überlappt.
 - **Lineal** und **Geodreieck:** über ihren Knopf einblenden – sie **bleiben aktiv**, während der
   Stift zeichnet. Mit dem Finger am **unteren** Teil verschieben / am Griff (Ecke bzw. Spitze)
   drehen; mit dem Stift **an der Kante** eine saubere gerade Linie ziehen. Das Geodreieck hat
@@ -64,7 +69,9 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
 - **Wissenschaftlicher Taschenrechner** (Werkzeug): + − × ÷, Klammern, `xʸ`, √, sin/cos/tan,
   ln/log, π, e, umschaltbar **DEG/RAD**
 - **Aufnahme** (Werkzeug): nimmt die Tafelfläche **mit Ton** auf, direkt abspielbar (echtes
-  H.264-**MP4**, sonst WEBM) und speicherbar
+  H.264-**MP4**, sonst WEBM) und speicherbar. Während der Aufnahme **verschwindet das Fenster**;
+  oben in der Mitte bleibt nur ein rotes **„■ Aufnahme stoppen"** mit laufender Zeit. Die Statuszeile
+  sagt, ob **mit Ton** aufgenommen wird (bei verweigertem Mikrofon läuft die Aufnahme stumm weiter).
 - **Projekte / Klassen** (Einstellungen): mehrere Projekte (z. B. „Mathe 6a", „Physik 11c")
   anlegen, **umbenennen**, dazwischen **wechseln** und **schließen**. Jedes Projekt hat eigene
   Seiten **und** eine eigene Klassenliste. Alles wird automatisch im Browser gesichert.
@@ -74,6 +81,7 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   MAX, MIN, ANZAHL, **ZUFALL()**, ZUFALLSBEREICH(a;b), **ZÄHLENWENN(Bereich;Kriterium)** –
   Kriterium als Zahl (`=zählenwenn(A1:A9;5)`), Vergleich (`">3"`, `">=5"`, `"<>0"`) oder Text
   (`"ja"`, Groß-/Kleinschreibung egal).
+- Voreinstellungen bei einem neuen Projekt: Muster **Karo**, **„Finger wählt aus"** an, Leisten **hell/hellgrau**.
 - **Hintergrundfarben** (Einstellungen): Weiß, **Tafelgrün**, Schwarz, Dunkelgrau, **Dunkelblau**,
   **dunkles Weinrot**, Hellblau sowie **helles Gelb / Grün / Rot / Orange / Lila** und ein
   **Regenbogen-Button** für eine **beliebige Farbe** (Farbwähler) – die Farbkreise sind größer und
@@ -81,10 +89,10 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   (Kein / Karo / Linien / Punkte / **Notenlinien** / **Dreiecke** – gleichseitiges 60°-Raster).
   Die **Größe des Musters** ist direkt darunter einstellbar (＋/− und „Standard"): Kästchenweite,
   Linien-/Punktabstand, Notenlinienabstand bzw. Seitenlänge der Dreiecke – je Musterart gespeichert.
-- **Erscheinung der Leisten** (Einstellungen → „Leisten"): **Dunkel** (Standard) oder **Hell** – bei Hell
+- **Erscheinung der Leisten** (Einstellungen → „Leisten"): **Dunkel** oder **Hell** (Voreinstellung) – bei Hell
   cremeweiße Knöpfe mit schwarzen Symbolen und Beschriftungen. Darunter stehen je Variante mehrere
   **Farbtöne** zur Wahl: dunkel = Graphit, Dunkelblau, dunkles Weinrot, Dunkelbraun, Dunkelgrün;
-  hell = Cremeweiß, Hellblau, Hellgelb, Beige, Hellgrau. Gilt für alle drei Leisten samt Stift-/Formen-
+  hell = Cremeweiß, Hellblau, Hellgelb, Beige, Hellgrau (Voreinstellung). Gilt für alle drei Leisten samt Stift-/Formen-
   Popovers; jede Variante merkt sich ihren Farbton. Die Einstellung gilt geräteweit (projektübergreifend).
   Bei dunklem Hintergrund schreibt der Stift automatisch weiß.
 - **Text:** Textfelder anlegen; **Doppeltipp** auf einen Text zum Nachbearbeiten. Bei ausgewähltem
@@ -213,7 +221,8 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
    Die Leiste beginnt **unter der oberen Einstellungs-Leiste** und
    wächst nach unten. Verwandte Werkzeuge sind zur Übersicht in **Gruppen-Popovers**
    zusammengefasst (wie „Formen"): der **Formen**-Button enthält Linie/Rechteck/Ellipse/Dreiecke/Pfeil
-   **und** Kreis, Gerade, Zirkel, Koordinatensystem; ein **Zeit**-Button (Uhr, Stoppuhr, Timer);
+   **und** Kreis, Gerade, Zirkel, Zahlenstrahl, Koordinatensystem (alle Knöpfe gleich groß);
+   ein **Zeit**-Button (Uhr, Stoppuhr, Timer);
    ein **Klasse & Interaktion**-Button (Sozialform, Gruppen bilden, Umfrage, Zufälliger Name, Punktestand)
    und ein **Mathe & Physik**-Button (Gleichungslöser, Funktionsplotter, Vierfeldertafel, Baumdiagramm,
    Wahrscheinlichkeitsrechner, GeoGebra-App, Messwert-Analyse, **Würfel** und **Glücksrad**).
