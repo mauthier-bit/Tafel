@@ -100,6 +100,9 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   hell = Cremeweiß, Hellblau, Hellgelb, Beige, Hellgrau (Voreinstellung). Gilt für alle drei Leisten samt Stift-/Formen-
   Popovers; jede Variante merkt sich ihren Farbton. Die Einstellung gilt geräteweit (projektübergreifend).
   Bei dunklem Hintergrund schreibt der Stift automatisch weiß.
+- **Ebene ändern:** Im Kontextmenü eines ausgewählten Objekts gibt es **▲ Vor / ▼ Zurück** (eine Ebene)
+  und **⤒ Ganz vorn / ⤓ Ganz hinten**. Funktioniert auch mit einer Mehrfachauswahl und mit
+  eingebetteten Werkzeugen (Tabelle, Glücksrad …) gegenüber Gezeichnetem.
 - **Text:** Textfelder anlegen; **Doppeltipp** auf einen Text zum Nachbearbeiten. Bei ausgewähltem
   Text bietet das **Kontextmenü** zusätzlich **Fett, Kursiv, Aufzählung (Liste)** und eine
   **Schriftgrößen-Einstellung** (＋/−).

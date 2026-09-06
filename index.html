@@ -448,6 +448,12 @@
     <div style="display:flex;gap:6px;align-items:center"><b>Sektoren:</b><input id="whCount" type="number" min="2" max="12" style="width:52px"><span style="color:#888">Zahl &amp; Farbe je Sektor:</span></div>
     <div id="whList" style="display:flex;flex-direction:column;gap:4px;max-height:150px;overflow:auto"></div>
   </div>
+  <div class="prow" id="layerRow" style="gap:5px">
+    <button class="p" id="pr-fwd" title="Eine Ebene nach vorne">▲ Vor</button>
+    <button class="p" id="pr-bwd" title="Eine Ebene nach hinten">▼ Zurück</button>
+    <button class="p" id="pr-front" title="In den Vordergrund">⤒ Ganz vorn</button>
+    <button class="p" id="pr-back" title="In den Hintergrund">⤓ Ganz hinten</button>
+  </div>
   <div class="prow">
     <button class="p" id="pr-copy">Kopieren</button>
     <button class="p" id="pr-cut">Ausschneiden</button>
@@ -1220,6 +1226,20 @@ const pwEl=$('propWidths');
 widths.forEach(w=>{const b=document.createElement('button');b.className='wbtn';b.dataset.w=w;const dot=document.createElement('i');dot.style.width=dot.style.height=Math.min(w+4,20)+'px';b.appendChild(dot);
   b.onclick=()=>{ if(plotApply(f=>f.width=w)){return;} selection.forEach(o=>{ if(o.type==='stroke'||o.type==='shape'||o.type==='numline')o.width=w; else if(o.type==='text')o.size=Math.round(14+w*4); }); scheduleAutosave(); markDirty(); }; pwEl.appendChild(b);});
 $('propFill').onclick=function(){ this.classList.toggle('on'); const on=this.classList.contains('on'); selection.forEach(o=>{if(o.type==='shape')o.fill=on;}); scheduleAutosave(); markDirty(); };
+/* ---- Ebene (Stapelreihenfolge) ---- */
+function layerReorderEmbeds(){ for(const o of page().objects){ const card=embedCards.get(o.id); if(card)embedLayer.appendChild(card);
+    const el=embedEls.get(o.id); if(el)embedLayer.appendChild(el); } }
+function layerMove(mode){ const p=page(), objs=p.objects, isSel=o=>selection.includes(o);
+  if(!selection.length)return;
+  if(mode==='front'||mode==='back'){ const sel=objs.filter(isSel), rest=objs.filter(o=>!isSel(o));
+    p.objects = mode==='front' ? rest.concat(sel) : sel.concat(rest); }
+  else { const a=objs.slice();
+    if(mode==='fwd'){ for(let i=a.length-2;i>=0;i--) if(isSel(a[i])&&!isSel(a[i+1])){ const t=a[i]; a[i]=a[i+1]; a[i+1]=t; } }
+    else { for(let i=1;i<a.length;i++) if(isSel(a[i])&&!isSel(a[i-1])){ const t=a[i]; a[i]=a[i-1]; a[i-1]=t; } }
+    p.objects=a; }
+  layerReorderEmbeds(); markDirty(); scheduleAutosave(); }
+$('pr-fwd').onclick=()=>layerMove('fwd'); $('pr-bwd').onclick=()=>layerMove('bwd');
+$('pr-front').onclick=()=>layerMove('front'); $('pr-back').onclick=()=>layerMove('back');
 $('pr-group').onclick=()=>{ if(selection.length<2)return; const g=uid(); selection.forEach(o=>o.groupId=g); scheduleAutosave(); markDirty(); };
 $('pr-ungroup').onclick=()=>{ selection.forEach(o=>o.groupId=null); scheduleAutosave(); markDirty(); };
 $('pr-del').onclick=()=>{ page().objects=page().objects.filter(o=>!selection.includes(o)); selection=[]; refreshProps(); refreshEmbedUI(); scheduleAutosave(); markDirty(); };
