@@ -149,6 +149,8 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   wahlweise als **Objekt** oder als **eigene Seite** eingefügt. Läuft offline (entpackt die .pptx
   im Browser). Für **exakte** Darstellung die Präsentation als **PDF** exportieren und einfügen.
 - **Kamera** (Werkzeug): Live-Bild in einem Fenster (z. B. für Versuche), Kamera umschaltbar,
+  **Zoom mit zwei Fingern** direkt im Bild (Doppeltipp = zurück; am Rechner auch per Mausrad) –
+  der Zoom steckt auch im Foto und in der Videoaufnahme,
   „Foto auf Tafel" legt einen Schnappschuss als bewegliches Objekt ab. **„Video auf Tafel"** nimmt
   einen Clip auf (nochmal antippen = beenden, mit laufender Zeitanzeige) und legt ihn als abspielbares
   Videoobjekt auf die Tafel – wahlweise **mit Ton** (Schalter „Video mit Ton"; ohne Mikrofonfreigabe
