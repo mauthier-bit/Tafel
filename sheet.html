@@ -28,6 +28,9 @@
   #grid td.refsel{background:#dcfce7;outline:2px dashed #16a34a;outline-offset:-2px;}
   #grid td.refhi{box-shadow:inset 0 0 0 2px var(--rc,#2563eb);}
   #grid td.refhi input{color:var(--rc,#2563eb);}
+  #fmlOv{position:fixed;z-index:8;pointer-events:none;display:none;overflow:hidden;align-items:center;box-sizing:border-box;color:#1f2430;}
+  #fmlOv.show{display:flex;}
+  #fmlOv .ovInner{white-space:pre;flex:none;}
   .fillh{position:absolute;right:-9px;bottom:-9px;width:19px;height:19px;background:#3b82f6;border:2px solid #fff;border-radius:4px;cursor:crosshair;z-index:4;touch-action:none;box-shadow:0 1px 3px rgba(0,0,0,.4);}
   .fillh::after{content:'';position:absolute;inset:-9px;}   /* größere Trefferfläche für den Finger */
   td input:focus{background:#eaf1ff;}
@@ -275,10 +278,12 @@ function build(){ let html='<colgroup><col style="width:44px">';
   for(let r=1;r<=ROWS;r++){ html+='<tr><th data-r="'+r+'">'+r+'</th>'; for(let c=0;c<COLS;c++){ const id=colName(c)+r; html+='<td data-cell="'+id+'"><input data-cell="'+id+'"></td>'; } html+='</tr>'; }
   html+='</tbody>'; grid.innerHTML=html; applyColWidths();
   grid.querySelectorAll('input').forEach(inp=>{
-    inp.addEventListener('focus',()=>{ setActive(inp.dataset.cell); inp.value=data[inp.dataset.cell]||''; highlightRefs(inp.value); });
-    inp.addEventListener('blur',()=>{ if(!refPick) clearRefHi(); commit(inp); });
-    inp.addEventListener('input',()=>{ document.getElementById('fx').value=inp.value; highlightRefs(inp.value); });
+    inp.addEventListener('focus',()=>{ setActive(inp.dataset.cell); inp.value=data[inp.dataset.cell]||''; formulaUI(inp); });
+    inp.addEventListener('blur',()=>{ if(!refPick){ clearRefHi(); ovHide(); } commit(inp); });
+    inp.addEventListener('input',()=>{ document.getElementById('fx').value=inp.value; formulaUI(inp); });
     inp.addEventListener('keydown',e=>{ handleKey(e,inp); });
+    inp.addEventListener('scroll',()=>{ if(ovTarget===inp) ovPlace(); });
+    inp.addEventListener('click',()=>{ if(ovTarget===inp) ovPlace(); });
     inp.addEventListener('pointerdown',()=>{ selAnchor=selFocus=inp.dataset.cell; dragging=true; renderRange(); });
     inp.addEventListener('pointerenter',()=>{ if(dragging && inp.dataset.cell!==selFocus){ selFocus=inp.dataset.cell;
       if(document.activeElement&&document.activeElement.blur)document.activeElement.blur(); renderRange(); } });
@@ -300,7 +305,7 @@ function refInsert(a,b){ if(!refPick)return; const {el}=refPick; const txt=(a===
   refPick.len=txt.length; const c=refPick.start+refPick.len;
   try{ el.setSelectionRange(c,c); }catch(_){}
   if(el.id!=='fx') $('fx').value=el.value; else if(inputOf(active)) inputOf(active).value=el.value;
-  highlightRefs(el.value); refMark(a,b); }
+  formulaUI(el); refMark(a,b); }
 function refMark(a,b){ const A=cellCR(a), B=cellCR(b), c0=Math.min(A.c,B.c),c1=Math.max(A.c,B.c),r0=Math.min(A.r,B.r),r1=Math.max(A.r,B.r);
   const set=new Set(); for(let c=c0;c<=c1;c++)for(let r=r0;r<=r1;r++)set.add(colName(c)+r);
   grid.querySelectorAll('td[data-cell]').forEach(td=>td.classList.toggle('refsel',set.has(td.dataset.cell))); }
@@ -319,28 +324,62 @@ grid.addEventListener('pointerdown',e=>{
 document.addEventListener('pointermove',e=>{ if(!refPick||refPick.whole)return;
   const el=document.elementFromPoint(e.clientX,e.clientY); const td=el&&el.closest?el.closest('td[data-cell]'):null; if(!td)return;
   refInsert(refPick.anchor, td.dataset.cell); },{passive:false});
-document.addEventListener('pointerup',()=>{ if(!refPick)return; const el=refPick.el; refPick=null; setTimeout(()=>{ try{ el.focus(); }catch(_){} },0); });
+document.addEventListener('pointerup',()=>{ if(!refPick)return; const el=refPick.el; refPick=null; refClear();   // grüne Zieh-Markierung weg; der farbige Rahmen der Bezüge bleibt
+  setTimeout(()=>{ try{ el.focus(); }catch(_){} },0); });
 
 /* ---------- Alle in der Formel verwendeten Zellen/Bereiche farbig markieren ---------- */
 const REFCOLORS=['#2563eb','#16a34a','#d97706','#db2777','#7c3aed','#0891b2'];
 let hiCells=[];
-function clearRefHi(){ hiCells.forEach(td=>{ td.classList.remove('refhi'); td.style.removeProperty('--rc'); }); hiCells=[]; }
-function highlightRefs(text){ clearRefHi();
-  if(!text||String(text).trim()[0]!=='=')return;
+function clearRefHi(){ hiCells.forEach(td=>{ td.classList.remove('refhi'); td.style.removeProperty('--rc'); }); hiCells=[]; refClear(); }
+function hideFormulaUI(){ clearRefHi(); ovHide(); }
+/* Formel in Abschnitte zerlegen: jeder Bezug bekommt eine Farbe (gleiche Farbe wie die Zelle im Blatt) */
+function refParts(text){ const parts=[], marks=[];
+  if(!text||String(text).trim()[0]!=='=') return {parts:[{text:text||''}], marks};
   const re=/(\$?[A-Za-z]{1,2}\$?[0-9]+)(?:\s*:\s*(\$?[A-Za-z]{1,2}\$?[0-9]+))?/g;
-  const seen={}; let m, n=0, count=0;
+  const seen={}; let m, n=0, last=0;
   while((m=re.exec(text))!==null){
     const prev=text[m.index-1]; if(prev&&/[A-Za-z0-9$]/.test(prev))continue;            // z. B. „log10" ist kein Bezug
     const a=m[1].replace(/\$/g,'').toUpperCase(), b=(m[2]||m[1]).replace(/\$/g,'').toUpperCase();
     if(!/^[A-Z]{1,2}[0-9]+$/.test(a)||!/^[A-Z]{1,2}[0-9]+$/.test(b))continue;
-    const key=a+':'+b; if(seen[key]!==undefined)continue; const col=REFCOLORS[(n++)%REFCOLORS.length]; seen[key]=col;
-    const A=cellCR(a), B=cellCR(b);
+    const key=a+':'+b; let col=seen[key]; if(col===undefined){ col=REFCOLORS[(n++)%REFCOLORS.length]; seen[key]=col; marks.push({a,b,col}); }
+    if(m.index>last) parts.push({text:text.slice(last,m.index)});
+    parts.push({text:m[0], color:col}); last=m.index+m[0].length; }
+  if(last<text.length) parts.push({text:text.slice(last)});
+  return {parts,marks}; }
+function highlightRefs(text){ clearRefHi();
+  const {marks}=refParts(text); let count=0;
+  for(const {a,b,col} of marks){ const A=cellCR(a), B=cellCR(b);
     for(let c=Math.min(A.c,B.c);c<=Math.max(A.c,B.c);c++)
       for(let r=Math.min(A.r,B.r);r<=Math.max(A.r,B.r);r++){
         if(++count>1500)return;                                                          // Sicherheitsbremse
         const td=grid.querySelector('td[data-cell="'+colName(c)+r+'"]');
-        if(td){ td.classList.add('refhi'); td.style.setProperty('--rc',col); hiCells.push(td); } }
-  } }
+        if(td){ td.classList.add('refhi'); td.style.setProperty('--rc',col); hiCells.push(td); } } } }
+
+/* ---------- Farbige Bezüge direkt in der Formel (Textebene über dem Eingabefeld) ---------- */
+const ovEl=document.createElement('div'); ovEl.id='fmlOv'; document.body.appendChild(ovEl);
+let ovTarget=null;
+function ovHide(){ if(ovTarget){ ovTarget.style.color=''; ovTarget.style.caretColor=''; ovTarget=null; } ovEl.classList.remove('show'); ovEl.innerHTML=''; }
+function ovPlace(){ if(!ovTarget)return;
+  const el=ovTarget, r=el.getBoundingClientRect();
+  if(el.dataset.cell){ const wr=$('wrap').getBoundingClientRect(), head=grid.tHead?grid.tHead.getBoundingClientRect().height:0;
+    if(r.top < wr.top+head-1 || r.bottom > wr.bottom+1 || r.right < wr.left || r.left > wr.right){ ovEl.classList.remove('show'); return; } }
+  const cs=getComputedStyle(el);
+  ovEl.style.left=r.left+'px'; ovEl.style.top=r.top+'px'; ovEl.style.width=r.width+'px'; ovEl.style.height=r.height+'px';
+  ovEl.style.font=cs.font; ovEl.style.letterSpacing=cs.letterSpacing; ovEl.style.padding=cs.padding;
+  ovEl.style.justifyContent = cs.textAlign==='right'?'flex-end':(cs.textAlign==='center'?'center':'flex-start');
+  const inner=ovEl.firstChild; if(inner) inner.style.transform='translateX('+(-el.scrollLeft)+'px)';
+  ovEl.classList.add('show'); }
+function ovUpdate(el){ const editing = el && (document.activeElement===el || (refPick&&refPick.el===el));
+  if(!editing || String(el.value||'').trim()[0]!=='='){ if(!el||ovTarget===el) ovHide(); return; }
+  if(ovTarget&&ovTarget!==el){ ovTarget.style.color=''; ovTarget.style.caretColor=''; }
+  ovTarget=el; el.style.color='transparent'; el.style.caretColor='#1f2430';
+  const {parts}=refParts(el.value);
+  const inner=document.createElement('span'); inner.className='ovInner';
+  parts.forEach(p=>{ const sp=document.createElement('span'); sp.textContent=p.text; if(p.color)sp.style.color=p.color; inner.appendChild(sp); });
+  ovEl.innerHTML=''; ovEl.appendChild(inner); ovPlace(); }
+function formulaUI(el){ highlightRefs(el?el.value:''); ovUpdate(el); }
+$('wrap').addEventListener('scroll',ovPlace,{passive:true});
+addEventListener('resize',ovPlace); addEventListener('scroll',ovPlace,{passive:true});
 /* ---------- Kopfzeile/Kopfspalte antippen = ganze Spalte/Zeile markieren ---------- */
 let hdrDrag=null;
 function markHeaders(){ const {c0,c1,r0,r1}=selRect(); const fullCol=(r0===1&&r1===ROWS), fullRow=(c0===0&&c1===COLS-1);
@@ -453,7 +492,7 @@ function setActive(cell){ active=cell; document.getElementById('cellref').textCo
   grid.querySelectorAll('td.sel').forEach(td=>td.classList.remove('sel')); const td=grid.querySelector('td[data-cell="'+cell+'"]'); if(td)td.classList.add('sel');
   if(!dragging){ selAnchor=selFocus=cell; renderRange(); } }
 function inputOf(cell){ return grid.querySelector('input[data-cell="'+cell+'"]'); }
-function commit(inp){ if(!refPick) clearRefHi(); const cell=inp.dataset.cell; const val=inp.value;
+function commit(inp){ if(!refPick) hideFormulaUI(); const cell=inp.dataset.cell; const val=inp.value;
   if((data[cell]||'')!==val) snapshot();
   if(val==='') delete data[cell]; else data[cell]=val; recompute(); sync(); }
 function recompute(){ const memo=new Map(); grid.querySelectorAll('input').forEach(inp=>{ const cell=inp.dataset.cell; if(document.activeElement===inp)return;
@@ -539,12 +578,15 @@ addEventListener('message',e=>{ if(e.data&&e.data.type==='embed-data'){ data=e.d
   const want=Math.max(20,Math.min(1000,+data.rows||60));
   if(want!==ROWS){ ROWS=want; build(); }
   $('rowSel').value=String(ROWS); applyFont(); applyColWidths(); recompute(); } });
-function fxCommit(){ clearRefHi(); const cell=active, val=document.getElementById('fx').value; if((data[cell]||'')!==val) snapshot();      // Wert direkt übernehmen (ohne fragilen Fokus/Blur-Umweg)
+function fxCommit(){ hideFormulaUI(); const cell=active, val=document.getElementById('fx').value; if((data[cell]||'')!==val) snapshot();      // Wert direkt übernehmen (ohne fragilen Fokus/Blur-Umweg)
   if(val==='') delete data[cell]; else data[cell]=val; recompute(); sync();
   const c=colIdx(cell.match(/[A-Z]+/)[0]), r=parseInt(cell.match(/[0-9]+/)[0]);
   if(r<ROWS) setActive(colName(c)+(r+1)); }
-document.getElementById('fx').addEventListener('input',function(){ highlightRefs(this.value); const i=inputOf(active); if(i&&document.activeElement!==i)i.value=this.value; });
-document.getElementById('fx').addEventListener('blur',()=>{ if(!refPick) setTimeout(()=>{ if(!refPick&&document.activeElement!==$('fx')&&!(document.activeElement&&document.activeElement.dataset&&document.activeElement.dataset.cell)) clearRefHi(); },50); });
+document.getElementById('fx').addEventListener('input',function(){ formulaUI(this); const i=inputOf(active); if(i&&document.activeElement!==i)i.value=this.value; });
+$('fx').addEventListener('focus',function(){ formulaUI(this); });
+$('fx').addEventListener('scroll',function(){ if(ovTarget===this) ovPlace(); });
+$('fx').addEventListener('click',function(){ if(ovTarget===this) ovPlace(); });
+document.getElementById('fx').addEventListener('blur',()=>{ if(!refPick) ovHide(); if(!refPick) setTimeout(()=>{ if(!refPick&&document.activeElement!==$('fx')&&!(document.activeElement&&document.activeElement.dataset&&document.activeElement.dataset.cell)) clearRefHi(); },50); });
 document.getElementById('fx').addEventListener('keydown',e=>{ if(e.key!=='Enter')return; e.preventDefault(); fxCommit(); });
 document.getElementById('fxGo').onclick=fxCommit;
 

@@ -99,7 +99,8 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   (Ziehen über mehrere Köpfe markiert mehrere), und der **rechte Rand einer Kopfzelle** lässt sich
   ziehen, um die **Spaltenbreite** zu ändern (Doppeltipp = Standardbreite). Breiten werden im Projekt
   gespeichert und aus **Excel-Dateien** mit übernommen. Während des Tippens werden **alle in der Formel
-  verwendeten Zellen und Bereiche farbig umrandet** (jeder Bezug in einer eigenen Farbe).
+  verwendeten Zellen und Bereiche farbig umrandet** (jeder Bezug in einer eigenen Farbe) – und der
+  **Bezug in der Formel selbst erscheint in derselben Farbe**, in der Eingabezeile wie in der Zelle.
 - **Formeln:** Grundrechenarten, Klammern, `^`, Zellbezüge relativ und absolut (`A1`, `$A1`, `A$3`,
   `$A$3` – beim Ausfüllen wird nur der nicht festgehaltene Teil angepasst). Dezimalzahlen mit Komma
   oder Punkt (`=runden(2,345;2)`), Argumente mit `;` trennen.
