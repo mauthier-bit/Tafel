@@ -8,7 +8,7 @@
   *{box-sizing:border-box;}
   html,body{margin:0;height:100%;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#fff;color:#1f2430;}
   #bar{display:flex;gap:8px;align-items:center;padding:6px 10px;background:#f1f3f7;border-bottom:1px solid #dfe4ec;position:sticky;top:0;z-index:5;}
-  #bar .cellref{font-weight:700;min-width:44px;font-variant-numeric:tabular-nums;}
+  #bar .cellref{font-weight:700;min-width:44px;max-width:130px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums;cursor:pointer;flex:none;}
   #fx{flex:1;padding:6px 8px;border:1px solid #cfd6e0;border-radius:6px;font-size:15px;font-family:inherit;}
   #bar .hint{font-size:11px;color:#8a93a2;white-space:nowrap;}
   #wrap{position:absolute;top:44px;left:0;right:0;bottom:0;overflow:auto;}
@@ -78,7 +78,7 @@
 <body>
 <div id="bar">
   <span class="cellref" id="cellref">A1</span>
-  <input id="fx" placeholder="Wert oder =Formel (z. B. =A1+B2*2, =summe(A1:A5), =zählenwenn(A1:A9;&quot;&gt;3&quot;))">
+  <input id="fx" placeholder="Wert oder = Formel (z. B. =A1+B2*2, =summe(A1:A5), =zählenwenn(A1:A9;&quot;&gt;3&quot;))">
   <button class="cbtn" id="fxGo" title="Eingabe übernehmen (wie Enter)">✓</button>
   <button class="cbtn" id="btnUndo" title="Rückgängig"><svg viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg></button>
   <button class="cbtn" id="btnRedo" title="Wiederherstellen"><svg viewBox="0 0 24 24"><path d="m15 14 5-5-5-5"/><path d="M20 9H9a5 5 0 0 0 0 10h3"/></svg></button>
@@ -183,8 +183,11 @@ function evalFormula(src, resolve){ const t=tokenize(src); let p=0;
         ok = op==='=' ? a===b : op==='<>' ? a!==b : false; }          // Text nur auf (Un-)Gleichheit prüfen
       if(ok)n++; }
     return n; }
+  const nameRef=w=>(typeof nameLookup==='function')?nameLookup(w):null;
   function argList(){ const out=[];
     do{ if(peek()&&peek().k==='ref'&&t[p+1]&&t[p+1].k===':'){ const a=next().v; next(); const b=next().v; out.push(...rangeVals(a,b)); }
+        else if(peek()&&peek().k==='fn'&&nameRef(peek().v)&&(!t[p+1]||t[p+1].k===','||t[p+1].k===';'||t[p+1].k===')')){
+          const r=nameRef(next().v); out.push(...rangeVals(r.a,r.b)); }        // benannter Bereich als ganzes Argument
         else out.push(expr());
     } while(peek()&&(peek().k===','||peek().k===';')&&(next(),true));
     return out; }
@@ -250,6 +253,7 @@ function evalFormula(src, resolve){ const t=tokenize(src); let p=0;
     if(tk.k==='str'){ next(); return tk.v; }
     if(tk.k==='fn'){ next(); const name=tk.v;
       const consts={pi:Math.PI,e:Math.E}; if(name in consts && (!peek()||peek().k!=='(')) return consts[name];
+      if(!peek()||peek().k!=='('){ const r=nameRef(name); if(r) return resolve(r.a); }        // benannte Zelle als Wert
       if(name==='zählenwenn'||name==='zaehlenwenn'||name==='countif'){        // braucht die Zellen selbst, nicht nur ihre Zahlenwerte
         let cells=[], crit=null;
         if(peek()&&peek().k==='('){ next();
@@ -350,11 +354,16 @@ function hideFormulaUI(){ clearRefHi(); ovHide(); }
 /* Formel in Abschnitte zerlegen: jeder Bezug bekommt eine Farbe (gleiche Farbe wie die Zelle im Blatt) */
 function refParts(text){ const parts=[], marks=[];
   if(!text||String(text).trim()[0]!=='=') return {parts:[{text:text||''}], marks};
-  const re=/(\$?[A-Za-z]{1,2}\$?[0-9]+)(?:\s*:\s*(\$?[A-Za-z]{1,2}\$?[0-9]+))?/g;
+  const nms=Object.keys(nameMap()).sort((x,y)=>y.length-x.length);
+  const re=new RegExp('(\\$?[A-Za-z]{1,2}\\$?[0-9]+)(?:\\s*:\\s*(\\$?[A-Za-z]{1,2}\\$?[0-9]+))?'
+    + (nms.length?('|('+nms.join('|')+')'):''), 'g');
   const seen={}; let m, n=0, last=0;
   while((m=re.exec(text))!==null){
     const prev=text[m.index-1]; if(prev&&/[A-Za-z0-9$]/.test(prev))continue;            // z. B. „log10" ist kein Bezug
-    const a=m[1].replace(/\$/g,'').toUpperCase(), b=(m[2]||m[1]).replace(/\$/g,'').toUpperCase();
+    let a,b;
+    if(m[3]){ const nx=text[m.index+m[0].length]; if(nx&&/[A-Za-z0-9_]/.test(nx))continue;
+      const r=nameLookup(m[3]); if(!r)continue; a=r.a; b=r.b; }
+    else { a=m[1].replace(/\$/g,'').toUpperCase(); b=(m[2]||m[1]).replace(/\$/g,'').toUpperCase(); }
     if(!/^[A-Z]{1,2}[0-9]+$/.test(a)||!/^[A-Z]{1,2}[0-9]+$/.test(b))continue;
     const key=a+':'+b; let col=seen[key]; if(col===undefined){ col=REFCOLORS[(n++)%REFCOLORS.length]; seen[key]=col; marks.push({a,b,col}); }
     if(m.index>last) parts.push({text:text.slice(last,m.index)});
@@ -503,7 +512,10 @@ document.addEventListener('pointermove',e=>{ if(!filling)return; e.preventDefaul
 document.addEventListener('pointerup',()=>{ if(!filling)return; filling=false;
   if(fillPrev){ applyFill(fillPrev, fillSeed); selAnchor=colName(fillPrev.c0)+fillPrev.r0; selFocus=colName(fillPrev.c1)+fillPrev.r1; }
   clearFillPreview(); fillPrev=null; renderRange(); });
-function setActive(cell){ active=cell; document.getElementById('cellref').textContent=cell; document.getElementById('fx').value=data[cell]||'';
+function setActive(cell){ active=cell;
+  const ref=(typeof selRefString==='function')?selRefString():cell, nm=(typeof nameOf==='function')?(nameOf(ref)||nameOf(cell)):null;
+  const cr=document.getElementById('cellref'); cr.textContent=nm?('🏷 '+nm):cell; cr.title=nm?(nm+' = '+ref+' – tippen zum Ändern'):'Namen für die Zelle/den Bereich vergeben';
+  document.getElementById('fx').value=data[cell]||'';
   grid.querySelectorAll('td.sel').forEach(td=>td.classList.remove('sel')); const td=grid.querySelector('td[data-cell="'+cell+'"]'); if(td)td.classList.add('sel');
   if(!dragging){ selAnchor=selFocus=cell; renderRange(); } }
 function inputOf(cell){ return grid.querySelector('input[data-cell="'+cell+'"]'); }
@@ -532,6 +544,35 @@ function adjustRefs(formula, from, to){ const fc=colIdx(from.match(/[A-Z]+/)[0])
     let nc=colIdx(col), nr=parseInt(row); if(a1!=='$') nc+=dC; if(a2!=='$') nr+=dR; nc=Math.max(0,nc); nr=Math.max(1,nr);
     return a1+colName(nc)+a2+nr; }); }
 function paste(target){ let raw=copyBuf.raw; if(raw[0]==='=') raw='='+adjustRefs(raw.slice(1), copyBuf.cell, target); if(raw==='') delete data[target]; else data[target]=raw; recompute(); sync(); setActive(target); }
+
+/* ---------- Namen für Zellen und Bereiche ---------- */
+const RESERVED=new Set(['summe','sum','mittelwert','average','mean','mw','min','max','anzahl','count','produkt','product',
+ 'median','modalwert','modus','mode','spannweite','varianz','var','varianzen','varp','stabw','sd','stabwn','sdp','quartil','quantil','perzentil',
+ 'wenn','if','und','and','oder','or','nicht','not','wahr','falsch','zählenwenn','zaehlenwenn','countif',
+ 'wurzel','sqrt','potenz','power','abs','runden','round','aufrunden','abrunden','ganzzahl','int','rest','mod','ggt','gcd','kgv','lcm',
+ 'sin','cos','tan','ln','log','exp','grad','degrees','bogenmass','radians','pi','e','zufall','rand','zufallszahl','zufallsbereich','randbetween']);
+const nameMap=()=>data.names||{};
+function nameOf(cellOrRange){ const m=nameMap(); for(const k in m) if(m[k]===cellOrRange) return k; return null; }
+function nameLookup(word){ const m=nameMap(), w=String(word||'').toLowerCase();
+  for(const k in m) if(k.toLowerCase()===w){ const v=m[k], p=v.split(':'); return {a:p[0],b:p[1]||p[0]}; } return null; }
+function selRefString(){ const {c0,c1,r0,r1}=selRect(); const a=colName(c0)+r0, b=colName(c1)+r1; return a===b?a:(a+':'+b); }
+function editName(){ const ref=selRefString(), cur=nameOf(ref)||'';
+  const inp=prompt('Name für '+ref+' (leer lassen = Name entfernen):', cur);
+  if(inp===null)return;
+  const nm=inp.trim();
+  snapshot(); data.names=Object.assign({},nameMap());
+  if(cur) delete data.names[cur];
+  if(nm){
+    if(!/^[A-Za-zÄÖÜäöüß_][A-Za-zÄÖÜäöüß0-9_]{0,23}$/.test(nm)){ toast('Name: Buchstabe zuerst, dann Buchstaben/Ziffern/_'); return; }
+    if(/^[A-Za-z]{1,2}[0-9]+$/.test(nm)){ toast('„'+nm+'" sieht aus wie ein Zellbezug – bitte anderen Namen wählen'); return; }
+    if(RESERVED.has(nm.toLowerCase())){ toast('„'+nm+'" ist ein Funktionsname'); return; }
+    for(const k in data.names) if(k.toLowerCase()===nm.toLowerCase()) delete data.names[k];
+    data.names[nm]=ref; toast('„'+nm+'" = '+ref); }
+  else toast('Name entfernt');
+  if(!Object.keys(data.names).length) delete data.names;
+  setActive(active); recompute(); sync(); }
+$('cellref').onclick=editName;
+$('cellref').title='Namen für die Zelle/den Bereich vergeben';
 
 /* ---------- Rückgängig / Wiederherstellen ---------- */
 let undoStack=[], redoStack=[], lastSnap='';
@@ -786,7 +827,7 @@ const KP_ROWS=[
   [['7','7'],['8','8'],['9','9'],['(','(',1],[')',')',1],['⌫',null,0,'del']],
   [['4','4'],['5','5'],['6','6'],['×','*',1],['÷','/',1],[';',';',1]],
   [['1','1'],['2','2'],['3','3'],['+','+',1],['−','-',1],[':',':',1]],
-  [['0','0'],[',',','],['=','=',1],['^','^',1],['◀',null,0,'left'],['▶',null,0,'right']],
+  [['0','0'],[',',','],['=','=',1],['$',null,0,'dollar'],['^','^',1],['◀',null,0,'left'],['▶',null,0,'right']],
   [['ABC',null,0,'abc'],['>','>',1],['<','<',1],['≥','>=',1],['≤','<=',1],['≠','<>',1],['✓ Fertig',null,0,'enter','act']]
 ];
 function buildKeypad(){ const kp=$('keypad'); if(kp.dataset.built)return; kp.dataset.built='1';
@@ -815,6 +856,17 @@ function kpAction(act){ const el=kpTarget(); if(!el)return;
   const s=el.selectionStart==null?el.value.length:el.selectionStart, e=el.selectionEnd==null?s:el.selectionEnd;
   if(act==='del'){ if(e>s){ el.value=el.value.slice(0,s)+el.value.slice(e); try{el.setSelectionRange(s,s);}catch(_){} }
     else if(s>0){ el.value=el.value.slice(0,s-1)+el.value.slice(s); try{el.setSelectionRange(s-1,s-1);}catch(_){} }
+    el.dispatchEvent(new Event('input',{bubbles:true})); return; }
+  if(act==='dollar'){                                                  // $ setzen bzw. A1 → $A$1 → A$1 → $A1 → A1 durchschalten
+    const v=el.value, re=/\$?[A-Za-z]{1,2}\$?[0-9]+/g; let m, hit=null;
+    while((m=re.exec(v))!==null){ if(s>=m.index && s<=m.index+m[0].length) hit=m; }
+    if(!hit){ kpInsert('$'); return; }
+    const parts=hit[0].match(/^(\$?)([A-Za-z]{1,2})(\$?)([0-9]+)$/); if(!parts){ kpInsert('$'); return; }
+    const state=(parts[1]?1:0)+(parts[3]?2:0);                         // 0=A1 1=$A1 2=A$1 3=$A$1
+    const next=[3,0,1,2][state];                                        // A1 → $A$1 → A$1 → $A1 → A1 …
+    const rep=(next&1?'$':'')+parts[2]+(next&2?'$':'')+parts[4];
+    el.value=v.slice(0,hit.index)+rep+v.slice(hit.index+hit[0].length);
+    const c=hit.index+rep.length; try{ el.setSelectionRange(c,c); }catch(_){}
     el.dispatchEvent(new Event('input',{bubbles:true})); return; }
   if(act==='left'){ const c=Math.max(0,s-1); try{el.setSelectionRange(c,c);}catch(_){} ovPlace(); return; }
   if(act==='right'){ const c=Math.min(el.value.length,e+1); try{el.setSelectionRange(c,c);}catch(_){} ovPlace(); return; }

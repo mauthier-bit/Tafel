@@ -123,6 +123,12 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     Zellbezüge tippt man weiter direkt im Blatt an – ideal fürs iPad ohne Tastatur. Für Texte
     (z. B. Tabellenköpfe) schaltet die Taste **ABC** auf die gewohnte Systemtastatur um – mit
     Umlauten, Diktat und Autokorrektur; der Knopf **⌨** holt die Formeltasten wieder zurück.
+    Die **$-Taste** schaltet den Bezug am Cursor durch `A1 → $A$1 → A$1 → $A1` (wie F4 in Excel).
+  - **Namen für Zellen und Bereiche:** oben links auf die Zellbezeichnung tippen und einen Namen
+    vergeben (leer lassen = entfernen). Danach rechnet man damit wie mit einer Variablen:
+    `=Preis*MwSt`, `=summe(Werte)`. Namen sind **immer fest** – beim Ausfüllen wandern sie nicht mit
+    (relative Bezüge wie `A1` dagegen schon). Sie werden in der Formel genauso farbig markiert wie
+    Zellbezüge und mit der Tabelle gespeichert.
   - **Rückgängig / Wiederherstellen** (↶ ↷ in der Leiste, auch ⌘Z / Strg+Z bzw. ⇧⌘Z).
   - **Schriftgröße** direkt im Werkzeug über **A− / A+**.
   - **Datei-Menü** (📁): **Öffnen** (eigene `.json`-Tabelle, CSV, Excel), **Tabelle speichern**
