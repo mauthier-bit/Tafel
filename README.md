@@ -85,10 +85,45 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   Seiten **und** eine eigene Klassenliste. Alles wird automatisch im Browser gesichert.
   **„Speichern und schließen"** sichert das Projekt zuerst als `.tafel`-Datei und entfernt es
   danach (nach Rückfrage) aus der App – später einfach über „Laden" wieder öffnen.
-- Tabellen-Funktionen zusätzlich: **SUMME / MITTELWERT** (auch über Bereiche wie `A1:A5`),
-  MAX, MIN, ANZAHL, **ZUFALL()**, ZUFALLSBEREICH(a;b), **ZÄHLENWENN(Bereich;Kriterium)** –
-  Kriterium als Zahl (`=zählenwenn(A1:A9;5)`), Vergleich (`">3"`, `">=5"`, `"<>0"`) oder Text
-  (`"ja"`, Groß-/Kleinschreibung egal).
+- **Reihen automatisch fortsetzen:** Zwei (oder mehr) Zellen markieren und am kleinen Quadrat unten
+  rechts ziehen – `1;2` wird zu `3;4;5 …`, `5;10` zu `15;20 …`, auch rückwärts, nach rechts und mit
+  Kommazahlen. Auch Text mit Zahl (`Gruppe 1` → `Gruppe 2 …`) wird fortgesetzt; ein **einzelner Wert**
+  und **Formeln** werden wie bisher kopiert (Formeln mit angepassten Bezügen).
+- **Zeilenzahl** wählbar (60 / 100 / 200 / 500 / 1000) über das Auswahlfeld in der Leiste; beim Import
+  oder Einfügen größerer Datenmengen wächst das Blatt automatisch mit. Die Einstellung wird im Projekt
+  gespeichert.
+- **Zellen und Bereiche mit dem Finger übernehmen:** Beginnt man eine Formel (`=` oder `=summe(`),
+  setzt ein **Antippen** einer Zelle deren Bezug ein (`=A3`, dann normal weitertippen: `+5`), und
+  **Streichen** über mehrere Zellen setzt den Bereich (`A1:A7`) ein – auch beim Antippen eines Spalten- oder
+  Zeilenkopfes (ganze Spalte/Zeile). **Kopfzelle antippen** markiert die ganze Spalte bzw. Zeile
+  (Ziehen über mehrere Köpfe markiert mehrere), und der **rechte Rand einer Kopfzelle** lässt sich
+  ziehen, um die **Spaltenbreite** zu ändern (Doppeltipp = Standardbreite). Breiten werden im Projekt
+  gespeichert und aus **Excel-Dateien** mit übernommen. Während des Tippens werden **alle in der Formel
+  verwendeten Zellen und Bereiche farbig umrandet** (jeder Bezug in einer eigenen Farbe).
+- **Formeln:** Grundrechenarten, Klammern, `^`, Zellbezüge relativ und absolut (`A1`, `$A1`, `A$3`,
+  `$A$3` – beim Ausfüllen wird nur der nicht festgehaltene Teil angepasst). Dezimalzahlen mit Komma
+  oder Punkt (`=runden(2,345;2)`), Argumente mit `;` trennen.
+  - **Rechnen:** SUMME, MITTELWERT, PRODUKT, MIN, MAX, ANZAHL, WURZEL, POTENZ, ABS, EXP, LN,
+    LOG (auch mit Basis: `=log(8;2)`), SIN/COS/TAN, GRAD, BOGENMASS, PI, E
+  - **Runden & ganze Zahlen:** RUNDEN(x;Stellen), AUFRUNDEN, ABRUNDEN, GANZZAHL, REST, GGT, KGV
+  - **Statistik:** MEDIAN, MODALWERT, SPANNWEITE, VARIANZ / VARIANZEN, STABW / STABWN,
+    QUARTIL(Bereich;0–4), QUANTIL(Bereich;p)
+  - **Bedingungen:** Vergleiche `= <> < <= > >=`, WENN(Bedingung;dann;sonst) – auch mit Text
+    (`=wenn(A1>=50;"bestanden";"durchgefallen")`), UND, ODER, NICHT, WAHR, FALSCH
+  - **Zählen/Zufall:** ZÄHLENWENN(Bereich;Kriterium) – Zahl, Vergleich (`">3"`) oder Text (`"ja"`);
+    ZUFALL(), ZUFALLSZAHL(a;b), ZUFALLSBEREICH(a;b)
+  - **Leere Zellen und Texte** werden in Bereichen übersprungen: `=mittelwert(A1:A100)` rechnet nur
+    mit den gefüllten Zellen.
+  - **Rückgängig / Wiederherstellen** (↶ ↷ in der Leiste, auch ⌘Z / Strg+Z bzw. ⇧⌘Z).
+  - **Schriftgröße** direkt im Werkzeug über **A− / A+**.
+  - **Datei-Menü** (📁): **Öffnen** (eigene `.json`-Tabelle, CSV, Excel), **Tabelle speichern**
+    (`.json` mit Formeln, Spaltenbreiten, Zeilenzahl), **Als CSV speichern** (Semikolon, deutsche
+    Kommazahlen – öffnet sich direkt in Excel), **Aus Zwischenablage einfügen**, **Alles löschen**.
+  - **Eigenständig nutzbar:** `sheet.html` lässt sich auch direkt aufrufen (z. B. per QR-Code für die
+    Klasse). Dort **speichert die Tabelle automatisch im Browser**, ist nach dem Neuladen also noch da;
+    zum Abgeben/Weitergeben dient „Tabelle speichern" bzw. der CSV-Export.
+  - **Anzeige mit deutschem Komma** (0,75 · 4,33) – auch in den Diagramm-Achsen und -Infozeilen;
+    eingeben darf man Komma oder Punkt.
 - Voreinstellungen bei einem neuen Projekt: Muster **Karo**, **„Finger wählt aus"** an, Leisten **hell/hellgrau**.
 - **Hintergrundfarben** (Einstellungen): Weiß, **Tafelgrün**, Schwarz, Dunkelgrau, **Dunkelblau**,
   **dunkles Weinrot**, Hellblau sowie **helles Gelb / Grün / Rot / Orange / Lila** und ein
@@ -142,6 +177,9 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   **mit dem Finger** Objekte antippen und verschieben; eine **Zwei-Finger-Geste auf einem
   ausgewählten Objekt** skaliert (aufziehen/zusammenziehen) und **dreht** es. Ist der Schalter aus,
   bleibt alles wie gewohnt (Finger schiebt/zoomt nur das Blatt, Auswählen nur mit dem Stift).
+- Das **Kontextmenü** ist nach Abschnitten geordnet (Objekt-Einstellungen · Ebene · Aktionen) und zeigt
+  nur, was beim ausgewählten Objekt wirklich etwas bewirkt – Farbe und Dicke erscheinen z. B. nicht bei
+  einer eingefügten Tabelle oder einem Bild.
 - **Gruppieren / Lösen / Duplizieren / Löschen** im Kontext-Panel („Lösen" hebt die Gruppe auf und
   die Auswahl auf, damit die Objekte danach wirklich einzeln beweglich sind)
 - **Laserpointer** und **Scheinwerferspot**
