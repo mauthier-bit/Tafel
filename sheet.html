@@ -12,6 +12,18 @@
   #fx{flex:1;padding:6px 8px;border:1px solid #cfd6e0;border-radius:6px;font-size:15px;font-family:inherit;}
   #bar .hint{font-size:11px;color:#8a93a2;white-space:nowrap;}
   #wrap{position:absolute;top:44px;left:0;right:0;bottom:0;overflow:auto;}
+  body.kp-open #wrap{bottom:var(--kph,236px);}
+  #keypad{position:fixed;left:0;right:0;bottom:0;z-index:12;background:#eef1f6;border-top:1px solid #cfd6e0;padding:7px;display:none;flex-direction:column;gap:6px;box-shadow:0 -4px 16px rgba(0,0,0,.10);}
+  #keypad.show{display:flex;}
+  #keypad .kp-row{display:flex;gap:6px;}
+  #keypad .kp-row.chips{overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px;}
+  #keypad button{flex:1 1 0;min-width:0;height:46px;border:1px solid #cfd6e0;background:#fff;border-radius:10px;font-size:18px;font-weight:600;font-family:inherit;color:#1f2430;cursor:pointer;touch-action:manipulation;padding:0;}
+  #keypad button:active{background:#dbe4f0;}
+  #keypad button.fn{flex:0 0 auto;height:38px;padding:0 13px;font-size:13px;font-weight:700;color:#2563eb;}
+  #keypad button.op{background:#f4f6fa;}
+  #keypad button.act{background:#3b82f6;border-color:#3b82f6;color:#fff;flex:1.5 1 0;}
+  #keypad button[data-act="abc"]{font-size:15px;font-weight:700;background:#f4f6fa;}
+  #keypad button.del{background:#fee2e2;border-color:#fca5a5;}
   table{border-collapse:collapse;table-layout:fixed;}
   th,td{border:1px solid #e2e7ef;padding:0;height:28px;}
   th{background:#f7f9fc;color:#5b6472;font-weight:var(--fwm,600);font-size:calc(var(--fs,14px)*0.86);position:sticky;z-index:2;text-align:center;cursor:pointer;user-select:none;-webkit-user-select:none;overflow:hidden;}
@@ -74,9 +86,10 @@
   <select id="rowSel" class="cbtn" title="Anzahl der Zeilen"><option value="60">60 Zeilen</option><option value="100">100 Zeilen</option><option value="200">200 Zeilen</option><option value="500">500 Zeilen</option><option value="1000">1000 Zeilen</option></select>
   <button class="cbtn" id="btnFsM" title="Schrift kleiner">A−</button>
   <button class="cbtn" id="btnFsP" title="Schrift größer">A+</button>
-  <button class="cbtn" id="btnChart" title="Markierte Zahlen als Diagramm anzeigen">📊 Diagramm</button>
+  <button class="cbtn" id="btnKeys" title="Formel-Tastatur ein-/ausblenden (mit ABC zurück zur Buchstaben-Tastatur)">⌨<span class="lbl"> Formeln</span></button>
+  <button class="cbtn" id="btnChart" title="Markierte Zahlen als Diagramm anzeigen">📊<span class="lbl"> Diagramm</span></button>
   <span id="fileWrap">
-    <button class="cbtn" id="btnFile" title="Öffnen, speichern, einfügen">📁 Datei ▾</button>
+    <button class="cbtn" id="btnFile" title="Öffnen, speichern, einfügen">📁<span class="lbl"> Datei</span> ▾</button>
     <div id="fileMenu">
       <button class="cbtn" id="btnOpen">📂 Öffnen (Tabelle, CSV, Excel)</button>
       <button class="cbtn" id="btnSave">💾 Tabelle speichern</button>
@@ -88,6 +101,7 @@
 </div>
 <input type="file" id="fileImp" accept=".json,.tabelle,.csv,.tsv,.txt,.xlsx,text/csv,application/json" style="display:none">
 <div id="wrap"><table id="grid"></table></div>
+<div id="keypad"></div>
 <div id="toast"></div>
 <div id="chartOv">
   <div id="chartHead">
@@ -277,6 +291,7 @@ function build(){ let html='<colgroup><col style="width:44px">';
   html+='</tr></thead><tbody>';
   for(let r=1;r<=ROWS;r++){ html+='<tr><th data-r="'+r+'">'+r+'</th>'; for(let c=0;c<COLS;c++){ const id=colName(c)+r; html+='<td data-cell="'+id+'"><input data-cell="'+id+'"></td>'; } html+='</tr>'; }
   html+='</tbody>'; grid.innerHTML=html; applyColWidths();
+  if(typeof keysOn!=='undefined'&&keysOn) setTimeout(applyInputMode,0);
   grid.querySelectorAll('input').forEach(inp=>{
     inp.addEventListener('focus',()=>{ setActive(inp.dataset.cell); inp.value=data[inp.dataset.cell]||''; formulaUI(inp); });
     inp.addEventListener('blur',()=>{ if(!refPick){ clearRefHi(); ovHide(); } commit(inp); });
@@ -762,6 +777,66 @@ $('rowSel').onchange=function(){ setRows(this.value,true); };
 $('fileImp').onclick=e=>{ e.target.value=''; };
 $('fileImp').onchange=e=>{ onImportFile(e.target.files[0]); };
 $('btnPaste').onclick=pasteClipboard;
+/* ---------- Formel-Tastatur (für Tablets ohne Tastatur) ---------- */
+let keysOn=false;
+const KP_FN=[['SUMME','summe('],['MITTELWERT','mittelwert('],['ANZAHL','anzahl('],['MIN','min('],['MAX','max('],
+  ['WENN','wenn('],['ZÄHLENWENN','zählenwenn('],['RUNDEN','runden('],['WURZEL','wurzel('],['MEDIAN','median('],
+  ['STABW','stabw('],['ZUFALL','zufallszahl(']];
+const KP_ROWS=[
+  [['7','7'],['8','8'],['9','9'],['(','(',1],[')',')',1],['⌫',null,0,'del']],
+  [['4','4'],['5','5'],['6','6'],['×','*',1],['÷','/',1],[';',';',1]],
+  [['1','1'],['2','2'],['3','3'],['+','+',1],['−','-',1],[':',':',1]],
+  [['0','0'],[',',','],['=','=',1],['^','^',1],['◀',null,0,'left'],['▶',null,0,'right']],
+  [['ABC',null,0,'abc'],['>','>',1],['<','<',1],['≥','>=',1],['≤','<=',1],['≠','<>',1],['✓ Fertig',null,0,'enter','act']]
+];
+function buildKeypad(){ const kp=$('keypad'); if(kp.dataset.built)return; kp.dataset.built='1';
+  const chips=document.createElement('div'); chips.className='kp-row chips';
+  KP_FN.forEach(([lab,ins])=>{ const b=document.createElement('button'); b.className='fn'; b.textContent=lab; b.dataset.ins=ins; chips.appendChild(b); });
+  kp.appendChild(chips);
+  KP_ROWS.forEach(row=>{ const r=document.createElement('div'); r.className='kp-row';
+    row.forEach(([lab,ins,op,act,cls])=>{ const b=document.createElement('button'); b.textContent=lab;
+      if(op)b.classList.add('op'); if(cls)b.classList.add(cls); if(act==='del')b.classList.add('del');
+      if(ins!==null&&ins!==undefined)b.dataset.ins=ins; if(act)b.dataset.act=act; r.appendChild(b); });
+    kp.appendChild(r); });
+  kp.addEventListener('pointerdown',e=>{ const b=e.target.closest('button'); if(!b)return;
+    e.preventDefault();                                   // Fokus bleibt im Eingabefeld (sonst würde die Formel abgeschlossen)
+    if(b.dataset.ins!==undefined) kpInsert(b.dataset.ins); else kpAction(b.dataset.act); }); }
+function kpTarget(){ const a=document.activeElement;
+  if(a&&(a.id==='fx'||a.dataset&&a.dataset.cell)) return a;
+  const inp=inputOf(active); if(inp){ inp.focus(); inp.value=data[active]||''; formulaUI(inp); }
+  return inp; }
+function kpInsert(txt){ const el=kpTarget(); if(!el)return;
+  if(!el.value && txt!=='=' && !/^[0-9,]$/.test(txt)) txt='='+txt;      // Formel automatisch mit „=" beginnen
+  const s=el.selectionStart==null?el.value.length:el.selectionStart, e=el.selectionEnd==null?s:el.selectionEnd;
+  el.value=el.value.slice(0,s)+txt+el.value.slice(e);
+  const c=s+txt.length; try{ el.setSelectionRange(c,c); }catch(_){}
+  el.dispatchEvent(new Event('input',{bubbles:true})); }
+function kpAction(act){ const el=kpTarget(); if(!el)return;
+  const s=el.selectionStart==null?el.value.length:el.selectionStart, e=el.selectionEnd==null?s:el.selectionEnd;
+  if(act==='del'){ if(e>s){ el.value=el.value.slice(0,s)+el.value.slice(e); try{el.setSelectionRange(s,s);}catch(_){} }
+    else if(s>0){ el.value=el.value.slice(0,s-1)+el.value.slice(s); try{el.setSelectionRange(s-1,s-1);}catch(_){} }
+    el.dispatchEvent(new Event('input',{bubbles:true})); return; }
+  if(act==='left'){ const c=Math.max(0,s-1); try{el.setSelectionRange(c,c);}catch(_){} ovPlace(); return; }
+  if(act==='right'){ const c=Math.min(el.value.length,e+1); try{el.setSelectionRange(c,c);}catch(_){} ovPlace(); return; }
+  if(act==='abc'){ setKeypad(false);                                   // auf die normale Tastatur wechseln (Text, Umlaute, Diktat)
+    try{ el.blur(); el.focus(); const n=el.value.length; el.setSelectionRange(n,n); }catch(_){}
+    toast('Buchstaben-Tastatur – mit ⌨ zurück zu den Formeln'); return; }
+  if(act==='enter'){ if(el.id==='fx'){ fxCommit(); return; }
+    const cell=el.dataset.cell, r=parseInt(cell.match(/[0-9]+/)[0]), c=colIdx(cell.match(/[A-Z]+/)[0]);
+    commit(el); hideFormulaUI(); el.blur();
+    if(r<ROWS){ const nx=inputOf(colName(c)+(r+1)); if(nx){ nx.focus(); nx.value=data[colName(c)+(r+1)]||''; setActive(colName(c)+(r+1)); } }
+    recompute(); } }   // fertige Zelle zeigt ihr Ergebnis
+function applyInputMode(){ const m=keysOn?'none':'text';                 // Systemtastatur unterdrücken, solange die Formel-Tastatur offen ist
+  $('fx').inputMode=m; grid.querySelectorAll('input').forEach(i=>i.inputMode=m); }
+function setKeypad(on){ keysOn=!!on; buildKeypad();
+  $('keypad').classList.toggle('show',keysOn); $('btnKeys').classList.toggle('on',keysOn);
+  document.body.classList.toggle('kp-open',keysOn);
+  if(keysOn) document.documentElement.style.setProperty('--kph',($('keypad').offsetHeight+2)+'px');
+  applyInputMode();
+  if(keysOn){ const inp=inputOf(active); if(inp){ inp.focus(); inp.value=data[active]||''; formulaUI(inp); } }
+  else ovPlace(); }
+$('btnKeys').onclick=()=>setKeypad(!keysOn);
+
 /* Finger-Modus: Auswählen/Ausfüllen (touch-action:none) ⇄ Scrollen */
 function setFingerMode(sel){ const w=$('wrap'); w.classList.toggle('noscroll',sel); const b=$('btnTouch'); b.classList.toggle('on',sel); b.innerHTML=sel?'👆<span class="lbl"> Auswählen</span>':'✋<span class="lbl"> Scrollen</span>'; }
 $('btnTouch').onclick=()=>setFingerMode(!$('wrap').classList.contains('noscroll'));

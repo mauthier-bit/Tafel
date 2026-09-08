@@ -115,6 +115,14 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     ZUFALL(), ZUFALLSZAHL(a;b), ZUFALLSBEREICH(a;b)
   - **Leere Zellen und Texte** werden in Bereichen übersprungen: `=mittelwert(A1:A100)` rechnet nur
     mit den gefüllten Zellen.
+  - **Formel-Tastatur** (Knopf **⌨**): blendet unten ein Tastenfeld ein, das aufs Formelschreiben
+    zugeschnitten ist – Ziffern, `= + − × ÷ ^ ( ) ; : , < > ≥ ≤ ≠`, Rücktaste, Cursor ◀ ▶, „✓ Fertig"
+    (übernimmt und springt eine Zeile tiefer) und eine Reihe fertiger Funktionen (SUMME, MITTELWERT,
+    WENN, ZÄHLENWENN …), die gleich mit `=` und Klammer eingesetzt werden. Solange sie offen ist,
+    bleibt die **Systemtastatur zu**, und die Tabelle rutscht nach oben, damit nichts verdeckt wird.
+    Zellbezüge tippt man weiter direkt im Blatt an – ideal fürs iPad ohne Tastatur. Für Texte
+    (z. B. Tabellenköpfe) schaltet die Taste **ABC** auf die gewohnte Systemtastatur um – mit
+    Umlauten, Diktat und Autokorrektur; der Knopf **⌨** holt die Formeltasten wieder zurück.
   - **Rückgängig / Wiederherstellen** (↶ ↷ in der Leiste, auch ⌘Z / Strg+Z bzw. ⇧⌘Z).
   - **Schriftgröße** direkt im Werkzeug über **A− / A+**.
   - **Datei-Menü** (📁): **Öffnen** (eigene `.json`-Tabelle, CSV, Excel), **Tabelle speichern**
