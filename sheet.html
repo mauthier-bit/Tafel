@@ -129,7 +129,8 @@ let selAnchor='A1', selFocus='A1', dragging=false;   // Bereichs-Markierung
 let editEl=null;            // Feld, das gerade bearbeitet wird (unabhängig vom Browser-Fokus – iPad verliert ihn beim Tippen auf Tastatur/Zellen)
 let kpBusy=false, refBusy=false;
 const isEditing=el=>!!el && (el===editEl || document.activeElement===el);
-function keepFocus(el){ setTimeout(()=>{ if(editEl===el && document.activeElement!==el){ try{ el.focus({preventScroll:true}); }catch(_){} } },0); }
+function keepFocus(el){ if(!el)return;
+  [0,60,180].forEach(t=>setTimeout(()=>{ if(editEl===el && document.activeElement!==el){ try{ el.focus({preventScroll:true}); }catch(_){} } },t)); }
 let chartType='bar';
 
 /* ---------- Formel-Engine ---------- */
@@ -302,6 +303,8 @@ function build(){ let html='<colgroup><col style="width:44px">';
   if(typeof keysOn!=='undefined'&&keysOn) setTimeout(applyInputMode,0);
   grid.querySelectorAll('input').forEach(inp=>{
     inp.addEventListener('focus',()=>{ if(editEl===inp){ formulaUI(inp); return; }        // schon in Bearbeitung: Text nicht überschreiben
+      // iOS setzt den Fokus auf die getippte Zelle, obwohl der Tipp zur Formel gehört → Bearbeitung zurückholen
+      if(editEl && (refPick || refBusy || String(editEl.value||'').trim()[0]==='=')){ const keep=editEl; keepFocus(keep); return; }
       editEl=inp; setActive(inp.dataset.cell); inp.value=data[inp.dataset.cell]||''; formulaUI(inp); });
     inp.addEventListener('blur',()=>{ if(editEl===inp){ keepFocus(inp); return; }   // Eingabe läuft weiter – beendet wird nur bewusst (Enter/✓/Fertig/Esc oder Tipp woanders)
       clearRefHi(); ovHide(); commit(inp); });
@@ -365,7 +368,7 @@ document.addEventListener('pointermove',e=>{ if(!refPick||refPick.whole)return;
   const el=document.elementFromPoint(e.clientX,e.clientY); const td=el&&el.closest?el.closest('td[data-cell]'):null; if(!td)return;
   refInsert(refPick.anchor, td.dataset.cell); },{passive:false});
 document.addEventListener('pointerup',()=>{ if(!refPick)return; const el=refPick.el; refPick=null; refClear();   // grüne Zieh-Markierung weg; der farbige Rahmen der Bezüge bleibt
-  keepFocus(el); setTimeout(()=>{ refBusy=false; },250); });
+  keepFocus(el); setTimeout(()=>{ refBusy=false; },600); });
 
 /* ---------- Alle in der Formel verwendeten Zellen/Bereiche farbig markieren ---------- */
 const REFCOLORS=['#2563eb','#16a34a','#d97706','#db2777','#7c3aed','#0891b2'];
@@ -541,7 +544,9 @@ document.addEventListener('pointermove',e=>{ if(!filling)return; e.preventDefaul
 document.addEventListener('pointerup',()=>{ if(!filling)return; filling=false;
   if(fillPrev){ applyFill(fillPrev, fillSeed); selAnchor=colName(fillPrev.c0)+fillPrev.r0; selFocus=colName(fillPrev.c1)+fillPrev.r1; }
   clearFillPreview(); fillPrev=null; renderRange(); });
-function setActive(cell){ active=cell;
+function setActive(cell){
+  if(editEl && editEl.dataset && editEl.dataset.cell && editEl.dataset.cell!==cell && String(editEl.value||'').trim()[0]==='=') return;   // offene Formel: Auswahl bleibt stehen
+  active=cell;
   const ref=(typeof selRefString==='function')?selRefString():cell, nm=(typeof nameOf==='function')?(nameOf(ref)||nameOf(cell)):null;
   const cr=document.getElementById('cellref'); cr.textContent=nm?('🏷 '+nm):cell; cr.title=nm?(nm+' = '+ref+' – tippen zum Ändern'):'Namen für die Zelle/den Bereich vergeben';
   document.getElementById('fx').value=data[cell]||'';
