@@ -662,12 +662,6 @@
     <hr class="wsep">
     <div class="hint">Eingebettetes (Tabelle/GeoGebra/Video/Webseite) ist ein <b>bewegliches Objekt</b> – verschieben, skalieren, drehen mit dem Auswahl-Werkzeug. Zum Bedienen oben auf „Einbettung bedienen" tippen. Braucht Internet; nicht im PDF-Export.</div>
   </div></div>
-<div class="win" id="win-log" style="left:60px;top:60px;width:min(520px,94vw);"><h3>Ereignis-Protokoll <span class="x" data-close="win-log">×</span></h3>
-  <div class="body">
-    <div class="hint" style="margin:0 0 6px">Zeichne die Stelle, an der Striche fehlen (z. B. mehrmals ein „="). Dann hier <b>Kopieren</b> und den Text schicken.</div>
-    <textarea id="logText" rows="12" readonly style="width:100%;box-sizing:border-box;padding:8px;border:1px solid #cfd6e0;border-radius:8px;font-family:ui-monospace,Menlo,monospace;font-size:11px;resize:vertical;color:#1f2430"></textarea>
-    <div class="row fill" style="gap:6px;margin-top:8px"><button class="btn pri" id="logCopy">Kopieren</button><button class="btn" id="logRefresh">Aktualisieren</button><button class="btn dang" id="logClear">Leeren</button></div>
-  </div></div>
 <div class="win" id="win-settings" style="left:70px;top:70px;width:min(400px,92vw);"><h3>Einstellungen <span class="x" data-close="win-settings">×</span></h3>
   <div class="body">
     <div class="wcap">Tafelblatt</div>
@@ -699,8 +693,6 @@
     <div class="toggle"><span>Nur mit Stift schreiben<br><small style="color:#888">(Finger schiebt & zoomt)</small></span><div class="sw2 on" id="penOnly"></div></div>
     <div class="toggle"><span>Finger wählt aus (Auswahl-Modus)<br><small style="color:#888">(1 Finger verschiebt Objekte, 2 Finger zoomen & drehen)</small></span><div class="sw2" id="fingerSelect"></div></div>
     <div class="toggle"><span>Druckstärke des Pencils</span><div class="sw2 on" id="usePressure"></div></div>
-    <div class="toggle"><span>Ereignis-Protokoll<br><small style="color:#888">nur zur Fehlersuche beim Schreiben</small></span><div class="sw2" id="logSw"></div></div>
-    <div class="row fill" style="margin-top:6px"><button class="btn" id="logOpen">Protokoll anzeigen</button></div>
     <label class="lbl">Maßstab (Lineal, Geodreieck, Karo)</label>
     <div class="hint" style="margin:0 0 6px">Nur nötig, wenn die Zentimeter auf diesem Gerät nicht stimmen (z. B. Windows-Tablet mit anderer Anzeigeskalierung). Den Balken mit einem echten Lineal messen – er soll <b>genau 5 cm</b> lang sein.</div>
     <div id="calBar" title="Soll genau 5 cm lang sein"></div>
@@ -746,7 +738,6 @@ const snapObjs=p=>p.objects.map(o=>({...o}));
 function pushSnap(p,snap){ (p.undo=p.undo||[]).push(snap); if(p.undo.length>UNDO_MAX)p.undo.shift(); p.redo.length=0; }
 function pushUndo(){ const p=page(); pushSnap(p,snapObjs(p)); }
 function applySnap(from,to){ const p=page(); if(!(p[from]&&p[from].length))return false;
-  evAdd('        ! '+(from==='undo'?'rückgängig':'wiederhergestellt')+' · Objekte: '+p.objects.length+' → '+p[from][p[from].length-1].length);
   (p[to]=p[to]||[]).push(snapObjs(p)); if(p[to].length>UNDO_MAX)p[to].shift();
   p.objects=p[from].pop(); selection=[]; refreshProps(); refreshEmbedUI(); layerReorderEmbeds(); markDirty(); scheduleAutosave(); return true; }
 const undoStep=()=>applySnap('undo','redo');
@@ -821,8 +812,20 @@ function paintPattern(c, x0,y0,x1,y1, pat, dark, uscale){ if(!pat||pat==='none')
     fam(0); fam(Math.PI/3); fam(2*Math.PI/3); c.stroke(); } }
 function drawBackground(){ paintPattern(ctx, (0-ox)/scale,(0-oy)/scale,(W-ox)/scale,(H-oy)/scale, pagePat(page()), isBgDark(), scale); }
 function strokePath(pts,w,vw,c){ c.beginPath(); if(pts.length===1)return;
-  if(vw){ for(let i=1;i<pts.length;i++){ c.lineWidth=Math.max(.5,w*(.35+.9*(pts[i].p||.5)));
-      c.beginPath(); c.moveTo(pts[i-1].x,pts[i-1].y); c.lineTo(pts[i].x,pts[i].y); c.stroke(); } return true; }
+  /* Druckabhängige Striche: je Punkt ein kurzes Kurvenstück (Kontrollpunkt = Messpunkt, Enden in
+     der Mitte zum Nachbarn). Gleiche Anzahl Zeichenschritte wie vorher, aber ohne Polygon-Ecken. */
+  if(vw){ const q=Math.max(.35,w*0.08);                       // Breiten in feine Stufen: gleich breite Stücke werden in einem Zug gezeichnet
+    const pw=i=>Math.round(Math.max(.5,w*(.35+.9*(pts[i].p||.5)))/q)*q;
+    if(pts.length===2){ c.lineWidth=pw(1); c.beginPath(); c.moveTo(pts[0].x,pts[0].y); c.lineTo(pts[1].x,pts[1].y); c.stroke(); return true; }
+    let px=(pts[0].x+pts[1].x)/2, py=(pts[0].y+pts[1].y)/2, lw=pw(1);
+    c.lineWidth=lw; c.beginPath(); c.moveTo(pts[0].x,pts[0].y); c.lineTo(px,py);
+    for(let i=1;i<pts.length-1;i++){ const mx=(pts[i].x+pts[i+1].x)/2, my=(pts[i].y+pts[i+1].y)/2, nw=pw(i);
+      if(nw!==lw){ c.stroke(); c.lineWidth=lw=nw; c.beginPath(); c.moveTo(px,py); }
+      c.quadraticCurveTo(pts[i].x,pts[i].y,mx,my); px=mx; py=my; }
+    const L=pts.length-1, nw=pw(L);
+    if(nw!==lw){ c.stroke(); c.lineWidth=nw; c.beginPath(); c.moveTo(px,py); }
+    c.lineTo(pts[L].x,pts[L].y); c.stroke();
+    return true; }
   c.moveTo(pts[0].x,pts[0].y);
   for(let i=1;i<pts.length-1;i++){ const mx=(pts[i].x+pts[i+1].x)/2,my=(pts[i].y+pts[i+1].y)/2; c.quadraticCurveTo(pts[i].x,pts[i].y,mx,my); }
   c.lineTo(pts[pts.length-1].x,pts[pts.length-1].y); }
@@ -959,18 +962,7 @@ function redraw(){
   syncEmbeds();
   dirty=false;
 }
-function loop(){ if(dirty||laser.length){ if(laser.length)markDirty(); redraw(); } evVisibleCheck(); requestAnimationFrame(loop); }
-/* Sichtprüfung (nur bei eingeschaltetem Protokoll): Ist der eben abgelegte Strich wirklich auf dem Bild? */
-let evCheck=null;
-function evVisibleCheck(){ if(!evCheck)return; if(++evCheck.n<2)return; const o=evCheck.o; evCheck=null;
-  try{ const pts=o.points||[]; if(!pts.length)return; let hit=0,seen=0;
-    const step=Math.max(1,Math.floor(pts.length/5));
-    for(let i=0;i<pts.length;i+=step){ const sc=toScreen(pts[i].x,pts[i].y);
-      if(sc.x<3||sc.y<3||sc.x>W-3||sc.y>H-3)continue; seen++;
-      const d=ctx.getImageData(Math.round(sc.x*dpr)-3,Math.round(sc.y*dpr)-3,7,7).data;
-      for(let k=3;k<d.length;k+=4){ if(d[k]>10){ hit++; break; } } }
-    evAdd('        ? sichtbar an '+hit+' von '+seen+' Stellen'+(seen&&hit<seen?'   ←←← NICHT GEZEICHNET':''));
-  }catch(e){ evAdd('        ? Sichtprüfung nicht möglich ('+e+')'); } }
+function loop(){ if(dirty||laser.length){ if(laser.length)markDirty(); redraw(); } requestAnimationFrame(loop); }
 
 /* ---- Lineal (bleibendes Overlay, unabhängig vom aktiven Werkzeug) ---- */
 const RULCOL='#286edc';
@@ -1105,7 +1097,6 @@ const isDraw=e=>(e.pointerType==='pen'||e.pointerType==='mouse')?true:(e.pointer
 const navList=()=>{const a=[];for(const[,p]of pointers)if(p.nav)a.push(p);return a;};
 
 cv.addEventListener('pointerdown',e=>{ if(e.pointerType==='mouse'&&e.button!==0) return;   // Rechts-/Mittelklick nicht als Strich werten
-  evPointer(e);
   // Kein setPointerCapture mehr: auf dem iPad verschluckt Safari dadurch bei schnellen
   // Strichen den nächsten Stiftkontakt. Die Zeichenfläche liegt ohnehin über dem ganzen Bild.
   if(e.pointerType!=='mouse' && !editing && e.cancelable) e.preventDefault();   // eigene Gestenerkennung von Safari heraushalten
@@ -1141,10 +1132,10 @@ cv.addEventListener('pointerdown',e=>{ if(e.pointerType==='mouse'&&e.button!==0)
     if(navList().length===1){ navList().forEach(q=>q.nav=false); navBase=null; }           // Stift schlägt einen ruhenden Finger/Handballen
     for(const[id,q] of pointers) if(q!==p && q.type!=='touch' && id!==e.pointerId) pointers.delete(id);   // Stift-Leichen aufräumen
   }
-  if(isDraw(e)&&drawId===null&&navList().length===0){ evAdd('        → Strich beginnt ('+tool+')'); startAction(e); }
-  else { evAdd('        → KEIN Strich (nav) isDraw='+isDraw(e)+' drawId='+drawId+' nav='+navList().length); p.nav=true; if(cur){forceEndStroke();} moveDrag=null; xform=null; setupNav(); }
+  if(isDraw(e)&&drawId===null&&navList().length===0){ startAction(e); }
+  else { p.nav=true; if(cur){forceEndStroke();} moveDrag=null; xform=null; setupNav(); }
 },{passive:false});
-cv.addEventListener('pointermove',e=>{ const p=pointers.get(e.pointerId); if(!p){ if(evLogOn&&e.pointerType!=='mouse')evPointer(e,'unbekannter Zeiger'); return; } p.x=e.clientX; p.y=e.clientY; lastInputT=performance.now(); if(evLogOn){ if(e.pointerId===drawId)evMoves++; else evPointer(e); }
+cv.addEventListener('pointermove',e=>{ const p=pointers.get(e.pointerId); if(!p)return; p.x=e.clientX; p.y=e.clientY; lastInputT=performance.now();
   if(objGesture){ updateObjGesture(); return; }
   if(tool==='spot'){ updateSpot(); return; }
   if(rulerDrag&&rulerDrag.id===e.pointerId){
@@ -1157,7 +1148,6 @@ cv.addEventListener('pointermove',e=>{ const p=pointers.get(e.pointerId); if(!p)
   if(p.nav) updateNav();
 },{passive:false});
 function endPointer(e){ const p=pointers.get(e.pointerId); lastInputT=performance.now();
-  evPointer(e,(e.pointerId===drawId?('Strich endet nach '+evMoves+' Bewegungen'):'')+(p?'':' (Zeiger unbekannt)')); if(e.pointerId===drawId)evMoves=0;
   if(objGesture&&objGesture.ids.includes(e.pointerId)){ objGesture=null; scheduleAutosave(); }
   if(rulerDrag&&rulerDrag.id===e.pointerId) rulerDrag=null;
   if(e.pointerId===drawId){ endAction(e); drawId=null; }        // auch ohne Eintrag in der Zeigerliste
@@ -1169,7 +1159,7 @@ cv.addEventListener('pointerup',endPointer); cv.addEventListener('pointercancel'
    heraus. Sonst hält Safari einen zweiten Kontakt, der kurz nach dem ersten und dicht daneben
    aufsetzt, für einen Doppeltipp – und verwirft ihn samt Strich (jeder zweite kurze Strich fehlte).
    Die Pointer-Ereignisse laufen davon unberührt weiter (pointerdown feuert vor touchstart). */
-const swallowTouch=e=>{ if(e.cancelable) e.preventDefault(); };
+const swallowTouch=e=>{ if(!editing && e.cancelable) e.preventDefault(); };   // während einer Texteingabe nicht (Tastatur/Fokus)
 cv.addEventListener('touchstart',swallowTouch,{passive:false});
 cv.addEventListener('touchmove',swallowTouch,{passive:false});
 cv.addEventListener('touchend',swallowTouch,{passive:false});
@@ -1237,8 +1227,7 @@ function endAction(e){ clearTimeout(dwellTimer); cancelGeoRay(); hideMeasure(); 
     } else if(cur.points.length) commit(cur); cur=null; markDirty(); } }
 // Im Schreibmodus: 2 s am Ende halten -> aus der Linie wird eine gerade Strecke (Anfang → gehaltener Punkt)
 function scheduleStraighten(){ clearTimeout(dwellTimer); dwellTimer=setTimeout(()=>{ if(cur&&cur.type==='stroke'&&!cur.rulerSnap&&cur.points.length>2){ cur.points=[cur.points[0],cur.points[cur.points.length-1]]; cur._straight=true; cur.varw=false; markDirty(); toast('→ gerade Strecke'); } },1000); }
-function commit(o){ if(!o.id)o.id=uid(); pushUndo(); page().objects.push(o); evAdd('        → abgelegt: '+o.type+(o.points?(' mit '+o.points.length+' Punkten'):'')+' · '+o.color+' · Dicke '+(Math.round((o.width||0)*10)/10)+' · Objekte: '+page().objects.length);
-  if(evLogOn&&o.type==='stroke') evCheck={o,n:0}; scheduleAutosave(); }
+function commit(o){ if(!o.id)o.id=uid(); pushUndo(); page().objects.push(o); scheduleAutosave(); }
 /* ===== Lasso-Auswahl ===== */
 let lassoPts=null, lassoSel=null;
 function pointInPoly(x,y,poly){ let inside=false; for(let i=0,j=poly.length-1;i<poly.length;j=i++){ const xi=poly[i].x,yi=poly[i].y,xj=poly[j].x,yj=poly[j].y;
@@ -1286,7 +1275,7 @@ function eraseAt(x,y){ const r=14/scale; const objs=page().objects; let changed=
       if(seg.length>1)segs.push(seg);
       if(segs.length!==1||segs[0]?.length!==o.points.length){ objs.splice(i,1); changed=true; for(const s of segs) objs.splice(i,0,{...o,id:uid(),points:s}); }
     } else if(hitTest(o,x,y)){ objs.splice(i,1); changed=true; } }
-  if(changed){ if(eraseSnap){ pushSnap(page(),eraseSnap); eraseSnap=null; } evAdd('        ! radiert · Objekte: '+objs.length); markDirty(); scheduleAutosave(); } }
+  if(changed){ if(eraseSnap){ pushSnap(page(),eraseSnap); eraseSnap=null; } markDirty(); scheduleAutosave(); } }
 
 /* --- Auswahl-Interaktion (Move/Scale/Rotate/Doppeltipp) --- */
 function screenHandleAt(sx,sy){ for(const h of handleList()){ if(Math.hypot(h.x-sx,h.y-sy)<15) return h; } return null; }
@@ -1736,7 +1725,7 @@ function positionProps(){ if(!selection.length)return; const b=selCenterBounds()
 
 /* ============ Seiten ============ */
 function refreshPage(){ invalidateSnap(); const p=page(); $('pageInfo').textContent=(p.name?p.name+' ':'')+(doc.cur+1)+' / '+doc.pages.length; refreshEmbedUI(); applyBg(); }
-function goPage(i){ if(i<0||i>=doc.pages.length)return; evAdd('        ! Seitenwechsel auf '+(i+1)); invalidateSnap(); commitText(); doc.cur=i; selection=[]; refreshProps(); scale=1;ox=0;oy=0; refreshPage(); ensureImgs(); markDirty(); }
+function goPage(i){ if(i<0||i>=doc.pages.length)return; invalidateSnap(); commitText(); doc.cur=i; selection=[]; refreshProps(); scale=1;ox=0;oy=0; refreshPage(); ensureImgs(); markDirty(); }
 $('p-prev').onclick=()=>goPage(doc.cur-1); $('p-next').onclick=()=>goPage(doc.cur+1);
 $('p-add').onclick=()=>{doc.pages.splice(doc.cur+1,0,newPage());goPage(doc.cur+1);scheduleAutosave();};
 $('p-del').onclick=()=>{ if(doc.pages.length<=1){const p=page();p.objects=[];p.bg=null;p._img=null;p.embed=null;markDirty();refreshPage();return;} if(confirm('Diese Seite löschen?')){doc.pages.splice(doc.cur,1);doc.cur=Math.max(0,doc.cur-1);goPage(doc.cur);scheduleAutosave();} };
@@ -2478,7 +2467,7 @@ function renderStudentsInfo(){ const n=(doc.students||[]).length; $('classInfo')
 $('classText').addEventListener('input',()=>{ doc.students=$('classText').value.split('\n').map(s=>s.trim()).filter(Boolean); nameUsed=new Set(); const n=doc.students.length; $('classInfo').textContent=n?(n+' Namen in „'+curProjName()+'"'):('Keine Namen in „'+curProjName()+'".'); scheduleAutosave(); });
 function renderProjects(){ [ 'projectSelect','barProject' ].forEach(id=>{ const sel=$(id); if(!sel)return; sel.innerHTML=''; projects.forEach(p=>{const o=document.createElement('option');o.value=p.id;o.textContent=p.name;sel.appendChild(o);}); sel.value=activeId; }); renderStudentsInfo(); }
 function blankDoc(name){ doc.pages=[newPage()]; doc.cur=0; doc.settings=DEFSET(); doc.students=[]; doc.name=name; nameUsed=new Set(); applySettingsUI(); }
-function loadProject(id){ const s=localStorage.getItem(projKey(id)); evAdd('        ! Projekt neu geladen'); activeId=id; if(s){ deserialize(s); } else { blankDoc((projects.find(p=>p.id===id)||{}).name||'Projekt'); } nameUsed=new Set(); }
+function loadProject(id){ const s=localStorage.getItem(projKey(id)); activeId=id; if(s){ deserialize(s); } else { blankDoc((projects.find(p=>p.id===id)||{}).name||'Projekt'); } nameUsed=new Set(); }
 function switchProject(id){ if(id===activeId)return; saveCurrentProject(); loadProject(id); goPage(0); saveIndex(); renderProjects(); }
 function newProject(){ const inp=prompt('Name des neuen Projekts (z. B. Mathe 6a):',''); if(inp===null)return; const nm=(inp.trim()||('Projekt '+(projects.length+1)));
   saveCurrentProject(); const id=uid(); projects.push({id,name:nm}); activeId=id; blankDoc(nm); goPage(0); saveCurrentProject(); saveIndex(); renderProjects(); toast('Projekt „'+nm+'" angelegt'); }
@@ -2650,26 +2639,6 @@ function initProjects(){ let idx=null; try{ idx=JSON.parse(localStorage.getItem(
   renderProjects(); }
 
 /* ============ Diverses ============ */
-/* Ereignis-Protokoll: zeichnet die rohen Zeiger-Ereignisse auf, um fehlende Striche zu finden */
-let evLogOn=false, evLog=[], evT0=0, evMoves=0;
-function evAdd(txt){ if(!evLogOn)return; const now=performance.now(); if(!evT0)evT0=now;
-  evLog.push(String(Math.round(now-evT0)).padStart(6)+' ms  '+txt); if(evLog.length>500)evLog.shift(); }
-function evPointer(e,note){ if(!evLogOn)return;
-  evAdd(e.type.replace('pointer','')+' id='+e.pointerId+' '+e.pointerType+(e.isPrimary?'':' sek')+
-    ' btn='+e.button+'/'+e.buttons+' p='+(Math.round((e.pressure||0)*100)/100)+
-    ' x='+Math.round(e.clientX)+' y='+Math.round(e.clientY)+
-    ' lag='+Math.round(performance.now()-(e.timeStamp||performance.now()))+
-    ' [zeiger='+pointers.size+' nav='+navList().length+' drawId='+drawId+' cur='+(cur?(cur.points?cur.points.length+'P':'obj'):'-')+']'+(note?'  → '+note:'')); }
-function evShow(){ $('logText').value = evLog.length? evLog.join('\n') : '(noch nichts aufgezeichnet – Schalter an und schreiben)'; }
-$('logSw').onclick=function(){ this.classList.toggle('on'); evLogOn=this.classList.contains('on');
-  if(evLogOn){ evLog=[]; evT0=0;
-    evAdd('Start · Hintergrund '+doc.settings.bgColor+'/'+doc.settings.pattern+' · Stift '+toolColors.pen+' Dicke '+penWidth+' · Marker '+toolColors.marker+' Dicke '+markerWidth+' · Zoom '+scale.toFixed(2)+' · dpr '+dpr+' · '+W+'×'+H);
-    toast('Protokoll läuft'); } else toast('Protokoll aus'); };
-$('logOpen').onclick=()=>{ evShow(); toggleWin('win-log'); };
-$('logRefresh').onclick=evShow;
-$('logClear').onclick=()=>{ evLog=[]; evT0=0; evShow(); };
-$('logCopy').onclick=async()=>{ try{ await navigator.clipboard.writeText($('logText').value); toast('Protokoll kopiert'); }
-  catch(e){ $('logText').removeAttribute('readonly'); $('logText').select(); toast('Bitte von Hand markieren und kopieren'); } };
 let toastT=null; function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),1900);}
 function showBusy(on,msg){const b=$('busy');if(msg)b.textContent=msg;b.classList.toggle('show',on);}
 const spot=$('spot'); let spotRadius=120, spotBase=null;

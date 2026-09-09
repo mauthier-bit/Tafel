@@ -25,6 +25,10 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   gestrichelten verdeckten Kanten). Alle im **Formen**-Popover. Ein **erneutes Tippen auf „Formen"**
   klappt die Auswahl wieder zu (das Werkzeug bleibt aktiv). Sind Formen-Auswahl und **Farbpalette**
   gleichzeitig offen, weichen sie einander aus, statt sich zu überdecken.
+- **Glatte Striche:** Auch druckabhängige Striche (Apple Pencil) werden als **Kurven** gezeichnet –
+  je Messpunkt ein kurzes Kurvenstück statt gerader Verbindungen. Schnell geschriebene Bögen zeigen
+  dadurch keine Polygon-Ecken mehr, ohne zusätzliche Punkte (gleicher Speicherbedarf) und sogar
+  etwas schneller als vorher.
 - **Freihand → gerade Strecke:** Beim normalen Schreiben am Ende einer Linie **1 Sekunde
   ruhig halten** → aus der Linie wird eine gerade Strecke (Anfang → gehaltener Punkt).
   Sonst bleibt es die Freihandlinie.
@@ -202,9 +206,6 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   unabhängige Seite zum Prüfen der Stifteingabe – zählt Pointer- und Touch-Ereignisse gegen die
   tatsächlich gezeichneten Striche und lässt `preventDefault`, `PointerCapture` und die Eingabeart
   umschalten. Damit lässt sich eingrenzen, ob fehlende Striche an der App oder am Browser liegen.
-- **Ereignis-Protokoll** (Einstellungen → Bedienung, standardmäßig aus): zeichnet zur Fehlersuche
-  jedes Stift-Ereignis mit Typ, Zeitpunkt und Zustand auf; „Protokoll anzeigen" öffnet den Text
-  zum **Kopieren**. Nur nötig, wenn beim Schreiben Striche fehlen.
 - **Maßstab kalibrieren** (Einstellungen → Bedienung, optional): Standard ist auf das **iPad**
   abgestimmt (37,8 px = 1 cm) – ohne Zutun ändert sich nichts. Bei Bedarf den angezeigten Balken mit
   einem echten Lineal messen und mit ＋/− auf **genau 5 cm** stellen; Lineal, Geodreieck und
@@ -248,6 +249,10 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   beginnt sofort – vorher ging in solchen Fällen jeder zweite kurze Strich verloren (typisch beim
   schnell geschriebenen **Gleichheitszeichen**). Ein Wächter erkennt zusätzlich verlorene
   Stiftkontakte und schließt den Strich ab, statt ihn zu verwerfen.
+- **Doppeltipp-Erkennung ausgehebelt:** Setzt der Stift kurz nach dem letzten Strich **dicht daneben**
+  wieder auf (typisch beim Gleichheitszeichen), hielt iPadOS das für einen **Doppeltipp** und verwarf
+  den Kontakt – der Strich fehlte komplett. Die Tafel unterbindet auf der Zeichenfläche jetzt die
+  Standardaktion der Touch-Ereignisse, damit Safaris Gestenerkennung gar nicht erst greift.
 - **Der Stift hat Vorrang:** Liegt beim Schreiben ein **Finger oder der Handballen** auf der Tafel,
   schreibt der Pencil trotzdem weiter (bisher blockierte eine solche Berührung das Schreiben, bis
   man die Hand anhob). Nur bei **zwei** Fingern (Zoomen/Schieben) hält sich der Stift heraus.
