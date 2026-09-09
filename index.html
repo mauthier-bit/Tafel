@@ -746,6 +746,7 @@ const snapObjs=p=>p.objects.map(o=>({...o}));
 function pushSnap(p,snap){ (p.undo=p.undo||[]).push(snap); if(p.undo.length>UNDO_MAX)p.undo.shift(); p.redo.length=0; }
 function pushUndo(){ const p=page(); pushSnap(p,snapObjs(p)); }
 function applySnap(from,to){ const p=page(); if(!(p[from]&&p[from].length))return false;
+  evAdd('        ! '+(from==='undo'?'rückgängig':'wiederhergestellt')+' · Objekte: '+p.objects.length+' → '+p[from][p[from].length-1].length);
   (p[to]=p[to]||[]).push(snapObjs(p)); if(p[to].length>UNDO_MAX)p[to].shift();
   p.objects=p[from].pop(); selection=[]; refreshProps(); refreshEmbedUI(); layerReorderEmbeds(); markDirty(); scheduleAutosave(); return true; }
 const undoStep=()=>applySnap('undo','redo');
@@ -937,26 +938,12 @@ function geomBounds(o){
 }
 function objBounds(o){ return geomBounds(o); }
 
-/* Während eines Strichs bleiben Hintergrund und fertige Objekte gleich: einmal in einen
-   Zwischen-Canvas sichern und danach nur noch kopieren – sonst wird jedes Bild neu gemalt
-   (auf vollen Seiten spürbar: der Stift „hängt" kurz). */
-let snapCv=null, snapCtx=null, snapValid=false;
-const invalidateSnap=()=>{ snapValid=false; };
-function captureSnap(){ if(!snapCv){ snapCv=document.createElement('canvas'); snapCtx=snapCv.getContext('2d'); }
-  if(snapCv.width!==cv.width||snapCv.height!==cv.height){ snapCv.width=cv.width; snapCv.height=cv.height; }
-  snapCtx.setTransform(1,0,0,1,0,0); snapCtx.clearRect(0,0,snapCv.width,snapCv.height);
-  try{ snapCtx.drawImage(cv,0,0); snapValid=true; }catch(e){ snapValid=false; } }
+const invalidateSnap=()=>{};   // (früher Zwischen-Canvas; wieder entfernt, es wird immer vollständig gezeichnet)
 function redraw(){
-  if(snapValid && cur && snapCv && snapCv.width===cv.width){          // schneller Weg: Untergrund kopieren
-    ctx.setTransform(1,0,0,1,0,0); ctx.clearRect(0,0,cv.width,cv.height); ctx.drawImage(snapCv,0,0);
-    ctx.setTransform(scale*dpr,0,0,scale*dpr,ox*dpr,oy*dpr);
-  } else {
   ctx.setTransform(1,0,0,1,0,0); ctx.clearRect(0,0,cv.width,cv.height);   // Canvas transparent; Farbe liegt im #bgLayer
   ctx.setTransform(scale*dpr,0,0,scale*dpr,ox*dpr,oy*dpr);
   drawBackground(); if(page()._img){try{ctx.drawImage(page()._img,0,0);}catch(e){}}
   for(const o of page().objects) drawObject(o);
-  if(cur) captureSnap();                                              // Stand vor dem laufenden Strich sichern
-  }
   if(cur) drawObject(cur);
   if(lassoPts&&lassoPts.length>1){ ctx.save(); ctx.strokeStyle='rgba(59,130,246,.9)'; ctx.setLineDash([6/scale,4/scale]); ctx.lineWidth=1.6/scale;
     ctx.beginPath(); ctx.moveTo(lassoPts[0].x,lassoPts[0].y); for(let i=1;i<lassoPts.length;i++)ctx.lineTo(lassoPts[i].x,lassoPts[i].y); ctx.closePath();
@@ -972,7 +959,18 @@ function redraw(){
   syncEmbeds();
   dirty=false;
 }
-function loop(){ checkLostPointer(); if(dirty||laser.length){ if(laser.length)markDirty(); redraw(); } requestAnimationFrame(loop); }
+function loop(){ checkLostPointer(); if(dirty||laser.length){ if(laser.length)markDirty(); redraw(); } evVisibleCheck(); requestAnimationFrame(loop); }
+/* Sichtprüfung (nur bei eingeschaltetem Protokoll): Ist der eben abgelegte Strich wirklich auf dem Bild? */
+let evCheck=null;
+function evVisibleCheck(){ if(!evCheck)return; if(++evCheck.n<2)return; const o=evCheck.o; evCheck=null;
+  try{ const pts=o.points||[]; if(!pts.length)return; let hit=0,seen=0;
+    const step=Math.max(1,Math.floor(pts.length/5));
+    for(let i=0;i<pts.length;i+=step){ const sc=toScreen(pts[i].x,pts[i].y);
+      if(sc.x<3||sc.y<3||sc.x>W-3||sc.y>H-3)continue; seen++;
+      const d=ctx.getImageData(Math.round(sc.x*dpr)-3,Math.round(sc.y*dpr)-3,7,7).data;
+      for(let k=3;k<d.length;k+=4){ if(d[k]>10){ hit++; break; } } }
+    evAdd('        ? sichtbar an '+hit+' von '+seen+' Stellen'+(seen&&hit<seen?'   ←←← NICHT GEZEICHNET':''));
+  }catch(e){ evAdd('        ? Sichtprüfung nicht möglich ('+e+')'); } }
 /* Kommt zu einem Strich kein pointerup (vom System verschluckt), bleibt er sonst „offen" und der
    nächste Strich wird geopfert, um ihn zu beenden – genau das ließ jeden zweiten Strich fehlen. */
 function checkLostPointer(){ if(drawId===null)return;
@@ -1235,7 +1233,8 @@ function endAction(e){ clearTimeout(dwellTimer); cancelGeoRay(); hideMeasure(); 
     } else if(cur.points.length) commit(cur); cur=null; markDirty(); } }
 // Im Schreibmodus: 2 s am Ende halten -> aus der Linie wird eine gerade Strecke (Anfang → gehaltener Punkt)
 function scheduleStraighten(){ clearTimeout(dwellTimer); dwellTimer=setTimeout(()=>{ if(cur&&cur.type==='stroke'&&!cur.rulerSnap&&cur.points.length>2){ cur.points=[cur.points[0],cur.points[cur.points.length-1]]; cur._straight=true; cur.varw=false; markDirty(); toast('→ gerade Strecke'); } },1000); }
-function commit(o){ if(!o.id)o.id=uid(); pushUndo(); page().objects.push(o); evAdd('        → abgelegt: '+o.type+(o.points?(' mit '+o.points.length+' Punkten'):'')); scheduleAutosave(); }
+function commit(o){ if(!o.id)o.id=uid(); pushUndo(); page().objects.push(o); evAdd('        → abgelegt: '+o.type+(o.points?(' mit '+o.points.length+' Punkten'):'')+' · Objekte auf der Seite: '+page().objects.length);
+  if(evLogOn&&o.type==='stroke') evCheck={o,n:0}; scheduleAutosave(); }
 /* ===== Lasso-Auswahl ===== */
 let lassoPts=null, lassoSel=null;
 function pointInPoly(x,y,poly){ let inside=false; for(let i=0,j=poly.length-1;i<poly.length;j=i++){ const xi=poly[i].x,yi=poly[i].y,xj=poly[j].x,yj=poly[j].y;
@@ -1283,7 +1282,7 @@ function eraseAt(x,y){ const r=14/scale; const objs=page().objects; let changed=
       if(seg.length>1)segs.push(seg);
       if(segs.length!==1||segs[0]?.length!==o.points.length){ objs.splice(i,1); changed=true; for(const s of segs) objs.splice(i,0,{...o,id:uid(),points:s}); }
     } else if(hitTest(o,x,y)){ objs.splice(i,1); changed=true; } }
-  if(changed){ if(eraseSnap){ pushSnap(page(),eraseSnap); eraseSnap=null; } markDirty(); scheduleAutosave(); } }
+  if(changed){ if(eraseSnap){ pushSnap(page(),eraseSnap); eraseSnap=null; } evAdd('        ! radiert · Objekte: '+objs.length); markDirty(); scheduleAutosave(); } }
 
 /* --- Auswahl-Interaktion (Move/Scale/Rotate/Doppeltipp) --- */
 function screenHandleAt(sx,sy){ for(const h of handleList()){ if(Math.hypot(h.x-sx,h.y-sy)<15) return h; } return null; }
@@ -1733,7 +1732,7 @@ function positionProps(){ if(!selection.length)return; const b=selCenterBounds()
 
 /* ============ Seiten ============ */
 function refreshPage(){ invalidateSnap(); const p=page(); $('pageInfo').textContent=(p.name?p.name+' ':'')+(doc.cur+1)+' / '+doc.pages.length; refreshEmbedUI(); applyBg(); }
-function goPage(i){ if(i<0||i>=doc.pages.length)return; invalidateSnap(); commitText(); doc.cur=i; selection=[]; refreshProps(); scale=1;ox=0;oy=0; refreshPage(); ensureImgs(); markDirty(); }
+function goPage(i){ if(i<0||i>=doc.pages.length)return; evAdd('        ! Seitenwechsel auf '+(i+1)); invalidateSnap(); commitText(); doc.cur=i; selection=[]; refreshProps(); scale=1;ox=0;oy=0; refreshPage(); ensureImgs(); markDirty(); }
 $('p-prev').onclick=()=>goPage(doc.cur-1); $('p-next').onclick=()=>goPage(doc.cur+1);
 $('p-add').onclick=()=>{doc.pages.splice(doc.cur+1,0,newPage());goPage(doc.cur+1);scheduleAutosave();};
 $('p-del').onclick=()=>{ if(doc.pages.length<=1){const p=page();p.objects=[];p.bg=null;p._img=null;p.embed=null;markDirty();refreshPage();return;} if(confirm('Diese Seite löschen?')){doc.pages.splice(doc.cur,1);doc.cur=Math.max(0,doc.cur-1);goPage(doc.cur);scheduleAutosave();} };
@@ -2475,7 +2474,7 @@ function renderStudentsInfo(){ const n=(doc.students||[]).length; $('classInfo')
 $('classText').addEventListener('input',()=>{ doc.students=$('classText').value.split('\n').map(s=>s.trim()).filter(Boolean); nameUsed=new Set(); const n=doc.students.length; $('classInfo').textContent=n?(n+' Namen in „'+curProjName()+'"'):('Keine Namen in „'+curProjName()+'".'); scheduleAutosave(); });
 function renderProjects(){ [ 'projectSelect','barProject' ].forEach(id=>{ const sel=$(id); if(!sel)return; sel.innerHTML=''; projects.forEach(p=>{const o=document.createElement('option');o.value=p.id;o.textContent=p.name;sel.appendChild(o);}); sel.value=activeId; }); renderStudentsInfo(); }
 function blankDoc(name){ doc.pages=[newPage()]; doc.cur=0; doc.settings=DEFSET(); doc.students=[]; doc.name=name; nameUsed=new Set(); applySettingsUI(); }
-function loadProject(id){ const s=localStorage.getItem(projKey(id)); activeId=id; if(s){ deserialize(s); } else { blankDoc((projects.find(p=>p.id===id)||{}).name||'Projekt'); } nameUsed=new Set(); }
+function loadProject(id){ const s=localStorage.getItem(projKey(id)); evAdd('        ! Projekt neu geladen'); activeId=id; if(s){ deserialize(s); } else { blankDoc((projects.find(p=>p.id===id)||{}).name||'Projekt'); } nameUsed=new Set(); }
 function switchProject(id){ if(id===activeId)return; saveCurrentProject(); loadProject(id); goPage(0); saveIndex(); renderProjects(); }
 function newProject(){ const inp=prompt('Name des neuen Projekts (z. B. Mathe 6a):',''); if(inp===null)return; const nm=(inp.trim()||('Projekt '+(projects.length+1)));
   saveCurrentProject(); const id=uid(); projects.push({id,name:nm}); activeId=id; blankDoc(nm); goPage(0); saveCurrentProject(); saveIndex(); renderProjects(); toast('Projekt „'+nm+'" angelegt'); }
