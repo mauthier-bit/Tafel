@@ -959,7 +959,7 @@ function redraw(){
   syncEmbeds();
   dirty=false;
 }
-function loop(){ checkLostPointer(); if(dirty||laser.length){ if(laser.length)markDirty(); redraw(); } evVisibleCheck(); requestAnimationFrame(loop); }
+function loop(){ if(dirty||laser.length){ if(laser.length)markDirty(); redraw(); } evVisibleCheck(); requestAnimationFrame(loop); }
 /* Sichtprüfung (nur bei eingeschaltetem Protokoll): Ist der eben abgelegte Strich wirklich auf dem Bild? */
 let evCheck=null;
 function evVisibleCheck(){ if(!evCheck)return; if(++evCheck.n<2)return; const o=evCheck.o; evCheck=null;
@@ -971,12 +971,6 @@ function evVisibleCheck(){ if(!evCheck)return; if(++evCheck.n<2)return; const o=
       for(let k=3;k<d.length;k+=4){ if(d[k]>10){ hit++; break; } } }
     evAdd('        ? sichtbar an '+hit+' von '+seen+' Stellen'+(seen&&hit<seen?'   ←←← NICHT GEZEICHNET':''));
   }catch(e){ evAdd('        ? Sichtprüfung nicht möglich ('+e+')'); } }
-/* Kommt zu einem Strich kein pointerup (vom System verschluckt), bleibt er sonst „offen" und der
-   nächste Strich wird geopfert, um ihn zu beenden – genau das ließ jeden zweiten Strich fehlen. */
-function checkLostPointer(){ if(drawId===null)return;
-  if(performance.now()-lastInputT<700) return;            // nur bei wirklich stillem Zeiger prüfen
-  const q=pointers.get(drawId);
-  if(q&&q.cap&&!cv.hasPointerCapture(drawId)){ evAdd('        → Stiftkontakt verloren, Strich abgeschlossen'); pointers.delete(drawId); forceEndStroke(); } }
 
 /* ---- Lineal (bleibendes Overlay, unabhängig vom aktiven Werkzeug) ---- */
 const RULCOL='#286edc';
@@ -1111,10 +1105,12 @@ const isDraw=e=>(e.pointerType==='pen'||e.pointerType==='mouse')?true:(e.pointer
 const navList=()=>{const a=[];for(const[,p]of pointers)if(p.nav)a.push(p);return a;};
 
 cv.addEventListener('pointerdown',e=>{ if(e.pointerType==='mouse'&&e.button!==0) return;   // Rechts-/Mittelklick nicht als Strich werten
-  evPointer(e); let cap=false;
-  try{ cv.setPointerCapture(e.pointerId); cap=cv.hasPointerCapture(e.pointerId); }catch(_){}   // darf den Rest nie blockieren
+  evPointer(e);
+  // Kein setPointerCapture mehr: auf dem iPad verschluckt Safari dadurch bei schnellen
+  // Strichen den nächsten Stiftkontakt. Die Zeichenfläche liegt ohnehin über dem ganzen Bild.
+  if(e.pointerType!=='mouse' && !editing && e.cancelable) e.preventDefault();   // eigene Gestenerkennung von Safari heraushalten
   lastInputT=performance.now();
-  const p={x:e.clientX,y:e.clientY,type:e.pointerType,nav:false,id:e.pointerId,cap}; pointers.set(e.pointerId,p);
+  const p={x:e.clientX,y:e.clientY,type:e.pointerType,nav:false,id:e.pointerId}; pointers.set(e.pointerId,p);
   if(tool==='spot'){ if(pointers.size===2){ const ps=[...pointers.values()]; spotBase={dist:Math.hypot(ps[0].x-ps[1].x,ps[0].y-ps[1].y)||1, radius:spotRadius}; } return; }
   // Auswahl-Modus + Finger-Bedienung: zweiter Finger auf einer Auswahl = Objekt(e) skalieren & drehen
   if(tool==='select'&&doc.settings.fingerSelect&&e.pointerType==='touch'){
@@ -1233,7 +1229,7 @@ function endAction(e){ clearTimeout(dwellTimer); cancelGeoRay(); hideMeasure(); 
     } else if(cur.points.length) commit(cur); cur=null; markDirty(); } }
 // Im Schreibmodus: 2 s am Ende halten -> aus der Linie wird eine gerade Strecke (Anfang → gehaltener Punkt)
 function scheduleStraighten(){ clearTimeout(dwellTimer); dwellTimer=setTimeout(()=>{ if(cur&&cur.type==='stroke'&&!cur.rulerSnap&&cur.points.length>2){ cur.points=[cur.points[0],cur.points[cur.points.length-1]]; cur._straight=true; cur.varw=false; markDirty(); toast('→ gerade Strecke'); } },1000); }
-function commit(o){ if(!o.id)o.id=uid(); pushUndo(); page().objects.push(o); evAdd('        → abgelegt: '+o.type+(o.points?(' mit '+o.points.length+' Punkten'):'')+' · Objekte auf der Seite: '+page().objects.length);
+function commit(o){ if(!o.id)o.id=uid(); pushUndo(); page().objects.push(o); evAdd('        → abgelegt: '+o.type+(o.points?(' mit '+o.points.length+' Punkten'):'')+' · '+o.color+' · Dicke '+(Math.round((o.width||0)*10)/10)+' · Objekte: '+page().objects.length);
   if(evLogOn&&o.type==='stroke') evCheck={o,n:0}; scheduleAutosave(); }
 /* ===== Lasso-Auswahl ===== */
 let lassoPts=null, lassoSel=null;
@@ -2658,7 +2654,9 @@ function evPointer(e,note){ if(!evLogOn)return;
     ' [zeiger='+pointers.size+' nav='+navList().length+' drawId='+drawId+' cur='+(cur?(cur.points?cur.points.length+'P':'obj'):'-')+']'+(note?'  → '+note:'')); }
 function evShow(){ $('logText').value = evLog.length? evLog.join('\n') : '(noch nichts aufgezeichnet – Schalter an und schreiben)'; }
 $('logSw').onclick=function(){ this.classList.toggle('on'); evLogOn=this.classList.contains('on');
-  if(evLogOn){ evLog=[]; evT0=0; toast('Protokoll läuft'); } else toast('Protokoll aus'); };
+  if(evLogOn){ evLog=[]; evT0=0;
+    evAdd('Start · Hintergrund '+doc.settings.bgColor+'/'+doc.settings.pattern+' · Stift '+toolColors.pen+' Dicke '+penWidth+' · Marker '+toolColors.marker+' Dicke '+markerWidth+' · Zoom '+scale.toFixed(2)+' · dpr '+dpr+' · '+W+'×'+H);
+    toast('Protokoll läuft'); } else toast('Protokoll aus'); };
 $('logOpen').onclick=()=>{ evShow(); toggleWin('win-log'); };
 $('logRefresh').onclick=evShow;
 $('logClear').onclick=()=>{ evLog=[]; evT0=0; evShow(); };
