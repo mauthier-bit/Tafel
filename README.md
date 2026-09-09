@@ -24,7 +24,8 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   beschriftung und Zahlenskala als bewegliches Objekt ein – man kann direkt darauf zeichnen. Im
   Kontextmenü lässt sich der **x- und y-Bereich** (Ausschnitt) über **＋/−-Buttons** einstellen sowie
   **Gitterlinien** und **Achsenbeschriftung** ein-/ausschalten (Gitter standardmäßig **aus** – meist
-  reicht das Karogitter des Hintergrunds) sowie die **Schriftgröße der Beschriftung** (＋/−). Achsen
+  reicht das Karogitter des Hintergrunds), einen **Hintergrund** (Schalter + Farbwähler, Standard weiß;
+  aus = transparent wie bisher) sowie die **Schriftgröße der Beschriftung** (＋/−). Achsen
   sind kräftig mit großen Pfeilspitzen und gut lesbaren Beschriftungen.
 - **Zahlenstrahl** (im Formen-Popover): waagerechter Strahl mit Pfeilspitze, Teilstrichen und Zahlen
   als bewegliches Objekt. Im Kontextmenü einstellbar: **Beginn, Ende, Beschriftungsintervall**
@@ -92,6 +93,10 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
 - **Zeilenzahl** wählbar (60 / 100 / 200 / 500 / 1000) über das Auswahlfeld in der Leiste; beim Import
   oder Einfügen größerer Datenmengen wächst das Blatt automatisch mit. Die Einstellung wird im Projekt
   gespeichert.
+- **Solange eine Formel offen ist**, gehört jeder Tipp auf eine Zelle zur Formel – die Eingabe wird
+  dabei nie beendet. Tippt man direkt hintereinander auf zwei Zellen, wird der Bezug **ersetzt**.
+  Beendet wird die Formel mit **✓** (Leiste), **„✓ Fertig"** (Formel-Tastatur) oder **Enter**;
+  **Esc** verwirft die Eingabe. Danach wählt ein Tipp wieder ganz normal Zellen aus.
 - **Zellen und Bereiche mit dem Finger übernehmen:** Beginnt man eine Formel (`=` oder `=summe(`),
   setzt ein **Antippen** einer Zelle deren Bezug ein (`=A3`, dann normal weitertippen: `+5`), und
   **Streichen** über mehrere Zellen setzt den Bereich (`A1:A7`) ein – auch beim Antippen eines Spalten- oder
@@ -139,6 +144,12 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     zum Abgeben/Weitergeben dient „Tabelle speichern" bzw. der CSV-Export.
   - **Anzeige mit deutschem Komma** (0,75 · 4,33) – auch in den Diagramm-Achsen und -Infozeilen;
     eingeben darf man Komma oder Punkt.
+- **Favoriten:** Oben in der senkrechten Leiste – gleich unter den Modus-Knöpfen – lassen sich bis zu
+  **8 Lieblingswerkzeuge** ablegen; sie sind in jedem Modus sichtbar. Einen beliebigen Knopf (aus jeder
+  Leiste, auch aus den Untermenüs) **eine Sekunde gedrückt halten** → „★ Zu den Favoriten". Auf einem
+  Favoriten liefert dasselbe lange Drücken „▲ Nach oben / ▼ Nach unten / ☆ Entfernen". In den
+  Einstellungen (Abschnitt **Favoriten**) gibt es zusätzlich eine Liste aller Knöpfe zum An- und
+  Abwählen sowie **„Favoriten zurücksetzen"**. Die Auswahl gilt geräteweit, projektübergreifend.
 - Voreinstellungen bei einem neuen Projekt: Muster **Karo**, **„Finger wählt aus"** an, Leisten **hell/hellgrau**.
 - **Hintergrundfarben** (Einstellungen): Weiß, **Tafelgrün**, Schwarz, Dunkelgrau, **Dunkelblau**,
   **dunkles Weinrot**, Hellblau sowie **helles Gelb / Grün / Rot / Orange / Lila** und ein

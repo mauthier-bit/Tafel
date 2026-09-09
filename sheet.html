@@ -313,12 +313,22 @@ document.addEventListener('pointerup',()=>{ dragging=false; hdrDrag=null; });
 
 /* ---------- Bereich mit dem Finger in eine Formel übernehmen ("=summe(" + Zellen streichen) ---------- */
 let refPick=null;
-function refTarget(){ const el=document.activeElement;                                   // Formel-Eingabe, die gerade offen ist
+/* Solange eine Formel offen ist, gehört jeder Zell-Tipp zur Formel – nie zur Zellauswahl.
+   Steht direkt vor dem Cursor schon ein Bezug (oder ein Name), wird dieser ersetzt, sonst eingefügt. */
+function refTarget(){ const el=document.activeElement;
   if(!el||el.tagName!=='INPUT'||(el.id!=='fx'&&!el.dataset.cell))return null;
-  const v=el.value||''; if(v[0]!=='=')return null;
+  const v=el.value||''; if(v[0]!=='=')return null;                                        // nur bei Formeln
   const pos=(el.selectionStart==null?v.length:el.selectionStart);
-  const before=v.slice(0,pos).replace(/\s+$/,'');
-  return /[=+\-*/^(:;,]$/.test(before) ? {el,pos} : null; }                              // nach Operator/Klammer/Semikolon: Bezug erwartet
+  const before=v.slice(0,pos);
+  if(/[=+\-*/^(:;,<>]\s*$/.test(before)) return {el,pos,len:0};                            // nach Operator/Klammer: einfügen
+  const m=before.match(/(\$?[A-Za-z]{1,2}\$?[0-9]+(?:\s*:\s*\$?[A-Za-z]{1,2}\$?[0-9]+)?)$/);
+  if(m){ const st=pos-m[1].length, pre=v[st-1];
+    if(!pre||!/[A-Za-z0-9_$]/.test(pre)) return {el,pos:st,len:m[1].length}; }             // vorhandenen Bezug ersetzen
+  const nms=Object.keys(nameMap());
+  for(const nm of nms.sort((a,b)=>b.length-a.length)){
+    if(before.toLowerCase().endsWith(nm.toLowerCase())){ const st=pos-nm.length, pre=v[st-1];
+      if(!pre||!/[A-Za-z0-9_$]/.test(pre)) return {el,pos:st,len:nm.length}; } }           // Namen ebenso ersetzen
+  return {el,pos,len:0}; }                                                                 // sonst an der Cursorposition einfügen
 function refInsert(a,b){ if(!refPick)return; const {el}=refPick; const txt=(a===b)?a:(a+':'+b);
   el.value=el.value.slice(0,refPick.start)+txt+el.value.slice(refPick.start+refPick.len);
   refPick.len=txt.length; const c=refPick.start+refPick.len;
@@ -330,12 +340,12 @@ function refMark(a,b){ const A=cellCR(a), B=cellCR(b), c0=Math.min(A.c,B.c),c1=M
   grid.querySelectorAll('td[data-cell]').forEach(td=>td.classList.toggle('refsel',set.has(td.dataset.cell))); }
 function refClear(){ grid.querySelectorAll('td.refsel').forEach(td=>td.classList.remove('refsel')); }
 grid.addEventListener('pointerdown',e=>{
-  if(e.target.closest('.colres'))return;
+  if(e.target.closest('.colres')||e.target.closest('.fillh'))return;
   const t=refTarget(); if(!t)return;
   const td=e.target.closest('td[data-cell]'), th=e.target.closest('th[data-c],th[data-r]');
   if(!td&&!th)return;
   e.preventDefault(); e.stopPropagation();                                    // Fokus bleibt in der Formel
-  refPick={el:t.el,start:t.pos,len:0,anchor:null};
+  refPick={el:t.el,start:t.pos,len:t.len||0,anchor:null};
   if(th&&th.dataset.c!==undefined){ const cn=colName(+th.dataset.c); refPick.anchor=cn+'1'; refInsert(cn+'1',cn+ROWS); refPick.whole='col'; }
   else if(th){ const r=+th.dataset.r; refPick.anchor='A'+r; refInsert('A'+r,colName(COLS-1)+r); refPick.whole='row'; }
   else { refPick.anchor=td.dataset.cell; refInsert(refPick.anchor,refPick.anchor); }
@@ -535,6 +545,7 @@ function moveTo(cell){ const inp=inputOf(cell); if(inp){ inp.focus(); inp.select
 function handleKey(e,inp){ const cell=inp.dataset.cell; const c=colIdx(cell.match(/[A-Z]+/)[0]); const r=parseInt(cell.match(/[0-9]+/)[0]);
   if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='c'){ copyBuf={cell,raw:data[cell]||''}; return; }
   if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='v'){ if(copyBuf){ e.preventDefault(); paste(cell); } return; }
+  if(e.key==='Escape'){ e.preventDefault(); inp.value=data[cell]||''; hideFormulaUI(); inp.blur(); return; }   // Eingabe verwerfen
   if(e.key==='Enter'){ e.preventDefault(); inp.blur(); if(r<ROWS) moveTo(colName(c)+(r+1)); }
   else if(e.key==='Tab'){ /* Browser-Standard: nächste Zelle */ inp.blur(); }
 }
@@ -635,7 +646,10 @@ addEventListener('message',e=>{ if(e.data&&e.data.type==='embed-data'){ data=e.d
   if(want!==ROWS){ ROWS=want; build(); }
   $('rowSel').value=String(ROWS); applyFont(); applyColWidths(); recompute(); } });
 function fxCommit(){ hideFormulaUI(); const cell=active, val=document.getElementById('fx').value; if((data[cell]||'')!==val) snapshot();      // Wert direkt übernehmen (ohne fragilen Fokus/Blur-Umweg)
-  if(val==='') delete data[cell]; else data[cell]=val; recompute(); sync();
+  if(val==='') delete data[cell]; else data[cell]=val;
+  const inp=inputOf(cell);                                              // Formeleingabe wirklich beenden …
+  if(inp){ inp.value=data[cell]||''; if(document.activeElement===inp) inp.blur(); }   // … sonst gilt der nächste Zell-Tipp weiter als Bezug
+  recompute(); sync();
   const c=colIdx(cell.match(/[A-Z]+/)[0]), r=parseInt(cell.match(/[0-9]+/)[0]);
   if(r<ROWS) setActive(colName(c)+(r+1)); }
 document.getElementById('fx').addEventListener('input',function(){ formulaUI(this); const i=inputOf(active); if(i&&document.activeElement!==i)i.value=this.value; });
