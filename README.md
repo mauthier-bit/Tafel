@@ -6,16 +6,25 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
 ## Funktionen
 
 - **Schreiben:** Stift (mit Apple-Pencil-Druckstärke), Marker; **eigener Farb-Button**
-  (Farbe & Dicke). **Stift und Marker haben getrennte Farben und Strichstärken**: der Stift
-  schreibt standardmäßig **schwarz**, der Marker **gelb**; beim Umschalten kommt automatisch die
-  zuletzt für dieses Werkzeug gewählte Farbe zurück (geräteweit gespeichert). Auf dunklem
-  Hintergrund wird nur die **Stift**farbe automatisch auf Weiß gestellt, die Markerfarbe bleibt.
+  (Farbe & Dicke) mit **sechs Strichstärken** (eine feinere und eine dickere als früher).
+  **Stift, Linien/Formen und Marker haben getrennte Farben** (Stift und Marker zusätzlich getrennte Strichstärken): der Stift
+  schreibt standardmäßig **schwarz**, Linien und Formen ebenfalls **schwarz**, der Marker **gelb**.
+  Beim Umschalten kommt automatisch die
+  zuletzt für dieses Werkzeug gewählte Farbe zurück (geräteweit gespeichert); voreingestellt sind
+  beim Stift die zweite Stufe (wie bisher) und beim Marker die vierte. Auf dunklem
+  Hintergrund werden **Stift sowie Linien/Formen** automatisch auf Weiß gestellt, die Markerfarbe bleibt.
+- **Farbpalette selbst zusammenstellen** (Einstellungen → Werkzeugleisten → „Farbpalette"): auf eines
+  der **acht Felder** tippen und eine beliebige Farbe wählen – die Auswahl gilt sofort in **allen**
+  Farbmenüs (Stift/Marker, Formen, Kontextmenü, Lineal und Geodreieck) und bleibt geräteweit
+  gespeichert; „Palette zurücksetzen" stellt die Standardfarben wieder her.
   Neben den festen Farben gibt es einen **bunten Punkt** – ein Tipp öffnet den vollen Farbwähler
   für beliebige Farben (auch bei der Objektfarbe im Kontextmenü).
 - **Formen:** Linie, Rechteck, **Quadrat**, Ellipse, Dreieck, **rechtwinkliges Dreieck**,
   **allgemeines Dreieck**, **Parallelogramm**, **Trapez**, Pfeil (auch gefüllt), **Drachenviereck**
   sowie **Schrägbilder** von **Quader, vierseitiger Pyramide, Zylinder und Kegel** (mit
-  gestrichelten verdeckten Kanten). Alle im **Formen**-Popover.
+  gestrichelten verdeckten Kanten). Alle im **Formen**-Popover. Ein **erneutes Tippen auf „Formen"**
+  klappt die Auswahl wieder zu (das Werkzeug bleibt aktiv). Sind Formen-Auswahl und **Farbpalette**
+  gleichzeitig offen, weichen sie einander aus, statt sich zu überdecken.
 - **Freihand → gerade Strecke:** Beim normalen Schreiben am Ende einer Linie **1 Sekunde
   ruhig halten** → aus der Linie wird eine gerade Strecke (Anfang → gehaltener Punkt).
   Sonst bleibt es die Freihandlinie.
@@ -218,13 +227,14 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   ⌘/Strg + V) Objekte, Bilder oder Text **aus anderen Apps** in die Tafel ein. Zusätzlich gibt es
   in der **Einstellungs-Leiste (oben links)** einen eigenen Knopf **„Aus der Zwischenablage einfügen"**.
 - **Radierer:** radiert Teile von Strichen weg (nicht nur ganze Striche) – **Rückgängig macht auch das Radieren wieder rückgängig**
+- **Schnell aufeinanderfolgende Striche:** Bleibt ein Strich „offen", weil das System das
+  Loslassen des Stifts verschluckt hat, wird er jetzt **sauber übernommen** und der nächste Strich
+  beginnt sofort – vorher ging in solchen Fällen jeder zweite kurze Strich verloren (typisch beim
+  schnell geschriebenen **Gleichheitszeichen**). Ein Wächter erkennt zusätzlich verlorene
+  Stiftkontakte und schließt den Strich ab, statt ihn zu verwerfen.
 - **Der Stift hat Vorrang:** Liegt beim Schreiben ein **Finger oder der Handballen** auf der Tafel,
   schreibt der Pencil trotzdem weiter (bisher blockierte eine solche Berührung das Schreiben, bis
   man die Hand anhob). Nur bei **zwei** Fingern (Zoomen/Schieben) hält sich der Stift heraus.
-- **Stift-Diagnose** (Einstellungen → Bedienung, standardmäßig aus): meldet als kurze Einblendung,
-  wenn ein Stiftkontakt **verzögert** verarbeitet wurde (ab 90 ms, mit Maximalwert), wenn ein
-  **Finger/Handballen** im Spiel war und wie lange das letzte **Speichern** gedauert hat – zum
-  Eingrenzen von „Totzeiten" beim Schreiben.
 - **Lineal:** einblendbar, mit Pencil verschieben/drehen, Striche schnappen an die Kante
 - **Lasso-Auswahl** (Werkzeug): einen Bereich mit dem Stift **einrahmen** (ist die Kurve nicht
   geschlossen, wird sie automatisch mit einer geraden Strecke geschlossen). Nach dem Loslassen
