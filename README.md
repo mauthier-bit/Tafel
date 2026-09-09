@@ -141,7 +141,8 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     Zellbezüge und mit der Tabelle gespeichert.
   - **Rückgängig / Wiederherstellen** (↶ ↷ in der Leiste, auch ⌘Z / Strg+Z bzw. ⇧⌘Z).
   - **Schriftgröße** direkt im Werkzeug über **A− / A+**.
-  - **Datei-Menü** (📁): **Öffnen** (eigene `.json`-Tabelle, CSV, Excel), **Tabelle speichern**
+  - **Datei-Menü** (📁): **Neu** (leere Tabelle – setzt auch Spaltenbreiten, Schriftgröße und
+    Zeilenzahl zurück), **Öffnen** (eigene `.json`-Tabelle, CSV, Excel), **Tabelle speichern**
     (`.json` mit Formeln, Spaltenbreiten, Zeilenzahl), **Als CSV speichern** (Semikolon, deutsche
     Kommazahlen – öffnet sich direkt in Excel), **Aus Zwischenablage einfügen**, **Alles löschen**.
   - **Eigenständig nutzbar:** `sheet.html` lässt sich auch direkt aufrufen (z. B. per QR-Code für die
@@ -213,7 +214,7 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   einer eingefügten Tabelle oder einem Bild.
 - **Gruppieren / Lösen / Duplizieren / Löschen** im Kontext-Panel („Lösen" hebt die Gruppe auf und
   die Auswahl auf, damit die Objekte danach wirklich einzeln beweglich sind)
-- **Laserpointer** und **Scheinwerferspot**
+- **Laserpointer** und **Scheinwerferspot** – nutzbar auch **mit dem Finger**, unabhängig von der Einstellung „Nur mit Stift schreiben"
 - **Zoom/Verschieben:** zwei Finger zoomen, ein Finger schiebt (Pencil schreibt weiter). Die Seite
   ist **oben und links fest begrenzt** (Ursprung oben-links) und **nach unten und rechts unbegrenzt** –
   man schiebt also nur nach unten/rechts.
