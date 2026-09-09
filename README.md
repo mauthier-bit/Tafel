@@ -198,6 +198,10 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   Linien-/Punktabstand, Notenlinienabstand bzw. Seitenlänge der Dreiecke – je Musterart gespeichert.
   Die **Kästchenweite wird in Millimetern** angezeigt und in 1-mm-Schritten verstellt; **Standard sind
   5 mm**, damit das Karo genau zur Skala von **Lineal und Geodreieck** passt.
+- **Stift-Testseite** `pentest.html` (im selben Ordner, direkt aufrufbar): kleine, von der Tafel
+  unabhängige Seite zum Prüfen der Stifteingabe – zählt Pointer- und Touch-Ereignisse gegen die
+  tatsächlich gezeichneten Striche und lässt `preventDefault`, `PointerCapture` und die Eingabeart
+  umschalten. Damit lässt sich eingrenzen, ob fehlende Striche an der App oder am Browser liegen.
 - **Ereignis-Protokoll** (Einstellungen → Bedienung, standardmäßig aus): zeichnet zur Fehlersuche
   jedes Stift-Ereignis mit Typ, Zeitpunkt und Zustand auf; „Protokoll anzeigen" öffnet den Text
   zum **Kopieren**. Nur nötig, wenn beim Schreiben Striche fehlen.
