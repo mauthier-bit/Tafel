@@ -47,6 +47,8 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
 - **Lineal** und **Geodreieck:** über ihren Knopf einblenden – mit **cm-/mm-Skala und Zahlen**. Über das
   kleine **⚙-Feld auf dem Werkzeug** öffnet sich ein Menü für **Länge bzw. Größe (8–40 cm), Millimeter
   an/aus, Zahlen an/aus und Farbe** (unten schließt ein **„Schließen"-Knopf** das Menü);
+  stimmen die Zentimeter auf einem Gerät nicht (z. B. Windows-Tablet mit anderer Anzeigeskalierung),
+  lässt sich der **Maßstab** in den Einstellungen → Bedienung kalibrieren (siehe unten);
   voreingestellt sind **Lineal 19 cm** und **Geodreieck 15 cm**, jeweils **mit Millimeter-Skala**;
   die Einstellungen bleiben geräteweit gespeichert. Sie **bleiben aktiv**, während der
   Stift zeichnet. Mit dem Finger am **unteren** Teil verschieben / am Griff (Ecke bzw. Spitze)
@@ -196,6 +198,16 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   Linien-/Punktabstand, Notenlinienabstand bzw. Seitenlänge der Dreiecke – je Musterart gespeichert.
   Die **Kästchenweite wird in Millimetern** angezeigt und in 1-mm-Schritten verstellt; **Standard sind
   5 mm**, damit das Karo genau zur Skala von **Lineal und Geodreieck** passt.
+- **Ereignis-Protokoll** (Einstellungen → Bedienung, standardmäßig aus): zeichnet zur Fehlersuche
+  jedes Stift-Ereignis mit Typ, Zeitpunkt und Zustand auf; „Protokoll anzeigen" öffnet den Text
+  zum **Kopieren**. Nur nötig, wenn beim Schreiben Striche fehlen.
+- **Maßstab kalibrieren** (Einstellungen → Bedienung, optional): Standard ist auf das **iPad**
+  abgestimmt (37,8 px = 1 cm) – ohne Zutun ändert sich nichts. Bei Bedarf den angezeigten Balken mit
+  einem echten Lineal messen und mit ＋/− auf **genau 5 cm** stellen; Lineal, Geodreieck und
+  Karo-Muster übernehmen den Maßstab (ihre Zentimeter-Angaben bleiben dabei gleich), „Standard"
+  stellt den Ausgangswert wieder her. Die Einstellung gilt geräteweit.
+- **Maus:** Rechts- und Mittelklick zeichnen nicht (nur die linke Taste) – relevant an Geräten mit
+  Maus/Trackpad oder Stiften mit Knopf.
 - **Erscheinung der Leisten** (Einstellungen → „Leisten"): **Dunkel** oder **Hell** (Voreinstellung) – bei Hell
   cremeweiße Knöpfe mit schwarzen Symbolen und Beschriftungen. Darunter stehen je Variante mehrere
   **Farbtöne** zur Wahl: dunkel = Graphit, Dunkelblau, dunkles Weinrot, Dunkelbraun, Dunkelgrün;

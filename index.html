@@ -158,6 +158,7 @@
   #bgColors,#barTints{align-items:center;}
   #bgColors{margin-top:8px;}
   #bgColors .sw,#barTints .sw{width:auto;height:auto;flex:1 1 22px;min-width:0;max-width:30px;aspect-ratio:1;border:2px solid rgba(0,0,0,.14);}
+  #calBar{height:18px;border:1px solid #9aa4b2;border-radius:3px;max-width:100%;}
   #palEdit{display:flex;gap:6px;}
   #palEdit input{-webkit-appearance:none;appearance:none;padding:0;background:none;cursor:pointer;
     flex:1 1 22px;min-width:0;max-width:34px;aspect-ratio:1;border:2px solid rgba(0,0,0,.18);border-radius:50%;}
@@ -661,6 +662,12 @@
     <hr class="wsep">
     <div class="hint">Eingebettetes (Tabelle/GeoGebra/Video/Webseite) ist ein <b>bewegliches Objekt</b> – verschieben, skalieren, drehen mit dem Auswahl-Werkzeug. Zum Bedienen oben auf „Einbettung bedienen" tippen. Braucht Internet; nicht im PDF-Export.</div>
   </div></div>
+<div class="win" id="win-log" style="left:60px;top:60px;width:min(520px,94vw);"><h3>Ereignis-Protokoll <span class="x" data-close="win-log">×</span></h3>
+  <div class="body">
+    <div class="hint" style="margin:0 0 6px">Zeichne die Stelle, an der Striche fehlen (z. B. mehrmals ein „="). Dann hier <b>Kopieren</b> und den Text schicken.</div>
+    <textarea id="logText" rows="12" readonly style="width:100%;box-sizing:border-box;padding:8px;border:1px solid #cfd6e0;border-radius:8px;font-family:ui-monospace,Menlo,monospace;font-size:11px;resize:vertical;color:#1f2430"></textarea>
+    <div class="row fill" style="gap:6px;margin-top:8px"><button class="btn pri" id="logCopy">Kopieren</button><button class="btn" id="logRefresh">Aktualisieren</button><button class="btn dang" id="logClear">Leeren</button></div>
+  </div></div>
 <div class="win" id="win-settings" style="left:70px;top:70px;width:min(400px,92vw);"><h3>Einstellungen <span class="x" data-close="win-settings">×</span></h3>
   <div class="body">
     <div class="wcap">Tafelblatt</div>
@@ -692,6 +699,16 @@
     <div class="toggle"><span>Nur mit Stift schreiben<br><small style="color:#888">(Finger schiebt & zoomt)</small></span><div class="sw2 on" id="penOnly"></div></div>
     <div class="toggle"><span>Finger wählt aus (Auswahl-Modus)<br><small style="color:#888">(1 Finger verschiebt Objekte, 2 Finger zoomen & drehen)</small></span><div class="sw2" id="fingerSelect"></div></div>
     <div class="toggle"><span>Druckstärke des Pencils</span><div class="sw2 on" id="usePressure"></div></div>
+    <div class="toggle"><span>Ereignis-Protokoll<br><small style="color:#888">nur zur Fehlersuche beim Schreiben</small></span><div class="sw2" id="logSw"></div></div>
+    <div class="row fill" style="margin-top:6px"><button class="btn" id="logOpen">Protokoll anzeigen</button></div>
+    <label class="lbl">Maßstab (Lineal, Geodreieck, Karo)</label>
+    <div class="hint" style="margin:0 0 6px">Nur nötig, wenn die Zentimeter auf diesem Gerät nicht stimmen (z. B. Windows-Tablet mit anderer Anzeigeskalierung). Den Balken mit einem echten Lineal messen – er soll <b>genau 5 cm</b> lang sein.</div>
+    <div id="calBar" title="Soll genau 5 cm lang sein"></div>
+    <div style="display:flex;align-items:center;gap:6px;margin-top:7px;font-size:13px">
+      <span style="flex:1;color:#555">5 cm = <b id="calV">189</b> px</span>
+      <button class="stepbtn" id="calM">−</button><button class="stepbtn" id="calP">+</button>
+      <button class="stepbtn" id="calR" title="Standardmaßstab" style="width:auto;padding:6px 9px;font-size:13px;font-weight:600">Standard</button>
+    </div>
     <hr class="wsep">
     <div class="wcap">Projekt &amp; Klasse</div>
     <label class="lbl">Projekt</label>
@@ -771,10 +788,11 @@ const toWorld=(x,y)=>({x:(x-ox)/scale, y:(y-oy)/scale});
 const toScreen=(x,y)=>({x:x*scale+ox, y:y*scale+oy});
 
 /* ============ Zeichnen ============ */
-const PXCM=37.8;                      // 1 cm auf dem Bildschirm (96 dpi)
+const PXCM_DEF=37.8;                  // 1 cm auf dem Bildschirm (96 dpi) – Standard, passt fürs iPad
+let PXCM=PXCM_DEF;                    // in den Einstellungen kalibrierbar (geräteweit)
 /* Muster: Standardgröße, Grenzen, Schrittweite und Beschriftung je Musterart */
 /* Karo in Millimetern (passt damit zu Lineal und Geodreieck), Standard 5 mm */
-const PATCFG={ grid:{def:PXCM/2,min:PXCM*0.25,max:PXCM*2,step:PXCM/10,lab:'Kästchenweite',mm:true},
+const PATCFG={ grid:{get def(){return PXCM/2;},get min(){return PXCM*0.25;},get max(){return PXCM*2;},get step(){return PXCM/10;},lab:'Kästchenweite',mm:true},
   lines:{def:40,min:12,max:140,step:4,lab:'Linienabstand'},
   dots:{def:40,min:12,max:140,step:4,lab:'Punktabstand'},
   staff:{def:12,min:6,max:36,step:1,lab:'Notenlinienabstand'},
@@ -957,8 +975,10 @@ function redraw(){
 function loop(){ checkLostPointer(); if(dirty||laser.length){ if(laser.length)markDirty(); redraw(); } requestAnimationFrame(loop); }
 /* Kommt zu einem Strich kein pointerup (vom System verschluckt), bleibt er sonst „offen" und der
    nächste Strich wird geopfert, um ihn zu beenden – genau das ließ jeden zweiten Strich fehlen. */
-function checkLostPointer(){ if(drawId===null)return; const q=pointers.get(drawId);
-  if(q&&q.cap&&!cv.hasPointerCapture(drawId)){ pointers.delete(drawId); forceEndStroke(); } }
+function checkLostPointer(){ if(drawId===null)return;
+  if(performance.now()-lastInputT<700) return;            // nur bei wirklich stillem Zeiger prüfen
+  const q=pointers.get(drawId);
+  if(q&&q.cap&&!cv.hasPointerCapture(drawId)){ evAdd('        → Stiftkontakt verloren, Strich abgeschlossen'); pointers.delete(drawId); forceEndStroke(); } }
 
 /* ---- Lineal (bleibendes Overlay, unabhängig vom aktiven Werkzeug) ---- */
 const RULCOL='#286edc';
@@ -1092,7 +1112,8 @@ let lastTap={t:0,o:null};
 const isDraw=e=>(e.pointerType==='pen'||e.pointerType==='mouse')?true:(e.pointerType==='touch'&&(tool==='laser'||tool==='spot'||!doc.settings.penOnly||(tool==='select'&&doc.settings.fingerSelect)));   // Laser/Scheinwerfer hinterlassen nichts → immer auch mit dem Finger
 const navList=()=>{const a=[];for(const[,p]of pointers)if(p.nav)a.push(p);return a;};
 
-cv.addEventListener('pointerdown',e=>{ let cap=false;
+cv.addEventListener('pointerdown',e=>{ if(e.pointerType==='mouse'&&e.button!==0) return;   // Rechts-/Mittelklick nicht als Strich werten
+  evPointer(e); let cap=false;
   try{ cv.setPointerCapture(e.pointerId); cap=cv.hasPointerCapture(e.pointerId); }catch(_){}   // darf den Rest nie blockieren
   lastInputT=performance.now();
   const p={x:e.clientX,y:e.clientY,type:e.pointerType,nav:false,id:e.pointerId,cap}; pointers.set(e.pointerId,p);
@@ -1126,10 +1147,10 @@ cv.addEventListener('pointerdown',e=>{ let cap=false;
     if(navList().length===1){ navList().forEach(q=>q.nav=false); navBase=null; }           // Stift schlägt einen ruhenden Finger/Handballen
     for(const[id,q] of pointers) if(q!==p && q.type!=='touch' && id!==e.pointerId) pointers.delete(id);   // Stift-Leichen aufräumen
   }
-  if(isDraw(e)&&drawId===null&&navList().length===0){ startAction(e); }
-  else { p.nav=true; if(cur){forceEndStroke();} moveDrag=null; xform=null; setupNav(); }
+  if(isDraw(e)&&drawId===null&&navList().length===0){ evAdd('        → Strich beginnt ('+tool+')'); startAction(e); }
+  else { evAdd('        → KEIN Strich (nav) isDraw='+isDraw(e)+' drawId='+drawId+' nav='+navList().length); p.nav=true; if(cur){forceEndStroke();} moveDrag=null; xform=null; setupNav(); }
 },{passive:false});
-cv.addEventListener('pointermove',e=>{ const p=pointers.get(e.pointerId); if(!p)return; p.x=e.clientX; p.y=e.clientY; lastInputT=performance.now();
+cv.addEventListener('pointermove',e=>{ const p=pointers.get(e.pointerId); if(!p){ if(evLogOn&&e.pointerType!=='mouse')evPointer(e,'unbekannter Zeiger'); return; } p.x=e.clientX; p.y=e.clientY; lastInputT=performance.now(); if(evLogOn){ if(e.pointerId===drawId)evMoves++; else evPointer(e); }
   if(objGesture){ updateObjGesture(); return; }
   if(tool==='spot'){ updateSpot(); return; }
   if(rulerDrag&&rulerDrag.id===e.pointerId){
@@ -1142,6 +1163,7 @@ cv.addEventListener('pointermove',e=>{ const p=pointers.get(e.pointerId); if(!p)
   if(p.nav) updateNav();
 },{passive:false});
 function endPointer(e){ const p=pointers.get(e.pointerId); lastInputT=performance.now();
+  evPointer(e,(e.pointerId===drawId?('Strich endet nach '+evMoves+' Bewegungen'):'')+(p?'':' (Zeiger unbekannt)')); if(e.pointerId===drawId)evMoves=0;
   if(objGesture&&objGesture.ids.includes(e.pointerId)){ objGesture=null; scheduleAutosave(); }
   if(rulerDrag&&rulerDrag.id===e.pointerId) rulerDrag=null;
   if(e.pointerId===drawId){ endAction(e); drawId=null; }        // auch ohne Eintrag in der Zeigerliste
@@ -1213,7 +1235,7 @@ function endAction(e){ clearTimeout(dwellTimer); cancelGeoRay(); hideMeasure(); 
     } else if(cur.points.length) commit(cur); cur=null; markDirty(); } }
 // Im Schreibmodus: 2 s am Ende halten -> aus der Linie wird eine gerade Strecke (Anfang → gehaltener Punkt)
 function scheduleStraighten(){ clearTimeout(dwellTimer); dwellTimer=setTimeout(()=>{ if(cur&&cur.type==='stroke'&&!cur.rulerSnap&&cur.points.length>2){ cur.points=[cur.points[0],cur.points[cur.points.length-1]]; cur._straight=true; cur.varw=false; markDirty(); toast('→ gerade Strecke'); } },1000); }
-function commit(o){ if(!o.id)o.id=uid(); pushUndo(); page().objects.push(o); scheduleAutosave(); }
+function commit(o){ if(!o.id)o.id=uid(); pushUndo(); page().objects.push(o); evAdd('        → abgelegt: '+o.type+(o.points?(' mit '+o.points.length+' Punkten'):'')); scheduleAutosave(); }
 /* ===== Lasso-Auswahl ===== */
 let lassoPts=null, lassoSel=null;
 function pointInPoly(x,y,poly){ let inside=false; for(let i=0,j=poly.length-1;i<poly.length;j=i++){ const xi=poly[i].x,yi=poly[i].y,xj=poly[j].x,yj=poly[j].y;
@@ -1979,13 +2001,14 @@ $('pageMenu').addEventListener('pointerdown',e=>e.stopPropagation());
 document.addEventListener('pointerdown',e=>{ if($('pageMenu').classList.contains('show') && !e.target.closest('#pageMenu') && !e.target.closest('.pmBtn')) closePageMenu(); }, true);
 $('setMin').onclick=()=>{ $('settingsbar').classList.toggle('min'); rotateChev('setMin',$('settingsbar').classList.contains('min'),true); saveUI(); positionAnnoToggle(); };
 function rotateChev(id,min){ $(id).querySelector('svg').style.transform=min?'scaleX(-1)':''; }
-function saveUI(){ try{ localStorage.setItem('tafel_ui',JSON.stringify({page:$('pagebar').classList.contains('min'),set:$('settingsbar').classList.contains('min'),side:mainbarSide,theme:barTheme,tint:barTint,favs,pal:palette,cols:toolColors,wv:2,pw:penWidth,mw:markerWidth,rul:{len:ruler.len,color:ruler.color,mm:ruler.mm,nums:ruler.nums},geo:{size:geo.size,color:geo.color,mm:geo.mm,nums:geo.nums}})); }catch(e){} }
+function saveUI(){ try{ localStorage.setItem('tafel_ui',JSON.stringify({page:$('pagebar').classList.contains('min'),set:$('settingsbar').classList.contains('min'),side:mainbarSide,theme:barTheme,tint:barTint,favs,pxcm:PXCM,pal:palette,cols:toolColors,wv:2,pw:penWidth,mw:markerWidth,rul:{len:ruler.len,color:ruler.color,mm:ruler.mm,nums:ruler.nums},geo:{size:geo.size,color:geo.color,mm:geo.mm,nums:geo.nums}})); }catch(e){} }
 function restoreUI(){ try{ const u=JSON.parse(localStorage.getItem('tafel_ui')||'{}'); if(u.page){$('pagebar').classList.add('min');pageChev(true);} if(u.set){$('settingsbar').classList.add('min');rotateChev('setMin',true);} if(u.side==='right')mainbarSide='right'; if(u.theme==='light'||u.theme==='dark')barTheme=u.theme; if(u.tint&&typeof u.tint==='object')barTint=Object.assign(barTint,u.tint); if(Array.isArray(u.favs))favs=u.favs.slice(0,FAV_MAX);
+  if(+u.pxcm>0) PXCM=Math.max(28,Math.min(64,+u.pxcm));
   if(Array.isArray(u.pal)&&u.pal.length===palette.length&&u.pal.every(c=>/^#[0-9a-f]{6}$/i.test(c))) palette=u.pal.slice();
   if(u.cols&&typeof u.cols==='object')Object.assign(toolColors,u.cols); if(u.wv===2){ if(+u.pw>0)penWidth=+u.pw; if(+u.mw>0)markerWidth=+u.mw; }   // ältere Stärken (4 Stufen) verwerfen
   if(u.rul)Object.assign(ruler,{len:+u.rul.len||ruler.len,color:u.rul.color||ruler.color,mm:u.rul.mm!==false,nums:u.rul.nums!==false});
   if(u.geo)Object.assign(geo,{size:+u.geo.size||geo.size,color:u.geo.color||geo.color,mm:u.geo.mm!==false,nums:u.geo.nums!==false});
-  applyBarsState(); refreshBarTheme(); renderFavs(); buildFavList(); buildPalEdit(); repaintPalette(); applyToolColor(); }catch(e){} }
+  applyBarsState(); refreshBarTheme(); renderFavs(); buildFavList(); buildPalEdit(); repaintPalette(); applyToolColor(); refreshCal(); }catch(e){} }
 
 /* ---- Leisten per Wischgeste weg/hervor (Präsentationsmodus) ---- */
 function applyBarsState(){ document.body.classList.toggle('bars-hidden',barsHidden); document.body.classList.toggle('mainbar-right',mainbarSide==='right'); document.body.classList.toggle('bars-light',barTheme==='light');
@@ -2060,6 +2083,16 @@ $('patSizeR').onclick=()=>{ const pat=doc.settings.pattern; if(!PATCFG[pat])retu
   if(doc.settings.patSize) delete doc.settings.patSize[pat]; refreshPatSize(); markDirty(); scheduleAutosave(); };
 $('penOnly').onclick=function(){this.classList.toggle('on');doc.settings.penOnly=this.classList.contains('on');scheduleAutosave();};
 $('fingerSelect').onclick=function(){this.classList.toggle('on');doc.settings.fingerSelect=this.classList.contains('on');scheduleAutosave();};
+/* Maßstab kalibrieren: Lineal, Geodreieck und Karo werden mitskaliert, damit ihre cm gleich bleiben */
+function refreshCal(){ const w=PXCM*5; $('calV').textContent=Math.round(w);
+  $('calBar').style.width=w+'px';
+  $('calBar').style.background='repeating-linear-gradient(90deg,#42506a 0 1px,transparent 1px '+PXCM+'px)'; }
+function calSet(px5){ const v=Math.max(140,Math.min(320,px5))/5, f=v/PXCM; if(!isFinite(f)||f<=0)return;
+  PXCM=v; ruler.len*=f; geo.size*=f;
+  const ps=doc.settings.patSize; if(ps&&typeof ps.grid==='number') ps.grid*=f;
+  refreshCal(); refreshPatSize(); refreshToolPops(); markDirty(); saveUI(); scheduleAutosave(); }
+$('calM').onclick=()=>calSet(PXCM*5-2); $('calP').onclick=()=>calSet(PXCM*5+2);
+$('calR').onclick=()=>{ calSet(PXCM_DEF*5); toast('Standardmaßstab'); };
 $('usePressure').onclick=function(){this.classList.toggle('on');doc.settings.usePressure=this.classList.contains('on');scheduleAutosave();};
 
 /* ============ Stoppuhr/Timer/Ampel/Sozialform/Umfrage ============ */
@@ -2614,6 +2647,24 @@ function initProjects(){ let idx=null; try{ idx=JSON.parse(localStorage.getItem(
   renderProjects(); }
 
 /* ============ Diverses ============ */
+/* Ereignis-Protokoll: zeichnet die rohen Zeiger-Ereignisse auf, um fehlende Striche zu finden */
+let evLogOn=false, evLog=[], evT0=0, evMoves=0;
+function evAdd(txt){ if(!evLogOn)return; const now=performance.now(); if(!evT0)evT0=now;
+  evLog.push(String(Math.round(now-evT0)).padStart(6)+' ms  '+txt); if(evLog.length>500)evLog.shift(); }
+function evPointer(e,note){ if(!evLogOn)return;
+  evAdd(e.type.replace('pointer','')+' id='+e.pointerId+' '+e.pointerType+(e.isPrimary?'':' sek')+
+    ' btn='+e.button+'/'+e.buttons+' p='+(Math.round((e.pressure||0)*100)/100)+
+    ' x='+Math.round(e.clientX)+' y='+Math.round(e.clientY)+
+    ' lag='+Math.round(performance.now()-(e.timeStamp||performance.now()))+
+    ' [zeiger='+pointers.size+' nav='+navList().length+' drawId='+drawId+' cur='+(cur?(cur.points?cur.points.length+'P':'obj'):'-')+']'+(note?'  → '+note:'')); }
+function evShow(){ $('logText').value = evLog.length? evLog.join('\n') : '(noch nichts aufgezeichnet – Schalter an und schreiben)'; }
+$('logSw').onclick=function(){ this.classList.toggle('on'); evLogOn=this.classList.contains('on');
+  if(evLogOn){ evLog=[]; evT0=0; toast('Protokoll läuft'); } else toast('Protokoll aus'); };
+$('logOpen').onclick=()=>{ evShow(); toggleWin('win-log'); };
+$('logRefresh').onclick=evShow;
+$('logClear').onclick=()=>{ evLog=[]; evT0=0; evShow(); };
+$('logCopy').onclick=async()=>{ try{ await navigator.clipboard.writeText($('logText').value); toast('Protokoll kopiert'); }
+  catch(e){ $('logText').removeAttribute('readonly'); $('logText').select(); toast('Bitte von Hand markieren und kopieren'); } };
 let toastT=null; function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),1900);}
 function showBusy(on,msg){const b=$('busy');if(msg)b.textContent=msg;b.classList.toggle('show',on);}
 const spot=$('spot'); let spotRadius=120, spotBase=null;

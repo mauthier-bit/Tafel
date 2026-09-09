@@ -1,5 +1,5 @@
 /* Service Worker – macht die Tafel offline-fähig (App-Shell + Bibliotheken cachen). */
-const CACHE = 'tafel-v110';
+const CACHE = 'tafel-v112';
 const ASSETS = [
   './',
   'index.html',
