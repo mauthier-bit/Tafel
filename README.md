@@ -72,6 +72,10 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
 - **Aufnahme** (Werkzeug): nimmt die Tafelfläche **mit Ton** auf, direkt abspielbar (echtes
   H.264-**MP4**, sonst WEBM) und speicherbar. Während der Aufnahme **verschwindet das Fenster**;
   oben in der Mitte bleibt nur ein rotes **„■ Aufnahme stoppen"** mit laufender Zeit. Die Statuszeile
+  Mit **„🎙 Nur Ton"** lässt sich auch **nur eine Tonaufnahme** machen (ohne Bild): danach anhören und
+  entweder **auf die Tafel legen** (Audioplayer als bewegliches Objekt) oder als **Datei speichern**
+  (.m4a bzw. .webm). Wie Videoclips gelten Tonaufnahmen nur für die laufende Sitzung; im Kontextmenü
+  des Objekts steht „🎙 Ton speichern". Die Statuszeile
   sagt, ob **mit Ton** aufgenommen wird (bei verweigertem Mikrofon läuft die Aufnahme stumm weiter).
   Nach dem Stoppen prüft die Tafel die fertige Datei und schreibt in die Statuszeile, ob wirklich eine
   **Tonspur** drin ist – steht dort „mit Ton" und man hört trotzdem nichts, liegt es am Gerät

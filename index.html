@@ -19,7 +19,8 @@
   #board{position:fixed;inset:0;touch-action:none;display:block;background:transparent;z-index:2;}
   #bgLayer{position:fixed;inset:0;z-index:0;background:#fff;pointer-events:none;}
   #embedLayer{position:fixed;inset:0;z-index:1;pointer-events:none;overflow:hidden;}
-  #embedLayer iframe,#embedLayer video{position:absolute;left:0;top:0;border:0;transform-origin:0 0;background:#fff;box-shadow:0 1px 6px rgba(0,0,0,.15);}
+  #embedLayer iframe,#embedLayer video,#embedLayer audio{position:absolute;left:0;top:0;border:0;transform-origin:0 0;background:#fff;box-shadow:0 1px 6px rgba(0,0,0,.15);}
+  #embedLayer audio{border-radius:10px;}
   #embedLayer video{background:#000;object-fit:contain;}
   #embedBarLayer{position:fixed;inset:0;z-index:14;pointer-events:none;overflow:hidden;display:none;}
   .embedCard{position:absolute;left:0;top:0;transform-origin:0 0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:#f4f6fa;color:#5b6472;text-align:center;padding:14px;overflow:hidden;}
@@ -555,10 +556,11 @@
     <div class="row"><button class="btn pri" id="qrMake">Auf Seite einfügen</button></div><div id="qrPreview" style="display:flex;justify-content:center;margin-top:10px"></div></div></div>
 <div class="win" id="win-record" style="left:70px;top:70px;min-width:290px;"><h3>Aufnahme <span class="x" data-close="win-record">×</span></h3>
   <div class="body">
-    <div class="row"><button class="btn pri" id="recToggle">● Aufnahme starten</button></div>
+    <div class="row fill"><button class="btn pri" id="recToggle">● Tafel + Ton</button><button class="btn" id="recAudio">🎙 Nur Ton</button></div>
     <div id="recStatus" class="hint" style="text-align:center;font-size:13px">Nimmt die Tafelfläche + Mikrofon auf.</div>
     <video id="recVideo" controls playsinline style="width:100%;max-height:38vh;object-fit:contain;margin-top:10px;border-radius:8px;display:none;background:#000"></video>
-    <div class="row" id="recDownloadRow" style="display:none"><a class="btn" id="recDownload" download>Video speichern</a></div>
+    <audio id="recPlayer" controls style="width:100%;display:none;margin-top:10px"></audio>
+    <div class="row fill" id="recDownloadRow" style="display:none"><button class="btn pri" id="recToBoard" style="display:none">🔊 Auf die Tafel</button><a class="btn" id="recDownload" download>Video speichern</a></div>
     <div class="hint">Format: MP4 (Safari/iPad) bzw. WEBM (Chrome). Eingebettete Web-/Video-/GeoGebra-/Tabellen-Seiten werden nicht mit aufgenommen (nur die Zeichenfläche).</div>
   </div></div>
 <div class="win" id="win-shot" style="left:70px;top:70px;min-width:300px;max-width:min(360px,92vw);"><h3>Screenshot <span class="x" data-close="win-shot">×</span></h3>
@@ -1408,7 +1410,8 @@ function refreshProps(){ const has=selection.length>0 && tool==='select';
     const fo=(selection.length===1&&selection[0].type==='embed'&&FONT_DEF[selection[0].etype]!==undefined)?selection[0]:null; $('fontRow').style.display=fo?'flex':'none';
     if(fo){ $('embFsV').textContent=(fo.data&&fo.data.fontSize)||FONT_DEF[fo.etype]; $('embBold').classList.toggle('on',!!(fo.data&&fo.data.fontBold)); $('embItalic').classList.toggle('on',!!(fo.data&&fo.data.fontItalic)); }
     const po=(selection.length===1&&selection[0].type==='embed'&&['verteilung','mess','ggbapp'].includes(selection[0].etype))?selection[0]:null; $('pageRow').style.display=po?'flex':'none';
-    const cl=(selection.length===1&&selection[0].type==='embed'&&selection[0].etype==='clip')?selection[0]:null; $('clipRow').style.display=cl?'flex':'none';
+    const cl=(selection.length===1&&selection[0].type==='embed'&&(selection[0].etype==='clip'||selection[0].etype==='audio'))?selection[0]:null; $('clipRow').style.display=cl?'flex':'none';
+    if(cl) $('pr-clipsave').textContent=(cl.etype==='audio')?'🎙 Ton speichern':'🎬 Video speichern';
     const wo=(selection.length===1&&selection[0].type==='embed'&&selection[0].etype==='gluecksrad')?selection[0]:null; $('wheelRow').style.display=wo?'flex':'none';
     if(wo) buildWheelEditor(wo); }
   if(has) positionProps();
@@ -1435,11 +1438,11 @@ $('whCount').oninput=()=>{ const o=selection[0]; if(!o||o.etype!=='gluecksrad')r
   const cur=o.data.sectors||[]; const next=[]; for(let i=0;i<n;i++) next.push(cur[i]||{label:String(i+1),color:WHPAL[i%WHPAL.length]});
   o.data.sectors=next; buildWheelEditor(o); postToEmbed(o,o.data); markDirty(); scheduleAutosave(); };
 /* Videoclip der Kamera als Datei sichern */
-$('pr-clipsave').onclick=()=>{ const o=singleSel(); if(!o||o.etype!=='clip')return;
+$('pr-clipsave').onclick=()=>{ const o=singleSel(); if(!o||(o.etype!=='clip'&&o.etype!=='audio'))return;
   if(!o.src){ toast('Dieser Clip ist nach dem Neuladen nicht mehr verfügbar'); return; }
   const a=document.createElement('a'); a.href=o.src;
-  a.download='tafel-clip-'+new Date().toISOString().slice(0,16).replace(/[:T]/g,'-')+'.'+(o.ext||'webm'); a.click();
-  toast('Video gespeichert'); };
+  a.download=(o.etype==='audio'?'tafel-ton-':'tafel-clip-')+new Date().toISOString().slice(0,16).replace(/[:T]/g,'-')+'.'+(o.ext||'webm'); a.click();
+  toast(o.etype==='audio'?'Ton gespeichert':'Video gespeichert'); };
 $('pr-topage').onclick=()=>{ const o=singleSel(); if(!o||o.type!=='embed')return;
   page().objects=page().objects.filter(x=>x!==o);
   doc.pages.splice(doc.cur+1,0,newPage()); goPage(doc.cur+1);
@@ -1579,7 +1582,12 @@ function syncEmbeds(){ const p=page(), wanted=new Set();
   for(const o of p.objects){ if(o.type!=='embed')continue; wanted.add(o.id);
     let fr=embedEls.get(o.id);
     if(!fr){
-      if(o.etype==='clip'){                                    // Videoclip aus dem Kamera-Werkzeug
+      if(o.etype==='audio'){                                   // Tonaufnahme
+        if(o.src){ fr=document.createElement('audio'); fr.controls=true; fr.preload='metadata'; fr.src=o.src; }
+        else { fr=document.createElement('div'); fr.className='embedCard';
+          fr.innerHTML='<div class="ec-ico">🎙</div><div class="ec-sub">Tonaufnahme</div><div class="ec-hint">Aufnahmen werden nicht mitgespeichert – nach dem Neuladen ist der Ton weg.</div>'; }
+      }
+      else if(o.etype==='clip'){                               // Videoclip aus dem Kamera-Werkzeug
         if(o.src){ fr=document.createElement('video'); fr.setAttribute('playsinline',''); fr.playsInline=true; fr.controls=true; fr.preload='metadata'; fr.src=o.src; if(!o.sound)fr.muted=true; }
         else { fr=document.createElement('div'); fr.className='embedCard';
           fr.innerHTML='<div class="ec-ico">🎬</div><div class="ec-sub">Videoclip</div><div class="ec-hint">Clips werden nicht mitgespeichert – nach dem Neuladen ist die Aufnahme weg.</div>'; }
@@ -1925,26 +1933,33 @@ function pickRecMime(withAudio){
   return '';   // leer = Browser entscheidet (enthält dann i. d. R. Bild und Ton)
 }
 function recComposite(){ if(!recCtx)return; recCtx.setTransform(1,0,0,1,0,0); recCtx.fillStyle=bgHex(); recCtx.fillRect(0,0,recCanvas.width,recCanvas.height); try{ recCtx.drawImage(cv,0,0); }catch(e){} recRAF=requestAnimationFrame(recComposite); }
-async function startRec(){
-  if(!(HTMLCanvasElement.prototype.captureStream && window.MediaRecorder)){ toast('Aufnahme wird von diesem Browser nicht unterstützt'); return; }
+function pickAudioMime(){ for(const m of ['audio/mp4;codecs=mp4a.40.2','audio/mp4','audio/webm;codecs=opus','audio/webm','audio/aac']){
+    try{ if(MediaRecorder.isTypeSupported(m)) return m; }catch(e){} } return ''; }
+let recAudioOnly=false, recBlob=null;
+async function startRec(audioOnly){
+  recAudioOnly=!!audioOnly;
+  if(!window.MediaRecorder || (!audioOnly && !HTMLCanvasElement.prototype.captureStream)){ toast('Aufnahme wird von diesem Browser nicht unterstützt'); return; }
   let audio=[]; try{ const mic=await getMic(); recMic=mic; audio=mic.getAudioTracks(); }catch(e){ toast('Ohne Mikrofon (kein Zugriff)'); }
-  const mime=pickRecMime(audio.length>0);
+  if(recAudioOnly && !audio.length){ toast('Ohne Mikrofon keine Tonaufnahme möglich'); return; }
+  const mime=recAudioOnly?pickAudioMime():pickRecMime(audio.length>0);
   try{ // eigenes Aufnahme-Canvas: Hintergrundfarbe + (transparente) Zeichenfläche zusammensetzen
-    recCanvas=document.createElement('canvas'); recCanvas.width=cv.width; recCanvas.height=cv.height; recCtx=recCanvas.getContext('2d'); recComposite();
-    const cs=recCanvas.captureStream(30); recStream=new MediaStream([...cs.getVideoTracks(),...audio]);
+    if(recAudioOnly){ recStream=new MediaStream(audio); }
+    else { recCanvas=document.createElement('canvas'); recCanvas.width=cv.width; recCanvas.height=cv.height; recCtx=recCanvas.getContext('2d'); recComposite();
+      const cs=recCanvas.captureStream(30); recStream=new MediaStream([...cs.getVideoTracks(),...audio]); }
     recChunks=[]; const opt=audio.length?{audioBitsPerSecond:128000}:{}; if(mime)opt.mimeType=mime;
     mediaRec=new MediaRecorder(recStream, opt);
     mediaRec.ondataavailable=e=>{ if(e.data&&e.data.size) recChunks.push(e.data); };
     mediaRec.onstop=()=>finishRec(mediaRec.mimeType||mime); mediaRec.start(1000); recStart=performance.now();
   }catch(err){ toast('Aufnahme-Fehler: '+err.message); cancelAnimationFrame(recRAF); recCtx=null; return; }
-  $('recToggle').textContent='■ Aufnahme stoppen'; $('recToggle').classList.add('dang'); $('recToggle').classList.remove('pri');
-  $('recVideo').style.display='none'; $('recDownloadRow').style.display='none';
+  const btn=recAudioOnly?$('recAudio'):$('recToggle');
+  btn.textContent=recAudioOnly?'■ Tonaufnahme stoppen':'■ Aufnahme stoppen'; btn.classList.add('dang'); btn.classList.remove('pri');
+  $('recVideo').style.display='none'; $('recPlayer').style.display='none'; $('recDownloadRow').style.display='none';
   const withSound=recStream.getAudioTracks().length>0;
   $('win-record').classList.remove('show');                     // Fenster weg – nur der Stopp-Knopf oben bleibt
   $('recStop').classList.add('show'); positionAnnoToggle();
   const tick=()=>{ const s=Math.floor((performance.now()-recStart)/1000), t=String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
-    $('recStatus').textContent='● Aufnahme läuft… '+t+(withSound?' (mit Ton)':' (ohne Ton)');
-    $('recStop').textContent='■ Aufnahme stoppen  '+t; positionAnnoToggle(); };
+    $('recStatus').textContent=(recAudioOnly?'🎙 Tonaufnahme läuft… ':'● Aufnahme läuft… ')+t+(recAudioOnly?'':(withSound?' (mit Ton)':' (ohne Ton)'));
+    $('recStop').textContent=(recAudioOnly?'■ Tonaufnahme stoppen  ':'■ Aufnahme stoppen  ')+t; positionAnnoToggle(); };
   tick(); recTimer=setInterval(tick,500);
 }
 function stopRec(){ try{ if(mediaRec&&mediaRec.state!=='inactive') mediaRec.stop(); }catch(e){}
@@ -1952,21 +1967,37 @@ function stopRec(){ try{ if(mediaRec&&mediaRec.state!=='inactive') mediaRec.stop
   if(!micOn && sharedMic){ sharedMic.getTracks().forEach(t=>t.stop()); sharedMic=null; }   // Mikro freigeben, außer die Lärmampel braucht es
   recMic=null;
   clearInterval(recTimer); cancelAnimationFrame(recRAF); recCtx=null; recCanvas=null;
-  $('recStop').classList.remove('show'); $('win-record').classList.add('show'); positionAnnoToggle(); }
+  $('recStop').classList.remove('show'); $('recStop').textContent='■ Aufnahme stoppen'; $('win-record').classList.add('show'); positionAnnoToggle(); }
 $('recStop').onclick=()=>stopRec();
-function finishRec(mime){ const ext=(mime&&mime.includes('mp4'))?'mp4':'webm', type=(mime||'video/webm').split(';')[0];
-  if(!recChunks.length){ $('recStatus').textContent='Keine Aufnahme aufgezeichnet.'; $('recToggle').textContent='● Aufnahme starten'; $('recToggle').classList.add('pri'); $('recToggle').classList.remove('dang'); return; }
-  const blob=new Blob(recChunks,{type}); if(recUrl)URL.revokeObjectURL(recUrl); recUrl=URL.createObjectURL(blob);
+function recResetButtons(){ $('recToggle').textContent='● Tafel + Ton'; $('recToggle').classList.add('pri'); $('recToggle').classList.remove('dang');
+  $('recAudio').textContent='🎙 Nur Ton'; $('recAudio').classList.remove('dang'); }
+function finishRec(mime){ const audioOnly=recAudioOnly;
+  const type=(mime||(audioOnly?'audio/webm':'video/webm')).split(';')[0];
+  const ext=audioOnly ? (type.includes('mp4')||type.includes('aac')?'m4a':'webm') : ((mime&&mime.includes('mp4'))?'mp4':'webm');
+  if(!recChunks.length){ $('recStatus').textContent='Keine Aufnahme aufgezeichnet.'; recResetButtons(); return; }
+  const blob=new Blob(recChunks,{type}); recBlob=blob; if(recUrl)URL.revokeObjectURL(recUrl); recUrl=URL.createObjectURL(blob);
+  const a=$('recDownload'); a.href=recUrl;
+  a.download=(audioOnly?'tafel-ton-':'tafel-aufnahme-')+new Date().toISOString().slice(0,16).replace(/[:T]/g,'-')+'.'+ext;
+  a.textContent=(audioOnly?'Ton speichern (.':'Video speichern (.')+ext+')';
+  $('recDownloadRow').style.display='flex'; $('recToBoard').style.display=audioOnly?'inline-flex':'none';
+  $('recToBoard').dataset.ext=ext;
+  if(audioOnly){ const p=$('recPlayer'); p.src=recUrl; p.style.display='block'; $('recVideo').style.display='none';
+    $('recStatus').textContent='Tonaufnahme fertig – anhören ▶, auf die Tafel legen oder speichern.'; recResetButtons(); return; }
   const v=$('recVideo'); v.src=recUrl; v.style.display='block'; v.load();
   v.onloadeddata=()=>{ try{ v.currentTime=0; }catch(e){} };
-  const a=$('recDownload'); a.href=recUrl; a.download='tafel-aufnahme-'+new Date().toISOString().slice(0,16).replace(/[:T]/g,'-')+'.'+ext; a.textContent='Video speichern (.'+ext+')'; $('recDownloadRow').style.display='flex';
-  $('recToggle').textContent='● Aufnahme starten'; $('recToggle').classList.add('pri'); $('recToggle').classList.remove('dang');
+  recResetButtons();
   $('recStatus').textContent='Aufnahme fertig ('+ext.toUpperCase()+') – unten abspielen ▶ oder speichern.';
   v.muted=false; v.volume=1;
   blobHasAudio(recUrl).then(has=>{ if(has===null)return;
     $('recStatus').textContent='Aufnahme fertig ('+ext.toUpperCase()+(has?', mit Ton':', ohne Ton')+') – unten abspielen ▶ oder speichern.'
       + (has?'  Nichts zu hören? Am iPad Lautstärke und Stummschalter im Kontrollzentrum prüfen.':''); }); }
-$('recToggle').onclick=()=>{ if(mediaRec&&mediaRec.state==='recording') stopRec(); else startRec(); };
+$('recToggle').onclick=()=>{ if(mediaRec&&mediaRec.state==='recording') stopRec(); else startRec(false); };
+$('recAudio').onclick=()=>{ if(mediaRec&&mediaRec.state==='recording') stopRec(); else startRec(true); };
+$('recToBoard').onclick=()=>{ if(!recUrl){ toast('Keine Aufnahme vorhanden'); return; }
+  const w=Math.min(W*0.5,360)/scale, h=58/scale, c=toWorld(W/2,H/2);
+  addEmbedObject('audio', recUrl, 'Tonaufnahme', undefined, false);
+  const o=selection[0]; if(o&&o.etype==='audio'){ o.w=w; o.h=h; o.x=c.x-w/2; o.y=c.y-h/2; o.ext=$('recToBoard').dataset.ext||'webm'; markDirty(); }
+  $('win-record').classList.remove('show'); toast('Tonaufnahme auf die Tafel gelegt'); };
 
 /* ---- Screenshot eines Tafel-Bereichs (Rechteck, Oval oder Lasso) ---- */
 let shotTarget='insert', shotShape='rect', shotPts=null, shotDown=false;
@@ -2324,7 +2355,7 @@ function exportPDF(){ if(!window.jspdf){toast('PDF-Bibliothek fehlt');return;} s
   }catch(err){ toast('Export-Fehler: '+err.message); } showBusy(false); },50); }
 
 /* ============ Speichern / Laden ============ */
-function stripObj(o){ const c={...o}; delete c._img; delete c._hidden; delete c._lock; delete c._prev; delete c._guide; delete c._straight; if(c.type==='embed'&&c.etype==='clip')c.src=''; return c; }
+function stripObj(o){ const c={...o}; delete c._img; delete c._hidden; delete c._lock; delete c._prev; delete c._guide; delete c._straight; if(c.type==='embed'&&(c.etype==='clip'||c.etype==='audio'))c.src=''; return c; }
 function serialize(){ return JSON.stringify({v:4,name:doc.name,settings:doc.settings,cur:doc.cur,students:doc.students||[],
   pages:doc.pages.map(p=>({objects:p.objects.map(stripObj),bg:p.bg,embed:p.embed,name:p.name||null,bgColor:p.bgColor||null,pattern:p.pattern||null}))}); }
 function deserialize(str){ const o=JSON.parse(str); const os=o.settings||{}; doc.settings=Object.assign({bgColor:'white',pattern:'none',penOnly:true,usePressure:true,fingerSelect:false},os); doc.settings.patSize=Object.assign({},os.patSize||{});
