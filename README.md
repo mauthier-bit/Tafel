@@ -6,7 +6,10 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
 ## Funktionen
 
 - **Schreiben:** Stift (mit Apple-Pencil-Druckstärke), Marker; **eigener Farb-Button**
-  (Farbe & Dicke) – der Stift zeichnet in der zuletzt gewählten Farbe (Standard: Schwarz).
+  (Farbe & Dicke). **Stift und Marker haben getrennte Farben und Strichstärken**: der Stift
+  schreibt standardmäßig **schwarz**, der Marker **gelb**; beim Umschalten kommt automatisch die
+  zuletzt für dieses Werkzeug gewählte Farbe zurück (geräteweit gespeichert). Auf dunklem
+  Hintergrund wird nur die **Stift**farbe automatisch auf Weiß gestellt, die Markerfarbe bleibt.
   Neben den festen Farben gibt es einen **bunten Punkt** – ein Tipp öffnet den vollen Farbwähler
   für beliebige Farben (auch bei der Objektfarbe im Kontextmenü).
 - **Formen:** Linie, Rechteck, **Quadrat**, Ellipse, Dreieck, **rechtwinkliges Dreieck**,
@@ -154,6 +157,10 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     (relative Bezüge wie `A1` dagegen schon). Sie werden in der Formel genauso farbig markiert wie
     Zellbezüge und mit der Tabelle gespeichert.
   - **Rückgängig / Wiederherstellen** (↶ ↷ in der Leiste, auch ⌘Z / Strg+Z bzw. ⇧⌘Z).
+    Es wirkt auf **alle Änderungen an den Objekten einer Seite**: Schreiben, **Radieren**,
+    Löschen, Einfügen, Duplizieren, Gruppieren/Lösen, Ebenen-Wechsel und „Seite leeren"
+    (bis zu 40 Schritte je Seite). Nicht erfasst wird das **Verschieben/Skalieren/Drehen**
+    von Objekten.
   - **Schriftgröße** direkt im Werkzeug über **A− / A+**.
   - **Datei-Menü** (📁): **Neu** (leere Tabelle – setzt auch Spaltenbreiten, Schriftgröße und
     Zeilenzahl zurück), **Öffnen** (eigene `.json`-Tabelle, CSV, Excel), **Tabelle speichern**
@@ -210,7 +217,7 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   einfügen (als Bild). Umgekehrt fügt **„Aus Zwischenablage einfügen"** im Einfügen-Fenster (oder
   ⌘/Strg + V) Objekte, Bilder oder Text **aus anderen Apps** in die Tafel ein. Zusätzlich gibt es
   in der **Einstellungs-Leiste (oben links)** einen eigenen Knopf **„Aus der Zwischenablage einfügen"**.
-- **Radierer:** radiert Teile von Strichen weg (nicht nur ganze Striche)
+- **Radierer:** radiert Teile von Strichen weg (nicht nur ganze Striche) – **Rückgängig macht auch das Radieren wieder rückgängig**
 - **Lineal:** einblendbar, mit Pencil verschieben/drehen, Striche schnappen an die Kante
 - **Lasso-Auswahl** (Werkzeug): einen Bereich mit dem Stift **einrahmen** (ist die Kurve nicht
   geschlossen, wird sie automatisch mit einer geraden Strecke geschlossen). Nach dem Loslassen
