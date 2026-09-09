@@ -218,6 +218,13 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   ⌘/Strg + V) Objekte, Bilder oder Text **aus anderen Apps** in die Tafel ein. Zusätzlich gibt es
   in der **Einstellungs-Leiste (oben links)** einen eigenen Knopf **„Aus der Zwischenablage einfügen"**.
 - **Radierer:** radiert Teile von Strichen weg (nicht nur ganze Striche) – **Rückgängig macht auch das Radieren wieder rückgängig**
+- **Der Stift hat Vorrang:** Liegt beim Schreiben ein **Finger oder der Handballen** auf der Tafel,
+  schreibt der Pencil trotzdem weiter (bisher blockierte eine solche Berührung das Schreiben, bis
+  man die Hand anhob). Nur bei **zwei** Fingern (Zoomen/Schieben) hält sich der Stift heraus.
+- **Stift-Diagnose** (Einstellungen → Bedienung, standardmäßig aus): meldet als kurze Einblendung,
+  wenn ein Stiftkontakt **verzögert** verarbeitet wurde (ab 90 ms, mit Maximalwert), wenn ein
+  **Finger/Handballen** im Spiel war und wie lange das letzte **Speichern** gedauert hat – zum
+  Eingrenzen von „Totzeiten" beim Schreiben.
 - **Lineal:** einblendbar, mit Pencil verschieben/drehen, Striche schnappen an die Kante
 - **Lasso-Auswahl** (Werkzeug): einen Bereich mit dem Stift **einrahmen** (ist die Kurve nicht
   geschlossen, wird sie automatisch mit einer geraden Strecke geschlossen). Nach dem Loslassen

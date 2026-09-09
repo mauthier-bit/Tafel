@@ -679,6 +679,7 @@
     <div class="toggle"><span>Nur mit Stift schreiben<br><small style="color:#888">(Finger schiebt & zoomt)</small></span><div class="sw2 on" id="penOnly"></div></div>
     <div class="toggle"><span>Finger wählt aus (Auswahl-Modus)<br><small style="color:#888">(1 Finger verschiebt Objekte, 2 Finger zoomen & drehen)</small></span><div class="sw2" id="fingerSelect"></div></div>
     <div class="toggle"><span>Druckstärke des Pencils</span><div class="sw2 on" id="usePressure"></div></div>
+    <div class="toggle"><span>Stift-Diagnose<br><small style="color:#888">meldet Verzögerungen beim Schreiben</small></span><div class="sw2" id="penDiagSw"></div></div>
     <hr class="wsep">
     <div class="wcap">Projekt &amp; Klasse</div>
     <label class="lbl">Projekt</label>
@@ -1073,7 +1074,7 @@ const isDraw=e=>(e.pointerType==='pen'||e.pointerType==='mouse')?true:(e.pointer
 const navList=()=>{const a=[];for(const[,p]of pointers)if(p.nav)a.push(p);return a;};
 
 cv.addEventListener('pointerdown',e=>{ try{ cv.setPointerCapture(e.pointerId); }catch(_){}   // darf den Rest nie blockieren
-  lastInputT=performance.now();
+  lastInputT=performance.now(); diagPointer(e);
   const p={x:e.clientX,y:e.clientY,type:e.pointerType,nav:false,id:e.pointerId}; pointers.set(e.pointerId,p);
   if(tool==='spot'){ if(pointers.size===2){ const ps=[...pointers.values()]; spotBase={dist:Math.hypot(ps[0].x-ps[1].x,ps[0].y-ps[1].y)||1, radius:spotRadius}; } return; }
   // Auswahl-Modus + Finger-Bedienung: zweiter Finger auf einer Auswahl = Objekt(e) skalieren & drehen
@@ -1100,6 +1101,8 @@ cv.addEventListener('pointerdown',e=>{ try{ cv.setPointerCapture(e.pointerId); }
     if(z==='draw' && isDraw(e)){ pendingRulerSnap=true; pendingSnap={cx:geo.cx,cy:geo.cy,angle:geo.angle};
       if(onGeoCenter(e.clientX,e.clientY)) pendingGeoRay=true; }
   }
+  if(isDraw(e)&&drawId===null&&navList().length===1&&(e.pointerType==='pen'||e.pointerType==='mouse')){
+    navList().forEach(q=>q.nav=false); navBase=null; }        // Stift schlägt einen ruhenden Finger/Handballen
   if(isDraw(e)&&drawId===null&&navList().length===0){ startAction(e); }
   else { p.nav=true; if(cur){cur=null;drawId=null;} moveDrag=null; xform=null; setupNav(); }
 },{passive:false});
@@ -1913,8 +1916,9 @@ $('pageMenu').addEventListener('pointerdown',e=>e.stopPropagation());
 document.addEventListener('pointerdown',e=>{ if($('pageMenu').classList.contains('show') && !e.target.closest('#pageMenu') && !e.target.closest('.pmBtn')) closePageMenu(); }, true);
 $('setMin').onclick=()=>{ $('settingsbar').classList.toggle('min'); rotateChev('setMin',$('settingsbar').classList.contains('min'),true); saveUI(); positionAnnoToggle(); };
 function rotateChev(id,min){ $(id).querySelector('svg').style.transform=min?'scaleX(-1)':''; }
-function saveUI(){ try{ localStorage.setItem('tafel_ui',JSON.stringify({page:$('pagebar').classList.contains('min'),set:$('settingsbar').classList.contains('min'),side:mainbarSide,theme:barTheme,tint:barTint,favs,cols:toolColors,pw:penWidth,mw:markerWidth,rul:{len:ruler.len,color:ruler.color,mm:ruler.mm,nums:ruler.nums},geo:{size:geo.size,color:geo.color,mm:geo.mm,nums:geo.nums}})); }catch(e){} }
+function saveUI(){ try{ localStorage.setItem('tafel_ui',JSON.stringify({page:$('pagebar').classList.contains('min'),set:$('settingsbar').classList.contains('min'),side:mainbarSide,theme:barTheme,tint:barTint,favs,diag:penDiag,cols:toolColors,pw:penWidth,mw:markerWidth,rul:{len:ruler.len,color:ruler.color,mm:ruler.mm,nums:ruler.nums},geo:{size:geo.size,color:geo.color,mm:geo.mm,nums:geo.nums}})); }catch(e){} }
 function restoreUI(){ try{ const u=JSON.parse(localStorage.getItem('tafel_ui')||'{}'); if(u.page){$('pagebar').classList.add('min');pageChev(true);} if(u.set){$('settingsbar').classList.add('min');rotateChev('setMin',true);} if(u.side==='right')mainbarSide='right'; if(u.theme==='light'||u.theme==='dark')barTheme=u.theme; if(u.tint&&typeof u.tint==='object')barTint=Object.assign(barTint,u.tint); if(Array.isArray(u.favs))favs=u.favs.slice(0,FAV_MAX);
+  if(u.diag){ penDiag=true; $('penDiagSw').classList.add('on'); }
   if(u.cols&&typeof u.cols==='object')Object.assign(toolColors,u.cols); if(+u.pw>0)penWidth=+u.pw; if(+u.mw>0)markerWidth=+u.mw;
   if(u.rul)Object.assign(ruler,{len:+u.rul.len||ruler.len,color:u.rul.color||ruler.color,mm:u.rul.mm!==false,nums:u.rul.nums!==false});
   if(u.geo)Object.assign(geo,{size:+u.geo.size||geo.size,color:u.geo.color||geo.color,mm:u.geo.mm!==false,nums:u.geo.nums!==false});
@@ -1992,6 +1996,8 @@ $('patSizeR').onclick=()=>{ const pat=doc.settings.pattern; if(!PATCFG[pat])retu
   if(doc.settings.patSize) delete doc.settings.patSize[pat]; refreshPatSize(); markDirty(); scheduleAutosave(); };
 $('penOnly').onclick=function(){this.classList.toggle('on');doc.settings.penOnly=this.classList.contains('on');scheduleAutosave();};
 $('fingerSelect').onclick=function(){this.classList.toggle('on');doc.settings.fingerSelect=this.classList.contains('on');scheduleAutosave();};
+$('penDiagSw').onclick=function(){ this.classList.toggle('on'); penDiag=this.classList.contains('on'); diagMax=0; saveUI();
+  toast(penDiag?'Diagnose an – Meldung ab 90 ms Verzögerung':'Diagnose aus'); };
 $('usePressure').onclick=function(){this.classList.toggle('on');doc.settings.usePressure=this.classList.contains('on');scheduleAutosave();};
 
 /* ============ Stoppuhr/Timer/Ampel/Sozialform/Umfrage ============ */
@@ -2368,7 +2374,7 @@ const projKey=id=>'tafel_proj_'+id;
 const DEFSET=()=>({bgColor:'white',pattern:'grid',penOnly:true,usePressure:true,fingerSelect:true,patSize:{}});
 const curProjName=()=>{ const p=projects.find(x=>x.id===activeId); return p?p.name:'Projekt'; };
 function saveIndex(){ try{ localStorage.setItem('tafel_index',JSON.stringify({activeId,list:projects})); }catch(e){} }
-function saveCurrentProject(){ if(activeId){ try{ localStorage.setItem(projKey(activeId),serialize()); }catch(e){} } }
+function saveCurrentProject(){ if(activeId){ const t0=performance.now(); try{ localStorage.setItem(projKey(activeId),serialize()); }catch(e){} lastSaveDur=performance.now()-t0; lastSaveEnd=performance.now(); } }
 function renderStudentsInfo(){ const n=(doc.students||[]).length; $('classInfo').textContent=n?(n+' Namen in „'+curProjName()+'"'):('Keine Namen in „'+curProjName()+'". Direkt eintippen oder CSV importieren.');
   if(document.activeElement!==$('classText')) $('classText').value=(doc.students||[]).join('\n'); }
 $('classText').addEventListener('input',()=>{ doc.students=$('classText').value.split('\n').map(s=>s.trim()).filter(Boolean); nameUsed=new Set(); const n=doc.students.length; $('classInfo').textContent=n?(n+' Namen in „'+curProjName()+'"'):('Keine Namen in „'+curProjName()+'".'); scheduleAutosave(); });
@@ -2546,6 +2552,17 @@ function initProjects(){ let idx=null; try{ idx=JSON.parse(localStorage.getItem(
   renderProjects(); }
 
 /* ============ Diverses ============ */
+/* Stift-Diagnose: misst, wie lange ein Stiftkontakt in der Warteschlange lag, bevor die App ihn
+   verarbeiten konnte („Totzeit"), und ob gerade ein Finger/Handballen das Schreiben blockiert hat. */
+let penDiag=false, lastSaveDur=0, lastSaveEnd=0, diagMax=0;
+function diagPointer(e){ if(!penDiag||e.pointerType==='touch')return;
+  const now=performance.now(), lag=Math.round(now-(e.timeStamp||now)), blocked=navList().length;
+  if(lag>diagMax)diagMax=lag;
+  if(lag<90 && !blocked) return;
+  let msg='Stift: '+lag+' ms Verzögerung (max '+Math.round(diagMax)+')';
+  if(blocked) msg+=' · '+blocked+'× Finger/Handballen';
+  if(lastSaveDur>25 && now-lastSaveEnd<2000) msg+=' · Speichern '+Math.round(lastSaveDur)+' ms';
+  toast(msg); }
 let toastT=null; function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),1900);}
 function showBusy(on,msg){const b=$('busy');if(msg)b.textContent=msg;b.classList.toggle('show',on);}
 const spot=$('spot'); let spotRadius=120, spotBase=null;
