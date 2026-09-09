@@ -60,6 +60,18 @@
   #chartWrap{flex:1;position:relative;min-height:0;}
   #chartCv{position:absolute;inset:0;width:100%;height:100%;}
   #chartInfo{padding:6px 12px;font-size:12px;color:#334155;border-top:1px solid #e2e7ef;white-space:pre-wrap;min-height:18px;}
+  #chartOpt{display:none;flex-direction:column;gap:7px;padding:9px 12px;border-bottom:1px solid #e2e7ef;background:#fbfcfe;}
+  #chartOpt.show{display:flex;}
+  #chartOpt .corow{display:flex;align-items:center;gap:7px;font-size:13px;color:#334155;flex-wrap:wrap;}
+  #chartOpt .corow>span{color:#5b6472;}
+  #chartOpt .corow>span.lb{min-width:96px;font-weight:600;color:#334155;}
+  #chartOpt input{flex:1;min-width:70px;border:1px solid #cfd8e6;border-radius:8px;padding:6px 8px;font:inherit;font-size:13px;background:#fff;color:#1f2430;}
+  #chartPickBar{position:fixed;left:0;right:0;bottom:0;z-index:14;display:none;align-items:center;gap:10px;padding:9px 12px;
+    background:#1f2937;color:#fff;font-size:13px;box-shadow:0 -4px 16px rgba(0,0,0,.25);}
+  #chartPickBar.show{display:flex;}
+  #chartPickBar b{flex:1;font-weight:600;}
+  #chartPickBar button{border:none;border-radius:9px;padding:8px 12px;font:inherit;font-size:13px;font-weight:700;cursor:pointer;background:#e5e7eb;color:#1f2430;}
+  #chartPickBar button.pri{background:#3b82f6;color:#fff;}
   #toast{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);background:#1f2430;color:#fff;padding:8px 14px;border-radius:9px;font-size:13px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:30;max-width:90%;text-align:center;}
   #toast.show{opacity:1;}
   #bar .cbtn.on{background:#3b82f6;color:#fff;border-color:#3b82f6;}
@@ -104,6 +116,7 @@
 <div id="wrap"><table id="grid"></table></div>
 <div id="keypad"></div>
 <div id="toast"></div>
+<div id="chartPickBar"><b id="chartPickTxt">Bereich markieren</b><button id="chartPickCancel">Abbrechen</button><button class="pri" id="chartPickOk">Übernehmen</button></div>
 <div id="chartOv">
   <div id="chartHead">
     <b id="chartTitle">Diagramm</b>
@@ -111,8 +124,15 @@
       <button class="cbtn" id="chartBar">Säulen</button>
       <button class="cbtn" id="chartPie">Kreis</button>
       <button class="cbtn" id="chartBox">Boxplot</button>
+      <button class="cbtn" id="chartOptBtn" title="Achsen und Beschriftung einstellen">⚙<span class="lbl"> Achsen</span></button>
       <span id="chartClose" title="Schließen">×</span>
     </span>
+  </div>
+  <div id="chartOpt">
+    <div class="corow"><span class="lb">Rubriken (x)</span><input id="coCat" placeholder="z. B. A1:A8"><button class="cbtn" id="coCatPick">Markieren</button></div>
+    <div class="corow"><span class="lb">Werte (y)</span><input id="coVal" placeholder="z. B. B1:B8"><button class="cbtn" id="coValPick">Markieren</button></div>
+    <div class="corow"><span class="lb">Achsentitel</span><input id="coXt" placeholder="x-Achse"><input id="coYt" placeholder="y-Achse"></div>
+    <div class="corow"><span class="lb">y-Achse von</span><input id="coYmin" inputmode="decimal" placeholder="auto"><span>bis</span><input id="coYmax" inputmode="decimal" placeholder="auto"><button class="cbtn" id="coAuto">Auto</button></div>
   </div>
   <div id="chartWrap"><canvas id="chartCv"></canvas></div>
   <div id="chartInfo"></div>
@@ -699,7 +719,22 @@ function niceTicks(lo,hi,n){ const span=(hi-lo)||1; const raw=span/Math.max(1,n)
 function quantile(s,q){ const pos=(s.length-1)*q, base=Math.floor(pos), rest=pos-base;
   return s[base+1]!==undefined ? s[base]+rest*(s[base+1]-s[base]) : s[base]; }
 /* Werte des markierten Bereichs; bei 2 Spalten/Zeilen: erste = Beschriftung, zweite = Wert */
-function chartData(){ const memo=new Map(); const {c0,c1,r0,r1}=selRect(); const w=c1-c0+1, h=r1-r0+1;
+function chartOpt(){ data.chartOpt=data.chartOpt||{}; return data.chartOpt; }
+/* Zellen eines Bezugs wie "B2:B9" (spaltenweise); null, wenn der Text kein gültiger Bezug ist */
+function refList(ref){ const m=String(ref||'').trim().toUpperCase().match(/^([A-Z]+[0-9]+)(?::([A-Z]+[0-9]+))?$/); if(!m)return null;
+  const a=cellCR(m[1]), b=cellCR(m[2]||m[1]);
+  const c0=Math.min(a.c,b.c),c1=Math.max(a.c,b.c),r0=Math.min(a.r,b.r),r1=Math.max(a.r,b.r), out=[];
+  if(c1>=COLS||r1>ROWS||r0<1)return null;
+  for(let c=c0;c<=c1;c++)for(let r=r0;r<=r1;r++) out.push(colName(c)+r);
+  return out; }
+function chartData(){ const memo=new Map();
+  const o=chartOpt(), vl=(chartType==='bar')?refList(o.val):null, cl=(chartType==='bar')?refList(o.cat):null;
+  if(vl){ const labels=[], values=[];                       // eigene Achsen-Bereiche (Säulendiagramm)
+    vl.forEach((id,i)=>{ const v=numOf(display(id,memo)); if(v===null)return;
+      const l=(cl&&cl[i]!==undefined)?String(display(cl[i],memo)):'';
+      values.push(v); labels.push(l!==''?l:String(values.length)); });
+    return {labels,values}; }
+  const {c0,c1,r0,r1}=selRect(); const w=c1-c0+1, h=r1-r0+1;
   const disp=(c,r)=>display(colName(c)+r,memo);
   let labels=[], values=[];
   if(w===2){ for(let r=r0;r<=r1;r++){ const v=numOf(disp(c1,r)); if(v!==null){ const l=disp(c0,r); labels.push(l!==''?String(l):('#'+(r-r0+1))); values.push(v); } } }
@@ -710,11 +745,15 @@ function ctxFor(){ const cv=$('chartCv'); const w=cv.clientWidth||300, h=cv.clie
   cv.width=Math.round(w*dpr); cv.height=Math.round(h*dpr); const c=cv.getContext('2d'); c.setTransform(dpr,0,0,dpr,0,0); c.clearRect(0,0,w,h);
   c.font='11px -apple-system,sans-serif'; return {c,w,h}; }
 function noData(c,w,h,msg){ c.fillStyle='#8a93a2'; c.font='14px -apple-system,sans-serif'; c.textAlign='center'; c.fillText(msg,w/2,h/2); }
-function drawBar(){ const {labels,values}=chartData(); const {c,w,h}=ctxFor();
+function drawBar(){ const {labels,values}=chartData(); const {c,w,h}=ctxFor(), o=chartOpt();
   if(!values.length){ noData(c,w,h,'Keine Zahlen im markierten Bereich.'); $('chartInfo').textContent=''; return; }
-  const padL=48,padR=16,padT=18,padB=46, plotW=w-padL-padR, plotH=h-padT-padB;
-  const maxV=Math.max(...values,0), minV=Math.min(...values,0), range=(maxV-minV)||1;
-  const yOf=v=>padT+(maxV-v)/range*plotH, y0=yOf(0);
+  const xt=(o.xt||'').trim(), yt=(o.yt||'').trim();
+  const padL=yt?66:48, padR=16, padT=18, padB=46+(xt?18:0), plotW=w-padL-padR, plotH=h-padT-padB;
+  const um=numOf(o.ymin), ux=numOf(o.ymax);                    // Start-/Endwert der senkrechten Achse (leer = automatisch)
+  let maxV=Math.max(...values,0), minV=Math.min(...values,0);
+  if(um!==null)minV=um; if(ux!==null)maxV=ux; if(maxV<=minV)maxV=minV+1;
+  const range=maxV-minV, clamp=v=>Math.max(minV,Math.min(maxV,v));
+  const yOf=v=>padT+(maxV-clamp(v))/range*plotH, y0=yOf(0);
   c.strokeStyle='#e2e7ef'; c.fillStyle='#8a93a2'; c.textAlign='right'; c.lineWidth=1;
   niceTicks(minV,maxV,5).forEach(t=>{ const y=yOf(t); c.beginPath(); c.moveTo(padL,y); c.lineTo(padL+plotW,y); c.stroke(); c.fillText(de(String(t)),padL-6,y+3); });
   c.strokeStyle='#9aa4b2'; c.beginPath(); c.moveTo(padL,padT); c.lineTo(padL,padT+plotH); c.stroke();
@@ -722,9 +761,12 @@ function drawBar(){ const {labels,values}=chartData(); const {c,w,h}=ctxFor();
   c.textAlign='center';
   values.forEach((v,i)=>{ const cx=padL+slot*i+slot/2, top=yOf(v), bh=Math.abs(top-y0);
     c.fillStyle='#3b82f6'; c.fillRect(cx-bw/2, Math.min(top,y0), bw, Math.max(bh,1));
-    c.fillStyle='#1f2430'; c.fillText(roundDe(v), cx, Math.min(top,y0)-4);
+    c.fillStyle='#1f2430'; c.fillText(roundDe(v), cx, Math.max(padT+10,Math.min(top,y0)-4));
     c.fillStyle='#5b6472'; const lab=labels[i]||String(i+1); c.fillText(lab.length>10?lab.slice(0,9)+'…':lab, cx, padT+plotH+15, slot); });
   c.strokeStyle='#334155'; c.beginPath(); c.moveTo(padL,y0); c.lineTo(padL+plotW,y0); c.stroke();
+  c.fillStyle='#1f2430'; c.font='bold 12px -apple-system,sans-serif';
+  if(xt){ c.textAlign='center'; c.fillText(xt, padL+plotW/2, padT+plotH+34); }
+  if(yt){ c.save(); c.translate(14,padT+plotH/2); c.rotate(-Math.PI/2); c.textAlign='center'; c.fillText(yt,0,0); c.restore(); }
   const sum=values.reduce((a,b)=>a+b,0);
   $('chartInfo').textContent='n = '+n+' · Summe = '+roundDe(sum)+' · Mittelwert = '+roundDe(sum/n); }
 function drawBox(){ const vals=chartData().values.slice().sort((a,b)=>a-b); const {c,w,h}=ctxFor();
@@ -765,9 +807,34 @@ function drawPie(){ const {labels,values}=chartData(); const {c,w,h}=ctxFor();
   $('chartInfo').textContent='n = '+pos.length+' · Summe = '+roundDe(total); }
 function drawChart(){ $('chartTitle').textContent=chartType==='bar'?'Säulendiagramm':chartType==='pie'?'Kreisdiagramm':'Boxplot';
   $('chartBar').classList.toggle('on',chartType==='bar'); $('chartPie').classList.toggle('on',chartType==='pie'); $('chartBox').classList.toggle('on',chartType==='box');
-  if(chartType==='bar')drawBar(); else if(chartType==='pie')drawPie(); else drawBox(); }
+  const bar=chartType==='bar'; $('chartOptBtn').style.display=bar?'':'none';
+  if(!bar)$('chartOpt').classList.remove('show'); $('chartOptBtn').classList.toggle('on',$('chartOpt').classList.contains('show'));
+  if(bar)drawBar(); else if(chartType==='pie')drawPie(); else drawBox(); }
+/* --- Achsen-Einstellungen (nur Säulendiagramm) --- */
+function fillChartOpt(){ const o=chartOpt();
+  $('coCat').value=o.cat||''; $('coVal').value=o.val||''; $('coXt').value=o.xt||''; $('coYt').value=o.yt||'';
+  $('coYmin').value=o.ymin||''; $('coYmax').value=o.ymax||''; }
+function readChartOpt(){ const o=chartOpt();
+  o.cat=$('coCat').value.trim().toUpperCase(); o.val=$('coVal').value.trim().toUpperCase();
+  o.xt=$('coXt').value; o.yt=$('coYt').value; o.ymin=$('coYmin').value.trim(); o.ymax=$('coYmax').value.trim();
+  sync(); drawChart(); }
+['coCat','coVal','coXt','coYt','coYmin','coYmax'].forEach(id=>{ $(id).oninput=readChartOpt; });
+$('coAuto').onclick=()=>{ $('coYmin').value=''; $('coYmax').value=''; readChartOpt(); };
+$('chartOptBtn').onclick=()=>{ const p=$('chartOpt'); const show=!p.classList.contains('show');
+  p.classList.toggle('show',show); if(show)fillChartOpt(); $('chartOptBtn').classList.toggle('on',show); drawChart(); };
+/* Bereich mit dem Finger wählen: Diagramm kurz ausblenden, in der Tabelle markieren, „Übernehmen" */
+let chartPickFor=null;
+function chartPick(field,txt){ chartPickFor=field; $('chartOv').classList.remove('show');
+  $('chartPickTxt').textContent=txt; $('chartPickBar').classList.add('show'); }
+function chartPickEnd(take){ const bar=$('chartPickBar'); bar.classList.remove('show');
+  if(take&&chartPickFor){ $(chartPickFor).value=selRefString(); readChartOpt(); }
+  chartPickFor=null; $('chartOv').classList.add('show'); fillChartOpt(); drawChart(); }
+$('coCatPick').onclick=()=>chartPick('coCat','Bereich für die Rubriken (x-Achse) in der Tabelle markieren');
+$('coValPick').onclick=()=>chartPick('coVal','Bereich für die Werte (y-Achse) in der Tabelle markieren');
+$('chartPickOk').onclick=()=>chartPickEnd(true);
+$('chartPickCancel').onclick=()=>chartPickEnd(false);
 function openChart(){ if(document.activeElement&&document.activeElement.blur)document.activeElement.blur();
-  $('chartOv').classList.add('show'); drawChart(); }
+  $('chartOv').classList.add('show'); fillChartOpt(); drawChart(); }
 $('btnChart').onclick=openChart;
 $('chartBar').onclick=()=>{ chartType='bar'; drawChart(); };
 $('chartPie').onclick=()=>{ chartType='pie'; drawChart(); };

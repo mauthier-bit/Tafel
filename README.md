@@ -32,11 +32,20 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   (0,1 bis 1000), **Zahlen an/aus** sowie **Schriftgröße, Fett und Kursiv**; **Farbe und Liniendicke**
   kommen aus den Farbpunkten bzw. „Dicke/Größe" oben im selben Kontextmenü. Wird die Teilung sehr fein,
   bleiben alle Striche stehen, aber nur jede n-te Zahl wird beschriftet, damit nichts überlappt.
-- **Lineal** und **Geodreieck:** über ihren Knopf einblenden – sie **bleiben aktiv**, während der
+- **Lineal** und **Geodreieck:** über ihren Knopf einblenden – mit **cm-/mm-Skala und Zahlen**. Über das
+  kleine **⚙-Feld auf dem Werkzeug** öffnet sich ein Menü für **Länge bzw. Größe (8–40 cm), Millimeter
+  an/aus, Zahlen an/aus und Farbe** (unten schließt ein **„Schließen"-Knopf** das Menü);
+  voreingestellt sind **Lineal 19 cm** und **Geodreieck 15 cm**, jeweils **mit Millimeter-Skala**;
+  die Einstellungen bleiben geräteweit gespeichert. Sie **bleiben aktiv**, während der
   Stift zeichnet. Mit dem Finger am **unteren** Teil verschieben / am Griff (Ecke bzw. Spitze)
   drehen; mit dem Stift **an der Kante** eine saubere gerade Linie ziehen. Das Geodreieck hat
-  eine **Winkelskala (0–180°)**, eine Lot-Linie, eine **innenliegende cm-Skala** und
+  eine **Winkelskala (0–180°)**, eine Lot-Linie, eine **innenliegende cm-Skala**, deren **Null in der
+  Mitte der langen Seite** liegt und die nach links und rechts hochzählt (wie beim echten Geodreieck), und
   **Parallelen zur längsten Seite** (zum Zeichnen von Parallelen).
+- **Winkel zeichnen (Geodreieck):** mit dem Stift **mindestens 1 Sekunde in der Mitte der langen Seite**
+  (dem Scheitelpunkt) ruhig halten – danach lässt sich von dort eine **gerade Linie über die Winkelskala**
+  ziehen. Der **aktuelle Winkel zur Kante** wird dabei laufend angezeigt (α = …°) und die Linie rastet
+  auf **ganze Grad** ein, sodass der gezeichnete Winkel genau dem angezeigten Wert entspricht.
 - **Zirkel** (Werkzeug): Kreisbögen in **zwei Schritten** – **1)** Mittelpunkt antippen und
   Radius aufziehen, loslassen (der Radius wird gefixt, ein gestrichelter Kreis bleibt als
   Hilfe stehen); **2)** einmal herumziehen, um den Bogen zu zeichnen. Radius/Winkel live.
@@ -53,6 +62,11 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   die Zellen ziehen) und auf **„📊 Diagramm"** tippen – die markierten Zahlen werden wahlweise als
   **Säulendiagramm**, **Kreisdiagramm** oder **Boxplot** (mit Min/Q₁/Median/Q₃/Max) angezeigt.
   Bei zwei markierten Spalten (bzw. Zeilen) dient die erste als **Beschriftung**, die zweite als Werte.
+  Im **Säulendiagramm** öffnet **„⚙ Achsen"** zusätzlich die Achsen-Einstellungen: **Rubriken (x)** und
+  **Werte (y)** lassen sich als eigene Bereiche festlegen – entweder eintippen (z. B. `A1:A8`) oder über
+  **„Markieren"**: das Diagramm blendet sich kurz aus, man markiert den Bereich in der Tabelle und tippt
+  auf **„Übernehmen"**. Dazu kommen **Achsentitel** für x und y sowie **Start- und Endwert der senkrechten
+  Achse** (leer = automatisch, „Auto" setzt beides zurück).
 - **Formeln durch Ziehen ausfüllen:** unten rechts an der markierten Zelle/Auswahl sitzt ein kleines
   blaues **Ausfüllkästchen** – nach unten oder zur Seite ziehen füllt die Formel/den Wert in die
   überstrichenen Zellen; **relative Bezüge (A1) werden angepasst, absolute ($A$1) bleiben fest**
@@ -164,6 +178,8 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   (Kein / Karo / Linien / Punkte / **Notenlinien** / **Dreiecke** – gleichseitiges 60°-Raster).
   Die **Größe des Musters** ist direkt darunter einstellbar (＋/− und „Standard"): Kästchenweite,
   Linien-/Punktabstand, Notenlinienabstand bzw. Seitenlänge der Dreiecke – je Musterart gespeichert.
+  Die **Kästchenweite wird in Millimetern** angezeigt und in 1-mm-Schritten verstellt; **Standard sind
+  5 mm**, damit das Karo genau zur Skala von **Lineal und Geodreieck** passt.
 - **Erscheinung der Leisten** (Einstellungen → „Leisten"): **Dunkel** oder **Hell** (Voreinstellung) – bei Hell
   cremeweiße Knöpfe mit schwarzen Symbolen und Beschriftungen. Darunter stehen je Variante mehrere
   **Farbtöne** zur Wahl: dunkel = Graphit, Dunkelblau, dunkles Weinrot, Dunkelbraun, Dunkelgrün;
@@ -234,6 +250,12 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   **„Einbettungen bedienen" → „↗ Öffnen"** (oben links am Objekt) lässt sich die Seite im Browser öffnen.
   Direkte Inhalts-URLs (z. B. **PhET-Simulationen**) funktionieren dagegen problemlos.
   (PDF wird weiter als ganze Seite(n) eingefügt.)
+- **Audiodatei einfügen (mp3 …):** über **Einfügen → Datei** („PDF / Bild / PowerPoint / Audio wählen").
+  Unterstützt **mp3, m4a, aac, wav, ogg, opus**; die Datei landet als kleiner **Abspieler** (Play,
+  Position, Lautstärke) als bewegliches Objekt auf der Tafel – zum Abspielen oben auf **„Einbettung
+  bedienen"** tippen. Dateien **bis 4 MB werden mit dem Projekt gespeichert** und sind nach dem
+  Neuladen noch da; größere Dateien laufen nur bis zum Neuladen. Über das Kontextmenü lässt sich der
+  Ton mit **„🎙 Ton speichern"** wieder als Datei sichern.
 - **PowerPoint (.pptx) einfügen:** über **„PDF / Bild / PowerPoint"** – jede Folie wird als Bild
   dargestellt (einfache Darstellung: **Text & Bilder**, keine Animationen/Themes/SmartArt) und
   wahlweise als **Objekt** oder als **eigene Seite** eingefügt. Läuft offline (entpackt die .pptx
