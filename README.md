@@ -75,7 +75,8 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   Mit **„🎙 Nur Ton"** lässt sich auch **nur eine Tonaufnahme** machen (ohne Bild): danach anhören und
   entweder **auf die Tafel legen** (Audioplayer als bewegliches Objekt) oder als **Datei speichern**
   (.m4a bzw. .webm). Wie Videoclips gelten Tonaufnahmen nur für die laufende Sitzung; im Kontextmenü
-  des Objekts steht „🎙 Ton speichern". Die Statuszeile
+  des Objekts steht „🎙 Ton speichern". Mit **„🗑 Verwerfen"** lässt sich eine Aufnahme direkt im
+  Fenster wieder löschen (bereits auf der Tafel abgelegte Aufnahmen bleiben davon unberührt). Die Statuszeile
   sagt, ob **mit Ton** aufgenommen wird (bei verweigertem Mikrofon läuft die Aufnahme stumm weiter).
   Nach dem Stoppen prüft die Tafel die fertige Datei und schreibt in die Statuszeile, ob wirklich eine
   **Tonspur** drin ist – steht dort „mit Ton" und man hört trotzdem nichts, liegt es am Gerät

@@ -303,8 +303,8 @@ function build(){ let html='<colgroup><col style="width:44px">';
   grid.querySelectorAll('input').forEach(inp=>{
     inp.addEventListener('focus',()=>{ if(editEl===inp){ formulaUI(inp); return; }        // schon in Bearbeitung: Text nicht überschreiben
       editEl=inp; setActive(inp.dataset.cell); inp.value=data[inp.dataset.cell]||''; formulaUI(inp); });
-    inp.addEventListener('blur',()=>{ if(kpBusy||refBusy||refPick){ keepFocus(inp); return; }   // Tastatur-/Bezugstipp: Eingabe läuft weiter
-      if(editEl===inp) editEl=null; clearRefHi(); ovHide(); commit(inp); });
+    inp.addEventListener('blur',()=>{ if(editEl===inp){ keepFocus(inp); return; }   // Eingabe läuft weiter – beendet wird nur bewusst (Enter/✓/Fertig/Esc oder Tipp woanders)
+      clearRefHi(); ovHide(); commit(inp); });
     inp.addEventListener('input',()=>{ document.getElementById('fx').value=inp.value; formulaUI(inp); });
     inp.addEventListener('keydown',e=>{ handleKey(e,inp); });
     inp.addEventListener('scroll',()=>{ if(ovTarget===inp) ovPlace(); });
@@ -353,6 +353,7 @@ grid.addEventListener('pointerdown',e=>{
     return; }
   const td=e.target.closest('td[data-cell]'), th=e.target.closest('th[data-c],th[data-r]');
   if(!td&&!th)return;
+  if(td && editEl && editEl.dataset && editEl.dataset.cell===td.dataset.cell) return;   // Tipp in die eigene Zelle: Cursor setzen, kein Selbstbezug
   e.preventDefault(); e.stopPropagation();                                    // Fokus bleibt in der Formel
   refBusy=true; keepFocus(t.el);
   refPick={el:t.el,start:t.pos,len:t.len||0,anchor:null};
@@ -424,6 +425,13 @@ function ovUpdate(el){ const editing = el && (isEditing(el) || (refPick&&refPick
 function formulaUI(el){ highlightRefs(el?el.value:''); ovUpdate(el); }
 $('wrap').addEventListener('scroll',ovPlace,{passive:true});
 addEventListener('resize',ovPlace); addEventListener('scroll',ovPlace,{passive:true});
+/* Eingabe beenden, wenn man außerhalb tippt (Werkzeugleiste, Diagramm …) */
+function endEdit(){ if(!editEl)return; const prev=editEl; editEl=null; hideFormulaUI();
+  if(prev.id==='fx') fxCommit(); else commit(prev); }
+document.addEventListener('pointerdown',e=>{ if(!editEl)return;
+  if(e.target===editEl || e.target.closest('#keypad') || e.target.closest('#grid') || e.target.closest('#fx') || e.target.closest('#fxGo') || e.target.closest('#fileMenu')) return;
+  endEdit(); });
+
 /* ---------- Kopfzeile/Kopfspalte antippen = ganze Spalte/Zeile markieren ---------- */
 let hdrDrag=null;
 function markHeaders(){ const {c0,c1,r0,r1}=selRect(); const fullCol=(r0===1&&r1===ROWS), fullRow=(c0===0&&c1===COLS-1);
@@ -433,7 +441,8 @@ function selectCols(c0,c1){ selAnchor=colName(c0)+'1'; selFocus=colName(c1)+ROWS
 function selectRows(r0,r1){ selAnchor='A'+r0; selFocus=colName(COLS-1)+r1; setActive('A'+r0); selAnchor='A'+r0; selFocus=colName(COLS-1)+r1; renderRange(); }
 grid.addEventListener('pointerdown',e=>{ if(e.target.closest('.colres'))return; if(refTarget())return;
   const th=e.target.closest('th[data-c],th[data-r]'); if(!th)return;
-  e.preventDefault(); if(document.activeElement&&document.activeElement.blur)document.activeElement.blur();
+  e.preventDefault(); if(editEl){ const prev=editEl; editEl=null; hideFormulaUI(); commit(prev); }
+  if(document.activeElement&&document.activeElement.blur)document.activeElement.blur();
   if(th.dataset.c!==undefined){ hdrDrag={type:'col',from:+th.dataset.c}; selectCols(+th.dataset.c,+th.dataset.c); }
   else { hdrDrag={type:'row',from:+th.dataset.r}; selectRows(+th.dataset.r,+th.dataset.r); } });
 document.addEventListener('pointermove',e=>{ if(!hdrDrag)return;
