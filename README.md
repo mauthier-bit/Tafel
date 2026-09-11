@@ -85,6 +85,11 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   **„Markieren"**: das Diagramm blendet sich kurz aus, man markiert den Bereich in der Tabelle und tippt
   auf **„Übernehmen"**. Dazu kommen **Achsentitel** für x und y sowie **Start- und Endwert der senkrechten
   Achse** (leer = automatisch, „Auto" setzt beides zurück).
+  Mit **A− / A+** im Diagrammkopf lässt sich die **Schriftgröße der Diagrammbeschriftung** einstellen
+  (Achsen, Rubriken, Werte, Titel, Legende); die Ränder wachsen automatisch mit.
+- **Tabellen-Schrift und Spaltenbreite:** Wird die Schrift der Tabelle mit A+ vergrößert, werden die
+  **Spalten (und die Zeilennummern-Spalte) automatisch mitbreiter**; beim Verkleinern gehen sie auf
+  die gewohnte Breite zurück. Selbst gezogene Spaltenbreiten bleiben dabei im gleichen Verhältnis.
 - **Formeln durch Ziehen ausfüllen:** unten rechts an der markierten Zelle/Auswahl sitzt ein kleines
   blaues **Ausfüllkästchen** – nach unten oder zur Seite ziehen füllt die Formel/den Wert in die
   überstrichenen Zellen; **relative Bezüge (A1) werden angepasst, absolute ($A$1) bleiben fest**
@@ -202,6 +207,28 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   Linien-/Punktabstand, Notenlinienabstand bzw. Seitenlänge der Dreiecke – je Musterart gespeichert.
   Die **Kästchenweite wird in Millimetern** angezeigt und in 1-mm-Schritten verstellt; **Standard sind
   5 mm**, damit das Karo genau zur Skala von **Lineal und Geodreieck** passt.
+- **Sticker & Klassenliste** (Gruppe „Klasse & Interaktion", Stern-Knopf) – ein Fenster mit zwei
+  Bereichen, gespeichert **je Projekt (= Klasse)**:
+  - **Sticker:** Die gesammelten Sticker der aktiven Klasse werden groß angezeigt; ein Tipp auf einen
+    der 16 Sticker in der Auswahl (u. a. ⭐ 🏆 👑 🎉 😊 🦄 🦋 🐱) **vergibt** ihn – mit großer Einblendung
+    und **Applaus**, dazu **abwechselnd** ein **Konfettiregen** (ca. 4 Sekunden) oder ein **Feuerwerk**
+    (Raketen mit bunten Funken und leisem Knallen vor abgedunkeltem Hintergrund, ca. 4–5 Sekunden).
+    Gilt auch für den automatischen Sticker; alle Töne werden im Browser erzeugt, es wird keine
+    Audiodatei geladen.
+    „Sticker entfernen" lässt einzelne Sticker per Tipp wieder wegnehmen, „Alle entfernen" leert die
+    Sammlung. Schalter **„Automatisch bei Ruhe"**: siehe Lärmampel.
+  - **Klassenliste:** alle Namen der aktiven Klasse als Knöpfe. Ein Tipp auf einen Namen öffnet die
+    **Kategorien** (Standard: ⚠️ Verwarnung, 👍 Lob, ℹ️ Hinweis, 📚 Keine Hausaufgabe) – ein Tipp auf eine Kategorie zählt
+    **+1**, das kleine **−** daneben nimmt einen zurück. **„Anzeigen/Verbergen"** blendet die Zähler
+    an den Namen ein oder aus (standardmäßig verborgen – praktisch, wenn die Tafel projiziert wird).
+    Unter **„Kategorien"** lassen sich Kategorien **hinzufügen, umbenennen**, mit einem Symbol versehen
+    und löschen; „Zähler zurücksetzen" setzt alle Zähler der Klasse auf 0.
+- **Sticker bei Ruhe (Sozialform):** In der Sozialform-Ansicht gibt es bei der **Lärmampel** den
+  Schalter **„⭐ Sticker für die Klasse, wenn die Ampel bis zum Timer-Ende nicht rot wird"**. Sind Timer und
+  Lärmampel beide aufgeklappt, sind ihre Bereiche **gleich hoch**. Laufen **Timer und Lärmampel** zusammen und
+  leuchtet die Ampel bis zum Ablauf des Timers **nicht rot** (kurze Ausreißer unter ⅓ Sekunde zählen
+  nicht), bekommt die aktive Klasse automatisch einen ⭐ – mit großer Einblendung. War sie rot, gibt es
+  einen kurzen Hinweis. Der Schalter ist derselbe wie „Automatisch bei Ruhe" im Sticker-Fenster.
 - **Stift-Testseite** `pentest.html` (im selben Ordner, direkt aufrufbar): kleine, von der Tafel
   unabhängige Seite zum Prüfen der Stifteingabe – zählt Pointer- und Touch-Ereignisse gegen die
   tatsächlich gezeichneten Striche und lässt `preventDefault`, `PointerCapture` und die Eingabeart
