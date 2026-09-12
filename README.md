@@ -217,12 +217,78 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     Audiodatei geladen.
     „Sticker entfernen" lässt einzelne Sticker per Tipp wieder wegnehmen, „Alle entfernen" leert die
     Sammlung. Schalter **„Automatisch bei Ruhe"**: siehe Lärmampel.
-  - **Klassenliste:** alle Namen der aktiven Klasse als Knöpfe. Ein Tipp auf einen Namen öffnet die
-    **Kategorien** (Standard: ⚠️ Verwarnung, 👍 Lob, ℹ️ Hinweis, 📚 Keine Hausaufgabe) – ein Tipp auf eine Kategorie zählt
-    **+1**, das kleine **−** daneben nimmt einen zurück. **„Anzeigen/Verbergen"** blendet die Zähler
-    an den Namen ein oder aus (standardmäßig verborgen – praktisch, wenn die Tafel projiziert wird).
-    Unter **„Kategorien"** lassen sich Kategorien **hinzufügen, umbenennen**, mit einem Symbol versehen
-    und löschen; „Zähler zurücksetzen" setzt alle Zähler der Klasse auf 0.
+  - **Klassenliste:** die Namen der aktiven Klasse **alphabetisch** in einer **scrollbaren Tabelle**
+    (Kopfzeile und Namensspalte bleiben beim Scrollen stehen); dahinter je **Kategorie eine Spalte**.
+    - **Art der Kategorie:** *Zähler* (Zelle antippen = **+1**), *Haken* (Zelle antippen =
+      **✓ setzen/entfernen**), *Noten* oder *Frei*. Standard: ⚠️ Verwarnung, 👍 Lob, ℹ️ Hinweis,
+      📚 Keine Hausaufgabe (Zähler), 📝 **Noten** und ✏️ **Frei**; die Art lässt sich unter
+      „Kategorien" umstellen.
+    - **Frei:** eine freie Textzeile je Kind. Zelle antippen → Eingabefeld direkt in der Tabelle,
+      **Enter** oder Wegtippen speichert, **Esc** bricht ab. Lange Texte werden gekürzt angezeigt
+      (vollständig beim Bearbeiten und im Druck). Sortiert wird alphabetisch nach dem Text, leere
+      Zeilen ans Ende. Im Namensmenü wird die Zeile per Tipp zum Eingabefeld, ✕ löscht den Text.
+    - **Noten:** Zelle (oder im Namensmenü die Kategorie) antippen → kleines Fenster mit **Note 1–6**,
+      **Art gLN/kLN** (die zuletzt gewählte Art ist vorbelegt) und **Datum** (heute vorbelegt) →
+      „eintragen". In der Zelle erscheinen die Noten als Kästchen (**gLN gefüllt**, kLN umrandet, Datum
+      beim Antippen/Überfahren). Im selben Fenster lassen sich bisherige Noten ansehen und einzeln
+      löschen – bei verborgener Klassenliste erst nach „Bisherige Noten anzeigen". Sortiert wird eine
+      Notenspalte nach dem **ungewichteten Schnitt** (bester zuerst, Kinder ohne Note am Ende).
+    - **Direkt in den Spalten eintragen:** Jede Zelle einer sichtbaren Spalte ist antippbar; leere
+      Zellen zeigen dafür ein blasses **+** (Zähler, Noten), **○** (Haken) bzw. **✎** (Frei).
+    - **Name antippen** öffnet alle Kategorien des Kindes (auch ausgeblendete) mit **+1 / −1** bzw.
+      **✓ / ✕**.
+    - **Spaltenkopf antippen** sortiert nach dieser Kategorie (erst meiste/abgehakte oben, erneut
+      tippen = umgekehrt); „Name" sortiert wieder alphabetisch (A–Z / Z–A). Beim Antippen der Zellen
+      bleibt die Reihenfolge stehen, damit die Zeilen nicht unter dem Finger wegspringen.
+    - **„Anzeigen/Verbergen"** blendet alle Kategorien-Spalten ein oder aus (standardmäßig verborgen
+      – praktisch, wenn die Tafel projiziert wird). Bei eingeblendeten Werten lässt sich über die
+      Knöpfe **„Spalten:"** jede Kategorie **einzeln ein- oder ausblenden**.
+    - Unter **„Kategorien"**: Symbol, Name und Art (Zähler/Haken/Noten/Frei) je Kategorie, löschen,
+      „+ Kategorie", „Standard". „Zurücksetzen" löscht alle Zähler, Haken, Noten und Texte der Klasse.
+    - **🖨 Drucken:** druckt genau das Sichtbare – Namen plus eingeblendete Spalten, in der aktuellen
+      Sortierung, mit Klassenname und Datum (Noten mit Art und Datum). Bei verborgener Klassenliste
+      wird nur die Namensliste gedruckt.
+- **🪑 Sitzplan** (Reiter im Klassen-Fenster): Reihen anlegen und darin **Einzel-, Zweier- oder
+  Viererbänke** hinzufügen; für jeden Platz wird der Name aus der Klassenliste gewählt. Oben zeigt ein
+  Balken **„▲ Vorne · Tafel ▲"**, wo vorne ist. Darunter stehen die noch nicht verteilten Namen (und
+  eine Warnung bei doppelt eingeteilten). Dazu zwei Felder für die **Klassensprecher**.
+  **🖨 Drucken** gibt den Sitzplan samt Klassensprechern aus.
+- **🗒 Notizen** (Reiter im Klassen-Fenster): ein großes Notizfeld zur aktiven Klasse, wird mit
+  dem Projekt gespeichert (und exportiert).
+- **📅 Termine** (vierter Reiter): **Monatskalender** (‹ › blättern, „Heute"; Punkte zeigen Einträge:
+  blau = Termin, orange = Erinnerung). Tag antippen → Einträge des Tages; darunter das Formular:
+  - **Termin** mit Titel, Datum, Uhrzeit und optional **„vorher erinnern"** (5/10/15/30 Min, 1 Std,
+    1 Tag, 2 Tage, 5 Tage, 1 Woche). Zur Termin-Zeit – und bei gewählter Erinnerung zusätzlich vorher – erscheint oben rechts
+    auf der Tafel ein **Popup mit Gong**, das sich mit × oder „Schließen" wegklicken lässt.
+  - **Erinnerung** mit Titel, Datum und Uhrzeit: poppt zur Zeit auf und lässt sich dort mit
+    **„✓ Erledigt"** abhaken oder **„In 10 Min erneut"** verschieben. Offene Erinnerungen, die fällig
+    wurden, während die Tafel geschlossen war, erscheinen beim nächsten Öffnen; verpasste Termine
+    werden nur bis 12 Stunden danach noch angezeigt.
+  - Unter **„Anstehend"** stehen die nächsten Termine und alle offenen Erinnerungen (überfällige rot);
+    ✓ markiert eine Erinnerung als erledigt (↺ öffnet sie wieder), × löscht einen Eintrag.
+  - Popups erscheinen **nur für die aktive Klasse** – fällige Einträge einer anderen Klasse kommen
+    spätestens, wenn du dieses Projekt öffnest. Gespeichert werden alle Termine geräteweit; der
+    Kalender zeigt die Einträge der aktiven Klasse, mit **„alle Klassen"** alle (mit Klassennamen).
+  - **🏖 Schulferien (Bayern)** lassen sich einblenden (Ferientage sind im Kalender hell hinterlegt).
+    Voreingetragen sind die **amtlichen bayerischen Ferientermine 2025–2030** (aus dem iCal-Export des
+    Kultusministeriums). Unter „bearbeiten" lässt sich jeder Zeitraum ändern, löschen oder ergänzen
+    („+ Zeitraum", „Standard (Bayern)"); die Liste gilt geräteweit.
+  - **📥 .ics importieren:** Beliebige Ferienkalender im **iCal-Format** (z. B. der Download von
+    km.bayern.de oder das eigene Bundesland) einlesen – auf Nachfrage **ersetzend** oder **ergänzend**.
+    Erkannt werden ganztägige Einträge (das Ende in der Datei ist der Folgetag und wird korrekt
+    umgerechnet), umbrochene Zeilen und Einträge mit Uhrzeit.
+  - **🧹 Dienst:** Aufgabe (z. B. Putzdienst), **Gruppengröße**, **Rhythmus** (täglich an Schultagen,
+    wöchentlich, zweiwöchentlich) und Startdatum. „Gruppen bilden" teilt die Klassenliste
+    alphabetisch, „Neu mischen" zufällig. Die Tafel zeigt den **aktuellen Dienst** und die nächsten
+    Zeiträume; im Kalender steht die Gruppe am jeweiligen Tag. **Ferien bleiben frei** – dort ruht der
+    Dienst und die Reihenfolge rückt nicht weiter. **🖨 Dienstplan** druckt die nächsten Zeiträume.
+    Der Dienst erscheint auch **im Kalender**: der erste Tag jedes Zeitraums bekommt einen **grünen
+    Punkt**, und unter „Anstehend" stehen die nächsten Dienst-Zeiträume zwischen den Terminen.
+    Mit **„🔔 Erinnerung zum Dienstbeginn um …"** poppt zu Beginn jedes Zeitraums ein Fenster mit der
+    **Gruppe und ihren Namen** auf (einmal je Zeitraum; war die Tafel zu, kommt es beim nächsten Öffnen).
+- Das Klassen-Fenster („Klassenliste & Aufgaben") ist 720 px breit; **„🖨 Drucken"** steht mit
+  „Anzeigen/Verbergen", „Kategorien" und „Zurücksetzen" in einer Zeile. Reihenfolge der Reiter:
+  **Klassenliste · Termine · Sitzplan · Sticker · Notizen**, beim Öffnen ist die Klassenliste aktiv.
 - **Sticker bei Ruhe (Sozialform):** In der Sozialform-Ansicht gibt es bei der **Lärmampel** den
   Schalter **„⭐ Sticker für die Klasse, wenn die Ampel bis zum Timer-Ende nicht rot wird"**. Sind Timer und
   Lärmampel beide aufgeklappt, sind ihre Bereiche **gleich hoch**. Laufen **Timer und Lärmampel** zusammen und
