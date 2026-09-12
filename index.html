@@ -285,6 +285,10 @@
   #calGrid .cd.hol.out{background:#fffaf1;}
   #calGrid .cd.sel.hol{background:#3b82f6;}
   #win-class .dutyHead{display:flex;align-items:center;gap:8px;}
+  #dutyChips{display:flex;flex-wrap:wrap;gap:5px;margin:8px 0 2px;}
+  #dutyChips button{border:1px solid #dfe5ee;background:#fff;color:#5b6472;border-radius:999px;padding:6px 11px;font:inherit;font-size:12.5px;cursor:pointer;}
+  #dutyChips button.on{background:#e8f0fe;border-color:#bcd2fb;color:#1f2430;font-weight:700;}
+  #dutyChips button.add{color:#3b82f6;font-weight:700;}
   #win-class .dutyRem{display:flex;align-items:center;gap:7px;margin-top:8px;font-size:13px;color:#334155;cursor:pointer;flex-wrap:wrap;}
   #win-class .dutyRem input[type=checkbox]{width:20px;height:20px;margin:0;}
   #win-class .dutyRem input[type=time]{width:auto;flex:0 0 auto;padding:5px 7px;}
@@ -810,12 +814,13 @@
         <div class="row fill" style="margin-top:7px"><button class="btn pri" id="evSave">Eintragen</button></div>
       </div>
       <div class="calForm" id="dutyBox">
-        <div class="dutyHead"><b>🧹 Dienst</b><span class="hint" style="margin:0;flex:1">Gruppen wechseln im Rhythmus, Ferien bleiben frei</span><div class="sw2" id="dutyOn"></div></div>
+        <div class="dutyHead"><b>🧹 Dienste</b><span class="hint" style="margin:0;flex:1">Gruppen wechseln im Rhythmus, Ferien bleiben frei</span><div class="sw2" id="dutyOn" title="Diesen Dienst ein-/ausschalten"></div></div>
+        <div id="dutyChips"></div>
         <div id="dutyCfg">
           <div class="calRow"><input type="text" id="dutyTask" placeholder="Aufgabe, z. B. Putzdienst"><select id="dutyRhythm"><option value="7">wöchentlich</option><option value="14">zweiwöchentlich</option><option value="1">täglich (Schultage)</option></select></div>
           <div class="calRow"><span class="dl">Gruppengröße</span><input type="number" id="dutySize" min="1" max="12" value="3"><span class="dl">ab</span><input type="date" id="dutyStart"></div>
           <label class="dutyRem"><input type="checkbox" id="dutyRemOn"> 🔔 Erinnerung zum Dienstbeginn um <input type="time" id="dutyRemTime" value="08:00"></label>
-          <div class="row fill" style="gap:6px;margin-top:7px"><button class="btn" id="dutyMakeBtn">Gruppen bilden</button><button class="btn" id="dutyShuffle">Neu mischen</button><button class="btn" id="dutyPrint">🖨 Dienstplan</button></div>
+          <div class="row fill" style="gap:6px;margin-top:7px"><button class="btn" id="dutyMakeBtn">Gruppen bilden</button><button class="btn" id="dutyShuffle">Neu mischen</button><button class="btn" id="dutyPrint">🖨 Dienstpläne</button><button class="btn dang" id="dutyDel">Dienst löschen</button></div>
           <div id="dutyNow"></div><div id="dutyNext"></div>
         </div>
       </div>
@@ -2698,16 +2703,17 @@ function renderCal(){ const now=new Date(), tIso=evIso(now); if(!calMonth) calMo
   const g=$('calGrid'); g.innerHTML='';
   ['Mo','Di','Mi','Do','Fr','Sa','So'].forEach(t=>{ const d=document.createElement('div'); d.className='cw'; d.textContent=t; g.appendChild(d); });
   const off=(new Date(y,m,1).getDay()+6)%7;
-  const dd=dutyGet(), dPer=(dd.on&&dd.groups.length)?dutyPlan(evIso(new Date(y,m,1-off)),14):[];
-  const dStart=new Map(dPer.map(q=>[q.a,q]));
+  const dStart=new Map();
+  dutiesOn().forEach(dx=>dutyPlanOf(dx,evIso(new Date(y,m,1-off)),14).forEach(q=>{
+    const e=dStart.get(q.a)||[]; e.push({d:dx,p:q}); dStart.set(q.a,e); }));
   for(let i=0;i<42;i++){ const d=new Date(y,m,1-off+i), iso=evIso(d);
     const fer=ferien.show?ferAt(iso):null;
     const c=document.createElement('div'); c.className='cd'+(d.getMonth()!==m?' out':'')+(iso===tIso?' today':'')+(fer?' hol':'')+(iso===calSel?' sel':''); c.textContent=d.getDate();
     if(fer) c.title=fer.n;
     const evs=evList.filter(e=>e.date===iso&&evVisible(e)), dS=dStart.get(iso);
     if(evs.length||dS){ const dots=document.createElement('span'); dots.className='dots';
-      if(dS){ const q=document.createElement('i'); q.className='duty'; dots.appendChild(q);
-        c.title=((dd.task||'Dienst')+': Gruppe '+(dS.gi+1)+' – '+(dd.groups[dS.gi]||[]).join(', '))+(c.title?(' · '+c.title):''); }
+      if(dS){ dS.slice(0,2).forEach(()=>{ const q=document.createElement('i'); q.className='duty'; dots.appendChild(q); });
+        c.title=dS.map(x=>(x.d.task||'Dienst')+': Gruppe '+(x.p.gi+1)+' – '+(x.d.groups[x.p.gi]||[]).join(', ')).join(' · ')+(c.title?(' · '+c.title):''); }
       evs.slice(0,3).forEach(e=>{ const q=document.createElement('i'); if(e.kind==='erinnerung')q.className='rem'; dots.appendChild(q); }); c.appendChild(dots); }
     c.onclick=()=>{ calSel=iso; $('evDate').value=iso; if(d.getMonth()!==m) calMonth=new Date(d.getFullYear(),d.getMonth(),1); renderCal(); };
     g.appendChild(c); }
@@ -2716,14 +2722,13 @@ function renderCal(){ const now=new Date(), tIso=evIso(now); if(!calMonth) calMo
   const fSel=ferien.show?ferAt(calSel):null;
   if(fSel){ const fl=document.createElement('div'); fl.className='evItem'; fl.style.background='#fff5e0';
     fl.append(Object.assign(document.createElement('span'),{textContent:'🏖'}), Object.assign(document.createElement('div'),{className:'ti',textContent:fSel.n})); list.appendChild(fl); }
-  const dp=dutyAt(calSel);
-  if(dp&&dd.on&&dd.groups.length) list.appendChild(dutyItemEl(dp,dd));
+  dutiesOn().forEach(dx=>{ const dp=dutyAtOf(dx,calSel); if(dp) list.appendChild(dutyItemEl(dp,dx)); });
   const day=evList.filter(e=>e.date===calSel&&evVisible(e)).sort((a,b)=>evStart(a)-evStart(b));
   if(!day.length&&!list.childNodes.length) list.innerHTML='<div class="hint" style="margin:4px 0 0">Keine Einträge an diesem Tag.</div>'; else day.forEach(e=>list.appendChild(evItemEl(e,false)));
   const up=$('evUpcoming'); up.innerHTML=''; const nowT=Date.now();
   const ups=evList.filter(e=>evVisible(e)&&(e.kind==='erinnerung'?!e.done:evStart(e)>=nowT-3600000))
     .map(e=>({d:e.date,make:()=>evItemEl(e,true)}));
-  if(dd.on&&dd.groups.length) dutyPlan(evIso(now),3).forEach(q=>ups.push({d:q.a,make:()=>dutyItemEl(q,dd)}));
+  dutiesOn().forEach(dx=>dutyPlanOf(dx,evIso(now),3).forEach(q=>ups.push({d:q.a,make:()=>dutyItemEl(q,dx)})));
   ups.sort((a,b)=>String(a.d).localeCompare(String(b.d)));
   if(!ups.length) up.innerHTML='<div class="hint" style="margin:4px 0 0">Nichts Anstehendes.</div>'; else ups.slice(0,15).forEach(x=>up.appendChild(x.make())); }
 function evItemEl(e,withDate){ const it=document.createElement('div'), late=e.kind==='erinnerung'&&!e.done&&evStart(e)<Date.now();
@@ -2863,11 +2868,22 @@ function renderFerBox(){ const el=$('ferBox'); el.innerHTML='';
   row.append(add,imp,std); el.appendChild(row); }
 
 /* ============ Dienst: Gruppen im Rhythmus, Ferien bleiben frei ============ */
-const dutyDef=()=>({task:'Putzdienst',rhythm:7,size:3,start:evIso(new Date()),groups:[],on:false});
-function dutyGet(){ if(!doc.duty||typeof doc.duty!=='object') doc.duty=dutyDef(); if(!Array.isArray(doc.duty.groups)) doc.duty.groups=[]; return doc.duty; }
+const dutyDef=()=>({id:'d'+uid(),task:'Putzdienst',rhythm:7,size:3,start:evIso(new Date()),groups:[],on:false,rem:false,remTime:'08:00',lastAnn:''});
+let dutySel=0;
+function duties(){ if(!Array.isArray(doc.duties)){ doc.duties = (doc.duty&&typeof doc.duty==='object') ? [Object.assign(dutyDef(),doc.duty)] : []; delete doc.duty; }
+  doc.duties.forEach(d=>{ if(!Array.isArray(d.groups)) d.groups=[]; if(!d.id) d.id='d'+uid(); });
+  return doc.duties; }
+function dutyGet(){ const L=duties(); if(!L.length) L.push(dutyDef()); if(dutySel>=L.length||dutySel<0) dutySel=0; return L[dutySel]; }
+function renderDutyChips(){ const el=$('dutyChips'); el.innerHTML=''; const L=duties();
+  L.forEach((d,i)=>{ const b=document.createElement('button'); b.className=(i===dutySel?'on':'');
+    b.textContent=(d.task||('Dienst '+(i+1)))+(d.on?'':' (aus)');
+    b.onclick=()=>{ dutySel=i; renderDuty(); }; el.appendChild(b); });
+  const a=document.createElement('button'); a.className='add'; a.textContent='+ Dienst';
+  a.onclick=()=>{ const L2=duties(); L2.push(Object.assign(dutyDef(),{task:'Neuer Dienst'})); dutySel=L2.length-1; scheduleAutosave(); renderDuty(); renderCal(); };
+  el.appendChild(a); }
 function schoolDays(a,b){ let n=0; const d=new Date(a+'T00:00'), e=new Date(b+'T00:00');
   for(; d<=e; d.setDate(d.getDate()+1)){ const w=d.getDay(); if(w===0||w===6)continue; if(isFerien(evIso(d)))continue; n++; } return n; }
-function dutyPlan(fromIso,count){ const d=dutyGet(); if(!d.on||!d.groups.length) return [];
+function dutyPlanOf(d,fromIso,count){ if(!d||!d.on||!d.groups.length) return [];
   const step=+d.rhythm||7; const cur=new Date((d.start||evIso(new Date()))+'T00:00');
   if(step>=7){ cur.setDate(cur.getDate()-((cur.getDay()+6)%7)); }      // Wochenrhythmus beginnt montags
   const out=[]; let gi=0, guard=0;
@@ -2878,9 +2894,11 @@ function dutyPlan(fromIso,count){ const d=dutyGet(); if(!d.on||!d.groups.length)
     if(!skip){ if(bIso>=fromIso) out.push({a:aIso,b:bIso,gi:gi%d.groups.length}); gi++; }
     cur.setDate(cur.getDate()+(step===1?1:step)); }
   return out; }
-const dutyAt=iso=>{ const p=dutyPlan(iso,1); return (p.length&&p[0].a<=iso&&iso<=p[0].b)?p[0]:null; };
+const dutyPlan=(fromIso,count)=>dutyPlanOf(dutyGet(),fromIso,count);
+const dutyAtOf=(d,iso)=>{ const p=dutyPlanOf(d,iso,1); return (p.length&&p[0].a<=iso&&iso<=p[0].b)?p[0]:null; };
+const dutiesOn=()=>duties().filter(d=>d.on&&d.groups.length);
 const perLabel=p=>p.a===p.b?fmtDateDe(p.a).slice(0,6):(fmtDateDe(p.a).slice(0,6)+'–'+fmtDateDe(p.b).slice(0,6));
-function dutyFillForm(){ const d=dutyGet(); $('dutyTask').value=d.task||''; $('dutyRhythm').value=String(d.rhythm||7);
+function dutyFillForm(){ renderDutyChips(); const d=dutyGet(); $('dutyTask').value=d.task||''; $('dutyRhythm').value=String(d.rhythm||7);
   $('dutySize').value=d.size||3; $('dutyStart').value=d.start||evIso(new Date());
   $('dutyRemOn').checked=!!d.rem; $('dutyRemTime').value=d.remTime||'08:00';
   $('dutyOn').classList.toggle('on',!!d.on); $('dutyCfg').style.display=d.on?'':'none'; }
@@ -2888,13 +2906,14 @@ function dutyRead(){ const d=dutyGet(); d.task=$('dutyTask').value.trim(); d.rhy
   d.size=Math.max(1,Math.min(12,+$('dutySize').value||3)); d.start=$('dutyStart').value||evIso(new Date());
   d.rem=$('dutyRemOn').checked; d.remTime=$('dutyRemTime').value||'08:00'; scheduleAutosave(); }
 /* Erinnerung zum Beginn jedes Dienst-Zeitraums – einmal je Zeitraum (auch nachträglich beim Öffnen) */
-function checkDuty(now){ const d=dutyGet(); if(!d.on||!d.rem||!d.groups.length) return;
-  const today=evIso(new Date(now)), plan=dutyPlan(today,1); if(!plan.length) return;
+function checkDuty(now){ duties().forEach(d=>checkDutyOne(d,now)); }
+function checkDutyOne(d,now){ if(!d.on||!d.rem||!d.groups.length) return;
+  const today=evIso(new Date(now)), plan=dutyPlanOf(d,today,1); if(!plan.length) return;
   const p=plan[0]; if(p.a>today || d.lastAnn===p.a) return;
   const hm=(d.remTime||'08:00').split(':').map(Number), t=new Date(p.a+'T00:00'); t.setHours(hm[0]||0,hm[1]||0,0,0);
   if(now<t.getTime()) return;
   d.lastAnn=p.a; scheduleAutosave();
-  showEvPop({id:'duty_'+p.a,kind:'dienst',label:'🧹 '+(d.task||'Dienst')+' · '+perLabel(p),
+  showEvPop({id:'duty_'+(d.id||'')+'_'+p.a,kind:'dienst',label:'🧹 '+(d.task||'Dienst')+' · '+perLabel(p),
     title:'Gruppe '+(p.gi+1)+': '+(d.groups[p.gi]||[]).join(', '),date:p.a,time:d.remTime||'',clsName:doc.name||''},'jetzt'); }
 function dutyItemEl(p,d){ const it=document.createElement('div'); it.className='evItem'; it.style.background='#e8f0fe';
   it.append(Object.assign(document.createElement('span'),{textContent:'🧹'}),
@@ -2917,6 +2936,9 @@ function renderDuty(){ dutyFillForm(); const d=dutyGet(), now=$('dutyNow'), nx=$
   nx.innerHTML=plan.slice(1).map(p=>escHtml(perLabel(p))+': Gruppe '+(p.gi+1)+' – '+escHtml((d.groups[p.gi]||[]).join(', '))).join('<br>'); }
 $('dutyOn').onclick=()=>{ const d=dutyGet(); d.on=!d.on; scheduleAutosave();
   if(d.on&&!d.groups.length) dutyMake(false); else { renderDuty(); renderCal(); } };
+$('dutyDel').onclick=()=>{ const L=duties(), d=dutyGet();
+  if(!confirm('Dienst „'+(d.task||'Dienst')+'" löschen?'))return;
+  L.splice(dutySel,1); dutySel=Math.max(0,dutySel-1); scheduleAutosave(); renderDuty(); renderCal(); toast('Dienst gelöscht'); };
 $('dutyTask').oninput=dutyRead;
 $('dutyRhythm').onchange=()=>{ dutyRead(); renderDuty(); renderCal(); };
 $('dutySize').onchange=dutyRead;
@@ -2977,14 +2999,16 @@ function printSeating(){ const st=seatGet();
   if(sp.length) h+='<div class="pmeta" style="margin-top:6mm">Klassensprecher: '+escHtml(sp.join(' · '))+'</div>';
   doPrint(h); }
 $('seatPrint').onclick=printSeating;
-function printDuty(){ const d=dutyGet();
-  if(!d.on||!d.groups.length){ toast('Noch kein Dienst eingerichtet'); return; }
-  const plan=dutyPlan(evIso(new Date()),16);
-  let h='<h1>'+escHtml(d.task||'Dienst')+(doc.name?(' – '+escHtml(doc.name)):'')+'</h1>';
-  h+='<div class="pmeta">Stand: '+escHtml(new Date().toLocaleDateString('de-DE'))+' · '+({1:'täglich (Schultage)',7:'wöchentlich',14:'zweiwöchentlich'}[d.rhythm]||'')+' · Ferien bleiben frei</div>';
-  h+='<table><thead><tr><th class="pn">Zeitraum</th><th>Gruppe</th><th class="pn">Namen</th></tr></thead><tbody>';
-  plan.forEach(p=>{ h+='<tr><td class="pn">'+escHtml(perLabel(p))+'</td><td>'+(p.gi+1)+'</td><td class="pn">'+escHtml((d.groups[p.gi]||[]).join(', '))+'</td></tr>'; });
-  h+='</tbody></table>'; doPrint(h); }
+function printDuty(){ const L=dutiesOn();
+  if(!L.length){ toast('Noch kein Dienst eingerichtet'); return; }
+  let h='<h1>Dienstpläne'+(doc.name?(' – '+escHtml(doc.name)):'')+'</h1>';
+  h+='<div class="pmeta">Stand: '+escHtml(new Date().toLocaleDateString('de-DE'))+' · Ferien bleiben frei</div>';
+  L.forEach((d,i)=>{ const plan=dutyPlanOf(d,evIso(new Date()),16);
+    h+='<h2 style="font-size:13pt;margin:'+(i?'8mm':'0')+' 0 2mm">'+escHtml(d.task||'Dienst')+' · '+({1:'täglich (Schultage)',7:'wöchentlich',14:'zweiwöchentlich'}[d.rhythm]||'')+'</h2>';
+    h+='<table><thead><tr><th class="pn">Zeitraum</th><th>Gruppe</th><th class="pn">Namen</th></tr></thead><tbody>';
+    plan.forEach(p=>{ h+='<tr><td class="pn">'+escHtml(perLabel(p))+'</td><td>'+(p.gi+1)+'</td><td class="pn">'+escHtml((d.groups[p.gi]||[]).join(', '))+'</td></tr>'; });
+    h+='</tbody></table>'; });
+  doPrint(h); }
 $('dutyPrint').onclick=printDuty;
 let pollData=[{n:'A',c:0},{n:'B',c:0},{n:'C',c:0},{n:'D',c:0}];
 function renderPoll(){const max=Math.max(1,...pollData.map(o=>o.c)),list=$('pollList');list.innerHTML='';pollData.forEach(o=>{const d=document.createElement('div');d.className='poll-opt';d.innerHTML=`<div class="name">${o.n}</div><div class="poll-bar"><div style="width:${o.c/max*100}%"></div></div><div class="cnt">${o.c}</div><div class="pm"><button data-m="-1">−</button><button data-m="1">+</button></div>`;d.querySelectorAll('.pm button').forEach(b=>b.onclick=()=>{o.c=Math.max(0,o.c+ +b.dataset.m);renderPoll();});list.appendChild(d);});}
@@ -3326,7 +3350,7 @@ function renderStudentsInfo(){ const n=(doc.students||[]).length; $('classInfo')
   if(document.activeElement!==$('classText')) $('classText').value=(doc.students||[]).join('\n'); }
 $('classText').addEventListener('input',()=>{ doc.students=$('classText').value.split('\n').map(s=>s.trim()).filter(Boolean); refreshClassWin(); nameUsed=new Set(); const n=doc.students.length; $('classInfo').textContent=n?(n+' Namen in „'+curProjName()+'"'):('Keine Namen in „'+curProjName()+'".'); scheduleAutosave(); });
 function renderProjects(){ [ 'projectSelect','barProject' ].forEach(id=>{ const sel=$(id); if(!sel)return; sel.innerHTML=''; projects.forEach(p=>{const o=document.createElement('option');o.value=p.id;o.textContent=p.name;sel.appendChild(o);}); sel.value=activeId; }); renderStudentsInfo(); refreshClassWin(); }
-function blankDoc(name){ doc.pages=[newPage()]; doc.cur=0; doc.settings=DEFSET(); doc.students=[]; doc.notes=''; doc.duty=null; doc.seating=null; doc.stickers=[]; doc.marks={cats:MARK_DEF(),counts:{},grades:{},texts:{},v:4}; doc.name=name; nameUsed=new Set(); applySettingsUI(); }
+function blankDoc(name){ doc.pages=[newPage()]; doc.cur=0; doc.settings=DEFSET(); doc.students=[]; doc.notes=''; doc.duties=null; doc.seating=null; doc.stickers=[]; doc.marks={cats:MARK_DEF(),counts:{},grades:{},texts:{},v:4}; doc.name=name; nameUsed=new Set(); applySettingsUI(); }
 /* Beim Wechsel der Klasse fällige Termine/Erinnerungen dieser Klasse nachholen */
 function loadProject(id){ const s=localStorage.getItem(projKey(id)); activeId=id; setTimeout(checkEvents,600); if(s){ deserialize(s); } else { blankDoc((projects.find(p=>p.id===id)||{}).name||'Projekt'); } nameUsed=new Set(); }
 function switchProject(id){ if(id===activeId)return; saveCurrentProject(); loadProject(id); goPage(0); saveIndex(); renderProjects(); }
@@ -3458,12 +3482,12 @@ function exportPDF(){ if(!window.jspdf){toast('PDF-Bibliothek fehlt');return;} s
 
 /* ============ Speichern / Laden ============ */
 function stripObj(o){ const c={...o}; delete c._img; delete c._hidden; delete c._lock; delete c._prev; delete c._guide; delete c._straight; if(c.type==='embed'&&(c.etype==='clip'||c.etype==='audio')&&!c.keep)c.src=''; return c; }
-function serialize(){ return JSON.stringify({v:4,name:doc.name,settings:doc.settings,cur:doc.cur,students:doc.students||[],stickers:doc.stickers||[],marks:doc.marks||null,notes:doc.notes||'',duty:doc.duty||null,seating:doc.seating||null,
+function serialize(){ return JSON.stringify({v:4,name:doc.name,settings:doc.settings,cur:doc.cur,students:doc.students||[],stickers:doc.stickers||[],marks:doc.marks||null,notes:doc.notes||'',duties:doc.duties||null,seating:doc.seating||null,
   pages:doc.pages.map(p=>({objects:p.objects.map(stripObj),bg:p.bg,embed:p.embed,name:p.name||null,bgColor:p.bgColor||null,pattern:p.pattern||null}))}); }
 function deserialize(str){ const o=JSON.parse(str); const os=o.settings||{}; doc.settings=Object.assign({bgColor:'white',pattern:'none',penOnly:true,usePressure:true,fingerSelect:false},os); doc.settings.patSize=Object.assign({},os.patSize||{});
   if(os.background!==undefined && os.pattern===undefined){ doc.settings.pattern=(os.background&&os.background!=='white')?os.background:'none'; doc.settings.bgColor='white'; }
   doc.name=o.name||'Projekt'; doc.students=o.students || (o.classes&&o.classes[0]&&o.classes[0].students) || [];
-  doc.notes=typeof o.notes==='string'?o.notes:''; doc.duty=(o.duty&&typeof o.duty==='object')?o.duty:null; doc.seating=(o.seating&&Array.isArray(o.seating.rows))?o.seating:null; doc.stickers=Array.isArray(o.stickers)?o.stickers:[]; doc.marks=(o.marks&&Array.isArray(o.marks.cats))?o.marks:{cats:MARK_DEF(),counts:{},grades:{},texts:{},v:4};
+  doc.notes=typeof o.notes==='string'?o.notes:''; doc.duties=Array.isArray(o.duties)?o.duties:((o.duty&&typeof o.duty==='object')?[o.duty]:null); doc.duty=null; doc.seating=(o.seating&&Array.isArray(o.seating.rows))?o.seating:null; doc.stickers=Array.isArray(o.stickers)?o.stickers:[]; doc.marks=(o.marks&&Array.isArray(o.marks.cats))?o.marks:{cats:MARK_DEF(),counts:{},grades:{},texts:{},v:4};
   doc.pages=(o.pages||[{}]).map(p=>({objects:(p.objects||p.strokes||[]).map(x=>({...x,_img:null})),redo:[],bg:p.bg||null,_img:null,embed:p.embed||null,name:p.name||null,bgColor:p.bgColor||null,pattern:p.pattern||null}));
   // Altlast: frühere Vollbild-Einbettungen (page.embed) in bewegliche Embed-Objekte umwandeln
   doc.pages.forEach(p=>{ if(p.embed){ const em=p.embed; const ob={type:'embed',id:uid(),etype:em.type,src:em.src,label:em.label||em.type,x:80,y:80,w:900,h:560,rot:0,groupId:null}; if(em.data)ob.data=em.data; p.objects.push(ob); p.embed=null; } });

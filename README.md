@@ -277,15 +277,21 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     km.bayern.de oder das eigene Bundesland) einlesen – auf Nachfrage **ersetzend** oder **ergänzend**.
     Erkannt werden ganztägige Einträge (das Ende in der Datei ist der Folgetag und wird korrekt
     umgerechnet), umbrochene Zeilen und Einträge mit Uhrzeit.
-  - **🧹 Dienst:** Aufgabe (z. B. Putzdienst), **Gruppengröße**, **Rhythmus** (täglich an Schultagen,
+  - **🧹 Dienste:** Es lassen sich **mehrere Dienstpläne** anlegen (z. B. Putzdienst, Tafeldienst).
+    Über die Knöpfe oben im Dienst-Bereich wechselst du zwischen ihnen, **„+ Dienst"** legt einen
+    neuen an, „Dienst löschen" entfernt den gewählten; der Schalter rechts schaltet **den gewählten**
+    Dienst ein oder aus (ausgeschaltete sind an „(aus)" erkennbar). Kalender, Tagesliste, „Anstehend",
+    Erinnerungen und Druck berücksichtigen **alle eingeschalteten** Dienste.
+    Je Dienst: Aufgabe (z. B. Putzdienst), **Gruppengröße**, **Rhythmus** (täglich an Schultagen,
     wöchentlich, zweiwöchentlich) und Startdatum. „Gruppen bilden" teilt die Klassenliste
     alphabetisch, „Neu mischen" zufällig. Die Tafel zeigt den **aktuellen Dienst** und die nächsten
     Zeiträume; im Kalender steht die Gruppe am jeweiligen Tag. **Ferien bleiben frei** – dort ruht der
-    Dienst und die Reihenfolge rückt nicht weiter. **🖨 Dienstplan** druckt die nächsten Zeiträume.
+    Dienst und die Reihenfolge rückt nicht weiter. Gedruckt werden die nächsten Zeiträume.
     Der Dienst erscheint auch **im Kalender**: der erste Tag jedes Zeitraums bekommt einen **grünen
     Punkt**, und unter „Anstehend" stehen die nächsten Dienst-Zeiträume zwischen den Terminen.
     Mit **„🔔 Erinnerung zum Dienstbeginn um …"** poppt zu Beginn jedes Zeitraums ein Fenster mit der
-    **Gruppe und ihren Namen** auf (einmal je Zeitraum; war die Tafel zu, kommt es beim nächsten Öffnen).
+    **Gruppe und ihren Namen** auf (einmal je Zeitraum und Dienst; war die Tafel zu, kommt es beim
+    nächsten Öffnen). **🖨 Dienstpläne** druckt alle eingeschalteten Dienste nacheinander.
 - Das Klassen-Fenster („Klassenliste & Aufgaben") ist 720 px breit; **„🖨 Drucken"** steht mit
   „Anzeigen/Verbergen", „Kategorien" und „Zurücksetzen" in einer Zeile. Reihenfolge der Reiter:
   **Klassenliste · Termine · Sitzplan · Sticker · Notizen**, beim Öffnen ist die Klassenliste aktiv.
