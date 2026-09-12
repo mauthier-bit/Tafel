@@ -17,7 +17,9 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
 - **Schreiben:** Stift (mit Apple-Pencil-Druckstärke), Marker; **eigener Farb-Button**
   (Farbe & Dicke) mit **sechs Strichstärken** (eine feinere und eine dickere als früher).
   **Stift, Linien/Formen und Marker haben getrennte Farben** (Stift und Marker zusätzlich getrennte Strichstärken): der Stift
-  schreibt standardmäßig **schwarz**, Linien und Formen ebenfalls **schwarz**, der Marker **gelb**.
+  schreibt standardmäßig **schwarz**, Linien und Formen ebenfalls **schwarz**, der Marker **gelb**,
+  der **Laserpointer rot** – auch er hat eine **eigene Farbe**: bei aktivem Laser den Farb-Button
+  öffnen und eine Farbe (oder über den Regenbogen eine **beliebige eigene Farbe**) wählen.
   Beim Umschalten kommt automatisch die
   zuletzt für dieses Werkzeug gewählte Farbe zurück (geräteweit gespeichert); voreingestellt sind
   beim Stift die zweite Stufe (wie bisher) und beim Marker die vierte. Auf dunklem
