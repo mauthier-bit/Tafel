@@ -5,6 +5,15 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
 
 ## Funktionen
 
+- **✍️ Text** (Knopf direkt unter dem Stift): auf die Tafel tippen – **an dieser Stelle** öffnet sich
+  das Schreibfeld. Die Tafel erkennt dabei, **womit** du tippst:
+  - **mit dem Pencil** → ein großer, halbdurchsichtiger **Schreibbereich** zum Handschreiben;
+    **iPadOS (Kritzeln) wandelt die Handschrift in Text um**. Der Bereich **wächst beim Schreiben
+    mit** und hält immer eine Zeile Platz frei.
+  - **mit dem Finger oder der Maus** → das schmale Feld zum Tippen wie bisher.
+  Geschrieben wird gleich in der späteren **Größe und Farbe** (Text hat eine eigene Farbe neben
+  Stift, Linien und Marker); ein Tipp daneben übernimmt den Text als Objekt an dieser Stelle.
+  Formeln erkennt das nicht, dafür bräuchte es einen Cloud-Dienst.
 - **Schreiben:** Stift (mit Apple-Pencil-Druckstärke), Marker; **eigener Farb-Button**
   (Farbe & Dicke) mit **sechs Strichstärken** (eine feinere und eine dickere als früher).
   **Stift, Linien/Formen und Marker haben getrennte Farben** (Stift und Marker zusätzlich getrennte Strichstärken): der Stift
@@ -29,6 +38,11 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   je Messpunkt ein kurzes Kurvenstück statt gerader Verbindungen. Schnell geschriebene Bögen zeigen
   dadurch keine Polygon-Ecken mehr, ohne zusätzliche Punkte (gleicher Speicherbedarf) und sogar
   etwas schneller als vorher.
+- **Freihand → Form** (Schalter „Freihand erkennen" im **Formen**-Menü): Ist er an, werden mit dem
+  **Stift** gezeichnete Kritzel beim Loslassen automatisch zu einer sauberen **Linie, einem Rechteck,
+  einer Ellipse oder einem Dreieck**, wenn die Zeichnung eindeutig genug ist – sonst bleibt der Strich
+  als Freihand stehen. Farbe und Strichstärke werden übernommen, „Rückgängig" nimmt die Umwandlung
+  zurück. Marker, Lineal-Striche und geglättete Strecken bleiben unberührt.
 - **Freihand → gerade Strecke:** Beim normalen Schreiben am Ende einer Linie **1 Sekunde
   ruhig halten** → aus der Linie wird eine gerade Strecke (Anfang → gehaltener Punkt).
   Sonst bleibt es die Freihandlinie.

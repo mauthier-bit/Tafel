@@ -483,6 +483,7 @@
 
   #spot{position:fixed;inset:0;z-index:15;display:none;pointer-events:none;}
   #textEditor{position:fixed;z-index:45;display:none;background:transparent;border:1px dashed #3b82f6;outline:none;resize:none;color:#111;overflow:hidden;padding:2px;line-height:1.2;}
+  #textEditor.big{background:rgba(255,255,255,.62);border:1.6px dashed #3b82f6;border-radius:12px;padding:8px 10px;box-shadow:0 4px 18px rgba(0,0,0,.12);}
   #measure{position:fixed;z-index:32;background:#1f2430;color:#fff;padding:4px 9px;border-radius:8px;font-size:13px;pointer-events:none;display:none;font-variant-numeric:tabular-nums;box-shadow:var(--shadow);}
   #annoToggle{position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:30;display:none;background:var(--bar);color:#fff;border:none;border-radius:20px;padding:9px 16px;font-size:14px;box-shadow:var(--shadow);cursor:pointer;white-space:nowrap;}
   #annoToggle.show{display:block;} #annoToggle.on{background:var(--accent);}
@@ -526,6 +527,7 @@
   <!-- Schreibwerkzeuge -->
   <div class="mbody on" id="writeTools">
     <button class="tbtn active" id="t-pen" title="Stift"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
+    <button class="tbtn" id="t-text" title="Text – mit dem Stift schreiben (Handschrift wird zu Text) oder tippen"><svg viewBox="0 0 24 24"><path d="M3 6V4h10v2M8 4v13M6 17h4"/><path d="M13.5 16.7 19 11.2l2.3 2.3-5.5 5.5-3 .7Z"/></svg></button>
     <button class="tbtn" id="t-marker" title="Marker"><svg viewBox="0 0 24 24"><path d="M9 11l-4 4v4h4l4-4"/><path d="M13 7l4 4 3-3a2 2 0 0 0 0-3l-1-1a2 2 0 0 0-3 0Z"/></svg></button>
     <button class="tbtn" id="t-eraser" title="Radierer"><svg viewBox="0 0 24 24"><path d="M4 15 15 4l5 5L9 20H6Z"/><path d="M8 20h12"/></svg></button>
     <button class="tbtn" id="t-color" title="Farbe & Dicke"><span id="colorDot" class="dotc"></span></button>
@@ -533,7 +535,6 @@
     <button class="tbtn" id="t-ruler" title="Lineal"><svg viewBox="0 0 24 24"><rect x="2" y="8.5" width="20" height="7" rx="1.2"/><path d="M6 8.5v3.4M9.5 8.5v2M13 8.5v3.4M16.5 8.5v2M20 8.5v3.4"/></svg></button>
     <button class="tbtn" id="t-geo" title="Geodreieck"><svg viewBox="0 0 24 24"><path d="M2.5 18h19L12 8.5Z"/><path d="M10.6 10.6 12 12l1.4-1.4"/></svg></button>
     <button class="tbtn" id="t-lasso" title="Lasso-Auswahl (Bereich einrahmen)"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="10" rx="8" ry="6" stroke-dasharray="3 2.5"/><path d="M8.5 15.6c-.6 1 .1 2.4 1.3 2.6" stroke-dasharray="0"/><circle cx="10" cy="19" r="1.5" fill="currentColor" stroke="none"/></svg></button>
-    <button class="tbtn" id="t-text" title="Text"><svg viewBox="0 0 24 24"><path d="M5 6V4h14v2M12 4v16M9 20h6"/></svg></button>
     <button class="tbtn" id="t-table" title="Tabelle einfügen"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="1.5"/><path d="M3 10h18M3 15h18M9 4v16M15 4v16"/></svg></button>
   </div>
   <!-- Werkzeuge / Widgets -->
@@ -561,7 +562,8 @@
     <button class="tbtn" id="t-numline" title="Zahlenstrahl einfügen"><svg viewBox="0 0 24 24"><path d="M2 12h19M21 12l-4-2.5M21 12l-4 2.5"/><path d="M5 8.5v7M10 8.5v7M15 8.5v7"/></svg></button>
     <button class="tbtn" id="t-coord" title="Koordinatensystem (transparent) einfügen"><svg viewBox="0 0 24 24"><path d="M12 3v18M3 12h18"/><path d="M12 3l-2 3M12 3l2 3M21 12l-3-2M21 12l-3 2"/></svg></button>
   </div>
-  <div class="toggle"><span>Gefüllt</span><div class="sw2" id="shapeFill"></div></div></div>
+  <div class="toggle"><span>Gefüllt</span><div class="sw2" id="shapeFill"></div></div>
+  <div class="toggle"><span>Freihand erkennen</span><div class="sw2" id="shapeRecogSw" title="Stift-Kritzel werden zu Linie, Rechteck, Ellipse oder Dreieck"></div></div></div>
 <div class="pop" id="rulerpop">
   <div class="toolrow"><b>Länge</b><button class="p step" id="rulLenM">−</button><span class="stepv" id="rulLenV">20 cm</span><button class="p step" id="rulLenP">+</button></div>
   <div class="toolrow"><label class="propToggle"><span>Millimeter</span><div class="sw2 on" id="rulMm"></div></label><label class="propToggle"><span>Zahlen</span><div class="sw2 on" id="rulNums"></div></label></div>
@@ -985,9 +987,10 @@ const bgHex=()=>bgHexOf(pageBg(page()));
 const isBgDark=()=>isBgDarkOf(pageBg(page()));
 let scale=1, ox=0, oy=0; const MINS=0.2, MAXS=8;
 let tool='pen', color='#111111', penWidth=3, markerWidth=32, textSize=28;   // Stift wie bisher (Stufe 2), Marker eine Stufe stärker
-let toolColors={pen:'#111111', line:'#111111', marker:'#eab308'};   // Stift, Linien/Formen und Marker merken sich ihre Farbe getrennt
+let toolColors={pen:'#111111', line:'#111111', marker:'#eab308', text:'#111111'};   // Stift, Linien/Formen, Marker und Text merken sich ihre Farbe getrennt
 const LINE_TOOLS=['shape','arrow','circle','gerade','arc'];
-const colKey=()=>tool==='marker'?'marker':(LINE_TOOLS.includes(tool)?'line':'pen');
+const TEXT_TOOLS=['text'];
+const colKey=()=>tool==='marker'?'marker':(LINE_TOOLS.includes(tool)?'line':(TEXT_TOOLS.includes(tool)?'text':'pen'));
 let barsHidden=false, mainbarSide='left', barTheme='light', barTint={dark:'graphit',light:'grau'};   // Leisten ein-/ausblendbar per Wischgeste; Hauptleiste links oder rechts; Erscheinung dunkel/hell + Farbton
 /* Farbtöne der Leisten: [Schlüssel, Name, Leisten-Hintergrund, Knopf-Farbe] */
 const BARTINTS={ dark:[['graphit','Graphit','#2b2f38','#363b45'],['navy','Dunkelblau','#1c2942','#28385a'],['wein','Dunkles Weinrot','#3a1f27','#4c2b34'],['braun','Dunkelbraun','#33261c','#453427'],['tafel','Dunkelgrün','#1e3129','#294036']],
@@ -1059,6 +1062,16 @@ function strokePath(pts,w,vw,c){ c.beginPath(); if(pts.length===1)return;
   c.moveTo(pts[0].x,pts[0].y);
   for(let i=1;i<pts.length-1;i++){ const mx=(pts[i].x+pts[i+1].x)/2,my=(pts[i].y+pts[i+1].y)/2; c.quadraticCurveTo(pts[i].x,pts[i].y,mx,my); }
   c.lineTo(pts[pts.length-1].x,pts[pts.length-1].y); }
+/* Textzeilen: bei gesetzter Breite (Schreibbereich) wird umbrochen, sonst wie eingegeben */
+function textLines(o,c){ c=c||ctx; c.font=(o.italic?'italic ':'')+(o.bold?'bold ':'')+o.size+'px -apple-system,sans-serif';
+  const pre=o.bullet?'•  ':'', raw=String(o.text==null?'':o.text).split('\n');
+  if(!(o.w>0)) return raw.map(l=>pre+l);
+  const out=[];
+  for(const par of raw){ const words=(pre+par).split(' '); let line='';
+    for(const wd of words){ const t=line?line+' '+wd:wd;
+      if(!line || c.measureText(t).width<=o.w) line=t; else { out.push(line); line=wd; } }
+    out.push(line); }
+  return out; }
 function drawObjectRaw(o,c){
   c.lineJoin='round'; c.lineCap='round'; c.globalAlpha=1;
   if(o.type==='stroke'){ const pts=o.points; if(!pts.length)return;
@@ -1102,8 +1115,8 @@ function drawObjectRaw(o,c){
     if(o.fill&&['rect','ellipse','circle','triangle','square','rtriangle','gtriangle','parallelogram','trapez','kite'].includes(o.shape)){c.fillStyle=o.color;c.globalAlpha=.22;c.fill();c.globalAlpha=1;}
     c.stroke();
     if(o.shape==='arc'||o.shape==='circle'){ c.beginPath(); c.arc(o.x0,o.y0,Math.max(o.width*0.9,1.6),0,7); c.fillStyle=o.color; c.fill(); }  // Mittelpunkt sichtbar (Zirkel & Kreis)
-  } else if(o.type==='text'){ c.fillStyle=o.color; c.textBaseline='top'; c.font=(o.italic?'italic ':'')+(o.bold?'bold ':'')+o.size+'px -apple-system,sans-serif';
-    o.text.split('\n').forEach((ln,i)=>c.fillText((o.bullet?'•  ':'')+ln,o.x,o.y+i*o.size*1.3));
+  } else if(o.type==='text'){ c.fillStyle=o.color; c.textBaseline='top';
+    textLines(o,c).forEach((ln,i)=>c.fillText(ln,o.x,o.y+i*o.size*1.3));
   } else if(o.type==='image'){ if(o._img){try{c.drawImage(o._img,o.x,o.y,o.w,o.h);}catch(e){}} }
   else if(o.type==='embed'){ if(c===ctx) c.clearRect(o.x,o.y,o.w,o.h); else { c.fillStyle='#fff'; c.fillRect(o.x,o.y,o.w,o.h); } c.strokeStyle='rgba(120,130,150,.6)'; c.lineWidth=1/scale; c.strokeRect(o.x,o.y,o.w,o.h); }
   else if(o.type==='clock'){ const cx=o.x+o.w/2, cy=o.y+o.h/2, r=Math.min(o.w,o.h)/2;
@@ -1165,7 +1178,8 @@ function geomBounds(o){
   if(o.type==='shape'){ if(o.shape==='circle'){ const r=Math.hypot(o.x1-o.x0,o.y1-o.y0); return {x:o.x0-r,y:o.y0-r,w:2*r,h:2*r}; }
     if(o.shape==='arc'){ return {x:o.x0-o.r,y:o.y0-o.r,w:2*o.r,h:2*o.r}; }
     const x=Math.min(o.x0,o.x1),y=Math.min(o.y0,o.y1); return {x,y,w:Math.abs(o.x1-o.x0),h:Math.abs(o.y1-o.y0)}; }
-  if(o.type==='text'){ ctx.font=(o.italic?'italic ':'')+(o.bold?'bold ':'')+o.size+'px -apple-system,sans-serif'; let w=0; const pre=o.bullet?'•  ':''; o.text.split('\n').forEach(l=>w=Math.max(w,ctx.measureText(pre+l).width)); return {x:o.x,y:o.y,w:Math.max(w,10),h:o.text.split('\n').length*o.size*1.3}; }
+  if(o.type==='text'){ const L=textLines(o,ctx); let w=0; L.forEach(l=>w=Math.max(w,ctx.measureText(l).width));
+    return {x:o.x,y:o.y,w:Math.max(o.w>0?o.w:w,10),h:Math.max(1,L.length)*o.size*1.3}; }
   if(o.type==='image'||o.type==='embed'||o.type==='clock'||o.type==='coord'||o.type==='numline') return {x:o.x,y:o.y,w:o.w,h:o.h};
   return {x:0,y:0,w:0,h:0};
 }
@@ -1407,7 +1421,7 @@ function startAction(e){ drawId=e.pointerId; dwellAnchor=null; invalidateSnap();
   if(tool==='laser'){ laser.push({x:e.clientX,y:e.clientY,t:performance.now()}); markDirty(); return; }
   if(tool==='lasso'){ closeLassoMenu(); lassoPts=[{x:w.x,y:w.y}]; markDirty(); return; }
   if(tool==='eraser'){ eraseAt(w.x,w.y); return; }
-  if(tool==='text'){ openTextEditor(w.x,w.y,null); drawId=null; return; }
+  if(tool==='text'){ openTextEditor(w.x,w.y,null,e.pointerType==='pen'); drawId=null; return; }   // mit dem Stift: großer Schreibbereich für Handschrift
   if(tool==='select'){ startSelect(e,w); return; }
   if(tool==='shape'){ cur={type:'shape',id:uid(),shape:shapeKind,color,width:penWidth/scale,fill:shapeFill,x0:w.x,y0:w.y,x1:w.x,y1:w.y,rot:0,groupId:null}; return; }
   if(tool==='arrow'){ cur={type:'shape',id:uid(),shape:'arrow',color,width:penWidth/scale,fill:false,x0:w.x,y0:w.y,x1:w.x,y1:w.y,rot:0,groupId:null}; return; }
@@ -1454,9 +1468,52 @@ function endAction(e){ clearTimeout(dwellTimer); cancelGeoRay(); hideMeasure(); 
       else if(cur._guide){ const r=Math.hypot(cur.x1-cur.x0,cur.y1-cur.y0); if(r>4){ arcState={cx:cur.x0,cy:cur.y0,r}; toast('Radius gesetzt – jetzt den Bogen ziehen'); } }
       else if(cur.shape==='arc'){ if(Math.abs(cur.a1-cur.a0)>0.03){ delete cur._prev; commit(cur); arcState=null; } }
       else if(Math.hypot(cur.x1-cur.x0,cur.y1-cur.y0)>3) commit(cur);
-    } else if(cur.points.length) commit(cur); cur=null; markDirty(); } }
+    } else if(cur.points.length){ const sh=shapeRecog?recogShape(cur):null;
+      if(sh){ commit(sh); toast('→ '+(SHAPE_DE[sh.shape]||'Form')); } else commit(cur);
+    } cur=null; markDirty(); } }
 // Im Schreibmodus: 2 s am Ende halten -> aus der Linie wird eine gerade Strecke (Anfang → gehaltener Punkt)
 function scheduleStraighten(){ clearTimeout(dwellTimer); dwellTimer=setTimeout(()=>{ if(cur&&cur.type==='stroke'&&!cur.rulerSnap&&cur.points.length>2){ cur.points=[cur.points[0],cur.points[cur.points.length-1]]; cur._straight=true; cur.varw=false; markDirty(); toast('→ gerade Strecke'); } },1000); }
+/* ============ Freihand → Form (optional, über den Schalter im Formen-Menü) ============ */
+let shapeRecog=false;
+/* Ramer-Douglas-Peucker: Linienzug vereinfachen, um Ecken zu zählen */
+function rdpSimplify(pts,eps){ if(pts.length<3) return pts.slice();
+  const dist=(a,b,c)=>{ const A=c.x-b.x, B=c.y-b.y, L=Math.hypot(A,B)||1; return Math.abs((a.x-b.x)*B-(a.y-b.y)*A)/L; };
+  const rec=(s,e)=>{ let mx=0, mi=-1;
+    for(let i=s+1;i<e;i++){ const d=dist(pts[i],pts[s],pts[e]); if(d>mx){ mx=d; mi=i; } }
+    return (mx>eps&&mi>0) ? rec(s,mi).slice(0,-1).concat(rec(mi,e)) : [pts[s],pts[e]]; };
+  return rec(0,pts.length-1); }
+function recogShape(o){
+  if(!o||o.type!=='stroke'||o.tool!=='pen'||o.rulerSnap||o._straight||o._geoRay) return null;
+  const p=o.points; if(!p||p.length<10) return null;
+  let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9, len=0;
+  for(let i=0;i<p.length;i++){ const q=p[i];
+    if(q.x<x0)x0=q.x; if(q.x>x1)x1=q.x; if(q.y<y0)y0=q.y; if(q.y>y1)y1=q.y;
+    if(i) len+=Math.hypot(q.x-p[i-1].x,q.y-p[i-1].y); }
+  const w=x1-x0, h=y1-y0, diag=Math.hypot(w,h);
+  if(diag<30/scale) return null;                                       // zu kleine Kritzel ignorieren
+  const first=p[0], last=p[p.length-1], gap=Math.hypot(last.x-first.x,last.y-first.y);
+  const closed=gap<0.25*diag;
+  const mk=(kind,a,b,c,d)=>({type:'shape',id:uid(),shape:kind,color:o.color,width:o.width,fill:false,x0:a,y0:b,x1:c,y1:d,rot:0,groupId:null});
+  if(!closed){                                                          // Gerade?
+    const A=last.x-first.x, B=last.y-first.y, L=Math.hypot(A,B)||1; let dev=0;
+    for(const q of p) dev=Math.max(dev,Math.abs((q.x-first.x)*B-(q.y-first.y)*A)/L);
+    if(dev<0.06*L && len<1.25*L) return mk('line',first.x,first.y,last.x,last.y);
+    return null; }
+  if(len<1.2*diag) return null;                                        // geschlossene Figur braucht genug Umfang
+  const cx=(x0+x1)/2, cy=(y0+y1)/2, rx=Math.max(w/2,1), ry=Math.max(h/2,1);
+  let eErr=0, rErr=0;
+  for(const q of p){ eErr+=Math.abs(Math.hypot((q.x-cx)/rx,(q.y-cy)/ry)-1);
+    rErr+=Math.min(Math.abs(q.x-x0),Math.abs(q.x-x1),Math.abs(q.y-y0),Math.abs(q.y-y1)); }
+  eErr/=p.length; rErr/=(p.length*diag);
+  const corners=Math.max(0,rdpSimplify(p,diag*0.05).length-1);
+  if(eErr<0.13 && rErr>0.07) return mk('ellipse',x0,y0,x1,y1);          // Punkte liegen auf der Ellipse, nicht am Rand
+  if(corners===3) return mk('triangle',x0,y0,x1,y1);
+  if(rErr<0.07 && corners<=5) return mk('rect',x0,y0,x1,y1);            // Punkte kleben am Rechteck-Rand
+  if(eErr<0.2 && corners>=6) return mk('ellipse',x0,y0,x1,y1);
+  return null; }
+const SHAPE_DE={line:'Linie',rect:'Rechteck',ellipse:'Ellipse',triangle:'Dreieck'};
+$('shapeRecogSw').onclick=function(){ this.classList.toggle('on'); shapeRecog=this.classList.contains('on'); saveUI();
+  toast(shapeRecog?'Freihand wird in Formen umgewandelt':'Freihand-Erkennung aus'); };
 function commit(o){ if(!o.id)o.id=uid(); pushUndo(); page().objects.push(o); scheduleAutosave(); }
 /* ===== Lasso-Auswahl ===== */
 let lassoPts=null, lassoSel=null;
@@ -1516,6 +1573,7 @@ function startSelect(e,w){
   // 2) Griff (Skalieren/Drehen) bei Einzelauswahl?
   const h=screenHandleAt(e.clientX,e.clientY);
   if(h && singleSel()){ const o=singleSel(); const b=geomBounds(o); const C={x:b.x+b.w/2,y:b.y+b.h/2};
+    if(o.type==='text'&&!(o.w>0)) o.w=Math.max(40,geomBounds(o).w);   // Textbreite festhalten, bevor gezogen wird
     xform={o,role:h.role,C,snap:JSON.parse(JSON.stringify(stripObj(o))),startAngle:0};
     if(h.role==='rot'){ xform.startAngle=Math.atan2(w.y-C.y,w.x-C.x)-(o.rot||0); }
     lastTap={t:now,o:hit}; return; }
@@ -1569,7 +1627,7 @@ function applyXform(w){ const o=xform.o, C=xform.C, snap=xform.snap;
 function scaleObj(o,snap,sx,sy,cx,cy){ const aw=(Math.abs(sx)+Math.abs(sy))/2;
   if(o.type==='stroke'){ o.points=snap.points.map(p=>({x:cx+(p.x-cx)*sx,y:cy+(p.y-cy)*sy,p:p.p})); o.width=Math.max(.3,snap.width*aw); }
   else if(o.type==='shape'){ o.x0=cx+(snap.x0-cx)*sx; o.y0=cy+(snap.y0-cy)*sy; o.x1=cx+(snap.x1-cx)*sx; o.y1=cy+(snap.y1-cy)*sy; o.width=Math.max(.3,snap.width*aw); if(o.shape==='arc') o.r=Math.max(1,snap.r*aw); }
-  else if(o.type==='text'){ o.x=cx+(snap.x-cx)*sx; o.y=cy+(snap.y-cy)*sy; o.size=Math.max(6,snap.size*sy); }
+  else if(o.type==='text'){ o.x=cx+(snap.x-cx)*sx; o.y=cy+(snap.y-cy)*sy; o.w=Math.max(40,(snap.w||10)*sx); }   // Ziehen ändert den Schreibbereich, nicht die Schriftgröße
   else if(o.type==='image'||o.type==='embed'||o.type==='clock'||o.type==='coord'||o.type==='numline'){ o.x=cx+(snap.x-cx)*sx; o.y=cy+(snap.y-cy)*sy; o.w=Math.max(4,snap.w*sx); o.h=Math.max(4,snap.h*sy); } }
 
 /* --- Navigation --- */
@@ -1583,17 +1641,23 @@ function updateNav(){ if(!navBase)return; invalidateSnap(); const ns=navList(); 
 
 /* ============ Textfelder ============ */
 const TE=$('textEditor'); let editing=null;
-function openTextEditor(wx,wy,existing){ if(editing) commitText();   // FIX: vorher offenen Text zuerst sichern (sonst geht er verloren)
+function openTextEditor(wx,wy,existing,big){ if(editing) commitText();   // FIX: vorher offenen Text zuerst sichern (sonst geht er verloren)
   editing={wx,wy,existing}; const s=toScreen(wx,wy);
   TE.style.display='block'; TE.style.left=s.x+'px'; TE.style.top=s.y+'px';
   const sz=(existing?existing.size:textSize)*scale; TE.style.font=(existing&&existing.italic?'italic ':'')+(existing&&existing.bold?'bold ':'')+sz+'px -apple-system,sans-serif'; TE.style.color=existing?existing.color:color;
-  TE.value=existing?existing.text:''; TE.style.width='260px'; TE.style.height='auto';
+  TE.style.lineHeight=big?'1.45':'1.2';
+  TE.classList.toggle('big',!!big);                                   // Textstift: großer Schreibbereich zum Handschreiben
+  const bw=Math.min(560,Math.max(260,W*0.62)), tw=existing&&existing.w>0 ? Math.max(80,existing.w*scale) : (big?bw:260);
+  TE.style.width=tw+'px'; TE.style.minHeight=big?Math.round(sz*2.6)+'px':''; TE.style.height='auto';
+  if(big) toast('Mit dem Stift hineinschreiben – iPadOS macht Text daraus');
   if(existing){ existing._hidden=true; markDirty(); } setTimeout(()=>{TE.focus();autoGrow();},10); }
-function autoGrow(){ TE.style.height='auto'; TE.style.height=TE.scrollHeight+'px'; }
-TE.addEventListener('input',autoGrow); TE.addEventListener('blur',commitText);
+function autoGrow(){ TE.style.height='auto';
+  const extra=TE.classList.contains('big') ? Math.round(parseFloat(getComputedStyle(TE).fontSize)*1.45) : 0;   // eine Zeile Platz zum Weiterschreiben
+  TE.style.height=(TE.scrollHeight+extra)+'px'; }
+TE.addEventListener('input',autoGrow); TE.addEventListener('blur',commitText);   // mitwachsen und beim Verlassen übernehmen
 function commitText(){ if(!editing)return; const txt=TE.value.replace(/\s+$/,''); const ex=editing.existing;
   if(ex){ ex._hidden=false; if(txt)ex.text=txt; else{const i=page().objects.indexOf(ex);if(i>=0)page().objects.splice(i,1);} }
-  else if(txt) commit({type:'text',id:uid(),x:editing.wx,y:editing.wy,text:txt,color,size:textSize,rot:0,groupId:null});
+  else if(txt) commit({type:'text',id:uid(),x:editing.wx,y:editing.wy,text:txt,color,size:textSize,w:Math.max(60,(TE.offsetWidth||260)/scale),rot:0,groupId:null});
   TE.style.display='none'; TE.value=''; editing=null; scheduleAutosave(); markDirty(); }
 
 /* ============ Modi & Werkzeuge ============ */
@@ -2223,10 +2287,11 @@ $('pageMenu').addEventListener('pointerdown',e=>e.stopPropagation());
 document.addEventListener('pointerdown',e=>{ if($('pageMenu').classList.contains('show') && !e.target.closest('#pageMenu') && !e.target.closest('.pmBtn')) closePageMenu(); }, true);
 $('setMin').onclick=()=>{ $('settingsbar').classList.toggle('min'); rotateChev('setMin',$('settingsbar').classList.contains('min'),true); saveUI(); positionAnnoToggle(); };
 function rotateChev(id,min){ $(id).querySelector('svg').style.transform=min?'scaleX(-1)':''; }
-function saveUI(){ try{ localStorage.setItem('tafel_ui',JSON.stringify({page:$('pagebar').classList.contains('min'),set:$('settingsbar').classList.contains('min'),side:mainbarSide,theme:barTheme,tint:barTint,favs,pxcm:PXCM,pal:palette,cols:toolColors,wv:2,pw:penWidth,mw:markerWidth,rul:{len:ruler.len,color:ruler.color,mm:ruler.mm,nums:ruler.nums},geo:{size:geo.size,color:geo.color,mm:geo.mm,nums:geo.nums}})); }catch(e){} }
+function saveUI(){ try{ localStorage.setItem('tafel_ui',JSON.stringify({page:$('pagebar').classList.contains('min'),set:$('settingsbar').classList.contains('min'),side:mainbarSide,theme:barTheme,tint:barTint,favs,pxcm:PXCM,pal:palette,cols:toolColors,rec:shapeRecog,wv:2,pw:penWidth,mw:markerWidth,rul:{len:ruler.len,color:ruler.color,mm:ruler.mm,nums:ruler.nums},geo:{size:geo.size,color:geo.color,mm:geo.mm,nums:geo.nums}})); }catch(e){} }
 function restoreUI(){ try{ const u=JSON.parse(localStorage.getItem('tafel_ui')||'{}'); if(u.page){$('pagebar').classList.add('min');pageChev(true);} if(u.set){$('settingsbar').classList.add('min');rotateChev('setMin',true);} if(u.side==='right')mainbarSide='right'; if(u.theme==='light'||u.theme==='dark')barTheme=u.theme; if(u.tint&&typeof u.tint==='object')barTint=Object.assign(barTint,u.tint); if(Array.isArray(u.favs))favs=u.favs.slice(0,FAV_MAX);
   if(+u.pxcm>0) PXCM=Math.max(28,Math.min(64,+u.pxcm));
   if(Array.isArray(u.pal)&&u.pal.length===palette.length&&u.pal.every(c=>/^#[0-9a-f]{6}$/i.test(c))) palette=u.pal.slice();
+  if(u.rec){ shapeRecog=true; $('shapeRecogSw').classList.add('on'); }
   if(u.cols&&typeof u.cols==='object')Object.assign(toolColors,u.cols); if(u.wv===2){ if(+u.pw>0)penWidth=+u.pw; if(+u.mw>0)markerWidth=+u.mw; }   // ältere Stärken (4 Stufen) verwerfen
   if(u.rul)Object.assign(ruler,{len:+u.rul.len||ruler.len,color:u.rul.color||ruler.color,mm:u.rul.mm!==false,nums:u.rul.nums!==false});
   if(u.geo)Object.assign(geo,{size:+u.geo.size||geo.size,color:u.geo.color||geo.color,mm:u.geo.mm!==false,nums:u.geo.nums!==false});
@@ -2272,7 +2337,7 @@ $('s-settings').onclick=()=>toggleWin('win-settings');
 
 /* ============ Einstellungen ============ */
 function applyBg(){ $('bgLayer').style.background=bgHex(); markDirty(); }
-function autoPenColor(){ const c=isBgDark()?'#ffffff':'#111111'; toolColors.pen=c; toolColors.line=c;   // Stift und Linien/Formen folgen dem Hintergrund
+function autoPenColor(){ const c=isBgDark()?'#ffffff':'#111111'; toolColors.pen=c; toolColors.line=c; toolColors.text=c;   // Stift, Linien/Formen und Text folgen dem Hintergrund
   if(colKey()!=='marker'){ color=c; $('colorDot').style.background=c; markSwatch(c); if(editing)TE.style.color=c; } saveUI(); }
 const bgColEl=$('bgColors'); [['white','Weiß'],['green','Tafelgrün'],['black','Schwarz'],['darkgray','Dunkelgrau'],['darkblue','Dunkelblau'],['winered','Dunkles Weinrot'],['lightblue','Hellblau'],['lightyellow','Helles Gelb'],['lightgreen','Helles Grün'],['lightred','Helles Rot'],['lightorange','Helles Orange'],['lightpurple','Helles Lila']].forEach(([k,t])=>{
   const d=document.createElement('div'); d.className='sw'; d.dataset.bg=k; d.title=t; d.style.background=BG[k];
