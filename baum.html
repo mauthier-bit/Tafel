@@ -10,17 +10,23 @@
   #app{display:flex;flex-direction:column;height:100%;}
   #ctrl{flex:none;display:flex;gap:12px;align-items:center;padding:6px 10px;border-bottom:1px solid #e6eaf0;font-size:13px;flex-wrap:wrap;}
   #ctrl label{display:flex;align-items:center;gap:5px;font-weight:600;}
+  #shotBtns button{border:1px solid #cfd6e0;background:#fff;border-radius:7px;padding:4px 9px;font:600 13px -apple-system,sans-serif;cursor:pointer;color:#1f2430;}
   #ctrl input{width:52px;padding:5px;border:1px solid #cfd6e0;border-radius:7px;font-size:14px;text-align:center;}
   #area{flex:1;position:relative;min-height:0;}
   canvas{position:absolute;inset:0;width:100%;height:100%;}
-  .pin{position:absolute;width:calc(var(--fs,13px)*3.3);transform:translate(-50%,-50%);border:1px solid #cfd6e0;border-radius:6px;background:#fff;text-align:center;font-size:var(--fs,13px);padding:3px 2px;font-family:inherit;color:#2563eb;font-weight:var(--fwm,600);font-style:var(--fi,normal);}
+  .pin{position:absolute;width:calc(var(--fs,13px)*3.3);transform:translate(-50%,-50%);border:1px solid #cfd6e0;border-radius:6px;background:#fff;text-align:center;font-size:var(--fs,13px);padding:3px 2px;font-family:inherit;color:#1f2430;font-weight:var(--fwm,600);font-style:var(--fi,normal);}
+  .pin.calc,.leaf.calc{color:#2563eb;font-weight:var(--fwh,700);background:#eff6ff;border-color:#bfdbfe;}
+  .pin.bad,.leaf.bad{color:#dc2626;border-color:#fca5a5;}
+  #bCalc{border:1px solid #2563eb;background:#2563eb;color:#fff;border-radius:7px;padding:4px 12px;font:700 13px -apple-system,sans-serif;cursor:pointer;}
+  #bClr{border:1px solid #cfd6e0;background:#fff;border-radius:7px;padding:4px 9px;font:600 13px -apple-system,sans-serif;cursor:pointer;color:#1f2430;}
+  #bmsg{font-size:12px;color:#64748b;} #bmsg.err{color:#dc2626;} #bmsg.ok{color:#16a34a;}
   .nbox{position:absolute;transform:translate(-50%,-100%);display:flex;flex-direction:column;align-items:center;gap:1px;pointer-events:none;}
   .nlab{pointer-events:auto;cursor:text;font-size:var(--fs,13px);font-weight:var(--fwh,700);font-style:var(--fi,normal);color:#1f2430;background:rgba(255,255,255,.88);padding:0 4px;border-radius:4px;white-space:nowrap;min-width:16px;text-align:center;}
   .nlab .nph{color:#9aa4b2;font-weight:400;}
   .nin{pointer-events:auto;width:calc(var(--fs,13px)*4.4);font-size:var(--fs,13px);padding:1px 3px;border:1px solid #2563eb;border-radius:4px;text-align:center;font-family:inherit;}
   .nfreq{pointer-events:none;font-size:calc(var(--fs,13px)*0.9);color:#7c3aed;font-variant-numeric:tabular-nums;background:rgba(255,255,255,.88);padding:0 3px;border-radius:3px;white-space:nowrap;font-weight:var(--fwm,600);}
   .ovl{text-decoration:overline;}
-  .leaf{position:absolute;transform:translate(0,-50%);white-space:nowrap;font-size:calc(var(--fs,13px)*0.92);font-weight:var(--fw,400);font-style:var(--fi,normal);color:#1f2430;font-variant-numeric:tabular-nums;background:rgba(255,255,255,.85);padding:1px 3px;border-radius:4px;}
+  .leaf{position:absolute;transform:translate(0,-50%);width:calc(var(--fs,13px)*4.4);font-size:calc(var(--fs,13px)*0.92);font-weight:var(--fw,400);font-style:var(--fi,normal);color:#1f2430;font-variant-numeric:tabular-nums;background:#fff;padding:2px 3px;border:1px solid #e2e8f0;border-radius:5px;text-align:center;font-family:inherit;}
 </style>
 </head>
 <body>
@@ -29,17 +35,19 @@
     <label>Stufen <input id="stufen" type="number" min="1" max="4" value="2"></label>
     <label>Verzweigungen <input id="aeste" type="number" min="2" max="4" value="2"></label>
     <label title="Stichprobenumfang – wenn gesetzt, erscheinen unter den Ereignissen die absoluten Häufigkeiten">Stichprobe n <input id="nsize" type="number" min="0" placeholder="–" style="width:78px"></label>
-    <span style="color:#8a93a2">P an die Äste · Ereignisnamen über den Knoten antippen (nichtA → Ā) · Pfadprodukte rechts</span>
+    <span id="shotBtns" style="display:inline-flex;gap:5px;margin-left:auto;order:9"><button type="button" id="fsM" title="Schrift kleiner">A−</button><button type="button" id="fsP" title="Schrift größer">A+</button></span><button type="button" id="bCalc" title="Fehlende Wahrscheinlichkeiten ergänzen">Berechnen</button><button type="button" id="bClr" title="Berechnete (blaue) Werte entfernen">Berechnete leeren</button><span id="bmsg"></span>
+    <span style="color:#8a93a2;flex-basis:100%">Wahrscheinlichkeiten an die Äste und/oder rechts an die Pfade eintragen (Zahl, 0,3, 3/10 oder 30 %) → „Berechnen“ · Ereignisnamen über den Knoten antippen (nichtA → Ā)</span>
   </div>
   <div id="area"><canvas id="cv"></canvas></div>
 </div>
+<script src="shot.js"></script>
 <script>
 "use strict";
 const $=id=>document.getElementById(id), area=$('area'), cv=$('cv'), ctx=cv.getContext('2d');
 let dpr=Math.max(1,window.devicePixelRatio||1);
-let stages=2, branches=2, probs={}, names={}, nsize='', fontSize=13, fontBold=false, fontItalic=false;
+let stages=2, branches=2, probs={}, leafVals={}, calcSet=new Set(), names={}, nsize='', fontSize=13, fontBold=false, fontItalic=false, lastPos=null;
 function applyFont(){ const r=document.documentElement.style; r.setProperty('--fs',(fontSize||13)+'px'); r.setProperty('--fw',fontBold?'700':''); r.setProperty('--fwh',fontBold?'900':'700'); r.setProperty('--fwm',fontBold?'800':'600'); r.setProperty('--fi',fontItalic?'italic':'normal'); }
-const num=v=>{ v=(v||'').toString().trim().replace(',','.'); if(v==='')return null; if(v.includes('/')){const[a,b]=v.split('/');return (+a)/(+b);} const n=+v; return isNaN(n)?null:n; };
+const num=v=>{ v=(v||'').toString().trim().replace(/\s/g,'').replace(',','.'); if(v==='')return null; let pc=false; if(v.endsWith('%')){ pc=true; v=v.slice(0,-1); } let n; if(v.includes('/')){const[a,b]=v.split('/'); n=(+a)/(+b);} else n=+v; if(!isFinite(n)) return null; return pc?n/100:n; };
 
 function build(extra,extraL){ extra=(typeof extra==='number')?extra:0; extraL=(typeof extraL==='number')?extraL:0; applyFont();
   stages=Math.max(1,Math.min(4,+$('stufen').value||2));
@@ -55,13 +63,13 @@ function build(extra,extraL){ extra=(typeof extra==='number')?extra:0; extraL=(t
   ctx.strokeStyle='#64748b'; ctx.lineWidth=1.6;
   for(let k=0;k<stages;k++){ for(let pi=0;pi<pos[k].length;pi++){ for(let bi=0;bi<branches;bi++){ const cj=pi*branches+bi, P=pos[k][pi], C=pos[k+1][cj];
     ctx.beginPath(); ctx.moveTo(P.x,P.y); ctx.lineTo(C.x,C.y); ctx.stroke();
-    const key='p_'+k+'_'+cj; const inp=document.createElement('input'); inp.className='pin'; inp.value=probs[key]||''; inp.placeholder='P';
+    const key='p_'+k+'_'+cj; const inp=document.createElement('input'); inp.className='pin'+(calcSet.has(key)?' calc':''); inp.dataset.key=key; inp.inputMode='decimal'; inp.value=probs[key]||''; inp.placeholder='P';
     inp.style.left=(P.x*.45+C.x*.55)+'px'; inp.style.top=(P.y*.45+C.y*.55)+'px';
-    inp.oninput=()=>{ probs[key]=inp.value; drawLabels(pos); drawLeaves(pos,cw,ch,top,H); sync(); };
+    inp.oninput=()=>{ probs[key]=inp.value; onEdit(key,inp); };
     area.appendChild(inp); } } }
   // Knoten
   for(let k=0;k<=stages;k++){ for(const n of pos[k]){ ctx.beginPath(); ctx.arc(n.x,n.y,4,0,7); ctx.fillStyle=(k===0)?'#1f2430':'#2563eb'; ctx.fill(); } }
-  drawLabels(pos); drawLeaves(pos,cw,ch,top,H);
+  lastPos=pos; drawLabels(pos); drawLeaves(pos,cw,ch,top,H);
   if(!extra&&!extraL){ const over=Math.max(0,...[...area.querySelectorAll('.leaf')].map(l=>l.offsetLeft+l.offsetWidth+8-cw));   // Werte ragen rechts raus → Blätter nach links rücken
     const rb=area.querySelector('.nbox[data-k="0"]'); const overL=rb?Math.max(0, 4-(rb.getBoundingClientRect().left-area.getBoundingClientRect().left)):0;   // Wurzel-Label ragt links raus → Wurzel nach rechts rücken
     if(over>0||overL>0) build(over,overL); }
@@ -79,23 +87,78 @@ function drawLabels(pos){ area.querySelectorAll('.nbox').forEach(e=>e.remove());
       box.appendChild(lab); }
     if(hasN){ const f=pathProb(k,cj); if(f!==null){ const fd=document.createElement('div'); fd.className='nfreq'; fd.textContent=fmtF(n*f); fd.title='absolute Häufigkeit = n · P(Pfad)'; box.appendChild(fd); } }
     if(box.children.length) area.appendChild(box); }); } }
-function drawLeaves(pos,cw,ch){ area.querySelectorAll('.leaf').forEach(e=>e.remove());
-  const leaves=pos[stages]; const B=branches;
-  leaves.forEach((L,idx)=>{ // Produkt entlang des Pfades
-    let prod=1, ok=true;
-    for(let k=0;k<stages;k++){ const cj=Math.floor(idx/Math.pow(B,stages-k-1)); const p=num(probs['p_'+k+'_'+cj]); if(p===null){ok=false;break;} prod*=p; }
-    const d=document.createElement('div'); d.className='leaf'; d.textContent = ok?String(Math.round(prod*1e6)/1e6):'';
+function drawLeaves(pos){ area.querySelectorAll('.leaf').forEach(e=>e.remove());
+  pos[stages].forEach((L,idx)=>{ const key='l_'+idx; const d=document.createElement('input'); d.className='leaf'+(calcSet.has(key)?' calc':''); d.dataset.key=key; d.inputMode='decimal'; d.placeholder='P(Pfad)'; d.value=leafVals[key]||'';
+    d.title='Pfadwahrscheinlichkeit'; d.oninput=()=>{ leafVals[key]=d.value; onEdit(key,d); };
     const nb=area.querySelector('.nbox[data-k="'+stages+'"][data-cj="'+idx+'"]'); const half=nb?nb.offsetWidth/2:0;
     d.style.left=(L.x+Math.max(8, half+8))+'px'; d.style.top=L.y+'px'; area.appendChild(d); });
 }
-function sync(){ try{ parent.postMessage({type:'embed-data',data:{stages,branches,probs,names,nsize,fontSize,fontBold,fontItalic}},'*'); }catch(e){} }
-$('stufen').oninput=()=>{ build(); sync(); };
-$('aeste').oninput=()=>{ build(); sync(); };
+/* ---- Berechnen: Astsummen = 1, Pfadregel P(Kind) = P(Eltern)·p, Summenregel Σ P(Kinder) = P(Eltern) ---- */
+function setMsg(t,c){ $('bmsg').textContent=t; $('bmsg').className=c||''; }
+function fracOf(x){ const sg=x<0?-1:1, ax=Math.abs(x); let h0=1,h1=0,k0=0,k1=1,b=ax;
+  for(let i=0;i<25;i++){ const a=Math.floor(b); [h0,h1]=[a*h0+h1,h0]; [k0,k1]=[a*k0+k1,k0]; if(k0>10000) break; if(Math.abs(ax-h0/k0)<1e-9*Math.max(1,ax)) return {s:sg,n:h0,d:k0}; b=1/(b-a); if(!isFinite(b)) break; } return null; }
+function fmtV(x,st){ if(Math.abs(x)<1e-12) x=0;
+  if(st.pct){ const r=Math.round(x*100*1e4)/1e4; return String(r).replace('.',st.comma?',':'.')+' %'; }
+  if(st.frac){ const f=fracOf(x); if(f&&f.d>1) return (f.s<0?'-':'')+f.n+'/'+f.d; }
+  return String(Math.round(x*1e6)/1e6).replace('.',st.comma?',':'.'); }
+function clearCalcVals(){ calcSet.forEach(k=>{ if(k.startsWith('p_')) delete probs[k]; else delete leafVals[k]; });
+  area.querySelectorAll('input.pin,input.leaf').forEach(i=>{ if(calcSet.has(i.dataset.key)){ i.value=''; i.classList.remove('calc'); } }); calcSet.clear(); }
+function onEdit(key,el){ el.classList.remove('bad'); if(calcSet.has(key)){ calcSet.delete(key); el.classList.remove('calc'); }
+  if(calcSet.size){ clearCalcVals(); setMsg('Eingaben geändert – „Berechnen“ tippen'); }
+  if(lastPos) drawLabels(lastPos); sync(); }
+function computeTree(){ clearCalcVals(); const B=branches, S=stages, st={pct:false,frac:false,comma:false};
+  const P=[], p=[]; for(let k=0;k<=S;k++){ P.push(new Array(Math.pow(B,k)).fill(undefined)); } P[0][0]=1;
+  for(let k=0;k<S;k++){ p.push(new Array(Math.pow(B,k+1)).fill(undefined)); }
+  const look=raw=>{ if(/%/.test(raw)) st.pct=true; if(/\//.test(raw)) st.frac=true; if(/,/.test(raw)) st.comma=true; };
+  let bad=[];
+  for(let k=0;k<S;k++) for(let cj=0;cj<p[k].length;cj++){ const raw=probs['p_'+k+'_'+cj]; if(raw==null||String(raw).trim()==='') continue; const n=num(raw); if(n===null){ bad.push('p_'+k+'_'+cj); continue; } p[k][cj]=n; look(raw); }
+  for(let i=0;i<P[S].length;i++){ const raw=leafVals['l_'+i]; if(raw==null||String(raw).trim()==='') continue; const n=num(raw); if(n===null){ bad.push('l_'+i); continue; } P[S][i]=n; look(raw); }
+  area.querySelectorAll('input.pin,input.leaf').forEach(i=>i.classList.toggle('bad',bad.includes(i.dataset.key)));
+  if(bad.length){ setMsg('Unlesbare Eingabe (rot markiert)','err'); return; }
+  const given=new Set(); for(let k=0;k<S;k++) p[k].forEach((v,cj)=>{ if(v!==undefined) given.add('p_'+k+'_'+cj); }); P[S].forEach((v,i)=>{ if(v!==undefined) given.add('l_'+i); });
+  if(!given.size){ setMsg('Bitte zuerst Werte eintragen','err'); return; }
+  const E=1e-12; let ch=true, guard=0;
+  while(ch&&guard++<200){ ch=false;
+    for(let k=0;k<S;k++){ for(let pi=0;pi<P[k].length;pi++){ const u=P[k][pi], kids=[...Array(B).keys()].map(b=>pi*B+b);
+      kids.forEach(cj=>{ const v=P[k+1][cj], e=p[k][cj];                       // Pfadregel
+        if(u!==undefined&&e!==undefined&&v===undefined){ P[k+1][cj]=u*e; ch=true; }
+        else if(u!==undefined&&v!==undefined&&e===undefined&&Math.abs(u)>E){ p[k][cj]=v/u; ch=true; }
+        else if(u===undefined&&v!==undefined&&e!==undefined&&Math.abs(e)>E){ P[k][pi]=v/e; ch=true; } });
+      const ue=kids.filter(cj=>p[k][cj]===undefined);                           // Astsumme = 1
+      if(ue.length===1){ p[k][ue[0]]=1-kids.filter(cj=>cj!==ue[0]).reduce((s,cj)=>s+p[k][cj],0); ch=true; }
+      const uv=kids.filter(cj=>P[k+1][cj]===undefined);                         // Summenregel
+      if(P[k][pi]!==undefined&&uv.length===1){ P[k+1][uv[0]]=P[k][pi]-kids.filter(cj=>cj!==uv[0]).reduce((s,cj)=>s+P[k+1][cj],0); ch=true; }
+      else if(P[k][pi]===undefined&&uv.length===0){ P[k][pi]=kids.reduce((s,cj)=>s+P[k+1][cj],0); ch=true; } } } }
+  // Widersprüche
+  let contra=false; const tol=v=>1e-9*Math.max(1,Math.abs(v));
+  for(let k=0;k<S;k++){ for(let pi=0;pi<P[k].length;pi++){ const kids=[...Array(B).keys()].map(b=>pi*B+b);
+    if(kids.every(cj=>p[k][cj]!==undefined)&&Math.abs(kids.reduce((s,cj)=>s+p[k][cj],0)-1)>1e-9) contra=true;
+    kids.forEach(cj=>{ if(P[k][pi]!==undefined&&p[k][cj]!==undefined&&P[k+1][cj]!==undefined&&Math.abs(P[k][pi]*p[k][cj]-P[k+1][cj])>tol(P[k+1][cj])) contra=true; }); } }
+  // Ergebnisse eintragen
+  let missing=0, neg=false;
+  for(let k=0;k<S;k++) p[k].forEach((v,cj)=>{ const key='p_'+k+'_'+cj; if(v===undefined){ missing++; return; } if(v<-1e-12||v>1+1e-9) neg=true; if(!given.has(key)){ probs[key]=fmtV(v,st); calcSet.add(key); } });
+  P[S].forEach((v,i)=>{ const key='l_'+i; if(v===undefined){ missing++; return; } if(v<-1e-12) neg=true; if(!given.has(key)){ leafVals[key]=fmtV(v,st); calcSet.add(key); } });
+  area.querySelectorAll('input.pin,input.leaf').forEach(i=>{ const k=i.dataset.key; if(calcSet.has(k)){ i.value=k.startsWith('p_')?probs[k]:leafVals[k]; i.classList.add('calc'); } });
+  if(lastPos) drawLabels(lastPos);
+  if(contra) setMsg('Widerspruch in den Angaben (Astsumme ≠ 1 oder Pfadregel verletzt)','err');
+  else if(neg) setMsg('Achtung: Werte außerhalb von 0 bis 1 – Eingaben prüfen','err');
+  else if(missing) setMsg('Nicht eindeutig – es fehlen noch Angaben ('+missing+' Werte offen)','err');
+  else setMsg('✓ Vollständig berechnet','ok');
+  sync(); }
+$('bCalc').addEventListener('pointerdown',e=>e.preventDefault()); $('bCalc').onclick=computeTree;
+$('bClr').onclick=()=>{ clearCalcVals(); setMsg(''); if(lastPos) drawLabels(lastPos); sync(); };
+function sync(){ if(window.parent===window) return; try{ parent.postMessage({type:'embed-data',data:{stages,branches,probs,leaves:leafVals,calc:[...calcSet],names,nsize,fontSize,fontBold,fontItalic}},'*'); }catch(e){} }
+if(window.TafelShot) TafelShot.buttons($('shotBtns'),()=>TafelShot.rasterize(area,{exclude:'.nph',pad:4}));
+for(const [id,d] of [['fsM',-1],['fsP',1]]){ $(id).addEventListener('pointerdown',e=>e.preventDefault()); $(id).onclick=()=>{ fontSize=Math.max(9,Math.min(36,(fontSize||13)+d)); build(); sync(); }; }
+$('stufen').oninput=()=>{ clearCalcVals(); setMsg(''); build(); sync(); };
+$('aeste').oninput=()=>{ clearCalcVals(); setMsg(''); build(); sync(); };
 $('nsize').oninput=()=>{ nsize=$('nsize').value; build(); sync(); };
 addEventListener('resize',build);
 addEventListener('message',e=>{ if(e.data&&e.data.type==='embed-data'&&e.data.data){ const d=e.data.data;
   if(d.stages){ stages=d.stages; $('stufen').value=d.stages; } if(d.branches){ branches=d.branches; $('aeste').value=d.branches; }
-  probs=d.probs||{}; names=d.names||{}; nsize=(d.nsize===undefined||d.nsize===null)?'':String(d.nsize); $('nsize').value=nsize; if(d.fontSize)fontSize=d.fontSize; fontBold=!!d.fontBold; fontItalic=!!d.fontItalic; build(); } });
+  probs=d.probs||{}; leafVals=d.leaves||{}; calcSet=new Set(Array.isArray(d.calc)?d.calc:[]); names=d.names||{}; nsize=(d.nsize===undefined||d.nsize===null)?'':String(d.nsize); $('nsize').value=nsize; if(d.fontSize)fontSize=d.fontSize; fontBold=!!d.fontBold; fontItalic=!!d.fontItalic; build();
+  if(!d.leaves&&!d.calc&&Object.values(probs).some(v=>String(v||'').trim())) setTimeout(computeTree,0);   // ältere Bäume: Pfadprodukte wie früher anzeigen
+  } });
 window.addEventListener('load',()=>{ build(); try{ parent.postMessage({type:'embed-ready'},'*'); }catch(e){} });
 </script>
 </body>

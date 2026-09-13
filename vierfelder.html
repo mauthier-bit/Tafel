@@ -11,50 +11,113 @@
   table{border-collapse:collapse;width:100%;table-layout:fixed;}
   td,th{border:1px solid #cbd3df;padding:2px;text-align:center;height:15%;}
   th{background:#f2f5f9;font-weight:var(--fwh,700);}
-  input{width:100%;border:0;text-align:center;font-size:var(--fs,16px);font-weight:var(--fw,400);font-style:var(--fi,normal);font-family:inherit;background:transparent;padding:8px 2px;}
+  input{width:100%;border:0;text-align:center;font-size:var(--fs,16px);font-weight:var(--fw,400);font-style:var(--fi,normal);font-family:inherit;background:transparent;padding:8px 2px;color:#1f2430;-webkit-user-select:text;user-select:text;}
   input:focus{outline:2px solid #3b82f6;outline-offset:-2px;border-radius:4px;}
+  input.calc{color:#2563eb;font-weight:var(--fwh,700);}
+  input.bad{color:#dc2626;}
   .lbl input{font-weight:var(--fwh,700);color:#1f2430;}
-  .sum{background:#eef4ff;font-weight:var(--fwh,700);}
-  .sum .cell{padding:8px 2px;font-variant-numeric:tabular-nums;font-size:var(--fs,16px);font-weight:var(--fw,400);font-style:var(--fi,normal);}
+  .sum{background:#eef4ff;}
+  .sum input{font-weight:var(--fwm,600);}
   .hd{font-size:12px;color:#8a93a2;padding:6px 2px 2px;}
   .ovl{text-decoration:overline;font-weight:var(--fwh,700);font-size:var(--fs,16px);font-style:var(--fi,normal);}
   th.sum{font-size:var(--fs,16px);font-style:var(--fi,normal);}
+  #shotBtns button,#acts button{border:1px solid #cfd6e0;background:#fff;border-radius:7px;padding:4px 9px;font:600 12px -apple-system,sans-serif;cursor:pointer;color:#1f2430;}
+  #acts{display:flex;gap:6px;align-items:center;margin-top:8px;flex-wrap:wrap;}
+  #acts button{font-size:14px;padding:7px 14px;border-radius:9px;}
+  #acts button.pri{background:#2563eb;border-color:#2563eb;color:#fff;}
+  #msg{font-size:13px;color:#64748b;}
+  #msg.err{color:#dc2626;} #msg.ok{color:#16a34a;}
 </style>
 </head>
 <body>
 <div id="wrap">
-  <div class="hd">Vierfeldertafel – Werte eintragen, Summen werden berechnet</div>
+  <div class="hd" style="display:flex;align-items:center;gap:6px"><span style="flex:1">Vierfeldertafel – beliebige Felder eintragen (auch Summen), dann „Berechnen“</span><span id="shotBtns" style="display:inline-flex;gap:5px"><button type="button" id="fsM" title="Schrift kleiner">A−</button><button type="button" id="fsP" title="Schrift größer">A+</button></span></div>
   <table>
     <tr><th></th><th class="lbl"><input id="Lb" value="B"></th><th class="lbl"><span class="ovl" id="Lb2">B</span></th><th class="sum">Σ</th></tr>
-    <tr><th class="lbl"><input id="La" value="A"></th><td><input class="d" id="d00"></td><td><input class="d" id="d01"></td><td class="sum"><span class="cell" id="r0"></span></td></tr>
-    <tr><th class="lbl"><span class="ovl" id="La2">A</span></th><td><input class="d" id="d10"></td><td><input class="d" id="d11"></td><td class="sum"><span class="cell" id="r1"></span></td></tr>
-    <tr><th class="sum">Σ</th><td class="sum"><span class="cell" id="c0"></span></td><td class="sum"><span class="cell" id="c1"></span></td><td class="sum"><span class="cell" id="tot"></span></td></tr>
+    <tr><th class="lbl"><input id="La" value="A"></th><td><input class="v" data-k="a" inputmode="decimal"></td><td><input class="v" data-k="b" inputmode="decimal"></td><td class="sum"><input class="v" data-k="r0" inputmode="decimal"></td></tr>
+    <tr><th class="lbl"><span class="ovl" id="La2">A</span></th><td><input class="v" data-k="c" inputmode="decimal"></td><td><input class="v" data-k="d" inputmode="decimal"></td><td class="sum"><input class="v" data-k="r1" inputmode="decimal"></td></tr>
+    <tr><th class="sum">Σ</th><td class="sum"><input class="v" data-k="c0" inputmode="decimal"></td><td class="sum"><input class="v" data-k="c1" inputmode="decimal"></td><td class="sum"><input class="v" data-k="T" inputmode="decimal"></td></tr>
   </table>
+  <div id="acts"><button type="button" class="pri" id="bCalc">Berechnen</button><button type="button" id="bClearCalc" title="Nur die berechneten (blauen) Felder leeren">Berechnete leeren</button><button type="button" id="bClear">Alles leeren</button><span id="msg"></span></div>
 </div>
+<script src="shot.js"></script>
 <script>
 "use strict";
 const $=id=>document.getElementById(id);
-const num=v=>{ v=(v||'').toString().trim().replace(',','.'); if(v==='')return null; if(v.includes('/')){const[a,b]=v.split('/');return (+a)/(+b);} const n=+v; return isNaN(n)?null:n; };
-function fmt(n){ if(n===null)return ''; const r=Math.round(n*1e6)/1e6; return String(r); }
-function recompute(){
-  const g=(r,c)=>num($('d'+r+''+c).value);
-  const a=g(0,0),b=g(0,1),cc=g(1,0),d=g(1,1);
-  const rowSum=(x,y)=>(x===null&&y===null)?null:((x||0)+(y||0));
-  const r0=rowSum(a,b), r1=rowSum(cc,d), c0=rowSum(a,cc), c1=rowSum(b,d);
-  const tot=(a===null&&b===null&&cc===null&&d===null)?null:((a||0)+(b||0)+(cc||0)+(d||0));
-  $('r0').textContent=fmt(r0); $('r1').textContent=fmt(r1); $('c0').textContent=fmt(c0); $('c1').textContent=fmt(c1); $('tot').textContent=fmt(tot);
-}
+const KEYS=['a','b','c','d','r0','r1','c0','c1','T'];
+const EQS=[['a','b','r0'],['c','d','r1'],['a','c','c0'],['b','d','c1'],['r0','r1','T'],['c0','c1','T']];   // x + y = z
+const NAME={a:'A∩B',b:'A∩B̄',c:'Ā∩B',d:'Ā∩B̄',r0:'Σ A',r1:'Σ Ā',c0:'Σ B',c1:'Σ B̄',T:'Gesamt'};
+const inp=k=>document.querySelector('input.v[data-k="'+k+'"]');
+let calc=new Set();                                            // automatisch berechnete Felder
+function num(v){ v=(v||'').toString().trim().replace(/\s/g,'').replace(',','.'); if(v==='') return null;
+  let pct=false; if(v.endsWith('%')){ pct=true; v=v.slice(0,-1); }
+  let n; if(v.includes('/')){ const [x,y]=v.split('/'); n=(+x)/(+y); } else n=+v;
+  if(!isFinite(n)) return NaN; return pct?n/100:n; }
+function frac(x){ const sg=x<0?-1:1, ax=Math.abs(x); let h0=1,h1=0,k0=0,k1=1,b=ax;
+  for(let i=0;i<25;i++){ const a=Math.floor(b); [h0,h1]=[a*h0+h1,h0]; [k0,k1]=[a*k0+k1,k0]; if(k0>10000) break; if(Math.abs(ax-h0/k0)<1e-9*Math.max(1,ax)) return {s:sg,n:h0,d:k0}; b=1/(b-a); if(!isFinite(b)) break; }
+  return null; }
+/* Ausgabe im Stil der Eingaben: Prozent, Bruch oder Dezimalzahl (Komma, wenn mit Komma eingegeben) */
+function fmt(x,style){ if(Math.abs(x)<1e-12) x=0;
+  if(style.pct){ const r=Math.round(x*100*1e4)/1e4; return String(r).replace('.',style.comma?',':'.')+' %'; }
+  if(style.frac){ const f=frac(x); if(f&&f.d>1) return (f.s<0?'-':'')+f.n+'/'+f.d; }
+  const r=Math.round(x*1e6)/1e6; return String(r).replace('.',style.comma?',':'.'); }
+function setMsg(t,cls){ $('msg').textContent=t; $('msg').className=cls||''; }
+function compute(){ clearCalc(false);
+  const val={}, given={}; const style={pct:false,frac:false,comma:false}, badIn=[];
+  KEYS.forEach(k=>{ const raw=inp(k).value; const n=num(raw); inp(k).classList.remove('bad');
+    if(n===null) return; if(isNaN(n)){ badIn.push(k); inp(k).classList.add('bad'); return; }
+    val[k]=n; given[k]=true; if(/%/.test(raw)) style.pct=true; if(/\//.test(raw)) style.frac=true; if(/,/.test(raw)) style.comma=true; });
+  if(badIn.length){ setMsg('Unlesbare Eingabe in: '+badIn.map(k=>NAME[k]).join(', '),'err'); return; }
+  if(Object.keys(val).length===0){ setMsg('Bitte zuerst Werte eintragen.','err'); return; }
+  // Wahrscheinlichkeiten (Prozent, Bruch oder nur Werte zwischen 0 und 1): Gesamt ist immer 1 bzw. 100 %
+  const gv=KEYS.filter(k=>given[k]).map(k=>val[k]);
+  const probMode=style.pct||style.frac||gv.every(v=>v>=0&&v<=1);
+  if((style.pct||style.frac)&&gv.some(v=>v>1+1e-9)){ setMsg('Wahrscheinlichkeiten und absolute Zahlen gemischt – bitte einheitlich eintragen.','err'); return; }
+  if(probMode){
+    if(val.T===undefined) val.T=1;                              // fest gesetzt, wird wie ein berechnetes Feld angezeigt
+    else if(Math.abs(val.T-1)>1e-9){ inp('T').classList.add('bad'); setMsg('Bei Wahrscheinlichkeiten muss die Gesamtsumme 1 (100 %) sein.','err'); return; } }
+  const propagate=()=>{ let changed=true;
+    while(changed){ changed=false;
+      for(const [x,y,z] of EQS){ const kn=[x,y,z].filter(k=>val[k]!==undefined);
+        if(kn.length!==2) continue;
+        if(val[z]===undefined) val[z]=val[x]+val[y];
+        else if(val[x]===undefined) val[x]=val[z]-val[y];
+        else val[y]=val[z]-val[x];
+        changed=true; } } };
+  propagate();
+  const bad=EQS.filter(([x,y,z])=>[x,y,z].every(k=>val[k]!==undefined)&&Math.abs(val[x]+val[y]-val[z])>1e-9*Math.max(1,Math.abs(val[z])));
+  const missing=KEYS.filter(k=>val[k]===undefined);
+  KEYS.forEach(k=>{ if(!given[k]&&val[k]!==undefined){ inp(k).value=fmt(val[k],style); inp(k).classList.add('calc'); calc.add(k); } });
+  const neg=KEYS.filter(k=>val[k]!==undefined&&(val[k]<-1e-12||(probMode&&val[k]>1+1e-9)));
+  if(bad.length) setMsg('Widerspruch: '+bad.map(([x,y,z])=>NAME[x]+' + '+NAME[y]+' ≠ '+NAME[z]).join('; '),'err');
+  else if(missing.length) setMsg('Nicht eindeutig – es fehlt noch mindestens ein passender Wert ('+missing.map(k=>NAME[k]).join(', ')+' offen).','err');
+  else if(neg.length) setMsg('Achtung: '+(probMode?'Werte außerhalb von 0 bis 1':'negative Werte')+' ('+neg.map(k=>NAME[k]).join(', ')+') – Eingaben prüfen.','err');
+  else setMsg('✓ Vollständig berechnet','ok');
+  sync(); }
+function clearCalc(doSync){ calc.forEach(k=>{ inp(k).value=''; inp(k).classList.remove('calc'); }); calc.clear(); if(doSync!==false){ setMsg(''); sync(); } }
 function refreshLabels(){ $('La2').textContent=$('La').value||'A'; $('Lb2').textContent=$('Lb').value||'B'; }
 let fontSize=16, fontBold=false, fontItalic=false;
 function applyFont(){ const r=document.documentElement.style; r.setProperty('--fs',(fontSize||16)+'px'); r.setProperty('--fw',fontBold?'700':'400'); r.setProperty('--fwh',fontBold?'900':'700'); r.setProperty('--fwm',fontBold?'800':'600'); r.setProperty('--fi',fontItalic?'italic':'normal'); }
-function collect(){ return { La:$('La').value, Lb:$('Lb').value, v:[[ $('d00').value,$('d01').value ],[ $('d10').value,$('d11').value ]], fontSize, fontBold, fontItalic }; }
-function sync(){ try{ parent.postMessage({type:'embed-data',data:collect()},'*'); }catch(e){} }
-document.querySelectorAll('input').forEach(inp=>inp.addEventListener('input',()=>{ refreshLabels(); recompute(); sync(); }));
+function collect(){ const cells={}; KEYS.forEach(k=>cells[k]=inp(k).value); return { La:$('La').value, Lb:$('Lb').value, cells, calc:[...calc], fontSize, fontBold, fontItalic }; }
+function sync(){ if(window.parent===window) return; try{ parent.postMessage({type:'embed-data',data:collect()},'*'); }catch(e){} }
+document.querySelectorAll('input.v').forEach(el=>el.addEventListener('input',()=>{
+  const k=el.dataset.k; if(calc.has(k)){ calc.delete(k); el.classList.remove('calc'); }      // überschrieben → jetzt eine Vorgabe
+  el.classList.remove('bad'); if(calc.size){ clearCalc(false); setMsg('Eingaben geändert – „Berechnen“ tippen'); } sync(); }));
+document.querySelectorAll('input.v').forEach(el=>el.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); compute(); } }));
+['La','Lb'].forEach(id=>$(id).addEventListener('input',()=>{ refreshLabels(); sync(); }));
+$('bCalc').onclick=compute;
+$('bClearCalc').onclick=()=>clearCalc(true);
+$('bClear').onclick=()=>{ KEYS.forEach(k=>{ inp(k).value=''; inp(k).classList.remove('calc','bad'); }); calc.clear(); setMsg(''); sync(); };
 addEventListener('message',e=>{ if(e.data&&e.data.type==='embed-data'&&e.data.data){ const d=e.data.data;
   if(d.La!==undefined)$('La').value=d.La; if(d.Lb!==undefined)$('Lb').value=d.Lb;
-  if(d.v){ $('d00').value=d.v[0][0]||''; $('d01').value=d.v[0][1]||''; $('d10').value=d.v[1][0]||''; $('d11').value=d.v[1][1]||''; }
-  if(d.fontSize)fontSize=d.fontSize; fontBold=!!d.fontBold; fontItalic=!!d.fontItalic; applyFont(); refreshLabels(); recompute(); } });
-applyFont(); refreshLabels(); recompute();
+  KEYS.forEach(k=>{ inp(k).value=''; inp(k).classList.remove('calc','bad'); }); calc.clear();
+  if(d.cells){ KEYS.forEach(k=>{ inp(k).value=d.cells[k]||''; }); (d.calc||[]).forEach(k=>{ if(KEYS.includes(k)&&inp(k).value){ calc.add(k); inp(k).classList.add('calc'); } }); }
+  else if(d.v){ inp('a').value=d.v[0][0]||''; inp('b').value=d.v[0][1]||''; inp('c').value=d.v[1][0]||''; inp('d').value=d.v[1][1]||'';   // ältere Tafeln: Summen wie früher ergänzen
+    if(['a','b','c','d'].some(k=>inp(k).value)) setTimeout(compute,0); }
+  if(d.fontSize)fontSize=d.fontSize; fontBold=!!d.fontBold; fontItalic=!!d.fontItalic; applyFont(); refreshLabels(); } });
+applyFont(); refreshLabels();
+if(window.TafelShot) TafelShot.buttons($('shotBtns'),()=>TafelShot.rasterize(document.querySelector('table'),{pad:6}));
+for(const [id,d] of [['fsM',-2],['fsP',2]]){ $(id).addEventListener('pointerdown',e=>e.preventDefault()); $(id).onclick=()=>{ fontSize=Math.max(10,Math.min(60,(fontSize||16)+d)); applyFont(); sync(); }; }
 window.addEventListener('load',()=>{ try{ parent.postMessage({type:'embed-ready'},'*'); }catch(e){} });
 </script>
 </body>

@@ -44,7 +44,8 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   **Stift** gezeichnete Kritzel beim Loslassen automatisch zu einer sauberen **Linie, einem Rechteck,
   einer Ellipse oder einem Dreieck**, wenn die Zeichnung eindeutig genug ist – sonst bleibt der Strich
   als Freihand stehen. Farbe und Strichstärke werden übernommen, „Rückgängig" nimmt die Umwandlung
-  zurück. Marker, Lineal-Striche und geglättete Strecken bleiben unberührt.
+  zurück. Marker, Lineal-Striche und geglättete Strecken bleiben unberührt. Die Schalter „Gefüllt"
+  und „Freihand erkennen" stehen kompakt direkt untereinander.
 - **Freihand → gerade Strecke:** Beim normalen Schreiben am Ende einer Linie **1 Sekunde
   ruhig halten** → aus der Linie wird eine gerade Strecke (Anfang → gehaltener Punkt).
   Sonst bleibt es die Freihandlinie.
@@ -263,7 +264,11 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
       „+ Kategorie", „Standard". „Zurücksetzen" löscht alle Zähler, Haken, Noten und Texte der Klasse.
     - **🖨 Drucken:** druckt genau das Sichtbare – Namen plus eingeblendete Spalten, in der aktuellen
       Sortierung, mit Klassenname und Datum (Noten mit Art und Datum). Bei verborgener Klassenliste
-      wird nur die Namensliste gedruckt.
+      wird nur die Namensliste gedruckt – wahlweise **nur mit Zeilen** oder mit Zeilen **und ca. 5 mm
+      breiten Kästchenspalten** (26 Spalten, zum Abhaken).
+    - Alle Ausdrucke (Klassenliste, Sitzplan, Dienstpläne) tragen im Kopf das **aktuelle Schuljahr**
+      (z. B. „Schuljahr 2026/27"), ermittelt aus dem Ferienkalender: ab Beginn der Sommerferien gilt
+      schon das neue Schuljahr.
 - **🪑 Sitzplan** (Reiter im Klassen-Fenster): Reihen anlegen und darin **Einzel-, Zweier- oder
   Viererbänke** hinzufügen; für jeden Platz wird der Name aus der Klassenliste gewählt. Oben zeigt ein
   Balken **„▲ Vorne · Tafel ▲"**, wo vorne ist. Darunter stehen die noch nicht verteilten Namen (und
@@ -340,9 +345,29 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
 - **Text:** Textfelder anlegen; **Doppeltipp** auf einen Text zum Nachbearbeiten. Bei ausgewähltem
   Text bietet das **Kontextmenü** zusätzlich **Fett, Kursiv, Aufzählung (Liste)** und eine
   **Schriftgrößen-Einstellung** (＋/−).
-- **Gleichungslöser** (Werkzeug neben dem Textfeld): bewegliches Objekt, in das man eine
-  Gleichung **tippt** (z. B. `2x+3=7` oder `x^2-5x+6=0`). **Lineare und quadratische**
-  Gleichungen werden mit Lösungsweg gelöst; andere werden ehrlich als „nicht lösbar" gemeldet.
+- **Gleichungslöser** (Mathe & Physik): bewegliches Objekt mit großem Eingabefeld und zwei Modi:
+  - **Gleichung** (Variable x): tippt man z. B. `2x+3=7`, `x^2-5x+6=0` oder `3/(x-2)=2/(x+1)`.
+    **Lineare, quadratische und Bruchgleichungen** werden mit Lösungsweg gelöst – bei Bruchgleichungen
+    mit **Definitionsmenge 𝔻**, **Hauptnenner** (in Linearfaktoren), der Gleichung nach dem
+    Multiplizieren (ganzzahlig), ggf. Diskriminante und **Lösungsmenge 𝕃**. Lösungen, die nicht in 𝔻
+    liegen, werden rot als „entfällt" markiert (z. B. `x/(x-2)=2/(x-2)`). Ergebnisse als **Bruch**
+    (z. B. −3/5), sonst gerundet; höhere Grade werden numerisch gelöst. `:` = geteilt, Komma als
+    Dezimalzeichen möglich.
+  - **Einfache trigonometrische Gleichungen** (sin, cos, tan mit linearem Argument, z. B. `2sin(x)=1`,
+    `cos(2x+30)=0,5`, auch quadratisch wie `2sin^2(x)-sin(x)-1=0` per Substitution): allgemeine Lösung
+    mit k ∈ ℤ und alle Lösungen in [0°; 360°[. Umschalter **Grad / Bogenmaß** (dann z. B. π/6, 5π/12).
+    Unmögliche Werte (|sin| > 1) werden rot markiert.
+  - **Einfache Exponential- und Logarithmusgleichungen:** `3*2^x=48` (Umformen + log₂),
+    `8^x=4^(x+1)` (gleiche Basis → Exponentenvergleich), `2^x=3^(x-1)` (logarithmieren),
+    `e^(2x)-3e^x+2=0` (Substitution u = eˣ, u ≤ 0 entfällt), `ln(2x-1)=3`, `lg(x)=2` (mit Definitionsmenge).
+  - **Schriftgröße:** Knöpfe **A− / A+** oben im Werkzeug (auch über das Kontextmenü, dort zusätzlich fett/kursiv); die Formel-Tastatur behält ihre Größe.
+  - **Formel-Tastatur** (Knopf „⌨ Formeln"): Ziffern, Rechenzeichen, Klammern, x, π, °, sin/cos/tan,
+    eˣ, ln, lg, √, x² – wie in der Tabellenkalkulation; die iPad-Tastatur bleibt dabei zu. „ABC" wechselt
+    zur normalen Tastatur, „✓ Fertig" schließt sie (bei Gleichungssystemen: nächste Zeile).
+  - **Gleichungssystem** mit **2 Unbekannten (x, y)** oder **3 Unbekannten (x, y, z)**: Gleichungen I–III
+    eintippen → geordnete Form, **Stufenform (Gauß-Verfahren)**, Lösung und Lösungsmenge
+    (z. B. 𝕃 = {(1 | 2 | 3)}); erkennt auch **keine Lösung** (Widerspruch 0 = 1) und **unendlich viele
+    Lösungen** (mit Parameter t bzw. t, s).
   (Handschrift-Erkennung ist offline nicht möglich – für handschriftliche/komplexere Mathematik
   die **GeoGebra-App** nutzen.)
 - **Tabelle** (Werkzeug bei den Schreibwerkzeugen): fügt eine **gewöhnliche Tabelle** als
@@ -435,18 +460,31 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   in einstellbarer Größe; „Auf Tafel" schreibt die Gruppen auf die Tafel.
 - **Uhr** (Werkzeug): fügt eine live laufende Analoguhr als bewegliches Objekt ein.
 - **Funktionsplotter** (Werkzeug): Funktionsterm eingeben (mit Parametern **a, b, c** → Schieberegler),
+  Malpunkte dürfen fehlen (`2x`, `ax^2+bx+c`, `3(x+1)`, `2sin(x)`, `(x+1)(x−1)`),
   der Graph wird gezeichnet; im Bedien-Modus mit **Fingergeste zoom-/verschiebbar**. Über **„＋ Funktion"**
   lassen sich **mehrere Funktionen gleichzeitig** anzeigen (je eigene Farbe, eigene Eingabezeile, mit „×"
   entfernbar); die **Parameter a/b/c wirken auf alle Funktionen gemeinsam**. **Farbe und Linienstärke**
   im **Kontextmenü** wirken auf den **aktiven Graphen** (die farblich hervorgehobene Eingabezeile –
-  im Bedien-Modus die Zeile antippen, um sie auszuwählen).
-- **Vierfeldertafel** (Werkzeug): 2×2-Tabelle mit editierbaren Beschriftungen; Zeilen-/Spaltensummen
-  werden automatisch berechnet. Die Schriftgröße aus dem Kontextmenü gilt für Ereignisse, **Gegenereignisse und das Σ-Zeichen** gleichermaßen.
-- **Baumdiagramm** (Werkzeug): Stufen und Verzweigungen einstellbar, Wahrscheinlichkeiten an die
-  Äste eintragen; Pfadprodukte werden an den Blättern angezeigt. Über jedem Knoten lässt sich per Tipp ein **Ereignisname** eintragen – die Eingabe `nichtA` erscheint als **Ā** (A mit Querstrich). Oben kann zusätzlich ein **Stichprobenumfang n** eingegeben werden; ist er gesetzt, stehen unter den Ereignissen die **absoluten Häufigkeiten** n·P(Pfad) (an der Wurzel n selbst).
+  im Bedien-Modus die Zeile antippen, um sie auszuwählen). **⌨ Formeln** blendet eine **Formel-Tastatur** ein (Ziffern, x, a/b/c, + − × ÷ ^ ², Klammern, sin/cos/tan, √, ln, eˣ, |x|, π – schreibt in die aktive Eingabezeile, die iPad-Tastatur bleibt zu; „ABC“ wechselt zur normalen Tastatur). **A−/A+** (neben „Ansicht“) für die Schriftgröße – Achsenbeschriftung, Eingabezeilen und Parameterregler wachsen mit (auch im Kontextmenü, dort zusätzlich fett/kursiv); **🖼 Tafel / 📋 Kopieren**: Graph mit
+  Legende (Terme, Parameterwerte) als Bild neben das Werkzeug legen bzw. in die Zwischenablage kopieren.
+- **Vierfeldertafel** (Werkzeug): 2×2-Tabelle mit editierbaren Beschriftungen. **Alle neun Felder** (vier innere,
+  Zeilen- und Spaltensummen, Gesamt) sind eintragbar – beliebige gegebene Werte eintragen und **„Berechnen“** tippen:
+  fehlende Felder werden **blau** ergänzt. Eingaben als Zahl, Dezimalzahl (Punkt oder Komma), Bruch (`1/4`) oder
+  Prozent (`30 %`); das Ergebnis erscheint im selben Stil. **Wahrscheinlichkeiten** (Prozent, Brüche oder nur Werte
+  zwischen 0 und 1): die Gesamtsumme ist **fest 1 bzw. 100 %** (ein anderer Wert wird als Fehler gemeldet). **Absolute
+  Zahlen** (Werte größer 1): Gesamt = Stichprobenumfang, frei; Mischen von Prozent und absoluten Zahlen wird gemeldet. Hinweise bei **nicht eindeutigen** Angaben, **Widersprüchen** und **negativen Werten**.
+  Ändert man eine Eingabe, verschwinden die berechneten Werte bis zum nächsten „Berechnen“; ein überschriebenes blaues
+  Feld wird zur Vorgabe. „Berechnete leeren“ / „Alles leeren“. Ältere Tafeln (nur innere Felder) werden automatisch ergänzt. Die Schriftgröße aus dem Kontextmenü gilt für Ereignisse, **Gegenereignisse und das Σ-Zeichen** gleichermaßen. Oben rechts: **A−/A+** für die Schriftgröße (auch im Kontextmenü) und **🖼 Tafel / 📋 Kopieren**: Tabelle als Bild.
+- **Baumdiagramm** (Werkzeug): Stufen und Verzweigungen einstellbar. Wahrscheinlichkeiten **an die Äste und/oder
+  rechts an die Pfade** (Pfadwahrscheinlichkeiten) eintragen – beliebig gemischt – und **„Berechnen“** tippen: fehlende
+  Werte werden **blau** ergänzt (Astsumme = 1, Pfadregel, Summenregel; z. B. aus P(A) und zwei Pfadwahrscheinlichkeiten
+  den ganzen Baum). Eingaben als Dezimalzahl, Bruch oder Prozent, Ergebnis im selben Stil; Hinweise bei nicht eindeutigen
+  Angaben, Widersprüchen oder Werten außerhalb von 0 bis 1. Ändern einer Eingabe entfernt die berechneten Werte bis zum
+  nächsten „Berechnen“; „Berechnete leeren“. Ältere Bäume zeigen ihre Pfadprodukte wie bisher. Über jedem Knoten lässt sich per Tipp ein **Ereignisname** eintragen – die Eingabe `nichtA` erscheint als **Ā** (A mit Querstrich). Oben kann zusätzlich ein **Stichprobenumfang n** eingegeben werden; ist er gesetzt, stehen unter den Ereignissen die **absoluten Häufigkeiten** n·P(Pfad) (an der Wurzel n selbst). Oben rechts: **A−/A+** für die Schriftgröße (auch im Kontextmenü) und **🖼 Tafel / 📋 Kopieren**: Baum als Bild.
 - **Wahrscheinlichkeitsrechner** (Werkzeug): Binomial- und Normalverteilung – Wahrscheinlichkeiten
   (=, ≤, <, ≥, >, zwischen) mit Histogramm bzw. Glockenkurve und markiertem Bereich; bei Binomial
-  zusätzlich eine **scrollbare Wertetabelle** (k, P(X=k), P(X≤k)).
+  zusätzlich eine **scrollbare Wertetabelle** (k, P(X=k), P(X≤k)). Rechts neben dem Ergebnis: **A−/A+** für die Schriftgröße (auch im Kontextmenü) und **🖼 Tafel / 📋 Kopieren** –
+  Eingaben, Ergebnis, Diagramm und sichtbarer Teil der Tabelle als Bild.
 - **Messwert-Analyse** (Werkzeug): bindet das Messdaten-Tool ein (als Objekt oder eigene Seite;
   fragt beim Einfügen nach). Braucht Internet (nutzt Chart.js u. a. per CDN).
 - **Seitenübersicht:** auf die **Seitenzahl** (z. B. „2/5") tippen → Miniaturen aller Seiten,
@@ -491,7 +529,7 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
    **und** Kreis, Gerade, Zirkel, Zahlenstrahl, Koordinatensystem (alle Knöpfe gleich groß);
    ein **Zeit**-Button (Uhr, Stoppuhr, Timer);
    ein **Klasse & Interaktion**-Button (Sozialform, Gruppen bilden, Umfrage, Zufälliger Name, Punktestand)
-   und ein **Mathe & Physik**-Button (Gleichungslöser, Funktionsplotter, Vierfeldertafel, Baumdiagramm,
+   und ein **Mathe & Physik**-Button (Gleichungslöser, Funktionsplotter, **Ableitungen**, **Einheitskreis**, **3D-Koordinatensystem**, Vierfeldertafel, Baumdiagramm,
    Wahrscheinlichkeitsrechner, GeoGebra-App, Messwert-Analyse, **Würfel** und **Glücksrad**).
 - **Würfel** (Zufallsgenerator, Mathe & Physik): 1–6 Würfel mit wählbarer Seitenzahl (2–20),
   „Würfeln" rollt, Summe wird angezeigt. **Antippen eines Würfels wechselt seine Farbe**
@@ -503,8 +541,90 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   mit gleich großen Sektoren** dargestellt (Zähler-viele Sektoren gefüllt), plus Dezimalwert.
 - **Stellenwerttafel** (Mathe & Physik): umschaltbar **Längen / Flächen / Volumen / Massen** mit den
   üblichen Einheiten. Ziffern eintippen; ein Tipp auf eine Einheit **verschiebt das Komma** (Umrechnung) –
-  **Komma und die zugehörige Einheit werden rot hervorgehoben**. Mit **„＋ Zeile"** lassen sich
+  **Komma und die zugehörige Einheit werden rot hervorgehoben**. Unten rechts: **A−/A+** für die Schriftgröße (auch im Kontextmenü) sowie **🖼 Tafel / 📋 Kopieren** – die Tafel (ohne Löschknöpfe) als Bild neben das Werkzeug legen bzw. in die Zwischenablage kopieren. Mit **„＋ Zeile"** lassen sich
   weitere Zahlen-Zeilen hinzufügen; jede Zeile zeigt ihren Wert in der gewählten Einheit. Die Schriftgröße im Kontextmenü vergrößert jetzt auch **Zellenbreite und -höhe**. Neue Kategorie **„Zahl"**: Stellen vor dem Komma **E, Z, H, T, ZT, HT, M** (Einer bis Millionen), nach dem Komma **z, h, t, zt** (Zehntel bis Zehntausendstel); das Komma sitzt fest hinter den Einern. „Zahl" steht als erste Kategorie ganz links. Im Zahl-Modus schaltet der Button **„%-Komma"** ein zweites (blaues) Komma an der Hundertstel-Stelle ein – dann erscheinen nach dem = beide Darstellungen, z. B. **1,025 = 102,5 %**. Bei „Zahl" reichen die Nachkommastellen jetzt bis **ht** und **m**. Tippt man auf eine Stelle (z. B. h), werden **die Zellen dieser und aller Stellen links davon grün unterstrichen** (die Kopfzeile bleibt unverändert); erst dann erscheint der Button **„Bruch"**, der die Zahl als Bruch mit der markierten Stelle als Nenner zeigt (h → Nenner 100, t → 1000 …; der Bruchstrich ist so lang wie die längere der beiden Zahlen). Erneutes Tippen hebt die Markierung auf.
+- **Einheitskreis** (Mathe & Physik): interaktiver Einheitskreis, Schriftgröße mit **A−/A+** direkt im
+  Werkzeug (rechts unten) oder im **Kontextmenü** (＋/−, fett, kursiv). **🖼 Tafel / 📋 Kopieren**: Kreis samt
+  Werten (ohne Bedienknöpfe) als Bild neben das Werkzeug legen bzw. in die Zwischenablage kopieren. Bedienen über „Einbettung bedienen". Zwei Modi:
+  - **Winkel → Werte:** Punkt P auf dem Kreis ziehen (oder irgendwo in die Kreisfläche tippen), Winkel
+    eintippen (auch im Bogenmaß, z. B. `2π/3`) oder per Schieberegler. Angezeigt werden **sin α (rot)**,
+    **cos α (blau)** und **tan α (grün, Abschnitt auf der Tangente x = 1)** – jeweils mit den Knöpfen
+    ein-/ausblendbar – als Strecken im Kreis und als Werte, bei besonderen Winkeln **exakt**
+    (z. B. ½√3 ≈ 0,866; tan 90° „nicht definiert"), dazu der Quadrant mit den Vorzeichen.
+  - **Wert → Winkel:** sin, cos oder tan wählen, Wert eintippen (`0,5`, `1/2`, `½√3`, `-√2/2` …) oder den
+    farbigen Anfasser auf der Achse bzw. Tangente ziehen → beide Winkel **α₁, α₂ im Bereich
+    0° ≤ α < 360°** in Grad und Bogenmaß, mit Punkten P₁, P₂ im Kreis und Symmetrie-Hinweis; bei
+    |sin α| > 1 bzw. |cos α| > 1 „keine Lösung".
+  - **Einrasten:** besondere Winkel (Vielfache von 30° und 45°) und die zugehörigen Werte
+    (0, ±½, ±½√2, ±½√3, ±1; bei tan 0, ±⅓√3, ±1, ±√3) rasten beim Ziehen ein; ohne Einrasten ganze Grad
+    bzw. Hundertstel. **Besondere Winkel** markiert diese am Kreis, **Bogenmaß** beschriftet sie mit π.
+- **Stromkreis** (Mathe & Physik): Schaltungen zeichnen und simulieren. Einfügen als eigene Seite oder
+  bewegliches Objekt; Schriftgröße über **A−/A+** im Werkzeug oder im **Kontextmenü** (dort auch fett/kursiv) –
+  eine Änderung dort setzt die laufende Simulation (z. B. geladene Kondensatoren) nicht zurück.
+  - **Bauteile:** Quelle (Gleichspannung, U einstellbar), **Wechselspannungsquelle** (Scheitelwert Û und
+    **Frequenz f** einstellbar, z. B. 0,5 Hz zum Zuschauen), Schalter, **Wechselschalter**, Widerstand,
+    Lampe (leuchtet je nach Leistung), Diode, **Transistor (NPN)**, Motor (dreht sich je nach Strom),
+    **Spule** (mit 5 Ω Drahtwiderstand), **Kondensator**, **Strommesser** und **Spannungsmesser**.
+  - **Zeichnen:** Bauteil wählen und antippen (waagrecht) oder in eine Richtung ziehen; auf eine
+    Leitung gesetzt ersetzt es das Leitungsstück. „Leitung" von Gitterpunkt zu Gitterpunkt ziehen
+    (Ecken automatisch); Verzweigungen bekommen einen Knotenpunkt. Auswahl: antippen = auswählen,
+    ziehen = verschieben, Schalter/Wechselschalter antippen = umlegen. Eigenschaften oben: Wert mit −/+
+    oder Eingabe, **↻ Drehen**, **⇄ Umpolen**, **⇅ Spiegeln**, Löschen. Radierer, Zurück/Vor.
+  - **Rechnen:** Knotenanalyse – Reihen-, Parallel- und gemischte Schaltungen; Werte **U, I** und
+    **R/C/L** einblendbar, Messgeräte zeigen ihren Messwert immer. Kondensator lädt/entlädt sich,
+    Spule verzögert den Stromanstieg, Wechselspannung wechselt die Richtung, Diode sperrt,
+    Transistor sperrt/verstärkt/schaltet durch. Warnung bei **Kurzschluss**.
+  - **Ladungen fließen** bei geschlossenem Stromkreis – als **Elektronen** (− → +) oder positive
+    Ladungen (technische Stromrichtung), Geschwindigkeit je nach Stromstärke; nicht durch den Kondensator.
+  - **Vorlagen:** einfacher Stromkreis, Reihen-, Parallel-, gemischte Schaltung, Diode, Messgeräte,
+    Kondensator laden/entladen, Wechselspannung, Transistor als Schalter, Spule, leeres Blatt.
+  - **📈 Diagramm:** Bauteil antippen → „📈 Diagramm" blendet ein verschiebbares Fenster mit dem
+    **zeitlichen Verlauf von Spannung U und Stromstärke I** an diesem Bauteil ein (Nulllinien beider
+    Achsen auf gleicher Höhe, beim Transistor U_CE und I_C, bei Quellen der abgegebene Strom). U/I
+    einzeln ein-/ausblendbar, Zeitfenster 5–60 s, ⏸ anhalten, 🖼 Diagramm als Bild auf die Tafel. Das
+    Bauteil ist in der Schaltung grün gestrichelt markiert. Gut sichtbar z. B. Laden/Entladen des
+    Kondensators, Einschaltverzögerung der Spule oder die Gleichrichtung an der Diode.
+  - **Datei:** **Neu** (leere Schaltung), **Speichern** (als `.json`-Datei, Name wählbar – auf dem iPad z. B. in
+    „Dateien“), **Laden** (gespeicherte Datei öffnen). Bei nicht gespeicherten Änderungen wird nachgefragt.
+  - **Eigenständig nutzbar:** `stromkreis.html` direkt im Browser öffnen (…/tafel/stromkreis.html). Dann gibt es
+    zusätzlich **Schließen**, und die zuletzt bearbeitete Schaltung wird im Browser gemerkt und beim nächsten
+    Öffnen wiederhergestellt („Auf die Tafel“ entfällt, Kopieren bleibt).
+  - **🖼 Bild → Tafel** (rechts in der zweiten Zeile, immer sichtbar – auch wenn ein Bauteil ausgewählt ist) legt die Schaltung als Bild neben das Werkzeug; **📋 Kopieren** kopiert sie als
+    Bild in die Zwischenablage.
+- **Ableitungen** (Mathe & Physik): die Lernumgebung „Zusammenhänge von F · f · f′ · f″" als Werkzeug.
+  Beim Einfügen fragt die Tafel „eigene Seite oder bewegliches Objekt" (im Kontextmenü auch später
+  „Als eigene Seite anzeigen"). Bedienen über „Einbettung bedienen": Ausgangsfunktion (F, f, f′, f″),
+  Funktionstyp mit Parametern, eigener Term, Freihand-Zeichnen, Graphen ein-/ausblenden mit C-Reglern,
+  Analyse-Knöpfe VZ/M/K, Tangente, Fläche/Integral, Intervalle, Symbolleiste, Ableitungsrelation,
+  Krümmungs-Smileys, Linienstil, Anleitung (?). Der eingestellte Zustand (Funktion, Parameter, sichtbare
+  Graphen, Analyse-Knöpfe, Zoom, Farben, Freihand-Kurve) wird **mit dem Tafel-Projekt gespeichert**.
+- **3D-Koordinatensystem** (Mathe & Physik): räumliches Koordinatensystem im **Schrägbild** wie im
+  Heft (x₁ schräg nach vorne, x₂ nach rechts, x₃ nach oben); Achsen **x₁ x₂ x₃ oder x y z** umschaltbar.
+  Schriftgröße mit **A−/A+** oben in der Zeichenfläche oder im **Kontextmenü** (＋/−, fett, kursiv). Bedienen über
+  „Einbettung bedienen". **🖼 Tafel / 📋 Kopieren**: Zeichnung mit Legende der sichtbaren Objekte als Bild neben das
+  Werkzeug legen bzw. in die Zwischenablage kopieren.
+  - **Ansicht:** mit einem Finger **drehen**, mit zwei Fingern **zoomen/verschieben**, −/＋ zum Zoomen,
+    „Schrägbild" setzt die Ansicht zurück. **Bereich** (± 2 … 20) einstellbar, **Gitter** in der
+    x₁x₂-Ebene, **Hilfslinien** zu Punkten (Koordinatenquader), **Koordinaten** an Punkten.
+  - **Objekte eintippen** (mit eigener **Formel-Tastatur**: X =, λ, μ, x₁…x₃, ∘, |, Namen):
+    Punkte `A(2|3|1)` (auch `A(2;3;1)`, `A = B + 2·(1|0|0)`), Geraden `g: X = (1|0|2) + λ·(2|1|−1)`,
+    `h: AB`, Ebenen in **Koordinatenform** `E: 2x₁ + x₂ − x₃ = 4`, **Parameterform**
+    `F: X = … + λ·… + μ·…`, **Normalenform** `G: (X − (1|1|1)) ∘ (0|0|1) = 0` oder durch drei Punkte
+    `E: ABC`. Objekte, die auf Punkten aufbauen, ändern sich mit, wenn man den Punkt bearbeitet.
+    Die Eingabe wird sofort geprüft (✓ bzw. Fehlermeldung).
+  - **Liste:** Farbe antippen = wechseln, ✎ bearbeiten, 👁 ein-/ausblenden, ✕ löschen; Antippen
+    hebt das Objekt in der Zeichnung hervor. Unter jeder Ebene steht ihre Koordinatenform.
+  - **Darstellung:** Ebenen halbdurchsichtig (am Würfel abgeschnitten oder als **Spurdreieck**),
+    **verdeckte Teile** von Achsen und Geraden gestrichelt, verdeckte Punkte hohl.
+    **Spurpunkte** (S₁, S₂, S₃ bei Ebenen; S₁₂, S₁₃, S₂₃ bei Geraden) und Spurgeraden einblendbar.
+  - **Berechnen** (ein oder zwei Objekte wählen): Koordinaten-, Normalen- und Parameterform einer
+    Ebene, Normalenvektor, Spurpunkte, Abstand zum Ursprung; Abstand, Verbindungsvektor und
+    Mittelpunkt zweier Punkte; **Punktprobe**, Lotfußpunkt, Spiegelpunkt und **Abstand Punkt–Gerade/Ebene**;
+    **Lage zweier Geraden** (identisch, parallel mit Abstand, Schnittpunkt mit Winkel, windschief mit
+    Abstand); **Gerade–Ebene** (liegt in, parallel mit Abstand, Schnittpunkt + Schnittwinkel);
+    **Ebene–Ebene** (identisch, parallel mit Abstand, Schnittgerade + Schnittwinkel). Ergebnisse
+    exakt (Brüche, Wurzeln wie 2√6/3 ≈ 1,633); Schnittpunkte, Lotfußpunkte, Schnittgeraden usw. lassen
+    sich mit einem Knopf **einzeichnen**.
 - **Einheitenumrechner** (Mathe & Physik): rechnet gängige physikalische Größen des Schulbetriebs um –
   **Dichte, Stromstärke, Spannung, Widerstand, Länge, Fläche, Volumen, Masse, Geschwindigkeit,
   Beschleunigung, Kraft, Temperatur (°C/K/°F), Impuls, Wärmekapazität, Kapazität, Ladung, Leistung,
@@ -555,7 +675,7 @@ vierfelder.html       ← eingebettete Vierfeldertafel
 baum.html             ← eingebettetes Baumdiagramm
 wahrscheinlichkeit.html ← Binomial-/Normalverteilungs-Rechner
 messwert.html         ← eingebundenes Messwert-Analyse-Tool (nutzt CDN → Internet nötig)
-gleichung.html        ← eingebetteter Gleichungslöser (linear/quadratisch)
+gleichung.html        ← eingebetteter Gleichungslöser (linear/quadratisch/Bruch-, trig., Exponential-/Log-Gleichungen, LGS; Formel-Tastatur)
 tabelle.html          ← eingebettete gewöhnliche Tabelle (Zeilen/Spalten im Kontextmenü)
 geogebra.html         ← eingebettete GeoGebra-App (nutzt CDN → Internet nötig)
 wuerfel.html          ← Würfel-Zufallsgenerator (Objekt)
@@ -563,7 +683,12 @@ gluecksrad.html       ← Glücksrad (Sektoren im Kontextmenü einstellbar)
 bruch.html            ← Bruch mit Kreis-Sektoren-Darstellung
 stellenwerttafel.html ← Stellenwerttafel (Längen/Flächen/Volumen/Massen, Komma verschieben)
 umrechner.html        ← Einheitenumrechner (physikalische Größen)
+einheitskreis.html    ← interaktiver Einheitskreis (sin/cos/tan, Winkel ↔ Werte)
+raum.html             ← 3D-Koordinatensystem (Punkte, Geraden, Ebenen, Lagebeziehungen)
+ableitungen.html      ← Lernumgebung F · f · f′ · f″ (Ableitungen/Stammfunktionen), mit Zustands-Sync
+stromkreis.html       ← Stromkreis-Editor mit Simulation (U, I, R, C, L, Ladungsfluss, Bild-Export)
 pptx.js               ← einfacher PPTX-Renderer (Folien → Bilder, offline)
+shot.js               ← Werkzeug als Bild: auf die Tafel legen / in die Zwischenablage kopieren
 manifest.webmanifest  ← PWA-Manifest
 sw.js                 ← Service Worker (Offline-Cache)
 icon.svg, icon-maskable.svg

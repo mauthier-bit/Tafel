@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Einheitskreis</title>
+<style>
+  *{box-sizing:border-box;-webkit-user-select:none;user-select:none;}
+  :root{--fs:15px;--fw:400;--fwb:700;--fi:normal;}
+  html,body{margin:0;height:100%;font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#1f2430;overflow:hidden;
+    font-size:var(--fs);font-weight:var(--fw);font-style:var(--fi);}
+  #wrap{height:100%;display:flex;}
+  #wrap.col{flex-direction:column;}
+  #cvbox{flex:1;min-width:0;min-height:0;position:relative;}
+  #cv{position:absolute;inset:0;width:100%;height:100%;touch-action:none;}
+  #panel{flex:none;width:min(calc(var(--fs) * 18), 46vw);padding:10px 10px 10px 4px;display:flex;flex-direction:column;gap:7px;overflow:auto;}
+  #wrap.col #panel{width:auto;max-height:52%;padding:4px 10px 10px;}
+  button{font:inherit;color:inherit;cursor:pointer;}
+  .seg{display:flex;background:#eef1f6;border-radius:10px;padding:3px;gap:3px;}
+  .seg button{flex:1;border:none;background:transparent;border-radius:8px;padding:6px 4px;font-size:.87em;font-weight:600;white-space:nowrap;}
+  .seg button.on{background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.14);color:#2563eb;}
+  .big{display:flex;align-items:center;gap:6px;font-size:1.25em;font-weight:var(--fwb);}
+  .big input{flex:1;min-width:0;font:inherit;text-align:right;border:1px solid #cfd6e0;border-radius:9px;padding:4px 8px;color:#1f2430;
+    -webkit-user-select:text;user-select:text;}
+  .sub{color:#64748b;font-size:.9em;min-height:1.2em;text-align:right;}
+  input[type=range]{width:100%;margin:2px 0;accent-color:#2563eb;}
+  .res{display:flex;align-items:center;gap:8px;padding:6px 8px;border:1px solid #e2e7ef;border-radius:10px;}
+  .res .v{flex:1;text-align:right;font-weight:var(--fwb);font-variant-numeric:tabular-nums;}
+  .chip{border:2px solid currentColor;background:#fff;border-radius:8px;padding:2px 8px;font-weight:700;min-width:3.6em;opacity:.45;}
+  .chip.on{opacity:1;}
+  .chip.sin{color:#dc2626;} .chip.cos{color:#2563eb;} .chip.tan{color:#16a34a;}
+  .chip.sin.on{background:#fef2f2;} .chip.cos.on{background:#eff6ff;} .chip.tan.on{background:#f0fdf4;}
+  .lab{font-weight:800;min-width:2.2em;}
+  .a1{color:#ea580c;} .a2{color:#9333ea;}
+  .hint{color:#64748b;font-size:.85em;line-height:1.3;}
+  .opts{display:flex;flex-wrap:wrap;gap:5px;margin-top:auto;padding-top:4px;}
+  .tog{border:1px solid #cfd6e0;background:#fff;border-radius:999px;padding:4px 10px;font-size:.82em;font-weight:600;color:#475569;}
+  .tog.on{background:#2563eb;border-color:#2563eb;color:#fff;}
+  .fr{display:inline-flex;flex-direction:column;vertical-align:middle;text-align:center;font-size:.8em;line-height:1.05;}
+  .fr>span:first-child{border-bottom:1.5px solid currentColor;padding:0 2px;}
+  [hidden]{display:none!important;}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="cvbox"><canvas id="cv"></canvas></div>
+  <div id="panel">
+    <div class="seg" id="modeSeg"><button data-m="angle">Winkel → Werte</button><button data-m="value">Wert → Winkel</button></div>
+
+    <div id="pAngle">
+      <div class="big">α =<input id="aIn" type="text" inputmode="decimal"><span>°</span></div>
+      <div class="sub" id="aRad"></div>
+      <input type="range" id="aSl" min="0" max="359" step="1">
+      <div style="display:flex;flex-direction:column;gap:5px;margin-top:4px">
+        <div class="res"><button class="chip sin" data-f="sin">sin α</button><span class="v" id="rSin"></span></div>
+        <div class="res"><button class="chip cos" data-f="cos">cos α</button><span class="v" id="rCos"></span></div>
+        <div class="res"><button class="chip tan" data-f="tan">tan α</button><span class="v" id="rTan"></span></div>
+      </div>
+      <div class="hint" id="quad" style="margin-top:6px"></div>
+    </div>
+
+    <div id="pValue" hidden>
+      <div class="seg" id="fnSeg"><button data-fn="sin">sin</button><button data-fn="cos">cos</button><button data-fn="tan">tan</button></div>
+      <div class="big" style="margin-top:6px"><span id="fnLbl">sin α</span> =<input id="vIn" type="text" inputmode="decimal"></div>
+      <div class="sub" id="vSub"></div>
+      <input type="range" id="vSl" min="-1" max="1" step="0.01">
+      <div style="display:flex;flex-direction:column;gap:5px;margin-top:4px">
+        <div class="res"><span class="lab a1">α₁</span><span class="v" id="r1"></span></div>
+        <div class="res" id="r2row"><span class="lab a2">α₂</span><span class="v" id="r2"></span></div>
+      </div>
+      <div class="hint" id="vHint" style="margin-top:6px"></div>
+    </div>
+
+    <div class="opts">
+      <button class="tog" data-o="snap" title="Besondere Winkel und Werte rasten beim Ziehen ein">Einrasten</button>
+      <button class="tog" data-o="marks" title="Besondere Winkel am Kreis markieren">Besondere Winkel</button>
+      <button class="tog" data-o="rad" title="Winkel am Kreis im Bogenmaß beschriften">Bogenmaß</button>
+      <span style="flex:1"></span>
+      <span id="shotBtns" style="display:contents"></span><button class="tog" id="fsM" title="Schrift kleiner">A−</button><button class="tog" id="fsP" title="Schrift größer">A+</button>
+    </div>
+  </div>
+</div>
+<script src="shot.js"></script>
+<script>
+"use strict";
+const $=id=>document.getElementById(id);
+const cv=$('cv'), ctx=cv.getContext('2d');
+const DEG=Math.PI/180, EPS=1e-9;
+const COL={sin:'#dc2626',cos:'#2563eb',tan:'#16a34a',a1:'#ea580c',a2:'#9333ea',ink:'#1f2430',grey:'#94a3b8'};
+const SPECIAL=[0,30,45,60,90,120,135,150,180,210,225,240,270,300,315,330];
+const defaults=()=>({mode:'angle',a:30,fn:'sin',v:0.5,show:{sin:true,cos:true,tan:false},snap:true,marks:true,rad:false,fontSize:15,fontBold:false,fontItalic:false});
+let data=defaults();
+
+/* ---------- Zahlen & exakte Werte ---------- */
+const norm=a=>{ a=a%360; if(a<0)a+=360; if(a>360-1e-7)a=0; return a; };
+function fmt(v,d){ const p=Math.pow(10,d); let r=Math.round(v*p)/p; if(Object.is(r,-0)||Math.abs(r)<EPS)r=0;
+  return String(r).replace('.',',').replace('-','−'); }
+const EXACT=[[0,'0'],[0.5,'½'],[Math.SQRT2/2,'½√2'],[Math.sqrt(3)/2,'½√3'],[1,'1'],[Math.sqrt(3)/3,'⅓√3'],[Math.sqrt(3),'√3']];
+function exactOf(v){ const a=Math.abs(v); for(const[x,s] of EXACT){ if(Math.abs(a-x)<1e-7) return (v<0&&s!=='0'?'−':'')+s; } return null; }
+/* „½√3 ≈ 0,866" · „½ = 0,5" · „1" · „≈ 0,342" */
+function valStr(v){ const ex=exactOf(v);
+  if(ex!==null){ if(/√/.test(ex)) return ex+' ≈ '+fmt(v,3); if(ex==='½'||ex==='−½') return ex+' = '+fmt(v,1); return ex; }
+  const isRound=Math.abs(v*1000-Math.round(v*1000))<1e-6; return (isRound?'':'≈ ')+fmt(v,3); }
+const gcd=(a,b)=>b?gcd(b,a%b):a;
+/* Bogenmaß: bei Vielfachen von 15° als Bruch von π, sonst Dezimalzahl */
+function radParts(deg){ const k=deg/180;
+  for(const den of [1,2,3,4,6,12]){ const num=k*den; if(Math.abs(num-Math.round(num))<1e-6){ let n=Math.round(num), d=den; const g=gcd(n,d)||1; n/=g; d/=g; return {n,d}; } }
+  return null; }
+function radText(deg){ const p=radParts(deg); if(!p) return '≈ '+fmt(deg*DEG,3);
+  if(p.n===0) return '0'; const top=(p.n===1?'':p.n)+'π'; return p.d===1?top:top+'/'+p.d; }
+function radHTML(deg){ const p=radParts(deg); if(!p) return '≈ '+fmt(deg*DEG,3);
+  if(p.n===0) return '0'; const top=(p.n===1?'':p.n)+'π'; return p.d===1?top:'<span class="fr"><span>'+top+'</span><span>'+p.d+'</span></span>'; }
+function degStr(d){ return fmt(norm(d),2)+'°'; }
+/* Eingabe: „0,5", „1/2", „½√3", „√2/2", „-sqrt(3)", „π/3" */
+function parseNum(s){ s=String(s||'').trim(); if(!s) return NaN;
+  let t=s.replace(/,/g,'.').replace(/[−–]/g,'-').replace(/·|×/g,'*').replace(/½/g,'(1/2)').replace(/⅓/g,'(1/3)')
+    .replace(/sqrt/gi,'√').replace(/√\s*(\d+(?:\.\d+)?)/g,'S($1)').replace(/√\s*\(/g,'S(').replace(/π|pi/gi,'(P)');
+  t=t.replace(/([\d)])\s*(?=[SP(])/g,'$1*');
+  if(/[^\d.+\-*/()SP\s]/.test(t)) return NaN;
+  try{ const r=Function('S','P','"use strict";return ('+t+');')(Math.sqrt,Math.PI); return (typeof r==='number'&&isFinite(r))?r:NaN; }catch(e){ return NaN; } }
+
+/* ---------- Einrasten ---------- */
+function snapAngle(a){ a=norm(a); if(data.snap){ for(const s of SPECIAL){ let d=Math.abs(a-s); d=Math.min(d,360-d); if(d<=4) return s; } } return norm(Math.round(a)); }
+function snapValue(v,fn){ if(data.snap){ const base=fn==='tan'?[0,Math.sqrt(3)/3,1,Math.sqrt(3)]:[0,0.5,Math.SQRT2/2,Math.sqrt(3)/2,1];
+    const tol=fn==='tan'?0.06:0.035; for(const b of base){ for(const sg of [1,-1]){ if(Math.abs(v-sg*b)<=tol) return sg*b; } } }
+  return Math.round(v*100)/100; }
+
+/* ---------- Lösungen im Bereich 0° ≤ α < 360° ---------- */
+function solutions(fn,v){
+  if(fn==='tan'){ const a=norm(Math.atan(v)/DEG); return [a,norm(a+180)].sort((x,y)=>x-y); }
+  if(Math.abs(v)>1+1e-12) return [];
+  v=Math.max(-1,Math.min(1,v));
+  if(fn==='sin'){ const a=norm(Math.asin(v)/DEG), b=norm(180-Math.asin(v)/DEG); return Math.abs(a-b)<1e-7?[a]:[a,b].sort((x,y)=>x-y); }
+  const a=Math.acos(v)/DEG, b=norm(360-a); return Math.abs(norm(a)-b)<1e-7?[norm(a)]:[norm(a),b]; }
+const cleanAngle=a=>{ const r=Math.round(a); return Math.abs(a-r)<1e-7?norm(r):a; };
+
+/* ---------- Zeichnen ---------- */
+let W=0,H=0,cx=0,cy=0,R=100,K=1;
+function resize(){ const dpr=window.devicePixelRatio||1; W=cv.clientWidth||300; H=cv.clientHeight||300;
+  cv.width=Math.round(W*dpr); cv.height=Math.round(H*dpr); ctx.setTransform(dpr,0,0,dpr,0,0); draw(); }
+const X=u=>cx+u*R, Y=u=>cy-u*R;
+function line(x1,y1,x2,y2,col,w,dash){ ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.strokeStyle=col; ctx.lineWidth=w; ctx.setLineDash(dash||[]); ctx.stroke(); ctx.setLineDash([]); }
+function arrow(x1,y1,x2,y2,col){ line(x1,y1,x2,y2,col,1.6*K); const a=Math.atan2(y2-y1,x2-x1), s=9*K;
+  ctx.beginPath(); ctx.moveTo(x2,y2); ctx.lineTo(x2-s*Math.cos(a-0.4),y2-s*Math.sin(a-0.4)); ctx.lineTo(x2-s*Math.cos(a+0.4),y2-s*Math.sin(a+0.4)); ctx.closePath(); ctx.fillStyle=col; ctx.fill(); }
+function label(txt,x,y,col,al,bl,size,bold){ ctx.font=(data.fontItalic?'italic ':'')+(bold||data.fontBold?'700 ':'500 ')+Math.round((size||14)*K)+'px -apple-system,BlinkMacSystemFont,sans-serif';
+  ctx.textAlign=al||'center'; ctx.textBaseline=bl||'middle'; ctx.lineJoin='round'; ctx.lineWidth=4*K; ctx.strokeStyle='rgba(255,255,255,.92)'; ctx.strokeText(txt,x,y); ctx.fillStyle=col; ctx.fillText(txt,x,y); }
+function dot(x,y,col,r){ ctx.beginPath(); ctx.arc(x,y,r,0,7); ctx.fillStyle=col; ctx.fill(); ctx.lineWidth=2.5*K; ctx.strokeStyle='#fff'; ctx.stroke(); }
+function sector(deg,r,col,alpha){ if(deg<0.01) return; ctx.beginPath(); ctx.moveTo(cx,cy); ctx.arc(cx,cy,r,0,-deg*DEG,true); ctx.closePath();
+  ctx.globalAlpha=alpha; ctx.fillStyle=col; ctx.fill(); ctx.globalAlpha=1;
+  ctx.beginPath(); ctx.arc(cx,cy,r,0,-deg*DEG,true); ctx.strokeStyle=col; ctx.lineWidth=2*K; ctx.stroke(); }
+function angleLabel(deg,r,txt,col){ if(deg<0.01) return; const m=deg/2*DEG, rr=r+(deg<25?18:11)*K; label(txt,cx+rr*Math.cos(m),cy-rr*Math.sin(m),col,'center','middle',15,true); }
+/* Tangens-Abschnitt auf x = 1 (bis zum Rand abgeschnitten) */
+function tanSegment(t){ const lim=(H/2-6*K)/R, tt=Math.max(-lim,Math.min(lim,t));
+  line(cx,cy,X(1),Y(tt),COL.tan,1.6*K,[6*K,5*K]);
+  line(X(1),Y(0),X(1),Y(tt),COL.tan,5*K);
+  if(Math.abs(t)>lim) arrow(X(1),Y(tt*0.9),X(1),Y(tt),COL.tan);
+  else dot(X(1),Y(t),COL.tan,5*K);
+  if(Math.abs(tt)>0.1) label('tan α',X(1)+8*K,Y(tt/2),COL.tan,'left','middle',14,true); }
+
+function draw(){
+  K=(data.fontSize||15)/15;
+  ctx.clearRect(0,0,W,H);
+  R=Math.max(40,Math.min(W/2-52*K,H/2-34*K)); cx=W/2; cy=H/2;
+  /* Achsen, Tangente, Kreis */
+  arrow(4*K,cy,W-4*K,cy,'#475569'); arrow(cx,H-4*K,cx,4*K,'#475569');
+  label('x',W-8*K,cy+14*K,'#475569','right','middle',13); label('y',cx+10*K,10*K,'#475569','left','middle',13);
+  for(const u of [-1,-0.5,0.5,1]){ line(X(u),cy-4*K,X(u),cy+4*K,'#475569',1.4*K); line(cx-4*K,Y(u),cx+4*K,Y(u),'#475569',1.4*K); }
+  label('1',X(1)-4*K,cy+13*K,'#64748b','right','middle',12); label('−1',X(-1)+4*K,cy+13*K,'#64748b','left','middle',12);
+  label('1',cx-7*K,Y(1)+10*K,'#64748b','right','middle',12); label('−1',cx-7*K,Y(-1)-10*K,'#64748b','right','middle',12);
+  const showTanLine=(data.mode==='angle'&&data.show.tan)||(data.mode==='value'&&data.fn==='tan');
+  if(showTanLine) line(X(1),4*K,X(1),H-4*K,'#b6c2d2',1.2*K,[3*K,4*K]);
+  ctx.beginPath(); ctx.arc(cx,cy,R,0,7); ctx.strokeStyle=COL.ink; ctx.lineWidth=2.2*K; ctx.stroke();
+  if(data.marks){ for(const s of SPECIAL){ const c=Math.cos(s*DEG), sn=Math.sin(s*DEG);
+      ctx.beginPath(); ctx.arc(X(c),Y(sn),2.6*K,0,7); ctx.fillStyle='#64748b'; ctx.fill();
+      if(R>=95){ const rr=R+9*K; const onX=(s===0||s===180);   // 0° und 180° über die x-Achse setzen
+        label(data.rad?radText(s):s+'°', cx+rr*c, cy-rr*sn-(onX?3*K:0), '#64748b', c>0.3?'left':(c<-0.3?'right':'center'), onX?'bottom':(sn>0.3?'bottom':(sn<-0.3?'top':'middle')), 11); } } }
+  label('0',cx-6*K,cy+12*K,'#64748b','right','middle',12);
+
+  if(data.mode==='angle'){
+    const a=data.a, c=Math.cos(a*DEG), s=Math.sin(a*DEG), cc=Math.abs(c)<EPS?0:c, ss=Math.abs(s)<EPS?0:s;
+    sector(a,0.22*R,COL.a1,0.16);
+    if(data.show.tan && Math.abs(cc)>1e-6) tanSegment(s/c);
+    if(data.show.cos){ line(cx,cy,X(cc),cy,COL.cos,5*K); if(Math.abs(cc)>0.12) label('cos α',X(cc/2),cy+(ss>=0?16:-16)*K,COL.cos,'center','middle',14,true); }
+    if(data.show.sin){ line(X(cc),cy,X(cc),Y(ss),COL.sin,5*K); if(Math.abs(ss)>0.12) label('sin α',X(cc)+(cc>=0?8:-8)*K,Y(ss/2),COL.sin,cc>=0?'left':'right','middle',14,true); }
+    if(!data.show.sin && !data.show.cos){ line(X(cc),cy,X(cc),Y(ss),'#cbd5e1',1.2*K,[4*K,4*K]); }
+    line(cx,cy,X(cc),Y(ss),COL.ink,2.6*K);
+    angleLabel(a,0.22*R,'α',COL.a1);
+    dot(X(cc),Y(ss),COL.ink,9*K);
+    const pu=18*K/R, pi=15*K/R;                          // „P" innen neben dem Punkt, damit es keine Winkelbeschriftung verdeckt
+    label('P',X(cc-ss*pu-cc*pi),Y(ss+cc*pu-ss*pi),COL.ink,'center','middle',15,true);
+  } else {
+    const fn=data.fn, v=data.v, sol=solutions(fn,v), lim=(H/2-6*K)/R, limX=(W/2-6*K)/R;
+    if(fn==='sin'){ const vv=Math.max(-lim,Math.min(lim,v)); line(4*K,Y(vv),W-4*K,Y(vv),COL.sin,1.6*K,[7*K,5*K]); }
+    else if(fn==='cos'){ const vv=Math.max(-limX,Math.min(limX,v)); line(X(vv),4*K,X(vv),H-4*K,COL.cos,1.6*K,[7*K,5*K]); }
+    sol.forEach((a,i)=>sector(a,(0.18+0.1*i)*R,i?COL.a2:COL.a1,0.13));
+    if(fn==='tan') tanSegment(v);
+    sol.forEach(a=>{ const c=Math.cos(a*DEG), s=Math.sin(a*DEG);
+      if(fn==='sin') line(X(c),cy,X(c),Y(s),COL.sin,5*K);
+      if(fn==='cos') line(cx,cy,X(c),cy,COL.cos,5*K); });
+    if(fn==='tan'&&sol.length){ const c=Math.cos(sol[0]*DEG), s=Math.sin(sol[0]*DEG); line(X(-c*1.25),Y(-s*1.25),X(c*1.25),Y(s*1.25),COL.tan,1.6*K,[6*K,5*K]); }
+    sol.forEach((a,i)=>{ const c=Math.cos(a*DEG), s=Math.sin(a*DEG); line(cx,cy,X(c),Y(s),COL.ink,2.4*K); });
+    sol.forEach((a,i)=>angleLabel(a,(0.18+0.1*i)*R,sol.length>1?(i?'α₂':'α₁'):'α₁',i?COL.a2:COL.a1));
+    sol.forEach((a,i)=>{ const c=Math.cos(a*DEG), s=Math.sin(a*DEG); dot(X(c),Y(s),i?COL.a2:COL.a1,8*K);
+      const pu=20*K/R, pi=16*K/R; label(i?'P₂':'P₁',X(c-s*pu-c*pi),Y(s+c*pu-s*pi),i?COL.a2:COL.a1,'center','middle',14,true); });
+    /* Anfasser */
+    let hx,hy,hc;
+    if(fn==='sin'){ hx=cx; hy=Y(Math.max(-lim,Math.min(lim,v))); hc=COL.sin; }
+    else if(fn==='cos'){ hx=X(Math.max(-limX,Math.min(limX,v))); hy=cy; hc=COL.cos; }
+    else { hx=X(1); hy=Y(Math.max(-lim,Math.min(lim,v))); hc=COL.tan; }
+    ctx.beginPath(); ctx.arc(hx,hy,11*K,0,7); ctx.fillStyle=hc; ctx.fill(); ctx.lineWidth=3*K; ctx.strokeStyle='#fff'; ctx.stroke();
+    ctx.beginPath(); ctx.arc(hx,hy,3.5*K,0,7); ctx.fillStyle='#fff'; ctx.fill();
+  }
+}
+
+/* ---------- Panel ---------- */
+function showExpr(fn){ return fn+' α'; }
+function render(){
+  const r=document.documentElement.style; r.setProperty('--fs',(data.fontSize||15)+'px'); r.setProperty('--fw',data.fontBold?'700':'400'); r.setProperty('--fwb',data.fontBold?'800':'700'); r.setProperty('--fi',data.fontItalic?'italic':'normal');
+  document.querySelectorAll('#modeSeg button').forEach(b=>b.classList.toggle('on',b.dataset.m===data.mode));
+  $('pAngle').hidden=data.mode!=='angle'; $('pValue').hidden=data.mode!=='value';
+  document.querySelectorAll('.tog').forEach(b=>b.classList.toggle('on',!!data[b.dataset.o]));
+  if(data.mode==='angle'){
+    const a=data.a, c=Math.cos(a*DEG), s=Math.sin(a*DEG);
+    if(document.activeElement!==$('aIn')) $('aIn').value=fmt(a,2);
+    $('aSl').value=Math.round(a)%360;
+    $('aRad').innerHTML=(radParts(a)?'= ':'')+radHTML(a)+' (Bogenmaß)';
+    $('rSin').textContent=valStr(Math.abs(s)<EPS?0:s);
+    $('rCos').textContent=valStr(Math.abs(c)<EPS?0:c);
+    $('rTan').textContent=Math.abs(c)<1e-9?'nicht definiert':valStr(Math.abs(s)<EPS?0:s/c);
+    document.querySelectorAll('.chip').forEach(b=>b.classList.toggle('on',!!data.show[b.dataset.f]));
+    let q;
+    if([0,90,180,270].includes(a)) q='P liegt auf einer Achse.';
+    else { const n=a<90?'I':a<180?'II':a<270?'III':'IV';
+      q=n+'. Quadrant: sin α '+(s>0?'> 0':'< 0')+', cos α '+(c>0?'> 0':'< 0')+', tan α '+(s*c>0?'> 0':'< 0'); }
+    $('quad').textContent=q;
+  } else {
+    const fn=data.fn, v=data.v, sol=solutions(fn,v);
+    document.querySelectorAll('#fnSeg button').forEach(b=>b.classList.toggle('on',b.dataset.fn===fn));
+    $('fnLbl').textContent=showExpr(fn); $('fnLbl').style.color=COL[fn];
+    if(document.activeElement!==$('vIn')) $('vIn').value=exactOf(v)||fmt(v,3);
+    const sl=$('vSl'); if(fn==='tan'){ sl.min=-4; sl.max=4; } else { sl.min=-1.2; sl.max=1.2; } sl.step=0.01; sl.value=v;
+    $('vSub').textContent=exactOf(v)&&/√/.test(exactOf(v))?'≈ '+fmt(v,3):(exactOf(v)?'':(Math.abs(v*1000-Math.round(v*1000))<1e-6?'':'≈ '+fmt(v,3)));
+    const fmtA=a=>{ a=cleanAngle(a); return degStr(a)+(radParts(a)?'  =  ':'  ')+radHTML(a); };
+    if(!sol.length){ $('r1').textContent='keine Lösung'; $('r2row').hidden=true;
+      $('vHint').textContent='Für jeden Winkel gilt −1 ≤ '+fn+' α ≤ 1.'; }
+    else { $('r1').innerHTML=fmtA(sol[0]); $('r2row').hidden=sol.length<2; if(sol.length>1) $('r2').innerHTML=fmtA(sol[1]);
+      $('vHint').textContent=sol.length<2?'Nur eine Lösung im Bereich 0° ≤ α < 360°.':(fn==='tan'?'Die Lösungen unterscheiden sich um 180° (0° ≤ α < 360°).':(fn==='sin'?'α₂ = 180° − α₁ (Symmetrie zur y-Achse), 0° ≤ α < 360°.':'α₂ = 360° − α₁ (Symmetrie zur x-Achse), 0° ≤ α < 360°.')); }
+  }
+  layout(); draw();
+}
+function layout(){ const wide=innerWidth>=innerHeight*1.15; $('wrap').classList.toggle('col',!wide); }
+
+/* ---------- Sync ---------- */
+let syncT=null;
+function post(){ try{ parent.postMessage({type:'embed-data',data},'*'); }catch(e){} }
+function sync(now){ if(now){ clearTimeout(syncT); syncT=null; post(); return; } if(!syncT) syncT=setTimeout(()=>{ syncT=null; post(); },200); }
+addEventListener('message',e=>{ if(e.data&&e.data.type==='embed-data'&&e.data.data){ const d=e.data.data, def=defaults();
+  data=Object.assign(def,d,{show:Object.assign(def.show,d.show||{})});
+  data.a=norm(+data.a||0); if(!isFinite(+data.v))data.v=0.5; if(!['sin','cos','tan'].includes(data.fn))data.fn='sin'; if(data.mode!=='value')data.mode='angle';
+  render(); } });
+
+/* ---------- Bedienung ---------- */
+document.querySelectorAll('#modeSeg button').forEach(b=>b.onclick=()=>{ data.mode=b.dataset.m; render(); sync(true); });
+document.querySelectorAll('#fnSeg button').forEach(b=>b.onclick=()=>{ if(data.fn===b.dataset.fn)return; data.fn=b.dataset.fn;
+  if(b.dataset.fn!=='tan'&&Math.abs(data.v)>1) data.v=0.5; render(); sync(true); });
+document.querySelectorAll('.chip').forEach(b=>b.onclick=()=>{ data.show[b.dataset.f]=!data.show[b.dataset.f]; render(); sync(true); });
+document.querySelectorAll('.tog[data-o]').forEach(b=>b.onclick=()=>{ data[b.dataset.o]=!data[b.dataset.o]; render(); sync(true); });
+if(window.TafelShot) TafelShot.buttons($('shotBtns'),()=>TafelShot.rasterize($('wrap'),{exclude:'#modeSeg,#fnSeg,.opts,input[type=range]',pad:6}),'tog');
+for(const [id,d] of [['fsM',-1],['fsP',1]]) $(id).onclick=()=>{ data.fontSize=Math.max(9,Math.min(36,(data.fontSize||15)+d)); render(); sync(true); };
+$('aSl').oninput=()=>{ data.a=norm(+$('aSl').value); render(); sync(); };
+$('aSl').onchange=()=>sync(true);
+$('aIn').oninput=()=>{ const raw=$('aIn').value; let v=parseNum(raw); if(!isFinite(v))return;
+  if(/π|pi/i.test(raw)) v=v/DEG;                       // Eingabe im Bogenmaß
+  data.a=cleanAngle(norm(v)); render(); sync(); };
+$('aIn').onblur=()=>{ render(); sync(true); };
+$('vSl').oninput=()=>{ data.v=snapValue(+$('vSl').value,data.fn); render(); sync(); };
+$('vSl').onchange=()=>sync(true);
+$('vIn').oninput=()=>{ const v=parseNum($('vIn').value); if(!isFinite(v))return; data.v=v; render(); sync(); };
+$('vIn').onblur=()=>{ render(); sync(true); };
+for(const id of ['aIn','vIn']) $(id).addEventListener('keydown',e=>{ if(e.key==='Enter') e.target.blur(); });
+
+let dragId=null;
+function fromPointer(e){ const b=cv.getBoundingClientRect(), x=(e.clientX-b.left)*(W/(b.width||W)), y=(e.clientY-b.top)*(H/(b.height||H));
+  if(data.mode==='angle'){ const dx=x-cx, dy=cy-y; if(Math.hypot(dx,dy)<0.12*R) return false;
+    data.a=snapAngle(Math.atan2(dy,dx)/DEG); }
+  else { const lim=(H/2-6*K)/R, limX=(W/2-6*K)/R; let v;
+    if(data.fn==='cos') v=Math.max(-limX,Math.min(limX,(x-cx)/R)); else v=Math.max(-lim,Math.min(lim,(cy-y)/R));
+    data.v=snapValue(v,data.fn); }
+  return true; }
+cv.addEventListener('pointerdown',e=>{ if(dragId!==null)return; if(document.activeElement&&document.activeElement.blur) document.activeElement.blur();
+  dragId=e.pointerId; try{ cv.setPointerCapture(e.pointerId); }catch(_){} if(fromPointer(e)){ render(); sync(); } e.preventDefault(); });
+cv.addEventListener('pointermove',e=>{ if(e.pointerId!==dragId)return; if(fromPointer(e)){ render(); sync(); } e.preventDefault(); });
+const endDrag=e=>{ if(e.pointerId!==dragId)return; dragId=null; sync(true); };
+cv.addEventListener('pointerup',endDrag); cv.addEventListener('pointercancel',endDrag);
+cv.addEventListener('touchstart',e=>e.preventDefault(),{passive:false});
+cv.addEventListener('touchmove',e=>e.preventDefault(),{passive:false});
+
+window.addEventListener('resize',()=>{ layout(); resize(); });
+window.addEventListener('load',()=>{ render(); resize();
+  if(window.ResizeObserver){ new ResizeObserver(resize).observe(cv); }
+  try{ parent.postMessage({type:'embed-ready'},'*'); }catch(e){} });
+</script>
+</body>
+</html>
