@@ -31,9 +31,18 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   Neben den festen Farben gibt es einen **bunten Punkt** – ein Tipp öffnet den vollen Farbwähler
   für beliebige Farben (auch bei der Objektfarbe im Kontextmenü).
 - **Formen:** Linie, Rechteck, **Quadrat**, Ellipse, Dreieck, **rechtwinkliges Dreieck**,
-  **allgemeines Dreieck**, **Parallelogramm**, **Trapez**, Pfeil (auch gefüllt), **Drachenviereck**
-  sowie **Schrägbilder** von **Quader, vierseitiger Pyramide, Zylinder und Kegel** (mit
-  gestrichelten verdeckten Kanten). Alle im **Formen**-Popover. Ein **erneutes Tippen auf „Formen"**
+  **allgemeines Dreieck**, **Parallelogramm**, **Trapez**, Pfeil (auch gefüllt), **Drachenviereck**,
+  **Kreis** (aufziehen), **Raute**, **regelmäßiges Sechseck** und **Vieleck**: Ecken nacheinander antippen – ein grüner
+  Ring markiert den ersten Punkt; tippt man ihn erneut an (ab drei Ecken), wird das Vieleck geschlossen und gezeichnet.
+  „Rückgängig“ nimmt während des Setzens die letzte Ecke zurück. Alle neuen Formen lassen sich füllen, verschieben und skalieren,
+  sowie **Schrägbilder** von **Quader, Prisma, Pyramide, Zylinder und Kegel** (mit
+  gestrichelten verdeckten Kanten). Bei **Prisma** (Standard: Dreiecksprisma) und **Pyramide** (Standard: vierseitig)
+  legt man im **Kontextmenü** unter „Ecken der Grundfläche“ die Eckenzahl fest (3–12); die verdeckten Kanten werden
+  jeweils passend gestrichelt. Im **Kontextmenü** lassen sich bei Vielecken (Rechteck, Quadrat, Dreiecke, Parallelogramm, Trapez,
+  Raute, Drachenviereck, Sechseck, Vieleck) und bei Quader, Prisma und Pyramide **„Ecken beschriften“** (A, B, C …; Pyramidenspitze S,
+  Quader ABCD unten/EFGH oben) und **„Seiten/Kanten beschriften“** (a, b, c …; im Dreieck liegt a gegenüber von A) einschalten.
+  Die Beschriftung steht außen an der Figur, bleibt beim Drehen waagrecht und hat die Farbe der Form; ihre **Schriftgröße**
+  stellt man daneben im Kontextmenü mit − / + ein. Alle im **Formen**-Popover. Ein **erneutes Tippen auf „Formen"**
   klappt die Auswahl wieder zu (das Werkzeug bleibt aktiv). Sind Formen-Auswahl und **Farbpalette**
   gleichzeitig offen, weichen sie einander aus, statt sich zu überdecken.
 - **Glatte Striche:** Auch druckabhängige Striche (Apple Pencil) werden als **Kurven** gezeichnet –
@@ -122,7 +131,8 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   fügt tabellarische Daten **aus der Zwischenablage** (z. B. aus Excel/Sheets kopiert) ab der
   aktuellen Zelle ein. (Altes `.xls` bitte vorher als `.xlsx` oder CSV speichern.)
 - **Wissenschaftlicher Taschenrechner** (Werkzeug): + − × ÷, Klammern, `xʸ`, √, sin/cos/tan,
-  ln/log, π, e, umschaltbar **DEG/RAD**
+  ln/log, π, e, |x|, **Binomialkoeffizient** `nCr(n,k)` (Taste „nCr“, Komma-Taste für das zweite Argument, z. B. nCr(49,6) = 13983816)
+  und **Fakultät** `n!`, umschaltbar **DEG/RAD**
 - **Aufnahme** (Werkzeug): nimmt die Tafelfläche **mit Ton** auf, direkt abspielbar (echtes
   H.264-**MP4**, sonst WEBM) und speicherbar. Während der Aufnahme **verschwindet das Fenster**;
   oben in der Mitte bleibt nur ein rotes **„■ Aufnahme stoppen"** mit laufender Zeit. Die Statuszeile
