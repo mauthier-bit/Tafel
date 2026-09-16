@@ -131,8 +131,9 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   fügt tabellarische Daten **aus der Zwischenablage** (z. B. aus Excel/Sheets kopiert) ab der
   aktuellen Zelle ein. (Altes `.xls` bitte vorher als `.xlsx` oder CSV speichern.)
 - **Wissenschaftlicher Taschenrechner** (Werkzeug): + − × ÷, Klammern, `xʸ`, √, sin/cos/tan,
-  ln/log, π, e, |x|, **Binomialkoeffizient** `nCr(n,k)` (Taste „nCr“, Komma-Taste für das zweite Argument, z. B. nCr(49,6) = 13983816)
-  und **Fakultät** `n!`, umschaltbar **DEG/RAD**
+  ln/log, π, e, **Ans** (letztes Ergebnis), **Binomialkoeffizient** `nCr(n;k)` (Taste „nCr“, Semikolon-Taste für das zweite Argument, z. B. nCr(49;6) = 13983816),
+  `x²`, **⇧ Shift** für die Umkehrfunktionen (sin⁻¹, cos⁻¹, tan⁻¹, eˣ, 10ˣ, **1/x** aus xʸ – hängt ^(-1) an, n-te Wurzel ⁿ√ als root(n;x) – z. B. root(3;27) = 3; Shift gilt für einen Tastendruck, im DEG-Modus kommt sin⁻¹ in Grad). Nach „=“ beginnt eine Zahl/Funktion/Ans eine neue Rechnung, ein Rechenzeichen rechnet mit Ans weiter. **Iteration:** erneutes „=“ wiederholt die letzte Rechnung mit dem neuen Ans (z. B. 5 = , Ans+1/Ans = = = …); die letzte Rechnung steht klein über der Anzeige; ⌫ löscht Funktionsnamen und Ans am Stück
+  und **Fakultät** `n!`, umschaltbar **DEG/RAD**. Tastenanordnung: C ( ) ⌫ · ⇧ Shift x² xʸ √ · sin cos tan π · ln log n! nCr · Ziffernblock (0 , e +) · ; Ans S⇔D =; **DEG/RAD** als Umschalter oben rechts über der Anzeige. **Exakte Ergebnisse** (Taste **S⇔D** bzw. Schalter „exakt/dezimal“ über der Anzeige, wird gemerkt): Brüche (1/3+1/4 = 7/12), Vielfache von π (sin⁻¹(0,5) = π/6), Wurzelterme (cos(π/6) = √3/2, √8 = 2√2, (1+√5)/2); nicht erkennbare Zahlen (e, ln 2, sin 1) bleiben Dezimalzahlen. π und √ dürfen ohne Malpunkt stehen (2π/3, 2√3), sodass exakte Ergebnisse weiterbearbeitet werden können. **Dezimaltrennzeichen ist das Komma** (Ergebnisse z. B. 5,2), das **Semikolon** trennt Argumente (nCr(n;k), root(n;x))
 - **Aufnahme** (Werkzeug): nimmt die Tafelfläche **mit Ton** auf, direkt abspielbar (echtes
   H.264-**MP4**, sonst WEBM) und speicherbar. Während der Aufnahme **verschwindet das Fenster**;
   oben in der Mitte bleibt nur ein rotes **„■ Aufnahme stoppen"** mit laufender Zeit. Die Statuszeile
@@ -244,6 +245,7 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     Audiodatei geladen.
     „Sticker entfernen" lässt einzelne Sticker per Tipp wieder wegnehmen, „Alle entfernen" leert die
     Sammlung. Schalter **„Automatisch bei Ruhe"**: siehe Lärmampel.
+  - **Suchfeld** rechts neben „Drucken“ (bricht auf schmalen Bildschirmen in die nächste Zeile um): filtert die Tabelle beim Tippen (Groß-/Kleinschreibung und Umlaute egal, „weiss“ findet „Weiß“), × leert die Suche. Die Tabelle passt ihre Höhe an das Fenster an (auch bei eingeblendeten Kategorien), sodass immer bis zur letzten Zeile gescrollt werden kann. Kompakte Knöpfe und Reiter; lange Kategorienamen in der Kopfzeile brechen um, damit die Tabelle auch im schmalen Fenster (680 px) ohne seitliches Scrollen passt.
   - **Klassenliste:** die Namen der aktiven Klasse **alphabetisch** in einer **scrollbaren Tabelle**
     (Kopfzeile und Namensspalte bleiben beim Scrollen stehen); dahinter je **Kategorie eine Spalte**.
     - **Art der Kategorie:** *Zähler* (Zelle antippen = **+1**), *Haken* (Zelle antippen =
