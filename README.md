@@ -373,7 +373,7 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   als Wort stehen). „■ Stopp“ beendet das Zuhören und lässt das Textfeld mit Tastatur offen, um den Text zu korrigieren; „✓ Fertig“ oder Wegtippen übernimmt den Text als normales Textobjekt (Farbe wie beim Text). Mit dem Diktierstift auf einen vorhandenen Text tippen = dort weiterdiktieren; Doppeltipp (Auswahl) öffnet jeden Text zum Bearbeiten.
   Während des Diktats bleibt die Bildschirmtastatur zu. Ist die Spracherkennung nicht verfügbar oder nicht
   erlaubt, bleibt das Textfeld offen – dann die **Mikrofon-Taste der iPad-Tastatur** zum Diktieren nutzen.
-  Hinweis: Safari braucht dafür „Siri & Diktat“ und eine Internetverbindung.
+  Hinweis: Safari braucht dafür „Siri & Diktat“ und eine Internetverbindung. Auch **Mindmap** und **Pinnwand** haben einen 🎙-Knopf; lässt Safari die Spracherkennung im eingebetteten Werkzeug nicht zu, übernimmt die **Tafel selbst** das Zuhören und schickt den Text ins Werkzeug.
 - **Mindmap** (Schreibwerkzeuge): Thema in der Mitte; **+ Unterpunkt** / **+ Nachbar** hängen Äste an
   (neuer Knoten wird automatisch frei platziert und sofort beschriftet), Knoten **antippen** = auswählen,
   **nochmal antippen** = Text ändern (Enter fertig, Esc abbrechen, Tab = weiterer Unterpunkt), **ziehen** =
@@ -437,6 +437,13 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   geschlossen, wird sie automatisch mit einer geraden Strecke geschlossen). Nach dem Loslassen
   erscheint ein Menü mit **Kopieren · Ausschneiden · Gruppieren · Löschen** für alle eingerahmten
   Objekte. (Die Rechteck-Auswahl im Auswahl-Modus bleibt zusätzlich erhalten.)
+- **Beschriftungen ändern:** Bei beschriftbaren Formen öffnet **✎ Texte** im Kontextmenü ein Fenster mit je einem
+  Feld pro Ecke und Seite/Kante. Dort lassen sich eigene Buchstaben oder Namen eintragen (z. B. Süd, Ost, Nord oder
+  „Weg 1“); ein leeres Feld lässt die Stelle frei, **Standard wiederherstellen** bringt A, B, C … und a, b, c … zurück.
+  Dasselbe Fenster gibt es über einen eigenen, breiten Knopf unter der Schrift-Zeile auch beim **Koordinatensystem** (**✎ Achsen & Ursprung**): Namen der beiden Achsen und des
+  Ursprungs, z. B. x₁, x₂, O – und beim **Zahlenstrahl** (**✎ Achsenname & Einheit**): Name an der Pfeilspitze, z. B. t, und Einheit hinter
+  jeder Zahl, z. B. s oder cm. Im Fenster gibt es eine Reihe **Sonderzeichen** (₀–₉, ₙ, ², ³, ′, ″, °, ·,
+  α β γ δ φ π Δ ∡ ‾), die in das zuletzt angetippte Feld eingesetzt werden – so entstehen Indizes wie x₁.
 - **Auswählen, Verschieben, Skalieren, Drehen:** Objekt antippen → Rahmen mit Griffen
   (Eck- und Kantengriffe = Größe, Kreis oben = drehen). Beim Ziehen an einem Griff bleibt die **gegenüberliegende
   Kante bzw. Ecke stehen** – das Objekt wächst nur in Zugrichtung (auch bei gedrehten Objekten).

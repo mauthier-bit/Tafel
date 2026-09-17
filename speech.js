@@ -4,6 +4,7 @@
 (function(){
 "use strict";
 const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+const embedded=window.parent!==window;
 /* gesprochene Satzzeichen wie bei der iPad-Diktierfunktion */
 const CMDS=[[/\s*\b(neue Zeile|neuer Absatz)\b\s*/gi,'\n'],[/\s+Punkt\b(?!\s+[A-ZÄÖÜ]\b)/g,'.'],[/\s+Komma\b/g,','],[/\s+Fragezeichen\b/g,'?'],
   [/\s+Ausrufezeichen\b/g,'!'],[/\s+Doppelpunkt\b/g,':'],[/\s+Bindestrich\s+/g,'-']];
@@ -25,8 +26,27 @@ function start(h){ h=h||{};
   run();
   return { stop(){ if(stopped) return; stopped=true; try{ rec.stop(); }catch(e){ h.onEnd&&h.onEnd(got); } } };
 }
+/* In der Tafel eingebettete Werkzeuge: Safari lässt die Spracherkennung im iframe teils nicht zu –
+   dann übernimmt die Tafel selbst das Zuhören und schickt den Text ins Werkzeug zurück. */
+function startRemote(h){ h=h||{}; let done=false;
+  const finish=()=>{ if(done) return true; done=true; removeEventListener('message',onMsg); return false; };
+  const onMsg=e=>{ if(e.source!==window.parent||!e.data||done) return; const d=e.data;
+    if(d.type==='speech-text') h.onText&&h.onText(String(d.text||''),!!d.final);
+    else if(d.type==='speech-end'){ finish(); h.onEnd&&h.onEnd(); }
+    else if(d.type==='speech-error'){ finish(); h.onError&&h.onError(d.code||'error'); } };
+  addEventListener('message',onMsg);
+  try{ parent.postMessage({type:'speech-start'},'*'); }catch(e){ finish(); h.onError&&h.onError('error'); return null; }
+  return { stop(){ try{ parent.postMessage({type:'speech-stop'},'*'); }catch(e){} if(!finish()) h.onEnd&&h.onEnd(); } }; }
+/* bevorzugt hier zuhören, sonst über die Tafel */
+function begin(h){ h=h||{}; let local=null, remote=null, viaParent=false, stopped=false;
+  const goRemote=()=>{ if(viaParent||!embedded||stopped) return false; viaParent=true; remote=startRemote(h); return !!remote; };
+  if(!SR&&embedded) goRemote();
+  else local=start({ onText:(t,f)=>h.onText&&h.onText(t,f), onEnd:r=>{ if(!viaParent) h.onEnd&&h.onEnd(r); },
+    onError:c=>{ if(!goRemote()) h.onError&&h.onError(c); } });
+  if(!local&&!remote) return null;
+  return { stop(){ stopped=true; if(remote) remote.stop(); else if(local) local.stop(); } }; }
 function errText(c){ return c==='unsupported'?'Spracherkennung wird hier nicht unterstützt – Mikrofon-Taste der Bildschirmtastatur verwenden'
   : c==='denied'?'Kein Zugriff aufs Mikrofon/Diktat – in den Einstellungen erlauben oder Mikrofon-Taste der Tastatur verwenden'
   : c==='network'?'Spracherkennung braucht eine Internetverbindung':'Spracherkennung fehlgeschlagen ('+c+')'; }
-window.TafelSpeech={available:!!SR,start,tidy,errText};
+window.TafelSpeech={available:!!SR||embedded,embedded,start:begin,startLocal:start,tidy,errText};
 })();
