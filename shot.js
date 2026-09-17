@@ -31,6 +31,7 @@ function rasterize(root,opt){ opt=opt||{}; const S=opt.scale||2, pad=opt.pad||0;
   function walk(el){ if(el.nodeType===3){ drawText(el); return; } if(el.nodeType!==1||skip(el)) return;
     const cs=getComputedStyle(el); if(cs.display==='none'||cs.visibility==='hidden'||parseFloat(cs.opacity)===0) return;
     const r=el.getBoundingClientRect();
+    if(el.tagName==='IMG'){ try{ if(el.complete&&el.naturalWidth) g.drawImage(el,r.left,r.top,r.width,r.height); }catch(e){} return; }
     if(el.tagName==='CANVAS'){ try{ g.drawImage(el,r.left,r.top,r.width,r.height); }catch(e){} return; }
     if(el.tagName==='SVG'||el.tagName==='svg') return;
     const rad=parseFloat(cs.borderTopLeftRadius)||0;

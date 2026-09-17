@@ -1,5 +1,5 @@
 /* Service Worker – macht die Tafel offline-fähig (App-Shell + Bibliotheken cachen). */
-const CACHE = 'tafel-v172';
+const CACHE = 'tafel-v180';
 const ASSETS = [
   './',
   'index.html',
@@ -23,6 +23,9 @@ const ASSETS = [
   'stromkreis.html',
   'pptx.js',
   'shot.js',
+  'speech.js',
+  'mindmap.html',
+  'pinnwand.html',
   'manifest.webmanifest',
   'icon.svg',
   'icon-maskable.svg',

@@ -219,7 +219,12 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     zum Abgeben/Weitergeben dient „Tabelle speichern" bzw. der CSV-Export.
   - **Anzeige mit deutschem Komma** (0,75 · 4,33) – auch in den Diagramm-Achsen und -Infozeilen;
     eingeben darf man Komma oder Punkt.
-- **Favoriten:** Oben in der senkrechten Leiste – gleich unter den Modus-Knöpfen – lassen sich bis zu
+- **Umschalter Schreiben ⇄ Werkzeuge:** ganz oben in der senkrechten Leiste ein **runder, blauer Knopf**
+  (auch Laserpointer und Scheinwerfer darunter sind rund und damit abgesetzt). Er zeigt den **aktiven** Bereich (abklingende Schreibwelle mit Schwung = Schreibwerkzeuge, Mauszeiger = Auswählen & Werkzeuge); Antippen
+  wechselt. Beim Wechsel zu den Schreibwerkzeugen ist sofort der **Stift** aktiv, bei den Werkzeugen das Auswählen.
+  **Laserpointer und Scheinwerfer** schalten sich durch **erneutes Antippen** oder durch Tippen auf den Umschalter
+  wieder aus (dann gilt wieder das zuletzt benutzte Werkzeug der aktiven Leiste, die Leiste bleibt).
+- **Favoriten:** Oben in der senkrechten Leiste – gleich unter Umschalter, Laserpointer und Scheinwerfer – lassen sich bis zu
   **8 Lieblingswerkzeuge** ablegen; sie sind in jedem Modus sichtbar. Einen beliebigen Knopf (aus jeder
   Leiste, auch aus den Untermenüs) **eine Sekunde gedrückt halten** → „★ Zu den Favoriten". Auf einem
   Favoriten liefert dasselbe lange Drücken „▲ Nach oben / ▼ Nach unten / ☆ Entfernen". In den
@@ -357,6 +362,20 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
 - **Text:** Textfelder anlegen; **Doppeltipp** auf einen Text zum Nachbearbeiten. Bei ausgewähltem
   Text bietet das **Kontextmenü** zusätzlich **Fett, Kursiv, Aufzählung (Liste)** und eine
   **Schriftgrößen-Einstellung** (＋/−).
+- **Diktierstift** (Schreibwerkzeuge, Mikrofon-Symbol): an die gewünschte Stelle tippen und sprechen – der
+  erkannte Text erscheint live in einem Textfeld (Deutsch, Web-Spracherkennung von Safari/Siri). Gesprochene
+  Satzzeichen: „Punkt“, „Komma“, „Fragezeichen“, „Ausrufezeichen“, „Doppelpunkt“, „neue Zeile“ („Punkt A“ bleibt
+  als Wort stehen). „■ Stopp“ beendet das Zuhören und lässt das Textfeld mit Tastatur offen, um den Text zu korrigieren; „✓ Fertig“ oder Wegtippen übernimmt den Text als normales Textobjekt (Farbe wie beim Text). Mit dem Diktierstift auf einen vorhandenen Text tippen = dort weiterdiktieren; Doppeltipp (Auswahl) öffnet jeden Text zum Bearbeiten.
+  Während des Diktats bleibt die Bildschirmtastatur zu. Ist die Spracherkennung nicht verfügbar oder nicht
+  erlaubt, bleibt das Textfeld offen – dann die **Mikrofon-Taste der iPad-Tastatur** zum Diktieren nutzen.
+  Hinweis: Safari braucht dafür „Siri & Diktat“ und eine Internetverbindung.
+- **Mindmap** (Schreibwerkzeuge): Thema in der Mitte; **+ Unterpunkt** / **+ Nachbar** hängen Äste an
+  (neuer Knoten wird automatisch frei platziert und sofort beschriftet), Knoten **antippen** = auswählen,
+  **nochmal antippen** = Text ändern (Enter fertig, Esc abbrechen, Tab = weiterer Unterpunkt), **ziehen** =
+  verschieben (Unterpunkte wandern mit), **🎙** diktiert den Knotentext, **🗑** löscht einen Ast, **🎨** färbt
+  einen Ast, **↶** Rückgängig, **⟳ Ordnen** ordnet alles kreisförmig ohne Überlappungen an, **A−/A+** sowie
+  Schrift (fett/kursiv) im Kontextmenü, **🖼 Tafel / 📋 Kopieren** als Bild. Passt sich automatisch der
+  Objektgröße an; auch „Als eigene Seite anzeigen“.
 - **Gleichungslöser** (Mathe & Physik): bewegliches Objekt mit großem Eingabefeld und zwei Modi:
   - **Gleichung** (Variable x): tippt man z. B. `2x+3=7`, `x^2-5x+6=0` oder `3/(x-2)=2/(x+1)`.
     **Lineare, quadratische und Bruchgleichungen** werden mit Lösungsweg gelöst – bei Bruchgleichungen
@@ -414,7 +433,11 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   erscheint ein Menü mit **Kopieren · Ausschneiden · Gruppieren · Löschen** für alle eingerahmten
   Objekte. (Die Rechteck-Auswahl im Auswahl-Modus bleibt zusätzlich erhalten.)
 - **Auswählen, Verschieben, Skalieren, Drehen:** Objekt antippen → Rahmen mit Griffen
-  (Eckgriffe = Größe, Kreis oben = drehen). Am Objekt erscheint ein **kleiner Button (☰)** –
+  (Eck- und Kantengriffe = Größe, Kreis oben = drehen). Beim Ziehen an einem Griff bleibt die **gegenüberliegende
+  Kante bzw. Ecke stehen** – das Objekt wächst nur in Zugrichtung (auch bei gedrehten Objekten).
+  Im Kontextmenü unter **Drehung** (mit Anzeige des aktuellen Winkels): **⟲ 90° / ⟳ 90°** dreht exakt um 90°,
+  **⊾ Gerade ausrichten** richtet schräg (z. B. mit zwei Fingern) gedrehte Objekte auf das nächste Vielfache von 90° aus.
+  Mehrere bzw. gruppierte Objekte drehen gemeinsam um ihre gemeinsame Mitte. Am Objekt erscheint ein **kleiner Button (☰)** –
   ein Tipp klappt das **Kontext-Panel** auf/zu (Farbe, Dicke/Größe, Füllung, Kopieren usw.),
   damit es nicht ständig im Weg ist.
 - **Finger-Bedienung im Auswahl-Modus** (Einstellungen, standardmäßig **aus**): ist der Schalter
@@ -428,6 +451,16 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
 - **Gruppieren / Lösen / Duplizieren / Löschen** im Kontext-Panel („Lösen" hebt die Gruppe auf und
   die Auswahl auf, damit die Objekte danach wirklich einzeln beweglich sind)
 - **Laserpointer** und **Scheinwerferspot** – nutzbar auch **mit dem Finger**, unabhängig von der Einstellung „Nur mit Stift schreiben"
+- **Pinnwand** (Werkzeuge, direkt über dem QR-Code): Karten anheften wie auf einer Korkwand.
+  **+ Karte** öffnet einen Dialog mit Text (auch **🎙 Diktieren**), **Farbe** (7 Zettelfarben), **Bild**
+  (Foto/Kamera, wird verkleinert gespeichert), **Link** (antippbar), **👍-Zähler** und **Namen aus der Klassenliste** der aktiven Klasse (Auswahlliste getrennt nach „noch nicht vergeben“ / „schon auf anderen Karten“, **🎲 Zufall** wählt bevorzugt einen noch freien Namen, mehrere Namen pro Karte, × entfernt; ohne Klassenliste Namen eintippen) – die Namen stehen mit 👤 auf der Karte; ✎ auf der Karte oder
+  Doppeltipp bearbeitet, dort auch **Löschen** und **Kopie**. Ansicht **✥ Frei** (Karten mit Pin beliebig
+  ziehen, **▦** ordnet im Raster) oder **▥ Spalten** (Spalten anlegen, per Antippen umbenennen, ✕ löschen;
+  Karten seitlich bzw. nach kurzem Halten zwischen Spalten ziehen, senkrecht wischen blättert). **👍** auf der
+  Karte zählt hoch, **⇅ 👍** sortiert nach Likes, **🔀** mischt, **🙈 Verdecken** dreht alle Karten um (einzeln
+  antippen deckt auf), Hintergrund **Kork/Hell/Tafelgrün**, **↶** Rückgängig, **A−/A+** und Schrift im
+  Kontextmenü, **🖼 Tafel / 📋 Kopieren** als Bild. Hinweis: Die Pinnwand liegt nur auf diesem iPad – Schüler
+  können nicht von eigenen Geräten aus Karten hinzufügen.
 - **Zoom/Verschieben:** zwei Finger zoomen, ein Finger schiebt (Pencil schreibt weiter). Die Seite
   ist **oben und links fest begrenzt** (Ursprung oben-links) und **nach unten und rechts unbegrenzt** –
   man schiebt also nur nach unten/rechts.

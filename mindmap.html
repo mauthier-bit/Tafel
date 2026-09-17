@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Mindmap</title>
+<style>
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#1f2430;overflow:hidden;}
+  #app{display:flex;flex-direction:column;height:100%;}
+  #bar{flex:none;display:flex;gap:5px;align-items:center;padding:6px 8px;border-bottom:1px solid #e6eaf0;flex-wrap:wrap;font-size:13px;}
+  #bar button{border:1px solid #cfd6e0;background:#fff;border-radius:7px;padding:4px 9px;font:600 13px -apple-system,sans-serif;cursor:pointer;color:#1f2430;white-space:nowrap;}
+  #bar button.pri{background:#2563eb;border-color:#2563eb;color:#fff;}
+  #bar button:disabled{opacity:.4;cursor:default;}
+  #bar button.rec{background:#ef4444;border-color:#ef4444;color:#fff;}
+  #bar .sep{width:1px;align-self:stretch;background:#e6eaf0;margin:0 2px;}
+  #cols{display:inline-flex;gap:3px;} #cols[hidden]{display:none;}
+  #cols i{width:20px;height:20px;border-radius:50%;cursor:pointer;border:2px solid #fff;box-shadow:0 0 0 1px #cfd6e0;display:inline-block;}
+  #shotBtns{display:inline-flex;gap:5px;margin-left:auto;}
+  #area{flex:1;position:relative;min-height:0;overflow:hidden;touch-action:none;}
+  canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;}
+  .node{position:absolute;transform:translate(-50%,-50%);padding:.32em .75em;border:2px solid #2563eb;border-radius:999px;background:#fff;white-space:pre-wrap;text-align:center;max-width:14em;line-height:1.25;cursor:pointer;user-select:none;-webkit-user-select:none;font-style:var(--fi,normal);overflow-wrap:break-word;}
+  .node.root{border-radius:14px;border-width:3px;padding:.45em .9em;}
+  .node.sel{box-shadow:0 0 0 3px rgba(37,99,235,.35);}
+  .node.ph{color:#9aa4b2;}
+  textarea.edit{position:absolute;transform:translate(-50%,-50%);z-index:5;border:2px solid #2563eb;border-radius:10px;padding:.3em .6em;font-family:inherit;text-align:center;resize:none;outline:none;background:#fff;line-height:1.25;box-shadow:0 4px 16px rgba(0,0,0,.15);}
+  #hint{position:absolute;left:8px;bottom:6px;font-size:12px;color:#8a93a2;pointer-events:none;}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="bar">
+    <button type="button" id="bAdd" class="pri" title="Unterpunkt am ausgewählten Knoten anhängen">+ Unterpunkt</button>
+    <button type="button" id="bSib" title="Weiteren Punkt auf derselben Ebene anhängen">+ Nachbar</button>
+    <button type="button" id="bEdit" title="Text bearbeiten">✎</button>
+    <button type="button" id="bMic" title="Text diktieren">🎙</button>
+    <button type="button" id="bDel" title="Knoten mit allen Unterpunkten löschen">🗑</button>
+    <span class="sep"></span>
+    <button type="button" id="bCol" title="Farbe des Astes">🎨</button><span id="cols" hidden></span>
+    <span class="sep"></span>
+    <button type="button" id="bUndo" title="Rückgängig">↶</button>
+    <button type="button" id="bLay" title="Alles kreisförmig um das Thema anordnen">⟳ Ordnen</button>
+    <span id="shotBtns"><button type="button" id="fsM" title="Schrift kleiner">A−</button><button type="button" id="fsP" title="Schrift größer">A+</button></span>
+  </div>
+  <div id="area"><canvas id="cv"></canvas><div id="hint">Knoten antippen = auswählen · nochmal antippen = Text ändern · ziehen = verschieben</div></div>
+</div>
+<script src="shot.js"></script>
+<script src="speech.js"></script>
+<script>
+"use strict";
+const $=id=>document.getElementById(id), area=$('area'), cv=$('cv'), ctx=cv.getContext('2d');
+const PAL=['#2563eb','#dc2626','#16a34a','#d97706','#7c3aed','#db2777','#0891b2','#475569'];
+let nodes=[{id:'r',p:null,t:'Thema',x:0,y:0}], fontSize=16, fontBold=false, fontItalic=false;
+let sel='r', view=null, editing=null, undoStack=[], drag=null, speech=null;
+const toast=m=>window.TafelShot?TafelShot.toast(m):alert(m);
+const byId=id=>nodes.find(n=>n.id===id), kids=id=>nodes.filter(n=>n.p===id);
+const depth=n=>{ let d=0; while(n&&n.p){ n=byId(n.p); d++; } return d; };
+const uid=()=>'n'+Math.random().toString(36).slice(2,9);
+const tint=(hex,a)=>{ const v=parseInt(hex.slice(1),16), m=c=>Math.round(255-(255-c)*a); return 'rgb('+m(v>>16&255)+','+m(v>>8&255)+','+m(v&255)+')'; };
+const sz=new Map();   // gemessene Knotengröße in Einheiten [b,h]
+function colorOf(n){ if(!n) return PAL[0]; if(n.c) return n.c; if(!n.p) return '#1f2430';
+  const par=byId(n.p); if(par&&!par.p){ const i=kids(par.id).indexOf(n); return PAL[i%PAL.length]; } return colorOf(par); }
+function subtree(id){ const out=[id]; for(let i=0;i<out.length;i++) kids(out[i]).forEach(k=>out.push(k.id)); return out; }
+function snap(){ undoStack.push(JSON.stringify(nodes)); if(undoStack.length>60) undoStack.shift(); }
+function sync(){ if(window.parent===window) return; try{ parent.postMessage({type:'embed-data',data:{v:1,nodes:nodes.map(({id,p,t,x,y,c})=>c?{id,p,t,x,y,c}:{id,p,t,x,y}),fontSize,fontBold,fontItalic}},'*'); }catch(e){} }
+
+/* ---------- Zeichnen ---------- */
+const els=new Map();
+function fsOf(n){ const d=depth(n); return fontSize*(d===0?1.3:d===1?1.08:1); }
+function render(fit){
+  const W=area.clientWidth, H=area.clientHeight, dpr=window.devicePixelRatio||1;
+  cv.width=Math.round(W*dpr); cv.height=Math.round(H*dpr);
+  const seen=new Set();
+  for(const n of nodes){ seen.add(n.id); let el=els.get(n.id);
+    if(!el){ el=document.createElement('div'); el.className='node'; el.dataset.id=n.id; area.appendChild(el); els.set(n.id,el); }
+    const d=depth(n), col=colorOf(n);
+    el.classList.toggle('root',d===0); el.classList.toggle('sel',n.id===sel); el.classList.toggle('ph',!n.t);
+    el.textContent=n.t||'…'; el.style.borderColor=col; el.style.background=d===0?'#f1f5f9':(d===1?tint(col,.13):'#fff');
+    el.style.fontWeight=(fontBold||d===0)?'700':(d===1?'600':'500');
+    el.style.visibility=(editing&&editing.id===n.id)?'hidden':''; }
+  for(const [id,el] of els) if(!seen.has(id)){ el.remove(); els.delete(id); }
+  document.documentElement.style.setProperty('--fi',fontItalic?'italic':'normal');
+  // Größe in Einheiten messen (Schrift ohne Zoom)
+  const size={}; let x0=Infinity,y0=Infinity,x1=-Infinity,y1=-Infinity;
+  for(const n of nodes){ const el=els.get(n.id); el.style.fontSize=fsOf(n)+'px'; el.style.left='0px'; el.style.top='0px';
+    const w=el.offsetWidth, h=el.offsetHeight; size[n.id]=[w,h]; sz.set(n.id,[w,h]);
+    x0=Math.min(x0,n.x-w/2); x1=Math.max(x1,n.x+w/2); y0=Math.min(y0,n.y-h/2); y1=Math.max(y1,n.y+h/2); }
+  if(fit||!view){ const k=Math.min(1,(W-24)/Math.max(1,x1-x0),(H-24)/Math.max(1,y1-y0));
+    view={k,ox:W/2-k*(x0+x1)/2,oy:H/2-k*(y0+y1)/2}; }
+  const {k,ox,oy}=view;
+  for(const n of nodes){ const el=els.get(n.id); el.style.fontSize=(fsOf(n)*k)+'px'; el.style.left=(ox+n.x*k)+'px'; el.style.top=(oy+n.y*k)+'px'; }
+  ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,W,H); ctx.lineCap='round';
+  for(const n of nodes){ if(!n.p) continue; const p=byId(n.p); if(!p) continue; const d=depth(n);
+    const ax=ox+p.x*k, ay=oy+p.y*k, bx=ox+n.x*k, by=oy+n.y*k, mx=(ax+bx)/2, my=(ay+by)/2;
+    ctx.strokeStyle=colorOf(n); ctx.lineWidth=Math.max(1.5,(d===1?5:d===2?3:2)*k);
+    ctx.beginPath(); ctx.moveTo(ax,ay); ctx.quadraticCurveTo(mx+(ay-by)*0.12,my+(bx-ax)*0.12,bx,by); ctx.stroke(); }
+  $('hint').style.display=nodes.length>2?'none':'';
+  if(editing) placeEditor();
+  refreshBar(); }
+function refreshBar(){ const n=byId(sel); $('bSib').disabled=!n||!n.p; $('bDel').disabled=!n||!n.p; $('bEdit').disabled=!n; $('bUndo').disabled=!undoStack.length; $('bMic').classList.toggle('rec',!!speech); }
+
+/* ---------- Platz für neue Knoten ---------- */
+const szOf=n=>sz.get(n.id)||[fontSize*6,fontSize*2.2];
+const gapRect=(x,y,w,h,n)=>{ const [nw,nh]=szOf(n); return Math.max(Math.abs(x-n.x)-(w+nw)/2, Math.abs(y-n.y)-(h+nh)/2); };
+function freeScore(x,y,w,h,skip){ let m=Infinity; for(const n of nodes){ if(skip&&skip.has(n.id)) continue; m=Math.min(m,gapRect(x,y,w,h,n)); } return m; }
+function placeNew(par){ const [pw,ph]=szOf(par), cw=fontSize*6, ch=fontSize*2.2, ks=kids(par.id), want=fontSize*0.8;
+  let cands=[];
+  if(!par.p){ const used=ks.map(c=>Math.atan2(c.y-par.y,c.x-par.x));
+    for(let i=0;i<24;i++){ const a=i*Math.PI/12; const sep=used.length?Math.min(...used.map(u=>Math.abs(((a-u)%(2*Math.PI)+3*Math.PI)%(2*Math.PI)-Math.PI))):9; cands.push([a,sep]); }
+    cands.sort((A,B)=>B[1]-A[1]+(Math.abs(B[1]-A[1])<1e-6?0:0)); cands=cands.filter(c=>c[1]>=cands[0][1]-0.3).map(c=>c[0]); }
+  else { const gp=byId(par.p), base=Math.atan2(par.y-gp.y,par.x-gp.x); cands=[0,-28,28,-56,56,-84,84,-112,112].map(dd=>base+dd*Math.PI/180); }
+  const rx=pw/2+cw/2+fontSize*(par.p?3.2:5), ry=ph/2+ch/2+fontSize*(par.p?1.8:3);
+  let best=null, bs=-Infinity;
+  for(const a of cands) for(const f of [1,1.35,1.8,2.4]){ const x=par.x+rx*f*Math.cos(a), y=par.y+ry*f*Math.sin(a), sc=freeScore(x,y,cw,ch);
+    const val=Math.min(sc,want)-f*fontSize*0.35;   // genug Abstand zählt, danach möglichst nah am Elternknoten
+    if(val>bs+0.5){ bs=val; best={x,y}; } if(sc>=want) break; }
+  return best; }
+/* kreisförmige Anordnung: jeder Ast bekommt einen Winkelbereich nach Zahl seiner Blätter */
+function layout(){ const leaves=id=>{ const k=kids(id); return k.length?k.reduce((s,c)=>s+leaves(c.id),0):1; };
+  const root=nodes.find(n=>!n.p); root.x=0; root.y=0;
+  const R1=Math.max(180,fontSize*11.5), STEP=Math.max(160,fontSize*10);
+  const cnt={}; nodes.forEach(n=>{ const d=depth(n); cnt[d]=(cnt[d]||0)+1; });
+  const rad=[0]; for(let d=1;d<=Math.max(...Object.keys(cnt).map(Number));d++) rad[d]=Math.max(d===1?R1:rad[d-1]+STEP,(cnt[d]||0)*fontSize*7.5/(2*Math.PI));
+  function go(id,a0,a1,d){ const ks=kids(id), tot=ks.reduce((s,c)=>s+leaves(c.id),0); let a=a0;
+    for(const c of ks){ const span=(a1-a0)*leaves(c.id)/tot, am=a+span/2; c.x=rad[d]*Math.cos(am)*1.25; c.y=rad[d]*Math.sin(am)*0.8; go(c.id,a,a+span,d+1); a+=span; } }
+  go(root.id,-Math.PI/2,1.5*Math.PI,1);
+  const m=fontSize*0.7;
+  for(let it=0;it<120;it++){ let moved=false;
+    for(let i=0;i<nodes.length;i++) for(let j=i+1;j<nodes.length;j++){ const A=nodes[i], B=nodes[j], [aw,ah]=szOf(A), [bw,bh]=szOf(B);
+      const ox=(aw+bw)/2+m-Math.abs(A.x-B.x), oy=(ah+bh)/2+m-Math.abs(A.y-B.y); if(ox<=0||oy<=0) continue; moved=true;
+      const fa=A.p?0.5:0, fb=B.p?0.5:0, tot=fa+fb||1;
+      if(ox/(aw+bw)<oy/(ah+bh)){ const sgn=(B.x>=A.x)?1:-1; A.x-=sgn*ox*fa/tot; B.x+=sgn*ox*fb/tot; }
+      else { const sgn=(B.y>=A.y)?1:-1; A.y-=sgn*oy*fa/tot; B.y+=sgn*oy*fb/tot; } }
+    if(!moved) break; } }
+
+/* ---------- Bearbeiten ---------- */
+function select(id){ sel=id; render(false); }
+function startEdit(id,isNew){ finishEdit(true); const n=byId(id); if(!n) return; sel=id;
+  const ta=document.createElement('textarea'); ta.className='edit'; ta.value=n.t; ta.rows=1; ta.placeholder='Text …';
+  area.appendChild(ta); editing={id,ta,isNew,old:n.t};
+  ta.addEventListener('input',()=>{ n.t=ta.value; grow(); });
+  ta.addEventListener('keydown',e=>{ e.stopPropagation();
+    if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); finishEdit(true); }
+    else if(e.key==='Escape'){ e.preventDefault(); finishEdit(false); }
+    else if(e.key==='Tab'){ e.preventDefault(); finishEdit(true); addNode(e.shiftKey?'sib':'child'); } });
+  ta.addEventListener('blur',()=>setTimeout(()=>{ if(editing&&editing.ta===ta&&document.activeElement!==ta&&!speech) finishEdit(true); },0));
+  render(false); ta.focus(); try{ ta.select(); }catch(e){} }
+function grow(){ if(!editing) return; const ta=editing.ta; ta.style.height='auto'; ta.style.height=ta.scrollHeight+4+'px'; }
+function placeEditor(){ const n=byId(editing.id), el=els.get(editing.id); if(!n||!el){ return; } const ta=editing.ta, {k,ox,oy}=view;
+  ta.style.fontSize=(fsOf(n)*k)+'px'; ta.style.fontWeight=el.style.fontWeight; ta.style.left=(ox+n.x*k)+'px'; ta.style.top=(oy+n.y*k)+'px';
+  ta.style.width=Math.max(140,Math.min(area.clientWidth-20,el.offsetWidth+60))+'px'; grow(); }
+function finishEdit(save){ if(!editing) return; const ed=editing; editing=null; stopSpeech(); const n=byId(ed.id); ed.ta.remove();
+  if(n){ if(!save) n.t=ed.old; n.t=(n.t||'').replace(/\s+$/,'');
+    if(!n.t&&ed.isNew&&n.p){ nodes=nodes.filter(m=>m.id!==n.id); sel=n.p; }
+    else if(!n.t&&n.p) n.t=ed.old; }
+  render(false); sync(); }
+function addNode(kind){ const cur=byId(sel)||nodes[0]; const par=(kind==='sib'&&cur.p)?byId(cur.p):cur;
+  snap(); const pos=placeNew(par); const n={id:uid(),p:par.id,t:'',x:pos.x,y:pos.y}; nodes.push(n); sel=n.id;
+  render(true); startEdit(n.id,true); sync(); }
+function delNode(){ const n=byId(sel); if(!n||!n.p) return; snap(); const gone=new Set(subtree(n.id)); nodes=nodes.filter(m=>!gone.has(m.id)); sel=n.p; render(true); sync(); }
+function setColor(c){ const n=byId(sel); if(!n) return; if(!n.p){ toast('Farben gelten für die Äste – einen Unterpunkt auswählen'); return; } snap(); n.c=c; render(false); sync(); }
+function stopSpeech(){ if(speech){ const s=speech; speech=null; s.stop(); if(editing) editing.ta.removeAttribute('inputmode'); refreshBar(); } }
+function toggleMic(){ if(speech){ stopSpeech(); return; }
+  if(!TafelSpeech.available){ toast(TafelSpeech.errText('unsupported')); return; }
+  if(!editing){ if(!byId(sel)) return; startEdit(sel,false); }
+  const ed=editing, n=byId(ed.id), pre=ed.ta.value.replace(/\s+$/,'');
+  ed.ta.setAttribute('inputmode','none');
+  const rec=TafelSpeech.start({ onText:t=>{ if(speech!==rec||editing!==ed) return; ed.ta.value=(pre?pre+' ':'')+t; n.t=ed.ta.value; grow(); },
+    onEnd:()=>{ if(speech===rec){ speech=null; ed.ta.removeAttribute('inputmode'); refreshBar(); } },
+    onError:c=>{ if(speech===rec){ speech=null; refreshBar(); } toast(TafelSpeech.errText(c)); } });
+  speech=rec; refreshBar(); }
+
+/* ---------- Zeiger ---------- */
+area.addEventListener('pointerdown',e=>{ const el=e.target.closest('.node'); if(e.target.closest('textarea.edit')) return;
+  if(!el){ finishEdit(true); if(sel){ sel=null; render(false); } return; }
+  e.preventDefault(); const id=el.dataset.id, n=byId(id);
+  if(editing&&editing.id!==id) finishEdit(true);
+  drag={id,sx:e.clientX,sy:e.clientY,moved:false,start:subtree(id).map(i=>{ const m=byId(i); return [m,m.x,m.y]; }),pid:e.pointerId,wasSel:sel===id};
+  try{ area.setPointerCapture(e.pointerId); }catch(_){} });
+area.addEventListener('pointermove',e=>{ if(!drag||e.pointerId!==drag.pid) return; const dx=e.clientX-drag.sx, dy=e.clientY-drag.sy;
+  if(!drag.moved&&Math.hypot(dx,dy)<6) return;
+  if(!drag.moved){ drag.moved=true; snap(); sel=drag.id; }
+  const k=view.k; for(const [m,x,y] of drag.start){ m.x=x+dx/k; m.y=y+dy/k; } render(false); });
+const endDrag=e=>{ if(!drag||e.pointerId!==drag.pid) return; const d=drag; drag=null;
+  if(d.moved){ render(true); sync(); return; }
+  if(d.wasSel&&!editing) startEdit(d.id,false); else select(d.id); };
+area.addEventListener('pointerup',endDrag); area.addEventListener('pointercancel',endDrag);
+
+/* ---------- Leiste ---------- */
+PAL.forEach(c=>{ const i=document.createElement('i'); i.style.background=c; i.title='Farbe'; i.addEventListener('pointerdown',e=>e.preventDefault()); i.onclick=()=>{ setColor(c); $('cols').hidden=true; }; $('cols').appendChild(i); });
+const btn=(id,fn)=>{ $(id).addEventListener('pointerdown',e=>e.preventDefault()); $(id).onclick=fn; };
+btn('bCol',()=>{ $('cols').hidden=!$('cols').hidden; });
+btn('bAdd',()=>{ finishEdit(true); addNode('child'); });
+btn('bSib',()=>{ finishEdit(true); addNode('sib'); });
+btn('bEdit',()=>{ if(sel) startEdit(sel,false); });
+btn('bMic',toggleMic);
+btn('bDel',()=>{ finishEdit(true); delNode(); });
+btn('bUndo',()=>{ finishEdit(true); const s=undoStack.pop(); if(!s) return; nodes=JSON.parse(s); if(!byId(sel)) sel=nodes[0].id; render(true); sync(); });
+btn('bLay',()=>{ finishEdit(true); snap(); layout(); render(true); sync(); });
+for(const [id,d] of [['fsM',-1],['fsP',1]]) btn(id,()=>{ fontSize=Math.max(9,Math.min(40,fontSize+d)); render(true); sync(); });
+if(window.TafelShot) TafelShot.buttons($('shotBtns'),()=>{ const s=sel; sel=null; render(false); $('hint').style.display='none';
+  try{ return TafelShot.rasterize(area,{pad:4}); } finally{ sel=s; $('hint').style.display=''; render(false); } });
+addEventListener('keydown',e=>{ if(editing) return;
+  if(e.key==='Tab'){ e.preventDefault(); addNode(e.shiftKey?'sib':'child'); }
+  else if(e.key==='Enter'&&sel){ e.preventDefault(); startEdit(sel,false); }
+  else if((e.key==='Delete'||e.key==='Backspace')&&sel){ e.preventDefault(); delNode(); } });
+addEventListener('resize',()=>render(true));
+addEventListener('message',e=>{ if(!(e.data&&e.data.type==='embed-data'&&e.data.data)) return; const d=e.data.data;
+  if(Array.isArray(d.nodes)&&d.nodes.length&&d.nodes.some(n=>!n.p)) nodes=d.nodes.map(n=>({id:String(n.id),p:n.p==null?null:String(n.p),t:String(n.t||''),x:+n.x||0,y:+n.y||0,...(n.c?{c:n.c}:{})}));
+  if(d.fontSize) fontSize=d.fontSize; fontBold=!!d.fontBold; fontItalic=!!d.fontItalic;
+  if(!byId(sel)) sel=null; finishEdit(true); render(true); });
+window.addEventListener('load',()=>{ render(true); try{ if(window.parent!==window) parent.postMessage({type:'embed-ready'},'*'); }catch(e){} });
+</script>
+</body>
+</html>
