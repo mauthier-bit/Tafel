@@ -1011,8 +1011,8 @@
 <script src="vendor/pdf.min.js"></script>
 <script src="vendor/jspdf.umd.min.js"></script>
 <script src="vendor/qrcode.min.js"></script>
-<script src="pptx.js?v=189"></script>
-<script src="speech.js?v=189"></script>
+<script src="pptx.js?v=190"></script>
+<script src="speech.js?v=190"></script>
 <script>
 "use strict";
 if(window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc='vendor/pdf.worker.min.js';
@@ -1842,7 +1842,8 @@ function startDictation(w,existing){
     onText:(t)=>{ if(dictRec!==tok||!editing)return; tok.got=true; $('dictMsg').textContent='Hört zu …';
       TE.value=pre?(pre+(pre.endsWith('\n')?'':' ')+t):(t.charAt(0).toUpperCase()+t.slice(1)); autoGrow(); placeDictBar(); },
     onEnd:()=>{ if(dictRec===tok) endDictation(); },
-    onError:c=>{ if(dictRec!==tok)return; toast(TafelSpeech.errText(c)); endDictation(); } });
+    onError:c=>{ if(dictRec!==tok)return; toast(TafelSpeech.errText(c)); endDictation();
+      if(editing){ teKeepOpen=true; TE.blur(); TE.focus(); teKeepOpen=false; try{ TE.setSelectionRange(TE.value.length,TE.value.length); }catch(_){} } } });   // Tastatur mit Mikrofon-Taste anbieten
   if(!rec){ if(dictRec===tok){ endDictation(); toast('Spracherkennung ließ sich nicht starten'); } return; }
   tok.stop=()=>rec.stop(); }
 function endDictation(){ dictRec=null; clearTimeout(dictHush); $('dictBar').classList.remove('show'); $('dictMsg').textContent='Hört zu …'; TE.removeAttribute('inputmode'); }
@@ -2369,7 +2370,8 @@ addEventListener('message',e=>{ if(!e.data)return; let obj=null; for(const[id,fr
   if(e.data.type==='speech-start'){ if(embSpeech){ embSpeech.rec.stop(); embSpeech=null; }        // Werkzeug bittet die Tafel ums Zuhören
     const src=e.source;
     if(!window.TafelSpeech||!TafelSpeech.available){ src.postMessage({type:'speech-error',code:'unsupported'},'*'); return; }
-    const rec=TafelSpeech.startLocal({ onText:(t,f)=>src.postMessage({type:'speech-text',text:t,final:f},'*'),
+    const rec=TafelSpeech.startLocal({ watchdog:(TafelSpeech.standalone&&TafelSpeech.standalone())?4000:0,
+      onText:(t,f)=>src.postMessage({type:'speech-text',text:t,final:f},'*'),
       onEnd:()=>{ if(embSpeech&&embSpeech.rec===rec) embSpeech=null; src.postMessage({type:'speech-end'},'*'); },
       onError:c=>{ if(embSpeech&&embSpeech.rec===rec) embSpeech=null; src.postMessage({type:'speech-error',code:c},'*'); } });
     if(rec) embSpeech={src,rec}; else src.postMessage({type:'speech-error',code:'error'},'*'); return; }

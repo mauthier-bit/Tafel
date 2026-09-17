@@ -373,7 +373,10 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   als Wort stehen). „■ Stopp“ beendet das Zuhören und lässt das Textfeld mit Tastatur offen, um den Text zu korrigieren; „✓ Fertig“ oder Wegtippen übernimmt den Text als normales Textobjekt (Farbe wie beim Text). Mit dem Diktierstift auf einen vorhandenen Text tippen = dort weiterdiktieren; Doppeltipp (Auswahl) öffnet jeden Text zum Bearbeiten.
   Während des Diktats bleibt die Bildschirmtastatur zu. Ist die Spracherkennung nicht verfügbar oder nicht
   erlaubt, bleibt das Textfeld offen – dann die **Mikrofon-Taste der iPad-Tastatur** zum Diktieren nutzen.
-  Hinweis: Safari braucht dafür „Siri & Diktat“ und eine Internetverbindung. Auch **Mindmap** und **Pinnwand** haben einen 🎙-Knopf; lässt Safari die Spracherkennung im eingebetteten Werkzeug nicht zu, übernimmt die **Tafel selbst** das Zuhören und schickt den Text ins Werkzeug.
+  **Wichtig:** In der **App vom Home-Bildschirm** sperrt iPadOS die Web-Spracherkennung – die Tafel merkt das nach
+  ein paar Sekunden, blendet den Hinweis „Mikrofon-Taste der Tastatur verwenden“ ein und lässt das Textfeld mit
+  Tastatur offen (dort funktioniert das iPad-Diktat immer). Im **Safari-Browser** läuft das Diktat direkt; Safari
+  braucht dafür „Siri & Diktat“ und eine Internetverbindung. Auch **Mindmap** und **Pinnwand** haben einen 🎙-Knopf; lässt Safari die Spracherkennung im eingebetteten Werkzeug nicht zu, übernimmt die **Tafel selbst** das Zuhören und schickt den Text ins Werkzeug.
 - **Mindmap** (Schreibwerkzeuge): Thema in der Mitte; **+ Unterpunkt** / **+ Nachbar** hängen Äste an
   (neuer Knoten wird automatisch frei platziert und sofort beschriftet), Knoten **antippen** = auswählen,
   **nochmal antippen** = Text ändern (Enter fertig, Esc abbrechen, Tab = weiterer Unterpunkt), **ziehen** =
