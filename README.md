@@ -154,6 +154,11 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
 - **Projekte / Klassen** (Einstellungen): mehrere Projekte (z. B. „Mathe 6a", „Physik 11c")
   anlegen, **umbenennen**, dazwischen **wechseln** und **schließen**. Jedes Projekt hat eigene
   Seiten **und** eine eigene Klassenliste. Alles wird automatisch im Browser gesichert.
+  Gespeichert wird in der **IndexedDB** des Browsers (genug Platz auch für Fotos und PDF-Seiten; ältere Projekte
+  aus dem kleinen localStorage werden beim ersten Öffnen automatisch übernommen). Eingefügte Fotos werden auf
+  höchstens 2400 px an der langen Seite verkleinert. Scheitert das Speichern trotzdem, erscheint ein Hinweis
+  (dann über „Speichern“ als Datei sichern). Nach dem Zurückwechseln aus einer anderen App prüft die Tafel
+  die Bildschirmgröße nach, damit die Zeichenfläche wieder den ganzen Bildschirm füllt.
   **„Speichern und schließen"** sichert das Projekt zuerst als `.tafel`-Datei und entfernt es
   danach (nach Rückfrage) aus der App – später einfach über „Laden" wieder öffnen.
 - **Reihen automatisch fortsetzen:** Zwei (oder mehr) Zellen markieren und am kleinen Quadrat unten

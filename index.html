@@ -1053,7 +1053,13 @@ const $=id=>document.getElementById(id);
 
 function resize(){ invalidateSnap(); dpr=Math.max(1,window.devicePixelRatio||1); W=innerWidth; H=innerHeight;
   cv.width=Math.round(W*dpr); cv.height=Math.round(H*dpr); cv.style.width=W+'px'; cv.style.height=H+'px'; markDirty(); }
-addEventListener('resize',()=>{ resize(); placePopovers(); positionProps(); positionAnnoToggle(); });
+function onViewResize(){ resize(); placePopovers(); positionProps(); positionAnnoToggle(); }
+addEventListener('resize',onViewResize);
+/* iPad: Nach dem Zurückwechseln aus einer anderen App stimmt die Größe manchmal erst verspätet (halber Bildschirm) –
+   loop() vergleicht deshalb laufend, hier zusätzlich nachmessen */
+const recheckView=()=>[0,120,400,1000].forEach(t=>setTimeout(()=>{ if(innerWidth!==W||innerHeight!==H||cv.width!==Math.round(innerWidth*Math.max(1,window.devicePixelRatio||1))) onViewResize(); },t));
+addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') recheckView(); });
+addEventListener('pageshow',recheckView); addEventListener('focus',recheckView); addEventListener('orientationchange',recheckView);
 const toWorld=(x,y)=>({x:(x-ox)/scale, y:(y-oy)/scale});
 const toScreen=(x,y)=>({x:x*scale+ox, y:y*scale+oy});
 
@@ -1323,7 +1329,7 @@ function redraw(){
   syncEmbeds();
   dirty=false;
 }
-function loop(){ if(dirty||laser.length){ if(laser.length)markDirty(); redraw(); } requestAnimationFrame(loop); }
+function loop(){ if(innerWidth!==W||innerHeight!==H) onViewResize(); if(dirty||laser.length){ if(laser.length)markDirty(); redraw(); } requestAnimationFrame(loop); }
 
 /* ---- Lineal (bleibendes Overlay, unabhängig vom aktiven Werkzeug) ---- */
 const RULCOL='#286edc';
@@ -3679,21 +3685,39 @@ const projKey=id=>'tafel_proj_'+id;
 const DEFSET=()=>({bgColor:'white',pattern:'grid',penOnly:true,usePressure:true,fingerSelect:true,patSize:{}});
 const curProjName=()=>{ const p=projects.find(x=>x.id===activeId); return p?p.name:'Projekt'; };
 function saveIndex(){ try{ localStorage.setItem('tafel_index',JSON.stringify({activeId,list:projects})); }catch(e){} }
-function saveCurrentProject(){ if(activeId){ try{ localStorage.setItem(projKey(activeId),serialize()); }catch(e){} } }
+/* Projekte liegen in IndexedDB (viel Platz, auch für Fotos/PDF-Seiten). localStorage fasst nur ca. 5 MB für ALLE Klassen –
+   dort schlug das Speichern mit Bildern still fehl, und beim Klassenwechsel kam ein alter Stand ohne Bild zurück. */
+const PDB=(()=>{ let dbp=null;
+  const open=()=>dbp||(dbp=new Promise((res,rej)=>{ if(!window.indexedDB){ rej(new Error('noidb')); return; }
+    const r=indexedDB.open('tafel',1); r.onupgradeneeded=()=>{ if(!r.result.objectStoreNames.contains('projects')) r.result.createObjectStore('projects'); };
+    r.onsuccess=()=>res(r.result); r.onerror=()=>{ dbp=null; rej(r.error); }; }));
+  const run=(mode,fn)=>open().then(db=>new Promise((res,rej)=>{ const t=db.transaction('projects',mode), q=fn(t.objectStore('projects'));
+    t.oncomplete=()=>res(q&&q.result); t.onerror=t.onabort=()=>rej(t.error||new Error('tx')); }));
+  return { get:id=>run('readonly',st=>st.get(id)), put:(id,v)=>run('readwrite',st=>st.put(v,id)), del:id=>run('readwrite',st=>st.delete(id)) }; })();
+try{ if(navigator.storage&&navigator.storage.persist) navigator.storage.persist(); }catch(e){}
+const projCache=new Map(); let projLoading=false, saveWarned=false;
+function saveCurrentProject(){ if(!activeId||projLoading) return; const id=activeId; let str; try{ str=serialize(); }catch(e){ return; } projCache.set(id,str);
+  PDB.put(id,str).then(()=>{ saveWarned=false; try{ localStorage.removeItem(projKey(id)); }catch(e){} })   // alte Kopie im kleinen Speicher freigeben
+    .catch(()=>{ try{ localStorage.setItem(projKey(id),str); }catch(e){ if(!saveWarned){ saveWarned=true; toast('⚠️ Speicher voll – bitte das Projekt über „Speichern“ als Datei sichern'); } } }); }
 function renderStudentsInfo(){ const n=(doc.students||[]).length; $('classInfo').textContent=n?(n+' Namen in „'+curProjName()+'"'):('Keine Namen in „'+curProjName()+'". Direkt eintippen oder CSV importieren.');
   if(document.activeElement!==$('classText')) $('classText').value=(doc.students||[]).join('\n'); }
 $('classText').addEventListener('input',()=>{ doc.students=$('classText').value.split('\n').map(s=>s.trim()).filter(Boolean); refreshClassWin(); nameUsed=new Set(); const n=doc.students.length; $('classInfo').textContent=n?(n+' Namen in „'+curProjName()+'"'):('Keine Namen in „'+curProjName()+'".'); scheduleAutosave(); });
 function renderProjects(){ [ 'projectSelect','barProject' ].forEach(id=>{ const sel=$(id); if(!sel)return; sel.innerHTML=''; projects.forEach(p=>{const o=document.createElement('option');o.value=p.id;o.textContent=p.name;sel.appendChild(o);}); sel.value=activeId; }); renderStudentsInfo(); refreshClassWin(); }
 function blankDoc(name){ doc.pages=[newPage()]; doc.cur=0; doc.settings=DEFSET(); doc.students=[]; doc.notes=''; doc.duties=null; doc.seating=null; doc.stickers=[]; doc.marks={cats:MARK_DEF(),counts:{},grades:{},texts:{},v:4}; doc.name=name; nameUsed=new Set(); applySettingsUI(); }
 /* Beim Wechsel der Klasse fällige Termine/Erinnerungen dieser Klasse nachholen */
-function loadProject(id){ const s=localStorage.getItem(projKey(id)); activeId=id; setTimeout(checkEvents,600); if(s){ deserialize(s); } else { blankDoc((projects.find(p=>p.id===id)||{}).name||'Projekt'); } nameUsed=new Set(); }
-function switchProject(id){ if(id===activeId)return; saveCurrentProject(); loadProject(id); goPage(0); saveIndex(); renderProjects(); }
+async function loadProject(id){ projLoading=true;
+  let s=projCache.get(id); if(s==null){ try{ s=await PDB.get(id); }catch(e){} }
+  if(s==null){ try{ s=localStorage.getItem(projKey(id)); }catch(e){} }                 // ältere Versionen: noch im localStorage
+  activeId=id; projLoading=false; setTimeout(checkEvents,600);
+  if(s){ try{ deserialize(s); }catch(e){ blankDoc((projects.find(p=>p.id===id)||{}).name||'Projekt'); } } else { blankDoc((projects.find(p=>p.id===id)||{}).name||'Projekt'); }
+  nameUsed=new Set(); }
+async function switchProject(id){ if(id===activeId)return; saveCurrentProject(); await loadProject(id); goPage(0); saveIndex(); renderProjects(); }
 function newProject(){ const inp=prompt('Name des neuen Projekts (z. B. Mathe 6a):',''); if(inp===null)return; const nm=(inp.trim()||('Projekt '+(projects.length+1)));
   saveCurrentProject(); const id=uid(); projects.push({id,name:nm}); activeId=id; blankDoc(nm); goPage(0); saveCurrentProject(); saveIndex(); renderProjects(); toast('Projekt „'+nm+'" angelegt'); }
 function renameProject(){ const p=projects.find(x=>x.id===activeId); if(!p)return; const n=prompt('Projektname:',p.name); if(n===null)return; p.name=n.trim()||p.name; doc.name=p.name; saveIndex(); saveCurrentProject(); renderProjects(); }
-function closeProject(force){ if(!activeId)return; if(!force && !confirm('Projekt „'+curProjName()+'" schließen und aus dieser App entfernen?\n(Vorher ggf. über „Speichern" als Datei sichern.)'))return;
-  localStorage.removeItem(projKey(activeId)); projects=projects.filter(p=>p.id!==activeId);
-  if(projects.length){ loadProject(projects[0].id); } else { const id=uid(); projects=[{id,name:'Projekt 1'}]; activeId=id; blankDoc('Projekt 1'); }
+async function closeProject(force){ if(!activeId)return; if(!force && !confirm('Projekt „'+curProjName()+'" schließen und aus dieser App entfernen?\n(Vorher ggf. über „Speichern" als Datei sichern.)'))return;
+  const gone=activeId; try{ localStorage.removeItem(projKey(gone)); }catch(e){} projCache.delete(gone); PDB.del(gone).catch(()=>{}); projects=projects.filter(p=>p.id!==gone);
+  if(projects.length){ await loadProject(projects[0].id); } else { const id=uid(); projects=[{id,name:'Projekt 1'}]; activeId=id; blankDoc('Projekt 1'); }
   goPage(0); saveIndex(); saveCurrentProject(); renderProjects(); toast('Projekt geschlossen'); }
 $('projectSelect').onchange=function(){ switchProject(this.value); };
 $('barProject').onchange=function(){ switchProject(this.value); };
@@ -3759,7 +3783,15 @@ async function addAudioFile(f){ const nm=f.name||'Ton', ext=((nm.split('.').pop(
   toast(keep?('Audio „'+nm+'" eingefügt'):'Audio eingefügt – über 4 MB, wird nicht mitgespeichert');}
 function placeImageObject(url){ const im=new Image(); const finish=()=>{ let w=im.width||300,h=im.height||200; const k=Math.min(1,(W*0.6/scale)/w,(H*0.6/scale)/h); w*=k; h*=k; const c=toWorld(W/2,H/2);
   const o={type:'image',id:uid(),x:c.x-w/2,y:c.y-h/2,w,h,src:url,_img:im,rot:0,groupId:null}; pushUndo(); page().objects.push(o); setMode('write'); setTool('select'); selection=[o]; refreshProps(); markDirty(); scheduleAutosave(); }; im.onload=finish; im.src=url; }
-function addImageObject(url){ if(insAsPage()){ addBgPage(url,false); toast('Bild als eigene Seite eingefügt'); return; } placeImageObject(url); toast('Bild eingefügt – verschieben/skalieren/drehen mit dem Auswahl-Werkzeug'); }
+/* Fotos vom iPad sind oft 12 MP groß – für die Tafel reichen 2400 px an der langen Seite */
+function shrinkImage(url,max){ max=max||2400; return new Promise(res=>{ const im=new Image();
+  im.onload=()=>{ const w=im.naturalWidth, h=im.naturalHeight, k=Math.min(1,max/Math.max(w,h)); if(k>=1&&url.length<1.6e6){ res(url); return; }
+    try{ const c=document.createElement('canvas'); c.width=Math.round(w*k); c.height=Math.round(h*k); const g=c.getContext('2d');
+      const png=/^data:image\/(png|gif|webp)/.test(url)&&c.width*c.height<1.5e6;   // kleine PNGs (Transparenz) bleiben PNG
+      if(!png){ g.fillStyle='#fff'; g.fillRect(0,0,c.width,c.height); } g.drawImage(im,0,0,c.width,c.height);
+      const out=png?c.toDataURL('image/png'):c.toDataURL('image/jpeg',0.86); res(out.length<url.length?out:url); }catch(e){ res(url); } };
+  im.onerror=()=>res(url); im.src=url; }); }
+async function addImageObject(url){ url=await shrinkImage(url); if(insAsPage()){ addBgPage(url,false); toast('Bild als eigene Seite eingefügt'); return; } placeImageObject(url); toast('Bild eingefügt – verschieben/skalieren/drehen mit dem Auswahl-Werkzeug'); }
 /* Aus Zwischenablage in die Eingabefelder einfügen */
 document.querySelectorAll('.pastebtn[data-paste]').forEach(b=>b.onclick=async()=>{ try{ const t=await navigator.clipboard.readText(); if(t&&t.trim()){ $(b.dataset.paste).value=t.trim(); toast('Eingefügt'); } else toast('Zwischenablage leer'); }catch(err){ toast('Zwischenablage nicht verfügbar – bitte lange ins Feld tippen und „Einfügen"'); } });
 const fileToDataURL=f=>new Promise(r=>{const fr=new FileReader();fr.onload=()=>r(fr.result);fr.readAsDataURL(f);});
@@ -3850,8 +3882,8 @@ function runAutosave(){ if(!saveDue)return;
 function saveNow(){ if(!saveDue)return; clearTimeout(autosaveTimer); lastSaveT=performance.now(); saveDue=false; saveCurrentProject(); }
 addEventListener('visibilitychange',()=>{ if(document.visibilityState==='hidden') saveNow(); });   // beim Wegwischen/Sperren sicher sichern
 addEventListener('pagehide',saveNow);
-function initProjects(){ let idx=null; try{ idx=JSON.parse(localStorage.getItem('tafel_index')||'null'); }catch(e){}
-  if(idx && idx.list && idx.list.length){ projects=idx.list; activeId=(idx.activeId && projects.some(p=>p.id===idx.activeId))?idx.activeId:projects[0].id; loadProject(activeId); }
+async function initProjects(){ let idx=null; try{ idx=JSON.parse(localStorage.getItem('tafel_index')||'null'); }catch(e){}
+  if(idx && idx.list && idx.list.length){ projects=idx.list; const first=(idx.activeId && projects.some(p=>p.id===idx.activeId))?idx.activeId:projects[0].id; await loadProject(first); }
   else { const id=uid(); const old=localStorage.getItem('tafel_autosave');
     if(old){ projects=[{id,name:'Projekt 1'}]; activeId=id; try{ deserialize(old); }catch(e){ blankDoc('Projekt 1'); } doc.name='Projekt 1'; saveCurrentProject(); localStorage.removeItem('tafel_autosave'); }
     else { projects=[{id,name:'Projekt 1'}]; activeId=id; doc.name='Projekt 1'; saveCurrentProject(); }
