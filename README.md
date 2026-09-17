@@ -611,6 +611,9 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
 - **Stromkreis** (Mathe & Physik): Schaltungen zeichnen und simulieren. Einfügen als eigene Seite oder
   bewegliches Objekt; Schriftgröße über **A−/A+** im Werkzeug oder im **Kontextmenü** (dort auch fett/kursiv) –
   eine Änderung dort setzt die laufende Simulation (z. B. geladene Kondensatoren) nicht zurück.
+  - **Werkzeugleiste:** Links bleiben **Neu, Speichern, Laden, Schließen, Auswahl und Leitung** immer sichtbar,
+    rechts **Radierer, Zurück, Vor und Vorlagen**. Nur die **Bauteile dazwischen** werden seitlich gescrollt
+    (weiche Kanten zeigen an, dass es weitergeht); ist das Fenster sehr schmal, zeigen die festen Knöpfe nur ihr Symbol.
   - **Bauteile:** Quelle (Gleichspannung, U einstellbar), **Wechselspannungsquelle** (Scheitelwert Û und
     **Frequenz f** einstellbar, z. B. 0,5 Hz zum Zuschauen), Schalter, **Wechselschalter**, Widerstand,
     Lampe (leuchtet je nach Leistung), Diode, **Transistor (NPN)**, Motor (dreht sich je nach Strom),
