@@ -1011,8 +1011,8 @@
 <script src="vendor/pdf.min.js"></script>
 <script src="vendor/jspdf.umd.min.js"></script>
 <script src="vendor/qrcode.min.js"></script>
-<script src="pptx.js"></script>
-<script src="speech.js"></script>
+<script src="pptx.js?v=189"></script>
+<script src="speech.js?v=189"></script>
 <script>
 "use strict";
 if(window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc='vendor/pdf.worker.min.js';
@@ -1825,7 +1825,7 @@ function commitText(){ stopDictation(); if(!editing)return; const txt=TE.value.r
   TE.style.display='none'; TE.value=''; editing=null; scheduleAutosave(); markDirty(); }
 
 /* ---- Diktierstift: Textfeld öffnen und gesprochene Sprache hineinschreiben ---- */
-let dictRec=null;
+let dictRec=null, dictHush=null;
 function placeDictBar(){ const b=$('dictBar'); if(!b.classList.contains('show'))return; const r=TE.getBoundingClientRect();
   b.style.left=Math.max(8,Math.min(innerWidth-b.offsetWidth-8,r.left))+'px'; b.style.top=Math.min(innerHeight-b.offsetHeight-8,r.bottom+8)+'px'; }
 function startDictation(w,existing){
@@ -1835,13 +1835,18 @@ function startDictation(w,existing){
   const pre=TE.value.replace(/\s+$/,'');
   TE.setAttribute('inputmode','none');                 // keine Bildschirmtastatur, solange diktiert wird (Fokus folgt erst gleich)
   const b=$('dictBar'); $('dictMsg').textContent='Hört zu …'; b.classList.add('show'); setTimeout(placeDictBar,20);
+  const tok={};                                       // erst den Platzhalter setzen: Fehler/Ende können sofort kommen
+  dictRec=tok; clearTimeout(dictHush);
+  dictHush=setTimeout(()=>{ if(dictRec===tok&&!tok.got) $('dictMsg').textContent='Noch nichts gehört – lauter sprechen?'; },6000);
   const rec=TafelSpeech.start({
-    onText:(t)=>{ if(dictRec!==rec||!editing)return; TE.value=pre?(pre+(pre.endsWith('\n')?'':' ')+t):(t.charAt(0).toUpperCase()+t.slice(1)); autoGrow(); placeDictBar(); },
-    onEnd:()=>{ if(dictRec===rec) endDictation(); },
-    onError:c=>{ if(dictRec!==rec)return; toast(TafelSpeech.errText(c)); endDictation(); } });
-  dictRec=rec; if(!rec) endDictation(); }
-function endDictation(){ dictRec=null; $('dictBar').classList.remove('show'); TE.removeAttribute('inputmode'); }
-function stopDictation(){ const r=dictRec; if(!r&&!$('dictBar').classList.contains('show'))return; endDictation(); if(r) r.stop(); }
+    onText:(t)=>{ if(dictRec!==tok||!editing)return; tok.got=true; $('dictMsg').textContent='Hört zu …';
+      TE.value=pre?(pre+(pre.endsWith('\n')?'':' ')+t):(t.charAt(0).toUpperCase()+t.slice(1)); autoGrow(); placeDictBar(); },
+    onEnd:()=>{ if(dictRec===tok) endDictation(); },
+    onError:c=>{ if(dictRec!==tok)return; toast(TafelSpeech.errText(c)); endDictation(); } });
+  if(!rec){ if(dictRec===tok){ endDictation(); toast('Spracherkennung ließ sich nicht starten'); } return; }
+  tok.stop=()=>rec.stop(); }
+function endDictation(){ dictRec=null; clearTimeout(dictHush); $('dictBar').classList.remove('show'); $('dictMsg').textContent='Hört zu …'; TE.removeAttribute('inputmode'); }
+function stopDictation(){ const r=dictRec; if(!r&&!$('dictBar').classList.contains('show'))return; endDictation(); if(r&&r.stop) r.stop(); }
 $('dictDone').addEventListener('pointerdown',e=>e.preventDefault());   // Fokus im Textfeld lassen
 $('dictDone').onclick=()=>{ stopDictation(); commitText(); };
 $('dictStop').addEventListener('pointerdown',e=>e.preventDefault());

@@ -1,5 +1,5 @@
 /* Service Worker – macht die Tafel offline-fähig (App-Shell + Bibliotheken cachen). */
-const CACHE = 'tafel-v188';
+const CACHE = 'tafel-v189';
 const ASSETS = [
   './',
   'index.html',
@@ -36,7 +36,12 @@ const ASSETS = [
 ];
 
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));
+  // mit cache:'reload' laden, damit nie eine alte Kopie aus dem Browser-Cache in den neuen Cache wandert
+  e.waitUntil(caches.open(CACHE).then(async c => {
+    await Promise.all(ASSETS.map(async u => {
+      try { const res = await fetch(u, {cache: 'reload'}); if (res.ok) await c.put(u, res); } catch (err) {}
+    }));
+  }).then(() => self.skipWaiting()));
 });
 self.addEventListener('activate', e => {
   e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim()));
@@ -46,7 +51,7 @@ self.addEventListener('fetch', e => {
   // Nur eigene Dateien aus dem Cache bedienen; Einbettungen (YouTube/GeoGebra) immer aus dem Netz.
   if (url.origin !== location.origin) return;
   e.respondWith(
-    caches.match(e.request).then(hit => hit || fetch(e.request).then(res => {
+    caches.match(e.request).then(hit => hit || caches.match(e.request, {ignoreSearch: true})).then(hit => hit || fetch(e.request).then(res => {
       if (e.request.method === 'GET' && res.ok) { const copy = res.clone(); caches.open(CACHE).then(c => c.put(e.request, copy)); }
       return res;
     }))
