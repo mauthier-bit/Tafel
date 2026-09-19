@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>Baumdiagramm</title>
 <style>
-  *{box-sizing:border-box;}
+  *{box-sizing:border-box;} [hidden]{display:none!important;}
   html,body{margin:0;height:100%;font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#1f2430;overflow:hidden;}
   #app{display:flex;flex-direction:column;height:100%;}
   #ctrl{flex:none;display:flex;gap:12px;align-items:center;padding:6px 10px;border-bottom:1px solid #e6eaf0;font-size:13px;flex-wrap:wrap;}
@@ -26,6 +26,14 @@
   .nin{pointer-events:auto;width:calc(var(--fs,13px)*4.4);font-size:var(--fs,13px);padding:1px 3px;border:1px solid #2563eb;border-radius:4px;text-align:center;font-family:inherit;}
   .nfreq{pointer-events:none;font-size:calc(var(--fs,13px)*0.9);color:#7c3aed;font-variant-numeric:tabular-nums;background:rgba(255,255,255,.88);padding:0 3px;border-radius:3px;white-space:nowrap;font-weight:var(--fwm,600);}
   .ovl{text-decoration:overline;}
+  #vennBox{flex:none;padding:0 10px 10px;} #vennBox[hidden]{display:none;} #vennBox canvas{width:100%;max-width:520px;height:auto;display:block;}
+  #bVenn{border:1px solid #cfd6e0;background:#fff;border-radius:7px;padding:4px 9px;font:600 13px -apple-system,sans-serif;cursor:pointer;color:#1f2430;}
+  #bVenn.on{background:#e8f0fe;border-color:#93b4f5;}
+  #bSel{border:1px solid #cfd6e0;background:#fff;border-radius:7px;padding:4px 9px;font:600 13px -apple-system,sans-serif;cursor:pointer;color:#1f2430;}
+  #bSel.on{background:#fef3c7;border-color:#f59e0b;}
+  input.pin.hl,input.leaf.hl{background:#fde68a;border-color:#f59e0b;}
+  #vf4 td.hl,#vf4 th.hl{background:#fde68a!important;}
+  body.pick input.pin,body.pick input.leaf{cursor:pointer;}
   #bVf{border:1px solid #cfd6e0;background:#fff;border-radius:7px;padding:4px 9px;font:600 13px -apple-system,sans-serif;cursor:pointer;color:#1f2430;}
   #bVf.on{background:#e8f0fe;border-color:#93b4f5;}
   #vf4{flex:none;padding:4px 10px 10px;} #vf4[hidden]{display:none;}
@@ -43,13 +51,15 @@
     <label>Stufen <input id="stufen" type="number" min="1" max="4" value="2"></label>
     <label>Verzweigungen <input id="aeste" type="number" min="2" max="4" value="2"></label>
     <label title="Stichprobenumfang – wenn gesetzt, erscheinen unter den Ereignissen die absoluten Häufigkeiten">Stichprobe n <input id="nsize" type="number" min="0" placeholder="–" style="width:78px"></label>
-    <button type="button" id="bVf" title="Zugehörige Vierfeldertafel zeigen (nur bei 2 Stufen und 2 Verzweigungen)">▦ Vierfeldertafel</button><span id="shotBtns" style="display:inline-flex;gap:5px;margin-left:auto;order:9"><button type="button" id="fsM" title="Schrift kleiner">A−</button><button type="button" id="fsP" title="Schrift größer">A+</button></span><button type="button" id="bCalc" title="Fehlende Wahrscheinlichkeiten ergänzen">Berechnen</button><button type="button" id="bClr" title="Berechnete (blaue) Werte entfernen">Berechnete leeren</button><span id="bmsg"></span>
+    <button type="button" id="bVf" title="Zugehörige Vierfeldertafel zeigen (nur bei 2 Stufen und 2 Verzweigungen)">▦ Vierfeldertafel</button><button type="button" id="bVenn" title="Venn-Diagramm zeigen (bis 3 Stufen, je 2 Verzweigungen)">◯ Venn</button><button type="button" id="bSel" title="Auswahl-Modus: Ast, Pfad, Zelle oder Teilmenge antippen – überall farbig hervorgehoben">👆 Auswahl</button><span id="shotBtns" style="display:inline-flex;gap:5px;margin-left:auto;order:9"><button type="button" id="fsM" title="Schrift kleiner">A−</button><button type="button" id="fsP" title="Schrift größer">A+</button></span><button type="button" id="bCalc" title="Fehlende Wahrscheinlichkeiten ergänzen">Berechnen</button><button type="button" id="bClr" title="Berechnete (blaue) Werte entfernen">Berechnete leeren</button><span id="bmsg"></span>
     <span style="color:#8a93a2;flex-basis:100%">Wahrscheinlichkeiten an die Äste und/oder rechts an die Pfade eintragen (Zahl, 0,3, 3/10 oder 30 %) → „Berechnen“ · Ereignisnamen über den Knoten antippen (nichtA → Ā)</span>
   </div>
   <div id="area"><canvas id="cv"></canvas></div>
   <div id="vf4" hidden></div>
+  <div id="vennBox" hidden><canvas id="venn"></canvas></div>
 </div>
 <script src="shot.js"></script>
+<script src="venn.js"></script>
 <script>
 "use strict";
 const $=id=>document.getElementById(id), area=$('area'), cv=$('cv'), ctx=cv.getContext('2d');
@@ -71,7 +81,9 @@ function build(extra,extraL){ extra=(typeof extra==='number')?extra:0; extraL=(t
   // Äste
   ctx.strokeStyle='#64748b'; ctx.lineWidth=1.6;
   for(let k=0;k<stages;k++){ for(let pi=0;pi<pos[k].length;pi++){ for(let bi=0;bi<branches;bi++){ const cj=pi*branches+bi, P=pos[k][pi], C=pos[k+1][cj];
-    ctx.beginPath(); ctx.moveTo(P.x,P.y); ctx.lineTo(C.x,C.y); ctx.stroke();
+    const hiB=k===0&&pick.size>0&&leavesUnder(k,cj).every(x=>pick.has(x));   // nur die erste Stufe einfärben
+    ctx.save(); if(hiB){ ctx.strokeStyle='#f59e0b'; ctx.lineWidth=Math.max(3.5,fontSize/3); }
+    ctx.beginPath(); ctx.moveTo(P.x,P.y); ctx.lineTo(C.x,C.y); ctx.stroke(); ctx.restore();
     const key='p_'+k+'_'+cj; const inp=document.createElement('input'); inp.className='pin'+(calcSet.has(key)?' calc':''); inp.dataset.key=key; inp.inputMode='decimal'; inp.value=probs[key]||''; inp.placeholder='P';
     inp.style.left=(P.x*.45+C.x*.55)+'px'; inp.style.top=(P.y*.45+C.y*.55)+'px';
     inp.oninput=()=>{ probs[key]=inp.value; onEdit(key,inp); };
@@ -90,7 +102,7 @@ const fmtF=v=>String(Math.round(v*100)/100).replace('.',',');
 function drawLabels(pos){ area.querySelectorAll('.nbox').forEach(e=>e.remove()); const n=num(nsize); const hasN=(n!==null&&n>=0);
   for(let k=0;k<=stages;k++){ pos[k].forEach((nd,cj)=>{ if(k===0&&!hasN)return; const box=document.createElement('div'); box.className='nbox'; box.dataset.k=k; box.dataset.cj=cj; box.style.left=nd.x+'px'; box.style.top=(nd.y-6)+'px';
     if(k>0){ const key='n_'+k+'_'+cj; const lab=document.createElement('span'); lab.className='nlab'; lab.innerHTML=fmtName(names[key]); lab.title='Ereignis eingeben (nichtA → Ā)';
-      lab.onclick=()=>{ const inp=document.createElement('input'); inp.className='nin'; inp.value=names[key]||''; inp.placeholder='Ereignis';
+      lab.onclick=()=>{ if(pickMode) return; const inp=document.createElement('input'); inp.className='nin'; inp.value=names[key]||''; inp.placeholder='Ereignis';
         const done=()=>{ names[key]=inp.value.trim(); if(!names[key])delete names[key]; lab.innerHTML=fmtName(names[key]); if(inp.parentNode)inp.replaceWith(lab); sync(); };
         inp.onblur=done; inp.onkeydown=e=>{ if(e.key==='Enter'){ e.preventDefault(); inp.blur(); } }; lab.replaceWith(inp); inp.focus(); inp.select(); };
       box.appendChild(lab); }
@@ -114,7 +126,7 @@ function clearCalcVals(){ calcSet.forEach(k=>{ if(k.startsWith('p_')) delete pro
   area.querySelectorAll('input.pin,input.leaf').forEach(i=>{ if(calcSet.has(i.dataset.key)){ i.value=''; i.classList.remove('calc'); } }); calcSet.clear(); }
 function onEdit(key,el){ el.classList.remove('bad'); if(calcSet.has(key)){ calcSet.delete(key); el.classList.remove('calc'); }
   if(calcSet.size){ clearCalcVals(); setMsg('Eingaben geändert – „Berechnen“ tippen'); }
-  if(lastPos) drawLabels(lastPos); renderVf(); sync(); }
+  if(lastPos) drawLabels(lastPos); renderVf(); renderVenn(); sync(); }
 function computeTree(){ clearCalcVals(); const B=branches, S=stages, st={pct:false,frac:false,comma:false};
   const P=[], p=[]; for(let k=0;k<=S;k++){ P.push(new Array(Math.pow(B,k)).fill(undefined)); } P[0][0]=1;
   for(let k=0;k<S;k++){ p.push(new Array(Math.pow(B,k+1)).fill(undefined)); }
@@ -153,10 +165,10 @@ function computeTree(){ clearCalcVals(); const B=branches, S=stages, st={pct:fal
   else if(neg) setMsg('Achtung: Werte außerhalb von 0 bis 1 – Eingaben prüfen','err');
   else if(missing) setMsg('Nicht eindeutig – es fehlen noch Angaben ('+missing+' Werte offen)','err');
   else setMsg('✓ Vollständig berechnet','ok');
-  renderVf(); sync(); }
+  renderVf(); renderVenn(); sync(); }
 $('bCalc').addEventListener('pointerdown',e=>e.preventDefault()); $('bCalc').onclick=computeTree;
-$('bClr').onclick=()=>{ clearCalcVals(); setMsg(''); if(lastPos) drawLabels(lastPos); renderVf(); sync(); };
-function sync(){ if(window.parent===window) return; try{ parent.postMessage({type:'embed-data',data:{stages,branches,probs,leaves:leafVals,calc:[...calcSet],names,nsize,vf4:vf4On,fontSize,fontBold,fontItalic}},'*'); }catch(e){} }
+$('bClr').onclick=()=>{ clearCalcVals(); setMsg(''); if(lastPos) drawLabels(lastPos); renderVf(); renderVenn(); sync(); };
+function sync(){ if(window.parent===window) return; try{ parent.postMessage({type:'embed-data',data:{stages,branches,probs,leaves:leafVals,calc:[...calcSet],names,nsize,vf4:vf4On, venn:vennOn,fontSize,fontBold,fontItalic}},'*'); }catch(e){} }
 /* ---- Zugehörige Vierfeldertafel (nur 2 Stufen × 2 Äste) ---- */
 let vf4On=false;
 const vfOk=()=>stages===2&&branches===2;
@@ -168,28 +180,89 @@ function renderVf(){ const box=$('vf4'); if(!vf4On){ box.hidden=true; return; }
   box.hidden=false;
   if(!vfOk()){ box.innerHTML='<div style="font-size:12px;color:#8a93a2">Die Vierfeldertafel gibt es nur bei <b>2 Stufen</b> und <b>2 Verzweigungen</b>.</div>'; return; }
   const st=vfStyle(), f=v=>v===null||v===undefined?'<span class="miss">?</span>':esc(fmtV(v,st));
-  const A=fmtName(names['n_1_0']||'A'), nA=fmtName(names['n_1_1']||'nicht A');
-  const B=fmtName(names['n_2_0']||'B'), nB=fmtName(names['n_2_1']||'nicht B');
+  const std=['A','B'], ev=k=>names['n_'+k+'_0']||std[k-1],
+        gg=k=>names['n_'+(k)+'_1']||('nicht '+ev(k));               // Gegenereignis: eigener Name oder Ā
+  const A=fmtName(ev(1)), nA=fmtName(gg(1)), B=fmtName(ev(2)), nB=fmtName(gg(2));
   const v=[0,1,2,3].map(vfCell);
   const add=(x,y)=>(x===null||y===null||x===undefined||y===undefined)?null:x+y;
   const r0=add(v[0],v[1]), r1=add(v[2],v[3]), c0=add(v[0],v[2]), c1=add(v[1],v[3]), T=add(r0,r1);
+  const hl=ls=>(pick.size>0&&ls.every(i=>pick.has(i)))?' hl':'';
   box.innerHTML='<table><tr><th></th><th>'+B+'</th><th>'+nB+'</th><th class="sum">Σ</th></tr>'
-    +'<tr><th>'+A+'</th><td>'+f(v[0])+'</td><td>'+f(v[1])+'</td><td class="sum">'+f(r0)+'</td></tr>'
-    +'<tr><th>'+nA+'</th><td>'+f(v[2])+'</td><td>'+f(v[3])+'</td><td class="sum">'+f(r1)+'</td></tr>'
-    +'<tr><th class="sum">Σ</th><td class="sum">'+f(c0)+'</td><td class="sum">'+f(c1)+'</td><td class="sum">'+f(T)+'</td></tr></table>'; }
+    +'<tr><th>'+A+'</th><td data-l="0" class="'+hl([0]).trim()+'">'+f(v[0])+'</td><td data-l="1" class="'+hl([1]).trim()+'">'+f(v[1])+'</td><td class="sum'+hl([0,1])+'" data-l="0,1">'+f(r0)+'</td></tr>'
+    +'<tr><th>'+nA+'</th><td data-l="2" class="'+hl([2]).trim()+'">'+f(v[2])+'</td><td data-l="3" class="'+hl([3]).trim()+'">'+f(v[3])+'</td><td class="sum'+hl([2,3])+'" data-l="2,3">'+f(r1)+'</td></tr>'
+    +'<tr><th class="sum">Σ</th><td class="sum'+hl([0,2])+'" data-l="0,2">'+f(c0)+'</td><td class="sum'+hl([1,3])+'" data-l="1,3">'+f(c1)+'</td><td class="sum'+hl([0,1,2,3])+'" data-l="0,1,2,3">'+f(T)+'</td></tr></table>'; }
+$('vf4').addEventListener('click',e=>{ if(!pickMode) return; const td=e.target.closest('[data-l]'); if(!td) return;
+  setPick(td.dataset.l.split(',').map(Number)); });
+/* ---- Auswahl-Modus: Ast, Pfad, Tafelzelle oder Teilmenge antippen – überall hervorheben ---- */
+let pickMode=false, pick=new Set();
+const leafCount=()=>Math.pow(branches,stages);
+const leavesUnder=(k,cj)=>{ const step=Math.pow(branches,stages-k-1), out=[]; for(let i=0;i<step;i++) out.push(cj*step+i); return out; };
+function setPick(list){ const l=[...new Set(list)].sort((a,b)=>a-b);
+  const same=l.length===pick.size&&l.every(i=>pick.has(i));
+  pick=same?new Set():new Set(l); applyPick(); }
+function applyPick(){ build();                                    // Äste neu zeichnen, dabei entstehen die Felder neu
+  area.querySelectorAll('input.pin').forEach(i=>{ const m=/^p_(\d+)_(\d+)$/.exec(i.dataset.key||''); i.readOnly=pickMode; if(!m) return;
+    const first=(m[1]==='0'), ls=leavesUnder(+m[1],+m[2]);        // ab Stufe 2 stehen dort bedingte W. – die gibt es in Tafel/Venn nicht
+    i.classList.toggle('hl',first&&pick.size>0&&ls.every(x=>pick.has(x))); });
+  area.querySelectorAll('input.leaf').forEach(i=>{ const m=/^l_(\d+)$/.exec(i.dataset.key||''); i.readOnly=pickMode; if(!m) return;
+    i.classList.toggle('hl',pick.has(+m[1])); });
+  renderVf(); renderVenn(); }
+function setPickMode(on){ pickMode=on; $('bSel').classList.toggle('on',on); document.body.classList.toggle('pick',on);
+  if(!on) pick.clear();
+  applyPick(); setMsg(on?'Auswahl-Modus: Ast, Pfad, Zelle oder Teilmenge antippen (nochmal = abwählen)':''); }
+$('bSel').onclick=()=>setPickMode(!pickMode);
+const leavesWithBranch=(k,b)=>{ const out=[], div=Math.pow(branches,stages-k); for(let i=0;i<leafCount();i++) if(Math.floor(i/div)%branches===b) out.push(i); return out; };   // alle Pfade, die auf Stufe k diesen Ast nehmen
+area.addEventListener('click',e=>{ if(!pickMode) return;
+  const lab=e.target.closest('.nlab');
+  if(lab){ const box=lab.closest('.nbox'); if(box){ const k=+box.dataset.k, cj=+box.dataset.cj;
+      setPick(leavesWithBranch(k,cj%branches)); }                 // Ereignisname = alle Pfade mit diesem Ereignis
+    return; }
+  const el=e.target.closest('input.pin,input.leaf'); if(!el) return;
+  const key=el.dataset.key||''; let m=/^p_(\d+)_(\d+)$/.exec(key);
+  if(m){ if(m[1]!=='0'){ setMsg('Das ist eine bedingte Wahrscheinlichkeit – sie kommt in Tafel und Venn nicht vor. Ereignisnamen über dem Knoten antippen.','err'); return; }
+    setPick(leavesUnder(0,+m[2])); return; }
+  m=/^l_(\d+)$/.exec(key); if(m) setPick([+m[1]]); },true);
+
+/* ---- Venn-Diagramm: je Stufe eine Mengenblase (bis 3), Pfadwerte in den Bereichen ---- */
+let vennOn=false;
+const vennOk=()=>branches===2&&stages<=3;
+function vennName(k){ const raw=(names['n_'+k+'_0']||'').trim(); if(!raw) return 'A B C'.split(' ')[k-1];
+  const m=raw.match(/^nicht\s*(.+)$/i); return m?m[1]+'\u0304':raw; }
+function renderVenn(){ const box=$('vennBox'); if(!vennOn){ box.hidden=true; return; }
+  box.hidden=false;
+  if(!vennOk()){ box.innerHTML='<div style="font-size:12px;color:#8a93a2">Das Venn-Diagramm gibt es bis <b>3 Stufen</b> mit je <b>2 Verzweigungen</b> (eine Blase je Stufe).</div>'; return; }
+  if(!box.querySelector('canvas')) box.innerHTML='<canvas id="venn"></canvas>';
+  const st=vfStyle(), S=stages, vals={};
+  for(let idx=0;idx<Math.pow(2,S);idx++){ let key='';
+    for(let k=0;k<S;k++) key+=(((idx>>(S-1-k))&1)===0)?'1':'0';      // Zweig 0 = Ereignis, Zweig 1 = Gegenereignis
+    let v=num(leafVals['l_'+idx]); if(v===null) v=pathProb(S,idx);
+    vals[key]=(v===null||v===undefined)?'?':fmtV(v,st); }
+  const nm=[]; for(let k=1;k<=S;k++) nm.push(vennName(k));
+  TafelVenn.draw($('venn'),{names:nm,fs:Math.max(11,fontSize*1.05),bold:fontBold,italic:fontItalic,vals,hi:[...pick].map(i=>vennKey(i,S))}); }
+function vennKey(idx,S){ let key=''; for(let k=0;k<S;k++) key+=(((idx>>(S-1-k))&1)===0)?'1':'0'; return key; }
+function vennLeaf(key){ let idx=0; for(let k=0;k<key.length;k++) idx=idx*2+(key[k]==='1'?0:1); return idx; }
+$('vennBox').addEventListener('click',e=>{ if(!pickMode||!vennOk()) return; const cv=$('venn'); if(!cv) return;
+  const r=cv.getBoundingClientRect(), sc=cv.width/(window.devicePixelRatio||1)/r.width;
+  const key=TafelVenn.keyAt(cv,(e.clientX-r.left)*sc,(e.clientY-r.top)*sc);
+  if(key!==null) setPick([vennLeaf(key)]); });
+$('bVenn').addEventListener('pointerdown',e=>e.preventDefault());
+$('bVenn').onclick=()=>{ vennOn=!vennOn; $('bVenn').classList.toggle('on',vennOn);
+  if(vennOn&&!vennOk()) setMsg('Venn-Diagramm: bis 3 Stufen mit je 2 Verzweigungen','err');
+  renderVenn(); build(); sync(); };
+addEventListener('resize',()=>{ if(vennOn) renderVenn(); });
 $('bVf').addEventListener('pointerdown',e=>e.preventDefault());
 $('bVf').onclick=()=>{ vf4On=!vf4On; $('bVf').classList.toggle('on',vf4On);
   if(vf4On&&!vfOk()) setMsg('Vierfeldertafel: nur bei 2 Stufen und 2 Verzweigungen','err');
   renderVf(); build(); sync(); };
-if(window.TafelShot) TafelShot.buttons($('shotBtns'),()=>TafelShot.rasterize(vf4On?$('app'):area,{exclude:'.nph,#ctrl',pad:4}));
+if(window.TafelShot) TafelShot.buttons($('shotBtns'),()=>TafelShot.rasterize((vf4On||vennOn)?$('app'):area,{exclude:'.nph,#ctrl',pad:4}));
 for(const [id,d] of [['fsM',-1],['fsP',1]]){ $(id).addEventListener('pointerdown',e=>e.preventDefault()); $(id).onclick=()=>{ fontSize=Math.max(9,Math.min(36,(fontSize||13)+d)); build(); sync(); }; }
-$('stufen').oninput=()=>{ clearCalcVals(); setMsg(''); build(); renderVf(); sync(); };
-$('aeste').oninput=()=>{ clearCalcVals(); setMsg(''); build(); renderVf(); sync(); };
+$('stufen').oninput=()=>{ clearCalcVals(); setMsg(''); build(); renderVf(); renderVenn(); sync(); };
+$('aeste').oninput=()=>{ clearCalcVals(); setMsg(''); build(); renderVf(); renderVenn(); sync(); };
 $('nsize').oninput=()=>{ nsize=$('nsize').value; build(); sync(); };
 addEventListener('resize',build);
 addEventListener('message',e=>{ if(e.data&&e.data.type==='embed-data'&&e.data.data){ const d=e.data.data;
   if(d.stages){ stages=d.stages; $('stufen').value=d.stages; } if(d.branches){ branches=d.branches; $('aeste').value=d.branches; }
-  probs=d.probs||{}; leafVals=d.leaves||{}; calcSet=new Set(Array.isArray(d.calc)?d.calc:[]); names=d.names||{}; nsize=(d.nsize===undefined||d.nsize===null)?'':String(d.nsize); $('nsize').value=nsize; if(d.fontSize)fontSize=d.fontSize; fontBold=!!d.fontBold; fontItalic=!!d.fontItalic; vf4On=!!d.vf4; $('bVf').classList.toggle('on',vf4On); build(); renderVf();
+  probs=d.probs||{}; leafVals=d.leaves||{}; calcSet=new Set(Array.isArray(d.calc)?d.calc:[]); names=d.names||{}; nsize=(d.nsize===undefined||d.nsize===null)?'':String(d.nsize); $('nsize').value=nsize; if(d.fontSize)fontSize=d.fontSize; fontBold=!!d.fontBold; fontItalic=!!d.fontItalic; vf4On=!!d.vf4; $('bVf').classList.toggle('on',vf4On); vennOn=!!d.venn; $('bVenn').classList.toggle('on',vennOn); build(); renderVf(); renderVenn();
   if(!d.leaves&&!d.calc&&Object.values(probs).some(v=>String(v||'').trim())) setTimeout(computeTree,0);   // ältere Bäume: Pfadprodukte wie früher anzeigen
   } });
 window.addEventListener('load',()=>{ build(); try{ parent.postMessage({type:'embed-ready'},'*'); }catch(e){} });

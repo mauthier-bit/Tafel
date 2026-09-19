@@ -546,8 +546,20 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   (einmal zuerst A, einmal zuerst B) – mit den bedingten Wahrscheinlichkeiten an den Ästen (blau) und den
   Pfadwahrscheinlichkeiten rechts (violett); Prozent- und Bruch-Eingaben erscheinen auch im Baum so, Gegenereignisse
   mit Querstrich. Die Bäume aktualisieren sich bei jedem „Berechnen“ und wandern mit in „🖼 Tafel“/„📋 Kopieren“.
+  **„◯ Venn-Diagramm“** zeigt dieselben vier Werte als zwei Kreise in der Grundmenge Ω (Schnittmenge in der Mitte,
+  „weder noch“ unten rechts außerhalb).
+  **„👆 Auswahl“** schaltet in den **Auswahl-Modus**: Eine Tabellenzelle (auch eine Summe), im Baum ein **Ast der
+  ersten Stufe**, ein **Ereignisname der zweiten Stufe** oder ein **Pfadwert**, oder eine Teilmenge im Venn-Diagramm
+  antippen – die zugehörigen Ereignisse werden in **allen sichtbaren Darstellungen orange hervorgehoben** (nochmal
+  antippen = abwählen). Die **bedingten Wahrscheinlichkeiten an der zweiten Stufe** sind bewusst **nicht** wählbar
+  und werden nie eingefärbt: Sie kommen weder in der Tafel noch im Venn-Diagramm vor. Solange der Modus an ist, sind
+  die Felder gesperrt, damit nichts versehentlich überschrieben wird.
   „Berechnete leeren“ / „Alles leeren“. Ältere Tafeln (nur innere Felder) werden automatisch ergänzt. Die Schriftgröße aus dem Kontextmenü gilt für Ereignisse, **Gegenereignisse und das Σ-Zeichen** gleichermaßen. Oben rechts: **A−/A+** für die Schriftgröße (auch im Kontextmenü) und **🖼 Tafel / 📋 Kopieren**: Tabelle als Bild.
-- **Baumdiagramm** (Werkzeug): Stufen und Verzweigungen einstellbar. **„▦ Vierfeldertafel“** blendet bei
+- **Baumdiagramm** (Werkzeug): Stufen und Verzweigungen einstellbar. **„◯ Venn“** zeigt die Pfadwerte als **Venn-Diagramm** –
+  eine Mengenblase je Stufe, also 2 Kreise bei 2 Stufen und 3 Kreise bei 3 Stufen (nur bei je 2 Verzweigungen;
+  bei mehr Stufen erscheint ein Hinweis). **„👆 Auswahl“** hebt einen angetippten Ast der ersten Stufe, einen
+  Pfadwert, einen Ereignisnamen (= alle Pfade mit diesem Ereignis), eine Tafelzelle oder eine Venn-Teilmenge in allen
+  sichtbaren Darstellungen orange hervor; bedingte Wahrscheinlichkeiten ab der zweiten Stufe sind nicht wählbar. **„▦ Vierfeldertafel“** blendet bei
   **2 Stufen × 2 Verzweigungen** die zugehörige Vierfeldertafel unter dem Baum ein (Ereignisnamen und Zahlenformat
   wie im Baum; noch fehlende Werte stehen als „?“); sie wandert auch mit ins Bild („🖼 Tafel“/„📋 Kopieren“). Wahrscheinlichkeiten **an die Äste und/oder
   rechts an die Pfade** (Pfadwahrscheinlichkeiten) eintragen – beliebig gemischt – und **„Berechnen“** tippen: fehlende

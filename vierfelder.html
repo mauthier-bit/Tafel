@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>Vierfeldertafel</title>
 <style>
-  *{box-sizing:border-box;}
+  *{box-sizing:border-box;} [hidden]{display:none!important;}
   html,body{margin:0;height:100%;font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#1f2430;overflow:auto;}
   #wrap{padding:10px;}
   table{border-collapse:collapse;width:100%;table-layout:fixed;}
@@ -26,8 +26,12 @@
   #acts button{font-size:14px;padding:7px 14px;border-radius:9px;}
   #acts button.pri{background:#2563eb;border-color:#2563eb;color:#fff;}
   #acts button.on{background:#e8f0fe;border-color:#93b4f5;}
+  #acts #bSel.on{background:#fef3c7;border-color:#f59e0b;}
+  td.hl,th.hl{background:#fde68a!important;}
+  body.pick input.v{cursor:pointer;}
   #trees{margin-top:10px;display:flex;flex-direction:column;gap:6px;}
   #trees canvas{width:100%;display:block;}
+  #vennBox{margin-top:10px;} #vennBox canvas{width:100%;max-width:520px;height:auto;display:block;}
   #msg{font-size:13px;color:#64748b;}
   #msg.err{color:#dc2626;} #msg.ok{color:#16a34a;}
 </style>
@@ -41,10 +45,12 @@
     <tr><th class="lbl"><span class="ovl" id="La2">A</span></th><td><input class="v" data-k="c" inputmode="decimal"></td><td><input class="v" data-k="d" inputmode="decimal"></td><td class="sum"><input class="v" data-k="r1" inputmode="decimal"></td></tr>
     <tr><th class="sum">Σ</th><td class="sum"><input class="v" data-k="c0" inputmode="decimal"></td><td class="sum"><input class="v" data-k="c1" inputmode="decimal"></td><td class="sum"><input class="v" data-k="T" inputmode="decimal"></td></tr>
   </table>
-  <div id="acts"><button type="button" class="pri" id="bCalc">Berechnen</button><button type="button" id="bTree" title="Die beiden zugehörigen Baumdiagramme zeigen">🌳 Baumdiagramme</button><button type="button" id="bClearCalc" title="Nur die berechneten (blauen) Felder leeren">Berechnete leeren</button><button type="button" id="bClear">Alles leeren</button><span id="msg"></span></div>
+  <div id="acts"><button type="button" class="pri" id="bCalc">Berechnen</button><button type="button" id="bTree" title="Die beiden zugehörigen Baumdiagramme zeigen">🌳 Baumdiagramme</button><button type="button" id="bVenn" title="Venn-Diagramm der beiden Ereignisse zeigen">◯ Venn-Diagramm</button><button type="button" id="bSel" title="Auswahl-Modus: Zelle, Ast oder Teilmenge antippen – überall farbig hervorgehoben">👆 Auswahl</button><button type="button" id="bClearCalc" title="Nur die berechneten (blauen) Felder leeren">Berechnete leeren</button><button type="button" id="bClear">Alles leeren</button><span id="msg"></span></div>
   <div id="trees" hidden><canvas id="tree0"></canvas><canvas id="tree1"></canvas></div>
+  <div id="vennBox" hidden><canvas id="venn"></canvas></div>
 </div>
 <script src="shot.js"></script>
+<script src="venn.js"></script>
 <script>
 "use strict";
 const $=id=>document.getElementById(id);
@@ -97,7 +103,7 @@ function compute(){ clearCalc(false);
   else if(missing.length) setMsg('Nicht eindeutig – es fehlt noch mindestens ein passender Wert ('+missing.map(k=>NAME[k]).join(', ')+' offen).','err');
   else if(neg.length) setMsg('Achtung: '+(probMode?'Werte außerhalb von 0 bis 1':'negative Werte')+' ('+neg.map(k=>NAME[k]).join(', ')+') – Eingaben prüfen.','err');
   else setMsg('✓ Vollständig berechnet','ok');
-  drawTrees(); sync(); }
+  drawTrees(); drawVenn(); sync(); }
 /* ---- Baumdiagramme zur Tafel (erst A/Ā, dann B/B̄ – und umgekehrt) ---- */
 let treesOn=false;
 function readVals(){ const val={}, style={pct:false,frac:false,comma:false};
@@ -109,6 +115,7 @@ function readVals(){ const val={}, style={pct:false,frac:false,comma:false};
   if(!(Math.abs(val.T)>1e-12)) return null;
   return {val,style}; }
 function drawTree(cv,first,data){ const {val,style}=data, fs=Math.max(11,fontSize*0.8);
+  const order=first==='A'?[0,1,2,3]:[0,2,1,3];   // Pfade von oben nach unten → Elementarereignisse
   const A=$('La').value||'A', B=$('Lb').value||'B', neg=t=>t.length===1?t+'\u0304':'nicht '+t, nA=neg(A), nB=neg(B);
   /* erste Stufe, zweite Stufe, Pfadwert */
   const T=val.T;
@@ -126,44 +133,82 @@ function drawTree(cv,first,data){ const {val,style}=data, fs=Math.max(11,fontSiz
   c.setTransform(dpr,0,0,dpr,0,0); c.clearRect(0,0,W,H);
   c.fillStyle='#fff'; c.fillRect(0,0,W,H);
   const x0=fs*0.8, x1=W*0.34, x2=W*0.66, yMid=H/2, ys1=[H*0.26,H*0.74], ys2=[H*0.09,H*0.41,H*0.59,H*0.91];
+  const hiLeaf=k=>pick.has(order[k]), hiTop=i=>pick.size>0&&[0,1].every(j=>pick.has(order[i*2+j]));   // zweite Stufe = bedingte W. → nicht einfärben
   c.strokeStyle='#64748b'; c.lineWidth=Math.max(1.2,fs/11); c.lineCap='round';
   c.font=(fontItalic?'italic ':'')+(fontBold?'700 ':'600 ')+fs+'px -apple-system,BlinkMacSystemFont,sans-serif';
   c.textBaseline='middle';
-  const line=(ax,ay,bx,by,lab)=>{ c.beginPath(); c.moveTo(ax,ay); c.lineTo(bx,by); c.stroke();
+  const line=(ax,ay,bx,by,lab,hi)=>{ c.save(); if(hi){ c.strokeStyle='#f59e0b'; c.lineWidth=Math.max(3,fs/4); } c.beginPath(); c.moveTo(ax,ay); c.lineTo(bx,by); c.stroke(); c.restore();
     const mx=(ax+bx)/2, my=(ay+by)/2; c.save(); c.textAlign='center'; c.fillStyle='#1d4ed8';
     c.font=(fontItalic?'italic ':'')+'600 '+(fs*0.92)+'px -apple-system,sans-serif';
     const w=c.measureText(lab).width+6, off=(by<ay?-1:1)*fs*0.75;
     c.fillStyle='rgba(255,255,255,.9)'; c.fillRect(mx-w/2,my+off-fs*0.55,w,fs*1.1);
     c.fillStyle='#1d4ed8'; c.fillText(lab,mx,my+off); c.restore(); };
   c.textAlign='center'; c.fillStyle='#1f2430'; c.fillText('·',x0,yMid);
-  S.l1.forEach(([nm,v],i)=>{ line(x0+fs*0.5,yMid,x1-fs*1.1,ys1[i],txt(q(v,T)));
+  S.l1.forEach(([nm,v],i)=>{ line(x0+fs*0.5,yMid,x1-fs*1.1,ys1[i],txt(q(v,T)),hiTop(i));
     c.fillStyle='#1f2430'; c.textAlign='left'; c.fillText(nm,x1-fs*0.9,ys1[i]); });
   S.l2.forEach((pair,i)=>pair.forEach(([nm,v,base],j)=>{ const k=i*2+j;
-    line(x1+fs*0.9,ys1[i],x2-fs*1.1,ys2[k],txt(q(v,base)));
+    line(x1+fs*0.9,ys1[i],x2-fs*1.1,ys2[k],txt(q(v,base)),false);
     c.fillStyle='#1f2430'; c.textAlign='left'; c.fillText(nm,x2-fs*0.9,ys2[k]);
-    c.fillStyle='#7c3aed'; c.textAlign='left';
-    c.font=(fontItalic?'italic ':'')+'600 '+(fs*0.92)+'px -apple-system,sans-serif';
-    c.fillText(txt(q(S.leaf[k],T)),x2+fs*0.9,ys2[k]);
+    c.textAlign='left'; c.font=(fontItalic?'italic ':'')+'600 '+(fs*0.92)+'px -apple-system,sans-serif';
+    const lv=txt(q(S.leaf[k],T));
+    if(hiLeaf(k)){ const w2=c.measureText(lv).width+8; c.fillStyle='#fde68a'; c.fillRect(x2+fs*0.7,ys2[k]-fs*0.62,w2,fs*1.24); }
+    c.fillStyle='#7c3aed'; c.fillText(lv,x2+fs*0.9,ys2[k]);
     c.font=(fontItalic?'italic ':'')+(fontBold?'700 ':'600 ')+fs+'px -apple-system,BlinkMacSystemFont,sans-serif'; }));
   c.fillStyle='#8a93a2'; c.textAlign='left'; c.font='600 '+(fs*0.85)+'px -apple-system,sans-serif';
   c.fillText('zuerst '+(first==='A'?A:B), 2, fs*0.75); }
+function drawVenn(){ if(!vennOn) return; const data=readVals();
+  if(!data){ $('vennBox').hidden=true; setMsg('Für das Venn-Diagramm fehlen noch Werte – erst „Berechnen“.','err'); return; }
+  const {val,style}=data, A=$('La').value||'A', B=$('Lb').value||'B';
+  const t=v=>fmt(v,style);
+  $('vennBox').hidden=false;
+  const keyOf=['11','10','01','00'];
+  TafelVenn.draw($('venn'),{names:[A,B],fs:Math.max(11,fontSize*0.9),bold:fontBold,italic:fontItalic,
+    hi:[...pick].map(i=>keyOf[i]),
+    vals:{'11':t(val.a),'10':t(val.b),'01':t(val.c),'00':t(val.d)}}); }
+let vennOn=false;
+$('bVenn').onclick=()=>{ vennOn=!vennOn; $('bVenn').classList.toggle('on',vennOn); $('vennBox').hidden=!vennOn;
+  if(vennOn) drawVenn(); sync(); };
 function drawTrees(){ if(!treesOn) return; const data=readVals();
   if(!data){ $('trees').hidden=true; setMsg('Für die Baumdiagramme fehlen noch Werte – erst „Berechnen“.','err'); return; }
   $('trees').hidden=false; drawTree($('tree0'),'A',data); drawTree($('tree1'),'B',data); }
 $('bTree').onclick=()=>{ treesOn=!treesOn; $('bTree').classList.toggle('on',treesOn); $('trees').hidden=!treesOn;
   if(treesOn) drawTrees(); sync(); };
-addEventListener('resize',()=>{ if(treesOn) drawTrees(); });
+addEventListener('resize',()=>{ if(treesOn) drawTrees(); if(vennOn) drawVenn(); });
+/* ---- Auswahl-Modus: Zelle/Ast/Teilmenge antippen, überall hervorheben ---- */
+const ELEM={a:[0],b:[1],c:[2],d:[3],r0:[0,1],r1:[2,3],c0:[0,2],c1:[1,3],T:[0,1,2,3]};
+let pickMode=false, pick=new Set();
+const sameSet=(arr,set)=>arr.length===set.size&&arr.every(i=>set.has(i));
+function setPick(list){ const l=[...new Set(list)].sort();
+  if(sameSet(l,pick)) pick.clear(); else { pick=new Set(l); }
+  applyPick(); drawTrees(); drawVenn(); }
+function applyPick(){ KEYS.forEach(k=>{ const td=inp(k).closest('td,th'); if(td) td.classList.toggle('hl',pick.size>0&&ELEM[k].every(i=>pick.has(i))); }); }
+function setPickMode(on){ pickMode=on; $('bSel').classList.toggle('on',on); document.body.classList.toggle('pick',on);
+  document.querySelectorAll('input.v').forEach(i=>{ i.readOnly=on; });
+  if(!on){ pick.clear(); applyPick(); drawTrees(); drawVenn(); }
+  setMsg(on?'Auswahl-Modus: Zelle, Ast oder Teilmenge antippen (nochmal = abwählen)':''); }
+$('bSel').onclick=()=>setPickMode(!pickMode);
+document.querySelectorAll('input.v').forEach(el=>el.addEventListener('click',()=>{ if(pickMode) setPick(ELEM[el.dataset.k]||[]); }));
+$('venn').addEventListener('click',e=>{ if(!pickMode) return; const r=$('venn').getBoundingClientRect(), sc=$('venn').width/(devicePixelRatio||1)/r.width;
+  const key=TafelVenn.keyAt($('venn'),(e.clientX-r.left)*sc,(e.clientY-r.top)*sc);
+  const map={'11':0,'10':1,'01':2,'00':3}; if(key!==null&&map[key]!==undefined) setPick([map[key]]); });
+[0,1].forEach(t=>$('tree'+t).addEventListener('click',e=>{ if(!pickMode) return; const cv=$('tree'+t), r=cv.getBoundingClientRect();
+  const y=(e.clientY-r.top)/r.height, x=(e.clientX-r.left)/r.width;
+  const row=y<0.25?0:(y<0.5?1:(y<0.75?2:3));                       // vier Pfade von oben nach unten
+  const order=t===0?[0,1,2,3]:[0,2,1,3];                           // zweiter Baum: zuerst B
+  if(x<0.28){ setPick(row<2?order.slice(0,2):order.slice(2)); }                 // erste Stufe = ganzer Ast
+  else if(x<0.72){ setPick([0,1,2,3].filter(r=>r%2===row%2).map(r=>order[r])); }  // Ereignisname der zweiten Stufe = beide Pfade dazu
+  else setPick([order[row]]); }));                                                // Pfadwert = Schnittmenge
 function clearCalc(doSync){ calc.forEach(k=>{ inp(k).value=''; inp(k).classList.remove('calc'); }); calc.clear(); if(doSync!==false){ setMsg(''); sync(); } }
 function refreshLabels(){ $('La2').textContent=$('La').value||'A'; $('Lb2').textContent=$('Lb').value||'B'; }
 let fontSize=16, fontBold=false, fontItalic=false;
 function applyFont(){ const r=document.documentElement.style; r.setProperty('--fs',(fontSize||16)+'px'); r.setProperty('--fw',fontBold?'700':'400'); r.setProperty('--fwh',fontBold?'900':'700'); r.setProperty('--fwm',fontBold?'800':'600'); r.setProperty('--fi',fontItalic?'italic':'normal'); }
-function collect(){ const cells={}; KEYS.forEach(k=>cells[k]=inp(k).value); return { La:$('La').value, Lb:$('Lb').value, cells, calc:[...calc], trees:treesOn, fontSize, fontBold, fontItalic }; }
+function collect(){ const cells={}; KEYS.forEach(k=>cells[k]=inp(k).value); return { La:$('La').value, Lb:$('Lb').value, cells, calc:[...calc], trees:treesOn, venn:vennOn, fontSize, fontBold, fontItalic }; }
 function sync(){ if(window.parent===window) return; try{ parent.postMessage({type:'embed-data',data:collect()},'*'); }catch(e){} }
 document.querySelectorAll('input.v').forEach(el=>el.addEventListener('input',()=>{
   const k=el.dataset.k; if(calc.has(k)){ calc.delete(k); el.classList.remove('calc'); }      // überschrieben → jetzt eine Vorgabe
   el.classList.remove('bad'); if(calc.size){ clearCalc(false); setMsg('Eingaben geändert – „Berechnen“ tippen'); } sync(); }));
 document.querySelectorAll('input.v').forEach(el=>el.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); compute(); } }));
-['La','Lb'].forEach(id=>$(id).addEventListener('input',()=>{ refreshLabels(); drawTrees(); sync(); }));
+['La','Lb'].forEach(id=>$(id).addEventListener('input',()=>{ refreshLabels(); drawTrees(); drawVenn(); sync(); }));
 $('bCalc').onclick=compute;
 $('bClearCalc').onclick=()=>clearCalc(true);
 $('bClear').onclick=()=>{ KEYS.forEach(k=>{ inp(k).value=''; inp(k).classList.remove('calc','bad'); }); calc.clear(); setMsg(''); sync(); };
@@ -174,10 +219,11 @@ addEventListener('message',e=>{ if(e.data&&e.data.type==='embed-data'&&e.data.da
   else if(d.v){ inp('a').value=d.v[0][0]||''; inp('b').value=d.v[0][1]||''; inp('c').value=d.v[1][0]||''; inp('d').value=d.v[1][1]||'';   // ältere Tafeln: Summen wie früher ergänzen
     if(['a','b','c','d'].some(k=>inp(k).value)) setTimeout(compute,0); }
   if(d.fontSize)fontSize=d.fontSize; fontBold=!!d.fontBold; fontItalic=!!d.fontItalic; applyFont(); refreshLabels();
-  treesOn=!!d.trees; $('bTree').classList.toggle('on',treesOn); $('trees').hidden=!treesOn; if(treesOn) setTimeout(drawTrees,0); } });
+  treesOn=!!d.trees; $('bTree').classList.toggle('on',treesOn); $('trees').hidden=!treesOn; if(treesOn) setTimeout(drawTrees,0);
+  vennOn=!!d.venn; $('bVenn').classList.toggle('on',vennOn); $('vennBox').hidden=!vennOn; if(vennOn) setTimeout(drawVenn,0); } });
 applyFont(); refreshLabels();
-if(window.TafelShot) TafelShot.buttons($('shotBtns'),()=>TafelShot.rasterize(treesOn?$('wrap'):document.querySelector('table'),{pad:6,exclude:'#acts,.hd'}));
-for(const [id,d] of [['fsM',-2],['fsP',2]]){ $(id).addEventListener('pointerdown',e=>e.preventDefault()); $(id).onclick=()=>{ fontSize=Math.max(10,Math.min(60,(fontSize||16)+d)); applyFont(); drawTrees(); sync(); }; }
+if(window.TafelShot) TafelShot.buttons($('shotBtns'),()=>TafelShot.rasterize((treesOn||vennOn)?$('wrap'):document.querySelector('table'),{pad:6,exclude:'#acts,.hd'}));
+for(const [id,d] of [['fsM',-2],['fsP',2]]){ $(id).addEventListener('pointerdown',e=>e.preventDefault()); $(id).onclick=()=>{ fontSize=Math.max(10,Math.min(60,(fontSize||16)+d)); applyFont(); drawTrees(); drawVenn(); sync(); }; }
 window.addEventListener('load',()=>{ try{ parent.postMessage({type:'embed-ready'},'*'); }catch(e){} });
 </script>
 </body>

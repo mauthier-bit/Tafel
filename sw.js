@@ -1,5 +1,5 @@
 /* Service Worker – macht die Tafel offline-fähig (App-Shell + Bibliotheken cachen). */
-const CACHE = 'tafel-v195';
+const CACHE = 'tafel-v198';
 const ASSETS = [
   './',
   'index.html',
@@ -24,6 +24,7 @@ const ASSETS = [
   'pptx.js',
   'shot.js',
   'speech.js',
+  'venn.js',
   'mindmap.html',
   'pinnwand.html',
   'manifest.webmanifest',
