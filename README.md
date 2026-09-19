@@ -349,7 +349,9 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   tatsächlich gezeichneten Striche und lässt `preventDefault`, `PointerCapture` und die Eingabeart
   umschalten. Damit lässt sich eingrenzen, ob fehlende Striche an der App oder am Browser liegen.
 - **Maßstab kalibrieren** (Einstellungen → Bedienung, optional): Standard ist auf das **iPad**
-  abgestimmt (37,8 px = 1 cm) – ohne Zutun ändert sich nichts. Bei Bedarf den angezeigten Balken mit
+  abgestimmt: **5 cm = 261 px** (52,2 px = 1 cm, am iPad nachgemessen) – ohne Zutun ändert sich nichts.
+  Wer den alten Standard (37,8 px) verwendet hat, bekommt beim Update automatisch den neuen Wert; eine
+  selbst kalibrierte Einstellung bleibt erhalten. Bei Bedarf den angezeigten Balken mit
   einem echten Lineal messen und mit ＋/− auf **genau 5 cm** stellen; Lineal, Geodreieck und
   Karo-Muster übernehmen den Maßstab (ihre Zentimeter-Angaben bleiben dabei gleich), „Standard"
   stellt den Ausgangswert wieder her. Die Einstellung gilt geräteweit.
@@ -508,7 +510,13 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
 - **Kamera** (Werkzeug): Live-Bild in einem Fenster (z. B. für Versuche), Kamera umschaltbar,
   **Zoom mit zwei Fingern** direkt im Bild (Doppeltipp = zurück; am Rechner auch per Mausrad) –
   der Zoom steckt auch im Foto und in der Videoaufnahme,
-  „Foto auf Tafel" legt einen Schnappschuss als bewegliches Objekt ab. **„Video auf Tafel"** nimmt
+  „Foto auf Tafel" legt einen Schnappschuss als bewegliches Objekt ab.
+  **„📄 Scannen"** (in derselben Reihe) fotografiert ein Blatt und öffnet den **Scan-Editor**: Die Tafel sucht die
+  Blattecken selbst (hellste zusammenhängende Fläche), die vier Griffe lassen sich nachziehen, dann wird
+  die Seite **perspektivisch entzerrt**. Drei Aufbereitungen: **Schwarz-weiß** (Beleuchtung wird
+  herausgerechnet – weißes Papier, schwarze Schrift, auch bei Schatten), **Graustufen**, **Farbe**.
+  **„➕ Seite sichern"** sammelt mehrere Seiten, **„Auf die Tafel"** legt sie als eigene Tafelseiten ab
+  und **„PDF sichern"** speichert alle gesammelten Seiten als mehrseitige **PDF-Datei** (A4). **„Video auf Tafel"** nimmt
   einen Clip auf (nochmal antippen = beenden, mit laufender Zeitanzeige) und legt ihn als abspielbares
   Videoobjekt auf die Tafel – wahlweise **mit Ton** (Schalter „Video mit Ton"; ohne Mikrofonfreigabe
   wird stumm aufgenommen). Zum Abspielen oben „Einbettung bedienen" antippen. Clips gelten nur für die
@@ -534,8 +542,14 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   zwischen 0 und 1): die Gesamtsumme ist **fest 1 bzw. 100 %** (ein anderer Wert wird als Fehler gemeldet). **Absolute
   Zahlen** (Werte größer 1): Gesamt = Stichprobenumfang, frei; Mischen von Prozent und absoluten Zahlen wird gemeldet. Hinweise bei **nicht eindeutigen** Angaben, **Widersprüchen** und **negativen Werten**.
   Ändert man eine Eingabe, verschwinden die berechneten Werte bis zum nächsten „Berechnen“; ein überschriebenes blaues
-  Feld wird zur Vorgabe. „Berechnete leeren“ / „Alles leeren“. Ältere Tafeln (nur innere Felder) werden automatisch ergänzt. Die Schriftgröße aus dem Kontextmenü gilt für Ereignisse, **Gegenereignisse und das Σ-Zeichen** gleichermaßen. Oben rechts: **A−/A+** für die Schriftgröße (auch im Kontextmenü) und **🖼 Tafel / 📋 Kopieren**: Tabelle als Bild.
-- **Baumdiagramm** (Werkzeug): Stufen und Verzweigungen einstellbar. Wahrscheinlichkeiten **an die Äste und/oder
+  Feld wird zur Vorgabe. **„🌳 Baumdiagramme“** blendet unter der Tafel die **beiden zugehörigen Bäume** ein
+  (einmal zuerst A, einmal zuerst B) – mit den bedingten Wahrscheinlichkeiten an den Ästen (blau) und den
+  Pfadwahrscheinlichkeiten rechts (violett); Prozent- und Bruch-Eingaben erscheinen auch im Baum so, Gegenereignisse
+  mit Querstrich. Die Bäume aktualisieren sich bei jedem „Berechnen“ und wandern mit in „🖼 Tafel“/„📋 Kopieren“.
+  „Berechnete leeren“ / „Alles leeren“. Ältere Tafeln (nur innere Felder) werden automatisch ergänzt. Die Schriftgröße aus dem Kontextmenü gilt für Ereignisse, **Gegenereignisse und das Σ-Zeichen** gleichermaßen. Oben rechts: **A−/A+** für die Schriftgröße (auch im Kontextmenü) und **🖼 Tafel / 📋 Kopieren**: Tabelle als Bild.
+- **Baumdiagramm** (Werkzeug): Stufen und Verzweigungen einstellbar. **„▦ Vierfeldertafel“** blendet bei
+  **2 Stufen × 2 Verzweigungen** die zugehörige Vierfeldertafel unter dem Baum ein (Ereignisnamen und Zahlenformat
+  wie im Baum; noch fehlende Werte stehen als „?“); sie wandert auch mit ins Bild („🖼 Tafel“/„📋 Kopieren“). Wahrscheinlichkeiten **an die Äste und/oder
   rechts an die Pfade** (Pfadwahrscheinlichkeiten) eintragen – beliebig gemischt – und **„Berechnen“** tippen: fehlende
   Werte werden **blau** ergänzt (Astsumme = 1, Pfadregel, Summenregel; z. B. aus P(A) und zwei Pfadwahrscheinlichkeiten
   den ganzen Baum). Eingaben als Dezimalzahl, Bruch oder Prozent, Ergebnis im selben Stil; Hinweise bei nicht eindeutigen

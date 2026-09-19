@@ -26,6 +26,14 @@
   .nin{pointer-events:auto;width:calc(var(--fs,13px)*4.4);font-size:var(--fs,13px);padding:1px 3px;border:1px solid #2563eb;border-radius:4px;text-align:center;font-family:inherit;}
   .nfreq{pointer-events:none;font-size:calc(var(--fs,13px)*0.9);color:#7c3aed;font-variant-numeric:tabular-nums;background:rgba(255,255,255,.88);padding:0 3px;border-radius:3px;white-space:nowrap;font-weight:var(--fwm,600);}
   .ovl{text-decoration:overline;}
+  #bVf{border:1px solid #cfd6e0;background:#fff;border-radius:7px;padding:4px 9px;font:600 13px -apple-system,sans-serif;cursor:pointer;color:#1f2430;}
+  #bVf.on{background:#e8f0fe;border-color:#93b4f5;}
+  #vf4{flex:none;padding:4px 10px 10px;} #vf4[hidden]{display:none;}
+  #vf4 table{border-collapse:collapse;width:100%;table-layout:fixed;font-size:var(--fs,13px);}
+  #vf4 td,#vf4 th{border:1px solid #cbd3df;padding:6px 3px;text-align:center;}
+  #vf4 th{background:#f2f5f9;font-weight:var(--fwh,700);}
+  #vf4 td.sum,#vf4 th.sum{background:#eef4ff;font-weight:var(--fwm,600);}
+  #vf4 .miss{color:#c3cbd6;}
   .leaf{position:absolute;transform:translate(0,-50%);width:calc(var(--fs,13px)*4.4);font-size:calc(var(--fs,13px)*0.92);font-weight:var(--fw,400);font-style:var(--fi,normal);color:#1f2430;font-variant-numeric:tabular-nums;background:#fff;padding:2px 3px;border:1px solid #e2e8f0;border-radius:5px;text-align:center;font-family:inherit;}
 </style>
 </head>
@@ -35,10 +43,11 @@
     <label>Stufen <input id="stufen" type="number" min="1" max="4" value="2"></label>
     <label>Verzweigungen <input id="aeste" type="number" min="2" max="4" value="2"></label>
     <label title="Stichprobenumfang – wenn gesetzt, erscheinen unter den Ereignissen die absoluten Häufigkeiten">Stichprobe n <input id="nsize" type="number" min="0" placeholder="–" style="width:78px"></label>
-    <span id="shotBtns" style="display:inline-flex;gap:5px;margin-left:auto;order:9"><button type="button" id="fsM" title="Schrift kleiner">A−</button><button type="button" id="fsP" title="Schrift größer">A+</button></span><button type="button" id="bCalc" title="Fehlende Wahrscheinlichkeiten ergänzen">Berechnen</button><button type="button" id="bClr" title="Berechnete (blaue) Werte entfernen">Berechnete leeren</button><span id="bmsg"></span>
+    <button type="button" id="bVf" title="Zugehörige Vierfeldertafel zeigen (nur bei 2 Stufen und 2 Verzweigungen)">▦ Vierfeldertafel</button><span id="shotBtns" style="display:inline-flex;gap:5px;margin-left:auto;order:9"><button type="button" id="fsM" title="Schrift kleiner">A−</button><button type="button" id="fsP" title="Schrift größer">A+</button></span><button type="button" id="bCalc" title="Fehlende Wahrscheinlichkeiten ergänzen">Berechnen</button><button type="button" id="bClr" title="Berechnete (blaue) Werte entfernen">Berechnete leeren</button><span id="bmsg"></span>
     <span style="color:#8a93a2;flex-basis:100%">Wahrscheinlichkeiten an die Äste und/oder rechts an die Pfade eintragen (Zahl, 0,3, 3/10 oder 30 %) → „Berechnen“ · Ereignisnamen über den Knoten antippen (nichtA → Ā)</span>
   </div>
   <div id="area"><canvas id="cv"></canvas></div>
+  <div id="vf4" hidden></div>
 </div>
 <script src="shot.js"></script>
 <script>
@@ -105,7 +114,7 @@ function clearCalcVals(){ calcSet.forEach(k=>{ if(k.startsWith('p_')) delete pro
   area.querySelectorAll('input.pin,input.leaf').forEach(i=>{ if(calcSet.has(i.dataset.key)){ i.value=''; i.classList.remove('calc'); } }); calcSet.clear(); }
 function onEdit(key,el){ el.classList.remove('bad'); if(calcSet.has(key)){ calcSet.delete(key); el.classList.remove('calc'); }
   if(calcSet.size){ clearCalcVals(); setMsg('Eingaben geändert – „Berechnen“ tippen'); }
-  if(lastPos) drawLabels(lastPos); sync(); }
+  if(lastPos) drawLabels(lastPos); renderVf(); sync(); }
 function computeTree(){ clearCalcVals(); const B=branches, S=stages, st={pct:false,frac:false,comma:false};
   const P=[], p=[]; for(let k=0;k<=S;k++){ P.push(new Array(Math.pow(B,k)).fill(undefined)); } P[0][0]=1;
   for(let k=0;k<S;k++){ p.push(new Array(Math.pow(B,k+1)).fill(undefined)); }
@@ -144,19 +153,43 @@ function computeTree(){ clearCalcVals(); const B=branches, S=stages, st={pct:fal
   else if(neg) setMsg('Achtung: Werte außerhalb von 0 bis 1 – Eingaben prüfen','err');
   else if(missing) setMsg('Nicht eindeutig – es fehlen noch Angaben ('+missing+' Werte offen)','err');
   else setMsg('✓ Vollständig berechnet','ok');
-  sync(); }
+  renderVf(); sync(); }
 $('bCalc').addEventListener('pointerdown',e=>e.preventDefault()); $('bCalc').onclick=computeTree;
-$('bClr').onclick=()=>{ clearCalcVals(); setMsg(''); if(lastPos) drawLabels(lastPos); sync(); };
-function sync(){ if(window.parent===window) return; try{ parent.postMessage({type:'embed-data',data:{stages,branches,probs,leaves:leafVals,calc:[...calcSet],names,nsize,fontSize,fontBold,fontItalic}},'*'); }catch(e){} }
-if(window.TafelShot) TafelShot.buttons($('shotBtns'),()=>TafelShot.rasterize(area,{exclude:'.nph',pad:4}));
+$('bClr').onclick=()=>{ clearCalcVals(); setMsg(''); if(lastPos) drawLabels(lastPos); renderVf(); sync(); };
+function sync(){ if(window.parent===window) return; try{ parent.postMessage({type:'embed-data',data:{stages,branches,probs,leaves:leafVals,calc:[...calcSet],names,nsize,vf4:vf4On,fontSize,fontBold,fontItalic}},'*'); }catch(e){} }
+/* ---- Zugehörige Vierfeldertafel (nur 2 Stufen × 2 Äste) ---- */
+let vf4On=false;
+const vfOk=()=>stages===2&&branches===2;
+function vfStyle(){ const st={pct:false,frac:false,comma:false};
+  [...Object.values(probs),...Object.values(leafVals)].forEach(v=>{ v=String(v||''); if(/%/.test(v))st.pct=true; if(/\//.test(v))st.frac=true; if(/,/.test(v))st.comma=true; });
+  return st; }
+function vfCell(idx){ const v=num(leafVals['l_'+idx]); return v!==null?v:pathProb(2,idx); }
+function renderVf(){ const box=$('vf4'); if(!vf4On){ box.hidden=true; return; }
+  box.hidden=false;
+  if(!vfOk()){ box.innerHTML='<div style="font-size:12px;color:#8a93a2">Die Vierfeldertafel gibt es nur bei <b>2 Stufen</b> und <b>2 Verzweigungen</b>.</div>'; return; }
+  const st=vfStyle(), f=v=>v===null||v===undefined?'<span class="miss">?</span>':esc(fmtV(v,st));
+  const A=fmtName(names['n_1_0']||'A'), nA=fmtName(names['n_1_1']||'nicht A');
+  const B=fmtName(names['n_2_0']||'B'), nB=fmtName(names['n_2_1']||'nicht B');
+  const v=[0,1,2,3].map(vfCell);
+  const add=(x,y)=>(x===null||y===null||x===undefined||y===undefined)?null:x+y;
+  const r0=add(v[0],v[1]), r1=add(v[2],v[3]), c0=add(v[0],v[2]), c1=add(v[1],v[3]), T=add(r0,r1);
+  box.innerHTML='<table><tr><th></th><th>'+B+'</th><th>'+nB+'</th><th class="sum">Σ</th></tr>'
+    +'<tr><th>'+A+'</th><td>'+f(v[0])+'</td><td>'+f(v[1])+'</td><td class="sum">'+f(r0)+'</td></tr>'
+    +'<tr><th>'+nA+'</th><td>'+f(v[2])+'</td><td>'+f(v[3])+'</td><td class="sum">'+f(r1)+'</td></tr>'
+    +'<tr><th class="sum">Σ</th><td class="sum">'+f(c0)+'</td><td class="sum">'+f(c1)+'</td><td class="sum">'+f(T)+'</td></tr></table>'; }
+$('bVf').addEventListener('pointerdown',e=>e.preventDefault());
+$('bVf').onclick=()=>{ vf4On=!vf4On; $('bVf').classList.toggle('on',vf4On);
+  if(vf4On&&!vfOk()) setMsg('Vierfeldertafel: nur bei 2 Stufen und 2 Verzweigungen','err');
+  renderVf(); build(); sync(); };
+if(window.TafelShot) TafelShot.buttons($('shotBtns'),()=>TafelShot.rasterize(vf4On?$('app'):area,{exclude:'.nph,#ctrl',pad:4}));
 for(const [id,d] of [['fsM',-1],['fsP',1]]){ $(id).addEventListener('pointerdown',e=>e.preventDefault()); $(id).onclick=()=>{ fontSize=Math.max(9,Math.min(36,(fontSize||13)+d)); build(); sync(); }; }
-$('stufen').oninput=()=>{ clearCalcVals(); setMsg(''); build(); sync(); };
-$('aeste').oninput=()=>{ clearCalcVals(); setMsg(''); build(); sync(); };
+$('stufen').oninput=()=>{ clearCalcVals(); setMsg(''); build(); renderVf(); sync(); };
+$('aeste').oninput=()=>{ clearCalcVals(); setMsg(''); build(); renderVf(); sync(); };
 $('nsize').oninput=()=>{ nsize=$('nsize').value; build(); sync(); };
 addEventListener('resize',build);
 addEventListener('message',e=>{ if(e.data&&e.data.type==='embed-data'&&e.data.data){ const d=e.data.data;
   if(d.stages){ stages=d.stages; $('stufen').value=d.stages; } if(d.branches){ branches=d.branches; $('aeste').value=d.branches; }
-  probs=d.probs||{}; leafVals=d.leaves||{}; calcSet=new Set(Array.isArray(d.calc)?d.calc:[]); names=d.names||{}; nsize=(d.nsize===undefined||d.nsize===null)?'':String(d.nsize); $('nsize').value=nsize; if(d.fontSize)fontSize=d.fontSize; fontBold=!!d.fontBold; fontItalic=!!d.fontItalic; build();
+  probs=d.probs||{}; leafVals=d.leaves||{}; calcSet=new Set(Array.isArray(d.calc)?d.calc:[]); names=d.names||{}; nsize=(d.nsize===undefined||d.nsize===null)?'':String(d.nsize); $('nsize').value=nsize; if(d.fontSize)fontSize=d.fontSize; fontBold=!!d.fontBold; fontItalic=!!d.fontItalic; vf4On=!!d.vf4; $('bVf').classList.toggle('on',vf4On); build(); renderVf();
   if(!d.leaves&&!d.calc&&Object.values(probs).some(v=>String(v||'').trim())) setTimeout(computeTree,0);   // ältere Bäume: Pfadprodukte wie früher anzeigen
   } });
 window.addEventListener('load',()=>{ build(); try{ parent.postMessage({type:'embed-ready'},'*'); }catch(e){} });
