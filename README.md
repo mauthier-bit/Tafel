@@ -623,8 +623,36 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   bleiben beim Würfeln erhalten. (Nur die **Würfelfläche** wird gefärbt, die Augen bleiben schwarz.)
 - **Glücksrad** (Zufallsgenerator, Mathe & Physik): dreht auf einen zufälligen Sektor. **Anzahl der
   Sektoren sowie Beschriftung (Zahl) und Farbe je Sektor** lassen sich im **Kontextmenü** einstellen.
-- **Bruch** (Mathe & Physik): Zähler und Nenner eingeben → der Bruch wird angezeigt und als **Kreis
-  mit gleich großen Sektoren** dargestellt (Zähler-viele Sektoren gefüllt), plus Dezimalwert.
+- **Bruch** (Mathe & Physik): fünf Reiter, jeweils als **Kreis oder Rechteck** (Knopf „◯ Kreis / ▭ Rechteck“),
+  wahlweise **einfarbig, 🍕 Pizza** (Sauce, Käse, Peperoni, Kruste) **oder 🍰 Kuchen** (Torte mit schmalem Guss-Rand,
+  Sahnehäubchen mit Kirsche, Blechkuchen mit Guss und verteilten Früchten) als Füllung der Anteile (Reiter „Bruch“ und „Vergleichen“);
+  Torte bzw. Pizza werden **als Ganzes** gestaltet, die Einteilung machen nur die Striche – so bleibt das Bild auch
+  beim Erweitern ruhig,
+  Schriftgröße über **A−/A+** und das Kontextmenü, **🖼 Tafel / 📋 Kopieren** als Bild.
+  - **„Bruch“:** Zähler und Nenner eingeben → Darstellung mit gefüllten Teilen; der **Dezimalwert** erscheint nur
+    bei gesetztem Haken **„Dezimalbruch“**. **„Erweitern ·“**
+    und **„Kürzen :“** mit frei wählbarer Zahl sowie **„ganz kürzen“** (größter gemeinsamer Teiler). Beim Erweitern
+    bleiben die **ursprünglichen Teilungslinien dick** stehen – man sieht, dass der gefärbte Anteil gleich bleibt
+    (z. B. 2/3 = 8/12). Lässt sich mit der Zahl nicht kürzen, erscheint ein Hinweis.
+  - **„Vergleichen“:** zwei Brüche mit einem **„?“** dazwischen – zunächst ohne Bild. **„👁 Bilder“** zeigt beide
+    als Zeichnung, jeder Bruch lässt sich einzeln **erweitern** (antippen oder „links“/„rechts“), bis der Vergleich
+    klappt. Je nach Lage hilft ein Hinweis weiter: gleiche Nenner (größerer Zähler gewinnt), **gleiche Zähler**
+    (kleinerer Nenner gewinnt) oder gemeinsamer Nenner. **„Zeichen“** setzt schließlich **<, > oder =** ein.
+  - **„+ und −“:** die drei Bilder stehen **nebeneinander** (1. Bruch + 2. Bruch = Ergebnis). Solange die Nenner
+    verschieden sind, bleibt das Ergebnis ein gestricheltes „?“. Die beiden Summanden lassen sich **einzeln
+    erweitern** – Bild antippen oder „links“/„rechts“ mit der Zahl daneben – bis ein **gemeinsamer Nenner**
+    erreicht ist; dann erscheint das Ergebnis und der Rechenweg, z. B. 1/2 + 1/3 = 3/6 + 2/6 = 5/6. Beim Minus
+    bleiben die weggenommenen Teile blass. „↺“ nimmt die Erweiterungen zurück.
+  - **„· und :“:** Beim **Malnehmen** das Rechteckmodell – Breite in Nenner-Teile (blau) und Höhe in Nenner-Teile
+    (rot); der violette Überschneidungsteil ist das Produkt. Beim **Teilen** dieselbe Zeichnung als
+    **Umkehraufgabe**: Die Höhe ist der zweite Bruch, gesucht ist die **Breite x** mit x · c/d = a/b – der violette
+    Bereich zeigt also den ersten Bruch, die Breite das Ergebnis (bei Ergebnissen über 1 mehrere Quadrate
+    nebeneinander). Dazu der Rechenweg über den Kehrbruch.
+  - **„Bruchzahl“ (ganz rechts):** der Bruch als **Zahl auf dem Zahlenstrahl** – Teilstriche im Nenner-Takt,
+    der Anteil von 0 bis zum Bruch ist farbig, die Marke sitzt auf dem Zahlenstrahl, und die **1 ist rot und
+    fett hervorgehoben** (das Ganze). „bis“ stellt ein, wie weit
+    der Strahl reicht (auch für unechte Brüche wie 7/3); per Haken erscheinen die **gemischte Zahl** (7/3 = 2 1/3)
+    und der **Dezimalbruch**. So wird sichtbar: Ein Bruch ist nicht nur ein Anteil, sondern auch eine Zahl.
 - **Stellenwerttafel** (Mathe & Physik): umschaltbar **Längen / Flächen / Volumen / Massen** mit den
   üblichen Einheiten. Ziffern eintippen; ein Tipp auf eine Einheit **verschiebt das Komma** (Umrechnung) –
   **Komma und die zugehörige Einheit werden rot hervorgehoben**. Unten rechts: **A−/A+** für die Schriftgröße (auch im Kontextmenü) sowie **🖼 Tafel / 📋 Kopieren** – die Tafel (ohne Löschknöpfe) als Bild neben das Werkzeug legen bzw. in die Zwischenablage kopieren. Mit **„＋ Zeile"** lassen sich
