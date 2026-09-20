@@ -623,7 +623,7 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   bleiben beim Würfeln erhalten. (Nur die **Würfelfläche** wird gefärbt, die Augen bleiben schwarz.)
 - **Glücksrad** (Zufallsgenerator, Mathe & Physik): dreht auf einen zufälligen Sektor. **Anzahl der
   Sektoren sowie Beschriftung (Zahl) und Farbe je Sektor** lassen sich im **Kontextmenü** einstellen.
-- **Bruch** (Mathe & Physik): fünf Reiter, jeweils als **Kreis oder Rechteck** (Knopf „◯ Kreis / ▭ Rechteck“),
+- **Bruch** (Mathe & Physik): sieben Reiter, jeweils als **Kreis oder Rechteck** (Knopf „◯ Kreis / ▭ Rechteck“),
   wahlweise **einfarbig, 🍕 Pizza** (Sauce, Käse, Peperoni, Kruste) **oder 🍰 Kuchen** (Torte mit schmalem Guss-Rand,
   Sahnehäubchen mit Kirsche, Blechkuchen mit Guss und verteilten Früchten) als Füllung der Anteile (Reiter „Bruch“ und „Vergleichen“);
   Torte bzw. Pizza werden **als Ganzes** gestaltet, die Einteilung machen nur die Striche – so bleibt das Bild auch
@@ -634,6 +634,20 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     und **„Kürzen :“** mit frei wählbarer Zahl sowie **„ganz kürzen“** (größter gemeinsamer Teiler). Beim Erweitern
     bleiben die **ursprünglichen Teilungslinien dick** stehen – man sieht, dass der gefärbte Anteil gleich bleibt
     (z. B. 2/3 = 8/12). Lässt sich mit der Zahl nicht kürzen, erscheint ein Hinweis.
+  - **„Anteile“ (2. Reiter):** **Anteil – das Ganze – Bruchteil**. Links der Bruch (der **Anteil**), dann „von“,
+    dann **das Ganze** als Bild: **Uhr** (1 Stunde = 60 min oder 1 Minute = 60 s), **Messbecher** (1 Liter oder
+    800 ml, mit **beschrifteter Skala** bis 1000 ml – das Ganze steht als Füllstand darin) **Wurst** (1 kg oder
+    600 g, die 600-g-Wurst ist entsprechend kürzer und dünner) oder **Maßband** (1 Meter oder 120 cm, mit
+    cm-Skala – die 120 cm sind sichtbar länger als 1 Meter). Der Bruchteil ist jeweils **kräftig gefärbt**, eine
+    rote gestrichelte Linie zeigt die Stelle. Rechts steht der **Bruchteil** mit Einheit, z. B. „2/3 von 1 Stunde = 40 min“,
+    der **Rechenweg** erscheint per Haken darunter, als durchgehende Gleichungskette:
+    3/8 von 1 kg = 1000 g : 8 · 3 = 125 g · 3 = 375 g (bei Zähler 1 bzw. Nenner 1 entsprechend kürzer).
+  - **„Verteilen“ (3. Reiter):** der Bruch als **Quotient** – „2 Stücke auf 3 Personen“. Oben liegen die
+    Pizzen/Kuchen, jedes in so viele Teile geschnitten, wie es Personen gibt; unten stehen **leere Teller**.
+    Die Teile lassen sich **mit dem Finger nach unten auf einen Teller ziehen** (der Teller wird beim Ziehen
+    markiert); wer schon genug hat, bekommt nichts mehr – dann erscheint ein Hinweis. **„alles verteilen“** macht
+    es in einem Schritt, **„↺“** setzt zurück. Jeder Teller zeigt seinen Anteil (z. B. 2/3), und ist alles gerecht
+    verteilt, erscheint es grün. Unten steht die Rechnung, z. B. 2 : 3 = 2/3 oder 5 : 3 = 5/3 = 1 2/3.
   - **„Vergleichen“:** zwei Brüche mit einem **„?“** dazwischen – zunächst ohne Bild. **„👁 Bilder“** zeigt beide
     als Zeichnung, jeder Bruch lässt sich einzeln **erweitern** (antippen oder „links“/„rechts“), bis der Vergleich
     klappt. Je nach Lage hilft ein Hinweis weiter: gleiche Nenner (größerer Zähler gewinnt), **gleiche Zähler**
