@@ -623,26 +623,68 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   bleiben beim Würfeln erhalten. (Nur die **Würfelfläche** wird gefärbt, die Augen bleiben schwarz.)
 - **Glücksrad** (Zufallsgenerator, Mathe & Physik): dreht auf einen zufälligen Sektor. **Anzahl der
   Sektoren sowie Beschriftung (Zahl) und Farbe je Sektor** lassen sich im **Kontextmenü** einstellen.
-- **Bruch** (Mathe & Physik): sieben Reiter, jeweils als **Kreis oder Rechteck** (Knopf „◯ Kreis / ▭ Rechteck“),
-  wahlweise **einfarbig, 🍕 Pizza** (Sauce, Käse, Peperoni, Kruste) **oder 🍰 Kuchen** (Torte mit schmalem Guss-Rand,
-  Sahnehäubchen mit Kirsche, Blechkuchen mit Guss und verteilten Früchten) als Füllung der Anteile (Reiter „Bruch“ und „Vergleichen“);
+- **Bruch** (Mathe & Physik): acht Reiter, jeweils als **Kreis oder Rechteck** (Knopf „◯ Kreis / ▭ Rechteck“),
+  wahlweise **einfarbig, 🍕 Pizza** (Sauce, Käse, Peperoni, Kruste), **🍰 Kuchen** (Torte mit schmalem Guss-Rand,
+  Sahnehäubchen mit Kirsche, Blechkuchen mit Guss und verteilten Früchten) **oder 🍫 Schokolade**
+  (Kreis: **Schokokuchen** mit Schokoguss, Raspeln und Schokoröllchen am Rand; Rechteck: **Schokoladentafel**,
+  deren geprägte Stücke sich nach dem **eingestellten Nenner** richten – jede Teilungslinie liegt auf einer Rille,
+  die Reihen ergeben sich so, dass die Stücke etwa quadratisch bleiben) als Füllung der Anteile (Reiter „Intro“, „Darstellung“, „Verteilen“ und „Vergleichen“);
   Torte bzw. Pizza werden **als Ganzes** gestaltet, die Einteilung machen nur die Striche – so bleibt das Bild auch
   beim Erweitern ruhig,
   Schriftgröße über **A−/A+** und das Kontextmenü, **🖼 Tafel / 📋 Kopieren** als Bild.
-  - **„Bruch“:** Zähler und Nenner eingeben → Darstellung mit gefüllten Teilen; der **Dezimalwert** erscheint nur
-    bei gesetztem Haken **„Dezimalbruch“**. **„Erweitern ·“**
+  Alle Zahlenfelder (Zähler, Nenner, Erweitern/Kürzen, Anzahl der Personen und Stücke …) haben links und rechts
+  einen **−/+ Knopf**, der den Wert um eins verkleinert bzw. vergrößert – so lässt sich alles mit dem Finger
+  einstellen, ohne Tastatur.
+  - **„Intro“ (1. Reiter, Startansicht):** nur das Ganze als Bild. Im Feld **„Ein Ganzes in … Teile teilen.“** wird die Anzahl der
+    Teile eingestellt (1–24), die **Teilungslinien** erscheinen sofort. Durch **Antippen einzelner Stücke** wird
+    ausgewählt, wie viel man davon nimmt – die Stücke werden hervorgehoben (bei Pizza/Kuchen wird der Belag
+    sichtbar). **„zurücksetzen“** zeigt wieder das Ganze. Solange **nichts** gewählt ist, liegt das Ganze als **komplette Pizza, Torte oder Tafel Schokolade**
+    da (mit den Teilungslinien); beim ersten Antippen bleibt nur dieses eine Stück übrig, jedes weitere Stück kommt
+    dazu. Erst mit dem Haken **„Bruch anzeigen“** erscheinen unten
+    der zugehörige **Bruch** und der Text „x von n Teilen“ – so entsteht der Bruch aus dem Bild.
+  - **„Darstellung“ (2. Reiter):** Zähler und Nenner eingeben. Zunächst steht **nur der Bruch** groß in der Mitte
+    (beim Erweitern als Kette, z. B. 1/2 = 2/4); erst mit dem Haken **„Darstellung“** erscheint das **Bild** mit
+    gefüllten Teilen. Der **Dezimalwert** erscheint nur bei gesetztem Haken **„Dezimalbruch“**. **„Erweitern ·“**
     und **„Kürzen :“** mit frei wählbarer Zahl sowie **„ganz kürzen“** (größter gemeinsamer Teiler). Beim Erweitern
     bleiben die **ursprünglichen Teilungslinien dick** stehen – man sieht, dass der gefärbte Anteil gleich bleibt
     (z. B. 2/3 = 8/12). Lässt sich mit der Zahl nicht kürzen, erscheint ein Hinweis.
-  - **„Anteile“ (2. Reiter):** **Anteil – das Ganze – Bruchteil**. Links der Bruch (der **Anteil**), dann „von“,
-    dann **das Ganze** als Bild: **Uhr** (1 Stunde = 60 min oder 1 Minute = 60 s), **Messbecher** (1 Liter oder
-    800 ml, mit **beschrifteter Skala** bis 1000 ml – das Ganze steht als Füllstand darin) **Wurst** (1 kg oder
-    600 g, die 600-g-Wurst ist entsprechend kürzer und dünner) oder **Maßband** (1 Meter oder 120 cm, mit
-    cm-Skala – die 120 cm sind sichtbar länger als 1 Meter). Der Bruchteil ist jeweils **kräftig gefärbt**, eine
-    rote gestrichelte Linie zeigt die Stelle. Rechts steht der **Bruchteil** mit Einheit, z. B. „2/3 von 1 Stunde = 40 min“,
-    der **Rechenweg** erscheint per Haken darunter, als durchgehende Gleichungskette:
-    3/8 von 1 kg = 1000 g : 8 · 3 = 125 g · 3 = 375 g (bei Zähler 1 bzw. Nenner 1 entsprechend kürzer).
-  - **„Verteilen“ (3. Reiter):** der Bruch als **Quotient** – „2 Stücke auf 3 Personen“. Oben liegen die
+  - **„Anteile“ (3. Reiter):** **Anteil – das Ganze – Bruchteil**, mit zwei Unterbereichen (Auswahl links):
+    **„Bruchteil gesucht“** (3/4 von 1 l = 750 ml) und **„Ganzes gesucht“** (3/8 sind 75 ct → das Ganze sind 200 ct).
+    Das Ganze wird frei eingestellt: zuerst die **Größe** (Zeit, Masse, Volumen, Länge, Fläche, Geld), dann die
+    **Maßzahl** (Komma erlaubt, z. B. 1,5) und danach die **Einheit** dieser Größe (z. B. d · h · min · s,
+    t · kg · g · mg, hl · l · ml, km · m · cm · mm, km² · ha · a · m² · dm² · cm² · mm², € · ct) – im zweiten
+    Unterbereich ist diese Eingabe der bekannte **Bruchteil**. Der Haken **„Veranschaulichung“** blendet die Bilder
+    ein: **Uhr(en)** (Zeit – ein Zifferblatt steht immer für **eine Stunde** bzw. bei Tagen für einen Tag und bei
+    Sekunden für eine Minute, die Uhr bleibt also ablesbar: 2 h ergeben **zwei** Zifferblätter, 90 min ein volles
+    und ein halbes, 30 min die helle Halbscheibe bis zur 6 – der gefärbte Anteil endet dann genau auf der
+    passenden Minutenmarke), **Wurst** (Masse), **Messbecher** mit beschrifteter Skala (Volumen), **Maßband** mit Skala
+    (Länge), **Hunderterquadrat** (Fläche) oder **Geldschein** (Geld). In jedem Bild ist das Ganze durch **alle
+    Teilungsstriche des Nenners** geteilt, sodass man den Bruch direkt abzählen kann; der Anteil ist kräftig
+    gefärbt und eine rote gestrichelte Linie zeigt die Stelle.
+    - **„Bruchteil gesucht“:** der **Dreisatz in Bildern** – erst das Ganze b/b mit seinem Wert, dann **ein Teil**
+      1/b (Wert **: b**), dann der gesuchte Bruchteil a/b (Wert **· a**), z. B. 3/3 = 60 min → 1/3 = 20 min →
+      2/3 = 40 min. Bei Zähler oder Nenner 1 entfällt der Zwischenschritt. Unter der Ergebniszeile stehen die
+      **Fachbegriffe**: „Anteil“ unter dem Bruch, „das Ganze“ und „Bruchteil“ unter den beiden Größen
+      (z. B. 3/4 · von · 600 ml · = · 450 ml).
+    - **„Ganzes gesucht“:** der **Dreisatz in Bildern** – erst a/b mit dem bekannten Wert, dann **ein Teil** 1/b
+      (Wert **: a**), dann das Ganze b/b (Wert **· b**), z. B. 3/8 = 75 ct → 1/8 = 25 ct → 8/8 = 200 ct.
+      Bei Zähler 1 entfällt der Zwischenschritt.
+    In **beiden** Unterbereichen erscheinen die Schritte **nacheinander** über die Knöpfe **„Schritt 1“** und
+    **„Schritt 2“** (erneutes Antippen nimmt einen Schritt zurück); zuerst steht nur das Bekannte mit der Frage
+    („Wie groß ist der Bruchteil?“ bzw. „Wie groß ist das Ganze?“), mit jedem Schritt kommen Bild, Wert und die
+    passende Rechenzeile dazu. Bei der **Uhr** zeigt der erste Schritt nur das **Gegebene** (das Ganze bzw. den
+    bekannten Bruchteil) ohne Teilungsstriche – sonst könnte man die Lösung am Zifferblatt ablesen; ab Schritt 1
+    erscheint das Ganze mit seinen Teilen. Im ersten Schritt ist das Bild groß und zeigt bei Länge und Volumen auch die
+    **Skala**; sobald mehrere Bilder nebeneinander stehen – und im Unterbereich „Ganzes gesucht“ immer, weil die
+    Skala sonst die Lösung verriete – wird nur der Bruch im Bild gezeigt.
+    Das Ergebnis erscheint in der Einheit, in der es **glatt aufgeht** – z. B. „2/3 von 1 h = 40 min“,
+    „3/8 von 2 kg = 750 g“, „2/5 von 1 m² = 40 dm²“; geht es in keiner Einheit glatt auf, wird auf zwei Stellen
+    gerundet und mit **≈** angezeigt. Der **Rechenweg** erscheint per Haken darunter, als durchgehende
+    Gleichungskette: 3/8 von 2 kg = 2000 g : 8 · 3 = 250 g · 3 = 750 g bzw.
+    1/8 sind 75 ct : 3 = 25 ct und 8/8 sind 25 ct · 8 = 200 ct. Rechnung und Ergebnissatz stehen **direkt unter
+    der Veranschaulichung** und in gut lesbarer Schrift.
+  - **„Verteilen“ (4. Reiter):** der Bruch als **Quotient** – „2 Ganze auf 3 Personen“. Über der Darstellung
+    steht dazu „2 Ganze – jedes in 3 Teile geschnitten“. Oben liegen die
     Pizzen/Kuchen, jedes in so viele Teile geschnitten, wie es Personen gibt; unten stehen **leere Teller**.
     Die Teile lassen sich **mit dem Finger nach unten auf einen Teller ziehen** (der Teller wird beim Ziehen
     markiert); wer schon genug hat, bekommt nichts mehr – dann erscheint ein Hinweis. **„alles verteilen“** macht
@@ -662,7 +704,14 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     **Umkehraufgabe**: Die Höhe ist der zweite Bruch, gesucht ist die **Breite x** mit x · c/d = a/b – der violette
     Bereich zeigt also den ersten Bruch, die Breite das Ergebnis (bei Ergebnissen über 1 mehrere Quadrate
     nebeneinander). Dazu der Rechenweg über den Kehrbruch.
-  - **„Bruchzahl“ (ganz rechts):** der Bruch als **Zahl auf dem Zahlenstrahl** – Teilstriche im Nenner-Takt,
+  - **„Bruchzahl“ (ganz rechts):** zwei Unterpunkte (Auswahl links) – **„Bruch zeigen“** (wie bisher) und
+    **„Wert ablesen“**: Der Zahlenstrahl wird über **von**, **bis** und die **Unterteilung** („in … Teile“ je
+    Einheit) eingestellt; ein **roter Pfeil** lässt sich mit dem Finger verschieben und rastet auf den
+    Teilstrichen ein. Der Haken **„Wert anzeigen“** gilt für **beide** Unterpunkte: beim Ablesen erscheint der
+    Wert als Bruch über dem Pfeil (darunter je nach Haken die **gekürzte Form**, die **gemischte Zahl** und der
+    **Dezimalbruch**; auch negative Bereiche, z. B. −1 bis 1: −2/4 = −1/2 = −0,5), beim „Bruch zeigen“ die
+    **blaue Markierung samt Bruch** – ohne Haken ist nur der leere Zahlenstrahl zu sehen.
+    Im Unterpunkt „Bruch zeigen“ (Länge des Strahls über **„Zahlenstrahl bis“**): der Bruch als **Zahl auf dem Zahlenstrahl** – Teilstriche im Nenner-Takt,
     der Anteil von 0 bis zum Bruch ist farbig, die Marke sitzt auf dem Zahlenstrahl, und die **1 ist rot und
     fett hervorgehoben** (das Ganze). „bis“ stellt ein, wie weit
     der Strahl reicht (auch für unechte Brüche wie 7/3); per Haken erscheinen die **gemischte Zahl** (7/3 = 2 1/3)
