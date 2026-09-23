@@ -462,6 +462,37 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   **mit dem Finger** Objekte antippen und verschieben; eine **Zwei-Finger-Geste auf einem
   ausgewählten Objekt** skaliert (aufziehen/zusammenziehen) und **dreht** es. Ist der Schalter aus,
   bleibt alles wie gewohnt (Finger schiebt/zoomt nur das Blatt, Auswählen nur mit dem Stift).
+- **Bedienleisten der Werkzeuge:** Die Leisten brechen nicht mehr in viele Zeilen um, wenn das Fenster schmal ist
+  oder die Schrift vergrößert wird. Beim **Bruch-Werkzeug** bleiben es genau **zwei Zeilen** – Reiter oben,
+  Bedienelemente darunter –, die bei Platzmangel **seitlich gescrollt** werden; die Knöpfe A−/A+, 🖼 Tafel und
+  📋 Kopieren stehen dabei fest am rechten Rand. Ebenso scrollen jetzt die Leisten von **Wahrscheinlichkeits­rechner,
+  Baumdiagramm, Würfel, Stellenwerttafel, Vierfeldertafel und Einheitskreis**, statt umzubrechen.
+- **Werkzeuge einzeln öffnen:** Alle Werkzeug-Seiten (z. B. `wahrscheinlichkeit.html`, `plotter.html`,
+  `gluecksrad.html`) laufen auch **ohne die Tafel** direkt im Browser. Sie schicken ihren Zustand nur dann an die
+  Tafel, wenn sie wirklich eingebettet sind, und nehmen Zustands-Nachrichten nur von der Tafel an.
+- **✂ Trimmen** (Kontextmenü, nur bei **Videoclips**): öffnet das Fenster **„Videoclip trimmen"** mit dem Clip,
+  zwei Reglern für **Anfang** und **Ende** (der Knopf **„hier"** übernimmt jeweils die aktuelle Stelle),
+  **▶ Ausschnitt ansehen**, **⤢ Ganzer Clip** und **✂ Übernehmen**. Danach spielt der Clip auf der Tafel nur noch
+  diesen Ausschnitt: Start springt auf den Anfang, am Ende hält er an und steht wieder am Anfang. Der Schnitt gilt
+  für das Abspielen; **„🎬 Video speichern"** sichert weiterhin die ganze Aufnahme (Hinweis im Toast).
+- **Dokument-Objekt (mehrseitig):** Mehrere gescannte Seiten lassen sich als **ein Objekt** auf die Tafel legen
+  („📚 Als Dokument" im Scan-Fenster). Es verhält sich wie ein Bild – verschieben, skalieren, drehen, beschreiben –
+  zeigt unten rechts die **Seitenzahl** („2 / 5") und wird über das Kontextmenü mit **‹ Seite / Seite ›**
+  durchgeblättert. Ist das Dokument **ausgewählt**, erscheinen unten am Objekt zusätzlich zwei kleine runde
+  **Blätter-Knöpfe ‹ ›** (am Anfang bzw. Ende ausgegraut); ein **Doppeltipp** auf das Objekt blättert ebenfalls weiter. **„📄 Als PDF sichern"** im
+  Kontextmenü schreibt alle Seiten wieder in eine PDF-Datei (A4, Hoch- oder Querformat je Seite).
+- **✂ Zuschneiden** (Kontextmenü, nur bei **Bildern**): öffnet das Fenster **„Bild zuschneiden"** mit dem Bild in
+  Originalauflösung. Der Ausschnitt wird als Rahmen gezeigt (alles außerhalb ist abgedunkelt, Drittellinien helfen
+  beim Ausrichten): **Ecken ziehen** verändert ihn, **in der Mitte ziehen** verschiebt ihn, **außerhalb aufziehen**
+  setzt einen neuen Rahmen, **⤢ Ganzes Bild** nimmt alles zurück; die Größe des Ausschnitts steht in Pixeln darunter.
+  **✂ Zuschneiden** ersetzt das Bild durch den Ausschnitt – er bleibt genau an der Stelle liegen, an der er vorher
+  im Bild war (auch bei gedrehten Bildern), und die Größe auf der Tafel passt sich an. JPEG-Bilder bleiben JPEG,
+  PNG bleibt PNG. **Rückgängig** (↶) stellt das ganze Bild wieder her. Das gilt für **alle Bilder**: eingefügte
+  Dateien, Kamerafotos, Scans, Screenshots, QR-Codes und Bilder, die Werkzeuge auf die Tafel legen.
+- **Seitenfüllende Inhalte** (Bild oder Scan „als Seite", Werkzeug über **„📄 Als eigene Seite anzeigen"** bzw.
+  „als eigene Seite" beim Einfügen) hängen nicht mehr in der linken oberen Ecke, sondern beginnen **etwas weiter
+  innen** – die vertikale Werkzeugleiste und die Seitenleiste verdecken den Rand also nicht mehr. Bereits
+  gespeicherte Seiten behalten ihre bisherige Lage.
 - Das **Kontextmenü** ist nach Abschnitten geordnet (Objekt-Einstellungen · Ebene · Aktionen) und zeigt
   nur, was beim ausgewählten Objekt wirklich etwas bewirkt – Farbe und Dicke erscheinen z. B. nicht bei
   einer eingefügten Tabelle oder einem Bild.
@@ -496,7 +527,13 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   eines leeren weißen Kastens zeigt das Objekt dann eine **Info-Karte mit der Domain**; über
   **„Einbettungen bedienen" → „↗ Öffnen"** (oben links am Objekt) lässt sich die Seite im Browser öffnen.
   Direkte Inhalts-URLs (z. B. **PhET-Simulationen**) funktionieren dagegen problemlos.
-  (PDF wird weiter als ganze Seite(n) eingefügt.)
+- **PDF einfügen:** über **Einfügen → Datei** („PDF / Bild / PowerPoint / Audio wählen"). Jede PDF-Seite wird
+  gerendert; zwei Schalter bestimmen die Form:
+  **„Als eigene Seite einfügen"** (aus) macht aus jeder PDF-Seite eine eigene Tafelseite.
+  Sonst entscheidet **„Mehrseitiges als Dokument"** (standardmäßig **an**): bei mehr als einer Seite entsteht
+  **ein blätterbares Dokument-Objekt** (‹ ›, Seitenzahl, „📄 Als PDF sichern"); ist der Schalter aus, kommt jede
+  Seite als **einzelnes bewegliches Bild** (verschieben, skalieren, drehen, **zuschneiden**; leicht versetzt
+  gestapelt). Für **PowerPoint-Folien** gilt dasselbe.
 - **Audiodatei einfügen (mp3 …):** über **Einfügen → Datei** („PDF / Bild / PowerPoint / Audio wählen").
   Unterstützt **mp3, m4a, aac, wav, ogg, opus**; die Datei landet als kleiner **Abspieler** (Play,
   Position, Lautstärke) als bewegliches Objekt auf der Tafel – zum Abspielen oben auf **„Einbettung
@@ -515,8 +552,14 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   Blattecken selbst (hellste zusammenhängende Fläche), die vier Griffe lassen sich nachziehen, dann wird
   die Seite **perspektivisch entzerrt**. Drei Aufbereitungen: **Schwarz-weiß** (Beleuchtung wird
   herausgerechnet – weißes Papier, schwarze Schrift, auch bei Schatten), **Graustufen**, **Farbe**.
-  **„➕ Seite sichern"** sammelt mehrere Seiten, **„Auf die Tafel"** legt sie als eigene Tafelseiten ab
-  und **„PDF sichern"** speichert alle gesammelten Seiten als mehrseitige **PDF-Datei** (A4). **„Video auf Tafel"** nimmt
+  **„➕ Seite sichern"** sammelt mehrere Seiten, **„🖼 Als Bild auf die Tafel"** legt jede Seite als **bewegliches
+  Bild-Objekt** ab (verschieben, skalieren, drehen, **zuschneiden**; mehrere Seiten liegen leicht versetzt),
+  **„📚 Als Dokument"** fasst alle gesammelten Seiten zu **einem blätterbaren Objekt** zusammen (siehe unten),
+  **„📄 Als Seite"** legt sie wie bisher als eigene Tafelseiten (Blatt-Hintergrund) ab – dabei beginnt das Blatt
+  jetzt **neben bzw. unter den Werkzeugleisten**, sodass der obere und linke Rand sichtbar bleibt
+  und **„PDF sichern"** speichert alle gesammelten Seiten als mehrseitige **PDF-Datei** (A4).
+  Das Kamera- und das Scan-Fenster sind deutlich größer (bis 900 bzw. 820 px breit); ihre Breite richtet sich
+  zusätzlich nach der **Bildschirmhöhe**, damit Kamerabild und Knopfreihen immer vollständig sichtbar bleiben. **„Video auf Tafel"** nimmt
   einen Clip auf (nochmal antippen = beenden, mit laufender Zeitanzeige) und legt ihn als abspielbares
   Videoobjekt auf die Tafel – wahlweise **mit Ton** (Schalter „Video mit Ton"; ohne Mikrofonfreigabe
   wird stumm aufgenommen). Zum Abspielen oben „Einbettung bedienen" antippen. Clips gelten nur für die

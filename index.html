@@ -227,9 +227,15 @@
   .win h3{margin:0;padding:10px 14px;background:#f1f3f7;font-size:15px;display:flex;justify-content:space-between;align-items:center;cursor:grab;touch-action:none;}
   .win h3 .x{cursor:pointer;font-size:18px;line-height:1;padding:2px 6px;color:#666;}
   .win .body{padding:14px;max-height:72vh;overflow:auto;}
+  /* Kamera/Scan: Breite so begrenzen, dass Bild UND Bedienknöpfe auf den Schirm passen */
+  #win-cam .body,#win-scan .body{max-height:86vh;}
+  #win-cam{width:min(900px,94vw,calc((86vh - 250px) * 4 / 3))!important;}
+  #win-scan{width:min(820px,94vw,calc((86vh - 260px) * 4 / 3))!important;}
   #camWrap{position:relative;overflow:hidden;border-radius:8px;background:#000;aspect-ratio:4/3;touch-action:none;}
   #camWrap video{width:100%;height:100%;object-fit:cover;display:block;transform-origin:center center;}
   #scanStage{position:relative;touch-action:none;background:#eef1f5;border-radius:10px;overflow:hidden;display:flex;justify-content:center;}
+  #cropStage{position:relative;touch-action:none;background:#eef1f5;border-radius:10px;overflow:hidden;display:flex;justify-content:center;}
+  #cropStage canvas{display:block;max-width:100%;}
   #scanCv{display:block;max-width:100%;}
   .scorner{position:absolute;width:30px;height:30px;margin:-15px 0 0 -15px;border-radius:50%;border:2.5px solid #2563eb;background:rgba(255,255,255,.55);box-shadow:0 1px 4px rgba(0,0,0,.3);}
   #camZoomBadge{position:absolute;z-index:2;right:8px;bottom:8px;background:rgba(0,0,0,.55);color:#fff;font-size:12px;font-weight:700;padding:3px 8px;border-radius:10px;pointer-events:none;opacity:0;transition:opacity .2s;}
@@ -714,7 +720,14 @@
     <div style="display:flex;gap:6px;align-items:center;flex-wrap:nowrap"><b style="width:56px">Linien:</b><button class="p step" id="tblLineM">−</button><span class="stepv" id="tblLineV">1</span><button class="p step" id="tblLineP">+</button></div>
   </div>
   <div class="prow" id="pageRow" style="display:none"><button class="p" id="pr-topage" style="width:100%">📄 Als eigene Seite anzeigen</button></div>
-  <div class="prow" id="clipRow" style="display:none"><button class="p" id="pr-clipsave" style="width:100%">🎬 Video speichern</button></div>
+  <div class="prow" id="clipRow" style="display:none;gap:5px"><button class="p" id="pr-clipsave">🎬 Video speichern</button><button class="p" id="pr-trim">✂ Trimmen</button></div>
+  <div class="prow" id="imgRow" style="display:none"><button class="p" id="pr-crop" style="width:100%" title="Bildausschnitt wählen">✂ Zuschneiden</button></div>
+  <div class="prow" id="docRow" style="display:none;gap:5px;flex-wrap:wrap">
+    <button class="p" id="pr-docPrev" title="Eine Seite zurück">‹ Seite</button>
+    <span id="pr-docNum" style="min-width:66px;text-align:center;font-weight:600;color:#5b6472">1 / 1</span>
+    <button class="p" id="pr-docNext" title="Eine Seite weiter">Seite ›</button>
+    <button class="p" id="pr-docPdf" style="flex:1 0 100%" title="Alle Seiten als PDF-Datei sichern">📄 Als PDF sichern</button>
+  </div>
   <div class="prow" id="wheelRow" style="display:none;flex-direction:column;align-items:stretch;gap:6px;font-size:12px">
     <div style="display:flex;gap:6px;align-items:center"><b>Sektoren:</b><input id="whCount" type="number" min="2" max="12" style="width:52px"><span style="color:#888">Zahl &amp; Farbe je Sektor:</span></div>
     <div id="whList" style="display:flex;flex-direction:column;gap:4px;max-height:150px;overflow:auto"></div>
@@ -745,7 +758,7 @@
     <button class="p" id="pr-ungroup">Lösen</button>
     <button class="p d" id="pr-del">Löschen</button>
   </div>
-  <div class="hint" style="margin:0">Ziehen = verschieben · Eckgriffe = Größe · Kreis oben = drehen · Doppeltipp auf Text = bearbeiten</div>
+  <div class="hint" style="margin:0">Ziehen = verschieben · Eckgriffe = Größe · Kreis oben = drehen · Doppeltipp: Text bearbeiten, Dokument weiterblättern</div>
 </div>
 
 <div id="favMenu"></div>
@@ -823,7 +836,7 @@
   </div></div>
 <canvas id="shotLayer"></canvas>
 <button id="shotCancel">Abbrechen</button>
-<div class="win" id="win-cam" style="left:70px;top:70px;width:min(490px,92vw);max-width:92vw;"><h3>Kamera <span class="x" data-close="win-cam">×</span></h3>
+<div class="win" id="win-cam" style="left:70px;top:36px;max-width:94vw;"><h3>Kamera <span class="x" data-close="win-cam">×</span></h3>
   <div class="body">
     <div id="camWrap"><video id="camVideo" playsinline autoplay muted></video><div id="camZoomBadge">1,0×</div></div>
     <div class="hint" style="margin:4px 0 0">Zwei Finger im Bild = zoomen · Doppeltipp = zurück</div>
@@ -832,14 +845,29 @@
     <div class="toggle" style="margin:8px 0"><span>Video mit Ton</span><div class="sw2" id="camSound"></div></div>
     <div class="hint" id="camHint">Kamera geht nur über <b>https</b> (z. B. GitHub Pages) – Zugriff erlauben.</div>
   </div></div>
-<div class="win" id="win-scan" style="left:60px;top:60px;width:min(520px,94vw);"><h3>Dokument scannen <span class="x" data-close="win-scan">×</span></h3>
+<div class="win" id="win-scan" style="left:60px;top:36px;"><h3>Dokument scannen <span class="x" data-close="win-scan">×</span></h3>
   <div class="body">
     <div id="scanStage"><canvas id="scanCv"></canvas></div>
     <div class="hint" style="margin:6px 0">Die vier Ecken auf die Blattecken ziehen – die Tafel entzerrt die Seite.</div>
     <div class="seg" id="scanSeg"><button data-f="doc" class="active">📄 Schwarz-weiß</button><button data-f="gray">Graustufen</button><button data-f="color">Farbe</button></div>
     <div class="row fill" style="gap:6px;margin-top:8px"><button class="btn" id="scanAuto">Ecken automatisch</button><button class="btn" id="scanAgain">📷 Neu aufnehmen</button></div>
-    <div class="row fill" style="gap:6px"><button class="btn" id="scanAdd">➕ Seite sichern</button><button class="btn pri" id="scanBoard">Auf die Tafel</button><button class="btn" id="scanPdf">PDF sichern</button></div>
+    <div class="row fill" style="gap:6px"><button class="btn" id="scanAdd">➕ Seite sichern</button><button class="btn pri" id="scanBoard">🖼 Als Bild auf die Tafel</button><button class="btn" id="scanDoc">📚 Als Dokument</button><button class="btn" id="scanPage">📄 Als Seite</button><button class="btn" id="scanPdf">PDF sichern</button></div>
     <div class="hint" id="scanInfo" style="margin:6px 0 0">Mehrseitig: „Seite sichern“, dann die nächste Seite aufnehmen.</div>
+  </div></div>
+<div class="win" id="win-trim" style="left:70px;top:70px;width:min(640px,94vw);"><h3>Videoclip trimmen <span class="x" data-close="win-trim">×</span></h3>
+  <div class="body">
+    <video id="trimVid" playsinline controls style="width:100%;max-height:44vh;background:#000;border-radius:10px;display:block"></video>
+    <div style="display:flex;gap:8px;align-items:center;margin-top:8px"><b style="width:52px">Anfang</b><input type="range" id="trimA" style="flex:1"><button class="btn" id="trimSetA" title="Aktuelle Stelle als Anfang">hier</button></div>
+    <div style="display:flex;gap:8px;align-items:center;margin-top:6px"><b style="width:52px">Ende</b><input type="range" id="trimB" style="flex:1"><button class="btn" id="trimSetB" title="Aktuelle Stelle als Ende">hier</button></div>
+    <div class="hint" id="trimInfo" style="margin:8px 0 0"></div>
+    <div class="row fill" style="gap:6px;margin-top:6px"><button class="btn" id="trimPlay">▶ Ausschnitt ansehen</button><button class="btn" id="trimAll">⤢ Ganzer Clip</button><button class="btn pri" id="trimOk">✂ Übernehmen</button></div>
+    <div class="hint" style="margin:6px 0 0">Der Schnitt gilt für das Abspielen auf der Tafel. Beim Speichern wird weiterhin die ganze Aufnahme gesichert.</div>
+  </div></div>
+<div class="win" id="win-crop" style="left:60px;top:60px;width:min(560px,94vw);"><h3>Bild zuschneiden <span class="x" data-close="win-crop">×</span></h3>
+  <div class="body">
+    <div id="cropStage"><canvas id="cropCv"></canvas></div>
+    <div class="hint" style="margin:6px 0">Rahmen an den Ecken ziehen, in der Mitte verschieben – außerhalb aufziehen setzt einen neuen Rahmen. <span id="cropInfo" style="color:#5b6472"></span></div>
+    <div class="row fill" style="gap:6px;margin-top:4px"><button class="btn" id="cropAll">⤢ Ganzes Bild</button><button class="btn pri" id="cropOk">✂ Zuschneiden</button></div>
   </div></div>
 <div class="win" id="win-class" style="left:40px;top:60px;width:min(680px,96vw);"><h3><span>Klasse <span id="clsName" style="color:#5b6472;font-weight:600"></span></span> <span class="x" data-close="win-class">×</span></h3>
   <div class="body">
@@ -926,6 +954,7 @@
   <div class="body">
     <div class="wcap">Art</div>
     <div class="toggle" style="margin:6px 0"><span>Als eigene Seite einfügen<br><small style="color:#888">(sonst als bewegliches Objekt)</small></span><div class="sw2" id="insAsPage"></div></div>
+    <div class="toggle" style="margin:6px 0"><span>Mehrseitiges als Dokument<br><small style="color:#888">PDF/PowerPoint als ein blätterbares Objekt statt vieler Bilder</small></span><div class="sw2 on" id="insAsDoc"></div></div>
 
     <hr class="wsep">
     <div class="wcap">Tabellenkalkulation</div>
@@ -934,7 +963,7 @@
     <hr class="wsep">
     <div class="wcap">Datei</div>
     <div class="row fill" style="margin-top:6px"><button class="btn" id="ins-pdf">PDF / Bild / PowerPoint / Audio wählen</button></div>
-    <div class="hint">PowerPoint (.pptx) kommt als Bild je Folie (Text &amp; Bilder); für eine <b>exakte</b> Darstellung die Datei vorher als <b>PDF</b> exportieren. Mit „Als eigene Seite" wird jede Folie eine Seite.<br><b>Audio</b> (mp3, m4a, wav, ogg) kommt als kleiner Abspieler auf die Tafel – bis 4 MB wird die Datei <b>mit dem Projekt gespeichert</b>, größere nur bis zum Neuladen.</div>
+    <div class="hint">PowerPoint (.pptx) kommt als Bild je Folie (Text &amp; Bilder); für eine <b>exakte</b> Darstellung die Datei vorher als <b>PDF</b> exportieren. Mit „Als eigene Seite" wird jede Folie bzw. <b>PDF-Seite</b> eine Tafelseite. Sonst entscheidet „Mehrseitiges als Dokument": ein <b>blätterbares Dokument-Objekt</b> (‹ ›) oder einzelne bewegliche <b>Bilder</b> (verschieben, skalieren, zuschneiden).<br><b>Audio</b> (mp3, m4a, wav, ogg) kommt als kleiner Abspieler auf die Tafel – bis 4 MB wird die Datei <b>mit dem Projekt gespeichert</b>, größere nur bis zum Neuladen.</div>
 
     <hr class="wsep">
     <div class="wcap">GeoGebra</div>
@@ -1032,7 +1061,7 @@ if(window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc='vendor/pdf.worker.mi
 /* ============ Grundlagen ============ */
 const cv=document.getElementById('board'), ctx=cv.getContext('2d');
 let dpr=Math.max(1,window.devicePixelRatio||1), W=0,H=0;
-function newPage(){ return {objects:[], undo:[], redo:[], bg:null, _img:null, embed:null, name:null, bgColor:null, pattern:null}; }
+function newPage(){ return {objects:[], undo:[], redo:[], bg:null, bgX:0, bgY:0, _img:null, embed:null, name:null, bgColor:null, pattern:null}; }
 /* Rückgängig/Wiederholen über Schnappschüsse der Objektliste – so lässt sich auch das Radieren zurücknehmen */
 const UNDO_MAX=40;
 const snapObjs=p=>p.objects.map(o=>({...o}));
@@ -1195,6 +1224,15 @@ function drawObjectRaw(o,c){
   } else if(o.type==='text'){ c.fillStyle=o.color; c.textBaseline='top';
     textLines(o,c).forEach((ln,i)=>c.fillText(ln,o.x,o.y+i*o.size*1.3));
   } else if(o.type==='image'){ if(o._img){try{c.drawImage(o._img,o.x,o.y,o.w,o.h);}catch(e){}} }
+  else if(o.type==='doc'){ ensureImg(o); const i=docCur(o), im=o._imgs&&o._imgs[i];       // Dokument: die aktuelle Seite
+    c.fillStyle='#fff'; c.fillRect(o.x,o.y,o.w,o.h);
+    if(im&&im.complete){try{c.drawImage(im,o.x,o.y,o.w,o.h);}catch(e){}}
+    c.strokeStyle='rgba(120,130,150,.75)'; c.lineWidth=Math.max(1,1/scale); c.strokeRect(o.x,o.y,o.w,o.h);
+    const t=(i+1)+' / '+o.pages.length, fs=Math.max(9,Math.min(o.h*0.045,20));
+    c.save(); c.font='600 '+fs+'px -apple-system,sans-serif'; c.textAlign='right'; c.textBaseline='bottom';
+    const wT=c.measureText(t).width, pad=fs*0.45;
+    c.fillStyle='rgba(255,255,255,.88)'; c.fillRect(o.x+o.w-wT-pad*3,o.y+o.h-fs*2.1,wT+pad*2.4,fs*1.7);
+    c.fillStyle='#475569'; c.fillText(t,o.x+o.w-pad*1.6,o.y+o.h-pad*1.1); c.restore(); }
   else if(o.type==='embed'){ if(c===ctx) c.clearRect(o.x,o.y,o.w,o.h); else { c.fillStyle='#fff'; c.fillRect(o.x,o.y,o.w,o.h); } c.strokeStyle='rgba(120,130,150,.6)'; c.lineWidth=1/scale; c.strokeRect(o.x,o.y,o.w,o.h); }
   else if(o.type==='clock'){ const cx=o.x+o.w/2, cy=o.y+o.h/2, r=Math.min(o.w,o.h)/2;
     c.beginPath(); c.arc(cx,cy,r,0,7); c.fillStyle='#fff'; c.fill(); c.strokeStyle='#1f2430'; c.lineWidth=Math.max(1,r*0.03); c.stroke();
@@ -1332,7 +1370,7 @@ function geomBounds(o){
     const x=Math.min(o.x0,o.x1),y=Math.min(o.y0,o.y1); return {x,y,w:Math.abs(o.x1-o.x0),h:Math.abs(o.y1-o.y0)}; }
   if(o.type==='text'){ const L=textLines(o,ctx); let w=0; L.forEach(l=>w=Math.max(w,ctx.measureText(l).width));
     return {x:o.x,y:o.y,w:Math.max(o.w>0?o.w:w,10),h:Math.max(1,L.length)*o.size*1.3}; }
-  if(o.type==='image'||o.type==='embed'||o.type==='clock'||o.type==='coord'||o.type==='numline') return {x:o.x,y:o.y,w:o.w,h:o.h};
+  if(o.type==='image'||o.type==='doc'||o.type==='embed'||o.type==='clock'||o.type==='coord'||o.type==='numline') return {x:o.x,y:o.y,w:o.w,h:o.h};
   return {x:0,y:0,w:0,h:0};
 }
 function objBounds(o){ return geomBounds(o); }
@@ -1341,7 +1379,7 @@ const invalidateSnap=()=>{};   // (früher Zwischen-Canvas; wieder entfernt, es 
 function redraw(){
   ctx.setTransform(1,0,0,1,0,0); ctx.clearRect(0,0,cv.width,cv.height);   // Canvas transparent; Farbe liegt im #bgLayer
   ctx.setTransform(scale*dpr,0,0,scale*dpr,ox*dpr,oy*dpr);
-  drawBackground(); if(page()._img){try{ctx.drawImage(page()._img,0,0);}catch(e){}}
+  drawBackground(); if(page()._img){try{ctx.drawImage(page()._img,page().bgX||0,page().bgY||0);}catch(e){}}
   for(const o of page().objects) drawObject(o);
   if(cur) drawObject(cur);
   if(polyDraft&&tool==='shape'&&shapeKind==='polygon'){ const P=polyDraft.pts; ctx.save(); ctx.strokeStyle=polyDraft.color; ctx.lineWidth=polyDraft.width; ctx.lineJoin='round'; ctx.lineCap='round';
@@ -1469,6 +1507,10 @@ function handleList(){ // Bildschirm-Positionen der Griffe (nur bei Einzelauswah
   const rw=localToWorld(cx,b.y-26/scale,cx,cy,rot),rs=toScreen(rw.x,rw.y); out.push({role:'rot',x:rs.x,y:rs.y});
   return out;
 }
+/* kleine Blätter-Knöpfe am ausgewählten mehrseitigen Dokument (Bildschirm-Positionen) */
+function docBtnList(){ const o=singleSel(); if(!o||o.type!=='doc'||!(o.pages&&o.pages.length>1)) return [];
+  const b=geomBounds(o), cx=b.x+b.w/2, cy=b.y+b.h/2, rot=o.rot||0, y=b.y+b.h-26/scale, dx=34/scale;
+  return [['prev',cx-dx,y],['next',cx+dx,y]].map(([role,x,yy])=>{ const wp=localToWorld(x,yy,cx,cy,rot), sp=toScreen(wp.x,wp.y); return {role,x:sp.x,y:sp.y,o}; }); }
 function drawSelection(){ if(!selection.length)return;
   ctx.setTransform(dpr,0,0,dpr,0,0); ctx.strokeStyle='#3b82f6'; ctx.fillStyle='#fff'; ctx.lineWidth=1.5;
   // Rahmen
@@ -1479,6 +1521,14 @@ function drawSelection(){ if(!selection.length)return;
   for(const h of handleList()){ ctx.beginPath();
     if(h.role==='rot'){ ctx.arc(h.x,h.y,7,0,7); ctx.fillStyle='#3b82f6'; ctx.fill(); ctx.strokeStyle='#fff'; ctx.stroke(); ctx.strokeStyle='#3b82f6'; }
     else { ctx.rect(h.x-5,h.y-5,10,10); ctx.fillStyle='#fff'; ctx.fill(); ctx.stroke(); } }
+  // Blättern im Dokument
+  for(const d of docBtnList()){ const i=docCur(d.o), n=d.o.pages.length;
+    const off=(d.role==='prev')?(i<=0):(i>=n-1);
+    ctx.beginPath(); ctx.arc(d.x,d.y,16,0,7); ctx.fillStyle=off?'rgba(255,255,255,.7)':'#fff'; ctx.fill();
+    ctx.strokeStyle=off?'#c3cbd6':'#3b82f6'; ctx.lineWidth=1.8; ctx.stroke();
+    ctx.fillStyle=off?'#c3cbd6':'#2563eb'; ctx.font='700 20px -apple-system,sans-serif';
+    ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(d.role==='prev'?'‹':'›',d.x,d.y+1); }
+  ctx.textAlign='left'; ctx.textBaseline='alphabetic'; ctx.strokeStyle='#3b82f6';
   ctx.setTransform(scale*dpr,0,0,scale*dpr,ox*dpr,oy*dpr);
 }
 function drawMarquee(){ ctx.setTransform(dpr,0,0,dpr,0,0); ctx.strokeStyle='#3b82f6'; ctx.fillStyle='rgba(59,130,246,.1)'; ctx.lineWidth=1;
@@ -1741,17 +1791,20 @@ function screenHandleAt(sx,sy){ for(const h of handleList()){ if(Math.hypot(h.x-
 function startSelect(e,w){
   const now=performance.now(); const hit=hitObject(w.x,w.y);
   // 1) Doppeltipp auf Text -> bearbeiten (hat Vorrang vor den Griffen)
+  if(hit && hit.type==='doc' && lastTap.o===hit && now-lastTap.t<400){ docTurn(hit,1); lastTap={t:0,o:null}; return; }
   if(hit && hit.type==='text' && lastTap.o===hit && now-lastTap.t<400){ selection=[]; refreshProps(); openTextEditor(hit.x,hit.y,hit); lastTap={t:0,o:null}; return; }
-  // 2) Griff (Skalieren/Drehen) bei Einzelauswahl?
+  // 2) Blätter-Knopf am Dokument?
+  for(const d of docBtnList()){ if(Math.hypot(d.x-e.clientX,d.y-e.clientY)<20){ docTurn(d.o,d.role==='prev'?-1:1); lastTap={t:0,o:null}; return; } }
+  // 3) Griff (Skalieren/Drehen) bei Einzelauswahl?
   const h=screenHandleAt(e.clientX,e.clientY);
   if(h && singleSel()){ const o=singleSel(); const b=geomBounds(o); const C={x:b.x+b.w/2,y:b.y+b.h/2};
     if(o.type==='text'&&!(o.w>0)) o.w=Math.max(40,geomBounds(o).w);   // Textbreite festhalten, bevor gezogen wird
     xform={o,role:h.role,C,snap:JSON.parse(JSON.stringify(stripObj(o))),startAngle:0};
     if(h.role==='rot'){ xform.startAngle=Math.atan2(w.y-C.y,w.x-C.x)-(o.rot||0); }
     lastTap={t:now,o:hit}; return; }
-  // 3) Objekt getroffen -> auswählen/verschieben
+  // 4) Objekt getroffen -> auswählen/verschieben
   if(hit){ lastTap={t:now,o:hit}; if(!selection.includes(hit)) selectObject(hit,false); moveDrag={lx:w.x,ly:w.y}; markDirty(); return; }
-  // 4) leer -> Rahmenauswahl
+  // 5) leer -> Rahmenauswahl
   lastTap={t:0,o:null}; selection=[]; refreshProps(); marquee={x0:e.clientX,y0:e.clientY,x1:e.clientX,y1:e.clientX}; markDirty();
 }
 function moveSelect(e,w){
@@ -1804,7 +1857,7 @@ function scaleObj(o,snap,sx,sy,cx,cy){ const aw=(Math.abs(sx)+Math.abs(sy))/2;
   if(o.type==='stroke'){ o.points=snap.points.map(p=>({x:cx+(p.x-cx)*sx,y:cy+(p.y-cy)*sy,p:p.p})); o.width=Math.max(.3,snap.width*aw); }
   else if(o.type==='shape'){ o.x0=cx+(snap.x0-cx)*sx; o.y0=cy+(snap.y0-cy)*sy; o.x1=cx+(snap.x1-cx)*sx; o.y1=cy+(snap.y1-cy)*sy; o.width=Math.max(.3,snap.width*aw); if(o.shape==='arc') o.r=Math.max(1,snap.r*aw); }
   else if(o.type==='text'){ o.x=cx+(snap.x-cx)*sx; o.y=cy+(snap.y-cy)*sy; o.w=Math.max(40,(snap.w||10)*sx); }   // Ziehen ändert den Schreibbereich, nicht die Schriftgröße
-  else if(o.type==='image'||o.type==='embed'||o.type==='clock'||o.type==='coord'||o.type==='numline'){ o.x=cx+(snap.x-cx)*sx; o.y=cy+(snap.y-cy)*sy; o.w=Math.max(4,snap.w*sx); o.h=Math.max(4,snap.h*sy); } }
+  else if(o.type==='image'||o.type==='doc'||o.type==='embed'||o.type==='clock'||o.type==='coord'||o.type==='numline'){ o.x=cx+(snap.x-cx)*sx; o.y=cy+(snap.y-cy)*sy; o.w=Math.max(4,snap.w*sx); o.h=Math.max(4,snap.h*sy); } }
 
 /* --- Navigation --- */
 function clampPan(){ ox=Math.min(0,ox); oy=Math.min(0,oy); }   // Seite oben+links fest, nur nach unten/rechts schiebbar
@@ -2139,7 +2192,12 @@ function refreshProps(){ const has=selection.length>0 && tool==='select';
     if(fo){ $('embFsV').textContent=(fo.data&&fo.data.fontSize)||FONT_DEF[fo.etype]; $('embBold').classList.toggle('on',!!(fo.data&&fo.data.fontBold)); $('embItalic').classList.toggle('on',!!(fo.data&&fo.data.fontItalic)); }
     const po=(selection.length===1&&selection[0].type==='embed'&&['verteilung','mess','ggbapp','ableitung','stromkreis','mindmap','pinnwand'].includes(selection[0].etype))?selection[0]:null; $('pageRow').style.display=po?'flex':'none';
     const cl=(selection.length===1&&selection[0].type==='embed'&&(selection[0].etype==='clip'||selection[0].etype==='audio'))?selection[0]:null; $('clipRow').style.display=cl?'flex':'none';
-    if(cl) $('pr-clipsave').textContent=(cl.etype==='audio')?'🎙 Ton speichern':'🎬 Video speichern';
+    if(cl){ $('pr-clipsave').textContent=(cl.etype==='audio')?'🎙 Ton speichern':'🎬 Video speichern';
+      $('pr-trim').style.display=(cl.etype==='clip'&&cl.src)?'':'none'; }
+    const io=(selection.length===1&&selection[0].type==='image')?selection[0]:null; $('imgRow').style.display=io?'flex':'none';
+    const dk=(selection.length===1&&selection[0].type==='doc')?selection[0]:null; $('docRow').style.display=dk?'flex':'none';
+    if(dk){ $('pr-docNum').textContent=(docCur(dk)+1)+' / '+dk.pages.length;
+      $('pr-docPrev').disabled=docCur(dk)<=0; $('pr-docNext').disabled=docCur(dk)>=dk.pages.length-1; }
     const wo=(selection.length===1&&selection[0].type==='embed'&&selection[0].etype==='gluecksrad')?selection[0]:null; $('wheelRow').style.display=wo?'flex':'none';
     if(wo) buildWheelEditor(wo); }
   if(has) positionProps();
@@ -2170,12 +2228,12 @@ $('pr-clipsave').onclick=()=>{ const o=singleSel(); if(!o||(o.etype!=='clip'&&o.
   if(!o.src){ toast('Dieser Clip ist nach dem Neuladen nicht mehr verfügbar'); return; }
   const a=document.createElement('a'); a.href=o.src;
   a.download=o.name||((o.etype==='audio'?'tafel-ton-':'tafel-clip-')+new Date().toISOString().slice(0,16).replace(/[:T]/g,'-')+'.'+(o.ext||'webm')); a.click();
-  toast(o.etype==='audio'?'Ton gespeichert':'Video gespeichert'); };
+  toast(o.etype==='audio'?'Ton gespeichert':((o.t0||o.t1)?'Video gespeichert – die Datei enthält die ganze Aufnahme':'Video gespeichert')); };
 $('pr-topage').onclick=()=>{ const o=singleSel(); if(!o||o.type!=='embed')return;
   page().objects=page().objects.filter(x=>x!==o);
   doc.pages.splice(doc.cur+1,0,newPage()); goPage(doc.cur+1);
-  const wv=W*0.92, hv=H*0.84, c=toWorld(W/2,H/2);
-  o.x=c.x-wv/2; o.y=c.y-hv/2; o.w=wv; o.h=hv; o.rot=0;
+  const ar=pageArea();
+  o.x=ar.x; o.y=ar.y; o.w=ar.w; o.h=ar.h; o.rot=0;
   page().objects.push(o); selection=[o]; setMode('write'); setTool('select'); refreshProps(); refreshEmbedUI(); markDirty(); scheduleAutosave();
   toast('„'+(o.label||'Objekt')+'" als eigene Seite'); };
 function postToEmbed(obj,data){ const fr=embedEls.get(obj.id); if(fr&&fr.contentWindow){ try{ fr.contentWindow.postMessage({type:'embed-data',data},'*'); }catch(e){} } }
@@ -2305,12 +2363,22 @@ function ytEmbed(url){ const m=url.match(/(?:youtu\.be\/|v=|embed\/|shorts\/)([\
 function ggbEmbed(v){ v=v.trim(); const m=v.match(/geogebra\.org\/m\/([\w]+)/)||v.match(/\/([\w]+)$/); const id=(v.includes('/')?(m?m[1]:v):v); return 'https://www.geogebra.org/material/iframe/id/'+encodeURIComponent(id)+'/width/1200/height/800/border/ddd/rc/false/ai/false/sdz/true'; }
 const insAsPage=()=>$('insAsPage').classList.contains('on');
 $('insAsPage').onclick=function(){ this.classList.toggle('on'); };
+const insAsDoc=()=>$('insAsDoc').classList.contains('on');
+$('insAsDoc').onclick=function(){ this.classList.toggle('on'); };
+/* Seitenfüllende Inhalte (eigene Seite, Hintergrundbild) beginnen etwas weiter innen,
+   damit die Werkzeugleisten den Rand nicht verdecken. */
+const PAGE_INSET={x:78,y:66,r:20,b:20};
+function pageArea(){ const a=toWorld(PAGE_INSET.x,PAGE_INSET.y),
+  b=toWorld(Math.max(PAGE_INSET.x+160,W-PAGE_INSET.r), Math.max(PAGE_INSET.y+120,H-PAGE_INSET.b));
+  return {x:a.x,y:a.y,w:b.x-a.x,h:b.y-a.y}; }
 function addEmbedObject(etype,src,label,data,asPage){
   if(asPage===undefined) asPage=insAsPage();
   if(asPage){ doc.pages.splice(doc.cur+1,0,newPage()); goPage(doc.cur+1); }   // eigene Seite
   const ratio={sheet:0.72,plotter:0.8,vierfelder:0.5,baum:0.64,verteilung:0.85,mess:0.72,gleichung:0.62,tabelle:0.6,ggbapp:0.78,wuerfel:0.92,gluecksrad:1.05,bruch:0.68,stellenwert:0.5,umrechner:0.9,einheitskreis:0.62,raum:0.72,ableitung:0.7,stromkreis:0.66,mindmap:0.62,pinnwand:0.66}[etype]||0.62;
-  const wv=asPage?(W*0.92):Math.min(W*0.6,700)/scale, hv=asPage?(H*0.84):wv*ratio, c=toWorld(W/2,H/2);
-  const o={type:'embed',id:uid(),etype,src,label,x:c.x-wv/2,y:c.y-hv/2,w:wv,h:hv,rot:0,groupId:null}; if(data!==undefined)o.data=data;
+  const ar=asPage?pageArea():null;
+  const wv=asPage?ar.w:Math.min(W*0.6,700)/scale, hv=asPage?ar.h:wv*ratio, c=toWorld(W/2,H/2);
+  const px=asPage?ar.x:(c.x-wv/2), py=asPage?ar.y:(c.y-hv/2);
+  const o={type:'embed',id:uid(),etype,src,label,x:px,y:py,w:wv,h:hv,rot:0,groupId:null}; if(data!==undefined)o.data=data;
   pushUndo(); page().objects.push(o); setMode('write'); setTool('select'); selection=[o]; refreshProps(); refreshEmbedUI(); markDirty(); scheduleAutosave(); }
 const pageHasEmbeds=()=>page().objects.some(o=>o.type==='embed');
 function refreshEmbedUI(){ const has=pageHasEmbeds(); $('annoToggle').classList.toggle('show',has); if(!has)embedInteract=false; applyEmbedMode(); }
@@ -2361,7 +2429,11 @@ function syncEmbeds(){ const p=page(), wanted=new Set();
           fr.innerHTML='<div class="ec-ico">🎙</div><div class="ec-sub">'+((o.label||'Tonaufnahme').replace(/[<>&]/g,''))+'</div><div class="ec-hint">Eigene Aufnahmen und Audiodateien über 4 MB werden nicht mitgespeichert – nach dem Neuladen ist der Ton weg.</div>'; }
       }
       else if(o.etype==='clip'){                               // Videoclip aus dem Kamera-Werkzeug
-        if(o.src){ fr=document.createElement('video'); fr.setAttribute('playsinline',''); fr.playsInline=true; fr.controls=true; fr.preload='metadata'; fr.src=o.src; if(!o.sound)fr.muted=true; }
+        if(o.src){ fr=document.createElement('video'); fr.setAttribute('playsinline',''); fr.playsInline=true; fr.controls=true; fr.preload='metadata'; fr.src=o.src; if(!o.sound)fr.muted=true;
+          const A=()=>Math.max(0,o.t0||0), B=()=>((o.t1&&o.t1>(o.t0||0))?o.t1:Infinity), jump=v=>{ try{ fr.currentTime=v; }catch(_){} };
+          fr.addEventListener('loadedmetadata',()=>{ if(A()>0&&fr.currentTime<A()) jump(A()); });
+          fr.addEventListener('play',()=>{ if(fr.currentTime<A()-0.05||fr.currentTime>=B()-0.02) jump(A()); });
+          fr.addEventListener('timeupdate',()=>{ if(fr.currentTime>=B()){ fr.pause(); jump(A()); } else if(fr.currentTime<A()-0.3) jump(A()); }); }
         else { fr=document.createElement('div'); fr.className='embedCard';
           fr.innerHTML='<div class="ec-ico">🎬</div><div class="ec-sub">Videoclip</div><div class="ec-hint">Clips werden nicht mitgespeichert – nach dem Neuladen ist die Aufnahme weg.</div>'; }
       } else { fr=document.createElement('iframe'); fr.setAttribute('allow','autoplay; fullscreen; clipboard-write; microphone'); fr.allowFullscreen=true; fr.src=o.src; fr.style.background=(o.etype==='html')?'transparent':'#fff'; }
@@ -2482,7 +2554,7 @@ function renderThumbs(){ const grid=$('ppGrid'); grid.innerHTML='';
     grid.appendChild(cell); }); }
 /* ---- Seite kopieren/klonen (frische Objekt-IDs) ---- */
 function clonePage(p){ return { objects:(p.objects||[]).map(o=>{ const c=JSON.parse(JSON.stringify(stripObj(o))); c.id=uid(); return c; }),
-  redo:[], bg:p.bg||null, _img:null, embed:null, name:p.name||null, bgColor:p.bgColor||null, pattern:p.pattern||null }; }
+  redo:[], bg:p.bg||null, bgX:p.bgX||0, bgY:p.bgY||0, _img:null, embed:null, name:p.name||null, bgColor:p.bgColor||null, pattern:p.pattern||null }; }
 /* ---- Seiten-Kontextmenü ---- */
 let pageClip=null, pmIdx=-1;
 const PMPATS=[['none','Kein'],['grid','Karo'],['lines','Linien'],['dots','Punkte'],['staff','Noten'],['triangles','Dreiecke']];
@@ -3646,7 +3718,7 @@ $('scanAgain').onclick=()=>{ $('win-scan').classList.remove('show'); $('win-cam'
 $('scanAuto').onclick=()=>{ if(scanSrc){ scanQuad=scanDetect(scanSrc); scanDraw(); } };
 $('scanSeg').querySelectorAll('button').forEach(b=>b.onclick=()=>{ scanFilter=b.dataset.f;
   $('scanSeg').querySelectorAll('button').forEach(x=>x.classList.toggle('active',x===b)); });
-function scanInfo(){ $('scanInfo').textContent=scanPages.length?(scanPages.length+' Seite(n) gesichert – „Auf die Tafel“ oder „PDF sichern“ legt alle zusammen ab.'):'Mehrseitig: „Seite sichern“, dann die nächste Seite aufnehmen.'; }
+function scanInfo(){ $('scanInfo').textContent=scanPages.length?(scanPages.length+' Seite(n) gesichert – „Als Bild“, „Als Dokument“ (blätterbar), „Als Seite“ oder „PDF sichern“ legt alle zusammen ab.'):'Mehrseitig: „Seite sichern“, dann die nächste Seite aufnehmen.'; }
 /* Blatt suchen: helle, zusammenhängende Fläche im verkleinerten Bild, davon die vier äußersten Ecken */
 function scanDetect(src){
   const W=240, H=Math.max(1,Math.round(src.height*W/src.width));
@@ -3676,7 +3748,7 @@ function scanDefault(src){ const mx=src.width*0.08, my=src.height*0.08;
   return [scanPt(mx,my),scanPt(src.width-mx,my),scanPt(src.width-mx,src.height-my),scanPt(mx,src.height-my)]; }
 /* Vorschau samt Ecken zeichnen */
 function scanDraw(){ if(!scanSrc) return; const cv2=$('scanCv'), stage=$('scanStage');
-  const maxW=Math.min(460, (stage.clientWidth||460)), k=Math.min(1, maxW/scanSrc.width, 420/scanSrc.height);
+  const maxW=Math.min(760, (stage.clientWidth||460)), k=Math.min(1, maxW/scanSrc.width, Math.max(240,innerHeight*0.52)/scanSrc.height);
   cv2.width=Math.round(scanSrc.width*k); cv2.height=Math.round(scanSrc.height*k);
   const g=cv2.getContext('2d'); g.drawImage(scanSrc,0,0,cv2.width,cv2.height);
   g.save(); g.strokeStyle='#2563eb'; g.lineWidth=2; g.fillStyle='rgba(37,99,235,.12)';
@@ -3753,6 +3825,16 @@ $('scanAdd').onclick=()=>{ showBusy(true,'Seite wird entzerrt…'); setTimeout((
   showBusy(false); },40); };
 function scanCollect(){ const u=scanCurrent(); const all=scanPages.slice(); if(u) all.push(u); return all; }
 $('scanBoard').onclick=()=>{ showBusy(true,'Seite wird entzerrt…'); setTimeout(()=>{ const all=scanCollect();
+  if(all.length){ all.forEach((p2,i)=>placeImageObject(p2.u, i*26/scale, i*26/scale));   // als Bild-Objekt: verschiebbar und zuschneidbar
+    scanPages=[]; scanInfo(); $('win-scan').classList.remove('show'); markDirty(); scheduleAutosave();
+    toast(all.length+' Scan-Bild(er) eingefügt – verschieben, skalieren, zuschneiden'); }
+  showBusy(false); },40); };
+$('scanDoc').onclick=()=>{ showBusy(true,'Seiten werden entzerrt…'); setTimeout(()=>{ const all=scanCollect();
+  if(all.length){ addDocObject(all.map(p2=>p2.u),'scan-'+new Date().toISOString().slice(0,10)); scanPages=[]; scanInfo();
+    $('win-scan').classList.remove('show'); markDirty(); scheduleAutosave();
+    toast(all.length+' Seite(n) als Dokument eingefügt – mit ‹ › blättern (Doppeltipp = weiter)'); }
+  showBusy(false); },40); };
+$('scanPage').onclick=()=>{ showBusy(true,'Seite wird entzerrt…'); setTimeout(()=>{ const all=scanCollect();
   if(all.length){ all.forEach((p2,i)=>addBgPage(p2.u, i===0&&!page().objects.length&&!page().bg)); scanPages=[]; scanInfo();
     $('win-scan').classList.remove('show'); scheduleAutosave(); toast(all.length+' Scan-Seite(n) eingefügt'); }
   showBusy(false); },40); };
@@ -3766,6 +3848,118 @@ $('scanPdf').onclick=()=>{ if(!window.jspdf){ toast('PDF-Bibliothek fehlt'); ret
     pdf.save('scan-'+new Date().toISOString().slice(0,10)+'.pdf'); scanPages=[]; scanInfo(); toast('PDF gesichert');
   }catch(err){ toast('PDF-Fehler: '+err.message); } showBusy(false); },40); };
 addEventListener('resize',()=>{ if($('win-scan').classList.contains('show')) scanDraw(); });
+
+/* ---- Bild zuschneiden ---- */
+let cropObj=null, cropImg=null, cropRect=null, cropScale=1, cropDrag=null;
+const cropCorners=R=>[{x:R.x,y:R.y},{x:R.x+R.w,y:R.y},{x:R.x+R.w,y:R.y+R.h},{x:R.x,y:R.y+R.h}];
+function openCrop(o){ if(!o||o.type!=='image'||!o.src){ toast('Nur Bilder lassen sich zuschneiden'); return; }
+  const im=new Image();
+  im.onload=()=>{ cropObj=o; cropImg=im; cropRect={x:0,y:0,w:im.naturalWidth,h:im.naturalHeight};
+    $('win-crop').classList.add('show'); cropDraw(); };
+  im.onerror=()=>toast('Bild konnte nicht geladen werden');
+  im.src=o.src; }
+function cropDraw(){ if(!cropImg||!cropRect) return; const cv2=$('cropCv'), stage=$('cropStage');
+  const W=cropImg.naturalWidth, H=cropImg.naturalHeight;
+  const maxW=Math.min(520,(stage.clientWidth||460)), k=Math.min(1, maxW/W, 420/H);
+  cv2.width=Math.round(W*k); cv2.height=Math.round(H*k);
+  const g=cv2.getContext('2d'); g.drawImage(cropImg,0,0,cv2.width,cv2.height);
+  const R={x:cropRect.x*k,y:cropRect.y*k,w:cropRect.w*k,h:cropRect.h*k};
+  g.save(); g.fillStyle='rgba(15,23,42,.45)';                                    // alles außerhalb abdunkeln
+  g.fillRect(0,0,cv2.width,R.y); g.fillRect(0,R.y+R.h,cv2.width,cv2.height-R.y-R.h);
+  g.fillRect(0,R.y,R.x,R.h); g.fillRect(R.x+R.w,R.y,cv2.width-R.x-R.w,R.h);
+  g.strokeStyle='rgba(255,255,255,.55)'; g.lineWidth=1;                          // Drittellinien
+  for(let i=1;i<3;i++){ g.beginPath(); g.moveTo(R.x+R.w*i/3,R.y); g.lineTo(R.x+R.w*i/3,R.y+R.h); g.stroke();
+    g.beginPath(); g.moveTo(R.x,R.y+R.h*i/3); g.lineTo(R.x+R.w,R.y+R.h*i/3); g.stroke(); }
+  g.strokeStyle='#2563eb'; g.lineWidth=2; g.strokeRect(R.x,R.y,R.w,R.h);
+  cropCorners(R).forEach(p=>{ g.beginPath(); g.arc(p.x,p.y,9,0,7); g.fillStyle='#fff'; g.fill();
+    g.lineWidth=3; g.strokeStyle='#2563eb'; g.stroke(); });
+  g.restore(); cropScale=k;
+  $('cropInfo').textContent='Ausschnitt: '+Math.round(cropRect.w)+' × '+Math.round(cropRect.h)+' px'; }
+$('cropStage').addEventListener('pointerdown',e=>{ if(!cropImg) return; const r=$('cropCv').getBoundingClientRect();
+  const x=(e.clientX-r.left)/cropScale, y=(e.clientY-r.top)/cropScale, R=cropRect;
+  let bi=-1, bd=Math.pow(26/cropScale,2);
+  cropCorners(R).forEach((p,i)=>{ const d2=(p.x-x)*(p.x-x)+(p.y-y)*(p.y-y); if(d2<bd){ bd=d2; bi=i; } });
+  if(bi>=0) cropDrag={mode:'corner',i:bi};
+  else if(x>=R.x&&x<=R.x+R.w&&y>=R.y&&y<=R.y+R.h) cropDrag={mode:'move',dx:x-R.x,dy:y-R.y};
+  else { cropDrag={mode:'new',x0:x,y0:y}; cropRect={x:x,y:y,w:1,h:1}; cropDraw(); }
+  e.preventDefault(); try{ $('cropStage').setPointerCapture(e.pointerId); }catch(_){} });
+$('cropStage').addEventListener('pointermove',e=>{ if(!cropDrag||!cropImg) return; const r=$('cropCv').getBoundingClientRect();
+  const W=cropImg.naturalWidth, H=cropImg.naturalHeight;
+  const x=Math.max(0,Math.min(W,(e.clientX-r.left)/cropScale)), y=Math.max(0,Math.min(H,(e.clientY-r.top)/cropScale)), R=cropRect;
+  if(cropDrag.mode==='corner'){ const op=cropCorners(R)[(cropDrag.i+2)%4];       // gegenüberliegende Ecke bleibt stehen
+    cropRect={x:Math.min(op.x,x), y:Math.min(op.y,y), w:Math.max(8,Math.abs(x-op.x)), h:Math.max(8,Math.abs(y-op.y))}; }
+  else if(cropDrag.mode==='move') cropRect={x:Math.max(0,Math.min(W-R.w,x-cropDrag.dx)), y:Math.max(0,Math.min(H-R.h,y-cropDrag.dy)), w:R.w, h:R.h};
+  else cropRect={x:Math.min(cropDrag.x0,x), y:Math.min(cropDrag.y0,y), w:Math.abs(x-cropDrag.x0), h:Math.abs(y-cropDrag.y0)};
+  cropDraw(); });
+['pointerup','pointercancel'].forEach(ev=>$('cropStage').addEventListener(ev,()=>{
+  if(cropDrag&&cropDrag.mode==='new'&&cropImg&&(cropRect.w<12||cropRect.h<12)) cropRect={x:0,y:0,w:cropImg.naturalWidth,h:cropImg.naturalHeight};
+  cropDrag=null; cropDraw(); }));
+$('cropAll').onclick=()=>{ if(!cropImg) return; cropRect={x:0,y:0,w:cropImg.naturalWidth,h:cropImg.naturalHeight}; cropDraw(); };
+$('cropOk').onclick=()=>{ const o=cropObj, im=cropImg, R=cropRect;
+  if(!o||!im||!R||R.w<8||R.h<8){ toast('Der Ausschnitt ist zu klein'); return; }
+  const W=im.naturalWidth, H=im.naturalHeight;
+  if(R.w>=W-1&&R.h>=H-1){ $('win-crop').classList.remove('show'); cropObj=null; return; }   // nichts zu tun
+  const cv2=document.createElement('canvas'); cv2.width=Math.max(1,Math.round(R.w)); cv2.height=Math.max(1,Math.round(R.h));
+  cv2.getContext('2d').drawImage(im,Math.round(R.x),Math.round(R.y),cv2.width,cv2.height,0,0,cv2.width,cv2.height);
+  let url; try{ url=/^data:image\/jpeg/i.test(o.src||'')?cv2.toDataURL('image/jpeg',0.92):cv2.toDataURL('image/png'); }
+  catch(err){ toast('Dieses Bild lässt sich nicht zuschneiden (fremde Quelle)'); return; }
+  pushUndo();
+  const cx=o.x+o.w/2, cy=o.y+o.h/2;                                              // Ausschnitt bleibt dort, wo er im Bild lag
+  const px=o.x+o.w*(R.x+R.w/2)/W, py=o.y+o.h*(R.y+R.h/2)/H;
+  const rot=o.rot||0, dx=px-cx, dy=py-cy, ca=Math.cos(rot), sa=Math.sin(rot);
+  const nw=o.w*R.w/W, nh=o.h*R.h/H;
+  o.x=cx+dx*ca-dy*sa-nw/2; o.y=cy+dx*sa+dy*ca-nh/2; o.w=nw; o.h=nh;
+  o.src=url; o._img=null; ensureImg(o);
+  $('win-crop').classList.remove('show'); cropObj=null; cropImg=null;
+  scheduleAutosave(); markDirty(); refreshProps(); toast('Bild zugeschnitten'); };
+$('pr-crop').onclick=()=>{ if(selection.length===1) openCrop(selection[0]); };
+$('pr-docPrev').onclick=()=>{ const o=singleSel(); if(o) docTurn(o,-1); };
+$('pr-docNext').onclick=()=>{ const o=singleSel(); if(o) docTurn(o,1); };
+$('pr-docPdf').onclick=()=>{ const o=singleSel(); if(!o||o.type!=='doc') return;
+  if(!window.jspdf){ toast('PDF-Bibliothek fehlt'); return; }
+  showBusy(true,'PDF wird erstellt…'); setTimeout(()=>{ try{ const {jsPDF}=window.jspdf; let pdf=null; let done=0;
+    const next=i=>{ if(i>=o.pages.length){ pdf.save((o.label||'dokument')+'.pdf'); toast(done+' Seite(n) als PDF gesichert'); showBusy(false); return; }
+      const im=new Image(); im.onload=()=>{ const orient=im.width>=im.height?'l':'p';
+        if(!pdf) pdf=new jsPDF({orientation:orient,unit:'mm',format:'a4'}); else pdf.addPage('a4',orient);
+        const iw=orient==='l'?297:210, ih=orient==='l'?210:297, r=Math.min((iw-10)/im.width,(ih-10)/im.height);
+        pdf.addImage(o.pages[i],'JPEG',(iw-im.width*r)/2,(ih-im.height*r)/2,im.width*r,im.height*r); done++; next(i+1); };
+      im.onerror=()=>next(i+1); im.src=o.pages[i]; };
+    next(0);
+  }catch(err){ toast('PDF-Fehler: '+err.message); showBusy(false); } },40); };
+addEventListener('resize',()=>{ if($('win-crop').classList.contains('show')) cropDraw(); });
+
+/* ---- Videoclip trimmen (Abspielbereich festlegen) ---- */
+let trimObj=null;
+const fmtT=t=>{ t=Math.max(0,t||0); const one=v=>v.toFixed(1).replace('.',',');
+  if(t<60) return one(t)+' s';
+  const m=Math.floor(t/60), s=t-m*60; return m+':'+(s<10?'0':'')+one(s)+' min'; };
+function trimUpd(){ const v=$('trimVid'), d=isFinite(v.duration)?v.duration:0;
+  let a=+$('trimA').value||0, b=+$('trimB').value||d;
+  if(b<a+0.1){ b=Math.min(d,a+0.1); $('trimB').value=b; }
+  $('trimInfo').textContent='Von '+fmtT(a)+' bis '+fmtT(b)+'   ·   Länge '+fmtT(b-a)+' von '+fmtT(d); }
+function openTrim(o){ if(!o||o.etype!=='clip'||!o.src){ toast('Dieser Clip ist nach dem Neuladen nicht mehr verfügbar'); return; }
+  trimObj=o; const v=$('trimVid'); v.muted=!o.sound; v.src=o.src; $('win-trim').classList.add('show');
+  v.onloadedmetadata=()=>{ const d=isFinite(v.duration)?v.duration:0;
+    ['trimA','trimB'].forEach(id=>{ const r=$(id); r.min=0; r.max=d||1; r.step=Math.max(0.01,(d||1)/600); });
+    $('trimA').value=Math.min(o.t0||0,d); $('trimB').value=Math.min((o.t1&&o.t1>0)?o.t1:d,d);
+    try{ v.currentTime=+$('trimA').value; }catch(_){} trimUpd(); }; }
+['trimA','trimB'].forEach(id=>$(id).addEventListener('input',()=>{ trimUpd(); const v=$('trimVid');
+  try{ v.currentTime=+$(id==='trimA'?'trimA':'trimB').value; }catch(_){} }));
+$('trimSetA').onclick=()=>{ $('trimA').value=$('trimVid').currentTime||0; trimUpd(); };
+$('trimSetB').onclick=()=>{ $('trimB').value=$('trimVid').currentTime||0; trimUpd(); };
+$('trimAll').onclick=()=>{ const v=$('trimVid'), d=isFinite(v.duration)?v.duration:0; $('trimA').value=0; $('trimB').value=d; trimUpd(); };
+$('trimPlay').onclick=()=>{ const v=$('trimVid'), a=+$('trimA').value||0; try{ v.currentTime=a; }catch(_){} v.play(); };
+$('trimVid').addEventListener('timeupdate',()=>{ const v=$('trimVid'), b=+$('trimB').value;
+  if(!v.paused&&b>0&&v.currentTime>=b){ v.pause(); try{ v.currentTime=+$('trimA').value||0; }catch(_){} } });
+$('trimOk').onclick=()=>{ const o=trimObj, v=$('trimVid'); if(!o) return;
+  const d=isFinite(v.duration)?v.duration:0, a=+$('trimA').value||0, b=+$('trimB').value||d;
+  pushUndo(); o.t0=(a>0.05)?a:0; o.t1=(d&&b<d-0.05)?b:0;
+  const el=embedEls.get(o.id); if(el&&el.tagName==='VIDEO'){ el.pause(); try{ el.currentTime=o.t0||0; }catch(_){} }
+  $('win-trim').classList.remove('show'); v.pause(); trimObj=null;
+  markDirty(); scheduleAutosave(); refreshProps();
+  toast((o.t0||o.t1)?('Clip spielt jetzt von '+fmtT(o.t0)+' bis '+fmtT(o.t1||d)):'Ganzer Clip'); };
+$('pr-trim').onclick=()=>{ const o=singleSel(); if(o) openTrim(o); };
+$('win-trim').querySelector('.x').addEventListener('click',()=>{ $('trimVid').pause(); trimObj=null; });
 
 /* ---- Punktestand (Score-Board) ---- */
 let scoreTeams=[{n:'Team A',s:0},{n:'Team B',s:0}];
@@ -4002,8 +4196,8 @@ async function addAudioFile(f){ const nm=f.name||'Ton', ext=((nm.split('.').pop(
   const o=selection[0]; if(o&&o.etype==='audio'){ const w=Math.min(W*0.5,360)/scale;
     const c=toWorld(W/2,H/2); o.w=w; o.h=58/scale; o.x=c.x-w/2; o.y=c.y-o.h/2; o.ext=ext; o.name=nm; o.keep=keep; markDirty(); scheduleAutosave(); }
   toast(keep?('Audio „'+nm+'" eingefügt'):'Audio eingefügt – über 4 MB, wird nicht mitgespeichert');}
-function placeImageObject(url){ const im=new Image(); const finish=()=>{ let w=im.width||300,h=im.height||200; const k=Math.min(1,(W*0.6/scale)/w,(H*0.6/scale)/h); w*=k; h*=k; const c=toWorld(W/2,H/2);
-  const o={type:'image',id:uid(),x:c.x-w/2,y:c.y-h/2,w,h,src:url,_img:im,rot:0,groupId:null}; pushUndo(); page().objects.push(o); setMode('write'); setTool('select'); selection=[o]; refreshProps(); markDirty(); scheduleAutosave(); }; im.onload=finish; im.src=url; }
+function placeImageObject(url,dx,dy){ const im=new Image(); const finish=()=>{ let w=im.width||300,h=im.height||200; const k=Math.min(1,(W*0.6/scale)/w,(H*0.6/scale)/h); w*=k; h*=k; const c=toWorld(W/2,H/2);
+  const o={type:'image',id:uid(),x:c.x-w/2+(dx||0),y:c.y-h/2+(dy||0),w,h,src:url,_img:im,rot:0,groupId:null}; pushUndo(); page().objects.push(o); setMode('write'); setTool('select'); selection=[o]; refreshProps(); markDirty(); scheduleAutosave(); }; im.onload=finish; im.src=url; }
 /* Fotos vom iPad sind oft 12 MP groß – für die Tafel reichen 2400 px an der langen Seite */
 function shrinkImage(url,max){ max=max||2400; return new Promise(res=>{ const im=new Image();
   im.onload=()=>{ const w=im.naturalWidth, h=im.naturalHeight, k=Math.min(1,max/Math.max(w,h)); if(k>=1&&url.length<1.6e6){ res(url); return; }
@@ -4016,7 +4210,9 @@ async function addImageObject(url){ url=await shrinkImage(url); if(insAsPage()){
 /* Aus Zwischenablage in die Eingabefelder einfügen */
 document.querySelectorAll('.pastebtn[data-paste]').forEach(b=>b.onclick=async()=>{ try{ const t=await navigator.clipboard.readText(); if(t&&t.trim()){ $(b.dataset.paste).value=t.trim(); toast('Eingefügt'); } else toast('Zwischenablage leer'); }catch(err){ toast('Zwischenablage nicht verfügbar – bitte lange ins Feld tippen und „Einfügen"'); } });
 const fileToDataURL=f=>new Promise(r=>{const fr=new FileReader();fr.onload=()=>r(fr.result);fr.readAsDataURL(f);});
-function addBgPage(url,replaceEmpty=true){ let t; if(replaceEmpty&&!page().objects.length&&!page().bg&&!page().embed)t=page(); else{const np=newPage();doc.pages.splice(doc.cur+1,0,np);doc.cur++;t=np;} t.bg=url;t._img=null;ensurePageImg(t);refreshPage();markDirty(); }
+function addBgPage(url,replaceEmpty=true){ let t; if(replaceEmpty&&!page().objects.length&&!page().bg&&!page().embed)t=page(); else{const np=newPage();doc.pages.splice(doc.cur+1,0,np);doc.cur++;t=np;}
+  t.bg=url;t._img=null;t.bgX=PAGE_INSET.x;t.bgY=PAGE_INSET.y;   // nicht in der Ecke: Rand bleibt sichtbar
+  ensurePageImg(t);refreshPage();markDirty(); }
 $('ins-video-go').onclick=()=>{const v=$('ins-video').value.trim();if(!v)return;addEmbedObject('video',ytEmbed(v),'Video');$('win-insert').classList.remove('show');toast('Video eingefügt');};
 function extractUrl(v){ v=(v||'').trim(); if(!v)return '';
   const m=v.match(/src\s*=\s*["']([^"']+)["']/i);            // ganzer <iframe src="…"> -Schnipsel
@@ -4029,32 +4225,55 @@ $('ins-html-go').onclick=()=>{const v=extractUrl($('ins-html').value);if(!v){toa
 $('ins-ggb-go').onclick=()=>{const v=$('ins-ggb').value.trim();if(!v)return;addEmbedObject('geogebra',ggbEmbed(v),'GeoGebra');$('win-insert').classList.remove('show');toast('GeoGebra eingefügt');};
 $('ins-sheet').onclick=()=>{ addEmbedObject('sheet','sheet.html','Tabelle',{}); $('win-insert').classList.remove('show'); toast('Tabellenkalkulation eingefügt'); };
 async function importPDF(f){ showBusy(true,'PDF wird eingelesen…'); try{ const buf=await f.arrayBuffer(); const pdf=await pdfjsLib.getDocument({data:buf}).promise;
-    for(let i=1;i<=pdf.numPages;i++){ const pg=await pdf.getPage(i); const vp=pg.getViewport({scale:2}); const c=document.createElement('canvas'); c.width=vp.width;c.height=vp.height; await pg.render({canvasContext:c.getContext('2d'),viewport:vp}).promise; addBgPage(c.toDataURL('image/jpeg',0.85), i===1); }
-    toast(pdf.numPages+' PDF-Seite(n) eingefügt'); scheduleAutosave(); }catch(err){ toast('PDF-Fehler: '+err.message); } showBusy(false); }
+    const asPage=insAsPage(), asDoc=!asPage&&insAsDoc()&&pdf.numPages>1, urls=[];
+    for(let i=1;i<=pdf.numPages;i++){ const pg=await pdf.getPage(i); const vp=pg.getViewport({scale:2}); const c=document.createElement('canvas'); c.width=vp.width;c.height=vp.height; await pg.render({canvasContext:c.getContext('2d'),viewport:vp}).promise;
+      const url=c.toDataURL('image/jpeg',0.85);
+      if(asPage) addBgPage(url, i===1);
+      else if(asDoc) urls.push(url);
+      else placeImageObject(url,(i-1)*26/scale,(i-1)*26/scale); }   // als Bild: leicht versetzt stapeln
+    if(asDoc) addDocObject(urls,(f.name||'dokument').replace(/\.pdf$/i,''));
+    toast(pdf.numPages+(asPage?' PDF-Seite(n) eingefügt':(asDoc?' Seiten als Dokument eingefügt – mit ‹ › blättern':' PDF-Seite(n) als Bild eingefügt – verschieben, skalieren, zuschneiden')));
+    markDirty(); scheduleAutosave(); }catch(err){ toast('PDF-Fehler: '+err.message); } showBusy(false); }
 async function importPPTX(f){ if(typeof renderPPTX!=='function'){ toast('PPTX-Modul nicht geladen'); return; }
   if(typeof DecompressionStream==='undefined'){ toast('Dieser Browser kann PPTX nicht entpacken – bitte als PDF exportieren.'); return; }
   showBusy(true,'PowerPoint wird eingelesen…');
   try{ const buf=await f.arrayBuffer(); const slides=await renderPPTX(buf);
     if(!slides||!slides.length){ toast('Keine Folien gefunden – bitte als PDF exportieren.'); showBusy(false); return; }
     if(insAsPage()){ slides.forEach((url,i)=>addBgPage(url, i===0)); toast(slides.length+' Folie(n) als Seiten eingefügt'); }
-    else { slides.forEach(url=>placeImageObject(url)); toast(slides.length+' Folie(n) als Objekt(e) eingefügt'); }
+    else if(insAsDoc()&&slides.length>1){ addDocObject(slides,(f.name||'folien').replace(/\.pptx$/i,'')); toast(slides.length+' Folie(n) als Dokument eingefügt – mit ‹ › blättern'); }
+    else { slides.forEach((url,i)=>placeImageObject(url,i*26/scale,i*26/scale)); toast(slides.length+' Folie(n) als Objekt(e) eingefügt'); }
     scheduleAutosave();
   }catch(err){ toast('PowerPoint-Fehler: '+err.message+' – ggf. als PDF exportieren.'); }
   showBusy(false); }
-function ensureImg(o){ if(o&&o.type==='image'&&o.src&&!o._img){const im=new Image();im.onload=markDirty;im.src=o.src;o._img=im;} }
+const docCur=o=>Math.max(0,Math.min((o.pages||[]).length-1,o.cur|0));
+function ensureImg(o){ if(!o) return;
+  if(o.type==='image'&&o.src&&!o._img){const im=new Image();im.onload=markDirty;im.src=o.src;o._img=im;}
+  else if(o.type==='doc'&&Array.isArray(o.pages)&&o.pages.length){ if(!Array.isArray(o._imgs)) o._imgs=[];
+    const i=docCur(o); [i,i+1,i-1].forEach(k=>{ if(k<0||k>=o.pages.length||o._imgs[k]) return;
+      const im=new Image(); im.onload=markDirty; im.src=o.pages[k]; o._imgs[k]=im; }); } }
+/* mehrere Seiten als ein Dokument-Objekt (blätterbar) */
+function addDocObject(urls,label){ if(!urls||!urls.length) return;
+  const im=new Image();
+  im.onload=()=>{ let w=im.width||600,h=im.height||800; const k=Math.min(1,(W*0.55/scale)/w,(H*0.8/scale)/h); w*=k; h*=k;
+    const c=toWorld(W/2,H/2);
+    const o={type:'doc',id:uid(),x:c.x-w/2,y:c.y-h/2,w,h,rot:0,groupId:null,pages:urls.slice(),cur:0,label:label||'Dokument',_imgs:[]};
+    pushUndo(); page().objects.push(o); ensureImg(o); setMode('write'); setTool('select'); selection=[o]; refreshProps(); markDirty(); scheduleAutosave(); };
+  im.onerror=()=>toast('Seiten konnten nicht gelesen werden'); im.src=urls[0]; }
+function docTurn(o,d){ if(!o||o.type!=='doc') return; const n=o.pages.length;
+  o.cur=Math.max(0,Math.min(n-1,docCur(o)+d)); ensureImg(o); markDirty(); refreshProps(); scheduleAutosave(); }
 function ensurePageImg(p){ if(p.bg&&!p._img){const im=new Image();im.onload=markDirty;im.src=p.bg;p._img=im;} }
 function ensureImgs(){ ensurePageImg(page()); for(const o of page().objects) ensureImg(o); }
 
 /* ============ PDF-Export ============ */
 $('w-export').onclick=exportPDF;
 function pageContentBounds(p){ let a=1e9,b=1e9,c=-1e9,d=-1e9,any=false;
-  if(p._img){a=Math.min(a,0);b=Math.min(b,0);c=Math.max(c,p._img.width);d=Math.max(d,p._img.height);any=true;}
+  if(p._img){const bx=p.bgX||0,by=p.bgY||0; a=Math.min(a,bx);b=Math.min(b,by);c=Math.max(c,bx+p._img.width);d=Math.max(d,by+p._img.height);any=true;}
   for(const o of p.objects){const bb=geomBounds(o);a=Math.min(a,bb.x);b=Math.min(b,bb.y);c=Math.max(c,bb.x+bb.w);d=Math.max(d,bb.y+bb.h);any=true;}
   if(!any)return {x:0,y:0,w:1400,h:990}; const pad=40; return {x:a-pad,y:b-pad,w:(c-a)+2*pad,h:(d-b)+2*pad}; }
 function renderPageToCanvas(p,maxW=1600){ const bd=pageContentBounds(p),sc=Math.min(maxW/bd.w,2); const c=document.createElement('canvas'); c.width=Math.round(bd.w*sc);c.height=Math.round(bd.h*sc); const cx2=c.getContext('2d');
   cx2.fillStyle=bgHexOf(pageBg(p));cx2.fillRect(0,0,c.width,c.height); cx2.setTransform(sc,0,0,sc,-bd.x*sc,-bd.y*sc);
   paintPattern(cx2, bd.x,bd.y,bd.x+bd.w,bd.y+bd.h, pagePat(p), isBgDarkOf(pageBg(p)), sc);
-  if(p._img){try{cx2.drawImage(p._img,0,0);}catch(e){}} for(const o of p.objects) drawObject(o,cx2); return c; }
+  if(p._img){try{cx2.drawImage(p._img,p.bgX||0,p.bgY||0);}catch(e){}} for(const o of p.objects) drawObject(o,cx2); return c; }
 function exportPDF(){ if(!window.jspdf){toast('PDF-Bibliothek fehlt');return;} showBusy(true,'PDF wird erstellt…');
   setTimeout(()=>{ try{ const {jsPDF}=window.jspdf; let pdf=null;
     doc.pages.forEach(p=>{ let c;
@@ -4068,14 +4287,14 @@ function exportPDF(){ if(!window.jspdf){toast('PDF-Bibliothek fehlt');return;} s
   }catch(err){ toast('Export-Fehler: '+err.message); } showBusy(false); },50); }
 
 /* ============ Speichern / Laden ============ */
-function stripObj(o){ const c={...o}; delete c._img; delete c._hidden; delete c._lock; delete c._prev; delete c._guide; delete c._straight; if(c.type==='embed'&&(c.etype==='clip'||c.etype==='audio')&&!c.keep)c.src=''; return c; }
+function stripObj(o){ const c={...o}; delete c._img; delete c._imgs; delete c._hidden; delete c._lock; delete c._prev; delete c._guide; delete c._straight; if(c.type==='embed'&&(c.etype==='clip'||c.etype==='audio')&&!c.keep)c.src=''; return c; }
 function serialize(){ return JSON.stringify({v:4,name:doc.name,settings:doc.settings,cur:doc.cur,students:doc.students||[],stickers:doc.stickers||[],marks:doc.marks||null,notes:doc.notes||'',duties:doc.duties||null,seating:doc.seating||null,
-  pages:doc.pages.map(p=>({objects:p.objects.map(stripObj),bg:p.bg,embed:p.embed,name:p.name||null,bgColor:p.bgColor||null,pattern:p.pattern||null}))}); }
+  pages:doc.pages.map(p=>({objects:p.objects.map(stripObj),bg:p.bg,bgX:p.bgX||0,bgY:p.bgY||0,embed:p.embed,name:p.name||null,bgColor:p.bgColor||null,pattern:p.pattern||null}))}); }
 function deserialize(str){ const o=JSON.parse(str); const os=o.settings||{}; doc.settings=Object.assign({bgColor:'white',pattern:'none',penOnly:true,usePressure:true,fingerSelect:false},os); doc.settings.patSize=Object.assign({},os.patSize||{});
   if(os.background!==undefined && os.pattern===undefined){ doc.settings.pattern=(os.background&&os.background!=='white')?os.background:'none'; doc.settings.bgColor='white'; }
   doc.name=o.name||'Projekt'; doc.students=o.students || (o.classes&&o.classes[0]&&o.classes[0].students) || [];
   doc.notes=typeof o.notes==='string'?o.notes:''; doc.duties=Array.isArray(o.duties)?o.duties:((o.duty&&typeof o.duty==='object')?[o.duty]:null); doc.duty=null; doc.seating=(o.seating&&Array.isArray(o.seating.rows))?o.seating:null; doc.stickers=Array.isArray(o.stickers)?o.stickers:[]; doc.marks=(o.marks&&Array.isArray(o.marks.cats))?o.marks:{cats:MARK_DEF(),counts:{},grades:{},texts:{},v:4};
-  doc.pages=(o.pages||[{}]).map(p=>({objects:(p.objects||p.strokes||[]).map(x=>({...x,_img:null})),redo:[],bg:p.bg||null,_img:null,embed:p.embed||null,name:p.name||null,bgColor:p.bgColor||null,pattern:p.pattern||null}));
+  doc.pages=(o.pages||[{}]).map(p=>({objects:(p.objects||p.strokes||[]).map(x=>({...x,_img:null,_imgs:null})),redo:[],bg:p.bg||null,bgX:p.bgX||0,bgY:p.bgY||0,_img:null,embed:p.embed||null,name:p.name||null,bgColor:p.bgColor||null,pattern:p.pattern||null}));
   // Altlast: frühere Vollbild-Einbettungen (page.embed) in bewegliche Embed-Objekte umwandeln
   doc.pages.forEach(p=>{ if(p.embed){ const em=p.embed; const ob={type:'embed',id:uid(),etype:em.type,src:em.src,label:em.label||em.type,x:80,y:80,w:900,h:560,rot:0,groupId:null}; if(em.data)ob.data=em.data; p.objects.push(ob); p.embed=null; } });
   if(!doc.pages.length)doc.pages=[newPage()]; doc.cur=Math.min(o.cur||0,doc.pages.length-1);

@@ -12,7 +12,9 @@
   #tabs button{flex:1;border:none;background:#f4f6fa;padding:9px;font-size:14px;font-weight:600;cursor:pointer;color:#5b6472;}
   #tabs button.on{background:#fff;color:#2563eb;box-shadow:inset 0 -2px 0 #2563eb;}
   #panel{flex:none;padding:8px 10px;display:flex;flex-direction:column;gap:7px;}
-  .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:14px;}
+  .row{display:flex;gap:8px;align-items:center;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:thin;font-size:14px;}
+  .row>*{flex:0 0 auto;}
+  .row::-webkit-scrollbar{height:4px;} .row::-webkit-scrollbar-thumb{background:#cfd6e0;border-radius:2px;}
   .row label{font-weight:600;}
   input,select{padding:6px 8px;border:1px solid #cfd6e0;border-radius:7px;font-size:15px;font-family:inherit;-webkit-user-select:text;user-select:text;}
   input{width:76px;text-align:center;}
@@ -132,8 +134,9 @@ document.querySelectorAll('input,select').forEach(el=>el.addEventListener('input
 addEventListener('resize',()=>{ mode==='B'?drawBin(Math.max(1,Math.round(+$('n').value||1)),Math.min(1,Math.max(0,+$('p').value||0))):drawNorm(+$('mu').value||0,Math.max(1e-6,+$('sig').value||1)); });
 
 function collect(){ return { mode, n:$('n').value,p:$('p').value,opB:$('opB').value,kB:$('kB').value,kB2:$('kB2').value, mu:$('mu').value,sig:$('sig').value,opN:$('opN').value,xN:$('xN').value,xN2:$('xN2').value, fontSize, fontBold, fontItalic }; }
-function sync(){ try{ parent.postMessage({type:'embed-data',data:collect()},'*'); }catch(e){} }
-addEventListener('message',e=>{ if(e.data&&e.data.type==='embed-data'&&e.data.data){ const d=e.data.data;
+function sync(){ if(window.parent===window) return; /* allein geöffnet: nicht an sich selbst senden */ try{ parent.postMessage({type:'embed-data',data:collect()},'*'); }catch(e){} }
+addEventListener('message',e=>{ if(window.parent===window||e.source!==window.parent) return;   // eigene Nachrichten ignorieren
+  if(e.data&&e.data.type==='embed-data'&&e.data.data){ const d=e.data.data;
   ['n','p','kB','kB2','mu','sig','xN','xN2'].forEach(id=>{ if(d[id]!==undefined)$(id).value=d[id]; });
   if(d.opB)$('opB').value=d.opB; if(d.opN)$('opN').value=d.opN;
   if(d.fontSize)fontSize=d.fontSize; fontBold=!!d.fontBold; fontItalic=!!d.fontItalic; applyFont();
