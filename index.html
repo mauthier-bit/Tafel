@@ -3625,7 +3625,9 @@ function shotDeliver(c){
 let camStream=null, camFacing='environment';
 $('w-cam').onclick=()=>toggleWin('win-cam');
 async function camStartFn(){ try{ camClipStop(); setCamZoom(1); if(camStream)camStream.getTracks().forEach(t=>t.stop());
-    camStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:camFacing},audio:!!camWithSound});
+    const vidReq={facingMode:camFacing,width:{ideal:3840},height:{ideal:2160}};   // möglichst hoch auflösen (wichtig fürs Scannen)
+    try{ camStream=await navigator.mediaDevices.getUserMedia({video:vidReq,audio:!!camWithSound}); }
+    catch(e1){ camStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:camFacing},audio:!!camWithSound}); }
     $('camVideo').srcObject=camStream; $('camVideo').muted=true;   // Vorschau stumm (sonst Rückkopplung)
     $('camStart').textContent='Neu starten'; $('camHint').style.display='none';
   }catch(e){ $('camHint').innerHTML='<b>Kein Kamerazugriff.</b> Bitte über https öffnen und Zugriff erlauben.'; } }
@@ -3709,9 +3711,10 @@ $('win-cam').querySelector('.x').addEventListener('click',camStop);
 let scanSrc=null, scanQuad=null, scanFilter='doc', scanPages=[];
 const scanPt=(x,y)=>({x,y});
 function scanOpen(){ const v=$('camVideo'); if(!v.videoWidth){ toast('Erst Kamera starten'); return; }
-  const c=camCrop(v,camZoom); const k=Math.min(1,2000/Math.max(c.sw,c.sh));
+  const c=camCrop(v,camZoom); const k=Math.min(1,2800/Math.max(c.sw,c.sh));
   const cc=document.createElement('canvas'); cc.width=Math.round(c.sw*k); cc.height=Math.round(c.sh*k);
-  cc.getContext('2d').drawImage(v,c.sx,c.sy,c.sw,c.sh,0,0,cc.width,cc.height);
+  const cg=cc.getContext('2d'); cg.imageSmoothingEnabled=true; cg.imageSmoothingQuality='high';
+  cg.drawImage(v,c.sx,c.sy,c.sw,c.sh,0,0,cc.width,cc.height);
   scanSrc=cc; scanQuad=scanDetect(cc); $('win-scan').classList.add('show'); scanInfo(); scanDraw(); }
 $('camScan').onclick=scanOpen;
 $('scanAgain').onclick=()=>{ $('win-scan').classList.remove('show'); $('win-cam').classList.add('show'); };
@@ -3776,7 +3779,7 @@ function scanSolve(A,b){ const n=b.length;
   return b.map((v,i)=>v/(A[i][i]||1e-12)); }
 function scanWarp(){ const q=scanQuad, dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
   let ow=Math.round((dist(q[0],q[1])+dist(q[3],q[2]))/2), oh=Math.round((dist(q[0],q[3])+dist(q[1],q[2]))/2);
-  const k=Math.min(1,1700/Math.max(ow,oh)); ow=Math.max(40,Math.round(ow*k)); oh=Math.max(40,Math.round(oh*k));
+  const k=Math.min(1,2400/Math.max(ow,oh)); ow=Math.max(40,Math.round(ow*k)); oh=Math.max(40,Math.round(oh*k));
   const A=[], b=[];                                   // Abbildung Ausgabe → Quelle
   [[0,0,q[0]],[ow,0,q[1]],[ow,oh,q[2]],[0,oh,q[3]]].forEach(([x,y,P])=>{
     A.push([x,y,1,0,0,0,-x*P.x,-y*P.x]); b.push(P.x);
@@ -3786,10 +3789,15 @@ function scanWarp(){ const q=scanQuad, dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
   const out=document.createElement('canvas'); out.width=ow; out.height=oh; const og=out.getContext('2d'); const od=og.createImageData(ow,oh);
   const S=sd.data, D=od.data, sw=scanSrc.width, sh=scanSrc.height;
   for(let y=0;y<oh;y++) for(let x=0;x<ow;x++){
-    const w2=h[6]*x+h[7]*y+1, sx=(h[0]*x+h[1]*y+h[2])/w2, sy=(h[3]*x+h[4]*y+h[5])/w2;
-    const xi=Math.round(sx), yi=Math.round(sy), o=(y*ow+x)*4;
-    if(xi<0||yi<0||xi>=sw||yi>=sh){ D[o]=D[o+1]=D[o+2]=255; D[o+3]=255; continue; }
-    const i=(yi*sw+xi)*4; D[o]=S[i]; D[o+1]=S[i+1]; D[o+2]=S[i+2]; D[o+3]=255; }
+    const w2=h[6]*x+h[7]*y+1, sx=(h[0]*x+h[1]*y+h[2])/w2, sy=(h[3]*x+h[4]*y+h[5])/w2, o=(y*ow+x)*4;
+    if(sx<0||sy<0||sx>sw-1||sy>sh-1){ D[o]=D[o+1]=D[o+2]=255; D[o+3]=255; continue; }
+    const x0=sx|0, y0=sy|0, fx=sx-x0, fy=sy-y0;                       // bilinear: vier Nachbarn mischen (viel glattere Kanten)
+    const x1=Math.min(sw-1,x0+1), y1=Math.min(sh-1,y0+1);
+    const i00=(y0*sw+x0)*4, i10=(y0*sw+x1)*4, i01=(y1*sw+x0)*4, i11=(y1*sw+x1)*4;
+    const w00=(1-fx)*(1-fy), w10=fx*(1-fy), w01=(1-fx)*fy, w11=fx*fy;
+    D[o]  =S[i00]  *w00+S[i10]  *w10+S[i01]  *w01+S[i11]  *w11;
+    D[o+1]=S[i00+1]*w00+S[i10+1]*w10+S[i01+1]*w01+S[i11+1]*w11;
+    D[o+2]=S[i00+2]*w00+S[i10+2]*w10+S[i01+2]*w01+S[i11+2]*w11; D[o+3]=255; }
   if(scanFilter!=='color') scanEnhance(D,ow,oh,scanFilter==='doc');
   og.putImageData(od,0,0); return out; }
 /* Graustufen bzw. Dokumenten-Look: Beleuchtung herausrechnen (Bild durch weichgezeichneten Hintergrund teilen) */
@@ -3819,7 +3827,9 @@ function scanEnhance(D,w,h,doc2){ const n=w*h, g=new Float32Array(n);
   let acc2=0, pap=100; for(let v=127;v>=0;v--){ acc2+=hist2[v]; if(acc2>n*0.18){ pap=Math.max(50,v); break; } }   // typische Papierhelligkeit
   const lo=pap*0.78/100, hi=pap/100, sc2=255/Math.max(0.05,hi-lo);
   for(let i=0;i<n;i++){ const v=put((rat[i]-lo)*sc2); D[i*4]=D[i*4+1]=D[i*4+2]=v; } }
-function scanCurrent(){ const c=scanWarp(); return c?{u:c.toDataURL('image/jpeg',0.85),w:c.width,h:c.height}:null; }
+function scanCurrent(){ const c=scanWarp(); if(!c) return null;
+  const u=(scanFilter==='doc')?c.toDataURL('image/png'):c.toDataURL('image/jpeg',0.92);   // S/W-Seiten verlustfrei, sonst fein
+  return {u,w:c.width,h:c.height}; }
 $('scanAdd').onclick=()=>{ showBusy(true,'Seite wird entzerrt…'); setTimeout(()=>{ const u=scanCurrent();
   if(u){ scanPages.push(u); toast(scanPages.length+' Seite(n) gesichert'); scanInfo(); $('win-scan').classList.remove('show'); $('win-cam').classList.add('show'); }
   showBusy(false); },40); };

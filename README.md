@@ -466,7 +466,13 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   oder die Schrift vergrößert wird. Beim **Bruch-Werkzeug** bleiben es genau **zwei Zeilen** – Reiter oben,
   Bedienelemente darunter –, die bei Platzmangel **seitlich gescrollt** werden; die Knöpfe A−/A+, 🖼 Tafel und
   📋 Kopieren stehen dabei fest am rechten Rand. Ebenso scrollen jetzt die Leisten von **Wahrscheinlichkeits­rechner,
-  Baumdiagramm, Würfel, Stellenwerttafel, Vierfeldertafel und Einheitskreis**, statt umzubrechen.
+  Baumdiagramm, Würfel, Stellenwerttafel, Vierfeldertafel, Einheitskreis, Funktionsplotter, 3D-Koordinatensystem
+  und Stromkreis**, statt umzubrechen. Im **Bruch-Werkzeug** stehen A−/A+, 🖼 Tafel und 📋 Kopieren jetzt in der
+  **oberen** Zeile neben den Reitern, damit die Bedienzeile darunter ganz für das Werkzeug bleibt.
+  Das **Baumdiagramm** hat zwei Zeilen (Eingaben · Knöpfe) und blendet seine Kurzanleitung über einen
+  **„?"-Knopf** ein; ebenso die **Stellenwerttafel**. Im **Wahrscheinlichkeitsrechner** stehen Parameter und
+  Abfrage in einer Zeile, Ergebnis, μ/σ und die Werkzeugknöpfe in der zweiten. Das **Venn-Diagramm** des
+  Baumdiagramms erscheint jetzt **unter** dem Baum, statt ihn zu überlagern.
 - **Werkzeuge einzeln öffnen:** Alle Werkzeug-Seiten (z. B. `wahrscheinlichkeit.html`, `plotter.html`,
   `gluecksrad.html`) laufen auch **ohne die Tafel** direkt im Browser. Sie schicken ihren Zustand nur dann an die
   Tafel, wenn sie wirklich eingebettet sind, und nehmen Zustands-Nachrichten nur von der Tafel an.
@@ -550,7 +556,9 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   „Foto auf Tafel" legt einen Schnappschuss als bewegliches Objekt ab.
   **„📄 Scannen"** (in derselben Reihe) fotografiert ein Blatt und öffnet den **Scan-Editor**: Die Tafel sucht die
   Blattecken selbst (hellste zusammenhängende Fläche), die vier Griffe lassen sich nachziehen, dann wird
-  die Seite **perspektivisch entzerrt**. Drei Aufbereitungen: **Schwarz-weiß** (Beleuchtung wird
+  die Seite **perspektivisch entzerrt** – mit **bilinearer Abtastung** (glatte Kanten statt Treppchen), bis
+  **2400 px** Kantenlänge und in möglichst hoher Kameraauflösung (die Kamera wird mit bis zu 4K angefordert).
+  Schwarz-weiße Seiten werden **verlustfrei als PNG** gesichert, Graustufen/Farbe als JPEG in hoher Qualität. Drei Aufbereitungen: **Schwarz-weiß** (Beleuchtung wird
   herausgerechnet – weißes Papier, schwarze Schrift, auch bei Schatten), **Graustufen**, **Farbe**.
   **„➕ Seite sichern"** sammelt mehrere Seiten, **„🖼 Als Bild auf die Tafel"** legt jede Seite als **bewegliches
   Bild-Objekt** ab (verschieben, skalieren, drehen, **zuschneiden**; mehrere Seiten liegen leicht versetzt),
