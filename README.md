@@ -466,8 +466,10 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   oder die Schrift vergrößert wird. Beim **Bruch-Werkzeug** bleiben es genau **zwei Zeilen** – Reiter oben,
   Bedienelemente darunter –, die bei Platzmangel **seitlich gescrollt** werden; die Knöpfe A−/A+, 🖼 Tafel und
   📋 Kopieren stehen dabei fest am rechten Rand. Ebenso scrollen jetzt die Leisten von **Wahrscheinlichkeits­rechner,
-  Baumdiagramm, Würfel, Stellenwerttafel, Vierfeldertafel, Einheitskreis, Funktionsplotter, 3D-Koordinatensystem
-  und Stromkreis**, statt umzubrechen. Im **Bruch-Werkzeug** stehen A−/A+, 🖼 Tafel und 📋 Kopieren jetzt in der
+  Baumdiagramm, Würfel, Stellenwerttafel, Vierfeldertafel, Einheitskreis, Funktionsplotter, 3D-Koordinatensystem,
+  Stromkreis, Pinnwand und Mindmap**, statt umzubrechen. Im **3D-Koordinatensystem** gilt das nur für die Leiste
+  über dem Bild (sie hat jetzt einen eigenen hellen Hintergrund und überlappt nichts mehr); die Optionen im Panel
+  („Ansicht", Beispiele) dürfen weiterhin **mehrere Zeilen** nutzen, weil dort Platz ist. Im **Bruch-Werkzeug** stehen A−/A+, 🖼 Tafel und 📋 Kopieren jetzt in der
   **oberen** Zeile neben den Reitern, damit die Bedienzeile darunter ganz für das Werkzeug bleibt.
   Das **Baumdiagramm** hat zwei Zeilen (Eingaben · Knöpfe) und blendet seine Kurzanleitung über einen
   **„?"-Knopf** ein; ebenso die **Stellenwerttafel**. Im **Wahrscheinlichkeitsrechner** stehen Parameter und
