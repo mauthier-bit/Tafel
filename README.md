@@ -716,8 +716,11 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   Schließen) mit **Umbenennen, Duplizieren, Kopieren, Ausschneiden, Einfügen** sowie **Seitenstil** (Muster
   Kein/Karo/Linien/Punkte/Noten/Dreiecke **und** Hintergrundfarbe) – **je Seite einzeln** einstellbar –
   und oben links ein **rotes ×** zum **Löschen** der Seite
-  (der Seitenname erscheint auch in der Kopfzeile). Die Miniaturen behalten immer **dieselbe Größe**
-  (werden bei vielen Seiten nicht gequetscht) – bei Bedarf wird die Übersicht **scrollbar**.
+  (der Seitenname erscheint auch in der Kopfzeile). Hinter der letzten Seite steht eine gestrichelte
+  Kachel **„＋ Neue Seite"** – sie hängt eine leere Seite ans Ende an und springt gleich dorthin.
+  Die Miniaturen behalten immer **dieselbe Größe** (werden bei vielen Seiten nicht gequetscht) –
+  bei Bedarf wird die Übersicht **scrollbar**. Die Spaltenzahl wird auch beim **Drehen des iPads**
+  neu berechnet, sodass keine Seite mehr seitlich aus dem Fenster rutscht.
   **Bedienung der Miniaturen:** **antippen** springt zur Seite, **streichen** scrollt die Übersicht
   (auch direkt auf einer Miniatur), **lange gedrückt halten** (ca. eine halbe Sekunde) und ziehen
   ordnet die Seiten neu. Zusätzlich gibt es oben rechts **▲/▼-Knöpfe** zum seitenweisen Scrollen
