@@ -100,6 +100,7 @@
 const $=id=>document.getElementById(id);
 const cv=$('cv'), ctx=cv.getContext('2d');
 const GW=1000, RI=0.05, RD=0.2, VF=0.7, GOFF=1e-9, REG=1e-8, SHORT=10;
+const GBE=1e-6;    /* gesperrte Basis-Emitter-Strecke: muss REG uebersteigen, sonst driftet die offene Basis auf 0 V */
 const INFO={
   bat:  {name:'Quelle',     q:'U', unit:'V', def:6,  list:[1.5,3,4.5,6,9,12,24], min:0.5, max:400},
   ac:   {name:'Wechselspannung', q:'Û', unit:'V', def:6, list:[1.5,3,4.5,6,9,12,24], min:0.5, max:400,
@@ -264,7 +265,7 @@ function solve(h,commit){ const nodes=new Map(); const idx=(p)=>{ const k=nkey(.
     const M=Array.from({length:n},()=>new Float64Array(n)), r=new Float64Array(n);
     for(let i=0;i<n;i++) M[i][i]=REG;
     br.forEach(B=>{ if(B.npn){ const b=B.a, cc=B.b, e=B.c;          // B–E wie Diode, C–E gesteuert
-        const gb=B.be?1/RD:GOFF, jb=B.be?VBE/RD:0; M[b][b]+=gb; M[e][e]+=gb; M[b][e]-=gb; M[e][b]-=gb; r[b]+=jb; r[e]-=jb;
+        const gb=B.be?1/RD:GBE, jb=B.be?VBE/RD:0; M[b][b]+=gb; M[e][e]+=gb; M[b][e]-=gb; M[e][b]-=gb; r[b]+=jb; r[e]-=jb;
         if(B.be&&B.ce==='act'){ const gm=BETA/RD; M[cc][b]+=gm; M[cc][e]-=gm; M[e][b]-=gm; M[e][e]+=gm; r[cc]+=gm*VBE; r[e]-=gm*VBE; }
         else if(B.be&&B.ce==='sat'){ const g=1/RSAT; M[cc][cc]+=g; M[e][e]+=g; M[cc][e]-=g; M[e][cc]-=g; r[cc]+=VSAT*g; r[e]-=VSAT*g; }
         const gl=GOFF; M[cc][cc]+=gl; M[e][e]+=gl; M[cc][e]-=gl; M[e][cc]-=gl; return; }
@@ -280,10 +281,12 @@ function solve(h,commit){ const nodes=new Map(); const idx=(p)=>{ const k=nkey(.
       if(B.on&&I<-1e-9){ B.on=false; ch=true; } else if(!B.on&&u>VF+1e-9){ B.on=true; ch=true; } });
     if(!ch) break; }
   const out={wire:new Map(),part:new Map(),imax:0,short:false,change:0};
-  br.forEach(B=>{ if(B.npn){ const ube=V[B.a]-V[B.c], uce=V[B.b]-V[B.c]; let ib=B.be?Math.max(0,(ube-VBE)/RD):0, ic=0;
-      if(B.be&&B.ce==='act') ic=BETA*ib; else if(B.be&&B.ce==='sat') ic=Math.max(0,(uce-VSAT)/RSAT);
+  br.forEach(B=>{ if(B.npn){ const ube=V[B.a]-V[B.c], uce=V[B.b]-V[B.c];
+      const leitet=B.be&&ube>VBE;                       /* sperrt die BE-Diode, fliesst nirgends etwas */
+      let ib=leitet?Math.max(0,(ube-VBE)/RD):0, ic=0;
+      if(leitet&&B.ce==='act') ic=BETA*ib; else if(leitet&&B.ce==='sat') ic=Math.max(0,(uce-VSAT)/RSAT);
       if(ib<1e-6) ib=0; if(ic<1e-6) ic=0;
-      out.part.set(B.p.id,{U:uce,I:ic,IB:ib,UBE:ube,state:B.be?B.ce:'off'}); out.imax=Math.max(out.imax,ic,ib); return; }
+      out.part.set(B.p.id,{U:uce,I:ic,IB:ib,UBE:ube,state:leitet?B.ce:'off'}); out.imax=Math.max(out.imax,ic,ib); return; }
     const u=V[B.a]-V[B.b]; let I=B.G*u-B.J; if(Math.abs(I)<1e-7) I=0;
     if(B.w) out.wire.set(B.w,I);
     else { out.part.set(B.p.id,{U:u,I,on:B.on});
@@ -316,7 +319,9 @@ function frame(t){ rafId=null; const dt=lastT?Math.min(0.05,(t-lastT)/1000):0; l
     for(let k=0;k<steps;k++){ simT+=h; res=solve(h,true); ch=Math.max(ch,res.change); } dirty=false; if(ch>1e-5||data.parts.some(p=>p.type==='ac')) anim=true; }
   const R=ensureSolved();
   if(data.flow&&R&&R.imax>1e-6&&!R.short){ anim=true;
-    const adv=(key,I)=>{ const v=2.2*Math.abs(I)/Math.max(R.imax,0.02); flowPos.set(key,((flowPos.get(key)||0)+v*dt)); };
+    /* Tempo proportional zur Stromstaerke, aber mit Mindesttempo: ein sehr kleiner Strom
+       (z. B. der Basisstrom, rund 1 % des Kollektorstroms) stuende sonst scheinbar still. */
+    const adv=(key,I)=>{ const v=Math.max(0.12, 2.2*Math.abs(I)/Math.max(R.imax,0.02)); flowPos.set(key,((flowPos.get(key)||0)+v*dt)); };
     R.wire.forEach((I,k)=>{ if(I) adv(k,I); }); R.part.forEach((o,id)=>{ if(o.I) adv(id,o.I); if(o.IB!==undefined){ adv(id+'b',o.IB); adv(id+'e',o.I+o.IB); } }); }
   if(R) data.parts.forEach(p=>{ if(p.type!=='motor') return; const o=R.part.get(p.id); if(!o||!o.I) return; anim=true;
     const inom=6/Math.max(0.1,p.val); motorAng.set(p.id,(motorAng.get(p.id)||0)+dt*6*Math.max(-2,Math.min(2,o.I/inom))); });
@@ -341,18 +346,33 @@ function drawScene(c,o){ const cell=o.cell, K=(data.fontSize||14)/14, R=ensureSo
   c.lineCap='round'; c.lineWidth=lw;
   data.wires.forEach(k=>{ const [a,b]=edgeEnds(k), A=S(...a), B=S(...b); c.strokeStyle=selWires.has(k)?selCol:ink; c.beginPath(); c.moveTo(...A); c.lineTo(...B); c.stroke(); });
   // Ladungen
+  let npnFluss=null;                                   // Transistor-Ladungen kommen ueber das Symbol
   if(o.charges&&R&&R.imax>1e-6&&!R.short){ const rad=Math.max(2,cell*0.085), col=data.carrier==='e'?'#2563eb':'#dc2626';
+    const punkt=(x,y)=>{ c.fillStyle=col; c.beginPath(); c.arc(x,y,rad,0,7); c.fill();
+      if(rad>=5.5){ c.strokeStyle='#fff'; c.lineWidth=1.4; c.beginPath(); c.moveTo(x-rad*0.5,y); c.lineTo(x+rad*0.5,y); if(data.carrier!=='e'){ c.moveTo(x,y-rad*0.5); c.lineTo(x,y+rad*0.5); } c.stroke(); } };
     const dots=(A,B,L,I,key)=>{ if(!I||Math.abs(I)<1e-5) return; let dir=I>0?1:-1; if(data.carrier==='e') dir=-dir;
       const pos=flowPos.get(key)||0, sp=0.5, off=((pos%sp)+sp)%sp;
-      for(let s=off; s<L-1e-6; s+=sp){ const t=(dir>0?s:L-s)/L; const x=A[0]+(B[0]-A[0])*t, y=A[1]+(B[1]-A[1])*t;
-        c.fillStyle=col; c.beginPath(); c.arc(x,y,rad,0,7); c.fill();
-        if(rad>=5.5){ c.strokeStyle='#fff'; c.lineWidth=1.4; c.beginPath(); c.moveTo(x-rad*0.5,y); c.lineTo(x+rad*0.5,y); if(data.carrier!=='e'){ c.moveTo(x,y-rad*0.5); c.lineTo(x,y+rad*0.5); } c.stroke(); } } };
+      for(let s=off; s<L-1e-6; s+=sp){ const t=(dir>0?s:L-s)/L; punkt(A[0]+(B[0]-A[0])*t, A[1]+(B[1]-A[1])*t); } };
+    /* Ladungen entlang eines Streckenzugs (Gitterpunkte) – fuer die abgeknickten Transistor-Anschluesse */
+    const dotsWeg=(g,I,key)=>{ if(!I||Math.abs(I)<1e-5) return; let dir=I>0?1:-1; if(data.carrier==='e') dir=-dir;
+      const len=[]; let L=0;
+      for(let i=1;i<g.length;i++){ const d=Math.hypot(g[i][0]-g[i-1][0],g[i][1]-g[i-1][1]); len.push(d); L+=d; }
+      const pos=flowPos.get(key)||0, sp=0.5, off=((pos%sp)+sp)%sp;
+      for(let s=off; s<L-1e-6; s+=sp){ let d=(dir>0?s:L-s), i=0;
+        while(i<len.length-1&&d>len[i]){ d-=len[i]; i++; }
+        const u=Math.max(0,Math.min(1,d/(len[i]||1)));
+        punkt(...S(g[i][0]+(g[i+1][0]-g[i][0])*u, g[i][1]+(g[i+1][1]-g[i][1])*u)); } };
     R.wire.forEach((I,k)=>{ const [a,b]=edgeEnds(k); dots(S(...a),S(...b),1,I,k); });
-    data.parts.forEach(p=>{ if(p.type==='cap'||p.type==='volt') return; const r=R.part.get(p.id); if(!r) return; const e=ends(p);
-      if(p.type==='npn'){ const m=S(...toG(p,1.4,0)); dots(S(...e.a),m,1.4,r.IB,p.id+'b'); dots(S(...e.b),m,1.8,r.I,p.id); dots(m,S(...e.c),1.8,r.I+r.IB,p.id+'e'); return; }
-      if(p.type==='sw2'&&p.pos){ dots(S(...e.a),S(...e.c),2.24,r.I,p.id); return; } dots(S(...e.a),S(...e.b),2,r.I,p.id); }); }
+    data.parts.forEach(p=>{ if(p.type==='cap'||p.type==='volt'||p.type==='npn') return; const r=R.part.get(p.id); if(!r) return; const e=ends(p);
+      if(p.type==='sw2'&&p.pos){ dots(S(...e.a),S(...e.c),2.24,r.I,p.id); return; } dots(S(...e.a),S(...e.b),2,r.I,p.id); });
+    npnFluss=()=>data.parts.forEach(p=>{ if(p.type!=='npn') return; const r=R.part.get(p.id); if(!r) return;
+      const G=(x,y)=>toG(p,x,y);
+      dotsWeg([G(0,0),G(0.72,0)], r.IB, p.id+'b');                           // Basisanschluss
+      dotsWeg([G(2,-1),G(1.45,-0.55),G(0.72,-0.14)], r.I, p.id);             // Kollektor zur Basisschicht
+      dotsWeg([G(0.72,0.14),G(1.45,0.55),G(2,1)], r.I+r.IB, p.id+'e'); }); } // Basisschicht zum Emitter
   // Bauteile
   data.parts.forEach(p=>drawPart(c,p,S,cell,lw,(o.selection&&sel&&sel.part===p.id)?selCol:ink,R,false));
+  if(npnFluss) npnFluss();                             // ueber dem Symbol, damit der Weg durch den Transistor sichtbar ist
   if(ghost&&o.selection){ c.globalAlpha=0.45; (ghost.parts||[]).forEach(p=>drawPart(c,p,S,cell,lw,ghost.bad?'#dc2626':selCol,null,true));
     (ghost.wires||[]).forEach(k=>{ const [a,b]=edgeEnds(k); c.strokeStyle=selCol; c.lineWidth=lw; c.beginPath(); c.moveTo(...S(...a)); c.lineTo(...S(...b)); c.stroke(); }); c.globalAlpha=1; }
   // Knotenpunkte (Verzweigungen) und offene Anschlüsse

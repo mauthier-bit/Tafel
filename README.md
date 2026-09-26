@@ -1082,6 +1082,12 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     Transistor sperrt/verstärkt/schaltet durch. Warnung bei **Kurzschluss**.
   - **Ladungen fließen** bei geschlossenem Stromkreis – als **Elektronen** (− → +) oder positive
     Ladungen (technische Stromrichtung), Geschwindigkeit je nach Stromstärke; nicht durch den Kondensator.
+    Ein sehr kleiner Strom (z. B. der Basisstrom, rund 1 % des Kollektorstroms) bekommt ein
+    **Mindesttempo**, damit man sieht, dass dort überhaupt etwas fließt.
+    Am **Transistor** laufen die Ladungen an den gezeichneten Anschlüssen entlang – über den
+    Emitter zur Basisschicht und von dort weiter zum Kollektor, ein kleiner Teil über die Basis;
+    im Elektronenbild in der umgekehrten Richtung. Sperrt der Transistor, bewegt sich nichts
+    und I_B, I_C werden als 0 angezeigt.
   - **Vorlagen:** einfacher Stromkreis, Reihen-, Parallel-, gemischte Schaltung, Diode, Messgeräte,
     Kondensator laden/entladen, Wechselspannung, Transistor als Schalter, Spule, leeres Blatt.
   - **📈 Diagramm:** Bauteil antippen → „📈 Diagramm" blendet ein verschiebbares Fenster mit dem
