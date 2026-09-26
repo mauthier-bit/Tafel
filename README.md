@@ -764,6 +764,8 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   bleiben beim Würfeln erhalten. (Nur die **Würfelfläche** wird gefärbt, die Augen bleiben schwarz.)
 - **Glücksrad** (Zufallsgenerator, Mathe & Physik): dreht auf einen zufälligen Sektor. **Anzahl der
   Sektoren sowie Beschriftung (Zahl) und Farbe je Sektor** lassen sich im **Kontextmenü** einstellen.
+  Der **Zeiger oben** ist groß und rot mit weißem Rand, damit auch von hinten im Klassenzimmer klar
+  zu sehen ist, welcher Sektor getroffen wurde.
 - **Bruch** (Mathe & Physik): acht Reiter, jeweils als **Kreis oder Rechteck** (Knopf „◯ Kreis / ▭ Rechteck“),
   wahlweise **einfarbig, 🍕 Pizza** (Sauce, Käse, Peperoni, Kruste), **🍰 Kuchen** (Torte mit schmalem Guss-Rand,
   Sahnehäubchen mit Kirsche, Blechkuchen mit Guss und verteilten Früchten) **oder 🍫 Schokolade**
