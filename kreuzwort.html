@@ -1,0 +1,229 @@
+<!DOCTYPE html><html lang="de"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Kreuzworträtsel</title>
+<style>
+  *{box-sizing:border-box;} [hidden]{display:none!important;}
+  html,body{margin:0;height:100%;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#fff;color:#1f2430;overflow:hidden;}
+  #app{display:flex;flex-direction:column;height:100%;}
+  #bar{flex:none;display:flex;flex-direction:column;gap:5px;padding:6px 8px;border-bottom:1px solid #e6eaf0;font-size:13px;}
+  #row1,#row2{display:flex;gap:6px;align-items:center;flex-wrap:nowrap;}
+  #scroll1,#scroll2{display:flex;gap:6px;align-items:center;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:thin;flex:1 1 auto;min-width:0;padding-bottom:1px;}
+  #scroll1>*,#scroll2>*{flex:0 0 auto;}
+  #scroll1::-webkit-scrollbar,#scroll2::-webkit-scrollbar{height:4px;}
+  #scroll1::-webkit-scrollbar-thumb,#scroll2::-webkit-scrollbar-thumb{background:#cfd6e0;border-radius:2px;}
+  #bar button,#bar select{border:1px solid #cfd6e0;background:#fff;border-radius:7px;padding:4px 9px;font:600 13px -apple-system,sans-serif;cursor:pointer;color:#1f2430;white-space:nowrap;}
+  #bar button.on{background:#2563eb;border-color:#2563eb;color:#fff;}
+  #bar label{display:inline-flex;gap:4px;align-items:center;font-weight:600;white-space:nowrap;}
+  #shotBtns{display:inline-flex;gap:5px;flex:0 0 auto;}
+  #words{flex:none;padding:6px 8px;border-bottom:1px solid #e6eaf0;}
+  #words textarea{width:100%;height:96px;border:1px solid #cfd6e0;border-radius:8px;padding:6px 8px;font:500 14px -apple-system,sans-serif;resize:vertical;}
+  #words .hint{font-size:12px;color:#8a93a2;margin-top:4px;}
+  #area{flex:1;position:relative;min-height:0;}
+  #area canvas{position:absolute;inset:0;width:100%;height:100%;}
+  #msg{font-size:12.5px;color:#64748b;white-space:nowrap;}
+</style>
+</head><body>
+<div id="app">
+  <div id="bar">
+    <div id="row1">
+      <div id="scroll1">
+        <button type="button" id="bEdit">✎ Begriffe</button>
+        <button type="button" id="bNew" title="Anordnung neu berechnen">🎲 Neu anordnen</button>
+        <label><input type="checkbox" id="cSol"> Lösung</label>
+        <button type="button" id="bPrint" title="Als Arbeitsblatt drucken">🖨 Drucken</button>
+        <span id="msg"></span>
+      </div>
+      <span id="shotBtns"><button type="button" id="fsM" title="Schrift kleiner">A−</button><button type="button" id="fsP" title="Schrift größer">A+</button></span>
+    </div>
+    <div id="row2"><div id="scroll2">
+      <label><input type="checkbox" id="cClues" checked> Hinweise</label>
+      <label><input type="checkbox" id="cNums" checked> Nummern</label>
+      <select id="place" title="Wo stehen die Hinweise?"><option value="below">Hinweise unten</option><option value="right">Hinweise rechts</option></select>
+    </div></div>
+  </div>
+  <div id="words" hidden>
+    <textarea id="wIn" placeholder="Begriff = Hinweis&#10;Nenner = steht unter dem Bruchstrich&#10;Zaehler = steht über dem Bruchstrich"></textarea>
+    <div class="hint">Je Zeile ein Begriff, danach ein <b>=</b> und der Hinweis (der Hinweis darf auch fehlen) · Umlaute bleiben, ß wird zu SS</div>
+  </div>
+  <div id="area"><canvas id="cv"></canvas></div>
+</div>
+<script src="shot.js"></script>
+<script>
+"use strict";
+const $=id=>document.getElementById(id), cv=$('cv'), ctx=cv.getContext('2d');
+const LINE='#1f2430', BLUE='#2563eb', GREY='#8a93a2';
+let D={ v:1, seed:11, sol:false, clues:true, nums:true, place:'below', fontSize:15, fontBold:false, fontItalic:false,
+  words:'Nenner = steht unter dem Bruchstrich\nZaehler = steht über dem Bruchstrich\nKuerzen = Zähler und Nenner durch dieselbe Zahl teilen\nAnteil = der Bruch als Teil eines Ganzen\nProzent = Hundertstel' };
+let lay=null;   // {cells:Map, entries:[{word,clue,x,y,dir,num}], w,h, missing:[]}
+
+const clean=w=>w.toUpperCase().replace(/ß/g,'SS').replace(/[^A-ZÄÖÜ]/g,'');
+function items(){ return (D.words||'').split(/\n+/).map(l=>{
+    const m=l.split(/\s*[=:]\s*/); const w=clean(m[0]||'');
+    return {word:w, clue:(m.slice(1).join(': ')||'').trim()}; })
+  .filter(it=>it.word.length>=2&&it.word.length<=18).slice(0,24); }
+const rnd=seed=>{ let t=(seed|0)||1; return ()=>((t=t*16807%2147483647)/2147483647); };
+
+/* ---------- Kreuzworträtsel legen ---------- */
+function tryLayout(list,seed){
+  const r=rnd(seed), cells=new Map(), entries=[];
+  const key=(x,y)=>x+','+y, at=(x,y)=>cells.get(key(x,y));
+  function ok(w,x,y,dir){
+    const dx=dir==='h'?1:0, dy=dir==='h'?0:1;
+    if(at(x-dx,y-dy)||at(x+dx*w.length,y+dy*w.length)) return false;   // davor/dahinter frei
+    let cross=0;
+    for(let i=0;i<w.length;i++){
+      const cx=x+dx*i, cy=y+dy*i, c=at(cx,cy);
+      if(c){ if(c!==w[i]) return false; cross++; }
+      else{ const sx=dir==='h'?0:1, sy=dir==='h'?1:0;                  // seitlich muss frei sein
+        if(at(cx+sx,cy+sy)||at(cx-sx,cy-sy)) return false; }
+    }
+    return cross>0;
+  }
+  function put(w,clue,x,y,dir){ const dx=dir==='h'?1:0, dy=dir==='h'?0:1;
+    for(let i=0;i<w.length;i++) cells.set(key(x+dx*i,y+dy*i), w[i]);
+    entries.push({word:w,clue,x,y,dir}); }
+  const first=list[0]; if(!first) return null;
+  for(let i=0;i<first.word.length;i++) cells.set(key(i,0),first.word[i]);
+  entries.push({word:first.word,clue:first.clue,x:0,y:0,dir:'h'});
+  const missing=[];
+  for(let n=1;n<list.length;n++){
+    const {word:w,clue}=list[n]; let best=null;
+    for(let i=0;i<w.length;i++) for(const [k,ch] of cells){
+      if(ch!==w[i]) continue;
+      const [cx,cy]=k.split(',').map(Number);
+      for(const dir of ['h','v']){
+        const x=dir==='h'?cx-i:cx, y=dir==='h'?cy:cy-i;
+        if(!ok(w,x,y,dir)) continue;
+        /* kompakt bleiben: Bewertung aus Fläche und etwas Zufall */
+        let minX=1e9,minY=1e9,maxX=-1e9,maxY=-1e9;
+        for(const kk of cells.keys()){ const [ax,ay]=kk.split(',').map(Number);
+          minX=Math.min(minX,ax); maxX=Math.max(maxX,ax); minY=Math.min(minY,ay); maxY=Math.max(maxY,ay); }
+        const ex=dir==='h'?x+w.length-1:x, ey=dir==='h'?y:y+w.length-1;
+        const W=Math.max(maxX,ex)-Math.min(minX,x)+1, H=Math.max(maxY,ey)-Math.min(minY,y)+1;
+        const score=Math.max(W,H)*2+Math.abs(W-H)+r()*1.5;
+        if(!best||score<best.score) best={x,y,dir,score};
+      }
+    }
+    if(best) put(w,clue,best.x,best.y,best.dir); else missing.push(w);
+  }
+  let minX=1e9,minY=1e9,maxX=-1e9,maxY=-1e9;
+  for(const k of cells.keys()){ const [x,y]=k.split(',').map(Number);
+    minX=Math.min(minX,x); maxX=Math.max(maxX,x); minY=Math.min(minY,y); maxY=Math.max(maxY,y); }
+  const norm=new Map(); for(const [k,v] of cells){ const [x,y]=k.split(',').map(Number); norm.set((x-minX)+','+(y-minY),v); }
+  entries.forEach(e=>{ e.x-=minX; e.y-=minY; });
+  const W=maxX-minX+1, H=maxY-minY+1;
+  /* Nummern: Startzellen zeilenweise durchzählen */
+  entries.sort((a,b)=>a.y-b.y||a.x-b.x||(a.dir==='h'?-1:1));
+  let num=0; const numAt=new Map();
+  entries.forEach(e=>{ const k=e.x+','+e.y; if(!numAt.has(k)) numAt.set(k,++num); e.num=numAt.get(k); });
+  return {cells:norm,entries,w:W,h:H,missing,placed:entries.length};
+}
+function build(){
+  const list=items(); if(!list.length){ lay=null; setMsg('Bitte Begriffe eintragen'); return; }
+  const sorted=list.slice().sort((a,b)=>b.word.length-a.word.length);
+  let best=null;
+  for(let t=0;t<40;t++){ const L=tryLayout(sorted,(D.seed|0)+t*97);
+    if(!L) continue;
+    const score=L.placed*100-Math.max(L.w,L.h)-Math.abs(L.w-L.h);
+    if(!best||score>best.score) best={L,score}; }
+  lay=best?best.L:null;
+  setMsg(lay&&lay.missing.length?('Nicht eingebaut: '+lay.missing.join(', ')):'');
+}
+const setMsg=t=>{ $('msg').textContent=t||''; };
+
+/* ---------- Zeichnen ---------- */
+function resize(){ const dpr=window.devicePixelRatio||1, w=cv.clientWidth||320, h=cv.clientHeight||240;
+  cv.width=Math.round(w*dpr); cv.height=Math.round(h*dpr); ctx.setTransform(dpr,0,0,dpr,0,0); draw(); }
+const fontStr=(px,bold)=>(D.fontItalic?'italic ':'')+((bold||D.fontBold)?'800 ':'600 ')+px+'px -apple-system,BlinkMacSystemFont,sans-serif';
+function wrap(text,maxW){ const words=String(text).split(/\s+/), out=[]; let line='';
+  for(const w of words){ const t=line?line+' '+w:w; if(ctx.measureText(t).width>maxW&&line){ out.push(line); line=w; } else line=t; }
+  if(line) out.push(line); return out; }
+function draw(){ const w=cv.clientWidth, h=cv.clientHeight, fs=D.fontSize;
+  ctx.clearRect(0,0,w,h); ctx.fillStyle='#fff'; ctx.fillRect(0,0,w,h);
+  if(!lay){ ctx.fillStyle=GREY; ctx.font=fontStr(fs); ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('„✎ Begriffe" antippen und Wörter eintragen',w/2,h/2); return; }
+  const right=(D.place==='right'&&D.clues), pad=8;
+  const gridW=right?w*0.58:w, clueW=right?(w-gridW-pad):(w-2*pad);
+  const clueH=D.clues&&!right?h*0.42:0;
+  const cell=Math.max(9,Math.min((gridW-2*pad)/lay.w, (h-2*pad-clueH)/lay.h));
+  const gw=cell*lay.w, gh=cell*lay.h, x0=pad+Math.max(0,(gridW-2*pad-gw)/2), y0=pad;
+  /* Zellen */
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  for(const [k,ch] of lay.cells){ const [x,y]=k.split(',').map(Number);
+    const px=x0+x*cell, py=y0+y*cell;
+    ctx.fillStyle='#fff'; ctx.fillRect(px,py,cell,cell);
+    ctx.strokeStyle=LINE; ctx.lineWidth=Math.max(1,cell*0.05); ctx.strokeRect(px,py,cell,cell);
+    if(D.sol){ ctx.fillStyle=BLUE; ctx.font=fontStr(cell*0.62,true); ctx.fillText(ch,px+cell/2,py+cell*0.58); } }
+  /* Nummern */
+  if(D.nums){ ctx.fillStyle=LINE; ctx.textAlign='left'; ctx.textBaseline='top'; ctx.font=fontStr(Math.max(7,cell*0.3));
+    const seen=new Set();
+    lay.entries.forEach(e=>{ const k=e.x+','+e.y; if(seen.has(k))return; seen.add(k);
+      ctx.fillText(String(e.num), x0+e.x*cell+cell*0.08, y0+e.y*cell+cell*0.06); });
+    ctx.textAlign='center'; ctx.textBaseline='middle'; }
+  /* Hinweise */
+  if(D.clues){ const cx0=right?(gridW+pad/2):pad, cy0=right?pad:(y0+gh+fs*1.4);
+    const maxW=right?clueW:(w-2*pad), avail=right?(h-2*pad):(h-cy0-pad);
+    const across=lay.entries.filter(e=>e.dir==='h'), down=lay.entries.filter(e=>e.dir==='v');
+    const twoCols=!right;                                   // unten: links waagerecht, rechts senkrecht
+    const colW=twoCols?((maxW-16)/2):maxW;
+    let size=fs*0.92, colA=[], colB=[];
+    const linesOf=(title,arr)=>{ const out=[{t:title,head:true}];
+      arr.forEach(e=>{ const txt=e.num+'. '+(e.clue||('Wort mit '+e.word.length+' Buchstaben'));
+        wrap(txt,colW-6).forEach((ln,i)=>out.push({t:(i?'   ':'')+ln})); });
+      return out; };
+    const build2=()=>{ ctx.font=fontStr(size);
+      if(twoCols){ colA=across.length?linesOf('Waagerecht',across):[]; colB=down.length?linesOf('Senkrecht',down):[]; }
+      else { colA=[].concat(across.length?linesOf('Waagerecht',across):[], down.length?linesOf('Senkrecht',down):[]); colB=[]; } };
+    build2();
+    while(size>7 && Math.max(colA.length,colB.length)*size*1.35>avail){ size-=1; build2(); }
+    ctx.textAlign='left'; ctx.textBaseline='top';
+    const paint=(arr,cx)=>arr.forEach((ln,i)=>{ ctx.font=fontStr(size,ln.head); ctx.fillStyle=ln.head?LINE:'#475569';
+      ctx.fillText(ln.t, cx, cy0+i*size*1.35); });
+    paint(colA,cx0); if(colB.length) paint(colB,cx0+colW+16);
+    ctx.textAlign='center'; ctx.textBaseline='middle'; }
+}
+/* ---------- Bedienung ---------- */
+function refresh(rebuild){ if(rebuild) build(); draw(); sync(); }
+$('bEdit').onclick=()=>{ const wbox=$('words'); wbox.hidden=!wbox.hidden; $('bEdit').classList.toggle('on',!wbox.hidden);
+  if(!wbox.hidden){ $('wIn').value=D.words; $('wIn').focus(); } resize(); };
+$('wIn').addEventListener('input',()=>{ D.words=$('wIn').value; refresh(true); });
+$('bNew').onclick=()=>{ D.seed=Math.max(1,Math.floor(Math.random()*1e6)); refresh(true); };
+$('cSol').onchange=()=>{ D.sol=$('cSol').checked; refresh(false); };
+$('cClues').onchange=()=>{ D.clues=$('cClues').checked; refresh(false); };
+$('cNums').onchange=()=>{ D.nums=$('cNums').checked; refresh(false); };
+$('place').onchange=()=>{ D.place=$('place').value; refresh(false); };
+function applyFont(){ }
+for(const [id,d] of [['fsM',-1],['fsP',1]]){ $(id).addEventListener('pointerdown',e=>e.preventDefault());
+  $(id).onclick=()=>{ D.fontSize=Math.max(9,Math.min(40,(D.fontSize||15)+d)); draw(); sync(); }; }
+
+/* ---------- Drucken ---------- */
+function printSheet(title){
+  let url='';
+  try{ const c=(window.TafelShot&&TafelShot.rasterize)?TafelShot.rasterize($('area'),{scale:2.5,pad:6}):cv; url=c.toDataURL('image/png'); }
+  catch(e){ url=cv.toDataURL('image/png'); }
+  const win=window.open('','_blank');
+  if(!win){ setMsg('Bitte Pop-ups erlauben – dann klappt das Drucken'); return; }
+  win.document.write('<!DOCTYPE html><meta charset="utf-8"><title>'+title+'</title>'+
+    '<style>html,body{margin:0;padding:0}@page{margin:10mm}img{width:100%;height:auto;display:block}</style>'+
+    '<img src="'+url+'">');
+  win.document.close();
+  win.focus();
+  setTimeout(()=>{ try{ win.print(); }catch(e){} },350);
+}
+$('bPrint').onclick=()=>printSheet('Kreuzworträtsel');
+if(window.TafelShot) TafelShot.buttons($('shotBtns'),()=>TafelShot.rasterize($('app'),{exclude:'#bar,#words',pad:6}));
+/* ---------- Tafel-Anbindung ---------- */
+function sync(){ if(window.parent===window) return; /* allein geöffnet: nicht an sich selbst senden */
+  try{ parent.postMessage({type:'embed-data',data:D},'*'); }catch(e){} }
+addEventListener('message',e=>{ if(window.parent===window||e.source!==window.parent) return;   // eigene Nachrichten ignorieren
+  if(!(e.data&&e.data.type==='embed-data'&&e.data.data)) return; const d=e.data.data;
+  D=Object.assign(D,d);
+  $('wIn').value=D.words||''; $('cSol').checked=!!D.sol; $('cClues').checked=D.clues!==false;
+  $('cNums').checked=D.nums!==false; $('place').value=D.place||'below';
+  build(); resize(); });
+addEventListener('resize',resize);
+window.addEventListener('load',()=>{ build(); resize();
+  if(window.ResizeObserver) new ResizeObserver(resize).observe(cv);
+  try{ if(window.parent!==window) parent.postMessage({type:'embed-ready'},'*'); }catch(e){} });
+</script>
+</body></html>

@@ -1,0 +1,526 @@
+<!DOCTYPE html><html lang="de"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Wellenwanne</title>
+<style>
+  :root{--fs:14px;}
+  *{box-sizing:border-box;} [hidden]{display:none!important;}
+  html,body{margin:0;height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#1f2430;font-size:var(--fs);}
+  #wrap{position:absolute;inset:0;display:flex;flex-direction:column;}
+  #bar{display:flex;gap:4px;padding:6px;border-bottom:1px solid #e2e7ef;align-items:center;flex:none;overflow:hidden;}
+  #barL,#barR{display:flex;gap:4px;align-items:center;flex:none;}
+  #barMid{display:flex;gap:4px;align-items:center;flex:1 1 auto;min-width:0;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:thin;padding:0 2px;}
+  #bar.compact #barL .tb span,#bar.compact #barR .tb span{display:none;}
+  #bar.compact #barL .tb,#bar.compact #barR .tb{min-width:42px;padding:0 3px;}
+  #barMid::-webkit-scrollbar{height:5px;} #barMid::-webkit-scrollbar-thumb{background:#c8d0dc;border-radius:3px;}
+  #barMid.more{-webkit-mask-image:linear-gradient(90deg,#000 0,#000 calc(100% - 22px),transparent);mask-image:linear-gradient(90deg,#000 0,#000 calc(100% - 22px),transparent);}
+  #barMid.more.start{-webkit-mask-image:linear-gradient(90deg,transparent,#000 22px,#000 calc(100% - 22px),transparent);mask-image:linear-gradient(90deg,transparent,#000 22px,#000 calc(100% - 22px),transparent);}
+  #barMid.more.end{-webkit-mask-image:linear-gradient(90deg,transparent,#000 22px,#000 100%);mask-image:linear-gradient(90deg,transparent,#000 22px,#000 100%);}
+  .tb{flex:none;min-width:52px;height:50px;border:1px solid #d6dce5;background:#fff;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;padding:0 5px;color:#1f2430;font:inherit;}
+  .tb svg{width:32px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+  .tb span{font-size:.7em;font-weight:600;white-space:nowrap;}
+  .tb.on{background:#2563eb;border-color:#2563eb;color:#fff;}
+  .tb:disabled{opacity:.35;}
+  .sep{width:1px;align-self:stretch;background:#e2e7ef;margin:0 3px;flex:none;}
+  #bar2{display:flex;gap:6px;padding:5px 8px;border-bottom:1px solid #e2e7ef;align-items:center;flex-wrap:nowrap;flex:none;min-height:44px;font-size:.92em;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:thin;}
+  #bar2>*{flex:0 0 auto;}
+  #bar2::-webkit-scrollbar{height:4px;} #bar2::-webkit-scrollbar-thumb{background:#cfd6e0;border-radius:2px;}
+  .lbl{color:#64748b;font-weight:600;}
+  .grow{flex:1 1 auto!important;min-width:4px;}
+  .btn{border:1px solid #cfd6e0;background:#fff;border-radius:9px;padding:5px 10px;font:inherit;font-weight:600;color:#1f2430;cursor:pointer;white-space:nowrap;}
+  .btn.pri{background:#2563eb;border-color:#2563eb;color:#fff;}
+  .btn.red{color:#dc2626;border-color:#fca5a5;}
+  .stp{display:inline-flex;align-items:center;gap:4px;}
+  .stp button{border:1px solid #cfd6e0;background:#fff;border-radius:8px;width:30px;height:30px;font:inherit;font-weight:700;cursor:pointer;color:#1f2430;}
+  .stp .val{min-width:56px;text-align:center;font-weight:700;}
+  #cvbox{position:relative;flex:1;min-height:0;background:#0b1020;}
+  #cvbox canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;}
+  #hint{position:absolute;left:8px;bottom:6px;font-size:.78em;color:#93a3b8;pointer-events:none;}
+</style>
+</head><body>
+<div id="wrap">
+  <div id="bar"><div id="barL">
+    <button class="tb tafelEdit" id="fNew" title="Leere Wanne"><svg viewBox="0 0 32 20"><path d="M11 2h8l4 4v12H11Z M19 2v4h4 M17 9v6M14 12h6"/></svg><span>Neu</span></button>
+    <button class="tb tafelEdit" id="fSave" title="Aufbau als Datei speichern"><svg viewBox="0 0 32 20"><path d="M10 2h10l3 3v13H10Z M13 2v5h7V2 M13 18v-6h7v6"/></svg><span>Speichern</span></button>
+    <button class="tb tafelEdit" id="fLoad" title="Gespeicherten Aufbau laden"><svg viewBox="0 0 32 20"><path d="M7 16V5h6l2 2h10v9Z M16 9v6M13 12l3 3 3-3"/></svg><span>Laden</span></button>
+    <input type="file" id="fFile" accept=".json,application/json" hidden>
+    <span class="sep"></span>
+    <button class="tb" id="bPlay" title="Anhalten / weiterlaufen"><svg viewBox="0 0 32 20"><path d="M12 4v12M20 4v12" stroke-width="3"/></svg><span>Pause</span></button>
+    <button class="tb" id="bReset" title="Wasser beruhigen und neu starten"><svg viewBox="0 0 32 20"><path d="M24 10a8 8 0 1 1-2.5-5.8M24 2v4h-4"/></svg><span>Neustart</span></button>
+    <button class="tb tafelEdit" id="bDel" title="Ausgewähltes Bauteil löschen"><svg viewBox="0 0 32 20"><path d="M11 5h10l-1 13H12Z M14 5V3h4v2M9 5h14"/></svg><span>Löschen</span></button>
+    </div><div id="barMid" class="tafelEdit">
+    <button class="tb" data-add="src" title="Punkterreger – erzeugt Kreiswellen"><svg viewBox="0 0 32 20"><circle cx="16" cy="10" r="1.6" fill="currentColor"/><circle cx="16" cy="10" r="4.5"/><circle cx="16" cy="10" r="8"/></svg><span>Erreger</span></button>
+    <button class="tb" data-add="plane" title="Linienerreger – erzeugt gerade Wellen"><svg viewBox="0 0 32 20"><path d="M5 2v16" stroke-width="2.6"/><path d="M11 2v16M17 2v16M23 2v16M29 2v16" stroke-width="1.4"/></svg><span>Gerade Welle</span></button>
+    <button class="tb" data-add="wall" title="Bande – die Welle wird reflektiert"><svg viewBox="0 0 32 20"><path d="M16 2v16" stroke-width="3.4"/><path d="M4 6l10 4-10 4"/></svg><span>Bande</span></button>
+    <button class="tb" data-add="slit" title="Bande mit einem Spalt – Beugung"><svg viewBox="0 0 32 20"><path d="M16 2v5M16 13v5" stroke-width="3.4"/><path d="M4 10h8M20 10h8" stroke-dasharray="2 2"/></svg><span>Spalt</span></button>
+    <button class="tb" data-add="dslit" title="Bande mit zwei Spalten – Interferenz"><svg viewBox="0 0 32 20"><path d="M16 2v3M16 8v4M16 15v3" stroke-width="3.4"/><path d="M4 10h8M20 10h8" stroke-dasharray="2 2"/></svg><span>Doppelspalt</span></button>
+    <button class="tb" data-add="block" title="Hindernis im Wasser"><svg viewBox="0 0 32 20"><rect x="10" y="5" width="12" height="10" rx="1.5" fill="currentColor" stroke="none"/></svg><span>Hindernis</span></button>
+    <button class="tb" data-add="shallow" title="Flaches Wasser – die Welle wird langsamer und gebrochen"><svg viewBox="0 0 32 20"><path d="M4 12h24v6H4Z" fill="currentColor" fill-opacity=".25"/><path d="M4 12h24M4 6c2-2 4 2 6 0s4 2 6 0 4 2 6 0 4 2 6 0" stroke-width="1.5"/></svg><span>Flachwasser</span></button>
+    </div><div id="barR"><span class="sep"></span>
+    <button class="tb tafelEdit" id="bUndo" title="Rückgängig"><svg viewBox="0 0 32 20"><path d="M10 5 5 10l5 5M5 10H20a6 6 0 0 1 0 12"/></svg><span>Zurück</span></button>
+    <button class="tb tafelEdit" id="bRedo" title="Wiederholen"><svg viewBox="0 0 32 20"><path d="M22 5l5 5-5 5M27 10H12a6 6 0 0 0 0 12"/></svg><span>Vor</span></button>
+    <span class="sep"></span>
+    <button class="tb" id="bEdge" title="Rand der Wanne: offen (die Wellen laufen hinaus) oder Bande ringsum"><svg viewBox="0 0 32 20"><rect x="4" y="3" width="24" height="14" rx="1.5" stroke-dasharray="3 3"/><path d="M13 10h10M20 7l3 3-3 3"/></svg><span>Rand offen</span></button>
+    <button class="tb" id="bHuy" title="Huygenssches Prinzip: Elementarwellen einzeichnen"><svg viewBox="0 0 32 20"><path d="M10 2v16" stroke-width="2.4"/><circle cx="10" cy="5" r="3.6"/><circle cx="10" cy="12" r="3.6"/><circle cx="10" cy="18" r="3.6"/></svg><span>Huygens</span></button>
+    <button class="tb tafelEdit" id="bTpl" title="Fertigen Versuch laden"><svg viewBox="0 0 32 20"><rect x="7" y="3" width="18" height="14" rx="2"/><path d="M11 8h10M11 12h6"/></svg><span>Vorlagen</span></button>
+  </div></div>
+  <div id="bar2"></div>
+  <div id="cvbox"><canvas id="cv"></canvas><div id="hint"></div></div>
+</div>
+<script src="shot.js"></script>
+<script src="modus.js"></script>
+<script>
+"use strict";
+const $=id=>document.getElementById(id), cv=$('cv'), ctx=cv.getContext('2d');
+const toast=m=>window.TafelShot&&TafelShot.toast(m);
+const NAME={src:'Punkterreger',plane:'Linienerreger',wall:'Bande',slit:'Spalt',dslit:'Doppelspalt',block:'Hindernis',shallow:'Flachwasser'};
+let D={ v:1, lam:22, run:true, huy:false, edge:'open', sel:-1, fontSize:14, fontBold:false, fontItalic:false, parts:null };
+let P=[];
+/* ---------- Gitter ---------- */
+let GW=0, GH=0, SC=1, u=null, u1=null, u2=null, K=null, solid=null, shallowMask=null, damp=null;
+const K_DEEP=0.26, K_SHAL=0.085;
+const absorbB=()=>Math.max(12,Math.min(44,Math.round(1.1*(D.lam||22))));   /* Absorptionszone ≈ eine Wellenlänge */                    /* (c·dt/dx)² – flaches Wasser ist langsamer */
+let phase=0, steps=0, norm=1;
+function gridSetup(){
+  const w=cv.clientWidth||320, h=cv.clientHeight||240;
+  GW=Math.max(80,Math.min(300,Math.round(w/3.2)));
+  SC=w/GW; GH=Math.max(60,Math.round(h/SC));
+  const n=GW*GH;
+  u=new Float32Array(n); u1=new Float32Array(n); u2=new Float32Array(n);
+  K=new Float32Array(n); solid=new Uint8Array(n); shallowMask=new Uint8Array(n); damp=new Float32Array(n);
+  phase=0; steps=0; norm=1;
+  buildDamp(); buildMask();
+}
+const gx=px=>px/SC, gy=py=>py/SC, px=g=>g*SC;
+function inRot(b,x,y,hw,hh){                        /* Punkt (x,y) im gedrehten Rechteck um b? */
+  const c=Math.cos(-b.ang), s=Math.sin(-b.ang), dx=x-gx(b.x), dy=y-gy(b.y);
+  const lx=dx*c-dy*s, ly=dx*s+dy*c;
+  return Math.abs(lx)<=hw&&Math.abs(ly)<=hh;
+}
+function buildDamp(){                                    /* Dämpfungszone am Rand (γ wächst sanft nach außen) */
+  if(!damp) return;
+  const B=absorbB(), G=0.32;
+  for(let y=0;y<GH;y++) for(let x=0;x<GW;x++){
+    const d=Math.min(x,y,GW-1-x,GH-1-y);
+    damp[y*GW+x]=(d<B)?G*Math.pow((B-d)/B,2):0;
+  }
+  P.forEach(b=>{                                         /* rund um die Erreger nicht dämpfen */
+    if(b.t!=='src'&&b.t!=='plane') return;
+    const pts=[];
+    if(b.t==='src') pts.push([gx(b.x),gy(b.y)]);
+    else { const c=Math.cos(b.ang), si=Math.sin(b.ang), hw=(b.len||300)/2/SC;
+      for(let t=-hw;t<=hw;t+=1) pts.push([gx(b.x)+c*t, gy(b.y)+si*t]); }
+    pts.forEach(([px,py])=>{ const R=6;
+      for(let y=Math.max(0,Math.round(py-R));y<=Math.min(GH-1,Math.round(py+R));y++)
+        for(let x=Math.max(0,Math.round(px-R));x<=Math.min(GW-1,Math.round(px+R));x++) damp[y*GW+x]=0; });
+  });
+}
+function buildMask(){
+  if(!K) return;
+  buildDamp();
+  solid.fill(0); shallowMask.fill(0); K.fill(K_DEEP);
+  P.forEach(b=>{
+    const hw=(b.len||100)/2/SC, th=(b.thick||8)/2/SC;
+    if(b.t==='shallow'){
+      const hw2=(b.w||260)/2/SC, hh2=(b.h||160)/2/SC;
+      for(let y=0;y<GH;y++) for(let x=0;x<GW;x++) if(inRot(b,x,y,hw2,hh2)){ const i=y*GW+x; shallowMask[i]=1; K[i]=K_SHAL; }
+      return;
+    }
+    if(b.t==='block'){
+      const hh=(b.thick||40)/2/SC;
+      for(let y=0;y<GH;y++) for(let x=0;x<GW;x++) if(inRot(b,x,y,hw,hh)) solid[y*GW+x]=1;
+      return;
+    }
+    if(b.t==='wall'||b.t==='slit'||b.t==='dslit'){
+      const g=(b.gap||26)/2/SC;
+      for(let y=0;y<GH;y++) for(let x=0;x<GW;x++){
+        if(!inRot(b,x,y,hw,Math.max(1.2,th))) continue;
+        const c=Math.cos(-b.ang), s=Math.sin(-b.ang);
+        const lx=(x-gx(b.x))*c-(y-gy(b.y))*s;        /* Lage längs der Bande */
+        if(b.t==='slit'&&Math.abs(lx)<g) continue;
+        if(b.t==='dslit'){ const d=(b.sep||90)/2/SC; if(Math.abs(Math.abs(lx)-d)<g) continue; }
+        solid[y*GW+x]=1;
+      }
+    }
+  });
+  for(let i=0;i<solid.length;i++) if(solid[i]){ u[i]=u1[i]=u2[i]=0; }
+}
+/* ---------- Simulation ---------- */
+function stepSim(){
+  const reibung=0.9994, n=GW*GH;
+  for(let y=1;y<GH-1;y++){
+    const row=y*GW;
+    for(let x=1;x<GW-1;x++){
+      const i=row+x;
+      if(solid[i]){ u2[i]=0; continue; }
+      const lap=(solid[i-1]?u1[i]:u1[i-1])+(solid[i+1]?u1[i]:u1[i+1])
+               +(solid[i-GW]?u1[i]:u1[i-GW])+(solid[i+GW]?u1[i]:u1[i+GW])-4*u1[i];
+      const g=(D.edge==='wall')?0:damp[i];
+      u2[i]=(2*u1[i]-u[i]+K[i]*lap-g*(u1[i]-u[i]))*reibung;
+    }
+  }
+  if(D.edge!=='wall'){
+    /* offener Rand: Mur-Bedingung in der äußersten Reihe … */
+    const c=Math.sqrt(K_DEEP), q=(c-1)/(c+1);
+    for(let x=0;x<GW;x++){
+      u2[x]            = u1[GW+x]          + q*(u2[GW+x]           - u1[x]);
+      u2[(GH-1)*GW+x]  = u1[(GH-2)*GW+x]   + q*(u2[(GH-2)*GW+x]    - u1[(GH-1)*GW+x]);
+    }
+    for(let y=0;y<GH;y++){
+      u2[y*GW]         = u1[y*GW+1]        + q*(u2[y*GW+1]         - u1[y*GW]);
+      u2[y*GW+GW-1]    = u1[y*GW+GW-2]     + q*(u2[y*GW+GW-2]      - u1[y*GW+GW-1]);
+    }
+  } else {
+    for(let x=0;x<GW;x++){ u2[x]=0; u2[(GH-1)*GW+x]=0; }
+    for(let y=0;y<GH;y++){ u2[y*GW]=0; u2[y*GW+GW-1]=0; }
+  }
+  /* Erreger */
+  const T=Math.max(6,D.lam/Math.sqrt(K_DEEP));       /* Periode in Zeitschritten */
+  phase+=2*Math.PI/T;
+  const a=Math.sin(phase);
+  P.forEach(b=>{
+    if(b.t==='src'){
+      const x=Math.round(gx(b.x)), y=Math.round(gy(b.y));
+      for(let dy=-1;dy<=1;dy++) for(let dx=-1;dx<=1;dx++){
+        const xx=x+dx, yy=y+dy; if(xx<1||yy<1||xx>=GW-1||yy>=GH-1) continue;
+        u2[yy*GW+xx]=a;
+      }
+    }
+    if(b.t==='plane'){
+      const s=Math.sin(b.ang), c=Math.cos(b.ang), hw=(b.len||300)/2/SC;
+      for(let t=-hw;t<=hw;t+=0.5){
+        const xx=Math.round(gx(b.x)+c*t), yy=Math.round(gy(b.y)+s*t);
+        if(xx<1||yy<1||xx>=GW-1||yy>=GH-1) continue;
+        u2[yy*GW+xx]=a;
+      }
+    }
+  });
+  const t=u; u=u1; u1=u2; u2=t; steps++;
+}
+/* ---------- Zeichnen ---------- */
+let img=null, off=null, octx=null;
+function resize(){
+  const dpr=window.devicePixelRatio||1, w=cv.clientWidth||320, h=cv.clientHeight||240;
+  cv.width=Math.round(w*dpr); cv.height=Math.round(h*dpr); ctx.setTransform(dpr,0,0,dpr,0,0);
+  gridSetup();
+  off=document.createElement('canvas'); off.width=GW; off.height=GH; octx=off.getContext('2d');
+  img=octx.createImageData(GW,GH);
+  draw();
+}
+function draw(){
+  const w=cv.clientWidth, h=cv.clientHeight, fs=D.fontSize;
+  if(!img){ return; }
+  const d=img.data;
+  let mx=0; for(let i=0;i<GW*GH;i+=7){ const v=Math.abs(u1[i]); if(v>mx) mx=v; }
+  norm+=((1/Math.max(0.9,mx*0.95))-norm)*0.06;           /* Anzeige sanft nachregeln (Resonanz sättigt sonst) */
+  for(let i=0,j=0;i<GW*GH;i++,j+=4){
+    if(solid[i]){ d[j]=71; d[j+1]=85; d[j+2]=105; d[j+3]=255; continue; }
+    const v=u1[i]*norm, av=Math.min(1,Math.abs(v)*1.1);
+    const t=0.5+0.5*Math.sign(v)*Math.pow(av,0.65);      /* Berg hell, Tal dunkel (weiche Kennlinie) */
+    let r=Math.round(15+t*(238-15)), g=Math.round(38+t*(246-38)), b=Math.round(86+t*(255-86));
+    if(shallowMask[i]){ r=Math.min(255,r+16); g=Math.min(255,g+10); b=Math.max(0,b-24); }
+    d[j]=r; d[j+1]=g; d[j+2]=b; d[j+3]=255;
+  }
+  octx.putImageData(img,0,0);
+  ctx.imageSmoothingEnabled=true;
+  ctx.drawImage(off,0,0,w,h);
+  if(D.huy) drawHuygens(w,h);
+  P.forEach((b,i)=>drawPart(b,i===D.sel,fs));
+}
+function openings(){                                     /* Mittelpunkte der Spaltöffnungen */
+  const out=[];
+  P.forEach(b=>{
+    if(b.t==='slit') out.push([b.x,b.y,b]);
+    if(b.t==='dslit'){ const d=(b.sep||90)/2, c=Math.cos(b.ang), s=Math.sin(b.ang);
+      out.push([b.x-c*d,b.y-s*d,b]); out.push([b.x+c*d,b.y+s*d,b]); }
+  });
+  return out;
+}
+function drawHuygens(w,h){
+  const lamPx=D.lam*SC, ph=(phase/(2*Math.PI))%1;
+  let zent=openings().map(o=>[o[0],o[1]]);
+  if(!zent.length){                                      /* ohne Spalt: Elementarwellen auf einer Wellenfront */
+    const pl=P.find(b=>b.t==='plane');
+    if(pl){
+      const c=Math.cos(pl.ang), s=Math.sin(pl.ang), hw=(pl.len||300)/2, n=7;
+      const nx=-s, ny=c;                                 /* senkrecht zur Erregerlinie = Laufrichtung */
+      const weg=steps*Math.sqrt(K_DEEP)*SC;              /* bisher zurückgelegter Weg */
+      const front=Math.max(0,lamPx*Math.floor(weg/lamPx)-lamPx);
+      for(let i=0;i<n;i++){ const t=-hw+(2*hw)*i/(n-1);
+        zent.push([pl.x+c*t+nx*front, pl.y+s*t+ny*front]); }
+    } else P.filter(b=>b.t==='src').forEach(b=>zent.push([b.x,b.y]));
+  }
+  ctx.save(); ctx.strokeStyle='rgba(255,255,255,.75)'; ctx.lineWidth=1.4;
+  zent.forEach(([x,y])=>{
+    for(let k=0;k<4;k++){
+      const r=((k+ph)*lamPx);
+      if(r<3||r>Math.max(w,h)) continue;
+      ctx.globalAlpha=0.75-k*0.15;
+      ctx.beginPath(); ctx.arc(x,y,r,0,7); ctx.stroke();
+    }
+    ctx.globalAlpha=1; ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(x,y,3,0,7); ctx.fill();
+  });
+  ctx.restore();
+}
+function drawPart(b,sel,fs){
+  const c=Math.cos(b.ang), s=Math.sin(b.ang), hw=(b.len||100)/2;
+  ctx.save();
+  if(b.t==='src'){
+    ctx.fillStyle='#fbbf24'; ctx.strokeStyle='#1f2430'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.arc(b.x,b.y,7,0,7); ctx.fill(); ctx.stroke();
+  } else if(b.t==='plane'){
+    ctx.strokeStyle='#fbbf24'; ctx.lineWidth=5; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(b.x-c*hw,b.y-s*hw); ctx.lineTo(b.x+c*hw,b.y+s*hw); ctx.stroke();
+  } else if(b.t==='shallow'){
+    const hw2=(b.w||260)/2, hh2=(b.h||160)/2;
+    ctx.translate(b.x,b.y); ctx.rotate(b.ang);
+    ctx.strokeStyle='rgba(253,224,151,.9)'; ctx.setLineDash([7,5]); ctx.lineWidth=2;
+    ctx.strokeRect(-hw2,-hh2,2*hw2,2*hh2); ctx.setLineDash([]);
+    ctx.fillStyle='rgba(253,224,151,.9)'; ctx.font=fontStr(fs*0.8,true); ctx.textAlign='left'; ctx.textBaseline='top';
+    ctx.fillText('flaches Wasser',-hw2+6,-hh2+5);
+  }
+  ctx.restore();
+  if(sel){ ctx.save(); ctx.strokeStyle='#38bdf8'; ctx.lineWidth=1.8; ctx.setLineDash([5,4]);
+    if(b.t==='shallow'){ ctx.save(); ctx.translate(b.x,b.y); ctx.rotate(b.ang);
+      ctx.strokeRect(-(b.w||260)/2,-(b.h||160)/2,(b.w||260),(b.h||160)); ctx.restore(); }
+    else { const r=Math.max(26,(b.len||60)/2+14); ctx.beginPath(); ctx.arc(b.x,b.y,r,0,7); ctx.stroke(); }
+    ctx.setLineDash([]);
+    const [hx,hy]=griffPos(b);
+    ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(hx,hy,8,0,7); ctx.fill();
+    ctx.strokeStyle='#38bdf8'; ctx.lineWidth=2.4; ctx.stroke(); ctx.restore(); }
+}
+const fontStr=(px,bold)=>(D.fontItalic?'italic ':'')+((bold||D.fontBold)?'800 ':'600 ')+px+'px -apple-system,BlinkMacSystemFont,sans-serif';
+/* ---------- Schleife ---------- */
+let raf=null;
+function loop(){ raf=requestAnimationFrame(loop);
+  if(D.run&&u1){ stepSim(); stepSim(); }
+  draw();
+}
+/* ---------- Bauteile ---------- */
+function defPart(t,x,y){
+  const b={t,x,y,ang:0};
+  if(t==='src'){ }
+  if(t==='plane'){ b.len=Math.max(120,cv.clientHeight*0.8); b.ang=Math.PI/2; }
+  if(t==='wall'){ b.len=Math.max(140,cv.clientHeight*0.6); b.ang=Math.PI/2; b.thick=8; }
+  if(t==='slit'){ b.len=Math.max(200,cv.clientHeight*1.2); b.ang=Math.PI/2; b.thick=8; b.gap=26; }
+  if(t==='dslit'){ b.len=Math.max(200,cv.clientHeight*1.2); b.ang=Math.PI/2; b.thick=8; b.gap=16; b.sep=90; }
+  if(t==='block'){ b.len=120; b.thick=40; b.ang=0; }
+  if(t==='shallow'){ b.w=260; b.h=Math.max(140,cv.clientHeight*0.9); b.ang=0; }
+  return b;
+}
+function add(t){
+  pushUndo();
+  const x=cv.clientWidth*(t==='src'||t==='plane'?0.16:0.55), y=cv.clientHeight*0.5;
+  P.push(defPart(t,x,y)); D.sel=P.length-1; buildMask(); renderBar2(); sync();
+}
+function randAbstand(b,x,y){                             /* Abstand zum Rahmen der Zone */
+  const c=Math.cos(-b.ang), s=Math.sin(-b.ang), dx=x-b.x, dy=y-b.y;
+  const lx=dx*c-dy*s, ly=dx*s+dy*c, hw=(b.w||260)/2, hh=(b.h||160)/2;
+  const ox=Math.abs(lx)-hw, oy=Math.abs(ly)-hh;
+  if(ox>0||oy>0) return Math.hypot(Math.max(ox,0),Math.max(oy,0));   // außerhalb
+  return Math.min(-ox,-oy);                                          // innerhalb: Abstand zum Rand
+}
+const griffPos=b=>{                                      /* Drehgriff: Ecke bei Zonen, sonst auf der Achse */
+  if(b.t==='shallow'){ const c=Math.cos(b.ang), s=Math.sin(b.ang), hw=(b.w||260)/2, hh=(b.h||160)/2;
+    return [b.x+c*hw-s*(-hh), b.y+s*hw+c*(-hh)]; }
+  const r=Math.max(26,(b.len||60)/2+14);
+  return [b.x+Math.cos(b.ang)*r, b.y+Math.sin(b.ang)*r];
+};
+const hitTest=(x,y)=>{ let best=-1,bd=1e9;
+  P.forEach((b,i)=>{
+    if(b.t==='shallow') return;                          /* Zonen erst danach – Bauteile haben Vorrang */
+    let d;
+    if(b.t==='src') d=Math.hypot(x-b.x,y-b.y);
+    else { const c=Math.cos(b.ang), s=Math.sin(b.ang), hw=(b.len||100)/2;
+      const ax=b.x-c*hw, ay=b.y-s*hw, bx=b.x+c*hw, by=b.y+s*hw;
+      const vx=bx-ax, vy=by-ay, L=vx*vx+vy*vy||1;
+      let t=((x-ax)*vx+(y-ay)*vy)/L; t=Math.max(0,Math.min(1,t));
+      d=Math.hypot(x-ax-vx*t,y-ay-vy*t); }
+    if(d<bd){ bd=d; best=i; } });
+  if(bd<26) return best;
+  let z=-1, zd=1e9;                                      /* Flachwasser: Rand oder Fläche */
+  P.forEach((b,i)=>{ if(b.t!=='shallow') return;
+    const d=innen(b,x,y)?0:randAbstand(b,x,y); if(d<zd){ zd=d; z=i; } });
+  return zd<26?z:-1; };
+function innen(b,x,y){
+  const c=Math.cos(-b.ang), s=Math.sin(-b.ang), dx=x-b.x, dy=y-b.y;
+  const lx=dx*c-dy*s, ly=dx*s+dy*c;
+  return Math.abs(lx)<=(b.w||260)/2&&Math.abs(ly)<=(b.h||160)/2;
+}
+let drag=null;
+cv.addEventListener('pointerdown',e=>{ const r=cv.getBoundingClientRect(), x=e.clientX-r.left, y=e.clientY-r.top;
+  if(D.sel>=0&&P[D.sel]){ const b=P[D.sel];
+    const [hx,hy]=griffPos(b);
+    if(Math.hypot(x-hx,y-hy)<20){ drag={mode:'rot',i:D.sel,before:snap()}; try{cv.setPointerCapture(e.pointerId);}catch(_){} return; } }
+  const i=hitTest(x,y); D.sel=i; renderBar2();
+  if(i>=0){ drag={mode:'move',i,dx:x-P[i].x,dy:y-P[i].y,before:snap()}; try{cv.setPointerCapture(e.pointerId);}catch(_){} }
+  sync(); });
+cv.addEventListener('pointermove',e=>{ if(!drag) return; const r=cv.getBoundingClientRect(), x=e.clientX-r.left, y=e.clientY-r.top;
+  const b=P[drag.i]; if(!b) return;
+  if(drag.mode==='move'){ b.x=x-drag.dx; b.y=y-drag.dy; } else { b.ang=Math.atan2(y-b.y,x-b.x); }
+  buildMask(); });
+['pointerup','pointercancel'].forEach(ev=>cv.addEventListener(ev,()=>{
+  if(drag){ if(drag.before&&drag.before!==snap()){ undoStack.push(drag.before); if(undoStack.length>60) undoStack.shift(); redoStack.length=0; updUndo(); }
+    drag=null; sync(); } }));
+/* ---------- zweite Zeile ---------- */
+function renderBar2(){
+  const bar=$('bar2'); bar.innerHTML='';
+  const el=(tag,cls,txt,fn)=>{ const e=document.createElement(tag); if(cls) e.className=cls; if(txt!=null) e.textContent=txt; if(fn) e.onclick=fn; bar.appendChild(e); return e; };
+  const imgBtns=()=>{ el('span','sep');
+    if(window.parent!==window) el('button','btn pri','🖼 Bild → Tafel',()=>TafelShot.toBoard(shot()));
+    el('button','btn','📋 Kopieren',()=>TafelShot.copy(shot())); };
+  const stepper=(label,get,set,step,unit)=>{
+    el('span','lbl',label);
+    const st=document.createElement('span'); st.className='stp'; bar.appendChild(st);
+    const mk=(t,fn)=>{ const b=document.createElement('button'); b.textContent=t; b.onclick=fn; st.appendChild(b); };
+    mk('−',()=>{ pushUndo(); set(get()-step); buildMask(); renderBar2(); sync(); });
+    const v=document.createElement('span'); v.className='val'; v.textContent=get()+(unit||''); st.appendChild(v);
+    mk('+',()=>{ pushUndo(); set(get()+step); buildMask(); renderBar2(); sync(); });
+  };
+  const b=P[D.sel];
+  $('bDel').disabled=!b;
+  if(b){
+    el('span','lbl',NAME[b.t]||'Bauteil');
+    if(b.t==='slit'||b.t==='dslit') stepper('Spaltbreite',()=>Math.round(b.gap||26),v=>{ b.gap=Math.max(4,Math.min(200,v)); },6,' px');
+    if(b.t==='dslit') stepper('Abstand',()=>Math.round(b.sep||90),v=>{ b.sep=Math.max(20,Math.min(400,v)); },10,' px');
+    if(b.t==='block') stepper('Dicke',()=>Math.round(b.thick||40),v=>{ b.thick=Math.max(6,Math.min(300,v)); },10,' px');
+    if(b.t==='shallow'){ stepper('Breite',()=>Math.round(b.w||260),v=>{ b.w=Math.max(40,Math.min(2000,v)); },30,' px');
+      stepper('Höhe',()=>Math.round(b.h||160),v=>{ b.h=Math.max(40,Math.min(2000,v)); },30,' px'); }
+    else if(b.len!==undefined) stepper('Länge',()=>Math.round(b.len),v=>{ b.len=Math.max(40,Math.min(2000,v)); },30,' px');
+    if(b.t!=='src') el('button','btn','↻ 90°',()=>{ pushUndo(); b.ang+=Math.PI/2; buildMask(); renderBar2(); sync(); });
+    el('span','grow');
+    el('button','btn red','Löschen',()=>{ pushUndo(); P.splice(D.sel,1); D.sel=-1; buildMask(); renderBar2(); sync(); });
+    el('button','btn','✕',()=>{ D.sel=-1; renderBar2(); });
+    imgBtns(); return;
+  }
+  stepper('Wellenlänge',()=>D.lam,v=>{ D.lam=Math.max(8,Math.min(60,v)); buildDamp(); },4);
+  el('span','sep');
+  el('span','lbl','Schrift'); el('button','btn','A−',()=>fontBy(-1)); el('button','btn','A+',()=>fontBy(1));
+  el('span','grow');
+  imgBtns();
+}
+const shot=()=>TafelShot.rasterize($('wrap'),{exclude:'#bar,#bar2',pad:6});
+function fontBy(d){ D.fontSize=Math.max(9,Math.min(30,(D.fontSize||14)+d));
+  document.documentElement.style.setProperty('--fs',Math.min(18,D.fontSize)+'px'); renderBar2(); sync(); }
+/* ---------- Rückgängig / Datei ---------- */
+let undoStack=[], redoStack=[], savedSnap=null;
+const snap=()=>JSON.stringify({p:P,l:D.lam});
+function pushUndo(){ undoStack.push(snap()); if(undoStack.length>60) undoStack.shift(); redoStack.length=0; updUndo(); }
+function applySnap(str){ const o=JSON.parse(str); P=o.p||[]; if(o.l) D.lam=o.l; D.sel=-1; buildMask(); renderBar2(); sync(); }
+function updUndo(){ $('bUndo').disabled=!undoStack.length; $('bRedo').disabled=!redoStack.length; }
+$('bUndo').onclick=()=>{ if(!undoStack.length) return; redoStack.push(snap()); applySnap(undoStack.pop()); updUndo(); };
+$('bRedo').onclick=()=>{ if(!redoStack.length) return; undoStack.push(snap()); applySnap(redoStack.pop()); updUndo(); };
+const unsaved=()=>P.length&&snap()!==savedSnap;
+$('fNew').onclick=()=>{ if(unsaved()&&!confirm('Leere Wanne? Nicht gespeicherte Änderungen gehen verloren.')) return;
+  pushUndo(); P=[]; D.sel=-1; savedSnap=null; calm(); renderBar2(); sync(); toast('Leere Wanne'); };
+$('fSave').onclick=()=>{ if(!P.length){ toast('Noch nichts aufgebaut'); return; }
+  const name=(prompt('Dateiname:','wellenwanne-'+new Date().toISOString().slice(0,10))||'').trim(); if(!name) return;
+  const file={app:'tafel-wellen',v:1,parts:P,lam:D.lam,edge:D.edge,fontSize:D.fontSize};
+  const blob=new Blob([JSON.stringify(file)],{type:'application/json'});
+  const fname=name.replace(/[\\/:*?"<>|]+/g,'_').replace(/\.json$/i,'')+'.json';
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=fname; document.body.appendChild(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },2000); savedSnap=snap(); toast('Gespeichert: '+fname); };
+$('fLoad').onclick=()=>{ if(unsaved()&&!confirm('Anderen Aufbau laden? Nicht gespeicherte Änderungen gehen verloren.')) return;
+  $('fFile').value=''; $('fFile').click(); };
+$('fFile').onchange=()=>{ const f=$('fFile').files[0]; if(!f) return; const rd=new FileReader();
+  rd.onload=()=>{ try{ const o=JSON.parse(rd.result); if(!o||!Array.isArray(o.parts)) throw new Error('x');
+      pushUndo(); P=o.parts.filter(q=>q&&NAME[q.t]); if(o.lam) D.lam=o.lam; if(o.edge) { D.edge=o.edge; edgeBtn(); } if(o.fontSize) D.fontSize=+o.fontSize||14;
+      D.sel=-1; document.documentElement.style.setProperty('--fs',Math.min(18,D.fontSize)+'px');
+      savedSnap=snap(); calm(); renderBar2(); sync(); toast('Geladen: '+f.name); }
+    catch(e){ toast('Keine gültige Wellenwannen-Datei'); } };
+  rd.readAsText(f); };
+/* ---------- feste Knöpfe ---------- */
+function calm(){ if(!u) return; u.fill(0); u1.fill(0); u2.fill(0); phase=0; steps=0; buildMask(); }
+document.querySelectorAll('.tb[data-add]').forEach(b=>b.onclick=()=>add(b.dataset.add));
+$('bDel').onclick=()=>{ if(D.sel<0) return; pushUndo(); P.splice(D.sel,1); D.sel=-1; buildMask(); renderBar2(); sync(); };
+$('bReset').onclick=()=>{ calm(); toast('Wasser beruhigt'); };
+$('bPlay').onclick=()=>{ D.run=!D.run; $('bPlay').classList.toggle('on',!D.run);
+  $('bPlay').innerHTML=(D.run?'<svg viewBox="0 0 32 20"><path d="M12 4v12M20 4v12" stroke-width="3"/></svg><span>Pause</span>'
+                             :'<svg viewBox="0 0 32 20"><path d="M12 4l12 6-12 6Z" fill="currentColor" stroke="none"/></svg><span>Weiter</span>');
+  sync(); };
+$('bHuy').onclick=()=>{ D.huy=!D.huy; $('bHuy').classList.toggle('on',D.huy); sync(); };
+function edgeBtn(){ const w=D.edge==='wall';
+  $('bEdge').classList.toggle('on',w);
+  $('bEdge').innerHTML=w?'<svg viewBox="0 0 32 20"><rect x="4" y="3" width="24" height="14" rx="1.5" stroke-width="2.6"/><path d="M12 10h8M15 7l-3 3 3 3M17 7l3 3-3 3"/></svg><span>Rand Bande</span>'
+                       :'<svg viewBox="0 0 32 20"><rect x="4" y="3" width="24" height="14" rx="1.5" stroke-dasharray="3 3"/><path d="M13 10h10M20 7l3 3-3 3"/></svg><span>Rand offen</span>'; }
+$('bEdge').onclick=()=>{ D.edge=(D.edge==='wall')?'open':'wall'; edgeBtn(); calm(); sync();
+  toast(D.edge==='wall'?'Rand wirkt wie eine Bande – die Wellen werden zurückgeworfen':'Offener Rand – die Wellen laufen aus dem Bild hinaus'); };
+$('hint').textContent='Bauteil antippen = auswählen · ziehen = verschieben · am blauen Griff drehen';
+function barFade(){ const bar=$('bar'), m=$('barMid');
+  bar.classList.remove('compact');
+  const more=m.scrollWidth>m.clientWidth+2;
+  if(more&&m.clientWidth<150) bar.classList.add('compact');
+  m.classList.toggle('more',more);
+  m.classList.toggle('start',m.scrollLeft>4);
+  m.classList.toggle('end',m.scrollLeft+m.clientWidth>=m.scrollWidth-4);
+}
+$('barMid').addEventListener('scroll',barFade);
+/* ---------- Vorlagen ---------- */
+const TEMPLATES={
+  'Kreiswellen (ein Erreger)':(w,h,put)=>{ put('src',w*0.3,h*0.5); return 'Ein Erreger sendet Kreiswellen aus'; },
+  'Interferenz (zwei Erreger)':(w,h,put)=>{ put('src',w*0.28,h*0.36); put('src',w*0.28,h*0.64);
+    return 'Zwei Erreger: Verstärkung und Auslöschung'; },
+  'Reflexion an der Bande':(w,h,put)=>{ put('src',w*0.25,h*0.5); put('wall',w*0.78,h*0.5,{len:h*0.9,ang:Math.PI/2});
+    return 'Die Welle wird an der Bande zurückgeworfen'; },
+  'Reflexion an schräger Bande':(w,h,put)=>{ put('plane',w*0.14,h*0.5,{len:h*0.9,ang:Math.PI/2});
+    put('wall',w*0.7,h*0.5,{len:h*1.1,ang:Math.PI/2+0.6}); return 'Einfallswinkel = Reflexionswinkel'; },
+  'Beugung am Spalt':(w,h,put)=>{ put('plane',w*0.14,h*0.5,{len:h*0.9,ang:Math.PI/2});
+    put('slit',w*0.45,h*0.5,{len:h*1.4,ang:Math.PI/2,gap:22}); return 'Hinter dem engen Spalt läuft die Welle in alle Richtungen'; },
+  'Doppelspalt':(w,h,put)=>{ put('plane',w*0.14,h*0.5,{len:h*0.9,ang:Math.PI/2});
+    put('dslit',w*0.42,h*0.5,{len:h*1.4,ang:Math.PI/2,gap:14,sep:Math.max(70,h*0.22)});
+    return 'Zwei Spalte – dahinter entsteht ein Interferenzmuster'; },
+  'Beugung am Hindernis':(w,h,put)=>{ put('plane',w*0.14,h*0.5,{len:h*0.9,ang:Math.PI/2});
+    put('block',w*0.45,h*0.5,{len:h*0.35,thick:26,ang:Math.PI/2}); return 'Hinter dem Hindernis läuft die Welle wieder zusammen'; },
+  'Stehende Welle (Reflexion)':(w,h,put)=>{
+    const lam=(D.lam||22)*SC;                            /* Wellenlänge in Bildpunkten */
+    const xs=w*0.18, n=Math.max(4,Math.round((w*0.6)/(lam/2)));
+    put('plane',xs,h*0.5,{len:h*1.3,ang:Math.PI/2});
+    put('wall',xs+n*lam/2,h*0.5,{len:h*1.4,ang:Math.PI/2,thick:10});
+    return 'Hinlaufende und reflektierte Welle überlagern sich – die Knoten bleiben an ihrem Platz'; },
+  'Stehende Welle (zwei Erreger)':(w,h,put)=>{
+    const lam=(D.lam||22)*SC, xs=w*0.18;
+    const n=Math.max(4,Math.round((w*0.64)/(lam/2)));
+    put('plane',xs,h*0.5,{len:h*1.3,ang:Math.PI/2});
+    put('plane',xs+n*lam/2,h*0.5,{len:h*1.3,ang:Math.PI/2});
+    return 'Zwei gegenläufige Wellen ergeben eine stehende Welle mit festen Knoten'; },
+  'Brechung am Flachwasser':(w,h,put)=>{ put('plane',w*0.13,h*0.5,{len:h*0.9,ang:Math.PI/2});
+    put('shallow',w*0.76,h*0.5,{w:w*0.52,h:h*1.6,ang:0}); return 'Im flachen Wasser wird die Welle langsamer und kürzer'; },
+  'Brechung an schräger Grenze':(w,h,put)=>{ put('plane',w*0.13,h*0.5,{len:h*0.9,ang:Math.PI/2});
+    put('shallow',w*0.95,h*0.62,{w:w*0.8,h:h*1.6,ang:-0.55}); return 'An der schrägen Grenze ändert die Welle ihre Richtung'; },
+  'Leere Wanne':()=>{ return 'Leere Wanne'; }
+};
+function loadTpl(name){ const f=TEMPLATES[name]; if(!f) return;
+  pushUndo(); P=[]; D.sel=-1;
+  const w=cv.clientWidth, h=cv.clientHeight;
+  const put=(t,x,y,o)=>{ const b=defPart(t,x,y); Object.assign(b,o||{}); P.push(b); return b; };
+  const msg=f(w,h,put);
+  calm(); renderBar2(); sync(); if(msg) toast(msg);
+}
+$('bTpl').onclick=()=>{ const bar=$('bar2'); bar.innerHTML='';
+  const lab=document.createElement('span'); lab.className='lbl'; lab.textContent='Vorlage:'; bar.appendChild(lab);
+  Object.keys(TEMPLATES).forEach(k=>{ const bt=document.createElement('button'); bt.className='btn'+(k==='Leere Wanne'?' red':'');
+    bt.textContent=k; bt.onclick=()=>loadTpl(k); bar.appendChild(bt); });
+  const x=document.createElement('button'); x.className='btn'; x.textContent='✕'; x.onclick=renderBar2; bar.appendChild(x); };
+/* ---------- Tafel-Anbindung ---------- */
+let ready=false, syncT=null;
+function post(){ syncT=null; if(window.parent===window||!ready) return;
+  D.parts=P; try{ parent.postMessage({type:'embed-data',data:D},'*'); }catch(e){} }
+function sync(){ if(!syncT) syncT=setTimeout(post,250); }
+addEventListener('message',e=>{ if(window.parent===window||e.source!==window.parent) return;
+  if(!(e.data&&e.data.type==='embed-data'&&e.data.data)) return;
+  D=Object.assign(D,e.data.data); ready=true;
+  if(window.TafelModus) TafelModus.refresh();
+  if(Array.isArray(D.parts)) P=D.parts;
+  $('bHuy').classList.toggle('on',!!D.huy); edgeBtn();
+  document.documentElement.style.setProperty('--fs',Math.min(18,D.fontSize||14)+'px');
+  calm(); renderBar2(); barFade(); });
+addEventListener('resize',()=>{ resize(); barFade(); });
+window.addEventListener('load',()=>{
+  if(window.TafelModus) TafelModus.init({get:()=>D.edit!==false, set:v=>{ D.edit=v; renderBar2(); resize(); barFade(); sync(); }});
+  renderBar2(); resize(); barFade(); updUndo(); edgeBtn(); loop();
+  if(window.ResizeObserver) new ResizeObserver(()=>{ resize(); barFade(); }).observe(cv);
+  if(window.parent===window){ ready=true; loadTpl('Beugung am Spalt'); return; }
+  try{ parent.postMessage({type:'embed-ready'},'*'); }catch(e){}
+  setTimeout(()=>{ ready=true; if(!P.length) loadTpl('Beugung am Spalt'); },700);   /* neues Objekt: Standardversuch */
+});
+</script>
+</body></html>

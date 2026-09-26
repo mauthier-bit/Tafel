@@ -78,7 +78,7 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   kleine **⚙-Feld auf dem Werkzeug** öffnet sich ein Menü für **Länge bzw. Größe (8–40 cm), Millimeter
   an/aus, Zahlen an/aus und Farbe** (unten schließt ein **„Schließen"-Knopf** das Menü);
   stimmen die Zentimeter auf einem Gerät nicht (z. B. Windows-Tablet mit anderer Anzeigeskalierung),
-  lässt sich der **Maßstab** in den Einstellungen → Bedienung kalibrieren (siehe unten);
+  lässt sich der **Maßstab** in den Einstellungen → Tafelblatt kalibrieren (siehe unten);
   voreingestellt sind **Lineal 19 cm** und **Geodreieck 15 cm**, jeweils **mit Millimeter-Skala**;
   die Einstellungen bleiben geräteweit gespeichert. Sie **bleiben aktiv**, während der
   Stift zeichnet. Mit dem Finger am **unteren** Teil verschieben / am Griff (Ecke bzw. Spitze)
@@ -236,6 +236,12 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   Einstellungen (Abschnitt **Favoriten**) gibt es zusätzlich eine Liste aller Knöpfe zum An- und
   Abwählen sowie **„Favoriten zurücksetzen"**. Die Auswahl gilt geräteweit, projektübergreifend.
 - Voreinstellungen bei einem neuen Projekt: Muster **Karo**, **„Finger wählt aus"** an, Leisten **hell/hellgrau**.
+- **Wie das Blatt wächst** (Einstellungen → Tafelblatt): **nach rechts und unten** (Standard – eine
+  endlose Fläche) oder **nur nach unten**; dann bleibt die Breite die Bildschirmbreite, das Blatt ist
+  also wie eine **endlose Rolle Papier**, und man kann sich beim Schreiben nicht seitlich „verlaufen".
+  Beim Hineinzoomen bleibt der Bereich, der durch den Zoom entsteht, weiterhin seitlich erreichbar.
+- **Das Einstellungsfenster** ist in vier **Reiter** gegliedert – **Tafelblatt**, **Werkzeugleisten**,
+  **Bedienung** und **Projekt & Klasse** –, sodass kaum noch gescrollt werden muss.
 - **Hintergrundfarben** (Einstellungen): Weiß, **Tafelgrün**, Schwarz, Dunkelgrau, **Dunkelblau**,
   **dunkles Weinrot**, Hellblau sowie **helles Gelb / Grün / Rot / Orange / Lila** und ein
   **Regenbogen-Button** für eine **beliebige Farbe** (Farbwähler) – die Farbkreise sind größer und
@@ -348,7 +354,7 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   unabhängige Seite zum Prüfen der Stifteingabe – zählt Pointer- und Touch-Ereignisse gegen die
   tatsächlich gezeichneten Striche und lässt `preventDefault`, `PointerCapture` und die Eingabeart
   umschalten. Damit lässt sich eingrenzen, ob fehlende Striche an der App oder am Browser liegen.
-- **Maßstab kalibrieren** (Einstellungen → Bedienung, optional): Standard ist auf das **iPad**
+- **Maßstab kalibrieren** (Einstellungen → Tafelblatt, optional): Standard ist auf das **iPad**
   abgestimmt: **5 cm = 261 px** (52,2 px = 1 cm, am iPad nachgemessen) – ohne Zutun ändert sich nichts.
   Wer den alten Standard (37,8 px) verwendet hat, bekommt beim Update automatisch den neuen Wert; eine
   selbst kalibrierte Einstellung bleibt erhalten. Bei Bedarf den angezeigten Balken mit
@@ -398,6 +404,12 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     `cos(2x+30)=0,5`, auch quadratisch wie `2sin^2(x)-sin(x)-1=0` per Substitution): allgemeine Lösung
     mit k ∈ ℤ und alle Lösungen in [0°; 360°[. Umschalter **Grad / Bogenmaß** (dann z. B. π/6, 5π/12).
     Unmögliche Werte (|sin| > 1) werden rot markiert.
+  - **Nullprodukte:** Steht auf einer Seite ein **Produkt** (oder lässt sich durch **Ausklammern**
+    eines erzeugen) und ist die andere Seite 0, wird jeder **Faktor einzeln** gelöst – etwa
+    `sin(x)·cos(x) − 0,5·sin(x) = 0`: ausgeklammert zu `sin(x)·(cos(x) − ½) = 0`, daraus
+    `x ∈ {0°; 180°}` **oder** `x ∈ {60°; 300°}`. Der Weg zeigt die Zerlegung und dann jeden Faktor
+    mit eigenem Lösungsweg. So gehen auch Mischformen wie `sin(x)·(x−2) = 0`, `x·(x−3)·(x+1) = 0`
+    oder `e^x·(x−1) = 0` (dort hat `e^x = 0` keine Lösung und entfällt).
   - **Einfache Exponential- und Logarithmusgleichungen:** `3*2^x=48` (Umformen + log₂),
     `8^x=4^(x+1)` (gleiche Basis → Exponentenvergleich), `2^x=3^(x-1)` (logarithmieren),
     `e^(2x)-3e^x+2=0` (Substitution u = eˣ, u ≤ 0 entfällt), `ln(2x-1)=3`, `lg(x)=2` (mit Definitionsmenge).
@@ -411,9 +423,19 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     Lösungen** (mit Parameter t bzw. t, s).
   (Handschrift-Erkennung ist offline nicht möglich – für handschriftliche/komplexere Mathematik
   die **GeoGebra-App** nutzen.)
-- **Tabelle** (Werkzeug bei den Schreibwerkzeugen): fügt eine **gewöhnliche Tabelle** als
-  bewegliches Objekt ein; **Zeilen- und Spaltenzahl** lassen sich im **Kontextmenü** nachträglich
-  einstellen, Zelleninhalte werden im Projekt gespeichert.
+- **Tabelle** (Gruppe **Diverses**): fügt eine **gewöhnliche
+  Tabelle** als bewegliches Objekt ein, deren Zellen direkt beschrieben werden. Über **zwei eigene
+  Bedienzeilen** lässt sich die Tabelle gestalten. **Erste Zeile:** **Zeilen** und **Spalten** sowie
+  **Spaltenbreite** und **Zeilenhöhe** – sie wirken auf die zuletzt angetippte Zelle (die Anzeige nennt
+  „Spalte 2 · Zeile 3"), jeder Schritt macht sie um ein Viertel breiter bzw. höher, **„gleich verteilen"**
+  stellt alles zurück. **Zweite Zeile:** **Schriftgröße**,
+  **fett/kursiv**, **Ausrichtung** (links, mittig, rechts), **Randstärke** (0–6) und welche Linien
+  gezeichnet werden (**alle, nur außen, nur Zeilen, keine**), **Kopfzeile** und **erste Spalte**
+  hervorheben sowie **Zellenfüllung** in sechs Farben – wahlweise für die angetippte **Zelle**, die
+  ganze **Zeile**, die **Spalte** oder die ganze **Tabelle**. Mit **▲** klappt die Zeile weg (▾ holt
+  sie zurück), damit in kleinen Objekten die ganze Fläche der Tabelle gehört.
+  Dazu 🖼 Bild und 📋 Kopieren. Zeilen- und Spaltenzahl lassen sich weiterhin auch im **Kontextmenü**
+  ändern, alle Inhalte und Einstellungen werden im Projekt gespeichert.
 - **GeoGebra-App** (Werkzeug): fügt ein vollständiges **GeoGebra-App-Fenster** ein (nicht nur eine
   .ggb-Datei) – wahlweise als bewegliches **Objekt** oder als **eigene Seite**. Braucht Internet.
 - **„Als eigene Seite anzeigen":** Bei einem als Objekt eingefügten **Wahrscheinlichkeitsrechner**,
@@ -507,7 +529,35 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
 - **Gruppieren / Lösen / Duplizieren / Löschen** im Kontext-Panel („Lösen" hebt die Gruppe auf und
   die Auswahl auf, damit die Objekte danach wirklich einzeln beweglich sind)
 - **Laserpointer** und **Scheinwerferspot** – nutzbar auch **mit dem Finger**, unabhängig von der Einstellung „Nur mit Stift schreiben"
-- **Pinnwand** (Werkzeuge, direkt über dem QR-Code): Karten anheften wie auf einer Korkwand.
+- **Werkzeuggruppe „Diverses"** (Zeigewerkzeuge, Symbol: **Werkzeugkoffer**): darin liegen **Mindmap**, **Pinnwand**,
+  **Kreuzworträtsel**, **Zeitleiste**, **Wortwolke** und **Buchstabengitter**.
+  - **Kreuzworträtsel:** Über **„✎ Begriffe"** eine Liste eintragen – je Zeile `Begriff = Hinweis` (der Hinweis darf
+    fehlen). Die Tafel legt daraus ein **verschränktes Kreuzworträtsel** (40 Versuche, das kompakteste gewinnt),
+    nummeriert die Startfelder und schreibt die Hinweise als **Waagerecht/Senkrecht** darunter oder daneben
+    (Auswahl „Hinweise unten/rechts"). **🎲 Neu anordnen** würfelt ein anderes Gitter, der Haken **„Lösung"**
+    füllt die Buchstaben ein, **„Nummern"** und **„Hinweise"** lassen sich abschalten. Begriffe, für die kein
+    Kreuzungspunkt frei ist, werden oben gemeldet.
+  - **Buchstabengitter (Suchrätsel):** Wörter über **„✎ Wörter"** eintragen (je Zeile eines), Gittergröße 7–22
+    einstellen und die Richtungen wählen: **→ und ↓** (leicht), **+ schräg** oder **+ rückwärts** (schwer).
+    **🎲 Neu mischen** erzeugt ein neues Gitter, der Haken **„Lösung"** markiert alle Wörter farbig, die
+    **Wortliste** lässt sich ausblenden (sie steht unter oder – bei breitem Objekt – neben dem Gitter).
+  - **Wortwolke:** Begriffe über **„✎ Wörter"** eintragen – **mehrfach genannte Wörter werden automatisch größer**,
+    ein Gewicht lässt sich auch direkt angeben (`Bruch = 5`). Die Wolke ordnet sich in einer Spirale an, **skaliert
+    sich selbst** auf die Objektgröße und lässt sich in **vier Farbstimmungen** (bunt, blau, warm, grau) sowie
+    wahlweise **nur waagerecht** oder **waagerecht & senkrecht** anzeigen; **„Anzahl zeigen"** schreibt die
+    Nennungen in Klammern dazu. Gut für Brainstorming, Wortschatz oder Auswertungen von Zuruf-Runden.
+  - **Zeitleiste:** Über **„✎ Einträge"** je Zeile `Zeitpunkt = Ereignis` eintragen – **Jahr** (`1687`), **Datum**
+    (`12.4.1961`), **vor Christus** (`-500` oder `500 v. Chr.`) und **Zeiträume** (`1789–1799 = Französische
+    Revolution`, erscheinen als Balken). Die Tafel setzt die Ereignisse **abwechselnd über und unter** die Achse
+    (bei Bedarf gestapelt) und wählt die **Jahresmarken** automatisch. Umschalter **„maßstabsgetreu"** ↔
+    **„gleichmäßig verteilt"** (praktisch, wenn ein Ereignis weit weg liegt), dazu **Jahresmarken** und
+    **Jahreszahl am Ereignis** ein-/ausschaltbar sowie drei Farbstimmungen.
+    Mit **◀ / ▶ / alle** lässt sich die Leiste **Schritt für Schritt aufdecken** (Anzeige „3/5"), ideal zum
+    gemeinsamen Erarbeiten. Die Schrift passt sich kleinen Objekten automatisch an.
+  - Alle vier Werkzeuge haben wie gewohnt **A− / A+** (auch über die Schriftgröße im Kontextmenü), **🖼 Tafel**,
+    **📋 Kopieren** und **🖨 Drucken** (öffnet das fertige Blatt als Druckvorschau); Umlaute bleiben erhalten,
+    ß wird zu SS.
+- **Pinnwand** (in der Gruppe „Diverses"): Karten anheften wie auf einer Korkwand.
   **+ Karte** öffnet einen Dialog mit Text (auch **🎙 Diktieren**), **Farbe** (7 Zettelfarben), **Bild**
   (Foto/Kamera, wird verkleinert gespeichert), **Link** (antippbar), **👍-Zähler** und **Namen aus der Klassenliste** der aktiven Klasse (Auswahlliste getrennt nach „noch nicht vergeben“ / „schon auf anderen Karten“, **🎲 Zufall** wählt bevorzugt einen noch freien Namen, mehrere Namen pro Karte, × entfernt; ohne Klassenliste Namen eintippen) – die Namen stehen mit 👤 auf der Karte; ✎ auf der Karte oder
   Doppeltipp bearbeitet, dort auch **Löschen** und **Kopie**. Ansicht **✥ Frei** (Karten mit Pin beliebig
@@ -524,13 +574,24 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
 - **Einbetten als bewegliches Objekt:** Bilder, **YouTube/Video**, **Webseiten/HTML**, **GeoGebra**
   und die **Tabellenkalkulation** – verschieben/skalieren/drehen wie jedes andere Objekt. Zum
   Bedienen (Video abspielen, Zellen auswählen, GeoGebra ziehen …) **oben** auf
-  **„Einbettung bedienen"** tippen (schaltet zwischen Zeichnen und Bedienen um). Der Knopf sitzt
+  **„Objekt bedienen"** tippen (schaltet zwischen Zeichnen und Bedienen um). Der Knopf sitzt
   **mittig oben**, wenn die oberen Leisten eingeklappt sind, und rutscht in die **Lücke zwischen
   den Leisten**, wenn sie ausgeklappt sind – immer vollständig sichtbar.
   In die Link-Felder kann man per **📋-Knopf aus der Zwischenablage** einfügen. Mit der Option
   **„Als eigene Seite einfügen"** kommt das Eingebettete stattdessen groß auf eine neue Seite.
   Beim Webseiten-Feld darf auch ein **kompletter `<iframe src="…">`-Einbettungscode** eingefügt
-  werden – die URL wird automatisch herausgezogen. **Hinweis:** Manche Websites (z. B. leifiphysik.de)
+  werden – die URL wird automatisch herausgezogen; enthält der Code **width/height**, übernimmt das Objekt dieses
+  **Seitenverhältnis**. So lassen sich auch **H5P-Inhalte** einbetten (h5p.org, H5P.com, Moodle, Lumi-Cloud):
+  im H5P-Inhalt auf **„Einbetten"** tippen, den Code kopieren und hier einfügen – das Objekt heißt dann „H5P-Inhalt"
+  und ist über **„Objekt bedienen"** interaktiv nutzbar.
+- **H5P-Datei (.h5p) einfügen – auch offline:** über **Einfügen → Datei** („PDF / Bild / PowerPoint / H5P / Audio
+  wählen") lässt sich eine heruntergeladene **.h5p-Datei** direkt auf die Tafel legen. Die Tafel entpackt sie im
+  Browser und spielt sie mit einem **eingebauten H5P-Player** ab (h5p-standalone, liegt im Ordner `h5p/`) – ganz
+  ohne Internet. Das Objekt trägt den Titel des Inhalts, lässt sich wie jedes andere verschieben und skalieren und
+  ist nach einem Tipp auf **„Objekt bedienen"** benutzbar (Quiz beantworten, Lösung zeigen …).
+  Die entpackten Inhalte liegen im **Browser-Speicher des Geräts** (eigener Cache `tafel-h5p`, bleibt auch bei
+  App-Updates erhalten): Nach dem Neuladen ist der Inhalt wieder da, auf einem **anderen Gerät** oder in einer
+  exportierten Projektdatei jedoch nicht – dort zeigt das Objekt einen Hinweis, die Datei erneut einzufügen. **Hinweis:** Manche Websites (z. B. leifiphysik.de)
   verbieten das Einbetten technisch (`X-Frame-Options` / CSP) – das lässt sich nicht umgehen. Statt
   eines leeren weißen Kastens zeigt das Objekt dann eine **Info-Karte mit der Domain**; über
   **„Einbettungen bedienen" → „↗ Öffnen"** (oben links am Objekt) lässt sich die Seite im Browser öffnen.
@@ -556,6 +617,13 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   **Zoom mit zwei Fingern** direkt im Bild (Doppeltipp = zurück; am Rechner auch per Mausrad) –
   der Zoom steckt auch im Foto und in der Videoaufnahme,
   „Foto auf Tafel" legt einen Schnappschuss als bewegliches Objekt ab.
+  **„🔎 Dokumentenkamera"** legt das **Livebild** als Objekt auf die Tafel – ideal, um ein Heft
+  unter der Kamera gemeinsam zu korrigieren. Das Kamerafenster schließt sich dabei, das Bild bleibt
+  sichtbar und lässt sich wie jedes Objekt **verschieben und über die Eckgriffe vergrößern**;
+  **− / +** unten rechts im Bild zoomen stufenweise (1,0× bis 8,0×, Anzeige daneben), das kleine
+  rote **×** oben rechts schließt es wieder (danach wird die Kamera abgeschaltet, sofern kein
+  weiteres Livebild läuft). Mehrere Livebilder gleichzeitig sind möglich; gespeichert werden sie
+  nicht – beim Laden eines Projekts ist das Livebild weg.
   **„📄 Scannen"** (in derselben Reihe) fotografiert ein Blatt und öffnet den **Scan-Editor**: Die Tafel sucht die
   Blattecken selbst (hellste zusammenhängende Fläche), die vier Griffe lassen sich nachziehen, dann wird
   die Seite **perspektivisch entzerrt** – mit **bilinearer Abtastung** (glatte Kanten statt Treppchen), bis
@@ -572,14 +640,21 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   zusätzlich nach der **Bildschirmhöhe**, damit Kamerabild und Knopfreihen immer vollständig sichtbar bleiben. **„Video auf Tafel"** nimmt
   einen Clip auf (nochmal antippen = beenden, mit laufender Zeitanzeige) und legt ihn als abspielbares
   Videoobjekt auf die Tafel – wahlweise **mit Ton** (Schalter „Video mit Ton"; ohne Mikrofonfreigabe
-  wird stumm aufgenommen). Zum Abspielen oben „Einbettung bedienen" antippen. Clips gelten nur für die
+  wird stumm aufgenommen). Zum Abspielen oben „Objekt bedienen" antippen. Clips gelten nur für die
   laufende Sitzung: im gespeicherten Projekt bleibt ein Platzhalter statt der Videodaten – wer eine
   Aufnahme behalten will, wählt den Clip aus und tippt im **Kontextmenü** auf **„🎬 Video speichern"**
   (.mp4 bzw. .webm). (Nur über https.)
 - **Punktestand** (Werkzeug): Score-Board für Spiele – Teams mit Namen, hoch-/runterzählen.
 - **Gruppen bilden** (Werkzeug): erzeugt aus der Klassenliste zufällige, ausgewogene Gruppen
   in einstellbarer Größe; „Auf Tafel" schreibt die Gruppen auf die Tafel.
-- **Uhr** (Werkzeug): fügt eine live laufende Analoguhr als bewegliches Objekt ein.
+- **Uhr** (Werkzeug): fügt eine live laufende Analoguhr als bewegliches Objekt ein. Im **Kontextmenü**
+  der Uhr lassen sich zwei Anzeigen zuschalten: **Schulstunden** markiert die **laufende Schulstunde
+  farbig auf dem Zifferblatt** – das Blatt wird dabei als Minutenskala gelesen, die 2. Stunde
+  (8:45–9:30) färbt also den Bereich von Minute 45 bis Minute 30 ein; der bereits vergangene Teil ist
+  kräftiger, darunter stehen Name, Zeitspanne und die **Restzeit** („2. Stunde · 8:45–9:30 · 20 min
+  übrig"), Pausen erscheinen grau. Der Takt ist 1. Std 8:00–8:45, 2. Std 8:45–9:30, Pause bis 9:45,
+  3. Std 9:45–10:30, 4. Std 10:30–11:15, Pause bis 11:30, 5. Std 11:30–12:15, 6. Std 12:15–13:00.
+  **Digitalanzeige** blendet zusätzlich die Uhrzeit in Ziffern ein.
 - **Funktionsplotter** (Werkzeug): Funktionsterm eingeben (mit Parametern **a, b, c** → Schieberegler),
   Malpunkte dürfen fehlen (`2x`, `ax^2+bx+c`, `3(x+1)`, `2sin(x)`, `(x+1)(x−1)`),
   der Graph wird gezeichnet; im Bedien-Modus mit **Fingergeste zoom-/verschiebbar**. Über **„＋ Funktion"**
@@ -608,7 +683,12 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   und werden nie eingefärbt: Sie kommen weder in der Tafel noch im Venn-Diagramm vor. Solange der Modus an ist, sind
   die Felder gesperrt, damit nichts versehentlich überschrieben wird.
   „Berechnete leeren“ / „Alles leeren“. Ältere Tafeln (nur innere Felder) werden automatisch ergänzt. Die Schriftgröße aus dem Kontextmenü gilt für Ereignisse, **Gegenereignisse und das Σ-Zeichen** gleichermaßen. Oben rechts: **A−/A+** für die Schriftgröße (auch im Kontextmenü) und **🖼 Tafel / 📋 Kopieren**: Tabelle als Bild.
-- **Baumdiagramm** (Werkzeug): Stufen und Verzweigungen einstellbar. **„◯ Venn“** zeigt die Pfadwerte als **Venn-Diagramm** –
+- **Baumdiagramm** (Werkzeug): Stufen und Verzweigungen einstellbar. Sind **Vierfeldertafel** und
+  **Venn-Diagramm** gleichzeitig eingeblendet, wird der Baum **nicht mehr zusammengequetscht** – er
+  behält seine Höhe und der Bereich darunter lässt sich **scrollen**. Über den Umschalter
+  **▶ Benutzen / ✎ Bearbeiten** verschwindet beim Arbeiten die **erste Bedienzeile** (Stufen,
+  Verzweigungen, Stichprobe, Schriftgröße), sodass mehr Platz bleibt; die Knöpfe zum Arbeiten
+  (Vierfeldertafel, Venn, Auswahl, Berechnen, Berechnete leeren) bleiben stehen. **„◯ Venn“** zeigt die Pfadwerte als **Venn-Diagramm** –
   eine Mengenblase je Stufe, also 2 Kreise bei 2 Stufen und 3 Kreise bei 3 Stufen (nur bei je 2 Verzweigungen;
   bei mehr Stufen erscheint ein Hinweis). **„👆 Auswahl“** hebt einen angetippten Ast der ersten Stufe, einen
   Pfadwert, einen Ereignisnamen (= alle Pfade mit diesem Ereignis), eine Tafelzelle oder eine Venn-Teilmenge in allen
@@ -638,7 +718,7 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   ordnet die Seiten neu. Zusätzlich gibt es oben rechts **▲/▼-Knöpfe** zum seitenweisen Scrollen
   (sie erscheinen nur, wenn es etwas zu scrollen gibt). Die Höhe richtet sich nach dem **wirklich
   sichtbaren** Bereich, damit am iPad nichts hinter den Safari-Leisten verschwindet.
-- **QR-Code-Generator**
+- **QR-Code-Generator** (Gruppe **Diverses**)
 - **Klassenlisten:** pro Projekt – **Namen direkt eintippen** (ein Name pro Zeile im Einstellungen-
   Fenster) oder **CSV importieren** (Name in der 1. Spalte); Button „Zufälliger Name" zieht per Zufall
   eine Person (ohne Wiederholung) – **animiert wie ein Spielautomat**: die Namen laufen im Slot-Fenster
@@ -656,14 +736,17 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
 
 Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimieren**:
 
-1. **Hauptleiste (links, senkrecht):** am **linken Rand vertikal** angeordnet (damit man beim
+1. **Hauptleiste (links, senkrecht – oder unten bzw. rechts):** standardmäßig am **linken Rand vertikal**
+   angeordnet (damit man beim
    Schreiben nicht versehentlich etwas auslöst). Oben **untereinander** vier immer sichtbare Buttons –
    die **Schwunglinie** = Schreiben (Stiftwerkzeuge), der **Auswahl-Cursor** = Auswählen &
    Werkzeuge (Objekte auswählen/verschieben + Zeit, Klasse & Interaktion, Lärmampel, QR,
    Namensziehung, Taschenrechner, Einfügen …), der **Laserpointer** und der **Scheinwerfer**.
    Ein **Trennstrich** trennt diese Buttons vom jeweiligen Werkzeugmenü (das bei Bedarf **scrollt**).
    Die Leiste beginnt **unter der oberen Einstellungs-Leiste** und
-   wächst nach unten. Verwandte Werkzeuge sind zur Übersicht in **Gruppen-Popovers**
+   wächst nach unten. Ihr **Platz** ist in den **Einstellungen → Werkzeugleisten** wählbar:
+   **links** (Standard), **unten** – dann liegt sie waagerecht am unteren Rand, was auf großen
+   Whiteboards angenehm ist, und die Menüs klappen nach oben auf – oder **rechts** für Linkshänder. Verwandte Werkzeuge sind zur Übersicht in **Gruppen-Popovers**
    zusammengefasst (wie „Formen"): der **Formen**-Button enthält Linie/Rechteck/Ellipse/Dreiecke/Pfeil
    **und** Kreis, Gerade, Zirkel, Zahlenstrahl, Koordinatensystem (alle Knöpfe gleich groß);
    ein **Zeit**-Button (Uhr, Stoppuhr, Timer);
@@ -775,7 +858,7 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   weitere Zahlen-Zeilen hinzufügen; jede Zeile zeigt ihren Wert in der gewählten Einheit. Die Schriftgröße im Kontextmenü vergrößert jetzt auch **Zellenbreite und -höhe**. Neue Kategorie **„Zahl"**: Stellen vor dem Komma **E, Z, H, T, ZT, HT, M** (Einer bis Millionen), nach dem Komma **z, h, t, zt** (Zehntel bis Zehntausendstel); das Komma sitzt fest hinter den Einern. „Zahl" steht als erste Kategorie ganz links. Im Zahl-Modus schaltet der Button **„%-Komma"** ein zweites (blaues) Komma an der Hundertstel-Stelle ein – dann erscheinen nach dem = beide Darstellungen, z. B. **1,025 = 102,5 %**. Bei „Zahl" reichen die Nachkommastellen jetzt bis **ht** und **m**. Tippt man auf eine Stelle (z. B. h), werden **die Zellen dieser und aller Stellen links davon grün unterstrichen** (die Kopfzeile bleibt unverändert); erst dann erscheint der Button **„Bruch"**, der die Zahl als Bruch mit der markierten Stelle als Nenner zeigt (h → Nenner 100, t → 1000 …; der Bruchstrich ist so lang wie die längere der beiden Zahlen). Erneutes Tippen hebt die Markierung auf.
 - **Einheitskreis** (Mathe & Physik): interaktiver Einheitskreis, Schriftgröße mit **A−/A+** direkt im
   Werkzeug (rechts unten) oder im **Kontextmenü** (＋/−, fett, kursiv). **🖼 Tafel / 📋 Kopieren**: Kreis samt
-  Werten (ohne Bedienknöpfe) als Bild neben das Werkzeug legen bzw. in die Zwischenablage kopieren. Bedienen über „Einbettung bedienen". Zwei Modi:
+  Werten (ohne Bedienknöpfe) als Bild neben das Werkzeug legen bzw. in die Zwischenablage kopieren. Bedienen über „Objekt bedienen". Zwei Modi:
   - **Winkel → Werte:** Punkt P auf dem Kreis ziehen (oder irgendwo in die Kreisfläche tippen), Winkel
     eintippen (auch im Bogenmaß, z. B. `2π/3`) oder per Schieberegler. Angezeigt werden **sin α (rot)**,
     **cos α (blau)** und **tan α (grün, Abschnitt auf der Tangente x = 1)** – jeweils mit den Knöpfen
@@ -788,7 +871,191 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   - **Einrasten:** besondere Winkel (Vielfache von 30° und 45°) und die zugehörigen Werte
     (0, ±½, ±½√2, ±½√3, ±1; bei tan 0, ±⅓√3, ±1, ±√3) rasten beim Ziehen ein; ohne Einrasten ganze Grad
     bzw. Hundertstel. **Besondere Winkel** markiert diese am Kreis, **Bogenmaß** beschriftet sie mit π.
-- **Stromkreis** (Mathe & Physik): Schaltungen zeichnen und simulieren. Einfügen als eigene Seite oder
+- **Periodensystem** (Mathe & Physik): alle **118 Elemente** mit Symbol, Name, Ordnungszahl und Atommasse.
+  Ein Tipp auf ein Element öffnet eine **Infokarte** (Atommasse, Kategorie, Zustand bei 20 °C, Schmelz- und
+  Siedepunkt, Dichte, Elektronenkonfiguration); das **Suchfeld** findet Symbol, Name oder Ordnungszahl.
+  **„Nebengruppen"** klappt die Gruppen 3–12 weg (Kurzform mit den Hauptgruppen), **„La/Ac"** blendet die
+  Lanthanoide und Actinoide ein oder aus. Die **Einfärbung** lässt sich umstellen: Kategorien, Zustand bei 20 °C,
+  Metalle/Nichtmetalle oder ohne Farbe – jeweils mit Legende. Dazu **Atommasse** und **Name** ein-/ausblendbar,
+  A−/A+, 🖼 Tafel, 📋 Kopieren und **🖨 Drucken** (Querformat). Läuft vollständig offline.
+- **Nuklidkarte** (Mathe & Physik): alle **3082 Nuklide bis Plutonium (Z ≤ 94)** – N waagerecht,
+  Z senkrecht, eingefärbt nach Zerfallsart: **stabil** (schwarz), **α** (gelb), **β⁻** (blau),
+  **β⁺/e⁻-Einfang** (rot), **Protonen-** und **Neutronen-Emission**, **spontane Spaltung**; dazu eine Legende.
+  **Zoomen** mit zwei Fingern, den Knöpfen **− / +** oder am Rechner mit dem Mausrad, **Verschieben**
+  mit einem Finger; die Auswahlliste stellt feste Ausschnitte ein (ganze Karte, leichte Kerne Z ≤ 20,
+  mittlere Z 20–60, schwere Z 80–94). Ab mittlerer Vergrößerung stehen die **Massenzahlen** in den
+  Feldern, bei starker Vergrößerung zusätzlich **Symbol und Halbwertszeit**.
+  - **Antippen** eines Nuklids öffnet eine **Infokarte**: Symbol, Name, Z, N, Massenzahl,
+    **Halbwertszeit** (passend gerundet von Nanosekunden bis Milliarden Jahren), **Zerfallsart**
+    (bei zwei Wegen mit Anteilen), das entstehende **Tochternuklid** und die **natürliche Häufigkeit**.
+  - **Suchfeld:** `Cs-137`, `U238` oder `Kohlenstoff 14` springt zum Nuklid und wählt es aus.
+  - **Zerfallsreihen:** Die vier klassischen Reihen (**Thorium 4n**, **Neptunium 4n+1**,
+    **Uran-Radium 4n+2**, **Uran-Actinium 4n+3**) werden als Pfeilkette in die Karte gezeichnet –
+    α-Schritte und β-Schritte farblich unterschieden. **„Zerfallsweg"** verfolgt die Kette eines
+    beliebig ausgewählten Nuklids bis zum stabilen Ende. Mit **◀ ▶** geht man **Schritt für Schritt**
+    durch die Reihe (Anzeige z. B. `Ra-224 —α→ Rn-220`, die Infokarte wandert mit), **alle** zeigt die
+    ganze Kette, **✕** blendet sie aus.
+  - **„magische Zahlen"** legt die Linien bei 2, 8, 20, 28, 50, 82 und 126 über die Karte.
+    Dazu A−/A+, 🖼 Tafel, 📋 Kopieren und 🖨 Drucken. Daten: IAEA Nuclear Data Services
+    (NUBASE/ENSDF), vollständig offline in `nuklid-data.js`.
+- **Optiklabor** (Mathe & Physik): Strahlenoptik zum Anfassen. Die Bedienung ist wie beim Stromkreis
+  aufgebaut: links **Neu, Speichern, Laden, ▶ Animation** und **Löschen**, in der Mitte die seitlich
+  scrollenden **Bauteile**, rechts **Zurück, Vor, Dunkel, Lot & Winkel** und **Vorlagen**; die zweite
+  Zeile zeigt die Einstellungen des ausgewählten Bauteils. Bauteile sind **💡 Lampe** (Punktlichtquelle),
+  **🔦 Laser** (paralleles Bündel), **Spiegel**, **Wölbspiegel**, **Linse**, **Hindernis**,
+  **Blende** (Wand mit einstellbarer Öffnung), **Schirm** und **Himmelskörper** (runde Körper für Finsternisse). Jedes Bauteil wird mit dem Finger verschoben;
+  das ausgewählte zeigt einen gestrichelten Kreis mit **Drehgriff**, dazu gibt es **↻ 90°**.
+  Der Strahlengang wird laufend neu berechnet (Reflexion, Brechung an der dünnen Linse, Schatten).
+  - **Benutzen oder Bearbeiten:** Der Umschalter blendet beim Arbeiten die **Datei- und Bauteilleiste**
+    aus; sichtbar bleiben **▶ Animation**, **Dunkel**, **Lot & Winkel**, **virtuell** und **g und b**
+    sowie die Einstellzeile des gewählten Bauteils – der Versuch lässt sich also weiter verschieben,
+    drehen und umschalten, ohne dass neue Bauteile dazukommen.
+  - **Einstellungen:** Lichtfarbe (6 Farben), bei der Lampe drei Betriebsarten – **rundum**,
+    **einzelne Strahlen** oder **Lichtfeld**. Bei **einzelnen Strahlen** kommt mit **+** jeweils ein
+    Strahl dazu (bis zu zwölf, **−** nimmt einen weg); jeder Strahl hat einen kleinen Punkt, an dem
+    man ihn **greifen und in die gewünschte Richtung ziehen** kann – ideal für Bildkonstruktionen, bei
+    denen nur zwei oder drei Strahlen gezeichnet werden sollen. Jeder dieser Strahlen bekommt eine
+    **eigene Farbe**: den Punkt antippen wählt den Strahl aus (er erscheint dann als „Strahl 2" in der
+    zweiten Zeile), die Farbfelder färben genau diesen Strahl, **„alle gleich"** überträgt die Farbe auf
+    alle. Dazu **Strahlen oder kontinuierliches Lichtfeld**
+    (dann eine gefüllte Lichtfläche statt einzelner Strahlen – so sieht man Schatten wie in Wirklichkeit),
+    **Auflösung** und **Ausdehnung** der Lampe (ausgedehnte Lichtquellen erzeugen **Halbschatten**),
+    wahlweise ein **Gehäuse** mit einstellbarem **Öffnungswinkel** (5°–350°), sodass die Lampe nur in
+    eine Richtung leuchtet – gedreht wird sie am blauen Griff,
+    Strahlenzahl und Bündelbreite beim Laser, **Brennweite f** mit Umschalter Sammellinse/Zerstreuungslinse
+    bzw. Hohlspiegel/Wölbspiegel, Größe bzw. Radius.
+  - **Dunkel** stellt auf schwarzen Hintergrund mit **additiver Farbmischung** um (farbige Schatten),
+    **Lot & Winkel** zeichnet am Spiegel das Lot ein und beschriftet **α** und **α′**.
+  - **virtuell** zeichnet die **virtuellen Strahlen gestrichelt** ein: am Spiegel die
+    Rückverlängerungen hinter die Spiegelfläche (sie treffen sich im **Spiegelbild**) und an der Linse
+    die Rückverlängerungen, wenn das Bild virtuell ist (Lupe oder Zerstreuungslinse).
+  - **g und b** zeichnet die Abbildung durch die Linse ein: Die **Lampe ist der Gegenstand**, eingetragen
+    werden die optische Achse, die **Gegenstandsweite g**, die **Bildweite b** (aus der Linsengleichung
+    1/f = 1/g + 1/b) und der **Bildpunkt B** mit dem **Abbildungsmaßstab β** – bei g < f gestrichelt als
+    **virtuelles Bild**, bei g = f mit dem Hinweis, dass kein Bild entsteht. Der Bildpunkt liegt genau dort,
+    wo sich die berechneten Strahlen schneiden. Längen erscheinen in **cm** (10 px auf der Tafel = 1 cm).
+  - **Rückgängig/Vor** für jeden Schritt, **Speichern/Laden** als Datei (.json), **Neu** leert die Fläche.
+  - **Vorlagen:** Schatten (Kern- und Halbschatten), farbige Schatten (RGB), Reflexion am Spiegel,
+    Sammellinse mit Brennpunkt, Zerstreuungslinse, Hohlspiegel, **Bildkonstruktion an der Sammellinse**,
+    **Lupe (virtuelles Bild)**, **Spiegelbild**, Lochkamera sowie die Astronomie-Versuche
+    **Mondphasen**, **Mondfinsternis** und **Sonnenfinsternis**: Sonne, Erde und Mond als Modell
+    (nicht maßstabsgetreu), der Mond läuft auf seiner Bahn – **▶ Animation** startet und stoppt die
+    Bewegung. Rechts unten zeigt ein Fenster, **wie der Mond von der Erde aus aussieht** (Sichel,
+    Halbmond, Vollmond mit Prozentangabe, bei einer Mondfinsternis der verdunkelte Mond).
+- **Wellenwanne** (Mathe & Physik): eine echte Wellensimulation (Wellengleichung auf einem Gitter,
+  rund 50 000 Zellen, flüssig in Echtzeit). Bedienung wie beim Stromkreis: links **Neu, Speichern, Laden,
+  Pause, Neustart, Löschen**, in der Mitte die Bauteile, rechts **Zurück, Vor, Rand, Huygens, Vorlagen**.
+  - **Benutzen oder Bearbeiten:** Der Umschalter blendet beim Arbeiten Datei-Knöpfe, Bauteile,
+    Zurück/Vor und Vorlagen aus; sichtbar bleiben **Pause**, **Neustart**, **Rand**, **Huygens** und
+    die **Wellenlänge** – der Versuch läuft also weiter und lässt sich beobachten, ohne dass aus
+    Versehen neue Bauteile entstehen.
+  - **Bauteile:** **Erreger** (Punktquelle, Kreiswellen), **Gerade Welle** (Linienerreger), **Bande**
+    (Reflexion), **Spalt** und **Doppelspalt** (Beugung, Spaltbreite und Abstand einstellbar),
+    **Hindernis** und **Flachwasser** (dort läuft die Welle langsamer → **Brechung**, auch an einer
+    schrägen Grenze; die Zone lässt sich überall innerhalb ihres gestrichelten Rahmens antippen, der
+    Drehgriff sitzt an der Ecke – Erreger, Banden und Hindernisse darin haben beim Antippen Vorrang).
+    Alles verschiebbar und drehbar; die **Wellenlänge** stellt man in der zweiten Zeile ein.
+  - **Rand:** wahlweise **offen** – die Wellen laufen aus dem Bild hinaus, als ginge die Wanne unendlich
+    weiter (dafür sorgt ein ringsum laufender, nach außen sanft ansteigender Dämpfungssaum von etwa einer
+    Wellenlänge Breite; rund um die Erreger bleibt er wirkungslos, damit auch randnahe Erreger voll
+    arbeiten) – oder **Bande** ringsum, dann werden sie am Bildrand zurückgeworfen.
+  - **Huygens** zeichnet die **Elementarwellen** ein: an jeder Spaltöffnung (bzw. auf der Wellenfront)
+    wachsen Kreise, deren Einhüllende die neue Wellenfront ist.
+  - **Vorlagen:** Kreiswellen, Interferenz zweier Erreger, Reflexion an gerader und schräger Bande,
+    Beugung am Spalt, Doppelspalt, Beugung am Hindernis, **stehende Welle** (einmal als Überlagerung von
+    hinlaufender und an der Bande reflektierter Welle, einmal aus zwei gegenläufigen Erregern – der
+    Abstand ist jeweils ein Vielfaches von λ/2, sodass die Knoten an ihrem Platz bleiben), Brechung am
+    Flachwasser und an schräger Grenze. Damit die Bäuche bei solchen Resonanzen nicht übersteuern, regelt
+    sich die Helligkeit der Darstellung automatisch nach.
+- **Lernlandkarte** (Diverses): eine Karte aus **Orten** (Aufgaben, Themen, Stationen), die durch
+  **Wege** verbunden sind – der Fortschritt schaltet nach und nach neue Orte frei.
+  - **Arbeiten mit der Karte:** Ein Ort wird durch Antippen als **erledigt** markiert (grüner Haken);
+    daraufhin werden die Wege eingefärbt und die nächsten Orte **freigeschaltet** (sie pulsieren blau).
+    Noch nicht erreichbare Orte sind grau mit „?" – mit **verbergen** blendet man sie ganz aus, sodass
+    die Karte sich Schritt für Schritt aufdeckt. Ein Balken zeigt, wie viele Orte schon geschafft sind,
+    **Zurücksetzen** löscht den Fortschritt aller Karten.
+  - **Editor:** Sobald die Bedienleisten über den Umschalter **✎ Bearbeiten** sichtbar sind, ist die
+    Karte im Bearbeiten-Modus (ein eigener „Bearbeiten"-Knopf in der Leiste entfällt dadurch).
+    **Ort** setzt eine neue Station (Name direkt in der zweiten Zeile
+    eintippen), **Weg** zieht eine Verbindung von einem Ort zum nächsten, **Löschen** entfernt Orte oder
+    Wege; Orte lassen sich frei verschieben. Über **Hintergrund** kann ein Bild (echte Landkarte,
+    Zeichnung, Foto) hinterlegt werden. **Neu** beginnt eine leere Karte, **Zurück** und **Vor** nehmen
+    jeden Schritt zurück bzw. wieder her.
+  - **Aktivitäten an den Orten:** Jeder Ort kann **mehrere Aufgaben** tragen. In der zweiten Zeile steht
+    dafür nur ein Knopf **„✎ Aktivitäten (n)"**; er öffnet ein **Fenster**, in dem die Aktivitäten
+    **untereinander** stehen – je Zeile Auswahl, Hinweistext und **✕**, unten **„+ Aktivität"** und
+    **„fertig"**. So bleibt die Bedienzeile kurz. Je Aktivität wählt man:
+    ein **Text/Arbeitsauftrag**, **„Datei einfügen"** (öffnet den Einfüge-Dialog der Tafel für PDF, Bild
+    oder Video) oder eines von rund **28 Werkzeugen** aus **Mathe & Physik** (Gleichungslöser,
+    Funktionsplotter, Ableitungen, Einheitskreis, 3D-Koordinatensystem, Vierfeldertafel, Baumdiagramm,
+    Wahrscheinlichkeitsrechner, Messwert-Analyse, Bruch, Stellenwerttafel, Einheitenumrechner,
+    Stromkreis, Optiklabor, Wellenwanne, Periodensystem, Nuklidkarte, Tabellenkalkulation) und
+    **Diverses** (Tabelle, Lückentext, Zuordnen, Glossar, Kreuzworträtsel, Buchstabengitter, Wortwolke,
+    Zeitleiste, Mindmap, Pinnwand). Orte mit Aktivität tragen ein kleines **▸** bzw. **i**, bei mehreren
+    die **Anzahl**. Beim Antippen öffnet sich ein Fenster mit allen Aufträgen und je einem Knopf pro
+    Werkzeug (**„▸ Funktionsplotter"** usw.) – das Werkzeug wird dann **neben der Karte auf die Tafel
+    gelegt** – sowie **„erledigt ✓"**.
+  - **Verschachtelte Karten:** Jeder Ort kann eine eigene **Unterkarte** bekommen (z. B. ein Modul mit
+    mehreren Aufgaben). Orte mit Unterkarte tragen ein **»**; ein Tipp öffnet sie, eine Leiste oben links
+    („Lernweg » Übung") führt zurück. Eine Unterkarte gilt automatisch als erledigt, sobald alle ihre
+    Orte erledigt sind.
+  - Dazu vier **Farbschemata** (Wiese, Meer, Sand, Nacht), ein Schalter für die **Animation**,
+    Speichern/Laden als Datei sowie A−/A+, 🖼 Tafel und 📋 Kopieren. Eine fertige Karte lässt sich so
+    auch **außerhalb der Tafel bauen, speichern und später in ein Tafel-Objekt laden**.
+  - **Benutzen oder Bearbeiten:** Bedient werden Einbettungen wie gewohnt über **„Objekt bedienen"**.
+    Bei Lernlandkarte, Tabelle, Lückentext, Zuordnen und Glossar
+    erscheint, **solange „Objekt bedienen" aktiv ist** und das Objekt ausgewählt ist, zusätzlich
+    **direkt unter dem Kontextmenü-Knopf** (also außerhalb des Objekts, damit nichts verdeckt wird)
+    ein **Umschalter**: **✎ Bearbeiten** blendet alle Bedienleisten ein (Orte und Wege anlegen,
+    Tabelle gestalten, Text und Lücken festlegen, Begriffe eintragen …), **▶ Benutzen** blendet sie wieder
+    aus. Im Benutzen-Modus bleiben nur die Knöpfe zum Arbeiten stehen – beim Lückentext etwa *Prüfen*,
+    *Lösung ▶*, *alle Lösungen* und *zurücksetzen*, beim Zuordnen *Prüfen*, *Lösung* und *Mischen*
+    (die zweite Zeile verschwindet dort ganz), beim Glossar Suchfeld, Auf-/Zuklappen, Abschnitte,
+    Sortierung und *Abfragen*. Kreuzworträtsel und Buchstabengitter haben keinen Umschalter – dort
+    gehören alle Knöpfe zum Arbeiten. Der Zustand wird im Projekt gespeichert: Ein für die Klasse vorbereitetes Objekt
+    bleibt also im Benutzen-Modus. (Ruft man ein Werkzeug **außerhalb der Tafel** auf, sitzt der
+    Umschalter oben rechts im Werkzeug selbst.)
+  - **Fertige Seite zum Weitergeben:** **Speichern** bietet zwei Formate – die **Kartendatei (.json)**
+    zum Weiterarbeiten und eine **fertige Seite (.html)**, in der die Karte schon steckt. Diese Datei
+    läuft **allein im Browser** (ohne Tafel, ohne Internet), zeigt nur die Karte mit den Aufgaben und
+    merkt sich den **Fortschritt im Browser** der Schülerin bzw. des Schülers. **Die an den Orten
+    hinterlegten Werkzeuge werden mit eingepackt:** Beim Export werden Funktionsplotter, Lückentext,
+    Gleichungslöser & Co. samt ihrer Hilfsdateien in die HTML-Datei eingebettet und öffnen sich beim
+    Antippen in einem Fenster auf der Karte. So genügt **eine einzige Datei** – je nach Anzahl der
+    Aktivitäten etwa 100–400 KB. (Aktivitäten vom Typ „Datei einfügen" brauchen weiterhin die Tafel.)
+- **Lückentext** (Diverses): Text eingeben oder über **📋 Einfügen** aus der Zwischenablage holen
+  (**Laden** liest auch eine .txt-Datei). Dann die Lücken festlegen: **Wählen** – die Wörter im Text
+  antippen (nochmal antippen hebt die Lücke auf, ein kleines × zeigt das an) – oder **Zufällig**, wobei in der zweiten Zeile
+  einstellbar ist, dass jedes 2. bis 20. längere Wort zur Lücke wird. Gefüllt wird wahlweise
+  **frei getippt** (Enter springt zur nächsten Lücke) oder per **Ziehen**: die Lösungswörter liegen
+  gemischt unter dem Text und werden in die Lücken gezogen (benutzte Wörter werden blass, ein Tipp auf
+  eine gefüllte Lücke gibt das Wort zurück). **Prüfen** färbt richtig grün und falsch rot und zählt mit,
+  **Lösung ▶** deckt die Lösungen **eine nach der anderen** auf (nochmal am Ende = wieder verdecken).
+  Eine einzelne Lücke lässt sich jederzeit mit einem **Doppeltipp** wieder auflösen – das Wort steht dann
+  wieder im Text –, **„Lücken löschen"** entfernt auf einmal alle;
+  „alle Lösungen" und „zurücksetzen" stehen in der zweiten Zeile. Dazu Speichern/Laden (Text samt
+  Lücken), Drucken, A−/A+, 🖼 Tafel und 📋 Kopieren.
+- **Zuordnen** (Diverses): Zuordnungsaufgaben zum Ziehen mit dem Finger. Über **„✎ Aufgabe"** je Zeile
+  `Oberbegriff = Begriff, Begriff, Begriff` eintragen (für **Paare** genügt ein Begriff je Zeile);
+  **🖼 Bild** fügt ein Foto ein, das als `[b1]`, `[b2]` … in jede Zeile geschrieben werden kann – so
+  lassen sich auch **Bilder zuordnen**. Die Karten liegen gemischt im Vorrat und werden in die farbigen
+  Gruppenfelder gezogen. Hat jede Zeile genau einen Begriff, schaltet das Werkzeug automatisch auf
+  **paarweise Zuordnung** um: links steht die Vorgabe, rechts daneben das Feld für die passende Karte
+  (gut für Vokabeln, Land–Hauptstadt, Formel–Größe); der Knopf **Paare/Gruppen** schaltet von Hand um.
+  **Prüfen** färbt richtig zugeordnete Karten grün, falsche rot und zählt mit
+  („3 von 4 richtig"), **Lösung** zeigt die richtige Verteilung, **Mischen** beginnt von vorn.
+  Dazu Speichern/Laden als Datei, Drucken, A−/A+, 🖼 Tafel und 📋 Kopieren.
+- **Glossar** (Diverses): Begriffe mit Erklärungen als Karten. Über **„✎ Einträge"** je Zeile
+  `Begriff = Erklärung` eintragen; eine Zeile mit `# Überschrift` beginnt einen **Abschnitt**
+  (jeder Abschnitt bekommt eine eigene Farbe und einen Filter-Chip). **Suchfeld**, **alle auf-/zuklappen**,
+  Sortierung **A → Z** oder wie eingegeben, **Abfragen** (die Erklärungen sind verdeckt und werden durch
+  Antippen einzeln aufgedeckt – gut zur Wiederholung), **Speichern/Laden** als Textdatei, **Drucken**
+  (druckt immer mit allen Erklärungen) sowie A−/A+, 🖼 Tafel und 📋 Kopieren.
+- **Stromkreis** (Mathe & Physik): Schaltungen zeichnen und simulieren. Über den Umschalter
+  **▶ Benutzen / ✎ Bearbeiten** verschwindet beim Arbeiten die **ganze obere Werkzeugleiste**
+  (Datei, Bauteile, Radierer, Vorlagen) und es bleibt die untere Zeile mit **Werten, Ladungsfluss,
+  Diagramm, Schrift und Zoom**; das Werkzeug wird dabei automatisch auf **Auswahl** gestellt, sodass
+  sich **Schalter antippen** und Bauteile ziehen lassen, ohne dass man aus Versehen etwas baut. Einfügen als eigene Seite oder
   bewegliches Objekt; Schriftgröße über **A−/A+** im Werkzeug oder im **Kontextmenü** (dort auch fett/kursiv) –
   eine Änderung dort setzt die laufende Simulation (z. B. geladene Kondensatoren) nicht zurück.
   - **Werkzeugleiste:** Links bleiben **Neu, Speichern, Laden, Schließen, Auswahl und Leitung** immer sichtbar,
@@ -826,7 +1093,7 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     Bild in die Zwischenablage.
 - **Ableitungen** (Mathe & Physik): die Lernumgebung „Zusammenhänge von F · f · f′ · f″" als Werkzeug.
   Beim Einfügen fragt die Tafel „eigene Seite oder bewegliches Objekt" (im Kontextmenü auch später
-  „Als eigene Seite anzeigen"). Bedienen über „Einbettung bedienen": Ausgangsfunktion (F, f, f′, f″),
+  „Als eigene Seite anzeigen"). Bedienen über „Objekt bedienen": Ausgangsfunktion (F, f, f′, f″),
   Funktionstyp mit Parametern, eigener Term, Freihand-Zeichnen, Graphen ein-/ausblenden mit C-Reglern,
   Analyse-Knöpfe VZ/M/K, Tangente, Fläche/Integral, Intervalle, Symbolleiste, Ableitungsrelation,
   Krümmungs-Smileys, Linienstil, Anleitung (?). Der eingestellte Zustand (Funktion, Parameter, sichtbare
@@ -834,7 +1101,7 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
 - **3D-Koordinatensystem** (Mathe & Physik): räumliches Koordinatensystem im **Schrägbild** wie im
   Heft (x₁ schräg nach vorne, x₂ nach rechts, x₃ nach oben); Achsen **x₁ x₂ x₃ oder x y z** umschaltbar.
   Schriftgröße mit **A−/A+** oben in der Zeichenfläche oder im **Kontextmenü** (＋/−, fett, kursiv). Bedienen über
-  „Einbettung bedienen". **🖼 Tafel / 📋 Kopieren**: Zeichnung mit Legende der sichtbaren Objekte als Bild neben das
+  „Objekt bedienen". **🖼 Tafel / 📋 Kopieren**: Zeichnung mit Legende der sichtbaren Objekte als Bild neben das
   Werkzeug legen bzw. in die Zwischenablage kopieren.
   - **Ansicht:** mit einem Finger **drehen**, mit zwei Fingern **zoomen/verschieben**, −/＋ zum Zoomen,
     „Schrägbild" setzt die Ansicht zurück. **Bereich** (± 2 … 20) einstellbar, **Gitter** in der
@@ -908,7 +1175,7 @@ vierfelder.html       ← eingebettete Vierfeldertafel
 baum.html             ← eingebettetes Baumdiagramm
 wahrscheinlichkeit.html ← Binomial-/Normalverteilungs-Rechner
 messwert.html         ← eingebundenes Messwert-Analyse-Tool (nutzt CDN → Internet nötig)
-gleichung.html        ← eingebetteter Gleichungslöser (linear/quadratisch/Bruch-, trig., Exponential-/Log-Gleichungen, LGS; Formel-Tastatur)
+gleichung.html        ← eingebetteter Gleichungslöser (linear/quadratisch/Bruch-, trig., Exponential-/Log-Gleichungen, Nullprodukte, LGS)
 tabelle.html          ← eingebettete gewöhnliche Tabelle (Zeilen/Spalten im Kontextmenü)
 geogebra.html         ← eingebettete GeoGebra-App (nutzt CDN → Internet nötig)
 wuerfel.html          ← Würfel-Zufallsgenerator (Objekt)
@@ -920,8 +1187,24 @@ einheitskreis.html    ← interaktiver Einheitskreis (sin/cos/tan, Winkel ↔ We
 raum.html             ← 3D-Koordinatensystem (Punkte, Geraden, Ebenen, Lagebeziehungen)
 ableitungen.html      ← Lernumgebung F · f · f′ · f″ (Ableitungen/Stammfunktionen), mit Zustands-Sync
 stromkreis.html       ← Stromkreis-Editor mit Simulation (U, I, R, C, L, Ladungsfluss, Bild-Export)
+optik.html            ← Optiklabor (Strahlenoptik, Schatten, Mondphasen und Finsternisse)
+wellen.html           ← Wellenwanne (Reflexion, Brechung, Beugung, Interferenz, Huygens)
+glossar.html          ← Glossar (Begriffe mit Erklärungen, Abfragemodus)
+zuordnen.html         ← Zuordnen (Begriffe und Bilder in Gruppen oder paarweise)
+luecken.html          ← Lückentext (Lücken wählen oder zufällig, tippen oder ziehen)
+lernkarte.html        ← Lernlandkarte (Orte, Wege, Freischaltung, Unterkarten)
+nuklid.html, nuklid-data.js ← Nuklidkarte bis Z = 94 mit Zerfallsreihen (offline)
+pse.html, pse-data.js ← Periodensystem der Elemente (alle 118 Elemente, offline)
+mindmap.html          ← Mindmap (Diverses)
+pinnwand.html         ← Pinnwand mit Karten (Diverses)
+kreuzwort.html        ← Kreuzworträtsel aus einer Begriffsliste
+wortgitter.html       ← Buchstabengitter-Suchrätsel
+wortwolke.html        ← Wortwolke aus einer Begriffsliste
+zeitleiste.html       ← Zeitleiste / Timeline
+h5p.js                ← H5P-Player für lokale .h5p-Dateien (offline)
 pptx.js               ← einfacher PPTX-Renderer (Folien → Bilder, offline)
 shot.js               ← Werkzeug als Bild: auf die Tafel legen / in die Zwischenablage kopieren
+modus.js              ← Umschalter „Benutzen ↔ Bearbeiten" für die Lernwerkzeuge
 manifest.webmanifest  ← PWA-Manifest
 sw.js                 ← Service Worker (Offline-Cache)
 icon.svg, icon-maskable.svg

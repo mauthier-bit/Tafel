@@ -18,7 +18,9 @@
   #ctrl label{display:flex;align-items:center;gap:5px;font-weight:600;}
   #shotBtns button{border:1px solid #cfd6e0;background:#fff;border-radius:7px;padding:4px 9px;font:600 13px -apple-system,sans-serif;cursor:pointer;color:#1f2430;}
   #ctrl input{width:52px;padding:5px;border:1px solid #cfd6e0;border-radius:7px;font-size:14px;text-align:center;}
-  #area{flex:1;position:relative;min-height:0;}
+  #stage{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column;}
+  #stage::-webkit-scrollbar{width:5px;} #stage::-webkit-scrollbar-thumb{background:#cfd6e0;border-radius:3px;}
+  #area{flex:none;position:relative;min-height:180px;}
   #area canvas{position:absolute;inset:0;width:100%;height:100%;}   /* nur der Baum füllt die Fläche */
   .pin{position:absolute;width:calc(var(--fs,13px)*3.3);transform:translate(-50%,-50%);border:1px solid #cfd6e0;border-radius:6px;background:#fff;text-align:center;font-size:var(--fs,13px);padding:3px 2px;font-family:inherit;color:#1f2430;font-weight:var(--fwm,600);font-style:var(--fi,normal);}
   .pin.calc,.leaf.calc{color:#2563eb;font-weight:var(--fwh,700);background:#eff6ff;border-color:#bfdbfe;}
@@ -54,7 +56,7 @@
 <body>
 <div id="app">
   <div id="ctrl">
-    <div class="crow">
+    <div class="crow tafelEdit">
     <label>Stufen <input id="stufen" type="number" min="1" max="4" value="2"></label>
     <label>Verzweigungen <input id="aeste" type="number" min="2" max="4" value="2"></label>
     <label title="Stichprobenumfang – wenn gesetzt, erscheinen unter den Ereignissen die absoluten Häufigkeiten">Stichprobe n <input id="nsize" type="number" min="0" placeholder="–" style="width:78px"></label>
@@ -66,21 +68,32 @@
     </div>
     <div id="ctrlHelp" hidden>Wahrscheinlichkeiten an die Äste und/oder rechts an die Pfade eintragen (Zahl, 0,3, 3/10 oder 30 %) → „Berechnen“ · Ereignisnamen über den Knoten antippen (nichtA → Ā)</div>
   </div>
-  <div id="area"><canvas id="cv"></canvas></div>
-  <div id="vf4" hidden></div>
-  <div id="vennBox" hidden><canvas id="venn"></canvas></div>
+  <div id="stage">
+    <div id="area"><canvas id="cv"></canvas></div>
+    <div id="vf4" hidden></div>
+    <div id="vennBox" hidden><canvas id="venn"></canvas></div>
+  </div>
 </div>
 <script src="shot.js"></script>
+<script src="modus.js"></script>
 <script src="venn.js"></script>
 <script>
 "use strict";
 const $=id=>document.getElementById(id), area=$('area'), cv=$('cv'), ctx=cv.getContext('2d');
 let dpr=Math.max(1,window.devicePixelRatio||1);
+let edit=undefined;
 let stages=2, branches=2, probs={}, leafVals={}, calcSet=new Set(), names={}, nsize='', fontSize=13, fontBold=false, fontItalic=false, lastPos=null;
 function applyFont(){ const r=document.documentElement.style; r.setProperty('--fs',(fontSize||13)+'px'); r.setProperty('--fw',fontBold?'700':''); r.setProperty('--fwh',fontBold?'900':'700'); r.setProperty('--fwm',fontBold?'800':'600'); r.setProperty('--fi',fontItalic?'italic':'normal'); }
 const num=v=>{ v=(v||'').toString().trim().replace(/\s/g,'').replace(',','.'); if(v==='')return null; let pc=false; if(v.endsWith('%')){ pc=true; v=v.slice(0,-1); } let n; if(v.includes('/')){const[a,b]=v.split('/'); n=(+a)/(+b);} else n=+v; if(!isFinite(n)) return null; return pc?n/100:n; };
 
-function build(extra,extraL){ extra=(typeof extra==='number')?extra:0; extraL=(typeof extraL==='number')?extraL:0; applyFont();
+function fitArea(){                                     /* Baum behält seine Höhe – darunter wird gescrollt */
+  const st=$('stage'); if(!st) return;
+  const platz=st.clientHeight;
+  const extra=(!$('vf4').hidden?$('vf4').offsetHeight:0)+(!$('vennBox').hidden?$('vennBox').offsetHeight:0);
+  const minH=Math.max(220,110+70*stages);
+  area.style.height=Math.max(minH,platz-extra)+'px';
+}
+function build(extra,extraL){ fitArea(); extra=(typeof extra==='number')?extra:0; extraL=(typeof extraL==='number')?extraL:0; applyFont();
   stages=Math.max(1,Math.min(4,+$('stufen').value||2));
   branches=Math.max(2,Math.min(4,+$('aeste').value||2));
   const cw=area.clientWidth||400, ch=area.clientHeight||300;
@@ -180,7 +193,7 @@ function computeTree(){ clearCalcVals(); const B=branches, S=stages, st={pct:fal
   renderVf(); renderVenn(); sync(); }
 $('bCalc').addEventListener('pointerdown',e=>e.preventDefault()); $('bCalc').onclick=computeTree;
 $('bClr').onclick=()=>{ clearCalcVals(); setMsg(''); if(lastPos) drawLabels(lastPos); renderVf(); renderVenn(); sync(); };
-function sync(){ if(window.parent===window) return; try{ parent.postMessage({type:'embed-data',data:{stages,branches,probs,leaves:leafVals,calc:[...calcSet],names,nsize,vf4:vf4On, venn:vennOn,fontSize,fontBold,fontItalic}},'*'); }catch(e){} }
+function sync(){ if(window.parent===window) return; try{ parent.postMessage({type:'embed-data',data:{stages,branches,probs,leaves:leafVals,calc:[...calcSet],names,nsize,vf4:vf4On, venn:vennOn,fontSize,fontBold,fontItalic,edit}},'*'); }catch(e){} }
 /* ---- Zugehörige Vierfeldertafel (nur 2 Stufen × 2 Äste) ---- */
 let vf4On=false;
 const vfOk=()=>stages===2&&branches===2;
@@ -262,7 +275,7 @@ $('bVenn').addEventListener('pointerdown',e=>e.preventDefault());
 $('bVenn').onclick=()=>{ vennOn=!vennOn; $('bVenn').classList.toggle('on',vennOn);
   if(vennOn&&!vennOk()) setMsg('Venn-Diagramm: bis 3 Stufen mit je 2 Verzweigungen','err');
   renderVenn(); build(); sync(); };
-addEventListener('resize',()=>{ if(vennOn) renderVenn(); });
+addEventListener('resize',()=>{ if(vennOn) renderVenn(); fitArea(); });
 $('bVf').addEventListener('pointerdown',e=>e.preventDefault());
 $('bVf').onclick=()=>{ vf4On=!vf4On; $('bVf').classList.toggle('on',vf4On);
   if(vf4On&&!vfOk()) setMsg('Vierfeldertafel: nur bei 2 Stufen und 2 Verzweigungen','err');
@@ -275,10 +288,13 @@ $('nsize').oninput=()=>{ nsize=$('nsize').value; build(); sync(); };
 addEventListener('resize',build);
 addEventListener('message',e=>{ if(e.data&&e.data.type==='embed-data'&&e.data.data){ const d=e.data.data;
   if(d.stages){ stages=d.stages; $('stufen').value=d.stages; } if(d.branches){ branches=d.branches; $('aeste').value=d.branches; }
-  probs=d.probs||{}; leafVals=d.leaves||{}; calcSet=new Set(Array.isArray(d.calc)?d.calc:[]); names=d.names||{}; nsize=(d.nsize===undefined||d.nsize===null)?'':String(d.nsize); $('nsize').value=nsize; if(d.fontSize)fontSize=d.fontSize; fontBold=!!d.fontBold; fontItalic=!!d.fontItalic; vf4On=!!d.vf4; $('bVf').classList.toggle('on',vf4On); vennOn=!!d.venn; $('bVenn').classList.toggle('on',vennOn); build(); renderVf(); renderVenn();
+  probs=d.probs||{}; leafVals=d.leaves||{}; calcSet=new Set(Array.isArray(d.calc)?d.calc:[]); names=d.names||{}; nsize=(d.nsize===undefined||d.nsize===null)?'':String(d.nsize); $('nsize').value=nsize; if(d.fontSize)fontSize=d.fontSize; fontBold=!!d.fontBold; fontItalic=!!d.fontItalic; vf4On=!!d.vf4; $('bVf').classList.toggle('on',vf4On); vennOn=!!d.venn; $('bVenn').classList.toggle('on',vennOn); if(d.edit!==undefined){ edit=!!d.edit; if(window.TafelModus) TafelModus.refresh(); } build(); renderVf(); renderVenn();
   if(!d.leaves&&!d.calc&&Object.values(probs).some(v=>String(v||'').trim())) setTimeout(computeTree,0);   // ältere Bäume: Pfadprodukte wie früher anzeigen
   } });
-window.addEventListener('load',()=>{ build(); try{ parent.postMessage({type:'embed-ready'},'*'); }catch(e){} });
+window.addEventListener('load',()=>{
+  if(window.parent===window&&edit===undefined) edit=true;
+  if(window.TafelModus) TafelModus.init({get:()=>edit!==false, set:v=>{ edit=v; fitArea(); build(); sync(); }});
+  build(); try{ parent.postMessage({type:'embed-ready'},'*'); }catch(e){} });
 </script>
 </body>
 </html>

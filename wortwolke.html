@@ -1,0 +1,181 @@
+<!DOCTYPE html><html lang="de"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Wortwolke</title>
+<style>
+  *{box-sizing:border-box;} [hidden]{display:none!important;}
+  html,body{margin:0;height:100%;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#fff;color:#1f2430;overflow:hidden;}
+  #app{display:flex;flex-direction:column;height:100%;}
+  #bar{flex:none;display:flex;flex-direction:column;gap:5px;padding:6px 8px;border-bottom:1px solid #e6eaf0;font-size:13px;}
+  #row1,#row2{display:flex;gap:6px;align-items:center;flex-wrap:nowrap;}
+  #scroll1,#scroll2{display:flex;gap:6px;align-items:center;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:thin;flex:1 1 auto;min-width:0;padding-bottom:1px;}
+  #scroll1>*,#scroll2>*{flex:0 0 auto;}
+  #scroll1::-webkit-scrollbar,#scroll2::-webkit-scrollbar{height:4px;}
+  #scroll1::-webkit-scrollbar-thumb,#scroll2::-webkit-scrollbar-thumb{background:#cfd6e0;border-radius:2px;}
+  #bar button,#bar select{border:1px solid #cfd6e0;background:#fff;border-radius:7px;padding:4px 9px;font:600 13px -apple-system,sans-serif;cursor:pointer;color:#1f2430;white-space:nowrap;}
+  #bar button.on{background:#2563eb;border-color:#2563eb;color:#fff;}
+  #bar label{display:inline-flex;gap:4px;align-items:center;font-weight:600;white-space:nowrap;}
+  #shotBtns{display:inline-flex;gap:5px;flex:0 0 auto;}
+  #words{flex:none;padding:6px 8px;border-bottom:1px solid #e6eaf0;}
+  #words textarea{width:100%;height:92px;border:1px solid #cfd6e0;border-radius:8px;padding:6px 8px;font:500 14px -apple-system,sans-serif;resize:vertical;}
+  #words .hint{font-size:12px;color:#8a93a2;margin-top:4px;}
+  #area{flex:1;position:relative;min-height:0;}
+  #area canvas{position:absolute;inset:0;width:100%;height:100%;}
+  #msg{font-size:12.5px;color:#64748b;white-space:nowrap;}
+</style>
+</head><body>
+<div id="app">
+  <div id="bar">
+    <div id="row1">
+      <div id="scroll1">
+        <button type="button" id="bEdit">✎ Wörter</button>
+        <button type="button" id="bNew" title="Anordnung neu berechnen">🎲 Neu anordnen</button>
+        <button type="button" id="bPrint" title="Wolke drucken">🖨 Drucken</button>
+        <span id="msg"></span>
+      </div>
+      <span id="shotBtns"><button type="button" id="fsM" title="Schrift kleiner">A−</button><button type="button" id="fsP" title="Schrift größer">A+</button></span>
+    </div>
+    <div id="row2"><div id="scroll2">
+      <select id="pal" title="Farben">
+        <option value="bunt">🎨 bunt</option><option value="blau">🔵 blau</option>
+        <option value="warm">🔥 warm</option><option value="grau">⚫️ grau</option>
+      </select>
+      <select id="rot" title="Ausrichtung">
+        <option value="mix">waagerecht &amp; senkrecht</option>
+        <option value="flat">nur waagerecht</option>
+      </select>
+      <label><input type="checkbox" id="cCount"> Anzahl zeigen</label>
+    </div></div>
+  </div>
+  <div id="words" hidden>
+    <textarea id="wIn" placeholder="Ein Wort je Zeile – mehrfach genannte Wörter werden größer.&#10;Oder Gewicht angeben: Bruch = 5"></textarea>
+    <div class="hint">Ein Begriff je Zeile (Komma geht auch) · <b>Begriff = 5</b> setzt das Gewicht · mehrfach genannte Begriffe werden automatisch größer</div>
+  </div>
+  <div id="area"><canvas id="cv"></canvas></div>
+</div>
+<script src="shot.js"></script>
+<script>
+"use strict";
+const $=id=>document.getElementById(id), cv=$('cv'), ctx=cv.getContext('2d');
+const PAL={ bunt:['#2563eb','#dc2626','#16a34a','#d97706','#7c3aed','#0891b2','#db2777','#65a30d'],
+  blau:['#1e3a8a','#2563eb','#3b82f6','#60a5fa','#0891b2','#0ea5e9'],
+  warm:['#b91c1c','#dc2626','#ea580c','#d97706','#ca8a04','#9a3412'],
+  grau:['#1f2430','#374151','#4b5563','#6b7280','#111827'] };
+let D={ v:1, words:'Bruch\nBruch\nNenner\nZähler\nKürzen\nErweitern\nAnteil\nProzent\nDezimalbruch\nGanzes\nTeil\nBruchstrich',
+  pal:'bunt', rot:'mix', count:false, seed:5, fontSize:18, fontBold:false, fontItalic:false };
+let items=[], laid=[];
+
+/* ---------- Begriffe zählen ---------- */
+function parse(){
+  const map=new Map();
+  (D.words||'').split(/[\n,;]+/).forEach(line=>{
+    const m=line.split(/\s*=\s*/);
+    const w=(m[0]||'').trim(); if(!w) return;
+    const extra=m.length>1?Math.max(1,Math.min(99,parseFloat(m[1].replace(',','.'))||1)):1;
+    map.set(w,(map.get(w)||0)+extra);
+  });
+  return [...map.entries()].map(([text,n])=>({text,n})).sort((a,b)=>b.n-a.n).slice(0,60);
+}
+const rnd=seed=>{ let t=(seed|0)||1; return ()=>((t=t*16807%2147483647)/2147483647); };
+const setMsg=t=>{ $('msg').textContent=t||''; };
+
+/* ---------- Anordnen (Spirale mit Kollisionsprüfung) ---------- */
+function layoutOnce(f){
+  const w=cv.clientWidth, h=cv.clientHeight, out=[];
+  const r=rnd(D.seed), maxN=items[0].n, minN=items[items.length-1].n;
+  const base=Math.max(9,D.fontSize*f), big=Math.min(base*3.4, Math.min(w,h)*0.42);
+  const boxes=[];
+  const hit=b=>boxes.some(o=>!(b.x+b.w<o.x||b.x>o.x+o.w||b.y+b.h<o.y||b.y>o.y+o.h));
+  let bb={x0:1e9,y0:1e9,x1:-1e9,y1:-1e9};
+  items.forEach((it,idx)=>{
+    const t=(maxN===minN)?1:(it.n-minN)/(maxN-minN);
+    const size=Math.max(base*0.6, base*0.6+(big-base*0.6)*Math.pow(t,0.7));
+    const vertical=(D.rot==='mix')&&idx>0&&r()<0.28;
+    ctx.font=fontStr(size);
+    const label=it.text+(D.count&&it.n>1?(' ('+(Math.round(it.n*10)/10)+')'):'');
+    const tw=ctx.measureText(label).width, th=size*1.12;
+    const bw=vertical?th:tw, bh=vertical?tw:th;
+    for(let step=0; step<4000; step++){
+      const ang=step*0.32, rad=step*0.45;
+      const cx=w/2+Math.cos(ang)*rad*(w/Math.max(w,h)), cy=h/2+Math.sin(ang)*rad*(h/Math.max(w,h));
+      const b={x:cx-bw/2, y:cy-bh/2, w:bw+5, h:bh+5};
+      if(b.x<4||b.y<4||b.x+b.w>w-4||b.y+b.h>h-4) continue;
+      if(hit(b)) continue;
+      boxes.push(b); out.push({label,size,vertical,cx,cy,idx});
+      bb.x0=Math.min(bb.x0,b.x); bb.y0=Math.min(bb.y0,b.y); bb.x1=Math.max(bb.x1,b.x+b.w); bb.y1=Math.max(bb.y1,b.y+b.h);
+      break;
+    }
+  });
+  const fill=out.length?Math.max((bb.x1-bb.x0)/w,(bb.y1-bb.y0)/h):0;
+  return {out,fill,all:out.length===items.length};
+}
+function layout(){
+  laid=[]; items=parse();
+  if(!items.length){ setMsg('Bitte Wörter eintragen'); return; }
+  let f=1, best=null;
+  for(let i=0;i<5;i++){                                   // Größe so wählen, dass die Wolke die Fläche gut füllt
+    const res=layoutOnce(f);
+    if(res.all&&(!best||res.fill>best.fill)) best={...res,f};
+    if(!res.all){ f*=0.78; continue; }
+    if(res.fill>0.92) break;
+    f*=Math.min(1.8, 0.95/Math.max(0.2,res.fill));
+  }
+  const use=best||layoutOnce(0.6);
+  laid=use.out;
+  const pal=PAL[D.pal]||PAL.bunt;
+  laid.forEach((l,i)=>l.color=pal[i%pal.length]);
+  const fehlt=items.length-laid.length;
+  setMsg(fehlt>0?(fehlt+' Wort/Wörter passen nicht – Objekt größer ziehen'):'');
+}
+const fontStr=(px,bold)=>(D.fontItalic?'italic ':'')+((bold||D.fontBold)?'800 ':'700 ')+px+'px -apple-system,BlinkMacSystemFont,sans-serif';
+
+/* ---------- Zeichnen ---------- */
+function resize(){ const dpr=window.devicePixelRatio||1, w=cv.clientWidth||320, h=cv.clientHeight||240;
+  cv.width=Math.round(w*dpr); cv.height=Math.round(h*dpr); ctx.setTransform(dpr,0,0,dpr,0,0); layout(); draw(); }
+function draw(){ const w=cv.clientWidth, h=cv.clientHeight;
+  ctx.clearRect(0,0,w,h); ctx.fillStyle='#fff'; ctx.fillRect(0,0,w,h);
+  if(!laid.length){ ctx.fillStyle='#8a93a2'; ctx.font=fontStr(D.fontSize); ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('„✎ Wörter" antippen und Begriffe eintragen',w/2,h/2); return; }
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  laid.forEach(l=>{ ctx.save(); ctx.translate(l.cx,l.cy); if(l.vertical) ctx.rotate(-Math.PI/2);
+    ctx.font=fontStr(l.size); ctx.fillStyle=l.color; ctx.fillText(l.label,0,0); ctx.restore(); });
+}
+/* ---------- Drucken ---------- */
+function printSheet(title){
+  let url='';
+  try{ const c=(window.TafelShot&&TafelShot.rasterize)?TafelShot.rasterize($('area'),{scale:2.5,pad:6}):cv; url=c.toDataURL('image/png'); }
+  catch(e){ url=cv.toDataURL('image/png'); }
+  const win=window.open('','_blank');
+  if(!win){ setMsg('Bitte Pop-ups erlauben – dann klappt das Drucken'); return; }
+  win.document.write('<!DOCTYPE html><meta charset="utf-8"><title>'+title+'</title>'+
+    '<style>html,body{margin:0;padding:0}@page{margin:10mm}img{width:100%;height:auto;display:block}</style>'+
+    '<img src="'+url+'">');
+  win.document.close(); win.focus();
+  setTimeout(()=>{ try{ win.print(); }catch(e){} },350);
+}
+/* ---------- Bedienung ---------- */
+function refresh(){ layout(); draw(); sync(); }
+$('bEdit').onclick=()=>{ const wb=$('words'); wb.hidden=!wb.hidden; $('bEdit').classList.toggle('on',!wb.hidden);
+  if(!wb.hidden){ $('wIn').value=D.words; $('wIn').focus(); } resize(); };
+$('wIn').addEventListener('input',()=>{ D.words=$('wIn').value; refresh(); });
+$('bNew').onclick=()=>{ D.seed=Math.max(1,Math.floor(Math.random()*1e6)); refresh(); };
+$('bPrint').onclick=()=>printSheet('Wortwolke');
+$('pal').onchange=()=>{ D.pal=$('pal').value; refresh(); };
+$('rot').onchange=()=>{ D.rot=$('rot').value; refresh(); };
+$('cCount').onchange=()=>{ D.count=$('cCount').checked; refresh(); };
+for(const [id,d] of [['fsM',-2],['fsP',2]]){ $(id).addEventListener('pointerdown',e=>e.preventDefault());
+  $(id).onclick=()=>{ D.fontSize=Math.max(10,Math.min(60,(D.fontSize||18)+d)); refresh(); }; }
+if(window.TafelShot) TafelShot.buttons($('shotBtns'),()=>TafelShot.rasterize($('app'),{exclude:'#bar,#words',pad:6}));
+/* ---------- Tafel-Anbindung ---------- */
+function sync(){ if(window.parent===window) return; /* allein geöffnet: nicht an sich selbst senden */
+  try{ parent.postMessage({type:'embed-data',data:D},'*'); }catch(e){} }
+addEventListener('message',e=>{ if(window.parent===window||e.source!==window.parent) return;   // eigene Nachrichten ignorieren
+  if(!(e.data&&e.data.type==='embed-data'&&e.data.data)) return;
+  D=Object.assign(D,e.data.data);
+  $('wIn').value=D.words||''; $('pal').value=D.pal||'bunt'; $('rot').value=D.rot||'mix'; $('cCount').checked=!!D.count;
+  resize(); });
+addEventListener('resize',resize);
+window.addEventListener('load',()=>{ resize();
+  if(window.ResizeObserver) new ResizeObserver(resize).observe(cv);
+  try{ if(window.parent!==window) parent.postMessage({type:'embed-ready'},'*'); }catch(e){} });
+</script>
+</body></html>

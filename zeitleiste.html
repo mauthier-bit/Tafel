@@ -1,0 +1,229 @@
+<!DOCTYPE html><html lang="de"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Zeitleiste</title>
+<style>
+  *{box-sizing:border-box;} [hidden]{display:none!important;}
+  html,body{margin:0;height:100%;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#fff;color:#1f2430;overflow:hidden;}
+  #app{display:flex;flex-direction:column;height:100%;}
+  #bar{flex:none;display:flex;flex-direction:column;gap:5px;padding:6px 8px;border-bottom:1px solid #e6eaf0;font-size:13px;}
+  #row1,#row2{display:flex;gap:6px;align-items:center;flex-wrap:nowrap;}
+  #scroll1,#scroll2{display:flex;gap:6px;align-items:center;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:thin;flex:1 1 auto;min-width:0;padding-bottom:1px;}
+  #scroll1>*,#scroll2>*{flex:0 0 auto;}
+  #scroll1::-webkit-scrollbar,#scroll2::-webkit-scrollbar{height:4px;}
+  #scroll1::-webkit-scrollbar-thumb,#scroll2::-webkit-scrollbar-thumb{background:#cfd6e0;border-radius:2px;}
+  #bar button,#bar select{border:1px solid #cfd6e0;background:#fff;border-radius:7px;padding:4px 9px;font:600 13px -apple-system,sans-serif;cursor:pointer;color:#1f2430;white-space:nowrap;}
+  #bar button.on{background:#2563eb;border-color:#2563eb;color:#fff;}
+  #bar button:disabled{opacity:.45;}
+  #bar label{display:inline-flex;gap:4px;align-items:center;font-weight:600;white-space:nowrap;}
+  #shotBtns{display:inline-flex;gap:5px;flex:0 0 auto;}
+  #words{flex:none;padding:6px 8px;border-bottom:1px solid #e6eaf0;}
+  #words textarea{width:100%;height:110px;border:1px solid #cfd6e0;border-radius:8px;padding:6px 8px;font:500 14px -apple-system,sans-serif;resize:vertical;}
+  #words .hint{font-size:12px;color:#8a93a2;margin-top:4px;}
+  #area{flex:1;position:relative;min-height:0;}
+  #area canvas{position:absolute;inset:0;width:100%;height:100%;}
+  #msg{font-size:12.5px;color:#64748b;white-space:nowrap;}
+</style>
+</head><body>
+<div id="app">
+  <div id="bar">
+    <div id="row1">
+      <div id="scroll1">
+        <button type="button" id="bEdit">✎ Einträge</button>
+        <button type="button" id="bPrev" title="Schritt für Schritt zeigen / ein Ereignis zurück">◀</button>
+        <span id="stepV" style="min-width:52px;text-align:center;font-weight:700;color:#5b6472">alle</span>
+        <button type="button" id="bNext" title="Nächstes Ereignis zeigen">▶</button>
+        <button type="button" id="bAll" title="Alle Ereignisse zeigen">alle</button>
+        <button type="button" id="bPrint" title="Zeitleiste drucken">🖨 Drucken</button>
+        <span id="msg"></span>
+      </div>
+      <span id="shotBtns"><button type="button" id="fsM" title="Schrift kleiner">A−</button><button type="button" id="fsP" title="Schrift größer">A+</button></span>
+    </div>
+    <div id="row2"><div id="scroll2">
+      <select id="mode" title="Abstände auf der Leiste">
+        <option value="scale">maßstabsgetreu</option>
+        <option value="even">gleichmäßig verteilt</option>
+      </select>
+      <label><input type="checkbox" id="cTicks" checked> Jahresmarken</label>
+      <label><input type="checkbox" id="cYears" checked> Jahreszahl am Ereignis</label>
+      <select id="pal" title="Farben"><option value="bunt">🎨 bunt</option><option value="blau">🔵 blau</option><option value="grau">⚫️ grau</option></select>
+    </div></div>
+  </div>
+  <div id="words" hidden>
+    <textarea id="wIn" placeholder="1687 = Newton: Principia&#10;1905 = Einstein: Relativitätstheorie&#10;12.4.1961 = Gagarin im All&#10;1789–1799 = Französische Revolution"></textarea>
+    <div class="hint">Je Zeile <b>Zeitpunkt = Ereignis</b> · Jahr (<b>1687</b>), Datum (<b>12.4.1961</b>), vor Christus (<b>-500</b> oder <b>500 v. Chr.</b>) · Zeitraum mit Bindestrich: <b>1789–1799 = …</b></div>
+  </div>
+  <div id="area"><canvas id="cv"></canvas></div>
+</div>
+<script src="shot.js"></script>
+<script>
+"use strict";
+const $=id=>document.getElementById(id), cv=$('cv'), ctx=cv.getContext('2d');
+const LINE='#1f2430', GREY='#8a93a2';
+const PAL={ bunt:['#2563eb','#dc2626','#16a34a','#d97706','#7c3aed','#0891b2','#db2777','#65a30d'],
+  blau:['#1e3a8a','#2563eb','#3b82f6','#0891b2','#0ea5e9','#1d4ed8'],
+  grau:['#1f2430','#374151','#4b5563','#6b7280'] };
+let D={ v:1, mode:'scale', ticks:true, years:true, pal:'bunt', step:-1, fontSize:15, fontBold:false, fontItalic:false,
+  words:'1687 = Newton: Principia\n1789–1799 = Französische Revolution\n1905 = Einstein: Relativitätstheorie\n12.4.1961 = Gagarin im All\n1969 = Erste Mondlandung' };
+let evs=[];
+
+/* ---------- Zeitangaben lesen ---------- */
+function parseTime(t){
+  t=(t||'').trim(); if(!t) return null;
+  let bc=/v\.?\s*chr\.?/i.test(t); t=t.replace(/v\.?\s*chr\.?/ig,'').replace(/n\.?\s*chr\.?/ig,'').trim();
+  const dm=t.match(/^(\d{1,2})\.(\d{1,2})\.(-?\d{1,5})$/);              // Tag.Monat.Jahr
+  if(dm){ const y=+dm[3], m=+dm[2], d=+dm[1]; return {val:(bc?-y:y)+((m-1)+ (d-1)/31)/12, label:t}; }
+  const my=t.match(/^(\d{1,2})\.(-?\d{1,5})$/);                          // Monat.Jahr
+  if(my){ const y=+my[2]; return {val:(bc?-y:y)+(+my[1]-1)/12, label:t}; }
+  const y=t.match(/^(-?\d{1,5})$/);
+  if(y){ const n=+y[1]; return {val:bc?-Math.abs(n):n, label:(bc?Math.abs(n)+' v. Chr.':String(n))}; }
+  const num=parseFloat(t.replace(',','.'));
+  return isFinite(num)?{val:bc?-Math.abs(num):num,label:t}:null;
+}
+function parse(){
+  const out=[];
+  (D.words||'').split(/\n+/).forEach(line=>{
+    if(!line.trim()) return;
+    const i=line.indexOf('='); if(i<0) return;
+    const left=line.slice(0,i).trim(), text=line.slice(i+1).trim();
+    const span=left.split(/\s*(?:–|—|\bbis\b|(?<=\d)\s*-\s*(?=\d))\s*/).filter(Boolean);
+    if(span.length>=2){ const a=parseTime(span[0]), b=parseTime(span[1]);
+      if(a&&b) out.push({from:Math.min(a.val,b.val), to:Math.max(a.val,b.val), label:a.label+'–'+b.label, text}); return; }
+    const p=parseTime(left); if(p) out.push({from:p.val, to:p.val, label:p.label, text});
+  });
+  return out.sort((a,b)=>a.from-b.from||a.to-b.to);
+}
+const setMsg=t=>{ $('msg').textContent=t||''; };
+const fontStr=(px,bold)=>(D.fontItalic?'italic ':'')+((bold||D.fontBold)?'800 ':'600 ')+px+'px -apple-system,BlinkMacSystemFont,sans-serif';
+function wrap(text,maxW){ const words=String(text).split(/\s+/), out=[]; let line='';
+  for(const w of words){ const t=line?line+' '+w:w; if(ctx.measureText(t).width>maxW&&line){ out.push(line); line=w; } else line=t; }
+  if(line) out.push(line); return out; }
+const niceStep=v=>{ if(!(v>0)) return 1; const e=Math.pow(10,Math.floor(Math.log10(v))), m=v/e;
+  return (m<1.5?1:(m<3?2:(m<7?5:10)))*e; };
+const fmtYear=y=>{ const r=Math.round(y); return r<0?(Math.abs(r)+' v. Chr.'):String(r); };
+
+/* ---------- Zeichnen ---------- */
+function resize(){ const dpr=window.devicePixelRatio||1, w=cv.clientWidth||320, h=cv.clientHeight||240;
+  cv.width=Math.round(w*dpr); cv.height=Math.round(h*dpr); ctx.setTransform(dpr,0,0,dpr,0,0); draw(); }
+function draw(){
+  evs=parse();
+  const w=cv.clientWidth, h=cv.clientHeight;
+  const fs=Math.max(8,Math.min(D.fontSize, h/9, w/26));   // in kleinen Objekten automatisch kleiner
+  ctx.clearRect(0,0,w,h); ctx.fillStyle='#fff'; ctx.fillRect(0,0,w,h);
+  if(!evs.length){ ctx.fillStyle=GREY; ctx.font=fontStr(fs); ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('„✎ Einträge" antippen – z. B. 1687 = Newton: Principia',w/2,h/2); setMsg(''); return; }
+  const vis=(D.step<0)?evs.length:Math.max(1,Math.min(evs.length,D.step));
+  setMsg(vis<evs.length?(vis+' von '+evs.length+' Ereignissen'):'');
+  $('stepV').textContent=(D.step<0)?'alle':(vis+'/'+evs.length);
+  $('bPrev').disabled=(D.step>=0&&vis<=1); $('bNext').disabled=(D.step<0||vis>=evs.length);
+  const pad=Math.max(28,fs*2.4), y=h*0.5, x0=pad, x1=w-pad;
+  /* Positionen */
+  let pos;
+  if(D.mode==='even'||evs.length<2){ const n=Math.max(1,evs.length-1);
+    pos=evs.map((e,i)=>({a:x0+(x1-x0)*(evs.length<2?0.5:i/n), b:x0+(x1-x0)*(evs.length<2?0.5:i/n)})); }
+  else { let mn=Math.min(...evs.map(e=>e.from)), mx=Math.max(...evs.map(e=>e.to));
+    if(mx-mn<1){ mx+=0.5; mn-=0.5; }
+    const span=mx-mn, m0=mn-span*0.06, m1=mx+span*0.06;
+    const X=v=>x0+(x1-x0)*(v-m0)/(m1-m0);
+    pos=evs.map(e=>({a:X(e.from), b:X(e.to)}));
+    /* Achsenmarken */
+    if(D.ticks){ const st=niceStep((m1-m0)/6);
+      ctx.strokeStyle='#c9d2df'; ctx.fillStyle=GREY; ctx.font=fontStr(fs*0.8); ctx.textAlign='center'; ctx.textBaseline='top';
+      for(let t=Math.ceil(m0/st)*st; t<=m1; t+=st){ const x=X(t);
+        ctx.lineWidth=1.2; ctx.beginPath(); ctx.moveTo(x,y-7); ctx.lineTo(x,y+7); ctx.stroke();
+        ctx.fillText(fmtYear(t), x, y+10); } }
+  }
+  /* Achse */
+  ctx.strokeStyle=LINE; ctx.lineWidth=2.6; ctx.lineCap='round';
+  ctx.beginPath(); ctx.moveTo(x0-10,y); ctx.lineTo(x1+12,y); ctx.stroke();
+  const ah=Math.max(7,fs*0.6);
+  ctx.beginPath(); ctx.moveTo(x1+12,y); ctx.lineTo(x1+12-ah,y-ah*0.55); ctx.moveTo(x1+12,y); ctx.lineTo(x1+12-ah,y+ah*0.55); ctx.stroke();
+  /* Ereignisse abwechselnd oben und unten, bei Bedarf gestapelt */
+  const pal=PAL[D.pal]||PAL.bunt;
+  const lanes={up:[],down:[]};
+  ctx.textBaseline='top';
+  for(let i=0;i<vis;i++){
+    const e=evs[i], p=pos[i], col=pal[i%pal.length], up=(i%2===0);
+    const isSpan=p.b-p.a>2;
+    ctx.font=fontStr(fs);
+    const maxW=Math.max(70,Math.min(w*0.30,(x1-x0)/Math.max(2,Math.min(vis,5))*1.5));
+    const lines=wrap(e.text||'',maxW);
+    const head=D.years?e.label:'';
+    const tw=Math.max(...lines.map(l=>ctx.measureText(l).width), head?ctx.measureText(head).width:0)+10;
+    const th=(lines.length+(head?1:0))*fs*1.25+8;
+    /* freie Höhe in der Spur suchen */
+    const cx=(p.a+p.b)/2; let lvl=0, box;
+    const arr=up?lanes.up:lanes.down;
+    const bx=Math.max(4,Math.min(w-4-tw, cx-tw/2));      // Kasten im Bild halten
+    while(lvl<3){
+      const dy=fs*1.7+lvl*(th+8);
+      box={x:bx, y:up?(y-dy-th):(y+dy), w:tw, h:th};
+      box.y=Math.max(2, Math.min(h-2-th, box.y));            // Kasten bleibt im Bild
+      if(!arr.some(o=>!(box.x+box.w<o.x-6||box.x>o.x+o.w+6||box.y+box.h<o.y||box.y>o.y+o.h))) break;
+      lvl++;
+    }
+    arr.push(box);
+    /* Marke auf der Achse */
+    ctx.save();
+    if(isSpan){ ctx.fillStyle=col; ctx.globalAlpha=.30; ctx.fillRect(p.a,y-9,Math.max(3,p.b-p.a),18); ctx.globalAlpha=1;
+      ctx.strokeStyle=col; ctx.lineWidth=2.4; ctx.beginPath(); ctx.moveTo(p.a,y-9); ctx.lineTo(p.a,y+9); ctx.moveTo(p.b,y-9); ctx.lineTo(p.b,y+9); ctx.stroke(); }
+    else { ctx.fillStyle=col; ctx.beginPath(); ctx.arc(p.a,y,Math.max(4,fs*0.32),0,7); ctx.fill(); }
+    /* Verbindungslinie */
+    ctx.strokeStyle=col; ctx.lineWidth=1.6; ctx.setLineDash([4,3]);
+    const lx=Math.max(box.x+8, Math.min(box.x+box.w-8, cx));   // an der Kastenkante andocken
+    ctx.beginPath(); ctx.moveTo(cx, up?y-6:y+6); ctx.lineTo(lx, up?box.y+box.h:box.y); ctx.stroke(); ctx.setLineDash([]);
+    /* Textfeld */
+    ctx.fillStyle='rgba(255,255,255,.92)'; ctx.fillRect(box.x,box.y,box.w,box.h);
+    ctx.strokeStyle=col; ctx.lineWidth=1.4; ctx.strokeRect(box.x,box.y,box.w,box.h);
+    let ty=box.y+4;
+    ctx.textAlign='center';
+    if(head){ ctx.font=fontStr(fs,true); ctx.fillStyle=col; ctx.fillText(head, box.x+box.w/2, ty); ty+=fs*1.25; }
+    ctx.font=fontStr(fs); ctx.fillStyle=LINE;
+    lines.forEach(l=>{ ctx.fillText(l, box.x+box.w/2, ty); ty+=fs*1.25; });
+    ctx.restore();
+  }
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+}
+/* ---------- Drucken ---------- */
+function printSheet(title){
+  let url='';
+  try{ const c=(window.TafelShot&&TafelShot.rasterize)?TafelShot.rasterize($('area'),{scale:2.5,pad:6}):cv; url=c.toDataURL('image/png'); }
+  catch(e){ url=cv.toDataURL('image/png'); }
+  const win=window.open('','_blank');
+  if(!win){ setMsg('Bitte Pop-ups erlauben – dann klappt das Drucken'); return; }
+  win.document.write('<!DOCTYPE html><meta charset="utf-8"><title>'+title+'</title>'+
+    '<style>html,body{margin:0;padding:0}@page{margin:10mm;size:landscape}img{width:100%;height:auto;display:block}</style>'+
+    '<img src="'+url+'">');
+  win.document.close(); win.focus();
+  setTimeout(()=>{ try{ win.print(); }catch(e){} },350);
+}
+/* ---------- Bedienung ---------- */
+function refresh(){ draw(); sync(); }
+$('bEdit').onclick=()=>{ const wb=$('words'); wb.hidden=!wb.hidden; $('bEdit').classList.toggle('on',!wb.hidden);
+  if(!wb.hidden){ $('wIn').value=D.words; $('wIn').focus(); } resize(); };
+$('wIn').addEventListener('input',()=>{ D.words=$('wIn').value; refresh(); });
+$('bNext').onclick=()=>{ const n=parse().length; D.step=(D.step<0)?n:Math.min(n,D.step+1); refresh(); };
+$('bPrev').onclick=()=>{ D.step=(D.step<0)?1:Math.max(1,D.step-1); refresh(); };   // aus „alle" heraus beginnt die Schrittfolge vorn
+$('bAll').onclick=()=>{ D.step=-1; refresh(); };
+$('bPrint').onclick=()=>printSheet('Zeitleiste');
+$('mode').onchange=()=>{ D.mode=$('mode').value; refresh(); };
+$('cTicks').onchange=()=>{ D.ticks=$('cTicks').checked; refresh(); };
+$('cYears').onchange=()=>{ D.years=$('cYears').checked; refresh(); };
+$('pal').onchange=()=>{ D.pal=$('pal').value; refresh(); };
+for(const [id,d] of [['fsM',-1],['fsP',1]]){ $(id).addEventListener('pointerdown',e=>e.preventDefault());
+  $(id).onclick=()=>{ D.fontSize=Math.max(9,Math.min(34,(D.fontSize||15)+d)); refresh(); }; }
+if(window.TafelShot) TafelShot.buttons($('shotBtns'),()=>TafelShot.rasterize($('app'),{exclude:'#bar,#words',pad:6}));
+/* ---------- Tafel-Anbindung ---------- */
+function sync(){ if(window.parent===window) return; /* allein geöffnet: nicht an sich selbst senden */
+  try{ parent.postMessage({type:'embed-data',data:D},'*'); }catch(e){} }
+addEventListener('message',e=>{ if(window.parent===window||e.source!==window.parent) return;   // eigene Nachrichten ignorieren
+  if(!(e.data&&e.data.type==='embed-data'&&e.data.data)) return;
+  D=Object.assign(D,e.data.data);
+  $('wIn').value=D.words||''; $('mode').value=D.mode||'scale';
+  $('cTicks').checked=D.ticks!==false; $('cYears').checked=D.years!==false; $('pal').value=D.pal||'bunt';
+  resize(); });
+addEventListener('resize',resize);
+window.addEventListener('load',()=>{ resize();
+  if(window.ResizeObserver) new ResizeObserver(resize).observe(cv);
+  try{ if(window.parent!==window) parent.postMessage({type:'embed-ready'},'*'); }catch(e){} });
+</script>
+</body></html>

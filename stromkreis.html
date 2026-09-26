@@ -61,7 +61,7 @@
 </head>
 <body>
 <div id="wrap">
-  <div id="bar"><div id="barL">
+  <div id="bar" class="tafelEdit"><div id="barL">
     <button class="tb" id="fNew" title="Neue, leere Schaltung"><svg viewBox="0 0 32 20"><path d="M11 2h8l4 4v12H11Z M19 2v4h4 M17 9v6M14 12h6"/></svg><span>Neu</span></button>
     <button class="tb" id="fSave" title="Schaltung als Datei speichern"><svg viewBox="0 0 32 20"><path d="M10 2h10l3 3v13H10Z M13 2v5h7V2 M13 18v-6h7v6"/></svg><span>Speichern</span></button>
     <button class="tb" id="fLoad" title="Gespeicherte Schaltung laden"><svg viewBox="0 0 32 20"><path d="M7 16V5h6l2 2h10v9Z M16 9v6M13 12l3 3 3-3"/></svg><span>Laden</span></button>
@@ -94,6 +94,7 @@
   <div id="cvbox"><canvas id="cv"></canvas><div id="warn" hidden></div><div id="hint"></div><div id="toast"></div>
     <div id="chart" hidden><div id="chHead"><b id="chTitle">Diagramm</b><span class="grow"></span><button class="chip U on" data-q="U">U</button><button class="chip I on" data-q="I">I</button><select id="chWin"><option value="5">5 s</option><option value="10" selected>10 s</option><option value="30">30 s</option><option value="60">60 s</option></select><button class="btn" id="chPause" title="Anhalten/Weiter">⏸</button><button class="btn" id="chBoard" title="Diagramm als Bild auf die Tafel">🖼</button><button class="btn" id="chClose" title="Diagramm schließen">✕</button></div><canvas id="chCv"></canvas></div></div>
 </div>
+<script src="modus.js"></script>
 <script>
 "use strict";
 const $=id=>document.getElementById(id);
@@ -117,7 +118,7 @@ const INFO={
 const RL=5;                                   // Drahtwiderstand der Spule in Ω
 const BETA=100, VBE=0.7, VSAT=0.1, RSAT=0.5;   // Transistor-Modell
 let simT=0;                                   // Simulationszeit für Wechselspannung
-const defaults=()=>({wires:[],parts:[],show:{U:true,I:true,R:false},flow:true,carrier:'e',zoom:1,ox:null,oy:null,fontSize:14});
+const defaults=()=>({wires:[],parts:[],show:{U:true,I:true,R:false},flow:true,carrier:'e',zoom:1,ox:null,oy:null,fontSize:14,edit:true});
 let data=defaults();
 let tool='sel', sel=null;             // sel: {part:id} oder {wires:[keys]}
 let undoSt=[], redoSt=[];
@@ -653,10 +654,12 @@ addEventListener('message',e=>{ if(window.parent===window||e.source!==window.par
   document.documentElement.style.setProperty('--fs',Math.min(18,data.fontSize||14)+'px');
   if(!data.parts.length&&!data.wires.length&&!d.wires){ TEMPLATES['Einfacher Stromkreis'](); data.ox=null; }
   if(!isFinite(data.ox)||data.ox===null) data.ox=null;
-  sel=sameCircuit?keepSel:null; dirty=true; renderBar2(); resize(); });
+  sel=sameCircuit?keepSel:null; dirty=true; if(window.TafelModus) TafelModus.refresh(); renderBar2(); resize(); });
 window.addEventListener('resize',resize);
 if(window.ResizeObserver) new ResizeObserver(resize).observe(cv);
 setTool('sel'); updUndo(); renderBar2(); resize();
+if(window.TafelModus) TafelModus.init({get:()=>data.edit!==false,
+  set:v=>{ data.edit=v; if(!v) setTool('sel'); renderBar2(); resize(); sync(true); }});
 try{ parent.postMessage({type:'embed-ready'},'*'); }catch(e){}
 if(window.parent===window){                               // eigenständig: zuletzt bearbeitete Schaltung wiederherstellen
   $('fClose').hidden=false; $('chBoard').hidden=true; document.title='Stromkreis';

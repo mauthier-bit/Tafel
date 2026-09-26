@@ -1,0 +1,208 @@
+<!DOCTYPE html><html lang="de"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Periodensystem</title>
+<style>
+  *{box-sizing:border-box;} [hidden]{display:none!important;}
+  html,body{margin:0;height:100%;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#fff;color:#1f2430;overflow:hidden;}
+  #app{display:flex;flex-direction:column;height:100%;}
+  #bar{flex:none;display:flex;flex-direction:column;gap:5px;padding:6px 8px;border-bottom:1px solid #e6eaf0;font-size:13px;}
+  #row1,#row2{display:flex;gap:6px;align-items:center;flex-wrap:nowrap;}
+  #scroll1,#scroll2{display:flex;gap:6px;align-items:center;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:thin;flex:1 1 auto;min-width:0;padding-bottom:1px;}
+  #scroll1>*,#scroll2>*{flex:0 0 auto;}
+  #scroll1::-webkit-scrollbar,#scroll2::-webkit-scrollbar{height:4px;}
+  #scroll1::-webkit-scrollbar-thumb,#scroll2::-webkit-scrollbar-thumb{background:#cfd6e0;border-radius:2px;}
+  #bar button,#bar select,#bar input[type=search]{border:1px solid #cfd6e0;background:#fff;border-radius:7px;padding:4px 9px;font:600 13px -apple-system,sans-serif;cursor:pointer;color:#1f2430;white-space:nowrap;}
+  #bar input[type=search]{cursor:text;width:120px;}
+  #bar button.on{background:#2563eb;border-color:#2563eb;color:#fff;}
+  #bar label{display:inline-flex;gap:4px;align-items:center;font-weight:600;white-space:nowrap;}
+  #shotBtns{display:inline-flex;gap:5px;flex:0 0 auto;}
+  #area{flex:1;position:relative;min-height:0;overflow:hidden;}
+  #area canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;}
+  #msg{font-size:12.5px;color:#64748b;white-space:nowrap;}
+</style>
+</head><body>
+<div id="app">
+  <div id="bar">
+    <div id="row1">
+      <div id="scroll1">
+        <input type="search" id="q" placeholder="🔍 Element…" autocomplete="off" autocorrect="off" spellcheck="false">
+        <button type="button" id="bNeben" class="on" title="Nebengruppen (3–12) ein- und ausklappen">Nebengruppen</button>
+        <button type="button" id="bLan" class="on" title="Lanthanoide und Actinoide ein- und ausklappen">La/Ac</button>
+        <button type="button" id="bPrint" title="Periodensystem drucken">🖨 Drucken</button>
+        <span id="msg"></span>
+      </div>
+      <span id="shotBtns"><button type="button" id="fsM" title="Schrift kleiner">A−</button><button type="button" id="fsP" title="Schrift größer">A+</button></span>
+    </div>
+    <div id="row2"><div id="scroll2">
+      <select id="color" title="Einfärbung">
+        <option value="cat">Kategorien</option>
+        <option value="state">Zustand bei 20 °C</option>
+        <option value="metal">Metall / Nichtmetall</option>
+        <option value="none">ohne Farbe</option>
+      </select>
+      <label><input type="checkbox" id="cMass" checked> Atommasse</label>
+      <label><input type="checkbox" id="cName" checked> Name</label>
+      <button type="button" id="bReset" title="Auswahl und Zoom zurücksetzen">↺ Ansicht</button>
+    </div></div>
+  </div>
+  <div id="area"><canvas id="cv"></canvas></div>
+</div>
+<script src="shot.js"></script>
+<script src="pse-data.js"></script>
+<script>
+"use strict";
+const $=id=>document.getElementById(id), cv=$('cv'), ctx=cv.getContext('2d');
+const EL=(window.PSE_DATA||[]).map(a=>({z:a[0],sym:a[1],name:a[2],mass:a[3],cat:a[4],x:a[5],y:a[6],melt:a[7],boil:a[8],dens:a[9],conf:a[10]}));
+const CATS={ alkali:['Alkalimetall','#fca5a5'], erdalkali:['Erdalkalimetall','#fdba74'], uebergang:['Übergangsmetall','#fde68a'],
+  metall:['Metall','#bbf7d0'], halbmetall:['Halbmetall','#a7f3d0'], nichtmetall:['Nichtmetall','#bfdbfe'],
+  edelgas:['Edelgas','#ddd6fe'], lanthanoid:['Lanthanoid','#f5d0fe'], actinoid:['Actinoid','#fbcfe8'], unbekannt:['unbekannt','#e5e7eb'] };
+const NONMETAL=new Set(['nichtmetall','edelgas']);
+let D={ v:1, neben:true, lan:true, color:'cat', mass:true, name:true, sel:0, fontSize:13, fontBold:false, fontItalic:false };
+let cells=[], hitBoxes=[];
+
+const state=e=>{ if(e.melt===null||e.melt===undefined) return '?';
+  if(e.melt>20) return 'fest'; if(e.boil!==null&&e.boil<20) return 'gasförmig'; return 'flüssig'; };
+function colorOf(e){
+  if(D.color==='none') return '#f8fafc';
+  if(D.color==='cat') return (CATS[e.cat]||CATS.unbekannt)[1];
+  if(D.color==='metal') return NONMETAL.has(e.cat)?'#bfdbfe':(e.cat==='halbmetall'?'#a7f3d0':'#fde68a');
+  const s=state(e); return s==='fest'?'#e2e8f0':(s==='flüssig'?'#bae6fd':(s==='gasförmig'?'#fecdd3':'#f1f5f9'));
+}
+const fontStr=(px,bold)=>(D.fontItalic?'italic ':'')+((bold||D.fontBold)?'800 ':'600 ')+px+'px -apple-system,BlinkMacSystemFont,sans-serif';
+const setMsg=t=>{ $('msg').textContent=t||''; };
+
+/* ---------- Gitter aufbauen ---------- */
+function build(){
+  const skip=new Set();
+  if(!D.neben) for(let g=3;g<=12;g++) skip.add(g);           // Nebengruppen ausblenden
+  cells=[];
+  const colOf=x=>{ if(D.neben) return x;
+    return x<=2?x:(x>=13?x-10:0); };                          // Kurzform: Hauptgruppen zusammenrücken
+  EL.forEach(e=>{
+    if(e.y>=8){ if(!D.lan||!D.neben) return; cells.push({e, cx:e.x, cy:e.y+0.4}); return; }   // La/Ac-Reihen (nur in der Langform)
+    const grp=(e.y<=7)?e.x:0;
+    if(!D.neben && grp>=3 && grp<=12) return;
+    cells.push({e, cx:colOf(e.x), cy:e.y});
+  });
+  if(D.lan||!D.neben){                                         // Platzhalter in Periode 6/7
+    cells.push({ph:'57–71', cx:colOf(3), cy:6}); cells.push({ph:'89–103', cx:colOf(3), cy:7});
+  }
+}
+/* ---------- Zeichnen ---------- */
+function resize(){ const dpr=window.devicePixelRatio||1, w=cv.clientWidth||320, h=cv.clientHeight||240;
+  cv.width=Math.round(w*dpr); cv.height=Math.round(h*dpr); ctx.setTransform(dpr,0,0,dpr,0,0); draw(); }
+function draw(){
+  build();
+  const w=cv.clientWidth, h=cv.clientHeight;
+  ctx.clearRect(0,0,w,h); ctx.fillStyle='#fff'; ctx.fillRect(0,0,w,h);
+  const colsMax=D.neben?18:8, rowsMax=(D.lan&&D.neben)?10.4:7.2;
+  const padL=6, padT=6, legend=D.color==='none'?0:Math.max(16,D.fontSize*1.6);
+  const cw=(w-2*padL)/colsMax, chh=(h-2*padT-legend)/rowsMax;
+  const cell=Math.max(12,Math.min(cw,chh));
+  const gridW=cell*colsMax, x0=(w-gridW)/2, y0=padT;
+  hitBoxes=[];
+  const selEl=D.sel?EL.find(e=>e.z===D.sel):null;
+  cells.forEach(c=>{
+    const x=x0+(c.cx-1)*cell, y=y0+(c.cy-1)*cell, s=cell-2;
+    if(c.ph){ ctx.fillStyle='#eef2f7'; ctx.fillRect(x+1,y+1,s,s);
+      ctx.strokeStyle='#cbd5e1'; ctx.lineWidth=1; ctx.strokeRect(x+1,y+1,s,s);
+      ctx.fillStyle='#64748b'; ctx.font=fontStr(Math.max(7,s*0.24)); ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText(c.ph,x+1+s/2,y+1+s/2); return; }
+    const e=c.e, sel=selEl&&selEl.z===e.z;
+    ctx.fillStyle=colorOf(e); ctx.fillRect(x+1,y+1,s,s);
+    ctx.strokeStyle=sel?'#2563eb':'#94a3b8'; ctx.lineWidth=sel?3:0.8; ctx.strokeRect(x+1,y+1,s,s);
+    ctx.fillStyle='#1f2430'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.font=fontStr(Math.max(6,s*0.16)); ctx.textAlign='left'; ctx.fillText(String(e.z), x+4, y+5+s*0.09);
+    ctx.textAlign='center';
+    ctx.font=fontStr(Math.max(8,s*0.40),true); ctx.fillText(e.sym, x+1+s/2, y+1+s*0.46);
+    if(D.name&&s>34){ ctx.font=fontStr(Math.max(5,s*0.135)); ctx.fillStyle='#334155';
+      let n=e.name; while(ctx.measureText(n).width>s-4&&n.length>3) n=n.slice(0,-1);
+      ctx.fillText(n===e.name?n:(n+'.'), x+1+s/2, y+1+s*0.70); }
+    if(D.mass&&s>44){ ctx.font=fontStr(Math.max(5,s*0.13)); ctx.fillStyle='#64748b';
+      ctx.fillText(String(Math.round(e.mass*100)/100), x+1+s/2, y+1+s*0.87); }
+    hitBoxes.push({x:x+1,y:y+1,w:s,h:s,z:e.z});
+  });
+  /* Legende */
+  if(legend){ const fs=Math.max(8,Math.min(D.fontSize,legend*0.62)); ctx.font=fontStr(fs); ctx.textBaseline='middle'; ctx.textAlign='left';
+    let lx=x0+2, ly=h-legend/2;
+    const keys=D.color==='cat'?Object.keys(CATS).filter(k=>k!=='unbekannt')
+      :(D.color==='metal'?['metall','halbmetall','nichtmetall']:['fest','flüssig','gasförmig']);
+    keys.forEach(k=>{
+      let col,label;
+      if(D.color==='cat'){ col=CATS[k][1]; label=CATS[k][0]; }
+      else if(D.color==='metal'){ col=k==='nichtmetall'?'#bfdbfe':(k==='halbmetall'?'#a7f3d0':'#fde68a');
+        label=k==='metall'?'Metalle':(k==='halbmetall'?'Halbmetalle':'Nichtmetalle'); }
+      else { col=k==='fest'?'#e2e8f0':(k==='flüssig'?'#bae6fd':'#fecdd3'); label=k; }
+      const tw=ctx.measureText(label).width+fs*1.9;
+      if(lx+tw>w-4){ return; }
+      ctx.fillStyle=col; ctx.fillRect(lx,ly-fs*0.55,fs*1.1,fs*1.1);
+      ctx.strokeStyle='#94a3b8'; ctx.lineWidth=0.8; ctx.strokeRect(lx,ly-fs*0.55,fs*1.1,fs*1.1);
+      ctx.fillStyle='#475569'; ctx.fillText(label, lx+fs*1.45, ly); lx+=tw+fs*0.8; });
+  }
+  /* Infokarte zum gewählten Element */
+  if(selEl) drawCard(selEl,w,h,cell);
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+}
+function drawCard(e,w,h,cell){
+  const fs=Math.max(11,Math.min(D.fontSize*1.05, h*0.035));
+  const lines=[['Ordnungszahl',String(e.z)],['Atommasse',String(e.mass)+' u'],
+    ['Kategorie',(CATS[e.cat]||CATS.unbekannt)[0]],['Zustand (20 °C)',state(e)],
+    ['Schmelzpunkt',e.melt===null?'–':(e.melt+' °C')],['Siedepunkt',e.boil===null?'–':(e.boil+' °C')],
+    ['Dichte',e.dens?(e.dens+' g/cm³'):'–'],['Konfiguration',e.conf||'–']];
+  ctx.font=fontStr(fs);
+  const bw=Math.min(w*0.44, Math.max(...lines.map(l=>ctx.measureText(l[0]+': '+l[1]).width))+fs*1.6);
+  const bh=(lines.length+1.8)*fs*1.35;
+  const x=w-bw-8, y=8;
+  ctx.fillStyle='rgba(255,255,255,.96)'; ctx.fillRect(x,y,bw,bh);
+  ctx.strokeStyle='#2563eb'; ctx.lineWidth=2; ctx.strokeRect(x,y,bw,bh);
+  ctx.fillStyle=colorOf(e); ctx.fillRect(x+1,y+1,bw-2,fs*1.9);
+  ctx.fillStyle='#1f2430'; ctx.textAlign='left'; ctx.textBaseline='middle';
+  ctx.font=fontStr(fs*1.25,true); ctx.fillText(e.sym+'  '+e.name, x+fs*0.6, y+fs*1.0);
+  let ty=y+fs*2.6;
+  lines.forEach(l=>{ ctx.font=fontStr(fs*0.92); ctx.fillStyle='#64748b'; ctx.fillText(l[0]+':', x+fs*0.6, ty);
+    ctx.fillStyle='#1f2430'; ctx.textAlign='right'; ctx.fillText(l[1], x+bw-fs*0.6, ty); ctx.textAlign='left'; ty+=fs*1.35; });
+}
+/* ---------- Bedienung ---------- */
+function refresh(){ draw(); sync(); }
+cv.addEventListener('pointerdown',e=>{ const r=cv.getBoundingClientRect(), x=e.clientX-r.left, y=e.clientY-r.top;
+  const hit=hitBoxes.find(b=>x>=b.x&&x<=b.x+b.w&&y>=b.y&&y<=b.y+b.h);
+  D.sel=(hit&&hit.z!==D.sel)?hit.z:0; refresh(); });
+$('bNeben').onclick=()=>{ D.neben=!D.neben; $('bNeben').classList.toggle('on',D.neben); refresh(); };
+$('bLan').onclick=()=>{ D.lan=!D.lan; $('bLan').classList.toggle('on',D.lan); refresh(); };
+$('color').onchange=()=>{ D.color=$('color').value; refresh(); };
+$('cMass').onchange=()=>{ D.mass=$('cMass').checked; refresh(); };
+$('cName').onchange=()=>{ D.name=$('cName').checked; refresh(); };
+$('bReset').onclick=()=>{ D.sel=0; $('q').value=''; setMsg(''); refresh(); };
+$('q').addEventListener('input',()=>{ const t=$('q').value.trim().toLowerCase(); if(!t){ D.sel=0; setMsg(''); refresh(); return; }
+  const hit=EL.find(e=>e.sym.toLowerCase()===t)||EL.find(e=>String(e.z)===t)||EL.find(e=>e.name.toLowerCase().startsWith(t));
+  if(hit){ D.sel=hit.z; setMsg(''); } else setMsg('nicht gefunden');
+  refresh(); });
+for(const [id,d] of [['fsM',-1],['fsP',1]]){ $(id).addEventListener('pointerdown',e=>e.preventDefault());
+  $(id).onclick=()=>{ D.fontSize=Math.max(8,Math.min(30,(D.fontSize||13)+d)); refresh(); }; }
+function printSheet(){
+  let url='';
+  try{ const c=(window.TafelShot&&TafelShot.rasterize)?TafelShot.rasterize($('area'),{scale:2.5,pad:6}):cv; url=c.toDataURL('image/png'); }
+  catch(e){ url=cv.toDataURL('image/png'); }
+  const win=window.open('','_blank');
+  if(!win){ setMsg('Bitte Pop-ups erlauben – dann klappt das Drucken'); return; }
+  win.document.write('<!DOCTYPE html><meta charset="utf-8"><title>Periodensystem</title>'+
+    '<style>html,body{margin:0;padding:0}@page{margin:8mm;size:landscape}img{width:100%;height:auto;display:block}</style><img src="'+url+'">');
+  win.document.close(); win.focus(); setTimeout(()=>{ try{ win.print(); }catch(e){} },350);
+}
+$('bPrint').onclick=printSheet;
+if(window.TafelShot) TafelShot.buttons($('shotBtns'),()=>TafelShot.rasterize($('app'),{exclude:'#bar',pad:6}));
+/* ---------- Tafel-Anbindung ---------- */
+function sync(){ if(window.parent===window) return; /* allein geöffnet: nicht an sich selbst senden */
+  try{ parent.postMessage({type:'embed-data',data:D},'*'); }catch(e){} }
+addEventListener('message',e=>{ if(window.parent===window||e.source!==window.parent) return;   // eigene Nachrichten ignorieren
+  if(!(e.data&&e.data.type==='embed-data'&&e.data.data)) return;
+  D=Object.assign(D,e.data.data);
+  $('bNeben').classList.toggle('on',D.neben!==false); $('bLan').classList.toggle('on',D.lan!==false);
+  $('color').value=D.color||'cat'; $('cMass').checked=D.mass!==false; $('cName').checked=D.name!==false;
+  resize(); });
+addEventListener('resize',resize);
+window.addEventListener('load',()=>{ resize();
+  if(window.ResizeObserver) new ResizeObserver(resize).observe(cv);
+  try{ if(window.parent!==window) parent.postMessage({type:'embed-ready'},'*'); }catch(e){} });
+</script>
+</body></html>

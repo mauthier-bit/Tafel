@@ -1,0 +1,556 @@
+<!DOCTYPE html><html lang="de"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Lernlandkarte</title>
+<style>
+  :root{--fs:15px;}
+  *{box-sizing:border-box;} [hidden]{display:none!important;}
+  html,body{margin:0;height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#1f2430;font-size:var(--fs);}
+  #wrap{position:absolute;inset:0;display:flex;flex-direction:column;}
+  #bar{display:flex;gap:4px;padding:6px;border-bottom:1px solid #e2e7ef;align-items:center;flex:none;overflow:hidden;}
+  #barL,#barR{display:flex;gap:4px;align-items:center;flex:none;}
+  #barMid{display:flex;gap:4px;align-items:center;flex:1 1 auto;min-width:0;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:thin;padding:0 2px;}
+  #bar.compact #barL .tb span,#bar.compact #barR .tb span{display:none;}
+  #bar.compact #barL .tb,#bar.compact #barR .tb{min-width:42px;padding:0 3px;}
+  #barMid::-webkit-scrollbar{height:5px;} #barMid::-webkit-scrollbar-thumb{background:#c8d0dc;border-radius:3px;}
+  .tb{flex:none;min-width:52px;height:50px;border:1px solid #d6dce5;background:#fff;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;padding:0 5px;color:#1f2430;font:inherit;font-size:15px;}
+  .tb svg{width:32px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+  .tb span{font-size:.7em;font-weight:600;white-space:nowrap;}
+  .tb.on{background:#2563eb;border-color:#2563eb;color:#fff;}
+  .tb:disabled{opacity:.35;}
+  .sep{width:1px;align-self:stretch;background:#e2e7ef;margin:0 3px;flex:none;}
+  #bar2{display:flex;gap:6px;padding:5px 8px;border-bottom:1px solid #e2e7ef;align-items:center;flex-wrap:nowrap;flex:none;min-height:44px;font-size:14px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;}
+  #bar2>*{flex:0 0 auto;}
+  .lbl{color:#64748b;font-weight:600;} .grow{flex:1 1 auto!important;min-width:4px;}
+  .btn{border:1px solid #cfd6e0;background:#fff;border-radius:9px;padding:5px 10px;font:inherit;font-weight:600;color:#1f2430;cursor:pointer;white-space:nowrap;}
+  .btn.pri{background:#2563eb;border-color:#2563eb;color:#fff;}
+  .btn.red{color:#dc2626;border-color:#fca5a5;}
+  #bar2 input[type=text]{border:1px solid #cfd6e0;border-radius:9px;padding:5px 9px;font:inherit;min-width:140px;}
+  .sw{width:24px;height:24px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px #cfd6e0;cursor:pointer;padding:0;}
+  .sw.on{box-shadow:0 0 0 2px #2563eb;}
+  #cvbox{position:relative;flex:1;min-height:0;}
+  #cvbox canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;}
+  #hint{position:absolute;left:8px;bottom:6px;font-size:.78em;color:#94a3b8;pointer-events:none;}
+  #crumbs{position:absolute;left:8px;top:6px;display:flex;gap:6px;align-items:center;font-size:.85em;}
+  #crumbs button{border:1px solid #cfd6e0;background:rgba(255,255,255,.92);border-radius:999px;padding:3px 10px;font:inherit;font-weight:700;cursor:pointer;color:#334155;}
+  #panel{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);min-width:min(340px,86%);max-width:min(520px,92%);
+         background:#fff;border:1px solid #cfd6e0;border-radius:14px;box-shadow:0 14px 40px rgba(15,23,42,.25);padding:14px 16px;z-index:6;}
+  #panel h3{margin:0 0 6px;font-size:1.05em;}
+  #panel p{margin:0 0 10px;color:#334155;line-height:1.45;white-space:pre-wrap;}
+  #panel #pBtns{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;}
+  #panel button{border:1px solid #cfd6e0;background:#fff;border-radius:9px;padding:6px 11px;font:inherit;font-weight:600;cursor:pointer;}
+  #panel button.pri{background:#2563eb;border-color:#2563eb;color:#fff;}
+  #panel button.ok{background:#16a34a;border-color:#16a34a;color:#fff;}
+  #aktBox{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(560px,94%);max-height:86%;
+          background:#fff;border:1px solid #cfd6e0;border-radius:14px;box-shadow:0 14px 40px rgba(15,23,42,.25);
+          padding:12px 14px;z-index:7;display:flex;flex-direction:column;}
+  #aktBox[hidden]{display:none;}
+  #aktBox h3{margin:0 0 8px;font-size:1.02em;}
+  #abListe{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:8px;}
+  .akZeile{display:flex;gap:6px;align-items:center;}
+  .akZeile select{flex:0 0 42%;border:1px solid #cfd6e0;border-radius:9px;padding:6px 7px;font:inherit;min-width:0;}
+  .akZeile input{flex:1;border:1px solid #cfd6e0;border-radius:9px;padding:6px 8px;font:inherit;min-width:0;}
+  .akZeile button{border:1px solid #fca5a5;background:#fff;color:#dc2626;border-radius:9px;padding:6px 9px;font:inherit;font-weight:700;cursor:pointer;}
+  #abFoot{flex:none;display:flex;gap:6px;align-items:center;margin-top:10px;}
+  #abFoot button{border:1px solid #cfd6e0;background:#fff;border-radius:9px;padding:6px 12px;font:inherit;font-weight:600;cursor:pointer;}
+  #abFoot button.pri{background:#2563eb;border-color:#2563eb;color:#fff;}
+  #toolBox{position:absolute;inset:3% 2%;z-index:8;background:#fff;border:1px solid #cfd6e0;border-radius:14px;
+           box-shadow:0 16px 46px rgba(15,23,42,.3);display:flex;flex-direction:column;overflow:hidden;}
+  #toolBox[hidden]{display:none;}
+  #tbHead{flex:none;display:flex;align-items:center;gap:8px;padding:7px 10px;border-bottom:1px solid #e2e7ef;font-size:.95em;}
+  #tbHead b{flex:1;}
+  #tbHead button{border:1px solid #cfd6e0;background:#fff;border-radius:8px;padding:3px 10px;font:inherit;font-weight:700;cursor:pointer;}
+  #tbFrame{flex:1;width:100%;border:0;min-height:0;}
+</style>
+</head><body>
+<div id="wrap">
+  <div id="bar"><div id="barL">
+    <button class="tb" id="fNew" title="Neue, leere Karte"><svg viewBox="0 0 32 20"><path d="M11 2h8l4 4v12H11Z M19 2v4h4 M17 9v6M14 12h6"/></svg><span>Neu</span></button>
+    <button class="tb" id="bUndo" title="Rückgängig"><svg viewBox="0 0 32 20"><path d="M10 5 5 10l5 5M5 10H20a6 6 0 0 1 0 12"/></svg><span>Zurück</span></button>
+    <button class="tb" id="bRedo" title="Wiederholen"><svg viewBox="0 0 32 20"><path d="M22 5l5 5-5 5M27 10H12a6 6 0 0 0 0 12"/></svg><span>Vor</span></button>
+    <span class="sep"></span>
+    <button class="tb" id="fSave" title="Karte als Datei speichern"><svg viewBox="0 0 32 20"><path d="M10 2h10l3 3v13H10Z M13 2v5h7V2 M13 18v-6h7v6"/></svg><span>Speichern</span></button>
+    <button class="tb" id="fLoad" title="Karte laden"><svg viewBox="0 0 32 20"><path d="M7 16V5h6l2 2h10v9Z M16 9v6M13 12l3 3 3-3"/></svg><span>Laden</span></button>
+    <input type="file" id="fFile" accept=".json,application/json" hidden>
+    <input type="file" id="bgFile" accept="image/*" hidden>
+    <span class="sep"></span>
+    </div><div id="barMid">
+    <button class="tb" data-tool="ort" title="Ort setzen: auf freie Fläche tippen"><svg viewBox="0 0 32 20"><path d="M16 18s7-6.2 7-10.6A7 7 0 0 0 9 7.4C9 11.8 16 18 16 18Z"/><circle cx="16" cy="7.6" r="2.4"/></svg><span>Ort</span></button>
+    <button class="tb" data-tool="weg" title="Weg ziehen: von einem Ort zum nächsten"><svg viewBox="0 0 32 20"><circle cx="6" cy="14" r="3"/><circle cx="26" cy="6" r="3"/><path d="M8.6 12.6 23.4 7.4" stroke-dasharray="3 2.5"/></svg><span>Weg</span></button>
+    <button class="tb" data-tool="del" title="Ort oder Weg antippen und löschen"><svg viewBox="0 0 32 20"><path d="M11 5h10l-1 13H12Z M14 5V3h4v2M9 5h14"/></svg><span>Löschen</span></button>
+    <span class="sep"></span>
+    <button class="tb" id="bBg" title="Hintergrundbild für diese Karte"><svg viewBox="0 0 32 20"><rect x="5" y="3" width="22" height="14" rx="2"/><path d="M5 14l6-5 4 3 4-4 8 7"/><circle cx="11.5" cy="7.5" r="1.5"/></svg><span>Hintergrund</span></button>
+    </div><div id="barR"><span class="sep"></span>
+    <button class="tb" id="bHide" title="Noch gesperrte Orte verbergen – sie erscheinen erst, wenn der Weg dorthin frei ist"><svg viewBox="0 0 32 20"><path d="M3 10s5-6 13-6 13 6 13 6-5 6-13 6S3 10 3 10Z"/><circle cx="16" cy="10" r="3"/><path d="M6 17 26 3"/></svg><span>verbergen</span></button>
+    <button class="tb" id="bAnim" title="Erreichbare Orte pulsieren lassen"><svg viewBox="0 0 32 20"><circle cx="16" cy="10" r="3"/><circle cx="16" cy="10" r="6.5" stroke-dasharray="3 3"/><circle cx="16" cy="10" r="9.5" stroke-dasharray="2 4"/></svg><span>Animation</span></button>
+    <button class="tb" id="bTheme" title="Farbschema wechseln"><svg viewBox="0 0 32 20"><circle cx="12" cy="10" r="6"/><circle cx="20" cy="10" r="6"/></svg><span>Farben</span></button>
+    <button class="tb" id="bReset" title="Fortschritt zurücksetzen"><svg viewBox="0 0 32 20"><path d="M24 10a8 8 0 1 1-2.5-5.8M24 2v4h-4"/></svg><span>Zurücksetzen</span></button>
+  </div></div>
+  <div id="bar2"></div>
+  <div id="cvbox"><canvas id="cv"></canvas><div id="crumbs"></div><div id="hint"></div>
+    <div id="panel" hidden><h3 id="pTitel"></h3><p id="pText"></p><div id="pBtns"></div></div>
+    <div id="aktBox" hidden><h3 id="abTitel"></h3><div id="abListe"></div>
+      <div id="abFoot"><button id="abAdd" class="pri">+ Aktivität</button><span class="grow"></span><button id="abOk">fertig</button></div></div>
+    <div id="toolBox" hidden><div id="tbHead"><b id="tbTitel"></b><button id="tbClose" title="Schließen">✕</button></div><iframe id="tbFrame"></iframe></div></div>
+</div>
+<script src="shot.js"></script>
+<script src="modus.js"></script>
+<script>
+"use strict";
+const $=id=>document.getElementById(id), cv=$('cv'), ctx=cv.getContext('2d');
+const toast=m=>window.TafelShot&&TafelShot.toast(m);
+const THEMES=[
+  {n:'Wiese', bg:'#f2f8ef', weg:'#94a3b8', auf:'#16a34a', frei:'#2563eb', zu:'#cbd5e1', txt:'#1f2430'},
+  {n:'Meer',  bg:'#eef6fb', weg:'#7ea6c0', auf:'#0d9488', frei:'#1d4ed8', zu:'#cbd5e1', txt:'#12303f'},
+  {n:'Sand',  bg:'#fdf6ec', weg:'#c8b18a', auf:'#b45309', frei:'#be123c', zu:'#ddd3c3', txt:'#3b2f1e'},
+  {n:'Nacht', bg:'#101728', weg:'#475569', auf:'#22c55e', frei:'#60a5fa', zu:'#334155', txt:'#e5e7eb'}
+];
+const uid=()=>Math.random().toString(36).slice(2,9);
+/* Aktivitäten, die an einem Ort hinterlegt werden können */
+const AKT=[
+  ['Aufgabe / Hinweis', [['text','Text am Ort','','']]],
+  ['Dokument',          [['insert','Datei einfügen (PDF, Bild, Video)','','']]],
+  ['Mathe & Physik',    [['tool','Gleichungslöser','gleichung','gleichung.html'],
+                         ['tool','Funktionsplotter','plotter','plotter.html'],
+                         ['tool','Ableitungen','ableitung','ableitungen.html'],
+                         ['tool','Einheitskreis','einheitskreis','einheitskreis.html'],
+                         ['tool','3D-Koordinatensystem','raum','raum.html'],
+                         ['tool','Vierfeldertafel','vierfelder','vierfelder.html'],
+                         ['tool','Baumdiagramm','baum','baum.html'],
+                         ['tool','Wahrscheinlichkeitsrechner','verteilung','wahrscheinlichkeit.html'],
+                         ['tool','Messwert-Analyse','mess','messwert.html'],
+                         ['tool','Bruch','bruch','bruch.html'],
+                         ['tool','Stellenwerttafel','stellenwert','stellenwerttafel.html'],
+                         ['tool','Einheitenumrechner','umrechner','umrechner.html'],
+                         ['tool','Stromkreis','stromkreis','stromkreis.html'],
+                         ['tool','Optiklabor','optik','optik.html'],
+                         ['tool','Wellenwanne','welle','wellen.html'],
+                         ['tool','Periodensystem','pse','pse.html'],
+                         ['tool','Nuklidkarte','nuklid','nuklid.html'],
+                         ['tool','Tabellenkalkulation','sheet','sheet.html']]],
+  ['Diverses',          [['tool','Tabelle','tabelle','tabelle.html'],
+                         ['tool','Lückentext','luecke','luecken.html'],
+                         ['tool','Zuordnen','zuordnen','zuordnen.html'],
+                         ['tool','Glossar','glossar','glossar.html'],
+                         ['tool','Kreuzworträtsel','kreuzwort','kreuzwort.html'],
+                         ['tool','Buchstabengitter','wortgitter','wortgitter.html'],
+                         ['tool','Wortwolke','wortwolke','wortwolke.html'],
+                         ['tool','Zeitleiste','zeitleiste','zeitleiste.html'],
+                         ['tool','Mindmap','mindmap','mindmap.html'],
+                         ['tool','Pinnwand','pinnwand','pinnwand.html']]]
+];
+const akts=n=>Array.isArray(n.akts)?n.akts:(n.akt?[n.akt]:[]);      /* ältere Karten hatten nur eine */
+const setAkts=(n,arr)=>{ n.akts=arr; delete n.akt; };
+const aktName=a=>{ if(!a) return 'keine';
+  if(a.typ==='text') return 'Text am Ort';
+  if(a.typ==='insert') return 'Datei einfügen';
+  for(const [,items] of AKT) for(const it of items) if(it[2]===a.etype) return it[1];
+  return a.label||'Werkzeug'; };
+let D={ v:1, maps:null, cur:'m0', mode:'lern', hide:false, anim:true, theme:0,
+        sel:null, fontSize:15, fontBold:false, fontItalic:false };
+let tool='ort', drag=null, tick=0;
+const allein=()=>window.parent===window;
+const fertigeSeite=!!window.KARTE;                       /* als eigenständige Datei weitergegeben */
+let editMode=false;                                      /* Bedienleisten – über den Umschalter */                                   /* Bedienzeilen nur bei „Einbettung bedienen" */
+let undoStack=[], redoStack=[];
+const snap=()=>JSON.stringify({maps:D.maps,cur:D.cur});
+function pushUndo(){ undoStack.push(snap()); if(undoStack.length>60) undoStack.shift(); redoStack.length=0; updUndo(); }
+function applySnap(str){ const o=JSON.parse(str); D.maps=o.maps; D.cur=D.maps[o.cur]?o.cur:Object.keys(D.maps)[0];
+  D.sel=null; bgKey=''; renderCrumbs(); renderBar2(); draw(); sync(); }
+function updUndo(){ $('bUndo').disabled=!undoStack.length; $('bRedo').disabled=!redoStack.length; }
+
+function leer(){
+  return { m0:{ name:'Lernweg', bg:null, nodes:[
+      {id:'a',x:0.12,y:0.5,t:'Start',done:false},
+      {id:'b',x:0.34,y:0.3,t:'Aufgabe 1',done:false},
+      {id:'c',x:0.34,y:0.72,t:'Aufgabe 2',done:false},
+      {id:'d',x:0.58,y:0.5,t:'Übung',done:false},
+      {id:'e',x:0.82,y:0.5,t:'Test',done:false}],
+    edges:[['a','b'],['a','c'],['b','d'],['c','d'],['d','e']] } };
+}
+const map=()=>D.maps[D.cur]||D.maps[Object.keys(D.maps)[0]];
+const TH=()=>THEMES[(D.theme|0)%THEMES.length];
+
+/* ---------- Fortschritt ---------- */
+function fertig(n){
+  if(n.sub&&D.maps[n.sub]){ const m=D.maps[n.sub];
+    return m.nodes.length>0&&m.nodes.every(x=>fertig(x)); }
+  return !!n.done;
+}
+function offen(n,m){
+  const rein=m.edges.filter(e=>e[1]===n.id);
+  if(!rein.length) return true;                          /* Startort */
+  return rein.some(e=>{ const v=m.nodes.find(x=>x.id===e[0]); return v&&fertig(v); });
+}
+const status=(n,m)=>fertig(n)?'auf':(offen(n,m)?'frei':'zu');
+
+/* ---------- Zeichnen ---------- */
+let bgImg=null, bgKey='';
+function resize(){ const dpr=window.devicePixelRatio||1, w=cv.clientWidth||320, h=cv.clientHeight||240;
+  cv.width=Math.round(w*dpr); cv.height=Math.round(h*dpr); ctx.setTransform(dpr,0,0,dpr,0,0); draw(); }
+const PX=n=>({x:n.x*cv.clientWidth, y:n.y*cv.clientHeight});
+const R=()=>Math.max(16,Math.min(34,cv.clientHeight*0.055));
+function draw(){
+  const w=cv.clientWidth, h=cv.clientHeight, t=TH(), m=map(), fs=D.fontSize;
+  ctx.clearRect(0,0,w,h); ctx.fillStyle=t.bg; ctx.fillRect(0,0,w,h);
+  if(m.bg){ if(bgKey!==m.bg){ bgKey=m.bg; bgImg=new Image(); bgImg.onload=draw; bgImg.src=m.bg; }
+    if(bgImg&&bgImg.complete&&bgImg.naturalWidth){ ctx.save(); ctx.globalAlpha=.85;
+      const s=Math.max(w/bgImg.naturalWidth,h/bgImg.naturalHeight);
+      const iw=bgImg.naturalWidth*s, ih=bgImg.naturalHeight*s;
+      ctx.drawImage(bgImg,(w-iw)/2,(h-ih)/2,iw,ih); ctx.restore(); } }
+  const sichtbar=n=>!(D.hide&&D.mode==='lern'&&status(n,m)==='zu');
+  /* Wege */
+  m.edges.forEach(e=>{
+    const a=m.nodes.find(x=>x.id===e[0]), b=m.nodes.find(x=>x.id===e[1]);
+    if(!a||!b||!sichtbar(a)||!sichtbar(b)) return;
+    const p=PX(a), q=PX(b), frei=fertig(a);
+    ctx.save(); ctx.lineCap='round';
+    ctx.strokeStyle=frei?t.auf:t.weg; ctx.globalAlpha=frei?0.95:0.5;
+    ctx.lineWidth=frei?5:3.5; if(!frei) ctx.setLineDash([8,7]);
+    ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(q.x,q.y); ctx.stroke(); ctx.restore();
+  });
+  /* Orte */
+  m.nodes.forEach((n,i)=>{
+    if(!sichtbar(n)) return;
+    const p=PX(n), st=status(n,m), r=R();
+    const col=st==='auf'?t.auf:(st==='frei'?t.frei:t.zu);
+    if(D.anim&&st==='frei'&&D.mode==='lern'){                 /* erreichbare Orte pulsieren */
+      const pu=(Math.sin(tick/22)+1)/2;
+      ctx.save(); ctx.globalAlpha=0.18+0.22*pu; ctx.fillStyle=col;
+      ctx.beginPath(); ctx.arc(p.x,p.y,r*(1.25+0.35*pu),0,7); ctx.fill(); ctx.restore();
+    }
+    ctx.save();
+    ctx.fillStyle=col; ctx.beginPath(); ctx.arc(p.x,p.y,r,0,7); ctx.fill();
+    ctx.lineWidth=3; ctx.strokeStyle=(D.sel===n.id)?'#111827':'rgba(255,255,255,.9)';
+    ctx.beginPath(); ctx.arc(p.x,p.y,r,0,7); ctx.stroke();
+    ctx.fillStyle='#fff'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    if(st==='auf'){ ctx.lineWidth=Math.max(3,r*0.16); ctx.strokeStyle='#fff'; ctx.lineCap='round';
+      ctx.beginPath(); ctx.moveTo(p.x-r*0.38,p.y); ctx.lineTo(p.x-r*0.1,p.y+r*0.3); ctx.lineTo(p.x+r*0.4,p.y-r*0.32); ctx.stroke(); }
+    else if(st==='zu'){ ctx.font='800 '+Math.round(r*0.95)+'px -apple-system,sans-serif'; ctx.fillText('?',p.x,p.y+1); }
+    else { ctx.font='800 '+Math.round(r*0.8)+'px -apple-system,sans-serif'; ctx.fillText(String(i+1),p.x,p.y+1); }
+    const aa=akts(n);
+    if(aa.length&&!n.sub){ ctx.fillStyle='#fff'; ctx.strokeStyle=col; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.arc(p.x+r*0.78,p.y-r*0.78,r*0.34,0,7); ctx.fill(); ctx.stroke();
+      ctx.fillStyle=col; ctx.font='800 '+Math.round(r*0.4)+'px -apple-system,sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText(aa.length>1?String(aa.length):(aa[0].typ==='text'?'i':'▸'),p.x+r*0.78,p.y-r*0.76); }
+    if(n.sub){ ctx.fillStyle='#fff'; ctx.strokeStyle=col; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.arc(p.x+r*0.78,p.y-r*0.78,r*0.36,0,7); ctx.fill(); ctx.stroke();
+      ctx.fillStyle=col; ctx.font='800 '+Math.round(r*0.42)+'px -apple-system,sans-serif';
+      ctx.fillText('»',p.x+r*0.78,p.y-r*0.74); }
+    ctx.restore();
+    const titel=(st==='zu'&&D.mode==='lern')?'':(n.t||'');
+    if(titel){ ctx.save(); ctx.font=fontStr(fs*0.95,true); ctx.textAlign='center'; ctx.textBaseline='top';
+      const tw=ctx.measureText(titel).width;
+      ctx.fillStyle=TH().bg==='#101728'?'rgba(16,23,40,.75)':'rgba(255,255,255,.8)';
+      ctx.beginPath(); ctx.roundRect(p.x-tw/2-7,p.y+r+5,tw+14,fs*1.5,7); ctx.fill();
+      ctx.fillStyle=t.txt; ctx.fillText(titel,p.x,p.y+r+5+fs*0.22); ctx.restore(); }
+  });
+  /* Weg-Vorschau */
+  if(drag&&drag.mode==='weg'&&drag.from){ const a=m.nodes.find(x=>x.id===drag.from);
+    if(a){ const p=PX(a); ctx.save(); ctx.strokeStyle=t.frei; ctx.lineWidth=3; ctx.setLineDash([6,5]);
+      ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(drag.x,drag.y); ctx.stroke(); ctx.restore(); } }
+  /* Fortschritt */
+  const ges=m.nodes.length, ok=m.nodes.filter(n=>fertig(n)).length;
+  if(ges){ ctx.save(); const bw=Math.min(260,w*0.42), bx=w-bw-12, by=12;
+    ctx.fillStyle=TH().bg==='#101728'?'rgba(255,255,255,.12)':'rgba(15,23,42,.08)';
+    ctx.beginPath(); ctx.roundRect(bx,by,bw,16,8); ctx.fill();
+    ctx.fillStyle=t.auf; ctx.beginPath(); ctx.roundRect(bx,by,Math.max(8,bw*ok/ges),16,8); ctx.fill();
+    ctx.fillStyle=t.txt; ctx.font=fontStr(fs*0.8,true); ctx.textAlign='right'; ctx.textBaseline='top';
+    ctx.fillText(ok+' von '+ges+' geschafft',bx+bw,by+20); ctx.restore(); }
+  if(!m.nodes.length){ ctx.fillStyle=t.weg; ctx.font=fontStr(fs); ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(D.mode==='edit'?'Auf die Fläche tippen setzt einen Ort':'Zum Anlegen oben auf „Bearbeiten“ tippen', w/2, h/2); }
+}
+const fontStr=(px,bold)=>(D.fontItalic?'italic ':'')+((bold||D.fontBold)?'800 ':'600 ')+px+'px -apple-system,BlinkMacSystemFont,sans-serif';
+function loop(){ requestAnimationFrame(loop); if(D.anim&&D.mode==='lern'){ tick++; if(tick%2===0) draw(); } }
+
+/* ---------- Bedienung ---------- */
+const trefferOrt=(x,y)=>{ const m=map(), r=R()*1.1;
+  for(let i=m.nodes.length-1;i>=0;i--){ const n=m.nodes[i], p=PX(n);
+    if(D.hide&&D.mode==='lern'&&status(n,m)==='zu') continue;
+    if(Math.hypot(x-p.x,y-p.y)<r) return n; }
+  return null; };
+const trefferWeg=(x,y)=>{ const m=map();
+  for(const e of m.edges){ const a=m.nodes.find(q=>q.id===e[0]), b=m.nodes.find(q=>q.id===e[1]); if(!a||!b) continue;
+    const p=PX(a), q=PX(b), vx=q.x-p.x, vy=q.y-p.y, L=vx*vx+vy*vy||1;
+    let t=((x-p.x)*vx+(y-p.y)*vy)/L; t=Math.max(0,Math.min(1,t));
+    if(Math.hypot(x-p.x-vx*t,y-p.y-vy*t)<14) return e; }
+  return null; };
+cv.addEventListener('pointerdown',e=>{
+  const r=cv.getBoundingClientRect(), x=e.clientX-r.left, y=e.clientY-r.top, m=map();
+  const n=trefferOrt(x,y);
+  if(D.mode==='lern'){
+    if(!n) return;
+    if(n.sub&&D.maps[n.sub]){ D.cur=n.sub; D.sel=null; renderCrumbs(); renderBar2(); draw(); sync(); return; }
+    if(status(n,m)==='zu'){ toast('Dieser Ort ist noch nicht freigeschaltet'); return; }
+    D.sel=n.id;
+    if(akts(n).length){ zeigePanel(n); draw(); return; }        /* Ort mit Aktivität → Fenster */
+    n.done=!n.done; renderBar2(); draw(); sync();
+    if(n.done&&m.nodes.every(q=>fertig(q))) toast('Geschafft – alle Orte dieser Karte sind erledigt!');
+    return;
+  }
+  /* Bearbeiten */
+  if(tool==='del'){
+    pushUndo();
+    if(n){ m.nodes=m.nodes.filter(q=>q!==n); m.edges=m.edges.filter(q=>q[0]!==n.id&&q[1]!==n.id); D.sel=null; }
+    else { const w=trefferWeg(x,y); if(w) m.edges=m.edges.filter(q=>q!==w); }
+    renderBar2(); draw(); sync(); return;
+  }
+  if(tool==='weg'){ if(n){ drag={mode:'weg',from:n.id,x,y}; try{cv.setPointerCapture(e.pointerId);}catch(_){} } return; }
+  if(n){ D.sel=n.id; drag={mode:'move',id:n.id,dx:x-PX(n).x,dy:y-PX(n).y,before:snap()};
+    try{cv.setPointerCapture(e.pointerId);}catch(_){} renderBar2(); draw(); return; }
+  if(tool==='ort'){ pushUndo(); const neu={id:uid(),x:x/cv.clientWidth,y:y/cv.clientHeight,t:'Ort '+(m.nodes.length+1),done:false};
+    m.nodes.push(neu); D.sel=neu.id; renderBar2(); draw(); sync(); }
+});
+cv.addEventListener('pointermove',e=>{ if(!drag) return;
+  const r=cv.getBoundingClientRect(), x=e.clientX-r.left, y=e.clientY-r.top;
+  if(drag.mode==='weg'){ drag.x=x; drag.y=y; draw(); return; }
+  const n=map().nodes.find(q=>q.id===drag.id); if(!n) return;
+  n.x=Math.max(0.03,Math.min(0.97,(x-drag.dx)/cv.clientWidth));
+  n.y=Math.max(0.05,Math.min(0.95,(y-drag.dy)/cv.clientHeight));
+  draw();
+});
+['pointerup','pointercancel'].forEach(ev=>cv.addEventListener(ev,e=>{
+  if(!drag) return;
+  if(drag.mode==='weg'){ const r=cv.getBoundingClientRect(), n=trefferOrt(e.clientX-r.left,e.clientY-r.top);
+    const m=map();
+    if(n&&n.id!==drag.from&&!m.edges.some(q=>q[0]===drag.from&&q[1]===n.id)){ pushUndo(); m.edges.push([drag.from,n.id]); toast('Weg angelegt'); }
+  }
+  if(drag.before&&drag.before!==snap()){ undoStack.push(drag.before); if(undoStack.length>60) undoStack.shift(); redoStack.length=0; updUndo(); }
+  drag=null; draw(); sync();
+}));
+
+/* ---------- Fenster: Aktivitäten eines Ortes bearbeiten ---------- */
+let aktNode=null;
+function zeigeAktBox(n){ aktNode=n; $('abTitel').textContent='Aktivitäten von „'+(n.t||'Ort')+'"';
+  renderAktBox(); $('aktBox').hidden=false; }
+function renderAktBox(){
+  const n=aktNode; if(!n) return;
+  const box=$('abListe'); box.innerHTML='';
+  const liste=akts(n).slice();
+  if(!liste.length){ const d=document.createElement('div'); d.style.cssText='color:#8a93a2;padding:6px 2px';
+    d.textContent='Noch keine Aktivität – unten „+ Aktivität" antippen.'; box.appendChild(d); }
+  liste.forEach((a,idx)=>{
+    const z=document.createElement('div'); z.className='akZeile';
+    const sel=document.createElement('select');
+    AKT.forEach(([grp,items])=>{ const og=document.createElement('optgroup'); og.label=grp; sel.appendChild(og);
+      items.forEach(([typ,name,et,src])=>{ const o=document.createElement('option'); o.textContent=name;
+        o.value=typ+'|'+et+'|'+src; og.appendChild(o); }); });
+    const cur=a.typ+'|'+(a.etype||'')+'|'+(a.src||'');
+    sel.value=cur; if(sel.value!==cur) sel.value=sel.options[0].value;
+    sel.onchange=()=>{ pushUndo(); const [typ,etype,src]=sel.value.split('|');
+      liste[idx]=Object.assign({typ},typ==='tool'?{etype,src}:{}, a.text?{text:a.text}:{});
+      setAkts(n,liste); renderAktBox(); renderBar2(); draw(); sync(); };
+    const ti=document.createElement('input'); ti.type='text';
+    ti.placeholder=(a.typ==='text')?'Arbeitsauftrag …':'Hinweis (optional)';
+    ti.value=a.text||'';
+    ti.oninput=()=>{ a.text=ti.value; setAkts(n,liste); sync(); };
+    const x=document.createElement('button'); x.textContent='✕'; x.title='Aktivität entfernen';
+    x.onclick=()=>{ pushUndo(); liste.splice(idx,1); setAkts(n,liste); renderAktBox(); renderBar2(); draw(); sync(); };
+    z.append(sel,ti,x); box.appendChild(z);
+  });
+}
+$('abAdd').onclick=()=>{ const n=aktNode; if(!n) return; pushUndo();
+  const liste=akts(n).slice(); liste.push({typ:'text',text:''}); setAkts(n,liste);
+  renderAktBox(); renderBar2(); draw(); sync(); };
+$('abOk').onclick=()=>{ $('aktBox').hidden=true; aktNode=null; };
+/* ---------- Fenster für die Aktivität eines Ortes ---------- */
+function schliessePanel(){ $('panel').hidden=true; $('aktBox').hidden=true; aktNode=null; }
+function zeigePanel(n){
+  const p=$('panel'), aa=akts(n);
+  $('pTitel').textContent=n.t||'Ort';
+  $('pText').textContent=aa.map(a=>a.typ==='text'?(a.text||'—')
+      :((a.text?a.text+' – ':'')+(a.typ==='tool'?aktName(a):'Dokument einfügen (PDF, Bild, Video)'))).join('\n');
+  const box=$('pBtns'); box.innerHTML='';
+  const mk=(t,cls,fn)=>{ const b=document.createElement('button'); b.textContent=t; if(cls) b.className=cls; b.onclick=fn; box.appendChild(b); };
+  aa.forEach(a=>{ if(a.typ==='tool') mk('▸ '+aktName(a),'pri',()=>oeffneAktivitaet(a));
+    else if(a.typ==='insert') mk('Datei einfügen','pri',()=>oeffneAktivitaet(a)); });
+  mk(fertig(n)?'wieder offen':'erledigt ✓',fertig(n)?'':'ok',()=>{ n.done=!n.done; schliessePanel(); renderBar2(); draw(); sync();
+    if(n.done&&map().nodes.every(q=>fertig(q))) toast('Geschafft – alle Orte dieser Karte sind erledigt!'); });
+  mk('✕','',schliessePanel);
+  p.hidden=false;
+}
+function oeffneAktivitaet(a){
+  const mit=fertigeSeite&&window.KARTE.tools&&window.KARTE.tools[a.src];
+  if(mit){                                             /* Werkzeug steckt in dieser Datei */
+    $('tbTitel').textContent=aktName(a); $('tbFrame').srcdoc=window.KARTE.tools[a.src];
+    $('toolBox').hidden=false; schliessePanel(); return; }
+  if(window.parent===window){ toast('Das geht nur, wenn die Karte auf der Tafel liegt'); return; }
+  try{
+    if(a.typ==='insert') parent.postMessage({type:'tool-open',tool:'insert'},'*');
+    else parent.postMessage({type:'embed-open',etype:a.etype,src:a.src,label:aktName(a)},'*');
+    schliessePanel(); toast('„'+aktName(a)+'“ wird auf der Tafel geöffnet');
+  }catch(e){ toast('Nicht möglich'); }
+}
+/* ---------- Leisten ---------- */
+function renderBar2(){
+  const bar=$('bar2'); bar.innerHTML='';
+  const el=(tag,cls,txt,fn)=>{ const e=document.createElement(tag); if(cls) e.className=cls; if(txt!=null) e.textContent=txt; if(fn) e.onclick=fn; bar.appendChild(e); return e; };
+  const m=map(), n=m.nodes.find(q=>q.id===D.sel);
+  if(D.mode==='edit'&&n){
+    el('span','lbl','Ort');
+    const inp=document.createElement('input'); inp.type='text'; inp.value=n.t||'';
+    inp.oninput=()=>{ n.t=inp.value; draw(); sync(); }; bar.appendChild(inp);
+    if(n.sub&&D.maps[n.sub]){
+      el('button','btn pri','» Unterkarte öffnen',()=>{ D.cur=n.sub; D.sel=null; renderCrumbs(); renderBar2(); draw(); sync(); });
+      el('button','btn','Unterkarte entfernen',()=>{ if(!confirm('Unterkarte mit allen Orten löschen?')) return;
+        pushUndo(); delete D.maps[n.sub]; n.sub=null; renderCrumbs(); renderBar2(); draw(); sync(); });
+    } else el('button','btn','+ Unterkarte',()=>{
+      pushUndo(); const id='m'+uid(); D.maps[id]={name:n.t||'Unterkarte',bg:null,nodes:[],edges:[]};
+      n.sub=id; D.cur=id; D.sel=null; renderCrumbs(); renderBar2(); draw(); sync(); toast('Unterkarte angelegt – jetzt Orte setzen'); });
+    const anz=akts(n).length;
+    el('button','btn'+(anz?' pri':''),'✎ Aktivitäten'+(anz?' ('+anz+')':''),()=>zeigeAktBox(n));
+    el('button','btn',fertig(n)?'als offen markieren':'als erledigt markieren',()=>{ pushUndo(); n.done=!n.done; renderBar2(); draw(); sync(); });
+    el('span','grow');
+    el('button','btn red','Ort löschen',()=>{ pushUndo(); m.nodes=m.nodes.filter(q=>q!==n); m.edges=m.edges.filter(q=>q[0]!==n.id&&q[1]!==n.id); D.sel=null; renderBar2(); draw(); sync(); });
+    el('button','btn','✕',()=>{ D.sel=null; renderBar2(); draw(); });
+  } else {
+    const ges=m.nodes.length, ok=m.nodes.filter(x=>fertig(x)).length;
+    el('span','lbl',D.mode==='edit'?'Werkzeug oben wählen · Ort ziehen verschiebt ihn':(ok+' von '+ges+' Orten geschafft'));
+    if(D.mode==='edit'){ el('span','sep'); el('span','lbl','Kartenname');
+      const inp=document.createElement('input'); inp.type='text'; inp.value=m.name||'';
+      inp.oninput=()=>{ m.name=inp.value; renderCrumbs(); sync(); }; bar.appendChild(inp); }
+  }
+  el('span','sep');
+  el('span','lbl','Schrift'); el('button','btn','A−',()=>fontBy(-1)); el('button','btn','A+',()=>fontBy(1));
+  el('span','grow');
+  if(window.parent!==window) el('button','btn pri','🖼 Bild → Tafel',()=>TafelShot.toBoard(shot()));
+  el('button','btn','📋 Kopieren',()=>TafelShot.copy(shot()));
+}
+const shot=()=>TafelShot.rasterize($('wrap'),{exclude:'#bar,#bar2',pad:6});
+function fontBy(d){ D.fontSize=Math.max(10,Math.min(30,(D.fontSize||15)+d)); draw(); renderBar2(); sync(); }
+function renderCrumbs(){
+  const box=$('crumbs'); box.innerHTML='';
+  const pfad=[]; let cur=D.cur, schutz=0;
+  while(cur&&schutz++<10){ pfad.unshift(cur);
+    const eltern=Object.keys(D.maps).find(k=>D.maps[k].nodes.some(n=>n.sub===cur)); cur=eltern; }
+  if(pfad.length<2) return;
+  pfad.forEach((id,i)=>{ const b=document.createElement('button'); b.textContent=(i?'» ':'')+ (D.maps[id]?D.maps[id].name:'Karte');
+    b.onclick=()=>{ D.cur=id; D.sel=null; renderCrumbs(); renderBar2(); draw(); sync(); }; box.appendChild(b); });
+}
+function setTool(t){ tool=t; document.querySelectorAll('.tb[data-tool]').forEach(b=>b.classList.toggle('on',b.dataset.tool===t)); }
+document.querySelectorAll('.tb[data-tool]').forEach(b=>b.onclick=()=>setTool(b.dataset.tool));
+function zeigeLeisten(){
+  $('bar').style.display=editMode?'flex':'none';
+  $('bar2').style.display=editMode?'flex':'none';
+  $('hint').style.display=editMode?'block':'none';
+  setMode(editMode?'edit':'lern');            /* Leisten sichtbar = Karte bearbeiten */
+  if(window.TafelModus) TafelModus.refresh();
+  renderBar2(); resize();
+}
+function setMode(m){ D.mode=m; schliessePanel(); renderCrumbs();
+  document.querySelectorAll('.tb[data-tool]').forEach(b=>b.disabled=(m!=='edit'));
+  $('bBg').disabled=(m!=='edit');
+  $('hint').textContent=(m==='edit')?'Ort setzen · Ort ziehen verschiebt · „Weg" von Ort zu Ort ziehen'
+                                    :'Ort antippen = erledigt · Orte mit » führen auf eine Unterkarte';
+  D.sel=null; renderBar2(); draw(); sync(); }
+$('tbClose').onclick=()=>{ $('toolBox').hidden=true; $('tbFrame').srcdoc=''; };
+$('bUndo').onclick=()=>{ if(!undoStack.length) return; redoStack.push(snap()); applySnap(undoStack.pop()); updUndo(); };
+$('bRedo').onclick=()=>{ if(!redoStack.length) return; undoStack.push(snap()); applySnap(redoStack.pop()); updUndo(); };
+$('fNew').onclick=()=>{ if(!confirm('Neue, leere Karte beginnen?')) return;
+  pushUndo(); D.maps={m0:{name:'Lernweg',bg:null,nodes:[],edges:[]}}; D.cur='m0'; D.sel=null; bgKey='';
+  setMode('edit'); renderCrumbs(); renderBar2(); draw(); sync(); toast('Neue Karte'); };
+$('bHide').onclick=()=>{ D.hide=!D.hide; $('bHide').classList.toggle('on',D.hide); draw(); sync();
+  toast(D.hide?'Gesperrte Orte werden verborgen':'Alle Orte sind sichtbar'); };
+$('bAnim').onclick=()=>{ D.anim=!D.anim; $('bAnim').classList.toggle('on',D.anim); draw(); sync(); };
+$('bTheme').onclick=()=>{ D.theme=((D.theme|0)+1)%THEMES.length; draw(); sync(); toast('Farbschema: '+TH().n); };
+$('bReset').onclick=()=>{ if(!confirm('Fortschritt aller Karten zurücksetzen?')) return;
+  Object.values(D.maps).forEach(m=>m.nodes.forEach(n=>n.done=false)); draw(); renderBar2(); sync(); toast('Fortschritt zurückgesetzt'); };
+$('bBg').onclick=()=>{ $('bgFile').value=''; $('bgFile').click(); };
+$('bgFile').onchange=()=>{ const f=$('bgFile').files[0]; if(!f) return; const rd=new FileReader();
+  rd.onload=()=>{ const im=new Image();
+    im.onload=()=>{ const max=1400, sc=Math.min(1,max/Math.max(im.width,im.height));
+      const c=document.createElement('canvas'); c.width=Math.round(im.width*sc); c.height=Math.round(im.height*sc);
+      c.getContext('2d').drawImage(im,0,0,c.width,c.height);
+      pushUndo(); map().bg=c.toDataURL('image/jpeg',0.78); bgKey=''; draw(); sync(); toast('Hintergrund gesetzt'); };
+    im.src=rd.result; };
+  rd.readAsDataURL(f); };
+function lade(blob,fname){ const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=fname;
+  document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },2000); toast('Gespeichert: '+fname); }
+function saveJSON(){ const name=(prompt('Dateiname:','lernlandkarte-'+new Date().toISOString().slice(0,10))||'').trim(); if(!name) return;
+  const blob=new Blob([JSON.stringify({app:'tafel-lernkarte',v:1,maps:D.maps,theme:D.theme,hide:D.hide})],{type:'application/json'});
+  lade(blob,name.replace(/[\\/:*?"<>|]+/g,'_').replace(/\.json$/i,'')+'.json'); }
+async function inlineTool(src){                          /* Werkzeugdatei mit ihren Skripten zu einer Datei machen */
+  const html=await (await fetch(src)).text();
+  let out=html;
+  for(const m of [...html.matchAll(/<script src="([^"]+)"><\/script>/g)]){
+    const f=m[1].split('?')[0];
+    if(/^https?:/i.test(f)) continue;                    /* externe Quellen bleiben, wie sie sind */
+    let js=''; try{ js=await (await fetch(f)).text(); }catch(e){ }
+    out=out.replace(m[0], js?('<scr'+'ipt>'+js.replace(/<\/script>/gi,'<\\/script>')+'</scr'+'ipt>'):'');
+  }
+  return out;
+}
+async function saveHTML(){
+  const name=(prompt('Dateiname der fertigen Seite:','lernlandkarte-'+new Date().toISOString().slice(0,10))||'').trim(); if(!name) return;
+  try{
+    const res=await fetch(location.href.split('#')[0].split('?')[0]);
+    let html=await res.text();
+    const quellen=[...new Set(Object.values(D.maps).flatMap(m=>m.nodes)
+      .flatMap(n=>akts(n)).filter(a=>a.typ==='tool'&&a.src).map(a=>a.src))];
+    const tools={};
+    if(quellen.length){ toast('Die '+quellen.length+' Werkzeuge werden mit eingepackt …');
+      for(const q of quellen){ try{ tools[q]=await inlineTool(q); }catch(e){} } }
+    const daten={id:Math.random().toString(36).slice(2,9),maps:D.maps,theme:D.theme,hide:D.hide,anim:D.anim,tools};
+    const tag='<scr'+'ipt>window.KARTE='+JSON.stringify(daten).replace(/</g,'\\u003c')+';</scr'+'ipt>';
+    html=html.replace(/<script src="shot\.js"><\/script>/, tag);      // shot.js wird in der fertigen Seite nicht gebraucht
+    lade(new Blob([html],{type:'text/html;charset=utf-8'}),name.replace(/[\\/:*?"<>|]+/g,'_').replace(/\.html?$/i,'')+'.html');
+    toast('Fertige Seite gespeichert'+(quellen.length?' – mit '+quellen.length+' Werkzeug'+(quellen.length>1?'en':'')+' darin':'')+', sie läuft allein im Browser');
+  }catch(e){ toast('Die fertige Seite konnte nicht erzeugt werden'); }
+}
+$('fSave').onclick=()=>{ const bar=$('bar2'); bar.innerHTML='';
+  const lab=document.createElement('span'); lab.className='lbl'; lab.textContent='Speichern als:'; bar.appendChild(lab);
+  const mk=(t,fn,cls)=>{ const b=document.createElement('button'); b.className='btn'+(cls||''); b.textContent=t;
+    b.onclick=()=>{ renderBar2(); fn(); }; bar.appendChild(b); };
+  mk('Kartendatei (.json)',saveJSON,' pri');
+  mk('fertige Seite (.html) zum Weitergeben',saveHTML);
+  mk('✕',()=>{});
+};
+$('fLoad').onclick=()=>{ $('fFile').value=''; $('fFile').click(); };
+$('fFile').onchange=()=>{ const f=$('fFile').files[0]; if(!f) return; const rd=new FileReader();
+  rd.onload=()=>{ try{ const o=JSON.parse(rd.result); if(!o||!o.maps) throw new Error('x');
+      D.maps=o.maps; D.cur=Object.keys(o.maps)[0]; if(o.theme!=null) D.theme=o.theme; if(o.hide!=null) D.hide=!!o.hide;
+      $('bHide').classList.toggle('on',D.hide); bgKey=''; D.sel=null; renderCrumbs(); renderBar2(); draw(); sync(); toast('Geladen: '+f.name); }
+    catch(e){ toast('Keine gültige Kartendatei'); } };
+  rd.readAsText(f); };
+function barFade(){ const bar=$('bar'), m=$('barMid');
+  bar.classList.remove('compact'); if(m.clientWidth<140) bar.classList.add('compact'); }
+addEventListener('resize',()=>{ resize(); barFade(); });
+
+/* ---------- Tafel-Anbindung ---------- */
+let ready=false, syncT=null;
+function post(){ syncT=null; if(window.parent===window||!ready) return;
+  try{ parent.postMessage({type:'embed-data',data:D},'*'); }catch(e){} }
+function sync(){ if(fertigeSeite){ merkeFortschritt(); return; }
+  if(!syncT) syncT=setTimeout(post,250); }
+function merkeFortschritt(){ try{ const done={};
+    Object.values(D.maps).forEach(m=>m.nodes.forEach(n=>{ if(n.done) done[n.id]=1; }));
+    localStorage.setItem('lernkarte_'+(window.KARTE.id||'x'),JSON.stringify(done)); }catch(e){} }
+addEventListener('message',e=>{ if(window.parent===window||e.source!==window.parent) return;
+  if(!(e.data&&e.data.type==='embed-data'&&e.data.data)) return;
+  D=Object.assign(D,e.data.data); ready=true; editMode=(D.edit===undefined)?true:!!D.edit;
+  if(!D.maps) D.maps=leer(); if(!D.maps[D.cur]) D.cur=Object.keys(D.maps)[0];
+  $('bHide').classList.toggle('on',D.hide); $('bAnim').classList.toggle('on',D.anim);
+  bgKey=''; setMode(D.mode||'lern'); renderCrumbs(); zeigeLeisten(); resize(); barFade(); });
+window.addEventListener('load',()=>{
+  if(fertigeSeite){                                      /* Karte steckt in der Datei */
+    D.maps=window.KARTE.maps; D.cur=Object.keys(D.maps)[0];
+    if(window.KARTE.theme!=null) D.theme=window.KARTE.theme;
+    if(window.KARTE.hide!=null) D.hide=!!window.KARTE.hide;
+    if(window.KARTE.anim!=null) D.anim=!!window.KARTE.anim;
+    try{ const f=localStorage.getItem('lernkarte_'+(window.KARTE.id||'x'));   /* Fortschritt merken */
+      if(f){ const done=JSON.parse(f); Object.keys(D.maps).forEach(k=>D.maps[k].nodes.forEach(n=>{ if(done[n.id]) n.done=true; })); } }catch(e){}
+  }
+  if(!D.maps) D.maps=leer();
+  setTool('ort'); setMode('lern'); $('bAnim').classList.toggle('on',D.anim);
+  if(window.TafelModus){
+    if(fertigeSeite) TafelModus.verstecke();
+    else TafelModus.init({get:()=>editMode, set:v=>{ editMode=v; D.edit=v; zeigeLeisten(); sync(); }, after:()=>{}});
+  }
+  if(!fertigeSeite&&D.edit===undefined) editMode=true;   /* neu eingefügt: gleich einrichten */
+  renderCrumbs(); zeigeLeisten(); resize(); barFade(); updUndo(); loop();
+  if(window.ResizeObserver) new ResizeObserver(()=>{ resize(); barFade(); }).observe(cv);
+  if(window.parent===window){ ready=true; return; }
+  try{ parent.postMessage({type:'embed-ready'},'*'); }catch(e){}
+  setTimeout(()=>{ ready=true; },700);
+});
+</script>
+</body></html>

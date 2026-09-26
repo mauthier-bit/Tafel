@@ -1,0 +1,815 @@
+<!DOCTYPE html><html lang="de"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Optiklabor</title>
+<style>
+  :root{--fs:14px;}
+  *{box-sizing:border-box;} [hidden]{display:none!important;}
+  html,body{margin:0;height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#1f2430;font-size:var(--fs);}
+  #wrap{position:absolute;inset:0;display:flex;flex-direction:column;}
+  #bar{display:flex;gap:4px;padding:6px;border-bottom:1px solid #e2e7ef;align-items:center;flex:none;overflow:hidden;}
+  /* links (Auswahl/Löschen) und rechts (Ansicht/Vorlagen) bleiben stehen, die Bauteile dazwischen scrollen */
+  #barL,#barR{display:flex;gap:4px;align-items:center;flex:none;}
+  #barMid{display:flex;gap:4px;align-items:center;flex:1 1 auto;min-width:0;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:thin;padding:0 2px;}
+  #bar.compact #barL .tb span,#bar.compact #barR .tb span{display:none;}
+  #bar.compact #barL .tb,#bar.compact #barR .tb{min-width:42px;padding:0 3px;}
+  #barMid::-webkit-scrollbar{height:5px;} #barMid::-webkit-scrollbar-thumb{background:#c8d0dc;border-radius:3px;}
+  #barMid.more{-webkit-mask-image:linear-gradient(90deg,#000 0,#000 calc(100% - 22px),transparent);mask-image:linear-gradient(90deg,#000 0,#000 calc(100% - 22px),transparent);}
+  #barMid.more.start{-webkit-mask-image:linear-gradient(90deg,transparent,#000 22px,#000 calc(100% - 22px),transparent);mask-image:linear-gradient(90deg,transparent,#000 22px,#000 calc(100% - 22px),transparent);}
+  #barMid.more.end{-webkit-mask-image:linear-gradient(90deg,transparent,#000 22px,#000 100%);mask-image:linear-gradient(90deg,transparent,#000 22px,#000 100%);}
+  .tb{flex:none;min-width:52px;height:50px;border:1px solid #d6dce5;background:#fff;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;padding:0 5px;color:#1f2430;font:inherit;}
+  .tb svg{width:32px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+  .tb span{font-size:.7em;font-weight:600;white-space:nowrap;}
+  .tb.on{background:#2563eb;border-color:#2563eb;color:#fff;}
+  .tb:disabled{opacity:.35;}
+  .sep{width:1px;align-self:stretch;background:#e2e7ef;margin:0 3px;flex:none;}
+  #bar2{display:flex;gap:6px;padding:5px 8px;border-bottom:1px solid #e2e7ef;align-items:center;flex-wrap:nowrap;flex:none;min-height:44px;font-size:.92em;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:thin;}
+  #bar2>*{flex:0 0 auto;}
+  #bar2::-webkit-scrollbar{height:4px;} #bar2::-webkit-scrollbar-thumb{background:#cfd6e0;border-radius:2px;}
+  .lbl{color:#64748b;font-weight:600;}
+  .grow{flex:1 1 auto!important;min-width:4px;}
+  .btn{border:1px solid #cfd6e0;background:#fff;border-radius:9px;padding:5px 10px;font:inherit;font-weight:600;color:#1f2430;cursor:pointer;white-space:nowrap;}
+  .btn.pri{background:#2563eb;border-color:#2563eb;color:#fff;}
+  .btn.red{color:#dc2626;border-color:#fca5a5;}
+  .seg{display:inline-flex;background:#eef1f6;border-radius:9px;padding:2px;gap:2px;}
+  .seg button{border:none;background:transparent;border-radius:7px;padding:4px 9px;font:inherit;font-weight:600;color:#475569;cursor:pointer;}
+  .seg button.on{background:#fff;color:#1f2430;box-shadow:0 1px 2px rgba(0,0,0,.15);}
+  .stp{display:inline-flex;align-items:center;gap:4px;}
+  .stp button{border:1px solid #cfd6e0;background:#fff;border-radius:8px;width:30px;height:30px;font:inherit;font-weight:700;cursor:pointer;color:#1f2430;}
+  .stp .val{min-width:52px;text-align:center;font-weight:700;}
+  .sw{width:24px;height:24px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px #cfd6e0;cursor:pointer;padding:0;}
+  .sw.on{box-shadow:0 0 0 2px #2563eb;}
+  #cvbox{position:relative;flex:1;min-height:0;}
+  #cvbox canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;}
+  #hint{position:absolute;left:8px;bottom:6px;font-size:.78em;color:#7b8494;pointer-events:none;}
+</style>
+</head><body>
+<div id="wrap">
+  <div id="bar"><div id="barL" class="tafelEdit">
+    <button class="tb" id="fNew" title="Neuer, leerer Versuchsaufbau"><svg viewBox="0 0 32 20"><path d="M11 2h8l4 4v12H11Z M19 2v4h4 M17 9v6M14 12h6"/></svg><span>Neu</span></button>
+    <button class="tb" id="fSave" title="Aufbau als Datei speichern"><svg viewBox="0 0 32 20"><path d="M10 2h10l3 3v13H10Z M13 2v5h7V2 M13 18v-6h7v6"/></svg><span>Speichern</span></button>
+    <button class="tb" id="fLoad" title="Gespeicherten Aufbau laden"><svg viewBox="0 0 32 20"><path d="M7 16V5h6l2 2h10v9Z M16 9v6M13 12l3 3 3-3"/></svg><span>Laden</span></button>
+    <input type="file" id="fFile" accept=".json,.optik,application/json" hidden>
+    <span class="sep"></span>
+    <button class="tb" id="bDel" title="Ausgewähltes Bauteil löschen"><svg viewBox="0 0 32 20"><path d="M11 5h10l-1 13H12Z M14 5V3h4v2M9 5h14"/></svg><span>Löschen</span></button>
+    </div><div id="barMid" class="tafelEdit">
+    <button class="tb" data-add="lamp" title="Punktlichtquelle – strahlt in alle Richtungen"><svg viewBox="0 0 32 20"><circle cx="16" cy="10" r="4"/><path d="M16 1v3M16 16v3M7 10H4M28 10h-3M9.6 3.6 7.5 1.5M22.4 16.4l2.1 2.1M22.4 3.6l2.1-2.1M9.6 16.4l-2.1 2.1"/></svg><span>Lampe</span></button>
+    <button class="tb" data-add="laser" title="Laser – paralleles Lichtbündel"><svg viewBox="0 0 32 20"><rect x="3" y="6" width="11" height="8" rx="1.5"/><path d="M14 8h15M14 10h15M14 12h15"/></svg><span>Laser</span></button>
+    <button class="tb" data-add="mirror" title="Ebener Spiegel"><svg viewBox="0 0 32 20"><path d="M10 2v16" stroke-width="3"/><path d="M12 4l3-2M12 8l3-2M12 12l3-2M12 16l3-2" stroke-width="1.3"/><path d="M29 5 17 10l12 5"/></svg><span>Spiegel</span></button>
+    <button class="tb" data-add="curve" title="Hohlspiegel / Wölbspiegel"><svg viewBox="0 0 32 20"><path d="M20 2a11 11 0 0 0 0 16" stroke-width="3"/><path d="M22 3.5l3-1.5M23.5 10H27M22 16.5l3 1.5" stroke-width="1.3"/><path d="M4 10h9"/></svg><span>Wölbspiegel</span></button>
+    <button class="tb" data-add="lens" title="Sammel- oder Zerstreuungslinse"><svg viewBox="0 0 32 20"><path d="M16 2c4 3.6 4 12.4 0 16-4-3.6-4-12.4 0-16Z"/><path d="M2 10h9M21 10h9"/><circle cx="26" cy="10" r="1" fill="currentColor"/><circle cx="6" cy="10" r="1" fill="currentColor"/></svg><span>Linse</span></button>
+    <button class="tb" data-add="block" title="Undurchsichtiges Hindernis – wirft Schatten"><svg viewBox="0 0 32 20"><rect x="12" y="2" width="8" height="16" rx="1" fill="currentColor" stroke="none"/><path d="M2 6h7M2 10h7M2 14h7"/></svg><span>Hindernis</span></button>
+    <button class="tb" data-add="slit" title="Blende mit einstellbarer Öffnung"><svg viewBox="0 0 32 20"><path d="M16 1v6M16 13v6" stroke-width="3.4"/><path d="M2 10h9M21 10h9" stroke-dasharray="2.5 2.5"/></svg><span>Blende</span></button>
+    <button class="tb" data-add="screen" title="Schirm – fängt das Licht auf"><svg viewBox="0 0 32 20"><path d="M22 2v16" stroke-width="3"/><path d="M2 6h16M2 10h16M2 14h16"/></svg><span>Schirm</span></button>
+    </div><div id="barR"><span class="sep"></span>
+    <button class="tb" id="bAnim" title="Bewegung starten / anhalten (z. B. Mond auf seiner Bahn)"><svg viewBox="0 0 32 20"><path d="M12 4l12 6-12 6Z" fill="currentColor" stroke="none"/></svg><span>Animation</span></button>
+
+    <button class="tb tafelEdit" id="bUndo" title="Rückgängig"><svg viewBox="0 0 32 20"><path d="M10 5 5 10l5 5M5 10H20a6 6 0 0 1 0 12"/></svg><span>Zurück</span></button>
+    <button class="tb tafelEdit" id="bRedo" title="Wiederholen"><svg viewBox="0 0 32 20"><path d="M22 5l5 5-5 5M27 10H12a6 6 0 0 0 0 12"/></svg><span>Vor</span></button>
+    <span class="sep"></span>
+    <button class="tb" id="bDark" title="Dunkler Raum: schwarzer Hintergrund, Farben mischen sich additiv"><svg viewBox="0 0 32 20"><path d="M20 3a8 8 0 1 0 6 13A9 9 0 0 1 20 3Z"/><path d="M8 4v1M5 8h1M11 7l-.7.7"/></svg><span>Dunkel</span></button>
+    <button class="tb" id="bNorm" title="Lot und Winkel am Spiegel einzeichnen"><svg viewBox="0 0 32 20"><path d="M6 18 16 4l10 14" stroke-dasharray="0"/><path d="M16 4v14" stroke-dasharray="3 2"/><path d="M12.5 12a6 6 0 0 0 7 0" stroke-width="1.3"/></svg><span>Lot &amp; Winkel</span></button>
+    <button class="tb" id="bVirt" title="Virtuelle Strahlen gestrichelt einzeichnen (Spiegelbild, virtuelles Bild)"><svg viewBox="0 0 32 20"><path d="M3 16 16 4"/><path d="M16 4 29 16" stroke-dasharray="3 2.5"/><circle cx="16" cy="4" r="1.6" fill="currentColor" stroke="none"/></svg><span>virtuell</span></button>
+    <button class="tb" id="bGB" title="Bei Linsen Gegenstandsweite g und Bildweite b einzeichnen (Lampe = Gegenstand)"><svg viewBox="0 0 32 20"><path d="M16 2v16" stroke-dasharray="3 2"/><path d="M3 10h26"/><path d="M5 7v6M27 7v6"/><path d="M8 10 5 8.5M8 10l-3 1.5M24 10l3-1.5M24 10l3 1.5" stroke-width="1.3"/></svg><span>g und b</span></button>
+    <button class="tb tafelEdit" id="bTpl" title="Fertigen Versuch laden"><svg viewBox="0 0 32 20"><rect x="7" y="3" width="18" height="14" rx="2"/><path d="M11 8h10M11 12h6"/></svg><span>Vorlagen</span></button>
+  </div></div>
+  <div id="bar2"></div>
+  <div id="cvbox"><canvas id="cv"></canvas><div id="hint"></div></div>
+</div>
+<script src="shot.js"></script>
+<script src="modus.js"></script>
+<script>
+"use strict";
+const $=id=>document.getElementById(id), cv=$('cv'), ctx=cv.getContext('2d');
+const COLS=['#ffffff','#ffd166','#ff2d2d','#22c55e','#3b82f6','#d946ef'];
+let D={ v:2, dark:false, norm:false, gb:false, virt:false, selRay:0, phase:false, anim:false, sel:-1, fontSize:14, fontBold:false, fontItalic:false, parts:null };
+let P=[];
+const toast=m=>window.TafelShot&&TafelShot.toast(m);
+const fontStr=(px,bold)=>(D.fontItalic?'italic ':'')+((bold||D.fontBold)?'800 ':'600 ')+px+'px -apple-system,BlinkMacSystemFont,sans-serif';
+const rayCol=(b,i)=>((b.sc&&b.sc[i])||b.col||'#ff2d2d');   /* Farbe eines Einzelstrahls */
+const RAYGRIFF=54;                                       /* Abstand der Strahlgriffe vom Lampenmittelpunkt */
+const PXCM=10;                                           /* 10 px auf der Tafel = 1 cm im Modell */
+const cm=v=>(v/PXCM).toFixed(1).replace('.',',')+' cm';
+const NAME={lamp:'Lampe',laser:'Laser',mirror:'Spiegel',curve:'Wölbspiegel',lens:'Linse',block:'Hindernis',slit:'Blende',screen:'Schirm',disk:'Himmelskörper'};
+
+/* ---------- Bauteile ---------- */
+function defPart(t,x,y){
+  const b={t,x,y,ang:0};
+  if(t==='lamp'){ b.col='#ffd166'; b.rays=48; b.field=false; b.size=0; b.open=360; b.single=null; }
+  if(t==='disk'){ b.r=28; b.label=''; }
+  if(t==='laser'){ b.col='#ff2d2d'; b.rays=3; b.w=28; b.ang=0; }
+  if(t==='mirror'){ b.len=160; b.ang=-Math.PI/2; }
+  if(t==='curve'){ b.len=170; b.ang=Math.PI/2; b.f=110; }
+  if(t==='lens'){ b.len=150; b.ang=-Math.PI/2; b.f=130; }
+  if(t==='block'){ b.len=90; b.ang=-Math.PI/2; b.thick=14; }
+  if(t==='slit'){ b.len=260; b.ang=-Math.PI/2; b.thick=12; b.gap=30; }
+  if(t==='screen'){ b.len=200; b.ang=-Math.PI/2; }
+  return b;
+}
+function add(t){
+  pushUndo();
+  const b=defPart(t, cv.clientWidth*(t==='lamp'||t==='laser'?0.2:0.5), cv.clientHeight*0.5);
+  P.push(b); D.sel=P.length-1; renderBar2(); refresh();
+}
+const slitSegs=b=>{                                     /* Blende: zwei Balken mit Öffnung dazwischen */
+  const c=Math.cos(b.ang), s=Math.sin(b.ang), hw=(b.len||200)/2, go=(b.gap||30)/2;
+  const mk=(t1,t2)=>({x1:b.x+c*t1,y1:b.y+s*t1,x2:b.x+c*t2,y2:b.y+s*t2,nx:-s,ny:c,tx:c,ty:s});
+  return [mk(-hw,-go),mk(go,hw)];
+};
+const segOf=b=>{ const c=Math.cos(b.ang), s=Math.sin(b.ang), h=(b.len||100)/2;
+  return {x1:b.x-c*h, y1:b.y-s*h, x2:b.x+c*h, y2:b.y+s*h, nx:-s, ny:c, tx:c, ty:s}; };
+
+/* ---------- Strahlverfolgung ---------- */
+function hitSeg(r,g){
+  const ex=g.x2-g.x1, ey=g.y2-g.y1, den=r.dx*ey-r.dy*ex;
+  if(Math.abs(den)<1e-9) return null;
+  const t=((g.x1-r.x)*ey-(g.y1-r.y)*ex)/den;
+  const u=(r.dx*(g.y1-r.y)-r.dy*(g.x1-r.x))/(-den);
+  if(t<0.001||u<0||u>1) return null;
+  return {t,u,x:r.x+r.dx*t,y:r.y+r.dy*t};
+}
+function hitArc(r,b){
+  const R=Math.abs(2*(b.f||100)), s=segOf(b), sign=(b.f>=0)?1:-1;
+  const cx=b.x+s.nx*R*sign, cy=b.y+s.ny*R*sign;
+  const ox=r.x-cx, oy=r.y-cy;
+  const B=2*(ox*r.dx+oy*r.dy), C=ox*ox+oy*oy-R*R, disc=B*B-4*C;
+  if(disc<0) return null;
+  const sq=Math.sqrt(disc);
+  for(const t of [(-B-sq)/2,(-B+sq)/2]){
+    if(t<0.001) continue;
+    const x=r.x+r.dx*t, y=r.y+r.dy*t;
+    const along=(x-b.x)*s.tx+(y-b.y)*s.ty;
+    if(Math.abs(along)>b.len/2) continue;
+    let nx=(x-cx)/R, ny=(y-cy)/R; if(sign>0){ nx=-nx; ny=-ny; }
+    return {t,x,y,nx,ny};
+  }
+  return null;
+}
+function hitDisk(r,b){                                   /* Strahl gegen Kreisscheibe */
+  const ox=r.x-b.x, oy=r.y-b.y, R=b.r||20;
+  const B=2*(ox*r.dx+oy*r.dy), C=ox*ox+oy*oy-R*R, disc=B*B-4*C;
+  if(disc<0) return null;
+  const sq=Math.sqrt(disc);
+  for(const t of [(-B-sq)/2,(-B+sq)/2]) if(t>0.001) return {t,x:r.x+r.dx*t,y:r.y+r.dy*t};
+  return null;
+}
+function trace(r,depth,out){
+  if(depth>12) return;
+  let best=null;
+  P.forEach((b,i)=>{
+    if(b.t==='lamp'||b.t==='laser') return;
+    if(b.t==='disk'){ const h=hitDisk(r,b); if(h&&(!best||h.t<best.t)) best={...h,b,i}; return; }
+    if(b.t==='curve'){ const h=hitArc(r,b); if(h&&(!best||h.t<best.t)) best={...h,b,i}; return; }
+    if(b.t==='slit'){ slitSegs(b).forEach(g=>{ const h=hitSeg(r,g); if(h&&(!best||h.t<best.t)) best={...h,b,i,g}; }); return; }
+    const g=segOf(b), h=hitSeg(r,g);
+    if(h&&(!best||h.t<best.t)) best={...h,b,i,g};
+  });
+  const far=4000;
+  if(!best){ out.push({x1:r.x,y1:r.y,x2:r.x+r.dx*far,y2:r.y+r.dy*far,col:r.col}); return; }
+  out.push({x1:r.x,y1:r.y,x2:best.x,y2:best.y,col:r.col});
+  const b=best.b;
+  if(b.t==='block'||b.t==='disk'||b.t==='slit') return;
+  if(b.t==='screen'){ out.push({spot:true,x:best.x,y:best.y,col:r.col}); return; }
+  if(b.t==='mirror'||b.t==='curve'){
+    let nx,ny;
+    if(b.t==='curve'){ nx=best.nx; ny=best.ny; } else { nx=best.g.nx; ny=best.g.ny; }
+    const dot=r.dx*nx+r.dy*ny;
+    const rx=r.dx-2*dot*nx, ry=r.dy-2*dot*ny, rl=Math.hypot(rx,ry)||1;
+    const rr={x:best.x+rx/rl*0.5,y:best.y+ry/rl*0.5,sx:r.sx,sy:r.sy,dx:rx/rl,dy:ry/rl,col:r.col,main:r.main};
+    if(D.virt){                                          /* Rückwärtsverlängerung: scheinbarer Ursprung */
+      const L=Math.hypot(best.x-r.x,best.y-r.y);
+      out.push({virt:true,x1:best.x,y1:best.y,x2:best.x-rx/rl*L,y2:best.y-ry/rl*L,col:r.col}); }
+    trace(rr,depth+1,out);
+    if(D.norm&&r.main) out.push({normal:true,x:best.x,y:best.y,nx,ny,dx:r.dx,dy:r.dy,rx:rx/rl,ry:ry/rl});
+    return;
+  }
+  if(b.t==='lens'){
+    const g=best.g, f=b.f||120;
+    const h=(best.x-b.x)*g.tx+(best.y-b.y)*g.ty;
+    const a=r.dx*g.nx+r.dy*g.ny, c=r.dx*g.tx+r.dy*g.ty;
+    const sgn=a>=0?1:-1, A=Math.abs(a);
+    const c2=c-A*h/f;
+    let dx=A*g.nx*sgn+c2*g.tx, dy=A*g.ny*sgn+c2*g.ty;
+    const L=Math.hypot(dx,dy)||1; dx/=L; dy/=L;
+    if(D.virt&&r.sx!==undefined){                        /* virtuelles Bild: Strahl nach hinten verlängern */
+      const gx=r.sx-b.x, gy=r.sy-b.y, gg=Math.abs(gx*g.nx+gy*g.ny);
+      const virtuell=(f<0)||(gg<Math.abs(f));
+      if(virtuell){                                      /* Bildweite des virtuellen Bildes */
+        const len=Math.max(40,Math.min(2000,Math.abs(f<0 ? (Math.abs(f)*gg/(gg+Math.abs(f))) : (f*gg/(f-gg)))));
+        out.push({virt:true,x1:best.x,y1:best.y,x2:best.x-dx*len,y2:best.y-dy*len,col:r.col}); }
+    }
+    trace({x:best.x+dx*0.5,y:best.y+dy*0.5,sx:r.sx,sy:r.sy,dx,dy,col:r.col,main:r.main},depth+1,out);
+  }
+}
+/* liefert Einzelstrahlen und – für Lampen im Lichtfeld-Modus – gefüllte Lichtfächer */
+function scene(){
+  const rays=[], fans=[];
+  P.forEach(b=>{
+    if(b.t==='lamp'&&Array.isArray(b.single)){                /* einzelne, frei drehbare Strahlen */
+      b.single.forEach((a,i)=>trace({x:b.x,y:b.y,sx:b.x,sy:b.y,dx:Math.cos(a),dy:Math.sin(a),
+        col:rayCol(b,i),main:i===0},0,rays));
+      return;
+    }
+    if(b.t==='lamp'){
+      const n=Math.max(8,Math.min(720,b.rays||48));
+      const sub=[];                                       /* ausgedehnte Lampe: mehrere Teilquellen */
+      if(b.size>2&&b.field){ const k=5; for(let j=0;j<k;j++){ const a=j/k*Math.PI*2;
+          sub.push([b.x+Math.cos(a)*b.size/2, b.y+Math.sin(a)*b.size/2]); } }
+      else sub.push([b.x,b.y]);
+      const spanne=Math.max(2,Math.min(360,b.open===undefined?360:b.open))*Math.PI/180;
+      const a0=(spanne>=Math.PI*2-1e-6)?0:(b.ang-spanne/2);
+      const voll=spanne>=Math.PI*2-1e-6;
+      if(b.field){
+        sub.forEach(([sx,sy])=>{
+          const pts=[];
+          for(let i=0;i<=n;i++){
+            const a=voll?(i/n*Math.PI*2):(a0+spanne*i/n), tmp=[];
+            trace({x:sx,y:sy,sx,sy,dx:Math.cos(a),dy:Math.sin(a),col:b.col},0,tmp);
+            const first=tmp.find(s=>!s.spot&&!s.normal);
+            if(first) pts.push([first.x2,first.y2]);
+            tmp.forEach(s=>{ if(s!==first) rays.push(Object.assign({dim:true},s)); });
+          }
+          fans.push({x:sx,y:sy,col:b.col,pts,share:1/sub.length});
+        });
+      } else {
+        for(let i=0;i<n;i++){ const a=voll?(i/n*Math.PI*2):(a0+spanne*i/(n-1||1));
+          trace({x:b.x,y:b.y,sx:b.x,sy:b.y,dx:Math.cos(a),dy:Math.sin(a),col:b.col,main:i===(voll?0:(n>>1))},0,rays); }
+      }
+    }
+    if(b.t==='laser'){
+      const n=Math.max(1,Math.min(15,b.rays||3)), c=Math.cos(b.ang), s=Math.sin(b.ang);
+      for(let i=0;i<n;i++){ const off=(n===1)?0:((i/(n-1))-0.5)*(b.w||28);
+        trace({x:b.x-s*off, y:b.y+c*off, sx:b.x-s*off, sy:b.y+c*off, dx:c, dy:s, col:b.col, main:i===(n>>1)},0,rays); }
+    }
+  });
+  return {rays,fans};
+}
+/* ---------- Zeichnen ---------- */
+function resize(){ const dpr=window.devicePixelRatio||1, w=cv.clientWidth||320, h=cv.clientHeight||240;
+  cv.width=Math.round(w*dpr); cv.height=Math.round(h*dpr); ctx.setTransform(dpr,0,0,dpr,0,0); draw(); }
+function draw(){
+  const w=cv.clientWidth, h=cv.clientHeight, fs=D.fontSize;
+  ctx.clearRect(0,0,w,h);
+  ctx.fillStyle=D.dark?'#0b1020':'#ffffff'; ctx.fillRect(0,0,w,h);
+  const {rays,fans}=scene();
+  ctx.save();
+  if(D.dark) ctx.globalCompositeOperation='lighter';
+  fans.forEach(f=>{ if(f.pts.length<3) return;                 // kontinuierliches Lichtfeld
+    const base=D.phase?0.2:(D.dark?0.8:0.34);
+    ctx.globalAlpha=base*(f.share?Math.max(0.45,f.share*1.9):1); ctx.fillStyle=f.col;
+    ctx.beginPath(); ctx.moveTo(f.x,f.y); f.pts.forEach(p=>ctx.lineTo(p[0],p[1])); ctx.closePath(); ctx.fill(); });
+  ctx.save(); ctx.setLineDash([7,5]); ctx.lineWidth=1.4;                 /* virtuelle Strahlen */
+  rays.forEach(r=>{ if(!r.virt) return;
+    ctx.globalAlpha=D.dark?0.5:0.6; ctx.strokeStyle=r.col;
+    ctx.beginPath(); ctx.moveTo(r.x1,r.y1); ctx.lineTo(r.x2,r.y2); ctx.stroke(); });
+  ctx.restore();
+  ctx.lineWidth=D.dark?2.2:1.6; ctx.lineCap='round';
+  rays.forEach(r=>{ if(r.spot||r.normal||r.virt) return;
+    ctx.globalAlpha=r.dim?(D.dark?0.22:0.3):(D.dark?0.55:0.75);
+    ctx.strokeStyle=r.col; ctx.beginPath(); ctx.moveTo(r.x1,r.y1); ctx.lineTo(r.x2,r.y2); ctx.stroke(); });
+  ctx.globalAlpha=1;
+  rays.forEach(r=>{ if(!r.spot) return; ctx.fillStyle=r.col; ctx.beginPath(); ctx.arc(r.x,r.y,4,0,7); ctx.fill(); });
+  ctx.restore();
+  if(D.norm) rays.forEach(r=>{ if(!r.normal) return;
+    const dn=r.dx*r.nx+r.dy*r.ny, sg=dn>0?-1:1, nx=r.nx*sg, ny=r.ny*sg;
+    ctx.save(); ctx.setLineDash([5,4]); ctx.strokeStyle=D.dark?'#93c5fd':'#2563eb'; ctx.lineWidth=1.3;
+    ctx.beginPath(); ctx.moveTo(r.x,r.y); ctx.lineTo(r.x+nx*62,r.y+ny*62); ctx.stroke(); ctx.setLineDash([]);
+    const an=Math.atan2(ny,nx), ai=Math.atan2(-r.dy,-r.dx), ar=Math.atan2(r.ry,r.rx);
+    const deg=Math.round(Math.acos(Math.min(1,Math.abs(dn)))*180/Math.PI);
+    ctx.strokeStyle=D.dark?'#93c5fd':'#2563eb'; ctx.lineWidth=1.3;
+    [[an,ai],[an,ar]].forEach(([a1,a2])=>{ let d=a2-a1; while(d>Math.PI)d-=2*Math.PI; while(d<-Math.PI)d+=2*Math.PI;
+      ctx.beginPath(); ctx.arc(r.x,r.y,30,a1,a1+d,d<0); ctx.stroke(); });
+    ctx.fillStyle=D.dark?'#bfdbfe':'#2563eb'; ctx.font=fontStr(fs*0.85); ctx.textAlign='center'; ctx.textBaseline='middle';
+    const lab=(a1,a2,t)=>{ let d=a2-a1; while(d>Math.PI)d-=2*Math.PI; while(d<-Math.PI)d+=2*Math.PI;
+      const m=a1+d/2; ctx.fillText(t, r.x+Math.cos(m)*46, r.y+Math.sin(m)*46); };
+    if(deg>=3){ lab(an,ai,'α = '+deg+'°'); lab(an,ar,'α′ = '+deg+'°'); }
+    else ctx.fillText('α = α′ = 0°', r.x+Math.cos(an)*46+34, r.y+Math.sin(an)*46);
+    ctx.restore(); });
+  P.forEach((b,i)=>drawPart(b,i===D.sel,fs));
+  if(D.gb) drawGB(fs);
+  if(D.phase) phaseView(w,h,fs);
+  if(!P.length){ ctx.fillStyle=D.dark?'#93a3b8':'#8a93a2'; ctx.font=fontStr(fs);
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('Bauteil oben auswählen oder eine Vorlage laden', w/2, h/2); }
+}
+function drawPart(b,sel,fs){
+  const s=segOf(b), C=D.dark?'#e5e7eb':'#1f2430';
+  ctx.save();
+  if(b.t==='lamp'){
+    const R=Math.max(9,(b.size||0)/2);
+    ctx.fillStyle=b.col; ctx.beginPath(); ctx.arc(b.x,b.y,R,0,7); ctx.fill();
+    ctx.strokeStyle=C; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(b.x,b.y,R,0,7); ctx.stroke();
+    if(Array.isArray(b.single)){                         /* Griffe zum Drehen der Einzelstrahlen */
+      b.single.forEach((a,i)=>{ const hx=b.x+Math.cos(a)*RAYGRIFF, hy=b.y+Math.sin(a)*RAYGRIFF;
+        const aktiv=(sel&&D.selRay===i);
+        ctx.fillStyle=rayCol(b,i); ctx.beginPath(); ctx.arc(hx,hy,aktiv?9:7,0,7); ctx.fill();
+        ctx.strokeStyle=aktiv?'#2563eb':(D.dark?'#e5e7eb':'#1f2430'); ctx.lineWidth=aktiv?3:2;
+        ctx.stroke(); });
+    }
+    const off=(b.open===undefined?360:b.open);
+    if(off<360){                                         /* Gehäuse: Bogen um den geschlossenen Teil */
+      const sp=off*Math.PI/180, gr=R+7;
+      ctx.strokeStyle=D.dark?'#475569':'#334155'; ctx.lineWidth=Math.max(5,R*0.5); ctx.lineCap='butt';
+      ctx.beginPath(); ctx.arc(b.x,b.y,gr,b.ang+sp/2,b.ang-sp/2+Math.PI*2); ctx.stroke();
+    }
+  } else if(b.t==='laser'){
+    ctx.translate(b.x,b.y); ctx.rotate(b.ang);
+    ctx.fillStyle=D.dark?'#374151':'#334155'; ctx.fillRect(-34,-13,34,26);
+    ctx.fillStyle=b.col; ctx.fillRect(-4,-9,8,18);
+    ctx.strokeStyle=C; ctx.lineWidth=1.6; ctx.strokeRect(-34,-13,34,26);
+  } else if(b.t==='mirror'){
+    ctx.strokeStyle='#38bdf8'; ctx.lineWidth=5; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(s.x1,s.y1); ctx.lineTo(s.x2,s.y2); ctx.stroke();
+    ctx.strokeStyle=D.dark?'#64748b':'#94a3b8'; ctx.lineWidth=2;
+    for(let u=0;u<=1.001;u+=0.1){ const x=s.x1+(s.x2-s.x1)*u, y=s.y1+(s.y2-s.y1)*u;
+      ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x-s.nx*9-s.tx*6, y-s.ny*9-s.ty*6); ctx.stroke(); }
+  } else if(b.t==='curve'){
+    const R=Math.abs(2*(b.f||100)), sign=(b.f>=0)?1:-1;
+    const cx=b.x+s.nx*R*sign, cy=b.y+s.ny*R*sign;
+    const am=Math.atan2(b.y-cy,b.x-cx), half=Math.asin(Math.min(1,(b.len/2)/R));
+    ctx.strokeStyle='#38bdf8'; ctx.lineWidth=5; ctx.beginPath(); ctx.arc(cx,cy,R,am-half,am+half); ctx.stroke();
+    ctx.fillStyle=D.dark?'#93c5fd':'#0369a1'; ctx.font=fontStr(fs*0.8); ctx.textAlign='center';
+    ctx.fillText(b.f>=0?'Hohlspiegel':'Wölbspiegel', b.x-s.nx*18*sign, b.y-s.ny*18*sign);
+    ctx.fillStyle='#ef4444'; ctx.beginPath(); ctx.arc(b.x+s.nx*b.f,b.y+s.ny*b.f,3.5,0,7); ctx.fill();
+  } else if(b.t==='lens'){
+    const conv=(b.f||0)>=0;
+    ctx.strokeStyle='#60a5fa'; ctx.fillStyle=D.dark?'rgba(96,165,250,.25)':'rgba(96,165,250,.20)'; ctx.lineWidth=3;
+    ctx.beginPath();
+    if(conv){ ctx.moveTo(s.x1,s.y1);
+      ctx.quadraticCurveTo(b.x+s.nx*13,b.y+s.ny*13,s.x2,s.y2);
+      ctx.quadraticCurveTo(b.x-s.nx*13,b.y-s.ny*13,s.x1,s.y1);
+    } else { const e=9;
+      ctx.moveTo(s.x1+s.nx*e,s.y1+s.ny*e);
+      ctx.quadraticCurveTo(b.x-s.nx*4,b.y-s.ny*4,s.x2+s.nx*e,s.y2+s.ny*e);
+      ctx.lineTo(s.x2-s.nx*e,s.y2-s.ny*e);
+      ctx.quadraticCurveTo(b.x+s.nx*4,b.y+s.ny*4,s.x1-s.nx*e,s.y1-s.ny*e);
+    }
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.fillStyle='#ef4444';
+    [1,-1].forEach(k=>{ ctx.beginPath(); ctx.arc(b.x+s.nx*(b.f||120)*k, b.y+s.ny*(b.f||120)*k,3.5,0,7); ctx.fill(); });
+    ctx.fillStyle=D.dark?'#bfdbfe':'#1d4ed8'; ctx.font=fontStr(fs*0.8); ctx.textAlign='center';
+    ctx.fillText('f = '+cm(Math.abs(b.f)), b.x+s.tx*(b.len/2+22), b.y+s.ty*(b.len/2+22));
+  } else if(b.t==='block'){
+    const th=b.thick||14;                                   /* lange Seite liegt auf der Bauteil-Linie */
+    ctx.translate(b.x,b.y); ctx.rotate(b.ang);
+    ctx.fillStyle=D.dark?'#1f2937':'#1f2430'; ctx.fillRect(-b.len/2,-th/2,b.len,th);
+    if(D.dark){ ctx.strokeStyle='#64748b'; ctx.lineWidth=1.5; ctx.strokeRect(-b.len/2,-th/2,b.len,th); }
+  } else if(b.t==='disk'){
+    const R=b.r||20, lamp=P.find(q=>q.t==='lamp');
+    ctx.fillStyle=D.dark?'#232b3d':'#2b3344';
+    ctx.beginPath(); ctx.arc(b.x,b.y,R,0,7); ctx.fill();
+    if(lamp){
+      const a=Math.atan2(lamp.y-b.y,lamp.x-b.x), frei=litFraction(b,lamp);
+      if(frei>0.02){ ctx.save(); ctx.globalAlpha=0.25+0.75*frei; ctx.fillStyle=lamp.col||'#ffd166';
+        ctx.beginPath(); ctx.arc(b.x,b.y,R,a-Math.PI/2,a+Math.PI/2); ctx.closePath(); ctx.fill(); ctx.restore(); }
+    }
+    ctx.strokeStyle=D.dark?'#94a3b8':'#334155'; ctx.lineWidth=1.6;
+    ctx.beginPath(); ctx.arc(b.x,b.y,R,0,7); ctx.stroke();
+    if(b.label){ ctx.fillStyle=D.dark?'#e5e7eb':'#1f2430'; ctx.font=fontStr(fs*0.9,true);
+      ctx.textAlign='center'; ctx.textBaseline='top'; ctx.fillText(b.label,b.x,b.y+R+5); }
+  } else if(b.t==='slit'){
+    const th=b.thick||12;
+    ctx.strokeStyle=D.dark?'#cbd5e1':'#1f2430'; ctx.lineWidth=th; ctx.lineCap='butt';
+    slitSegs(b).forEach(g=>{ ctx.beginPath(); ctx.moveTo(g.x1,g.y1); ctx.lineTo(g.x2,g.y2); ctx.stroke(); });
+    ctx.fillStyle=D.dark?'#cbd5e1':'#334155'; ctx.font=fontStr(fs*0.78); ctx.textAlign='center'; ctx.textBaseline='middle';
+    const c2=Math.cos(b.ang), s2=Math.sin(b.ang);
+    ctx.fillText(cm(b.gap||30), b.x-(-s2)*(th/2+12), b.y-(c2)*(th/2+12));
+  } else if(b.t==='screen'){
+    ctx.strokeStyle=D.dark?'#e5e7eb':'#475569'; ctx.lineWidth=4; ctx.lineCap='butt';
+    ctx.beginPath(); ctx.moveTo(s.x1,s.y1); ctx.lineTo(s.x2,s.y2); ctx.stroke();
+    ctx.globalAlpha=.25; ctx.lineWidth=14; ctx.strokeStyle=D.dark?'#94a3b8':'#cbd5e1';
+    ctx.beginPath(); ctx.moveTo(s.x1,s.y1); ctx.lineTo(s.x2,s.y2); ctx.stroke(); ctx.globalAlpha=1;
+  }
+  ctx.restore();
+  if(sel){ ctx.save(); ctx.strokeStyle='#2563eb'; ctx.lineWidth=1.6; ctx.setLineDash([5,4]);
+    const r=Math.max(26,(b.t==='disk'?(b.r||20):(b.len||40)/2)+14);
+    ctx.beginPath(); ctx.arc(b.x,b.y,r,0,7); ctx.stroke(); ctx.setLineDash([]);
+    const hx=b.x+Math.cos(b.ang)*r, hy=b.y+Math.sin(b.ang)*r;
+    ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(hx,hy,8,0,7); ctx.fill(); ctx.strokeStyle='#2563eb'; ctx.lineWidth=2.4; ctx.stroke();
+    ctx.restore(); }
+}
+/* Gegenstandsweite g und Bildweite b für die erste Linse und die erste Lampe */
+function drawGB(fs){
+  const L=P.find(b=>b.t==='lens'), G=P.find(b=>b.t==='lamp');
+  if(!L||!G) return;
+  const s=segOf(L), f=L.f||120;
+  const dx=G.x-L.x, dy=G.y-L.y;
+  const gs=dx*s.nx+dy*s.ny, hh=dx*s.tx+dy*s.ty;        /* Lage des Gegenstands */
+  const sgn=gs>=0?1:-1, g=Math.abs(gs);
+  const achse=(t,q)=>({x:L.x+s.nx*t+s.tx*q, y:L.y+s.ny*t+s.ty*q});
+  ctx.save();
+  ctx.setLineDash([6,5]); ctx.lineWidth=1.2; ctx.strokeStyle=D.dark?'#94a3b8':'#64748b';
+  const a1=achse(sgn*(g+160),0), a2=achse(-sgn*(g+260),0);   /* optische Achse */
+  ctx.beginPath(); ctx.moveTo(a1.x,a1.y); ctx.lineTo(a2.x,a2.y); ctx.stroke(); ctx.setLineDash([]);
+  const mass=(t1,t2,txt,col,dash,q)=>{                  /* Maßstrecke neben der Achse */
+    const p1=achse(t1,q), p2=achse(t2,q);
+    ctx.save(); ctx.strokeStyle=col; ctx.fillStyle=col; ctx.lineWidth=1.8;
+    if(dash) ctx.setLineDash([5,4]);
+    ctx.beginPath(); ctx.moveTo(p1.x,p1.y); ctx.lineTo(p2.x,p2.y); ctx.stroke(); ctx.setLineDash([]);
+    [[p1,t2>t1?1:-1],[p2,t2>t1?-1:1]].forEach(([p,d])=>{  /* Pfeilspitzen */
+      const ux=s.nx*d, uy=s.ny*d;
+      ctx.beginPath(); ctx.moveTo(p.x,p.y);
+      ctx.lineTo(p.x+ux*9-s.tx*4, p.y+uy*9-s.ty*4);
+      ctx.lineTo(p.x+ux*9+s.tx*4, p.y+uy*9+s.ty*4); ctx.closePath(); ctx.fill(); });
+    const m=achse((t1+t2)/2,q+(q>0?15:-15));
+    ctx.font=fontStr(fs*0.92,true); ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(txt,m.x,m.y); ctx.restore();
+  };
+  mass(sgn*g,0,'g = '+cm(g),'#b45309',false,26);
+  ctx.strokeStyle='#b45309'; ctx.lineWidth=1.2; ctx.setLineDash([4,4]);
+  ctx.beginPath(); ctx.moveTo(G.x,G.y); ctx.lineTo(achse(sgn*g,0).x,achse(sgn*g,0).y); ctx.stroke(); ctx.setLineDash([]);
+  if(Math.abs(g-f)<6){                                   /* Gegenstand im Brennpunkt */
+    ctx.fillStyle='#be123c'; ctx.font=fontStr(fs*0.92,true); ctx.textAlign='center';
+    const m=achse(-sgn*90,-30); ctx.fillText('g = f → kein Bild (Strahlen bleiben parallel)',m.x,m.y);
+    ctx.restore(); return;
+  }
+  const bw=f*g/(g-f), hs=-hh*bw/g;                       /* Linsengleichung und Abbildungsmaßstab */
+  const bild=achse(-sgn*bw,hs);
+  mass(0,-sgn*bw,'b = '+cm(Math.abs(bw)),bw>0?'#1d4ed8':'#7c3aed',bw<0,-26);
+  ctx.fillStyle=bw>0?'#1d4ed8':'#7c3aed';
+  ctx.beginPath(); ctx.arc(bild.x,bild.y,5,0,7); ctx.fill();
+  ctx.strokeStyle=ctx.fillStyle; ctx.lineWidth=1.2; ctx.setLineDash([4,4]);
+  ctx.beginPath(); ctx.moveTo(bild.x,bild.y); ctx.lineTo(achse(-sgn*bw,0).x,achse(-sgn*bw,0).y); ctx.stroke(); ctx.setLineDash([]);
+  ctx.font=fontStr(fs*0.9,true); ctx.textBaseline='bottom';
+  const txt=(bw>0?'Bild B':'virtuelles Bild B')+'  ·  β = '+(Math.abs(bw/g)).toFixed(2).replace('.',',');
+  const W=cv.clientWidth, H=cv.clientHeight;
+  if(bild.x<-20||bild.x>W+20||bild.y<-20||bild.y>H+20){        /* Bild außerhalb der Fläche */
+    ctx.textAlign='right';
+    ctx.fillText('Bild liegt außerhalb ('+txt.replace('Bild B  ·  ','')+')', W-12, H-12);
+  } else { ctx.textAlign=(bild.x>W*0.7)?'right':'left';
+    const nah=Math.abs(hs)<50;                         /* nahe der Achse: Beschriftung höher setzen */
+    ctx.fillText(txt, bild.x+(bild.x>W*0.7?-9:9), bild.y-(nah?34:13)); }
+  ctx.restore();
+}
+/* wie viel der Lampe sieht dieser Körper? (0 = im Kernschatten, 1 = voll beleuchtet) */
+function litFraction(b,lamp){
+  const k=7, R=lamp.size>2?lamp.size/2:0; let frei=0;
+  for(let j=0;j<k;j++){
+    const a=(j/k)*Math.PI*2;
+    const sx=lamp.x+(R?Math.cos(a)*R:0), sy=lamp.y+(R?Math.sin(a)*R:0);
+    let dx=b.x-sx, dy=b.y-sy; const L=Math.hypot(dx,dy)||1; dx/=L; dy/=L;
+    let blocked=false;
+    P.forEach(o=>{ if(o===b||blocked) return;
+      if(o.t==='disk'){ const h=hitDisk({x:sx,y:sy,dx,dy},o); if(h&&h.t<L-(b.r||0)) blocked=true; }
+      else if(o.t==='block'){ const h=hitSeg({x:sx,y:sy,dx,dy},segOf(o)); if(h&&h.t<L) blocked=true; } });
+    if(!blocked) frei++;
+  }
+  return frei/k;
+}
+function phaseView(w,h,fs){
+  const sun=P.find(b=>b.t==='lamp'), erde=P.find(b=>b.t==='disk'&&/Erde/i.test(b.label||'')),
+        mond=P.find(b=>b.t==='disk'&&/Mond/i.test(b.label||''));
+  if(!sun||!erde||!mond) return;
+  const mx=mond.x-erde.x, my=mond.y-erde.y, sx=sun.x-erde.x, sy=sun.y-erde.y;
+  const ml=Math.hypot(mx,my)||1, sl=Math.hypot(sx,sy)||1;
+  const cosE=(mx*sx+my*sy)/(ml*sl);                     /* Elongation Sonne–Erde–Mond */
+  const e=Math.acos(Math.max(-1,Math.min(1,cosE)));
+  const side=(sx*my-sy*mx)>=0?1:-1;                     /* zunehmend / abnehmend */
+  const k=(1-cosE)/2;                                   /* beleuchteter Anteil */
+  const R=Math.max(26,Math.min(48,h*0.07));
+  ctx.save(); ctx.font=fontStr(fs*0.78); const t1=ctx.measureText('von der Erde aus gesehen:').width;
+  ctx.font=fontStr(fs*1.0,true); const t2=ctx.measureText('Mondfinsternis (Kernschatten)').width;
+  ctx.restore(); const tw=Math.max(t1,t2);
+  const bw=R*2+tw+34, bh=R*2+34;
+  const x=w-bw-10, y=h-bh-10;
+  ctx.save();
+  ctx.fillStyle=D.dark?'rgba(15,23,42,.9)':'rgba(255,255,255,.94)'; ctx.strokeStyle='#64748b'; ctx.lineWidth=1.2;
+  ctx.beginPath(); ctx.roundRect(x,y,bw,bh,10); ctx.fill(); ctx.stroke();
+  const cx=x+R+14, cy=y+bh/2+4;
+  ctx.fillStyle='#10131c'; ctx.beginPath(); ctx.arc(cx,cy,R,0,7); ctx.fill();
+  const f=-cosE;                                         /* +1 = Vollmond, −1 = Neumond */
+  ctx.fillStyle='#fdf3cf';
+  ctx.beginPath();
+  ctx.arc(cx,cy,R,-Math.PI/2,Math.PI/2,side<0);          /* beleuchteter Rand */
+  ctx.ellipse(cx,cy,Math.abs(f)*R,R,0,Math.PI/2,-Math.PI/2,(f>0)!==(side<0));
+  ctx.closePath(); ctx.fill();
+  ctx.strokeStyle='#94a3b8'; ctx.lineWidth=1; ctx.beginPath(); ctx.arc(cx,cy,R,0,7); ctx.stroke();
+  const pct=Math.round(k*100);
+  let t='Vollmond';
+  if(pct<3) t='Neumond'; else if(pct<45) t=(side>0?'zunehmende Sichel':'abnehmende Sichel');
+  else if(pct<=55) t=(side>0?'zunehmender Halbmond':'abnehmender Halbmond');
+  else if(pct<97) t=(side>0?'zunehmender Mond':'abnehmender Mond');
+  const sun2=P.find(b=>b.t==='lamp'), frei=sun2?litFraction(mond,sun2):1;
+  if(frei<0.98){                                         /* der Mond steht im Erdschatten */
+    ctx.save(); ctx.globalCompositeOperation='source-atop';
+    ctx.fillStyle='rgba(60,22,22,'+(0.55+0.4*(1-frei))+')';
+    ctx.beginPath(); ctx.arc(cx,cy,R,0,7); ctx.fill(); ctx.restore();
+    t=(frei<0.05?'Mondfinsternis (Kernschatten)':'Mondfinsternis (teilweise)');
+  }
+  ctx.fillStyle=D.dark?'#e5e7eb':'#1f2430'; ctx.textAlign='left'; ctx.textBaseline='middle';
+  ctx.font=fontStr(fs*0.78); ctx.fillText('von der Erde aus gesehen:',cx+R+12,y+18);
+  ctx.font=fontStr(fs*1.0,true); ctx.fillText(t,cx+R+12,y+bh/2+2);
+  ctx.font=fontStr(fs*0.78); ctx.fillText(pct+' % beleuchtet',cx+R+12,y+bh-16);
+  ctx.restore();
+}
+/* ---------- Bedienung auf der Fläche ---------- */
+let drag=null;
+function distSeg(px,py,s){ const dx=s.x2-s.x1, dy=s.y2-s.y1, L=dx*dx+dy*dy||1;
+  let t=((px-s.x1)*dx+(py-s.y1)*dy)/L; t=Math.max(0,Math.min(1,t));
+  return Math.hypot(px-(s.x1+dx*t), py-(s.y1+dy*t)); }
+const at=(x,y)=>{ let best=-1,bd=1e9;
+  P.forEach((b,i)=>{ const s=segOf(b);
+    const d=(b.t==='lamp'||b.t==='laser')?Math.hypot(x-b.x,y-b.y)
+      :(b.t==='disk')?Math.max(0,Math.hypot(x-b.x,y-b.y)-(b.r||20))
+      :distSeg(x,y,s);
+    if(d<bd){ bd=d; best=i; } });
+  return bd<28?best:-1; };
+cv.addEventListener('pointerdown',e=>{ const r=cv.getBoundingClientRect(), x=e.clientX-r.left, y=e.clientY-r.top;
+  for(let i=0;i<P.length;i++){ const b=P[i]; if(b.t!=='lamp'||!Array.isArray(b.single)) continue;
+    for(let k=0;k<b.single.length;k++){
+      const hx=b.x+Math.cos(b.single[k])*RAYGRIFF, hy=b.y+Math.sin(b.single[k])*RAYGRIFF;
+      if(Math.hypot(x-hx,y-hy)<18){ D.sel=i; D.selRay=k; renderBar2();
+        drag={mode:'ray',i,k,before:snap()}; try{cv.setPointerCapture(e.pointerId);}catch(_){}
+        draw(); return; } } }
+  if(D.sel>=0&&P[D.sel]){ const b=P[D.sel], rr=Math.max(26,(b.len||40)/2+14);
+    const hx=b.x+Math.cos(b.ang)*rr, hy=b.y+Math.sin(b.ang)*rr;
+    if(Math.hypot(x-hx,y-hy)<18){ drag={mode:'rot',i:D.sel,before:snap()}; try{cv.setPointerCapture(e.pointerId);}catch(_){} return; } }
+  const i=at(x,y);
+  D.sel=i; renderBar2();
+  if(i>=0){ drag={mode:'move',i,dx:x-P[i].x,dy:y-P[i].y,before:snap()}; try{cv.setPointerCapture(e.pointerId);}catch(_){} }
+  draw(); sync(); });
+cv.addEventListener('pointermove',e=>{ if(!drag) return; const r=cv.getBoundingClientRect(), x=e.clientX-r.left, y=e.clientY-r.top;
+  const b=P[drag.i]; if(!b) return;
+  if(drag.mode==='move'){ b.x=x-drag.dx; b.y=y-drag.dy; }
+  else if(drag.mode==='ray'){ b.single[drag.k]=Math.atan2(y-b.y,x-b.x); }
+  else { b.ang=Math.atan2(y-b.y,x-b.x); }
+  draw(); });
+['pointerup','pointercancel'].forEach(ev=>cv.addEventListener(ev,()=>{
+  if(drag){ if(drag.before&&drag.before!==snap()){ undoStack.push(drag.before); if(undoStack.length>60) undoStack.shift(); redoStack.length=0; updUndo(); }
+    drag=null; sync(); } }));
+
+/* ---------- zweite Zeile: Eigenschaften ---------- */
+function renderBar2(){
+  const bar=$('bar2'); bar.innerHTML='';
+  const el=(tag,cls,txt,fn)=>{ const e=document.createElement(tag); if(cls) e.className=cls; if(txt!=null) e.textContent=txt; if(fn) e.onclick=fn; bar.appendChild(e); return e; };
+  const imgBtns=()=>{ el('span','sep');
+    if(window.parent!==window) el('button','btn pri','🖼 Bild → Tafel',()=>TafelShot.toBoard(shot()));
+    el('button','btn','📋 Kopieren',()=>TafelShot.copy(shot())); };
+  const stepper=(label,get,set,step,unit)=>{
+    el('span','lbl',label);
+    const st=document.createElement('span'); st.className='stp'; bar.appendChild(st);
+    const mk=(t,fn)=>{ const b=document.createElement('button'); b.textContent=t; b.onclick=fn; st.appendChild(b); return b; };
+    mk('−',()=>{ pushUndo(); set(get()-step); renderBar2(); refresh(); });
+    const v=document.createElement('span'); v.className='val'; v.textContent=get()+(unit||''); st.appendChild(v);
+    mk('+',()=>{ pushUndo(); set(get()+step); renderBar2(); refresh(); });
+  };
+  const stepperTxt=(label,get,step)=>{               /* Stepper mit eigener Beschriftung */
+    el('span','lbl',label);
+    const st=document.createElement('span'); st.className='stp'; bar.appendChild(st);
+    const mk=(t,d)=>{ const x=document.createElement('button'); x.textContent=t;
+      x.onclick=()=>{ pushUndo(); step(d); renderBar2(); refresh(); }; st.appendChild(x); };
+    mk('−',-1);
+    const v=document.createElement('span'); v.className='val'; v.textContent=get(); st.appendChild(v);
+    mk('+',1);
+  };
+  const b=P[D.sel];
+  $('bDel').disabled=!b;
+  if(b){
+    el('span','lbl',NAME[b.t]||'Bauteil');
+    if(b.t==='lamp'||b.t==='laser'){
+      const einzeln=Array.isArray(b.single);
+      if(einzeln){ const k=Math.max(0,Math.min(b.single.length-1,D.selRay|0));
+        el('span','lbl','Strahl '+(k+1)); }
+      const box=document.createElement('span'); box.style.cssText='display:inline-flex;gap:4px;align-items:center'; bar.appendChild(box);
+      const k=einzeln?Math.max(0,Math.min(b.single.length-1,D.selRay|0)):-1;
+      const jetzt=einzeln?rayCol(b,k):b.col;
+      COLS.forEach(c=>{ const bt=document.createElement('button'); bt.className='sw'+(jetzt===c?' on':''); bt.style.background=c;
+        bt.title=einzeln?'Farbe dieses Strahls':'Lichtfarbe';
+        bt.onclick=()=>{ pushUndo();
+          if(einzeln){ if(!Array.isArray(b.sc)) b.sc=b.single.map(()=>b.col);
+            b.sc[k]=c; } else b.col=c;
+          renderBar2(); refresh(); }; box.appendChild(bt); });
+      if(einzeln) el('button','btn','alle gleich',()=>{ pushUndo(); b.sc=b.single.map(()=>rayCol(b,k)); renderBar2(); refresh(); });
+    }
+    if(b.t==='lamp'){
+      const modus=Array.isArray(b.single)?'einzeln':(b.field?'feld':'rund');
+      const sg=document.createElement('span'); sg.className='seg'; bar.appendChild(sg);
+      [['rundum','rund'],['einzelne Strahlen','einzeln'],['Lichtfeld','feld']].forEach(([t,m])=>{
+        const bt=document.createElement('button'); bt.textContent=t; bt.className=(modus===m)?'on':'';
+        bt.onclick=()=>{ pushUndo();
+          if(m==='einzeln'){ if(!Array.isArray(b.single)){ b.single=[b.ang||0, (b.ang||0)+0.35, (b.ang||0)-0.35];
+              b.sc=b.single.map(()=>b.col); } b.field=false; D.selRay=0; }
+          else { b.single=null; b.field=(m==='feld'); if(b.field&&(b.rays||0)<120) b.rays=240; if(!b.field&&b.rays>120) b.rays=48; }
+          renderBar2(); refresh(); }; sg.appendChild(bt); });
+      if(modus==='einzeln'){
+        stepperTxt('Strahlen',()=>b.single.length,d=>{
+          if(!Array.isArray(b.sc)) b.sc=b.single.map(()=>b.col);
+          if(d>0&&b.single.length<12){ const last=b.single[b.single.length-1]??0;
+            b.single.push(last+0.3); b.sc.push(rayCol(b,b.single.length-2)); D.selRay=b.single.length-1; }
+          else if(d<0&&b.single.length>1){ b.single.pop(); b.sc.pop(); D.selRay=Math.min(D.selRay,b.single.length-1); } });
+        el('span','lbl','Richtung am Punkt ziehen');
+      } else
+      stepper(b.field?'Auflösung':'Strahlen',()=>b.rays||48,v=>{ b.rays=Math.max(b.field?60:8,Math.min(720,v)); },b.field?60:8);
+      if(b.field&&!Array.isArray(b.single)) stepper('Ausdehnung',()=>Math.round(b.size||0),v=>{ b.size=Math.max(0,Math.min(300,v)); },10,' px');
+      const geh=(b.open===undefined?360:b.open)<360;
+      if(Array.isArray(b.single)){ el('span','grow'); el('button','btn red','Löschen',()=>{ pushUndo(); P.splice(D.sel,1); D.sel=-1; renderBar2(); refresh(); }); el('button','btn','✕',()=>{ D.sel=-1; renderBar2(); refresh(); }); imgBtns(); return; }
+      el('button','btn'+(geh?' pri':''),geh?'Gehäuse an':'Gehäuse aus',()=>{ pushUndo();
+        b.open=geh?360:60; renderBar2(); refresh(); });
+      if(geh) stepper('Öffnung',()=>Math.round(b.open),v=>{ b.open=Math.max(5,Math.min(350,v)); },10,'°');
+    }
+    if(b.t==='laser'){
+      stepper('Strahlen',()=>b.rays||1,v=>{ b.rays=Math.max(1,Math.min(15,v)); },1);
+      if((b.rays||1)>1) stepper('Breite',()=>Math.round(b.w||28),v=>{ b.w=Math.max(10,Math.min(220,v)); },10);
+    }
+    if(b.t==='lens'||b.t==='curve'){
+      stepperTxt('Brennweite f',()=>cm(Math.abs(b.f)),d=>{ let n=b.f+d*10*Math.sign(b.f||1); n=Math.max(-600,Math.min(600,n));
+        if(Math.abs(n)<30) n=(n>=0?30:-30); b.f=n; });
+      el('button','btn',(b.f>=0)?(b.t==='lens'?'→ Zerstreuungslinse':'→ Wölbspiegel'):(b.t==='lens'?'→ Sammellinse':'→ Hohlspiegel'),
+        ()=>{ pushUndo(); b.f=-b.f; renderBar2(); refresh(); });
+    }
+    if(b.t==='slit') stepperTxt('Öffnung',()=>cm(b.gap||30),d=>{ b.gap=Math.max(2,Math.min(600,(b.gap||30)+d*10)); });
+    if(b.t==='disk') stepper('Radius',()=>Math.round(b.r||20),v=>{ b.r=Math.max(4,Math.min(300,v)); },4,' px');
+    if(b.len!==undefined) stepper('Größe',()=>Math.round(b.len),v=>{ b.len=Math.max(30,Math.min(700,v)); },20);
+    if(b.t!=='disk') el('button','btn','↻ 90°',()=>{ pushUndo(); b.ang+=Math.PI/2; renderBar2(); refresh(); });
+    el('span','grow');
+    el('button','btn red','Löschen',()=>{ pushUndo(); P.splice(D.sel,1); D.sel=-1; renderBar2(); refresh(); });
+    el('button','btn','✕',()=>{ D.sel=-1; renderBar2(); refresh(); });
+    imgBtns(); return;
+  }
+  el('span','lbl','Bauteil antippen, um es einzustellen');
+  el('span','sep');
+  el('span','lbl','Schrift'); el('button','btn','A−',()=>fontBy(-1)); el('button','btn','A+',()=>fontBy(1));
+  el('span','grow');
+  imgBtns();
+}
+const shot=()=>TafelShot.rasterize($('wrap'),{exclude:'#bar,#bar2',pad:6});
+function fontBy(d){ D.fontSize=Math.max(9,Math.min(30,(D.fontSize||14)+d));
+  document.documentElement.style.setProperty('--fs',Math.min(18,D.fontSize)+'px'); refresh(); }
+function refresh(){ draw(); sync(); }
+
+/* ---------- Animation (Bahnbewegung) ---------- */
+let anim=null, lastT=0;
+function hasOrbit(){ return P.some(b=>b.orbit); }
+function stepAnim(t){
+  anim=requestAnimationFrame(stepAnim);
+  const dt=Math.min(0.05,(t-lastT)/1000||0); lastT=t;
+  if(!D.anim||!hasOrbit()) return;
+  P.forEach(b=>{ if(!b.orbit) return;
+    const o=b.orbit; o.a=(o.a||0)+(o.sp||0.3)*dt;
+    let cx=o.cx, cy=o.cy;
+    if(o.around){ const z=P.find(q=>q.t==='disk'&&q.label===o.around); if(z){ cx=z.x; cy=z.y; } }
+    b.x=cx+Math.cos(o.a)*o.R; b.y=cy+Math.sin(o.a)*o.R; });
+  draw();
+}
+function setAnim(on){ D.anim=on&&hasOrbit();
+  $('bAnim').classList.toggle('on',D.anim);
+  $('bAnim').innerHTML=(D.anim?'<svg viewBox="0 0 32 20"><path d="M12 4v12M20 4v12" stroke-width="3"/></svg><span>Pause</span>'
+                              :'<svg viewBox="0 0 32 20"><path d="M12 4l12 6-12 6Z" fill="currentColor" stroke="none"/></svg><span>Animation</span>');
+  if(!anim){ lastT=performance.now(); anim=requestAnimationFrame(stepAnim); }
+  sync();
+}
+$('bAnim').onclick=()=>{ if(!hasOrbit()){ toast('Diese Vorlage hat keine Bewegung'); return; } setAnim(!D.anim); };
+
+/* ---------- Vorlagen ---------- */
+const TEMPLATES={
+  'Schatten (Kern & Halbschatten)':(w,h,put)=>{ put('lamp',w*0.12,h*0.5-32,{col:'#ffd166',rays:240,field:true});
+    put('lamp',w*0.12,h*0.5+32,{col:'#ffd166',rays:240,field:true});
+    put('block',w*0.45,h*0.5,{len:120,ang:-Math.PI/2}); put('screen',w*0.86,h*0.5,{len:h*0.8,ang:-Math.PI/2});
+    D.dark=false; return 'Zwei Lampen: in der Mitte Kernschatten, außen Halbschatten'; },
+  'Farbige Schatten (RGB)':(w,h,put)=>{ put('lamp',w*0.12,h*0.5-90,{col:'#ff2d2d',rays:240,field:true});
+    put('lamp',w*0.12,h*0.5,{col:'#22c55e',rays:240,field:true}); put('lamp',w*0.12,h*0.5+90,{col:'#3b82f6',rays:240,field:true});
+    put('block',w*0.45,h*0.5,{len:110,ang:-Math.PI/2}); put('screen',w*0.88,h*0.5,{len:h*0.85,ang:-Math.PI/2});
+    D.dark=true; return 'Rot, Grün und Blau mischen sich – die Schatten werden bunt'; },
+  'Reflexion am Spiegel':(w,h,put)=>{ put('laser',w*0.12,h*0.5+70,{col:'#ff2d2d',rays:1,ang:-0.5});
+    put('mirror',w*0.6,h*0.5-20,{len:220,ang:-Math.PI/2+0.45}); D.dark=false; D.norm=true;
+    return 'Einfallswinkel = Reflexionswinkel'; },
+  'Sammellinse mit Brennpunkt':(w,h,put)=>{ put('laser',w*0.1,h*0.5,{col:'#ff2d2d',rays:7,ang:0,w:120});
+    put('lens',w*0.45,h*0.5,{len:180,ang:-Math.PI/2,f:150}); put('screen',w*0.9,h*0.5,{len:h*0.7,ang:-Math.PI/2});
+    D.dark=false; return 'Parallele Strahlen treffen sich im Brennpunkt'; },
+  'Zerstreuungslinse':(w,h,put)=>{ put('laser',w*0.1,h*0.5,{col:'#3b82f6',rays:7,ang:0,w:120});
+    put('lens',w*0.45,h*0.5,{len:180,ang:-Math.PI/2,f:-140}); D.dark=false;
+    return 'Zerstreuungslinse: die Strahlen laufen auseinander'; },
+  'Hohlspiegel':(w,h,put)=>{ put('laser',w*0.12,h*0.5,{col:'#f59e0b',rays:7,ang:0,w:120});
+    put('curve',w*0.78,h*0.5,{len:230,ang:Math.PI/2,f:150}); D.dark=false;
+    return 'Der Hohlspiegel bündelt im Brennpunkt'; },
+  'Bildkonstruktion (Sammellinse)':(w,h,put)=>{ const ly=h*0.5;
+    put('lamp',w*0.14,ly-60,{col:'#ff2d2d',single:[0.16,0,-0.16]});
+    put('lens',w*0.5,ly,{len:Math.max(160,h*0.5),ang:-Math.PI/2,f:90});
+    put('screen',w*0.93,ly,{len:h*0.8,ang:-Math.PI/2});
+    D.dark=false; D.gb=true; D.virt=false;
+    return 'Drei Strahlen am Punkt drehen – g, b und das Bild werden mitgerechnet'; },
+  'Lupe (virtuelles Bild)':(w,h,put)=>{ const ly=h*0.5;
+    put('lamp',w*0.42,ly-40,{col:'#ff2d2d',single:[0.3,0.1,-0.1]});
+    put('lens',w*0.56,ly,{len:Math.max(160,h*0.5),ang:-Math.PI/2,f:110});
+    D.dark=false; D.gb=true; D.virt=true;
+    return 'Gegenstand innerhalb der Brennweite: die gestrichelten Strahlen treffen sich im virtuellen Bild'; },
+  'Spiegelbild':(w,h,put)=>{
+    put('lamp',w*0.35,h*0.68,{col:'#ff2d2d',single:[-1.15,-0.85,-0.55]});
+    put('mirror',w*0.5,h*0.28,{len:Math.max(220,w*0.7),ang:0});
+    D.dark=false; D.gb=false; D.virt=true;
+    return 'Die gestrichelten Rückverlängerungen treffen sich im Spiegelbild'; },
+  'Lochkamera':(w,h,put)=>{ put('lamp',w*0.12,h*0.5,{col:'#ffd166',rays:360,field:true});
+    put('block',w*0.45,h*0.5-90,{len:150,ang:-Math.PI/2}); put('block',w*0.45,h*0.5+90,{len:150,ang:-Math.PI/2});
+    put('screen',w*0.85,h*0.5,{len:h*0.8,ang:-Math.PI/2}); D.dark=true;
+    return 'Nur durch die kleine Öffnung kommt Licht auf den Schirm'; },
+  'Mondphasen':(w,h,put)=>{ const ex=w*0.56, ey=h*0.5, R=Math.min(w*0.3,h*0.33);
+    put('lamp',Math.max(46,w*0.06),ey,{col:'#fff3c4',rays:360,field:true,size:30});
+    put('disk',ex,ey,{r:Math.max(16,h*0.05),label:'Erde'});
+    put('disk',ex+R,ey,{r:Math.max(7,h*0.022),label:'Mond',orbit:{around:'Erde',cx:ex,cy:ey,R,a:0,sp:0.3}});
+    D.dark=true; D.phase=true; setTimeout(()=>setAnim(true),60);
+    return 'Der Mond umläuft die Erde – rechts unten sieht man seine Phase (Modell, nicht maßstabsgetreu)'; },
+  'Mondfinsternis':(w,h,put)=>{ const ex=w*0.5, ey=h*0.5, R=Math.min(w*0.34,h*0.36);
+    put('lamp',Math.max(40,w*0.05),ey,{col:'#fff3c4',rays:480,field:true,size:Math.max(40,h*0.13)});
+    put('disk',ex,ey,{r:Math.max(20,h*0.062),label:'Erde'});
+    put('disk',ex+R,ey,{r:Math.max(7,h*0.02),label:'Mond',orbit:{around:'Erde',cx:ex,cy:ey,R,a:-0.42,sp:0.1}});
+    D.dark=true; D.phase=true; setTimeout(()=>setAnim(true),60);
+    return 'Der Mond wandert in den Schatten der Erde – Kernschatten und Halbschatten'; },
+  'Sonnenfinsternis':(w,h,put)=>{ const ex=w*0.72, ey=h*0.5, R=Math.min(w*0.3,h*0.34);
+    put('lamp',Math.max(40,w*0.05),ey,{col:'#fff3c4',rays:480,field:true,size:Math.max(40,h*0.13)});
+    put('disk',ex,ey,{r:Math.max(20,h*0.062),label:'Erde'});
+    put('disk',ex-R,ey,{r:Math.max(8,h*0.022),label:'Mond',orbit:{around:'Erde',cx:ex,cy:ey,R,a:Math.PI-0.35,sp:0.1}});
+    D.dark=true; D.phase=true; setTimeout(()=>setAnim(true),60);
+    return 'Der Mond steht zwischen Sonne und Erde – sein Schatten wandert über die Erde'; },
+  'Leere Fläche':()=>{ D.norm=false; return 'Leere Fläche'; }
+};
+function loadTpl(name){
+  const f=TEMPLATES[name]; if(!f) return;
+  pushUndo(); P=[]; D.sel=-1; D.norm=false; D.phase=false; setAnim(false);
+  const w=cv.clientWidth, h=cv.clientHeight;
+  const put=(t,x,y,o)=>{ const b=defPart(t,x,y); Object.assign(b,o||{}); P.push(b); return b; };
+  const msg=f(w,h,put);
+  $('bDark').classList.toggle('on',D.dark); $('bNorm').classList.toggle('on',D.norm); $('bGB').classList.toggle('on',!!D.gb); $('bVirt').classList.toggle('on',!!D.virt);
+  renderBar2(); refresh(); if(msg) toast(msg);
+}
+$('bTpl').onclick=()=>{ const bar=$('bar2'); bar.innerHTML='';
+  const lab=document.createElement('span'); lab.className='lbl'; lab.textContent='Vorlage:'; bar.appendChild(lab);
+  Object.keys(TEMPLATES).forEach(k=>{ const bt=document.createElement('button'); bt.className='btn'+(k==='Leere Fläche'?' red':'');
+    bt.textContent=k; bt.onclick=()=>loadTpl(k); bar.appendChild(bt); });
+  const x=document.createElement('button'); x.className='btn'; x.textContent='✕'; x.onclick=renderBar2; bar.appendChild(x); };
+
+/* ---------- Rückgängig / Wiederholen ---------- */
+let undoStack=[], redoStack=[], savedSnap=null;
+const snap=()=>JSON.stringify({p:P,d:!!D.dark,n:!!D.norm});
+function pushUndo(){ undoStack.push(snap()); if(undoStack.length>60) undoStack.shift(); redoStack.length=0; updUndo(); }
+function applySnap(str){ const o=JSON.parse(str); P=o.p||[]; D.dark=!!o.d; D.norm=!!o.n; D.sel=-1;
+  $('bDark').classList.toggle('on',D.dark); $('bNorm').classList.toggle('on',D.norm); renderBar2(); refresh(); }
+function updUndo(){ $('bUndo').disabled=!undoStack.length; $('bRedo').disabled=!redoStack.length; }
+$('bUndo').onclick=()=>{ if(!undoStack.length) return; redoStack.push(snap()); applySnap(undoStack.pop()); updUndo(); };
+$('bRedo').onclick=()=>{ if(!redoStack.length) return; undoStack.push(snap()); applySnap(redoStack.pop()); updUndo(); };
+
+/* ---------- Datei: Neu, Speichern, Laden ---------- */
+const unsaved=()=>P.length&&snap()!==savedSnap;
+$('fNew').onclick=()=>{ if(unsaved()&&!confirm('Neuer Aufbau? Nicht gespeicherte Änderungen gehen verloren.')) return;
+  pushUndo(); P=[]; D.sel=-1; D.norm=false; $('bNorm').classList.remove('on'); savedSnap=null; renderBar2(); refresh(); toast('Neuer Aufbau'); };
+$('fSave').onclick=()=>{ if(!P.length){ toast('Noch keine Bauteile aufgestellt'); return; }
+  const name=(prompt('Dateiname:','optik-'+new Date().toISOString().slice(0,10))||'').trim(); if(!name) return;
+  const file={app:'tafel-optik',v:1,parts:P,dark:!!D.dark,norm:!!D.norm,fontSize:D.fontSize};
+  const blob=new Blob([JSON.stringify(file)],{type:'application/json'});
+  const fname=name.replace(/[\\/:*?"<>|]+/g,'_').replace(/\.json$/i,'')+'.json';
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=fname; document.body.appendChild(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },2000); savedSnap=snap(); toast('Gespeichert: '+fname); };
+$('fLoad').onclick=()=>{ if(unsaved()&&!confirm('Anderen Aufbau laden? Nicht gespeicherte Änderungen gehen verloren.')) return;
+  $('fFile').value=''; $('fFile').click(); };
+$('fFile').onchange=()=>{ const f=$('fFile').files[0]; if(!f) return; const rd=new FileReader();
+  rd.onload=()=>{ try{ const o=JSON.parse(rd.result); if(!o||!Array.isArray(o.parts)) throw new Error('x');
+      pushUndo(); P=o.parts.filter(q=>q&&NAME[q.t]); D.dark=!!o.dark; D.norm=!!o.norm; if(o.fontSize) D.fontSize=+o.fontSize||14;
+      D.sel=-1; $('bDark').classList.toggle('on',D.dark); $('bNorm').classList.toggle('on',D.norm);
+      document.documentElement.style.setProperty('--fs',Math.min(18,D.fontSize)+'px');
+      savedSnap=snap(); renderBar2(); refresh(); toast('Geladen: '+f.name); }
+    catch(e){ toast('Keine gültige Optik-Datei'); } };
+  rd.readAsText(f); };
+
+/* ---------- feste Knöpfe ---------- */
+document.querySelectorAll('.tb[data-add]').forEach(b=>b.onclick=()=>add(b.dataset.add));
+$('bDel').onclick=()=>{ if(D.sel<0) return; pushUndo(); P.splice(D.sel,1); D.sel=-1; renderBar2(); refresh(); };
+$('bDark').onclick=()=>{ pushUndo(); D.dark=!D.dark; $('bDark').classList.toggle('on',D.dark); refresh(); };
+$('bNorm').onclick=()=>{ pushUndo(); D.norm=!D.norm; $('bNorm').classList.toggle('on',D.norm); refresh(); };
+$('bVirt').onclick=()=>{ D.virt=!D.virt; $('bVirt').classList.toggle('on',D.virt); refresh();
+  toast(D.virt?'Virtuelle Strahlen werden gestrichelt gezeigt':'Virtuelle Strahlen aus'); };
+$('bGB').onclick=()=>{ D.gb=!D.gb; $('bGB').classList.toggle('on',D.gb);
+  if(D.gb&&!P.some(b=>b.t==='lens')) toast('Dafür braucht es eine Linse und eine Lampe als Gegenstand');
+  refresh(); };
+$('hint').textContent='Bauteil antippen = auswählen · ziehen = verschieben · am blauen Griff drehen';
+/* weiche Kanten zeigen, dass die Bauteilleiste seitlich weitergeht */
+function barFade(){ const bar=$('bar'), m=$('barMid');
+  bar.classList.remove('compact');
+  const more=m.scrollWidth>m.clientWidth+2;
+  if(more&&m.clientWidth<150) bar.classList.add('compact');
+  m.classList.toggle('more',m.scrollWidth>m.clientWidth+2);
+  m.classList.toggle('start',m.scrollLeft>4);
+  m.classList.toggle('end',m.scrollLeft+m.clientWidth>=m.scrollWidth-4);
+}
+$('barMid').addEventListener('scroll',barFade);
+
+/* ---------- Tafel-Anbindung ---------- */
+let ready=false;
+function sync(){ if(window.parent===window||!ready) return;
+  D.parts=P; try{ parent.postMessage({type:'embed-data',data:D},'*'); }catch(e){} }
+addEventListener('message',e=>{ if(window.parent===window||e.source!==window.parent) return;
+  if(!(e.data&&e.data.type==='embed-data'&&e.data.data)) return;
+  D=Object.assign(D,e.data.data); ready=true;
+  if(window.TafelModus) TafelModus.refresh();
+  if(Array.isArray(D.parts)) P=D.parts;
+  $('bDark').classList.toggle('on',D.dark); $('bNorm').classList.toggle('on',D.norm); $('bGB').classList.toggle('on',!!D.gb); $('bVirt').classList.toggle('on',!!D.virt);
+  document.documentElement.style.setProperty('--fs',Math.min(18,D.fontSize||14)+'px');
+  setAnim(D.anim); renderBar2(); resize(); barFade(); });
+addEventListener('resize',()=>{ resize(); barFade(); });
+window.addEventListener('load',()=>{
+  if(window.TafelModus) TafelModus.init({get:()=>D.edit!==false, set:v=>{ D.edit=v; renderBar2(); resize(); barFade(); sync(); }});
+  renderBar2(); resize(); barFade(); updUndo();
+  if(window.ResizeObserver){ new ResizeObserver(()=>{ resize(); barFade(); }).observe(cv); }
+  if(window.parent===window){ ready=true; loadTpl('Sammellinse mit Brennpunkt'); return; }
+  try{ parent.postMessage({type:'embed-ready'},'*'); }catch(e){}
+  setTimeout(()=>{ ready=true; if(!P.length) loadTpl('Sammellinse mit Brennpunkt'); },700);   /* neues Objekt: Standardversuch */
+});
+</script>
+</body></html>

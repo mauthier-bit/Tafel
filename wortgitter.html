@@ -1,0 +1,203 @@
+<!DOCTYPE html><html lang="de"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Buchstabengitter</title>
+<style>
+  *{box-sizing:border-box;} [hidden]{display:none!important;}
+  html,body{margin:0;height:100%;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#fff;color:#1f2430;overflow:hidden;}
+  #app{display:flex;flex-direction:column;height:100%;}
+  #bar{flex:none;display:flex;flex-direction:column;gap:5px;padding:6px 8px;border-bottom:1px solid #e6eaf0;font-size:13px;}
+  #row1,#row2{display:flex;gap:6px;align-items:center;flex-wrap:nowrap;}
+  #scroll1,#scroll2{display:flex;gap:6px;align-items:center;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:thin;flex:1 1 auto;min-width:0;padding-bottom:1px;}
+  #scroll1>*,#scroll2>*{flex:0 0 auto;}
+  #scroll1::-webkit-scrollbar,#scroll2::-webkit-scrollbar{height:4px;}
+  #scroll1::-webkit-scrollbar-thumb,#scroll2::-webkit-scrollbar-thumb{background:#cfd6e0;border-radius:2px;}
+  #bar button,#bar select{border:1px solid #cfd6e0;background:#fff;border-radius:7px;padding:4px 9px;font:600 13px -apple-system,sans-serif;cursor:pointer;color:#1f2430;white-space:nowrap;}
+  #bar button.on{background:#2563eb;border-color:#2563eb;color:#fff;}
+  #bar button:active{background:#e8f0fe;}
+  #bar label{display:inline-flex;gap:4px;align-items:center;font-weight:600;white-space:nowrap;}
+  .kin{width:52px;text-align:center;font:700 13px -apple-system,sans-serif;border:1px solid #cfd6e0;border-radius:7px;padding:4px;color:#1f2430;}
+  .stp{display:inline-flex;align-items:center;gap:2px;}
+  .stp button{width:26px;height:28px;padding:0;font:800 16px -apple-system,sans-serif;}
+  #shotBtns{display:inline-flex;gap:5px;flex:0 0 auto;}
+  #words{flex:none;padding:6px 8px;border-bottom:1px solid #e6eaf0;}
+  #words textarea{width:100%;height:84px;border:1px solid #cfd6e0;border-radius:8px;padding:6px 8px;font:500 14px -apple-system,sans-serif;resize:vertical;}
+  #words .hint{font-size:12px;color:#8a93a2;margin-top:4px;}
+  #area{flex:1;position:relative;min-height:0;}
+  #area canvas{position:absolute;inset:0;width:100%;height:100%;}
+  #msg{font-size:12.5px;color:#64748b;white-space:nowrap;}
+</style>
+</head><body>
+<div id="app">
+  <div id="bar">
+    <div id="row1">
+      <div id="scroll1">
+        <button type="button" id="bEdit">✎ Wörter</button>
+        <button type="button" id="bNew" title="Buchstaben neu anordnen">🎲 Neu mischen</button>
+        <label><input type="checkbox" id="cSol"> Lösung</label>
+        <button type="button" id="bPrint" title="Als Arbeitsblatt drucken">🖨 Drucken</button>
+        <span id="msg"></span>
+      </div>
+      <span id="shotBtns"><button type="button" id="fsM" title="Schrift kleiner">A−</button><button type="button" id="fsP" title="Schrift größer">A+</button></span>
+    </div>
+    <div id="row2"><div id="scroll2">
+      <span style="color:#64748b">Gitter</span><input id="gN" class="kin" type="number" min="7" max="22" value="12" inputmode="numeric"><span style="color:#64748b">× <span id="gN2">12</span></span>
+      <select id="dirs" title="Erlaubte Richtungen">
+        <option value="easy">→ und ↓ (leicht)</option>
+        <option value="diag">+ schräg</option>
+        <option value="all">+ rückwärts (schwer)</option>
+      </select>
+      <label><input type="checkbox" id="cList" checked> Wortliste</label>
+    </div></div>
+  </div>
+  <div id="words" hidden>
+    <textarea id="wIn" placeholder="Ein Wort je Zeile, z. B.&#10;Bruch&#10;Nenner&#10;Zähler"></textarea>
+    <div class="hint">Ein Wort je Zeile (oder mit Komma trennen) · Umlaute bleiben, ß wird zu SS · 3 bis 14 Buchstaben</div>
+  </div>
+  <div id="area"><canvas id="cv"></canvas></div>
+</div>
+<script src="shot.js"></script>
+<script>
+"use strict";
+const $=id=>document.getElementById(id), cv=$('cv'), ctx=cv.getContext('2d');
+const LINE='#1f2430', BLUE='#2563eb', GREY='#8a93a2';
+const SOLCOL=['#2563eb','#dc2626','#16a34a','#d97706','#7c3aed','#0891b2','#db2777','#65a30d'];
+let D={ v:1, words:'Bruch\nNenner\nZähler\nKürzen\nErweitern\nAnteil', size:12, dirs:'easy', sol:false, list:true, seed:7,
+  fontSize:16, fontBold:false, fontItalic:false };
+let grid=null, placed=[], missing=[];
+
+/* ---------- Wörter aufbereiten ---------- */
+const clean=w=>w.toUpperCase().replace(/ß/g,'SS').replace(/[^A-ZÄÖÜ]/g,'');
+function wordList(){ return (D.words||'').split(/[\n,;]+/).map(clean).filter(w=>w.length>=3&&w.length<=14).slice(0,20); }
+const rnd=seed=>{ let t=(seed|0)||1; return ()=>((t=t*16807%2147483647)/2147483647); };
+
+/* ---------- Gitter bauen ---------- */
+const DIRS={ easy:[[1,0],[0,1]], diag:[[1,0],[0,1],[1,1],[1,-1]],
+  all:[[1,0],[0,1],[1,1],[1,-1],[-1,0],[0,-1],[-1,-1],[-1,1]] };
+function build(){
+  const N=Math.max(7,Math.min(22,D.size|0)), words=wordList().sort((a,b)=>b.length-a.length);
+  const dirs=DIRS[D.dirs]||DIRS.easy, r=rnd(D.seed);
+  grid=Array.from({length:N},()=>new Array(N).fill(''));
+  placed=[]; missing=[];
+  const fits=(w,x,y,dx,dy)=>{ for(let i=0;i<w.length;i++){ const cx=x+dx*i, cy=y+dy*i;
+      if(cx<0||cy<0||cx>=N||cy>=N) return false;
+      const g=grid[cy][cx]; if(g&&g!==w[i]) return false; } return true; };
+  const put=(w,x,y,dx,dy)=>{ const cells=[]; for(let i=0;i<w.length;i++){ const cx=x+dx*i, cy=y+dy*i; grid[cy][cx]=w[i]; cells.push([cx,cy]); }
+    placed.push({word:w,cells,x,y,dx,dy}); };
+  for(const w of words){
+    if(w.length>N){ missing.push(w); continue; }
+    let done=false;
+    for(let tries=0;tries<400&&!done;tries++){
+      const d=dirs[Math.floor(r()*dirs.length)%dirs.length];
+      const x=Math.floor(r()*N), y=Math.floor(r()*N);
+      if(fits(w,x,y,d[0],d[1])){ put(w,x,y,d[0],d[1]); done=true; }
+    }
+    if(!done){                                        // systematisch suchen, wenn der Zufall nicht reicht
+      outer: for(const d of dirs) for(let y=0;y<N;y++) for(let x=0;x<N;x++)
+        if(fits(w,x,y,d[0],d[1])){ put(w,x,y,d[0],d[1]); done=true; break outer; }
+    }
+    if(!done) missing.push(w);
+  }
+  const AZ='ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  for(let y=0;y<N;y++) for(let x=0;x<N;x++) if(!grid[y][x]) grid[y][x]=AZ[Math.floor(r()*26)%26];
+  setMsg(missing.length?('Kein Platz für: '+missing.join(', ')):'');
+}
+const setMsg=t=>{ $('msg').textContent=t||''; };
+
+/* ---------- Zeichnen ---------- */
+function resize(){ const dpr=window.devicePixelRatio||1, w=cv.clientWidth||320, h=cv.clientHeight||240;
+  cv.width=Math.round(w*dpr); cv.height=Math.round(h*dpr); ctx.setTransform(dpr,0,0,dpr,0,0); draw(); }
+function fontStr(px,bold){ return (D.fontItalic?'italic ':'')+((bold||D.fontBold)?'800 ':'600 ')+px+'px -apple-system,BlinkMacSystemFont,sans-serif'; }
+function draw(){ if(!grid) build();
+  const w=cv.clientWidth, h=cv.clientHeight, N=grid.length, fs=D.fontSize;
+  ctx.clearRect(0,0,w,h); ctx.fillStyle='#fff'; ctx.fillRect(0,0,w,h);
+  const words=placed.map(p=>p.word);
+  const listOn=D.list&&words.length, side=listOn&&w>h*1.15;        // breites Objekt: Liste rechts neben das Gitter
+  const cols=side?1:Math.max(1,Math.min(4,Math.ceil(words.length/6)));
+  const listH=(listOn&&!side)?(fs*1.5*Math.ceil(words.length/cols)+fs*1.6):0;
+  const listW=side?Math.max(fs*6,Math.min(w*0.32,fs*10)):0;
+  const pad=8, avW=w-2*pad-listW, avH=h-2*pad-listH;
+  const cell=Math.max(10,Math.min(avW/N, avH/N));
+  const gw=cell*N, x0=pad+Math.max(0,(avW-gw)/2), y0=pad+Math.max(0,(avH-gw)/2);
+  /* Lösungsmarkierungen unter die Buchstaben */
+  if(D.sol) placed.forEach((p,i)=>{ const c=SOLCOL[i%SOLCOL.length];
+    const ax=x0+(p.x+0.5)*cell, ay=y0+(p.y+0.5)*cell;
+    const bx=x0+(p.x+p.dx*(p.word.length-1)+0.5)*cell, by=y0+(p.y+p.dy*(p.word.length-1)+0.5)*cell;
+    ctx.save(); ctx.strokeStyle=c; ctx.globalAlpha=.35; ctx.lineWidth=cell*0.82; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(ax,ay); ctx.lineTo(bx,by); ctx.stroke(); ctx.restore(); });
+  /* Gitter + Buchstaben */
+  ctx.strokeStyle='#d7dde7'; ctx.lineWidth=1;
+  for(let i=0;i<=N;i++){ ctx.beginPath(); ctx.moveTo(x0+i*cell,y0); ctx.lineTo(x0+i*cell,y0+gw); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x0,y0+i*cell); ctx.lineTo(x0+gw,y0+i*cell); ctx.stroke(); }
+  ctx.strokeStyle=LINE; ctx.lineWidth=2; ctx.strokeRect(x0,y0,gw,gw);
+  ctx.fillStyle=LINE; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.font=fontStr(Math.max(9,Math.min(cell*0.62,fs*1.6)));
+  for(let y=0;y<N;y++) for(let x=0;x<N;x++) ctx.fillText(grid[y][x], x0+(x+0.5)*cell, y0+(y+0.55)*cell);
+  /* Wortliste */
+  if(listOn){ ctx.textAlign='left';
+    let size=fs;
+    if(side){ const maxLines=Math.max(1,Math.floor((h-2*pad)/(fs*1.5)));
+      while(size>8&&words.length*size*1.5>h-2*pad) size-=1;
+      ctx.font=fontStr(size);
+      words.forEach((wd,i)=>{ ctx.fillStyle=D.sol?SOLCOL[i%SOLCOL.length]:LINE;
+        ctx.fillText(wd, w-listW+4, pad+size*0.9+i*size*1.5); }); }
+    else { const yL=y0+gw+fs*1.2, colW=(w-2*pad)/cols, per=Math.ceil(words.length/cols);
+      ctx.font=fontStr(fs);
+      words.forEach((wd,i)=>{ const c=Math.floor(i/per), r2=i%per;
+        ctx.fillStyle=D.sol?SOLCOL[i%SOLCOL.length]:LINE;
+        ctx.fillText(wd, pad+c*colW, yL+r2*fs*1.5); }); }
+    ctx.textAlign='center'; }
+}
+/* ---------- Bedienung ---------- */
+function refresh(rebuild){ if(rebuild) build(); draw(); sync(); }
+$('bEdit').onclick=()=>{ const w=$('words'); w.hidden=!w.hidden; $('bEdit').classList.toggle('on',!w.hidden);
+  if(!w.hidden){ $('wIn').value=D.words; $('wIn').focus(); } resize(); };
+$('wIn').addEventListener('input',()=>{ D.words=$('wIn').value; refresh(true); });
+$('bNew').onclick=()=>{ D.seed=Math.max(1,Math.floor(Math.random()*1e6)); refresh(true); };
+$('cSol').onchange=()=>{ D.sol=$('cSol').checked; refresh(false); };
+$('cList').onchange=()=>{ D.list=$('cList').checked; refresh(false); };
+$('dirs').onchange=()=>{ D.dirs=$('dirs').value; refresh(true); };
+$('gN').addEventListener('input',()=>{ let v=Math.floor(+$('gN').value); if(!isFinite(v)) v=12;
+  D.size=Math.max(7,Math.min(22,v)); $('gN2').textContent=D.size; refresh(true); });
+function addSteppers(){ document.querySelectorAll('#bar input[type=number]').forEach(inp=>{
+  if(inp.parentNode.classList.contains('stp')) return;
+  const wrap=document.createElement('span'); wrap.className='stp'; inp.parentNode.insertBefore(wrap,inp);
+  const mk=(t,d)=>{ const b=document.createElement('button'); b.type='button'; b.textContent=t; b.tabIndex=-1;
+    b.addEventListener('pointerdown',e=>e.preventDefault());
+    b.onclick=()=>{ const lo=+inp.min||0, hi=+inp.max||99, v=Math.max(lo,Math.min(hi,(parseInt(inp.value,10)||0)+d));
+      inp.value=v; inp.dispatchEvent(new Event('input',{bubbles:true})); }; return b; };
+  wrap.appendChild(mk('−',-1)); wrap.appendChild(inp); wrap.appendChild(mk('+',1)); }); }
+function applyFont(){ document.documentElement.style.setProperty('--fs',D.fontSize+'px'); }
+for(const [id,d] of [['fsM',-1],['fsP',1]]){ $(id).addEventListener('pointerdown',e=>e.preventDefault());
+  $(id).onclick=()=>{ D.fontSize=Math.max(9,Math.min(40,(D.fontSize||16)+d)); applyFont(); draw(); sync(); }; }
+
+/* ---------- Drucken ---------- */
+function printSheet(title){
+  let url='';
+  try{ const c=(window.TafelShot&&TafelShot.rasterize)?TafelShot.rasterize($('area'),{scale:2.5,pad:6}):cv; url=c.toDataURL('image/png'); }
+  catch(e){ url=cv.toDataURL('image/png'); }
+  const win=window.open('','_blank');
+  if(!win){ setMsg('Bitte Pop-ups erlauben – dann klappt das Drucken'); return; }
+  win.document.write('<!DOCTYPE html><meta charset="utf-8"><title>'+title+'</title>'+
+    '<style>html,body{margin:0;padding:0}@page{margin:10mm}img{width:100%;height:auto;display:block}</style>'+
+    '<img src="'+url+'">');
+  win.document.close();
+  win.focus();
+  setTimeout(()=>{ try{ win.print(); }catch(e){} },350);
+}
+$('bPrint').onclick=()=>printSheet('Buchstabengitter');
+if(window.TafelShot) TafelShot.buttons($('shotBtns'),()=>TafelShot.rasterize($('app'),{exclude:'#bar,#words',pad:6}));
+/* ---------- Tafel-Anbindung ---------- */
+function sync(){ if(window.parent===window) return; /* allein geöffnet: nicht an sich selbst senden */
+  try{ parent.postMessage({type:'embed-data',data:D},'*'); }catch(e){} }
+addEventListener('message',e=>{ if(window.parent===window||e.source!==window.parent) return;   // eigene Nachrichten ignorieren
+  if(!(e.data&&e.data.type==='embed-data'&&e.data.data)) return; const d=e.data.data;
+  D=Object.assign(D,d);
+  $('wIn').value=D.words||''; $('gN').value=D.size; $('gN2').textContent=D.size;
+  $('dirs').value=D.dirs||'easy'; $('cSol').checked=!!D.sol; $('cList').checked=D.list!==false;
+  applyFont(); build(); resize(); });
+addEventListener('resize',resize);
+window.addEventListener('load',()=>{ addSteppers(); applyFont(); build(); resize();
+  if(window.ResizeObserver) new ResizeObserver(resize).observe(cv);
+  try{ if(window.parent!==window) parent.postMessage({type:'embed-ready'},'*'); }catch(e){} });
+</script>
+</body></html>

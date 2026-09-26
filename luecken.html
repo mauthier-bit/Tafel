@@ -1,0 +1,322 @@
+<!DOCTYPE html><html lang="de"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Lückentext</title>
+<style>
+  :root{--fs:17px;}
+  *{box-sizing:border-box;} [hidden]{display:none!important;}
+  html,body{margin:0;height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#1f2430;font-size:var(--fs);}
+  #wrap{position:absolute;inset:0;display:flex;flex-direction:column;}
+  #bar{display:flex;gap:4px;padding:6px;border-bottom:1px solid #e2e7ef;align-items:center;flex:none;overflow:hidden;}
+  #barL,#barR{display:flex;gap:4px;align-items:center;flex:none;}
+  #barMid{display:flex;gap:4px;align-items:center;flex:1 1 auto;min-width:0;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:thin;padding:0 2px;}
+  #bar.compact #barL .tb span,#bar.compact #barR .tb span{display:none;}
+  #bar.compact #barL .tb,#bar.compact #barR .tb{min-width:42px;padding:0 3px;}
+  #barMid::-webkit-scrollbar{height:5px;} #barMid::-webkit-scrollbar-thumb{background:#c8d0dc;border-radius:3px;}
+  .tb{flex:none;min-width:52px;height:50px;border:1px solid #d6dce5;background:#fff;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;padding:0 5px;color:#1f2430;font:inherit;font-size:15px;}
+  .tb svg{width:32px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+  .tb span{font-size:.7em;font-weight:600;white-space:nowrap;}
+  .tb.on{background:#2563eb;border-color:#2563eb;color:#fff;}
+  .tb:disabled{opacity:.35;}
+  .sep{width:1px;align-self:stretch;background:#e2e7ef;margin:0 3px;flex:none;}
+  #bar2{display:flex;gap:6px;padding:5px 8px;border-bottom:1px solid #e2e7ef;align-items:center;flex-wrap:nowrap;flex:none;min-height:44px;font-size:14px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;}
+  #bar2>*{flex:0 0 auto;}
+  .lbl{color:#64748b;font-weight:600;} .grow{flex:1 1 auto!important;min-width:4px;}
+  .btn{border:1px solid #cfd6e0;background:#fff;border-radius:9px;padding:5px 10px;font:inherit;font-weight:600;color:#1f2430;cursor:pointer;white-space:nowrap;}
+  .btn.pri{background:#2563eb;border-color:#2563eb;color:#fff;}
+  .btn.red{color:#dc2626;border-color:#fca5a5;}
+  .stp{display:inline-flex;align-items:center;gap:4px;}
+  .stp button{border:1px solid #cfd6e0;background:#fff;border-radius:8px;width:28px;height:28px;font:inherit;font-weight:700;cursor:pointer;}
+  .stp .val{min-width:34px;text-align:center;font-weight:700;}
+  #play{flex:1;min-height:0;display:flex;flex-direction:column;}
+  #text{flex:1;min-height:0;overflow:auto;-webkit-overflow-scrolling:touch;padding:12px 14px;line-height:2.1;}
+  #woerter{flex:0 0 auto;max-height:28%;overflow-y:auto;display:flex;flex-wrap:wrap;gap:7px;padding:8px 10px;border-top:1px solid #e2e7ef;background:#f8fafc;}
+  #woerter.over{background:#eff6ff;}
+  .wort{border:1.5px solid #cfd6e0;background:#fff;border-radius:10px;padding:4px 10px;font-weight:700;cursor:grab;touch-action:none;box-shadow:0 1px 2px rgba(15,23,42,.08);}
+  .wort.ghost{position:fixed;z-index:99;pointer-events:none;opacity:.92;box-shadow:0 8px 20px rgba(15,23,42,.25);}
+  .wort.weg{opacity:.25;}
+  .w{border-radius:5px;padding:1px 2px;}
+  .waehlbar .w{cursor:pointer;}
+  .waehlbar .w:hover{background:#e0e7ff;}
+  .w.gap{background:#fde68a;box-shadow:inset 0 -2px 0 #f59e0b;}
+  .waehlbar .w.gap::after{content:'\00d7';color:#b45309;font-weight:800;margin-left:3px;}
+  .luecke{display:inline-block;min-width:96px;border-bottom:2.5px solid #2563eb;text-align:center;font-weight:700;color:#1d4ed8;
+          padding:0 6px;margin:0 2px;vertical-align:baseline;touch-action:none;}
+  .luecke.leer::after{content:'\00a0';}
+  .luecke.over{background:#dbeafe;}
+  .luecke input{width:100%;min-width:92px;border:none;border-bottom:0;background:transparent;font:inherit;font-weight:700;color:#1d4ed8;text-align:center;padding:0;}
+  .luecke input:focus{outline:none;background:#eff6ff;}
+  .luecke.ok{border-color:#16a34a;color:#15803d;background:#f0fdf4;}
+  .luecke.no{border-color:#dc2626;color:#b91c1c;background:#fef2f2;}
+  .luecke.loesung{border-color:#16a34a;color:#15803d;background:#dcfce7;}
+  #edit{flex:1;min-height:0;display:none;flex-direction:column;padding:8px 12px 12px;gap:6px;}
+  #edit textarea{flex:1;min-height:0;width:100%;border:1px solid #cfd6e0;border-radius:10px;padding:10px;font:inherit;line-height:1.5;resize:none;}
+  .help{color:#64748b;font-size:14px;}
+</style>
+</head><body>
+<div id="wrap">
+  <div id="bar"><div id="barL">
+    <button class="tb tafelEdit" id="bEdit" title="Text eingeben oder einfügen"><svg viewBox="0 0 32 20"><path d="M8 15h4l11-11-4-4L8 11Z M18 3l4 4"/></svg><span>✎ Text</span></button>
+    <button class="tb tafelEdit" id="fSave" title="Lückentext als Datei speichern"><svg viewBox="0 0 32 20"><path d="M10 2h10l3 3v13H10Z M13 2v5h7V2 M13 18v-6h7v6"/></svg><span>Speichern</span></button>
+    <button class="tb tafelEdit" id="fLoad" title="Text oder Lückentext laden"><svg viewBox="0 0 32 20"><path d="M7 16V5h6l2 2h10v9Z M16 9v6M13 12l3 3 3-3"/></svg><span>Laden</span></button>
+    <input type="file" id="fFile" accept=".json,.txt,text/plain,application/json" hidden>
+    <span class="sep"></span>
+    <button class="tb tafelEdit" id="bPick" title="Lücken selbst auswählen: Wörter im Text antippen"><svg viewBox="0 0 32 20"><path d="M4 14h8M20 14h8"/><path d="M14 16V8l4 8V8" stroke-width="2.2"/></svg><span>Wählen</span></button>
+    <button class="tb tafelEdit" id="bRnd" title="Lücken zufällig setzen"><svg viewBox="0 0 32 20"><rect x="8" y="3" width="16" height="14" rx="3"/><circle cx="13" cy="8" r="1.4" fill="currentColor"/><circle cx="19" cy="12" r="1.4" fill="currentColor"/></svg><span>Zufällig</span></button>
+    </div><div id="barMid"></div><div id="barR"><span class="sep"></span>
+    <button class="tb tafelEdit" id="bDnd" title="Lücken frei tippen oder Wörter hineinziehen"><svg viewBox="0 0 32 20"><rect x="3" y="7" width="11" height="7" rx="1.5"/><path d="M16 10.5h9M22 7.5l3 3-3 3"/><path d="M27 6v9" stroke-dasharray="2 2"/></svg><span>Ziehen</span></button>
+    <button class="tb" id="bCheck" title="Eingaben prüfen"><svg viewBox="0 0 32 20"><path d="M8 11l5 5 11-12"/></svg><span>Prüfen</span></button>
+    <button class="tb" id="bStep" title="Nächste Lösung aufdecken"><svg viewBox="0 0 32 20"><path d="M6 10h14M16 5l5 5-5 5"/><path d="M26 4v12" stroke-width="2.4"/></svg><span>Lösung ▶</span></button>
+    <button class="tb tafelEdit" id="bPrint" title="Drucken"><svg viewBox="0 0 32 20"><path d="M10 7V2h12v5 M10 15H7V7h18v8h-3 M10 12h12v6H10Z"/></svg><span>Drucken</span></button>
+  </div></div>
+  <div id="bar2"></div>
+  <div id="play"><div id="text"></div><div id="woerter" hidden></div></div>
+  <div id="edit">
+    <div class="help">Text eintippen oder einfügen – mit <b>📋 Einfügen</b> direkt aus der Zwischenablage,
+      mit <b>Laden</b> aus einer Textdatei. Danach die Lücken mit <b>Wählen</b> antippen oder <b>Zufällig</b> setzen lassen.</div>
+    <textarea id="ta" spellcheck="false" placeholder="Hier den Text einfügen …"></textarea>
+    <div style="display:flex;gap:6px;justify-content:flex-end;align-items:center">
+      <button class="btn" id="ePaste">📋 Einfügen</button><span class="grow"></span>
+      <button class="btn" id="eCancel">Abbrechen</button><button class="btn pri" id="eOk">Übernehmen</button>
+    </div>
+  </div>
+</div>
+<script src="shot.js"></script>
+<script src="modus.js"></script>
+<script>
+"use strict";
+const $=id=>document.getElementById(id);
+const toast=m=>window.TafelShot&&TafelShot.toast(m);
+const DEMO='Alle Körper bestehen aus Teilchen. Beim Erwärmen bewegen sich die Teilchen schneller, '+
+  'der Körper dehnt sich aus. Wasser siedet bei 100 Grad Celsius und gefriert bei 0 Grad Celsius. '+
+  'Die Temperatur misst man mit einem Thermometer in der Einheit Grad Celsius oder Kelvin.';
+let D={ v:1, text:DEMO, gaps:[], fill:{}, check:{}, reveal:0, dnd:true, pick:false, anteil:5, fontSize:17, fontBold:false, fontItalic:false };
+let toks=[], words=[];
+
+/* ---------- Text zerlegen ---------- */
+function parse(){
+  toks=[]; words=[];
+  const re=/([A-Za-zÄÖÜäöüßéèêàçñ0-9°]+)/g;
+  let last=0, m;
+  while((m=re.exec(D.text||''))!==null){
+    if(m.index>last) toks.push({t:'s',v:D.text.slice(last,m.index)});
+    const wi=words.length; words.push(m[0]);
+    toks.push({t:'w',v:m[0],i:wi});
+    last=m.index+m[0].length;
+  }
+  if(last<(D.text||'').length) toks.push({t:'s',v:D.text.slice(last)});
+  D.gaps=(D.gaps||[]).filter(i=>i<words.length).sort((a,b)=>a-b);
+}
+const istLuecke=i=>D.gaps.includes(i);
+const gapPos=i=>D.gaps.indexOf(i);
+
+/* ---------- Anzeige ---------- */
+function render(){
+  parse();
+  const box=$('text'); box.innerHTML=''; box.classList.toggle('waehlbar',D.pick);
+  toks.forEach(tk=>{
+    if(tk.t==='s'){ box.appendChild(document.createTextNode(tk.v)); return; }
+    if(istLuecke(tk.i)&&!D.pick){ box.appendChild(lueckeEl(tk)); return; }
+    const sp=document.createElement('span'); sp.className='w'+(istLuecke(tk.i)?' gap':''); sp.textContent=tk.v;
+    if(D.pick) sp.onclick=()=>{ const p=gapPos(tk.i);
+      if(p<0) D.gaps.push(tk.i); else D.gaps.splice(p,1);
+      D.gaps.sort((a,b)=>a-b); delete D.fill[tk.i]; D.check={}; render(); };
+    box.appendChild(sp);
+  });
+  const wl=$('woerter'); wl.hidden=!(D.dnd&&!D.pick&&D.gaps.length); wl.innerHTML='';
+  if(!wl.hidden){
+    wl.dataset.pool='1';
+    const benutzt=Object.values(D.fill).filter(Boolean);
+    mischOrder().forEach(i=>{
+      const w=words[i], e=document.createElement('div'); e.className='wort'; e.textContent=w; e.dataset.gi=String(i);
+      const nGesamt=D.gaps.filter(g=>words[g].toLowerCase()===w.toLowerCase()).length;
+      const nWeg=benutzt.filter(x=>String(x).toLowerCase()===w.toLowerCase()).length;
+      if(nWeg>=nGesamt) e.classList.add('weg');
+      e.addEventListener('pointerdown',ev=>dragStart(ev,w,e));
+      wl.appendChild(e);
+    });
+  }
+  renderBar2(); sync();
+}
+let mischCache=null, mischKey='';
+function mischOrder(){
+  const key=D.gaps.join(',');
+  if(mischKey!==key||!mischCache){ mischKey=key; mischCache=D.gaps.slice();
+    for(let i=mischCache.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [mischCache[i],mischCache[j]]=[mischCache[j],mischCache[i]]; } }
+  return mischCache;
+}
+function lueckeEl(tk){
+  const i=tk.i, pos=gapPos(i), auf=pos<D.reveal;
+  const e=document.createElement('span'); e.className='luecke'; e.dataset.gap=String(i);
+  e.title='Doppeltippen entfernt diese Lücke';
+  e.addEventListener('pointerdown',ev=>{                 /* Doppeltipp: Lücke wieder zu normalem Text */
+    const t=Date.now();
+    if(e._t&&t-e._t<450){ ev.preventDefault(); luecheWeg(i); return; }
+    e._t=t; });
+  if(auf){ e.classList.add('loesung'); e.textContent=tk.v; return e; }
+  const st=D.check[i];
+  if(st) e.classList.add(st);
+  if(D.dnd){
+    const v=D.fill[i];
+    if(v) e.textContent=v; else e.classList.add('leer');
+    e.onclick=()=>{ if(D.fill[i]){ delete D.fill[i]; delete D.check[i]; render(); } };
+  } else {
+    const inp=document.createElement('input'); inp.value=D.fill[i]||''; inp.size=Math.max(6,tk.v.length);
+    inp.oninput=()=>{ D.fill[i]=inp.value; delete D.check[i]; sync(); };
+    inp.onkeydown=ev=>{ if(ev.key==='Enter'){ ev.preventDefault();
+      const alle=[...document.querySelectorAll('.luecke input')], k=alle.indexOf(inp); if(alle[k+1]) alle[k+1].focus(); } };
+    e.appendChild(inp);
+  }
+  return e;
+}
+function luecheWeg(i){
+  const p=gapPos(i); if(p<0) return;
+  D.gaps.splice(p,1); delete D.fill[i]; delete D.check[i];
+  if(D.reveal>p) D.reveal--; mischKey='';
+  render(); toast('Lücke entfernt – „'+words[i]+'" steht wieder im Text');
+}
+function renderBar2(){
+  const bar=$('bar2'); bar.innerHTML='';
+  const el=(tag,cls,txt,fn)=>{ const e=document.createElement(tag); if(cls) e.className=cls; if(txt!=null) e.textContent=txt; if(fn) e.onclick=fn; bar.appendChild(e); return e; };
+  if(D.pick){ el('span','lbl','Wörter im Text antippen – sie werden zu Lücken. '+D.gaps.length+' gewählt');
+    el('button','btn','fertig',()=>{ D.pick=false; $('bPick').classList.remove('on'); render(); }); }
+  else {
+    el('span','lbl',D.gaps.length+' Lücken (Doppeltipp entfernt eine) · '+Object.keys(D.fill).filter(k=>D.fill[k]).length+' gefüllt'+
+      (D.reveal?' · '+D.reveal+' aufgedeckt':''));
+    const ids=Object.keys(D.check);
+    if(ids.length){ const ok=ids.filter(i=>D.check[i]==='ok').length; el('span','lbl','· '+ok+' von '+ids.length+' richtig'); }
+  }
+  el('span','sep tafelEdit');
+  el('span','lbl tafelEdit','jedes');
+  const st=document.createElement('span'); st.className='stp tafelEdit'; bar.appendChild(st);
+  const mk=(t,fn)=>{ const b=document.createElement('button'); b.textContent=t; b.onclick=fn; st.appendChild(b); };
+  mk('−',()=>{ D.anteil=Math.max(2,D.anteil-1); renderBar2(); sync(); });
+  const v=document.createElement('span'); v.className='val'; v.textContent=D.anteil+'.'; st.appendChild(v);
+  mk('+',()=>{ D.anteil=Math.min(20,D.anteil+1); renderBar2(); sync(); });
+  el('span','lbl tafelEdit','Wort bei „Zufällig"');
+  el('span','sep');
+  el('button','btn','alle Lösungen',()=>{ D.reveal=D.gaps.length; render(); });
+  el('button','btn red tafelEdit','Lücken löschen',()=>{ if(!D.gaps.length) return;
+    if(!confirm('Alle Lücken entfernen?')) return; D.gaps=[]; D.fill={}; D.check={}; D.reveal=0; mischKey=''; render(); });
+  el('button','btn','zurücksetzen',()=>{ D.reveal=0; D.fill={}; D.check={}; render(); });
+  el('span','sep tafelEdit');
+  el('span','lbl tafelEdit','Schrift'); el('button','btn tafelEdit','A−',()=>fontBy(-1)); el('button','btn tafelEdit','A+',()=>fontBy(1));
+  el('span','grow');
+  if(window.parent!==window) el('button','btn pri tafelEdit','🖼 Bild → Tafel',()=>TafelShot.toBoard(shot()));
+  el('button','btn tafelEdit','📋 Kopieren',()=>TafelShot.copy(shot()));
+}
+const shot=()=>TafelShot.rasterize($('wrap'),{exclude:'#bar,#bar2',pad:8});
+function fontBy(d){ D.fontSize=Math.max(11,Math.min(40,(D.fontSize||17)+d));
+  document.documentElement.style.setProperty('--fs',D.fontSize+'px'); renderBar2(); sync(); }
+
+/* ---------- Ziehen ---------- */
+let drag=null;
+function dragStart(ev,wort,el){
+  ev.preventDefault();
+  const r=el.getBoundingClientRect(), g=el.cloneNode(true); g.classList.add('ghost');
+  g.style.left=r.left+'px'; g.style.top=r.top+'px'; document.body.appendChild(g);
+  drag={wort,g,dx:ev.clientX-r.left,dy:ev.clientY-r.top};
+}
+addEventListener('pointermove',ev=>{ if(!drag) return;
+  drag.g.style.left=(ev.clientX-drag.dx)+'px'; drag.g.style.top=(ev.clientY-drag.dy)+'px';
+  document.querySelectorAll('.luecke').forEach(e=>e.classList.remove('over'));
+  const z=zielUnter(ev.clientX,ev.clientY); if(z&&z.classList.contains('luecke')) z.classList.add('over');
+});
+function zielUnter(x,y){ drag&&(drag.g.style.display='none');
+  const e=document.elementFromPoint(x,y); drag&&(drag.g.style.display='');
+  if(!e) return null; return e.closest('.luecke')||e.closest('#woerter'); }
+addEventListener('pointerup',ev=>{ if(!drag) return;
+  const z=zielUnter(ev.clientX,ev.clientY);
+  document.querySelectorAll('.luecke').forEach(e=>e.classList.remove('over'));
+  drag.g.remove();
+  if(z&&z.classList.contains('luecke')){ const gi=+z.dataset.gap; D.fill[gi]=drag.wort; delete D.check[gi]; }
+  drag=null; render();
+});
+addEventListener('pointercancel',()=>{ if(drag){ drag.g.remove(); drag=null; render(); } });
+
+/* ---------- Knöpfe ---------- */
+$('bPick').onclick=()=>{ D.pick=!D.pick; $('bPick').classList.toggle('on',D.pick);
+  if(D.pick){ D.reveal=0; D.check={}; toast('Wörter im Text antippen – nochmal antippen hebt die Lücke wieder auf'); }
+  render(); };
+$('bRnd').onclick=()=>{
+  parse();
+  const kandidaten=[]; words.forEach((w,i)=>{ if(w.length>=4) kandidaten.push(i); });
+  if(!kandidaten.length){ toast('Der Text ist noch zu kurz'); return; }
+  D.gaps=[]; for(let k=D.anteil-1;k<kandidaten.length;k+=D.anteil) D.gaps.push(kandidaten[k]);
+  if(!D.gaps.length) D.gaps=[kandidaten[0]];
+  D.fill={}; D.check={}; D.reveal=0; mischKey=''; render();
+  toast(D.gaps.length+' Lücken gesetzt');
+};
+$('bDnd').onclick=()=>{ D.dnd=!D.dnd; $('bDnd').classList.toggle('on',D.dnd);
+  D.fill={}; D.check={}; render(); toast(D.dnd?'Wörter in die Lücken ziehen':'Lücken frei ausfüllen'); };
+$('bCheck').onclick=()=>{
+  if(!D.gaps.length){ toast('Noch keine Lücken'); return; }
+  let ok=0, n=0; D.check={};
+  D.gaps.forEach(i=>{ const v=(D.fill[i]||'').trim(); if(!v) return; n++;
+    const richtig=v.toLowerCase()===String(words[i]).toLowerCase();
+    D.check[i]=richtig?'ok':'no'; if(richtig) ok++; });
+  if(!n){ toast('Zuerst Lücken ausfüllen'); return; }
+  render(); toast(ok+' von '+n+' richtig'+(n<D.gaps.length?' – es fehlen noch Lücken':''));
+};
+$('bStep').onclick=()=>{ if(!D.gaps.length){ toast('Noch keine Lücken'); return; }
+  if(D.reveal>=D.gaps.length){ D.reveal=0; render(); toast('Lösungen wieder verdeckt'); return; }
+  D.reveal++; render(); toast('Lösung '+D.reveal+' von '+D.gaps.length); };
+$('bEdit').onclick=()=>{ $('ta').value=D.text||''; $('play').style.display='none'; $('edit').style.display='flex'; $('ta').focus(); };
+$('eCancel').onclick=()=>{ $('edit').style.display='none'; $('play').style.display='flex'; };
+$('eOk').onclick=()=>{ const neu=$('ta').value;
+  if(neu!==D.text){ D.text=neu; D.gaps=[]; D.fill={}; D.check={}; D.reveal=0; mischKey=''; }
+  $('edit').style.display='none'; $('play').style.display='flex'; render(); };
+$('ePaste').onclick=async()=>{
+  try{ const t=await navigator.clipboard.readText();
+    if(!t){ toast('Die Zwischenablage ist leer'); return; }
+    const ta=$('ta'), pos=ta.selectionStart??ta.value.length;
+    ta.value=ta.value.slice(0,pos)+t+ta.value.slice(pos); ta.focus(); toast('Text eingefügt'); }
+  catch(e){ toast('Einfügen wurde vom Browser verhindert – bitte mit ⌘V bzw. langem Tippen einfügen'); } };
+$('fSave').onclick=()=>{ if(!D.text){ toast('Noch kein Text'); return; }
+  const name=(prompt('Dateiname:','lueckentext-'+new Date().toISOString().slice(0,10))||'').trim(); if(!name) return;
+  const blob=new Blob([JSON.stringify({app:'tafel-luecken',v:1,text:D.text,gaps:D.gaps,dnd:D.dnd})],{type:'application/json'});
+  const fname=name.replace(/[\\/:*?"<>|]+/g,'_').replace(/\.json$/i,'')+'.json';
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=fname; document.body.appendChild(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },2000); toast('Gespeichert: '+fname); };
+$('fLoad').onclick=()=>{ $('fFile').value=''; $('fFile').click(); };
+$('fFile').onchange=()=>{ const f=$('fFile').files[0]; if(!f) return; const rd=new FileReader();
+  rd.onload=()=>{ let t=String(rd.result||''), g=null, dnd=null;
+    try{ const o=JSON.parse(t); if(o&&typeof o.text==='string'){ t=o.text; g=o.gaps||[]; dnd=o.dnd; } }catch(e){}
+    D.text=t; D.gaps=g||[]; D.fill={}; D.check={}; D.reveal=0; if(dnd!=null) D.dnd=!!dnd;
+    $('bDnd').classList.toggle('on',D.dnd); mischKey=''; render(); toast('Geladen: '+f.name); };
+  rd.readAsText(f); };
+$('bPrint').onclick=()=>{
+  if(!window.TafelShot) return;
+  const im=TafelShot.rasterize($('wrap'),{exclude:'#bar,#bar2',pad:12,scale:2.5});
+  const win=window.open('','_blank'); if(!win){ toast('Bitte Pop-ups erlauben'); return; }
+  win.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>Lückentext</title>'+
+    '<style>@page{margin:14mm}body{margin:0}img{width:100%}</style></head><body><img src="'+im.canvas.toDataURL('image/png')+'"></body></html>');
+  win.document.close(); win.focus(); setTimeout(()=>win.print(),350); };
+function barFade(){ const bar=$('bar'), m=$('barMid');
+  bar.classList.remove('compact'); if(m.clientWidth<100) bar.classList.add('compact'); }
+addEventListener('resize',barFade);
+
+/* ---------- Tafel-Anbindung ---------- */
+let ready=false, syncT=null;
+function post(){ syncT=null; if(window.parent===window||!ready) return;
+  try{ parent.postMessage({type:'embed-data',data:D},'*'); }catch(e){} }
+function sync(){ if(!syncT) syncT=setTimeout(post,250); }
+addEventListener('message',e=>{ if(window.parent===window||e.source!==window.parent) return;
+  if(!(e.data&&e.data.type==='embed-data'&&e.data.data)) return;
+  D=Object.assign(D,e.data.data); ready=true;
+  if(window.TafelModus) TafelModus.refresh();
+  if(!D.gaps) D.gaps=[]; if(!D.fill) D.fill={}; if(!D.check) D.check={};
+  document.documentElement.style.setProperty('--fs',(D.fontSize||17)+'px');
+  $('bDnd').classList.toggle('on',D.dnd); $('bPick').classList.toggle('on',D.pick);
+  mischKey=''; render(); barFade(); });
+window.addEventListener('load',()=>{
+  document.documentElement.style.setProperty('--fs',(D.fontSize||17)+'px');
+  $('bDnd').classList.toggle('on',D.dnd);
+  if(window.parent===window&&D.edit===undefined) D.edit=true;
+  if(window.TafelModus) TafelModus.init({get:()=>D.edit!==false, set:v=>{ D.edit=v; if(!v&&D.pick){ D.pick=false; $('bPick').classList.remove('on'); } render(); sync(); }});
+  render(); barFade();
+  if(window.parent===window){ ready=true; return; }
+  try{ parent.postMessage({type:'embed-ready'},'*'); }catch(e){}
+  setTimeout(()=>{ ready=true; },700);
+});
+</script>
+</body></html>
