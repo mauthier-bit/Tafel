@@ -134,11 +134,13 @@ function hitArc(r,b){
   const B=2*(ox*r.dx+oy*r.dy), C=ox*ox+oy*oy-R*R, disc=B*B-4*C;
   if(disc<0) return null;
   const sq=Math.sqrt(disc);
+  const half=Math.asin(Math.min(1,(b.len/2)/R));         /* halber Öffnungswinkel des Bogens */
+  const vx=(b.x-cx)/R, vy=(b.y-cy)/R, cH=Math.cos(half); /* Richtung Kreismitte → Scheitel */
   for(const t of [(-B-sq)/2,(-B+sq)/2]){
     if(t<0.001) continue;
     const x=r.x+r.dx*t, y=r.y+r.dy*t;
-    const along=(x-b.x)*s.tx+(y-b.y)*s.ty;
-    if(Math.abs(along)>b.len/2) continue;
+    /* nur die gezeichnete Bogenhälfte trifft – nicht die gegenüberliegende Kreisseite */
+    if((((x-cx)*vx+(y-cy)*vy)/R)<cH) continue;
     let nx=(x-cx)/R, ny=(y-cy)/R; if(sign>0){ nx=-nx; ny=-ny; }
     return {t,x,y,nx,ny};
   }
@@ -480,11 +482,11 @@ function phaseView(w,h,fs){
   ctx.fillStyle='#fdf3cf';
   ctx.beginPath();
   ctx.arc(cx,cy,R,-Math.PI/2,Math.PI/2,side<0);          /* beleuchteter Rand */
-  ctx.ellipse(cx,cy,Math.abs(f)*R,R,0,Math.PI/2,-Math.PI/2,(f>0)!==(side<0));
+  ctx.ellipse(cx,cy,Math.abs(f)*R,R,0,Math.PI/2,-Math.PI/2,(f<0)!==(side<0));
   ctx.closePath(); ctx.fill();
   ctx.strokeStyle='#94a3b8'; ctx.lineWidth=1; ctx.beginPath(); ctx.arc(cx,cy,R,0,7); ctx.stroke();
   const pct=Math.round(k*100);
-  let t='Vollmond';
+  let t='Vollmond', fuss=pct+' % beleuchtet';
   if(pct<3) t='Neumond'; else if(pct<45) t=(side>0?'zunehmende Sichel':'abnehmende Sichel');
   else if(pct<=55) t=(side>0?'zunehmender Halbmond':'abnehmender Halbmond');
   else if(pct<97) t=(side>0?'zunehmender Mond':'abnehmender Mond');
@@ -494,11 +496,12 @@ function phaseView(w,h,fs){
     ctx.fillStyle='rgba(60,22,22,'+(0.55+0.4*(1-frei))+')';
     ctx.beginPath(); ctx.arc(cx,cy,R,0,7); ctx.fill(); ctx.restore();
     t=(frei<0.05?'Mondfinsternis (Kernschatten)':'Mondfinsternis (teilweise)');
+    fuss='die Erde nimmt ihm das Sonnenlicht';
   }
   ctx.fillStyle=D.dark?'#e5e7eb':'#1f2430'; ctx.textAlign='left'; ctx.textBaseline='middle';
   ctx.font=fontStr(fs*0.78); ctx.fillText('von der Erde aus gesehen:',cx+R+12,y+18);
   ctx.font=fontStr(fs*1.0,true); ctx.fillText(t,cx+R+12,y+bh/2+2);
-  ctx.font=fontStr(fs*0.78); ctx.fillText(pct+' % beleuchtet',cx+R+12,y+bh-16);
+  ctx.font=fontStr(fs*0.78); ctx.fillText(fuss,cx+R+12,y+bh-16);
   ctx.restore();
 }
 /* ---------- Bedienung auf der Fläche ---------- */
@@ -530,7 +533,9 @@ cv.addEventListener('pointerdown',e=>{ const r=cv.getBoundingClientRect(), x=e.c
 cv.addEventListener('pointermove',e=>{ if(!drag) return; const r=cv.getBoundingClientRect(), x=e.clientX-r.left, y=e.clientY-r.top;
   const b=P[drag.i]; if(!b) return;
   if(drag.mode==='move'){ b.x=x-drag.dx; b.y=y-drag.dy; }
-  else if(drag.mode==='ray'){ b.single[drag.k]=Math.atan2(y-b.y,x-b.x); }
+  else if(drag.mode==='ray'){                       /* Bauteil kann inzwischen ausgetauscht sein */
+    if(!Array.isArray(b.single)||drag.k>=b.single.length){ drag=null; return; }
+    b.single[drag.k]=Math.atan2(y-b.y,x-b.x); }
   else { b.ang=Math.atan2(y-b.y,x-b.x); }
   draw(); });
 ['pointerup','pointercancel'].forEach(ev=>cv.addEventListener(ev,()=>{
@@ -681,20 +686,22 @@ const TEMPLATES={
   'Hohlspiegel':(w,h,put)=>{ put('laser',w*0.12,h*0.5,{col:'#f59e0b',rays:7,ang:0,w:120});
     put('curve',w*0.78,h*0.5,{len:230,ang:Math.PI/2,f:150}); D.dark=false;
     return 'Der Hohlspiegel bündelt im Brennpunkt'; },
-  'Bildkonstruktion (Sammellinse)':(w,h,put)=>{ const ly=h*0.5;
+  'Bildkonstruktion (Sammellinse)':(w,h,put)=>{ const ly=h*0.5, f=90, lx=w*0.5, g=lx-w*0.14;
     put('lamp',w*0.14,ly-60,{col:'#ff2d2d',single:[0.16,0,-0.16]});
-    put('lens',w*0.5,ly,{len:Math.max(160,h*0.5),ang:-Math.PI/2,f:90});
-    put('screen',w*0.93,ly,{len:h*0.8,ang:-Math.PI/2});
+    put('lens',lx,ly,{len:Math.max(160,h*0.5),ang:-Math.PI/2,f});
+    put('screen',Math.min(w-14,lx+f*g/(g-f)),ly,{len:h*0.8,ang:-Math.PI/2});   /* Schirm in der Bildebene */
     D.dark=false; D.gb=true; D.virt=false;
     return 'Drei Strahlen am Punkt drehen – g, b und das Bild werden mitgerechnet'; },
-  'Lupe (virtuelles Bild)':(w,h,put)=>{ const ly=h*0.5;
-    put('lamp',w*0.42,ly-40,{col:'#ff2d2d',single:[0.3,0.1,-0.1]});
-    put('lens',w*0.56,ly,{len:Math.max(160,h*0.5),ang:-Math.PI/2,f:110});
+  'Lupe (virtuelles Bild)':(w,h,put)=>{ const ly=h*0.5, f=170, lx=w*0.56;
+    put('lamp',lx-f*0.55,ly-40,{col:'#ff2d2d',single:[0.3,0.1,-0.1]});   /* g = 0,55·f: immer innerhalb der Brennweite */
+    put('lens',lx,ly,{len:Math.max(160,h*0.5),ang:-Math.PI/2,f});
     D.dark=false; D.gb=true; D.virt=true;
     return 'Gegenstand innerhalb der Brennweite: die gestrichelten Strahlen treffen sich im virtuellen Bild'; },
   'Spiegelbild':(w,h,put)=>{
-    put('lamp',w*0.35,h*0.68,{col:'#ff2d2d',single:[-1.15,-0.85,-0.55]});
-    put('mirror',w*0.5,h*0.28,{len:Math.max(220,w*0.7),ang:0});
+    const my=h*0.48, ly=h*0.8, lx=w*0.3, mlen=Math.max(220,w*0.75);
+    const ziel=[0.18,0.34,0.5].map(u=>lx+u*w);              /* Auftreffpunkte auf dem Spiegel */
+    put('lamp',lx,ly,{col:'#ff2d2d',single:ziel.map(tx=>Math.atan2(my-ly,tx-lx))});
+    put('mirror',w*0.5,my,{len:mlen,ang:0});
     D.dark=false; D.gb=false; D.virt=true;
     return 'Die gestrichelten Rückverlängerungen treffen sich im Spiegelbild'; },
   'Lochkamera':(w,h,put)=>{ put('lamp',w*0.12,h*0.5,{col:'#ffd166',rays:360,field:true});
@@ -706,7 +713,7 @@ const TEMPLATES={
     put('disk',ex,ey,{r:Math.max(16,h*0.05),label:'Erde'});
     put('disk',ex+R,ey,{r:Math.max(7,h*0.022),label:'Mond',orbit:{around:'Erde',cx:ex,cy:ey,R,a:0,sp:0.3}});
     D.dark=true; D.phase=true; setTimeout(()=>setAnim(true),60);
-    return 'Der Mond umläuft die Erde – rechts unten sieht man seine Phase (Modell, nicht maßstabsgetreu)'; },
+    return 'Der Mond umläuft die Erde – rechts unten seine Phase. Im flachen Modell trifft der Vollmond den Erdschatten; in Wirklichkeit ist die Mondbahn geneigt'; },
   'Mondfinsternis':(w,h,put)=>{ const ex=w*0.5, ey=h*0.5, R=Math.min(w*0.34,h*0.36);
     put('lamp',Math.max(40,w*0.05),ey,{col:'#fff3c4',rays:480,field:true,size:Math.max(40,h*0.13)});
     put('disk',ex,ey,{r:Math.max(20,h*0.062),label:'Erde'});
@@ -719,11 +726,11 @@ const TEMPLATES={
     put('disk',ex-R,ey,{r:Math.max(8,h*0.022),label:'Mond',orbit:{around:'Erde',cx:ex,cy:ey,R,a:Math.PI-0.35,sp:0.1}});
     D.dark=true; D.phase=true; setTimeout(()=>setAnim(true),60);
     return 'Der Mond steht zwischen Sonne und Erde – sein Schatten wandert über die Erde'; },
-  'Leere Fläche':()=>{ D.norm=false; return 'Leere Fläche'; }
+  'Leere Fläche':()=>{ D.norm=false; D.dark=false; return 'Leere Fläche'; }
 };
 function loadTpl(name){
   const f=TEMPLATES[name]; if(!f) return;
-  pushUndo(); P=[]; D.sel=-1; D.norm=false; D.phase=false; setAnim(false);
+  pushUndo(); P=[]; D.sel=-1; drag=null; D.norm=false; D.phase=false; D.virt=false; D.gb=false; setAnim(false);
   const w=cv.clientWidth, h=cv.clientHeight;
   const put=(t,x,y,o)=>{ const b=defPart(t,x,y); Object.assign(b,o||{}); P.push(b); return b; };
   const msg=f(w,h,put);
@@ -740,7 +747,7 @@ $('bTpl').onclick=()=>{ const bar=$('bar2'); bar.innerHTML='';
 let undoStack=[], redoStack=[], savedSnap=null;
 const snap=()=>JSON.stringify({p:P,d:!!D.dark,n:!!D.norm});
 function pushUndo(){ undoStack.push(snap()); if(undoStack.length>60) undoStack.shift(); redoStack.length=0; updUndo(); }
-function applySnap(str){ const o=JSON.parse(str); P=o.p||[]; D.dark=!!o.d; D.norm=!!o.n; D.sel=-1;
+function applySnap(str){ const o=JSON.parse(str); P=o.p||[]; D.dark=!!o.d; D.norm=!!o.n; D.sel=-1; drag=null;
   $('bDark').classList.toggle('on',D.dark); $('bNorm').classList.toggle('on',D.norm); renderBar2(); refresh(); }
 function updUndo(){ $('bUndo').disabled=!undoStack.length; $('bRedo').disabled=!redoStack.length; }
 $('bUndo').onclick=()=>{ if(!undoStack.length) return; redoStack.push(snap()); applySnap(undoStack.pop()); updUndo(); };

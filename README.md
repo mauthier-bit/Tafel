@@ -936,12 +936,18 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     wo sich die berechneten Strahlen schneiden. Längen erscheinen in **cm** (10 px auf der Tafel = 1 cm).
   - **Rückgängig/Vor** für jeden Schritt, **Speichern/Laden** als Datei (.json), **Neu** leert die Fläche.
   - **Vorlagen:** Schatten (Kern- und Halbschatten), farbige Schatten (RGB), Reflexion am Spiegel,
-    Sammellinse mit Brennpunkt, Zerstreuungslinse, Hohlspiegel, **Bildkonstruktion an der Sammellinse**,
-    **Lupe (virtuelles Bild)**, **Spiegelbild**, Lochkamera sowie die Astronomie-Versuche
+    Sammellinse mit Brennpunkt, Zerstreuungslinse, Hohlspiegel, **Bildkonstruktion an der Sammellinse**
+    (der Schirm steht in der Bildebene, alle drei Strahlen treffen dort denselben Punkt),
+    **Lupe (virtuelles Bild)**, **Spiegelbild** (das Spiegelbild liegt immer im sichtbaren Bereich),
+    Lochkamera sowie die Astronomie-Versuche
     **Mondphasen**, **Mondfinsternis** und **Sonnenfinsternis**: Sonne, Erde und Mond als Modell
     (nicht maßstabsgetreu), der Mond läuft auf seiner Bahn – **▶ Animation** startet und stoppt die
     Bewegung. Rechts unten zeigt ein Fenster, **wie der Mond von der Erde aus aussieht** (Sichel,
-    Halbmond, Vollmond mit Prozentangabe, bei einer Mondfinsternis der verdunkelte Mond).
+    Halbmond, Vollmond mit Prozentangabe, bei einer Mondfinsternis der verdunkelte Mond mit dem
+    Hinweis „die Erde nimmt ihm das Sonnenlicht"). Der beleuchtete Teil liegt beim **zunehmenden**
+    Mond rechts, beim **abnehmenden** links. Weil Erde und Mond im flachen Modell in einer Ebene
+    laufen, gerät der Vollmond dort in jedem Umlauf in den Erdschatten – in Wirklichkeit ist die
+    Mondbahn geneigt; die Vorlage weist beim Laden darauf hin.
 - **Wellenwanne** (Mathe & Physik): eine echte Wellensimulation (Wellengleichung auf einem Gitter,
   rund 50 000 Zellen, flüssig in Echtzeit). Bedienung wie beim Stromkreis: links **Neu, Speichern, Laden,
   Pause, Neustart, Löschen**, in der Mitte die Bauteile, rechts **Zurück, Vor, Rand, Huygens, Vorlagen**.
