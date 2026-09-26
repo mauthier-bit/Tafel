@@ -76,7 +76,8 @@ function resize(){ dpr=Math.max(1,window.devicePixelRatio||1); W=cv.clientWidth|
   if(!view.ox&&!view.oy){ view.ox=W/2; view.oy=H/2; } draw(); }
 
 /* ---- Term auswerten ---- */
-function tokenize(s){ const t=[]; let i=0; while(i<s.length){ const c=s[i];
+function tokenize(s){ s=String(s).replace(/\|([^|]*)\|/g,'abs($1)');   /* |x| = Betrag */
+  const t=[]; let i=0; while(i<s.length){ const c=s[i];
   if(c===' '){i++;continue;}
   if('+-*/^(),'.includes(c)){ t.push({k:c}); i++; continue; }
   if(/[0-9.]/.test(c)){ let j=i; while(j<s.length&&/[0-9.]/.test(s[j]))j++; t.push({k:'num',v:parseFloat(s.slice(i,j))}); i=j; continue; }
@@ -84,7 +85,7 @@ function tokenize(s){ const t=[]; let i=0; while(i<s.length){ const c=s[i];
     // zusammengeschriebene Namen zerlegen: „ax“ → a·x, „2xsin“ → 2·x·sin
     let k=0; while(k<w.length){ const nm=PNAMES.find(n=>w.startsWith(n,k)); if(!nm){ t.push({k:'id',v:w.slice(k)}); break; } t.push({k:'id',v:nm}); k+=nm.length; }
     i=j; continue; }
-  i++; }
+  t.push({k:'?'}); i++; }                                /* unbekanntes Zeichen: Term gilt als ungueltig */
   // implizite Multiplikation: 2x, 3(x+1), x sin(x), (x+1)(x−1), a x
   const out=[]; for(let q=0;q<t.length;q++){ out.push(t[q]); const A=t[q], B=t[q+1]; if(!B) continue;
     const aEnd=A.k==='num'||A.k===')'||(A.k==='id'&&!PFUNCS.includes(A.v)), bStart=B.k==='num'||B.k==='id'||B.k==='(';
@@ -95,9 +96,9 @@ const PNAMES=[...PFUNCS,'pi','x','a','b','c','e'];
 function evalAt(x, T){ let p=0; const sc={x,a:params.a,b:params.b,c:params.c,pi:Math.PI,e:Math.E};
   const peek=()=>T[p], next=()=>T[p++];
   function E(){ let v=Tm(); while(peek()&&(peek().k==='+'||peek().k==='-')){ const o=next().k, r=Tm(); v=o==='+'?v+r:v-r; } return v; }
-  function Tm(){ let v=Pw(); while(peek()&&(peek().k==='*'||peek().k==='/')){ const o=next().k, r=Pw(); v=o==='*'?v*r:v/r; } return v; }
-  function Pw(){ let v=Un(); if(peek()&&peek().k==='^'){ next(); v=Math.pow(v,Pw()); } return v; }
-  function Un(){ if(peek()&&(peek().k==='+'||peek().k==='-')){ const o=next().k; return o==='-'?-Un():Un(); } return Pr(); }
+  function Tm(){ let v=Un(); while(peek()&&(peek().k==='*'||peek().k==='/')){ const o=next().k, r=Un(); v=o==='*'?v*r:v/r; } return v; }
+  function Un(){ if(peek()&&(peek().k==='+'||peek().k==='-')){ const o=next().k, v=Un(); return o==='-'?-v:v; } return Pw(); }
+  function Pw(){ let v=Pr(); if(peek()&&peek().k==='^'){ next(); v=Math.pow(v,Un()); } return v; }   /* -x^2 = -(x^2), 2^-3 bleibt moeglich */
   function Pr(){ const tk=peek(); if(!tk)return NaN;
     if(tk.k==='num'){ next(); return tk.v; }
     if(tk.k==='('){ next(); const v=E(); if(peek()&&peek().k===')')next(); return v; }
@@ -107,7 +108,7 @@ function evalAt(x, T){ let p=0; const sc={x,a:params.a,b:params.b,c:params.c,pi:
         return (f[n]||(()=>NaN))(a); }
       return (n in sc)?sc[n]:NaN; }
     next(); return NaN; }
-  const r=E(); return r; }
+  const r=E(); return (p<T.length)?NaN:r; }                /* Rest uebrig = Tippfehler: lieber nichts zeichnen */
 
 /* ---- Funktionszeilen ---- */
 function retok(){ funcs.forEach(f=>f.toks=tokenize(f.term)); }

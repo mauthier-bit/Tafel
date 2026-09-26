@@ -23,8 +23,8 @@ function style(){
 function paint(){
   const edit=!!(cfg&&cfg.get&&cfg.get());
   document.body.classList.toggle('nurBenutzen',!edit);
-  if(btn){                                             /* nur der Knopf für den anderen Modus wird gezeigt */
-    btn.children[0].hidden=!edit; btn.children[1].hidden=edit;
+  if(btn){                                             /* der Knopf zeigt den Modus, der gerade gilt */
+    btn.children[0].hidden=edit; btn.children[1].hidden=!edit;
     btn.classList.toggle('imEdit',edit);
   }
   if(cfg&&cfg.hide) document.querySelectorAll(cfg.hide).forEach(el=>el.classList.toggle('tafelEdit',true));
@@ -41,10 +41,10 @@ function init(opt){
   const inTafel=(window.parent!==window);        /* in der Tafel sitzt der Umschalter neben dem Kontextmenü */
   if(!btn&&cfg.button!==false&&!inTafel){
     btn=document.createElement('div'); btn.id='tafelModus';
-    const mk=(t,v,title)=>{ const b=document.createElement('button'); b.type='button'; b.textContent=t; b.title=title;
-      b.onclick=()=>setMode(v); btn.appendChild(b); };
-    mk('▶ Benutzen',false,'Nur mit dem Inhalt arbeiten');
-    mk('✎ Bearbeiten',true,'Bedienelemente einblenden');
+    const mk=(t,title)=>{ const b=document.createElement('button'); b.type='button'; b.textContent=t; b.title=title;
+      b.onclick=()=>setMode(!(cfg&&cfg.get&&cfg.get()));  /* der sichtbare Knopf schaltet um */ btn.appendChild(b); };
+    mk('▶ Benutzen','Gerade wird nur benutzt – tippen zum Bearbeiten');
+    mk('✎ Bearbeiten','Gerade wird bearbeitet – tippen zum Benutzen');
     document.body.appendChild(btn);
   }
   paint();

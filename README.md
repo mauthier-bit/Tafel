@@ -656,7 +656,9 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   3. Std 9:45–10:30, 4. Std 10:30–11:15, Pause bis 11:30, 5. Std 11:30–12:15, 6. Std 12:15–13:00.
   **Digitalanzeige** blendet zusätzlich die Uhrzeit in Ziffern ein.
 - **Funktionsplotter** (Werkzeug): Funktionsterm eingeben (mit Parametern **a, b, c** → Schieberegler),
-  Malpunkte dürfen fehlen (`2x`, `ax^2+bx+c`, `3(x+1)`, `2sin(x)`, `(x+1)(x−1)`),
+  Malpunkte dürfen fehlen (`2x`, `ax^2+bx+c`, `3(x+1)`, `2sin(x)`, `(x+1)(x−1)`), `|x|` ist der Betrag;
+  das Minuszeichen bindet **schwächer als die Potenz** (`-x^2` ist also −(x²), `2^-3` bleibt möglich),
+  und ein Term mit Tippfehler wird **nicht** gezeichnet, statt eine falsche Kurve zu zeigen;
   der Graph wird gezeichnet; im Bedien-Modus mit **Fingergeste zoom-/verschiebbar**. Über **„＋ Funktion"**
   lassen sich **mehrere Funktionen gleichzeitig** anzeigen (je eigene Farbe, eigene Eingabezeile, mit „×"
   entfernbar); die **Parameter a/b/c wirken auf alle Funktionen gemeinsam**. **Farbe und Linienstärke**
@@ -705,6 +707,9 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   zusätzlich eine **scrollbare Wertetabelle** (k, P(X=k), P(X≤k)). Rechts neben dem Ergebnis: **A−/A+** für die Schriftgröße (auch im Kontextmenü) und **🖼 Tafel / 📋 Kopieren** –
   Eingaben, Ergebnis, Diagramm und sichtbarer Teil der Tabelle als Bild.
 - **Messwert-Analyse** (Werkzeug): bindet das Messdaten-Tool ein (als Objekt oder eigene Seite;
+  die **Kurvenanpassung** rechnet die Gerade exakt (gewichtete Ausgleichsrechnung) und findet auch
+  bei e-Funktion, Potenz- und Sinusanpassung die richtigen Parameter – Startwerte kommen aus einer
+  logarithmischen bzw. doppelt-logarithmischen Ausgleichsgeraden, danach wird parameterweise nachgeschärft;
   fragt beim Einfügen nach). Braucht Internet (nutzt Chart.js u. a. per CDN).
 - **Seitenübersicht:** auf die **Seitenzahl** (z. B. „2/5") tippen → Miniaturen aller Seiten,
   eine antippen wechselt direkt dorthin. Jede Miniatur hat oben rechts ein **⋮-Menü** (mit **×** zum
@@ -1012,9 +1017,10 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     Bei Lernlandkarte, Tabelle, Lückentext, Zuordnen und Glossar
     erscheint, **solange „Objekt bedienen" aktiv ist** und das Objekt ausgewählt ist, zusätzlich
     **direkt unter dem Kontextmenü-Knopf** (also außerhalb des Objekts, damit nichts verdeckt wird)
-    ein **Umschalter**: **✎ Bearbeiten** blendet alle Bedienleisten ein (Orte und Wege anlegen,
-    Tabelle gestalten, Text und Lücken festlegen, Begriffe eintragen …), **▶ Benutzen** blendet sie wieder
-    aus. Im Benutzen-Modus bleiben nur die Knöpfe zum Arbeiten stehen – beim Lückentext etwa *Prüfen*,
+    ein **Umschalter**. Er zeigt – wie der Umschalter für Schreiben/Auswählen – den **gerade aktiven**
+    Zustand: **✎** bedeutet, dass gerade bearbeitet wird (alle Bedienleisten sind eingeblendet: Orte und
+    Wege anlegen, Tabelle gestalten, Text und Lücken festlegen, Begriffe eintragen …), **▶** bedeutet,
+    dass gerade nur benutzt wird. Ein Tipp schaltet jeweils um. Im Benutzen-Modus bleiben nur die Knöpfe zum Arbeiten stehen – beim Lückentext etwa *Prüfen*,
     *Lösung ▶*, *alle Lösungen* und *zurücksetzen*, beim Zuordnen *Prüfen*, *Lösung* und *Mischen*
     (die zweite Zeile verschwindet dort ganz), beim Glossar Suchfeld, Auf-/Zuklappen, Abschnitte,
     Sortierung und *Abfragen*. Kreuzworträtsel und Buchstabengitter haben keinen Umschalter – dort
@@ -1044,10 +1050,18 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
 - **Zuordnen** (Diverses): Zuordnungsaufgaben zum Ziehen mit dem Finger. Über **„✎ Aufgabe"** je Zeile
   `Oberbegriff = Begriff, Begriff, Begriff` eintragen (für **Paare** genügt ein Begriff je Zeile);
   **🖼 Bild** fügt ein Foto ein, das als `[b1]`, `[b2]` … in jede Zeile geschrieben werden kann – so
-  lassen sich auch **Bilder zuordnen**. Die Karten liegen gemischt im Vorrat und werden in die farbigen
-  Gruppenfelder gezogen. Hat jede Zeile genau einen Begriff, schaltet das Werkzeug automatisch auf
-  **paarweise Zuordnung** um: links steht die Vorgabe, rechts daneben das Feld für die passende Karte
-  (gut für Vokabeln, Land–Hauptstadt, Formel–Größe); der Knopf **Paare/Gruppen** schaltet von Hand um.
+  lassen sich auch **Bilder zuordnen** (Bild und Text dürfen in derselben Zeile stehen). Die Karten
+  liegen gemischt im Vorrat und werden in die farbigen Gruppenfelder gezogen. Hat jede Zeile genau
+  einen Begriff, schaltet das Werkzeug automatisch auf **paarweise Zuordnung** um (gut für Vokabeln,
+  Land–Hauptstadt, Formel–Größe); der Knopf **Paare/Gruppen** schaltet von Hand um. Für die Paare
+  gibt es daneben einen zweiten Knopf, der die **Art der Zuordnung** zeigt und umschaltet:
+  * **Verbinden** (Voreinstellung): links stehen die Begriffe (oder Bilder) untereinander, rechts
+    ihre Partner **gemischt**. Eine Karte links und eine rechts antippen – oder von der einen zur
+    anderen ziehen – zeichnet eine **Verbindungslinie** in der Farbe der Zeile; ein Tipp auf die Linie
+    löst sie wieder. **Prüfen** färbt die Linien grün bzw. rot, **Lösung** zeigt alle Paare gestrichelt.
+  * **Ziehen**: die Partner liegen gemischt im Vorrat und werden per **Drag and Drop** auf den
+    passenden Begriff gezogen.
+  Die Verbindungslinien sind auch in *🖼 Tafel*, *📋 Kopieren* und im Ausdruck enthalten.
   **Prüfen** färbt richtig zugeordnete Karten grün, falsche rot und zählt mit
   („3 von 4 richtig"), **Lösung** zeigt die richtige Verteilung, **Mischen** beginnt von vorn.
   Dazu Speichern/Laden als Datei, Drucken, A−/A+, 🖼 Tafel und 📋 Kopieren.
@@ -1106,7 +1120,8 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
 - **Ableitungen** (Mathe & Physik): die Lernumgebung „Zusammenhänge von F · f · f′ · f″" als Werkzeug.
   Beim Einfügen fragt die Tafel „eigene Seite oder bewegliches Objekt" (im Kontextmenü auch später
   „Als eigene Seite anzeigen"). Bedienen über „Objekt bedienen": Ausgangsfunktion (F, f, f′, f″),
-  Funktionstyp mit Parametern, eigener Term, Freihand-Zeichnen, Graphen ein-/ausblenden mit C-Reglern,
+  Funktionstyp mit Parametern, eigener Term (`ln(x)`, `log(x)`, `-x^2`, `2sin(3x)`, `sin(x)cos(x)`,
+  `(x+1)(x-1)` und Dezimalkomma werden verstanden), Freihand-Zeichnen, Graphen ein-/ausblenden mit C-Reglern,
   Analyse-Knöpfe VZ/M/K, Tangente, Fläche/Integral, Intervalle, Symbolleiste, Ableitungsrelation,
   Krümmungs-Smileys, Linienstil, Anleitung (?). Der eingestellte Zustand (Funktion, Parameter, sichtbare
   Graphen, Analyse-Knöpfe, Zoom, Farben, Freihand-Kurve) wird **mit dem Tafel-Projekt gespeichert**.

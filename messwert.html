@@ -2644,6 +2644,42 @@ function mvToggleLayer(n){
   const el=document.getElementById(m[n]);if(el)el.classList.toggle('active');
   mvUpdateChart();
 }
+/* Startwerte fuer die nichtlinearen Modelle: mehrere Kandidaten, mvAutoFit nimmt den besten.
+   (Ausgleichsgerade im logarithmischen bzw. doppelt-logarithmischen Ma\u00dfstab.) */
+function mvStartGuess(fn,pts){
+  const n=pts.length; if(n<2) return [];
+  const ger=(X,Y)=>{ const m=X.length, sx=X.reduce((a,b)=>a+b,0), sy=Y.reduce((a,b)=>a+b,0),
+      sxx=X.reduce((a,b)=>a+b*b,0), sxy=X.reduce((a,b,i)=>a+b*Y[i],0), d=m*sxx-sx*sx;
+    return Math.abs(d)<1e-30 ? null : [(m*sxy-sx*sy)/d, (sxx*sy-sx*sxy)/d]; };   // [Steigung, Achsenabschnitt]
+  const xs=pts.map(p=>p.x), ys=pts.map(p=>p.y);
+  const yMn=Math.min(...ys), yMx=Math.max(...ys), R=(yMx-yMn)||Math.abs(yMx)||1;
+  if(fn==='exp'){
+    const out=[];
+    const cs=[0];                                            // reine e-Funktion ohne Verschiebung
+    [0.5,0.2,0.05,0.01,0.001].forEach(f=>{ cs.push(yMn-f*R); cs.push(yMx+f*R); });
+    cs.forEach(c=>{
+      const dy=ys.map(y=>y-c);
+      if(dy.some(v=>Math.abs(v)<1e-12)) return;
+      const vz=dy[0]>0?1:-1; if(dy.some(v=>(v>0?1:-1)!==vz)) return;   // Vorzeichen muss einheitlich sein
+      const g=ger(xs, dy.map(v=>Math.log(Math.abs(v)))); if(!g) return;
+      out.push([vz*Math.exp(g[1]), g[0], c]);
+    });
+    return out;
+  }
+  if(fn==='power'){
+    const ok=pts.filter(p=>p.x>0&&p.y>0); if(ok.length<2) return [];
+    const g=ger(ok.map(p=>Math.log(p.x)), ok.map(p=>Math.log(p.y)));
+    return g?[[Math.exp(g[1]), g[0]]]:[];
+  }
+  if(fn==='sine'){
+    const d=ys.reduce((a,b)=>a+b,0)/n, a=R/2 || 1;
+    const spanne=(Math.max(...xs)-Math.min(...xs))||1, out=[];
+    for(let k=1;k<=5;k++) for(const ph of [0, Math.PI/2, Math.PI, -Math.PI/2])
+      out.push([a, 2*Math.PI*k/spanne, ph, d]);               // Frequenz und Phase grob abtasten
+    return out;
+  }
+  return [];
+}
 function mvAutoFit(){
   const pts=mvGetSeriesData(mvActiveSeries);
   if(pts.length<2){alert('Mindestens 2 Datenpunkte nötig!');return;}
@@ -2680,6 +2716,8 @@ function mvAutoFit(){
   },0);
 
   let pArr=fd.params.map(p=>mvParams[p]??fd.defs[fd.params.indexOf(p)]);
+  let cBest=cost(pArr);                              // bester analytischer Startwert gewinnt
+  mvStartGuess(mvFunc,pts).forEach(k=>{ if(k.every(v=>isFinite(v))){ const c=cost(k); if(c<cBest){ cBest=c; pArr=k; } } });
   let lr=1e-3, best=cost(pArr);
 
   for(let it=0;it<10000;it++){
@@ -2694,6 +2732,21 @@ function mvAutoFit(){
     const c=cost(cand);
     if(c<best){pArr=cand;best=c;lr*=1.05;}else lr*=0.65;
     if(lr<1e-14)break;
+  }
+
+  /* Feinschliff: parameterweise Suche mit schrumpfender Schrittweite.
+     Der Gradientenabstieg bleibt sonst z. B. bei a·e^(b·x)+c haengen, weil a und c
+     sich gegenseitig ausgleichen koennen (flaches Tal). */
+  let stp=pArr.map(v=>Math.max(Math.abs(v)*0.1,1e-3));
+  for(let round=0;round<400;round++){
+    let besser=false;
+    for(let i=0;i<pArr.length;i++){
+      for(const d of [stp[i],-stp[i]]){
+        const cand=[...pArr]; cand[i]+=d; const c=cost(cand);
+        if(c<best-1e-18){ best=c; pArr=cand; besser=true; break; }
+      }
+    }
+    if(!besser){ stp=stp.map(v=>v*0.5); if(stp.every(v=>v<1e-12)) break; }
   }
   fd.params.forEach((p,i)=>{mvParams[p]=pArr[i];});
   mvSaveActiveSeriesFit(); mvRenderParams(); mvUpdateChart();

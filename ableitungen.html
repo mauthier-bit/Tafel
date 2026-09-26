@@ -855,19 +855,22 @@ function polyLabel(terms){
 // MATH
 // ═══════════════════════════════════════════════════════════
 function parseExpr(expr,params){
-  // params = {a, b, c} — inject as constants if present in expression
-  // Auto-detect which of a,b,c appear in the expression
+  // params = {a, b, c} — werden als Zahlen eingesetzt, falls sie im Term vorkommen
   const p=params||state.customParams||{a:1,b:0,c:0};
-  let s=expr.replace(/\^/g,'**')
-    .replace(/\b(sin|cos|tan|exp|ln|sqrt|abs)\b/g,'Math.$1')
-    .replace(/\bpi\b/gi,'Math.PI').replace(/\be\b/g,'Math.E')
-    .replace(/(\d)(x)/g,'$1*$2').replace(/(\d)(Math\.)/g,'$1*$2')
-    .replace(/\)(x)/g,')*$2').replace(/\)(Math)/g,')*$2')
-    // Replace standalone a, b, c with their values
-    .replace(/\ba\b/g, String(p.a))
-    .replace(/\bb\b/g, String(p.b))
-    .replace(/\bc\b/g, String(p.c));
-  try{const f=new Function('x',`"use strict";return(${s});`);f(0);return f;}
+  let s=String(expr).replace(/\s+/g,'').replace(/(\d),(\d)/g,'$1.$2')   // Dezimalkomma
+    .replace(/\b([abc])x\b/g,'$1*x')            // ax, bx, cx
+    .replace(/\ba\b/g,'('+p.a+')').replace(/\bb\b/g,'('+p.b+')').replace(/\bc\b/g,'('+p.c+')')
+    .replace(/\^/g,'**')
+    /* implizite Multiplikation – noch vor dem Einsetzen der Math-Namen */
+    .replace(/(\d)([a-zA-Z(])/g,'$1*$2')        // 2x, 2sin(x), 2(x+1)
+    .replace(/\)([a-zA-Z0-9(])/g,')*$1')        // (x+1)(x-1), (x+1)x, sin(x)cos(x)
+    /* Funktionsnamen – log vor ln, sonst wird aus „Math.log“ noch einmal „Math.log10“ */
+    .replace(/\b(log|lg)\b/g,'Math.log10').replace(/\bln\b/g,'Math.log')
+    .replace(/\b(asin|acos|atan|sinh|cosh|tanh|sin|cos|tan|exp|sqrt|abs)\b/g,'Math.$1')
+    .replace(/\bpi\b/gi,'Math.PI').replace(/\be\b/g,'Math.E');
+  /* −x² heißt −(x²): JavaScript verbietet „-x**2“, deshalb (-1)*x**2 */
+  let vor; do{ vor=s; s=s.replace(/(^|[-+*/(,])-(\([^()]*\)|[A-Za-z0-9_.]+(?:\([^()]*\))?)\*\*/g,'$1(-1)*$2**'); }while(s!==vor);
+  try{const f=new Function('x',`"use strict";return(${s});`);const t=f(0.7);if(typeof t!=='number')return null;return f;}
   catch(e){return null;}
 }
 
