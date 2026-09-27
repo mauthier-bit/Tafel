@@ -22,19 +22,30 @@
   #embedLayer iframe,#embedLayer video,#embedLayer audio{position:absolute;left:0;top:0;border:0;transform-origin:0 0;background:#fff;box-shadow:0 1px 6px rgba(0,0,0,.15);}
   #embedLayer audio{border-radius:10px;}
   /* Vollbild für ein eingebettetes Objekt */
-  #fsUi{position:fixed;inset:0;z-index:40;pointer-events:none;display:none;}
+  #fsUi{position:fixed;inset:0;z-index:48;pointer-events:none;display:none;}   /* über dem Dokument-Vollbild */
   #fsUi.an{display:block;}
   /* schmale Griffleiste oben: von hier nach unten wischen beendet das Vollbild */
   #fsTop{position:absolute;left:0;right:0;top:0;height:22px;pointer-events:auto;touch-action:none;cursor:grab;
     background:linear-gradient(#eef2f8,#f8fafc);border-bottom:1px solid #dbe2ee;display:flex;align-items:center;justify-content:center;}
   #fsTop::before{content:'';width:54px;height:4px;border-radius:999px;background:#9aa6bd;}
-  #fsClose{position:absolute;top:2px;right:6px;pointer-events:auto;border:0;border-radius:999px;background:rgba(31,36,48,.8);color:#fff;
-    font:600 11.5px -apple-system,BlinkMacSystemFont,sans-serif;padding:3px 10px;cursor:pointer;opacity:.5;transition:opacity .25s;}
-  #fsUi.zeig #fsClose,#fsClose:hover{opacity:1;}
+  #fsClose{position:absolute;top:70px;right:16px;pointer-events:auto;border:0;border-radius:999px;background:#1f2430;color:#fff;
+    font:700 15px -apple-system,BlinkMacSystemFont,sans-serif;padding:12px 18px;cursor:grab;touch-action:none;
+    box-shadow:0 3px 12px rgba(15,23,42,.35);display:flex;align-items:center;gap:8px;}
+  #fsClose:active{cursor:grabbing;}
+  #fsClose .griff{font-size:15px;opacity:.65;letter-spacing:1px;}
   #fsHint{position:absolute;top:28px;left:50%;transform:translateX(-50%);pointer-events:none;background:rgba(31,36,48,.85);color:#fff;
     font:600 12px -apple-system,BlinkMacSystemFont,sans-serif;padding:6px 12px;border-radius:999px;opacity:0;transition:opacity .3s;}
   #fsUi.zeig #fsHint{opacity:.95;}
   #fsBar{position:absolute;right:2px;top:28px;bottom:10px;width:18px;pointer-events:auto;touch-action:none;display:none;}
+  /* Vollbild für Dokumente und Bilder (keine eingebetteten Rahmen, sondern Seitenbilder) */
+  #fsDoc{position:fixed;left:0;right:0;top:22px;bottom:0;z-index:44;background:#fff;overflow:auto;-webkit-overflow-scrolling:touch;display:none;}
+  #fsDoc.an{display:block;}
+  #fsDoc img{display:block;width:100%;height:auto;}
+  #fsPages{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:46;display:none;gap:8px;align-items:center;
+    background:rgba(31,36,48,.86);color:#fff;border-radius:999px;padding:7px 10px;font:700 14px -apple-system,BlinkMacSystemFont,sans-serif;}
+  #fsPages.an{display:flex;}
+  #fsPages button{border:0;background:rgba(255,255,255,.16);color:#fff;border-radius:999px;width:38px;height:32px;font:inherit;cursor:pointer;}
+  #fsPages button:disabled{opacity:.35;}
   #fsUi.scrollbar #fsBar{display:block;}
   #fsThumb{position:absolute;left:4px;width:10px;border-radius:999px;background:rgba(31,36,48,.38);}
   body.fs-mode #embedLayer{z-index:5;}       /* über dem Tafelblatt – sonst liegt das Karo über dem Objekt */
@@ -883,7 +894,9 @@
 <div id="namePick"><div id="nameWin"><div id="nameBig">–</div></div><div class="row"><button class="btn pri" id="nameAgain">Nochmal</button><button class="btn" id="nameReset">Zurücksetzen</button><button class="btn" id="nameClose">Schließen</button></div><div class="hint" id="nameInfo" style="color:#bbb"></div></div>
 <div id="pagePreview"><div class="pp-inner"><div class="pp-head"><span>Seiten <small style="font-weight:400;color:#8a93a2">· ⋮ = Menü · lang drücken = verschieben</small></span><span style="display:flex;align-items:center;gap:6px"><button class="ppScroll" id="ppUp" title="nach oben">▲</button><button class="ppScroll" id="ppDown" title="nach unten">▼</button><span class="x" id="ppClose">×</span></span></div><div class="pp-grid" id="ppGrid"></div></div></div>
 <div id="pageMenu"></div>
-<div id="fsUi"><div id="fsTop"></div><button id="fsClose" type="button">⤢ Vollbild beenden</button><div id="fsHint">Von oben nach unten wischen beendet das Vollbild</div><div id="fsBar"><div id="fsThumb"></div></div></div>
+<div id="fsUi"><div id="fsTop"></div><button id="fsClose" type="button"><span class="griff">⠿</span>⤢ Vollbild beenden</button><div id="fsHint">Von oben nach unten wischen beendet das Vollbild</div><div id="fsBar"><div id="fsThumb"></div></div></div>
+<div id="fsDoc"><img id="fsDocImg" alt=""></div>
+<div id="fsPages"><button id="fsPrev" type="button">‹</button><span id="fsPageV">1/1</span><button id="fsNext" type="button">›</button></div>
 
 <!-- Fenster -->
 <div class="win" id="win-noise" style="left:70px;top:70px;"><h3>Lärmampel <span class="x" data-close="win-noise">×</span></h3>
@@ -2339,7 +2352,8 @@ function refreshProps(){ const has=selection.length>0 && tool==='select';
     const fo=(selection.length===1&&selection[0].type==='embed'&&FONT_DEF[selection[0].etype]!==undefined)?selection[0]:null; $('fontRow').style.display=fo?'flex':'none';
     if(fo){ $('embFsV').textContent=(fo.data&&fo.data.fontSize)||FONT_DEF[fo.etype]; $('embBold').classList.toggle('on',!!(fo.data&&fo.data.fontBold)); $('embItalic').classList.toggle('on',!!(fo.data&&fo.data.fontItalic)); }
     const po=(selection.length===1&&selection[0].type==='embed'&&['verteilung','mess','ggbapp','ableitung','stromkreis','mindmap','pinnwand','terme','figuren','diagramm','formel'].includes(selection[0].etype))?selection[0]:null; $('pageRow').style.display=po?'flex':'none';
-    const fs=(selection.length===1&&selection[0].type==='embed'&&!['audio','live','clip'].includes(selection[0].etype))?selection[0]:null;
+    const fsSel=selection.length===1?selection[0]:null;
+    const fs=(fsSel&&((fsSel.type==='embed'&&!['audio','live','clip'].includes(fsSel.etype))||fsSel.type==='doc'||fsSel.type==='image'))?fsSel:null;
     $('fsRow').style.display=fs?'flex':'none';
     const cl=(selection.length===1&&selection[0].type==='embed'&&(selection[0].etype==='clip'||selection[0].etype==='audio'))?selection[0]:null; $('clipRow').style.display=cl?'flex':'none';
     if(cl){ $('pr-clipsave').textContent=(cl.etype==='audio')?'🎙 Ton speichern':'🎬 Video speichern';
@@ -2385,7 +2399,7 @@ $('pr-clipsave').onclick=()=>{ const o=singleSel(); if(!o||(o.etype!=='clip'&&o.
   const a=document.createElement('a'); a.href=o.src;
   a.download=o.name||((o.etype==='audio'?'tafel-ton-':'tafel-clip-')+new Date().toISOString().slice(0,16).replace(/[:T]/g,'-')+'.'+(o.ext||'webm')); a.click();
   toast(o.etype==='audio'?'Ton gespeichert':((o.t0||o.t1)?'Video gespeichert – die Datei enthält die ganze Aufnahme':'Video gespeichert')); };
-$('pr-full').onclick=()=>{ const o=singleSel(); if(o&&o.type==='embed') vollbildAn(o); };
+$('pr-full').onclick=()=>{ const o=singleSel(); if(o) vollbildAn(o); };
 $('pr-topage').onclick=()=>{ const o=singleSel(); if(!o||o.type!=='embed')return;
   page().objects=page().objects.filter(x=>x!==o);
   doc.pages.splice(doc.cur+1,0,newPage()); goPage(doc.cur+1);
@@ -2520,7 +2534,7 @@ function positionProps(){ if(!selection.length)return; const b=selCenterBounds()
 
 /* ============ Seiten ============ */
 function refreshPage(){ invalidateSnap(); const p=page(); $('pageInfo').textContent=(p.name?p.name+' ':'')+(doc.cur+1)+' / '+doc.pages.length; refreshEmbedUI(); applyBg(); }
-function goPage(i){ if(i<0||i>=doc.pages.length)return; if(fsId) vollbildAus();   /* Vollbild gilt nur für die eigene Seite */
+function goPage(i){ if(i<0||i>=doc.pages.length)return; if(fsId||fsDocO) vollbildAus();   /* Vollbild gilt nur für die eigene Seite */
   polyDraft=null; invalidateSnap(); commitText(); doc.cur=i; selection=[]; refreshProps(); scale=1;ox=0;oy=0; refreshPage(); ensureImgs(); markDirty(); }
 $('p-prev').onclick=()=>goPage(doc.cur-1); $('p-next').onclick=()=>goPage(doc.cur+1);
 $('p-add').onclick=()=>{doc.pages.splice(doc.cur+1,0,newPage());goPage(doc.cur+1);scheduleAutosave();};
@@ -2539,8 +2553,26 @@ function fsBalken(){ const u=$('fsUi'), t=$('fsThumb'), bar=$('fsBar');
   const h=bar.clientHeight||1, sicht=innerHeight-FSTOP, gesamt=sicht+fsMax;
   const th=Math.max(28,Math.round(h*sicht/gesamt));
   t.style.height=th+'px'; t.style.top=Math.round((h-th)*(fsScroll/fsMax))+'px'; }
+let fsDocO=null;                                              /* Dokument oder Bild im Vollbild */
+function fsDocZeigen(){
+  if(!fsDocO) return;
+  const bild=$('fsDocImg'), pg=$('fsPages');
+  if(fsDocO.type==='doc'){ const i=docCur(fsDocO), n=fsDocO.pages.length;
+    bild.src=fsDocO.pages[i]||''; pg.classList.toggle('an',n>1);
+    $('fsPageV').textContent=(i+1)+'/'+n; $('fsPrev').disabled=i<=0; $('fsNext').disabled=i>=n-1; }
+  else { bild.src=fsDocO.src||''; pg.classList.remove('an'); }
+}
+function fsDocBlaettern(d){ if(!fsDocO||fsDocO.type!=='doc') return; docTurn(fsDocO,d); $('fsDoc').scrollTop=0; fsDocZeigen(); }
 function vollbildAn(o){
-  if(!o||o.type!=='embed') return;
+  if(!o) return;
+  if(o.type==='doc'||o.type==='image'){                       /* Seitenbild statt Rahmen */
+    fsDocO=o; fsId=null; fsBarsVorher=barsHidden; if(!barsHidden) hideBars();
+    propsOpen=false; $('props').classList.remove('show'); $('propsBtn').classList.remove('show');
+    selection=[]; redraw();
+    document.body.classList.add('fs-mode'); $('fsUi').classList.add('an'); $('fsDoc').classList.add('an');
+    $('fsDoc').scrollTop=0; fsDocZeigen(); fsUiZeigen(); return;
+  }
+  if(o.type!=='embed') return;
   fsId=o.id; fsScroll=0; fsBarsVorher=barsHidden;
   if(!barsHidden) hideBars();
   propsOpen=false; $('props').classList.remove('show'); $('propsBtn').classList.remove('show');
@@ -2550,8 +2582,9 @@ function vollbildAn(o){
   syncEmbeds(); fsUiZeigen();
 }
 function vollbildAus(){
-  if(!fsId) return;
-  const fr=embedEls.get(fsId); if(fr) fr.dataset.fsAus='1';
+  if(!fsId&&!fsDocO) return;
+  if(fsDocO){ fsDocO=null; $('fsDoc').classList.remove('an'); $('fsPages').classList.remove('an'); $('fsDocImg').src=''; }
+  const fr=fsId?embedEls.get(fsId):null; if(fr) fr.dataset.fsAus='1';
   fsId=null; fsScroll=0; fsMax=0;
   document.body.classList.remove('fs-mode'); $('fsUi').classList.remove('an','zeig','scrollbar');
   if(!fsBarsVorher) showBars();
@@ -2559,7 +2592,10 @@ function vollbildAus(){
   redraw(); syncEmbeds();
 }
 function fsScrollen(d){ if(!fsId) return; fsScroll=Math.max(0,Math.min(fsMax,fsScroll+d)); syncEmbeds(); }
-addEventListener('keydown',e=>{ if(!fsId) return;
+addEventListener('keydown',e=>{ if(!fsId&&!fsDocO) return;
+  if(fsDocO){ if(e.key==='Escape'){ vollbildAus(); e.preventDefault(); }
+    else if(e.key==='ArrowRight'||e.key==='PageDown'){ fsDocBlaettern(1); e.preventDefault(); }
+    else if(e.key==='ArrowLeft'||e.key==='PageUp'){ fsDocBlaettern(-1); e.preventDefault(); } return; }
   if(e.key==='Escape'){ vollbildAus(); e.preventDefault(); }
   else if(e.key==='ArrowDown'){ fsScrollen(80); e.preventDefault(); }
   else if(e.key==='ArrowUp'){ fsScrollen(-80); e.preventDefault(); } });
@@ -2570,7 +2606,21 @@ addEventListener('keydown',e=>{ if(!fsId) return;
     if(e.clientY-start.y>45){ start=null; vollbildAus(); } });
   ['pointerup','pointercancel'].forEach(t=>top.addEventListener(t,()=>{ start=null; }));
   top.addEventListener('wheel',e=>{ fsScrollen(e.deltaY); e.preventDefault(); },{passive:false});
-  $('fsClose').onclick=()=>vollbildAus();
+  $('fsPrev').onclick=()=>fsDocBlaettern(-1); $('fsNext').onclick=()=>fsDocBlaettern(1);
+  const kn=$('fsClose'); let knZieh=null, bewegt=false;
+  try{ const p0=JSON.parse(localStorage.getItem('tafel_fsbtn')||'null');
+    if(p0&&isFinite(p0.x)&&isFinite(p0.y)){ kn.style.left=p0.x+'px'; kn.style.top=p0.y+'px'; kn.style.right='auto'; } }catch(e){}
+  kn.addEventListener('pointerdown',e=>{ const r=kn.getBoundingClientRect();
+    knZieh={dx:e.clientX-r.left,dy:e.clientY-r.top}; bewegt=false; try{kn.setPointerCapture(e.pointerId);}catch(_){} });
+  kn.addEventListener('pointermove',e=>{ if(!knZieh) return;
+    const x=Math.max(4,Math.min(innerWidth-kn.offsetWidth-4,e.clientX-knZieh.dx));
+    const y=Math.max(4,Math.min(innerHeight-kn.offsetHeight-4,e.clientY-knZieh.dy));
+    if(Math.abs(x-(kn.offsetLeft||0))>2||Math.abs(y-(kn.offsetTop||0))>2) bewegt=true;
+    kn.style.left=x+'px'; kn.style.top=y+'px'; kn.style.right='auto'; });
+  ['pointerup','pointercancel'].forEach(t=>kn.addEventListener(t,()=>{
+    if(knZieh&&bewegt){ try{ localStorage.setItem('tafel_fsbtn',JSON.stringify({x:kn.offsetLeft,y:kn.offsetTop})); }catch(e){} }
+    knZieh=null; }));
+  kn.onclick=()=>{ if(bewegt){ bewegt=false; return; } vollbildAus(); };
   const bar=$('fsBar'); let zieh=null;
   const setzen=y=>{ const r=bar.getBoundingClientRect(), th=$('fsThumb').offsetHeight||30;
     const rel=Math.max(0,Math.min(1,(y-r.top-th/2)/Math.max(1,r.height-th)));

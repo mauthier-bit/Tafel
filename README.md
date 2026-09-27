@@ -448,14 +448,19 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   **Messwert-Analyse**- oder **GeoGebra-App**-Objekt erscheint im Kontext-Panel eine Schaltfläche,
   die das Objekt nachträglich groß auf eine **neue eigene Seite** verschiebt (Inhalt bleibt erhalten).
 - **„⤢ Vollbild":** Bei jedem bedienbaren eingebetteten Objekt (Mathe- und Physik-Werkzeuge, die
-  Werkzeuge aus **Diverses**, PDF-, Web- und H5P-Objekte) steht im Kontext-Panel **„⤢ Vollbild"**.
+  Werkzeuge aus **Diverses**, Web- und H5P-Objekte) sowie bei **Dokumenten (PDF, PowerPoint-Seiten)
+  und Bildern** steht im Kontext-Panel **„⤢ Vollbild"**. Bei einem Dokument erscheint die Seite in
+  voller Breite; unten liegt eine Leiste zum **Blättern** (‹ 2/12 ›, auch mit den Pfeiltasten).
   Das Objekt nimmt dann die **volle Bildschirmbreite** ein, die Leisten verschwinden, und es lässt
   sich sofort bedienen. Ist das Objekt höher als der Bildschirm, kann man am **rechten Rand**
   scrollen (Mausrad und Pfeiltasten gehen auch). Oben liegt eine schmale **Griffleiste**: von dort
-  **nach unten wischen** – oder **Esc** bzw. der Knopf „Vollbild beenden" – bringt die Tafel in den
+  **nach unten wischen** – oder **Esc** bzw. der große Knopf **„⤢ Vollbild beenden"** – bringt die Tafel in den
   vorherigen Zustand zurück, mit Leisten und dem Objekt an seiner alten Stelle. Im Vollbild liegt das
   Objekt **über dem Tafelblatt**, das Seitenmuster (Karo, Linien …) scheint also nicht hindurch. Der **Inhalt bleibt
   dabei erhalten** (das Objekt wird nicht neu geladen), und ein Seitenwechsel beendet das Vollbild.
+  Weil auf dem iPad das Wischen vom oberen Rand dem System gehört, ist der Knopf **groß und deutlich**
+  und lässt sich am Griff **an eine beliebige Stelle ziehen**, wenn er im Weg ist – die Stelle wird
+  gemerkt.
 - **Kopieren / Ausschneiden / Einfügen:** im Kontext-Panel **Kopieren**/**Ausschneiden** (oder
   ⌘/Strg + C/X) – Objekte lassen sich **auf einer anderen Seite** oder **in einer anderen App**
   einfügen (als Bild). Umgekehrt fügt **„Aus Zwischenablage einfügen"** im Einfügen-Fenster (oder
