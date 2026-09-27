@@ -453,7 +453,8 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   sich sofort bedienen. Ist das Objekt höher als der Bildschirm, kann man am **rechten Rand**
   scrollen (Mausrad und Pfeiltasten gehen auch). Oben liegt eine schmale **Griffleiste**: von dort
   **nach unten wischen** – oder **Esc** bzw. der Knopf „Vollbild beenden" – bringt die Tafel in den
-  vorherigen Zustand zurück, mit Leisten und dem Objekt an seiner alten Stelle. Der **Inhalt bleibt
+  vorherigen Zustand zurück, mit Leisten und dem Objekt an seiner alten Stelle. Im Vollbild liegt das
+  Objekt **über dem Tafelblatt**, das Seitenmuster (Karo, Linien …) scheint also nicht hindurch. Der **Inhalt bleibt
   dabei erhalten** (das Objekt wird nicht neu geladen), und ein Seitenwechsel beendet das Vollbild.
 - **Kopieren / Ausschneiden / Einfügen:** im Kontext-Panel **Kopieren**/**Ausschneiden** (oder
   ⌘/Strg + C/X) – Objekte lassen sich **auf einer anderen Seite** oder **in einer anderen App**
@@ -1249,7 +1250,8 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
 hinauswischen** blendet **alle** Leisten aus (die vertikale zur Seite, die beiden oberen nach oben).
 Am Rand erscheinen dann kleine Griffe. **Von links in die App wischen** holt alle Leisten zurück
 (vertikale Leiste **links**); **von rechts hereinwischen** holt sie zurück mit der vertikalen Leiste
-**rechts** (dort auch wieder hinauswischbar). Die gewählte Seite bleibt gespeichert.
+**rechts** (dort auch wieder hinauswischbar). **Von unten hereinwischen** holt sie mit der Hauptleiste
+**unten** zurück – dort gibt es dafür ebenfalls einen Griff. Die gewählte Seite bleibt gespeichert.
 
 Oben rechts liegt der **Vollbild-Knopf**.
 
