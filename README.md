@@ -604,7 +604,7 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   **Seitenverhältnis**. So lassen sich auch **H5P-Inhalte** einbetten (h5p.org, H5P.com, Moodle, Lumi-Cloud):
   im H5P-Inhalt auf **„Einbetten"** tippen, den Code kopieren und hier einfügen – das Objekt heißt dann „H5P-Inhalt"
   und ist über **„Objekt bedienen"** interaktiv nutzbar.
-- **H5P-Datei (.h5p) einfügen – auch offline:** über **Einfügen → Datei** („PDF / Bild / PowerPoint / H5P / Audio
+- **H5P-Datei (.h5p) einfügen – auch offline:** über **Einfügen → Datei** („PDF / Bild / PowerPoint / H5P / HTML / Audio
   wählen") lässt sich eine heruntergeladene **.h5p-Datei** direkt auf die Tafel legen. Die Tafel entpackt sie im
   Browser und spielt sie mit einem **eingebauten H5P-Player** ab (h5p-standalone, liegt im Ordner `h5p/`) – ganz
   ohne Internet. Das Objekt trägt den Titel des Inhalts, lässt sich wie jedes andere verschieben und skalieren und
@@ -616,14 +616,20 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   eines leeren weißen Kastens zeigt das Objekt dann eine **Info-Karte mit der Domain**; über
   **„Einbettungen bedienen" → „↗ Öffnen"** (oben links am Objekt) lässt sich die Seite im Browser öffnen.
   Direkte Inhalts-URLs (z. B. **PhET-Simulationen**) funktionieren dagegen problemlos.
-- **PDF einfügen:** über **Einfügen → Datei** („PDF / Bild / PowerPoint / Audio wählen"). Jede PDF-Seite wird
+- **PDF einfügen:** über **Einfügen → Datei** („PDF / Bild / PowerPoint / H5P / HTML / Audio wählen"). Jede PDF-Seite wird
   gerendert; zwei Schalter bestimmen die Form:
   **„Als eigene Seite einfügen"** (aus) macht aus jeder PDF-Seite eine eigene Tafelseite.
   Sonst entscheidet **„Mehrseitiges als Dokument"** (standardmäßig **an**): bei mehr als einer Seite entsteht
   **ein blätterbares Dokument-Objekt** (‹ ›, Seitenzahl, „📄 Als PDF sichern"); ist der Schalter aus, kommt jede
   Seite als **einzelnes bewegliches Bild** (verschieben, skalieren, drehen, **zuschneiden**; leicht versetzt
   gestapelt). Für **PowerPoint-Folien** gilt dasselbe.
-- **Audiodatei einfügen (mp3 …):** über **Einfügen → Datei** („PDF / Bild / PowerPoint / Audio wählen").
+- **HTML-Datei einfügen:** über **Einfügen → Datei** eine eigenständige `.html`-Seite wählen (eigene
+  Lernumgebung, Arbeitsblatt, Simulation …). Sie erscheint als **bedienbares Objekt**, lässt sich über
+  **„Objekt bedienen"** benutzen, per **„⤢ Vollbild"** großziehen und wird **mit dem Projekt
+  gespeichert** – nach dem Neuladen ist sie also wieder da. Dafür muss die Datei **alles enthalten,
+  was sie braucht** (Bilder, Stile und Skripte im Dokument selbst oder als Web-Adresse); Verweise auf
+  Nachbardateien funktionieren nicht – darauf weist die Tafel beim Einfügen hin. Grenze: 3 MB.
+- **Audiodatei einfügen (mp3 …):** über **Einfügen → Datei** („PDF / Bild / PowerPoint / H5P / HTML / Audio wählen").
   Unterstützt **mp3, m4a, aac, wav, ogg, opus**; die Datei landet als kleiner **Abspieler** (Play,
   Position, Lautstärke) als bewegliches Objekt auf der Tafel – zum Abspielen oben auf **„Einbettung
   bedienen"** tippen. Dateien **bis 4 MB werden mit dem Projekt gespeichert** und sind nach dem
