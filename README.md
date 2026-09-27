@@ -1145,6 +1145,11 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   **✕** löscht Zeilen bzw. Reihen, die **Kopfzeile** lässt sich ausblenden.
   - **Diagrammarten:** Säulen, Balken, Linien, Fläche, Kreis und Ring; bei mehreren Datenreihen
     wahlweise **nebeneinander oder gestapelt** (Säulen, Balken, Fläche).
+  - **Achsen:** Für x- und y-Achse lässt sich je eine **Beschriftung** eintragen (z. B. „Zeit t in s"),
+    sie steht unter bzw. gedreht neben der Achse. Die **Rubriken** sind wahlweise **Namen**
+    (gleichmäßig verteilt) oder **Zahlen** – dann trägt die x-Achse eine echte Skala und die Punkte
+    liegen an ihrer Zahlenposition (gut sichtbarer Unterschied z. B. bei den Messzeiten 0, 1, 2, 5, 10 s).
+    Bei Zahlen kann der **x-Ausschnitt** automatisch oder **von–bis** gewählt werden.
   - **Verzerrende Wirkungen zeigen** – der eigentliche Unterrichtszweck: Die **y-Achse** läuft
     automatisch oder **von–bis** (unterdrückter Nullpunkt), die Skala ist **linear oder logarithmisch**,
     die **Rubriken** lassen sich **eng zusammenschieben**, das Diagramm in der **Höhe stauchen**, und

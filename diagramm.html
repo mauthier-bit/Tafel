@@ -40,7 +40,10 @@
   table.dt th,table.dt td{border:1px solid #d6dce5;padding:0;}
   table.dt input{width:100%;border:0;padding:6px 7px;font:inherit;background:transparent;color:inherit;min-width:60px;}
   table.dt input:focus{outline:2px solid #2563eb;outline-offset:-2px;}
-  table.dt thead input{font-weight:700;background:#f1f5fb;}
+  table.dt thead th{background:#f1f5fb;}
+  table.dt thead input{font-weight:700;background:transparent;}
+  .kopfzelle{display:flex;align-items:center;gap:5px;padding-left:5px;}
+  .kopfzelle input.farbe{flex:none;}
   table.dt td.num input{text-align:right;}
   table.dt .del{width:30px;text-align:center;}
   .delbtn{border:0;background:transparent;color:#dc2626;font-size:1.05em;cursor:pointer;padding:3px 5px;line-height:1;}
@@ -101,6 +104,7 @@ const DEMO={ head:['Sportart','Klasse 7a','Klasse 7b'],
 let D={ v:1, head:DEMO.head.slice(), rows:DEMO.rows.map(r=>r.slice()), kopf:true,
   art:'saeulen', stapel:false, titel:'Lieblingssportarten', werte:false, gitter:true, legende:true,
   yAuto:true, yMin:0, yMax:20, log:false, dehnung:1, flaeche:false, hoehe:1,
+  titelX:'', titelY:'', xNum:false, xAuto:true, xMin:0, xMax:10,
   farben:PAL.slice(0,6), fontSize:15, edit:true };
 
 /* ---------- Tabelle ---------- */
@@ -113,12 +117,13 @@ function renderTabelle(){
   const th=document.createElement('thead'), tr=document.createElement('tr');
   D.head.forEach((h,c)=>{
     const z=document.createElement('th');
+    const box=document.createElement('div'); box.className='kopfzelle';
     if(c>0){ const f=document.createElement('input'); f.type='color'; f.className='farbe'; f.value=D.farben[c-1]||PAL[(c-1)%PAL.length];
       f.title='Farbe der Datenreihe'; f.oninput=()=>{ D.farben[c-1]=f.value; zeichne(); sync(); };
-      z.style.whiteSpace='nowrap'; z.appendChild(f); }
+      box.appendChild(f); }
     const i=document.createElement('input'); i.value=h; i.placeholder=c===0?'Rubrik':'Reihe '+c;
     i.oninput=()=>{ D.head[c]=i.value; zeichne(); sync(); };
-    z.appendChild(i); tr.appendChild(z);
+    box.appendChild(i); z.appendChild(box); tr.appendChild(z);
   });
   const zdel=document.createElement('th'); zdel.className='del'; tr.appendChild(zdel);
   th.appendChild(tr); if(D.kopf) t.appendChild(th);
@@ -175,6 +180,25 @@ function renderBar2(){
   const ti=document.createElement('input'); ti.className='txt'; ti.value=D.titel; ti.placeholder='Überschrift';
   ti.oninput=()=>{ D.titel=ti.value; zeichne(); sync(); }; bar.appendChild(ti);
 
+  if(!KREISART.has(D.art)){
+    el('span','sep');
+    el('span','lbl','Achsen');
+    const tx=document.createElement('input'); tx.className='txt'; tx.style.minWidth='90px'; tx.value=D.titelX; tx.placeholder='x-Achse';
+    tx.title='Beschriftung der Rubrikenachse'; tx.oninput=()=>{ D.titelX=tx.value; zeichne(); sync(); }; bar.appendChild(tx);
+    const ty=document.createElement('input'); ty.className='txt'; ty.style.minWidth='90px'; ty.value=D.titelY; ty.placeholder='y-Achse';
+    ty.title='Beschriftung der Werteachse'; ty.oninput=()=>{ D.titelY=ty.value; zeichne(); sync(); }; bar.appendChild(ty);
+    el('span','sep');
+    el('span','lbl','Rubriken');
+    seg([[false,'Namen'],[true,'Zahlen']], D.xNum, v=>{ D.xNum=v; if(v){ const x=xSpanne(); D.xMin=x.min; D.xMax=x.max; } renderBar2(); zeichne(); sync(); });
+    if(D.xNum){
+      seg([[true,'automatisch'],[false,'von–bis']], D.xAuto, v=>{ D.xAuto=v; if(!v){ const x=xSpanne(); D.xMin=x.min; D.xMax=x.max; } renderBar2(); zeichne(); sync(); });
+      if(!D.xAuto){
+        const mk=(wert,setz)=>{ const n=document.createElement('input'); n.className='num'; n.value=wert; n.inputMode='decimal';
+          n.oninput=()=>{ const z=zahl(n.value); if(z!==null){ setz(z); zeichne(); sync(); } }; bar.appendChild(n); return n; };
+        mk(D.xMin,v=>D.xMin=v); el('span','lbl','bis'); mk(D.xMax,v=>D.xMax=v);
+      }
+    }
+  }
   if(reihen()>1&&STAPELBAR.has(D.art)){
     el('span','sep');
     seg([[false,'nebeneinander'],[true,'gestapelt']], D.stapel, v=>{ D.stapel=v; renderBar2(); zeichne(); sync(); });
@@ -199,7 +223,7 @@ function renderBar2(){
     seg([[false,'linear'],[true,'logarithmisch']], D.log, v=>{ D.log=v; renderBar2(); zeichne(); sync(); });
   }
   el('span','sep');
-  el('span','lbl','Rubriken');
+  el('span','lbl','Breite');
   const r1=document.createElement('input'); r1.type='range'; r1.min='0.35'; r1.max='1'; r1.step='0.05'; r1.value=D.dehnung;
   r1.title='Rubriken eng ↔ gedehnt'; r1.oninput=()=>{ D.dehnung=+r1.value; zeichne(); sync(); }; bar.appendChild(r1);
   el('span','lbl','Höhe');
@@ -239,6 +263,12 @@ function daten(){
   }
   return {namen,serien};
 }
+function xWerte(){ return D.rows.map(r=>zahl(r[0])); }              /* Rubriken als Zahlen */
+function xSpanne(){ const v=xWerte().filter(x=>x!==null);
+  if(!v.length) return {min:0,max:10};
+  let min=Math.min(...v), max=Math.max(...v);
+  if(min===max){ min-=1; max+=1; }
+  const luft=(max-min)*0.06; return {min:runde(min-luft,'ab'), max:runde(max+luft,'auf')}; }
 function spanne(){                                    /* sinnvoller Wertebereich */
   const {serien}=daten(); let min=Infinity,max=-Infinity;
   const sum=[];
@@ -298,46 +328,60 @@ function legende(W,H,namen,serien){
 
 function achsen(W,oben,unten,namen,serien){
   const balken=(D.art==='balken'), linie=(D.art==='linien'||D.art==='flaeche');
+  const numX=!!D.xNum;                                   /* Rubriken als Zahlenachse */
+  const xw=xWerte();
+  const gueltig=namen.map((_,i)=>!numX||xw[i]!==null);
+  /* Werteachse */
   const sp=D.yAuto?spanne():{min:zahl(D.yMin)!==null?zahl(D.yMin):0, max:zahl(D.yMax)!==null?zahl(D.yMax):10};
   let min=sp.min, max=sp.max; if(max<=min) max=min+1;
   if(D.log){ min=min>0?min:Math.max(max/100,1e-6); if(min>=max) min=max/10; }
-  /* Anteil eines Wertes an der Achse (0 = unten/links, 1 = oben/rechts) */
   const anteil=v=>{ v=Math.max(min,Math.min(max,v));
     if(D.log){ const lo=Math.log10(min), hi=Math.log10(max); return (Math.log10(Math.max(v,1e-9))-lo)/((hi-lo)||1); }
     return (v-min)/((max-min)||1); };
-  /* Achsenteilung */
   const ticks=[];
   if(D.log){ for(let e=Math.floor(Math.log10(min)); e<=Math.ceil(Math.log10(max)); e++){
       const v=Math.pow(10,e); if(v>=min*0.999&&v<=max*1.001) ticks.push(v); } if(ticks.length<2) ticks.push(min,max); }
   else { const st=schritt(max-min,6);
     for(let v=Math.ceil(min/st)*st; v<=max+1e-9; v+=st) ticks.push(Math.round(v*1e6)/1e6); }
+  /* Rubrikenachse */
+  const xs=numX?(D.xAuto?xSpanne():{min:zahl(D.xMin)!==null?zahl(D.xMin):0, max:zahl(D.xMax)!==null?zahl(D.xMax):10}):null;
+  let xmin=xs?xs.min:0, xmax=xs?xs.max:1; if(numX&&xmax<=xmin) xmax=xmin+1;
+  const xTicks=[];
+  if(numX){ const st=schritt(xmax-xmin,balken?6:7);
+    for(let v=Math.ceil(xmin/st)*st; v<=xmax+1e-9; v+=st) xTicks.push(Math.round(v*1e6)/1e6); }
+  const rubText=i=>numX?fmt(xw[i]):String(namen[i]);
 
   ctx.font=font(.85);
   const wertBreite=Math.max(12,...ticks.map(v=>ctx.measureText(fmt(v)).width));
-  const rubBreite=Math.max(12,...namen.map(t=>ctx.measureText(String(t)).width));
+  const rubTexte=numX?xTicks.map(fmt):namen.map(t=>String(t));
+  const rubBreite=Math.max(12,...rubTexte.map(t=>ctx.measureText(t).width));
   const zeile=(D.fontSize||15)*1.5;
 
-  const xA=(balken?Math.min(W*0.42,rubBreite+14):wertBreite+12)+8;
+  /* Platz für Achsentitel */
+  const platzY=D.titelY?zeile:0, platzX=D.titelX?zeile*0.95:0;
+  const xA=(balken?Math.min(W*0.42,rubBreite+14):wertBreite+12)+8+platzY;
   const xE=W-16;
   const yA=oben+6;
-  /* Passen die Rubriken nebeneinander? Sonst schräg schreiben – dafür mehr Platz unten */
   const bFv=Math.max(.35,Math.min(1,D.dehnung));
-  const feldRoh=((xE-xA)*bFv)/Math.max(1,namen.length);
+  const feldRoh=((xE-xA)*bFv)/Math.max(1,(numX?Math.max(2,xTicks.length):namen.length));
   const schraeg=!balken&&rubBreite>feldRoh*0.96;
-  const yE=unten-(schraeg?Math.min(rubBreite*0.78+16,(unten-oben)*0.45):zeile);
+  const yE=unten-platzX-(schraeg?Math.min(rubBreite*0.78+16,(unten-oben)*0.45):zeile);
   if(yE-yA<40||xE-xA<40) return;
 
-  /* Stauchen: Zeichenfläche verkleinern (verzerrende Wirkung) */
-  const hF=Math.max(.35,Math.min(1,D.hoehe)), bF=Math.max(.35,Math.min(1,D.dehnung));
+  const hF=Math.max(.35,Math.min(1,D.hoehe));
   const y1=yE, y0=balken?yA:(yE-(yE-yA)*hF);
-  const x0=xA, x1=balken?(xA+(xE-xA)*bF):xE;
-  const xEnde=balken?x1:(xA+(xE-xA)*bF);                 /* Rubriken-Richtung */
+  const x0=xA, xEnde=xA+(xE-xA)*bFv, x1=balken?xEnde:xE;
   const yOben=balken?(yA+(yE-yA)*(1-hF)):y0;
 
-  const wertX=v=>x0+anteil(v)*((balken?x1:xEnde)-x0);
+  const wertX=v=>x0+anteil(v)*(xEnde-x0);
   const wertY=v=>y1-anteil(v)*(y1-y0);
+  /* Position einer Rubrik auf ihrer Achse */
+  const rubAnteil=i=>numX?((xw[i]-xmin)/((xmax-xmin)||1)):((i+0.5)/namen.length);
+  const rubStart=balken?yOben:x0, rubLang=balken?(y1-yOben):(xEnde-x0);
+  const mitteRub=i=>rubStart+(balken?(1-rubAnteil(i)):rubAnteil(i))*rubLang;
+  const tickPos=v=>{ const a=(v-xmin)/((xmax-xmin)||1); return rubStart+(balken?(1-a):a)*rubLang; };
 
-  /* Gitter und Achsenbeschriftung */
+  /* Gitter und Beschriftung der Werteachse */
   ctx.strokeStyle='#e2e7ef'; ctx.lineWidth=1;
   ticks.forEach(v=>{
     ctx.fillStyle='#64748b';
@@ -355,16 +399,24 @@ function achsen(W,oben,unten,namen,serien){
   ctx.stroke();
 
   const k=namen.length, r=serien.length;
-  const feld=balken?((y1-yOben)/k):((xEnde-x0)/k);
-  const mitteRub=i=>(balken?yOben:x0)+feld*(i+0.5);
+  const feld=numX
+    ? (function(){ const p=namen.map((_,i)=>gueltig[i]?mitteRub(i):null).filter(v=>v!==null).sort((a,b)=>a-b);
+        let d=rubLang; for(let i=1;i<p.length;i++) d=Math.min(d,Math.abs(p[i]-p[i-1]));
+        return Math.max(6,Math.min(rubLang*0.6,d)); })()
+    : rubLang/Math.max(1,k);
 
+  /* Daten nur innerhalb der Zeichenfläche – bei gewähltem Ausschnitt ragt sonst nichts hinaus */
+  ctx.save(); ctx.beginPath();
+  ctx.rect(Math.min(x0,xEnde)-1, Math.min(yOben,y0)-1, Math.abs((balken?x1:xEnde)-x0)+2, Math.abs(y1-Math.min(yOben,y0))+2);
+  ctx.clip();
   if(linie){
     const stapelSum=namen.map(()=>0);
     serien.forEach(s=>{
       const punkte=[];
-      s.werte.forEach((v,i)=>{ if(v==null) return; let w=v;
+      s.werte.forEach((v,i)=>{ if(v==null||!gueltig[i]) return; let w=v;
         if(D.stapel&&D.art==='flaeche'){ stapelSum[i]+=v; w=stapelSum[i]; }
         punkte.push([mitteRub(i),wertY(w),v]); });
+      punkte.sort((a,b)=>a[0]-b[0]);
       if(D.art==='flaeche'&&punkte.length){
         ctx.globalAlpha=.28; ctx.fillStyle=s.farbe; ctx.beginPath(); ctx.moveTo(punkte[0][0],y1);
         punkte.forEach(p=>ctx.lineTo(p[0],p[1])); ctx.lineTo(punkte[punkte.length-1][0],y1); ctx.closePath(); ctx.fill(); ctx.globalAlpha=1;
@@ -376,14 +428,13 @@ function achsen(W,oben,unten,namen,serien){
         punkte.forEach(p=>ctx.fillText(fmt(p[2]),p[0],p[1]-6)); }
     });
   } else {
-    /* Säulen und Balken */
     const gruppe=feld*0.74, dicke=D.stapel?gruppe:gruppe/r;
     let groesst=0; serien.forEach(x=>x.werte.forEach(v=>{ if(v!=null) groesst=Math.max(groesst,Math.abs(v)); }));
     const dickeVon=v=>{ if(!D.flaeche||D.stapel||!groesst) return dicke*0.92;
       return dicke*0.92*Math.max(.18,Math.min(1,Math.sqrt(Math.abs(v)/groesst))); };   /* Wert wirkt als Fläche */
     serien.forEach((s,si)=>{
       s.werte.forEach((v,i)=>{
-        if(v==null) return;
+        if(v==null||!gueltig[i]) return;
         let unterWert=0;
         if(D.stapel) for(let q=0;q<si;q++){ const x=serien[q].werte[i]; if(x!=null) unterWert+=x; }
         const vonWert=D.stapel?unterWert:Math.min(0,v), bisWert=D.stapel?unterWert+v:v;
@@ -405,21 +456,34 @@ function achsen(W,oben,unten,namen,serien){
       });
     });
   }
-  /* Rubrikenbeschriftung */
+
+  ctx.restore();
+  /* Beschriftung der Rubrikenachse */
   ctx.fillStyle='#1f2430'; ctx.font=font(.85);
-  if(balken){ ctx.textAlign='right'; ctx.textBaseline='middle';
-    namen.forEach((t,i)=>ctx.fillText(String(t),x0-8,mitteRub(i))); }
-  else {
-    if(schraeg){                                          /* zu eng – schräg schreiben */
-      ctx.textAlign='right'; ctx.textBaseline='middle';
-      namen.forEach((t,i)=>{ ctx.save(); ctx.translate(mitteRub(i),y1+8); ctx.rotate(-Math.PI/4);
-        ctx.fillText(String(t),0,0); ctx.restore(); });
-    } else { ctx.textAlign='center'; ctx.textBaseline='top';
-      namen.forEach((t,i)=>ctx.fillText(String(t),mitteRub(i),y1+6)); }
-  }
+  if(numX){
+    ctx.fillStyle='#64748b';
+    xTicks.forEach(v=>{ const p=tickPos(v);
+      if(balken){ ctx.textAlign='right'; ctx.textBaseline='middle'; ctx.fillText(fmt(v),x0-8,p);
+        if(D.gitter){ ctx.strokeStyle='#eef2f8'; ctx.beginPath(); ctx.moveTo(x0,p); ctx.lineTo(x1,p); ctx.stroke(); } }
+      else { ctx.textAlign='center'; ctx.textBaseline='top'; ctx.fillText(fmt(v),p,y1+6); }
+    });
+  } else if(balken){ ctx.textAlign='right'; ctx.textBaseline='middle';
+    namen.forEach((t,i)=>ctx.fillText(String(t),x0-8,mitteRub(i)));
+  } else if(schraeg){ ctx.textAlign='right'; ctx.textBaseline='middle';
+    namen.forEach((t,i)=>{ ctx.save(); ctx.translate(mitteRub(i),y1+8); ctx.rotate(-Math.PI/4); ctx.fillText(String(t),0,0); ctx.restore(); });
+  } else { ctx.textAlign='center'; ctx.textBaseline='top';
+    namen.forEach((t,i)=>ctx.fillText(String(t),mitteRub(i),y1+6)); }
+
+  /* Achsentitel */
+  ctx.fillStyle='#42506a'; ctx.font=font(.92,true);
+  if(D.titelX){ ctx.textAlign='center'; ctx.textBaseline='bottom'; ctx.fillText(D.titelX,(x0+ (balken?x1:xEnde))/2, unten-2); }
+  if(D.titelY){ ctx.save(); ctx.translate(12, (yOben+y1)/2); ctx.rotate(-Math.PI/2);
+    ctx.textAlign='center'; ctx.textBaseline='top'; ctx.fillText(D.titelY,0,0); ctx.restore(); }
+
   /* Hinweis auf verzerrende Einstellungen */
   const w=[]; if(!D.yAuto&&min>0) w.push('Nullpunkt unterdrückt'); if(D.log) w.push('logarithmische Skala');
-  if(D.flaeche) w.push('Wert als Fläche'); if(hF<0.95) w.push('Höhe gestaucht'); if(bF<0.95) w.push('Rubriken eng');
+  if(D.flaeche) w.push('Wert als Fläche'); if(hF<0.95) w.push('Höhe gestaucht'); if(bFv<0.95) w.push('Rubriken eng');
+  if(numX&&!D.xAuto) w.push('x-Ausschnitt gewählt');
   if(w.length){ ctx.fillStyle='#b45309'; ctx.font=font(.75,true); ctx.textAlign='right'; ctx.textBaseline='top';
     ctx.fillText('⚠ '+w.join(' · '), W-10, oben-2); }
 }
