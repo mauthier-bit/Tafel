@@ -447,6 +447,14 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
 - **„Als eigene Seite anzeigen":** Bei einem als Objekt eingefügten **Wahrscheinlichkeitsrechner**,
   **Messwert-Analyse**- oder **GeoGebra-App**-Objekt erscheint im Kontext-Panel eine Schaltfläche,
   die das Objekt nachträglich groß auf eine **neue eigene Seite** verschiebt (Inhalt bleibt erhalten).
+- **„⤢ Vollbild":** Bei jedem bedienbaren eingebetteten Objekt (Mathe- und Physik-Werkzeuge, die
+  Werkzeuge aus **Diverses**, PDF-, Web- und H5P-Objekte) steht im Kontext-Panel **„⤢ Vollbild"**.
+  Das Objekt nimmt dann die **volle Bildschirmbreite** ein, die Leisten verschwinden, und es lässt
+  sich sofort bedienen. Ist das Objekt höher als der Bildschirm, kann man am **rechten Rand**
+  scrollen (Mausrad und Pfeiltasten gehen auch). Oben liegt eine schmale **Griffleiste**: von dort
+  **nach unten wischen** – oder **Esc** bzw. der Knopf „Vollbild beenden" – bringt die Tafel in den
+  vorherigen Zustand zurück, mit Leisten und dem Objekt an seiner alten Stelle. Der **Inhalt bleibt
+  dabei erhalten** (das Objekt wird nicht neu geladen), und ein Seitenwechsel beendet das Vollbild.
 - **Kopieren / Ausschneiden / Einfügen:** im Kontext-Panel **Kopieren**/**Ausschneiden** (oder
   ⌘/Strg + C/X) – Objekte lassen sich **auf einer anderen Seite** oder **in einer anderen App**
   einfügen (als Bild). Umgekehrt fügt **„Aus Zwischenablage einfügen"** im Einfügen-Fenster (oder
