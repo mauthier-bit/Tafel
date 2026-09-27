@@ -16,7 +16,7 @@ function hasOverline(el){ for(let k=0;el&&k<3;k++,el=el.parentElement){ const d=
 function rasterize(root,opt){ opt=opt||{}; const S=opt.scale||2, pad=opt.pad||0;
   const rr=root.getBoundingClientRect(), W=Math.ceil(rr.width)+2*pad, H=Math.ceil(rr.height)+2*pad;
   const c=document.createElement('canvas'); c.width=W*S; c.height=H*S; const g=c.getContext('2d');
-  g.scale(S,S); g.fillStyle='#fff'; g.fillRect(0,0,W,H); g.translate(pad-rr.left,pad-rr.top);
+  g.scale(S,S); g.fillStyle=opt.bg||'#fff'; g.fillRect(0,0,W,H);   /* dunkle Werkzeuge geben ihre eigene Farbe mit */ g.translate(pad-rr.left,pad-rr.top);
   const skip=el=>opt.exclude&&el.matches&&el.matches(opt.exclude);
   function drawText(tn){ const raw=tn.data; if(!raw||!raw.trim()) return; const pe=tn.parentElement; if(!pe) return; const cs=getComputedStyle(pe);
     const range=document.createRange(); range.selectNodeContents(tn); const rects=[...range.getClientRects()].filter(r=>r.width>0); if(!rects.length) return;

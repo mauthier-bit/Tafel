@@ -194,6 +194,8 @@ svg text{font-family:"Cambria Math",Cambria,"Times New Roman",Georgia,serif}
         <div class="btnrow">
           <button class="btn ghost sm on" id="bVals">Werte in der Skizze</button>
           <button class="btn ghost sm" id="bKnown">nur bekannte/gesuchte beschriften</button>
+          <button class="btn ghost sm" id="bFigBoard">🖼 Skizze → Tafel</button>
+          <button class="btn ghost sm" id="bFigCopy">🖼 Skizze kopieren</button>
           <span id="viewBtns"></span>
         </div>
         <div id="rotCtl" style="display:none">
@@ -244,6 +246,10 @@ svg text{font-family:"Cambria Math",Cambria,"Times New Roman",Georgia,serif}
       <div class="card">
         <h3>Rechenweg</h3>
         <div id="steps"></div>
+        <div class="btnrow">
+          <button class="btn ghost sm" id="bStepBoard">🖼 Rechenweg → Tafel</button>
+          <button class="btn ghost sm" id="bStepCopy">🖼 Rechenweg kopieren</button>
+        </div>
       </div>
     </div>
   </div>
@@ -254,6 +260,7 @@ svg text{font-family:"Cambria Math",Cambria,"Times New Roman",Georgia,serif}
   <div class="footer">Figuren &amp; Körper · rechtwinklige Stützdreiecke · Pythagoras &amp; Trigonometrie</div>
 </div>
 
+<script src="shot.js"></script>
 <script>
 "use strict";
 /* ================= Ausdrucks-Engine ================= */
@@ -1642,6 +1649,91 @@ $('#rotPhi').oninput=e=>{ROTST.phi=+e.target.value;$('#rotPhiV').textContent=Mat
 $('#rotPlay').onclick=rotAnimate;
 $('#rotTr').onclick=()=>{ROTST.transp=!ROTST.transp;$('#rotTr').classList.toggle('on',ROTST.transp);draw()};
 $('#rotCut').onclick=()=>{ROTST.cut=!ROTST.cut;$('#rotCut').classList.toggle('on',ROTST.cut);draw()};
+/* ---------- Skizze und Rechenweg als Bild ---------- */
+const bgFarbe=()=>getComputedStyle(document.body).backgroundColor||'#fff';
+function skizzeBild(scale){                                  /* SVG über ein Bild in ein Canvas zeichnen */
+  const svg=$('#fig'), r=svg.getBoundingClientRect();
+  const k=svg.cloneNode(true);
+  k.setAttribute('width',Math.round(r.width)); k.setAttribute('height',Math.round(r.height));
+  k.setAttribute('xmlns',svgNS);
+  const st=document.createElementNS(svgNS,'style');
+  st.textContent='text{font-family:"Cambria Math",Cambria,"Times New Roman",Georgia,serif}';
+  k.insertBefore(st,k.firstChild);
+  const xml=new XMLSerializer().serializeToString(k);
+  const url='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(xml);
+  return new Promise((res,rej)=>{ const im=new Image();
+    im.onload=()=>{ const c=document.createElement('canvas');
+      c.width=Math.round(r.width*scale); c.height=Math.round(r.height*scale);
+      const g=c.getContext('2d'); g.fillStyle=bgFarbe(); g.fillRect(0,0,c.width,c.height);
+      g.drawImage(im,0,0,c.width,c.height);
+      res({canvas:c,w:Math.round(r.width),h:Math.round(r.height)}); };
+    im.onerror=()=>rej(new Error('svg')); im.src=url; });
+}
+function wegBild(){
+  const el=$('#steps');
+  if(!el||!el.textContent.trim()){ TafelShot.toast('Noch kein Rechenweg – zuerst Größen eintragen und ? setzen'); return null; }
+  return TafelShot.rasterize(el,{pad:14,scale:2.5,bg:bgFarbe()});
+}
+(function(){
+  const imTafel=window.parent!==window;
+  if(!imTafel){ $('#bFigBoard').style.display='none'; $('#bStepBoard').style.display='none'; }
+  $('#bFigBoard').onclick=()=>skizzeBild(2.5).then(im=>TafelShot.toBoard(im),()=>TafelShot.toast('Bild konnte nicht erstellt werden'));
+  $('#bFigCopy').onclick=()=>{                                 /* Blob-Versprechen sofort übergeben, sonst blockt Safari */
+    if(!navigator.clipboard||!window.ClipboardItem){ TafelShot.toast('Kopieren wird hier nicht unterstützt'); return; }
+    const blob=skizzeBild(2.5).then(im=>new Promise(r=>im.canvas.toBlob(r,'image/png')));
+    navigator.clipboard.write([new ClipboardItem({'image/png':blob})])
+      .then(()=>TafelShot.toast('Skizze in die Zwischenablage kopiert'),()=>TafelShot.toast('Kopieren wurde vom Browser verhindert'));
+  };
+  $('#bStepBoard').onclick=()=>{ const im=wegBild(); if(im) TafelShot.toBoard(im); };
+  $('#bStepCopy').onclick=()=>{ const im=wegBild(); if(im) TafelShot.copy(im); };
+})();
+
+/* ---------- Tafel-Anbindung: Zustand wird mit dem Projekt gespeichert ---------- */
+(function(){
+  let bereit=false, tmr=null;
+  function daten(){
+    const st=ST()||{};
+    return { shape:G.shape, unit:G.unit, dec:DEC, showVals:G.showVals, onlyKnown:G.onlyKnown,
+      hell:LIGHT, look:{...LOOK},
+      zustand:{ given:{...(st.given||{})}, targets:[...(st.targets||[])], lines:[...(st.lines||[])],
+        tris:[...(st.tris||[])], rects:[...(st.rects||[])], sel:st.sel||null, params:{...(st.params||{})},
+        yaw:st.yaw, pitch:st.pitch, zoom:st.zoom, panX:st.panX, panY:st.panY, revealed:st.revealed||0 } };
+  }
+  function senden(){ tmr=null; if(window.parent===window||!bereit) return;
+    try{ parent.postMessage({type:'embed-data',data:daten()},'*'); }catch(e){} }
+  window.tafelSync=()=>{ if(!tmr) tmr=setTimeout(senden,350); };
+  addEventListener('message',e=>{
+    if(window.parent===window||e.source!==window.parent) return;
+    const d=e.data&&e.data.type==='embed-data'?e.data.data:null; if(!d) return;
+    bereit=true;
+    try{
+      if(d.hell!==undefined&&!!d.hell!==LIGHT){ LIGHT=!!d.hell; applyTheme(false); }
+      if(d.look){ Object.assign(LOOK,d.look); applyLook(false); }
+      if(d.unit){ G.unit=d.unit; const u=$('#unitSel'); if(u) u.value=d.unit; }
+      if(d.dec){ DEC=d.dec; const c=$('#decSel'); if(c) c.value=String(d.dec); }
+      if(d.showVals!==undefined){ G.showVals=!!d.showVals; $('#bVals').classList.toggle('on',G.showVals); }
+      if(d.onlyKnown!==undefined){ G.onlyKnown=!!d.onlyKnown; $('#bKnown').classList.toggle('on',G.onlyKnown); }
+      if(d.shape&&d.shape!==G.shape){ G.shape=d.shape; buildShapeChips(); onShape(); }
+      const z=d.zustand;
+      if(z&&G.shape!=='rot'){
+        const st=ST();
+        st.given={...z.given}; st.targets=new Set(z.targets||[]); st.lines=new Set(z.lines||[]);
+        st.tris=new Set(z.tris||[]); st.rects=new Set(z.rects||[]);
+        if(z.sel!==undefined) st.sel=z.sel;
+        if(z.params) Object.assign(st.params,z.params);
+        ['yaw','pitch','zoom','panX','panY','revealed'].forEach(k=>{ if(z[k]!==undefined) st[k]=z[k]; });
+        buildTable(); updateAll(true);
+      }
+    }catch(err){}
+  });
+  ['input','change','click','pointerup'].forEach(t=>document.addEventListener(t,()=>window.tafelSync(),true));
+  addEventListener('load',()=>{
+    if(window.parent===window){ bereit=true; return; }
+    try{ parent.postMessage({type:'embed-ready'},'*'); }catch(e){}
+    setTimeout(()=>{ bereit=true; },700);
+  });
+})();
+
 buildShapeChips();onShape();
 })()}
 </script>

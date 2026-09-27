@@ -1134,16 +1134,22 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   (Mathematik 7). Term eintippen – der Umformer zerlegt ihn in **Summanden und Faktoren**, die sich
   **selbst umsortieren und zusammenfassen** lassen (Drag & Drop); dazu **Tipp**, **nächsten Schritt
   ausführen**, **alles vorführen** (mit Tempo), **Gleichartiges färben**, Textmarker und ein
-  mitwachsender **Rechenweg** zum Kopieren oder Drucken. In der Kopfzeile stehen neben dem Titel
-  **A−/A+** für die Schriftgröße (die Einstellung bleibt gespeichert) und der Umschalter
-  **hell/dunkel**. Beim Einfügen fragt die Tafel „eigene Seite oder bewegliches Objekt"
-  (im Kontextmenü auch später „Als eigene Seite anzeigen").
+  mitwachsender **Rechenweg**. Der lässt sich als Text kopieren, drucken oder als **Bild auf die Tafel
+  legen** bzw. **als Bild kopieren**. **Beispiele** und **Zuletzt** sind aufklappbar, damit die
+  Eingabe kurz bleibt. In der Kopfzeile stehen neben dem Titel **A−/A+** für die Schriftgröße und der
+  Umschalter **hell/dunkel**. Beim Einfügen fragt die Tafel „eigene Seite oder bewegliches Objekt"
+  (im Kontextmenü auch später „Als eigene Seite anzeigen"). **Term, Ziel, Schrittweite, Tempo,
+  Einfärbung, Schriftgröße und Hell/Dunkel werden mit dem Tafel-Projekt gespeichert** – beim nächsten
+  Öffnen steht der Term wieder da.
 - **Figuren & Körper** (Mathe & Physik): Geometrie-Werkzeug für **Flächen, Umfänge und Volumen**
   (Mathematik 9/10). Figur oder Körper wählen (Dreiecke, Vierecke, n-Eck, Kreis mit Sehne, Prismen,
   Pyramiden, Pyramidenstumpf, Tetraeder, Zylinder, Kegel, Kegelstumpf, Kugel, Rotationskörper-Baukasten),
   **gegebene Größen eintragen** und die gesuchten mit **?** markieren; dazu **Hilfslinien** und
   **rechtwinklige Stützdreiecke** mit **Satz des Pythagoras** sowie **sin, cos, tan** farbig hervorgehoben.
-  Skizze mit Zoom, Linienstärke, Schrift- und Buttongröße einstellbar.
+  Skizze mit Zoom, Linienstärke, Schrift- und Buttongröße einstellbar. **Skizze** und **Rechenweg**
+  lassen sich einzeln **als Bild auf die Tafel legen** oder **in die Zwischenablage kopieren**.
+  **Figur, Einheit, eingetragene Größen, gesuchte Werte, Hilfslinien, Stützdreiecke, Blickwinkel und
+  Darstellung werden mit dem Tafel-Projekt gespeichert.**
 - **3D-Koordinatensystem** (Mathe & Physik): räumliches Koordinatensystem im **Schrägbild** wie im
   Heft (x₁ schräg nach vorne, x₂ nach rechts, x₃ nach oben); Achsen **x₁ x₂ x₃ oder x y z** umschaltbar.
   Schriftgröße mit **A−/A+** oben in der Zeichenfläche oder im **Kontextmenü** (＋/−, fett, kursiv). Bedienen über

@@ -264,6 +264,13 @@ header{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 header h1{margin:.1em 0}
 .hdrTools{margin-left:auto;display:flex;gap:6px;align-items:center;flex:none}
 .themebtn.sm{padding:6px 12px;font-weight:800;min-width:44px;text-align:center}
+.fold{margin-top:10px;border-top:1px solid var(--line);padding-top:8px}
+.fold>summary{cursor:pointer;font-weight:700;color:var(--muted);list-style:none;padding:3px 0;user-select:none}
+.fold>summary::-webkit-details-marker{display:none}
+.fold>summary::before{content:'▸ ';color:var(--accent)}
+.fold[open]>summary::before{content:'▾ '}
+.fold>summary:hover{color:var(--text)}
+.fold .hrow{margin-top:6px}
 @media(max-width:640px){.hdrTools{margin-left:0}}
 html[data-theme=light]{
   --bg:#f3f5fa; --panel:#ffffff; --card:#ffffff; --card2:#f2f5fb; --line:#cfd7e8; --grid:#e4e9f3;
@@ -344,8 +351,8 @@ html[data-theme=light] .binsvg rect[fill="rgba(255,255,255,.04)"]{fill:rgba(30,4
     <div class="setrow"><b>Ziel</b><div class="seg" id="goalSeg"><button data-v="sum" class="on">Vereinfachen / zusammenfassen</button><button data-v="fakt">danach ausklammern</button></div></div>
     <div class="setrow"><b>Schrittweite</b><div class="seg" id="fineSeg"><button data-v="0" class="on">normal</button><button data-v="1">kleinschrittig</button></div>
       <span class="small" style="color:var(--sub)">kleinschrittig: Produkte werden Faktor für Faktor umsortiert und zusammengefasst</span></div>
-    <div class="setrow"><b>Beispiele</b><div class="hrow" id="exs"></div></div>
-    <div class="setrow" id="histRow" style="display:none"><b>Zuletzt</b><div class="hrow" id="hist"></div></div>
+    <details class="fold" id="exsRow"><summary>Beispiele</summary><div class="hrow" id="exs"></div></details>
+    <details class="fold" id="histRow" style="display:none"><summary>Zuletzt</summary><div class="hrow" id="hist"></div></details>
   </div>
 
   <div class="card" id="wCard" style="display:none">
@@ -379,6 +386,8 @@ html[data-theme=light] .binsvg rect[fill="rgba(255,255,255,.04)"]{fill:rgba(30,4
     <div class="btnrow noprint">
       <button class="btn ghost sm" id="bCopy">📋 Rechenweg kopieren</button>
       <button class="btn ghost sm" id="bPrint">🖨 Rechenweg drucken</button>
+      <button class="btn ghost sm" id="bImgBoard">🖼 Rechenweg → Tafel</button>
+      <button class="btn ghost sm" id="bImgCopy">🖼 Als Bild kopieren</button>
       <button class="btn ghost sm" id="bLink">🔗 Link zu diesem Term</button>
       <span class="small" id="copyMsg" style="color:var(--ok)"></span>
     </div>
@@ -400,6 +409,7 @@ html[data-theme=light] .binsvg rect[fill="rgba(255,255,255,.04)"]{fill:rgba(30,4
   <div class="footer">Term-Umformer · Mathematik 7 · LehrplanPLUS Gymnasium Bayern</div>
 </div>
 
+<script src="shot.js"></script>
 <script>
 const $=(s,r=document)=>r.querySelector(s);
 const $$=(s,r=document)=>[...r.querySelectorAll(s)];
@@ -995,6 +1005,53 @@ function showHist(){ const h=getHist(); $('#histRow').style.display=h.length?'':
   $$('#hist .pill').forEach(p=>p.onclick=()=>{ tin.value=decodeURIComponent(p.dataset.t); onInput(); go() }) }
 showHist();
 const qp=new URLSearchParams(location.search).get('t'); if(qp){ tin.value=qp; onInput(); try{ parseTerm(qp); load(qp) }catch(e){} }
+
+/* ---------- Rechenweg als Bild: auf die Tafel oder in die Zwischenablage ---------- */
+(function(){
+  const bg=()=>getComputedStyle(document.body).backgroundColor||'#fff';
+  function bild(){
+    const el=document.querySelector('.wlog');
+    if(!el||!el.textContent.trim()){ TafelShot.toast('Noch kein Rechenweg – zuerst einen Term umformen'); return null; }
+    return TafelShot.rasterize(el,{pad:14,scale:2.5,bg:bg()});
+  }
+  const bB=document.getElementById('bImgBoard'), bC=document.getElementById('bImgCopy');
+  if(window.parent===window) bB.style.display='none';                 /* allein geöffnet: keine Tafel da */
+  bB.onclick=()=>{ const im=bild(); if(im) TafelShot.toBoard(im); };
+  bC.onclick=()=>{ const im=bild(); if(im) TafelShot.copy(im); };
+})();
+
+/* ---------- Tafel-Anbindung: Zustand wird mit dem Projekt gespeichert ---------- */
+(function(){
+  let bereit=false, tmr=null;
+  function daten(){ return { term:tin.value||'', geladen:U.text||'', goal:U.goal, fine:U.fine, speed:U.speed,
+    color:U.color, zoom:parseFloat(document.body.style.zoom)||1,
+    hell:document.documentElement.dataset.theme==='light' }; }
+  function senden(){ tmr=null; if(window.parent===window||!bereit) return;
+    try{ parent.postMessage({type:'embed-data',data:daten()},'*'); }catch(e){} }
+  window.tafelSync=()=>{ if(!tmr) tmr=setTimeout(senden,300); };
+  function segSetzen(id,v){ const b=$('#'+id+' button[data-v="'+v+'"]'); if(!b) return;
+    $$('#'+id+' button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); }
+  addEventListener('message',e=>{
+    if(window.parent===window||e.source!==window.parent) return;
+    const d=e.data&&e.data.type==='embed-data'?e.data.data:null; if(!d) return;
+    bereit=true;
+    if(d.hell) document.documentElement.dataset.theme='light'; else delete document.documentElement.dataset.theme;
+    if(d.zoom) document.body.style.zoom=d.zoom;
+    if(d.goal){ U.goal=d.goal; segSetzen('goalSeg',d.goal); }
+    if(d.fine!==undefined){ U.fine=!!d.fine; segSetzen('fineSeg',U.fine?'1':'0'); }
+    if(d.speed){ U.speed=d.speed; segSetzen('spdSeg',String(d.speed)); }
+    if(d.color!==undefined){ U.color=!!d.color; $('#bCol').classList.toggle('on',U.color); }
+    if(d.term){ tin.value=d.term; try{ onInput(); }catch(e2){} }
+    if(d.geladen){ try{ parseTerm(d.geladen); load(d.geladen); }catch(e2){} }
+  });
+  /* jede Eingabe/Änderung melden */
+  ['input','change','click'].forEach(t=>document.addEventListener(t,()=>window.tafelSync(),true));
+  addEventListener('load',()=>{
+    if(window.parent===window){ bereit=true; return; }
+    try{ parent.postMessage({type:'embed-ready'},'*'); }catch(e){}
+    setTimeout(()=>{ bereit=true; },700);
+  });
+})();
 
 /* Schriftgröße: skaliert die ganze Darstellung, Wert bleibt gespeichert */
 (function(){ const KZ='terme_zoom'; let f=1;
