@@ -765,7 +765,7 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
    **und** Kreis, Gerade, Zirkel, Zahlenstrahl, Koordinatensystem (alle Knöpfe gleich groß);
    ein **Zeit**-Button (Uhr, Stoppuhr, Timer);
    ein **Klasse & Interaktion**-Button (Sozialform, Gruppen bilden, Umfrage, Zufälliger Name, Punktestand)
-   und ein **Mathe & Physik**-Button (Gleichungslöser, Funktionsplotter, **Ableitungen**, **Term-Umformer**, **Figuren & Körper**, **Diagramm**, **Einheitskreis**, **3D-Koordinatensystem**, Vierfeldertafel, Baumdiagramm,
+   und ein **Mathe & Physik**-Button (Gleichungslöser, Funktionsplotter, **Ableitungen**, **Term-Umformer**, **Figuren & Körper**, **Diagramm**, **Formel umstellen**, **Einheitskreis**, **3D-Koordinatensystem**, Vierfeldertafel, Baumdiagramm,
    Wahrscheinlichkeitsrechner, GeoGebra-App, **CODAP**, Messwert-Analyse, **Würfel** und **Glücksrad**).
    Die Aufklappmenüs legen sich **nie über die Werkzeugleiste**: Sie öffnen neben ihr, bleiben unter
    der oberen Leiste und nehmen bei schmalem Fenster **weniger Spalten** (bei wenig Höhe lassen sie
@@ -1139,6 +1139,20 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   Analyse-Knöpfe VZ/M/K, Tangente, Fläche/Integral, Intervalle, Symbolleiste, Ableitungsrelation,
   Krümmungs-Smileys, Linienstil, Anleitung (?). Der eingestellte Zustand (Funktion, Parameter, sichtbare
   Graphen, Analyse-Knöpfe, Zoom, Farben, Freihand-Kurve) wird **mit dem Tafel-Projekt gespeichert**.
+- **Formel umstellen** (Mathe & Physik): Formel eintippen (`F = m · a`) oder aus der **Formelsammlung**
+  wählen – Mechanik, Elektrizität, Wärme, Geometrie und Mathematik, jeweils mit Einheiten. Dann die
+  **gesuchte Größe antippen**; das Werkzeug stellt **Schritt für Schritt** um und schreibt an jede Zeile
+  die Rechenregel: „| : m", „| − b", „| √ (x > 0)", „| Seiten tauschen".
+  - Brüche, Wurzeln und Potenzen werden wie im Heft gesetzt; Indizes schreibt man als `v_0`,
+    Kreiszahl als `pi`, Wurzel als `sqrt( )`.
+  - **Werte einsetzen:** Für jede bekannte Größe gibt es ein Feld (mit Einheit) – das Ergebnis wird
+    sofort ausgerechnet.
+  - **Grenzen ehrlich benannt:** Kommt die gesuchte Größe **mehrfach** vor (z. B. `t` in
+    `s = v₀ · t + ½ · a · t²`), sagt das Werkzeug, dass reines Umstellen nicht reicht – trägt man die
+    anderen Werte ein, wird die Gleichung trotzdem **numerisch** gelöst und **alle Lösungen** werden
+    genannt (im Sachzusammenhang ist meist die positive gemeint).
+  - Dazu **A−/A+**, **🖼 Rechenweg → Tafel**, **📋 Kopieren** und **Drucken**; Formel, Zielgröße und
+    eingetragene Werte werden **mit dem Tafel-Projekt gespeichert**.
 - **Diagramm** (Mathe & Physik): Daten in eine **Tabelle** eintragen – daraus entsteht daneben sofort das
   **Diagramm**. Die erste Spalte enthält die **Rubriken**, jede weitere Spalte ist eine **Datenreihe**
   (Farbe je Reihe im Tabellenkopf wählbar); **+ Zeile** und **+ Datenreihe** erweitern die Tabelle,
@@ -1274,6 +1288,7 @@ ableitungen.html      ← Lernumgebung F · f · f′ · f″ (Ableitungen/Stamm
 terme-rechner.html    ← Term-Umformer (Terme aufstellen und umformen, Mathematik 7)
 figuren-koerper.html  ← Figuren & Körper berechnen (Flächen, Umfang, Volumen, Mathematik 9/10)
 diagramm.html         ← Diagramm aus einer Tabelle (Säulen, Balken, Linien, Kreis …, verzerrende Darstellung)
+formel.html           ← Formel umstellen (nach einer Größe auflösen, Schritt für Schritt, mit Formelsammlung)
 stromkreis.html       ← Stromkreis-Editor mit Simulation (U, I, R, C, L, Ladungsfluss, Bild-Export)
 optik.html            ← Optiklabor (Strahlenoptik, Schatten, Mondphasen und Finsternisse)
 wellen.html           ← Wellenwanne (Reflexion, Brechung, Beugung, Interferenz, Huygens)
