@@ -761,6 +761,9 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
    ein **Klasse & Interaktion**-Button (Sozialform, Gruppen bilden, Umfrage, Zufälliger Name, Punktestand)
    und ein **Mathe & Physik**-Button (Gleichungslöser, Funktionsplotter, **Ableitungen**, **Term-Umformer**, **Figuren & Körper**, **Einheitskreis**, **3D-Koordinatensystem**, Vierfeldertafel, Baumdiagramm,
    Wahrscheinlichkeitsrechner, GeoGebra-App, Messwert-Analyse, **Würfel** und **Glücksrad**).
+   Die Aufklappmenüs legen sich **nie über die Werkzeugleiste**: Sie öffnen neben ihr, bleiben unter
+   der oberen Leiste und nehmen bei schmalem Fenster **weniger Spalten** (bei wenig Höhe lassen sie
+   sich scrollen) – so ist jeder Knopf erreichbar, auch im geteilten Bildschirm.
 - **Würfel** (Zufallsgenerator, Mathe & Physik): 1–6 Würfel mit wählbarer Seitenzahl (2–20),
   „Würfeln" rollt, Summe wird angezeigt. **Antippen eines Würfels wechselt seine Farbe**
   (durch eine Palette) – so kann man mehrere Würfel zur Unterscheidung einfärben; die Farben
