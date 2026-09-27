@@ -759,7 +759,7 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
    **und** Kreis, Gerade, Zirkel, Zahlenstrahl, Koordinatensystem (alle Knöpfe gleich groß);
    ein **Zeit**-Button (Uhr, Stoppuhr, Timer);
    ein **Klasse & Interaktion**-Button (Sozialform, Gruppen bilden, Umfrage, Zufälliger Name, Punktestand)
-   und ein **Mathe & Physik**-Button (Gleichungslöser, Funktionsplotter, **Ableitungen**, **Term-Umformer**, **Figuren & Körper**, **Einheitskreis**, **3D-Koordinatensystem**, Vierfeldertafel, Baumdiagramm,
+   und ein **Mathe & Physik**-Button (Gleichungslöser, Funktionsplotter, **Ableitungen**, **Term-Umformer**, **Figuren & Körper**, **Diagramm**, **Einheitskreis**, **3D-Koordinatensystem**, Vierfeldertafel, Baumdiagramm,
    Wahrscheinlichkeitsrechner, GeoGebra-App, Messwert-Analyse, **Würfel** und **Glücksrad**).
    Die Aufklappmenüs legen sich **nie über die Werkzeugleiste**: Sie öffnen neben ihr, bleiben unter
    der oberen Leiste und nehmen bei schmalem Fenster **weniger Spalten** (bei wenig Höhe lassen sie
@@ -1133,6 +1133,24 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   Analyse-Knöpfe VZ/M/K, Tangente, Fläche/Integral, Intervalle, Symbolleiste, Ableitungsrelation,
   Krümmungs-Smileys, Linienstil, Anleitung (?). Der eingestellte Zustand (Funktion, Parameter, sichtbare
   Graphen, Analyse-Knöpfe, Zoom, Farben, Freihand-Kurve) wird **mit dem Tafel-Projekt gespeichert**.
+- **Diagramm** (Mathe & Physik): Daten in eine **Tabelle** eintragen – daraus entsteht daneben sofort das
+  **Diagramm**. Die erste Spalte enthält die **Rubriken**, jede weitere Spalte ist eine **Datenreihe**
+  (Farbe je Reihe im Tabellenkopf wählbar); **+ Zeile** und **+ Datenreihe** erweitern die Tabelle,
+  **✕** löscht Zeilen bzw. Reihen, die **Kopfzeile** lässt sich ausblenden.
+  - **Diagrammarten:** Säulen, Balken, Linien, Fläche, Kreis und Ring; bei mehreren Datenreihen
+    wahlweise **nebeneinander oder gestapelt** (Säulen, Balken, Fläche).
+  - **Verzerrende Wirkungen zeigen** – der eigentliche Unterrichtszweck: Die **y-Achse** läuft
+    automatisch oder **von–bis** (unterdrückter Nullpunkt), die Skala ist **linear oder logarithmisch**,
+    die **Rubriken** lassen sich **eng zusammenschieben**, das Diagramm in der **Höhe stauchen**, und
+    der Wert wirkt wahlweise als **Länge** oder als **Fläche** (dann wächst auch die Breite der Säule
+    mit √Wert; beim Kreisdiagramm wird der **Radius** statt der Fläche zum Wert gesetzt). Sobald eine
+    solche Einstellung aktiv ist, steht rechts oben im Diagramm eine **Warnzeile** („⚠ Nullpunkt
+    unterdrückt · Rubriken eng …"); **Ehrlich** nimmt alle Verzerrungen auf einmal zurück.
+  - Dazu Titel, **Werte**, **Legende** und **Gitter** ein-/ausblendbar, **A−/A+** für die Schrift,
+    **🖼 Bild → Tafel** und **📋 Kopieren** sowie **Drucken**, **Speichern/Laden** als `.json`.
+    Der **Umschalter Benutzen/Bearbeiten** blendet die Tabelle aus – zum Vorführen bleibt nur das
+    Diagramm mit den Einstellreglern stehen. Tabelle, Diagrammart und alle Einstellungen werden
+    **mit dem Tafel-Projekt gespeichert**.
 - **Term-Umformer** (Mathe & Physik): Lernwerkzeug zum **Aufstellen und Umformen von Termen**
   (Mathematik 7). Term eintippen – der Umformer zerlegt ihn in **Summanden und Faktoren**, die sich
   **selbst umsortieren und zusammenfassen** lassen (Drag & Drop); dazu **Tipp**, **nächsten Schritt
@@ -1243,6 +1261,7 @@ raum.html             ← 3D-Koordinatensystem (Punkte, Geraden, Ebenen, Lagebez
 ableitungen.html      ← Lernumgebung F · f · f′ · f″ (Ableitungen/Stammfunktionen), mit Zustands-Sync
 terme-rechner.html    ← Term-Umformer (Terme aufstellen und umformen, Mathematik 7)
 figuren-koerper.html  ← Figuren & Körper berechnen (Flächen, Umfang, Volumen, Mathematik 9/10)
+diagramm.html         ← Diagramm aus einer Tabelle (Säulen, Balken, Linien, Kreis …, verzerrende Darstellung)
 stromkreis.html       ← Stromkreis-Editor mit Simulation (U, I, R, C, L, Ladungsfluss, Bild-Export)
 optik.html            ← Optiklabor (Strahlenoptik, Schatten, Mondphasen und Finsternisse)
 wellen.html           ← Wellenwanne (Reflexion, Brechung, Beugung, Interferenz, Huygens)

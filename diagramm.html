@@ -1,0 +1,505 @@
+<!DOCTYPE html><html lang="de"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Diagramm</title>
+<style>
+  :root{--fs:15px;}
+  *{box-sizing:border-box;} [hidden]{display:none!important;}
+  html,body{margin:0;height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#1f2430;font-size:var(--fs);}
+  #wrap{position:absolute;inset:0;display:flex;flex-direction:column;}
+  #bar{display:flex;gap:4px;padding:6px;border-bottom:1px solid #e2e7ef;align-items:center;flex:none;overflow:hidden;}
+  #barL,#barR{display:flex;gap:4px;align-items:center;flex:none;}
+  #barMid{display:flex;gap:4px;align-items:center;flex:1 1 auto;min-width:0;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:thin;padding:0 2px;}
+  #bar.compact #barL .tb span,#bar.compact #barR .tb span{display:none;}
+  #bar.compact #barL .tb,#bar.compact #barR .tb{min-width:42px;padding:0 3px;}
+  .tb{flex:none;min-width:52px;height:50px;border:1px solid #d6dce5;background:#fff;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;padding:0 5px;color:#1f2430;font:inherit;}
+  .tb svg{width:32px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+  .tb span{font-size:.7em;font-weight:600;white-space:nowrap;}
+  .tb.on{background:#2563eb;border-color:#2563eb;color:#fff;}
+  .tb:disabled{opacity:.4;}
+  .sep{width:1px;align-self:stretch;background:#e2e7ef;margin:0 3px;flex:none;}
+  #bar2{display:flex;gap:6px;padding:5px 8px;border-bottom:1px solid #e2e7ef;align-items:center;flex-wrap:nowrap;flex:none;min-height:44px;font-size:.92em;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;}
+  #bar2>*{flex:0 0 auto;}
+  .lbl{color:#64748b;font-weight:600;} .grow{flex:1 1 auto!important;min-width:4px;}
+  .btn{border:1px solid #cfd6e0;background:#fff;border-radius:9px;padding:5px 10px;font:inherit;font-weight:600;color:#1f2430;cursor:pointer;white-space:nowrap;}
+  .btn.on{background:#2563eb;border-color:#2563eb;color:#fff;}
+  .btn.pri{background:#2563eb;border-color:#2563eb;color:#fff;}
+  .btn.red{color:#dc2626;border-color:#fca5a5;}
+  .seg{display:inline-flex;border:1px solid #cfd6e0;border-radius:9px;overflow:hidden;}
+  .seg button{border:0;background:#fff;padding:5px 9px;font:inherit;font-weight:600;color:#42506a;cursor:pointer;white-space:nowrap;}
+  .seg button+button{border-left:1px solid #e2e7ef;}
+  .seg button.on{background:#2563eb;color:#fff;}
+  .num{width:62px;border:1px solid #cfd6e0;border-radius:8px;padding:4px 6px;font:inherit;text-align:right;}
+  .txt{border:1px solid #cfd6e0;border-radius:8px;padding:4px 8px;font:inherit;min-width:110px;}
+  input[type=range]{width:96px;accent-color:#2563eb;vertical-align:middle;}
+  #main{flex:1;min-height:0;display:flex;gap:8px;padding:8px;overflow:hidden;}
+  #tabBox{flex:0 0 42%;min-width:240px;display:flex;flex-direction:column;gap:6px;overflow:auto;-webkit-overflow-scrolling:touch;}
+  #chartBox{flex:1 1 auto;min-width:0;position:relative;border:1px solid #e2e7ef;border-radius:12px;background:#fff;overflow:hidden;}
+  #cv{position:absolute;inset:0;width:100%;height:100%;touch-action:none;}
+  @media (max-width:760px){ #main{flex-direction:column;} #tabBox{flex:0 0 auto;max-height:46%;min-width:0;} }
+  table.dt{border-collapse:collapse;width:100%;}
+  table.dt th,table.dt td{border:1px solid #d6dce5;padding:0;}
+  table.dt input{width:100%;border:0;padding:6px 7px;font:inherit;background:transparent;color:inherit;min-width:60px;}
+  table.dt input:focus{outline:2px solid #2563eb;outline-offset:-2px;}
+  table.dt thead input{font-weight:700;background:#f1f5fb;}
+  table.dt td.num input{text-align:right;}
+  table.dt .del{width:30px;text-align:center;}
+  .delbtn{border:0;background:transparent;color:#dc2626;font-size:1.05em;cursor:pointer;padding:3px 5px;line-height:1;}
+  .farbe{width:22px;height:22px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px #cfd6e0;padding:0;cursor:pointer;-webkit-appearance:none;appearance:none;}
+  .warn{color:#b45309;font-weight:700;}
+  .hint{color:#64748b;}
+  #tipp{padding:4px 2px;}
+</style>
+</head><body>
+<div id="wrap">
+  <div id="bar"><div id="barL">
+    <button class="tb tafelEdit" id="fNew" title="Neue Tabelle"><svg viewBox="0 0 32 20"><path d="M11 2h10l3 3v13H11Z M17 8v7M13.5 11.5h7"/></svg><span>Neu</span></button>
+    <button class="tb tafelEdit" id="fSave" title="Daten als Datei speichern"><svg viewBox="0 0 32 20"><path d="M10 2h10l3 3v13H10Z M13 2v5h7V2 M13 18v-6h7v6"/></svg><span>Speichern</span></button>
+    <button class="tb tafelEdit" id="fLoad" title="Daten laden"><svg viewBox="0 0 32 20"><g transform="translate(6,0) scale(.833)"><path d="M3 20V9.5a1.8 1.8 0 0 1 1.8-1.8h3.9l1.8 1.8H18a1.8 1.8 0 0 1 1.8 1.8v1"/><path d="M3 20l2.4-6.6h16L19 20Z"/><path d="M12 7V1.8M9.6 4.2 12 1.8l2.4 2.4"/></g></svg><span>Laden</span></button>
+    <input type="file" id="fFile" accept=".json,application/json" hidden>
+    <span class="sep"></span>
+    </div><div id="barMid"></div><div id="barR"><span class="sep"></span>
+    <button class="tb" id="bEhrlich" title="Alle verzerrenden Einstellungen zurücknehmen"><svg viewBox="0 0 32 20"><path d="M16 3v14M9 7h14M11 7l-3 6h6ZM21 7l-3 6h6Z"/></svg><span>Ehrlich</span></button>
+    <button class="tb" id="bPrint" title="Diagramm drucken"><svg viewBox="0 0 32 20"><path d="M10 7V2h12v5 M10 15H7V7h18v8h-3 M10 12h12v6H10Z"/></svg><span>Drucken</span></button>
+  </div></div>
+  <div id="bar2"></div>
+  <div id="main">
+    <div id="tabBox">
+      <div id="tipp" class="hint"></div>
+      <table class="dt" id="dt"></table>
+      <div style="display:flex;gap:6px;flex-wrap:wrap" class="tafelEdit">
+        <button class="btn" id="addRow">+ Zeile</button>
+        <button class="btn" id="addCol">+ Datenreihe</button>
+        <button class="btn" id="bHead">Kopfzeile: an</button>
+      </div>
+    </div>
+    <div id="chartBox"><canvas id="cv"></canvas></div>
+  </div>
+</div>
+<script src="shot.js"></script>
+<script src="modus.js"></script>
+<script>
+"use strict";
+const $=id=>document.getElementById(id);
+const toast=m=>window.TafelShot&&TafelShot.toast(m);
+const cv=$('cv'), ctx=cv.getContext('2d');
+
+const PAL=['#2563eb','#f59e0b','#16a34a','#dc2626','#7c3aed','#0891b2','#be185d','#65a30d','#ea580c','#475569'];
+const ARTEN=[
+  ['saeulen','Säulen','<path d="M4 17V9h5v8ZM13 17V4h5v13ZM22 17v-6h5v6Z"/>'],
+  ['balken','Balken','<path d="M4 4h12v4H4ZM4 10h20v4H4ZM4 16h8v3H4Z"/>'],
+  ['linien','Linien','<path d="M3 16l6-6 5 4 6-9 8 5"/><circle cx="9" cy="10" r="1.4"/><circle cx="14" cy="14" r="1.4"/><circle cx="20" cy="5" r="1.4"/>'],
+  ['flaeche','Fläche','<path d="M3 17V11l6-5 5 4 6-7 9 6v8Z"/>'],
+  ['kreis','Kreis','<circle cx="16" cy="10" r="8"/><path d="M16 10V2M16 10l7 4"/>'],
+  ['ring','Ring','<circle cx="16" cy="10" r="8"/><circle cx="16" cy="10" r="3.4"/><path d="M16 2v4.6"/>']
+];
+const STAPELBAR=new Set(['saeulen','balken','flaeche']);
+const KREISART=new Set(['kreis','ring']);
+
+const DEMO={ head:['Sportart','Klasse 7a','Klasse 7b'],
+  rows:[['Fußball',12,9],['Handball',5,7],['Schwimmen',7,6],['Turnen',3,5],['Tanzen',4,8]] };
+
+let D={ v:1, head:DEMO.head.slice(), rows:DEMO.rows.map(r=>r.slice()), kopf:true,
+  art:'saeulen', stapel:false, titel:'Lieblingssportarten', werte:false, gitter:true, legende:true,
+  yAuto:true, yMin:0, yMax:20, log:false, dehnung:1, flaeche:false, hoehe:1,
+  farben:PAL.slice(0,6), fontSize:15, edit:true };
+
+/* ---------- Tabelle ---------- */
+const zahl=v=>{ if(typeof v==='number') return v; const s=String(v==null?'':v).trim().replace(/\s/g,'').replace(',','.');
+  if(s==='') return null; const n=Number(s); return isFinite(n)?n:null; };
+const reihen=()=>Math.max(1,D.head.length-1);                     // Anzahl Datenreihen (ohne Rubrikenspalte)
+
+function renderTabelle(){
+  const t=$('dt'); t.innerHTML='';
+  const th=document.createElement('thead'), tr=document.createElement('tr');
+  D.head.forEach((h,c)=>{
+    const z=document.createElement('th');
+    if(c>0){ const f=document.createElement('input'); f.type='color'; f.className='farbe'; f.value=D.farben[c-1]||PAL[(c-1)%PAL.length];
+      f.title='Farbe der Datenreihe'; f.oninput=()=>{ D.farben[c-1]=f.value; zeichne(); sync(); };
+      z.style.whiteSpace='nowrap'; z.appendChild(f); }
+    const i=document.createElement('input'); i.value=h; i.placeholder=c===0?'Rubrik':'Reihe '+c;
+    i.oninput=()=>{ D.head[c]=i.value; zeichne(); sync(); };
+    z.appendChild(i); tr.appendChild(z);
+  });
+  const zdel=document.createElement('th'); zdel.className='del'; tr.appendChild(zdel);
+  th.appendChild(tr); if(D.kopf) t.appendChild(th);
+  const tb=document.createElement('tbody');
+  D.rows.forEach((row,r)=>{
+    const tr2=document.createElement('tr');
+    D.head.forEach((_,c)=>{
+      const td=document.createElement('td'); if(c>0) td.className='num';
+      const i=document.createElement('input'); i.value=row[c]==null?'':row[c];
+      i.inputMode=c>0?'decimal':'text';
+      i.oninput=()=>{ row[c]=c>0?i.value:i.value; zeichne(); sync(); };
+      td.appendChild(i); tr2.appendChild(td);
+    });
+    const td=document.createElement('td'); td.className='del';
+    const b=document.createElement('button'); b.className='delbtn tafelEdit'; b.textContent='✕'; b.title='Zeile löschen';
+    b.onclick=()=>{ if(D.rows.length<2){ toast('Eine Zeile muss bleiben'); return; } D.rows.splice(r,1); renderTabelle(); zeichne(); sync(); };
+    td.appendChild(b); tr2.appendChild(td);
+    tb.appendChild(tr2);
+  });
+  t.appendChild(tb);
+  /* Zeile zum Löschen von Datenreihen */
+  if(D.head.length>2){
+    const tf=document.createElement('tfoot'), tr3=document.createElement('tr');
+    D.head.forEach((_,c)=>{ const td=document.createElement('td');
+      if(c>0){ const b=document.createElement('button'); b.className='delbtn tafelEdit'; b.textContent='✕ Reihe';
+        b.style.fontSize='.78em'; b.title='Diese Datenreihe löschen';
+        b.onclick=()=>{ D.head.splice(c,1); D.rows.forEach(r=>r.splice(c,1)); D.farben.splice(c-1,1);
+          if(reihen()<2) D.stapel=false; renderTabelle(); renderBar2(); zeichne(); sync(); };
+        td.appendChild(b); }
+      tr3.appendChild(td); });
+    tr3.appendChild(document.createElement('td'));
+    tf.appendChild(tr3); t.appendChild(tf);
+  }
+  $('bHead').textContent='Kopfzeile: '+(D.kopf?'an':'aus');
+  $('tipp').innerHTML=D.kopf?'Erste Spalte = Rubriken · weitere Spalten = Datenreihen'
+                            :'Kopfzeile ist ausgeblendet – die Spalten heißen Reihe 1, Reihe 2 …';
+  if(window.TafelModus) TafelModus.refresh();
+}
+$('addRow').onclick=()=>{ D.rows.push([ 'Neu', ...Array(D.head.length-1).fill('') ]); renderTabelle(); zeichne(); sync(); };
+$('addCol').onclick=()=>{ if(D.head.length>=9){ toast('Mehr als acht Datenreihen werden unübersichtlich'); return; }
+  D.head.push('Reihe '+(D.head.length)); D.rows.forEach(r=>r.push('')); D.farben.push(PAL[(D.head.length-2)%PAL.length]);
+  renderTabelle(); renderBar2(); zeichne(); sync(); };
+$('bHead').onclick=()=>{ D.kopf=!D.kopf; renderTabelle(); zeichne(); sync(); };
+
+/* ---------- Bedienzeile ---------- */
+function renderBar2(){
+  const bar=$('bar2'); bar.innerHTML='';
+  const el=(tag,cls,txt,fn)=>{ const e=document.createElement(tag); if(cls) e.className=cls; if(txt!=null) e.textContent=txt; if(fn) e.onclick=fn; bar.appendChild(e); return e; };
+  const seg=(werte,akt,fn)=>{ const s=document.createElement('span'); s.className='seg';
+    werte.forEach(([v,t])=>{ const b=document.createElement('button'); b.textContent=t; if(v===akt) b.classList.add('on');
+      b.onclick=()=>fn(v); s.appendChild(b); }); bar.appendChild(s); return s; };
+
+  el('span','lbl','Titel');
+  const ti=document.createElement('input'); ti.className='txt'; ti.value=D.titel; ti.placeholder='Überschrift';
+  ti.oninput=()=>{ D.titel=ti.value; zeichne(); sync(); }; bar.appendChild(ti);
+
+  if(reihen()>1&&STAPELBAR.has(D.art)){
+    el('span','sep');
+    seg([[false,'nebeneinander'],[true,'gestapelt']], D.stapel, v=>{ D.stapel=v; renderBar2(); zeichne(); sync(); });
+  }
+  el('span','sep');
+  el('button','btn'+(D.werte?' on':''),'Werte', ()=>{ D.werte=!D.werte; renderBar2(); zeichne(); sync(); });
+  el('button','btn'+(D.legende?' on':''),'Legende', ()=>{ D.legende=!D.legende; renderBar2(); zeichne(); sync(); });
+  if(!KREISART.has(D.art)) el('button','btn'+(D.gitter?' on':''),'Gitter', ()=>{ D.gitter=!D.gitter; renderBar2(); zeichne(); sync(); });
+
+  if(!KREISART.has(D.art)){
+    el('span','sep');
+    el('span','lbl','y-Achse');
+    seg([[true,'automatisch'],[false,'von–bis']], D.yAuto, v=>{ D.yAuto=v; if(!v){ const s=spanne(); D.yMin=s.min; D.yMax=s.max; } renderBar2(); zeichne(); sync(); });
+    if(!D.yAuto){
+      const mk=(wert,setz)=>{ const n=document.createElement('input'); n.className='num'; n.value=wert; n.inputMode='decimal';
+        n.oninput=()=>{ const z=zahl(n.value); if(z!==null){ setz(z); zeichne(); sync(); } }; bar.appendChild(n); return n; };
+      mk(D.yMin,v=>D.yMin=v); el('span','lbl','bis'); mk(D.yMax,v=>D.yMax=v);
+      if(D.yMin>0) el('span','warn','⚠ Nullpunkt unterdrückt');
+    }
+    el('span','sep');
+    el('span','lbl','Skala');
+    seg([[false,'linear'],[true,'logarithmisch']], D.log, v=>{ D.log=v; renderBar2(); zeichne(); sync(); });
+  }
+  el('span','sep');
+  el('span','lbl','Rubriken');
+  const r1=document.createElement('input'); r1.type='range'; r1.min='0.35'; r1.max='1'; r1.step='0.05'; r1.value=D.dehnung;
+  r1.title='Rubriken eng ↔ gedehnt'; r1.oninput=()=>{ D.dehnung=+r1.value; zeichne(); sync(); }; bar.appendChild(r1);
+  el('span','lbl','Höhe');
+  const r2=document.createElement('input'); r2.type='range'; r2.min='0.35'; r2.max='1'; r2.step='0.05'; r2.value=D.hoehe;
+  r2.title='Diagramm gestaucht ↔ volle Höhe'; r2.oninput=()=>{ D.hoehe=+r2.value; zeichne(); sync(); }; bar.appendChild(r2);
+
+  if(D.art==='saeulen'||D.art==='balken'||KREISART.has(D.art)){
+    el('span','sep');
+    seg([[false,'Wert = Länge'],[true,'Wert = Fläche']], D.flaeche, v=>{ D.flaeche=v; renderBar2(); zeichne(); sync(); });
+  }
+  el('span','sep tafelEdit');
+  el('span','lbl tafelEdit','Schrift'); el('button','btn tafelEdit','A−',()=>schrift(-1)); el('button','btn tafelEdit','A+',()=>schrift(1));
+  el('span','grow');
+  if(window.parent!==window) el('button','btn pri','🖼 Bild → Tafel',()=>TafelShot.toBoard(bild()));
+  el('button','btn','📋 Kopieren',()=>TafelShot.copy(bild()));
+}
+function schrift(d){ D.fontSize=Math.max(10,Math.min(30,(D.fontSize||15)+d));
+  document.documentElement.style.setProperty('--fs',D.fontSize+'px'); resize(); sync(); }
+
+/* Diagrammarten in die Mittelleiste */
+(function(){ const m=$('barMid');
+  ARTEN.forEach(([id,name,pfad])=>{ const b=document.createElement('button'); b.className='tb'; b.id='art-'+id; b.title=name+'diagramm';
+    b.innerHTML='<svg viewBox="0 0 32 20">'+pfad+'</svg><span>'+name+'</span>';
+    b.onclick=()=>{ D.art=id; if(!STAPELBAR.has(id)) D.stapel=false; markArt(); renderBar2(); zeichne(); sync(); };
+    m.appendChild(b); });
+})();
+function markArt(){ ARTEN.forEach(([id])=>$('art-'+id).classList.toggle('on',D.art===id)); }
+
+/* ---------- Daten aufbereiten ---------- */
+function daten(){
+  const namen=D.rows.map((r,i)=>String(r[0]==null||r[0]===''?('Rubrik '+(i+1)):r[0]));
+  const serien=[];
+  for(let c=1;c<D.head.length;c++){
+    serien.push({ name:D.kopf?(D.head[c]||('Reihe '+c)):('Reihe '+c),
+      farbe:D.farben[c-1]||PAL[(c-1)%PAL.length],
+      werte:D.rows.map(r=>zahl(r[c])) });
+  }
+  return {namen,serien};
+}
+function spanne(){                                    /* sinnvoller Wertebereich */
+  const {serien}=daten(); let min=Infinity,max=-Infinity;
+  const sum=[];
+  serien.forEach(s=>s.werte.forEach((v,i)=>{ if(v==null) return; sum[i]=(sum[i]||0)+v; min=Math.min(min,v); max=Math.max(max,v); }));
+  if(D.stapel&&sum.length){ max=Math.max(max,...sum.filter(x=>isFinite(x))); min=Math.min(min,0); }
+  if(!isFinite(min)||!isFinite(max)){ min=0; max=10; }
+  if(min>0) min=0; if(max<0) max=0; if(min===max){ max=min+1; }
+  const luft=(max-min)*0.08;
+  return {min:runde(min-(min<0?luft:0),'ab'), max:runde(max+luft,'auf')};
+}
+function runde(x,ri){ if(x===0) return 0; const p=Math.pow(10,Math.floor(Math.log10(Math.abs(x)))-1)||1;
+  return (ri==='auf'?Math.ceil(x/p):Math.floor(x/p))*p; }
+function schritt(spanne,ziel){ const roh=spanne/Math.max(2,ziel), p=Math.pow(10,Math.floor(Math.log10(roh)));
+  for(const m of [1,2,2.5,5,10]) if(p*m>=roh) return p*m; return p*10; }
+const fmt=v=>{ const r=Math.round(v*1000)/1000; return String(r).replace('.',','); };
+
+/* ---------- Zeichnen ---------- */
+function resize(){ const dpr=window.devicePixelRatio||1, b=$('chartBox').getBoundingClientRect();
+  cv.width=Math.max(1,Math.round(b.width*dpr)); cv.height=Math.max(1,Math.round(b.height*dpr));
+  ctx.setTransform(dpr,0,0,dpr,0,0); zeichne(); }
+addEventListener('resize',()=>{ resize(); barFade(); });
+
+function font(gr,fett){ return (fett?'700 ':'')+Math.round((D.fontSize||15)*gr)+'px -apple-system,BlinkMacSystemFont,sans-serif'; }
+
+function zeichne(){
+  const W=cv.clientWidth||300, H=cv.clientHeight||200;
+  ctx.clearRect(0,0,W,H); ctx.fillStyle='#fff'; ctx.fillRect(0,0,W,H);
+  const {namen,serien}=daten();
+  if(!serien.length||!namen.length){ ctx.fillStyle='#8a93a2'; ctx.font=font(1); ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('Daten in die Tabelle eintragen',W/2,H/2); return; }
+  let oben=10;
+  if(D.titel){ ctx.fillStyle='#1f2430'; ctx.font=font(1.15,true); ctx.textAlign='center'; ctx.textBaseline='top';
+    ctx.fillText(D.titel,W/2,8); oben=8+(D.fontSize||15)*1.6; }
+  let unten=H-8;
+  if(D.legende&&(serien.length>1||KREISART.has(D.art))) unten=legende(W,H,namen,serien)-6;
+  if(KREISART.has(D.art)) kreis(W,oben,unten,namen,serien);
+  else achsen(W,oben,unten,namen,serien);
+}
+
+function legende(W,H,namen,serien){
+  ctx.font=font(.88); ctx.textBaseline='middle'; ctx.textAlign='left';
+  const eintraege = KREISART.has(D.art)
+    ? namen.map((n,i)=>({name:n,farbe:D.farben[i%D.farben.length]||PAL[i%PAL.length]}))
+    : serien.map(s=>({name:s.name,farbe:s.farbe}));
+  const teile=eintraege.map(e=>({e,b:ctx.measureText(e.name).width+26}));
+  const zeilen=[[]]; let br=0; const maxB=W-20;
+  teile.forEach(t=>{ if(br+t.b>maxB&&zeilen[zeilen.length-1].length){ zeilen.push([]); br=0; } zeilen[zeilen.length-1].push(t); br+=t.b; });
+  const zh=(D.fontSize||15)*1.35;
+  const start=H-8-zh*zeilen.length;
+  let y=start+zh/2;
+  zeilen.forEach(z=>{ const breite=z.reduce((a,t)=>a+t.b,0); let x=(W-breite)/2;
+    z.forEach(t=>{ ctx.fillStyle=t.e.farbe; ctx.beginPath(); ctx.roundRect(x,y-6,14,12,3); ctx.fill();
+      ctx.fillStyle='#1f2430'; ctx.fillText(t.e.name,x+19,y); x+=t.b; });
+    y+=zh; });
+  return start;
+}
+
+function achsen(W,oben,unten,namen,serien){
+  const balken=(D.art==='balken'), linie=(D.art==='linien'||D.art==='flaeche');
+  const sp=D.yAuto?spanne():{min:zahl(D.yMin)!==null?zahl(D.yMin):0, max:zahl(D.yMax)!==null?zahl(D.yMax):10};
+  let min=sp.min, max=sp.max; if(max<=min) max=min+1;
+  if(D.log){ min=min>0?min:Math.max(max/100,1e-6); if(min>=max) min=max/10; }
+  /* Anteil eines Wertes an der Achse (0 = unten/links, 1 = oben/rechts) */
+  const anteil=v=>{ v=Math.max(min,Math.min(max,v));
+    if(D.log){ const lo=Math.log10(min), hi=Math.log10(max); return (Math.log10(Math.max(v,1e-9))-lo)/((hi-lo)||1); }
+    return (v-min)/((max-min)||1); };
+  /* Achsenteilung */
+  const ticks=[];
+  if(D.log){ for(let e=Math.floor(Math.log10(min)); e<=Math.ceil(Math.log10(max)); e++){
+      const v=Math.pow(10,e); if(v>=min*0.999&&v<=max*1.001) ticks.push(v); } if(ticks.length<2) ticks.push(min,max); }
+  else { const st=schritt(max-min,6);
+    for(let v=Math.ceil(min/st)*st; v<=max+1e-9; v+=st) ticks.push(Math.round(v*1e6)/1e6); }
+
+  ctx.font=font(.85);
+  const wertBreite=Math.max(12,...ticks.map(v=>ctx.measureText(fmt(v)).width));
+  const rubBreite=Math.max(12,...namen.map(t=>ctx.measureText(String(t)).width));
+  const zeile=(D.fontSize||15)*1.5;
+
+  const xA=(balken?Math.min(W*0.42,rubBreite+14):wertBreite+12)+8;
+  const xE=W-16;
+  const yA=oben+6;
+  /* Passen die Rubriken nebeneinander? Sonst schräg schreiben – dafür mehr Platz unten */
+  const bFv=Math.max(.35,Math.min(1,D.dehnung));
+  const feldRoh=((xE-xA)*bFv)/Math.max(1,namen.length);
+  const schraeg=!balken&&rubBreite>feldRoh*0.96;
+  const yE=unten-(schraeg?Math.min(rubBreite*0.78+16,(unten-oben)*0.45):zeile);
+  if(yE-yA<40||xE-xA<40) return;
+
+  /* Stauchen: Zeichenfläche verkleinern (verzerrende Wirkung) */
+  const hF=Math.max(.35,Math.min(1,D.hoehe)), bF=Math.max(.35,Math.min(1,D.dehnung));
+  const y1=yE, y0=balken?yA:(yE-(yE-yA)*hF);
+  const x0=xA, x1=balken?(xA+(xE-xA)*bF):xE;
+  const xEnde=balken?x1:(xA+(xE-xA)*bF);                 /* Rubriken-Richtung */
+  const yOben=balken?(yA+(yE-yA)*(1-hF)):y0;
+
+  const wertX=v=>x0+anteil(v)*((balken?x1:xEnde)-x0);
+  const wertY=v=>y1-anteil(v)*(y1-y0);
+
+  /* Gitter und Achsenbeschriftung */
+  ctx.strokeStyle='#e2e7ef'; ctx.lineWidth=1;
+  ticks.forEach(v=>{
+    ctx.fillStyle='#64748b';
+    if(balken){ const x=wertX(v);
+      if(D.gitter){ ctx.beginPath(); ctx.moveTo(x,yOben); ctx.lineTo(x,y1); ctx.stroke(); }
+      ctx.textAlign='center'; ctx.textBaseline='top'; ctx.fillText(fmt(v),x,y1+6);
+    } else { const y=wertY(v);
+      if(D.gitter){ ctx.beginPath(); ctx.moveTo(x0,y); ctx.lineTo(xEnde,y); ctx.stroke(); }
+      ctx.textAlign='right'; ctx.textBaseline='middle'; ctx.fillText(fmt(v),x0-6,y);
+    }
+  });
+  ctx.strokeStyle='#94a3b8'; ctx.lineWidth=1.4; ctx.beginPath();
+  if(balken){ ctx.moveTo(x0,yOben); ctx.lineTo(x0,y1); ctx.lineTo(x1,y1); }
+  else { ctx.moveTo(x0,y0); ctx.lineTo(x0,y1); ctx.lineTo(xEnde,y1); }
+  ctx.stroke();
+
+  const k=namen.length, r=serien.length;
+  const feld=balken?((y1-yOben)/k):((xEnde-x0)/k);
+  const mitteRub=i=>(balken?yOben:x0)+feld*(i+0.5);
+
+  if(linie){
+    const stapelSum=namen.map(()=>0);
+    serien.forEach(s=>{
+      const punkte=[];
+      s.werte.forEach((v,i)=>{ if(v==null) return; let w=v;
+        if(D.stapel&&D.art==='flaeche'){ stapelSum[i]+=v; w=stapelSum[i]; }
+        punkte.push([mitteRub(i),wertY(w),v]); });
+      if(D.art==='flaeche'&&punkte.length){
+        ctx.globalAlpha=.28; ctx.fillStyle=s.farbe; ctx.beginPath(); ctx.moveTo(punkte[0][0],y1);
+        punkte.forEach(p=>ctx.lineTo(p[0],p[1])); ctx.lineTo(punkte[punkte.length-1][0],y1); ctx.closePath(); ctx.fill(); ctx.globalAlpha=1;
+      }
+      ctx.strokeStyle=s.farbe; ctx.lineWidth=2.6; ctx.beginPath();
+      punkte.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1])); ctx.stroke();
+      ctx.fillStyle=s.farbe; punkte.forEach(p=>{ ctx.beginPath(); ctx.arc(p[0],p[1],3.4,0,7); ctx.fill(); });
+      if(D.werte){ ctx.fillStyle='#1f2430'; ctx.font=font(.8); ctx.textAlign='center'; ctx.textBaseline='bottom';
+        punkte.forEach(p=>ctx.fillText(fmt(p[2]),p[0],p[1]-6)); }
+    });
+  } else {
+    /* Säulen und Balken */
+    const gruppe=feld*0.74, dicke=D.stapel?gruppe:gruppe/r;
+    let groesst=0; serien.forEach(x=>x.werte.forEach(v=>{ if(v!=null) groesst=Math.max(groesst,Math.abs(v)); }));
+    const dickeVon=v=>{ if(!D.flaeche||D.stapel||!groesst) return dicke*0.92;
+      return dicke*0.92*Math.max(.18,Math.min(1,Math.sqrt(Math.abs(v)/groesst))); };   /* Wert wirkt als Fläche */
+    serien.forEach((s,si)=>{
+      s.werte.forEach((v,i)=>{
+        if(v==null) return;
+        let unterWert=0;
+        if(D.stapel) for(let q=0;q<si;q++){ const x=serien[q].werte[i]; if(x!=null) unterWert+=x; }
+        const vonWert=D.stapel?unterWert:Math.min(0,v), bisWert=D.stapel?unterWert+v:v;
+        const versatz=D.stapel?0:(si-(r-1)/2)*dicke;
+        const mitte=mitteRub(i)+versatz;
+        const d=dickeVon(v);
+        ctx.fillStyle=s.farbe;
+        if(balken){
+          const xa=wertX(vonWert), xb=wertX(bisWert), von=Math.min(xa,xb), lang=Math.abs(xb-xa);
+          ctx.fillRect(von,mitte-d/2,Math.max(1.5,lang),d);
+          if(D.werte){ ctx.fillStyle='#1f2430'; ctx.font=font(.8); ctx.textAlign='left'; ctx.textBaseline='middle';
+            ctx.fillText(fmt(v),Math.max(xa,xb)+5,mitte); }
+        } else {
+          const ya=wertY(vonWert), yb=wertY(bisWert), von=Math.min(ya,yb), lang=Math.abs(yb-ya);
+          ctx.fillRect(mitte-d/2,von,d,Math.max(1.5,lang));
+          if(D.werte){ ctx.fillStyle='#1f2430'; ctx.font=font(.8); ctx.textAlign='center'; ctx.textBaseline='bottom';
+            ctx.fillText(fmt(v),mitte,Math.min(ya,yb)-4); }
+        }
+      });
+    });
+  }
+  /* Rubrikenbeschriftung */
+  ctx.fillStyle='#1f2430'; ctx.font=font(.85);
+  if(balken){ ctx.textAlign='right'; ctx.textBaseline='middle';
+    namen.forEach((t,i)=>ctx.fillText(String(t),x0-8,mitteRub(i))); }
+  else {
+    if(schraeg){                                          /* zu eng – schräg schreiben */
+      ctx.textAlign='right'; ctx.textBaseline='middle';
+      namen.forEach((t,i)=>{ ctx.save(); ctx.translate(mitteRub(i),y1+8); ctx.rotate(-Math.PI/4);
+        ctx.fillText(String(t),0,0); ctx.restore(); });
+    } else { ctx.textAlign='center'; ctx.textBaseline='top';
+      namen.forEach((t,i)=>ctx.fillText(String(t),mitteRub(i),y1+6)); }
+  }
+  /* Hinweis auf verzerrende Einstellungen */
+  const w=[]; if(!D.yAuto&&min>0) w.push('Nullpunkt unterdrückt'); if(D.log) w.push('logarithmische Skala');
+  if(D.flaeche) w.push('Wert als Fläche'); if(hF<0.95) w.push('Höhe gestaucht'); if(bF<0.95) w.push('Rubriken eng');
+  if(w.length){ ctx.fillStyle='#b45309'; ctx.font=font(.75,true); ctx.textAlign='right'; ctx.textBaseline='top';
+    ctx.fillText('⚠ '+w.join(' · '), W-10, oben-2); }
+}
+
+function kreis(W,oben,unten,namen,serien){
+  const werte=serien[0].werte.map(v=>v==null?0:Math.max(0,v));
+  const summe=werte.reduce((a,b)=>a+b,0);
+  const cx=W/2, cy=(oben+unten)/2;
+  const R=Math.max(24,Math.min((unten-oben)/2-6,W/2-30)*Math.max(.35,Math.min(1,D.hoehe)));
+  if(summe<=0){ ctx.fillStyle='#8a93a2'; ctx.font=font(1); ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('Keine positiven Werte in der ersten Datenreihe',cx,cy); return; }
+  let a0=-Math.PI/2;
+  werte.forEach((v,i)=>{
+    const teil=v/summe, a1=a0+teil*Math.PI*2;
+    let rr=R;
+    if(D.flaeche){ rr=R*Math.min(1,Math.max(.3,Math.sqrt(teil*werte.length))); }   /* Radius statt Fläche → verzerrt */
+    ctx.fillStyle=D.farben[i%D.farben.length]||PAL[i%PAL.length];
+    ctx.beginPath(); ctx.moveTo(cx,cy); ctx.arc(cx,cy,rr,a0,a1); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.stroke();
+    if(teil>0.045){ const am=(a0+a1)/2, tr=rr*(D.art==='ring'?0.8:0.62);
+      ctx.fillStyle='#fff'; ctx.font=font(.85,true); ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText(D.werte?fmt(v):Math.round(teil*100)+' %',cx+Math.cos(am)*tr,cy+Math.sin(am)*tr); }
+    a0=a1;
+  });
+  if(D.art==='ring'){ ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(cx,cy,R*0.45,0,7); ctx.fill();
+    ctx.fillStyle='#1f2430'; ctx.font=font(.95,true); ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(fmt(summe),cx,cy); }
+  if(D.flaeche){ ctx.fillStyle='#b45309'; ctx.font=font(.75,true); ctx.textAlign='right'; ctx.textBaseline='top';
+    ctx.fillText('⚠ Radius statt Fläche',W-10,oben-2); }
+}
+
+/* ---------- Bild, Datei, Druck ---------- */
+function bild(){ return TafelShot.rasterize($('chartBox'),{pad:8,scale:2.5}); }
+$('bEhrlich').onclick=()=>{ D.yAuto=true; D.log=false; D.dehnung=1; D.hoehe=1; D.flaeche=false;
+  renderBar2(); zeichne(); sync(); toast('Neutrale Darstellung'); };
+$('bPrint').onclick=()=>{ const im=bild(); const w=window.open('','_blank'); if(!w){ toast('Bitte Pop-ups erlauben'); return; }
+  w.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>Diagramm</title>'+
+    '<style>@page{margin:12mm}body{margin:0}img{width:100%}</style></head><body><img src="'+im.canvas.toDataURL('image/png')+'"></body></html>');
+  w.document.close(); w.focus(); setTimeout(()=>w.print(),350); };
+$('fNew').onclick=()=>{ if(!confirm('Neue, leere Tabelle?')) return;
+  D.head=['Rubrik','Reihe 1']; D.rows=[['A',''],['B',''],['C','']]; D.titel=''; D.stapel=false;
+  renderTabelle(); renderBar2(); zeichne(); sync(); };
+$('fSave').onclick=()=>{ const name=(prompt('Dateiname:','diagramm-'+new Date().toISOString().slice(0,10))||'').trim(); if(!name) return;
+  const blob=new Blob([JSON.stringify({app:'tafel-diagramm',v:1,d:D})],{type:'application/json'});
+  const fn=name.replace(/[\\/:*?"<>|]+/g,'_').replace(/\.json$/i,'')+'.json';
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=fn; document.body.appendChild(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },2000); toast('Gespeichert: '+fn); };
+$('fLoad').onclick=()=>{ $('fFile').value=''; $('fFile').click(); };
+$('fFile').onchange=()=>{ const f=$('fFile').files[0]; if(!f) return; const rd=new FileReader();
+  rd.onload=()=>{ try{ const o=JSON.parse(rd.result); if(!o||!o.d) throw 0;
+      D=Object.assign(D,o.d); renderTabelle(); renderBar2(); markArt(); resize(); sync(); toast('Geladen: '+f.name); }
+    catch(e){ toast('Keine gültige Diagramm-Datei'); } };
+  rd.readAsText(f); };
+
+function barFade(){ const bar=$('bar'), m=$('barMid'); bar.classList.remove('compact'); if(m.clientWidth<150) bar.classList.add('compact'); }
+
+/* ---------- Tafel-Anbindung ---------- */
+let ready=false, syncT=null;
+function post(){ syncT=null; if(window.parent===window||!ready) return;
+  try{ parent.postMessage({type:'embed-data',data:D},'*'); }catch(e){} }
+function sync(){ if(!syncT) syncT=setTimeout(post,300); }
+addEventListener('message',e=>{ if(window.parent===window||e.source!==window.parent) return;
+  if(!(e.data&&e.data.type==='embed-data'&&e.data.data)) return;
+  D=Object.assign(D,e.data.data); ready=true;
+  if(!Array.isArray(D.head)) D.head=DEMO.head.slice();
+  if(!Array.isArray(D.rows)) D.rows=DEMO.rows.map(r=>r.slice());
+  if(!Array.isArray(D.farben)) D.farben=PAL.slice(0,6);
+  document.documentElement.style.setProperty('--fs',(D.fontSize||15)+'px');
+  if(window.TafelModus) TafelModus.refresh();
+  renderTabelle(); renderBar2(); markArt(); resize(); barFade(); });
+
+window.addEventListener('load',()=>{
+  document.documentElement.style.setProperty('--fs',(D.fontSize||15)+'px');
+  if(window.parent===window&&D.edit===undefined) D.edit=true;
+  if(window.TafelModus) TafelModus.init({ get:()=>D.edit!==false, set:v=>{ D.edit=v; renderTabelle(); renderBar2(); resize(); sync(); },
+    hide:'#tabBox', after:()=>resize() });
+  renderTabelle(); renderBar2(); markArt(); resize(); barFade();
+  if(window.parent===window){ ready=true; return; }
+  try{ parent.postMessage({type:'embed-ready'},'*'); }catch(e){}
+  setTimeout(()=>{ ready=true; },700);
+});
+</script>
+</body></html>
