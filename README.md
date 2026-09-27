@@ -438,6 +438,12 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   ändern, alle Inhalte und Einstellungen werden im Projekt gespeichert.
 - **GeoGebra-App** (Werkzeug): fügt ein vollständiges **GeoGebra-App-Fenster** ein (nicht nur eine
   .ggb-Datei) – wahlweise als bewegliches **Objekt** oder als **eigene Seite**. Braucht Internet.
+- **CODAP** (Werkzeug, Statistik): bettet das Statistik-Werkzeug **CODAP v3** (Concord Consortium,
+  Open Source, codap3.concord.org) ein – Daten in **Tabellen** sammeln, per Ziehen in **Graphen**
+  darstellen (Punkt-, Streu-, Säulen-, Boxplot …), Mittelwerte/Geraden einzeichnen, Beispieldaten
+  öffnen. Wahlweise als **Objekt** oder **eigene Seite**, Oberfläche auf Deutsch. Braucht Internet.
+  Der CODAP-Inhalt wird **nicht** mit dem Tafel-Projekt gespeichert – bei Bedarf in CODAP über
+  **Datei → Speichern** als `.codap`-Datei sichern.
 - **„Als eigene Seite anzeigen":** Bei einem als Objekt eingefügten **Wahrscheinlichkeitsrechner**,
   **Messwert-Analyse**- oder **GeoGebra-App**-Objekt erscheint im Kontext-Panel eine Schaltfläche,
   die das Objekt nachträglich groß auf eine **neue eigene Seite** verschiebt (Inhalt bleibt erhalten).
@@ -760,7 +766,7 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
    ein **Zeit**-Button (Uhr, Stoppuhr, Timer);
    ein **Klasse & Interaktion**-Button (Sozialform, Gruppen bilden, Umfrage, Zufälliger Name, Punktestand)
    und ein **Mathe & Physik**-Button (Gleichungslöser, Funktionsplotter, **Ableitungen**, **Term-Umformer**, **Figuren & Körper**, **Diagramm**, **Einheitskreis**, **3D-Koordinatensystem**, Vierfeldertafel, Baumdiagramm,
-   Wahrscheinlichkeitsrechner, GeoGebra-App, Messwert-Analyse, **Würfel** und **Glücksrad**).
+   Wahrscheinlichkeitsrechner, GeoGebra-App, **CODAP**, Messwert-Analyse, **Würfel** und **Glücksrad**).
    Die Aufklappmenüs legen sich **nie über die Werkzeugleiste**: Sie öffnen neben ihr, bleiben unter
    der oberen Leiste und nehmen bei schmalem Fenster **weniger Spalten** (bei wenig Höhe lassen sie
    sich scrollen) – so ist jeder Knopf erreichbar, auch im geteilten Bildschirm.
@@ -1251,6 +1257,7 @@ messwert.html         ← eingebundenes Messwert-Analyse-Tool (nutzt CDN → Int
 gleichung.html        ← eingebetteter Gleichungslöser (linear/quadratisch/Bruch-, trig., Exponential-/Log-Gleichungen, Nullprodukte, LGS)
 tabelle.html          ← eingebettete gewöhnliche Tabelle (Zeilen/Spalten im Kontextmenü)
 geogebra.html         ← eingebettete GeoGebra-App (nutzt CDN → Internet nötig)
+codap.html            ← eingebettetes CODAP v3 (Statistik, codap3.concord.org → Internet nötig)
 wuerfel.html          ← Würfel-Zufallsgenerator (Objekt)
 gluecksrad.html       ← Glücksrad (Sektoren im Kontextmenü einstellbar)
 bruch.html            ← Bruch mit Kreis-Sektoren-Darstellung
@@ -1293,7 +1300,7 @@ vendor/
 ## Offline
 
 Alle eigenen Dateien (inkl. PDF-Import und -Export, QR) werden vom Service Worker
-gecacht und laufen offline. **Eingebettete** YouTube-/Web-/GeoGebra-Seiten brauchen
+gecacht und laufen offline. **Eingebettete** YouTube-/Web-/GeoGebra-/CODAP-Seiten brauchen
 naturgemäß Internet.
 
 > Nach Änderungen an den Dateien in `sw.js` die Zeile `const CACHE = 'tafel-v1'`
