@@ -1134,8 +1134,10 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   (Mathematik 7). Term eintippen – der Umformer zerlegt ihn in **Summanden und Faktoren**, die sich
   **selbst umsortieren und zusammenfassen** lassen (Drag & Drop); dazu **Tipp**, **nächsten Schritt
   ausführen**, **alles vorführen** (mit Tempo), **Gleichartiges färben**, Textmarker und ein
-  mitwachsender **Rechenweg** zum Kopieren oder Drucken. Beim Einfügen fragt die Tafel
-  „eigene Seite oder bewegliches Objekt" (im Kontextmenü auch später „Als eigene Seite anzeigen").
+  mitwachsender **Rechenweg** zum Kopieren oder Drucken. In der Kopfzeile stehen neben dem Titel
+  **A−/A+** für die Schriftgröße (die Einstellung bleibt gespeichert) und der Umschalter
+  **hell/dunkel**. Beim Einfügen fragt die Tafel „eigene Seite oder bewegliches Objekt"
+  (im Kontextmenü auch später „Als eigene Seite anzeigen").
 - **Figuren & Körper** (Mathe & Physik): Geometrie-Werkzeug für **Flächen, Umfänge und Volumen**
   (Mathematik 9/10). Figur oder Körper wählen (Dreiecke, Vierecke, n-Eck, Kreis mit Sehne, Prismen,
   Pyramiden, Pyramidenstumpf, Tetraeder, Zylinder, Kegel, Kegelstumpf, Kugel, Rotationskörper-Baukasten),
