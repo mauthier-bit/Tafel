@@ -759,7 +759,7 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
    **und** Kreis, Gerade, Zirkel, Zahlenstrahl, Koordinatensystem (alle Knöpfe gleich groß);
    ein **Zeit**-Button (Uhr, Stoppuhr, Timer);
    ein **Klasse & Interaktion**-Button (Sozialform, Gruppen bilden, Umfrage, Zufälliger Name, Punktestand)
-   und ein **Mathe & Physik**-Button (Gleichungslöser, Funktionsplotter, **Ableitungen**, **Einheitskreis**, **3D-Koordinatensystem**, Vierfeldertafel, Baumdiagramm,
+   und ein **Mathe & Physik**-Button (Gleichungslöser, Funktionsplotter, **Ableitungen**, **Term-Umformer**, **Figuren & Körper**, **Einheitskreis**, **3D-Koordinatensystem**, Vierfeldertafel, Baumdiagramm,
    Wahrscheinlichkeitsrechner, GeoGebra-App, Messwert-Analyse, **Würfel** und **Glücksrad**).
 - **Würfel** (Zufallsgenerator, Mathe & Physik): 1–6 Würfel mit wählbarer Seitenzahl (2–20),
   „Würfeln" rollt, Summe wird angezeigt. **Antippen eines Würfels wechselt seine Farbe**
@@ -1130,6 +1130,18 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   Analyse-Knöpfe VZ/M/K, Tangente, Fläche/Integral, Intervalle, Symbolleiste, Ableitungsrelation,
   Krümmungs-Smileys, Linienstil, Anleitung (?). Der eingestellte Zustand (Funktion, Parameter, sichtbare
   Graphen, Analyse-Knöpfe, Zoom, Farben, Freihand-Kurve) wird **mit dem Tafel-Projekt gespeichert**.
+- **Term-Umformer** (Mathe & Physik): Lernwerkzeug zum **Aufstellen und Umformen von Termen**
+  (Mathematik 7). Term eintippen – der Umformer zerlegt ihn in **Summanden und Faktoren**, die sich
+  **selbst umsortieren und zusammenfassen** lassen (Drag & Drop); dazu **Tipp**, **nächsten Schritt
+  ausführen**, **alles vorführen** (mit Tempo), **Gleichartiges färben**, Textmarker und ein
+  mitwachsender **Rechenweg** zum Kopieren oder Drucken. Beim Einfügen fragt die Tafel
+  „eigene Seite oder bewegliches Objekt" (im Kontextmenü auch später „Als eigene Seite anzeigen").
+- **Figuren & Körper** (Mathe & Physik): Geometrie-Werkzeug für **Flächen, Umfänge und Volumen**
+  (Mathematik 9/10). Figur oder Körper wählen (Dreiecke, Vierecke, n-Eck, Kreis mit Sehne, Prismen,
+  Pyramiden, Pyramidenstumpf, Tetraeder, Zylinder, Kegel, Kegelstumpf, Kugel, Rotationskörper-Baukasten),
+  **gegebene Größen eintragen** und die gesuchten mit **?** markieren; dazu **Hilfslinien** und
+  **rechtwinklige Stützdreiecke** mit **Satz des Pythagoras** sowie **sin, cos, tan** farbig hervorgehoben.
+  Skizze mit Zoom, Linienstärke, Schrift- und Buttongröße einstellbar.
 - **3D-Koordinatensystem** (Mathe & Physik): räumliches Koordinatensystem im **Schrägbild** wie im
   Heft (x₁ schräg nach vorne, x₂ nach rechts, x₃ nach oben); Achsen **x₁ x₂ x₃ oder x y z** umschaltbar.
   Schriftgröße mit **A−/A+** oben in der Zeichenfläche oder im **Kontextmenü** (＋/−, fett, kursiv). Bedienen über
@@ -1218,6 +1230,8 @@ umrechner.html        ← Einheitenumrechner (physikalische Größen)
 einheitskreis.html    ← interaktiver Einheitskreis (sin/cos/tan, Winkel ↔ Werte)
 raum.html             ← 3D-Koordinatensystem (Punkte, Geraden, Ebenen, Lagebeziehungen)
 ableitungen.html      ← Lernumgebung F · f · f′ · f″ (Ableitungen/Stammfunktionen), mit Zustands-Sync
+terme-rechner.html    ← Term-Umformer (Terme aufstellen und umformen, Mathematik 7)
+figuren-koerper.html  ← Figuren & Körper berechnen (Flächen, Umfang, Volumen, Mathematik 9/10)
 stromkreis.html       ← Stromkreis-Editor mit Simulation (U, I, R, C, L, Ladungsfluss, Bild-Export)
 optik.html            ← Optiklabor (Strahlenoptik, Schatten, Mondphasen und Finsternisse)
 wellen.html           ← Wellenwanne (Reflexion, Brechung, Beugung, Interferenz, Huygens)
