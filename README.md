@@ -68,7 +68,17 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   **Gitterlinien** und **Achsenbeschriftung** ein-/ausschalten (Gitter standardmäßig **aus** – meist
   reicht das Karogitter des Hintergrunds), einen **Hintergrund** (Schalter + Farbwähler, Standard weiß;
   aus = transparent wie bisher) sowie die **Schriftgröße der Beschriftung** (＋/−). Achsen
-  sind kräftig mit großen Pfeilspitzen und gut lesbaren Beschriftungen.
+  sind kräftig mit großen Pfeilspitzen und gut lesbaren Beschriftungen (der Achsenname steht **über**
+  der Achse, die Zahlen darunter).
+  - **1 Einheit = 1 cm:** Damit wird das Achsenkreuz **maßstabsgetreu** – eine Einheit ist genau ein
+    Zentimeter, also mit **Lineal und Geodreieck nachmessbar** (die Achsen heißen dann „x in cm" und
+    „y in cm", sofern sie noch x und y hießen). Zieht man das Objekt größer, bleibt der Maßstab
+    erhalten und der **Achsenbereich wächst** stattdessen mit.
+  - **Am Karo einrasten:** Liegt auf dem Tafelblatt ein **Karomuster**, springen **Ursprung und
+    Einheiten genau aufs Karo** – eine Einheit wird ein ganzes Vielfaches der Kästchenweite (bei
+    5-mm-Karo und cm-Einheiten also zwei Kästchen), und das Achsenkreuz rastet beim Verschieben
+    immer wieder auf einem Gitterkreuz ein. So passen gezeichnete Punkte, Karo und Achsen zusammen.
+    Ohne Karomuster ist der Schalter blass und weist beim Antippen darauf hin.
 - **Zahlenstrahl** (im Formen-Popover): waagerechter Strahl mit Pfeilspitze, Teilstrichen und Zahlen
   als bewegliches Objekt. Im Kontextmenü einstellbar: **Beginn, Ende, Beschriftungsintervall**
   (0,1 bis 1000), **Zahlen an/aus** sowie **Schriftgröße, Fett und Kursiv**; **Farbe und Liniendicke**
@@ -689,6 +699,9 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   **Zoom mit zwei Fingern** direkt im Bild (Doppeltipp = zurück; am Rechner auch per Mausrad) –
   der Zoom steckt auch im Foto und in der Videoaufnahme,
   „Foto auf Tafel" legt einen Schnappschuss als bewegliches Objekt ab.
+  - Die Knöpfe sind in Paaren angeordnet: **Kamera starten / Kamera wechseln**, **📷 Foto auf Tafel /
+    ● Video auf Tafel**, **📄 Scannen / 🔎 Dokumentenkamera**, darunter „Video mit Ton" und der
+    aufklappbare Look-Bereich.
   - **Looks (Filter und Rahmen):** Unter dem Bild lässt sich ein **Look** wählen – er gilt für
     **Vorschau, Foto, Videoclip und Dokumentenkamera** gleichermaßen, weil das Bild dafür durch ein
     Canvas läuft (ein reiner CSS-Filter würde beim Aufnehmen verlorengehen). Zur Wahl stehen:
@@ -696,8 +709,15 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     **Alter Fernseher** (Holzgehäuse mit gewölbter Mattscheibe, Drehknöpfen, Lautsprechergitter und
     Zeilenstruktur), **Bühnenvorhang** (roter Vorhang mit Volant und Goldborte um das Bild),
     **Polaroid** (weißer Rand, unten breit), **Gezeichnet** (Kantenerkennung – das Bild sieht aus wie
-    mit Bleistift skizziert) und **Comic** (Farbstufen mit dunklen Konturen). Die Wahl bleibt
-    gespeichert. Die beiden gerechneten Looks („Gezeichnet", „Comic") laufen bewusst mit kleinerer
+    mit Bleistift skizziert), **Comic** (Farbstufen mit dunklen Konturen) und **Greenscreen**.
+    Die Liste ist **aufklappbar** („🎨 Look: …"), damit das Kamerafenster übersichtlich bleibt; die
+    Wahl bleibt gespeichert.
+  - **Greenscreen:** ein möglichst gleichmäßig ausgeleuchtetes **grünes (oder blaues) Tuch** hinter
+    die Person hängen – alles in dieser Farbe wird durch einen Hintergrund ersetzt. Einstellbar sind
+    **Grün/Blau**, die **Toleranz** (0–12: wie genau die Farbe getroffen sein muss) und das
+    **Hintergrundbild** (eigene Datei; ohne Auswahl ein ruhiger Sternenhimmel). Der Rand wird weich
+    ausgeblendet und ein grüner Farbsaum entfärbt. Auch der Greenscreen gilt für Foto, Video und
+    Dokumentenkamera. Die beiden gerechneten Looks („Gezeichnet", „Comic") laufen bewusst mit kleinerer
     Auflösung und ~18 Bildern je Sekunde, damit das iPad flüssig bleibt; Fotos entstehen darin
     trotzdem in guter Größe. Ideen für den Unterricht: Vorhang für Präsentationen und
     Schüler-Vorführungen, Fernseher/Alter Film für historische Rollenspiele oder „Nachrichten von
