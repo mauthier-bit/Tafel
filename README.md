@@ -689,6 +689,19 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   **Zoom mit zwei Fingern** direkt im Bild (Doppeltipp = zurück; am Rechner auch per Mausrad) –
   der Zoom steckt auch im Foto und in der Videoaufnahme,
   „Foto auf Tafel" legt einen Schnappschuss als bewegliches Objekt ab.
+  - **Looks (Filter und Rahmen):** Unter dem Bild lässt sich ein **Look** wählen – er gilt für
+    **Vorschau, Foto, Videoclip und Dokumentenkamera** gleichermaßen, weil das Bild dafür durch ein
+    Canvas läuft (ein reiner CSS-Filter würde beim Aufnehmen verlorengehen). Zur Wahl stehen:
+    **Ohne**, **Schwarz-weiß**, **Alter Film** (Sepia, Filmkorn, Vignette, leichtes Flimmern),
+    **Alter Fernseher** (Holzgehäuse mit gewölbter Mattscheibe, Drehknöpfen, Lautsprechergitter und
+    Zeilenstruktur), **Bühnenvorhang** (roter Vorhang mit Volant und Goldborte um das Bild),
+    **Polaroid** (weißer Rand, unten breit), **Gezeichnet** (Kantenerkennung – das Bild sieht aus wie
+    mit Bleistift skizziert) und **Comic** (Farbstufen mit dunklen Konturen). Die Wahl bleibt
+    gespeichert. Die beiden gerechneten Looks („Gezeichnet", „Comic") laufen bewusst mit kleinerer
+    Auflösung und ~18 Bildern je Sekunde, damit das iPad flüssig bleibt; Fotos entstehen darin
+    trotzdem in guter Größe. Ideen für den Unterricht: Vorhang für Präsentationen und
+    Schüler-Vorführungen, Fernseher/Alter Film für historische Rollenspiele oder „Nachrichten von
+    1955", Gezeichnet, um ein Tafelbild oder einen Versuchsaufbau in eine Skizze zu verwandeln.
   **„🔎 Dokumentenkamera"** legt das **Livebild** als Objekt auf die Tafel – ideal, um ein Heft
   unter der Kamera gemeinsam zu korrigieren. Das Kamerafenster schließt sich dabei, das Bild bleibt
   sichtbar und lässt sich wie jedes Objekt **verschieben und über die Eckgriffe vergrößern**;

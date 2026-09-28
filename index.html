@@ -293,6 +293,12 @@
   #win-cam{width:min(900px,94vw,calc((86vh - 250px) * 4 / 3))!important;}
   #win-scan{width:min(820px,94vw,calc((86vh - 260px) * 4 / 3))!important;}
   #camWrap{position:relative;overflow:hidden;border-radius:8px;background:#000;aspect-ratio:4/3;touch-action:none;}
+  #camFx{position:absolute;inset:0;width:100%;height:100%;display:none;object-fit:contain;}
+  #camWrap.fx #camFx{display:block;} #camWrap.fx video{opacity:0;}
+  #camLooks{display:flex;flex-wrap:wrap;gap:5px;}
+  #camLooks button{border:1px solid #cfd6e0;background:#fff;border-radius:8px;padding:5px 9px;font:600 13px -apple-system,sans-serif;
+    color:#1f2430;cursor:pointer;white-space:nowrap;}
+  #camLooks button.on{background:#2563eb;border-color:#2563eb;color:#fff;}
   .liveWrap{position:absolute;left:0;top:0;transform-origin:0 0;overflow:hidden;background:#000;border-radius:10px;}
   .liveWrap video{width:100%;height:100%;object-fit:cover;display:block;transform-origin:center center;}
   .liveWrap .lvBtn{position:absolute;pointer-events:auto;border:none;border-radius:50%;width:30px;height:30px;
@@ -954,10 +960,12 @@
 <button id="shotCancel">Abbrechen</button>
 <div class="win" id="win-cam" style="left:70px;top:36px;max-width:94vw;"><h3>Kamera <span class="x" data-close="win-cam">×</span></h3>
   <div class="body">
-    <div id="camWrap"><video id="camVideo" playsinline autoplay muted></video><div id="camZoomBadge">1,0×</div></div>
+    <div id="camWrap"><video id="camVideo" playsinline autoplay muted></video><canvas id="camFx"></canvas><div id="camZoomBadge">1,0×</div></div>
     <div class="hint" style="margin:4px 0 0">Zwei Finger im Bild = zoomen · Doppeltipp = zurück</div>
     <div class="row"><button class="btn pri" id="camStart">Kamera starten</button><button class="btn" id="camSwitch">Wechseln</button></div>
     <div class="row"><button class="btn" id="camSnap">Foto auf Tafel</button><button class="btn" id="camClip">● Video auf Tafel</button><button class="btn" id="camScan">📄 Scannen</button><button class="btn" id="camLive">🔎 Dokumentenkamera</button></div>
+    <div class="lbl" style="margin:8px 0 3px;color:#64748b;font-weight:600;font-size:13px">Look (gilt für Vorschau, Foto, Video und Dokumentenkamera)</div>
+    <div id="camLooks"></div>
     <div class="toggle" style="margin:8px 0"><span>Video mit Ton</span><div class="sw2" id="camSound"></div></div>
     <div class="hint" id="camHint">Kamera geht nur über <b>https</b> (z. B. GitHub Pages) – Zugriff erlauben.</div>
   </div></div>
@@ -2837,7 +2845,7 @@ function syncEmbeds(){ const p=page(), wanted=new Set();
       else if(o.etype==='live'){                               // Dokumentenkamera: Livebild der Kamera
         fr=document.createElement('div'); fr.className='liveWrap';
         const v=document.createElement('video'); v.setAttribute('playsinline',''); v.playsInline=true; v.autoplay=true; v.muted=true;
-        if(camStream) v.srcObject=camStream;
+        { const q=camLiveQuelle(); if(q) v.srcObject=q; }
         fr.appendChild(v);
         const mk=(cls,txt,fn)=>{ const b=document.createElement('button'); b.type='button'; b.className='lvBtn '+cls; b.textContent=txt;
           b.addEventListener('pointerdown',e=>{ e.stopPropagation(); e.preventDefault(); });
@@ -2867,7 +2875,8 @@ function syncEmbeds(){ const p=page(), wanted=new Set();
     fr.style.width=o.w+'px'; fr.style.height=o.h+'px'; fr.style.transform=tf;
     if(o.etype==='live'&&fr._video){ const z=Math.max(1,Math.min(8,o.zoom||1));
       fr._video.style.transform='scale('+z+')'; if(fr._zv) fr._zv.textContent=z.toFixed(1).replace('.',',')+'×';
-      if(camStream&&fr._video.srcObject!==camStream){ fr._video.srcObject=camStream; fr._video.play().catch(()=>{}); } }
+      const quelle=camLiveQuelle();
+      if(quelle&&fr._video.srcObject!==quelle){ fr._video.srcObject=quelle; fr._video.play().catch(()=>{}); } }
     const card=embedCards.get(o.id); if(card){ card.style.width=o.w+'px'; card.style.height=o.h+'px'; card.style.transform=tf; }
     const pill=embedPills.get(o.id); if(pill){ const c=toScreen(o.x,o.y); pill.style.transform='translate('+c.x+'px,'+c.y+'px)'; }
     if(fsId){                                                 /* Vollbild: ein Objekt füllt die Breite, der Rest ist ausgeblendet */
@@ -4115,6 +4124,7 @@ async function camStartFn(){ try{ camClipStop(); setCamZoom(1); if(camStream)cam
     catch(e1){ camStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:camFacing},audio:!!camWithSound}); }
     $('camVideo').srcObject=camStream; $('camVideo').muted=true;   // Vorschau stumm (sonst Rückkopplung)
     $('camStart').textContent='Neu starten'; $('camHint').style.display='none';
+    camLookSet(camLook);                                   // Look auf Vorschau, Aufnahme und Dokumentenkamera anwenden
   }catch(e){ $('camHint').innerHTML='<b>Kein Kamerazugriff.</b> Bitte über https öffnen und Zugriff erlauben.'; } }
 $('camStart').onclick=camStartFn;
 $('camSwitch').onclick=()=>{ camFacing=camFacing==='environment'?'user':'environment'; if(camStream)camStartFn(); };
@@ -4135,9 +4145,157 @@ $('camWrap').addEventListener('wheel',e=>{ e.preventDefault(); setCamZoom(camZoo
 /* Bildausschnitt (Mitte) für Foto und Aufnahme */
 function camCrop(v,z){ const w=v.videoWidth/z, h=v.videoHeight/z; return {sx:(v.videoWidth-w)/2, sy:(v.videoHeight-h)/2, sw:w, sh:h}; }
 
+/* ---- Looks für die Kamera (Vorschau, Foto, Videoclip und Dokumentenkamera) ----
+   Alles wird in ein Canvas gerechnet: So sieht die Vorschau genau das, was auch im Foto
+   und im Video landet – CSS-Filter am <video> würden beim Aufnehmen verlorengehen. */
+const CAM_LOOKS=[
+  {id:'',        name:'Ohne'},
+  {id:'bw',      name:'Schwarz-weiß', css:'grayscale(1) contrast(1.12)', vig:.25},
+  {id:'alt',     name:'Alter Film',   css:'sepia(.82) contrast(1.22) saturate(.6) brightness(.97)', vig:.6, korn:.16, flimmer:true},
+  {id:'tv',      name:'Alter Fernseher', css:'grayscale(.4) contrast(1.28) brightness(1.03) saturate(.8)', vig:.5, scan:true, rahmen:'tv'},
+  {id:'buehne',  name:'Bühnenvorhang', vig:.4, rahmen:'vorhang'},
+  {id:'polaroid',name:'Polaroid',     css:'sepia(.24) saturate(1.2) contrast(1.06)', vig:.2, rahmen:'polaroid'},
+  {id:'zeichnung',name:'Gezeichnet',  rechnen:'sobel'},
+  {id:'comic',   name:'Comic',        rechnen:'comic'}
+];
+let camLook='';
+try{ camLook=localStorage.getItem('tafel_camlook')||''; }catch(e){}
+const lookDef=()=>CAM_LOOKS.find(l=>l.id===camLook)||CAM_LOOKS[0];
+const camFxAktiv=()=>!!camLook;
+
+/* Filmkorn einmal erzeugen und nur noch versetzt darüberlegen */
+let kornCv=null;
+function korn(){ if(kornCv) return kornCv;
+  kornCv=document.createElement('canvas'); kornCv.width=kornCv.height=180;
+  const g=kornCv.getContext('2d'), im=g.createImageData(180,180), d=im.data;
+  for(let i=0;i<d.length;i+=4){ const v=Math.random()*255; d[i]=d[i+1]=d[i+2]=v; d[i+3]=255; }
+  g.putImageData(im,0,0); return kornCv; }
+
+function vignette(g,W,H,st){ const r=Math.hypot(W,H)/2;
+  const gr=g.createRadialGradient(W/2,H/2,r*0.42,W/2,H/2,r);
+  gr.addColorStop(0,'rgba(0,0,0,0)'); gr.addColorStop(1,'rgba(0,0,0,'+st+')');
+  g.fillStyle=gr; g.fillRect(0,0,W,H); }
+
+/* Kanten hervorheben (Sobel) – „gezeichnet" wird daraus eine Bleistiftskizze, „comic" färbt in Stufen */
+function rechne(g,W,H,art){
+  let im; try{ im=g.getImageData(0,0,W,H); }catch(e){ return; }
+  const d=im.data, gray=new Uint8ClampedArray(W*H);
+  for(let i=0,p=0;i<d.length;i+=4,p++) gray[p]=(d[i]*0.299+d[i+1]*0.587+d[i+2]*0.114);
+  const out=g.createImageData(W,H), o=out.data;
+  const stufe=v=>Math.round(v/52)*52;
+  for(let y=0;y<H;y++) for(let x=0;x<W;x++){
+    const p=y*W+x, i=p*4;
+    let kante=0;
+    if(x>0&&y>0&&x<W-1&&y<H-1){
+      const gx=-gray[p-W-1]-2*gray[p-1]-gray[p+W-1]+gray[p-W+1]+2*gray[p+1]+gray[p+W+1];
+      const gy=-gray[p-W-1]-2*gray[p-W]-gray[p-W+1]+gray[p+W-1]+2*gray[p+W]+gray[p+W+1];
+      kante=Math.min(255,Math.hypot(gx,gy));
+    }
+    if(art==='sobel'){ const hell=255-Math.min(255,kante*1.35);
+      const grund=Math.min(255,180+gray[p]*0.3);                 // Papierton, damit es nicht flach wirkt
+      const v=Math.min(hell,grund);
+      o[i]=v; o[i+1]=v; o[i+2]=Math.min(255,v+6); o[i+3]=255; }
+    else { const k=kante>78?0.25:1;                              // Comic: Farbstufen mit dunklen Konturen
+      o[i]=stufe(d[i])*k; o[i+1]=stufe(d[i+1])*k; o[i+2]=stufe(d[i+2])*k; o[i+3]=255; }
+  }
+  g.putImageData(out,0,0);
+}
+
+/* Rahmen: Bühnenvorhang, alter Fernseher, Polaroid */
+function rahmenVorhang(g,W,H){
+  const bahn=W*0.17, volant=H*0.14;
+  const stoff=(x0,x1,y0,y1,falten)=>{ for(let i=0;i<falten;i++){
+      const a=x0+(x1-x0)*i/falten, b=x0+(x1-x0)*(i+1)/falten;
+      const gr=g.createLinearGradient(a,0,b,0);
+      gr.addColorStop(0,'#5b0d15'); gr.addColorStop(.45,'#a3171f'); gr.addColorStop(.75,'#7d1018'); gr.addColorStop(1,'#4a0a11');
+      g.fillStyle=gr; g.fillRect(a,y0,b-a+1,y1-y0); } };
+  stoff(0,bahn,0,H,4); stoff(W-bahn,W,0,H,4);
+  stoff(0,W,0,volant,10);
+  g.fillStyle='rgba(0,0,0,.25)';                                  // welliger Unterrand des Volants
+  g.beginPath(); g.moveTo(0,volant);
+  for(let x=0;x<=W;x+=W/12){ g.quadraticCurveTo(x+W/24,volant+H*0.045,x+W/12,volant); }
+  g.lineTo(W,volant-2); g.lineTo(0,volant-2); g.closePath();
+  g.fillStyle='#6b0f16'; g.fill();
+  g.fillStyle='rgba(214,178,74,.9)';                              // Goldborte
+  g.fillRect(0,volant-3,W,3); g.fillRect(bahn-3,volant,3,H-volant); g.fillRect(W-bahn,volant,3,H-volant);
+}
+function rahmenTV(g,W,H){
+  const r=Math.min(W,H)*0.09, rand=Math.min(W,H)*0.07, unten=H*0.15;
+  g.save();                                                        // alles außerhalb der Mattscheibe dunkel füllen
+  g.beginPath(); g.rect(0,0,W,H);
+  g.moveTo(rand+r,rand);
+  g.arcTo(W-rand,rand,W-rand,H-unten,r); g.arcTo(W-rand,H-unten,rand,H-unten,r);
+  g.arcTo(rand,H-unten,rand,rand,r); g.arcTo(rand,rand,W-rand,rand,r); g.closePath();
+  g.fillStyle='#4a3527'; g.fill('evenodd'); g.restore();
+  g.strokeStyle='rgba(0,0,0,.45)'; g.lineWidth=Math.max(2,W*0.006);
+  g.beginPath(); g.moveTo(rand+r,rand);
+  g.arcTo(W-rand,rand,W-rand,H-unten,r); g.arcTo(W-rand,H-unten,rand,H-unten,r);
+  g.arcTo(rand,H-unten,rand,rand,r); g.arcTo(rand,rand,W-rand,rand,r); g.closePath(); g.stroke();
+  const by=H-unten/2, br=Math.min(unten*0.3,W*0.03);
+  g.fillStyle='#d9c7a8'; [W*0.80,W*0.90].forEach(bx=>{ g.beginPath(); g.arc(bx,by,br,0,7); g.fill(); });
+  g.fillStyle='rgba(0,0,0,.35)'; [W*0.80,W*0.90].forEach(bx=>{ g.fillRect(bx-1,by-br*0.8,2,br*0.8); });
+  g.fillStyle='rgba(0,0,0,.25)';
+  for(let i=0;i<5;i++) g.fillRect(W*0.09,by-br+i*br*0.45,W*0.3,br*0.22);
+}
+function rahmenPolaroid(g,W,H){
+  const r=Math.min(W,H)*0.045, u=H*0.17;
+  g.save(); g.beginPath(); g.rect(0,0,W,H); g.rect(r,r,W-2*r,H-u-r); g.fillStyle='#fdfcf7'; g.fill('evenodd'); g.restore();
+  g.strokeStyle='rgba(0,0,0,.12)'; g.lineWidth=1; g.strokeRect(r,r,W-2*r,H-u-r);
+}
+
+/* ein Bild mit dem gewählten Look zeichnen */
+function camFxPaint(g,v,W,H,q){
+  const L=lookDef();
+  g.save(); g.filter=L.css||'none';
+  try{ g.drawImage(v, q.sx,q.sy,q.sw,q.sh, 0,0,W,H); }catch(e){}
+  g.restore();
+  if(L.rechnen) rechne(g,W,H,L.rechnen);
+  if(L.scan){ g.fillStyle='rgba(0,0,0,.16)'; const d=Math.max(2,Math.round(H/220));
+    for(let y=0;y<H;y+=d*2) g.fillRect(0,y,W,d); }
+  if(L.korn){ g.save(); g.globalAlpha=L.korn; g.globalCompositeOperation='overlay';
+    const k=korn(), ox=Math.random()*k.width, oy=Math.random()*k.height;
+    for(let x=-ox;x<W;x+=k.width) for(let y=-oy;y<H;y+=k.height) g.drawImage(k,x,y);
+    g.restore(); }
+  if(L.flimmer){ g.fillStyle='rgba(255,247,230,'+(0.02+Math.random()*0.05)+')'; g.fillRect(0,0,W,H); }
+  if(L.vig) vignette(g,W,H,L.vig);
+  if(L.rahmen==='vorhang') rahmenVorhang(g,W,H);
+  else if(L.rahmen==='tv') rahmenTV(g,W,H);
+  else if(L.rahmen==='polaroid') rahmenPolaroid(g,W,H);
+}
+
+/* Vorschau im Kamerafenster */
+let camPrevRAF=0;
+function camPrevStart(){ cancelAnimationFrame(camPrevRAF);
+  const wrap=$('camWrap'), c=$('camFx'), v=$('camVideo');
+  wrap.classList.toggle('fx',camFxAktiv());
+  if(!camFxAktiv()) return;
+  const g=c.getContext('2d'); let letzte=0;
+  const breit=lookDef().rechnen?520:960;                 // gerechnete Looks laufen kleiner, damit sie flüssig bleiben
+  (function zeichne(ts){ camPrevRAF=requestAnimationFrame(zeichne);
+    if(!camFxAktiv()||!v.videoWidth||!$('win-cam').classList.contains('show')) return;   // zugeklapptes Fenster kostet nichts
+    if(ts-letzte<(lookDef().rechnen?55:33)) return; letzte=ts;
+    const q=camCrop(v,camZoom), ar=q.sh/q.sw;
+    const W=Math.min(breit,Math.round(q.sw)), H=Math.round(W*ar);
+    if(c.width!==W||c.height!==H){ c.width=W; c.height=H; }
+    camFxPaint(g,v,W,H,q);
+  })(0); }
+function camLookSet(id){ camLook=id; try{ localStorage.setItem('tafel_camlook',id); }catch(e){}
+  [...$('camLooks').children].forEach(b=>b.classList.toggle('on',b.dataset.look===id));
+  camPrevStart();
+  if(camStream&&camFxAktiv()&&!camComp) camCompStart();
+  else if(!camFxAktiv()&&camZoom<=1&&!camRecording()) camCompStop();
+  liveNeuVerdrahten(); }
+CAM_LOOKS.forEach(L=>{ const b=document.createElement('button'); b.type='button'; b.textContent=L.name; b.dataset.look=L.id;
+  b.onclick=()=>camLookSet(L.id); $('camLooks').appendChild(b); });
+[...$('camLooks').children].forEach(b=>b.classList.toggle('on',b.dataset.look===camLook));   // beim Laden nur markieren:
+                                                                                             // der Kompositor steht erst weiter unten
+
 $('camSnap').onclick=()=>{ const v=$('camVideo'); if(!v.videoWidth){toast('Erst Kamera starten');return;}
-  const c=camCrop(v,camZoom); const cc=document.createElement('canvas'); cc.width=Math.round(c.sw); cc.height=Math.round(c.sh);
-  cc.getContext('2d').drawImage(v, c.sx,c.sy,c.sw,c.sh, 0,0,cc.width,cc.height);
+  const c=camCrop(v,camZoom);
+  const maxB=lookDef().rechnen?1500:2600;                 // gerechnete Looks sonst zu langsam
+  const W=Math.min(maxB,Math.round(c.sw)), H=Math.round(W*c.sh/c.sw);
+  const cc=document.createElement('canvas'); cc.width=W; cc.height=H;
+  camFxPaint(cc.getContext('2d'), v, W, H, c);
   placeImageObject(cc.toDataURL('image/jpeg',0.9)); toast('Foto auf die Tafel gelegt'); };
 
 /* ---- Videoclip der Kamera auf die Tafel legen (wahlweise mit Ton) ---- */
@@ -4159,7 +4317,7 @@ async function camClipStart(){
     if(!audio.length){ try{ camMicStream=await getMic(); audio=camMicStream.getAudioTracks(); }catch(e){} }
     if(!audio.length) toast('Ohne Ton (kein Mikrofonzugriff)'); }
   const mime=pickRecMime(audio.length>0);
-  try{ const st=new MediaStream([...(camZoom>1?camCompStart():camStream.getVideoTracks()),...audio]);
+  try{ const st=new MediaStream([...((camZoom>1||camFxAktiv())?camCompStart():camStream.getVideoTracks()),...audio]);
     camChunks=[]; const opt=audio.length?{audioBitsPerSecond:128000}:{}; if(mime)opt.mimeType=mime;
     camChunks=[]; camRec=new MediaRecorder(st, opt);
     camRec.ondataavailable=e=>{ if(e.data&&e.data.size) camChunks.push(e.data); };
@@ -4167,16 +4325,32 @@ async function camClipStart(){
     camRec.start(1000); camRecStart=performance.now(); camRecSound=audio.length>0;
   }catch(err){ toast('Aufnahme-Fehler: '+err.message); camRec=null; return; }
   camClipUI(); camRecTimer=setInterval(camClipUI,500); }
-let camComp=null, camCompCtx=null, camCompRAF=0;
-function camCompStart(){ const v=$('camVideo'), c=camCrop(v,camZoom);      // Zoom in die Aufnahme rechnen
-  camComp=document.createElement('canvas'); camComp.width=Math.round(c.sw); camComp.height=Math.round(c.sh); camCompCtx=camComp.getContext('2d');
-  (function draw(){ if(!camCompCtx)return; const q=camCrop(v,camZoom);
-    try{ camCompCtx.drawImage(v, q.sx,q.sy,q.sw,q.sh, 0,0,camComp.width,camComp.height); }catch(e){}
-    camCompRAF=requestAnimationFrame(draw); })();
-  return camComp.captureStream(30).getVideoTracks(); }
-function camCompStop(){ cancelAnimationFrame(camCompRAF); camCompRAF=0; camCompCtx=null; camComp=null; }
+/* Ein Canvas rechnet Zoom und Look ins Bild – daraus speisen sich Videoaufnahme und Dokumentenkamera */
+let camComp=null, camCompCtx=null, camCompRAF=0, camCompStream=null;
+function camCompStart(){ const v=$('camVideo'), c=camCrop(v,camZoom);
+  if(camComp) return camCompStream?camCompStream.getVideoTracks():[];
+  const breit=lookDef().rechnen?640:Math.min(1280,Math.round(c.sw));
+  camComp=document.createElement('canvas'); camComp.width=Math.max(2,breit);
+  camComp.height=Math.max(2,Math.round(breit*c.sh/c.sw)); camCompCtx=camComp.getContext('2d');
+  let letzte=0;
+  (function draw(ts){ if(!camCompCtx)return; camCompRAF=requestAnimationFrame(draw);
+    if(ts-letzte<(lookDef().rechnen?55:32)) return; letzte=ts||0;
+    const q=camCrop(v,camZoom);
+    if(camFxAktiv()) camFxPaint(camCompCtx,v,camComp.width,camComp.height,q);
+    else { try{ camCompCtx.drawImage(v, q.sx,q.sy,q.sw,q.sh, 0,0,camComp.width,camComp.height); }catch(e){} }
+  })(0);
+  camCompStream=camComp.captureStream(30);
+  return camCompStream.getVideoTracks(); }
+function camCompStop(){ cancelAnimationFrame(camCompRAF); camCompRAF=0; camCompCtx=null; camComp=null;
+  if(camCompStream){ try{ camCompStream.getTracks().forEach(t=>t.stop()); }catch(e){} camCompStream=null; } }
+/* Quelle für die Dokumentenkamera-Objekte: mit Look das gerechnete Bild, sonst direkt die Kamera */
+function camLiveQuelle(){ if(camFxAktiv()){ if(!camComp) camCompStart(); return camCompStream||camStream; } return camStream; }
+function liveNeuVerdrahten(){ const q=camLiveQuelle();
+  for(const [,fr] of embedEls){ if(fr._video&&q&&fr._video.srcObject!==q){ fr._video.srcObject=q; fr._video.play().catch(()=>{}); } }
+  markDirty(); }
 function camClipStop(){ try{ if(camRec&&camRec.state!=='inactive') camRec.stop(); }catch(e){}
-  clearInterval(camRecTimer); camRecTimer=null; camCompStop();
+  clearInterval(camRecTimer); camRecTimer=null;
+  if(!camFxAktiv()&&!liveObjs().length) camCompStop();      // läuft weiter, solange ein Look oder eine Dokumentenkamera ihn braucht
   camMicStream=null; }
 function camClipFinish(mime, hadSound){ camRec=null; camClipUI();
   if(!camChunks.length){ toast('Keine Aufnahme aufgezeichnet'); return; }
@@ -4204,9 +4378,11 @@ async function startLiveCam(){
 function setLiveZoom(o,z){ o.zoom=Math.max(1,Math.min(8,Math.round(z*10)/10)); markDirty(); }
 function closeLive(o){ pushUndo(); page().objects=page().objects.filter(x=>x!==o);
   selection=selection.filter(x=>x!==o); refreshProps(); refreshEmbedUI(); markDirty();
-  if(!liveObjs().length&&!$('win-cam').classList.contains('show')) camStop(); }
+  if(!liveObjs().length&&!$('win-cam').classList.contains('show')) camStop();
+  else if(!liveObjs().length&&!camFxAktiv()&&!camRecording()) camCompStop(); }
 $('camLive').onclick=startLiveCam;
-function camStop(){ camClipStop(); if(camStream){camStream.getTracks().forEach(t=>t.stop());camStream=null;$('camVideo').srcObject=null;$('camStart').textContent='Kamera starten';} }
+function camStop(){ camClipStop(); camCompStop(); cancelAnimationFrame(camPrevRAF);
+  if(camStream){camStream.getTracks().forEach(t=>t.stop());camStream=null;$('camVideo').srcObject=null;$('camStart').textContent='Kamera starten';} }
 $('win-cam').querySelector('.x').addEventListener('click',()=>{ if(!liveObjs().length) camStop(); else camClipStop(); });
 
 /* ---- Dokumentenscanner: Kamerabild entzerren, aufhellen, als Seite/PDF ---- */
