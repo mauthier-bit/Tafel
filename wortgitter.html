@@ -52,10 +52,13 @@
   <div id="words" hidden>
     <textarea id="wIn" placeholder="Ein Wort je Zeile, z. B.&#10;Bruch&#10;Nenner&#10;Zähler"></textarea>
     <div class="hint">Ein Wort je Zeile (oder mit Komma trennen) · Umlaute bleiben, ß wird zu SS · 3 bis 14 Buchstaben</div>
+    <div id="lpZeile" style="margin-top:5px"></div>
   </div>
   <div id="area"><canvas id="cv"></canvas></div>
 </div>
 <script src="shot.js"></script>
+<script src="lehrplan-glossar.js"></script>
+<script src="lehrplan.js"></script>
 <script>
 "use strict";
 const $=id=>document.getElementById(id), cv=$('cv'), ctx=cv.getContext('2d');
@@ -199,5 +202,19 @@ addEventListener('resize',resize);
 window.addEventListener('load',()=>{ addSteppers(); applyFont(); build(); resize();
   if(window.ResizeObserver) new ResizeObserver(resize).observe(cv);
   try{ if(window.parent!==window) parent.postMessage({type:'embed-ready'},'*'); }catch(e){} });
+
+/* Begriffe aus dem Lehrplan-Glossar übernehmen (nur die Wörter, ohne Erklärung) */
+if(window.TafelLehrplan&&TafelLehrplan.verfuegbar()&&document.getElementById('lpZeile')){
+  TafelLehrplan.knopf(document.getElementById('lpZeile'),{ cls:'btn', text:'📚 Begriffe aus dem Lehrplan',
+    titel:'Wörter für das Buchstabengitter',
+    uebernehmen:l=>{ const ta=document.getElementById('wIn');
+      /* das Gitter braucht einzelne Wörter ohne Leer- und Sonderzeichen */
+      const woerter=l.map(d=>d.b.replace(/\s*\(.*?\)\s*/g,' ').trim())
+        .filter(w=>/^[A-Za-zÄÖÜäöüß]{3,12}$/.test(w));
+      ta.value=(ta.value.trim()?ta.value.replace(/\s+$/,'')+'\n':'')+woerter.join('\n');
+      ta.dispatchEvent(new Event('input',{bubbles:true}));
+      ta.dispatchEvent(new Event('change',{bubbles:true}));
+      if(window.TafelShot) TafelShot.toast(woerter.length+' Wörter eingefügt'+(woerter.length<l.length?(' – '+(l.length-woerter.length)+' mehrteilige oder zu lange Begriffe passen nicht ins Gitter'):'')); } });
+}
 </script>
 </body></html>

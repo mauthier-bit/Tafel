@@ -421,6 +421,32 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   einen Ast, **↶** Rückgängig, **⟳ Ordnen** ordnet alles kreisförmig ohne Überlappungen an, **A−/A+** sowie
   Schrift (fett/kursiv) im Kontextmenü, **🖼 Tafel / 📋 Kopieren** als Bild. Passt sich automatisch der
   Objektgröße an; auch „Als eigene Seite anzeigen“.
+- **Galgenmännchen** (Diverses): Ratespiel für Fachbegriffe. Im **Bearbeiten-Modus** trägt die
+  Lehrkraft unter **„✎ Begriffe"** einen oder mehrere Begriffe ein – wahlweise mit Hinweis
+  (`Begriff = Hinweis`). Die Liste ist **nur im Bearbeiten-Modus sichtbar**; im **Benutzen-Modus**
+  sieht die Klasse nur die Lücken. Buchstaben werden über die **Tastenreihe** (oder die echte
+  Tastatur) geraten: Treffer erscheinen an allen passenden Stellen, Fehlgriffe lassen die Figur am
+  Galgen weiterwachsen – das Gerüst steht von Anfang an hellgrau da, die Figur kommt Stück für Stück
+  dazu. Einstellbar sind die **erlaubte Fehlerzahl (3–12)**, ob der **Hinweis** gezeigt wird und ob
+  **Umlaute** eigene Tasten bekommen (sonst zählen Ä/Ö/Ü/ß als A/O/U/S). **💡 Tipp** deckt einen
+  Buchstaben auf und kostet dafür einen Versuch, **↻ Neues Spiel** geht zum nächsten Begriff.
+  Dazu **A−/A+**, **🖼 Tafel / 📋 Kopieren** und der Umschalter **Benutzen/Bearbeiten**; der
+  Spielstand wird mit dem Tafel-Projekt gespeichert.
+- **Begriffe aus dem Lehrplan** (Glossar, Kreuzworträtsel, Buchstabengitter, Galgenmännchen):
+  Die Tafel bringt ein **Lehrplan-Glossar** mit rund **395 Fachbegriffen** aus dem **LehrplanPLUS
+  Bayern (Gymnasium, G9)** für **Mathematik (Jgst. 5–11 und 13)** und **Physik (Jgst. 7–11;
+  Jgst. 7 aus Natur und Technik)** – gegliedert nach den **Lernbereichen** des Lehrplans. Über den
+  Knopf **📚 Lehrplan** bzw. **„📚 Begriffe aus dem Lehrplan"** öffnet sich ein Fenster mit den
+  Filtern **Fach · Jahrgangsstufe · Themenbereich** und einer Suche; man kreuzt Begriffe an,
+  nimmt mit **„10 zufällig"** eine Stichprobe oder übernimmt einfach alles Gefilterte.
+  - Im **Glossar** entstehen daraus fertige Karten mit Abschnittsüberschriften („Mathematik 7 ·
+    Symmetrie und Winkel"); das Glossar lässt sich anschließend wie immer ergänzen und abfragen.
+  - Im **Kreuzworträtsel** wird der Begriff zum Lösungswort und die Erklärung zum Hinweis.
+  - Im **Buchstabengitter** werden die Begriffe zu Suchwörtern (mehrteilige oder sehr lange
+    Begriffe lässt das Gitter aus und sagt das).
+  - Im **Galgenmännchen** wird der Begriff zum Rätselwort und die Erklärung zum Hinweis.
+  Die Begriffe folgen den Lernbereichen des Lehrplans, die **Erklärungen sind eigens für die Tafel
+  geschrieben** (kurze, schülergerechte Sätze) – der Lehrplantext selbst wird nicht wiedergegeben.
 - **Begriffsnetz** (Diverses): freies **Netz aus Begriffen** – anders als die Mindmap ohne Hierarchie,
   jeder Begriff kann mit jedem verbunden werden (Concept Map). **+ Begriff** legt ein Feld an,
   **Doppeltippen auf die freie Fläche** ebenfalls; **antippen** wählt aus, **nochmal antippen**
@@ -600,7 +626,7 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
 - Der Knopf **„Objekt bedienen" / „Bedienen beenden"** oben in der Mitte sitzt **bündig mit der
   Unterkante der oberen Leisten** und nie unter der Statusleiste des iPads – er ist also auch am
   oberen Bildschirmrand immer ganz antippbar (dasselbe gilt für „Aufnahme stoppen").
-- **Werkzeuggruppe „Diverses"** (Zeigewerkzeuge, Symbol: **Werkzeugkoffer**): darin liegen **Mindmap**, **Begriffsnetz**, **Pinnwand**,
+- **Werkzeuggruppe „Diverses"** (Zeigewerkzeuge, Symbol: **Werkzeugkoffer**): darin liegen **Mindmap**, **Begriffsnetz**, **Galgenmännchen**, **Pinnwand**,
   **Kreuzworträtsel**, **Zeitleiste**, **Wortwolke** und **Buchstabengitter**.
   - **Kreuzworträtsel:** Über **„✎ Begriffe"** eine Liste eintragen – je Zeile `Begriff = Hinweis` (der Hinweis darf
     fehlen). Die Tafel legt daraus ein **verschränktes Kreuzworträtsel** (40 Versuche, das kompakteste gewinnt),
@@ -1414,6 +1440,9 @@ ableitungen.html      ← Lernumgebung F · f · f′ · f″ (Ableitungen/Stamm
 terme-rechner.html    ← Term-Umformer (Terme aufstellen und umformen, Mathematik 7)
 figuren-koerper.html  ← Figuren & Körper berechnen (Flächen, Umfang, Volumen, Mathematik 9/10)
 diagramm.html         ← Diagramm aus einer Tabelle (Säulen, Balken, Linien, Kreis …, verzerrende Darstellung)
+galgen.html           ← Galgenmännchen (Begriffe raten, Hinweise, Lehrplan-Import)
+lehrplan-glossar.js   ← Fachbegriffe nach LehrplanPLUS Bayern G9 (Mathematik, Physik)
+lehrplan.js           ← gemeinsames Auswahlfenster für den Lehrplan-Import
 formel.html           ← Formel umstellen (nach einer Größe auflösen, Schritt für Schritt, mit Formelsammlung)
 stromkreis.html       ← Stromkreis-Editor mit Simulation (U, I, R, C, L, Ladungsfluss, Bild-Export)
 optik.html            ← Optiklabor (Strahlenoptik, Schatten, Mondphasen und Finsternisse)

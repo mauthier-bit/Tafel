@@ -1,0 +1,135 @@
+/* Gemeinsamer Begriffs-Import aus dem Lehrplan-Glossar.
+   Wird von Glossar, Kreuzworträtsel, Buchstabengitter und Galgenmännchen genutzt.
+   Aufruf:  TafelLehrplan.oeffnen({ titel:'…', uebernehmen: liste => { … } })
+   Die Liste enthält Objekte { b:Begriff, e:Erklärung, f:Fach, j:Jahrgangsstufe, g:Themenbereich }. */
+(function(){
+"use strict";
+if(!window.LEHRPLAN) return;
+const L=window.LEHRPLAN, FA=L.faecher||{M:'Mathematik',Ph:'Physik'};
+const alle=()=>L.e.map(r=>({f:r[0], j:+r[1], g:r[2], b:r[3], e:r[4]}));
+
+let css=false;
+function stil(){ if(css) return; css=true;
+  const s=document.createElement('style');
+  s.textContent=`
+  #lpBox{position:fixed;inset:0;z-index:9000;background:rgba(15,23,42,.35);display:flex;align-items:center;justify-content:center;padding:10px;
+    font-family:-apple-system,BlinkMacSystemFont,sans-serif;color:#1f2430;}
+  #lpIn{background:#fff;border-radius:16px;box-shadow:0 12px 40px rgba(15,23,42,.35);width:min(620px,96vw);max-height:92vh;display:flex;flex-direction:column;overflow:hidden;}
+  #lpKopf{padding:10px 14px;font-weight:800;background:#f1f5fb;border-bottom:1px solid #e2e7ef;display:flex;justify-content:space-between;align-items:center;font-size:15px;}
+  #lpKopf .x{cursor:pointer;color:#64748b;font-size:22px;line-height:1;padding:0 4px;}
+  #lpFilter{padding:8px 14px;border-bottom:1px solid #e2e7ef;display:flex;flex-direction:column;gap:6px;}
+  #lpFilter .zeile{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
+  #lpFilter .zeile[data-r="ber"]{max-height:84px;overflow:auto;-webkit-overflow-scrolling:touch;align-items:flex-start;align-content:flex-start;}
+  #lpFilter b{font-size:12px;color:#64748b;text-transform:uppercase;letter-spacing:.04em;width:74px;flex:none;}
+  .lpChip{border:1.5px solid #cfd6e0;background:#fff;border-radius:999px;padding:3px 11px;font:700 13px -apple-system,sans-serif;color:#475569;cursor:pointer;}
+  .lpChip.on{background:#2563eb;border-color:#2563eb;color:#fff;}
+  #lpSuche{flex:1 1 140px;border:1px solid #cfd6e0;border-radius:9px;padding:5px 9px;font:inherit;font-size:14px;min-width:120px;}
+  #lpListe{flex:1 1 auto;overflow:auto;-webkit-overflow-scrolling:touch;padding:6px 10px;min-height:120px;}
+  .lpZ{display:flex;gap:8px;align-items:flex-start;padding:5px 4px;border-bottom:1px solid #f1f5f9;cursor:pointer;}
+  .lpZ input{margin-top:3px;width:18px;height:18px;flex:none;}
+  .lpZ .t{flex:1 1 auto;min-width:0;}
+  .lpZ .b{font-weight:700;font-size:14px;}
+  .lpZ .e{font-size:12.5px;color:#64748b;line-height:1.35;}
+  .lpZ .m{font-size:11px;color:#94a3b8;}
+  #lpFuss{padding:9px 14px;border-top:1px solid #e2e7ef;display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+  #lpFuss .info{font-size:13px;color:#64748b;flex:1 1 auto;}
+  .lpBtn{border:1px solid #cfd6e0;background:#fff;border-radius:9px;padding:6px 12px;font:700 14px -apple-system,sans-serif;color:#1f2430;cursor:pointer;}
+  .lpBtn.pri{background:#2563eb;border-color:#2563eb;color:#fff;}
+  #lpHinweis{font-size:11.5px;color:#94a3b8;padding:0 14px 8px;}`;
+  document.head.appendChild(s); }
+
+function oeffnen(opt){
+  opt=opt||{}; stil();
+  const daten=alle();
+  let fFach='', fJg=0, fBer='', fQ='';
+  const gewaehlt=new Set();
+
+  const box=document.createElement('div'); box.id='lpBox';
+  box.innerHTML=`<div id="lpIn">
+    <div id="lpKopf"><span>${opt.titel||'Begriffe aus dem Lehrplan'}</span><span class="x">×</span></div>
+    <div id="lpFilter">
+      <div class="zeile" data-r="fach"><b>Fach</b></div>
+      <div class="zeile" data-r="jg"><b>Jahrgang</b></div>
+      <div class="zeile" data-r="ber"><b>Bereich</b></div>
+      <div class="zeile"><b>Suche</b><input id="lpSuche" type="search" placeholder="Begriff oder Erklärung …"></div>
+    </div>
+    <div id="lpListe"></div>
+    <div id="lpHinweis">${L.stand||''}</div>
+    <div id="lpFuss">
+      <button class="lpBtn" id="lpAlle">alle</button>
+      <button class="lpBtn" id="lpKeine">keine</button>
+      <button class="lpBtn" id="lpZufall">10 zufällig</button>
+      <span class="info" id="lpInfo"></span>
+      <button class="lpBtn" id="lpAb">Abbrechen</button>
+      <button class="lpBtn pri" id="lpOk">Übernehmen</button>
+    </div></div>`;
+  document.body.appendChild(box);
+  const $l=q=>box.querySelector(q);
+
+  const passt=d=>(!fFach||d.f===fFach)&&(!fJg||d.j===fJg)&&(!fBer||d.g===fBer)&&
+    (!fQ||(d.b+' '+d.e).toLowerCase().includes(fQ));
+  const sichtbar=()=>daten.filter(passt);
+
+  function chips(){
+    const bauen=(sel,werte,akt,setz,titel)=>{ const z=$l('.zeile[data-r="'+sel+'"]');
+      z.innerHTML='<b>'+titel+'</b>';
+      const mk=(txt,val)=>{ const b=document.createElement('button'); b.className='lpChip'+(akt()===val?' on':''); b.textContent=txt;
+        b.onclick=()=>{ setz(val); chips(); liste(); }; z.appendChild(b); };
+      mk('alle',sel==='jg'?0:'');
+      werte.forEach(v=>mk(sel==='fach'?(FA[v]||v):(sel==='jg'?('Jgst. '+v):v), v)); };
+    bauen('fach',[...new Set(daten.map(d=>d.f))],()=>fFach,v=>{ fFach=v; fBer=''; },'Fach');
+    const jgs=[...new Set(daten.filter(d=>!fFach||d.f===fFach).map(d=>d.j))].sort((a,b)=>a-b);
+    bauen('jg',jgs,()=>fJg,v=>{ fJg=v; fBer=''; },'Jahrgang');
+    const bers=[...new Set(daten.filter(d=>(!fFach||d.f===fFach)&&(!fJg||d.j===fJg)).map(d=>d.g))];
+    bauen('ber',bers,()=>fBer,v=>{ fBer=v; },'Bereich');
+  }
+  function liste(){
+    const box2=$l('#lpListe'); box2.innerHTML='';
+    const list=sichtbar();
+    list.forEach(d=>{
+      const z=document.createElement('label'); z.className='lpZ';
+      const c=document.createElement('input'); c.type='checkbox'; c.checked=gewaehlt.has(d);
+      c.onchange=()=>{ if(c.checked) gewaehlt.add(d); else gewaehlt.delete(d); info(); };
+      const t=document.createElement('div'); t.className='t';
+      t.innerHTML='<div class="b"></div><div class="e"></div><div class="m"></div>';
+      t.querySelector('.b').textContent=d.b;
+      t.querySelector('.e').textContent=d.e;
+      t.querySelector('.m').textContent=(FA[d.f]||d.f)+' · Jgst. '+d.j+' · '+d.g;
+      z.appendChild(c); z.appendChild(t); box2.appendChild(z);
+    });
+    if(!list.length) box2.innerHTML='<div style="padding:20px;text-align:center;color:#94a3b8">Keine Begriffe – Filter ändern</div>';
+    info();
+  }
+  const info=()=>{ $l('#lpInfo').textContent=sichtbar().length+' Begriffe · '+gewaehlt.size+' ausgewählt'; };
+
+  $l('#lpSuche').oninput=e=>{ fQ=e.target.value.trim().toLowerCase(); liste(); };
+  $l('#lpAlle').onclick=()=>{ sichtbar().forEach(d=>gewaehlt.add(d)); liste(); };
+  $l('#lpKeine').onclick=()=>{ gewaehlt.clear(); liste(); };
+  $l('#lpZufall').onclick=()=>{ gewaehlt.clear(); const l=sichtbar().slice();
+    for(let i=l.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [l[i],l[j]]=[l[j],l[i]]; }
+    l.slice(0,10).forEach(d=>gewaehlt.add(d)); liste(); };
+  const zu=()=>box.remove();
+  $l('.x').onclick=zu; $l('#lpAb').onclick=zu;
+  box.onclick=e=>{ if(e.target===box) zu(); };
+  $l('#lpOk').onclick=()=>{
+    let l=[...gewaehlt];
+    if(!l.length) l=sichtbar();                       // nichts angekreuzt: alles Sichtbare übernehmen
+    if(!l.length){ zu(); return; }
+    l.sort((a,b)=>a.f.localeCompare(b.f)||a.j-b.j||a.g.localeCompare(b.g,'de')||a.b.localeCompare(b.b,'de'));
+    zu(); if(opt.uebernehmen) opt.uebernehmen(l);
+  };
+  chips(); liste();
+  if(opt.fach) { fFach=opt.fach; chips(); liste(); }
+}
+
+window.TafelLehrplan={
+  verfuegbar:()=>!!(window.LEHRPLAN&&window.LEHRPLAN.e&&window.LEHRPLAN.e.length),
+  anzahl:()=>window.LEHRPLAN?window.LEHRPLAN.e.length:0,
+  oeffnen,
+  /* hängt einen fertigen Knopf an ein Element */
+  knopf(ziel,opt){ if(!ziel) return null; const b=document.createElement('button');
+    b.type='button'; b.className=(opt&&opt.cls)||'btn'; b.textContent=(opt&&opt.text)||'📚 Lehrplan';
+    b.title='Begriffe aus dem Lehrplan-Glossar übernehmen (Mathematik und Physik, nach Jahrgangsstufe und Thema filterbar)';
+    b.onclick=()=>oeffnen(opt); ziel.appendChild(b); return b; }
+};
+})();

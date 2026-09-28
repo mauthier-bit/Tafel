@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Galgenmännchen</title>
+<style>
+  :root{--fs:16px;}
+  *{box-sizing:border-box;} [hidden]{display:none!important;}
+  html,body{margin:0;height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#1f2430;}
+  #app{position:absolute;inset:0;display:flex;flex-direction:column;}
+  .bar{flex:none;display:flex;gap:5px;align-items:center;padding:6px 8px;border-bottom:1px solid #e6eaf0;
+    flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;font-size:13px;}
+  .bar>*{flex:0 0 auto;}
+  .bar::-webkit-scrollbar{height:4px;} .bar::-webkit-scrollbar-thumb{background:#cfd6e0;border-radius:2px;}
+  .btn{border:1px solid #cfd6e0;background:#fff;border-radius:8px;padding:5px 10px;font:600 13px -apple-system,sans-serif;
+    color:#1f2430;cursor:pointer;white-space:nowrap;}
+  .btn.pri{background:#2563eb;border-color:#2563eb;color:#fff;}
+  .btn.on{background:#2563eb;border-color:#2563eb;color:#fff;}
+  .btn:disabled{opacity:.4;cursor:default;}
+  .sep{width:1px;align-self:stretch;background:#e6eaf0;margin:0 3px;}
+  .lbl{color:#64748b;font-weight:600;}
+  .grow{flex:1 1 auto!important;min-width:4px;}
+  #feld{flex:1 1 auto;min-height:0;display:flex;gap:10px;padding:8px 10px;overflow:hidden;}
+  @media (max-width:640px){ #feld{flex-direction:column;gap:4px;} }
+  #galgen{flex:0 0 38%;min-width:150px;display:flex;align-items:center;justify-content:center;}
+  @media (max-width:640px){ #galgen{flex:0 0 38%;min-height:0;} }
+  #galgen svg{width:100%;height:100%;max-height:100%;}
+  #rechts{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:8px;min-height:0;}
+  #rechts>#wort,#rechts>#tipp,#rechts>#status{flex:none;}      /* nicht zusammenquetschen lassen */
+  #rechts>#tasten{flex:1 1 auto;min-height:0;}
+  #wort{display:flex;flex-wrap:wrap;gap:6px;align-items:flex-end;justify-content:center;padding:4px 0;}
+  #wort .z{font:800 calc(var(--fs)*2) ui-monospace,monospace;line-height:1.1;min-width:.75em;text-align:center;
+    border-bottom:3px solid #94a3b8;padding:0 2px;}
+  #wort .z.frei{border-bottom-color:transparent;}
+  #wort .z.neu{color:#16a34a;}
+  #wort .z.fehlt{color:#dc2626;}
+  #tipp{text-align:center;color:#475569;font-size:calc(var(--fs)*0.95);line-height:1.35;padding:0 6px;min-height:1.2em;}
+  #tasten{display:flex;flex-wrap:wrap;gap:5px;justify-content:center;align-content:flex-start;overflow:auto;-webkit-overflow-scrolling:touch;padding:2px;}
+  @media (max-height:430px){ #feld{padding:4px 6px;gap:6px;} #galgen{flex:0 0 26%;} #wort .z{font-size:calc(var(--fs)*1.4);}
+    #rechts{gap:4px;} #tipp{font-size:calc(var(--fs)*.78);} #status{font-size:calc(var(--fs)*.88);}
+    #tasten button{width:calc(var(--fs)*1.9);height:calc(var(--fs)*1.9);font-size:calc(var(--fs)*.9);} }
+  @media (max-height:330px){ #galgen{display:none;} }
+  #tasten button{width:calc(var(--fs)*2.3);height:calc(var(--fs)*2.3);border:1px solid #cfd6e0;background:#fff;border-radius:9px;
+    font:800 calc(var(--fs)*1.05) -apple-system,sans-serif;color:#1f2430;cursor:pointer;}
+  #tasten button.gut{background:#dcfce7;border-color:#86efac;color:#166534;}
+  #tasten button.schlecht{background:#fee2e2;border-color:#fca5a5;color:#991b1b;text-decoration:line-through;}
+  #tasten button:disabled{cursor:default;}
+  #status{text-align:center;font-weight:800;font-size:calc(var(--fs)*1.1);min-height:1.4em;}
+  #status.gewonnen{color:#16a34a;} #status.verloren{color:#dc2626;}
+  #eingabe{position:absolute;inset:0;background:rgba(15,23,42,.35);display:none;align-items:center;justify-content:center;padding:12px;z-index:20;}
+  #eingabe.an{display:flex;}
+  #eIn{background:#fff;border-radius:14px;box-shadow:0 12px 40px rgba(15,23,42,.3);width:min(520px,96vw);padding:14px;display:flex;flex-direction:column;gap:8px;}
+  #eIn h3{margin:0;font-size:16px;}
+  #eIn input,#eIn textarea{border:1px solid #cfd6e0;border-radius:9px;padding:8px 10px;font:inherit;font-size:15px;width:100%;}
+  #eIn textarea{height:74px;resize:vertical;}
+  #eIn .hint{font-size:12.5px;color:#64748b;line-height:1.4;}
+  #eIn .row{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;}
+  #liste{max-height:120px;overflow:auto;border:1px solid #e2e7ef;border-radius:9px;padding:4px 6px;font-size:13px;color:#475569;}
+  #liste div{padding:2px 0;display:flex;justify-content:space-between;gap:8px;}
+  #liste b{font-weight:700;color:#1f2430;}
+  #liste span.x{color:#dc2626;cursor:pointer;font-weight:800;}
+  body.nurBenutzen .tafelEdit{display:none!important;}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="bar" id="bar">
+    <span id="barL"></span>
+    <button class="btn pri tafelEdit" id="bNeu" title="Begriff(e) eingeben – sie bleiben verdeckt">✎ Begriffe</button>
+    <button class="btn tafelEdit" id="bLehr" title="Begriffe aus dem Lehrplan-Glossar holen">📚 Lehrplan</button>
+    <span class="sep"></span>
+    <button class="btn" id="bNext" title="Nächster Begriff">↻ Neues Spiel</button>
+    <button class="btn" id="bTipp" title="Einen Buchstaben aufdecken (kostet einen Versuch)">💡 Tipp</button>
+    <span class="grow"></span>
+    <span id="barMid"></span>
+    <span id="barR"></span>
+  </div>
+  <div class="bar" id="bar2">
+    <span class="lbl">Fehler bis Schluss</span>
+    <button class="btn" id="fM">−</button><span id="fV" style="font-weight:800;min-width:20px;text-align:center">11</span><button class="btn" id="fP">+</button>
+    <span class="sep"></span>
+    <button class="btn on" id="bHinweis" title="Erklärung als Hinweis anzeigen">Hinweis zeigen</button>
+    <button class="btn" id="bUmlaut" title="Umlaute und ß als eigene Tasten">Umlaute</button>
+    <span class="sep"></span>
+    <span class="lbl">Schrift</span>
+    <button class="btn" id="fsM">A−</button><button class="btn" id="fsP">A+</button>
+    <span class="grow"></span>
+    <span id="shotBtns"></span>
+  </div>
+  <div id="feld">
+    <div id="galgen"></div>
+    <div id="rechts">
+      <div id="wort"></div>
+      <div id="tipp"></div>
+      <div id="status"></div>
+      <div id="tasten"></div>
+    </div>
+  </div>
+</div>
+
+<div id="eingabe"><div id="eIn">
+  <h3>Begriffe eingeben</h3>
+  <div class="hint">Ein Begriff je Zeile, wahlweise mit Hinweis: <b>Begriff = Hinweis</b>. Die Liste bleibt verdeckt – im Benutzen-Modus sieht die Klasse nur die Lücken.</div>
+  <textarea id="eTa" spellcheck="false" placeholder="Energie = Fähigkeit, Arbeit zu verrichten&#10;Parabel&#10;Stromkreis = geschlossener Weg für den Strom"></textarea>
+  <div id="liste"></div>
+  <div class="row"><button class="btn" id="eAb">Abbrechen</button><button class="btn pri" id="eOk">Übernehmen</button></div>
+</div></div>
+
+<script src="shot.js"></script>
+<script src="modus.js"></script>
+<script src="lehrplan-glossar.js"></script>
+<script src="lehrplan.js"></script>
+<script>
+"use strict";
+const $=id=>document.getElementById(id);
+const toast=m=>window.TafelShot?TafelShot.toast(m):null;
+
+/* D.woerter: [{w:Begriff, h:Hinweis}] – wird mit der Tafel gespeichert, aber nie offen angezeigt */
+let D={ v:1, woerter:[{w:'Energie',h:'Fähigkeit eines Körpers, Arbeit zu verrichten'},
+                      {w:'Parabel',h:'Graph einer quadratischen Funktion'},
+                      {w:'Stromkreis',h:'geschlossener Weg für den elektrischen Strom'}],
+        idx:0, geraten:[], maxF:11, hinweis:true, umlaut:false, fontSize:16, edit:true };
+
+const ALPHA='ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+const EXTRA='ÄÖÜSS';
+const norm=c=>c.toUpperCase();
+/* Ohne Umlaut-Modus zählen Ä/Ö/Ü/ß als A/O/U/S – so bleibt die Tastatur klein. */
+function vergleichbar(z){ const c=norm(z);
+  if(D.umlaut) return c;
+  return ({'Ä':'A','Ö':'O','Ü':'U','ß':'S','ẞ':'S'})[c]||c; }
+const istBuchstabe=z=>/[a-zäöüßA-ZÄÖÜẞ]/.test(z);
+
+const aktuell=()=>D.woerter[Math.min(D.idx,Math.max(0,D.woerter.length-1))]||{w:'',h:''};
+const wort=()=>String(aktuell().w||'');
+const getroffen=z=>D.geraten.includes(vergleichbar(z));
+const fehler=()=>D.geraten.filter(g=>![...wort()].some(z=>istBuchstabe(z)&&vergleichbar(z)===g)).length;
+const geschafft=()=>wort().length>0 && [...wort()].every(z=>!istBuchstabe(z)||getroffen(z));
+const ausgereizt=()=>fehler()>=D.maxF;
+
+/* ---------- Galgen zeichnen: je Fehler ein Teil mehr ---------- */
+/* Gerüst steht von Anfang an (hellgrau), die Figur wächst mit jedem Fehler */
+const GERUEST=[
+ `<line x1="12" y1="188" x2="96" y2="188"/>`,
+ `<line x1="34" y1="188" x2="34" y2="16"/>`,
+ `<line x1="34" y1="16" x2="104" y2="16"/>`,
+ `<line x1="34" y1="44" x2="62" y2="16"/>`,
+ `<line x1="104" y1="16" x2="104" y2="38"/>`
+];
+const FIGUR=[
+ `<circle cx="104" cy="52" r="14"/>`,                     /* Kopf */
+ `<line x1="104" y1="66" x2="104" y2="118"/>`,            /* Rumpf */
+ `<line x1="104" y1="78" x2="84" y2="100"/>`,             /* linker Arm */
+ `<line x1="104" y1="78" x2="124" y2="100"/>`,            /* rechter Arm */
+ `<line x1="104" y1="118" x2="86" y2="152"/>`,            /* linkes Bein */
+ `<line x1="104" y1="118" x2="122" y2="152"/>`,           /* rechtes Bein */
+ `<path d="M98 48l5 5M103 48l-5 5M110 48l5 5M115 48l-5 5"/>`   /* Augen-Kreuze zum Schluss */
+];
+function malen(){
+  const f=fehler(), verloren=ausgereizt();
+  /* die Teile werden gleichmäßig auf die erlaubten Fehler verteilt */
+  let n=Math.min(FIGUR.length, Math.ceil(f/D.maxF*FIGUR.length));
+  if(f>0&&n<1) n=1;
+  if(verloren) n=FIGUR.length;
+  const farbe=verloren?'#dc2626':'#334155';
+  $('galgen').innerHTML=
+   `<svg viewBox="0 0 140 200" preserveAspectRatio="xMidYMid meet" fill="none" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">`+
+   `<g stroke="#cbd5e1">${GERUEST.join('')}</g>`+
+   `<g stroke="${farbe}">${FIGUR.slice(0,n).join('')}</g></svg>`;
+}
+
+/* ---------- Anzeige ---------- */
+function render(){
+  document.documentElement.style.setProperty('--fs',D.fontSize+'px');
+  const w=wort();
+  const box=$('wort'); box.innerHTML='';
+  [...w].forEach(z=>{
+    const e=document.createElement('span'); e.className='z';
+    if(!istBuchstabe(z)){ e.classList.add('frei'); e.textContent=(z===' '?'\u00a0':z); }
+    else if(getroffen(z)||(!D.edit===false&&false)) e.textContent=z.toUpperCase();
+    else if(ausgereizt()){ e.textContent=z.toUpperCase(); e.classList.add('fehlt'); }
+    else e.textContent='\u00a0';
+    box.appendChild(e);
+  });
+  const h=aktuell().h||'';
+  $('tipp').textContent=(D.hinweis&&h)?('Hinweis: '+h):'';
+  const st=$('status'); st.className='';
+  if(geschafft()){ st.textContent='Erraten! 🎉'; st.classList.add('gewonnen'); }
+  else if(ausgereizt()){ st.textContent='Verloren – das Wort war „'+w+'"'; st.classList.add('verloren'); }
+  else st.textContent=(D.maxF-fehler())+' Fehler frei'+(D.woerter.length>1?(' · Begriff '+(D.idx+1)+' von '+D.woerter.length):'');
+  tasten(); malen(); bar2(); sync();
+}
+function tasten(){
+  const box=$('tasten'); box.innerHTML='';
+  const zeichen=(ALPHA+(D.umlaut?'ÄÖÜß':'')).split('');
+  const aus=geschafft()||ausgereizt();
+  zeichen.forEach(z=>{
+    const b=document.createElement('button'); b.textContent=z;
+    const g=vergleichbar(z);
+    if(D.geraten.includes(g)){
+      const drin=[...wort()].some(x=>istBuchstabe(x)&&vergleichbar(x)===g);
+      b.className=drin?'gut':'schlecht'; b.disabled=true;
+    } else if(aus) b.disabled=true;
+    else b.onclick=()=>raten(z);
+    box.appendChild(b);
+  });
+}
+function bar2(){ $('fV').textContent=D.maxF;
+  $('bHinweis').classList.toggle('on',!!D.hinweis);
+  $('bUmlaut').classList.toggle('on',!!D.umlaut);
+  $('bTipp').disabled=geschafft()||ausgereizt();
+}
+
+/* ---------- Spielzüge ---------- */
+function raten(z){
+  const g=vergleichbar(z);
+  if(D.geraten.includes(g)||geschafft()||ausgereizt()) return;
+  D.geraten.push(g);
+  const drin=[...wort()].some(x=>istBuchstabe(x)&&vergleichbar(x)===g);
+  render();
+  if(!drin&&ausgereizt()) toast('Aufgebraucht – der Begriff war „'+wort()+'"');
+  else if(geschafft()) toast('Erraten!');
+}
+function tipp(){
+  if(geschafft()||ausgereizt()) return;
+  const offen=[...wort()].filter(z=>istBuchstabe(z)&&!getroffen(z));
+  if(!offen.length) return;
+  const z=offen[Math.floor(Math.random()*offen.length)];
+  D.geraten.push(vergleichbar(z));
+  /* ein Tipp kostet einen Fehlversuch */
+  const frei=ALPHA.split('').filter(c=>!D.geraten.includes(c)&&![...wort()].some(x=>istBuchstabe(x)&&vergleichbar(x)===c));
+  if(frei.length) D.geraten.push(frei[0]);
+  render();
+}
+function neuesSpiel(weiter){
+  if(!D.woerter.length) return;
+  if(weiter) D.idx=(D.idx+1)%D.woerter.length;
+  D.geraten=[]; render();
+}
+
+/* ---------- Begriffe eingeben ---------- */
+function listeZeigen(){
+  const box=$('liste'); box.innerHTML='';
+  if(!D.woerter.length){ box.innerHTML='<div style="color:#94a3b8">noch keine Begriffe</div>'; return; }
+  D.woerter.forEach((e,i)=>{ const z=document.createElement('div');
+    z.innerHTML='<span><b></b> <i style="color:#94a3b8"></i></span><span class="x" title="löschen">×</span>';
+    z.querySelector('b').textContent=e.w; z.querySelector('i').textContent=e.h||'';
+    z.querySelector('.x').onclick=()=>{ D.woerter.splice(i,1); if(D.idx>=D.woerter.length) D.idx=0; listeZeigen(); render(); };
+    box.appendChild(z); });
+}
+function eingabeOeffnen(){ $('eTa').value=''; listeZeigen(); $('eingabe').classList.add('an'); setTimeout(()=>$('eTa').focus(),60); }
+function eingabeSchliessen(){ $('eingabe').classList.remove('an'); }
+function uebernehmen(){
+  const neu=[];
+  $('eTa').value.split(/\r?\n/).forEach(z=>{ const t=z.trim(); if(!t) return;
+    const m=t.match(/^([^=]{1,60})=\s*(.*)$/);
+    if(m) neu.push({w:m[1].trim(), h:m[2].trim()}); else neu.push({w:t, h:''}); });
+  if(neu.length){ D.woerter=D.woerter.concat(neu); D.idx=D.woerter.length-neu.length; D.geraten=[]; }
+  eingabeSchliessen(); render();
+  if(neu.length) toast(neu.length+' Begriff(e) übernommen – verdeckt');
+}
+
+/* ---------- Leiste ---------- */
+const btn=(id,fn)=>{ const b=$(id); b.addEventListener('pointerdown',e=>e.preventDefault()); b.onclick=fn; };
+btn('bNeu',eingabeOeffnen);
+btn('bNext',()=>neuesSpiel(true));
+btn('bTipp',tipp);
+btn('fM',()=>{ D.maxF=Math.max(3,D.maxF-1); D.geraten=[]; render(); });
+btn('fP',()=>{ D.maxF=Math.min(12,D.maxF+1); D.geraten=[]; render(); });
+btn('bHinweis',()=>{ D.hinweis=!D.hinweis; render(); });
+btn('bUmlaut',()=>{ D.umlaut=!D.umlaut; D.geraten=[]; render(); });
+btn('fsM',()=>{ D.fontSize=Math.max(11,D.fontSize-1); render(); });
+btn('fsP',()=>{ D.fontSize=Math.min(30,D.fontSize+1); render(); });
+btn('eAb',eingabeSchliessen); btn('eOk',uebernehmen);
+$('eingabe').onclick=e=>{ if(e.target===$('eingabe')) eingabeSchliessen(); };
+addEventListener('keydown',e=>{ if($('eingabe').classList.contains('an')) return;
+  if(e.key.length===1&&istBuchstabe(e.key)) raten(e.key); });
+
+if(window.TafelLehrplan&&TafelLehrplan.verfuegbar()){
+  $('bLehr').onclick=()=>TafelLehrplan.oeffnen({ titel:'Begriffe aus dem Lehrplan',
+    uebernehmen:l=>{ D.woerter=l.map(d=>({w:d.b,h:d.e})); D.idx=0; D.geraten=[]; render();
+      toast(l.length+' Begriffe übernommen'); } });
+} else $('bLehr').hidden=true;
+
+function bild(){ return TafelShot.rasterize($('feld'),{pad:8,bg:'#fff'}); }
+if(window.TafelShot) TafelShot.buttons($('shotBtns'),bild);
+
+/* ---------- Tafel-Anbindung ---------- */
+let ready=false;
+function sync(){ if(window.parent===window||!ready) return;
+  try{ parent.postMessage({type:'embed-data',data:JSON.parse(JSON.stringify(D))},'*'); }catch(e){} }
+function uebernimm(d){
+  if(Array.isArray(d.woerter)) D.woerter=d.woerter.filter(x=>x&&x.w).map(x=>({w:String(x.w),h:String(x.h||'')}));
+  if(typeof d.idx==='number') D.idx=d.idx;
+  if(Array.isArray(d.geraten)) D.geraten=d.geraten.map(String);
+  if(d.maxF) D.maxF=Math.max(3,Math.min(12,+d.maxF));
+  if(d.hinweis!==undefined) D.hinweis=!!d.hinweis;
+  if(d.umlaut!==undefined) D.umlaut=!!d.umlaut;
+  if(d.fontSize) D.fontSize=+d.fontSize||16;
+  if(d.edit!==undefined) D.edit=d.edit!==false;
+}
+addEventListener('message',e=>{ if(e.source!==window.parent) return;
+  if(!(e.data&&e.data.type==='embed-data'&&e.data.data)) return;
+  uebernimm(e.data.data); render(); });
+if(window.TafelModus) TafelModus.init({ get:()=>D.edit!==false, set:v=>{ D.edit=v; render(); }, after:()=>render() });
+addEventListener('resize',()=>malen());
+window.addEventListener('load',()=>{ render(); setTimeout(()=>{ ready=true; },700);
+  try{ if(window.parent!==window) parent.postMessage({type:'embed-ready'},'*'); }catch(e){} });
+</script>
+</body>
+</html>
