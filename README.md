@@ -69,7 +69,7 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   reicht das Karogitter des Hintergrunds), einen **Hintergrund** (Schalter + Farbwähler, Standard weiß;
   aus = transparent wie bisher) sowie die **Schriftgröße der Beschriftung** (＋/−). Achsen
   sind kräftig mit großen Pfeilspitzen und gut lesbaren Beschriftungen: Der Achsenname steht
-  **unter der x-Achse** bzw. **links neben der y-Achse**, mit etwas Luft zu den Zahlen. An den
+  **unter der x-Achse** bzw. **links neben der y-Achse**, mit deutlichem Abstand zu den Zahlen. An den
   **Pfeilspitzen bleibt die letzte Zahl weg** (die Beschriftung hört eine Einheit vorher auf), und
   Zahlen, die dem Achsennamen zu nahe kämen, entfallen ebenfalls.
   Das Kontextmenü ist kompakt: x- und y-Bereich je eine Zeile, darunter die vier Schalter
