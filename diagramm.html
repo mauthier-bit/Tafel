@@ -30,9 +30,13 @@
   .seg button.on{background:#2563eb;color:#fff;}
   .num{width:62px;border:1px solid #cfd6e0;border-radius:8px;padding:4px 6px;font:inherit;text-align:right;}
   .txt{border:1px solid #cfd6e0;border-radius:8px;padding:4px 8px;font:inherit;min-width:110px;}
+  #bar2 .txt{width:130px;min-width:0;}
+  #setInhalt .txt{flex:1 1 160px;}
   input[type=range]{width:96px;accent-color:#2563eb;vertical-align:middle;}
   #main{flex:1;min-height:0;display:flex;gap:8px;padding:8px;overflow:hidden;}
-  #tabBox{flex:0 0 42%;min-width:240px;display:flex;flex-direction:column;gap:6px;overflow:auto;-webkit-overflow-scrolling:touch;}
+  #tabBox{flex:0 0 42%;min-width:240px;display:flex;flex-direction:column;gap:6px;overflow:hidden;}
+  #tabScroll{flex:1 1 auto;min-height:60px;overflow:auto;-webkit-overflow-scrolling:touch;}
+  table.dt thead th{position:sticky;top:0;z-index:2;background:#f1f5fb;}
   #chartBox{flex:1 1 auto;min-width:0;position:relative;border:1px solid #e2e7ef;border-radius:12px;background:#fff;overflow:hidden;}
   #cv{position:absolute;inset:0;width:100%;height:100%;touch-action:none;}
   @media (max-width:760px){ #main{flex-direction:column;} #tabBox{flex:0 0 auto;max-height:46%;min-width:0;} }
@@ -51,6 +55,17 @@
   table.dt input.farbe::-webkit-color-swatch{border:none;border-radius:50%;}
   table.dt td.num input{text-align:right;}
   table.dt .del{width:30px;text-align:center;}
+  /* Fenster für Achsen und Verzerrung */
+  #setBox{position:fixed;inset:0;z-index:60;background:rgba(15,23,42,.18);display:none;align-items:flex-start;justify-content:flex-start;padding:10px;}
+  #setBox.an{display:flex;}
+  #setInner{background:#fff;border-radius:16px;box-shadow:0 12px 40px rgba(15,23,42,.3);width:min(520px,96vw);max-height:88vh;display:flex;flex-direction:column;overflow:hidden;}
+  #setKopf{padding:11px 14px;font-weight:700;background:#f1f5fb;border-bottom:1px solid #e2e7ef;display:flex;justify-content:space-between;align-items:center;}
+  #setKopf .x{cursor:pointer;color:#64748b;font-size:20px;line-height:1;padding:0 4px;}
+  #setInhalt{padding:10px 14px;overflow:auto;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column;gap:12px;}
+  #setFuss{padding:10px 14px;border-top:1px solid #e2e7ef;display:flex;gap:8px;align-items:center;}
+  .grp2{display:flex;flex-direction:column;gap:6px;}
+  .grp2>b{font-size:.86em;color:#64748b;text-transform:uppercase;letter-spacing:.04em;}
+  .zeile{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
   .delbtn{border:0;background:transparent;color:#dc2626;font-size:1.05em;cursor:pointer;padding:3px 5px;line-height:1;}
   .farbe{width:22px;height:22px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px #cfd6e0;padding:0;cursor:pointer;-webkit-appearance:none;appearance:none;}
   .warn{color:#b45309;font-weight:700;}
@@ -73,7 +88,7 @@
   <div id="main">
     <div id="tabBox">
       <div id="tipp" class="hint"></div>
-      <table class="dt" id="dt"></table>
+      <div id="tabScroll"><table class="dt" id="dt"></table></div>
       <div style="display:flex;gap:6px;flex-wrap:wrap" class="tafelEdit">
         <button class="btn" id="addRow">+ Zeile</button>
         <button class="btn" id="addCol">+ Datenreihe</button>
@@ -83,6 +98,11 @@
     <div id="chartBox"><canvas id="cv"></canvas></div>
   </div>
 </div>
+<div id="setBox"><div id="setInner">
+  <div id="setKopf"><span>Achsen &amp; Darstellung</span><span class="x" id="setX">×</span></div>
+  <div id="setInhalt"></div>
+  <div id="setFuss"><button class="btn" id="setEhrlich">Ehrlich darstellen</button><span class="grow"></span><button class="btn pri" id="setOk">fertig</button></div>
+</div></div>
 <script src="shot.js"></script>
 <script src="modus.js"></script>
 <script>
@@ -167,84 +187,102 @@ function renderTabelle(){
                             :'Kopfzeile ist ausgeblendet – die Spalten heißen Reihe 1, Reihe 2 …';
   if(window.TafelModus) TafelModus.refresh();
 }
-$('addRow').onclick=()=>{ D.rows.push([ 'Neu', ...Array(D.head.length-1).fill('') ]); renderTabelle(); zeichne(); sync(); };
+function tabEnde(){ const b=$('tabScroll'); if(b) b.scrollTop=b.scrollHeight; }
+$('addRow').onclick=()=>{ D.rows.push([ 'Neu', ...Array(D.head.length-1).fill('') ]); renderTabelle(); zeichne(); sync(); tabEnde(); };
 $('addCol').onclick=()=>{ if(D.head.length>=9){ toast('Mehr als acht Datenreihen werden unübersichtlich'); return; }
   D.head.push('Reihe '+(D.head.length)); D.rows.forEach(r=>r.push('')); D.farben.push(PAL[(D.head.length-2)%PAL.length]);
   renderTabelle(); renderBar2(); zeichne(); sync(); };
 $('bHead').onclick=()=>{ D.kopf=!D.kopf; renderTabelle(); zeichne(); sync(); };
 
 /* ---------- Bedienzeile ---------- */
+function verzerrt(){ let n=0;
+  if(!KREISART.has(D.art)){ if(!D.yAuto) n++; if(D.log) n++; }
+  if(+D.dehnung!==1) n++; if(+D.hoehe!==1) n++; if(D.flaeche) n++;
+  return n; }
+/* kleine Bausteine, die Bedienzeile und Einstellfenster gemeinsam nutzen */
+function mkSeg(ziel,werte,akt,fn){ const s=document.createElement('span'); s.className='seg';
+  werte.forEach(([v,t])=>{ const b=document.createElement('button'); b.textContent=t; if(v===akt) b.classList.add('on');
+    b.onclick=()=>fn(v); s.appendChild(b); }); ziel.appendChild(s); return s; }
+function mkNum(ziel,wert,setz){ const n=document.createElement('input'); n.className='num'; n.value=wert; n.inputMode='decimal';
+  n.oninput=()=>{ const z=zahl(n.value); if(z!==null){ setz(z); zeichne(); sync(); } }; ziel.appendChild(n); return n; }
+function mkTxt(ziel,wert,platz,fn){ const t=document.createElement('input'); t.className='txt'; t.value=wert; t.placeholder=platz;
+  t.oninput=()=>{ fn(t.value); zeichne(); sync(); }; ziel.appendChild(t); return t; }
+function mkLbl(ziel,txt,cls){ const e=document.createElement('span'); e.className='lbl'+(cls?' '+cls:''); e.textContent=txt; ziel.appendChild(e); return e; }
+
 function renderBar2(){
   const bar=$('bar2'); bar.innerHTML='';
   const el=(tag,cls,txt,fn)=>{ const e=document.createElement(tag); if(cls) e.className=cls; if(txt!=null) e.textContent=txt; if(fn) e.onclick=fn; bar.appendChild(e); return e; };
-  const seg=(werte,akt,fn)=>{ const s=document.createElement('span'); s.className='seg';
-    werte.forEach(([v,t])=>{ const b=document.createElement('button'); b.textContent=t; if(v===akt) b.classList.add('on');
-      b.onclick=()=>fn(v); s.appendChild(b); }); bar.appendChild(s); return s; };
 
-  el('span','lbl','Titel');
-  const ti=document.createElement('input'); ti.className='txt'; ti.value=D.titel; ti.placeholder='Überschrift';
-  ti.oninput=()=>{ D.titel=ti.value; zeichne(); sync(); }; bar.appendChild(ti);
+  mkLbl(bar,'Titel');
+  mkTxt(bar,D.titel,'Überschrift',v=>D.titel=v);
 
-  if(!KREISART.has(D.art)){
-    el('span','sep');
-    el('span','lbl','Achsen');
-    const tx=document.createElement('input'); tx.className='txt'; tx.style.minWidth='90px'; tx.value=D.titelX; tx.placeholder='x-Achse';
-    tx.title='Beschriftung der Rubrikenachse'; tx.oninput=()=>{ D.titelX=tx.value; zeichne(); sync(); }; bar.appendChild(tx);
-    const ty=document.createElement('input'); ty.className='txt'; ty.style.minWidth='90px'; ty.value=D.titelY; ty.placeholder='y-Achse';
-    ty.title='Beschriftung der Werteachse'; ty.oninput=()=>{ D.titelY=ty.value; zeichne(); sync(); }; bar.appendChild(ty);
-    el('span','sep');
-    el('span','lbl','Rubriken');
-    seg([[false,'Namen'],[true,'Zahlen']], D.xNum, v=>{ D.xNum=v; if(v){ const x=xSpanne(); D.xMin=x.min; D.xMax=x.max; } renderBar2(); zeichne(); sync(); });
-    if(D.xNum){
-      seg([[true,'automatisch'],[false,'von–bis']], D.xAuto, v=>{ D.xAuto=v; if(!v){ const x=xSpanne(); D.xMin=x.min; D.xMax=x.max; } renderBar2(); zeichne(); sync(); });
-      if(!D.xAuto){
-        const mk=(wert,setz)=>{ const n=document.createElement('input'); n.className='num'; n.value=wert; n.inputMode='decimal';
-          n.oninput=()=>{ const z=zahl(n.value); if(z!==null){ setz(z); zeichne(); sync(); } }; bar.appendChild(n); return n; };
-        mk(D.xMin,v=>D.xMin=v); el('span','lbl','bis'); mk(D.xMax,v=>D.xMax=v);
-      }
-    }
-  }
-  if(reihen()>1&&STAPELBAR.has(D.art)){
-    el('span','sep');
-    seg([[false,'nebeneinander'],[true,'gestapelt']], D.stapel, v=>{ D.stapel=v; renderBar2(); zeichne(); sync(); });
-  }
   el('span','sep');
   el('button','btn'+(D.werte?' on':''),'Werte', ()=>{ D.werte=!D.werte; renderBar2(); zeichne(); sync(); });
   el('button','btn'+(D.legende?' on':''),'Legende', ()=>{ D.legende=!D.legende; renderBar2(); zeichne(); sync(); });
   if(!KREISART.has(D.art)) el('button','btn'+(D.gitter?' on':''),'Gitter', ()=>{ D.gitter=!D.gitter; renderBar2(); zeichne(); sync(); });
+  if(reihen()>1&&STAPELBAR.has(D.art))
+    el('button','btn'+(D.stapel?' on':''),'gestapelt', ()=>{ D.stapel=!D.stapel; renderBar2(); zeichne(); sync(); });
 
-  if(!KREISART.has(D.art)){
-    el('span','sep');
-    el('span','lbl','y-Achse');
-    seg([[true,'automatisch'],[false,'von–bis']], D.yAuto, v=>{ D.yAuto=v; if(!v){ const s=spanne(); D.yMin=s.min; D.yMax=s.max; } renderBar2(); zeichne(); sync(); });
-    if(!D.yAuto){
-      const mk=(wert,setz)=>{ const n=document.createElement('input'); n.className='num'; n.value=wert; n.inputMode='decimal';
-        n.oninput=()=>{ const z=zahl(n.value); if(z!==null){ setz(z); zeichne(); sync(); } }; bar.appendChild(n); return n; };
-      mk(D.yMin,v=>D.yMin=v); el('span','lbl','bis'); mk(D.yMax,v=>D.yMax=v);
-      if(D.yMin>0) el('span','warn','⚠ Nullpunkt unterdrückt');
-    }
-    el('span','sep');
-    el('span','lbl','Skala');
-    seg([[false,'linear'],[true,'logarithmisch']], D.log, v=>{ D.log=v; renderBar2(); zeichne(); sync(); });
-  }
   el('span','sep');
-  el('span','lbl','Breite');
-  const r1=document.createElement('input'); r1.type='range'; r1.min='0.35'; r1.max='1'; r1.step='0.05'; r1.value=D.dehnung;
-  r1.title='Rubriken eng ↔ gedehnt'; r1.oninput=()=>{ D.dehnung=+r1.value; zeichne(); sync(); }; bar.appendChild(r1);
-  el('span','lbl','Höhe');
-  const r2=document.createElement('input'); r2.type='range'; r2.min='0.35'; r2.max='1'; r2.step='0.05'; r2.value=D.hoehe;
-  r2.title='Diagramm gestaucht ↔ volle Höhe'; r2.oninput=()=>{ D.hoehe=+r2.value; zeichne(); sync(); }; bar.appendChild(r2);
+  const n=verzerrt();
+  const bs=el('button','btn'+(n?' on':''),'⚙ Achsen'+(n?' ('+n+')':''), zeigeSet);
+  bs.title=n? n+' Einstellung(en) verändern die Darstellung' : 'Achsen und Darstellung einstellen';
 
-  if(D.art==='saeulen'||D.art==='balken'||KREISART.has(D.art)){
-    el('span','sep');
-    seg([[false,'Wert = Länge'],[true,'Wert = Fläche']], D.flaeche, v=>{ D.flaeche=v; renderBar2(); zeichne(); sync(); });
-  }
   el('span','sep tafelEdit');
-  el('span','lbl tafelEdit','Schrift'); el('button','btn tafelEdit','A−',()=>schrift(-1)); el('button','btn tafelEdit','A+',()=>schrift(1));
+  el('button','btn tafelEdit','A−',()=>schrift(-1)).title='Schrift kleiner';
+  el('button','btn tafelEdit','A+',()=>schrift(1)).title='Schrift größer';
   el('span','grow');
   if(window.parent!==window) el('button','btn pri','🖼 Bild → Tafel',()=>TafelShot.toBoard(bild()));
   el('button','btn','📋 Kopieren',()=>TafelShot.copy(bild()));
 }
+
+/* ---------- Fenster: Achsen & Darstellung ---------- */
+function zeigeSet(){ renderSet(); $('setBox').classList.add('an'); }
+function schliesseSet(){ $('setBox').classList.remove('an'); renderBar2(); }
+function renderSet(){
+  const box=$('setInhalt'); box.innerHTML='';
+  const grp=(titel)=>{ const g=document.createElement('div'); g.className='grp2';
+    const b=document.createElement('b'); b.textContent=titel; g.appendChild(b); box.appendChild(g); return g; };
+  const zeile=(g)=>{ const z=document.createElement('div'); z.className='zeile'; g.appendChild(z); return z; };
+  const neu=()=>{ renderSet(); zeichne(); sync(); };
+
+  if(!KREISART.has(D.art)){
+    let g=grp('Achsenbeschriftung'), z=zeile(g);
+    mkLbl(z,'x-Achse'); mkTxt(z,D.titelX,'z. B. Zeit in s',v=>D.titelX=v);
+    z=zeile(g); mkLbl(z,'y-Achse'); mkTxt(z,D.titelY,'z. B. Weg in m',v=>D.titelY=v);
+
+    g=grp('Rubrikenachse (x)'); z=zeile(g);
+    mkSeg(z,[[false,'Namen'],[true,'Zahlen']], !!D.xNum, v=>{ D.xNum=v; if(v){ const x=xSpanne(); D.xMin=x.min; D.xMax=x.max; } neu(); });
+    if(D.xNum){
+      mkSeg(z,[[true,'automatisch'],[false,'von–bis']], D.xAuto!==false, v=>{ D.xAuto=v; if(!v){ const x=xSpanne(); D.xMin=x.min; D.xMax=x.max; } neu(); });
+      if(D.xAuto===false){ const z2=zeile(g); mkLbl(z2,'von'); mkNum(z2,D.xMin,v=>D.xMin=v); mkLbl(z2,'bis'); mkNum(z2,D.xMax,v=>D.xMax=v); }
+    }
+
+    g=grp('Werteachse (y)'); z=zeile(g);
+    mkSeg(z,[[true,'automatisch'],[false,'von–bis']], D.yAuto!==false, v=>{ D.yAuto=v; if(!v){ const s=spanne(); D.yMin=s.min; D.yMax=s.max; } neu(); });
+    mkSeg(z,[[false,'linear'],[true,'logarithmisch']], !!D.log, v=>{ D.log=v; neu(); });
+    if(D.yAuto===false){ const z2=zeile(g); mkLbl(z2,'von'); mkNum(z2,D.yMin,v=>D.yMin=v); mkLbl(z2,'bis'); mkNum(z2,D.yMax,v=>D.yMax=v);
+      if(D.yMin>0){ const w=document.createElement('span'); w.className='warn'; w.textContent='⚠ Nullpunkt unterdrückt'; z2.appendChild(w); } }
+  }
+
+  const g=grp('Darstellung'); 
+  if(!KREISART.has(D.art)){
+    let z=zeile(g); mkLbl(z,'Breite der Rubriken');
+    const r1=document.createElement('input'); r1.type='range'; r1.min='0.35'; r1.max='1'; r1.step='0.05'; r1.value=D.dehnung;
+    r1.title='eng ↔ gedehnt'; r1.oninput=()=>{ D.dehnung=+r1.value; zeichne(); sync(); }; z.appendChild(r1);
+    z=zeile(g); mkLbl(z,'Höhe des Diagramms');
+    const r2=document.createElement('input'); r2.type='range'; r2.min='0.35'; r2.max='1'; r2.step='0.05'; r2.value=D.hoehe;
+    r2.title='gestaucht ↔ volle Höhe'; r2.oninput=()=>{ D.hoehe=+r2.value; zeichne(); sync(); }; z.appendChild(r2);
+  }
+  if(D.art==='saeulen'||D.art==='balken'||KREISART.has(D.art)){
+    const z=zeile(g);
+    mkSeg(z,[[false,'Wert = Länge'],[true,'Wert = Fläche']], !!D.flaeche, v=>{ D.flaeche=v; neu(); });
+  }
+}
+$('setOk').onclick=schliesseSet; $('setX').onclick=schliesseSet;
+$('setBox').onclick=e=>{ if(e.target===$('setBox')) schliesseSet(); };
+$('setEhrlich').onclick=()=>{ D.yAuto=true; D.log=false; D.dehnung=1; D.hoehe=1; D.flaeche=false;
+  renderSet(); zeichne(); sync(); toast('Neutrale Darstellung'); };
 function schrift(d){ D.fontSize=Math.max(10,Math.min(30,(D.fontSize||15)+d));
   document.documentElement.style.setProperty('--fs',D.fontSize+'px'); resize(); sync(); }
 
@@ -300,7 +338,9 @@ function font(gr,fett){ return (fett?'700 ':'')+Math.round((D.fontSize||15)*gr)+
 
 function zeichne(){
   const W=cv.clientWidth||300, H=cv.clientHeight||200;
-  ctx.clearRect(0,0,W,H); ctx.fillStyle='#fff'; ctx.fillRect(0,0,W,H);
+  /* ganze Zeichenfläche leeren, auch wenn sie gerade kleiner geworden ist */
+  ctx.save(); ctx.setTransform(1,0,0,1,0,0); ctx.clearRect(0,0,cv.width,cv.height);
+  ctx.fillStyle='#fff'; ctx.fillRect(0,0,cv.width,cv.height); ctx.restore();
   const {namen,serien}=daten();
   if(!serien.length||!namen.length){ ctx.fillStyle='#8a93a2'; ctx.font=font(1); ctx.textAlign='center'; ctx.textBaseline='middle';
     ctx.fillText('Daten in die Tabelle eintragen',W/2,H/2); return; }

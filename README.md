@@ -545,7 +545,9 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   gespeicherte Seiten behalten ihre bisherige Lage.
 - Das **Kontextmenü** ist nach Abschnitten geordnet (Objekt-Einstellungen · Ebene · Aktionen) und zeigt
   nur, was beim ausgewählten Objekt wirklich etwas bewirkt – Farbe und Dicke erscheinen z. B. nicht bei
-  einer eingefügten Tabelle oder einem Bild.
+  einer eingefügten Tabelle oder einem Bild. Es beginnt nie direkt am oberen Bildschirmrand, sondern
+  bleibt immer **unter der Statusleiste des iPads** (Safe Area + etwa 4 mm Luft) – dasselbe gilt für den
+  ⚙-Knopf und den Modus-Umschalter daneben, sodass der Schließen-Knopf immer erreichbar ist.
 - **Gruppieren / Lösen / Duplizieren / Löschen** im Kontext-Panel („Lösen" hebt die Gruppe auf und
   die Auswahl auf, damit die Objekte danach wirklich einzeln beweglich sind)
 - **Laserpointer** und **Scheinwerferspot** – nutzbar auch **mit dem Finger**, unabhängig von der Einstellung „Nur mit Stift schreiben"
@@ -1179,6 +1181,16 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   **✕** löscht Zeilen bzw. Reihen, die **Kopfzeile** lässt sich ausblenden.
   - **Diagrammarten:** Säulen, Balken, Linien, Fläche, Kreis und Ring; bei mehreren Datenreihen
     wahlweise **nebeneinander oder gestapelt** (Säulen, Balken, Fläche).
+  - **Bedienung kompakt:** In der Zeile über der Tabelle stehen nur noch **Titel**, **Werte**,
+    **Legende**, **Gitter**, **gestapelt**, der Knopf **⚙ Achsen**, **A−/A+** und die Bildknöpfe –
+    sie passt damit ohne Scrollen auf den iPad-Bildschirm. Alles Weitere öffnet **⚙ Achsen** in einem
+    eigenen Fenster („Achsen & Darstellung", oben links angedockt, sodass das Diagramm sichtbar
+    bleibt) mit den Gruppen **Achsenbeschriftung**, **Rubrikenachse (x)**, **Werteachse (y)** und
+    **Darstellung**; darin liegt auch **Ehrlich darstellen**. Ist eine verzerrende Einstellung aktiv,
+    ist der Knopf blau und zeigt ihre **Anzahl** – z. B. „⚙ Achsen (2)".
+  - **Tabelle scrollbar:** Bei vielen Zeilen scrollt nur der Tabellenbereich; die **Kopfzeile bleibt
+    oben stehen** und die Knöpfe **+ Zeile / + Datenreihe / Kopfzeile** bleiben immer sichtbar.
+    **+ Zeile** scrollt automatisch ans Ende.
   - **Achsen:** Für x- und y-Achse lässt sich je eine **Beschriftung** eintragen (z. B. „Zeit t in s"),
     sie steht unter bzw. gedreht neben der Achse. Die **Rubriken** sind wahlweise **Namen**
     (gleichmäßig verteilt) oder **Zahlen** – dann trägt die x-Achse eine echte Skala und die Punkte
