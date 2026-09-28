@@ -21,6 +21,14 @@
   .sep{width:1px;align-self:stretch;background:#e6eaf0;margin:0 3px;}
   .lbl{color:#64748b;font-weight:600;}
   .grow{flex:1 1 auto!important;min-width:4px;}
+  #teams{flex:none;display:flex;gap:8px;padding:6px 10px 0;}
+  #teams .team{flex:1 1 0;display:flex;align-items:center;gap:8px;border:2px solid #e2e7ef;border-radius:12px;padding:5px 10px;background:#fff;}
+  #teams .team.aktiv{border-color:#2563eb;background:#eff6ff;box-shadow:0 0 0 2px rgba(37,99,235,.12);}
+  #teams .tn{flex:1 1 auto;min-width:40px;border:none;background:transparent;font:800 calc(var(--fs)*0.95) -apple-system,sans-serif;
+    color:#1f2430;padding:2px 0;outline:none;}
+  #teams .team.aktiv .tn{color:#1d4ed8;}
+  #teams .p{font:900 calc(var(--fs)*1.35) -apple-system,sans-serif;min-width:1.4em;text-align:right;}
+  body.nurBenutzen #teams .tn{pointer-events:none;}
   #feld{flex:1 1 auto;min-height:0;display:flex;gap:10px;padding:8px 10px;overflow:hidden;}
   @media (max-width:640px){ #feld{flex-direction:column;gap:4px;} }
   #galgen{flex:0 0 38%;min-width:150px;display:flex;align-items:center;justify-content:center;}
@@ -83,10 +91,17 @@
     <button class="btn on" id="bHinweis" title="Erklärung als Hinweis anzeigen">Hinweis zeigen</button>
     <button class="btn" id="bUmlaut" title="Umlaute und ß als eigene Tasten">Umlaute</button>
     <span class="sep"></span>
+    <button class="btn" id="bTeams" title="Zwei Teams raten abwechselnd und sammeln Punkte">2 Teams</button>
+    <button class="btn" id="bReset" title="Punktestand zurücksetzen" hidden>0 : 0</button>
+    <span class="sep"></span>
     <span class="lbl">Schrift</span>
     <button class="btn" id="fsM">A−</button><button class="btn" id="fsP">A+</button>
     <span class="grow"></span>
     <span id="shotBtns"></span>
+  </div>
+  <div id="teams" hidden>
+    <div class="team" data-t="0"><input class="tn" value="Team 1" maxlength="14"><span class="p">0</span></div>
+    <div class="team" data-t="1"><input class="tn" value="Team 2" maxlength="14"><span class="p">0</span></div>
   </div>
   <div id="feld">
     <div id="galgen"></div>
@@ -120,7 +135,8 @@ const toast=m=>window.TafelShot?TafelShot.toast(m):null;
 let D={ v:1, woerter:[{w:'Energie',h:'Fähigkeit eines Körpers, Arbeit zu verrichten'},
                       {w:'Parabel',h:'Graph einer quadratischen Funktion'},
                       {w:'Stromkreis',h:'geschlossener Weg für den elektrischen Strom'}],
-        idx:0, geraten:[], maxF:11, hinweis:true, umlaut:false, fontSize:16, edit:true };
+        idx:0, geraten:[], maxF:11, hinweis:true, umlaut:false, fontSize:16, edit:true,
+        teams:false, tnamen:['Team 1','Team 2'], punkte:[0,0], dran:0, gewertet:false };
 
 const ALPHA='ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 const EXTRA='ÄÖÜSS';
@@ -184,11 +200,27 @@ function render(){
   });
   const h=aktuell().h||'';
   $('tipp').textContent=(D.hinweis&&h)?('Hinweis: '+h):'';
+  teamAnzeige();
   const st=$('status'); st.className='';
   if(geschafft()){ st.textContent='Erraten! 🎉'; st.classList.add('gewonnen'); }
   else if(ausgereizt()){ st.textContent='Verloren – das Wort war „'+w+'"'; st.classList.add('verloren'); }
-  else st.textContent=(D.maxF-fehler())+' Fehler frei'+(D.woerter.length>1?(' · Begriff '+(D.idx+1)+' von '+D.woerter.length):'');
+  else st.textContent=(D.teams?(D.tnamen[D.dran%2]+' ist dran · '):'')+(D.maxF-fehler())+' Fehler frei'+
+    (D.woerter.length>1?(' · Begriff '+(D.idx+1)+' von '+D.woerter.length):'');
   tasten(); malen(); bar2(); sync();
+}
+function teamAnzeige(){
+  $('teams').hidden=!D.teams;
+  $('bTeams').classList.toggle('on',!!D.teams);
+  $('bReset').hidden=!D.teams;
+  if(!D.teams) return;
+  $('bReset').textContent=(D.punkte[0]||0)+' : '+(D.punkte[1]||0);
+  [...$('teams').children].forEach((el,i)=>{
+    el.classList.toggle('aktiv', (D.dran%2)===i && !geschafft() && !ausgereizt());
+    const inp=el.querySelector('.tn');
+    if(document.activeElement!==inp) inp.value=D.tnamen[i]||('Team '+(i+1));
+    inp.onchange=inp.oninput=()=>{ D.tnamen[i]=inp.value; sync(); };
+    el.querySelector('.p').textContent=D.punkte[i]||0;
+  });
 }
 function tasten(){
   const box=$('tasten'); box.innerHTML='';
@@ -212,14 +244,23 @@ function bar2(){ $('fV').textContent=D.maxF;
 }
 
 /* ---------- Spielzüge ---------- */
+/* Punkte: jeder Treffer zählt einen Punkt, wer das Wort vollendet, bekommt drei dazu.
+   Nach einem Fehler ist das andere Team an der Reihe. */
 function raten(z){
   const g=vergleichbar(z);
   if(D.geraten.includes(g)||geschafft()||ausgereizt()) return;
   D.geraten.push(g);
   const drin=[...wort()].some(x=>istBuchstabe(x)&&vergleichbar(x)===g);
+  if(D.teams){
+    const t=D.dran%2;
+    if(drin) D.punkte[t]=(D.punkte[t]||0)+1;
+    else D.dran=(D.dran+1)%2;
+    if(geschafft()&&!D.gewertet){ D.punkte[t]=(D.punkte[t]||0)+3; D.gewertet=true; }
+  }
   render();
   if(!drin&&ausgereizt()) toast('Aufgebraucht – der Begriff war „'+wort()+'"');
-  else if(geschafft()) toast('Erraten!');
+  else if(geschafft()) toast(D.teams?('Erraten! '+D.tnamen[D.dran%2]+' bekommt 3 Punkte dazu'):'Erraten!');
+  else if(D.teams&&!drin) toast(D.tnamen[D.dran%2]+' ist dran');
 }
 function tipp(){
   if(geschafft()||ausgereizt()) return;
@@ -230,12 +271,15 @@ function tipp(){
   /* ein Tipp kostet einen Fehlversuch */
   const frei=ALPHA.split('').filter(c=>!D.geraten.includes(c)&&![...wort()].some(x=>istBuchstabe(x)&&vergleichbar(x)===c));
   if(frei.length) D.geraten.push(frei[0]);
+  if(D.teams) D.dran=(D.dran+1)%2;                 // der Tipp zählt wie ein Fehlversuch
   render();
 }
 function neuesSpiel(weiter){
   if(!D.woerter.length) return;
   if(weiter) D.idx=(D.idx+1)%D.woerter.length;
-  D.geraten=[]; render();
+  D.geraten=[]; D.gewertet=false;
+  if(D.teams&&weiter) D.dran=(D.dran+1)%2;      // beim nächsten Begriff beginnt das andere Team
+  render();
 }
 
 /* ---------- Begriffe eingeben ---------- */
@@ -267,6 +311,8 @@ btn('bNext',()=>neuesSpiel(true));
 btn('bTipp',tipp);
 btn('fM',()=>{ D.maxF=Math.max(3,D.maxF-1); D.geraten=[]; render(); });
 btn('fP',()=>{ D.maxF=Math.min(12,D.maxF+1); D.geraten=[]; render(); });
+btn('bTeams',()=>{ D.teams=!D.teams; if(D.teams){ D.dran=0; D.gewertet=geschafft(); } render(); });
+btn('bReset',()=>{ D.punkte=[0,0]; D.dran=0; render(); toast('Punkte zurückgesetzt'); });
 btn('bHinweis',()=>{ D.hinweis=!D.hinweis; render(); });
 btn('bUmlaut',()=>{ D.umlaut=!D.umlaut; D.geraten=[]; render(); });
 btn('fsM',()=>{ D.fontSize=Math.max(11,D.fontSize-1); render(); });
@@ -278,7 +324,7 @@ addEventListener('keydown',e=>{ if($('eingabe').classList.contains('an')) return
 
 if(window.TafelLehrplan&&TafelLehrplan.verfuegbar()){
   $('bLehr').onclick=()=>TafelLehrplan.oeffnen({ titel:'Begriffe aus dem Lehrplan',
-    uebernehmen:l=>{ D.woerter=l.map(d=>({w:d.b,h:d.e})); D.idx=0; D.geraten=[]; render();
+    uebernehmen:l=>{ D.woerter=l.map(d=>({w:d.b,h:d.e})); D.idx=0; D.geraten=[]; D.gewertet=false; render();
       toast(l.length+' Begriffe übernommen'); } });
 } else $('bLehr').hidden=true;
 
@@ -297,6 +343,11 @@ function uebernimm(d){
   if(d.hinweis!==undefined) D.hinweis=!!d.hinweis;
   if(d.umlaut!==undefined) D.umlaut=!!d.umlaut;
   if(d.fontSize) D.fontSize=+d.fontSize||16;
+  if(d.teams!==undefined) D.teams=!!d.teams;
+  if(Array.isArray(d.tnamen)) D.tnamen=[String(d.tnamen[0]||'Team 1'),String(d.tnamen[1]||'Team 2')];
+  if(Array.isArray(d.punkte)) D.punkte=[+d.punkte[0]||0,+d.punkte[1]||0];
+  if(typeof d.dran==='number') D.dran=d.dran%2;
+  if(d.gewertet!==undefined) D.gewertet=!!d.gewertet;
   if(d.edit!==undefined) D.edit=d.edit!==false;
 }
 addEventListener('message',e=>{ if(e.source!==window.parent) return;

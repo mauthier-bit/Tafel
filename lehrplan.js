@@ -17,6 +17,8 @@ function stil(){ if(css) return; css=true;
   #lpIn{background:#fff;border-radius:16px;box-shadow:0 12px 40px rgba(15,23,42,.35);width:min(620px,96vw);max-height:92vh;display:flex;flex-direction:column;overflow:hidden;}
   #lpKopf{padding:10px 14px;font-weight:800;background:#f1f5fb;border-bottom:1px solid #e2e7ef;display:flex;justify-content:space-between;align-items:center;font-size:15px;}
   #lpKopf .x{cursor:pointer;color:#64748b;font-size:22px;line-height:1;padding:0 4px;}
+  #lpQuelle{padding:7px 14px;border-bottom:1px solid #e2e7ef;display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
+  #lpQuelle b{font-size:12px;color:#64748b;text-transform:uppercase;letter-spacing:.04em;width:74px;flex:none;}
   #lpFilter{padding:8px 14px;border-bottom:1px solid #e2e7ef;display:flex;flex-direction:column;gap:6px;}
   #lpFilter .zeile{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
   #lpFilter .zeile[data-r="ber"]{max-height:84px;overflow:auto;-webkit-overflow-scrolling:touch;align-items:flex-start;align-content:flex-start;}
@@ -38,15 +40,30 @@ function stil(){ if(css) return; css=true;
   #lpHinweis{font-size:11.5px;color:#94a3b8;padding:0 14px 8px;}`;
   document.head.appendChild(s); }
 
+/* Ein gespeichertes Glossar (Textformat „Begriff = Erklärung", Abschnitte mit „# …") einlesen */
+function ausText(txt,name){
+  const out=[]; let g=name||'Glossar';
+  String(txt||'').split(/\r?\n/).forEach(z=>{ const t=z.trim(); if(!t) return;
+    if(/^#+\s*/.test(t)){ g=t.replace(/^#+\s*/,'').trim()||g; return; }
+    const m=t.match(/^([^=:]{1,60})\s*[=:]\s*(.+)$/);
+    if(m) out.push({f:'', j:0, g, b:m[1].trim(), e:m[2].trim()});
+    else out.push({f:'', j:0, g, b:t, e:''}); });
+  return out;
+}
 function oeffnen(opt){
   opt=opt||{}; stil();
-  const daten=alle();
+  let daten=alle(), quelle='lp';
   let fFach='', fJg=0, fBer='', fQ='';
   const gewaehlt=new Set();
 
   const box=document.createElement('div'); box.id='lpBox';
   box.innerHTML=`<div id="lpIn">
-    <div id="lpKopf"><span>${opt.titel||'Begriffe aus dem Lehrplan'}</span><span class="x">×</span></div>
+    <div id="lpKopf"><span id="lpTitel">${opt.titel||'Begriffe übernehmen'}</span><span class="x">×</span></div>
+    <div id="lpQuelle"><b>Quelle</b>
+      <button class="lpChip on" data-q="lp">Lehrplan-Glossar</button>
+      <button class="lpChip" data-q="datei">📄 eigenes Glossar …</button>
+      <input type="file" id="lpFile" accept=".txt,.json,text/plain,application/json" hidden>
+    </div>
     <div id="lpFilter">
       <div class="zeile" data-r="fach"><b>Fach</b></div>
       <div class="zeile" data-r="jg"><b>Jahrgang</b></div>
@@ -77,8 +94,11 @@ function oeffnen(opt){
         b.onclick=()=>{ setz(val); chips(); liste(); }; z.appendChild(b); };
       mk('alle',sel==='jg'?0:'');
       werte.forEach(v=>mk(sel==='fach'?(FA[v]||v):(sel==='jg'?('Jgst. '+v):v), v)); };
-    bauen('fach',[...new Set(daten.map(d=>d.f))],()=>fFach,v=>{ fFach=v; fBer=''; },'Fach');
-    const jgs=[...new Set(daten.filter(d=>!fFach||d.f===fFach).map(d=>d.j))].sort((a,b)=>a-b);
+    const faecher=[...new Set(daten.map(d=>d.f))].filter(Boolean);
+    $l('.zeile[data-r="fach"]').style.display=faecher.length?'':'none';
+    bauen('fach',faecher,()=>fFach,v=>{ fFach=v; fBer=''; },'Fach');
+    const jgs=[...new Set(daten.filter(d=>!fFach||d.f===fFach).map(d=>d.j))].filter(Boolean).sort((a,b)=>a-b);
+    $l('.zeile[data-r="jg"]').style.display=jgs.length?'':'none';
     bauen('jg',jgs,()=>fJg,v=>{ fJg=v; fBer=''; },'Jahrgang');
     const bers=[...new Set(daten.filter(d=>(!fFach||d.f===fFach)&&(!fJg||d.j===fJg)).map(d=>d.g))];
     bauen('ber',bers,()=>fBer,v=>{ fBer=v; },'Bereich');
@@ -94,7 +114,7 @@ function oeffnen(opt){
       t.innerHTML='<div class="b"></div><div class="e"></div><div class="m"></div>';
       t.querySelector('.b').textContent=d.b;
       t.querySelector('.e').textContent=d.e;
-      t.querySelector('.m').textContent=(FA[d.f]||d.f)+' · Jgst. '+d.j+' · '+d.g;
+      t.querySelector('.m').textContent=d.f?((FA[d.f]||d.f)+' · Jgst. '+d.j+' · '+d.g):d.g;
       z.appendChild(c); z.appendChild(t); box2.appendChild(z);
     });
     if(!list.length) box2.innerHTML='<div style="padding:20px;text-align:center;color:#94a3b8">Keine Begriffe – Filter ändern</div>';
@@ -102,6 +122,20 @@ function oeffnen(opt){
   }
   const info=()=>{ $l('#lpInfo').textContent=sichtbar().length+' Begriffe · '+gewaehlt.size+' ausgewählt'; };
 
+  box.querySelectorAll('#lpQuelle .lpChip').forEach(b=>b.onclick=()=>{
+    if(b.dataset.q==='datei'){ $l('#lpFile').click(); return; }
+    quelle='lp'; daten=alle(); gewaehlt.clear(); fFach=''; fJg=0; fBer='';
+    box.querySelectorAll('#lpQuelle .lpChip').forEach(x=>x.classList.toggle('on',x.dataset.q==='lp'));
+    $l('#lpHinweis').textContent=L.stand||''; chips(); liste(); });
+  $l('#lpFile').onchange=async e=>{ const f=e.target.files[0]; e.target.value=''; if(!f) return;
+    let txt=''; try{ txt=await f.text(); }catch(err){ return; }
+    if(/^\s*[{\[]/.test(txt)){ try{ const o=JSON.parse(txt); txt=(o&&(o.text||o.d&&o.d.text))||txt; }catch(err){} }
+    const neu=ausText(txt, f.name.replace(/\.[^.]+$/,''));
+    if(!neu.length) return;
+    quelle='datei'; daten=neu; gewaehlt.clear(); fFach=''; fJg=0; fBer='';
+    box.querySelectorAll('#lpQuelle .lpChip').forEach(x=>x.classList.toggle('on',x.dataset.q==='datei'));
+    $l('#lpHinweis').textContent='Aus der Datei „'+f.name+'" – '+neu.length+' Begriffe';
+    chips(); liste(); };
   $l('#lpSuche').oninput=e=>{ fQ=e.target.value.trim().toLowerCase(); liste(); };
   $l('#lpAlle').onclick=()=>{ sichtbar().forEach(d=>gewaehlt.add(d)); liste(); };
   $l('#lpKeine').onclick=()=>{ gewaehlt.clear(); liste(); };
@@ -115,7 +149,7 @@ function oeffnen(opt){
     let l=[...gewaehlt];
     if(!l.length) l=sichtbar();                       // nichts angekreuzt: alles Sichtbare übernehmen
     if(!l.length){ zu(); return; }
-    l.sort((a,b)=>a.f.localeCompare(b.f)||a.j-b.j||a.g.localeCompare(b.g,'de')||a.b.localeCompare(b.b,'de'));
+    l.sort((a,b)=>String(a.f).localeCompare(String(b.f))||a.j-b.j||String(a.g).localeCompare(String(b.g),'de')||a.b.localeCompare(b.b,'de'));
     zu(); if(opt.uebernehmen) opt.uebernehmen(l);
   };
   chips(); liste();
@@ -128,8 +162,8 @@ window.TafelLehrplan={
   oeffnen,
   /* hängt einen fertigen Knopf an ein Element */
   knopf(ziel,opt){ if(!ziel) return null; const b=document.createElement('button');
-    b.type='button'; b.className=(opt&&opt.cls)||'btn'; b.textContent=(opt&&opt.text)||'📚 Lehrplan';
-    b.title='Begriffe aus dem Lehrplan-Glossar übernehmen (Mathematik und Physik, nach Jahrgangsstufe und Thema filterbar)';
+    b.type='button'; b.className=(opt&&opt.cls)||'btn'; b.textContent=(opt&&opt.text)||'📚 Begriffe';
+    b.title='Begriffe aus dem Lehrplan-Glossar oder aus einem gespeicherten Glossar übernehmen';
     b.onclick=()=>oeffnen(opt); ziel.appendChild(b); return b; }
 };
 })();

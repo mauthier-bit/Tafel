@@ -432,7 +432,14 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   Buchstaben auf und kostet dafür einen Versuch, **↻ Neues Spiel** geht zum nächsten Begriff.
   Dazu **A−/A+**, **🖼 Tafel / 📋 Kopieren** und der Umschalter **Benutzen/Bearbeiten**; der
   Spielstand wird mit dem Tafel-Projekt gespeichert.
-- **Begriffe aus dem Lehrplan** (Glossar, Kreuzworträtsel, Buchstabengitter, Galgenmännchen):
+  - **Zwei Teams:** Der Schalter **„2 Teams"** blendet über dem Spielfeld zwei Punktekonten ein
+    (die Namen lassen sich antippen und ändern). Das Team, das an der Reihe ist, wird blau
+    hervorgehoben. **Jeder getroffene Buchstabe bringt einen Punkt**, das Team bleibt dran; bei
+    einem **Fehlgriff wechselt** die Reihe. Wer das Wort vollendet, bekommt **drei Punkte dazu**.
+    Ein **Tipp** zählt wie ein Fehlgriff, und beim nächsten Begriff beginnt das andere Team.
+    Der Knopf daneben zeigt den Spielstand und setzt ihn auf Wunsch zurück.
+- **Begriffe aus dem Lehrplan** (Glossar, Kreuzworträtsel, Buchstabengitter, Galgenmännchen,
+  Mindmap, Begriffsnetz, Pinnwand):
   Die Tafel bringt ein **Lehrplan-Glossar** mit rund **395 Fachbegriffen** aus dem **LehrplanPLUS
   Bayern (Gymnasium, G9)** für **Mathematik (Jgst. 5–11 und 13)** und **Physik (Jgst. 7–11;
   Jgst. 7 aus Natur und Technik)** – gegliedert nach den **Lernbereichen** des Lehrplans. Über den
@@ -445,6 +452,15 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   - Im **Buchstabengitter** werden die Begriffe zu Suchwörtern (mehrteilige oder sehr lange
     Begriffe lässt das Gitter aus und sagt das).
   - Im **Galgenmännchen** wird der Begriff zum Rätselwort und die Erklärung zum Hinweis.
+  - In der **Mindmap** werden die Themenbereiche zu Ästen und die Begriffe hängen darunter
+    (anschließend wird automatisch neu geordnet).
+  - Im **Begriffsnetz** erscheinen die Begriffe als Felder im Kreis – verbinden und „✨ Entwirren".
+  - An der **Pinnwand** wird jeder Begriff eine Karte (Begriff oben, Erklärung darunter); die
+    Karten werden gleich sauber ausgerichtet.
+  - **Eigene Glossare:** Im selben Fenster lässt sich über **„📄 eigenes Glossar …"** eine mit dem
+    Glossar-Werkzeug **gespeicherte Datei** laden – dann filtert man statt nach Fach und
+    Jahrgangsstufe nach den **Abschnitten dieser Datei**. So lassen sich auch selbst gepflegte
+    Begriffslisten in alle sieben Werkzeuge übernehmen.
   Die Begriffe folgen den Lernbereichen des Lehrplans, die **Erklärungen sind eigens für die Tafel
   geschrieben** (kurze, schülergerechte Sätze) – der Lehrplantext selbst wird nicht wiedergegeben.
 - **Begriffsnetz** (Diverses): freies **Netz aus Begriffen** – anders als die Mindmap ohne Hierarchie,

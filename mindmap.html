@@ -42,12 +42,15 @@
     <button type="button" id="bCol" title="Farbe des Astes">🎨</button><span id="cols" hidden></span>
     <span class="sep"></span>
     <button type="button" id="bUndo" title="Rückgängig"><svg viewBox="0 0 24 24" class="uico"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg></button>
+    <button type="button" id="bImp" title="Begriffe aus einem Glossar oder dem Lehrplan als Unterpunkte anhängen">📚 Begriffe</button>
     <button type="button" id="bLay" title="Alles kreisförmig um das Thema anordnen">⟳ Ordnen</button>
     <span id="shotBtns"><button type="button" id="fsM" title="Schrift kleiner">A−</button><button type="button" id="fsP" title="Schrift größer">A+</button></span>
   </div>
   <div id="area"><canvas id="cv"></canvas><div id="hint">Knoten antippen = auswählen · nochmal antippen = Text ändern · ziehen = verschieben</div></div>
 </div>
 <script src="shot.js"></script>
+<script src="lehrplan-glossar.js"></script>
+<script src="lehrplan.js"></script>
 <script src="speech.js"></script>
 <script>
 "use strict";
@@ -213,6 +216,24 @@ addEventListener('message',e=>{ if(!(e.data&&e.data.type==='embed-data'&&e.data.
   if(d.fontSize) fontSize=d.fontSize; fontBold=!!d.fontBold; fontItalic=!!d.fontItalic;
   if(!byId(sel)) sel=null; finishEdit(true); render(true); });
 window.addEventListener('load',()=>{ render(true); try{ if(window.parent!==window) parent.postMessage({type:'embed-ready'},'*'); }catch(e){} });
+
+/* Begriffe aus Glossar/Lehrplan als Unterpunkte des ausgewählten Knotens anhängen */
+if(window.TafelLehrplan&&TafelLehrplan.verfuegbar()){
+  btn('bImp',()=>{ finishEdit(true); TafelLehrplan.oeffnen({ titel:'Begriffe in die Mindmap',
+    uebernehmen:l=>{ snap();
+      const par=byId(sel)||nodes[0];
+      /* die Themenbereiche werden zu Ästen, die Begriffe hängen darunter */
+      const bereiche=[...new Set(l.map(d=>d.g))];
+      const proBereich=bereiche.length>1&&bereiche.length<=8;
+      let ast=par;
+      bereiche.forEach(g=>{
+        if(proBereich){ const pos=placeNew(par); ast={id:uid(),p:par.id,t:g,x:pos.x,y:pos.y}; nodes.push(ast); }
+        l.filter(d=>d.g===g).forEach(d=>{ const pos=placeNew(ast);
+          nodes.push({id:uid(),p:ast.id,t:d.b,x:pos.x,y:pos.y}); });
+      });
+      layout(); render(true); sync();
+      toast(l.length+' Begriffe angehängt'); } }); });
+} else { const b=$('bImp'); if(b) b.hidden=true; }
 </script>
 </body>
 </html>
