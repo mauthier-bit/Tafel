@@ -82,7 +82,15 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   voreingestellt sind **Lineal 19 cm** und **Geodreieck 15 cm**, jeweils **mit Millimeter-Skala**;
   die Einstellungen bleiben geräteweit gespeichert. Sie **bleiben aktiv**, während der
   Stift zeichnet. Mit dem Finger am **unteren** Teil verschieben / am Griff (Ecke bzw. Spitze)
-  drehen; mit dem Stift **an der Kante** eine saubere gerade Linie ziehen. Das Geodreieck hat
+  drehen; mit dem Stift **an der Kante** eine saubere gerade Linie ziehen.
+  **Prozentlineal:** Der Schalter **„Prozent 0–100 %"** im ⚙-Menü ersetzt die Zentimeter durch eine
+  **Prozentskala**, die immer **von 0 % am linken bis 100 % am rechten Ende** läuft (Zehnerschritte
+  beschriftet, „Feinstriche" schaltet 2-%- bzw. 5-%-Striche dazu). Dafür bekommt das Lineal **rechts
+  einen zweiten Griff mit ↔**: Damit lässt sich seine **Länge stauchen und strecken** (3–80 cm),
+  wobei die **0 %-Marke stehen bleibt** – so legt man die 100 % auf eine vorgegebene Strecke
+  (Säule, Strecke an der Tafel, Bildbreite) und liest daran direkt Prozente ab. Der **Dreh-Griff**
+  rückt dabei ein Stück nach innen, damit sich die beiden Griffe nicht in die Quere kommen.
+  Das Geodreieck hat
   eine **Winkelskala (0–180°)**, eine Lot-Linie, eine **innenliegende cm-Skala**, deren **Null in der
   Mitte der langen Seite** liegt und die nach links und rechts hochzählt (wie beim echten Geodreieck), und
   **Parallelen zur längsten Seite** (zum Zeichnen von Parallelen).
@@ -693,6 +701,12 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   übrig"), Pausen erscheinen grau. Der Takt ist 1. Std 8:00–8:45, 2. Std 8:45–9:30, Pause bis 9:45,
   3. Std 9:45–10:30, 4. Std 10:30–11:15, Pause bis 11:30, 5. Std 11:30–12:15, 6. Std 12:15–13:00.
   **Digitalanzeige** blendet zusätzlich die Uhrzeit in Ziffern ein.
+  **Immer im Vordergrund** löst die Uhr von der Seite: Sie **schwebt dann über allem** und bleibt beim
+  **Blättern, beim Wechsel der Klasse und nach dem Neuladen** an derselben Stelle stehen (sie gehört
+  dann nicht mehr zum Projekt, sondern zum Gerät – wie die Werkzeugleisten). Verschieben: einfach mit
+  dem Finger anfassen. Das kleine **⚙ im Zifferblatt** (zwischen Mitte und 12) öffnet ihr Menü mit
+  **Größe**, **Schulstunden**, **Digitalanzeige**, **„Wieder als Objekt auf die Seite"** (legt sie mit
+  gleicher Größe und Position zurück auf die aktuelle Seite) und **„Uhr ausblenden"**.
 - **Funktionsplotter** (Werkzeug): Funktionsterm eingeben (mit Parametern **a, b, c** → Schieberegler),
   Malpunkte dürfen fehlen (`2x`, `ax^2+bx+c`, `3(x+1)`, `2sin(x)`, `(x+1)(x−1)`), `|x|` ist der Betrag;
   das Minuszeichen bindet **schwächer als die Potenz** (`-x^2` ist also −(x²), `2^-3` bleibt möglich),

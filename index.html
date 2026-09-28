@@ -681,8 +681,16 @@
 <div class="pop" id="rulerpop">
   <div class="toolrow"><b>Länge</b><button class="p step" id="rulLenM">−</button><span class="stepv" id="rulLenV">20 cm</span><button class="p step" id="rulLenP">+</button></div>
   <div class="toolrow"><label class="propToggle"><span>Millimeter</span><div class="sw2 on" id="rulMm"></div></label><label class="propToggle"><span>Zahlen</span><div class="sw2 on" id="rulNums"></div></label></div>
+  <div class="toolrow"><label class="propToggle" style="width:100%"><span>Prozent 0–100 %<br><small style="color:#888">Länge am Griff rechts anpassen</small></span><div class="sw2" id="rulPct"></div></label></div>
   <div class="swatches" id="rulColors"></div>
   <button class="p" id="rulClose" style="width:100%">Schließen</button>
+</div>
+<div class="pop" id="clockpop">
+  <div class="toolrow"><b>Größe</b><button class="p step" id="pcSizeM">−</button><span class="stepv" id="pcSizeV">7 cm</span><button class="p step" id="pcSizeP">+</button></div>
+  <div class="toolrow"><label class="propToggle"><span>Schulstunden</span><div class="sw2" id="pcSchool"></div></label><label class="propToggle"><span>Digitalanzeige</span><div class="sw2" id="pcDigital"></div></label></div>
+  <button class="p" id="pcToPage" style="width:100%">Wieder als Objekt auf die Seite</button>
+  <button class="p" id="pcOff" style="width:100%">Uhr ausblenden</button>
+  <button class="p" id="pcClose" style="width:100%">Schließen</button>
 </div>
 <div class="pop" id="geopop">
   <div class="toolrow"><b>Größe</b><button class="p step" id="geoSizeM">−</button><span class="stepv" id="geoSizeV">15 cm</span><button class="p step" id="geoSizeP">+</button></div>
@@ -795,6 +803,7 @@
   <div class="prow" id="clockRow" style="display:none;flex-direction:column;align-items:stretch;gap:6px;font-size:13px">
     <label class="propToggle"><span>Schulstunden zeigen</span><div class="sw2" id="clkSchool"></div></label>
     <label class="propToggle"><span>Digitalanzeige</span><div class="sw2" id="clkDigital"></div></label>
+    <label class="propToggle"><span>Immer im Vordergrund<br><small style="color:#888">(über allen Seiten und Klassen)</small></span><div class="sw2" id="clkPin"></div></label>
   </div>
   <div class="prow" id="numRow" style="display:none;flex-direction:column;align-items:stretch;gap:6px;font-size:13px">
     <div style="display:flex;gap:6px;align-items:center;flex-wrap:nowrap"><b style="width:58px">Beginn:</b><button class="p step" id="nlFromM">−</button><span class="stepv" id="nlFromV">0</span><button class="p step" id="nlFromP">+</button></div>
@@ -1345,28 +1354,7 @@ function drawObjectRaw(o,c){
     c.fillStyle='rgba(255,255,255,.88)'; c.fillRect(o.x+o.w-wT-pad*3,o.y+o.h-fs*2.1,wT+pad*2.4,fs*1.7);
     c.fillStyle='#475569'; c.fillText(t,o.x+o.w-pad*1.6,o.y+o.h-pad*1.1); c.restore(); }
   else if(o.type==='embed'){ if(c===ctx) c.clearRect(o.x,o.y,o.w,o.h); else { c.fillStyle='#fff'; c.fillRect(o.x,o.y,o.w,o.h); } c.strokeStyle='rgba(120,130,150,.6)'; c.lineWidth=1/scale; c.strokeRect(o.x,o.y,o.w,o.h); }
-  else if(o.type==='clock'){ const cx=o.x+o.w/2, cy=o.y+o.h/2, r=Math.min(o.w,o.h)/2;
-    c.beginPath(); c.arc(cx,cy,r,0,7); c.fillStyle='#fff'; c.fill(); c.strokeStyle='#1f2430'; c.lineWidth=Math.max(1,r*0.03); c.stroke();
-    if(o.school) drawSchoolRing(c,cx,cy,r,o);
-    c.strokeStyle='#1f2430';
-    for(let i=0;i<12;i++){ const a=i*Math.PI/6, r1=r*0.85, r2=r*0.97; c.lineWidth=Math.max(1,r*(i%3===0?0.045:0.02)); c.beginPath(); c.moveTo(cx+r1*Math.sin(a),cy-r1*Math.cos(a)); c.lineTo(cx+r2*Math.sin(a),cy-r2*Math.cos(a)); c.stroke(); }
-    const n=new Date(), hh=n.getHours()%12, mm=n.getMinutes(), ss=n.getSeconds();
-    const hand=(ang,len,wd,col)=>{ c.strokeStyle=col; c.lineWidth=wd; c.lineCap='round'; c.beginPath(); c.moveTo(cx,cy); c.lineTo(cx+len*Math.sin(ang),cy-len*Math.cos(ang)); c.stroke(); };
-    hand((hh+mm/60)*Math.PI/6, r*0.5, Math.max(2,r*0.06), '#1f2430');
-    hand((mm+ss/60)*Math.PI/30, r*0.75, Math.max(1.5,r*0.04), '#1f2430');
-    hand(ss*Math.PI/30, r*0.82, Math.max(1,r*0.02), '#ef4444');
-    c.beginPath(); c.arc(cx,cy,Math.max(2,r*0.045),0,7); c.fillStyle='#1f2430'; c.fill();
-    if(o.school){ const st=schoolNow(n), txt=st?(st.name+' · '+st.von+'–'+st.bis):'keine Schulstunde';
-      c.textAlign='center'; c.textBaseline='middle'; c.fillStyle=st?st.col:'#64748b';
-      let fsz=Math.max(8,r*0.15); c.font='800 '+fsz+'px -apple-system,sans-serif';
-      const maxW=r*1.15; if(c.measureText(txt).width>maxW){ fsz=Math.max(7,fsz*maxW/c.measureText(txt).width); c.font='800 '+fsz+'px -apple-system,sans-serif'; }
-      c.fillText(txt, cx, cy+r*0.42);
-      if(st){ c.fillStyle='#475569'; c.font='600 '+Math.max(8,r*0.115)+'px -apple-system,sans-serif';
-        c.fillText(st.rest+' min übrig', cx, cy+r*0.58); } }
-    if(o.digital){ const p2=x=>String(x).padStart(2,'0');
-      c.textAlign='center'; c.textBaseline='middle'; c.fillStyle='#1f2430';
-      c.font='800 '+Math.max(10,r*0.2)+'px -apple-system,sans-serif';
-      c.fillText(p2(n.getHours())+':'+p2(mm), cx, cy-r*0.42); } }
+  else if(o.type==='clock') paintClock(c,o.x+o.w/2,o.y+o.h/2,Math.min(o.w,o.h)/2,o);
   else if(o.type==='numline'){ const from=(o.from??0), to=(o.to??10); let st=+o.step; if(!(st>0))st=1;
     const nfc=v=>String(Math.round(v*1e6)/1e6).replace('.',',');
     const col=o.color||'#334155', lw=Math.max(1,o.width||3);
@@ -1521,36 +1509,116 @@ function redraw(){
   if(marquee) drawMarquee();
   if(rulerVisible) drawRuler();
   if(geoVisible) drawGeo();
+  if(pinClock.on) drawPinClock();
   syncEmbeds();
   dirty=false;
 }
 function loop(){ if(innerWidth!==W||innerHeight!==H) onViewResize(); if(dirty||laser.length){ if(laser.length)markDirty(); redraw(); } requestAnimationFrame(loop); }
 
+/* ---- Schwebende Uhr: liegt über allem, bleibt beim Seiten- und Klassenwechsel stehen ----
+   Sie gehört nicht zum Projekt, sondern steht (wie die Werkzeugleisten) im Gerätespeicher. */
+let pinClock={on:false,x:0,y:0,r:70,school:false,digital:false};
+try{ const p0=JSON.parse(localStorage.getItem('tafel_pinclock')||'null'); if(p0) Object.assign(pinClock,p0); }catch(e){}
+function savePinClock(){ try{ localStorage.setItem('tafel_pinclock',JSON.stringify(pinClock)); }catch(e){} }
+function pinClockPos(){ const r=pinClock.r, m=6;                      // immer ganz im Bild, auch nach dem Drehen des iPads
+  return { x:Math.max(r+m,Math.min(pinClock.x||W-r-24, W-r-m)), y:Math.max(r+m,Math.min(pinClock.y||r+24, H-r-m)), r }; }
+function drawPinClock(){ const {x,y,r}=pinClockPos();
+  ctx.setTransform(dpr,0,0,dpr,0,0); ctx.save();
+  ctx.shadowColor='rgba(15,23,42,.28)'; ctx.shadowBlur=14; ctx.shadowOffsetY=3;
+  ctx.beginPath(); ctx.arc(x,y,r,0,7); ctx.fillStyle='#fff'; ctx.fill(); ctx.restore();
+  paintClock(ctx,x,y,r,pinClock);
+  const g=gearPos(x,y,r);                                        // ⚙ im Zifferblatt, zwischen Mitte und der 12
+  ctx.beginPath(); ctx.arc(g.x,g.y,g.r,0,7); ctx.fillStyle='#fff'; ctx.fill();
+  ctx.strokeStyle='rgba(31,36,48,.55)'; ctx.lineWidth=1; ctx.stroke();
+  ctx.fillStyle='#1f2430'; ctx.font=Math.round(g.r*1.15)+'px -apple-system,sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('⚙',g.x,g.y+1);
+  ctx.setTransform(scale*dpr,0,0,scale*dpr,ox*dpr,oy*dpr); }
+const onPinClock=(px,py)=>{ if(!pinClock.on) return false; const p=pinClockPos(); return Math.hypot(px-p.x,py-p.y)<=p.r+2; };
+const gearPos=(x,y,r)=>({x, y:y-r*0.6, r:Math.max(8,Math.min(12,r*0.14))});
+const onPinClockGear=(px,py)=>{ if(!pinClock.on) return false; const p=pinClockPos(), g=gearPos(p.x,p.y,p.r);
+  return Math.hypot(px-g.x,py-g.y)<Math.max(20,g.r+6); };
+/* Uhr-Objekt der Seite in die schwebende Uhr überführen und zurück */
+function clockToPin(o){ const r=Math.min(o.w,o.h)/2*scale, c=toScreen(o.x+o.w/2,o.y+o.h/2);
+  pinClock={on:true,x:c.x,y:c.y,r:Math.max(34,Math.min(Math.min(W,H)/2-10,r)),school:!!o.school,digital:!!o.digital};
+  savePinClock(); pushUndo();
+  const p=page(); const i=p.objects.indexOf(o); if(i>=0) p.objects.splice(i,1);
+  selection=[]; refreshProps(); markDirty(); scheduleAutosave(); }
+function pinToClock(){ const p=pinClockPos(), w=p.r*2/scale, c=toWorld(p.x,p.y);
+  const o={type:'clock',id:uid(),x:c.x-w/2,y:c.y-w/2,w,h:w,school:pinClock.school,digital:pinClock.digital,rot:0,groupId:null};
+  pinClock.on=false; savePinClock(); pushUndo(); page().objects.push(o);
+  setMode('write'); setTool('select'); selection=[o]; refreshProps(); markDirty(); scheduleAutosave(); }
+
 /* ---- Lineal (bleibendes Overlay, unabhängig vom aktiven Werkzeug) ---- */
 const RULCOL='#286edc';
 function rgba(hex,a){ const h=(hex||RULCOL).replace('#',''); const n=parseInt(h.length===3?h.replace(/./g,c=>c+c):h,16);
   return 'rgba('+((n>>16)&255)+','+((n>>8)&255)+','+(n&255)+','+a+')'; }
-let ruler={cx:0,cy:0,angle:0,len:728,color:RULCOL,mm:true,nums:true,init:false}, rulerVisible=false, pendingRulerSnap=false, pendingSnap=null, activeSnap=null;
+let ruler={cx:0,cy:0,angle:0,len:728,color:RULCOL,mm:true,nums:true,pct:false,init:false}, rulerVisible=false, pendingRulerSnap=false, pendingSnap=null, activeSnap=null;
+/* Zifferblatt – von den Uhr-Objekten und von der schwebenden Uhr gemeinsam genutzt */
+function paintClock(c,cx,cy,r,o){
+    c.beginPath(); c.arc(cx,cy,r,0,7); c.fillStyle='#fff'; c.fill(); c.strokeStyle='#1f2430'; c.lineWidth=Math.max(1,r*0.03); c.stroke();
+    if(o.school) drawSchoolRing(c,cx,cy,r,o);
+    c.strokeStyle='#1f2430';
+    for(let i=0;i<12;i++){ const a=i*Math.PI/6, r1=r*0.85, r2=r*0.97; c.lineWidth=Math.max(1,r*(i%3===0?0.045:0.02)); c.beginPath(); c.moveTo(cx+r1*Math.sin(a),cy-r1*Math.cos(a)); c.lineTo(cx+r2*Math.sin(a),cy-r2*Math.cos(a)); c.stroke(); }
+    const n=new Date(), hh=n.getHours()%12, mm=n.getMinutes(), ss=n.getSeconds();
+    const hand=(ang,len,wd,col)=>{ c.strokeStyle=col; c.lineWidth=wd; c.lineCap='round'; c.beginPath(); c.moveTo(cx,cy); c.lineTo(cx+len*Math.sin(ang),cy-len*Math.cos(ang)); c.stroke(); };
+    hand((hh+mm/60)*Math.PI/6, r*0.5, Math.max(2,r*0.06), '#1f2430');
+    hand((mm+ss/60)*Math.PI/30, r*0.75, Math.max(1.5,r*0.04), '#1f2430');
+    hand(ss*Math.PI/30, r*0.82, Math.max(1,r*0.02), '#ef4444');
+    c.beginPath(); c.arc(cx,cy,Math.max(2,r*0.045),0,7); c.fillStyle='#1f2430'; c.fill();
+    if(o.school){ const st=schoolNow(n), txt=st?(st.name+' · '+st.von+'–'+st.bis):'keine Schulstunde';
+      c.textAlign='center'; c.textBaseline='middle'; c.fillStyle=st?st.col:'#64748b';
+      let fsz=Math.max(8,r*0.15); c.font='800 '+fsz+'px -apple-system,sans-serif';
+      const maxW=r*1.15; if(c.measureText(txt).width>maxW){ fsz=Math.max(7,fsz*maxW/c.measureText(txt).width); c.font='800 '+fsz+'px -apple-system,sans-serif'; }
+      c.fillText(txt, cx, cy+r*0.42);
+      if(st){ c.fillStyle='#475569'; c.font='600 '+Math.max(8,r*0.115)+'px -apple-system,sans-serif';
+        c.fillText(st.rest+' min übrig', cx, cy+r*0.58); } }
+    if(o.digital){ const p2=x=>String(x).padStart(2,'0');
+      c.textAlign='center'; c.textBaseline='middle'; c.fillStyle='#1f2430';
+      c.font='800 '+Math.max(10,r*0.2)+'px -apple-system,sans-serif';
+      c.fillText(p2(n.getHours())+':'+p2(mm), cx, cy-(o.on?0.3:0.42)*r); }   // schwebende Uhr: Platz für den ⚙ darüber
+}
 function drawRuler(){ ctx.setTransform(dpr,0,0,dpr,0,0); const{cx,cy,angle,len}=ruler,w=64,col=ruler.color||RULCOL;
   ctx.save(); ctx.translate(cx,cy); ctx.rotate(angle);
   ctx.fillStyle=rgba(col,.16); ctx.strokeStyle=rgba(col,.9); ctx.lineWidth=1.5;
   const ov=PXCM*0.15;                                     // ~1,5 mm Überstand vor der Null (Beschriftung bleibt auf dem Lineal)
   ctx.beginPath(); ctx.rect(-len/2-ov,0,len+2*ov,w); ctx.fill(); ctx.stroke();
   ctx.beginPath(); ctx.moveTo(-len/2-ov,0); ctx.lineTo(len/2+ov,0); ctx.lineWidth=3; ctx.stroke();
-  const cms=Math.floor(len/PXCM); ctx.font='11px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='top';
-  for(let i=0;i<=cms;i++){ const x=-len/2+i*PXCM;
-    ctx.strokeStyle=rgba(col,.75); ctx.lineWidth=1.2; ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,15); ctx.stroke();
-    if(ruler.nums){ ctx.fillStyle=rgba(col,.95); ctx.save(); ctx.translate(x,18); ctx.rotate(-angle); ctx.fillText(String(i),0,0); ctx.restore(); }
-    if(ruler.mm && i<cms){ ctx.strokeStyle=rgba(col,.55); ctx.lineWidth=1;
-      for(let m=1;m<10;m++){ const xm=x+m*PXCM/10; ctx.beginPath(); ctx.moveTo(xm,0); ctx.lineTo(xm,m===5?10:6); ctx.stroke(); } } }
-  ctx.beginPath(); ctx.arc(len/2-16,w/2,12,0,7); ctx.fillStyle=rgba(col,.9); ctx.fill();                 // Dreh-Griff
+  ctx.font='11px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='top';
+  if(ruler.pct){
+    /* Prozentskala: 0 % ganz links, 100 % ganz rechts – die Länge selbst ist frei einstellbar */
+    const fein=ruler.mm?((len/50>=7)?2:((len/20>=7)?5:0)):0;
+    if(fein){ ctx.strokeStyle=rgba(col,.55); ctx.lineWidth=1;
+      for(let q=0;q<=100;q+=fein){ if(q%10===0) continue; const x=-len/2+len*q/100;
+        ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,q%5===0?10:6); ctx.stroke(); } }
+    for(let q=0;q<=100;q+=10){ const x=-len/2+len*q/100;
+      ctx.strokeStyle=rgba(col,.75); ctx.lineWidth=1.2; ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,15); ctx.stroke();
+      if(ruler.nums){ ctx.fillStyle=rgba(col,.95); ctx.save(); ctx.translate(x,18); ctx.rotate(-angle);
+        ctx.fillText(q===100?'100 %':String(q),0,0); ctx.restore(); } }
+  } else {
+    const cms=Math.floor(len/PXCM);
+    for(let i=0;i<=cms;i++){ const x=-len/2+i*PXCM;
+      ctx.strokeStyle=rgba(col,.75); ctx.lineWidth=1.2; ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,15); ctx.stroke();
+      if(ruler.nums){ ctx.fillStyle=rgba(col,.95); ctx.save(); ctx.translate(x,18); ctx.rotate(-angle); ctx.fillText(String(i),0,0); ctx.restore(); }
+      if(ruler.mm && i<cms){ ctx.strokeStyle=rgba(col,.55); ctx.lineWidth=1;
+        for(let m=1;m<10;m++){ const xm=x+m*PXCM/10; ctx.beginPath(); ctx.moveTo(xm,0); ctx.lineTo(xm,m===5?10:6); ctx.stroke(); } } }
+  }
+  if(ruler.pct){                                                                                        // Griff zum Stauchen und Strecken
+    const lx=rulerLenX(); ctx.beginPath(); ctx.arc(lx,w/2,13,0,7); ctx.fillStyle=rgba(col,.95); ctx.fill();
+    ctx.strokeStyle='#fff'; ctx.lineWidth=1.6; ctx.lineCap='round';
+    ctx.save(); ctx.translate(lx,w/2); ctx.rotate(-angle);
+    ctx.beginPath(); ctx.moveTo(-6,0); ctx.lineTo(6,0); ctx.moveTo(-6,0); ctx.lineTo(-3,-3); ctx.moveTo(-6,0); ctx.lineTo(-3,3);
+    ctx.moveTo(6,0); ctx.lineTo(3,-3); ctx.moveTo(6,0); ctx.lineTo(3,3); ctx.stroke(); ctx.restore();
+  }
+  ctx.beginPath(); ctx.arc(rulerRotX(),w/2,12,0,7); ctx.fillStyle=rgba(col,.9); ctx.fill();              // Dreh-Griff
   ctx.beginPath(); ctx.arc(-len/2+18,w/2,12,0,7); ctx.fillStyle=rgba(col,.9); ctx.fill();                // Einstellungen
   ctx.fillStyle='#fff'; ctx.font='13px sans-serif'; ctx.textBaseline='middle'; ctx.save(); ctx.translate(-len/2+18,w/2); ctx.rotate(-angle); ctx.fillText('⚙',0,1); ctx.restore();
   ctx.restore(); ctx.setTransform(scale*dpr,0,0,scale*dpr,ox*dpr,oy*dpr); }
+const rulerRotX=()=>ruler.len/2-(ruler.pct?46:16);        // im %-Modus rückt der Dreh-Griff nach innen
+const rulerLenX=()=>ruler.len/2-16;                        // ganz außen: Länge stauchen/strecken
 const onRulerGear=(x,y)=>{const l=rulerLocal(x,y);return Math.hypot(l.x-(-ruler.len/2+18),l.y-32)<20;};
+const onRulerLen=(x,y)=>{ if(!ruler.pct) return false; const l=rulerLocal(x,y); return Math.hypot(l.x-rulerLenX(),l.y-32)<20; };
 function rulerLocal(x,y){ const dx=x-ruler.cx,dy=y-ruler.cy,c=Math.cos(-ruler.angle),s=Math.sin(-ruler.angle); return {x:dx*c-dy*s,y:dx*s+dy*c}; }
 const onRulerBody=(x,y)=>{const l=rulerLocal(x,y);return Math.abs(l.x)<=ruler.len/2&&l.y>=-8&&l.y<=72;};
-const onRulerHandle=(x,y)=>{const l=rulerLocal(x,y);return Math.hypot(l.x-(ruler.len/2-16),l.y-32)<20;};
+const onRulerHandle=(x,y)=>{const l=rulerLocal(x,y);return Math.hypot(l.x-rulerRotX(),l.y-32)<(ruler.pct?16:20);};
 function snapToRuler(x,y){ const l=rulerLocal(x,y),c=Math.cos(ruler.angle),s=Math.sin(ruler.angle); return {x:ruler.cx+l.x*c,y:ruler.cy+l.x*s}; }
 function localTo(cx,cy,angle,x,y){ const dx=x-cx,dy=y-cy,c=Math.cos(-angle),s=Math.sin(-angle); return {x:dx*c-dy*s,y:dx*s+dy*c}; }
 function snapToLine(cx,cy,angle,x,y){ const l=localTo(cx,cy,angle,x,y),c=Math.cos(angle),s=Math.sin(angle); return {x:cx+l.x*c,y:cy+l.x*s}; }
@@ -1687,9 +1755,16 @@ cv.addEventListener('pointerdown',e=>{ if(e.pointerType==='mouse'&&e.button!==0)
     }
   }
   pendingRulerSnap=false; pendingSnap=null; pendingGeoRay=false; cancelGeoRay();
+  if(pinClock.on){
+    if(onPinClockGear(e.clientX,e.clientY)){ const p0=pinClockPos(); openClockPop(p0.x,p0.y+p0.r+12); return; }   // unter der Uhr, damit sie sichtbar bleibt
+    if(onPinClock(e.clientX,e.clientY)){ const p0=pinClockPos();
+      rulerDrag={mode:'pinclock',id:e.pointerId,dx:e.clientX-p0.x,dy:e.clientY-p0.y}; return; }
+  }
   if(rulerVisible){
     const L=rulerLocal(e.clientX,e.clientY), inLen=Math.abs(L.x)<=ruler.len/2;
     if(onRulerGear(e.clientX,e.clientY)){ openToolPop('ruler',e.clientX,e.clientY); return; }
+    if(onRulerLen(e.clientX,e.clientY)){ const c=Math.cos(ruler.angle), sn=Math.sin(ruler.angle);
+      rulerDrag={mode:'len',id:e.pointerId,lx:ruler.cx-c*ruler.len/2,ly:ruler.cy-sn*ruler.len/2}; return; }   // 0 % bleibt stehen
     if(onRulerHandle(e.clientX,e.clientY)){ rulerDrag={mode:'rot',id:e.pointerId}; return; }
     if(inLen && L.y>=18 && L.y<=72){ rulerDrag={mode:'move',id:e.pointerId,dx:e.clientX-ruler.cx,dy:e.clientY-ruler.cy}; return; } // untere Hälfte = greifen
     if(inLen && L.y>=-44 && L.y<=20 && isDraw(e)){ pendingRulerSnap=true; pendingSnap={cx:ruler.cx,cy:ruler.cy,angle:ruler.angle}; } // an der Kante = saubere Linie
@@ -1714,8 +1789,12 @@ cv.addEventListener('pointermove',e=>{ const p=pointers.get(e.pointerId); if(!p)
   if(objGesture){ updateObjGesture(); return; }
   if(tool==='spot'){ updateSpot(); return; }
   if(rulerDrag&&rulerDrag.id===e.pointerId){
-    if(rulerDrag.mode==='move'){ruler.cx=e.clientX-rulerDrag.dx;ruler.cy=e.clientY-rulerDrag.dy;}
+    if(rulerDrag.mode==='pinclock'){ pinClock.x=e.clientX-rulerDrag.dx; pinClock.y=e.clientY-rulerDrag.dy; }
+    else if(rulerDrag.mode==='move'){ruler.cx=e.clientX-rulerDrag.dx;ruler.cy=e.clientY-rulerDrag.dy;}
     else if(rulerDrag.mode==='rot'){ruler.angle=Math.atan2(e.clientY-ruler.cy,e.clientX-ruler.cx);}
+    else if(rulerDrag.mode==='len'){ const c=Math.cos(ruler.angle), sn=Math.sin(ruler.angle);
+      const d=Math.max(PXCM*3,Math.min(PXCM*80,(e.clientX-rulerDrag.lx)*c+(e.clientY-rulerDrag.ly)*sn));
+      ruler.len=d; ruler.cx=rulerDrag.lx+c*d/2; ruler.cy=rulerDrag.ly+sn*d/2; refreshToolPops(); }
     else if(rulerDrag.mode==='gmove'){geo.cx=e.clientX-rulerDrag.dx;geo.cy=e.clientY-rulerDrag.dy;}
     else if(rulerDrag.mode==='grot'){geo.angle=Math.atan2(e.clientY-geo.cy,e.clientX-geo.cx)+Math.PI/2;}
     markDirty(); return; }
@@ -1724,7 +1803,7 @@ cv.addEventListener('pointermove',e=>{ const p=pointers.get(e.pointerId); if(!p)
 },{passive:false});
 function endPointer(e){ const p=pointers.get(e.pointerId); lastInputT=performance.now();
   if(objGesture&&objGesture.ids.includes(e.pointerId)){ objGesture=null; scheduleAutosave(); }
-  if(rulerDrag&&rulerDrag.id===e.pointerId) rulerDrag=null;
+  if(rulerDrag&&rulerDrag.id===e.pointerId){ if(rulerDrag.mode==='len') saveUI(); if(rulerDrag.mode==='pinclock'){ const p0=pinClockPos(); pinClock.x=p0.x; pinClock.y=p0.y; savePinClock(); } rulerDrag=null; }
   if(e.pointerId===drawId){ endAction(e); drawId=null; }        // auch ohne Eintrag in der Zeigerliste
   if(!p) return;
   pointers.delete(e.pointerId); if(pointers.size<2) spotBase=null;
@@ -2145,14 +2224,31 @@ function placeAt(el,x,y){ const w=el.offsetWidth,h=el.offsetHeight;
   el.style.left=Math.max(8,Math.min(x+14,innerWidth-w-8))+'px';
   el.style.top=Math.max(8,Math.min(y-h/2,innerHeight-h-8))+'px'; }
 function refreshToolPops(){ $('rulLenV').textContent=cmTxt(ruler.len); $('rulMm').classList.toggle('on',!!ruler.mm); $('rulNums').classList.toggle('on',!!ruler.nums);
+  $('rulPct').classList.toggle('on',!!ruler.pct);
+  $('rulMm').parentNode.querySelector('span').textContent=ruler.pct?'Feinstriche':'Millimeter';
   $('geoSizeV').textContent=cmTxt(geo.size); $('geoMm').classList.toggle('on',!!geo.mm); $('geoNums').classList.toggle('on',!!geo.nums);
   const mark=(el,c)=>el.querySelectorAll('.sw').forEach(s2=>s2.classList.toggle('active',s2.dataset.c===c));
   mark($('rulColors'),ruler.color); mark($('geoColors'),geo.color); }
 function openToolPop(which,x,y){ closeAllPops(); const p=$(which==='ruler'?'rulerpop':'geopop');
   refreshToolPops(); p.classList.add('show'); placeAt(p,x,y); }
+/* Einstellungen der schwebenden Uhr (⚙ an der Uhr) */
+function refreshClockPop(){ $('pcSizeV').textContent=cmTxt(pinClock.r*2);
+  $('pcSchool').classList.toggle('on',!!pinClock.school); $('pcDigital').classList.toggle('on',!!pinClock.digital); }
+function openClockPop(x,y){ closeAllPops(); refreshClockPop(); const p=$('clockpop'); p.classList.add('show'); placeAt(p,x,y); }
+$('pcSizeM').onclick=()=>pcSize(-1); $('pcSizeP').onclick=()=>pcSize(1);
+function pcSize(d){ pinClock.r=Math.max(34,Math.min(Math.min(W,H)/2-10,pinClock.r+d*PXCM*0.5));
+  refreshClockPop(); savePinClock(); markDirty(); }
+$('pcSchool').onclick=()=>{ pinClock.school=!pinClock.school; refreshClockPop(); savePinClock(); markDirty(); };
+$('pcDigital').onclick=()=>{ pinClock.digital=!pinClock.digital; refreshClockPop(); savePinClock(); markDirty(); };
+$('pcToPage').onclick=()=>{ $('clockpop').classList.remove('show'); pinToClock(); toast('Uhr liegt wieder als Objekt auf der Seite'); };
+$('pcOff').onclick=()=>{ $('clockpop').classList.remove('show'); pinClock.on=false; savePinClock(); markDirty(); toast('Uhr ausgeblendet'); };
+$('pcClose').onclick=()=>$('clockpop').classList.remove('show');
 buildSwatches($('rulColors'),c=>{ ruler.color=c; markDirty(); saveUI(); });
 buildSwatches($('geoColors'),c=>{ geo.color=c; markDirty(); saveUI(); });
-function rulLen(d){ ruler.len=Math.max(PXCM*8,Math.min(PXCM*40,ruler.len+d*PXCM*2)); refreshToolPops(); markDirty(); saveUI(); }
+function rulLen(d){ const min=ruler.pct?PXCM*3:PXCM*8, max=ruler.pct?PXCM*80:PXCM*40;
+  ruler.len=Math.max(min,Math.min(max,ruler.len+d*PXCM*(ruler.pct?1:2))); refreshToolPops(); markDirty(); saveUI(); }
+$('rulPct').onclick=()=>{ ruler.pct=!ruler.pct; refreshToolPops(); markDirty(); saveUI();
+  toast(ruler.pct?'Prozentlineal: 0–100 % über die ganze Länge – am Griff rechts an eine Strecke anpassen':'Zentimeter-Lineal'); };
 $('rulLenM').onclick=()=>rulLen(-1); $('rulLenP').onclick=()=>rulLen(1);
 $('rulMm').onclick=()=>{ ruler.mm=!ruler.mm; refreshToolPops(); markDirty(); saveUI(); };
 $('rulNums').onclick=()=>{ ruler.nums=!ruler.nums; refreshToolPops(); markDirty(); saveUI(); };
@@ -2336,7 +2432,8 @@ function refreshProps(){ const has=selection.length>0 && tool==='select';
     const txo=(selection.length>0 && selection.every(o=>o.type==='text'))?selection[0]:null; $('textRow').style.display=txo?'flex':'none';
     if(txo){ $('txtBold').classList.toggle('on',!!txo.bold); $('txtItalic').classList.toggle('on',!!txo.italic); $('txtBullet').classList.toggle('on',!!txo.bullet); $('txtSizeV').textContent=txo.size||28; }
     const clk=(selection.length===1&&selection[0].type==='clock')?selection[0]:null; $('clockRow').style.display=clk?'flex':'none';
-    if(clk){ $('clkSchool').classList.toggle('on',!!clk.school); $('clkDigital').classList.toggle('on',!!clk.digital); }
+    if(clk){ $('clkSchool').classList.toggle('on',!!clk.school); $('clkDigital').classList.toggle('on',!!clk.digital);
+      $('clkPin').classList.remove('on'); }                      // ein Objekt ist nie gleichzeitig die schwebende Uhr
     const nl=(selection.length===1&&selection[0].type==='numline')?selection[0]:null; $('numRow').style.display=nl?'flex':'none';
     const lo=(selection.length===1&&selection[0].type==='shape'&&LABEL_SHAPES.includes(selection[0].shape))?selection[0]:null; $('lblRow').style.display=lo?'flex':'none';
     if($('win-lbl').classList.contains('show')) renderLblEdit();
@@ -2993,13 +3090,13 @@ $('pageMenu').addEventListener('pointerdown',e=>e.stopPropagation());
 document.addEventListener('pointerdown',e=>{ if($('pageMenu').classList.contains('show') && !e.target.closest('#pageMenu') && !e.target.closest('.pmBtn')) closePageMenu(); }, true);
 $('setMin').onclick=()=>{ $('settingsbar').classList.toggle('min'); rotateChev('setMin',$('settingsbar').classList.contains('min'),true); saveUI(); positionAnnoToggle(); };
 function rotateChev(id,min){ $(id).querySelector('svg').style.transform=min?'scaleX(-1)':''; }
-function saveUI(){ try{ localStorage.setItem('tafel_ui',JSON.stringify({page:$('pagebar').classList.contains('min'),set:$('settingsbar').classList.contains('min'),side:mainbarSide,theme:barTheme,tint:barTint,favs,pxcm:PXCM,pal:palette,cols:toolColors,rec:shapeRecog,wv:2,pw:penWidth,mw:markerWidth,rul:{len:ruler.len,color:ruler.color,mm:ruler.mm,nums:ruler.nums},geo:{size:geo.size,color:geo.color,mm:geo.mm,nums:geo.nums}})); }catch(e){} }
+function saveUI(){ try{ localStorage.setItem('tafel_ui',JSON.stringify({page:$('pagebar').classList.contains('min'),set:$('settingsbar').classList.contains('min'),side:mainbarSide,theme:barTheme,tint:barTint,favs,pxcm:PXCM,pal:palette,cols:toolColors,rec:shapeRecog,wv:2,pw:penWidth,mw:markerWidth,rul:{len:ruler.len,color:ruler.color,mm:ruler.mm,nums:ruler.nums,pct:ruler.pct},geo:{size:geo.size,color:geo.color,mm:geo.mm,nums:geo.nums}})); }catch(e){} }
 function restoreUI(){ try{ const u=JSON.parse(localStorage.getItem('tafel_ui')||'{}'); if(u.page){$('pagebar').classList.add('min');pageChev(true);} if(u.set){$('settingsbar').classList.add('min');rotateChev('setMin',true);} if(u.side==='right'||u.side==='bottom')mainbarSide=u.side; if(u.theme==='light'||u.theme==='dark')barTheme=u.theme; if(u.tint&&typeof u.tint==='object')barTint=Object.assign(barTint,u.tint); if(Array.isArray(u.favs))favs=u.favs.slice(0,FAV_MAX);
   if(+u.pxcm>0&&Math.abs(+u.pxcm-37.8)>0.2) PXCM=Math.max(28,Math.min(64,+u.pxcm));   // alter Standard 37,8 → neuer, am iPad gemessener Wert
   if(Array.isArray(u.pal)&&u.pal.length===palette.length&&u.pal.every(c=>/^#[0-9a-f]{6}$/i.test(c))) palette=u.pal.slice();
   if(u.rec){ shapeRecog=true; $('shapeRecogSw').classList.add('on'); }
   if(u.cols&&typeof u.cols==='object')Object.assign(toolColors,u.cols); if(u.wv===2){ if(+u.pw>0)penWidth=+u.pw; if(+u.mw>0)markerWidth=+u.mw; }   // ältere Stärken (4 Stufen) verwerfen
-  if(u.rul)Object.assign(ruler,{len:+u.rul.len||ruler.len,color:u.rul.color||ruler.color,mm:u.rul.mm!==false,nums:u.rul.nums!==false});
+  if(u.rul)Object.assign(ruler,{len:+u.rul.len||ruler.len,color:u.rul.color||ruler.color,mm:u.rul.mm!==false,nums:u.rul.nums!==false,pct:!!u.rul.pct});
   if(u.geo)Object.assign(geo,{size:+u.geo.size||geo.size,color:u.geo.color||geo.color,mm:u.geo.mm!==false,nums:u.geo.nums!==false});
   applyBarsState(); refreshBarTheme(); renderFavs(); buildFavList(); buildPalEdit(); repaintPalette(); applyToolColor(); refreshCal(); }catch(e){} }
 
@@ -4382,6 +4479,8 @@ $('clkSchool').onclick=()=>{ const o=selection[0]; if(!o||o.type!=='clock') retu
   toast(o.school?'Schulstunden werden angezeigt':'Schulstunden ausgeblendet'); };
 $('clkDigital').onclick=()=>{ const o=selection[0]; if(!o||o.type!=='clock') return; pushUndo(); o.digital=!o.digital;
   $('clkDigital').classList.toggle('on',!!o.digital); markDirty(); scheduleAutosave(); };
+$('clkPin').onclick=()=>{ const o=selection[0]; if(!o||o.type!=='clock') return; clockToPin(o);
+  toast('Die Uhr bleibt jetzt auf allen Seiten und in allen Klassen sichtbar – ⚙ an der Uhr für Größe und Anzeige'); };
 /* ---- Schulstunden (Bayern, 45-Minuten-Takt) ---- */
 const SCHOOL=[ {n:'1. Stunde',a:8*60,b:8*60+45,c:'#2563eb'}, {n:'2. Stunde',a:8*60+45,b:9*60+30,c:'#0d9488'},
   {n:'Pause',a:9*60+30,b:9*60+45,c:'#94a3b8',p:1}, {n:'3. Stunde',a:9*60+45,b:10*60+30,c:'#b45309'},
@@ -4413,7 +4512,7 @@ function addNumlineObject(){ const w=Math.min(W*0.7,760)/scale, h=90/scale, c=to
   const o={type:'numline',id:uid(),x:c.x-w/2,y:c.y-h/2,w,h,from:0,to:10,step:1,labelSize:14,rot:0,groupId:null};
   pushUndo(); page().objects.push(o); setMode('write'); setTool('select'); selection=[o]; refreshProps(); markDirty(); scheduleAutosave(); toast('Zahlenstrahl eingefügt'); }
 function addCoordObject(){ const sz=Math.min(W,H)*0.5/scale, c=toWorld(W/2,H/2); const o={type:'coord',id:uid(),x:c.x-sz/2,y:c.y-sz/2,w:sz,h:sz,xMin:-5,xMax:5,yMin:-5,yMax:5,rot:0,groupId:null}; pushUndo(); page().objects.push(o); setMode('write'); setTool('select'); selection=[o]; refreshProps(); markDirty(); scheduleAutosave(); toast('Koordinatensystem eingefügt'); }
-setInterval(()=>{ if(doc.pages[doc.cur].objects.some(o=>o.type==='clock')) markDirty(); },1000);   // Uhr lebendig halten
+setInterval(()=>{ if(pinClock.on||doc.pages[doc.cur].objects.some(o=>o.type==='clock')) markDirty(); },1000);   // Uhr lebendig halten
 
 /* ---- Funktionsplotter / Vierfeldertafel / Baumdiagramm (als Embed-Objekte) ---- */
 $('w-plot').onclick=()=>addEmbedObject('plotter','plotter.html','Funktionsplotter',{funcs:[{term:'a*x^2+b*x+c'}],params:{a:1,b:0,c:0},activeIdx:0});
