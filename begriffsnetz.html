@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Begriffsnetz</title>
+<style>
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#1f2430;overflow:hidden;
+    -webkit-text-size-adjust:100%;}
+  #app{display:flex;flex-direction:column;height:100%;}
+  .bar{flex:none;display:flex;gap:5px;align-items:center;padding:6px 8px;border-bottom:1px solid #e6eaf0;
+    flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;font-size:13px;}
+  .bar>*{flex:0 0 auto;}
+  .bar::-webkit-scrollbar{height:4px;} .bar::-webkit-scrollbar-thumb{background:#cfd6e0;border-radius:2px;}
+  .bar button{border:1px solid #cfd6e0;background:#fff;border-radius:8px;padding:5px 10px;font:600 13px -apple-system,sans-serif;
+    cursor:pointer;color:#1f2430;white-space:nowrap;}
+  .bar button.pri{background:#2563eb;border-color:#2563eb;color:#fff;}
+  .bar button.on{background:#2563eb;border-color:#2563eb;color:#fff;}
+  .bar button:disabled{opacity:.4;cursor:default;}
+  .sep{width:1px;align-self:stretch;background:#e6eaf0;margin:0 3px;}
+  .lbl{color:#64748b;font-weight:600;}
+  .grow{flex:1 1 auto!important;min-width:4px;}
+  #cols{display:inline-flex;gap:4px;} #cols[hidden]{display:none;}
+  #cols i{width:21px;height:21px;border-radius:50%;cursor:pointer;border:2px solid #fff;box-shadow:0 0 0 1px #cfd6e0;display:inline-block;}
+  #area{flex:1;position:relative;min-height:0;overflow:hidden;touch-action:none;background:#fff;}
+  canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;}
+  .node{position:absolute;transform:translate(-50%,-50%);padding:.3em .7em;border:2px solid #2563eb;border-radius:12px;background:#fff;
+    white-space:pre-wrap;text-align:center;max-width:11em;line-height:1.2;cursor:pointer;user-select:none;-webkit-user-select:none;
+    overflow-wrap:break-word;box-shadow:0 1px 3px rgba(15,23,42,.12);}
+  .node.sel{box-shadow:0 0 0 3px rgba(37,99,235,.35);}
+  .node.link{border-style:dashed;}
+  .node.ph{color:#9aa4b2;}
+  textarea.edit{position:absolute;transform:translate(-50%,-50%);z-index:5;border:2px solid #2563eb;border-radius:10px;padding:.3em .6em;
+    font-family:inherit;text-align:center;resize:none;outline:none;background:#fff;line-height:1.2;box-shadow:0 4px 16px rgba(0,0,0,.18);}
+  #hint{position:absolute;left:8px;bottom:6px;right:8px;font-size:12px;color:#8a93a2;pointer-events:none;}
+  #bar button .uico{width:17px;height:17px;display:block;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;}
+  body.nurBenutzen .tafelEdit{display:none!important;}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="bar" id="bar">
+    <span id="barL"></span>
+    <button type="button" id="bAdd" class="pri tafelEdit" title="Neues Begriffsfeld anlegen">+ Begriff</button>
+    <button type="button" id="bLink" class="tafelEdit" title="Zwei Begriffe verbinden: erst den einen, dann den anderen antippen">🔗 Verbinden</button>
+    <button type="button" id="bEdit" class="tafelEdit" title="Beschriftung ändern">✎</button>
+    <button type="button" id="bDel" class="tafelEdit" title="Ausgewähltes löschen">🗑</button>
+    <span class="sep tafelEdit"></span>
+    <button type="button" id="bCol" class="tafelEdit" title="Farbe">🎨</button><span id="cols" hidden></span>
+    <button type="button" id="bUndo" class="tafelEdit" title="Rückgängig"><svg viewBox="0 0 24 24" class="uico"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg></button>
+    <span class="grow"></span>
+    <span id="barMid"></span>
+    <span id="barR"></span>
+  </div>
+  <div class="bar" id="bar2">
+    <button type="button" id="bOrder" class="pri" title="Das Netz überschneidungsarm neu anordnen">✨ Entwirren</button>
+    <button type="button" id="bGrad" class="on" title="Begriffe mit vielen Verbindungen größer zeigen">Größe = Verbindungen</button>
+    <button type="button" id="bLabels" title="Beschriftungen an den Verbindungen anzeigen">Linien beschriften</button>
+    <span class="sep"></span>
+    <span class="lbl">Schrift</span>
+    <button type="button" id="fsM" title="Schrift kleiner">A−</button>
+    <button type="button" id="fsP" title="Schrift größer">A+</button>
+    <span class="sep"></span>
+    <button type="button" id="bNew" class="tafelEdit" title="Neues, leeres Netz">Neu</button>
+    <button type="button" id="bSave" class="tafelEdit" title="Netz als Datei sichern">Speichern</button>
+    <button type="button" id="bLoad" class="tafelEdit" title="Netz aus Datei laden">Laden</button>
+    <span class="grow"></span>
+    <span id="shotBtns"></span>
+  </div>
+  <div id="area"><canvas id="cv"></canvas>
+    <div id="hint">Feld antippen = auswählen · nochmal antippen = Text ändern · ziehen = verschieben · auf freie Fläche doppeltippen = neuer Begriff</div>
+  </div>
+</div>
+<input type="file" id="file" accept=".json,application/json" hidden>
+<script src="shot.js"></script>
+<script src="modus.js"></script>
+<script>
+"use strict";
+const $=id=>document.getElementById(id), area=$('area'), cv=$('cv'), ctx=cv.getContext('2d');
+const PAL=['#2563eb','#dc2626','#16a34a','#d97706','#7c3aed','#db2777','#0891b2','#475569'];
+const toast=m=>window.TafelShot?TafelShot.toast(m):alert(m);
+const uid=()=>Math.random().toString(36).slice(2,9);
+
+/* ---------- Daten ---------- */
+let D={ nodes:[], edges:[], fontSize:16, grad:true, labels:false, edit:true };
+let sel=null;                       /* {typ:'node',id} oder {typ:'edge',i} */
+let linkFrom=null, editing=null, drag=null, view={k:1,ox:0,oy:0}, undoStack=[], anim=null;
+const els=new Map();
+const byId=id=>D.nodes.find(n=>n.id===id);
+const grad=id=>D.edges.reduce((s,e)=>s+((e.a===id||e.b===id)?1:0),0);
+
+function beispiel(){
+  const n=(t,x,y)=>({id:uid(),t,x,y});
+  const a=n('Energie',0,0), b=n('Arbeit',-170,-110), c=n('Leistung',170,-110),
+        d=n('Kraft',-250,60), e=n('Weg',-90,140), f=n('Zeit',250,60);
+  D.nodes=[a,b,c,d,e,f];
+  D.edges=[{a:a.id,b:b.id,t:'wird übertragen durch'},{a:a.id,b:c.id,t:''},{a:b.id,b:d.id,t:''},
+           {a:b.id,b:e.id,t:''},{a:c.id,b:f.id,t:''},{a:c.id,b:b.id,t:'je Zeit'}];
+}
+beispiel();
+
+/* ---------- Darstellung ---------- */
+const fsOf=n=>{ const g=D.grad?Math.min(grad(n.id),8):0; return Math.round(D.fontSize*(1+g*0.11)); };
+function bounds(){ if(!D.nodes.length) return {x0:-100,y0:-100,x1:100,y1:100};
+  let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
+  for(const n of D.nodes){ const el=els.get(n.id); const w=(el?el.offsetWidth:90)/2/view.k, h=(el?el.offsetHeight:34)/2/view.k;
+    x0=Math.min(x0,n.x-w); x1=Math.max(x1,n.x+w); y0=Math.min(y0,n.y-h); y1=Math.max(y1,n.y+h); }
+  return {x0,y0,x1,y1}; }
+const hintAn=()=>D.edit!==false && area.clientHeight>250;
+function fitView(){ const b=bounds(), pad=22, unten=pad+(hintAn()?30:0);   // Platz für die Hinweiszeile
+  const w=Math.max(1,b.x1-b.x0), h=Math.max(1,b.y1-b.y0);
+  /* auch vergrößern, wenn das Netz klein ist – sonst klebt alles in der Mitte */
+  const k=Math.min(2,(area.clientWidth-2*pad)/w,(area.clientHeight-pad-unten)/h);
+  view.k=Math.max(0.12,k);
+  view.ox=area.clientWidth/2-((b.x0+b.x1)/2)*view.k;
+  view.oy=(pad+(area.clientHeight-unten))/2-((b.y0+b.y1)/2)*view.k; }
+const S=(x,y)=>({x:view.ox+x*view.k, y:view.oy+y*view.k});
+const W2=(x,y)=>({x:(x-view.ox)/view.k, y:(y-view.oy)/view.k});
+
+/* Linie am Rand des Feldes abschneiden, damit sie nicht in die Schrift läuft */
+function randPunkt(n,zx,zy){ const el=els.get(n.id); const w=(el?el.offsetWidth:90)/2+3, h=(el?el.offsetHeight:34)/2+3;
+  const p=S(n.x,n.y), dx=zx-p.x, dy=zy-p.y; if(!dx&&!dy) return p;
+  const t=Math.min(Math.abs(dx)>1e-6?w/Math.abs(dx):1e9, Math.abs(dy)>1e-6?h/Math.abs(dy):1e9);
+  return {x:p.x+dx*Math.min(1,t), y:p.y+dy*Math.min(1,t)}; }
+
+function render(refit){
+  for(const n of D.nodes){ let el=els.get(n.id);
+    if(!el){ el=document.createElement('div'); el.className='node'; el.dataset.id=n.id; area.appendChild(el); els.set(n.id,el); } }
+  for(const [id,el] of [...els]) if(!byId(id)){ el.remove(); els.delete(id); }
+  const beschrifte=()=>{ for(const n of D.nodes){ const el=els.get(n.id);
+    el.textContent=n.t||'Begriff'; el.classList.toggle('ph',!n.t);
+    el.style.fontSize=Math.max(7,fsOf(n)*Math.min(1,view.k))+'px';   // im kleinen Objektfenster schrumpft die Schrift mit
+    el.style.borderColor=n.c||'#2563eb';
+    el.classList.toggle('sel',!!sel&&sel.typ==='node'&&sel.id===n.id);
+    el.classList.toggle('link',linkFrom===n.id); } };
+  beschrifte();
+  if(refit!==false){ fitView(); beschrifte(); fitView(); beschrifte(); }   // Maße und Maßstab pendeln sich in zwei Schritten ein
+  for(const n of D.nodes){ const el=els.get(n.id), p=S(n.x,n.y);
+    el.style.left=p.x+'px'; el.style.top=p.y+'px'; el.style.transform='translate(-50%,-50%)'; }
+  $('hint').style.display=hintAn()?'':'none';
+  zeichneKanten();
+}
+function zeichneKanten(){
+  const dpr=Math.max(1,Math.min(3,devicePixelRatio||1)), w=area.clientWidth, h=area.clientHeight;
+  cv.width=Math.round(w*dpr); cv.height=Math.round(h*dpr); ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,w,h);
+  ctx.lineCap='round';
+  D.edges.forEach((e,i)=>{ const a=byId(e.a), b=byId(e.b); if(!a||!b) return;
+    const pa=S(a.x,a.y), pb=S(b.x,b.y);
+    const p1=randPunkt(a,pb.x,pb.y), p2=randPunkt(b,pa.x,pa.y);
+    const aktiv=!!sel&&sel.typ==='edge'&&sel.i===i;
+    ctx.strokeStyle=aktiv?'#2563eb':'rgba(71,85,105,.75)'; ctx.lineWidth=aktiv?3.5:2;
+    ctx.beginPath(); ctx.moveTo(p1.x,p1.y); ctx.lineTo(p2.x,p2.y); ctx.stroke();
+    if(D.labels&&e.t){ const mx=(p1.x+p2.x)/2, my=(p1.y+p2.y)/2, fs=Math.max(8,Math.round(D.fontSize*0.72*Math.min(1,view.k)));
+      ctx.font=fs+'px -apple-system,sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+      const tw=ctx.measureText(e.t).width;
+      ctx.fillStyle='rgba(255,255,255,.92)'; ctx.fillRect(mx-tw/2-4,my-fs*0.75,tw+8,fs*1.5);
+      ctx.fillStyle='#475569'; ctx.fillText(e.t,mx,my); }
+  });
+}
+
+/* ---------- Bearbeiten ---------- */
+function snap(){ undoStack.push(JSON.stringify({nodes:D.nodes,edges:D.edges})); if(undoStack.length>40) undoStack.shift(); }
+function select(s){ sel=s; linkFrom=null; render(false); refreshBar(); }
+function addNode(x,y){ snap(); const p=(x==null)?{x:0,y:0}:W2(x,y);
+  if(x==null&&D.nodes.length){ const b=bounds(); p.x=(b.x0+b.x1)/2; p.y=b.y1+70; }
+  const n={id:uid(),t:'',x:p.x,y:p.y}; D.nodes.push(n); sel={typ:'node',id:n.id};
+  render(true); startEdit(n.id,true); sync(); }
+function delSel(){ if(!sel) return; snap();
+  if(sel.typ==='node'){ D.edges=D.edges.filter(e=>e.a!==sel.id&&e.b!==sel.id); D.nodes=D.nodes.filter(n=>n.id!==sel.id); }
+  else D.edges.splice(sel.i,1);
+  sel=null; render(true); sync(); refreshBar(); }
+function verbinde(a,b){ if(a===b) return;
+  const da=D.edges.findIndex(e=>(e.a===a&&e.b===b)||(e.a===b&&e.b===a));
+  snap();
+  if(da>=0){ D.edges.splice(da,1); toast('Verbindung gelöst'); }
+  else { D.edges.push({a,b,t:''}); }
+  render(true); sync(); }
+
+function startEdit(id,isNew){ finishEdit(true);
+  if(typeof id==='object'&&id.typ==='edge') return startEditEdge(id.i);
+  const n=byId(id); if(!n) return;
+  const ta=document.createElement('textarea'); ta.className='edit'; ta.value=n.t; ta.rows=1;
+  ta.addEventListener('input',()=>{ n.t=ta.value; grow(); render(false); });
+  ta.addEventListener('keydown',ev=>{ if(ev.key==='Enter'&&!ev.shiftKey){ ev.preventDefault(); finishEdit(true); }
+    else if(ev.key==='Escape'){ ev.preventDefault(); finishEdit(false); } });
+  ta.addEventListener('blur',()=>finishEdit(true));
+  area.appendChild(ta); editing={id,ta,old:n.t,isNew:!!isNew,typ:'node'};
+  placeEditor(); render(false); ta.focus(); try{ ta.select(); }catch(e){} }
+function startEditEdge(i){ const e=D.edges[i]; if(!e) return;
+  const a=byId(e.a), b=byId(e.b); if(!a||!b) return;
+  const pa=S(a.x,a.y), pb=S(b.x,b.y);
+  const ta=document.createElement('textarea'); ta.className='edit'; ta.value=e.t||''; ta.rows=1;
+  ta.placeholder='z. B. „führt zu"';
+  ta.style.left=((pa.x+pb.x)/2)+'px'; ta.style.top=((pa.y+pb.y)/2)+'px';
+  ta.style.width='150px'; ta.style.fontSize=Math.max(11,Math.round(D.fontSize*0.8))+'px';
+  ta.addEventListener('input',()=>{ e.t=ta.value; });
+  ta.addEventListener('keydown',ev=>{ if(ev.key==='Enter'&&!ev.shiftKey){ ev.preventDefault(); finishEdit(true); }
+    else if(ev.key==='Escape'){ ev.preventDefault(); finishEdit(false); } });
+  ta.addEventListener('blur',()=>finishEdit(true));
+  area.appendChild(ta); editing={i,ta,old:e.t||'',typ:'edge'};
+  if(!D.labels){ D.labels=true; refreshBar(); }
+  render(false); ta.focus(); try{ ta.select(); }catch(_){} }
+function grow(){ if(!editing||editing.typ!=='node') return; const ta=editing.ta; ta.style.height='auto'; ta.style.height=ta.scrollHeight+4+'px'; }
+function placeEditor(){ if(!editing||editing.typ!=='node') return; const n=byId(editing.id), el=els.get(editing.id); if(!n||!el) return;
+  const ta=editing.ta, p=S(n.x,n.y);
+  ta.style.fontSize=(fsOf(n)*Math.min(1,view.k))+'px'; ta.style.left=p.x+'px'; ta.style.top=p.y+'px';
+  ta.style.width=Math.max(130,Math.min(area.clientWidth-20,el.offsetWidth+60))+'px'; grow(); }
+function finishEdit(save){ if(!editing) return; const ed=editing; editing=null; ed.ta.remove();
+  if(ed.typ==='node'){ const n=byId(ed.id);
+    if(n){ if(!save) n.t=ed.old; n.t=(n.t||'').replace(/\s+$/,'');
+      if(!n.t&&ed.isNew){ D.edges=D.edges.filter(e=>e.a!==n.id&&e.b!==n.id); D.nodes=D.nodes.filter(m=>m.id!==n.id); sel=null; } } }
+  else { const e=D.edges[ed.i]; if(e&&!save) e.t=ed.old; }
+  render(true); sync(); refreshBar(); }
+
+/* ---------- Entwirren: Federn an den Verbindungen, Abstoßung zwischen allen Begriffen ---------- */
+function entwirren(){
+  const N=D.nodes.length; if(N<2){ toast('Dafür braucht es mehrere Begriffe'); return; }
+  if(anim){ cancelAnimationFrame(anim); anim=null; }
+  snap();
+  const flaeche=Math.max(1,area.clientWidth*area.clientHeight)/Math.max(1,view.k*view.k);
+  const k=Math.sqrt(flaeche/N)*0.62;                       // Wunschabstand benachbarter Begriffe
+  const idx=new Map(D.nodes.map((n,i)=>[n.id,i]));
+  const gr=D.nodes.map(n=>Math.max(1,grad(n.id)));
+  /* Startlage: Kreis – so hängt das Ergebnis nicht an der alten, verhedderten Anordnung */
+  D.nodes.forEach((n,i)=>{ const a=2*Math.PI*i/N; n.x=Math.cos(a)*k*N/5.2; n.y=Math.sin(a)*k*N/5.2; });
+  let t=k*0.9, schritt=0; const MAX=260;
+  const zug=()=>{
+    for(let s=0;s<6&&schritt<MAX;s++,schritt++){
+      const fx=new Float64Array(N), fy=new Float64Array(N);
+      for(let i=0;i<N;i++) for(let j=i+1;j<N;j++){
+        let dx=D.nodes[i].x-D.nodes[j].x, dy=D.nodes[i].y-D.nodes[j].y;
+        let d=Math.hypot(dx,dy); if(d<1e-3){ dx=(Math.random()-0.5); dy=(Math.random()-0.5); d=0.5; }
+        const f=(k*k/d)*(1+0.12*(gr[i]+gr[j]));            // stark verbundene Begriffe brauchen mehr Platz
+        fx[i]+=dx/d*f; fy[i]+=dy/d*f; fx[j]-=dx/d*f; fy[j]-=dy/d*f;
+      }
+      for(const e of D.edges){ const i=idx.get(e.a), j=idx.get(e.b); if(i==null||j==null) continue;
+        const dx=D.nodes[i].x-D.nodes[j].x, dy=D.nodes[i].y-D.nodes[j].y, d=Math.max(0.01,Math.hypot(dx,dy));
+        const f=d*d/k;
+        fx[i]-=dx/d*f; fy[i]-=dy/d*f; fx[j]+=dx/d*f; fy[j]+=dy/d*f;
+      }
+      for(let i=0;i<N;i++){ fx[i]-=D.nodes[i].x*0.035; fy[i]-=D.nodes[i].y*0.035; }   // hält das Netz beisammen
+      for(let i=0;i<N;i++){ const d=Math.hypot(fx[i],fy[i])||1, m=Math.min(d,t);
+        D.nodes[i].x+=fx[i]/d*m; D.nodes[i].y+=fy[i]/d*m; }
+      t=Math.max(k*0.02,t*0.975);
+    }
+    render(true);
+    if(schritt<MAX) anim=requestAnimationFrame(zug);
+    else { anFlaeche(); entflechte(60); render(true); entflechte(40); render(true);
+      anim=null; sync(); toast('Netz entwirrt – große Felder haben die meisten Verbindungen'); }
+  };
+  zug();
+}
+/* Das Kräftenetz wird meist breiter als hoch (die Felder sind breit). Vor dem Entflechten wird es
+   auf die Form der Zeichenfläche gezogen – das ändert nichts an den Verbindungen, nutzt aber die Höhe. */
+function anFlaeche(){ const b=bounds(), bw=Math.max(1,b.x1-b.x0), bh=Math.max(1,b.y1-b.y0);
+  const netz=bw/bh, flaeche=Math.max(0.2,area.clientWidth/Math.max(1,area.clientHeight));
+  if(netz>flaeche*1.1){ const f=Math.min(2.6,netz/flaeche); const my=(b.y0+b.y1)/2;
+    for(const n of D.nodes) n.y=my+(n.y-my)*f; }
+  else if(netz<flaeche*0.5){ const f=Math.min(2.6,flaeche*0.7/netz); const mx=(b.x0+b.x1)/2;
+    for(const n of D.nodes) n.x=mx+(n.x-mx)*f; } }
+/* Die Kräfte kennen nur Punkte – zum Schluss werden die Felder so weit auseinandergeschoben,
+   dass sich keine zwei Beschriftungen mehr überdecken. */
+function entflechte(runden){
+  const masse=n=>{ const el=els.get(n.id); return { w:((el?el.offsetWidth:90)+16)/view.k, h:((el?el.offsetHeight:34)+12)/view.k }; };
+  for(let r=0;r<runden;r++){ let bewegt=false;
+    for(let i=0;i<D.nodes.length;i++) for(let j=i+1;j<D.nodes.length;j++){
+      const a=D.nodes[i], b=D.nodes[j], A=masse(a), B=masse(b);
+      let dx=b.x-a.x, dy=b.y-a.y;
+      if(!dx&&!dy){ dx=0.7; dy=0.4; }
+      const ux=(A.w+B.w)/2-Math.abs(dx), uy=(A.h+B.h)/2-Math.abs(dy);
+      if(ux>0&&uy>0){                                  // entlang der kleineren Überdeckung trennen
+        if(ux<uy){ const s=(dx>=0?1:-1)*ux/2+ (dx>=0?0.5:-0.5); a.x-=s; b.x+=s; }
+        else { const s=(dy>=0?1:-1)*uy/2+(dy>=0?0.5:-0.5); a.y-=s; b.y+=s; }
+        bewegt=true; } }
+    if(!bewegt) break; }
+}
+
+/* ---------- Zeiger ---------- */
+function kanteBei(x,y){ let best=-1, bd=14;
+  D.edges.forEach((e,i)=>{ const a=byId(e.a), b=byId(e.b); if(!a||!b) return;
+    const pa=S(a.x,a.y), pb=S(b.x,b.y);
+    const vx=pb.x-pa.x, vy=pb.y-pa.y, L=vx*vx+vy*vy; if(!L) return;
+    let t=((x-pa.x)*vx+(y-pa.y)*vy)/L; t=Math.max(0,Math.min(1,t));
+    const d=Math.hypot(x-(pa.x+vx*t), y-(pa.y+vy*t));
+    if(d<bd){ bd=d; best=i; } });
+  return best; }
+let letzterTipp=0, letzterPunkt={x:0,y:0};
+area.addEventListener('pointerdown',e=>{
+  if(e.target.closest('textarea.edit')) return;
+  const el=e.target.closest('.node');
+  if(!el){
+    finishEdit(true);
+    const r=area.getBoundingClientRect(), x=e.clientX-r.left, y=e.clientY-r.top;
+    const ki=kanteBei(x,y);
+    if(ki>=0){ if(!D.edit) return;
+      if(sel&&sel.typ==='edge'&&sel.i===ki){ startEdit({typ:'edge',i:ki}); return; }
+      select({typ:'edge',i:ki}); return; }
+    const jetzt=Date.now();
+    if(D.edit && jetzt-letzterTipp<400 && Math.hypot(x-letzterPunkt.x,y-letzterPunkt.y)<30){ letzterTipp=0; addNode(x,y); return; }
+    letzterTipp=jetzt; letzterPunkt={x,y};
+    if(sel||linkFrom) select(null);
+    return; }
+  e.preventDefault();
+  const id=el.dataset.id;
+  if(linkFrom){ if(linkFrom!==id){ verbinde(linkFrom,id); linkFrom=null; refreshBar(); render(false); return; }
+    linkFrom=null; render(false); refreshBar(); return; }
+  if(editing&&editing.id!==id) finishEdit(true);
+  drag={id,sx:e.clientX,sy:e.clientY,moved:false,ox:byId(id).x,oy:byId(id).y,pid:e.pointerId,warSel:!!sel&&sel.typ==='node'&&sel.id===id};
+  try{ area.setPointerCapture(e.pointerId); }catch(_){} });
+area.addEventListener('pointermove',e=>{ if(!drag||e.pointerId!==drag.pid) return;
+  const dx=e.clientX-drag.sx, dy=e.clientY-drag.sy;
+  if(!drag.moved&&Math.hypot(dx,dy)<6) return;
+  if(!drag.moved){ if(!D.edit){ drag=null; return; } drag.moved=true; snap(); sel={typ:'node',id:drag.id}; }
+  const n=byId(drag.id); if(!n) return;
+  n.x=drag.ox+dx/view.k; n.y=drag.oy+dy/view.k; render(false); });
+const endDrag=e=>{ if(!drag||e.pointerId!==drag.pid) return; const d=drag; drag=null;
+  if(d.moved){ render(true); sync(); return; }
+  if(!D.edit){ select({typ:'node',id:d.id}); return; }
+  if(d.warSel&&!editing) startEdit(d.id,false); else select({typ:'node',id:d.id}); };
+area.addEventListener('pointerup',endDrag); area.addEventListener('pointercancel',endDrag);
+
+/* ---------- Leiste ---------- */
+const btn=(id,fn)=>{ const b=$(id); b.addEventListener('pointerdown',e=>e.preventDefault()); b.onclick=fn; };
+function refreshBar(){ $('bLink').classList.toggle('on',!!linkFrom);
+  $('bGrad').classList.toggle('on',!!D.grad); $('bLabels').classList.toggle('on',!!D.labels);
+  $('bEdit').disabled=!sel; $('bDel').disabled=!sel; $('bCol').disabled=!(sel&&sel.typ==='node');
+  $('hint').textContent=linkFrom?'Jetzt den zweiten Begriff antippen – nochmal auf denselben tippen bricht ab'
+    :(sel&&sel.typ==='edge')?'Verbindung ausgewählt · nochmal antippen = beschriften · 🗑 löscht sie'
+    :'Feld antippen = auswählen · nochmal antippen = Text ändern · ziehen = verschieben · auf freie Fläche doppeltippen = neuer Begriff'; }
+PAL.forEach(c=>{ const i=document.createElement('i'); i.style.background=c;
+  i.addEventListener('pointerdown',e=>e.preventDefault());
+  i.onclick=()=>{ if(sel&&sel.typ==='node'){ snap(); const n=byId(sel.id); if(n) n.c=c; render(false); sync(); } $('cols').hidden=true; };
+  $('cols').appendChild(i); });
+btn('bCol',()=>{ $('cols').hidden=!$('cols').hidden; });
+btn('bAdd',()=>{ finishEdit(true); addNode(); });
+btn('bLink',()=>{ finishEdit(true);
+  if(linkFrom){ linkFrom=null; }
+  else if(sel&&sel.typ==='node'){ linkFrom=sel.id; toast('Jetzt den zweiten Begriff antippen'); }
+  else toast('Erst einen Begriff auswählen, dann „Verbinden"');
+  render(false); refreshBar(); });
+btn('bEdit',()=>{ if(sel) startEdit(sel.typ==='edge'?sel:sel.id,false); });
+btn('bDel',()=>{ finishEdit(true); delSel(); });
+btn('bUndo',()=>{ finishEdit(true); const s=undoStack.pop(); if(!s){ toast('Nichts mehr rückgängig zu machen'); return; }
+  const o=JSON.parse(s); D.nodes=o.nodes; D.edges=o.edges; sel=null; render(true); sync(); refreshBar(); });
+btn('bOrder',()=>{ finishEdit(true); entwirren(); });
+btn('bGrad',()=>{ D.grad=!D.grad; render(true); sync(); refreshBar(); });
+btn('bLabels',()=>{ D.labels=!D.labels; render(false); sync(); refreshBar(); });
+btn('fsM',()=>schrift(-1)); btn('fsP',()=>schrift(1));
+function schrift(d){ D.fontSize=Math.max(10,Math.min(34,D.fontSize+d)); render(true); sync(); }
+btn('bNew',()=>{ if(!confirm('Neues, leeres Begriffsnetz?')) return; snap();
+  D.nodes=[]; D.edges=[]; sel=null; render(true); sync(); refreshBar(); });
+btn('bSave',()=>{ const blob=new Blob([JSON.stringify({typ:'begriffsnetz',d:D},null,1)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='begriffsnetz-'+new Date().toISOString().slice(0,10)+'.json'; a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),2000); });
+btn('bLoad',()=>$('file').click());
+$('file').onchange=async ev=>{ const f=ev.target.files[0]; ev.target.value=''; if(!f) return;
+  try{ const o=JSON.parse(await f.text()); const d=o.d||o;
+    if(!Array.isArray(d.nodes)) throw 0;
+    snap(); uebernehmen(d); render(true); sync(); refreshBar(); toast('Geladen: '+f.name);
+  }catch(e){ toast('Diese Datei enthält kein Begriffsnetz'); } };
+function bild(){ const s=sel, l=linkFrom; sel=null; linkFrom=null; $('hint').style.display='none'; render(false);
+  try{ return TafelShot.rasterize(area,{pad:6,bg:'#fff'}); }
+  finally{ sel=s; linkFrom=l; $('hint').style.display=''; render(false); } }
+if(window.TafelShot) TafelShot.buttons($('shotBtns'),bild);
+
+/* ---------- Tafel-Anbindung ---------- */
+function uebernehmen(d){
+  if(Array.isArray(d.nodes)) D.nodes=d.nodes.map(n=>({id:String(n.id),t:String(n.t||''),x:+n.x||0,y:+n.y||0,...(n.c?{c:n.c}:{})}));
+  if(Array.isArray(d.edges)) D.edges=d.edges.filter(e=>e&&e.a!=null&&e.b!=null)
+    .map(e=>({a:String(e.a),b:String(e.b),t:String(e.t||'')}));
+  if(d.fontSize) D.fontSize=+d.fontSize||16;
+  if(d.grad!==undefined) D.grad=!!d.grad;
+  if(d.labels!==undefined) D.labels=!!d.labels;
+  if(d.edit!==undefined) D.edit=d.edit!==false;
+  if(sel&&sel.typ==='node'&&!byId(sel.id)) sel=null;
+}
+let ready=false;
+function sync(){ if(window.parent===window||!ready) return;
+  try{ parent.postMessage({type:'embed-data',data:JSON.parse(JSON.stringify(D))},'*'); }catch(e){} }
+addEventListener('message',e=>{ if(e.source!==window.parent) return;
+  if(!(e.data&&e.data.type==='embed-data'&&e.data.data)) return;
+  finishEdit(true); uebernehmen(e.data.data); render(true); refreshBar();
+  if(window.TafelModus) TafelModus.refresh&&TafelModus.refresh(); });
+if(window.TafelModus) TafelModus.init({ get:()=>D.edit!==false, set:v=>{ D.edit=v; finishEdit(true); sel=null; linkFrom=null;
+    render(true); sync(); refreshBar(); }, after:()=>render(true) });
+addEventListener('resize',()=>{ render(true); placeEditor(); });
+window.addEventListener('load',()=>{ render(true); refreshBar();
+  setTimeout(()=>{ ready=true; }, 700);
+  try{ if(window.parent!==window) parent.postMessage({type:'embed-ready'},'*'); }catch(e){} });
+</script>
+</body>
+</html>

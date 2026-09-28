@@ -90,6 +90,12 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   wobei die **0 %-Marke stehen bleibt** – so legt man die 100 % auf eine vorgegebene Strecke
   (Säule, Strecke an der Tafel, Bildbreite) und liest daran direkt Prozente ab. Der **Dreh-Griff**
   rückt dabei ein Stück nach innen, damit sich die beiden Griffe nicht in die Quere kommen.
+  **Ausrichten und Schrift:** Im ⚙-Menü beider Werkzeuge stehen **„waagrecht"** (legt Lineal bzw.
+  Geodreieck exakt waagrecht) und **„⟳ 90°"** (dreht in 90°-Schritten weiter) sowie **A− / A+ für die
+  Schriftgröße der Beschriftung** (8–22 px). Damit die Zahlen dabei **auf dem Werkzeug bleiben**, wird
+  automatisch **jede zweite, fünfte oder zehnte Zahl** beschriftet, sobald die Schrift für den
+  Strichabstand zu groß wird; beim Geodreieck entfallen zusätzlich die Zahlen, für die in der
+  schmaler werdenden Spitze kein Platz mehr ist, und die Winkelzahlen wachsen mit.
   Das Geodreieck hat
   eine **Winkelskala (0–180°)**, eine Lot-Linie, eine **innenliegende cm-Skala**, deren **Null in der
   Mitte der langen Seite** liegt und die nach links und rechts hochzählt (wie beim echten Geodreieck), und
@@ -400,6 +406,23 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   einen Ast, **↶** Rückgängig, **⟳ Ordnen** ordnet alles kreisförmig ohne Überlappungen an, **A−/A+** sowie
   Schrift (fett/kursiv) im Kontextmenü, **🖼 Tafel / 📋 Kopieren** als Bild. Passt sich automatisch der
   Objektgröße an; auch „Als eigene Seite anzeigen“.
+- **Begriffsnetz** (Diverses): freies **Netz aus Begriffen** – anders als die Mindmap ohne Hierarchie,
+  jeder Begriff kann mit jedem verbunden werden (Concept Map). **+ Begriff** legt ein Feld an,
+  **Doppeltippen auf die freie Fläche** ebenfalls; **antippen** wählt aus, **nochmal antippen**
+  ändert den Text, **ziehen** verschiebt. **🔗 Verbinden**: Begriff auswählen, auf „Verbinden" tippen,
+  dann den zweiten Begriff antippen – eine schon bestehende Verbindung wird dabei wieder gelöst.
+  Eine **Linie antippen** wählt sie aus (🗑 löscht sie), **nochmal antippen** beschriftet sie
+  (z. B. „führt zu", „ist Teil von"); **Linien beschriften** blendet diese Texte ein und aus.
+  - **✨ Entwirren** ordnet das Netz neu: Die Verbindungen wirken wie **Federn**, alle Begriffe
+    **stoßen sich ab**, danach werden das Netz auf die Form der Fläche gezogen und überlappende
+    Felder auseinandergeschoben. Im Test sank die Zahl der sich kreuzenden Linien von 8 auf 1, ohne
+    dass sich zwei Felder überdecken – man sieht die Umordnung als kurze Bewegung.
+  - **Größe = Verbindungen** zeigt Begriffe mit **vielen Verbindungen größer** – wer im Netz viele
+    Bezüge hat, ist offensichtlich wichtig. Abschaltbar, dann sind alle Felder gleich groß.
+  - Dazu **Farbe** je Begriff, **Rückgängig**, **A− / A+** für die Schrift, **🖼 Tafel / 📋 Kopieren**
+    (Netz als Bild), **Neu**, **Speichern/Laden** als `.json` und der Umschalter
+    **Benutzen/Bearbeiten**. Das Netz wird **mit dem Tafel-Projekt gespeichert**; im kleinen
+    Objektfenster verkleinert es sich so weit, dass immer das ganze Netz zu sehen ist.
 - **Gleichungslöser** (Mathe & Physik): bewegliches Objekt mit großem Eingabefeld und zwei Modi:
   - **Gleichung** (Variable x): tippt man z. B. `2x+3=7`, `x^2-5x+6=0` oder `3/(x-2)=2/(x+1)`.
     **Lineare, quadratische und Bruchgleichungen** werden mit Lösungsweg gelöst – bei Bruchgleichungen
@@ -559,7 +582,10 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
 - **Gruppieren / Lösen / Duplizieren / Löschen** im Kontext-Panel („Lösen" hebt die Gruppe auf und
   die Auswahl auf, damit die Objekte danach wirklich einzeln beweglich sind)
 - **Laserpointer** und **Scheinwerferspot** – nutzbar auch **mit dem Finger**, unabhängig von der Einstellung „Nur mit Stift schreiben"
-- **Werkzeuggruppe „Diverses"** (Zeigewerkzeuge, Symbol: **Werkzeugkoffer**): darin liegen **Mindmap**, **Pinnwand**,
+- Der Knopf **„Objekt bedienen" / „Bedienen beenden"** oben in der Mitte sitzt **bündig mit der
+  Unterkante der oberen Leisten** und nie unter der Statusleiste des iPads – er ist also auch am
+  oberen Bildschirmrand immer ganz antippbar (dasselbe gilt für „Aufnahme stoppen").
+- **Werkzeuggruppe „Diverses"** (Zeigewerkzeuge, Symbol: **Werkzeugkoffer**): darin liegen **Mindmap**, **Begriffsnetz**, **Pinnwand**,
   **Kreuzworträtsel**, **Zeitleiste**, **Wortwolke** und **Buchstabengitter**.
   - **Kreuzworträtsel:** Über **„✎ Begriffe"** eine Liste eintragen – je Zeile `Begriff = Hinweis` (der Hinweis darf
     fehlen). Die Tafel legt daraus ein **verschränktes Kreuzworträtsel** (40 Versuche, das kompakteste gewinnt),

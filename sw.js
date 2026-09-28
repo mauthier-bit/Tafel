@@ -1,5 +1,5 @@
 /* Service Worker – macht die Tafel offline-fähig (App-Shell + Bibliotheken cachen). */
-const CACHE = 'tafel-v314';
+const CACHE = 'tafel-v315';
 const H5P_CACHE = 'tafel-h5p';   // entpackte .h5p-Inhalte (bleiben über App-Updates hinweg erhalten)
 const ASSETS = [
   './',
@@ -32,7 +32,7 @@ const ASSETS = [
   'modus.js',
   'speech.js',
   'venn.js',
-  'mindmap.html',
+  'mindmap.html','begriffsnetz.html',
   'pinnwand.html',
   'kreuzwort.html',
   'wortgitter.html',
