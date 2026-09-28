@@ -631,12 +631,22 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   gespeichert** – nach dem Neuladen ist sie also wieder da. Dafür muss die Datei **alles enthalten,
   was sie braucht** (Bilder, Stile und Skripte im Dokument selbst oder als Web-Adresse); Verweise auf
   Nachbardateien funktionieren nicht – darauf weist die Tafel beim Einfügen hin. Grenze: 3 MB.
-- **Audiodatei einfügen (mp3 …):** über **Einfügen → Datei** („PDF / Bild / PowerPoint / H5P / HTML / Audio wählen").
+- **Audiodatei einfügen (mp3 …):** über **Einfügen → Datei** („PDF / Bild / PowerPoint / H5P / HTML / Audio / Video wählen").
   Unterstützt **mp3, m4a, aac, wav, ogg, opus**; die Datei landet als kleiner **Abspieler** (Play,
   Position, Lautstärke) als bewegliches Objekt auf der Tafel – zum Abspielen oben auf **„Einbettung
   bedienen"** tippen. Dateien **bis 4 MB werden mit dem Projekt gespeichert** und sind nach dem
   Neuladen noch da; größere Dateien laufen nur bis zum Neuladen. Über das Kontextmenü lässt sich der
   Ton mit **„🎙 Ton speichern"** wieder als Datei sichern.
+- **Videodatei einfügen (mp4 …):** ebenfalls über **Einfügen → Datei**. Unterstützt **mp4, m4v, mov,
+  webm** (alles, was das iPad abspielt); das Video kommt als **Abspieler** (Play, Position,
+  Lautstärke, Vollbild) im **richtigen Seitenverhältnis** auf die Tafel – zum Abspielen oben auf
+  **„Objekt bedienen"** tippen. Mit **„Als eigene Seite"** füllt es die Seite, bleibt dabei aber
+  unverzerrt. Dateien **bis 12 MB werden mit dem Projekt gespeichert** und sind nach dem Neuladen
+  noch da; größere laufen nur bis zum Neuladen (danach steht eine Karte mit dem Dateinamen da).
+  Im Kontextmenü stehen wie bei Kamera-Clips **„🎬 Video speichern"** und **„✂ Trimmen"** – damit
+  lässt sich der Abspielbereich festlegen, sodass im Unterricht genau der gewünschte Ausschnitt
+  läuft. Kann das iPad ein Format nicht abspielen (z. B. .avi, .mkv), sagt die Tafel das beim
+  Einfügen; solche Dateien vorher als **MP4 (H.264)** speichern.
 - **PowerPoint (.pptx) einfügen:** über **„PDF / Bild / PowerPoint"** – jede Folie wird als Bild
   dargestellt (einfache Darstellung: **Text & Bilder**, keine Animationen/Themes/SmartArt) und
   wahlweise als **Objekt** oder als **eigene Seite** eingefügt. Läuft offline (entpackt die .pptx

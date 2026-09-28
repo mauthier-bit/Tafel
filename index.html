@@ -1064,8 +1064,8 @@
 
     <hr class="wsep">
     <div class="wcap">Datei</div>
-    <div class="row fill" style="margin-top:6px"><button class="btn" id="ins-pdf">PDF / Bild / PowerPoint / H5P / HTML / Audio wählen</button></div>
-    <div class="hint">PowerPoint (.pptx) kommt als Bild je Folie (Text &amp; Bilder); für eine <b>exakte</b> Darstellung die Datei vorher als <b>PDF</b> exportieren. Mit „Als eigene Seite" wird jede Folie bzw. <b>PDF-Seite</b> eine Tafelseite. Sonst entscheidet „Mehrseitiges als Dokument": ein <b>blätterbares Dokument-Objekt</b> (‹ ›) oder einzelne bewegliche <b>Bilder</b> (verschieben, skalieren, zuschneiden).<br><b>Audio</b> (mp3, m4a, wav, ogg) kommt als kleiner Abspieler auf die Tafel – bis 4 MB wird die Datei <b>mit dem Projekt gespeichert</b>, größere nur bis zum Neuladen.</div>
+    <div class="row fill" style="margin-top:6px"><button class="btn" id="ins-pdf">PDF / Bild / PowerPoint / H5P / HTML / Audio / Video wählen</button></div>
+    <div class="hint">PowerPoint (.pptx) kommt als Bild je Folie (Text &amp; Bilder); für eine <b>exakte</b> Darstellung die Datei vorher als <b>PDF</b> exportieren. Mit „Als eigene Seite" wird jede Folie bzw. <b>PDF-Seite</b> eine Tafelseite. Sonst entscheidet „Mehrseitiges als Dokument": ein <b>blätterbares Dokument-Objekt</b> (‹ ›) oder einzelne bewegliche <b>Bilder</b> (verschieben, skalieren, zuschneiden).<br><b>Audio</b> (mp3, m4a, wav, ogg) kommt als kleiner Abspieler auf die Tafel – bis 4 MB wird die Datei <b>mit dem Projekt gespeichert</b>, größere nur bis zum Neuladen.<br><b>Video</b> (mp4, mov, m4v, webm) kommt als Abspieler mit dem richtigen Seitenverhältnis auf die Tafel – bis 12 MB wird die Datei <b>mit dem Projekt gespeichert</b>, größere laufen nur bis zum Neuladen. Das Video lässt sich wie ein Kamera-Clip <b>trimmen</b> (Kontextmenü) und über den Player auf Vollbild stellen.</div>
 
     <hr class="wsep">
     <div class="wcap">GeoGebra</div>
@@ -1152,7 +1152,7 @@
     </div>
   </div></div>
 
-<input type="file" id="fileImport" accept="application/pdf,image/*,audio/*,.pptx,.h5p,.html,.htm,text/html,.mp3,.m4a,.aac,.wav,.ogg,.opus,application/vnd.openxmlformats-officedocument.presentationml.presentation">
+<input type="file" id="fileImport" accept="application/pdf,image/*,audio/*,video/*,.pptx,.h5p,.html,.htm,text/html,.mp3,.m4a,.aac,.wav,.ogg,.opus,.mp4,.m4v,.mov,.webm,.ogv,application/vnd.openxmlformats-officedocument.presentationml.presentation">
 <input type="file" id="fileLoad" accept=".tafel,application/json">
 <input type="file" id="fileCsv" accept=".csv,text/csv,text/plain">
 <input type="file" id="ferFile" accept=".ics,text/calendar">
@@ -2732,7 +2732,9 @@ function syncEmbeds(){ const p=page(), wanted=new Set();
           fr.addEventListener('play',()=>{ if(fr.currentTime<A()-0.05||fr.currentTime>=B()-0.02) jump(A()); });
           fr.addEventListener('timeupdate',()=>{ if(fr.currentTime>=B()){ fr.pause(); jump(A()); } else if(fr.currentTime<A()-0.3) jump(A()); }); }
         else { fr=document.createElement('div'); fr.className='embedCard';
-          fr.innerHTML='<div class="ec-ico">🎬</div><div class="ec-sub">Videoclip</div><div class="ec-hint">Clips werden nicht mitgespeichert – nach dem Neuladen ist die Aufnahme weg.</div>'; }
+          fr.innerHTML='<div class="ec-ico">🎬</div><div class="ec-sub">'+((o.datei?(o.label||'Video'):'Videoclip').replace(/[<>&]/g,''))+'</div><div class="ec-hint">'+
+            (o.datei?'Videodateien über 12 MB werden nicht mitgespeichert – bitte erneut einfügen.'
+                   :'Clips werden nicht mitgespeichert – nach dem Neuladen ist die Aufnahme weg.')+'</div>'; }
       } else { fr=document.createElement('iframe'); fr.setAttribute('allow','autoplay; fullscreen; clipboard-write; microphone'); fr.allowFullscreen=true;
         if(o.etype==='htmlfile') fr.srcdoc=o.html||'<p style="font:15px sans-serif;padding:14px">Diese HTML-Seite ist leer.</p>'; else fr.src=o.src; fr.style.background=(o.etype==='html')?'transparent':'#fff'; }
       fr.dataset.oid=o.id; fr.style.pointerEvents=embedInteract?'auto':'none'; embedLayer.appendChild(fr); embedEls.set(o.id,fr);
@@ -4621,6 +4623,7 @@ fileImport.onchange=async e=>{const f=e.target.files[0];if(!f)return; const nm=(
   else if(nm.endsWith('.pptx')||f.type.includes('presentationml'))await importPPTX(f);
   else if(f.type.startsWith('image/')){const url=await fileToDataURL(f);addImageObject(url);}
   else if(f.type.startsWith('audio/')||/\.(mp3|m4a|aac|wav|ogg|oga|opus|flac)$/.test(nm)) await addAudioFile(f);
+  else if(f.type.startsWith('video/')||/\.(mp4|m4v|mov|webm|ogv|3gp|avi|mkv)$/.test(nm)) await addVideoFile(f);
   else if(nm.endsWith('.html')||nm.endsWith('.htm')||f.type==='text/html') await addHtmlFile(f);
   else toast('Dateityp nicht unterstützt');};
 /* eigenständige HTML-Datei (Lernumgebung, Arbeitsblatt …) als bedienbares Objekt einfügen.
@@ -4649,6 +4652,31 @@ async function addAudioFile(f){ const nm=f.name||'Ton', ext=((nm.split('.').pop(
   const o=selection[0]; if(o&&o.etype==='audio'){ const w=Math.min(W*0.5,360)/scale;
     const c=toWorld(W/2,H/2); o.w=w; o.h=58/scale; o.x=c.x-w/2; o.y=c.y-o.h/2; o.ext=ext; o.name=nm; o.keep=keep; markDirty(); scheduleAutosave(); }
   toast(keep?('Audio „'+nm+'" eingefügt'):'Audio eingefügt – über 4 MB, wird nicht mitgespeichert');}
+/* Videodatei als Abspieler auf die Tafel legen. Sie nutzt denselben Objekttyp wie die
+   Kamera-Clips ('clip'), also auch Trimmen und „Video speichern" im Kontextmenü.
+   Kleine Dateien wandern als Data-URL ins Projekt, große laufen nur bis zum Neuladen. */
+const VIDEO_KEEP_MAX=12*1024*1024;
+function videoMasse(src){ return new Promise(res=>{ const v=document.createElement('video'); v.preload='metadata'; v.muted=true;
+  const fertig=r=>{ v.removeAttribute('src'); res(r); };
+  v.onloadedmetadata=()=>fertig((v.videoWidth&&v.videoHeight)?v.videoHeight/v.videoWidth:9/16);
+  v.onerror=()=>fertig(null); setTimeout(()=>fertig(9/16),4000); v.src=src; }); }
+async function addVideoFile(f){
+  const nm=f.name||'Video', ext=((nm.split('.').pop()||'mp4').toLowerCase().match(/^[a-z0-9]+$/)||['mp4'])[0];
+  const keep=f.size<=VIDEO_KEEP_MAX;
+  toast(keep?'Video wird eingelesen …':'Video wird vorbereitet …');
+  let src; try{ src=keep?await fileToDataURL(f):URL.createObjectURL(f); }catch(e){ toast('Die Videodatei ließ sich nicht lesen'); return; }
+  const ar=await videoMasse(src);
+  if(ar===null){ toast('Dieses Videoformat kann das iPad nicht abspielen – bitte als MP4 (H.264) speichern'); return; }
+  const asPage=insAsPage();
+  addEmbedObject('clip', src, nm.replace(/\.[^.]+$/,''), undefined, asPage);
+  const o=selection[0];
+  if(o&&o.etype==='clip'){ o.sound=true; o.ext=ext; o.name=nm; o.keep=keep; o.datei=true;
+    if(asPage){ const bw=o.w, bh=o.h, w2=Math.min(bw,bh/ar), h2=w2*ar;      // auf der eigenen Seite unverzerrt einpassen
+      o.x+=(bw-w2)/2; o.y+=(bh-h2)/2; o.w=w2; o.h=h2; }
+    else { const h0=o.h; o.h=o.w*ar; o.y+=(h0-o.h)/2; }
+    markDirty(); scheduleAutosave(); syncEmbeds(); }
+  toast(keep?('Video „'+nm+'" eingefügt'):'Video eingefügt – über 12 MB, es wird nicht mitgespeichert');
+}
 function placeImageObject(url,dx,dy){ const im=new Image(); const finish=()=>{ let w=im.width||300,h=im.height||200; const k=Math.min(1,(W*0.6/scale)/w,(H*0.6/scale)/h); w*=k; h*=k; const c=toWorld(W/2,H/2);
   const o={type:'image',id:uid(),x:c.x-w/2+(dx||0),y:c.y-h/2+(dy||0),w,h,src:url,_img:im,rot:0,groupId:null}; pushUndo(); page().objects.push(o); setMode('write'); setTool('select'); selection=[o]; refreshProps(); markDirty(); scheduleAutosave(); }; im.onload=finish; im.src=url; }
 /* Fotos vom iPad sind oft 12 MP groß – für die Tafel reichen 2400 px an der langen Seite */
