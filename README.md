@@ -68,9 +68,10 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   **Gitterlinien** und **Achsenbeschriftung** ein-/ausschalten (Gitter standardmäßig **aus** – meist
   reicht das Karogitter des Hintergrunds), einen **Hintergrund** (Schalter + Farbwähler, Standard weiß;
   aus = transparent wie bisher) sowie die **Schriftgröße der Beschriftung** (＋/−). Achsen
-  sind kräftig mit großen Pfeilspitzen und gut lesbaren Beschriftungen (der Achsenname steht **über**
-  der Achse, die Zahlen darunter). An den **Pfeilspitzen bleibt die letzte Zahl weg** – die
-  Beschriftung hört eine Einheit vorher auf, damit sie nicht in Pfeil und Achsenname läuft.
+  sind kräftig mit großen Pfeilspitzen und gut lesbaren Beschriftungen: Der Achsenname steht
+  **unter der x-Achse** bzw. **links neben der y-Achse**, mit etwas Luft zu den Zahlen. An den
+  **Pfeilspitzen bleibt die letzte Zahl weg** (die Beschriftung hört eine Einheit vorher auf), und
+  Zahlen, die dem Achsennamen zu nahe kämen, entfallen ebenfalls.
   Das Kontextmenü ist kompakt: x- und y-Bereich je eine Zeile, darunter die vier Schalter
   **Gitter · Beschriftung · Einheit = 1 cm · Am Karo** als Raster, dann Schrift und zuletzt
   Hintergrund mit Farbfeld und **✎ Namen**.
@@ -721,8 +722,9 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     **Grün/Blau**, die **Toleranz** (0–12: wie genau die Farbe getroffen sein muss) und das
     **Hintergrundbild**. Zur Wahl stehen **acht fertige Hintergründe** als Vorschaukacheln –
     **Weltraum** (Sterne mit Ringplanet), **Wald**, **Strand**, **Pyramiden**, **Berge**, **Stadt**
-    (Skyline bei Nacht), **Studio** und **Klassenzimmer** (grüne Tafel) – dazu **🖼 Eigenes Bild
-    wählen** für eine eigene Datei. Die fertigen Hintergründe sind **gezeichnet**, brauchen also
+    (Skyline bei Nacht), **Studio**, **Meeresboden** (Lichtstrahlen, Fische, Korallen, Seegras),
+    **Vulkan** (Lavaströme, Funken, Rauch) und **Klassenzimmer** (grüne Tafel) – dazu **🖼 Eigenes
+    Bild wählen** für eine eigene Datei. Die fertigen Hintergründe sind **gezeichnet**, brauchen also
     keine Dateien, funktionieren offline und passen sich jedem Bildformat an. Der Rand wird weich
     ausgeblendet und ein grüner Farbsaum entfärbt. Auch der Greenscreen gilt für Foto, Video und
     Dokumentenkamera; Farbe, Toleranz und Hintergrund bleiben gespeichert. Die beiden gerechneten Looks („Gezeichnet", „Comic") laufen bewusst mit kleinerer

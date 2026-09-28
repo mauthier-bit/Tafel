@@ -1435,13 +1435,15 @@ function drawObjectRaw(o,c){
     if(o.labels!==false){ c.fillStyle='#334155'; const ls=o.labelSize||14;
     c.font='italic '+(o.labelBold?'bold ':'')+(ls+4)+'px sans-serif'; c.textAlign='right'; c.textBaseline='top';
     const nx=(o.axX===undefined?'x':o.axX), ny=(o.axY===undefined?'y':o.axY), no=(o.axO||'');
-    c.textBaseline='bottom'; if(nx) c.fillText(nx, x1-6, axC-6);        // Name über die Achse: die Zahlen stehen darunter
-    c.textBaseline='top'; c.textAlign='left'; if(ny) c.fillText(ny, ayC+7, o.y+4);   // Achsenbeschriftung (im Kontextmenü änderbar)
+    c.textBaseline='top'; c.textAlign='right';                          // an den Spitzen ist Platz: x darunter, y links daneben
+    let nxBr=0;
+    if(nx){ nxBr=c.measureText(nx).width+8; c.fillText(nx, x1-6, axC+10); }   // Breite merken: die Zahlen weichen aus
+    if(ny) c.fillText(ny, ayC-10, o.y+4);                                // Achsenbeschriftung (im Kontextmenü änderbar)
     if(no){ c.font=(o.labelItalic?'italic ':'')+(o.labelBold?'bold ':'')+ls+'px sans-serif'; c.textAlign='right'; c.textBaseline='top'; c.fillText(no, ayC-4, axC+4); }
     c.font=(o.labelItalic?'italic ':'')+(o.labelBold?'bold ':'')+ls+'px sans-serif'; c.textAlign='center'; c.textBaseline='top';
     /* an den Pfeilspitzen bleibt die letzte Zahl weg – dort stehen Pfeil und Achsenname */
     for(let v=Math.ceil(xMin/sx)*sx; v<=xMax+1e-9; v+=sx){ if(Math.abs(v)<1e-9)continue;
-      if(xMax-v<sx*0.75 || x1-PX(v)<20) continue; c.fillText(nf(v), PX(v), axC+4); }
+      if(xMax-v<sx*0.75 || x1-PX(v)<Math.max(20,nxBr+10)) continue; c.fillText(nf(v), PX(v), axC+4); }
     c.textAlign='right'; c.textBaseline='middle';
     for(let v=Math.ceil(yMin/sy)*sy; v<=yMax+1e-9; v+=sy){ if(Math.abs(v)<1e-9)continue;
       if(yMax-v<sy*0.75 || PY(v)-o.y<20) continue; c.fillText(nf(v), ayC-4, PY(v)); } } }
@@ -4282,17 +4284,24 @@ function gsSave(){ try{ localStorage.setItem('tafel_greenscreen',
   JSON.stringify({f:gsFarbe,t:gsTol,bg:gsBg,src:gsBild?gsBild.src:''})); }catch(e){} }
 /* Fertige Hintergründe – gezeichnet statt geladen: kosten nichts, funktionieren offline
    und passen sich jedem Seitenverhältnis an. */
+/* fester Pseudo-Zufall: streut Sterne und Blasen unregelmäßig, liefert aber bei jedem
+   Bild dieselbe Lage – sonst würde der Hintergrund im Video flimmern */
+function gsRnd(seed){ let s2=seed||1; return ()=>{ s2=(s2*16807)%2147483647; return s2/2147483647; }; }
 const GS_BGS=[
  {id:'weltraum', name:'Weltraum', mal(g,W,H){ const gr=g.createLinearGradient(0,0,0,H);
    gr.addColorStop(0,'#05060f'); gr.addColorStop(1,'#141a35'); g.fillStyle=gr; g.fillRect(0,0,W,H);
-   for(let i=0;i<160;i++){ const x=(i*137.5)%W, y=(i*89.7)%H, r=((i%4)+1)*0.35;
-     g.fillStyle='rgba(255,255,255,'+(0.35+(i%5)*0.13)+')'; g.beginPath(); g.arc(x,y,r,0,7); g.fill(); }
+   const zf=gsRnd(4711);
+   for(let i=0;i<190;i++){ const x=zf()*W, y=zf()*H, r=(0.4+zf()*1.4);
+     g.fillStyle='rgba(255,255,255,'+(0.3+zf()*0.65)+')'; g.beginPath(); g.arc(x,y,r,0,7); g.fill(); }
    const px=W*0.78, py=H*0.24, pr=Math.min(W,H)*0.16;                       // Planet mit Ring
+   const ring=(von,bis)=>{ g.save(); g.translate(px,py); g.rotate(-0.35);
+     g.strokeStyle='rgba(230,200,150,.75)'; g.lineWidth=Math.max(2,pr*0.09);
+     g.beginPath(); g.ellipse(0,0,pr*1.8,pr*0.45,0,von,bis); g.stroke(); g.restore(); };
+   ring(Math.PI,2*Math.PI);                                                 // hinterer Bogen zuerst …
    const pg=g.createRadialGradient(px-pr*0.3,py-pr*0.3,pr*0.1,px,py,pr);
    pg.addColorStop(0,'#e8b06a'); pg.addColorStop(1,'#8a4e22'); g.fillStyle=pg;
-   g.beginPath(); g.arc(px,py,pr,0,7); g.fill();
-   g.strokeStyle='rgba(230,200,150,.75)'; g.lineWidth=Math.max(2,pr*0.09);
-   g.save(); g.translate(px,py); g.rotate(-0.35); g.beginPath(); g.ellipse(0,0,pr*1.8,pr*0.45,0,0,7); g.stroke(); g.restore(); }},
+   g.beginPath(); g.arc(px,py,pr,0,7); g.fill();                            // … dann der Planet darüber …
+   ring(0,Math.PI); }},                                                     // … und zuletzt der Bogen davor
  {id:'wald', name:'Wald', mal(g,W,H){ const gr=g.createLinearGradient(0,0,0,H);
    gr.addColorStop(0,'#cfe6c4'); gr.addColorStop(.55,'#6fa361'); gr.addColorStop(1,'#33602f'); g.fillStyle=gr; g.fillRect(0,0,W,H);
    const baum=(x,h,br,col)=>{ g.fillStyle='#4a331f'; g.fillRect(x-br*0.09,H-h*0.35,br*0.18,h*0.35);
@@ -4321,7 +4330,8 @@ const GS_BGS=[
      g.fillStyle=dunkel; g.beginPath(); g.moveTo(x,H*0.78-h); g.lineTo(x+b,H*0.78); g.lineTo(x,H*0.78); g.closePath(); g.fill(); };
    pyr(W*0.34,W*0.2,H*0.42,'#e0b96e','#b98f45'); pyr(W*0.62,W*0.15,H*0.3,'#dcb265','#b0863f'); pyr(W*0.8,W*0.1,H*0.2,'#d8ad61','#a87f3b');
    g.fillStyle='#d9a94f'; g.fillRect(0,H*0.78,W,H*0.22);
-   g.fillStyle='rgba(0,0,0,.08)'; for(let i=0;i<7;i++){ g.beginPath(); g.ellipse(W*(0.1+i*0.14),H*(0.84+ (i%3)*0.04),W*0.09,H*0.012,0,0,7); g.fill(); } }},
+   const zw=gsRnd(1234); g.fillStyle='rgba(0,0,0,.08)';
+   for(let i=0;i<9;i++){ g.beginPath(); g.ellipse(zw()*W,H*(0.8+zw()*0.18),W*(0.05+zw()*0.07),H*0.012,0,0,7); g.fill(); } }},
  {id:'berge', name:'Berge', mal(g,W,H){ const gr=g.createLinearGradient(0,0,0,H);
    gr.addColorStop(0,'#8fc2e8'); gr.addColorStop(.6,'#d7ecf7'); gr.addColorStop(1,'#6f8f6a'); g.fillStyle=gr; g.fillRect(0,0,W,H);
    const berg=(x,b,h,col,schnee)=>{ g.fillStyle=col; g.beginPath(); g.moveTo(x,H*0.82-h); g.lineTo(x+b,H*0.82); g.lineTo(x-b,H*0.82); g.closePath(); g.fill();
@@ -4348,6 +4358,51 @@ const GS_BGS=[
    g.fillStyle='rgba(255,255,255,.9)'; g.fillRect(W*0.62,H*0.12,W*0.3,H*0.035);
    g.fillStyle='rgba(255,255,255,.5)'; g.fillRect(W*0.62,H*0.2,W*0.2,H*0.02);
    g.fillStyle='rgba(0,0,0,.35)'; g.fillRect(0,H*0.86,W,H*0.14); }},
+ {id:'meer', name:'Meeresboden', mal(g,W,H){ const gr=g.createLinearGradient(0,0,0,H);
+   gr.addColorStop(0,'#1b7fa8'); gr.addColorStop(.55,'#0d5a86'); gr.addColorStop(1,'#073d5e'); g.fillStyle=gr; g.fillRect(0,0,W,H);
+   g.save(); g.globalAlpha=.16; g.fillStyle='#bfe9ff';                       // Lichtstrahlen von oben
+   for(let i=0;i<6;i++){ const x=W*(0.05+i*0.17); g.beginPath(); g.moveTo(x,0); g.lineTo(x+W*0.05,0); g.lineTo(x+W*0.15,H*0.8); g.lineTo(x+W*0.04,H*0.8); g.closePath(); g.fill(); }
+   g.restore();
+   g.fillStyle='#d9c08a'; g.beginPath(); g.moveTo(0,H);                      // welliger Sandboden
+   for(let x=0;x<=W;x+=W/16) g.lineTo(x, H*0.82+Math.sin(x/W*7)*H*0.03);
+   g.lineTo(W,H); g.closePath(); g.fill();
+   const koralle=(x,h,col)=>{ g.strokeStyle=col; g.lineWidth=Math.max(3,W*0.012); g.lineCap='round';
+     g.beginPath(); g.moveTo(x,H*0.86); g.lineTo(x,H*0.86-h);
+     g.moveTo(x,H*0.86-h*0.55); g.lineTo(x-h*0.4,H*0.86-h*0.85);
+     g.moveTo(x,H*0.86-h*0.4); g.lineTo(x+h*0.42,H*0.86-h*0.8); g.stroke(); };
+   koralle(W*0.14,H*0.24,'#e2725b'); koralle(W*0.3,H*0.16,'#e89f4c'); koralle(W*0.82,H*0.22,'#d4566f');
+   g.fillStyle='#2f7d46'; for(let i=0;i<7;i++){ const x=W*(0.55+i*0.035);     // Seegras
+     g.save(); g.translate(x,H*0.86); g.rotate(Math.sin(i)*0.25);
+     g.beginPath(); g.moveTo(-W*0.006,0); g.quadraticCurveTo(W*0.01,-H*0.12,-W*0.004,-H*0.22);
+     g.quadraticCurveTo(W*0.016,-H*0.12,W*0.008,0); g.closePath(); g.fill(); g.restore(); }
+   const fisch=(x,y,s2,col)=>{ g.fillStyle=col; g.beginPath(); g.ellipse(x,y,s2,s2*0.55,0,0,7); g.fill();
+     g.beginPath(); g.moveTo(x+s2*0.9,y); g.lineTo(x+s2*1.7,y-s2*0.5); g.lineTo(x+s2*1.7,y+s2*0.5); g.closePath(); g.fill();
+     g.fillStyle='#fff'; g.beginPath(); g.arc(x-s2*0.45,y-s2*0.12,s2*0.13,0,7); g.fill(); };
+   fisch(W*0.3,H*0.32,W*0.028,'#f4c542'); fisch(W*0.45,H*0.5,W*0.022,'#ef7a45'); fisch(W*0.68,H*0.26,W*0.02,'#7fd4e8');
+   g.fillStyle='rgba(255,255,255,.35)';                                      // Luftblasen
+   const zb=gsRnd(90210);
+   for(let i=0;i<22;i++){ const x=zb()*W, y=H*0.12+zb()*H*0.6, r=W*(0.003+zb()*0.006);
+     g.beginPath(); g.arc(x,y,r,0,7); g.fill(); } }},
+ {id:'vulkan', name:'Vulkan', mal(g,W,H){ const gr=g.createLinearGradient(0,0,0,H);
+   gr.addColorStop(0,'#2a1230'); gr.addColorStop(.45,'#7b2420'); gr.addColorStop(.75,'#c85a1e'); gr.addColorStop(1,'#3a1a12');
+   g.fillStyle=gr; g.fillRect(0,0,W,H);
+   g.fillStyle='rgba(60,45,55,.75)';                                         // Rauchwolken über dem Krater
+   for(let i=0;i<7;i++){ const x=W*(0.42+i*0.035), y=H*(0.3-i*0.035), r=Math.min(W,H)*(0.07+i*0.012);
+     g.beginPath(); g.arc(x,y,r,0,7); g.fill(); }
+   g.fillStyle='#4a2b22'; g.beginPath();                                     // Vulkankegel
+   g.moveTo(W*0.08,H*0.86); g.lineTo(W*0.42,H*0.3); g.lineTo(W*0.58,H*0.3); g.lineTo(W*0.92,H*0.86); g.closePath(); g.fill();
+   g.fillStyle='#5d382c'; g.beginPath();
+   g.moveTo(W*0.5,H*0.3); g.lineTo(W*0.58,H*0.3); g.lineTo(W*0.92,H*0.86); g.lineTo(W*0.5,H*0.86); g.closePath(); g.fill();
+   g.fillStyle='#ffb43d'; g.beginPath(); g.ellipse(W*0.5,H*0.3,W*0.085,H*0.022,0,0,7); g.fill();   // glühender Krater
+   g.strokeStyle='#ff7a2f'; g.lineWidth=Math.max(3,W*0.012); g.lineCap='round';                    // Lavaströme
+   [[0.47,0.36],[0.53,0.3],[0.5,0.42]].forEach(([sx,br],i)=>{ g.beginPath(); g.moveTo(W*sx,H*0.31);
+     g.bezierCurveTo(W*(sx-0.05+i*0.05),H*0.5, W*(sx+0.08-i*0.06),H*0.65, W*(sx-0.1+i*0.12),H*0.86); g.stroke(); });
+   g.fillStyle='#ffce5c';                                                     // herausgeschleuderte Funken
+   for(let i=0;i<18;i++){ const a=-Math.PI/2+(i-9)*0.09, d=Math.min(W,H)*(0.12+((i*17)%30)/100);
+     g.beginPath(); g.arc(W*0.5+Math.cos(a)*d, H*0.3+Math.sin(a)*d*0.9, W*0.004+((i%3)*W*0.002),0,7); g.fill(); }
+   g.fillStyle='#2d1712'; g.fillRect(0,H*0.86,W,H*0.14);
+   g.fillStyle='rgba(255,120,40,.5)'; for(let i=0;i<5;i++){ g.beginPath();
+     g.ellipse(W*(0.12+i*0.2),H*(0.9+(i%2)*0.04),W*0.06,H*0.012,0,0,7); g.fill(); } }},
  {id:'tafel', name:'Klassenzimmer', mal(g,W,H){ g.fillStyle='#e8e2d6'; g.fillRect(0,0,W,H);
    g.fillStyle='#2f5b46'; g.fillRect(W*0.08,H*0.12,W*0.84,H*0.62);
    g.strokeStyle='#9b7a4a'; g.lineWidth=Math.max(4,W*0.014); g.strokeRect(W*0.08,H*0.12,W*0.84,H*0.62);
