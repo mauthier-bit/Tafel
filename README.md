@@ -467,7 +467,7 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   Die Begriffe folgen den Lernbereichen des Lehrplans, die **Erklärungen sind eigens für die Tafel
   geschrieben** (kurze, schülergerechte Sätze) – der Lehrplantext selbst wird nicht wiedergegeben.
 - **Fertige Zuordnungsaufgaben** (Zuordnen): Der Knopf **„Aufgaben"** öffnet eine Bibliothek mit
-  **205 fertigen Paaren**, filterbar nach **Jahrgangsstufe** und **Thema**:
+  **223 fertigen Paaren**, filterbar nach **Jahrgangsstufe** und **Thema**:
   - **Bruch und Dezimalbruch** (Jgst. 6): 1/4 ↔ 0,25, 5/8 ↔ 0,625, 1/3 ↔ 0,333…
   - **Brüche erweitern und kürzen** (Jgst. 6): 2/3 ↔ 8/12, 3/8 ↔ 6/16
   - **Unechter Bruch und gemischte Zahl** (Jgst. 6): 11/4 ↔ 2 3/4, 17/5 ↔ 3 2/5
@@ -484,6 +484,15 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     16." ↔ 3x − 5 = 16 – vierzehn Rätsel vom einfachen Ansatz bis zu Klammer und Nachfolgerzahl
   - **Term und umgeformter Term** (Jgst. 7): 3 · (x + 4) ↔ 3x + 12, (x + 3)² ↔ x² + 6x + 9,
     5x + 10 ↔ 5 · (x + 2) – Ausmultiplizieren, Ausklammern, Zusammenfassen und binomische Formeln
+  - **Bewegungsdiagramme** (Physik, Jgst. 10): Zu jedem **t-s-Diagramm** gehört das passende
+    **t-v-Diagramm** – gleichförmige Fahrt, Beschleunigung aus dem Stand, Abbremsen bis zum
+    Stillstand, Stillstand, Tempowechsel, Anhalten, Rückwärtsfahrt sowie beschleunigen–fahren–bremsen.
+    Hier sind **beide Seiten Diagramme**; die Zuordnung geht also allein über den Verlauf.
+    Die Weg-Kurve wird dabei aus der Geschwindigkeit aufsummiert, beide Bilder passen also exakt
+    zusammen.
+  - **Funktion und Ableitung** (Mathematik, Jgst. 11): Links der Graph von f, rechts der Graph von
+    f ′ – von f(x) = x² bis f(x) = 0,25x⁴ − x² und f(x) = sin(x). Auch hier sind beide Seiten
+    Graphen, sodass über Steigung, Hoch- und Tiefpunkte argumentiert werden muss.
   - **Funktionsterm und Graph** (Jgst. 8 bis 12): **45 Funktionen** von der linearen Funktion bis zur e-Funktion, filterbar nach
   **Jahrgangsstufe** (8 bis 12) und **Funktionstyp** (linear, gebrochen-rational, quadratisch,
   Potenz, exponentiell, Sinus/Kosinus, ganzrational, Wurzel, Logarithmus). Zu jedem Term wird der
@@ -1496,6 +1505,7 @@ galgen.html           ← Galgenmännchen (Begriffe raten, Hinweise, Lehrplan-Im
 lehrplan-texte.js     ← Textbibliothek für den Lückentext (Sachtexte, Alltag, Geschichten)
 funktionen-bibliothek.js ← Funktionsterme mit gezeichneten Graphen fürs Zuordnen
 zuordnen-bibliothek.js ← fertige Zuordnungspaare (Brüche, Zahlenrätsel, Terme)
+diagramme-bibliothek.js ← Diagramm-Paare (t-s ↔ t-v, Funktion ↔ Ableitung)
 lehrplan-glossar.js   ← Fachbegriffe nach LehrplanPLUS Bayern G9 (Mathematik, Physik)
 lehrplan.js           ← gemeinsames Auswahlfenster für den Lehrplan-Import
 formel.html           ← Formel umstellen (nach einer Größe auflösen, Schritt für Schritt, mit Formelsammlung)

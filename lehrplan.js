@@ -33,6 +33,7 @@ function stil(){ if(css) return; css=true;
   .lpZ .b{font-weight:700;font-size:14px;}
   .lpZ .e{font-size:12.5px;color:#64748b;line-height:1.35;}
   .lpZ .m{font-size:11px;color:#94a3b8;}
+  .lpZ .lpPfeil{align-self:center;color:#94a3b8;font-weight:800;}
   .lpZ .lpBild{width:96px;height:74px;object-fit:contain;border:1px solid #e2e7ef;border-radius:7px;background:#fff;flex:none;}
   #lpFuss{padding:9px 14px;border-top:1px solid #e2e7ef;display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
   #lpFuss .info{font-size:13px;color:#64748b;flex:1 1 auto;}
@@ -129,6 +130,8 @@ function oeffnen(opt){
       c.onchange=()=>{ if(textModus) gewaehlt.clear();          // ein Lückentext braucht genau einen Text
         if(c.checked) gewaehlt.add(d); else gewaehlt.delete(d); if(textModus) liste(); else info(); };
       if(d.bild){ const im=document.createElement('img'); im.src=d.bild; im.className='lpBild'; z.appendChild(im); }
+      if(d.bild2){ const p2=document.createElement('span'); p2.className='lpPfeil'; p2.textContent='↔'; z.appendChild(p2);
+        const im2=document.createElement('img'); im2.src=d.bild2; im2.className='lpBild'; z.appendChild(im2); }
       const t=document.createElement('div'); t.className='t';
       t.innerHTML='<div class="b"></div><div class="e"></div><div class="m"></div>';
       t.querySelector('.b').textContent=d.b;
