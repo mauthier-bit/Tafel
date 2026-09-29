@@ -457,9 +457,10 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   - Im **Begriffsnetz** erscheinen die Begriffe als Felder im Kreis – verbinden und „✨ Entwirren".
   - An der **Pinnwand** wird jeder Begriff eine Karte (Begriff oben, Erklärung darunter); die
     Karten werden gleich sauber ausgerichtet.
-  - Beim **Zuordnen** kann man wählen: **Begriff ↔ Erklärung** als paarweise Aufgabe oder
-    **nach Themenbereichen** sortieren (dann sind die Bereiche die Gruppen und die Begriffe die
-    Karten).
+  - Beim **Zuordnen** wählt man im Auswahlfenster unter **„Aufgabe"** die Form:
+    **paarweise** (Begriff ↔ Erklärung, zum Verbinden), **Gruppen: nach Thema** oder
+    **Gruppen: nach Jahrgangsstufe**. In den Gruppenformen werden die Themen bzw. Jahrgangsstufen
+    zu Feldern, in die die Karten einsortiert werden.
   - **Eigene Glossare:** Im selben Fenster lässt sich über **„📄 eigenes Glossar …"** eine mit dem
     Glossar-Werkzeug **gespeicherte Datei** laden – dann filtert man statt nach Fach und
     Jahrgangsstufe nach den **Abschnitten dieser Datei**. So lassen sich auch selbst gepflegte
@@ -503,9 +504,12 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   Potenz, exponentiell, Sinus/Kosinus, ganzrational, Wurzel, Logarithmus). Zu jedem Term wird der
   **Graph beim Übernehmen gezeichnet** – es liegen also keine Bilddateien im Projekt, und die
   Darstellung ist auf jedem Bildschirm scharf.
-  Aus jeder Auswahl entsteht eine **paarweise Aufgabe**: links die eine Seite, rechts die andere,
-  zu verbinden per Linie oder Drag-and-drop. Mit **„10 zufällig"** bekommt man schnell eine
-  Übungsrunde, mit **„alle"** die ganze Sammlung eines Themas.
+  Auch hier legt die Auswahl **„Aufgabe"** die Form fest: **paarweise** (links die eine Seite,
+  rechts die andere, zu verbinden per Linie oder Drag-and-drop), **Gruppen: nach Thema** oder
+  **Gruppen: nach Jahrgangsstufe**. Die Gruppenform eignet sich gut zum Sortieren – etwa „Ist das
+  ein Potenzterm, ein Wurzelterm oder eine Potenzfunktion?" oder „Zu welcher Jahrgangsstufe gehört
+  dieser Potenzterm?". Mit **„10 zufällig"** bekommt man schnell eine Übungsrunde, mit **„alle"**
+  die ganze Sammlung eines Themas.
 - **Texte für den Lückentext** (Lückentext): Der Knopf **„Texte"** öffnet eine Bibliothek mit
   **52 Sachtexten, Alltagstexten und Geschichten** (je rund 200 bis 250 Wörter), passend zu den
   Lernbereichen des LehrplanPLUS und sprachlich an die Jahrgangsstufe angepasst. Gefiltert wird
