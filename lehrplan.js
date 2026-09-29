@@ -14,7 +14,7 @@ function stil(){ if(css) return; css=true;
   s.textContent=`
   #lpBox{position:fixed;inset:0;z-index:9000;background:rgba(15,23,42,.35);display:flex;align-items:center;justify-content:center;padding:10px;
     font-family:-apple-system,BlinkMacSystemFont,sans-serif;color:#1f2430;}
-  #lpIn{background:#fff;border-radius:16px;box-shadow:0 12px 40px rgba(15,23,42,.35);width:min(620px,96vw);max-height:92vh;display:flex;flex-direction:column;overflow:hidden;}
+  #lpIn{background:#fff;border-radius:16px;box-shadow:0 12px 40px rgba(15,23,42,.35);width:min(620px,96vw);max-height:96vh;display:flex;flex-direction:column;overflow:hidden;}
   #lpKopf{padding:8px 14px;font-weight:800;background:#f1f5fb;border-bottom:1px solid #e2e7ef;display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:15px;flex:none;}
   #lpKopf #lpTitel{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   #lpKopf .rechts{display:flex;gap:8px;align-items:center;flex:none;}
@@ -23,14 +23,14 @@ function stil(){ if(css) return; css=true;
   #lpQuelle{padding:7px 14px;border-bottom:1px solid #e2e7ef;display:flex;gap:6px;align-items:center;flex-wrap:wrap;flex:none;}
   #lpQuelle b{font-size:12px;color:#64748b;text-transform:uppercase;letter-spacing:.04em;width:74px;flex:none;}
   #lpFilter{padding:8px 14px;border-bottom:1px solid #e2e7ef;display:flex;flex-direction:column;gap:6px;
-    flex:0 1 auto;min-height:0;max-height:42vh;overflow:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;}
+    flex:0 1 auto;min-height:0;max-height:30vh;overflow:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;}
   #lpFilter .zeile{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
   #lpFilter .zeile[data-r="ber"]{max-height:84px;overflow:auto;-webkit-overflow-scrolling:touch;align-items:flex-start;align-content:flex-start;}
   #lpFilter b{font-size:12px;color:#64748b;text-transform:uppercase;letter-spacing:.04em;width:74px;flex:none;}
   .lpChip{border:1.5px solid #cfd6e0;background:#fff;border-radius:999px;padding:3px 11px;font:700 13px -apple-system,sans-serif;color:#475569;cursor:pointer;}
   .lpChip.on{background:#2563eb;border-color:#2563eb;color:#fff;}
   #lpSuche{flex:1 1 140px;border:1px solid #cfd6e0;border-radius:9px;padding:5px 9px;font:inherit;font-size:14px;min-width:120px;}
-  #lpListe{flex:1 1 0;overflow:auto;-webkit-overflow-scrolling:touch;padding:6px 10px;min-height:72px;}
+  #lpListe{flex:1 1 380px;overflow:auto;-webkit-overflow-scrolling:touch;padding:6px 10px;min-height:170px;}
   .lpZ{display:flex;gap:8px;align-items:flex-start;padding:5px 4px;border-bottom:1px solid #f1f5f9;cursor:pointer;}
   .lpZ input{margin-top:3px;width:18px;height:18px;flex:none;}
   .lpZ .t{flex:1 1 auto;min-width:0;}
@@ -48,14 +48,16 @@ function stil(){ if(css) return; css=true;
   #lpArt.an{display:flex;} #lpArt b{font-size:12px;color:#64748b;text-transform:uppercase;letter-spacing:.04em;}
   #lpArt{flex:none;}
   /* niedriges Fenster: der Knopf „Übernehmen" bleibt sichtbar, die Filter rücken zusammen */
-  @media (max-height:560px){ #lpIn{max-height:96vh;} #lpHinweis{display:none;} #lpFilter{max-height:34vh;padding:6px 14px;}
-    #lpFilter .zeile[data-r="ber"]{max-height:56px;} }
-  /* sehr niedriges Objektfenster: Fußzeile einzeilig und schmal, damit „Übernehmen" ganz sichtbar bleibt */
+  /* je niedriger das Fenster, desto mehr Platz bekommt die Begriffsliste */
+  @media (max-height:680px){ #lpHinweis{display:none;}
+    #lpFuss{flex-wrap:nowrap;overflow-x:auto;} #lpFuss .lpBtn{white-space:nowrap;} }
+  @media (max-height:560px){ #lpFilter{max-height:26vh;padding:6px 14px;}
+    #lpFilter .zeile[data-r="ber"]{max-height:56px;} #lpListe{min-height:130px;} #lpFuss .info{display:none;} }
+  /* sehr niedriges Objektfenster: alles schmal, damit „Übernehmen" ganz sichtbar bleibt */
   @media (max-height:460px){ #lpIn{max-height:99vh;border-radius:12px;} #lpBox{padding:3px;}
-    #lpKopf{padding:6px 10px;} #lpQuelle{padding:4px 10px;} #lpFilter{padding:5px 10px;gap:4px;}
-    #lpListe{min-height:54px;padding:2px 8px;}
-    #lpFuss{flex-wrap:nowrap;overflow-x:auto;padding:6px 10px;gap:6px;}
-    #lpFuss .info{display:none;} #lpFuss .lpBtn{padding:5px 9px;font-size:13px;white-space:nowrap;} }`;
+    #lpKopf{padding:6px 10px;} #lpQuelle{padding:4px 10px;} #lpFilter{padding:5px 10px;gap:4px;max-height:24vh;}
+    #lpListe{min-height:84px;padding:2px 8px;}
+    #lpFuss{padding:6px 10px;gap:6px;} #lpFuss .lpBtn{padding:5px 9px;font-size:13px;} }`;
   document.head.appendChild(s); }
 
 /* Ein gespeichertes Glossar (Textformat „Begriff = Erklärung", Abschnitte mit „# …") einlesen */
@@ -74,8 +76,16 @@ const ARTNAME={sach:'Sachtext', alltag:'Alltag', geschichte:'Geschichte'};
 function texte(){ return TX().map(r=>{ const mitArt=r.length>5;
   return { f:r[0], j:+r[1], g:r[2], b:r[3], e:mitArt?r[5]:r[4], art:mitArt?r[4]:'sach' }; }); }
 
+/* Im Objektfenster der Tafel ist oft wenig Platz. Ist das Fenster zu niedrig, bittet das
+   Auswahlfenster die Tafel, das Werkzeug so lange auf Vollbild zu stellen. */
+let platzAngefragt=false;
+function platzHolen(){ try{ if(window.parent===window||window.innerHeight>=560) return;
+  parent.postMessage({type:'picker-space',on:true},'*'); platzAngefragt=true; }catch(e){} }
+function platzZurueck(){ try{ if(!platzAngefragt) return; platzAngefragt=false;
+  parent.postMessage({type:'picker-space',on:false},'*'); }catch(e){} }
+
 function oeffnen(opt){
-  opt=opt||{}; stil();
+  opt=opt||{}; stil(); platzHolen();
   const textModus=!!opt.texte, eigen=!!opt.daten;
   let daten=eigen?opt.daten.slice():(textModus?texte():alle()), quelle=eigen?'eigen':(textModus?'tx':'lp');
   let fFach='', fJg=0, fBer='', fArt='', fQ='';
@@ -181,7 +191,7 @@ function oeffnen(opt){
     for(let i=l.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [l[i],l[j]]=[l[j],l[i]]; }
     l.slice(0,textModus?1:10).forEach(d=>gewaehlt.add(d)); liste(); };
   if(textModus){ $l('#lpZufall').textContent='zufällig'; $l('#lpAlle').hidden=true; }
-  const zu=()=>box.remove();
+  const zu=()=>{ box.remove(); platzZurueck(); };
   $l('.x').onclick=zu; $l('#lpAb').onclick=zu;
   box.onclick=e=>{ if(e.target===box) zu(); };
   /* zusätzliche Auswahl, die das aufrufende Werkzeug anbietet (z. B. Paare oder Gruppen) */

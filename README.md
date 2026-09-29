@@ -460,10 +460,12 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   Filtern **Fach · Jahrgangsstufe · Themenbereich** und einer Suche; man kreuzt Begriffe an,
   nimmt mit **„10 zufällig"** eine Stichprobe oder übernimmt einfach alles Gefilterte.
   **„Übernehmen" steht zusätzlich oben in der Kopfzeile** des Auswahlfensters und ist damit auch dann
-  erreichbar, wenn das Werkzeug als kleines Objekt auf der Tafel liegt. Das Fenster passt sich der
-  Höhe des Objektfensters an: Kopf- und Fußzeile bleiben stehen, die Filterzeilen rücken zusammen und
-  werden scrollbar, die Begriffsliste bekommt den Rest – das Objektfenster muss also nicht mehr
-  aufgezogen werden.
+  erreichbar, wenn das Werkzeug als kleines Objekt auf der Tafel liegt. Das Fenster **nutzt die Höhe
+  aus, die da ist** (bis 96 % der Fensterhöhe) und gibt den Platz der **Begriffsliste**: Kopf- und
+  Fußzeile bleiben stehen, die Filterzeilen rücken zusammen und werden scrollbar, die Liste zeigt
+  fünf bis sechs Begriffe auf einmal. Liegt das Werkzeug als **kleines Objekt** auf der Tafel und
+  wäre das Fenster zu niedrig, stellt die Tafel das Werkzeug **für die Dauer der Auswahl auf
+  Vollbild** und danach wieder zurück – das Objekt muss also nicht aufgezogen werden.
   - Im **Glossar** entstehen daraus fertige Karten mit Abschnittsüberschriften („Mathematik 7 ·
     Symmetrie und Winkel"); das Glossar lässt sich anschließend wie immer ergänzen und abfragen.
   - Im **Kreuzworträtsel** wird der Begriff zum Lösungswort und die Erklärung zum Hinweis.
