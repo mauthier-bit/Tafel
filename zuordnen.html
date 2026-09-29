@@ -131,8 +131,10 @@ function parse(){
     const name=(m?m[1]:t).trim();
     const ci=cats.length; cats.push({name,idx:ci});
     const rest=m?m[2]:'';
-    /* in Anführungszeichen bleibt alles eine einzige Karte – so überleben Kommas in Erklärungssätzen */
-    const roh=/^\s*"([\s\S]*)"\s*$/.test(rest) ? [rest.trim().slice(1,-1)] : rest.split(/\s*[,;]\s*/);
+    /* Steht die rechte Seite in Anführungszeichen, ist jedes Zitat eine Karte.
+       So überleben Kommas in Erklärungssätzen, und mehrere Zitate ergeben mehrere Karten. */
+    const zitate=/^\s*"/.test(rest)&&/"\s*$/.test(rest) ? (rest.match(/"([^"]*)"/g)||[]) : null;
+    const roh = zitate&&zitate.length ? zitate.map(z=>z.slice(1,-1)) : rest.split(/\s*[,;]\s*/);
     roh.forEach(w=>{ const s=w.trim(); if(!s) return;
       karten.push({id:'k'+ci+'_'+karten.length, t:s, cat:ci}); });
   });
@@ -431,12 +433,15 @@ window.addEventListener('load',()=>{
 if(window.TafelLehrplan&&TafelLehrplan.verfuegbar()){
   $('bImp').onclick=()=>TafelLehrplan.oeffnen({ titel:'Begriffe zum Zuordnen',
     artTitel:'Aufgabe',
-    arten:[{id:'paare',name:'Begriff ↔ Erklärung (paarweise)'},{id:'gruppen',name:'nach Themenbereichen'}],
+    arten:[{id:'paare',name:'paarweise (Begriff ↔ Erklärung)'},
+           {id:'gruppen',name:'Gruppen: nach Thema'},
+           {id:'jgst',name:'Gruppen: nach Jahrgangsstufe'}],
     uebernehmen:(l,art)=>{
       let text;
-      if(art==='gruppen'){
-        const g=[...new Set(l.map(d=>d.g))];
-        text=g.map(name=>name+' = '+l.filter(d=>d.g===name).map(d=>d.b).join(', ')).join('\n');
+      if(art==='gruppen'||art==='jgst'){
+        const schl=d=>art==='gruppen'?d.g:('Jahrgangsstufe '+d.j);
+        const g=[...new Set(l.map(schl))];
+        text=g.map(name=>'"'+name+'" = '+l.filter(d=>schl(d)===name).map(d=>'"'+d.b+'"').join(', ')).join('\n');
         D.mode='gruppen';
       } else {
         text=l.map(d=>d.b+' = "'+String(d.e).replace(/"/g,'\u201d')+'"').join('\n');
@@ -456,23 +461,41 @@ if(window.TafelLehrplan&&((window.TafelFunktionen&&TafelFunktionen.verfuegbar())
     if(window.TafelFunktionen&&TafelFunktionen.verfuegbar()) daten=daten.concat(TafelFunktionen.daten());
     if(window.TafelDiagramme&&TafelDiagramme.verfuegbar()) daten=daten.concat(TafelDiagramme.daten());
     TafelLehrplan.oeffnen({ titel:'Fertige Zuordnungsaufgaben', daten,
-      hinweis:'Zahlenrätsel, Terme, Brüche und Funktionsgraphen – Graphen werden beim Übernehmen gezeichnet.',
-      uebernehmen:l=>{
-        const bilder={}; const zeilen=[]; let nb=0;
-        l.forEach(d=>{
-          if(d.paar){                                   // Diagramm links und Diagramm rechts
-            const gross=d.paar(), k1='b'+(++nb), k2='b'+(++nb);
-            bilder[k1]=gross.links; bilder[k2]=gross.rechts;
-            zeilen.push('"['+k1+']" = ['+k2+']');
-          }
-          else if(d.bild||d.voll){ const k='b'+(++nb); bilder[k]=d.voll?d.voll():d.bild;
-            zeilen.push('"'+d.b+'" = ['+k+']'); }
-          else zeilen.push('"'+d.b+'" = "'+String(d.e).replace(/"/g,'\u201d')+'"');
-        });
-        D.images=bilder; D.text=zeilen.join('\n'); D.mode='paare';
+      hinweis:'Zahlenrätsel, Terme, Brüche, Funktions- und Bewegungsdiagramme – Graphen werden beim Übernehmen gezeichnet.',
+      artTitel:'Aufgabe',
+      arten:[{id:'paare',name:'paarweise (Aufgabe ↔ Lösung)'},
+             {id:'thema',name:'Gruppen: nach Thema'},
+             {id:'jgst',name:'Gruppen: nach Jahrgangsstufe'}],
+      uebernehmen:(l,art)=>{
+        const bilder={}; let nb=0;
+        const karte=d=>{                                  // linke Seite als Text oder Bild
+          if(d.paar){ const k='b'+(++nb); bilder[k]=d.paar().links; return '['+k+']'; }
+          if(d.bild||d.voll){ return d.b; }               // Funktionen: der Term ist die linke Seite
+          return d.b; };
+        let zeilen;
+        if(art==='thema'||art==='jgst'){
+          /* Gruppenaufgabe: die Themen bzw. Jahrgangsstufen sind die Felder */
+          const schl=d=>art==='thema'?d.g:('Jahrgangsstufe '+d.j);
+          const gruppen=[...new Set(l.map(schl))];
+          zeilen=gruppen.map(g=>'"'+g+'" = '+l.filter(d=>schl(d)===g)
+            .map(d=>'"'+String(karte(d)).replace(/"/g,'\u201d')+'"').join(', '));
+          D.mode='gruppen';
+        } else {
+          zeilen=[]; 
+          l.forEach(d=>{
+            if(d.paar){ const gross=d.paar(), k1='b'+(++nb), k2='b'+(++nb);
+              bilder[k1]=gross.links; bilder[k2]=gross.rechts;
+              zeilen.push('"['+k1+']" = ['+k2+']'); }
+            else if(d.bild||d.voll){ const k='b'+(++nb); bilder[k]=d.voll?d.voll():d.bild;
+              zeilen.push('"'+d.b+'" = ['+k+']'); }
+            else zeilen.push('"'+d.b+'" = "'+String(d.e).replace(/"/g,'\u201d')+'"');
+          });
+          D.mode='paare';
+        }
+        D.images=bilder; D.text=zeilen.join('\n');
         D.place={}; D.order=[]; D.check={}; D.shown=false;
         render(); sync();
-        TafelShot&&TafelShot.toast(l.length+' Paare übernommen – jetzt zuordnen');
+        TafelShot&&TafelShot.toast(l.length+(D.mode==='gruppen'?' Karten zum Einsortieren':' Paare übernommen – jetzt zuordnen'));
       } });
   };
 } else { const b=$('bFunk'); if(b) b.hidden=true; }
