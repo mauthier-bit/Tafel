@@ -466,13 +466,23 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     Begriffslisten in alle sieben Werkzeuge übernehmen.
   Die Begriffe folgen den Lernbereichen des Lehrplans, die **Erklärungen sind eigens für die Tafel
   geschrieben** (kurze, schülergerechte Sätze) – der Lehrplantext selbst wird nicht wiedergegeben.
-- **Funktionsterm und Graph zuordnen** (Zuordnen): Der Knopf **„Funktionen"** öffnet eine eigene
-  Bibliothek mit **45 Funktionen** von der linearen Funktion bis zur e-Funktion, filterbar nach
+- **Fertige Zuordnungsaufgaben** (Zuordnen): Der Knopf **„Aufgaben"** öffnet eine Bibliothek mit
+  **107 fertigen Paaren**, filterbar nach **Jahrgangsstufe** und **Thema**:
+  - **Bruch und Dezimalbruch** (Jgst. 6): 1/4 ↔ 0,25, 5/8 ↔ 0,625, 1/3 ↔ 0,333…
+  - **Brüche erweitern und kürzen** (Jgst. 6): 2/3 ↔ 8/12, 3/8 ↔ 6/16
+  - **Unechter Bruch und gemischte Zahl** (Jgst. 6): 11/4 ↔ 2 3/4, 17/5 ↔ 3 2/5
+  - **Zahlenrätsel und Gleichungen** (Jgst. 7): „Das Dreifache einer Zahl, vermindert um 5, ergibt
+    16." ↔ 3x − 5 = 16 – vierzehn Rätsel vom einfachen Ansatz bis zu Klammer und Nachfolgerzahl
+  - **Term und umgeformter Term** (Jgst. 7): 3 · (x + 4) ↔ 3x + 12, (x + 3)² ↔ x² + 6x + 9,
+    5x + 10 ↔ 5 · (x + 2) – Ausmultiplizieren, Ausklammern, Zusammenfassen und binomische Formeln
+  - **Funktionsterm und Graph** (Jgst. 8 bis 12): **45 Funktionen** von der linearen Funktion bis zur e-Funktion, filterbar nach
   **Jahrgangsstufe** (8 bis 12) und **Funktionstyp** (linear, gebrochen-rational, quadratisch,
   Potenz, exponentiell, Sinus/Kosinus, ganzrational, Wurzel, Logarithmus). Zu jedem Term wird der
   **Graph beim Übernehmen gezeichnet** – es liegen also keine Bilddateien im Projekt, und die
-  Darstellung ist auf jedem Bildschirm scharf. Im Zuordnen entsteht daraus eine paarweise Aufgabe:
-  links die Terme, rechts die Graphen, zu verbinden per Linie oder Drag-and-drop.
+  Darstellung ist auf jedem Bildschirm scharf.
+  Aus jeder Auswahl entsteht eine **paarweise Aufgabe**: links die eine Seite, rechts die andere,
+  zu verbinden per Linie oder Drag-and-drop. Mit **„10 zufällig"** bekommt man schnell eine
+  Übungsrunde, mit **„alle"** die ganze Sammlung eines Themas.
 - **Texte für den Lückentext** (Lückentext): Der Knopf **„Texte"** öffnet eine Bibliothek mit
   **52 Sachtexten, Alltagstexten und Geschichten** (je rund 200 bis 250 Wörter), passend zu den
   Lernbereichen des LehrplanPLUS und sprachlich an die Jahrgangsstufe angepasst. Gefiltert wird
@@ -1476,6 +1486,7 @@ diagramm.html         ← Diagramm aus einer Tabelle (Säulen, Balken, Linien, K
 galgen.html           ← Galgenmännchen (Begriffe raten, Hinweise, Lehrplan-Import)
 lehrplan-texte.js     ← Textbibliothek für den Lückentext (Sachtexte, Alltag, Geschichten)
 funktionen-bibliothek.js ← Funktionsterme mit gezeichneten Graphen fürs Zuordnen
+zuordnen-bibliothek.js ← fertige Zuordnungspaare (Brüche, Zahlenrätsel, Terme)
 lehrplan-glossar.js   ← Fachbegriffe nach LehrplanPLUS Bayern G9 (Mathematik, Physik)
 lehrplan.js           ← gemeinsames Auswahlfenster für den Lehrplan-Import
 formel.html           ← Formel umstellen (nach einer Größe auflösen, Schritt für Schritt, mit Formelsammlung)
