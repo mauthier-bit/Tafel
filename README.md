@@ -815,7 +815,7 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   **Seitenverhältnis**. So lassen sich auch **H5P-Inhalte** einbetten (h5p.org, H5P.com, Moodle, Lumi-Cloud):
   im H5P-Inhalt auf **„Einbetten"** tippen, den Code kopieren und hier einfügen – das Objekt heißt dann „H5P-Inhalt"
   und ist über **„Objekt bedienen"** interaktiv nutzbar.
-- **H5P-Datei (.h5p) einfügen – auch offline:** über **Einfügen → Datei** („PDF / Bild / PowerPoint / H5P / HTML / Audio
+- **H5P-Datei (.h5p) einfügen – auch offline:** über **Einfügen → Datei** („PDF / Bild / ppt / H5P / HTML / Audio
   wählen") lässt sich eine heruntergeladene **.h5p-Datei** direkt auf die Tafel legen. Die Tafel entpackt sie im
   Browser und spielt sie mit einem **eingebauten H5P-Player** ab (h5p-standalone, liegt im Ordner `h5p/`) – ganz
   ohne Internet. Das Objekt trägt den Titel des Inhalts, lässt sich wie jedes andere verschieben und skalieren und
@@ -827,7 +827,10 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   eines leeren weißen Kastens zeigt das Objekt dann eine **Info-Karte mit der Domain**; über
   **„Einbettungen bedienen" → „↗ Öffnen"** (oben links am Objekt) lässt sich die Seite im Browser öffnen.
   Direkte Inhalts-URLs (z. B. **PhET-Simulationen**) funktionieren dagegen problemlos.
-- **PDF einfügen:** über **Einfügen → Datei** („PDF / Bild / PowerPoint / H5P / HTML / Audio wählen"). Jede PDF-Seite wird
+- Im Einfügen-Fenster steht der Abschnitt **Datei** mit dem blauen, einzeiligen Knopf
+  **„PDF / Bild / ppt / H5P / HTML / Audio / Video wählen"**; die ausführlichen Erläuterungen dazu
+  stecken darunter hinter **„ℹ️ Was kommt wie auf die Tafel?"** und klappen erst auf Tippen auf.
+- **PDF einfügen:** über **Einfügen → Datei** („PDF / Bild / ppt / H5P / HTML / Audio / Video wählen"). Jede PDF-Seite wird
   gerendert; zwei Schalter bestimmen die Form:
   **„Als eigene Seite einfügen"** (aus) macht aus jeder PDF-Seite eine eigene Tafelseite.
   Sonst entscheidet **„Mehrseitiges als Dokument"** (standardmäßig **an**): bei mehr als einer Seite entsteht
@@ -840,7 +843,7 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   gespeichert** – nach dem Neuladen ist sie also wieder da. Dafür muss die Datei **alles enthalten,
   was sie braucht** (Bilder, Stile und Skripte im Dokument selbst oder als Web-Adresse); Verweise auf
   Nachbardateien funktionieren nicht – darauf weist die Tafel beim Einfügen hin. Grenze: 3 MB.
-- **Audiodatei einfügen (mp3 …):** über **Einfügen → Datei** („PDF / Bild / PowerPoint / H5P / HTML / Audio / Video wählen").
+- **Audiodatei einfügen (mp3 …):** über **Einfügen → Datei** („PDF / Bild / ppt / H5P / HTML / Audio / Video wählen").
   Unterstützt **mp3, m4a, aac, wav, ogg, opus**; die Datei landet als kleiner **Abspieler** (Play,
   Position, Lautstärke) als bewegliches Objekt auf der Tafel – zum Abspielen oben auf **„Einbettung
   bedienen"** tippen. Dateien **bis 4 MB werden mit dem Projekt gespeichert** und sind nach dem
@@ -856,7 +859,7 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   lässt sich der Abspielbereich festlegen, sodass im Unterricht genau der gewünschte Ausschnitt
   läuft. Kann das iPad ein Format nicht abspielen (z. B. .avi, .mkv), sagt die Tafel das beim
   Einfügen; solche Dateien vorher als **MP4 (H.264)** speichern.
-- **PowerPoint (.pptx) einfügen:** über **„PDF / Bild / PowerPoint"** – jede Folie wird als Bild
+- **PowerPoint (.pptx) einfügen:** über **„PDF / Bild / ppt …"** – jede Folie wird als Bild
   dargestellt (einfache Darstellung: **Text & Bilder**, keine Animationen/Themes/SmartArt) und
   wahlweise als **Objekt** oder als **eigene Seite** eingefügt. Läuft offline (entpackt die .pptx
   im Browser). Für **exakte** Darstellung die Präsentation als **PDF** exportieren und einfügen.
