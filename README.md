@@ -467,10 +467,19 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   Die Begriffe folgen den Lernbereichen des Lehrplans, die **Erklärungen sind eigens für die Tafel
   geschrieben** (kurze, schülergerechte Sätze) – der Lehrplantext selbst wird nicht wiedergegeben.
 - **Fertige Zuordnungsaufgaben** (Zuordnen): Der Knopf **„Aufgaben"** öffnet eine Bibliothek mit
-  **107 fertigen Paaren**, filterbar nach **Jahrgangsstufe** und **Thema**:
+  **205 fertigen Paaren**, filterbar nach **Jahrgangsstufe** und **Thema**:
   - **Bruch und Dezimalbruch** (Jgst. 6): 1/4 ↔ 0,25, 5/8 ↔ 0,625, 1/3 ↔ 0,333…
   - **Brüche erweitern und kürzen** (Jgst. 6): 2/3 ↔ 8/12, 3/8 ↔ 6/16
   - **Unechter Bruch und gemischte Zahl** (Jgst. 6): 11/4 ↔ 2 3/4, 17/5 ↔ 3 2/5
+  - **Potenzterme** (Jgst. 5 bis 9, je zehn Paare mit wachsender Schwierigkeit): 2 · 2 · 2 ↔ 2³
+    und 2⁵ ↔ 32 in Jgst. 5, negative Exponenten wie 10⁻² ↔ 0,01 in Jgst. 6, die Potenzgesetze
+    a³ · a² ↔ a⁵ und (a²)³ ↔ a⁶ in Jgst. 7, Terme wie x⁻² ↔ 1/x² und (a/b)⁻¹ ↔ b/a in Jgst. 8,
+    rationale Exponenten wie x^(1/2) ↔ √x und 16^(3/4) ↔ 8 in Jgst. 9
+  - **Bruchterme kürzen und umformen** (Jgst. 8): (x² − 4)/(x + 2) ↔ x − 2 · (3a²b)/(6ab) ↔ a/2 ·
+    1/2 + 1/x ↔ (x + 2)/(2x) – Kürzen, Erweitern, Addieren, Multiplizieren und Dividieren
+  - **Wurzelterme vereinfachen** (Jgst. 9): √50 ↔ 5√2 · √8 + √2 ↔ 3√2 · 1/√2 ↔ √2/2 ·
+    √(a²) ↔ |a| – teilweises Radizieren, Zusammenfassen und rationaler Nenner
+  - **Logarithmusterme** (Jgst. 10): log₂(8) ↔ 3 · log₁₀(0,1) ↔ −1 · log₄(2) ↔ 0,5
   - **Zahlenrätsel und Gleichungen** (Jgst. 7): „Das Dreifache einer Zahl, vermindert um 5, ergibt
     16." ↔ 3x − 5 = 16 – vierzehn Rätsel vom einfachen Ansatz bis zu Klammer und Nachfolgerzahl
   - **Term und umgeformter Term** (Jgst. 7): 3 · (x + 4) ↔ 3x + 12, (x + 3)² ↔ x² + 6x + 9,
