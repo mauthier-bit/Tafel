@@ -380,9 +380,27 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     Mit **„🔔 Erinnerung zum Dienstbeginn um …"** poppt zu Beginn jedes Zeitraums ein Fenster mit der
     **Gruppe und ihren Namen** auf (einmal je Zeitraum und Dienst; war die Tafel zu, kommt es beim
     nächsten Öffnen). **🖨 Dienstpläne** druckt alle eingeschalteten Dienste nacheinander.
-- Das Klassen-Fenster („Klassenliste & Aufgaben") ist 720 px breit; **„🖨 Drucken"** steht mit
+- **🗓 Stundenplan** (eigener Reiter im Klassen-Fenster): der Plan der Klasse – **Zeiten links,
+  Montag bis Freitag als Spalten**.
+  - **Zeiten:** Jede Zeile hat einen **Namen** („1. Stunde", „Pause" – frei änderbar) und **Beginn/Ende**
+    als Uhrzeitfelder. Wird das **Ende** einer Einheit geändert, **rücken alle folgenden mit**, solange
+    sie lückenlos anschließen – eine um 5 Minuten längere Stunde verschiebt also den ganzen Vormittag.
+    **＋ Stunde** hängt 45 Minuten an, **＋ Pause** 15 Minuten, **×** löscht eine Zeile,
+    **„Standardzeiten"** setzt wieder 8:00–13:00 im 45-Minuten-Takt (die eingetragenen Fächer bleiben).
+  - **Fächer** werden einfach in die Zellen getippt; eine **Vorschlagsliste** (Mathematik, Physik,
+    Deutsch, Natur und Technik, Religion, Ethik, Sport …) hilft beim Tippen. **Gleiches Fach = gleiche
+    Farbe**, quer durch die Woche. **Pausen** laufen als graues Band durch alle Tage. Der **heutige Tag**
+    ist in der Kopfzeile hervorgehoben, die **laufende Stunde** liegt auf gelbem Grund.
+  - **„Fächer leeren"** löscht nur die Einträge, die Zeiten bleiben. **🖨 Drucken** gibt den Plan als
+    Tabelle mit Zeiten und Fächern aus (mit Klassenname, Schuljahr und Datum).
+  - Der Plan gehört **zur Klasse** (zum Projekt) und wird mit ihr gespeichert und exportiert. Die
+    **Uhr** übernimmt diese Zeiten: „Schulstunden zeigen" richtet sich nach dem Stundenplan der aktiven
+    Klasse – gibt es keinen, gelten die Standardzeiten (Bayern, 45-Minuten-Takt).
+- Das Klassen-Fenster („Klassenliste & Aufgaben") ist 760 px breit (damit die fünf Wochentage des
+  Stundenplans nebeneinander passen); **„🖨 Drucken"** steht mit
   „Anzeigen/Verbergen", „Kategorien" und „Zurücksetzen" in einer Zeile. Reihenfolge der Reiter:
-  **Klassenliste · Termine · Sitzplan · Sticker · Notizen**, beim Öffnen ist die Klassenliste aktiv.
+  **Klassenliste · Stundenplan · Termine · Sitzplan · Sticker · Notizen**, beim Öffnen ist die
+  Klassenliste aktiv.
 - **Sticker bei Ruhe (Sozialform):** In der Sozialform-Ansicht gibt es bei der **Lärmampel** den
   Schalter **„⭐ Sticker für die Klasse, wenn die Ampel bis zum Timer-Ende nicht rot wird"**. Sind Timer und
   Lärmampel beide aufgeklappt, sind ihre Bereiche **gleich hoch**. Laufen **Timer und Lärmampel** zusammen und
@@ -460,10 +478,11 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   Filtern **Fach · Jahrgangsstufe · Themenbereich** und einer Suche; man kreuzt Begriffe an,
   nimmt mit **„10 zufällig"** eine Stichprobe oder übernimmt einfach alles Gefilterte.
   **„Übernehmen" steht zusätzlich oben in der Kopfzeile** des Auswahlfensters und ist damit auch dann
-  erreichbar, wenn das Werkzeug als kleines Objekt auf der Tafel liegt. Das Fenster **nutzt die Höhe
-  aus, die da ist** (bis 96 % der Fensterhöhe) und gibt den Platz der **Begriffsliste**: Kopf- und
-  Fußzeile bleiben stehen, die Filterzeilen rücken zusammen und werden scrollbar, die Liste zeigt
-  fünf bis sechs Begriffe auf einmal. Liegt das Werkzeug als **kleines Objekt** auf der Tafel und
+  erreichbar, wenn das Werkzeug als kleines Objekt auf der Tafel liegt. Das Fenster ist 700 px breit,
+  **nutzt die Höhe aus, die da ist** (bis 96 % der Fensterhöhe) und gibt den Platz der
+  **Begriffsliste**: Kopf- und Fußzeile (einzeilig) bleiben stehen, die Filterzeilen rücken zusammen
+  und werden scrollbar, die Liste zeigt **sechs Begriffe** auf einmal – im Zuordnungswerkzeug, wo jede
+  Zeile ein Diagramm oder einen Graphen zeigt, **viereinhalb**. Liegt das Werkzeug als **kleines Objekt** auf der Tafel und
   wäre das Fenster zu niedrig, stellt die Tafel das Werkzeug **für die Dauer der Auswahl auf
   Vollbild** und danach wieder zurück – das Objekt muss also nicht aufgezogen werden.
   - Im **Glossar** entstehen daraus fertige Karten mit Abschnittsüberschriften („Mathematik 7 ·

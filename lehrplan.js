@@ -14,7 +14,7 @@ function stil(){ if(css) return; css=true;
   s.textContent=`
   #lpBox{position:fixed;inset:0;z-index:9000;background:rgba(15,23,42,.35);display:flex;align-items:center;justify-content:center;padding:10px;
     font-family:-apple-system,BlinkMacSystemFont,sans-serif;color:#1f2430;}
-  #lpIn{background:#fff;border-radius:16px;box-shadow:0 12px 40px rgba(15,23,42,.35);width:min(620px,96vw);max-height:96vh;display:flex;flex-direction:column;overflow:hidden;}
+  #lpIn{background:#fff;border-radius:16px;box-shadow:0 12px 40px rgba(15,23,42,.35);width:min(700px,96vw);max-height:96vh;display:flex;flex-direction:column;overflow:hidden;}
   #lpKopf{padding:8px 14px;font-weight:800;background:#f1f5fb;border-bottom:1px solid #e2e7ef;display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:15px;flex:none;}
   #lpKopf #lpTitel{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   #lpKopf .rechts{display:flex;gap:8px;align-items:center;flex:none;}
@@ -39,9 +39,11 @@ function stil(){ if(css) return; css=true;
   .lpZ .m{font-size:11px;color:#94a3b8;}
   .lpZ .lpPfeil{align-self:center;color:#94a3b8;font-weight:800;}
   .lpZ .lpBild{width:96px;height:74px;object-fit:contain;border:1px solid #e2e7ef;border-radius:7px;background:#fff;flex:none;}
-  #lpFuss{padding:9px 14px;border-top:1px solid #e2e7ef;display:flex;gap:8px;align-items:center;flex-wrap:wrap;flex:none;background:#fff;}
-  #lpFuss .info{font-size:13px;color:#64748b;flex:1 1 auto;}
+  #lpFuss{padding:9px 14px;border-top:1px solid #e2e7ef;display:flex;gap:8px;align-items:center;flex-wrap:nowrap;flex:none;background:#fff;}
+  #lpFuss .info{font-size:13px;color:#64748b;flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  #lpFuss .lpBtn{flex:none;white-space:nowrap;}
   .lpBtn{border:1px solid #cfd6e0;background:#fff;border-radius:9px;padding:6px 12px;font:700 14px -apple-system,sans-serif;color:#1f2430;cursor:pointer;}
+  #lpFuss .lpBtn{padding:6px 10px;font-size:13.5px;}
   .lpBtn.pri{background:#2563eb;border-color:#2563eb;color:#fff;}
   #lpHinweis{font-size:11.5px;color:#94a3b8;padding:0 14px 8px;flex:none;}
   #lpArt{display:none;gap:6px;align-items:center;flex-wrap:wrap;padding:0 14px 8px;}
@@ -49,8 +51,7 @@ function stil(){ if(css) return; css=true;
   #lpArt{flex:none;}
   /* niedriges Fenster: der Knopf „Übernehmen" bleibt sichtbar, die Filter rücken zusammen */
   /* je niedriger das Fenster, desto mehr Platz bekommt die Begriffsliste */
-  @media (max-height:680px){ #lpHinweis{display:none;}
-    #lpFuss{flex-wrap:nowrap;overflow-x:auto;} #lpFuss .lpBtn{white-space:nowrap;} }
+  @media (max-height:680px){ #lpHinweis{display:none;} }
   @media (max-height:560px){ #lpFilter{max-height:26vh;padding:6px 14px;}
     #lpFilter .zeile[data-r="ber"]{max-height:56px;} #lpListe{min-height:130px;} #lpFuss .info{display:none;} }
   /* sehr niedriges Objektfenster: alles schmal, damit „Übernehmen" ganz sichtbar bleibt */
@@ -167,7 +168,8 @@ function oeffnen(opt){
     if(!list.length) box2.innerHTML='<div style="padding:20px;text-align:center;color:#94a3b8">Keine Begriffe – Filter ändern</div>';
     info();
   }
-  const info=()=>{ $l('#lpInfo').textContent=sichtbar().length+' Begriffe · '+gewaehlt.size+' ausgewählt'; };
+  const info=()=>{ $l('#lpInfo').textContent=sichtbar().length+' Begriffe · '+gewaehlt.size+' gewählt';
+    $l('#lpInfo').title=sichtbar().length+' Begriffe sichtbar · '+gewaehlt.size+' ausgewählt'; };
 
   box.querySelectorAll('#lpQuelle .lpChip').forEach(b=>b.onclick=()=>{
     if(b.dataset.q==='datei'){ $l('#lpFile').click(); return; }
