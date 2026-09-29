@@ -490,6 +490,9 @@
   #mkCatEdit .catRow select{width:auto;padding:6px;flex:0 0 auto;}
   #mkCatEdit .catRow .btn{flex:0 0 auto;}
   #mkTable td.mkCell.grade{min-width:72px;white-space:nowrap;}
+  #mkTable td.mkCell.cards{min-width:66px;white-space:nowrap;}
+  .ka{display:inline-block;width:13px;height:18px;margin:1px 2px;border-radius:3px;vertical-align:-3px;box-shadow:0 1px 2px rgba(15,23,42,.3);}
+  .ka.g{background:#facc15;} .ka.r{background:#dc2626;}
   #mkTable td.mkCell.text{min-width:100px;max-width:230px;text-align:left;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   #mkTable input.mkTxtIn,#markMenu input.mmTxtIn{width:100%;min-width:0;padding:5px 7px;font-size:14px;border:1.5px solid #93b4f5;border-radius:7px;}
   #markMenu input.mmTxtIn{flex:1;width:auto;padding:8px;}
@@ -506,6 +509,8 @@
   #gradeDlg .gBtn{min-width:38px;height:38px;padding:0 8px;border:1px solid #dfe5ee;background:#fff;border-radius:10px;font:inherit;font-size:16px;font-weight:800;cursor:pointer;color:#1f2430;}
   #gradeDlg .gBtn.on{background:#3b82f6;border-color:#3b82f6;color:#fff;}
   #gradeDlg input[type=date]{width:auto;flex:1;min-width:0;padding:6px 8px;}
+  #gradeDlg .kBtn{flex:1 1 128px;display:flex;align-items:center;justify-content:center;gap:6px;height:42px;border:1.5px solid #dfe5ee;background:#fff;border-radius:11px;font:inherit;font-size:14px;font-weight:700;cursor:pointer;color:#1f2430;}
+  #gradeDlg .kBtn.g{background:#fefce8;border-color:#facc15;} #gradeDlg .kBtn.r{background:#fef2f2;border-color:#f87171;}
   #gradeDlg .gList{display:flex;flex-direction:column;gap:4px;max-height:30vh;overflow:auto;border-top:1px solid #eef1f5;padding-top:6px;}
   #gradeDlg .gItem{display:flex;align-items:center;gap:8px;font-size:13px;}
   #gradeDlg .gItem button{margin-left:auto;border:none;background:#f4f5f8;border-radius:8px;width:30px;height:28px;cursor:pointer;color:#5b6472;}
@@ -818,6 +823,7 @@
     <div style="display:flex;gap:6px;align-items:center;flex-wrap:nowrap"><b style="width:52px">Größe:</b><button class="p step" id="txtSizeM">−</button><span class="stepv" id="txtSizeV">28</span><button class="p step" id="txtSizeP">+</button></div>
   </div>
   <div class="prow" id="lblRow" style="display:none;font-size:13px;gap:14px;align-items:center;flex-wrap:wrap"><label class="propToggle"><span>Ecken beschriften</span><div class="sw2" id="lblV"></div></label><label class="propToggle"><span id="lblEtxt">Seiten beschriften</span><div class="sw2" id="lblE"></div></label><span style="display:inline-flex;gap:6px;align-items:center"><b>Schrift:</b><button class="p step" id="lblFsM">−</button><span class="stepv" id="lblFsV">15</span><button class="p step" id="lblFsP">+</button></span><button class="p" id="lblEditBtn" title="Eigene Buchstaben/Namen eintragen" style="flex:1 0 100%">✎ Beschriftung ändern</button></div>
+  <div class="prow" id="arrowRow" style="display:none;font-size:13px;gap:10px;align-items:center;flex-wrap:wrap"><b>Pfeilspitze:</b><button class="p" id="arrOne" title="Spitze nur am Ende">→ ein Ende</button><button class="p" id="arrBoth" title="Spitze an beiden Enden">↔ beide Enden</button></div>
   <div class="prow" id="solidRow" style="display:none;font-size:13px;gap:6px;align-items:center;flex-wrap:nowrap"><b>Ecken der Grundfläche:</b><button class="p step" id="solNM">−</button><span class="stepv" id="solNV">3</span><button class="p step" id="solNP">+</button></div>
   <div class="prow" id="clockRow" style="display:none;flex-direction:column;align-items:stretch;gap:6px;font-size:13px">
     <label class="propToggle"><span>Schulstunden zeigen</span><div class="sw2" id="clkSchool"></div></label>
@@ -1248,6 +1254,7 @@ let scale=1, ox=0, oy=0; const MINS=0.2, MAXS=8;
 let tool='pen', color='#111111', penWidth=3, markerWidth=32, textSize=28;   // Stift wie bisher (Stufe 2), Marker eine Stufe stärker
 let toolColors={pen:'#111111', line:'#111111', marker:'#eab308', text:'#111111', laser:'#ff2828'};   // Stift, Linien/Formen, Marker, Text und Laserpointer merken sich ihre Farbe getrennt
 const LINE_TOOLS=['shape','arrow','circle','gerade','arc'];
+let arrowBothDef=false;                       // zuletzt gewählte Pfeilform (ein Ende oder Doppelpfeil)
 const TEXT_TOOLS=['text','dict'];
 const colKey=()=>tool==='laser'?'laser':(tool==='marker'?'marker':(LINE_TOOLS.includes(tool)?'line':(TEXT_TOOLS.includes(tool)?'text':'pen')));
 let barsHidden=false, mainbarSide='left', barTheme='light', barTint={dark:'graphit',light:'grau'};   // Leisten ein-/ausblendbar per Wischgeste; Hauptleiste links oder rechts; Erscheinung dunkel/hell + Farbton
@@ -1379,7 +1386,8 @@ function drawObjectRaw(o,c){
     else if(o.shape==='line'){c.moveTo(o.x0,o.y0);c.lineTo(o.x1,o.y1);}
     else if(o.shape==='gerade'){ const dx=o.x1-o.x0,dy=o.y1-o.y0,len=Math.hypot(dx,dy)||1,ux=dx/len,uy=dy/len,BIG=100000; c.moveTo(o.x0-ux*BIG,o.y0-uy*BIG); c.lineTo(o.x1+ux*BIG,o.y1+uy*BIG); }
     else if(o.shape==='arrow'){c.moveTo(o.x0,o.y0);c.lineTo(o.x1,o.y1);const a=Math.atan2(o.y1-o.y0,o.x1-o.x0),L=Math.max(10,o.width*3.5);
-      c.moveTo(o.x1,o.y1);c.lineTo(o.x1-L*Math.cos(a-.4),o.y1-L*Math.sin(a-.4));c.moveTo(o.x1,o.y1);c.lineTo(o.x1-L*Math.cos(a+.4),o.y1-L*Math.sin(a+.4));}
+      const spitze=(px,py,w)=>{ c.moveTo(px,py);c.lineTo(px-L*Math.cos(w-.4),py-L*Math.sin(w-.4));c.moveTo(px,py);c.lineTo(px-L*Math.cos(w+.4),py-L*Math.sin(w+.4)); };
+      spitze(o.x1,o.y1,a); if(o.both) spitze(o.x0,o.y0,a+Math.PI);}   /* both = Doppelpfeil */
     if(o.fill&&['rect','ellipse','circle','triangle','square','rtriangle','gtriangle','parallelogram','trapez','kite','kreis','rhombus','hexagon','polygon'].includes(o.shape)){c.fillStyle=o.color;c.globalAlpha=.22;c.fill();c.globalAlpha=1;}
     c.stroke();
     if(o.shape==='arc'||o.shape==='circle'){ c.beginPath(); c.arc(o.x0,o.y0,Math.max(o.width*0.9,1.6),0,7); c.fillStyle=o.color; c.fill(); }  // Mittelpunkt sichtbar (Zirkel & Kreis)
@@ -1435,6 +1443,10 @@ function drawObjectRaw(o,c){
     c.beginPath(); c.moveTo(o.x,axC); c.lineTo(x1,axC); c.moveTo(ayC,y1); c.lineTo(ayC,o.y); c.stroke();
     const ah=14; c.lineJoin='round'; c.beginPath(); c.moveTo(x1,axC);c.lineTo(x1-ah,axC-ah*0.55); c.moveTo(x1,axC);c.lineTo(x1-ah,axC+ah*0.55); c.moveTo(ayC,o.y);c.lineTo(ayC-ah*0.55,o.y+ah); c.moveTo(ayC,o.y);c.lineTo(ayC+ah*0.55,o.y+ah); c.stroke();
     c.lineCap='butt';
+    if(o.ticks!==false){ const tk=4.5; c.lineWidth=2; c.beginPath();      // kleine Teilstriche an jeder Zahl
+      for(let v=Math.ceil(xMin/sx)*sx; v<=xMax+1e-9; v+=sx){ if(Math.abs(v)<1e-9)continue; const px=PX(v); if(px<o.x+1||px>x1-ah)continue; c.moveTo(px,axC-tk); c.lineTo(px,axC+tk); }
+      for(let v=Math.ceil(yMin/sy)*sy; v<=yMax+1e-9; v+=sy){ if(Math.abs(v)<1e-9)continue; const py=PY(v); if(py>y1-1||py<o.y+ah)continue; c.moveTo(ayC-tk,py); c.lineTo(ayC+tk,py); }
+      c.stroke(); c.lineWidth=3; }
     if(o.labels!==false){ c.fillStyle='#334155'; const ls=o.labelSize||14;
     c.font='italic '+(o.labelBold?'bold ':'')+(ls+4)+'px sans-serif'; c.textAlign='right'; c.textBaseline='top';
     const nx=(o.axX===undefined?'x':o.axX), ny=(o.axY===undefined?'y':o.axY), no=(o.axO||'');
@@ -1891,7 +1903,7 @@ function startAction(e){ drawId=e.pointerId; dwellAnchor=null; invalidateSnap();
   if(tool==='select'){ startSelect(e,w); return; }
   if(tool==='shape'&&shapeKind==='polygon'){ polyTap(e,w); drawId=null; return; }
   if(tool==='shape'){ cur={type:'shape',id:uid(),shape:shapeKind,color,width:penWidth/scale,fill:shapeFill,x0:w.x,y0:w.y,x1:w.x,y1:w.y,rot:0,groupId:null}; return; }
-  if(tool==='arrow'){ cur={type:'shape',id:uid(),shape:'arrow',color,width:penWidth/scale,fill:false,x0:w.x,y0:w.y,x1:w.x,y1:w.y,rot:0,groupId:null}; return; }
+  if(tool==='arrow'){ cur={type:'shape',id:uid(),shape:'arrow',color,width:penWidth/scale,fill:false,both:arrowBothDef,x0:w.x,y0:w.y,x1:w.x,y1:w.y,rot:0,groupId:null}; return; }
   if(tool==='circle'){ cur={type:'shape',id:uid(),shape:'circle',color,width:penWidth/scale,fill:shapeFill,x0:w.x,y0:w.y,x1:w.x,y1:w.y,rot:0,groupId:null}; updateMeasureCircle(e); return; }
   if(tool==='gerade'){ cur={type:'shape',id:uid(),shape:'gerade',color,width:penWidth/scale,fill:false,x0:w.x,y0:w.y,x1:w.x,y1:w.y,rot:0,groupId:null}; showMeasure(e,'Gerade'); return; }
   if(tool==='arc'){
@@ -2508,6 +2520,8 @@ function refreshProps(){ const has=selection.length>0 && tool==='select';
     if($('win-lbl').classList.contains('show')) renderLblEdit();
     if(lo){ $('lblV').classList.toggle('on',!!lo.lblV); $('lblE').classList.toggle('on',!!lo.lblE); $('lblEtxt').textContent=['cuboid','prism','pyramid'].includes(lo.shape)?'Kanten beschriften':'Seiten beschriften'; $('lblFsV').textContent=lblSizeOf(lo); }
     const so=(selection.length===1&&selection[0].type==='shape'&&(selection[0].shape==='prism'||selection[0].shape==='pyramid'))?selection[0]:null; $('solidRow').style.display=so?'flex':'none'; if(so) $('solNV').textContent=so.n||(so.shape==='prism'?3:4);
+    const ao=selection.length&&selection.every(o=>o.type==='shape'&&o.shape==='arrow')?selection[0]:null; $('arrowRow').style.display=ao?'flex':'none';
+    if(ao){ $('arrOne').classList.toggle('on',!ao.both); $('arrBoth').classList.toggle('on',!!ao.both); }
     if(nl){ $('nlFromV').textContent=nlNum(nl.from??0); $('nlToV').textContent=nlNum(nl.to??10); $('nlStepV').textContent=nlNum(nl.step||1);
       $('nlFsV').textContent=nl.labelSize||14; $('nlLabels').classList.toggle('on',nl.labels!==false);
       $('nlBold').classList.toggle('on',!!nl.labelBold); $('nlItalic').classList.toggle('on',!!nl.labelItalic); }
@@ -2620,6 +2634,11 @@ function renderLblEdit(){ const o=selection[0], box=$('lblEdit'); box.innerHTML=
 for(const [id,dl] of [['lblFsM',-2],['lblFsP',2]]) $(id).onclick=()=>{ const o=selection[0]; if(!o||o.type!=='shape')return; const nv=Math.max(8,Math.min(120,lblSizeOf(o)+dl)); pushUndo(); o.lblSize=nv; $('lblFsV').textContent=nv; if(!o.lblV&&!o.lblE) toast('Beschriftung ist noch ausgeschaltet'); markDirty(); scheduleAutosave(); };
 for(const k of ['lblV','lblE']) $(k).onclick=function(){ const o=selection[0]; if(!o||o.type!=='shape')return; pushUndo(); o[k]=!o[k]; this.classList.toggle('on',!!o[k]); markDirty(); scheduleAutosave(); };
 $('solNM').onclick=()=>solStep(-1); $('solNP').onclick=()=>solStep(1);
+/* Pfeil: Spitze an einem oder an beiden Enden */
+function arrowBoth(on){ const l=selection.filter(o=>o.type==='shape'&&o.shape==='arrow'); if(!l.length)return;
+  pushUndo(); arrowBothDef=on; l.forEach(o=>o.both=on); $('arrOne').classList.toggle('on',!on); $('arrBoth').classList.toggle('on',on);
+  markDirty(); scheduleAutosave(); }
+$('arrOne').onclick=()=>arrowBoth(false); $('arrBoth').onclick=()=>arrowBoth(true);
 function tblStep(which,delta){ const o=selection[0]; if(!o||o.type!=='embed'||o.etype!=='tabelle')return; o.data=o.data||{cells:{}};
   if(which==='rows') o.data.rows=Math.max(1,Math.min(30,(o.data.rows||3)+delta)); else o.data.cols=Math.max(1,Math.min(20,(o.data.cols||3)+delta));
   $('tblRowsV').textContent=o.data.rows||3; $('tblColsV').textContent=o.data.cols||3; postToEmbed(o,o.data); markDirty(); scheduleAutosave(); }
@@ -3360,8 +3379,8 @@ $('social').onclick=e=>{ if(e.target===$('social')||e.target.classList.contains(
 
 /* ============ Klasse: Sticker & Klassenliste (je Projekt = Klasse gespeichert) ============ */
 const STICKERS=['⭐','🌟','🏆','👑','🎉','👍','😊','💎','🚀','🌈','🍀','🦄','🦋','🐱','🐝','❤️'];
-const MARK_DEF=()=>[{id:'warn',name:'Verwarnung',icon:'⚠️'},{id:'lob',name:'Lob',icon:'👍'},{id:'hint',name:'Hinweis',icon:'ℹ️'},{id:'hw',name:'Keine Hausaufgabe',icon:'📚'},{id:'noten',name:'Noten',icon:'📝',type:'grade'},{id:'frei',name:'Frei',icon:'✏️',type:'text'}];
-const MARK_ICONS=['⚠️','👍','ℹ️','⭐','❗','✅','📚','📝','✏️','🗣️','⏰','🧹','🤝','❌'];
+const MARK_DEF=()=>[{id:'warn',name:'Verwarnung',icon:'⚠️'},{id:'lob',name:'Lob',icon:'👍'},{id:'hint',name:'Hinweis',icon:'ℹ️'},{id:'hw',name:'Keine Hausaufgabe',icon:'📚'},{id:'karten',name:'Karten',icon:'🟨',type:'cards'},{id:'noten',name:'Noten',icon:'📝',type:'grade'},{id:'frei',name:'Frei',icon:'✏️',type:'text'}];
+const MARK_ICONS=['⚠️','👍','ℹ️','⭐','❗','✅','📚','📝','✏️','🗣️','⏰','🧹','🤝','❌','🟨','🟥'];
 let quietRun={active:false,red:false,ticks:0,mic:0}, redRun=0;
 let stkEditing=false, mkShow=false, mkCatOpen=false, celT=null;
 function ensureClassData(){ if(!Array.isArray(doc.stickers))doc.stickers=[];
@@ -3369,7 +3388,9 @@ function ensureClassData(){ if(!Array.isArray(doc.stickers))doc.stickers=[];
   if(!doc.marks.v){ if(!doc.marks.cats.some(c=>c.id==='hw')) doc.marks.cats.push({id:'hw',name:'Keine Hausaufgabe',icon:'📚'}); doc.marks.v=2; }   // neue Standardkategorie einmalig ergänzen
   if(doc.marks.v<3){ if(!doc.marks.cats.some(c=>c.id==='noten')) doc.marks.cats.push({id:'noten',name:'Noten',icon:'📝',type:'grade'}); doc.marks.v=3; }
   if(doc.marks.v<4){ if(!doc.marks.cats.some(c=>c.id==='frei')) doc.marks.cats.push({id:'frei',name:'Frei',icon:'✏️',type:'text'}); doc.marks.v=4; }
-  if(!doc.marks.grades) doc.marks.grades={}; if(!doc.marks.texts) doc.marks.texts={};
+  if(doc.marks.v<5){ if(!doc.marks.cats.some(c=>c.id==='karten')){ const i=doc.marks.cats.findIndex(c=>c.id==='noten');   // vor den Noten einsortieren
+      doc.marks.cats.splice(i<0?doc.marks.cats.length:i,0,{id:'karten',name:'Karten',icon:'🟨',type:'cards'}); } doc.marks.v=5; }
+  if(!doc.marks.grades) doc.marks.grades={}; if(!doc.marks.texts) doc.marks.texts={}; if(!doc.marks.cards) doc.marks.cards={};
 }
 function openClassWin(){ ensureClassData(); $('clsNoteText').value=doc.notes||''; if(!$('clsDates').hidden){ initEvForm(); renderDuty(); renderCal(); } if(!$('clsSeats').hidden) renderSeats(); $('clsName').textContent=doc.name?('· '+doc.name):''; renderStickers(); renderMarks(); if(mkCatOpen)renderCatEdit(); }
 $('w-class').onclick=()=>{ openClassWin(); toggleWin('win-class'); requestAnimationFrame(mkFitTable); };
@@ -3480,7 +3501,15 @@ function quietDone(){ const q=quietRun; quietRun={active:false,red:false,ticks:0
   addSticker('⭐','Super leise gearbeitet!'); }
 /* --- Klassenliste als Tabelle: Namen alphabetisch, Kategorien als Spalten (Zähler, Haken oder Noten) --- */
 let mkSort={key:'name',dir:1}, mkOrder=null, gdState=null, gdLastArt='kLN';
-const catType=c=>({check:'check',grade:'grade',text:'text'})[c.type]||'count';
+const catType=c=>({check:'check',grade:'grade',text:'text',cards:'cards'})[c.type]||'count';
+/* Karten: je Name und Kategorie eine Liste { k:'g'|'r', d:Datum } – gelbe und rote Karten, mehrfach möglich */
+const KARTE={g:{name:'gelbe Karte',ic:'🟨'}, r:{name:'rote Karte',ic:'🟥'}};
+const cardList=(n,c)=>(((doc.marks.cards||{})[n]||{})[c.id])||[];
+function setCards(n,c,list){ const C=doc.marks.cards=doc.marks.cards||{}, m=C[n]=C[n]||{};
+  if(list.length) m[c.id]=list; else delete m[c.id]; if(!Object.keys(m).length) delete C[n]; scheduleAutosave(); }
+const cardScore=(n,c)=>cardList(n,c).reduce((s,x)=>s+(x.k==='r'?2:1),0);     // rote Karte wiegt schwerer
+function cardChips(host,list){ list.forEach(x=>{ const sp=document.createElement('span'); sp.className='ka '+x.k;
+  sp.title=KARTE[x.k].name+' · '+fmtDateDe(x.d); host.appendChild(sp); }); }
 const textVal=(n,c)=>(((doc.marks.texts||{})[n]||{})[c.id])||'';
 function setText(n,c,v){ const T=doc.marks.texts=doc.marks.texts||{}, m=T[n]=T[n]||{};
   if(v) m[c.id]=v; else delete m[c.id]; if(!Object.keys(m).length) delete T[n]; scheduleAutosave(); }
@@ -3498,6 +3527,7 @@ function mkComputeOrder(names,cols){ const col=cols.find(c=>c.id===mkSort.key);
   return names.slice().sort((a,b)=>{ if(!col) return byName(a,b)*mkSort.dir;
     if(catType(col)==='grade'){ const A=gradeAvg(a,col), B=gradeAvg(b,col);           // Noten: bester Schnitt zuerst, ohne Note ans Ende
       if(A===null&&B===null) return byName(a,b); if(A===null) return 1; if(B===null) return -1; return ((A-B)*mkSort.dir)||byName(a,b); }
+    if(catType(col)==='cards'){ const d=(cardScore(b,col)-cardScore(a,col))*mkSort.dir; return d||byName(a,b); }
     if(catType(col)==='text'){ const A=textVal(a,col), B=textVal(b,col);                      // Freitext: alphabetisch, leer ans Ende
       if(!A&&!B) return byName(a,b); if(!A) return 1; if(!B) return -1; return (A.localeCompare(B,'de',{sensitivity:'base'})*mkSort.dir)||byName(a,b); }
     const d=(markVal(b,col)-markVal(a,col))*mkSort.dir; return d||byName(a,b); }); }
@@ -3532,7 +3562,7 @@ function renderMarks(){ ensureClassData(); const host=$('mkNames');
   th0.onclick=()=>{ if(mkSort.key==='name') mkSort.dir*=-1; else mkSort={key:'name',dir:1}; mkOrder=null; renderMarks(); };
   const thN=document.createElement('th'); thN.className='mkNrH'; thN.textContent='Nr.'; hr.append(thN,th0);
   cols.forEach(c=>{ const ty=catType(c), th=document.createElement('th');
-    th.title=c.name+({count:' (Zähler)',check:' (Haken)',grade:' (Noten, sortiert nach Schnitt)',text:' (freier Text)'}[ty])+' – antippen zum Sortieren';
+    th.title=c.name+({count:' (Zähler)',check:' (Haken)',grade:' (Noten, sortiert nach Schnitt)',text:' (freier Text)',cards:' (gelbe und rote Karten)'}[ty])+' – antippen zum Sortieren';
     const ic=document.createElement('span'); ic.className='ic'; ic.textContent=c.icon;
     const nm=document.createElement('span'); nm.className='nm'; nm.textContent=c.name+arrow(c.id); th.append(ic,nm);
     th.onclick=()=>{ if(mkSort.key===c.id) mkSort.dir*=-1; else mkSort={key:c.id,dir:1}; mkOrder=null; renderMarks(); };
@@ -3547,6 +3577,9 @@ function renderMarks(){ ensureClassData(); const host=$('mkNames');
       if(ty==='text'){ const v=textVal(n,c); td.className='mkCell text'+(v?' has':'');
         if(v){ td.textContent=v; td.title=v+' – antippen zum Bearbeiten'; } else { td.appendChild(addHint('✎')); td.title='antippen = Text eingeben'; }
         td.onclick=e=>{ e.stopPropagation(); editTextCell(n,c,td); }; return; }
+      if(ty==='cards'){ const l=cardList(n,c); td.className='mkCell cards'+(l.length?' has':'');
+        if(l.length) cardChips(td,l); else td.appendChild(addHint('+'));
+        td.title='antippen = Karte geben oder zurücknehmen'; td.onclick=e=>{ e.stopPropagation(); openCardDlg(n,c,td); }; return; }
       if(ty==='grade'){ const l=gradeList(n,c); td.className='mkCell grade'+(l.length?' has':'');
         if(l.length) gradeChips(td,l); else td.appendChild(addHint('+'));
         td.title='antippen = Note eintragen'; td.onclick=e=>{ e.stopPropagation(); openGradeDlg(n,c,td); }; return; }
@@ -3589,6 +3622,9 @@ function openMarkMenu(name,anchor){ closeGradeDlg(); const m=$('markMenu'); m.in
         inp.onblur=save; inp.focus(); };
       mi.textContent='✕'; mi.title='Text löschen';
       mi.onclick=e=>{ e.stopPropagation(); if(textVal(name,cat)){ setText(name,cat,''); toast(cat.name+' bei '+name+' gelöscht'); } renderMarks(); closeMarkMenu(); }; }
+    else if(ty==='cards'){ if(mkShow){ const l=cardList(name,cat); if(l.length) cardChips(b,l); else { const bb=document.createElement('b'); bb.textContent='–'; b.appendChild(bb); } }
+      b.onclick=e=>{ e.stopPropagation(); openCardDlg(name,cat,anchor); };
+      mi.textContent='✎'; mi.title='Karten geben oder zurücknehmen'; mi.onclick=b.onclick; }
     else if(ty==='grade'){ if(mkShow){ const bb=document.createElement('b'); const l=gradeList(name,cat); bb.textContent=l.length?l.map(x=>x.g).join(' '):'–'; b.appendChild(bb); }
       b.onclick=e=>{ e.stopPropagation(); openGradeDlg(name,cat,anchor); };
       mi.textContent='✎'; mi.title='Noten bearbeiten'; mi.onclick=b.onclick; }
@@ -3607,11 +3643,35 @@ function closeMarkMenu(){ $('markMenu').classList.remove('show'); }
 function refreshClassWin(){ if($('win-class').classList.contains('show')){ closeMarkMenu(); closeGradeDlg(); openClassWin(); } }
 document.addEventListener('pointerdown',e=>{
   if($('markMenu').classList.contains('show')&&!e.target.closest('#markMenu')&&!e.target.closest('.mkName')) closeMarkMenu();
-  if($('gradeDlg').classList.contains('show')&&!e.target.closest('#gradeDlg')&&!e.target.closest('.mkCell.grade')&&!e.target.closest('#markMenu')) closeGradeDlg(); },true);
+  if($('gradeDlg').classList.contains('show')&&!e.target.closest('#gradeDlg')&&!e.target.closest('.mkCell.grade')&&!e.target.closest('.mkCell.cards')&&!e.target.closest('#markMenu')) closeGradeDlg(); },true);
 function bumpMark(name,cat,d){ ensureClassData(); const v=Math.max(0,markVal(name,cat)+d); setMark(name,cat,v); renderMarks();
   toast((d>0?(cat.icon+' '+cat.name+' für '+name):('−1 '+cat.name+' bei '+name))+(mkShow?(' ('+v+')'):'')); }
 function setCheck(name,cat,on){ ensureClassData(); const was=!!markVal(name,cat); setMark(name,cat,on?1:0); renderMarks();
   toast(on?(was?(cat.icon+' '+cat.name+': '+name+' ist schon abgehakt'):('✓ '+cat.name+' – '+name)):('✕ '+cat.name+' bei '+name+' entfernt')); }
+/* --- Karten geben: gelbe und rote Karten, mehrfach möglich und einzeln löschbar --- */
+function openCardDlg(name,cat,anchor){ closeMarkMenu(); gdState={name,cat,kind:'cards'};
+  renderCardDlg(); const el=$('gradeDlg'); el.classList.add('show'); placeNear(el,anchor); }
+function renderCardDlg(){ const st=gdState, el=$('gradeDlg'); if(!st)return; el.innerHTML='';
+  const head=document.createElement('div'); head.className='gdHead';
+  const ht=document.createElement('span'); ht.textContent=st.cat.icon+' '+st.cat.name+' – '+st.name;
+  const x=document.createElement('span'); x.className='x'; x.textContent='×'; x.onclick=closeGradeDlg; head.append(ht,x); el.appendChild(head);
+  const r1=document.createElement('div'); r1.className='gdRow';
+  ['g','r'].forEach(k=>{ const b=document.createElement('button'); b.className='kBtn '+k; b.textContent=KARTE[k].ic+' '+KARTE[k].name;
+    b.onclick=()=>{ const l=cardList(st.name,st.cat).slice(); l.push({k,d:todayIso()}); setCards(st.name,st.cat,l);
+      toast(KARTE[k].ic+' '+KARTE[k].name+' für '+st.name); renderMarks(); renderCardDlg(); }; r1.appendChild(b); });
+  el.appendChild(r1);
+  const l=cardList(st.name,st.cat); if(!l.length){ const h=document.createElement('div'); h.style.cssText='font-size:12.5px;color:#5b6472'; h.textContent='Noch keine Karte für '+st.name; el.appendChild(h); return; }
+  const box=document.createElement('div'); box.className='gList';
+  const cap=document.createElement('div'); cap.style.cssText='font-size:12px;color:#5b6472';
+  const rot=l.filter(x=>x.k==='r').length; cap.textContent='Bisher: '+(l.length-rot)+'× gelb, '+rot+'× rot'; box.appendChild(cap);
+  l.forEach((x,i)=>{ const it=document.createElement('div'); it.className='gItem';
+    const sp=document.createElement('span'); sp.className='ka '+x.k;
+    const tx=document.createElement('span'); tx.textContent=KARTE[x.k].name+' · '+fmtDateDe(x.d);
+    const del=document.createElement('button'); del.textContent='×'; del.title='Diese Karte zurücknehmen';
+    del.onclick=()=>{ const ll=cardList(st.name,st.cat).slice(); ll.splice(i,1); setCards(st.name,st.cat,ll);
+      toast(KARTE[x.k].name+' bei '+st.name+' zurückgenommen'); renderMarks(); renderCardDlg(); };
+    it.append(sp,tx,del); box.appendChild(it); });
+  el.appendChild(box); }
 /* --- Noten eintragen: Note 1–6, Art gLN/kLN, Datum --- */
 function openGradeDlg(name,cat,anchor){ closeMarkMenu(); gdState={name,cat,g:null,a:gdLastArt,d:todayIso(),list:mkShow};
   renderGradeDlg(); const el=$('gradeDlg'); el.classList.add('show'); placeNear(el,anchor); }
@@ -3646,11 +3706,13 @@ function renderGradeDlg(){ const st=gdState, el=$('gradeDlg'); if(!st)return; el
       it.append(sp,tx,del); box.appendChild(it); }); }
   el.appendChild(box); }
 $('mkShow').onclick=()=>{ mkShow=!mkShow; mkOrder=null; renderMarks(); closeMarkMenu(); closeGradeDlg(); };
-$('mkReset').onclick=()=>{ ensureClassData(); if(!confirm('Alle Zähler, Haken, Noten und Texte dieser Klasse zurücksetzen?'))return;
-  doc.marks.counts={}; doc.marks.grades={}; doc.marks.texts={}; mkOrder=null; scheduleAutosave(); renderMarks(); toast('Klassenliste zurückgesetzt'); };
+$('mkReset').onclick=()=>{ ensureClassData(); if(!confirm('Alle Zähler, Haken, Karten, Noten und Texte dieser Klasse zurücksetzen?'))return;
+  doc.marks.counts={}; doc.marks.grades={}; doc.marks.texts={}; doc.marks.cards={}; mkOrder=null; scheduleAutosave(); renderMarks(); toast('Klassenliste zurückgesetzt'); };
 /* --- Drucken: genau die sichtbaren Spalten (samt Namen) in der angezeigten Reihenfolge --- */
 function cellPrintText(n,c){ const ty=catType(c);
   if(ty==='grade') return gradeList(n,c).map(x=>x.g+' ('+x.a+', '+fmtDateDe(x.d).slice(0,6)+')').join('  ');
+  if(ty==='cards'){ const l=cardList(n,c), r=l.filter(x=>x.k==='r').length;
+    return l.length?[(l.length-r)?((l.length-r)+'× gelb'):'',r?(r+'× rot'):''].filter(Boolean).join(', '):''; }
   if(ty==='text') return textVal(n,c);
   const v=markVal(n,c); return ty==='check'?(v?'✓':''):(v?String(v):''); }
 /* Schuljahr aus dem Ferienkalender: ab Beginn der Sommerferien zählt schon das neue Schuljahr */
@@ -3689,10 +3751,10 @@ function renderCatEdit(){ ensureClassData(); const el=$('mkCatEdit'); el.innerHT
     const inp=document.createElement('input'); inp.type='text'; inp.value=cat.name;
     inp.oninput=()=>{ if(inp.value.trim()){ cat.name=inp.value.trim(); scheduleAutosave(); } };
     inp.onchange=()=>{ inp.value=cat.name; renderMarks(); };
-    const ty=document.createElement('select'); ty.title='Art: zählen, abhaken, Noten oder freier Text';
-    [['count','Zähler'],['check','Haken'],['grade','Noten'],['text','Frei']].forEach(([v,l])=>{ const o=document.createElement('option'); o.value=v; o.textContent=l; ty.appendChild(o); });
+    const ty=document.createElement('select'); ty.title='Art: zählen, abhaken, Karten, Noten oder freier Text';
+    [['count','Zähler'],['check','Haken'],['cards','Karten'],['grade','Noten'],['text','Frei']].forEach(([v,l])=>{ const o=document.createElement('option'); o.value=v; o.textContent=l; ty.appendChild(o); });
     ty.value=catType(cat);
-    ty.onchange=()=>{ const from=catType(cat), to=ty.value, store=t=>t==='grade'?'grades':(t==='text'?'texts':'counts');
+    ty.onchange=()=>{ const from=catType(cat), to=ty.value, store=t=>t==='grade'?'grades':(t==='text'?'texts':(t==='cards'?'cards':'counts'));
       if(store(from)!==store(to)){ const S=doc.marks[store(from)]||{};                  // Zähler/Haken, Noten und Text passen nicht ineinander
         if(Object.values(S).some(m=>m[cat.id])&&!confirm('Beim Wechsel der Art werden die bisherigen Einträge dieser Kategorie gelöscht. Fortfahren?')){ ty.value=from; return; }
         Object.values(S).forEach(m=>delete m[cat.id]); }
@@ -3703,7 +3765,7 @@ function renderCatEdit(){ ensureClassData(); const el=$('mkCatEdit'); el.innerHT
     const del=document.createElement('button'); del.className='btn'; del.textContent='×'; del.title='Kategorie löschen';
     del.onclick=()=>{ if(doc.marks.cats.length<=1){ toast('Mindestens eine Kategorie'); return; }
       if(!confirm('Kategorie „'+cat.name+'" samt ihren Einträgen löschen?'))return;
-      doc.marks.cats.splice(i,1); ['counts','grades','texts'].forEach(k=>Object.values(doc.marks[k]||{}).forEach(c=>delete c[cat.id]));
+      doc.marks.cats.splice(i,1); ['counts','grades','texts','cards'].forEach(k=>Object.values(doc.marks[k]||{}).forEach(c=>delete c[cat.id]));
       if(mkSort.key===cat.id) mkSort={key:'name',dir:1}; mkOrder=null; scheduleAutosave(); renderCatEdit(); renderMarks(); };
     row.append(sel,inp,ty,del); el.appendChild(row); });
   const add=document.createElement('div'); add.className='row fill'; add.style.cssText='gap:6px;margin-top:8px';
@@ -3711,7 +3773,7 @@ function renderCatEdit(){ ensureClassData(); const el=$('mkCatEdit'); el.innerHT
   ab.onclick=()=>{ doc.marks.cats.push({id:'c'+uid(),name:'Neue Kategorie',icon:'⭐',type:'count'}); scheduleAutosave(); renderCatEdit(); renderMarks();
     const ins=el.querySelectorAll('input[type=text]'), last=ins[ins.length-1]; if(last){ last.focus(); last.select(); } };
   const rs=document.createElement('button'); rs.className='btn'; rs.textContent='Standard';
-  rs.onclick=()=>{ if(!confirm('Kategorien auf Verwarnung, Lob, Hinweis, Keine Hausaufgabe, Noten und Frei zurücksetzen?'))return; doc.marks.cats=MARK_DEF(); mkSort={key:'name',dir:1}; mkOrder=null; scheduleAutosave(); renderCatEdit(); renderMarks(); };
+  rs.onclick=()=>{ if(!confirm('Kategorien auf Verwarnung, Lob, Hinweis, Keine Hausaufgabe, Karten, Noten und Frei zurücksetzen?'))return; doc.marks.cats=MARK_DEF(); mkSort={key:'name',dir:1}; mkOrder=null; scheduleAutosave(); renderCatEdit(); renderMarks(); };
   add.append(ab,rs); el.appendChild(add); }
 
 /* ============ Termine & Erinnerungen (geräteweit gespeichert, damit sie in jeder Klasse aufpoppen) ============ */

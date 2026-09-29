@@ -15,18 +15,22 @@ function stil(){ if(css) return; css=true;
   #lpBox{position:fixed;inset:0;z-index:9000;background:rgba(15,23,42,.35);display:flex;align-items:center;justify-content:center;padding:10px;
     font-family:-apple-system,BlinkMacSystemFont,sans-serif;color:#1f2430;}
   #lpIn{background:#fff;border-radius:16px;box-shadow:0 12px 40px rgba(15,23,42,.35);width:min(620px,96vw);max-height:92vh;display:flex;flex-direction:column;overflow:hidden;}
-  #lpKopf{padding:10px 14px;font-weight:800;background:#f1f5fb;border-bottom:1px solid #e2e7ef;display:flex;justify-content:space-between;align-items:center;font-size:15px;}
+  #lpKopf{padding:8px 14px;font-weight:800;background:#f1f5fb;border-bottom:1px solid #e2e7ef;display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:15px;flex:none;}
+  #lpKopf #lpTitel{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  #lpKopf .rechts{display:flex;gap:8px;align-items:center;flex:none;}
+  #lpKopf .lpBtn{padding:4px 11px;font-size:13.5px;}
   #lpKopf .x{cursor:pointer;color:#64748b;font-size:22px;line-height:1;padding:0 4px;}
-  #lpQuelle{padding:7px 14px;border-bottom:1px solid #e2e7ef;display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
+  #lpQuelle{padding:7px 14px;border-bottom:1px solid #e2e7ef;display:flex;gap:6px;align-items:center;flex-wrap:wrap;flex:none;}
   #lpQuelle b{font-size:12px;color:#64748b;text-transform:uppercase;letter-spacing:.04em;width:74px;flex:none;}
-  #lpFilter{padding:8px 14px;border-bottom:1px solid #e2e7ef;display:flex;flex-direction:column;gap:6px;}
+  #lpFilter{padding:8px 14px;border-bottom:1px solid #e2e7ef;display:flex;flex-direction:column;gap:6px;
+    flex:0 1 auto;min-height:0;max-height:42vh;overflow:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;}
   #lpFilter .zeile{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
   #lpFilter .zeile[data-r="ber"]{max-height:84px;overflow:auto;-webkit-overflow-scrolling:touch;align-items:flex-start;align-content:flex-start;}
   #lpFilter b{font-size:12px;color:#64748b;text-transform:uppercase;letter-spacing:.04em;width:74px;flex:none;}
   .lpChip{border:1.5px solid #cfd6e0;background:#fff;border-radius:999px;padding:3px 11px;font:700 13px -apple-system,sans-serif;color:#475569;cursor:pointer;}
   .lpChip.on{background:#2563eb;border-color:#2563eb;color:#fff;}
   #lpSuche{flex:1 1 140px;border:1px solid #cfd6e0;border-radius:9px;padding:5px 9px;font:inherit;font-size:14px;min-width:120px;}
-  #lpListe{flex:1 1 auto;overflow:auto;-webkit-overflow-scrolling:touch;padding:6px 10px;min-height:120px;}
+  #lpListe{flex:1 1 0;overflow:auto;-webkit-overflow-scrolling:touch;padding:6px 10px;min-height:72px;}
   .lpZ{display:flex;gap:8px;align-items:flex-start;padding:5px 4px;border-bottom:1px solid #f1f5f9;cursor:pointer;}
   .lpZ input{margin-top:3px;width:18px;height:18px;flex:none;}
   .lpZ .t{flex:1 1 auto;min-width:0;}
@@ -35,13 +39,23 @@ function stil(){ if(css) return; css=true;
   .lpZ .m{font-size:11px;color:#94a3b8;}
   .lpZ .lpPfeil{align-self:center;color:#94a3b8;font-weight:800;}
   .lpZ .lpBild{width:96px;height:74px;object-fit:contain;border:1px solid #e2e7ef;border-radius:7px;background:#fff;flex:none;}
-  #lpFuss{padding:9px 14px;border-top:1px solid #e2e7ef;display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+  #lpFuss{padding:9px 14px;border-top:1px solid #e2e7ef;display:flex;gap:8px;align-items:center;flex-wrap:wrap;flex:none;background:#fff;}
   #lpFuss .info{font-size:13px;color:#64748b;flex:1 1 auto;}
   .lpBtn{border:1px solid #cfd6e0;background:#fff;border-radius:9px;padding:6px 12px;font:700 14px -apple-system,sans-serif;color:#1f2430;cursor:pointer;}
   .lpBtn.pri{background:#2563eb;border-color:#2563eb;color:#fff;}
-  #lpHinweis{font-size:11.5px;color:#94a3b8;padding:0 14px 8px;}
+  #lpHinweis{font-size:11.5px;color:#94a3b8;padding:0 14px 8px;flex:none;}
   #lpArt{display:none;gap:6px;align-items:center;flex-wrap:wrap;padding:0 14px 8px;}
-  #lpArt.an{display:flex;} #lpArt b{font-size:12px;color:#64748b;text-transform:uppercase;letter-spacing:.04em;}`;
+  #lpArt.an{display:flex;} #lpArt b{font-size:12px;color:#64748b;text-transform:uppercase;letter-spacing:.04em;}
+  #lpArt{flex:none;}
+  /* niedriges Fenster: der Knopf „Übernehmen" bleibt sichtbar, die Filter rücken zusammen */
+  @media (max-height:560px){ #lpIn{max-height:96vh;} #lpHinweis{display:none;} #lpFilter{max-height:34vh;padding:6px 14px;}
+    #lpFilter .zeile[data-r="ber"]{max-height:56px;} }
+  /* sehr niedriges Objektfenster: Fußzeile einzeilig und schmal, damit „Übernehmen" ganz sichtbar bleibt */
+  @media (max-height:460px){ #lpIn{max-height:99vh;border-radius:12px;} #lpBox{padding:3px;}
+    #lpKopf{padding:6px 10px;} #lpQuelle{padding:4px 10px;} #lpFilter{padding:5px 10px;gap:4px;}
+    #lpListe{min-height:54px;padding:2px 8px;}
+    #lpFuss{flex-wrap:nowrap;overflow-x:auto;padding:6px 10px;gap:6px;}
+    #lpFuss .info{display:none;} #lpFuss .lpBtn{padding:5px 9px;font-size:13px;white-space:nowrap;} }`;
   document.head.appendChild(s); }
 
 /* Ein gespeichertes Glossar (Textformat „Begriff = Erklärung", Abschnitte mit „# …") einlesen */
@@ -69,7 +83,7 @@ function oeffnen(opt){
 
   const box=document.createElement('div'); box.id='lpBox';
   box.innerHTML=`<div id="lpIn">
-    <div id="lpKopf"><span id="lpTitel">${opt.titel||'Begriffe übernehmen'}</span><span class="x">×</span></div>
+    <div id="lpKopf"><span id="lpTitel">${opt.titel||'Begriffe übernehmen'}</span><span class="rechts"><button class="lpBtn pri" id="lpOk2" title="Auswahl übernehmen">Übernehmen</button><span class="x">×</span></span></div>
     <div id="lpQuelle"><b>Quelle</b>
       <button class="lpChip on" data-q="lp">${textModus?'Textbibliothek':'Lehrplan-Glossar'}</button>
       <button class="lpChip" data-q="datei">📄 ${textModus?'eigener Text …':'eigenes Glossar …'}</button>
@@ -176,13 +190,14 @@ function oeffnen(opt){
     z.innerHTML='<b>'+(opt.artTitel||'Form')+'</b>';
     opt.arten.forEach(a=>{ const b=document.createElement('button'); b.className='lpChip'+(a.id===art?' on':''); b.textContent=a.name;
       b.onclick=()=>{ art=a.id; [...z.querySelectorAll('.lpChip')].forEach(x=>x.classList.toggle('on',x===b)); }; z.appendChild(b); }); }
-  $l('#lpOk').onclick=()=>{
+  const uebernehmen=()=>{
     let l=[...gewaehlt];
     if(!l.length) l=textModus?sichtbar().slice(0,1):sichtbar();   // nichts angekreuzt: alles Sichtbare (beim Text der erste)
     if(!l.length){ zu(); return; }
     l.sort((a,b)=>String(a.f).localeCompare(String(b.f))||a.j-b.j||String(a.g).localeCompare(String(b.g),'de')||a.b.localeCompare(b.b,'de'));
     zu(); if(opt.uebernehmen) opt.uebernehmen(l, art);
   };
+  $l('#lpOk').onclick=uebernehmen; $l('#lpOk2').onclick=uebernehmen;
   chips(); liste();
   if(opt.fach) { fFach=opt.fach; chips(); liste(); }
 }

@@ -61,13 +61,17 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
 - **Konstruktionswerkzeuge:** **Kreis** (erster Punkt = Mittelpunkt – bleibt als Punkt sichtbar –,
   aufziehen = Radius, live angezeigt) und **Gerade** (zwei Punkte ziehen, loslassen → Gerade
   durch beide Punkte)
-- **Pfeil** (Werkzeug): Pfeile ziehen.
+- **Pfeil** (Werkzeug): Pfeile ziehen. Im Kontextmenü steht unter **„Pfeilspitze"**, ob der Pfeil
+  **→ ein Ende** oder **↔ beide Enden** mit einer Spitze bekommt (Doppelpfeil, z. B. für Abstände
+  und Zuordnungen). Die zuletzt gewählte Form gilt gleich für den nächsten Pfeil.
 - **Koordinatensystem** (Werkzeug): fügt ein **transparentes** Achsenkreuz mit x/y-Achsen-
   beschriftung und Zahlenskala als bewegliches Objekt ein – man kann direkt darauf zeichnen. Im
   Kontextmenü lässt sich der **x- und y-Bereich** (Ausschnitt) über **＋/−-Buttons** einstellen sowie
   **Gitterlinien** und **Achsenbeschriftung** ein-/ausschalten (Gitter standardmäßig **aus** – meist
   reicht das Karogitter des Hintergrunds), einen **Hintergrund** (Schalter + Farbwähler, Standard weiß;
   aus = transparent wie bisher) sowie die **Schriftgröße der Beschriftung** (＋/−). Achsen
+  An jeder Zahl sitzt ein **kleiner Teilstrich** quer über der Achse, so dass die Skala auch ohne
+  Gitter gut ablesbar ist. Achsen
   sind kräftig mit großen Pfeilspitzen und gut lesbaren Beschriftungen: Der Achsenname steht
   **unter der x-Achse** bzw. **links neben der y-Achse**, mit deutlichem Abstand zu den Zahlen. An den
   **Pfeilspitzen bleibt die letzte Zahl weg** (die Beschriftung hört eine Einheit vorher auf), und
@@ -294,9 +298,15 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   - **Klassenliste:** die Namen der aktiven Klasse **alphabetisch** in einer **scrollbaren Tabelle**
     (Kopfzeile und Namensspalte bleiben beim Scrollen stehen); dahinter je **Kategorie eine Spalte**.
     - **Art der Kategorie:** *Zähler* (Zelle antippen = **+1**), *Haken* (Zelle antippen =
-      **✓ setzen/entfernen**), *Noten* oder *Frei*. Standard: ⚠️ Verwarnung, 👍 Lob, ℹ️ Hinweis,
-      📚 Keine Hausaufgabe (Zähler), 📝 **Noten** und ✏️ **Frei**; die Art lässt sich unter
-      „Kategorien" umstellen.
+      **✓ setzen/entfernen**), *Karten*, *Noten* oder *Frei*. Standard: ⚠️ Verwarnung, 👍 Lob,
+      ℹ️ Hinweis, 📚 Keine Hausaufgabe (Zähler), 🟨 **Karten**, 📝 **Noten** und ✏️ **Frei**;
+      die Art lässt sich unter „Kategorien" umstellen.
+    - **Karten:** gelbe und rote Karten wie beim Sport. Zelle (oder im Namensmenü die Kategorie)
+      antippen → kleines Fenster mit **🟨 gelbe Karte** und **🟥 rote Karte**; beide lassen sich
+      **mehrfach** geben. In der Zelle stehen sie als **farbige Kärtchen** nebeneinander (Datum beim
+      Antippen/Überfahren), im selben Fenster zeigt eine Liste alle Karten mit Datum, **×** nimmt eine
+      einzelne wieder zurück. Sortiert wird nach Gewicht – eine **rote Karte zählt doppelt**; im
+      Ausdruck steht z. B. „2× gelb, 1× rot".
     - **Frei:** eine freie Textzeile je Kind. Zelle antippen → Eingabefeld direkt in der Tabelle,
       **Enter** oder Wegtippen speichert, **Esc** bricht ab. Lange Texte werden gekürzt angezeigt
       (vollständig beim Bearbeiten und im Druck). Sortiert wird alphabetisch nach dem Text, leere
@@ -445,9 +455,15 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   Die Tafel bringt ein **Lehrplan-Glossar** mit rund **475 Fachbegriffen** aus dem **LehrplanPLUS
   Bayern (Gymnasium, G9)** für **Mathematik (Jgst. 5 bis 13)** und **Physik (Jgst. 7 bis 13;
   Jgst. 7 aus Natur und Technik)** – gegliedert nach den **Lernbereichen** des Lehrplans. Über den
-  Knopf **📚 Lehrplan** bzw. **„📚 Begriffe aus dem Lehrplan"** öffnet sich ein Fenster mit den
+  Knopf **📚 Begriffe** (im Glossar **📚 Lehrplan**), der in **jedem** dieser Werkzeuge oben in der
+  Bedienleiste steht, öffnet sich ein Fenster mit den
   Filtern **Fach · Jahrgangsstufe · Themenbereich** und einer Suche; man kreuzt Begriffe an,
   nimmt mit **„10 zufällig"** eine Stichprobe oder übernimmt einfach alles Gefilterte.
+  **„Übernehmen" steht zusätzlich oben in der Kopfzeile** des Auswahlfensters und ist damit auch dann
+  erreichbar, wenn das Werkzeug als kleines Objekt auf der Tafel liegt. Das Fenster passt sich der
+  Höhe des Objektfensters an: Kopf- und Fußzeile bleiben stehen, die Filterzeilen rücken zusammen und
+  werden scrollbar, die Begriffsliste bekommt den Rest – das Objektfenster muss also nicht mehr
+  aufgezogen werden.
   - Im **Glossar** entstehen daraus fertige Karten mit Abschnittsüberschriften („Mathematik 7 ·
     Symmetrie und Winkel"); das Glossar lässt sich anschließend wie immer ergänzen und abfragen.
   - Im **Kreuzworträtsel** wird der Begriff zum Lösungswort und die Erklärung zum Hinweis.
