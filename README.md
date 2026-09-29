@@ -403,7 +403,9 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   eingebetteten Werkzeugen (Tabelle, Glücksrad …) gegenüber Gezeichnetem.
 - **Text:** Textfelder anlegen; **Doppeltipp** auf einen Text zum Nachbearbeiten. Bei ausgewähltem
   Text bietet das **Kontextmenü** zusätzlich **Fett, Kursiv, Aufzählung (Liste)** und eine
-  **Schriftgrößen-Einstellung** (＋/−).
+  **Schriftgrößen-Einstellung** (＋/−). Texte sind immer **linksbündig am Textanker** – auch dann,
+  wenn auf derselben Seite Objekte mit zentrierter Beschriftung liegen (Uhr, Koordinatensystem,
+  Diagramm). Das war bis Version 329 nach dem Laden einer Datei nicht zuverlässig der Fall.
 - **Diktierstift** (Schreibwerkzeuge, Mikrofon-Symbol): an die gewünschte Stelle tippen und sprechen – der
   erkannte Text erscheint live in einem Textfeld (Deutsch, Web-Spracherkennung von Safari/Siri). Gesprochene
   Satzzeichen: „Punkt“, „Komma“, „Fragezeichen“, „Ausrufezeichen“, „Doppelpunkt“, „neue Zeile“ („Punkt A“ bleibt
