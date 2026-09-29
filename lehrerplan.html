@@ -1,0 +1,279 @@
+<!DOCTYPE html><html lang="de"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Lehrer-Stundenplan</title>
+<style>
+  :root{--fs:15px;}
+  *{box-sizing:border-box;} [hidden]{display:none!important;}
+  html,body{margin:0;height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#1f2430;font-size:var(--fs);}
+  #wrap{position:absolute;inset:0;display:flex;flex-direction:column;}
+  #bar{display:flex;gap:4px;padding:6px;border-bottom:1px solid #e2e7ef;align-items:center;flex:none;overflow:hidden;}
+  #barL,#barR{display:flex;gap:4px;align-items:center;flex:none;}
+  #barMid{display:flex;gap:4px;align-items:center;flex:1 1 auto;min-width:0;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:thin;padding:0 2px;}
+  #bar.compact .tb span{display:none;}
+  #bar.compact .tb{min-width:42px;padding:0 3px;}
+  .tb{flex:none;min-width:52px;height:50px;border:1px solid #d6dce5;background:#fff;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;padding:0 5px;color:#1f2430;font:inherit;}
+  .tb svg{width:32px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+  .tb span{font-size:.7em;font-weight:600;white-space:nowrap;}
+  .tb.on{background:#2563eb;border-color:#2563eb;color:#fff;}
+  .sep{width:1px;align-self:stretch;background:#e2e7ef;margin:0 3px;flex:none;}
+  #bar2{display:flex;gap:6px;padding:5px 8px;border-bottom:1px solid #e2e7ef;align-items:center;flex-wrap:nowrap;flex:none;min-height:42px;font-size:.92em;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:thin;}
+  #bar2>*{flex:0 0 auto;}
+  .lbl{color:#64748b;font-weight:600;}
+  .grow{flex:1 1 auto!important;min-width:4px;}
+  .btn{border:1px solid #cfd6e0;background:#fff;border-radius:9px;padding:5px 10px;font:inherit;font-weight:600;color:#1f2430;cursor:pointer;white-space:nowrap;}
+  .btn.red{color:#dc2626;border-color:#fca5a5;}
+  #bar2 select,#bar2 input{border:1px solid #cfd6e0;border-radius:9px;padding:5px 9px;font:inherit;}
+  #titel{border:1px solid transparent;border-radius:9px;padding:6px 9px;font:inherit;font-weight:800;font-size:1.05em;min-width:150px;flex:1 1 auto;background:none;color:#1f2430;}
+  #titel:focus{border-color:#cfd6e0;outline:none;}
+  #view{flex:1;min-height:0;overflow:auto;-webkit-overflow-scrolling:touch;padding:8px 10px 20px;}
+  #pl{border-collapse:collapse;width:100%;}
+  #pl th{position:sticky;top:0;z-index:2;background:#f5f7fb;border:1px solid #e3e7ee;padding:6px 6px;font-size:.84em;color:#5b6472;letter-spacing:.04em;}
+  #pl th.heute{background:#e8efff;color:#1d4ed8;}
+  #pl td{border:1px solid #eef1f6;padding:2px;vertical-align:middle;}
+  #pl tr.jetzt td{background:#fffbe9;}
+  #pl td.zeit{min-width:132px;width:132px;background:#fbfcfe;}
+  #pl .zName{width:100%;border:1px solid transparent;border-radius:7px;padding:2px 5px;font:inherit;font-weight:700;font-size:.9em;background:none;color:#1f2430;}
+  #pl .zName:focus{border-color:#cfd6e0;background:#fff;outline:none;}
+  #pl .zZeit{display:flex;gap:3px;align-items:center;margin-top:1px;}
+  #pl input[type=time]{border:1px solid #e3e7ee;border-radius:6px;padding:2px 3px;font:inherit;font-size:.78em;color:#5b6472;background:#fff;width:58px;}
+  #pl input[type=time]::-webkit-calendar-picker-indicator{display:none;}
+  #pl .zX{border:none;background:none;color:#b6bdc9;font-size:1.1em;line-height:1;cursor:pointer;padding:0 3px;flex:none;}
+  #pl td.pause{background:#f4f6fa;color:#8a93a2;font-size:.8em;text-align:center;font-weight:600;letter-spacing:.04em;}
+  #pl td.auf{background:#f8fafc;padding:1px;min-width:112px;}
+  #pl td.auf.heute{background:#f3f7ff;}
+  #pl td.auf .zelle{display:flex;flex-direction:column;border-radius:8px;padding:2px 1px;}
+  #pl td.auf input{width:100%;border:1px solid transparent;border-radius:6px;padding:1px 3px;font:inherit;line-height:1.25;text-align:center;background:none;}
+  #pl td.auf input:focus{border-color:#cfd6e0;background:#fff;outline:none;}
+  #pl .aWas{font-size:.8em;font-weight:700;color:#92400e;}
+  #pl .aOrt{font-size:.72em;color:#a16207;}
+  #pl td.std{min-width:112px;padding:1px;}
+  #pl td.std.heute{background:#f7faff;}
+  #pl td.std .zelle{display:flex;flex-direction:column;gap:0;border-radius:8px;padding:3px 1px;}
+  #pl td.std input{width:100%;border:1px solid transparent;border-radius:6px;padding:1px 3px;font:inherit;line-height:1.25;text-align:center;background:none;}
+  #pl td.std input:focus{border-color:#cfd6e0;background:#fff;outline:none;}
+  #pl .eKlasse{font-weight:800;font-size:.92em;}
+  #pl .eFach{font-size:.8em;color:#334155;}
+  #pl .eRaum{font-size:.72em;color:#64748b;}
+  #hinweis{color:#8a93a2;font-size:.8em;padding:6px 2px 0;}
+</style>
+</head><body>
+<div id="wrap">
+  <div id="bar"><div id="barL">
+    <button class="tb tafelEdit" id="bAddH" title="Eine Unterrichtsstunde anhängen (45 Minuten)"><svg viewBox="0 0 32 20"><circle cx="11" cy="10" r="7"/><path d="M11 6v4l3 2"/><path d="M23 6v8M19 10h8"/></svg><span>＋ Stunde</span></button>
+    <button class="tb tafelEdit" id="bAddP" title="Eine Pause anhängen (15 Minuten)"><svg viewBox="0 0 32 20"><path d="M6 8h13v6a4 4 0 0 1-4 4H10a4 4 0 0 1-4-4Z"/><path d="M19 9h3a3 3 0 0 1 0 6h-3"/><path d="M10 5V3M14 5V3"/></svg><span>＋ Pause</span></button>
+    <button class="tb tafelEdit" id="bStd" title="Zeiten auf 8:00–13:00 im 45-Minuten-Takt zurücksetzen"><svg viewBox="0 0 32 20"><circle cx="16" cy="10" r="7"/><path d="M16 6v4l3 2"/><path d="M9 4v3h3"/></svg><span>Standard</span></button>
+    <span class="sep"></span>
+    </div><div id="barMid">
+    <input type="text" id="titel" placeholder="Name (erscheint über dem Plan)">
+    </div><div id="barR"><span class="sep"></span>
+    <button class="tb" id="bRaum" title="Räume ein- oder ausblenden"><svg viewBox="0 0 32 20"><path d="M8 17V4h11v13"/><path d="M6 17h15"/><circle cx="16" cy="11" r="1.1" fill="currentColor" stroke="none"/></svg><span>Räume</span></button>
+    <button class="tb tafelEdit" id="bPrint" title="Stundenplan drucken"><svg viewBox="0 0 32 20"><path d="M10 7V2h12v5 M10 15H7V7h18v8h-3 M10 12h12v6H10Z"/></svg><span>Drucken</span></button>
+    <span id="shotBtns" style="display:inline-flex;gap:4px"></span>
+  </div></div>
+  <div id="bar2" class="tafelEdit">
+    <span class="lbl">Tage</span>
+    <select id="tage" title="Wochentage im Plan"><option value="5">Mo–Fr</option><option value="6">Mo–Sa</option></select>
+    <span class="lbl">Schrift</span>
+    <button class="btn" id="fsM" title="kleiner">A−</button><span id="fsV" style="min-width:26px;text-align:center;font-weight:700">15</span><button class="btn" id="fsP" title="größer">A+</button>
+    <span class="grow"></span>
+    <button class="btn red" id="bClear" title="Alle Einträge löschen – die Zeiten bleiben">Einträge leeren</button>
+  </div>
+  <div id="view"><table id="pl"></table><div id="hinweis">Je Stunde: <b>Klasse</b>, <b>Fach</b> und <b>Raum</b> – gleiche Klasse bekommt dieselbe Farbe. In den Pausen und vor dem Unterricht: <b>Aufsicht</b> und <b>Ort</b>. Beim Ändern einer Endzeit rücken die folgenden Einheiten mit.</div></div>
+</div>
+<script src="shot.js"></script>
+<script src="modus.js"></script>
+<script>
+"use strict";
+const $=id=>document.getElementById(id);
+const toast=m=>window.TafelShot&&TafelShot.toast(m);
+const TAGE=['Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
+const KURZ=['Mo','Di','Mi','Do','Fr','Sa'];
+const COLS=['#2563eb','#0d9488','#b45309','#7c3aed','#be123c','#0369a1','#15803d','#a21caf'];
+/* Standardzeiten wie auf der Uhr der Tafel: Bayern, 45-Minuten-Takt */
+const STD=[ {n:'Vor dem Unterricht',a:7*60+45,b:8*60,p:1}, {n:'1. Stunde',a:8*60,b:8*60+45}, {n:'2. Stunde',a:8*60+45,b:9*60+30},
+  {n:'Pause',a:9*60+30,b:9*60+45,p:1}, {n:'3. Stunde',a:9*60+45,b:10*60+30},
+  {n:'4. Stunde',a:10*60+30,b:11*60+15}, {n:'Pause',a:11*60+15,b:11*60+30,p:1},
+  {n:'5. Stunde',a:11*60+30,b:12*60+15}, {n:'6. Stunde',a:12*60+15,b:13*60} ];
+const id6=()=>'s'+Math.random().toString(36).slice(2,8)+Date.now().toString(36).slice(-3);
+const standard=()=>STD.map(x=>({id:id6(), n:x.n, a:x.a, b:x.b, p:x.p?1:0}));
+const hhmm=m=>String(Math.floor(m/60))+':'+String(m%60).padStart(2,'0');
+const feld=m=>String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0');
+const minuten=t=>{ const m=/^(\d{1,2}):(\d{2})$/.exec(t||''); if(!m) return null;
+  const v=(+m[1])*60+(+m[2]); return (v>=0&&v<24*60)?v:null; };
+
+let D={ v:1, titel:'', slots:standard(), z:{}, tage:5, raum:true, fontSize:15, fontBold:false, fontItalic:false };
+let ready=false;
+
+/* ---------- Einträge: je Feld Klasse, Fach und Raum ---------- */
+const hol=(s,d,f)=>((D.z[s.id+'|'+d]||{})[f])||'';
+function setz(s,d,f,v){ const k=s.id+'|'+d, o=D.z[k]||(D.z[k]={});
+  if(v) o[f]=v; else delete o[f];
+  if(!Object.keys(o).length) delete D.z[k]; sync(); }
+/* gleiche Klasse = gleiche Farbe, quer durch die Woche */
+function farbe(t){ let h=0; const s=t.toLowerCase(); for(let i=0;i<s.length;i++) h=(h*31+s.charCodeAt(i))>>>0; return COLS[h%COLS.length]; }
+const heute=()=>(new Date().getDay()+6)%7;
+
+function render(){
+  const t=$('pl'); t.innerHTML='';
+  const nTage=Math.max(5,Math.min(6,+D.tage||5)), hd=heute();
+  const jetzt=new Date().getHours()*60+new Date().getMinutes();
+  const hr=t.createTHead().insertRow();
+  const th0=document.createElement('th'); th0.textContent='Zeit'; hr.appendChild(th0);
+  for(let d=0;d<nTage;d++){ const th=document.createElement('th'); th.textContent=KURZ[d]; th.title=TAGE[d];
+    if(d===hd) th.classList.add('heute'); hr.appendChild(th); }
+  const tb=t.createTBody();
+  D.slots.forEach((s,i)=>{
+    const tr=tb.insertRow(); if(jetzt>=s.a&&jetzt<s.b) tr.classList.add('jetzt');
+    const td=tr.insertCell(); td.className='zeit';
+    const z1=document.createElement('div'); z1.style.cssText='display:flex;gap:2px;align-items:center';
+    const nm=document.createElement('input'); nm.type='text'; nm.className='zName'; nm.value=s.n; nm.title='Name der Einheit';
+    nm.oninput=()=>{ s.n=nm.value; sync(); };
+    nm.onchange=()=>{ if(!nm.value.trim()){ s.n=s.p?'Pause':'Stunde'; } render(); };
+    const x=document.createElement('button'); x.className='zX'; x.textContent='×'; x.title='Diese Zeile löschen';
+    x.onclick=()=>{ if(!confirm('„'+s.n+'“ aus dem Plan löschen?'))return;
+      for(let d=0;d<6;d++) delete D.z[s.id+'|'+d];
+      D.slots.splice(i,1); sync(); render(); };
+    z1.append(nm,x);
+    const z2=document.createElement('div'); z2.className='zZeit';
+    const von=document.createElement('input'); von.type='time'; von.value=feld(s.a); von.title='Beginn';
+    const bis=document.createElement('input'); bis.type='time'; bis.value=feld(s.b); bis.title='Ende';
+    von.onchange=()=>{ const m=minuten(von.value); if(m===null){ von.value=feld(s.a); return; }
+      const dauer=s.b-s.a; s.a=m; if(s.b<=s.a) s.b=s.a+dauer; ordnen(); sync(); render(); };
+    bis.onchange=()=>{ const m=minuten(bis.value); if(m===null||m<=s.a){ bis.value=feld(s.b); return; }
+      const dif=m-s.b, folgt=D.slots[i+1]; s.b=m;
+      if(folgt&&folgt.a===m-dif) for(let k=i+1;k<D.slots.length;k++){ D.slots[k].a+=dif; D.slots[k].b+=dif; }  /* Anschluss bleibt erhalten */
+      ordnen(); sync(); render(); };
+    const strich=document.createElement('span'); strich.textContent='–'; strich.style.color='#b6bdc9';
+    z2.append(von,strich,bis);
+    td.append(z1,z2);
+    if(s.p){                                   /* Pause oder Zeit vor dem Unterricht: je Tag eine Aufsicht mit Ort */
+      for(let d=0;d<nTage;d++){
+        const c=tr.insertCell(); c.className='auf'+(d===hd?' heute':'');
+        const box=document.createElement('div'); box.className='zelle';
+        const wo=TAGE[d]+', '+s.n+' ('+hhmm(s.a)+'–'+hhmm(s.b)+')';
+        const was=document.createElement('input'); was.type='text'; was.className='aWas'; was.placeholder='–';
+        was.value=hol(s,d,'a'); was.title='Aufsicht – '+wo;
+        const ort=document.createElement('input'); ort.type='text'; ort.className='aOrt'; ort.placeholder=hol(s,d,'a')?'Ort':'';
+        ort.value=hol(s,d,'o'); ort.title='Ort der Aufsicht – '+wo; ort.hidden=!D.raum;
+        was.oninput=()=>{ setz(s,d,'a',was.value.trim()); ort.placeholder=was.value.trim()?'Ort':''; anAufsicht(box,s,d); };
+        ort.oninput=()=>{ setz(s,d,'o',ort.value.trim()); };
+        was.onkeydown=ort.onkeydown=e=>e.stopPropagation();
+        box.append(was,ort); anAufsicht(box,s,d); c.appendChild(box);
+      }
+      return; }
+    for(let d=0;d<nTage;d++){
+      const c=tr.insertCell(); c.className='std'+(d===hd?' heute':'');
+      const box=document.createElement('div'); box.className='zelle';
+      const mk=(feldName,cls,platz)=>{ const inp=document.createElement('input'); inp.type='text'; inp.className=cls;
+        inp.value=hol(s,d,feldName); inp.placeholder=platz;
+        inp.title=TAGE[d]+', '+s.n+' ('+hhmm(s.a)+'–'+hhmm(s.b)+')';
+        inp.oninput=()=>{ setz(s,d,feldName,inp.value.trim()); anstreichen(box,s,d); };
+        inp.onkeydown=e=>e.stopPropagation();
+        box.appendChild(inp); return inp; };
+      mk('k','eKlasse','–'); mk('f','eFach',''); const r=mk('r','eRaum','');
+      r.hidden=!D.raum;
+      anstreichen(box,s,d);
+      c.appendChild(box);
+    }
+  });
+  $('titel').value=D.titel||'';
+  $('tage').value=String(nTage);
+  $('bRaum').classList.toggle('on',!!D.raum);
+  $('fsV').textContent=D.fontSize||15;
+  document.documentElement.style.setProperty('--fs',(D.fontSize||15)+'px');
+  $('titel').style.fontWeight=D.fontBold?'900':'800';
+  $('titel').style.fontStyle=D.fontItalic?'italic':'normal';
+}
+/* eine eingetragene Aufsicht hebt sich warm ab */
+function anAufsicht(box,s,d){ box.style.background=hol(s,d,'a')?'rgba(217,119,6,.13)':'none'; }
+/* Farbe der Zelle richtet sich nach der Klasse (sonst nach dem Fach) */
+function anstreichen(box,s,d){
+  const k=hol(s,d,'k')||hol(s,d,'f');
+  if(!k){ box.style.background='none'; box.querySelectorAll('input').forEach(i=>i.style.color=''); return; }
+  const c=farbe(k); box.style.background=c+'18';
+  box.querySelector('.eKlasse').style.color=c;
+}
+
+/* nach der Anfangszeit sortieren – so rutscht eine früh gelegte Aufsicht nach oben */
+const ordnen=()=>D.slots.sort((x,y)=>(x.a-y.a)||(x.b-y.b));
+/* ---------- Zeilen anhängen ---------- */
+function anhaengen(pause){
+  const L=D.slots[D.slots.length-1], a=L?L.b:8*60;
+  const nr=D.slots.filter(x=>!x.p).length+1;
+  D.slots.push({id:id6(), n:pause?'Pause':(nr+'. Stunde'), a, b:a+(pause?15:45), p:pause?1:0});
+  ordnen(); sync(); render();
+}
+$('bAddH').onclick=()=>anhaengen(false);
+$('bAddP').onclick=()=>anhaengen(true);
+$('bStd').onclick=()=>{ if(!confirm('Die Zeiten auf 8:00–13:00 im 45-Minuten-Takt zurücksetzen?\n\nDie Einträge bleiben erhalten, soweit die Stunden zusammenpassen.'))return;
+  const alt=D.slots, neu=standard();
+  neu.forEach((x,i)=>{ if(alt[i]) x.id=alt[i].id; });          /* Einträge bleiben an ihrer Zeile */
+  D.slots=neu; sync(); render(); toast('Standardzeiten eingesetzt'); };
+$('bRaum').onclick=()=>{ D.raum=!D.raum; sync(); render(); };
+$('bClear').onclick=()=>{ if(!Object.keys(D.z).length){ toast('Es sind keine Einträge da'); return; }
+  if(!confirm('Alle Einträge löschen? Die Zeiten bleiben.'))return;
+  D.z={}; sync(); render(); toast('Einträge gelöscht'); };
+$('tage').onchange=()=>{ D.tage=+$('tage').value; sync(); render(); };
+$('titel').oninput=()=>{ D.titel=$('titel').value; sync(); };
+for(const [el,dd] of [['fsM',-1],['fsP',1]]) $(el).onclick=()=>{
+  D.fontSize=Math.max(10,Math.min(30,(D.fontSize||15)+dd)); sync(); render(); };
+
+/* ---------- Drucken ---------- */
+$('bPrint').onclick=()=>{
+  const esc=t=>String(t).replace(/[&<>"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));
+  const n=Math.max(5,Math.min(6,+D.tage||5));
+  let h='<h1>Stundenplan'+(D.titel?(' – '+esc(D.titel)):'')+'</h1>';
+  h+='<table><thead><tr><th>Zeit</th>'+Array.from({length:n},(_,d)=>'<th>'+KURZ[d]+'</th>').join('')+'</tr></thead><tbody>';
+  D.slots.forEach(s=>{
+    const z='<b>'+esc(s.n)+'</b><br><small>'+hhmm(s.a)+'–'+hhmm(s.b)+'</small>';
+    if(s.p){ let leer=true; for(let d=0;d<n;d++) if(hol(s,d,'a')||hol(s,d,'o')) leer=false;
+      if(leer){ h+='<tr><td class="z">'+z+'</td><td colspan="'+n+'" class="pause">'+esc(s.n)+'</td></tr>'; return; }
+      h+='<tr><td class="z">'+z+'</td>';
+      for(let d=0;d<n;d++){ const w=esc(hol(s,d,'a')), o=esc(hol(s,d,'o'));
+        h+='<td class="pause">'+(w?('<b>'+w+'</b>'):'')+(D.raum&&o?('<br><small>'+o+'</small>'):'')+'</td>'; }
+      h+='</tr>'; return; }
+    h+='<tr><td class="z">'+z+'</td>';
+    for(let d=0;d<n;d++){ const k=esc(hol(s,d,'k')), f=esc(hol(s,d,'f')), r=esc(hol(s,d,'r'));
+      h+='<td>'+(k?('<b>'+k+'</b>'):'')+(f?('<br>'+f):'')+(D.raum&&r?('<br><small>'+r+'</small>'):'')+'</td>'; }
+    h+='</tr>';
+  });
+  h+='</tbody></table><div class="meta">Stand: '+new Date().toLocaleDateString('de-DE')+'</div>';
+  const win=window.open('','_blank');
+  if(!win){ toast('Bitte Pop-ups erlauben – dann klappt das Drucken'); return; }
+  win.document.write('<!DOCTYPE html><meta charset="utf-8"><title>Stundenplan</title><style>'+
+    '@page{size:landscape;margin:12mm}body{font:13px -apple-system,Arial,sans-serif;color:#111;margin:0}'+
+    'h1{font-size:19px;margin:0 0 6px}table{border-collapse:collapse;width:100%}'+
+    'th,td{border:1px solid #999;padding:5px 6px;text-align:center;vertical-align:middle}'+
+    'th{background:#eef1f6;font-size:12px}td.z{text-align:left;width:22mm;background:#fafbfd}'+
+    'td.pause{background:#f2f4f8;color:#666;font-size:11px}small{color:#555}'+
+    '.meta{margin-top:5mm;font-size:11px;color:#666}</style>'+h);
+  win.document.close(); win.focus();
+  setTimeout(()=>{ try{ win.print(); }catch(e){} },350);
+};
+
+if(window.TafelShot) TafelShot.buttons($('shotBtns'),()=>TafelShot.rasterize($('wrap'),{exclude:'#bar,#bar2,#hinweis',pad:8}));
+
+/* ---------- Tafel-Anbindung ---------- */
+function sync(){ if(window.parent===window||!ready) return;
+  try{ parent.postMessage({type:'embed-data',data:D},'*'); }catch(e){} }
+addEventListener('message',e=>{ if(window.parent===window||e.source!==window.parent) return;
+  if(!(e.data&&e.data.type==='embed-data'&&e.data.data)) return;
+  const d=e.data.data;
+  D=Object.assign(D,d);
+  if(!Array.isArray(D.slots)||!D.slots.length) D.slots=standard();
+  D.slots.forEach(s=>{ if(!s.id) s.id=id6(); });
+  if(!D.z||typeof D.z!=='object') D.z={};
+  render();
+});
+function schmal(){ $('bar').classList.toggle('compact', innerWidth<620); }
+addEventListener('resize',schmal);
+window.addEventListener('load',()=>{
+  if(window.TafelModus) TafelModus.init({get:()=>D.edit!==false, set:v=>{ D.edit=v; render(); sync(); }});
+  schmal(); render();
+  setInterval(render,60000);                    /* laufende Stunde und heutiger Tag bleiben aktuell */
+  if(window.parent===window){ ready=true; return; }
+  try{ parent.postMessage({type:'embed-ready'},'*'); }catch(e){}
+  setTimeout(()=>{ ready=true; },700);
+});
+</script>
+</body></html>

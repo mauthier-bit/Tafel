@@ -391,8 +391,11 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     Deutsch, Natur und Technik, Religion, Ethik, Sport …) hilft beim Tippen. **Gleiches Fach = gleiche
     Farbe**, quer durch die Woche. **Pausen** laufen als graues Band durch alle Tage. Der **heutige Tag**
     ist in der Kopfzeile hervorgehoben, die **laufende Stunde** liegt auf gelbem Grund.
-  - **„Fächer leeren"** löscht nur die Einträge, die Zeiten bleiben. **🖨 Drucken** gibt den Plan als
-    Tabelle mit Zeiten und Fächern aus (mit Klassenname, Schuljahr und Datum).
+  - **🚪 Räume:** Unter jedem Fach steht eine zweite, kleine Zeile für den **Raum** (z. B. „B204",
+    „NWT 1"). Das Feld bietet sich erst an, wenn ein Fach dasteht. Der Knopf **„🚪 Räume"** blendet
+    diese Zeile ein und aus – eingetragene Räume bleiben dabei erhalten.
+  - **„Fächer leeren"** löscht nur die Einträge (Fächer und Räume), die Zeiten bleiben. **🖨 Drucken**
+    gibt den Plan als Tabelle mit Zeiten, Fächern und Räumen aus (mit Klassenname, Schuljahr und Datum).
   - Der Plan gehört **zur Klasse** (zum Projekt) und wird mit ihr gespeichert und exportiert. Die
     **Uhr** übernimmt diese Zeiten: „Schulstunden zeigen" richtet sich nach dem Stundenplan der aktiven
     Klasse – gibt es keinen, gelten die Standardzeiten (Bayern, 45-Minuten-Takt).
@@ -451,6 +454,23 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   einen Ast, **↶** Rückgängig, **⟳ Ordnen** ordnet alles kreisförmig ohne Überlappungen an, **A−/A+** sowie
   Schrift (fett/kursiv) im Kontextmenü, **🖼 Tafel / 📋 Kopieren** als Bild. Passt sich automatisch der
   Objektgröße an; auch „Als eigene Seite anzeigen“.
+- **Lehrer-Stundenplan** (Diverses, `lehrerplan.html`): der **eigene** Wochenplan der Lehrkraft,
+  unabhängig von der Klasse – Zeiten links, **Mo–Fr** (auf Wunsch **Mo–Sa**) als Spalten.
+  - **Je Stunde drei Zeilen:** **Klasse** (z. B. „9c", „11/2"), **Fach** und **Raum**. **Gleiche Klasse
+    bekommt dieselbe Farbe**, quer durch die Woche – so sieht man auf einen Blick, wann man wo ist.
+  - **Aufsichten:** Die Zeile **„Vor dem Unterricht"** (7:45–8:00) und jede **Pause** haben eigene Felder
+    je Tag für **Aufsicht** und **Ort** (z. B. „Hofaufsicht / Pausenhof Süd"). Eingetragene Aufsichten
+    heben sich warm hervor. Ist in einer Pausenzeile nichts eingetragen, bleibt sie ein ruhiges Band.
+  - **Zeiten** wie im Klassen-Stundenplan: Name, Beginn und Ende je Zeile, **＋ Stunde** (45 min),
+    **＋ Pause** (15 min), **×** löscht, **Standard** setzt 8:00–13:00 zurück (Einträge bleiben).
+    Wird eine **Endzeit** geändert, rücken die folgenden Einheiten mit; die Zeilen ordnen sich
+    **nach der Anfangszeit**, eine früh gelegte Aufsicht rutscht also nach oben.
+  - Oben steht ein Feld für den **Namen**, der über dem Plan und im Ausdruck erscheint. **🚪 Räume**
+    blendet Räume und Aufsichtsorte aus, **A−/A+** ändert die Schriftgröße, **🖨 Drucken** gibt den
+    Plan quer aus, **🖼 Tafel / 📋 Kopieren** legt ihn als Bild auf die Tafel. Der **heutige Tag** ist
+    hervorgehoben, die **laufende Stunde** liegt auf gelbem Grund (aktualisiert sich jede Minute).
+  - Der Plan wird **mit dem Tafel-Objekt gespeichert**; Umschalter **Benutzen/Bearbeiten** wie bei den
+    anderen Werkzeugen.
 - **Galgenmännchen** (Diverses): Ratespiel für Fachbegriffe. Im **Bearbeiten-Modus** trägt die
   Lehrkraft unter **„✎ Begriffe"** einen oder mehrere Begriffe ein – wahlweise mit Hinweis
   (`Begriff = Hinweis`). Die Liste ist **nur im Bearbeiten-Modus sichtbar**; im **Benutzen-Modus**
