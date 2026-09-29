@@ -148,7 +148,11 @@ window.TafelDiagramme={
         paarEintrag({ f:'Ph', j:10, g:'Bewegung: '+ln+' und '+rn,
           b:ln+': '+e.n, e:'zugehöriges '+rn,
           bild:bewBild(e,l,150,115), bild2:bewBild(e,r,150,115),
-          paar:()=>({links:bewBild(e,l,320,240), rechts:bewBild(e,r,320,240)}) });
+          paar:()=>({links:bewBild(e,l,320,240), rechts:bewBild(e,r,320,240)}),
+          /* für die Gruppenform: zum t-s-Diagramm gehören t-v und t-a */
+          gruppe:()=>({ feld:bewBild(e,'s',320,240),
+                        karten:[bewBild(e,'v',320,240), bewBild(e,'a',320,240)],
+                        name:e.n }) });
       }); });
     /* Ableitungen: f↔f′, f′↔f″ und f↔f″ */
     const AK=[['f','a','Graph von f','Graph von f ′','Funktion und erste Ableitung'],
@@ -160,7 +164,11 @@ window.TafelDiagramme={
         gesehen.add(sigL); gesehen.add('R'+sigR);
         paarEintrag({ f:'M', j:11, g:grp, b:ln+' bei '+e.t, e:rn,
           bild:ablBild(e,l,150,115), bild2:ablBild(e,r,150,115),
-          paar:()=>({links:ablBild(e,l,320,240), rechts:ablBild(e,r,320,240)}) });
+          paar:()=>({links:ablBild(e,l,320,240), rechts:ablBild(e,r,320,240)}),
+          /* für die Gruppenform: zum Graphen von f gehören f ′ und f ″ */
+          gruppe:()=>({ feld:ablBild(e,'f',320,240),
+                        karten:[ablBild(e,'a',320,240), ablBild(e,'b',320,240)],
+                        name:e.t }) });
       }); });
     return out;
   }

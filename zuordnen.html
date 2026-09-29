@@ -36,6 +36,9 @@
   .zone.over{box-shadow:0 0 0 3px rgba(37,99,235,.35);}
   .zone h3{margin:0;padding:6px 8px;font-size:.92em;color:#fff;background:var(--c,#2563eb);display:flex;gap:6px;align-items:center;}
   .zone h3 img{height:1.5em;border-radius:4px;}
+  .zone h3.bildkopf{padding:5px;background:var(--c,#2563eb);}
+  .zone h3.bildkopf img{height:auto;max-height:110px;max-width:100%;border-radius:6px;background:#fff;}
+  .zone.bildzone{min-width:190px;flex:1 0 190px;}
   .zbody{flex:1;min-height:0;overflow-y:auto;padding:7px;display:flex;flex-wrap:wrap;gap:7px;align-content:flex-start;}
   .karte{border:1.5px solid #cfd6e0;background:#fff;border-radius:10px;padding:6px 10px;font-weight:600;cursor:grab;touch-action:none;
          box-shadow:0 1px 2px rgba(15,23,42,.08);display:flex;align-items:center;gap:6px;max-width:100%;}
@@ -180,7 +183,11 @@ function render(){
     const z=document.createElement('div'); z.className='zone'; z.style.setProperty('--c',COLS[i%COLS.length]); z.dataset.zone=String(i);
     const h=document.createElement('h3');
     const img=bildVon(c.name);
-    if(img){ const im=document.createElement('img'); im.src=img; h.appendChild(im); const r=textOhneBild(c.name); if(r) h.appendChild(document.createTextNode(r)); }
+    if(img){ const im=document.createElement('img'); im.src=img; h.appendChild(im);
+      const r=textOhneBild(c.name);
+      if(r) h.appendChild(document.createTextNode(r));
+      else { h.classList.add('bildkopf'); z.classList.add('bildzone'); }   // reines Bild groß zeigen
+    }
     else h.textContent=c.name;
     const b=document.createElement('div'); b.className='zbody'; b.dataset.zone=String(i);
     z.append(h,b); zs.appendChild(z);
@@ -434,12 +441,15 @@ if(window.TafelLehrplan&&TafelLehrplan.verfuegbar()){
   $('bImp').onclick=()=>TafelLehrplan.oeffnen({ titel:'Begriffe zum Zuordnen',
     artTitel:'Aufgabe',
     arten:[{id:'paare',name:'paarweise (Begriff ↔ Erklärung)'},
-           {id:'gruppen',name:'Gruppen: nach Thema'},
-           {id:'jgst',name:'Gruppen: nach Jahrgangsstufe'}],
-    uebernehmen:(l,art)=>{
+           {id:'gruppen',name:'als Gruppen (nach Themenbereich)'}],
+    uebernehmen:(l0,art)=>{
+      const gesehen=new Set(); let raus=0;
+      const l=l0.filter(d=>{ const kl='L'+String(d.b).trim(), kr='R'+String(d.e).trim();
+        if(gesehen.has(kl)||gesehen.has(kr)){ raus++; return false; }
+        gesehen.add(kl); gesehen.add(kr); return true; });
       let text;
-      if(art==='gruppen'||art==='jgst'){
-        const schl=d=>art==='gruppen'?d.g:('Jahrgangsstufe '+d.j);
+      if(art==='gruppen'){
+        const schl=d=>d.g;
         const g=[...new Set(l.map(schl))];
         text=g.map(name=>'"'+name+'" = '+l.filter(d=>schl(d)===name).map(d=>'"'+d.b+'"').join(', ')).join('\n');
         D.mode='gruppen';
@@ -449,7 +459,7 @@ if(window.TafelLehrplan&&TafelLehrplan.verfuegbar()){
       }
       D.text=text; D.place={}; D.order=[]; D.check={}; D.shown=false;
       render(); sync();
-      TafelShot&&TafelShot.toast(l.length+' Begriffe übernommen');
+      TafelShot&&TafelShot.toast(l.length+' Begriffe übernommen'+(raus?(' · '+raus+' doppelte ausgelassen'):''));
     } });
 } else { const b=$('bImp'); if(b) b.hidden=true; }
 
@@ -463,31 +473,37 @@ if(window.TafelLehrplan&&((window.TafelFunktionen&&TafelFunktionen.verfuegbar())
     TafelLehrplan.oeffnen({ titel:'Fertige Zuordnungsaufgaben', daten,
       hinweis:'Zahlenrätsel, Terme, Brüche, Funktions- und Bewegungsdiagramme – Graphen werden beim Übernehmen gezeichnet.',
       artTitel:'Aufgabe',
-      arten:[{id:'paare',name:'paarweise (Aufgabe ↔ Lösung)'},
-             {id:'thema',name:'Gruppen: nach Thema'},
-             {id:'jgst',name:'Gruppen: nach Jahrgangsstufe'}],
-      uebernehmen:(l,art)=>{
-        const bilder={}; let nb=0;
-        const karte=d=>{                                  // linke Seite als Text oder Bild
-          if(d.paar){ const k='b'+(++nb); bilder[k]=d.paar().links; return '['+k+']'; }
-          if(d.bild||d.voll){ return d.b; }               // Funktionen: der Term ist die linke Seite
-          return d.b; };
-        let zeilen;
-        if(art==='thema'||art==='jgst'){
-          /* Gruppenaufgabe: die Themen bzw. Jahrgangsstufen sind die Felder */
-          const schl=d=>art==='thema'?d.g:('Jahrgangsstufe '+d.j);
-          const gruppen=[...new Set(l.map(schl))];
-          zeilen=gruppen.map(g=>'"'+g+'" = '+l.filter(d=>schl(d)===g)
-            .map(d=>'"'+String(karte(d)).replace(/"/g,'\u201d')+'"').join(', '));
-          D.mode='gruppen';
-        } else {
-          zeilen=[]; 
+      arten:[{id:'paare',name:'paarweise (zwei Karten)'},
+             {id:'gruppe',name:'als Gruppe (alle zugehörigen Karten)'}],
+      uebernehmen:(l0,art)=>{
+        /* Zwei Aufgaben mit derselben Lösung (z. B. (x+1)/(2x+2) und (1/x):(2/x) ergeben beide 1/2)
+           wären nicht eindeutig zuzuordnen – solche Dubletten fallen heraus. */
+        const gesehen=new Set(); let raus=0;
+        const l=l0.filter(d=>{ if(d.paar||d.bild||d.voll) return true;
+          const k='L'+String(d.b).trim()+'#R'+String(d.e).trim();
+          const kl='L'+String(d.b).trim(), kr='R'+String(d.e).trim();
+          if(gesehen.has(kl)||gesehen.has(kr)){ raus++; return false; }
+          gesehen.add(kl); gesehen.add(kr); return true; });
+        const bilder={}; let nb=0; const zeilen=[];
+        const bild=src=>{ const k='b'+(++nb); bilder[k]=src; return '['+k+']'; };
+        if(art==='gruppe'){
+          /* Eine Aufgabe je Eintrag: das erste Diagramm ist das Feld, die übrigen sind die Karten.
+             Bei Aufgaben ohne dritte Karte (Terme, Begriffe) steht links die Aufgabe, rechts die Lösung. */
+          let mitGruppe=0;
           l.forEach(d=>{
-            if(d.paar){ const gross=d.paar(), k1='b'+(++nb), k2='b'+(++nb);
-              bilder[k1]=gross.links; bilder[k2]=gross.rechts;
-              zeilen.push('"['+k1+']" = ['+k2+']'); }
-            else if(d.bild||d.voll){ const k='b'+(++nb); bilder[k]=d.voll?d.voll():d.bild;
-              zeilen.push('"'+d.b+'" = ['+k+']'); }
+            if(d.gruppe){ const g=d.gruppe(); mitGruppe++;
+              zeilen.push('"'+bild(g.feld)+'" = '+g.karten.map(k=>'"'+bild(k)+'"').join(', ')); }
+            else if(d.paar){ const p=d.paar();
+              zeilen.push('"'+bild(p.links)+'" = "'+bild(p.rechts)+'"'); }
+            else if(d.bild||d.voll) zeilen.push('"'+d.b+'" = "'+bild(d.voll?d.voll():d.bild)+'"');
+            else zeilen.push('"'+d.b+'" = "'+String(d.e).replace(/"/g,'\u201d')+'"');
+          });
+          D.mode='gruppen';
+          if(!mitGruppe) setTimeout(()=>TafelShot&&TafelShot.toast('Für diese Aufgaben gibt es nur zwei Karten – paarweise ist meist übersichtlicher'),900);
+        } else {
+          l.forEach(d=>{
+            if(d.paar){ const p=d.paar(); zeilen.push('"'+bild(p.links)+'" = '+bild(p.rechts)); }
+            else if(d.bild||d.voll) zeilen.push('"'+d.b+'" = '+bild(d.voll?d.voll():d.bild));
             else zeilen.push('"'+d.b+'" = "'+String(d.e).replace(/"/g,'\u201d')+'"');
           });
           D.mode='paare';
@@ -495,7 +511,8 @@ if(window.TafelLehrplan&&((window.TafelFunktionen&&TafelFunktionen.verfuegbar())
         D.images=bilder; D.text=zeilen.join('\n');
         D.place={}; D.order=[]; D.check={}; D.shown=false;
         render(); sync();
-        TafelShot&&TafelShot.toast(l.length+(D.mode==='gruppen'?' Karten zum Einsortieren':' Paare übernommen – jetzt zuordnen'));
+        TafelShot&&TafelShot.toast(l.length+(D.mode==='gruppen'?' Aufgaben – Karten einsortieren':' Paare übernommen – jetzt zuordnen')
+          +(raus?(' · '+raus+' mit gleicher Lösung ausgelassen'):''));
       } });
   };
 } else { const b=$('bFunk'); if(b) b.hidden=true; }

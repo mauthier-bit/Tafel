@@ -457,10 +457,9 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   - Im **Begriffsnetz** erscheinen die Begriffe als Felder im Kreis – verbinden und „✨ Entwirren".
   - An der **Pinnwand** wird jeder Begriff eine Karte (Begriff oben, Erklärung darunter); die
     Karten werden gleich sauber ausgerichtet.
-  - Beim **Zuordnen** wählt man im Auswahlfenster unter **„Aufgabe"** die Form:
-    **paarweise** (Begriff ↔ Erklärung, zum Verbinden), **Gruppen: nach Thema** oder
-    **Gruppen: nach Jahrgangsstufe**. In den Gruppenformen werden die Themen bzw. Jahrgangsstufen
-    zu Feldern, in die die Karten einsortiert werden.
+  - Beim **Zuordnen** wählt man im Auswahlfenster unter **„Aufgabe"** die Form: **paarweise**
+    (Begriff ↔ Erklärung, zum Verbinden) oder **als Gruppen** – dann werden die Themenbereiche zu
+    Feldern, in die die Begriffe einsortiert werden.
   - **Eigene Glossare:** Im selben Fenster lässt sich über **„📄 eigenes Glossar …"** eine mit dem
     Glossar-Werkzeug **gespeicherte Datei** laden – dann filtert man statt nach Fach und
     Jahrgangsstufe nach den **Abschnitten dieser Datei**. So lassen sich auch selbst gepflegte
@@ -504,12 +503,18 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   Potenz, exponentiell, Sinus/Kosinus, ganzrational, Wurzel, Logarithmus). Zu jedem Term wird der
   **Graph beim Übernehmen gezeichnet** – es liegen also keine Bilddateien im Projekt, und die
   Darstellung ist auf jedem Bildschirm scharf.
-  Auch hier legt die Auswahl **„Aufgabe"** die Form fest: **paarweise** (links die eine Seite,
-  rechts die andere, zu verbinden per Linie oder Drag-and-drop), **Gruppen: nach Thema** oder
-  **Gruppen: nach Jahrgangsstufe**. Die Gruppenform eignet sich gut zum Sortieren – etwa „Ist das
-  ein Potenzterm, ein Wurzelterm oder eine Potenzfunktion?" oder „Zu welcher Jahrgangsstufe gehört
-  dieser Potenzterm?". Mit **„10 zufällig"** bekommt man schnell eine Übungsrunde, mit **„alle"**
-  die ganze Sammlung eines Themas.
+  Auch hier legt die Auswahl **„Aufgabe"** die Form fest:
+  - **paarweise (zwei Karten)**: links die eine Seite, rechts die andere, zu verbinden per Linie
+    oder Drag-and-drop.
+  - **als Gruppe (alle zugehörigen Karten)**: Jede Aufgabe wird ein eigenes Feld, in das **alle**
+    zugehörigen Karten einsortiert werden. Bei den Bewegungen steht dann das **t-s-Diagramm** als
+    Feld oben, und **t-v- und t-a-Diagramm** müssen hineingezogen werden; bei den Ableitungen bildet
+    der **Graph von f** das Feld und **f ′ und f ″** gehören hinein. Aufgaben, zu denen es nur zwei
+    Karten gibt (Terme, Brüche, Zahlenrätsel), bleiben dabei ein Feld mit einer Karte – dort ist die
+    paarweise Form meist übersichtlicher.
+  Mit **„10 zufällig"** bekommt man schnell eine Übungsrunde, mit **„alle"** die ganze Sammlung
+  eines Themas. Zwei Aufgaben mit **derselben Lösung** (etwa (x + 1)/(2x + 2) und (1/x) : (2/x),
+  die beide 1/2 ergeben) werden dabei automatisch aussortiert, damit jede Zuordnung eindeutig ist.
 - **Texte für den Lückentext** (Lückentext): Der Knopf **„Texte"** öffnet eine Bibliothek mit
   **52 Sachtexten, Alltagstexten und Geschichten** (je rund 200 bis 250 Wörter), passend zu den
   Lernbereichen des LehrplanPLUS und sprachlich an die Jahrgangsstufe angepasst. Gefiltert wird
