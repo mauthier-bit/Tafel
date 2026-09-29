@@ -33,11 +33,14 @@ function stil(){ if(css) return; css=true;
   .lpZ .b{font-weight:700;font-size:14px;}
   .lpZ .e{font-size:12.5px;color:#64748b;line-height:1.35;}
   .lpZ .m{font-size:11px;color:#94a3b8;}
+  .lpZ .lpBild{width:96px;height:74px;object-fit:contain;border:1px solid #e2e7ef;border-radius:7px;background:#fff;flex:none;}
   #lpFuss{padding:9px 14px;border-top:1px solid #e2e7ef;display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
   #lpFuss .info{font-size:13px;color:#64748b;flex:1 1 auto;}
   .lpBtn{border:1px solid #cfd6e0;background:#fff;border-radius:9px;padding:6px 12px;font:700 14px -apple-system,sans-serif;color:#1f2430;cursor:pointer;}
   .lpBtn.pri{background:#2563eb;border-color:#2563eb;color:#fff;}
-  #lpHinweis{font-size:11.5px;color:#94a3b8;padding:0 14px 8px;}`;
+  #lpHinweis{font-size:11.5px;color:#94a3b8;padding:0 14px 8px;}
+  #lpArt{display:none;gap:6px;align-items:center;flex-wrap:wrap;padding:0 14px 8px;}
+  #lpArt.an{display:flex;} #lpArt b{font-size:12px;color:#64748b;text-transform:uppercase;letter-spacing:.04em;}`;
   document.head.appendChild(s); }
 
 /* Ein gespeichertes Glossar (Textformat „Begriff = Erklärung", Abschnitte mit „# …") einlesen */
@@ -50,28 +53,37 @@ function ausText(txt,name){
     else out.push({f:'', j:0, g, b:t, e:''}); });
   return out;
 }
+const TX=()=>window.LEHRPLAN_TEXTE&&window.LEHRPLAN_TEXTE.t||[];
+const ARTNAME={sach:'Sachtext', alltag:'Alltag', geschichte:'Geschichte'};
+/* Texte der Bibliothek in dieselbe Struktur bringen: b = Titel, e = Text */
+function texte(){ return TX().map(r=>{ const mitArt=r.length>5;
+  return { f:r[0], j:+r[1], g:r[2], b:r[3], e:mitArt?r[5]:r[4], art:mitArt?r[4]:'sach' }; }); }
+
 function oeffnen(opt){
   opt=opt||{}; stil();
-  let daten=alle(), quelle='lp';
-  let fFach='', fJg=0, fBer='', fQ='';
+  const textModus=!!opt.texte, eigen=!!opt.daten;
+  let daten=eigen?opt.daten.slice():(textModus?texte():alle()), quelle=eigen?'eigen':(textModus?'tx':'lp');
+  let fFach='', fJg=0, fBer='', fArt='', fQ='';
   const gewaehlt=new Set();
 
   const box=document.createElement('div'); box.id='lpBox';
   box.innerHTML=`<div id="lpIn">
     <div id="lpKopf"><span id="lpTitel">${opt.titel||'Begriffe übernehmen'}</span><span class="x">×</span></div>
     <div id="lpQuelle"><b>Quelle</b>
-      <button class="lpChip on" data-q="lp">Lehrplan-Glossar</button>
-      <button class="lpChip" data-q="datei">📄 eigenes Glossar …</button>
+      <button class="lpChip on" data-q="lp">${textModus?'Textbibliothek':'Lehrplan-Glossar'}</button>
+      <button class="lpChip" data-q="datei">📄 ${textModus?'eigener Text …':'eigenes Glossar …'}</button>
       <input type="file" id="lpFile" accept=".txt,.json,text/plain,application/json" hidden>
     </div>
     <div id="lpFilter">
       <div class="zeile" data-r="fach"><b>Fach</b></div>
       <div class="zeile" data-r="jg"><b>Jahrgang</b></div>
       <div class="zeile" data-r="ber"><b>Bereich</b></div>
+      <div class="zeile" data-r="art" style="display:none"><b>Art</b></div>
       <div class="zeile"><b>Suche</b><input id="lpSuche" type="search" placeholder="Begriff oder Erklärung …"></div>
     </div>
     <div id="lpListe"></div>
-    <div id="lpHinweis">${L.stand||''}</div>
+    <div id="lpHinweis">${opt.hinweis||L.stand||''}</div>
+    <div id="lpArt"></div>
     <div id="lpFuss">
       <button class="lpBtn" id="lpAlle">alle</button>
       <button class="lpBtn" id="lpKeine">keine</button>
@@ -82,8 +94,9 @@ function oeffnen(opt){
     </div></div>`;
   document.body.appendChild(box);
   const $l=q=>box.querySelector(q);
+  if(eigen) $l('#lpQuelle').style.display='none';
 
-  const passt=d=>(!fFach||d.f===fFach)&&(!fJg||d.j===fJg)&&(!fBer||d.g===fBer)&&
+  const passt=d=>(!fFach||d.f===fFach)&&(!fJg||d.j===fJg)&&(!fBer||d.g===fBer)&&(!fArt||d.art===fArt)&&
     (!fQ||(d.b+' '+d.e).toLowerCase().includes(fQ));
   const sichtbar=()=>daten.filter(passt);
 
@@ -93,7 +106,7 @@ function oeffnen(opt){
       const mk=(txt,val)=>{ const b=document.createElement('button'); b.className='lpChip'+(akt()===val?' on':''); b.textContent=txt;
         b.onclick=()=>{ setz(val); chips(); liste(); }; z.appendChild(b); };
       mk('alle',sel==='jg'?0:'');
-      werte.forEach(v=>mk(sel==='fach'?(FA[v]||v):(sel==='jg'?('Jgst. '+v):v), v)); };
+      werte.forEach(v=>mk(sel==='fach'?(FA[v]||v):(sel==='jg'?('Jgst. '+v):(sel==='art'?(ARTNAME[v]||v):v)), v)); };
     const faecher=[...new Set(daten.map(d=>d.f))].filter(Boolean);
     $l('.zeile[data-r="fach"]').style.display=faecher.length?'':'none';
     bauen('fach',faecher,()=>fFach,v=>{ fFach=v; fBer=''; },'Fach');
@@ -102,6 +115,10 @@ function oeffnen(opt){
     bauen('jg',jgs,()=>fJg,v=>{ fJg=v; fBer=''; },'Jahrgang');
     const bers=[...new Set(daten.filter(d=>(!fFach||d.f===fFach)&&(!fJg||d.j===fJg)).map(d=>d.g))];
     bauen('ber',bers,()=>fBer,v=>{ fBer=v; },'Bereich');
+    const arten=[...new Set(daten.map(d=>d.art).filter(Boolean))];
+    const za=$l('.zeile[data-r="art"]');
+    za.style.display=(arten.length>1)?'':'none';
+    if(arten.length>1) bauen('art',arten,()=>fArt,v=>{ fArt=v; },'Art');
   }
   function liste(){
     const box2=$l('#lpListe'); box2.innerHTML='';
@@ -109,12 +126,15 @@ function oeffnen(opt){
     list.forEach(d=>{
       const z=document.createElement('label'); z.className='lpZ';
       const c=document.createElement('input'); c.type='checkbox'; c.checked=gewaehlt.has(d);
-      c.onchange=()=>{ if(c.checked) gewaehlt.add(d); else gewaehlt.delete(d); info(); };
+      c.onchange=()=>{ if(textModus) gewaehlt.clear();          // ein Lückentext braucht genau einen Text
+        if(c.checked) gewaehlt.add(d); else gewaehlt.delete(d); if(textModus) liste(); else info(); };
+      if(d.bild){ const im=document.createElement('img'); im.src=d.bild; im.className='lpBild'; z.appendChild(im); }
       const t=document.createElement('div'); t.className='t';
       t.innerHTML='<div class="b"></div><div class="e"></div><div class="m"></div>';
       t.querySelector('.b').textContent=d.b;
-      t.querySelector('.e').textContent=d.e;
-      t.querySelector('.m').textContent=d.f?((FA[d.f]||d.f)+' · Jgst. '+d.j+' · '+d.g):d.g;
+      t.querySelector('.e').textContent=textModus?(d.e.slice(0,150)+(d.e.length>150?' …':'')):d.e;
+      t.querySelector('.m').textContent=(d.f?((FA[d.f]||d.f)+' · Jgst. '+d.j+' · '+d.g):d.g)
+        +(textModus?(' · '+(ARTNAME[d.art]||'Text')+' · '+d.e.split(/\s+/).length+' Wörter'):'');
       z.appendChild(c); z.appendChild(t); box2.appendChild(z);
     });
     if(!list.length) box2.innerHTML='<div style="padding:20px;text-align:center;color:#94a3b8">Keine Begriffe – Filter ändern</div>';
@@ -124,13 +144,14 @@ function oeffnen(opt){
 
   box.querySelectorAll('#lpQuelle .lpChip').forEach(b=>b.onclick=()=>{
     if(b.dataset.q==='datei'){ $l('#lpFile').click(); return; }
-    quelle='lp'; daten=alle(); gewaehlt.clear(); fFach=''; fJg=0; fBer='';
+    quelle='lp'; daten=textModus?texte():alle(); gewaehlt.clear(); fFach=''; fJg=0; fBer='';
     box.querySelectorAll('#lpQuelle .lpChip').forEach(x=>x.classList.toggle('on',x.dataset.q==='lp'));
-    $l('#lpHinweis').textContent=L.stand||''; chips(); liste(); });
+    $l('#lpHinweis').textContent=(textModus&&window.LEHRPLAN_TEXTE?window.LEHRPLAN_TEXTE.stand:L.stand)||''; chips(); liste(); });
   $l('#lpFile').onchange=async e=>{ const f=e.target.files[0]; e.target.value=''; if(!f) return;
     let txt=''; try{ txt=await f.text(); }catch(err){ return; }
     if(/^\s*[{\[]/.test(txt)){ try{ const o=JSON.parse(txt); txt=(o&&(o.text||o.d&&o.d.text))||txt; }catch(err){} }
-    const neu=ausText(txt, f.name.replace(/\.[^.]+$/,''));
+    const name=f.name.replace(/\.[^.]+$/,'');
+    const neu=textModus ? [{f:'', j:0, g:'Eigener Text', b:name, e:txt.trim(), art:'sach'}] : ausText(txt, name);
     if(!neu.length) return;
     quelle='datei'; daten=neu; gewaehlt.clear(); fFach=''; fJg=0; fBer='';
     box.querySelectorAll('#lpQuelle .lpChip').forEach(x=>x.classList.toggle('on',x.dataset.q==='datei'));
@@ -141,16 +162,23 @@ function oeffnen(opt){
   $l('#lpKeine').onclick=()=>{ gewaehlt.clear(); liste(); };
   $l('#lpZufall').onclick=()=>{ gewaehlt.clear(); const l=sichtbar().slice();
     for(let i=l.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [l[i],l[j]]=[l[j],l[i]]; }
-    l.slice(0,10).forEach(d=>gewaehlt.add(d)); liste(); };
+    l.slice(0,textModus?1:10).forEach(d=>gewaehlt.add(d)); liste(); };
+  if(textModus){ $l('#lpZufall').textContent='zufällig'; $l('#lpAlle').hidden=true; }
   const zu=()=>box.remove();
   $l('.x').onclick=zu; $l('#lpAb').onclick=zu;
   box.onclick=e=>{ if(e.target===box) zu(); };
+  /* zusätzliche Auswahl, die das aufrufende Werkzeug anbietet (z. B. Paare oder Gruppen) */
+  let art=(opt.arten&&opt.arten[0]&&opt.arten[0].id)||null;
+  if(opt.arten&&opt.arten.length>1){ const z=$l('#lpArt'); z.classList.add('an');
+    z.innerHTML='<b>'+(opt.artTitel||'Form')+'</b>';
+    opt.arten.forEach(a=>{ const b=document.createElement('button'); b.className='lpChip'+(a.id===art?' on':''); b.textContent=a.name;
+      b.onclick=()=>{ art=a.id; [...z.querySelectorAll('.lpChip')].forEach(x=>x.classList.toggle('on',x===b)); }; z.appendChild(b); }); }
   $l('#lpOk').onclick=()=>{
     let l=[...gewaehlt];
-    if(!l.length) l=sichtbar();                       // nichts angekreuzt: alles Sichtbare übernehmen
+    if(!l.length) l=textModus?sichtbar().slice(0,1):sichtbar();   // nichts angekreuzt: alles Sichtbare (beim Text der erste)
     if(!l.length){ zu(); return; }
     l.sort((a,b)=>String(a.f).localeCompare(String(b.f))||a.j-b.j||String(a.g).localeCompare(String(b.g),'de')||a.b.localeCompare(b.b,'de'));
-    zu(); if(opt.uebernehmen) opt.uebernehmen(l);
+    zu(); if(opt.uebernehmen) opt.uebernehmen(l, art);
   };
   chips(); liste();
   if(opt.fach) { fFach=opt.fach; chips(); liste(); }

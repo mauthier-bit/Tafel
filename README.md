@@ -439,9 +439,9 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     Ein **Tipp** zählt wie ein Fehlgriff, und beim nächsten Begriff beginnt das andere Team.
     Der Knopf daneben zeigt den Spielstand und setzt ihn auf Wunsch zurück.
 - **Begriffe aus dem Lehrplan** (Glossar, Kreuzworträtsel, Buchstabengitter, Galgenmännchen,
-  Mindmap, Begriffsnetz, Pinnwand):
-  Die Tafel bringt ein **Lehrplan-Glossar** mit rund **395 Fachbegriffen** aus dem **LehrplanPLUS
-  Bayern (Gymnasium, G9)** für **Mathematik (Jgst. 5–11 und 13)** und **Physik (Jgst. 7–11;
+  Mindmap, Begriffsnetz, Pinnwand, Zuordnen):
+  Die Tafel bringt ein **Lehrplan-Glossar** mit rund **475 Fachbegriffen** aus dem **LehrplanPLUS
+  Bayern (Gymnasium, G9)** für **Mathematik (Jgst. 5 bis 13)** und **Physik (Jgst. 7 bis 13;
   Jgst. 7 aus Natur und Technik)** – gegliedert nach den **Lernbereichen** des Lehrplans. Über den
   Knopf **📚 Lehrplan** bzw. **„📚 Begriffe aus dem Lehrplan"** öffnet sich ein Fenster mit den
   Filtern **Fach · Jahrgangsstufe · Themenbereich** und einer Suche; man kreuzt Begriffe an,
@@ -457,12 +457,29 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   - Im **Begriffsnetz** erscheinen die Begriffe als Felder im Kreis – verbinden und „✨ Entwirren".
   - An der **Pinnwand** wird jeder Begriff eine Karte (Begriff oben, Erklärung darunter); die
     Karten werden gleich sauber ausgerichtet.
+  - Beim **Zuordnen** kann man wählen: **Begriff ↔ Erklärung** als paarweise Aufgabe oder
+    **nach Themenbereichen** sortieren (dann sind die Bereiche die Gruppen und die Begriffe die
+    Karten).
   - **Eigene Glossare:** Im selben Fenster lässt sich über **„📄 eigenes Glossar …"** eine mit dem
     Glossar-Werkzeug **gespeicherte Datei** laden – dann filtert man statt nach Fach und
     Jahrgangsstufe nach den **Abschnitten dieser Datei**. So lassen sich auch selbst gepflegte
     Begriffslisten in alle sieben Werkzeuge übernehmen.
   Die Begriffe folgen den Lernbereichen des Lehrplans, die **Erklärungen sind eigens für die Tafel
   geschrieben** (kurze, schülergerechte Sätze) – der Lehrplantext selbst wird nicht wiedergegeben.
+- **Funktionsterm und Graph zuordnen** (Zuordnen): Der Knopf **„Funktionen"** öffnet eine eigene
+  Bibliothek mit **45 Funktionen** von der linearen Funktion bis zur e-Funktion, filterbar nach
+  **Jahrgangsstufe** (8 bis 12) und **Funktionstyp** (linear, gebrochen-rational, quadratisch,
+  Potenz, exponentiell, Sinus/Kosinus, ganzrational, Wurzel, Logarithmus). Zu jedem Term wird der
+  **Graph beim Übernehmen gezeichnet** – es liegen also keine Bilddateien im Projekt, und die
+  Darstellung ist auf jedem Bildschirm scharf. Im Zuordnen entsteht daraus eine paarweise Aufgabe:
+  links die Terme, rechts die Graphen, zu verbinden per Linie oder Drag-and-drop.
+- **Texte für den Lückentext** (Lückentext): Der Knopf **„Texte"** öffnet eine Bibliothek mit
+  **52 Sachtexten, Alltagstexten und Geschichten** (je rund 200 bis 250 Wörter), passend zu den
+  Lernbereichen des LehrplanPLUS und sprachlich an die Jahrgangsstufe angepasst. Gefiltert wird
+  nach **Fach, Jahrgangsstufe, Themenbereich** und **Art** (Sachtext · Alltag · Geschichte); die
+  Trefferliste zeigt Titel, Anfang und Wortzahl. Ein Klick übernimmt den Text, danach setzt man die
+  Lücken wie gewohnt von Hand oder per **Zufällig**. Über **„📄 eigener Text …"** lässt sich auch
+  eine eigene Textdatei laden.
 - **Begriffsnetz** (Diverses): freies **Netz aus Begriffen** – anders als die Mindmap ohne Hierarchie,
   jeder Begriff kann mit jedem verbunden werden (Concept Map). **+ Begriff** legt ein Feld an,
   **Doppeltippen auf die freie Fläche** ebenfalls; **antippen** wählt aus, **nochmal antippen**
@@ -1457,6 +1474,8 @@ terme-rechner.html    ← Term-Umformer (Terme aufstellen und umformen, Mathemat
 figuren-koerper.html  ← Figuren & Körper berechnen (Flächen, Umfang, Volumen, Mathematik 9/10)
 diagramm.html         ← Diagramm aus einer Tabelle (Säulen, Balken, Linien, Kreis …, verzerrende Darstellung)
 galgen.html           ← Galgenmännchen (Begriffe raten, Hinweise, Lehrplan-Import)
+lehrplan-texte.js     ← Textbibliothek für den Lückentext (Sachtexte, Alltag, Geschichten)
+funktionen-bibliothek.js ← Funktionsterme mit gezeichneten Graphen fürs Zuordnen
 lehrplan-glossar.js   ← Fachbegriffe nach LehrplanPLUS Bayern G9 (Mathematik, Physik)
 lehrplan.js           ← gemeinsames Auswahlfenster für den Lehrplan-Import
 formel.html           ← Formel umstellen (nach einer Größe auflösen, Schritt für Schritt, mit Formelsammlung)
