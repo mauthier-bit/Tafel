@@ -486,9 +486,13 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   sieht die Klasse nur die Lücken. Buchstaben werden über die **Tastenreihe** (oder die echte
   Tastatur) geraten: Treffer erscheinen an allen passenden Stellen, Fehlgriffe lassen die Figur am
   Galgen weiterwachsen – das Gerüst steht von Anfang an hellgrau da, die Figur kommt Stück für Stück
-  dazu. Einstellbar sind die **erlaubte Fehlerzahl (3–12)**, ob der **Hinweis** gezeigt wird und ob
+  dazu. Einstellbar sind die **erlaubte Fehlerzahl (3–12)** und ob
   **Umlaute** eigene Tasten bekommen (sonst zählen Ä/Ö/Ü/ß als A/O/U/S). **💡 Tipp** deckt einen
   Buchstaben auf und kostet dafür einen Versuch, **↻ Neues Spiel** geht zum nächsten Begriff.
+  - **Der Hinweis bleibt zunächst verdeckt:** Gibt es zum Begriff eine Erklärung, steht unter den
+    Lücken nur der Knopf **„💡 Hinweis zeigen"** – erst ein Tipp darauf blendet sie ein (in der Leiste
+    macht das auch **„💡 Hinweis"**, der dann **„Hinweis verbergen"** heißt). So raten die Kinder erst
+    selbst, und die Hilfe kommt, wenn sie gebraucht wird.
   Dazu **A−/A+**, **🖼 Tafel / 📋 Kopieren** und der Umschalter **Benutzen/Bearbeiten**; der
   Spielstand wird mit dem Tafel-Projekt gespeichert.
   - **Zwei Teams:** Der Schalter **„2 Teams"** blendet über dem Spielfeld zwei Punktekonten ein
