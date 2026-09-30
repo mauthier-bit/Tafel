@@ -1195,6 +1195,8 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   - **Antippen** eines Nuklids öffnet eine **Infokarte**: Symbol, Name, Z, N, Massenzahl,
     **Halbwertszeit** (passend gerundet von Nanosekunden bis Milliarden Jahren), **Zerfallsart**
     (bei zwei Wegen mit Anteilen), das entstehende **Tochternuklid** und die **natürliche Häufigkeit**.
+    **Nochmal auf dasselbe Nuklid tippen blendet die Karte wieder aus** (ein Tipp auf ein anderes
+    Nuklid wechselt wie bisher direkt dorthin).
   - **Suchfeld:** `Cs-137`, `U238` oder `Kohlenstoff 14` springt zum Nuklid und wählt es aus.
   - **Zerfallsreihen:** Die vier klassischen Reihen (**Thorium 4n**, **Neptunium 4n+1**,
     **Uran-Radium 4n+2**, **Uran-Actinium 4n+3**) werden als Pfeilkette in die Karte gezeichnet –
