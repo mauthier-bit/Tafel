@@ -859,6 +859,10 @@
     <div style="display:flex;gap:6px;align-items:center;flex-wrap:nowrap"><b style="width:58px">Ende:</b><button class="p step" id="nlToM">−</button><span class="stepv" id="nlToV">10</span><button class="p step" id="nlToP">+</button></div>
     <div style="display:flex;gap:6px;align-items:center;flex-wrap:nowrap"><b style="width:58px">Intervall:</b><button class="p step" id="nlStepM">−</button><span class="stepv" id="nlStepV">1</span><button class="p step" id="nlStepP">+</button><label class="propToggle" style="margin-left:10px"><span>Zahlen</span><div class="sw2 on" id="nlLabels"></div></label></div>
     <div style="display:flex;gap:6px;align-items:center;flex-wrap:nowrap"><b style="width:58px">Schrift:</b><button class="p step" id="nlFsM">−</button><span class="stepv" id="nlFsV">14</span><button class="p step" id="nlFsP">+</button><button class="p" id="nlBold" title="Fett" style="font-weight:900;width:34px;margin-left:6px">F</button><button class="p" id="nlItalic" title="Kursiv" style="font-style:italic;width:34px">K</button></div>
+    <div class="coordSw">
+      <label class="propToggle" title="Maßstabsgetreu: eine Einheit ist genau ein Zentimeter"><span>Einheit = 1 cm</span><div class="sw2" id="nlCm"></div></label>
+      <label class="propToggle" title="Null und Einheiten auf das Karo des Tafelblatts legen"><span>Am Karo</span><div class="sw2" id="nlSnap"></div></label>
+    </div>
     <button class="p" id="nlTexts" title="Name an der Pfeilspitze und Einheit hinter den Zahlen">✎ Achsenname &amp; Einheit</button>
   </div>
   <div class="prow" id="coordRow" style="display:none;flex-direction:column;align-items:stretch;gap:6px;font-size:13px">
@@ -2114,13 +2118,15 @@ function moveSelect(e,w){
 function endSelect(e){
   if(xform){ const o=xform.o; xform=null;
     if(o&&o.type==='coord'&&(o.cm||o.snap)) coordNachZiehen(o);   // maßstabsgetreu: statt zu strecken wächst der Achsenbereich
+    if(o&&o.type==='numline'&&(o.cm||o.snap)) nlNachZiehen(o);
     scheduleAutosave(); return; }
   if(marquee){ const a=toWorld(Math.min(marquee.x0,marquee.x1),Math.min(marquee.y0,marquee.y1)),b=toWorld(Math.max(marquee.x0,marquee.x1),Math.max(marquee.y0,marquee.y1)); selection=[];
     for(const o of page().objects){ const bb=geomBounds(o); if(bb.x>=a.x&&bb.y>=a.y&&bb.x+bb.w<=b.x&&bb.y+bb.h<=b.y) selection.push(o); }
     const gids=new Set(selection.filter(o=>o.groupId).map(o=>o.groupId));
     for(const o of page().objects) if(o.groupId&&gids.has(o.groupId)&&!selection.includes(o)) selection.push(o);
     marquee=null; refreshProps(); return; }
-  if(moveDrag){ moveDrag=null; selection.forEach(o=>{ if(o.type==='coord'&&o.snap){ coordSnapFix(o); markDirty(); } }); scheduleAutosave(); } }
+  if(moveDrag){ moveDrag=null; selection.forEach(o=>{ if(o.type==='coord'&&o.snap){ coordSnapFix(o); markDirty(); }
+    else if(o.type==='numline'&&o.snap){ nlSnapFix(o); markDirty(); } }); scheduleAutosave(); } }
 function translateObj(o,dx,dy){
   if(o.type==='stroke') o.points.forEach(p=>{p.x+=dx;p.y+=dy;});
   else if(o.type==='shape'){o.x0+=dx;o.x1+=dx;o.y0+=dy;o.y1+=dy;} else {o.x+=dx;o.y+=dy;} }
@@ -2427,7 +2433,7 @@ buildSwatches($('propColors'),propColorPick);
 addRainbow($('propColors'),propColorPick);
 const pwEl=$('propWidths');
 widths.forEach(w=>{const b=document.createElement('button');b.className='wbtn';b.dataset.w=w;const dot=document.createElement('i');dot.style.width=dot.style.height=Math.min(w+4,20)+'px';b.appendChild(dot);
-  b.onclick=()=>{ markPropWidth(b); if(plotApply(f=>f.width=w)){return;} selection.forEach(o=>{ if(o.type==='stroke'||o.type==='shape'||o.type==='numline')o.width=w; else if(o.type==='text')o.size=Math.round(14+w*4); }); scheduleAutosave(); markDirty(); }; pwEl.appendChild(b);});
+  b.onclick=()=>{ markPropWidth(b); if(plotApply(f=>f.width=w)){return;} selection.forEach(o=>{ if(o.type==='stroke'||o.type==='shape'||o.type==='numline'){ o.width=w; if(o.type==='numline') nlFix(o); } else if(o.type==='text')o.size=Math.round(14+w*4); }); scheduleAutosave(); markDirty(); }; pwEl.appendChild(b);});
 /* gewählte Dicke im Kontextmenü hervorheben (wie im Stiftmenü) */
 function markPropWidth(btn){ pwEl.querySelectorAll('.wbtn').forEach(x=>x.classList.toggle('active',x===btn)); }
 function propWidthVal(){ const o=selection[0]; if(!o)return null;
@@ -2558,7 +2564,11 @@ function refreshProps(){ const has=selection.length>0 && tool==='select';
     if(ao){ $('arrOne').classList.toggle('on',!ao.both); $('arrBoth').classList.toggle('on',!!ao.both); }
     if(nl){ $('nlFromV').textContent=nlNum(nl.from??0); $('nlToV').textContent=nlNum(nl.to??10); $('nlStepV').textContent=nlNum(nl.step||1);
       $('nlFsV').textContent=nl.labelSize||14; $('nlLabels').classList.toggle('on',nl.labels!==false);
-      $('nlBold').classList.toggle('on',!!nl.labelBold); $('nlItalic').classList.toggle('on',!!nl.labelItalic); }
+      $('nlBold').classList.toggle('on',!!nl.labelBold); $('nlItalic').classList.toggle('on',!!nl.labelItalic);
+      $('nlCm').classList.toggle('on',!!nl.cm); $('nlSnap').classList.toggle('on',!!nl.snap);
+      const karoNl=pagePat(page())==='grid';
+      $('nlSnap').parentNode.style.opacity=karoNl?'1':'.45';
+      $('nlSnap').parentNode.title=karoNl?'Null und Einheiten auf das Karo des Tafelblatts legen':'Das Tafelblatt hat gerade kein Karomuster'; }
     const co=(selection.length===1&&selection[0].type==='coord')?selection[0]:null; $('coordRow').style.display=co?'flex':'none';
     if(co){ $('coordCm').classList.toggle('on',!!co.cm); $('coordSnap').classList.toggle('on',!!co.snap);
       const karo=pagePat(page())==='grid';
@@ -2685,7 +2695,7 @@ $('tblLineM').onclick=()=>tblLineStep(-1); $('tblLineP').onclick=()=>tblLineStep
 const nlNum=v=>String(Math.round(v*1e6)/1e6).replace('.',',');
 const NLSTEPS=[0.1,0.2,0.25,0.5,1,2,2.5,5,10,20,25,50,100,200,250,500,1000];
 function nlSel(){ const o=selection[0]; return (o&&o.type==='numline')?o:null; }
-function nlChanged(o){ refreshProps(); markDirty(); scheduleAutosave(); }
+function nlChanged(o){ nlFix(o); refreshProps(); markDirty(); scheduleAutosave(); }
 function nlEndStep(key,d){ const o=nlSel(); if(!o)return; const st=+o.step||1;
   let v=Math.round(((o[key]??(key==='from'?0:10))+d*st)*1e6)/1e6;
   if(key==='from'&&v>=(o.to??10)-st*0.5) return; if(key==='to'&&v<=(o.from??0)+st*0.5) return;
@@ -2702,6 +2712,16 @@ $('nlFsM').onclick=()=>{ const o=nlSel(); if(!o)return; o.labelSize=Math.max(8,M
 $('nlFsP').onclick=()=>{ const o=nlSel(); if(!o)return; o.labelSize=Math.max(8,Math.min(60,(o.labelSize||14)+2)); nlChanged(o); };
 $('nlLabels').onclick=()=>{ const o=nlSel(); if(!o)return; o.labels=!(o.labels!==false); nlChanged(o); };
 $('nlBold').onclick=()=>{ const o=nlSel(); if(!o)return; o.labelBold=!o.labelBold; nlChanged(o); };
+$('nlCm').onclick=function(){ const o=nlSel(); if(!o)return;
+  o.cm=!o.cm; this.classList.toggle('on',!!o.cm);
+  if(o.cm){ const mx=o.x+o.w/2; nlCmFix(o); o.x=mx-o.w/2; nlSnapFix(o);
+    toast('Eine Einheit ist jetzt genau 1 cm – mit dem Lineal nachmessbar'); }
+  markDirty(); scheduleAutosave(); };
+$('nlSnap').onclick=function(){ const o=nlSel(); if(!o)return;
+  if(pagePat(page())!=='grid'){ toast('Dieses Tafelblatt hat kein Karomuster – Muster im Seitenmenü oder in den Einstellungen wählen'); return; }
+  o.snap=!o.snap; this.classList.toggle('on',!!o.snap);
+  if(o.snap){ nlSnapFix(o); toast('Null und Einheiten liegen jetzt auf dem Karo'); }
+  markDirty(); scheduleAutosave(); };
 $('nlItalic').onclick=()=>{ const o=nlSel(); if(!o)return; o.labelItalic=!o.labelItalic; nlChanged(o); };
 function coordStep(key,elId,delta){ const co=selection[0]; if(!co||co.type!=='coord')return;
   const def=(key==='xMin'||key==='yMin')?-5:5; let v=(co[key]??def)+delta; v=Math.max(-100,Math.min(100,v));
@@ -2712,6 +2732,26 @@ $('cxMinM').onclick=()=>coordStep('xMin','cxMinV',-1); $('cxMinP').onclick=()=>c
 $('cxMaxM').onclick=()=>coordStep('xMax','cxMaxV',-1); $('cxMaxP').onclick=()=>coordStep('xMax','cxMaxV',1);
 $('cyMinM').onclick=()=>coordStep('yMin','cyMinV',-1); $('cyMinP').onclick=()=>coordStep('yMin','cyMinV',1);
 $('cyMaxM').onclick=()=>coordStep('yMax','cyMaxV',-1); $('cyMaxP').onclick=()=>coordStep('yMax','cyMaxV',1);
+/* ---- Zahlenstrahl maßstabsgetreu: 1 Einheit = 1 cm bzw. ein ganzes Vielfaches der Kästchenweite ---- */
+const nlSpan=o=>(((o.to??10)-(o.from??0))||1);
+const nlPfeil=o=>{ const lw=Math.max(1,o.width||3); return Math.max(10,Math.min(26,lw*4.5))+8; };   // Platz hinter dem letzten Strich
+const nlBreite=(o,einheit)=>nlSpan(o)*einheit+nlPfeil(o);
+function nlCmFix(o){ if(!o.cm) return; o.w=nlBreite(o,PXCM); }
+function nlSnapFix(o){ if(!o.snap) return; if(pagePat(page())!=='grid') return;
+  const g=patGap('grid'), einheit=Math.max(1,Math.round(((o.w-nlPfeil(o))/nlSpan(o))/g))*g;
+  o.w=nlBreite(o,einheit);
+  const nullX=o.x+(0-(o.from??0))*einheit, achse=o.y+o.h/2;               /* Null und Achse aufs Karo legen */
+  o.x+=Math.round(nullX/g)*g-nullX; o.y+=Math.round(achse/g)*g-achse; }
+function nlFix(o){ if(!o||o.type!=='numline') return; nlCmFix(o); nlSnapFix(o); }
+/* Größer ziehen heißt bei festem Maßstab: mehr Zahlenbereich statt größerer Einheiten. */
+function nlNachZiehen(o){
+  const einheit=o.cm?PXCM:(pagePat(page())==='grid'?Math.max(1,Math.round(((o.w-nlPfeil(o))/nlSpan(o))/patGap('grid')))*patGap('grid'):0);
+  if(einheit>0){ const st=+o.step||1;
+    const n=Math.max(1,Math.round((o.w-nlPfeil(o))/einheit));
+    o.to=Math.round(((o.from??0)+n)/st)*st; if(o.to<=(o.from??0)) o.to=(o.from??0)+st;
+    o.w=nlBreite(o,einheit);
+    if($('nlToV')) $('nlToV').textContent=nlNum(o.to); }
+  nlSnapFix(o); markDirty(); }
 /* 1 Einheit = 1 cm: Die Objektgröße folgt dem Achsenbereich, damit die Kästchen echte Zentimeter sind. */
 const coordSpanX=o=>(((o.xMax??5)-(o.xMin??-5))||1), coordSpanY=o=>(((o.yMax??5)-(o.yMin??-5))||1);
 function coordCmFix(o){ if(!o.cm) return; o.w=coordSpanX(o)*PXCM; o.h=coordSpanY(o)*PXCM; }
@@ -5201,9 +5241,13 @@ function drawSchoolRing(c,cx,cy,r,o){
 function addClockObject(){ const sz=Math.min(W,H)*0.3/scale, c=toWorld(W/2,H/2); const o={type:'clock',id:uid(),x:c.x-sz/2,y:c.y-sz/2,w:sz,h:sz,rot:0,groupId:null}; pushUndo(); page().objects.push(o); setMode('write'); setTool('select'); selection=[o]; refreshProps(); markDirty(); scheduleAutosave(); toast('Uhr eingefügt'); }
 $('w-clock').onclick=addClockObject;
 function addNumlineObject(){ const w=Math.min(W*0.7,760)/scale, h=90/scale, c=toWorld(W/2,H/2);
-  const o={type:'numline',id:uid(),x:c.x-w/2,y:c.y-h/2,w,h,from:0,to:10,step:1,labelSize:14,rot:0,groupId:null};
-  pushUndo(); page().objects.push(o); setMode('write'); setTool('select'); selection=[o]; refreshProps(); markDirty(); scheduleAutosave(); toast('Zahlenstrahl eingefügt'); }
-function addCoordObject(){ const sz=Math.min(W,H)*0.5/scale, c=toWorld(W/2,H/2); const o={type:'coord',id:uid(),x:c.x-sz/2,y:c.y-sz/2,w:sz,h:sz,xMin:-5,xMax:5,yMin:-5,yMax:5,rot:0,groupId:null}; pushUndo(); page().objects.push(o); setMode('write'); setTool('select'); selection=[o]; refreshProps(); markDirty(); scheduleAutosave(); toast('Koordinatensystem eingefügt'); }
+  const o={type:'numline',id:uid(),x:c.x-w/2,y:c.y-h/2,w,h,from:0,to:10,step:1,labelSize:14,cm:true,snap:true,rot:0,groupId:null};
+  nlCmFix(o); o.x=c.x-o.w/2; nlSnapFix(o);                               /* eine Einheit = 1 cm, auf dem Karo */
+  pushUndo(); page().objects.push(o); setMode('write'); setTool('select'); selection=[o]; refreshProps(); markDirty(); scheduleAutosave(); toast('Zahlenstrahl eingefügt – eine Einheit ist 1 cm'); }
+function addCoordObject(){ const sz=Math.min(W,H)*0.5/scale, c=toWorld(W/2,H/2);
+  const o={type:'coord',id:uid(),x:c.x-sz/2,y:c.y-sz/2,w:sz,h:sz,xMin:-5,xMax:5,yMin:-5,yMax:5,cm:true,snap:true,rot:0,groupId:null};
+  coordCmFix(o); o.x=c.x-o.w/2; o.y=c.y-o.h/2; coordSnapFix(o);          /* maßstabsgetreu und aufs Karo gelegt */
+  pushUndo(); page().objects.push(o); setMode('write'); setTool('select'); selection=[o]; refreshProps(); markDirty(); scheduleAutosave(); toast('Koordinatensystem eingefügt – eine Einheit ist 1 cm'); }
 setInterval(()=>{ if(pinClock.on||doc.pages[doc.cur].objects.some(o=>o.type==='clock')) markDirty(); },1000);   // Uhr lebendig halten
 
 /* ---- Funktionsplotter / Vierfeldertafel / Baumdiagramm (als Embed-Objekte) ---- */

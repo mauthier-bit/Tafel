@@ -79,6 +79,8 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   Das Kontextmenü ist kompakt: x- und y-Bereich je eine Zeile, darunter die vier Schalter
   **Gitter · Beschriftung · Einheit = 1 cm · Am Karo** als Raster, dann Schrift und zuletzt
   Hintergrund mit Farbfeld und **✎ Namen**.
+  Beide Schalter – **Einheit = 1 cm** und **Am Karo** – sind **von Haus aus an**: Ein neu eingefügtes
+  Koordinatensystem ist also sofort maßstabsgetreu und liegt auf dem Karo (10 × 10 Einheiten = 10 × 10 cm).
   - **1 Einheit = 1 cm:** Damit wird das Achsenkreuz **maßstabsgetreu** – eine Einheit ist genau ein
     Zentimeter, also mit **Lineal und Geodreieck nachmessbar** (die Achsen heißen dann „x in cm" und
     „y in cm", sofern sie noch x und y hießen). Zieht man das Objekt größer, bleibt der Maßstab
@@ -93,6 +95,12 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   (0,1 bis 1000), **Zahlen an/aus** sowie **Schriftgröße, Fett und Kursiv**; **Farbe und Liniendicke**
   kommen aus den Farbpunkten bzw. „Dicke/Größe" oben im selben Kontextmenü. Wird die Teilung sehr fein,
   bleiben alle Striche stehen, aber nur jede n-te Zahl wird beschriftet, damit nichts überlappt.
+  - Wie beim Koordinatensystem gibt es die Schalter **Einheit = 1 cm** und **Am Karo** – beide
+    **von Haus aus an**. Eine Einheit ist dann genau ein Zentimeter (mit dem Lineal nachmessbar),
+    **Null und Teilstriche liegen auf dem Karo**, und der Strahl rastet beim Verschieben wieder darauf
+    ein. Zieht man ihn breiter, bleibt der Maßstab erhalten und der **Zahlenbereich wächst**
+    stattdessen mit (aus 0–10 wird z. B. 0–13). Ohne Karomuster auf dem Tafelblatt ist „Am Karo"
+    blass und weist beim Antippen darauf hin.
 - **Lineal** und **Geodreieck:** über ihren Knopf einblenden – mit **cm-/mm-Skala und Zahlen**. Über das
   kleine **⚙-Feld auf dem Werkzeug** öffnet sich ein Menü für **Länge bzw. Größe (8–40 cm), Millimeter
   an/aus, Zahlen an/aus und Farbe** (unten schließt ein **„Schließen"-Knopf** das Menü);
@@ -1469,9 +1477,12 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   **selbst umsortieren und zusammenfassen** lassen (Drag & Drop); dazu **Tipp**, **nächsten Schritt
   ausführen**, **alles vorführen** (mit Tempo), **Gleichartiges färben**, Textmarker und ein
   mitwachsender **Rechenweg**. Der lässt sich als Text kopieren, drucken oder als **Bild auf die Tafel
-  legen** bzw. **als Bild kopieren**. **Beispiele** und **Zuletzt** sind aufklappbar, damit die
-  Eingabe kurz bleibt. In der Kopfzeile stehen neben dem Titel **A−/A+** für die Schriftgröße und der
-  Umschalter **hell/dunkel**. Beim Einfügen fragt die Tafel „eigene Seite oder bewegliches Objekt"
+  legen** bzw. **als Bild kopieren**. **Beispiele**, **Zuletzt** und **Hinweise zur Eingabe** sind
+  **aufklappbar** und stehen nebeneinander in der Eingabekarte, damit die Seite kurz bleibt (die
+  Eingabehilfen waren früher eine eigene Karte am Seitenende). In der Kopfzeile stehen neben dem Titel
+  **A−/A+** für die Schriftgröße und der Umschalter **hell/dunkel**; **standardmäßig ist es hell**
+  (die eigene Wahl wird gemerkt). Der Inhalt nutzt die Fensterbreite bis 1400 px mit **schmalen
+  Seitenrändern**. Beim Einfügen fragt die Tafel „eigene Seite oder bewegliches Objekt"
   (im Kontextmenü auch später „Als eigene Seite anzeigen"). **Term, Ziel, Schrittweite, Tempo,
   Einfärbung, Schriftgröße und Hell/Dunkel werden mit dem Tafel-Projekt gespeichert** – beim nächsten
   Öffnen steht der Term wieder da.
