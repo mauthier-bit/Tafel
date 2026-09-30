@@ -1208,8 +1208,10 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     Dazu A−/A+, 🖼 Tafel, 📋 Kopieren und 🖨 Drucken. Daten: IAEA Nuclear Data Services
     (NUBASE/ENSDF), vollständig offline in `nuklid-data.js`.
 - **Optiklabor** (Mathe & Physik): Strahlenoptik zum Anfassen. Die Bedienung ist wie beim Stromkreis
-  aufgebaut: links **Neu, Speichern, Laden, ▶ Animation** und **Löschen**, in der Mitte die seitlich
-  scrollenden **Bauteile**, rechts **Zurück, Vor, Dunkel, Lot & Winkel** und **Vorlagen**; die zweite
+  aufgebaut: links **Neu, Speichern, Laden** und **Löschen**, in der Mitte die seitlich scrollenden
+  **Bauteile** – und **hinter ihnen, ebenfalls mitscrollend, die vier Ansichtsschalter
+  Dunkel, Lot & Winkel, virtuell und g und b**, damit für die Bauteile viel Platz bleibt –, rechts
+  bleiben nur **▶ Animation, Zurück, Vor** und **Vorlagen** stehen; die zweite
   Zeile zeigt die Einstellungen des ausgewählten Bauteils. Bauteile sind **💡 Lampe** (Punktlichtquelle),
   **🔦 Laser** (paralleles Bündel), **Spiegel**, **Wölbspiegel**, **Linse**, **Hindernis**,
   **Blende** (Wand mit einstellbarer Öffnung), **Schirm** und **Himmelskörper** (runde Körper für Finsternisse). Jedes Bauteil wird mit dem Finger verschoben;
@@ -1259,7 +1261,11 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     Mondbahn geneigt; die Vorlage weist beim Laden darauf hin.
 - **Wellenwanne** (Mathe & Physik): eine echte Wellensimulation (Wellengleichung auf einem Gitter,
   rund 50 000 Zellen, flüssig in Echtzeit). Bedienung wie beim Stromkreis: links **Neu, Speichern, Laden,
-  Pause, Neustart, Löschen**, in der Mitte die Bauteile, rechts **Zurück, Vor, Rand, Huygens, Vorlagen**.
+  Start/Pause, Neustart, Löschen**, in der Mitte die seitlich scrollenden Bauteile und dahinter –
+  ebenfalls mitscrollend – **Rand** und **Huygens**, rechts bleiben nur **Zurück, Vor** und
+  **Vorlagen** stehen.
+  Die Wanne **startet ruhig**: Das Wasser steht still, bis man auf **▶ Start** tippt – so lässt sich
+  der Aufbau erst in Ruhe besprechen. Der Knopf heißt dann **Pause**.
   - **Benutzen oder Bearbeiten:** Der Umschalter blendet beim Arbeiten Datei-Knöpfe, Bauteile,
     Zurück/Vor und Vorlagen aus; sichtbar bleiben **Pause**, **Neustart**, **Rand**, **Huygens** und
     die **Wellenlänge** – der Versuch läuft also weiter und lässt sich beobachten, ohne dass aus
