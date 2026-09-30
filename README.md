@@ -1477,7 +1477,10 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   **selbst umsortieren und zusammenfassen** lassen (Drag & Drop); dazu **Tipp**, **nächsten Schritt
   ausführen**, **alles vorführen** (mit Tempo), **Gleichartiges färben**, Textmarker und ein
   mitwachsender **Rechenweg**. Der lässt sich als Text kopieren, drucken oder als **Bild auf die Tafel
-  legen** bzw. **als Bild kopieren**. **Beispiele**, **Zuletzt** und **Hinweise zur Eingabe** sind
+  legen** bzw. **als Bild kopieren**. In der Eingabekarte steht zuerst das **Eingabefeld mit den
+  Eingabetasten**, darunter **Ziel** (*Vereinfachen* / *danach ausklammern*) und **Schrittweite** –
+  beide einzeilig neben ihrer Beschriftung – und erst danach der Knopf **Umformen ▸**.
+  **Beispiele**, **Zuletzt** und **Hinweise zur Eingabe** sind
   **aufklappbar** und stehen nebeneinander in der Eingabekarte, damit die Seite kurz bleibt (die
   Eingabehilfen waren früher eine eigene Karte am Seitenende). In der Kopfzeile stehen neben dem Titel
   **A−/A+** für die Schriftgröße und der Umschalter **hell/dunkel**; **standardmäßig ist es hell**
@@ -1487,8 +1490,15 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   Einfärbung, Schriftgröße und Hell/Dunkel werden mit dem Tafel-Projekt gespeichert** – beim nächsten
   Öffnen steht der Term wieder da.
 - **Figuren & Körper** (Mathe & Physik): Geometrie-Werkzeug für **Flächen, Umfänge und Volumen**
-  (Mathematik 9/10). Figur oder Körper wählen (Dreiecke, Vierecke, n-Eck, Kreis mit Sehne, Prismen,
-  Pyramiden, Pyramidenstumpf, Tetraeder, Zylinder, Kegel, Kegelstumpf, Kugel, Rotationskörper-Baukasten),
+  (Mathematik 9/10). Die Überschrift heißt schlicht **„Figuren und Körper"**; die Zeile **Darstellung**
+  (hell/dunkel und **⚙ Linien, Schrift & Buttons**) steht **rechts daneben in der Kopfzeile**, die
+  Regler klappen erst auf Tippen auf. **Standardmäßig ist die Darstellung hell** (die eigene Wahl
+  wird gemerkt).
+  Ausgewählt wird über **zwei Knöpfe – „▭ Figur wählen" und „⬛ Körper wählen"**: Der angetippte Knopf
+  öffnet darunter ein **Auswahlmenü** mit allen Figuren bzw. Körpern (Dreiecke, Vierecke, n-Eck,
+  Kreis mit Sehne, Prismen, Pyramiden, Pyramidenstumpf, Tetraeder, Zylinder, Kegel, Kegelstumpf,
+  Kugel, Rotationskörper-Baukasten); nach der Wahl schließt es sich wieder, daneben steht
+  **„gewählt: …"**, und der Knopf der aktiven Gruppe bleibt hervorgehoben. Dann
   **gegebene Größen eintragen** und die gesuchten mit **?** markieren; dazu **Hilfslinien** und
   **rechtwinklige Stützdreiecke** mit **Satz des Pythagoras** sowie **sin, cos, tan** farbig hervorgehoben.
   Skizze mit Zoom, Linienstärke, Schrift- und Buttongröße einstellbar. **Skizze** und **Rechenweg**
