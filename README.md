@@ -1091,6 +1091,8 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     (z. B. 2/3 = 8/12). Lässt sich mit der Zahl nicht kürzen, erscheint ein Hinweis.
   - **„Anteile“ (3. Reiter):** **Anteil – das Ganze – Bruchteil**, mit zwei Unterbereichen (Auswahl links):
     **„Bruchteil gesucht“** (3/4 von 1 l = 750 ml) und **„Ganzes gesucht“** (3/8 sind 75 ct → das Ganze sind 200 ct).
+    Das Wörtchen dazwischen – **„von“** bzw. **„sind“** – steht in der Bedienleiste **wie mit dem Textmarker
+    hervorgehoben**, denn genau daran hängt, was gesucht ist.
     Das Ganze wird frei eingestellt: zuerst die **Größe** (Zeit, Masse, Volumen, Länge, Fläche, Geld), dann die
     **Maßzahl** (Komma erlaubt, z. B. 1,5) und danach die **Einheit** dieser Größe (z. B. d · h · min · s,
     t · kg · g · mg, hl · l · ml, km · m · cm · mm, km² · ha · a · m² · dm² · cm² · mm², € · ct) – im zweiten
