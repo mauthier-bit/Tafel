@@ -11,7 +11,15 @@
   #top{flex:none;padding:6px 8px;display:flex;flex-direction:column;gap:5px;border-bottom:1px solid #e6eaf0;}
   .frow{display:flex;gap:6px;align-items:center;}
   .func{gap:6px;}
-  .func .fcol{width:calc(var(--k) * 16px);height:calc(var(--k) * 16px);border-radius:50%;flex:none;border:2px solid #fff;box-shadow:0 0 0 1px #cfd6e0;}
+  .func .fcol{width:calc(var(--k) * 16px);height:calc(var(--k) * 16px);border-radius:50%;flex:none;border:2px solid #fff;box-shadow:0 0 0 1px #cfd6e0;cursor:pointer;}
+  .func .fcol:active{box-shadow:0 0 0 2px #2563eb;}
+  /* Farbwähler zum Punkt vor der Funktion */
+  #colPop{position:fixed;z-index:60;display:none;grid-template-columns:repeat(5,30px);gap:8px;
+    background:#fff;border:1px solid #cfd6e0;border-radius:13px;box-shadow:0 8px 28px rgba(15,23,42,.24);padding:9px;}
+  #colPop.show{display:grid;}
+  #colPop button{width:30px;height:30px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px #cfd6e0;cursor:pointer;padding:0;}
+  #colPop button.on{box-shadow:0 0 0 2px #2563eb;}
+  #colPop input[type=color]{width:30px;height:30px;padding:0;border:1px solid #cfd6e0;border-radius:50%;background:none;cursor:pointer;}
   :root{--k:1;}
   body.fb .fterm,body.fb .fname{font-weight:800;} body.fi .fterm{font-style:italic;}
   .func .fname{font-size:calc(var(--k) * 14px);white-space:nowrap;font-weight:700;}
@@ -56,6 +64,7 @@
   <div id="wrap"><canvas id="plot"></canvas><div id="err"></div></div>
 </div>
 <div id="keypad"></div>
+<div id="colPop"></div>
 <script src="shot.js"></script>
 <script>
 "use strict";
@@ -116,7 +125,9 @@ function markActive(){ document.querySelectorAll('#funcs .func').forEach((r,i)=>
 function buildRows(){ const host=document.getElementById('funcs'); host.innerHTML='';
   funcs.forEach((f,i)=>{ const row=document.createElement('div'); row.className='frow func'+(i===activeIdx?' active':'');
     row.innerHTML='<span class="fcol"></span><b class="fname"></b><input class="fterm" spellcheck="false" placeholder="z. B. a*x^2+b*x+c, sin(a*x), 1/x"><button class="fdel" title="Funktion entfernen">×</button>';
-    row.querySelector('.fcol').style.background=f.color;
+    const dot=row.querySelector('.fcol'); dot.style.background=f.color;
+    dot.title='Farbe dieser Funktion wählen';
+    dot.onclick=e=>{ e.stopPropagation(); farbwahl(i,dot); };
     const nm=row.querySelector('.fname'); nm.textContent='f'+sub(i+1)+'(x)='; nm.style.color=f.color;
     const inp=row.querySelector('.fterm'); inp.value=f.term; if(typeof keysOn!=='undefined'&&keysOn) inp.inputMode='none';
     inp.addEventListener('focus',()=>{ activeIdx=i; markActive(); sync(); });
@@ -126,6 +137,31 @@ function buildRows(){ const host=document.getElementById('funcs'); host.innerHTM
     host.appendChild(row); }); }
 document.getElementById('add').onclick=()=>{ funcs.push({term:'', color:GCOL[funcs.length%GCOL.length], width:DEFW, toks:[]}); activeIdx=funcs.length-1;
   buildRows(); const inps=document.querySelectorAll('#funcs .fterm'); const last=inps[inps.length-1]; if(last)last.focus(); draw(); sync(); };
+
+/* ---- Farbe einer Funktion: Punkt antippen ---- */
+const FARBEN=GCOL.concat(['#1f2430','#64748b']);
+const colPop=document.getElementById('colPop');
+function setzeFarbe(i,c){ if(!funcs[i]) return; funcs[i].color=c;
+  const row=document.querySelectorAll('#funcs .func')[i];
+  if(row){ row.querySelector('.fcol').style.background=c; row.querySelector('.fname').style.color=c; }
+  colPop.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.c===c));
+  draw(); sync(); }
+function farbeZu(){ colPop.classList.remove('show'); }
+function farbwahl(i,el){
+  colPop.innerHTML='';
+  FARBEN.forEach(c=>{ const b=document.createElement('button'); b.style.background=c; b.dataset.c=c; b.title=c;
+    b.classList.toggle('on',funcs[i].color===c);
+    b.onclick=()=>{ setzeFarbe(i,c); farbeZu(); }; colPop.appendChild(b); });
+  const eig=document.createElement('input'); eig.type='color'; eig.value=/^#[0-9a-f]{6}$/i.test(funcs[i].color)?funcs[i].color:'#2563eb';
+  eig.title='eigene Farbe'; eig.oninput=()=>setzeFarbe(i,eig.value); colPop.appendChild(eig);
+  colPop.classList.add('show');
+  const r=el.getBoundingClientRect(), pw=colPop.offsetWidth, ph=colPop.offsetHeight;
+  colPop.style.left=Math.max(6,Math.min(innerWidth-pw-6,r.left-6))+'px';
+  colPop.style.top=((r.bottom+6+ph>innerHeight)?Math.max(6,r.top-ph-6):r.bottom+6)+'px';
+}
+document.addEventListener('pointerdown',e=>{ if(!colPop.classList.contains('show')) return;
+  if(!e.target.closest('#colPop')&&!e.target.closest('.fcol')) farbeZu(); },true);
+addEventListener('resize',farbeZu);
 
 /* ---- Parameter-Schieberegler (über alle Funktionen) ---- */
 function updateSliders(){ const ids=new Set(); funcs.forEach(f=>f.toks.forEach(t=>{ if(t.k==='id')ids.add(t.v); })); const used=['a','b','c'].filter(p=>ids.has(p));

@@ -954,7 +954,11 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   und ein Term mit Tippfehler wird **nicht** gezeichnet, statt eine falsche Kurve zu zeigen;
   der Graph wird gezeichnet; im Bedien-Modus mit **Fingergeste zoom-/verschiebbar**. Über **„＋ Funktion"**
   lassen sich **mehrere Funktionen gleichzeitig** anzeigen (je eigene Farbe, eigene Eingabezeile, mit „×"
-  entfernbar); die **Parameter a/b/c wirken auf alle Funktionen gemeinsam**. **Farbe und Linienstärke**
+  entfernbar); die **Parameter a/b/c wirken auf alle Funktionen gemeinsam**.
+  **Farbe direkt an der Funktion:** Ein Tipp auf den **farbigen Punkt vor „f₁(x) ="** öffnet eine
+  kleine Farbauswahl – zehn Farben plus ein Feld für eine **eigene Farbe**; die gewählte Farbe gilt
+  sofort für Punkt, Beschriftung und **Graph** und wird mit dem Tafel-Projekt gespeichert.
+  **Farbe und Linienstärke**
   im **Kontextmenü** wirken auf den **aktiven Graphen** (die farblich hervorgehobene Eingabezeile –
   im Bedien-Modus die Zeile antippen, um sie auszuwählen). **⌨ Formeln** blendet eine **Formel-Tastatur** ein (Ziffern, x, a/b/c, + − × ÷ ^ ², Klammern, sin/cos/tan, √, ln, eˣ, |x|, π – schreibt in die aktive Eingabezeile, die iPad-Tastatur bleibt zu; „ABC“ wechselt zur normalen Tastatur). **A−/A+** (neben „Ansicht“) für die Schriftgröße – Achsenbeschriftung, Eingabezeilen und Parameterregler wachsen mit (auch im Kontextmenü, dort zusätzlich fett/kursiv); **🖼 Tafel / 📋 Kopieren**: Graph mit
   Legende (Terme, Parameterwerte) als Bild neben das Werkzeug legen bzw. in die Zwischenablage kopieren.
