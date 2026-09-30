@@ -511,7 +511,9 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   Filtern **Fach · Jahrgangsstufe · Themenbereich** und einer Suche; man kreuzt Begriffe an,
   nimmt mit **„10 zufällig"** eine Stichprobe oder übernimmt einfach alles Gefilterte.
   **„Übernehmen" steht zusätzlich oben in der Kopfzeile** des Auswahlfensters und ist damit auch dann
-  erreichbar, wenn das Werkzeug als kleines Objekt auf der Tafel liegt. Das Fenster ist 700 px breit,
+  erreichbar, wenn das Werkzeug als kleines Objekt auf der Tafel liegt. Nach dem Schließen steht das
+  Werkzeug wieder in seiner alten Größe da und ist **weiterhin ausgewählt** – „☰" und „Objekt bedienen"
+  bleiben also griffbereit. Das Fenster ist 700 px breit,
   **nutzt die Höhe aus, die da ist** (bis 96 % der Fensterhöhe) und gibt den Platz der
   **Begriffsliste**: Kopf- und Fußzeile (einzeilig) bleiben stehen, die Filterzeilen rücken zusammen
   und werden scrollbar, die Liste zeigt **sechs Begriffe** auf einmal – im Zuordnungswerkzeug, wo jede

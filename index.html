@@ -2852,7 +2852,7 @@ const embedLayer=$('embedLayer'); const embedEls=new Map(); let embedInteract=fa
 /* ---------- Vollbild für ein eingebettetes Objekt ---------- */
 const FSTOP=22;                                              /* Höhe der Griffleiste über dem Objekt */
 let fsId=null, fsScroll=0, fsMax=0, fsBarsVorher=false, fsBedienVorher=false, fsUiT=null;
-let pickerFs=null;           /* Werkzeug, das nur für ein Auswahlfenster im Vollbild ist */
+let pickerFs=null, pickerSel=null;   /* Werkzeug, das nur für ein Auswahlfenster im Vollbild ist */
 function fsUiZeigen(){ const u=$('fsUi'); u.classList.add('zeig'); clearTimeout(fsUiT); fsUiT=setTimeout(()=>u.classList.remove('zeig'),2600); }
 function fsBalken(){ const u=$('fsUi'), t=$('fsThumb'), bar=$('fsBar');
   u.classList.toggle('scrollbar',fsMax>2);
@@ -2896,7 +2896,7 @@ function vollbildAus(){
   document.body.classList.remove('fs-mode'); $('fsUi').classList.remove('an','zeig','scrollbar');
   if(!fsBarsVorher) showBars();
   if(!fsBedienVorher){ embedInteract=false; applyEmbedMode(); }
-  redraw(); syncEmbeds();
+  redraw(); syncEmbeds(); refreshProps();        /* sonst bleiben „☰" und „Objekt bedienen" verschwunden */
 }
 function fsScrollen(d){ if(!fsId) return; fsScroll=Math.max(0,Math.min(fsMax,fsScroll+d)); syncEmbeds(); }
 addEventListener('keydown',e=>{ if(!fsId&&!fsDocO) return;
@@ -3096,8 +3096,12 @@ addEventListener('message',e=>{ if(!e.data)return; let obj=null; for(const[id,fr
     if(neu){ neu.x=src.x+src.w+24/scale; neu.y=src.y; markDirty(); scheduleAutosave(); }
     toast('„'+(e.data.label||'Werkzeug')+'“ neben die Karte gelegt'); }
   else if(e.data.type==='picker-space'){        /* Begriffs-Auswahl braucht Höhe: Werkzeug so lange auf Vollbild */
-    if(e.data.on){ if(!fsId&&!fsDocO&&obj.type==='embed'){ pickerFs=obj.id; vollbildAn(obj); } }
-    else if(pickerFs&&fsId===pickerFs) vollbildAus(); }
+    if(e.data.on){ if(!fsId&&!fsDocO&&obj.type==='embed'){ pickerFs=obj.id; pickerSel=selection.slice(); vollbildAn(obj); } }
+    else if(pickerFs&&fsId===pickerFs){ const zurueck=pickerSel; pickerSel=null; vollbildAus();
+      const da=page().objects;                    /* danach steht das Werkzeug wieder da wie vorher */
+      selection=(zurueck||[]).filter(o=>da.includes(o));
+      if(!selection.length&&da.includes(obj)) selection=[obj];
+      refreshProps(); redraw(); } }
   else if(e.data.type==='tool-open'&&e.data.tool==='insert'){ toggleWin('win-insert'); }
   else if(e.data.type==='embed-image'&&typeof e.data.url==='string'&&/^data:image\/(png|jpeg);/.test(e.data.url)){   // z. B. Schaltung als Bild neben das Objekt legen
     const src=obj, im=new Image();
