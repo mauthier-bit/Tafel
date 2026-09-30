@@ -30,8 +30,8 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   gespeichert; „Palette zurücksetzen" stellt die Standardfarben wieder her.
   Neben den festen Farben gibt es einen **bunten Punkt** – ein Tipp öffnet den vollen Farbwähler
   für beliebige Farben (auch bei der Objektfarbe im Kontextmenü).
-- **Formen:** Linie, Rechteck, **Quadrat**, Ellipse, Dreieck, **rechtwinkliges Dreieck**,
-  **allgemeines Dreieck**, **Parallelogramm**, **Trapez**, Pfeil (auch gefüllt), **Drachenviereck**,
+- **Formen:** Linie, Rechteck, **Quadrat**, Ellipse, **Dreieck** (allgemein), **rechtwinkliges
+  Dreieck**, **gleichschenkliges Dreieck**, **Parallelogramm**, **Trapez**, Pfeil (auch gefüllt), **Drachenviereck**,
   **Kreis** (aufziehen), **Raute**, **regelmäßiges Sechseck** und **Vieleck**: Ecken nacheinander antippen – ein grüner
   Ring markiert den ersten Punkt; tippt man ihn erneut an (ab drei Ecken), wird das Vieleck geschlossen und gezeichnet.
   „Rückgängig“ nimmt während des Setzens die letzte Ecke zurück. Alle neuen Formen lassen sich füllen, verschieben und skalieren,
@@ -112,7 +112,8 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   drehen; mit dem Stift **an der Kante** eine saubere gerade Linie ziehen.
   **Prozentlineal:** Der Schalter **„Prozent 0–100 %"** im ⚙-Menü ersetzt die Zentimeter durch eine
   **Prozentskala**, die immer **von 0 % am linken bis 100 % am rechten Ende** läuft (Zehnerschritte
-  beschriftet, „Feinstriche" schaltet 2-%- bzw. 5-%-Striche dazu). Dafür bekommt das Lineal **rechts
+  beschriftet – erst bei einem sehr kurzen Lineal nur jede 20. oder 50. Marke, damit die Zahlen nicht
+  übereinanderlaufen; „Feinstriche" schaltet 2-%- bzw. 5-%-Striche dazu). Dafür bekommt das Lineal **rechts
   einen zweiten Griff mit ↔**: Damit lässt sich seine **Länge stauchen und strecken** (3–80 cm),
   wobei die **0 %-Marke stehen bleibt** – so legt man die 100 % auf eine vorgegebene Strecke
   (Säule, Strecke an der Tafel, Bildbreite) und liest daran direkt Prozente ab. Der **Dreh-Griff**
