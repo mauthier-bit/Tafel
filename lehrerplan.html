@@ -65,6 +65,13 @@
   #vBar .btn{border:1px solid #cfd6e0;background:#fff;border-radius:9px;padding:5px 10px;font:inherit;font-weight:600;color:#1f2430;cursor:pointer;white-space:nowrap;}
   #vHint{color:#8a93a2;font-size:.78em;flex:1 1 180px;min-width:0;}
   #vFrame{flex:1 1 auto;width:100%;border:0;background:#fff;min-height:0;}
+  #vKarte{flex:1 1 auto;min-height:0;overflow:auto;display:flex;align-items:flex-start;justify-content:center;padding:18px 14px;}
+  #vKarte .k{max-width:560px;border:1px solid #e2e7ef;border-radius:14px;background:#f8fafc;padding:16px 18px;}
+  #vKarte h3{margin:0 0 6px;font-size:1.05em;}
+  #vKarte p{margin:7px 0;color:#475569;font-size:.9em;line-height:1.45;}
+  #vKarte .gross{display:inline-flex;align-items:center;gap:7px;background:#2563eb;border:none;color:#fff;border-radius:11px;
+    padding:11px 18px;font:inherit;font-weight:800;cursor:pointer;margin:6px 0 2px;}
+  #vKarte .klein{border:1px solid #cfd6e0;background:#fff;border-radius:9px;padding:6px 11px;font:inherit;font-weight:600;color:#1f2430;cursor:pointer;}
 </style>
 </head><body>
 <div id="wrap">
@@ -102,7 +109,18 @@
       <button type="button" class="btn tafelEdit" id="vEdit" title="Adresse des Vertretungsplans ändern">✎ Link</button>
       <span id="vHint"></span>
     </div>
-    <iframe id="vFrame" title="Vertretungsplan" referrerpolicy="origin"></iframe>
+    <div id="vKarte"><div class="k">
+      <h3>Vertretungsplan öffnen</h3>
+      <p id="vUrl" style="word-break:break-all;color:#1f2430;font-weight:600"></p>
+      <button type="button" class="gross" id="vGo">↗ Vertretungsplan öffnen</button>
+      <p><b>Warum nicht hier im Fenster?</b> WebUntis meldet beim Anmelden im eingebetteten Rahmen
+      „Es ist ein Fehler aufgetreten" – der Browser gibt einer eingebetteten fremden Seite die
+      Sitzungs-Cookies nicht. Im eigenen Tab klappt die Anmeldung wie gewohnt.</p>
+      <p>Hat deine Schule einen <b>öffentlichen Vertretungs-Monitor</b> (eine Adresse, die ohne
+      Anmeldung den Plan zeigt), trage sie über <b>✎ Link</b> ein – so eine Seite lässt sich hier
+      meist direkt anzeigen. <button type="button" class="klein" id="vTry">trotzdem hier versuchen</button></p>
+    </div></div>
+    <iframe id="vFrame" title="Vertretungsplan" referrerpolicy="origin" hidden></iframe>
   </div>
 </div>
 <script src="shot.js"></script>
@@ -281,22 +299,32 @@ $('bPrint').onclick=()=>{
 if(window.TafelShot) TafelShot.buttons($('shotBtns'),()=>TafelShot.rasterize($('wrap'),{exclude:'#bar,#bar2,#hinweis',pad:8}));
 
 /* ---------- Reiter: Stundenplan und Vertretungsplan ---------- */
+let vEingebettet=false;                 /* die Seite wird nur auf ausdrücklichen Wunsch im Rahmen geladen */
+function vZeigen(){ const u=(D.vertretung||VERT_STD);
+  $('vUrl').textContent=u;
+  $('vKarte').hidden=vEingebettet; $('vFrame').hidden=!vEingebettet;
+  $('vReload').hidden=!vEingebettet;
+  if(vEingebettet&&$('vFrame').dataset.url!==u){ $('vFrame').dataset.url=u; $('vFrame').src=u; }
+  $('vHint').textContent=vEingebettet?'Zeigt die Seite im Rahmen – meldet sie einen Fehler, hilft „↗ Im Browser öffnen".':'';
+}
 function reiter(){ const v=D.reiter==='vert';
   $('seitePlan').hidden=v; $('seiteVertretung').hidden=!v;
   $('rPlan').classList.toggle('on',!v); $('rVert').classList.toggle('on',v);
-  if(v){ const u=(D.vertretung||VERT_STD);
-    if($('vFrame').dataset.url!==u){ $('vFrame').dataset.url=u; $('vFrame').src=u; }   /* erst beim Öffnen laden */
-    $('vHint').textContent='Anmeldung wie gewohnt. Klappt die Anmeldung hier nicht, hilft „↗ Im Browser öffnen".'; }
-  if(!v) requestAnimationFrame(render);
+  if(v) vZeigen(); else requestAnimationFrame(render);
 }
+function vOeffnen(){ const u=D.vertretung||VERT_STD;
+  let w=null; try{ w=window.open(u,'_blank','noopener'); }catch(e){}
+  if(!w){ try{ parent.postMessage({type:'open-url',url:u},'*'); }catch(e){}
+    toast('Falls sich nichts öffnet: Pop-ups für die Tafel erlauben'); } }
 $('rPlan').onclick=()=>{ D.reiter='plan'; reiter(); sync(); };
 $('rVert').onclick=()=>{ D.reiter='vert'; reiter(); sync(); };
 $('vReload').onclick=()=>{ const f=$('vFrame'); const u=f.dataset.url||D.vertretung||VERT_STD; f.src='about:blank'; setTimeout(()=>{ f.src=u; },60); };
-$('vOpen').onclick=()=>{ try{ window.open(D.vertretung||VERT_STD,'_blank','noopener'); }catch(e){} };
+$('vOpen').onclick=vOeffnen; $('vGo').onclick=vOeffnen;
+$('vTry').onclick=()=>{ vEingebettet=true; vZeigen(); };
 $('vEdit').onclick=()=>{ const u=prompt('Adresse des Vertretungsplans:', D.vertretung||VERT_STD);
   if(u===null) return; const t=u.trim();
   if(t&&!/^https?:\/\//i.test(t)){ toast('Bitte eine vollständige Adresse mit https:// angeben'); return; }
-  D.vertretung=t||VERT_STD; $('vFrame').dataset.url=''; reiter(); sync(); };
+  D.vertretung=t||VERT_STD; $('vFrame').dataset.url=''; vZeigen(); sync(); };
 
 /* ---------- Tafel-Anbindung ---------- */
 function sync(){ if(window.parent===window||!ready) return;

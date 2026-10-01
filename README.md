@@ -469,11 +469,13 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   und alles Eingetragene bleibt erhalten – der Plan gehört zur Lehrkraft, nicht zu einer Seite oder
   Klasse, und wird **geräteweit gespeichert** (also in jedem Projekt derselbe). **🖼 Tafel** legt ihn
   trotzdem jederzeit als Bild auf die aktuelle Seite.
-  - **Zweiter Reiter „🔁 Vertretungsplan":** Dort öffnet sich der **WebUntis-Zugang der Schule**
-    direkt im Fenster (Standard: `hca.webuntis.com`), mit **⟳ Neu laden** und **↗ Im Browser öffnen**;
-    über **✎ Link** lässt sich eine andere Adresse eintragen. Die Seite wird erst geladen, wenn man
-    den Reiter öffnet. Sollte die **Anmeldung im eingebetteten Fenster** scheitern (Safari blockiert
-    im iframe manchmal die nötigen Cookies), führt „↗ Im Browser öffnen" zum normalen Tab.
+  - **Zweiter Reiter „🔁 Vertretungsplan":** Dort steht eine Karte mit der hinterlegten Adresse
+    (Standard: `hca.webuntis.com`) und dem Knopf **„↗ Vertretungsplan öffnen"**, der die Seite im
+    **eigenen Tab** öffnet. Das ist kein Umweg, sondern nötig: **WebUntis lässt sich zwar einbetten,
+    die Anmeldung schlägt im Rahmen aber fehl** („Es ist ein Fehler aufgetreten") – der Browser gibt
+    einer eingebetteten fremden Seite die Sitzungs-Cookies nicht. Über **✎ Link** lässt sich eine
+    andere Adresse hinterlegen; hat die Schule einen **öffentlichen Vertretungs-Monitor** (ohne
+    Anmeldung), zeigt ihn **„trotzdem hier versuchen"** direkt im Fenster an.
   - **Je Stunde drei Zeilen:** **Klasse** (z. B. „9c", „11/2"), **Fach** und **Raum**. **Gleiche Klasse
     bekommt dieselbe Farbe**, quer durch die Woche – so sieht man auf einen Blick, wann man wo ist.
   - **Aufsichten:** Die Zeile **„Vor dem Unterricht"** (7:45–8:00) und jede **Pause** haben eigene Felder
@@ -550,10 +552,15 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   Die Begriffe folgen den Lernbereichen des Lehrplans, die **Erklärungen sind eigens für die Tafel
   geschrieben** (kurze, schülergerechte Sätze) – der Lehrplantext selbst wird nicht wiedergegeben.
 - **Fertige Zuordnungsaufgaben** (Zuordnen): Der Knopf **„Aufgaben"** öffnet eine Bibliothek mit
-  **275 fertigen Paaren**, filterbar nach **Jahrgangsstufe** und **Thema**:
+  **fertigen Aufgaben**, filterbar nach **Jahrgangsstufe** und **Thema**:
   - **Bruch und Dezimalbruch** (Jgst. 6): 1/4 ↔ 0,25, 5/8 ↔ 0,625, 1/3 ↔ 0,333…
   - **Brüche erweitern und kürzen** (Jgst. 6): 2/3 ↔ 8/12, 3/8 ↔ 6/16
   - **Unechter Bruch und gemischte Zahl** (Jgst. 6): 11/4 ↔ 2 3/4, 17/5 ↔ 3 2/5
+  - **Brüche und Tortenstücke** (Jgst. 6, **zwölf Brüche**): Zu jedem Bruch gehören **drei
+    Tortenbilder mit demselben Anteil** – das **gekürzte** und zwei **erweiterte** (z. B. 3/4 als
+    3 von 4, 6 von 8 und 9 von 12 Stücken). **Als Gruppe** steht der Bruch als Feld, die drei
+    Tortenbilder werden einsortiert; **paarweise** gehört zum Bruch ein **erweitertes** Tortenbild,
+    man muss also kürzen. Die Bilder werden beim Übernehmen gezeichnet.
   - **Potenzterme** (Jgst. 5 bis 9, je zehn Paare mit wachsender Schwierigkeit): 2 · 2 · 2 ↔ 2³
     und 2⁵ ↔ 32 in Jgst. 5, negative Exponenten wie 10⁻² ↔ 0,01 in Jgst. 6, die Potenzgesetze
     a³ · a² ↔ a⁵ und (a²)³ ↔ a⁶ in Jgst. 7, Terme wie x⁻² ↔ 1/x² und (a/b)⁻¹ ↔ b/a in Jgst. 8,
