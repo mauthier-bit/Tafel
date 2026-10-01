@@ -66,8 +66,9 @@
     </div><div id="barMid"></div><div id="barR"><span class="sep"></span>
     <button class="tb tafelEdit" id="bDnd" title="Lücken frei tippen oder Wörter hineinziehen"><svg viewBox="0 0 32 20"><rect x="3" y="7" width="11" height="7" rx="1.5"/><path d="M16 10.5h9M22 7.5l3 3-3 3"/><path d="M27 6v9" stroke-dasharray="2 2"/></svg><span>Ziehen</span></button>
     <button class="tb" id="bCheck" title="Eingaben prüfen"><svg viewBox="0 0 32 20"><path d="M8 11l5 5 11-12"/></svg><span>Prüfen</span></button>
-    <button class="tb" id="bStep" title="Nächste Lösung aufdecken"><svg viewBox="0 0 32 20"><path d="M6 10h14M16 5l5 5-5 5"/><path d="M26 4v12" stroke-width="2.4"/></svg><span>Lösung ▶</span></button>
+    <button class="tb tafelLoesung" id="bStep" title="Nächste Lösung aufdecken"><svg viewBox="0 0 32 20"><path d="M6 10h14M16 5l5 5-5 5"/><path d="M26 4v12" stroke-width="2.4"/></svg><span>Lösung ▶</span></button>
     <button class="tb tafelEdit" id="bPrint" title="Drucken"><svg viewBox="0 0 32 20"><path d="M10 7V2h12v5 M10 15H7V7h18v8h-3 M10 12h12v6H10Z"/></svg><span>Drucken</span></button>
+    <span id="teilenBtn" style="display:inline-flex"></span>
   </div></div>
   <div id="bar2"></div>
   <div id="play"><div id="text"></div><div id="woerter" hidden></div></div>
@@ -84,6 +85,8 @@
 <script src="shot.js"></script>
 <script src="lehrplan-glossar.js"></script>
 <script src="lehrplan-texte.js"></script>
+<script src="vendor/qrcode.min.js"></script>
+<script src="teilen.js"></script>
 <script src="lehrplan.js"></script>
 <script src="modus.js"></script>
 <script>
@@ -93,7 +96,7 @@ const toast=m=>window.TafelShot&&TafelShot.toast(m);
 const DEMO='Alle Körper bestehen aus Teilchen. Beim Erwärmen bewegen sich die Teilchen schneller, '+
   'der Körper dehnt sich aus. Wasser siedet bei 100 Grad Celsius und gefriert bei 0 Grad Celsius. '+
   'Die Temperatur misst man mit einem Thermometer in der Einheit Grad Celsius oder Kelvin.';
-let D={ v:1, text:DEMO, gaps:[], fill:{}, check:{}, reveal:0, dnd:true, pick:false, anteil:5, fontSize:17, fontBold:false, fontItalic:false };
+let D={ v:1, text:DEMO, gaps:[], fill:{}, check:{}, reveal:0, dnd:true, pick:false, anteil:5, fontSize:17, fontBold:false, fontItalic:false, quelle:'' };
 let toks=[], words=[];
 
 /* ---------- Text zerlegen ---------- */
@@ -198,7 +201,7 @@ function renderBar2(){
   mk('+',()=>{ D.anteil=Math.min(20,D.anteil+1); renderBar2(); sync(); });
   el('span','lbl tafelEdit','Wort bei „Zufällig"');
   el('span','sep');
-  el('button','btn','alle Lösungen',()=>{ D.reveal=D.gaps.length; render(); });
+  el('button','btn tafelLoesung','alle Lösungen',()=>{ D.reveal=D.gaps.length; render(); });
   el('button','btn red tafelEdit','Lücken löschen',()=>{ if(!D.gaps.length) return;
     if(!confirm('Alle Lücken entfernen?')) return; D.gaps=[]; D.fill={}; D.check={}; D.reveal=0; mischKey=''; render(); });
   el('button','btn','zurücksetzen',()=>{ D.reveal=0; D.fill={}; D.check={}; render(); });
@@ -316,8 +319,14 @@ window.addEventListener('load',()=>{
   document.documentElement.style.setProperty('--fs',(D.fontSize||17)+'px');
   $('bDnd').classList.toggle('on',D.dnd);
   if(window.parent===window&&D.edit===undefined) D.edit=true;
-  if(window.TafelModus) TafelModus.init({get:()=>D.edit!==false, set:v=>{ D.edit=v; if(!v&&D.pick){ D.pick=false; $('bPick').classList.remove('on'); } render(); sync(); }});
+  const geteilt=window.TafelTeilen&&TafelTeilen.istGeteilt();
+  if(geteilt){ TafelTeilen.nurBenutzen('#bStep,#shotBtns'); D.edit=false; }
+  else if(window.TafelModus) TafelModus.init({get:()=>D.edit!==false, set:v=>{ D.edit=v; if(!v&&D.pick){ D.pick=false; $('bPick').classList.remove('on'); } render(); sync(); }});
   render(); barFade();
+  if(geteilt){ ready=true;
+    TafelTeilen.empfangen().then(p=>{ if(!geteiltLaden(p)) toast('Der Link konnte nicht gelesen werden'); })
+      .catch(()=>toast('Der Link konnte nicht gelesen werden'));
+    return; }
   if(window.parent===window){ ready=true; return; }
   try{ parent.postMessage({type:'embed-ready'},'*'); }catch(e){}
   setTimeout(()=>{ ready=true; },700);
@@ -327,12 +336,42 @@ window.addEventListener('load',()=>{
 if(window.TafelLehrplan&&window.LEHRPLAN_TEXTE){
   $('bImp').onclick=()=>TafelLehrplan.oeffnen({ titel:'Text für den Lückentext', texte:true,
     uebernehmen:l=>{ const t=l[0]; if(!t) return;
-      D.text=t.e; D.gaps=[]; D.fill={}; D.check={}; D.reveal=0;
+      D.text=t.e; D.quelle=t.b; D.gaps=[]; D.fill={}; D.check={}; D.reveal=0;
       if(typeof mischKey!=='undefined') mischKey='';
       $('ta').value=t.e;                                  // falls das Bearbeiten-Fenster offen ist
       $('edit').style.display='none'; $('play').style.display='flex';
       render(); sync&&sync();
       toast('„'+t.b+'" übernommen – jetzt Lücken wählen oder zufällig setzen lassen'); } });
 } else { const b=$('bImp'); if(b) b.hidden=true; }
+
+/* ---------- Teilen: Text samt Lücken per QR-Code an die Klasse ---------- */
+function textSuchen(titel){
+  if(!window.LEHRPLAN_TEXTE) return null;
+  const e=(LEHRPLAN_TEXTE.t||[]).find(a=>a[3]===titel);
+  return e?e[e.length-1]:null;
+}
+if(window.TafelTeilen){
+  TafelTeilen.knopf($('teilenBtn'),'luecken.html',()=>{
+    if(!D.text||!D.text.trim()) return null;
+    const p={w:'l', g:(D.gaps||[]).slice(), d:D.dnd!==false};
+    /* Stammt der Text aus der Bibliothek, genügt sein Titel */
+    if(D.quelle&&textSuchen(D.quelle)===D.text) p.k=D.quelle; else p.t=D.text;
+    return p;
+  });
+}
+function geteiltLaden(p){
+  if(!p||p.w!=='l') return false;
+  const txt=p.k?textSuchen(p.k):p.t;
+  if(typeof txt!=='string'||!txt.trim()) return false;
+  D.text=txt; D.quelle=p.k||'';
+  D.gaps=Array.isArray(p.g)?p.g.filter(i=>typeof i==='number'):[];
+  D.fill={}; D.check={}; D.reveal=0; D.pick=false;
+  if(typeof p.d==='boolean') D.dnd=p.d;
+  if(typeof mischKey!=='undefined') mischKey='';
+  $('bDnd').classList.toggle('on',D.dnd);
+  $('edit').style.display='none'; $('play').style.display='flex';
+  render();
+  return true;
+}
 </script>
 </body></html>

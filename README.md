@@ -624,6 +624,24 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     Begriffslisten in alle sieben Werkzeuge übernehmen.
   Die Begriffe folgen den Lernbereichen des Lehrplans, die **Erklärungen sind eigens für die Tafel
   geschrieben** (kurze, schülergerechte Sätze) – der Lehrplantext selbst wird nicht wiedergegeben.
+- **Teilen per QR-Code** (Zuordnen, Reihenfolge, Lückentext): Der Knopf **„Teilen"** zeigt einen
+  **QR-Code**. Wer ihn mit der Kamera scannt, öffnet **dasselbe Werkzeug mit genau der Aufgabe**, die
+  an der Tafel eingestellt ist – ohne Konto, ohne Anmeldung, ohne Server.
+  - **Wie es funktioniert:** Die Aufgabe steckt komprimiert im **Fragment der Adresse** (hinter dem
+    `#`). Dieser Teil wird nie an einen Server geschickt. Stammt die Aufgabe aus einer **Bibliothek**,
+    wandert nur ihr **Titel** mit und das Schülergerät baut sie selbst auf – dadurch bleibt der Code
+    winzig (etwa 140 bis 210 Zeichen) und **Bilder sind wieder dabei**: Tortenstücke, Funktionsgraphen
+    und die Konstruktionsfiguren der Reihenfolge-Ketten werden im Schülergerät neu gezeichnet. Nur
+    **selbst eingetippte** Aufgaben reisen vollständig mit; der Code wird dann dichter, und ab etwa
+    900 Zeichen weist das Fenster darauf hin, dass man ihn groß zeigen oder stattdessen den **Link
+    kopieren** sollte.
+  - **Was die Schüler sehen:** Die geteilte Fassung öffnet im **Benutzen-Modus**. Bibliothek,
+    Bearbeiten, Drucken und der Umschalter fehlen, und die **Lösung lässt sich nicht aufdecken** –
+    **Prüfen** und **Mischen** bleiben. Was die Schüler eintragen, bleibt auf ihrem Gerät: Das Teilen
+    ist ein **Einbahnweg**, die Tafel sammelt nichts ein.
+  - **Voraussetzungen:** Die Geräte brauchen Internet, denn der Code zeigt auf die veröffentlichte
+    Tafel (`mauthier-bit.github.io/Tafel/`) – auch dann, wenn die Tafel gerade lokal läuft. Der Link
+    ist nicht verschlüsselt: Wer sich auskennt, kann die Aufgabe daraus auslesen.
 - **Fertige Zuordnungsaufgaben** (Zuordnen): Der Knopf **„Aufgaben"** öffnet eine Bibliothek mit
   **fertigen Aufgaben**, filterbar nach **Jahrgangsstufe** und **Thema**:
   (Alle Bibliotheken **fertiger Aufgaben** – Zuordnen, Lückentext, Reihenfolge – tragen dasselbe
@@ -1743,6 +1761,7 @@ zuordnen-bibliothek.js ← fertige Zuordnungspaare (Brüche, Zahlenrätsel, Term
 diagramme-bibliothek.js ← Diagramm-Paare (t-s, t-v, t-a; f, f′, f″)
 lehrplan-glossar.js   ← Fachbegriffe nach LehrplanPLUS Bayern G9 (Mathematik, Physik)
 lehrplan.js           ← gemeinsames Auswahlfenster für den Lehrplan-Import
+teilen.js             ← Teilen per QR-Code (Aufgabe steckt im Fragment der Adresse)
 formel.html           ← Formel umstellen (nach einer Größe auflösen, Schritt für Schritt, mit Formelsammlung)
 stromkreis.html       ← Stromkreis-Editor mit Simulation (U, I, R, C, L, Ladungsfluss, Bild-Export)
 optik.html            ← Optiklabor (Strahlenoptik, Schatten, Mondphasen und Finsternisse)

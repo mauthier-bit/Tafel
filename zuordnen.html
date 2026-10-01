@@ -84,9 +84,10 @@
     <button class="tb tafelEdit" id="bMode" title="Darstellung: Gruppenfelder oder paarweise Zuordnung"><svg viewBox="0 0 32 20"><rect x="2" y="3" width="11" height="5" rx="1.2"/><rect x="19" y="3" width="11" height="5" rx="1.2"/><rect x="2" y="12" width="11" height="5" rx="1.2"/><rect x="19" y="12" width="11" height="5" rx="1.2"/><path d="M13 5.5h6M13 14.5h6" stroke-width="1.4"/></svg><span>Paare</span></button>
     <button class="tb" id="bPArt" title="Paare verbinden oder ziehen" hidden><svg viewBox="0 0 32 20" class="iLinie"><circle cx="6" cy="10" r="2.6"/><circle cx="26" cy="10" r="2.6"/><path d="M8.6 10c4 0 4-5 7-5s3 5 7 5" stroke-width="1.6"/></svg><svg viewBox="0 0 32 20" class="iZug aus"><rect x="2" y="5" width="11" height="10" rx="1.8"/><path d="M15 10h7M19 7l3 3-3 3" stroke-width="1.6"/><rect x="23" y="3" width="7" height="14" rx="1.8" stroke-dasharray="2.6 2"/></svg><span>Verbinden</span></button>
     <button class="tb" id="bCheck" title="Zuordnung prüfen"><svg viewBox="0 0 32 20"><path d="M8 11l5 5 11-12"/></svg><span>Prüfen</span></button>
-    <button class="tb" id="bSol" title="Lösung zeigen"><svg viewBox="0 0 32 20"><circle cx="16" cy="10" r="7"/><path d="M16 6v5l3 2"/></svg><span>Lösung</span></button>
+    <button class="tb tafelLoesung" id="bSol" title="Lösung zeigen"><svg viewBox="0 0 32 20"><circle cx="16" cy="10" r="7"/><path d="M16 6v5l3 2"/></svg><span>Lösung</span></button>
     <button class="tb" id="bMix" title="Neu mischen und von vorn beginnen"><svg viewBox="0 0 32 20"><path d="M4 5h5l14 10h5M4 15h5l4-3M23 2l4 3-4 3M23 12l4 3-4 3"/></svg><span>Mischen</span></button>
     <button class="tb tafelEdit" id="bPrint" title="Aufgabe drucken"><svg viewBox="0 0 32 20"><path d="M10 7V2h12v5 M10 15H7V7h18v8h-3 M10 12h12v6H10Z"/></svg><span>Drucken</span></button>
+    <span id="teilenBtn" style="display:inline-flex"></span>
   </div></div>
   <div id="bar2" class="tafelEdit"></div>
   <div id="play"><div id="pool"></div><div id="zones"></div>
@@ -115,13 +116,15 @@
 <script src="brueche-bibliothek.js"></script>
 <script src="lehrplan.js"></script>
 <script src="modus.js"></script>
+<script src="vendor/qrcode.min.js"></script>
+<script src="teilen.js"></script>
 <script>
 "use strict";
 const $=id=>document.getElementById(id);
 const toast=m=>window.TafelShot&&TafelShot.toast(m);
 const COLS=['#2563eb','#0d9488','#b45309','#7c3aed','#be123c','#0369a1','#4d7c0f','#a21caf'];
 const DEMO='Säugetiere = Hund, Wal, Fledermaus\nVögel = Amsel, Pinguin, Adler\nReptilien = Schlange, Eidechse, Krokodil';
-let D={ v:1, text:DEMO, images:{}, place:{}, order:[], check:{}, shown:false, mode:'auto', paarArt:'linie', fontSize:15, fontBold:false, fontItalic:false };
+let D={ v:1, text:DEMO, images:{}, place:{}, order:[], check:{}, shown:false, mode:'auto', paarArt:'linie', fontSize:15, fontBold:false, fontItalic:false, quelle:null };
 let cats=[], karten=[];
 
 /* ---------- Aufgabe einlesen ---------- */
@@ -367,7 +370,7 @@ $('bSol').onclick=()=>{ D.shown=!D.shown; $('bSol').classList.toggle('on',D.show
 $('bMix').onclick=()=>{ mische(true); D.check={}; D.shown=false; $('bSol').classList.remove('on'); render(); toast('Neu gemischt'); };
 $('bEdit').onclick=()=>{ $('ta').value=D.text||''; renderImgs(); $('play').style.display='none'; $('edit').style.display='flex'; $('ta').focus(); };
 $('eCancel').onclick=()=>{ $('edit').style.display='none'; $('play').style.display='flex'; };
-$('eOk').onclick=()=>{ D.text=$('ta').value; D.place={}; D.order=[]; D.check={}; D.shown=false;
+$('eOk').onclick=()=>{ D.text=$('ta').value; D.quelle=null; D.place={}; D.order=[]; D.check={}; D.shown=false;
   $('edit').style.display='none'; $('play').style.display='flex'; render(); };
 $('eImg').onclick=()=>{ $('imgFile').value=''; $('imgFile').click(); };
 $('imgFile').onchange=()=>{ const f=$('imgFile').files[0]; if(!f) return;
@@ -430,8 +433,14 @@ addEventListener('message',e=>{ if(window.parent===window||e.source!==window.par
 window.addEventListener('load',()=>{
   document.documentElement.style.setProperty('--fs',(D.fontSize||15)+'px');
   if(window.parent===window&&D.edit===undefined) D.edit=true;
-  if(window.TafelModus) TafelModus.init({get:()=>D.edit!==false, set:v=>{ D.edit=v; render(); sync(); }});
+  const geteilt=window.TafelTeilen&&TafelTeilen.istGeteilt();
+  if(geteilt){ TafelTeilen.nurBenutzen('#shotBtns'); D.edit=false; }
+  else if(window.TafelModus) TafelModus.init({get:()=>D.edit!==false, set:v=>{ D.edit=v; render(); sync(); }});
   render(); barFade();
+  if(geteilt){ ready=true;
+    setTimeout(()=>TafelTeilen.empfangen().then(p=>{ if(!geteiltLaden(p)) TafelShot&&TafelShot.toast('Der Link konnte nicht gelesen werden'); })
+      .catch(()=>TafelShot&&TafelShot.toast('Der Link konnte nicht gelesen werden')),0);
+    return; }
   if(window.parent===window){ ready=true; return; }
   try{ parent.postMessage({type:'embed-ready'},'*'); }catch(e){}
   setTimeout(()=>{ ready=true; },700);
@@ -458,7 +467,7 @@ if(window.TafelLehrplan&&TafelLehrplan.verfuegbar()){
         text=l.map(d=>d.b+' = "'+String(d.e).replace(/"/g,'\u201d')+'"').join('\n');
         D.mode='paare';
       }
-      D.text=text; D.place={}; D.order=[]; D.check={}; D.shown=false;
+      D.text=text; D.images={}; D.quelle=null; D.place={}; D.order=[]; D.check={}; D.shown=false;
       render(); sync();
       TafelShot&&TafelShot.toast(l.length+' Begriffe übernommen'+(raus?(' · '+raus+' doppelte ausgelassen'):''));
     } });
@@ -479,7 +488,11 @@ if(window.TafelLehrplan&&((window.TafelFunktionen&&TafelFunktionen.verfuegbar())
              {id:'gruppe',name:'als Gruppe (alle zugehörigen Karten)'}],
       art2Titel:'Dezimalbrüche',
       arten2:[{id:'ohne',name:'ohne'},{id:'mit',name:'mit (bei den Brüchen)'}],
-      uebernehmen:(l0,art,art2)=>{
+      uebernehmen:(l0,art,art2)=>{ ausBibliothek(l0,art,art2,true); } });
+  };
+
+  /* Aufgabe aus der Bibliothek aufbauen – aus dem Auswahlfenster oder aus einem geteilten Link */
+  window.ausBibliothek=function(l0,art,art2,melden){
         const mitDez=(art2==='mit');
         /* Zwei Aufgaben mit derselben Lösung (z. B. (x+1)/(2x+2) und (1/x):(2/x) ergeben beide 1/2)
            wären nicht eindeutig zuzuordnen – solche Dubletten fallen heraus. */
@@ -515,11 +528,54 @@ if(window.TafelLehrplan&&((window.TafelFunktionen&&TafelFunktionen.verfuegbar())
         }
         D.images=bilder; D.text=zeilen.join('\n');
         D.place={}; D.order=[]; D.check={}; D.shown=false;
+        /* für „Teilen": nur Titel und Themenbereich – Bilder entstehen auf dem Schülergerät neu.
+           Der Themenbereich muss mit, weil derselbe Titel in mehreren Quellen vorkommt (etwa „1/2"). */
+        D.quelle={k:l.map(d=>[d.b,d.g]), a:art, a2:art2};
         render(); sync();
-        TafelShot&&TafelShot.toast(l.length+(D.mode==='gruppen'?' Aufgaben – Karten einsortieren':' Paare übernommen – jetzt zuordnen')
+        if(melden) TafelShot&&TafelShot.toast(l.length+(D.mode==='gruppen'?' Aufgaben – Karten einsortieren':' Paare übernommen – jetzt zuordnen')
           +(raus?(' · '+raus+' mit gleicher Lösung ausgelassen'):''));
-      } });
+        return l.length;
+  };
+  window.bibliotheksDaten=function(){
+    let daten=[];
+    if(window.TafelPaare&&TafelPaare.verfuegbar()) daten=daten.concat(TafelPaare.daten());
+    if(window.TafelFunktionen&&TafelFunktionen.verfuegbar()) daten=daten.concat(TafelFunktionen.daten());
+    if(window.TafelDiagramme&&TafelDiagramme.verfuegbar()) daten=daten.concat(TafelDiagramme.daten());
+    if(window.TafelBrueche&&TafelBrueche.verfuegbar()) daten=daten.concat(TafelBrueche.daten());
+    return daten;
   };
 } else { const b=$('bFunk'); if(b) b.hidden=true; }
+
+/* ---------- Teilen: Aufgabe per QR-Code an die Klasse ---------- */
+if(window.TafelTeilen){
+  TafelTeilen.knopf($('teilenBtn'),'zuordnen.html',()=>{
+    if(!D.text||!D.text.trim()) return null;
+    const q=D.quelle;
+    if(q&&Array.isArray(q.k)&&q.k.length&&window.bibliotheksDaten) return {w:'z',k:q.k,a:q.a,a2:q.a2,p:D.paarArt};
+    if(D.images&&Object.keys(D.images).length){
+      TafelShot&&TafelShot.toast('Aufgaben mit eigenen Bildern lassen sich nicht teilen');
+      return null;
+    }
+    return {w:'z',t:D.text,m:D.mode,p:D.paarArt};
+  });
+}
+function geteiltLaden(p){
+  if(!p||p.w!=='z') return false;
+  if(p.p) D.paarArt=p.p;
+  if(Array.isArray(p.k)&&window.bibliotheksDaten&&window.ausBibliothek){
+    const alle=bibliotheksDaten();
+    const l=p.k.map(t=>Array.isArray(t)?alle.find(d=>d.b===t[0]&&d.g===t[1]):alle.find(d=>d.b===t)).filter(Boolean);
+    if(!l.length) return false;
+    ausBibliothek(l,p.a,p.a2,false);
+    return true;
+  }
+  if(typeof p.t==='string'&&p.t.trim()){
+    D.text=p.t; D.images={}; D.mode=p.m||'auto';
+    D.place={}; D.order=[]; D.check={}; D.shown=false; D.quelle=null;
+    render();
+    return true;
+  }
+  return false;
+}
 </script>
 </body></html>

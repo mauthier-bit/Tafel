@@ -84,9 +84,10 @@
     </div><div id="barMid">
     <button class="tb" id="bMix" title="Schritte neu mischen"><svg viewBox="0 0 32 20"><path d="M4 5h5l14 10h5M4 15h5l4-3M23 2l4 3-4 3M23 12l4 3-4 3"/></svg><span>Mischen</span></button>
     <button class="tb" id="bCheck" title="Reihenfolge prüfen"><svg viewBox="0 0 32 20"><path d="M8 11l5 5 11-12"/></svg><span>Prüfen</span></button>
-    <button class="tb" id="bSol" title="Richtige Reihenfolge zeigen"><svg viewBox="0 0 32 20"><circle cx="16" cy="10" r="7"/><path d="M16 6v5l3 2"/></svg><span>Lösung</span></button>
+    <button class="tb tafelLoesung" id="bSol" title="Richtige Reihenfolge zeigen"><svg viewBox="0 0 32 20"><circle cx="16" cy="10" r="7"/><path d="M16 6v5l3 2"/></svg><span>Lösung</span></button>
     </div><div id="barR"><span class="sep"></span>
     <button class="tb tafelEdit" id="bPrint" title="Aufgabe drucken"><svg viewBox="0 0 32 20"><path d="M10 7V2h12v5 M10 15H7V7h18v8h-3 M10 12h12v6H10Z"/></svg><span>Drucken</span></button>
+    <span id="teilenBtn" style="display:inline-flex"></span>
     <span id="shotBtns" style="display:inline-flex;gap:4px"></span>
   </div></div>
   <div id="bar2">
@@ -135,6 +136,8 @@
 <script src="lehrplan-glossar.js"></script>
 <script src="lehrplan.js"></script>
 <script src="reihenfolge-bibliothek.js"></script>
+<script src="vendor/qrcode.min.js"></script>
+<script src="teilen.js"></script>
 <script>
 "use strict";
 const $=id=>document.getElementById(id);
@@ -149,7 +152,7 @@ let D={ v:1, titel:'Beweis: Satz des Thales',
             'Der Winkel bei C setzt sich aus diesen beiden Basiswinkeln zusammen.',
             'Die Winkelsumme im Dreieck beträgt 180°, also ist der Winkel bei C genau 90°.'],
   order:[], geprueft:false, shown:false, fontSize:15, edit:true,
-  bilder:null, figur:'', bildAn:true };
+  bilder:null, figur:'', bildAn:true, quelle:'' };
 let ready=false;
 
 const n=()=>D.schritte.length;
@@ -279,7 +282,7 @@ $('bCheck').onclick=()=>{ if(!n()) return; D.geprueft=true; D.shown=false; rende
 $('bSol').onclick=()=>{ if(!n()) return; D.order=D.schritte.map((_,i)=>i); D.shown=true; D.geprueft=false; render(); sync(); };
 $('bClear').onclick=()=>{ if(!n()) return; if(!confirm('Alle Schritte löschen?'))return;
   D.schritte=[]; D.order=[]; D.titel=''; D.geprueft=false; D.shown=false;
-  D.bilder=null; D.figur=''; render(); sync(); };
+  D.bilder=null; D.figur=''; D.quelle=''; render(); sync(); };
 for(const [id,d] of [['fsM',-1],['fsP',1]]) $(id).onclick=()=>{
   D.fontSize=Math.max(11,Math.min(26,(D.fontSize||15)+d)); render(); sync(); };
 
@@ -291,7 +294,7 @@ $('eAb').onclick=()=>$('eingabe').classList.remove('an');
 $('eOk').onclick=()=>{
   const zeilen=$('eTa').value.split(/\r?\n/).map(z=>z.trim()).filter(Boolean);
   if(zeilen.length<2){ toast('Bitte mindestens zwei Schritte eintragen'); return; }
-  D.titel=$('eTitel').value.trim(); D.schritte=zeilen; D.bilder=null; D.figur=''; mischen();
+  D.titel=$('eTitel').value.trim(); D.schritte=zeilen; D.bilder=null; D.figur=''; D.quelle=''; mischen();
   if($('eSave').checked) eigeneSichern(D.titel, zeilen, $('eFach').value, $('eJg').value);
   $('eingabe').classList.remove('an'); render(); sync();
   toast(zeilen.length+' Schritte übernommen – jetzt ordnen'); };
@@ -317,7 +320,7 @@ function eigeneListe(){ const host=$('gListe'); host.innerHTML=''; const a=eigen
     t.querySelector('b').textContent=e.t;
     t.querySelector('small').textContent=e.s.length+' Schritte'+(e.f?(' · '+(e.f==='M'?'Mathematik':'Physik')):'')+(e.j?(' · Jgst. '+e.j):'');
     const laden=document.createElement('button'); laden.className='btn'; laden.textContent='laden';
-    laden.onclick=()=>{ D.titel=e.t; D.schritte=e.s.slice(); D.bilder=null; D.figur=''; mischen(); render(); sync();
+    laden.onclick=()=>{ D.titel=e.t; D.schritte=e.s.slice(); D.bilder=null; D.figur=''; D.quelle=''; mischen(); render(); sync();
       $('eigene').classList.remove('an'); toast(e.s.length+' Schritte übernommen – jetzt ordnen'); };
     const weg=document.createElement('button'); weg.className='btn red'; weg.textContent='🗑';
     weg.title='aus der Bibliothek löschen';
@@ -350,20 +353,28 @@ $('gFile').onchange=async e=>{ const f=e.target.files[0]; e.target.value=''; if(
   toast(neuZahl+' neu'+(ersetzt?(' · '+ersetzt+' ersetzt'):'')+(gut.length<liste.length?(' · '+(liste.length-gut.length)+' übersprungen'):'')); };
 
 /* ---------- Bibliothek ---------- */
+/* Eine Kette samt Veranschaulichungen übernehmen – aus dem Auswahlfenster oder aus einem geteilten Link */
+function ketteLaden(d){
+  D.titel=d.b; D.schritte=d.schritte.slice(); D.quelle=d.b;
+  D.bilder=null; D.figur='';                       /* Bilder werden erst jetzt gezeichnet */
+  try{ if(typeof d.bilder==='function'){ const b=d.bilder();
+         if(Array.isArray(b)&&b.length===D.schritte.length) D.bilder=b; } }catch(err){}
+  try{ if(typeof d.figur==='function') D.figur=d.figur()||''; }catch(err){}
+  if(hatBilder()) D.bildAn=true;
+  mischen(); render(); sync();
+}
+function ketteSuchen(titel){
+  if(!(window.TafelReihen&&TafelReihen.verfuegbar())) return null;
+  return TafelReihen.daten().find(e=>e.b===titel)||null;
+}
+
 if(window.TafelLehrplan&&window.TafelReihen&&TafelReihen.verfuegbar()){
   $('bLib').onclick=()=>TafelLehrplan.oeffnen({ titel:'Fertige Argumentationsketten',
     daten:TafelReihen.daten().concat(eigeneLesen().map(e=>({ f:e.f||'', j:e.j||0, g:'Eigene Aufgaben', b:e.t,
       e:e.s.length+' Schritte · '+e.s[0].slice(0,70)+(e.s[0].length>70?' …':''), schritte:e.s.slice() }))),
     hinweis:'Beweise und Ursache-Wirkungs-Ketten – die Schritte werden beim Übernehmen gemischt.',
     uebernehmen:l=>{ const d=l[0]; if(!d||!d.schritte) return;
-      D.titel=d.b; D.schritte=d.schritte.slice();
-      /* Veranschaulichungen werden erst jetzt gezeichnet */
-      D.bilder=null; D.figur='';
-      try{ if(typeof d.bilder==='function'){ const b=d.bilder();
-             if(Array.isArray(b)&&b.length===D.schritte.length) D.bilder=b; } }catch(err){}
-      try{ if(typeof d.figur==='function') D.figur=d.figur()||''; }catch(err){}
-      if(hatBilder()) D.bildAn=true;
-      mischen(); render(); sync();
+      ketteLaden(d);
       toast(D.schritte.length+' Schritte übernommen – jetzt ordnen');
       if(l.length>1) setTimeout(()=>toast('Es wird immer nur eine Kette geladen – die erste ausgewählte'),1400); } });
 } else { const b=$('bLib'); if(b) b.hidden=true; }
@@ -394,6 +405,26 @@ $('bPrint').onclick=()=>{
 
 if(window.TafelShot) TafelShot.buttons($('shotBtns'),()=>TafelShot.rasterize($('wrap'),{exclude:'#bar,#bar2',pad:8}),'btn');
 
+/* ---------- Teilen: Aufgabe per QR-Code an die Klasse ---------- */
+if(window.TafelTeilen){
+  TafelTeilen.knopf($('teilenBtn'),'reihenfolge.html',()=>{
+    if(!n()) return null;
+    /* Stammt die Kette aus der Bibliothek, genügt ihr Titel – die Bilder entstehen auf dem Schülergerät neu */
+    if(D.quelle&&ketteSuchen(D.quelle)) return {w:'r',k:D.quelle};
+    return {w:'r',t:D.titel,s:D.schritte};
+  });
+}
+function geteiltLaden(p){
+  if(!p||p.w!=='r') return false;
+  const d=p.k&&ketteSuchen(p.k);
+  if(d){ ketteLaden(d); return true; }
+  if(Array.isArray(p.s)&&p.s.length>1){
+    D.titel=p.t||''; D.schritte=p.s.slice(); D.bilder=null; D.figur=''; D.quelle='';
+    mischen(); render(); return true;
+  }
+  return false;
+}
+
 /* ---------- Tafel-Anbindung ---------- */
 function sync(){ if(window.parent===window||!ready) return;
   try{ parent.postMessage({type:'embed-data',data:D},'*'); }catch(e){} }
@@ -407,12 +438,18 @@ addEventListener('message',e=>{ if(window.parent===window||e.source!==window.par
 function schmal(){ $('bar').classList.toggle('compact', innerWidth<640); }
 addEventListener('resize',schmal);
 window.addEventListener('load',()=>{
-  if(window.TafelModus) TafelModus.init({get:()=>D.edit!==false, set:v=>{ D.edit=v; render(); sync(); }});
+  const geteilt=window.TafelTeilen&&TafelTeilen.istGeteilt();
+  if(geteilt){ TafelTeilen.nurBenutzen('#bSol,#shotBtns'); D.edit=false; }
+  else if(window.TafelModus) TafelModus.init({get:()=>D.edit!==false, set:v=>{ D.edit=v; render(); sync(); }});
   for(let j=5;j<=13;j++){ const o=document.createElement('option'); o.value=j; o.textContent='Jgst. '+j; $('eJg').appendChild(o); }
   eigeneKnopf();
   schmal(); ordnungPruefen();
   if(!D.order.length||D.order.every((v,i)=>v===i)) mischen();
   render();
+  if(geteilt){ ready=true;
+    TafelTeilen.empfangen().then(p=>{ if(!geteiltLaden(p)) toast('Der Link konnte nicht gelesen werden'); })
+      .catch(()=>toast('Der Link konnte nicht gelesen werden'));
+    return; }
   if(window.parent===window){ ready=true; return; }
   try{ parent.postMessage({type:'embed-ready'},'*'); }catch(e){}
   setTimeout(()=>{ ready=true; },700);
