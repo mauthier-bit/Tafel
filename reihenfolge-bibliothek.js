@@ -7,6 +7,497 @@
 (function(){
 "use strict";
 
+/* ====================== Veranschaulichungen ======================
+   Zu geometrischen Ketten gehören Bilder: bei Konstruktionen je Schritt
+   eine Figur, die den Stand nach diesem Schritt zeigt – das jeweils neu
+   hinzukommende Element rot. Gezeichnet wird zur Laufzeit auf Canvas,
+   damit keine Bilddateien nötig sind.                                  */
+const FARB={lin:'#1f2430',hilf:'#94a3b8',neu:'#dc2626',erg:'#2563eb',gru:'#15803d',hell:'#cbd5e1'};
+const SW=300, SH=320;
+function blatt(w,h){ const c=document.createElement('canvas');
+  const dpr=2; c.width=w*dpr; c.height=h*dpr;
+  const g=c.getContext('2d'); g.setTransform(dpr,0,0,dpr,0,0);
+  g.fillStyle='#fff'; g.fillRect(0,0,w,h); g.lineJoin='round'; g.lineCap='round';
+  return {c,g}; }
+function L(g,x1,y1,x2,y2,col,bd,dash){ g.save(); g.strokeStyle=col||FARB.lin; g.lineWidth=bd||1.8;
+  if(dash) g.setLineDash(dash); g.beginPath(); g.moveTo(x1,y1); g.lineTo(x2,y2); g.stroke(); g.restore(); }
+function BOG(g,cx,cy,r,a0,a1,col,bd,dash){ g.save(); g.strokeStyle=col||FARB.hilf; g.lineWidth=bd||1.3;
+  if(dash) g.setLineDash(dash); g.beginPath(); g.arc(cx,cy,r,a0,a1); g.stroke(); g.restore(); }
+function KREIS(g,cx,cy,r,col,bd,dash){ BOG(g,cx,cy,r,0,Math.PI*2,col,bd,dash); }
+function TXT(g,x,y,t,col,gr,al,fett){ g.save(); g.fillStyle=col||FARB.lin;
+  g.font=(fett?'700 ':'')+(gr||11.5)+'px -apple-system,Helvetica,sans-serif';
+  g.textAlign=al||'center'; g.textBaseline='middle'; g.fillText(t,x,y); g.restore(); }
+function PKT(g,x,y,name,dx,dy,col){ g.save(); g.fillStyle=col||FARB.lin;
+  g.beginPath(); g.arc(x,y,2.8,0,7); g.fill();
+  if(name) TXT(g,x+(dx||0),y+(dy||0),name,col||FARB.lin,12.5,'center',true); g.restore(); }
+function STICH(g,x,y,col){ g.save(); g.strokeStyle=col||FARB.neu; g.lineWidth=1.6;
+  g.beginPath(); g.arc(x,y,6.5,0,7); g.stroke();
+  g.beginPath(); g.moveTo(x-9,y); g.lineTo(x+9,y); g.moveTo(x,y-9); g.lineTo(x,y+9); g.stroke(); g.restore(); }
+function WNK(g,cx,cy,r,a0,a1,col,name){
+  let d=a1-a0; while(d>Math.PI)d-=2*Math.PI; while(d<-Math.PI)d+=2*Math.PI;  /* immer der innere Winkel */
+  const s0=Math.min(a0,a0+d), s1=Math.max(a0,a0+d);
+  g.save(); g.strokeStyle=col||FARB.erg; g.lineWidth=1.7;
+  g.beginPath(); g.arc(cx,cy,r,s0,s1); g.stroke();
+  if(name){ const m=(s0+s1)/2; TXT(g,cx+Math.cos(m)*(r+12),cy+Math.sin(m)*(r+12),name,col||FARB.erg,12.5,'center',true); }
+  g.restore(); }
+function RECHT(g,x,y,a1,a2,col){ const s=11, p1=[x+Math.cos(a1)*s,y+Math.sin(a1)*s],
+  p2=[x+Math.cos(a2)*s,y+Math.sin(a2)*s], p3=[p1[0]+p2[0]-x,p1[1]+p2[1]-y];
+  g.save(); g.strokeStyle=col||FARB.erg; g.lineWidth=1.5; g.beginPath();
+  g.moveTo(p1[0],p1[1]); g.lineTo(p3[0],p3[1]); g.lineTo(p2[0],p2[1]); g.stroke(); g.restore(); }
+/* k Gleichheitsstriche in der Mitte einer Strecke */
+function MARK(g,x1,y1,x2,y2,k,col){ const mx=(x1+x2)/2,my=(y1+y2)/2,dx=x2-x1,dy=y2-y1,l=Math.hypot(dx,dy)||1;
+  const ux=dx/l,uy=dy/l; g.save(); g.strokeStyle=col||FARB.gru; g.lineWidth=1.6;
+  for(let i=0;i<(k||1);i++){ const o=(i-((k||1)-1)/2)*4, cx=mx+ux*o, cy=my+uy*o;
+    g.beginPath(); g.moveTo(cx-uy*5,cy+ux*5); g.lineTo(cx+uy*5,cy-ux*5); g.stroke(); }
+  g.restore(); }
+function PFEIL(g,x1,y1,x2,y2,col,bd){ L(g,x1,y1,x2,y2,col,bd||2);
+  const a=Math.atan2(y2-y1,x2-x1);
+  L(g,x2,y2,x2-Math.cos(a-0.42)*9,y2-Math.sin(a-0.42)*9,col,bd||2);
+  L(g,x2,y2,x2-Math.cos(a+0.42)*9,y2-Math.sin(a+0.42)*9,col,bd||2); }
+function WOB(g,x1,y1,x2,y2,col,bd,amp){ const mx=(x1+x2)/2,my=(y1+y2)/2,dx=x2-x1,dy=y2-y1,l=Math.hypot(dx,dy)||1;
+  g.save(); g.strokeStyle=col||FARB.hilf; g.lineWidth=bd||1.5; g.beginPath(); g.moveTo(x1,y1);
+  g.quadraticCurveTo(mx-dy/l*(amp===undefined?5:amp), my+dx/l*(amp===undefined?5:amp), x2,y2); g.stroke(); g.restore(); }
+/* Hilfs-Shortcuts für die Stufenbilder */
+const CL=(neu,norm)=>neu?FARB.neu:(norm||FARB.lin);
+const BD=neu=>neu?2.7:1.8;
+function malen(g,st,liste){ liste.forEach(p=>{ if(st>=p[0]) p[1](st===p[0]); }); }
+/* freihändige Planfigur */
+function planfigur(g,texte){
+  const A=[55,205],B=[250,196],C=[150,78];
+  WOB(g,A[0],A[1],B[0],B[1],FARB.neu,1.6,4); WOB(g,A[0],A[1],C[0],C[1],FARB.neu,1.6,-4);
+  WOB(g,B[0],B[1],C[0],C[1],FARB.neu,1.6,4);
+  TXT(g,A[0]-10,A[1]+4,'A',FARB.lin,12,'center',true); TXT(g,B[0]+11,B[1]+4,'B',FARB.lin,12,'center',true);
+  TXT(g,C[0]+2,C[1]-13,'C',FARB.lin,12,'center',true);
+  TXT(g,150,218,'c',FARB.lin,12.5,'center',true); TXT(g,88,140,'b',FARB.lin,12.5,'center',true);
+  TXT(g,214,140,'a',FARB.lin,12.5,'center',true);
+  TXT(g,150,44,'Planfigur: gegebene Stücke markieren',FARB.hilf,11);
+  (texte||[]).forEach((t,i)=>TXT(g,150,232+i*14,t,FARB.erg,11.5));
+}
+/* waagrechte Strecke mit Namen – für „gegebene Stücke“ */
+function strecke(g,x,y,len,name,neu){ const col=CL(neu,FARB.lin);
+  L(g,x,y,x+len,y,col,BD(neu)); L(g,x,y-5,x,y+5,col,1.6); L(g,x+len,y-5,x+len,y+5,col,1.6);
+  TXT(g,x+len/2,y-11,name,col,12.5,'center',true); }
+function winkelStueck(g,x,y,grad,name,neu){ const col=CL(neu,FARB.lin), a=-grad*Math.PI/180, len=78;
+  L(g,x,y,x+len,y,col,BD(neu)); L(g,x,y,x+Math.cos(a)*len,y+Math.sin(a)*len,col,BD(neu));
+  WNK(g,x,y,26,a,0,col,name); }
+
+/* ---------------- Konstruktion: Mittelsenkrechte ---------------- */
+const A_=[55,135], B_=[245,135], RMS=110;
+function fMs(g,st){ const M=[150,135], d=Math.sqrt(RMS*RMS-95*95), P=[150,135-d], Q=[150,135+d];
+  const aP=Math.atan2(P[1]-A_[1],P[0]-A_[0]);
+  malen(g,st,[
+   [0,neu=>{ L(g,A_[0],A_[1],B_[0],B_[1],CL(neu),BD(neu)); PKT(g,A_[0],A_[1],'A',-12,9); PKT(g,B_[0],B_[1],'B',12,9); }],
+   [1,neu=>{ if(neu) STICH(g,A_[0],A_[1],FARB.neu); }],
+   [2,neu=>{ if(!neu) return; STICH(g,A_[0],A_[1],FARB.hilf);
+             L(g,A_[0],A_[1],A_[0]+Math.cos(-0.55)*RMS,A_[1]+Math.sin(-0.55)*RMS,FARB.neu,1.7,[6,4]);
+             TXT(g,A_[0]+Math.cos(-0.55)*RMS/2-9,A_[1]+Math.sin(-0.55)*RMS/2-14,'r > ½·AB',FARB.neu,11.5); }],
+   [3,neu=>{ const col=CL(neu,FARB.hilf); BOG(g,A_[0],A_[1],RMS,aP-0.42,aP+0.42,col,neu?2:1.3);
+             BOG(g,A_[0],A_[1],RMS,-aP-0.42,-aP+0.42,col,neu?2:1.3); }],
+   [4,neu=>{ if(neu) STICH(g,B_[0],B_[1],FARB.neu); }],
+   [5,neu=>{ const col=CL(neu,FARB.hilf), b=Math.PI-aP;
+             BOG(g,B_[0],B_[1],RMS,b-0.42,b+0.42,col,neu?2:1.3);
+             BOG(g,B_[0],B_[1],RMS,-b-0.42,-b+0.42,col,neu?2:1.3); }],
+   [6,neu=>{ PKT(g,P[0],P[1],'P',-12,-8,CL(neu,FARB.erg)); PKT(g,Q[0],Q[1],'Q',-12,8,CL(neu,FARB.erg)); }],
+   [7,neu=>{ L(g,P[0],P[1]-22,Q[0],Q[1]+22,CL(neu,FARB.erg),neu?2.8:2.2); }],
+   [8,neu=>{ const col=CL(neu,FARB.gru); RECHT(g,M[0],M[1],0,-Math.PI/2,col);
+             MARK(g,A_[0],A_[1],M[0],M[1],1,col); MARK(g,M[0],M[1],B_[0],B_[1],1,col);
+             TXT(g,215,P[1]-6,'Mittelsenkrechte',FARB.erg,11.5); }],
+   [9,neu=>{ const col=CL(neu,FARB.hilf);
+             L(g,P[0],P[1],A_[0],A_[1],col,1.4,[5,4]); L(g,P[0],P[1],B_[0],B_[1],col,1.4,[5,4]);
+             MARK(g,P[0],P[1],A_[0],A_[1],2,col); MARK(g,P[0],P[1],B_[0],B_[1],2,col);
+             TXT(g,150,24,'gleicher Abstand von A und B',col,11.5); }]
+  ]); }
+
+/* ---------------- Konstruktion: Winkelhalbierende ---------------- */
+function fWh(g,st){ const S=[50,180], a1=-1.0, a2=-0.2, len=232, r=85, rr=55;
+  const P=[S[0]+Math.cos(a1)*r,S[1]+Math.sin(a1)*r], Q=[S[0]+Math.cos(a2)*r,S[1]+Math.sin(a2)*r];
+  const am=(a1+a2)/2, dw=(a2-a1)/2;
+  const dd=(2*r*Math.cos(dw)+Math.sqrt(Math.pow(2*r*Math.cos(dw),2)-4*(r*r-rr*rr)))/2;
+  const X=[S[0]+Math.cos(am)*dd, S[1]+Math.sin(am)*dd];
+  const aPX=Math.atan2(X[1]-P[1],X[0]-P[0]), aQX=Math.atan2(X[1]-Q[1],X[0]-Q[0]);
+  malen(g,st,[
+   [0,neu=>{ const col=CL(neu); L(g,S[0],S[1],S[0]+Math.cos(a1)*len,S[1]+Math.sin(a1)*len,col,BD(neu));
+             L(g,S[0],S[1],S[0]+Math.cos(a2)*len,S[1]+Math.sin(a2)*len,col,BD(neu)); PKT(g,S[0],S[1],'S',-12,8); }],
+   [1,neu=>{ if(neu) STICH(g,S[0],S[1],FARB.neu); }],
+   [2,neu=>{ BOG(g,S[0],S[1],r,a1-0.12,a2+0.12,CL(neu,FARB.hilf),neu?2:1.3); }],
+   [3,neu=>{ PKT(g,P[0],P[1],'P',-6,-12,CL(neu,FARB.erg)); PKT(g,Q[0],Q[1],'Q',2,14,CL(neu,FARB.erg));
+             if(neu){ MARK(g,S[0],S[1],P[0],P[1],1,FARB.neu); MARK(g,S[0],S[1],Q[0],Q[1],1,FARB.neu); } }],
+   [4,neu=>{ BOG(g,P[0],P[1],rr,aPX-0.5,aPX+0.5,CL(neu,FARB.hilf),neu?2:1.3); }],
+   [5,neu=>{ BOG(g,Q[0],Q[1],rr,aQX-0.5,aQX+0.5,CL(neu,FARB.hilf),neu?2:1.3);
+             PKT(g,X[0],X[1],'',0,0,CL(neu,FARB.erg)); }],
+   [6,neu=>{ L(g,S[0],S[1],X[0],X[1],CL(neu,FARB.erg),neu?2.8:2.2); }],
+   [7,neu=>{ const col=CL(neu,FARB.erg); L(g,X[0],X[1],S[0]+Math.cos(am)*len,S[1]+Math.sin(am)*len,col,neu?2.8:2.2,[7,5]);
+             WNK(g,S[0],S[1],40,a1,am,FARB.gru,''); WNK(g,S[0],S[1],52,am,a2,FARB.gru,'');
+             TXT(g,205,S[1]+Math.sin(am)*len+14,'Winkelhalbierende',FARB.erg,11.5); }],
+   [8,neu=>{ const col=CL(neu,FARB.gru);
+             MARK(g,S[0]+Math.cos((a1+am)/2)*46,S[1]+Math.sin((a1+am)/2)*46,S[0]+Math.cos((a1+am)/2)*46,S[1]+Math.sin((a1+am)/2)*46,0,col);
+             TXT(g,S[0]+Math.cos((a1+am)/2)*64,S[1]+Math.sin((a1+am)/2)*64,'φ',col,12.5,'center',true);
+             TXT(g,S[0]+Math.cos((am+a2)/2)*74,S[1]+Math.sin((am+a2)/2)*74,'φ',col,12.5,'center',true); }],
+   [9,neu=>{ const col=CL(neu,FARB.hilf); const T=[S[0]+Math.cos(am)*165,S[1]+Math.sin(am)*165];
+             const fuss=(a)=>{ const t=(T[0]-S[0])*Math.cos(a)+(T[1]-S[1])*Math.sin(a);
+               return [S[0]+Math.cos(a)*t, S[1]+Math.sin(a)*t]; };
+             const F1=fuss(a1), F2=fuss(a2);
+             L(g,T[0],T[1],F1[0],F1[1],col,1.4,[5,4]); L(g,T[0],T[1],F2[0],F2[1],col,1.4,[5,4]);
+             RECHT(g,F1[0],F1[1],a1,Math.atan2(T[1]-F1[1],T[0]-F1[0]),col);
+             RECHT(g,F2[0],F2[1],a2,Math.atan2(T[1]-F2[1],T[0]-F2[0]),col);
+             MARK(g,T[0],T[1],F1[0],F1[1],2,col); MARK(g,T[0],T[1],F2[0],F2[1],2,col);
+             TXT(g,150,22,'gleicher Abstand von beiden Schenkeln',col,11.5); }]
+  ]); }
+
+/* ---- Hilfsfunktion: Mittelsenkrechte einer Seite mit Bögen ---- */
+function msBogen(g,P,Q,col,bd,lang){ const mx=(P[0]+Q[0])/2,my=(P[1]+Q[1])/2;
+  const dx=Q[0]-P[0],dy=Q[1]-P[1],l=Math.hypot(dx,dy), r=l*0.62, h=Math.sqrt(r*r-(l/2)*(l/2));
+  const nx=-dy/l, ny=dx/l;
+  const S1=[mx+nx*h,my+ny*h], S2=[mx-nx*h,my-ny*h];
+  [[P,S1],[P,S2],[Q,S1],[Q,S2]].forEach(([Z,T])=>{ const a=Math.atan2(T[1]-Z[1],T[0]-Z[0]);
+    BOG(g,Z[0],Z[1],r,a-0.3,a+0.3,col,bd); });
+  const e=lang||26;
+  L(g,S1[0]+nx*e,S1[1]+ny*e,S2[0]-nx*e,S2[1]-ny*e,col,bd,[6,4]);
+  return [mx,my]; }
+function whBogen(g,S,P1,P2,col,bd,lang){
+  const a1=Math.atan2(P1[1]-S[1],P1[0]-S[0]);
+  let d=Math.atan2(P2[1]-S[1],P2[0]-S[0])-a1;                 /* immer der innere Winkel */
+  while(d>Math.PI)d-=2*Math.PI; while(d<-Math.PI)d+=2*Math.PI;
+  const r=52, a2=a1+d, am=a1+d/2;
+  BOG(g,S[0],S[1],r,Math.min(a1,a2),Math.max(a1,a2),col,bd);
+  const P=[S[0]+Math.cos(a1)*r,S[1]+Math.sin(a1)*r], Q=[S[0]+Math.cos(a2)*r,S[1]+Math.sin(a2)*r];
+  const rr=42, dw=Math.abs(d)/2, k=2*r*Math.cos(dw);
+  const dd=(k+Math.sqrt(Math.max(0,k*k-4*(r*r-rr*rr))))/2;
+  const X=[S[0]+Math.cos(am)*dd,S[1]+Math.sin(am)*dd];
+  [[P,X],[Q,X]].forEach(z=>{ const a=Math.atan2(z[1][1]-z[0][1],z[1][0]-z[0][0]);
+    BOG(g,z[0][0],z[0][1],rr,a-0.45,a+0.45,col,bd); });
+  L(g,S[0],S[1],S[0]+Math.cos(am)*(lang||185),S[1]+Math.sin(am)*(lang||185),col,bd,[6,4]); }
+
+/* ---------------- Konstruktion: Umkreis ---------------- */
+function fUk(g,st){ const A=[50,150], B=[252,140], C=[150,40];
+  const d=2*(A[0]*(B[1]-C[1])+B[0]*(C[1]-A[1])+C[0]*(A[1]-B[1]));
+  const q=p=>p[0]*p[0]+p[1]*p[1];
+  const M=[(q(A)*(B[1]-C[1])+q(B)*(C[1]-A[1])+q(C)*(A[1]-B[1]))/d,
+           (q(A)*(C[0]-B[0])+q(B)*(A[0]-C[0])+q(C)*(B[0]-A[0]))/d];
+  const R=Math.hypot(A[0]-M[0],A[1]-M[1]);
+  const drei=(neu)=>{ const col=CL(neu); L(g,A[0],A[1],B[0],B[1],col,BD(neu)); L(g,B[0],B[1],C[0],C[1],col,BD(neu));
+    L(g,C[0],C[1],A[0],A[1],col,BD(neu)); PKT(g,A[0],A[1],'A',-12,9); PKT(g,B[0],B[1],'B',12,9); PKT(g,C[0],C[1],'C',0,-13); };
+  malen(g,st,[
+   [0,drei],
+   [1,neu=>{ if(!neu) return; KREIS(g,M[0],M[1],R,FARB.neu,1.5,[6,5]);
+             [A,B,C].forEach(P=>{ L(g,M[0],M[1],P[0],P[1],FARB.neu,1.3,[4,4]); MARK(g,M[0],M[1],P[0],P[1],1,FARB.neu); });
+             TXT(g,150,236,'durch A, B und C – gleicher Abstand',FARB.neu,11.5); }],
+   [2,neu=>{ if(!neu) return; const m=[(A[0]+B[0])/2,(A[1]+B[1])/2];
+             PKT(g,m[0],m[1],'',0,0,FARB.neu); MARK(g,A[0],A[1],m[0],m[1],1,FARB.neu); MARK(g,m[0],m[1],B[0],B[1],1,FARB.neu);
+             TXT(g,150,236,'gleich weit von A und B: Mittelsenkrechte',FARB.neu,11.5); }],
+   [3,neu=>{ msBogen(g,A,B,CL(neu,FARB.hilf),neu?2:1.3,34); }],
+   [4,neu=>{ msBogen(g,B,C,CL(neu,FARB.hilf),neu?2:1.3,34); }],
+   [5,neu=>{ PKT(g,M[0],M[1],'M',-13,-3,CL(neu,FARB.erg)); }],
+   [6,neu=>{ msBogen(g,A,C,CL(neu,FARB.hell),neu?2:1.2,30); }],
+   [7,neu=>{ if(!neu) return; STICH(g,M[0],M[1],FARB.neu);
+             L(g,M[0],M[1],A[0],A[1],FARB.neu,1.7,[6,4]); TXT(g,(M[0]+A[0])/2,(M[1]+A[1])/2-11,'r = MA',FARB.neu,11.5); }],
+   [8,neu=>{ KREIS(g,M[0],M[1],R,CL(neu,FARB.erg),neu?2.8:2.2); }],
+   [9,neu=>{ if(!neu) return; PKT(g,M[0],M[1],'',0,0,FARB.gru);
+             TXT(g,150,236,'spitzwinklig: M innen · stumpfwinklig: M außen',FARB.gru,11.5); }]
+  ]); }
+
+/* ---------------- Konstruktion: Inkreis ---------------- */
+function fIk(g,st){ const A=[48,200], B=[256,200], C=[140,58];
+  const a=Math.hypot(B[0]-C[0],B[1]-C[1]), b=Math.hypot(A[0]-C[0],A[1]-C[1]), c=Math.hypot(A[0]-B[0],A[1]-B[1]);
+  const u=a+b+c, M=[(a*A[0]+b*B[0]+c*C[0])/u,(a*A[1]+b*B[1]+c*C[1])/u];
+  const fl=Math.abs((B[0]-A[0])*(C[1]-A[1])-(C[0]-A[0])*(B[1]-A[1]))/2, r=2*fl/u;
+  const lot=(P,Q)=>{ const dx=Q[0]-P[0],dy=Q[1]-P[1],l2=dx*dx+dy*dy;
+    const t=((M[0]-P[0])*dx+(M[1]-P[1])*dy)/l2; return [P[0]+dx*t,P[1]+dy*t]; };
+  const F1=lot(A,B), F2=lot(B,C), F3=lot(A,C);
+  const drei=(neu)=>{ const col=CL(neu); L(g,A[0],A[1],B[0],B[1],col,BD(neu)); L(g,B[0],B[1],C[0],C[1],col,BD(neu));
+    L(g,C[0],C[1],A[0],A[1],col,BD(neu)); PKT(g,A[0],A[1],'A',-12,9); PKT(g,B[0],B[1],'B',12,9); PKT(g,C[0],C[1],'C',0,-13); };
+  malen(g,st,[
+   [0,drei],
+   [1,neu=>{ if(!neu) return; KREIS(g,M[0],M[1],r,FARB.neu,1.5,[6,5]);
+             [F1,F2,F3].forEach(F=>{ L(g,M[0],M[1],F[0],F[1],FARB.neu,1.3,[4,4]); MARK(g,M[0],M[1],F[0],F[1],1,FARB.neu); });
+             TXT(g,150,236,'berührt alle drei Seiten – gleicher Abstand',FARB.neu,11.5); }],
+   [2,neu=>{ if(neu) TXT(g,150,236,'gleicher Abstand von zwei Seiten: Winkelhalbierende',FARB.neu,11.5); }],
+   [3,neu=>{ whBogen(g,A,B,C,CL(neu,FARB.hilf),neu?2:1.3,150); }],
+   [4,neu=>{ whBogen(g,B,A,C,CL(neu,FARB.hilf),neu?2:1.3,150); }],
+   [5,neu=>{ PKT(g,M[0],M[1],'M',-13,-4,CL(neu,FARB.erg)); }],
+   [6,neu=>{ const col=CL(neu,FARB.hilf); L(g,M[0],M[1],F1[0],F1[1],col,1.7,[5,4]);
+             RECHT(g,F1[0],F1[1],-Math.PI/2,0,col); }],
+   [7,neu=>{ const col=CL(neu,FARB.gru); L(g,M[0],M[1],F1[0],F1[1],col,2);
+             TXT(g,M[0]+13,(M[1]+F1[1])/2,'r',col,12.5,'left',true); }],
+   [8,neu=>{ KREIS(g,M[0],M[1],r,CL(neu,FARB.erg),neu?2.8:2.2); }],
+   [9,neu=>{ const col=CL(neu,FARB.gru); [F1,F2,F3].forEach(F=>PKT(g,F[0],F[1],'',0,0,col));
+             if(neu) TXT(g,150,236,'jede Seite wird genau einmal berührt',col,11.5); }]
+  ]); }
+
+/* ---------------- Dreieckskonstruktionen ---------------- */
+const DA=[52,205], DB=[248,205];                        /* c = 196 px */
+function seiten(g,A,B,C,neu,ohneC){ const col=CL(neu,FARB.erg);
+  if(!ohneC){ L(g,A[0],A[1],C[0],C[1],col,neu?2.8:2.2); L(g,B[0],B[1],C[0],C[1],col,neu?2.8:2.2); } }
+function fSss(g,st){ const c=168, b=144, a=122, DA=[66,175], DB=[DA[0]+c,175];
+  const x=(c*c+b*b-a*a)/(2*c), y=Math.sqrt(b*b-x*x), C=[DA[0]+x,DA[1]-y];
+  const aB=Math.atan2(C[1]-DA[1],C[0]-DA[0]), aA=Math.atan2(C[1]-DB[1],C[0]-DB[0]);
+  if(st<=2){ if(st<=1){ strecke(g,58,100,c,'c',st===0); strecke(g,58,145,b,'b',st===0); strecke(g,58,190,a,'a',st===0);
+      TXT(g,150,60,'gegeben: drei Seiten',FARB.hilf,11.5);
+      if(st===1){ TXT(g,150,226,'a + b > c  und  a + c > b  und  b + c > a  ✓',FARB.neu,12,'center',true); } }
+    else planfigur(g); return; }
+  malen(g,st,[
+   [3,neu=>{ L(g,DA[0],DA[1],DB[0],DB[1],CL(neu),BD(neu)); PKT(g,DA[0],DA[1],'A',-12,9); PKT(g,DB[0],DB[1],'B',12,9);
+             TXT(g,150,222,'c',FARB.lin,12.5,'center',true); }],
+   [4,neu=>{ if(!neu) return; STICH(g,DA[0],DA[1],FARB.neu);
+             L(g,DA[0],DA[1],DA[0]+Math.cos(-0.4)*b,DA[1]+Math.sin(-0.4)*b,FARB.neu,1.6,[6,4]);
+             TXT(g,DA[0]+52,DA[1]-42,'r = b',FARB.neu,11.5); }],
+   [5,neu=>{ BOG(g,DA[0],DA[1],b,aB-0.45,aB+0.45,CL(neu,FARB.hilf),neu?2:1.3); }],
+   [6,neu=>{ if(!neu) return; STICH(g,DB[0],DB[1],FARB.neu);
+             L(g,DB[0],DB[1],DB[0]+Math.cos(Math.PI+0.4)*a,DB[1]-Math.sin(0.4)*a,FARB.neu,1.6,[6,4]);
+             TXT(g,DB[0]-52,DB[1]-42,'r = a',FARB.neu,11.5); }],
+   [7,neu=>{ BOG(g,DB[0],DB[1],a,aA-0.45,aA+0.45,CL(neu,FARB.hilf),neu?2:1.3); }],
+   [8,neu=>{ PKT(g,C[0],C[1],'C',4,-13,CL(neu,FARB.erg)); }],
+   [9,neu=>seiten(g,DA,DB,C,neu)],
+   [10,neu=>{ const col=CL(neu,FARB.gru); MARK(g,DA[0],DA[1],C[0],C[1],1,col); MARK(g,DB[0],DB[1],C[0],C[1],2,col);
+              TXT(g,(DA[0]+C[0])/2-15,(DA[1]+C[1])/2,'b',col,12.5,'center',true);
+              TXT(g,(DB[0]+C[0])/2+15,(DB[1]+C[1])/2,'a',col,12.5,'center',true); }],
+   [11,neu=>{ const col=neu?FARB.neu:FARB.hell, C2=[C[0],2*DA[1]-C[1]];
+              L(g,DA[0],DA[1],C2[0],C2[1],col,1.5,[5,4]); L(g,DB[0],DB[1],C2[0],C2[1],col,1.5,[5,4]);
+              PKT(g,C2[0],C2[1],'C′',6,12,col);
+              if(neu) TXT(g,150,24,'die Lösung unterhalb ist die Spiegelung',FARB.neu,11.5); }]
+  ]); }
+function fSws(g,st){ const b=168, al=-50*Math.PI/180, C=[DA[0]+Math.cos(al)*b, DA[1]+Math.sin(al)*b];
+  if(st<=2){ if(st===0){ strecke(g,52,70,196,'c',true); strecke(g,52,120,b,'b',true);
+      winkelStueck(g,70,205,50,'α',true); TXT(g,150,34,'gegeben: b, c und der Winkel α dazwischen',FARB.hilf,11.5); }
+    else if(st===1) planfigur(g);
+    else { planfigur(g); TXT(g,150,246,'α liegt zwischen b und c  ✓',FARB.neu,12,'center',true); } return; }
+  malen(g,st,[
+   [3,neu=>{ L(g,DA[0],DA[1],DB[0],DB[1],CL(neu),BD(neu)); PKT(g,DA[0],DA[1],'A',-12,9); PKT(g,DB[0],DB[1],'B',12,9);
+             TXT(g,150,222,'c',FARB.lin,12.5,'center',true); }],
+   [4,neu=>{ const col=CL(neu,FARB.hilf);
+             L(g,DA[0],DA[1],DA[0]+Math.cos(al)*225,DA[1]+Math.sin(al)*225,col,neu?2.2:1.5,[7,5]);
+             WNK(g,DA[0],DA[1],34,al,0,neu?FARB.neu:FARB.gru,'α'); }],
+   [5,neu=>{ if(!neu) return; STICH(g,DA[0],DA[1],FARB.neu);
+             L(g,DA[0],DA[1],DA[0]+Math.cos(al-0.33)*b,DA[1]+Math.sin(al-0.33)*b,FARB.neu,1.6,[6,4]);
+             TXT(g,DA[0]+26,DA[1]-62,'r = b',FARB.neu,11.5); }],
+   [6,neu=>{ BOG(g,DA[0],DA[1],b,al-0.42,al+0.42,CL(neu,FARB.hilf),neu?2:1.3); }],
+   [7,neu=>{ PKT(g,C[0],C[1],'C',6,-12,CL(neu,FARB.erg)); }],
+   [8,neu=>{ const col=CL(neu,FARB.erg); L(g,DA[0],DA[1],C[0],C[1],col,2.2);
+             L(g,DB[0],DB[1],C[0],C[1],neu?FARB.neu:col,neu?2.8:2.2); }],
+   [9,neu=>{ const col=CL(neu,FARB.gru); MARK(g,DA[0],DA[1],C[0],C[1],1,col);
+             TXT(g,(DA[0]+C[0])/2-16,(DA[1]+C[1])/2,'b',col,12.5,'center',true); }],
+   [10,neu=>{ TXT(g,150,240,'SWS: das Dreieck ist eindeutig bestimmt',CL(neu,FARB.hilf),11.5); }]
+  ]); }
+function fWsw(g,st){ const al=-52*Math.PI/180, be=Math.PI+40*Math.PI/180;
+  const t=(DB[0]-DA[0])*Math.sin(be)/(Math.cos(al)*Math.sin(be)-Math.sin(al)*Math.cos(be));
+  const C=[DA[0]+Math.cos(al)*t, DA[1]+Math.sin(al)*t];
+  if(st<=2){ if(st===0){ strecke(g,52,80,196,'c',true); winkelStueck(g,60,170,52,'α',true); winkelStueck(g,185,170,40,'β',true);
+      TXT(g,150,40,'gegeben: c und die anliegenden Winkel α, β',FARB.hilf,11.5); }
+    else if(st===1){ winkelStueck(g,60,120,52,'α',false); winkelStueck(g,185,120,40,'β',false);
+      TXT(g,150,180,'α + β = 52° + 40° = 92° < 180°  ✓',FARB.neu,12.5,'center',true);
+      TXT(g,150,208,'nur dann schneiden sich die Schenkel',FARB.hilf,11.5); }
+    else planfigur(g); return; }
+  malen(g,st,[
+   [3,neu=>{ L(g,DA[0],DA[1],DB[0],DB[1],CL(neu),BD(neu)); PKT(g,DA[0],DA[1],'A',-12,9); PKT(g,DB[0],DB[1],'B',12,9);
+             TXT(g,150,222,'c',FARB.lin,12.5,'center',true); }],
+   [4,neu=>{ const col=CL(neu,FARB.hilf); L(g,DA[0],DA[1],DA[0]+Math.cos(al)*t*1.18,DA[1]+Math.sin(al)*t*1.18,col,neu?2.2:1.5,[7,5]);
+             WNK(g,DA[0],DA[1],34,al,0,neu?FARB.neu:FARB.gru,'α'); }],
+   [5,neu=>{ WNK(g,DB[0],DB[1],34,Math.PI,be,neu?FARB.neu:FARB.gru,'β'); }],
+   [6,neu=>{ const col=CL(neu,FARB.hilf); const t2=Math.hypot(C[0]-DB[0],C[1]-DB[1])*1.18;
+             L(g,DB[0],DB[1],DB[0]+Math.cos(be)*t2,DB[1]+Math.sin(be)*t2,col,neu?2.2:1.5,[7,5]); }],
+   [7,neu=>{ PKT(g,C[0],C[1],'C',0,-13,CL(neu,FARB.erg)); }],
+   [8,neu=>seiten(g,DA,DB,C,neu)],
+   [9,neu=>{ const col=CL(neu,FARB.gru);
+             const cA=Math.atan2(DA[1]-C[1],DA[0]-C[0]), cB=Math.atan2(DB[1]-C[1],DB[0]-C[0]);
+             WNK(g,C[0],C[1],30,cA,cB,col,'γ');
+             TXT(g,150,240,'α + β + γ = 180°  zur Probe',col,11.5); }],
+   [10,neu=>{ TXT(g,150,22,'WSW: eindeutig bestimmt',CL(neu,FARB.hilf),11.5); }]
+  ]); }
+function fSsw(g,st){ const A=[72,195], B=[218,195], c=146, a=172, al=-40*Math.PI/180;
+  const dx=Math.cos(al), dy=Math.sin(al);
+  const ex=A[0]-B[0], ey=A[1]-B[1], pb=2*(ex*dx+ey*dy), pc=ex*ex+ey*ey-a*a;
+  const t=(-pb+Math.sqrt(pb*pb-4*pc))/2, C=[A[0]+dx*t, A[1]+dy*t];
+  if(st<=2){ if(st===0){ strecke(g,52,74,a,'a',true); strecke(g,52,124,c,'c',true); winkelStueck(g,70,200,40,'α',true);
+      TXT(g,150,36,'gegeben: a, c und α – mit a > c',FARB.hilf,11.5); }
+    else if(st===1){ strecke(g,52,80,a,'a',false); strecke(g,52,125,c,'c',false);
+      TXT(g,150,170,'α liegt der längeren Seite a gegenüber  ✓',FARB.neu,12,'center',true);
+      TXT(g,150,198,'nur dann ist die Konstruktion eindeutig',FARB.hilf,11.5); }
+    else planfigur(g); return; }
+  malen(g,st,[
+   [3,neu=>{ L(g,A[0],A[1],B[0],B[1],CL(neu),BD(neu)); PKT(g,A[0],A[1],'A',-12,9); PKT(g,B[0],B[1],'B',12,9);
+             TXT(g,(A[0]+B[0])/2,212,'c',FARB.lin,12.5,'center',true); }],
+   [4,neu=>{ const col=CL(neu,FARB.hilf); L(g,A[0],A[1],A[0]+dx*t*1.14,A[1]+dy*t*1.14,col,neu?2.2:1.5,[7,5]);
+             WNK(g,A[0],A[1],32,al,0,neu?FARB.neu:FARB.gru,'α'); }],
+   [5,neu=>{ if(!neu) return; STICH(g,B[0],B[1],FARB.neu);
+             L(g,B[0],B[1],B[0]+Math.cos(-2.1)*a,B[1]+Math.sin(-2.1)*a,FARB.neu,1.6,[6,4]);
+             TXT(g,B[0]-8,B[1]-34,'r = a',FARB.neu,11.5,'left'); }],
+   [6,neu=>{ const aB=Math.atan2(C[1]-B[1],C[0]-B[0]); BOG(g,B[0],B[1],a,aB-0.42,aB+0.42,CL(neu,FARB.hilf),neu?2:1.3); }],
+   [7,neu=>{ PKT(g,C[0],C[1],'C',8,-11,CL(neu,FARB.erg));
+             if(neu) TXT(g,150,24,'genau ein Schnittpunkt',FARB.neu,11.5); }],
+   [8,neu=>{ L(g,A[0],A[1],C[0],C[1],FARB.erg,2.2); L(g,B[0],B[1],C[0],C[1],CL(neu,FARB.erg),neu?2.8:2.2); }],
+   [9,neu=>{ const col=CL(neu,FARB.gru); MARK(g,B[0],B[1],C[0],C[1],1,col);
+             TXT(g,(B[0]+C[0])/2+15,(B[1]+C[1])/2,'a',col,12.5,'left',true); }],
+   [10,neu=>{ /* Gegenfall: kürzere Seite gegenüber – zwei Schnittpunkte */
+             const col=neu?FARB.neu:FARB.hilf, a2=112;
+             const pc2=ex*ex+ey*ey-a2*a2, t1=(-pb-Math.sqrt(pb*pb-4*pc2))/2, t2=(-pb+Math.sqrt(pb*pb-4*pc2))/2;
+             const C1=[A[0]+dx*t1,A[1]+dy*t1], C2=[A[0]+dx*t2,A[1]+dy*t2];
+             const b1=Math.atan2(C1[1]-B[1],C1[0]-B[0]), b2=Math.atan2(C2[1]-B[1],C2[0]-B[0]);
+             BOG(g,B[0],B[1],a2,Math.min(b1,b2)-0.25,Math.max(b1,b2)+0.25,col,1.6,[5,4]);
+             PKT(g,C1[0],C1[1],'C₁',-13,-6,col); PKT(g,C2[0],C2[1],'C₂',12,-6,col);
+             TXT(g,150,236,'a < c: zwei Lösungen – nicht eindeutig',col,11.5); }]
+  ]); }
+
+/* ---------------- Beweis: Satz des Thales ---------------- */
+function fThales(g,st){ const M=[150,170], R=112, A=[M[0]-R,M[1]], B=[M[0]+R,M[1]], w=-2.0;
+  const C=[M[0]+Math.cos(w)*R, M[1]+Math.sin(w)*R];
+  const aA=Math.atan2(C[1]-A[1],C[0]-A[0]), aB=Math.atan2(C[1]-B[1],C[0]-B[0]);
+  const cA=Math.atan2(A[1]-C[1],A[0]-C[0]), cM=Math.atan2(M[1]-C[1],M[0]-C[0]), cB=Math.atan2(B[1]-C[1],B[0]-C[0]);
+  malen(g,st,[
+   [0,neu=>{ const col=CL(neu,FARB.lin); BOG(g,M[0],M[1],R,Math.PI,2*Math.PI,neu?FARB.neu:FARB.hilf,neu?2.4:1.6);
+             L(g,A[0],A[1],B[0],B[1],col,BD(neu));
+             PKT(g,A[0],A[1],'A',-12,10); PKT(g,B[0],B[1],'B',12,10); PKT(g,M[0],M[1],'M',2,14); PKT(g,C[0],C[1],'C',-6,-13); }],
+   [1,neu=>{ const col=CL(neu,FARB.lin); L(g,A[0],A[1],C[0],C[1],col,BD(neu)); L(g,B[0],B[1],C[0],C[1],col,BD(neu));
+             RECHT(g,C[0],C[1],cA,cB,neu?FARB.neu:FARB.erg);
+             if(neu) TXT(g,C[0]+34,C[1]+24,'90° ?',FARB.neu,12.5,'left',true); }],
+   [2,neu=>{ const col=CL(neu,FARB.gru); L(g,M[0],M[1],C[0],C[1],col,neu?2.4:1.7,[6,4]);
+             MARK(g,M[0],M[1],A[0],A[1],1,col); MARK(g,M[0],M[1],B[0],B[1],1,col); MARK(g,M[0],M[1],C[0],C[1],1,col);
+             if(neu) TXT(g,150,236,'MA = MB = MC = r',col,12); }],
+   [3,neu=>{ if(neu){ g.save(); g.fillStyle='rgba(220,38,38,.10)'; g.beginPath();
+               g.moveTo(A[0],A[1]); g.lineTo(M[0],M[1]); g.lineTo(C[0],C[1]); g.closePath(); g.fill(); g.restore();
+               TXT(g,150,22,'Dreieck AMC ist gleichschenklig',FARB.neu,11.5); } }],
+   [4,neu=>{ const col=neu?FARB.neu:FARB.erg; WNK(g,A[0],A[1],32,aA,0,col,'α'); WNK(g,C[0],C[1],26,cA,cM,col,'α'); }],
+   [5,neu=>{ const col=neu?FARB.neu:FARB.erg; WNK(g,B[0],B[1],32,Math.PI,aB,col,'β'); WNK(g,C[0],C[1],38,cM,cB,col,'β'); }],
+   [6,neu=>{ if(neu) TXT(g,150,22,'Winkel bei C = α + β',FARB.neu,12.5,'center',true); }],
+   [7,neu=>{ if(neu) TXT(g,150,236,'α + β + (α + β) = 180°',FARB.neu,12.5,'center',true); }],
+   [8,neu=>{ RECHT(g,C[0],C[1],cA,cB,neu?FARB.neu:FARB.gru);
+             TXT(g,C[0]+34,C[1]+24,'90°',neu?FARB.neu:FARB.gru,12.5,'left',true); }]
+  ]); }
+
+/* ---------------- Beweis: Winkelsumme im Dreieck ---------------- */
+function fWsumme(g,st){ const A=[48,200], B=[256,194], C=[138,74];
+  const aA=Math.atan2(C[1]-A[1],C[0]-A[0]), aB=Math.atan2(C[1]-B[1],C[0]-B[0]);
+  const cA=Math.atan2(A[1]-C[1],A[0]-C[0]), cB=Math.atan2(B[1]-C[1],B[0]-C[0]);
+  const ab=Math.atan2(B[1]-A[1],B[0]-A[0]);
+  const pL=[C[0]-120*Math.cos(ab),C[1]-120*Math.sin(ab)], pR=[C[0]+140*Math.cos(ab),C[1]+140*Math.sin(ab)];
+  malen(g,st,[
+   [0,neu=>{ const col=CL(neu); L(g,A[0],A[1],B[0],B[1],col,BD(neu)); L(g,B[0],B[1],C[0],C[1],col,BD(neu));
+             L(g,C[0],C[1],A[0],A[1],col,BD(neu));
+             PKT(g,A[0],A[1],'A',-12,10); PKT(g,B[0],B[1],'B',12,10); PKT(g,C[0],C[1],'C',0,-13);
+             WNK(g,A[0],A[1],32,aA,0,FARB.gru,'α'); WNK(g,B[0],B[1],32,Math.PI,aB,FARB.erg,'β');
+             WNK(g,C[0],C[1],28,cA,cB,FARB.lin,'γ'); }],
+   [1,neu=>{ if(neu) TXT(g,150,236,'α + β + γ = 180° ?',FARB.neu,12.5,'center',true); }],
+   [2,neu=>{ L(g,pL[0],pL[1],pR[0],pR[1],CL(neu,FARB.erg),neu?2.6:1.9,[7,5]);
+             TXT(g,pR[0]-4,pR[1]-12,'p',CL(neu,FARB.erg),12.5,'right',true); }],
+   [3,neu=>{ const col=CL(neu,FARB.erg);
+             MARK(g,C[0],C[1],pR[0],pR[1],2,col); MARK(g,A[0],A[1],B[0],B[1],2,col);
+             if(neu) TXT(g,150,236,'p parallel zu AB – Parallelenaxiom',FARB.neu,11.5); }],
+   [4,neu=>{ const col=CL(neu,FARB.hilf); L(g,A[0],A[1],C[0]+(C[0]-A[0])*0.30,C[1]+(C[1]-A[1])*0.30,col,neu?2.2:1.4,[6,4]); }],
+   [5,neu=>{ const col=neu?FARB.neu:FARB.gru; WNK(g,C[0],C[1],26,Math.atan2(pL[1]-C[1],pL[0]-C[0]),cA,col,'α'); }],
+   [6,neu=>{ const col=neu?FARB.neu:FARB.erg; L(g,B[0],B[1],C[0]+(C[0]-B[0])*0.30,C[1]+(C[1]-B[1])*0.30,
+               neu?FARB.neu:FARB.hilf,neu?2.2:1.4,[6,4]);
+             WNK(g,C[0],C[1],26,cB,Math.atan2(pR[1]-C[1],pR[0]-C[0]),col,'β'); }],
+   [7,neu=>{ if(neu) TXT(g,150,236,'bei C liegen α, γ und β nebeneinander',FARB.neu,12,'center',true); }],
+   [8,neu=>{ const col=neu?FARB.neu:FARB.gru;
+             BOG(g,C[0],C[1],46,Math.atan2(pL[1]-C[1],pL[0]-C[0]),Math.atan2(pR[1]-C[1],pR[0]-C[0]),col,2);
+             TXT(g,C[0],C[1]-30,'180°',col,12.5,'center',true); }],
+   [9,neu=>{ if(neu) TXT(g,150,236,'α + γ + β = 180° – für jedes Dreieck',FARB.neu,12,'center',true); }]
+  ]); }
+
+/* ---------------- Gesamtfiguren (eine je Aufgabe) ---------------- */
+function fPythagoras(g){ const F=[100,200], O=[100,62], W=[268,200];
+  L(g,F[0],40,F[0],F[1],FARB.hilf,2.6); L(g,46,F[1],288,F[1],FARB.hilf,2.6);
+  TXT(g,62,52,'Wand',FARB.hilf,11,'left'); TXT(g,250,214,'Boden',FARB.hilf,11);
+  L(g,F[0],O[1],F[0],F[1],FARB.lin,2); L(g,F[0],F[1],W[0],W[1],FARB.lin,2);
+  L(g,W[0],W[1],F[0],O[1],FARB.erg,2.8);
+  RECHT(g,F[0],F[1],-Math.PI/2,0,FARB.neu);
+  TXT(g,F[0]-10,(O[1]+F[1])/2,'a',FARB.lin,13,'right',true);
+  TXT(g,(F[0]+W[0])/2,F[1]+15,'b',FARB.lin,13,'center',true);
+  TXT(g,(W[0]+F[0])/2+24,(W[1]+O[1])/2-10,'c',FARB.erg,13,'center',true);
+  TXT(g,150,236,'a² + b² = c²  –  c liegt dem rechten Winkel gegenüber',FARB.hilf,11); }
+function fStrahlensatz(g){ const Z=[42,206], a1=-0.95, a2=-0.26;
+  L(g,Z[0],Z[1],Z[0]+Math.cos(a1)*250,Z[1]+Math.sin(a1)*250,FARB.lin,1.9);
+  L(g,Z[0],Z[1],Z[0]+Math.cos(a2)*268,Z[1]+Math.sin(a2)*268,FARB.lin,1.9);
+  const t1=98, t2=210;
+  const P=t=>[[Z[0]+Math.cos(a1)*t,Z[1]+Math.sin(a1)*t],[Z[0]+Math.cos(a2)*t,Z[1]+Math.sin(a2)*t]];
+  const [A,B]=P(t1), [A2,B2]=P(t2);
+  L(g,A[0],A[1],B[0],B[1],FARB.erg,2.4); L(g,A2[0],A2[1],B2[0],B2[1],FARB.erg,2.4);
+  PKT(g,Z[0],Z[1],'Z',-11,8); PKT(g,A[0],A[1],'A',-12,-4); PKT(g,B[0],B[1],'B',4,14);
+  PKT(g,A2[0],A2[1],'A′',-13,-6); PKT(g,B2[0],B2[1],'B′',10,13);
+  MARK(g,A[0],A[1],B[0],B[1],2,FARB.erg); MARK(g,A2[0],A2[1],B2[0],B2[1],2,FARB.erg);
+  TXT(g,150,238,'ZA : ZA′ = ZB : ZB′ = AB : A′B′',FARB.hilf,11.5); }
+function fSchiefe(g){ const Fu=[36,196], Sp=[278,196], Ho=[278,96];
+  L(g,Fu[0],Fu[1],Sp[0],Sp[1],FARB.hilf,1.8); L(g,Sp[0],Sp[1],Ho[0],Ho[1],FARB.hilf,1.8);
+  L(g,Fu[0],Fu[1],Ho[0],Ho[1],FARB.lin,2.3);
+  const al=Math.atan2(Fu[1]-Ho[1],Ho[0]-Fu[0]), t=0.50;
+  const K=[Fu[0]+(Ho[0]-Fu[0])*t, Fu[1]-(Fu[1]-Ho[1])*t];
+  g.save(); g.translate(K[0],K[1]); g.rotate(-al); g.fillStyle='#dbe3f0'; g.strokeStyle=FARB.lin; g.lineWidth=1.5;
+  g.beginPath(); g.rect(-21,-26,42,26); g.fill(); g.stroke(); g.restore();
+  const S=[K[0]-Math.sin(al)*13, K[1]-Math.cos(al)*13];
+  PFEIL(g,S[0],S[1],S[0],S[1]+66,FARB.lin,2.2);
+  const H=[S[0]+Math.cos(Math.PI-al)*50, S[1]-Math.sin(Math.PI-al)*50];
+  const N=[S[0]+Math.sin(al)*44, S[1]+Math.cos(al)*44];
+  PFEIL(g,S[0],S[1],H[0],H[1],FARB.neu,2.2); PFEIL(g,S[0],S[1],N[0],N[1],FARB.erg,2.2);
+  L(g,S[0],S[1]+66,H[0],H[1],FARB.hilf,1.2,[4,3]); L(g,S[0],S[1]+66,N[0],N[1],FARB.hilf,1.2,[4,3]);
+  WNK(g,Fu[0],Fu[1],38,-al,0,FARB.gru,'α');
+  TXT(g,S[0]+8,S[1]+78,'Fg',FARB.lin,11.5,'left'); TXT(g,H[0]-8,H[1]-10,'FH',FARB.neu,11.5,'right');
+  TXT(g,N[0]+9,N[1]+6,'FN',FARB.erg,11.5,'left');
+  TXT(g,150,236,'FH = Fg · sin α      FN = Fg · cos α',FARB.hilf,11.5); }
+function fLinse(g){ const M=[150,130], f=50, G=[150-112,130];
+  L(g,16,M[1],290,M[1],FARB.hilf,1.5);
+  g.save(); g.strokeStyle=FARB.erg; g.lineWidth=2.1; g.beginPath(); g.ellipse(M[0],M[1],13,62,0,0,7); g.stroke(); g.restore();
+  PKT(g,M[0]-f,M[1],'F',0,14,FARB.hilf); PKT(g,M[0]+f,M[1],'F′',0,14,FARB.hilf);
+  const gh=44, Gs=[G[0],M[1]-gh];
+  PFEIL(g,G[0],M[1],Gs[0],Gs[1],FARB.lin,2.3);
+  const gg=M[0]-G[0], bb=gg*f/(gg-f), B=[M[0]+bb,M[1]], bh=gh*bb/gg, Bs=[B[0],M[1]+bh];
+  L(g,Gs[0],Gs[1],M[0],Gs[1],FARB.neu,1.7); L(g,M[0],Gs[1],Bs[0],Bs[1],FARB.neu,1.7);
+  L(g,Gs[0],Gs[1],Bs[0],Bs[1],FARB.gru,1.7);
+  PFEIL(g,B[0],M[1],Bs[0],Bs[1],FARB.erg,2.3);
+  TXT(g,G[0]-7,M[1]+14,'G',FARB.lin,12,'right',true); TXT(g,B[0]+8,M[1]-13,'B',FARB.erg,12,'left',true);
+  TXT(g,150,236,'1/f = 1/g + 1/b      Abbildungsmaßstab B/G = b/g',FARB.hilf,11.5); }
+
+/* ---------------- Zuordnung Kette → Figur ---------------- */
+const SFIG={ ms:fMs, wh:fWh, uk:fUk, ik:fIk, sss:fSss, sws:fSws, wsw:fWsw, ssw:fSsw, thales:fThales, wsumme:fWsumme };
+const SCHRITTBILD={
+ 'Konstruktion: Mittelsenkrechte einer Strecke':{k:'ms',   z:[0,1,2,3,4,5,6,7,8,9]},
+ 'Konstruktion: Winkelhalbierende':            {k:'wh',   z:[0,1,2,3,4,5,6,7,8,9]},
+ 'Konstruktion: Umkreis eines Dreiecks':       {k:'uk',   z:[0,1,2,3,4,5,6,7,8,9]},
+ 'Konstruktion: Inkreis eines Dreiecks':       {k:'ik',   z:[0,1,2,3,4,5,6,7,8,9]},
+ 'Konstruktion: Dreieck aus drei Seiten (SSS)':{k:'sss',  z:[0,1,2,3,4,5,6,7,8,9,10,11]},
+ 'Konstruktion: Dreieck aus zwei Seiten und Zwischenwinkel (SWS)':{k:'sws',z:[0,1,2,3,4,5,6,7,8,9,10]},
+ 'Konstruktion: Dreieck aus einer Seite und zwei Winkeln (WSW)':  {k:'wsw',z:[0,1,2,3,4,5,6,7,8,9,10]},
+ 'Konstruktion: Dreieck aus zwei Seiten und Gegenwinkel (SsW)':   {k:'ssw',z:[0,1,2,3,4,5,6,7,8,9,10]},
+ 'Beweis: Satz des Thales':                    {k:'thales',z:[0,1,2,3,4,5,6,7,7,8]},
+ 'Beweis: Winkelsumme im Dreieck':             {k:'wsumme',z:[0,1,2,3,4,5,6,7,8,8,9]}
+};
+const GESAMTBILD={
+ 'Vorgehen: Sachaufgabe mit dem Satz des Pythagoras':fPythagoras,
+ 'Vorgehen: Aufgabe mit dem Strahlensatz':fStrahlensatz,
+ 'Vorgehen: Kräftezerlegung an der schiefen Ebene':fSchiefe,
+ 'Vorgehen: Aufgabe mit der Linsengleichung':fLinse
+};
+const CACHE={};
+/* Die Figuren werden auf einer festen Fläche gezeichnet und danach auf den
+   tatsächlich bemalten Bereich zugeschnitten – je Kette auf denselben
+   Ausschnitt, damit die Bilder der Schritte nicht hin- und herspringen.   */
+function rand(c){ const d=c.getContext('2d').getImageData(0,0,c.width,c.height).data;
+  let x0=c.width,y0=c.height,x1=-1,y1=-1;
+  for(let y=0;y<c.height;y++) for(let x=0;x<c.width;x++){ const i=(y*c.width+x)*4;
+    if(d[i]<248||d[i+1]<248||d[i+2]<248){ if(x<x0)x0=x; if(x>x1)x1=x; if(y<y0)y0=y; if(y>y1)y1=y; } }
+  return x1<0?null:[x0,y0,x1,y1]; }
+function schneiden(c,b,m){ const x0=Math.max(0,b[0]-m), y0=Math.max(0,b[1]-m),
+  x1=Math.min(c.width-1,b[2]+m), y1=Math.min(c.height-1,b[3]+m);
+  const o=document.createElement('canvas'); o.width=x1-x0+1; o.height=y1-y0+1;
+  const g=o.getContext('2d'); g.fillStyle='#fff'; g.fillRect(0,0,o.width,o.height);
+  g.drawImage(c,x0,y0,o.width,o.height,0,0,o.width,o.height);
+  return o.toDataURL('image/png'); }
+function stufenSatz(k,zs){ const id='S#'+k; if(CACHE[id]) return CACHE[id];
+  const cs={}, uniq=[]; zs.forEach(st=>{ if(uniq.indexOf(st)<0) uniq.push(st); });
+  let bb=null;
+  uniq.forEach(st=>{ const b=blatt(SW,SH); SFIG[k](b.g,st); cs[st]=b.c;
+    const r=rand(b.c); if(r) bb=bb?[Math.min(bb[0],r[0]),Math.min(bb[1],r[1]),Math.max(bb[2],r[2]),Math.max(bb[3],r[3])]:r; });
+  const out={}; uniq.forEach(st=>{ out[st]=bb?schneiden(cs[st],bb,16):cs[st].toDataURL('image/png'); });
+  CACHE[id]=out; return out; }
+function einzelBild(zeichnen,id){ if(!CACHE[id]){ const b=blatt(SW,SH); zeichnen(b.g);
+    const r=rand(b.c); CACHE[id]=r?schneiden(b.c,r,16):b.c.toDataURL('image/png'); }
+  return CACHE[id]; }
+function gesamtBild(t){ return einzelBild(GESAMTBILD[t],'G#'+t); }
+function schrittBilder(t){ const e=SCHRITTBILD[t]; if(!e) return null;
+  const satz=stufenSatz(e.k,e.z); return e.z.map(st=>satz[st]||''); }
+function vorschau(t){ const e=SCHRITTBILD[t];          /* nur ein Bild für das Auswahlfenster */
+  if(e){ const letzt=Math.max.apply(null,e.z); return einzelBild(g=>SFIG[e.k](g,letzt),'V#'+e.k+'#'+letzt); }
+  if(GESAMTBILD[t]) return gesamtBild(t);
+  return ''; }
+
 const A=[
 
 {f:'M', j:8, g:'Kreis und Satz des Thales', t:'Beweis: Satz des Thales', s:[
@@ -644,9 +1135,17 @@ window.TafelReihen={
   verfuegbar:()=>A.length>0,
   anzahl:()=>A.length,
   /* gleiche Struktur wie die anderen Quellen des Auswahlfensters */
-  daten(){ return A.map(e=>({ f:e.f, j:e.j, g:e.g, b:e.t,
-    e:e.s.length+' Schritte · '+e.s[0].slice(0,70)+(e.s[0].length>70?' …':''),
-    schritte:e.s.slice() })); },
+  daten(){ return A.map(e=>{
+    const o={ f:e.f, j:e.j, g:e.g, b:e.t,
+      e:e.s.length+' Schritte · '+e.s[0].slice(0,70)+(e.s[0].length>70?' …':''),
+      schritte:e.s.slice() };
+    /* Veranschaulichungen: Konstruktionen und geometrische Beweise bekommen
+       je Schritt ein Bild, Vorgehensketten eine Gesamtfigur. Erst beim
+       Übernehmen gezeichnet, im Auswahlfenster nur die Vorschau.           */
+    try{ const v=vorschau(e.t); if(v) o.bild=v; }catch(err){}
+    if(SCHRITTBILD[e.t]) o.bilder=()=>schrittBilder(e.t);
+    if(GESAMTBILD[e.t])  o.figur =()=>gesamtBild(e.t);
+    return o; }); },
   fachName:k=>FA[k]||k
 };
 })();

@@ -477,7 +477,8 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   - **🔀 Mischen** mischt neu (und sorgt dafür, dass die Lösung nicht zufällig schon dasteht),
     **✓ Prüfen** färbt jede Karte grün oder rot und zeigt „x von n an der richtigen Stelle",
     **🕘 Lösung** stellt die richtige Reihenfolge her.
-  - **📚 Aufgaben** öffnet die Bibliothek mit **46 fertigen Ketten** (rund 500 Schritte), filterbar
+  - **📚 Aufgaben** (Symbol: Buchrücken im Regal – das aufgeschlagene Buch steht fürs Glossar)
+    öffnet die Bibliothek mit **46 fertigen Ketten** (rund 500 Schritte), filterbar
     nach **Fach, Jahrgangsstufe und Themenbereich**. Sie umfasst drei Sorten:
     - **Beweise:** Winkelsumme im Dreieck (Jgst. 7, über die Parallele durch C und die
       Wechselwinkel), Satz des Thales (Jgst. 8) und Irrationalität von Wurzel 2 (Jgst. 9).
@@ -504,6 +505,22 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
       Altersbestimmung über die Halbwertszeit (10) und Bewegung mit konstanter Beschleunigung (11).
     Mit **✎ Schritte** trägt man eigene Ketten ein: eine
     Überschrift und je Zeile ein Schritt, in der richtigen Reihenfolge – gemischt wird beim Übernehmen.
+  - **Bilder zur Veranschaulichung:** Die geometrischen Ketten bringen **Figuren** mit, die beim
+    Übernehmen erzeugt werden.
+    - Bei den **Konstruktionen** (Mittelsenkrechte, Winkelhalbierende, Umkreis, Inkreis, SSS, SWS,
+      WSW, SsW) und den beiden geometrischen **Beweisen** (Satz des Thales, Winkelsumme im Dreieck)
+      gehört **zu jedem Schritt ein eigenes Bild**: Es zeigt die Figur so, wie sie **nach diesem
+      Schritt** aussieht – das jeweils **neu hinzukommende Element rot**, alles Frühere schwarz oder
+      grau. Einstich, Zirkelöffnung und Hinweise erscheinen nur in ihrem eigenen Schritt, damit die
+      Zeichnung nicht zuwächst.
+    - Bei vier Vorgehensketten (Pythagoras, Strahlensatz, schiefe Ebene, Linsengleichung) steht
+      **eine Figur zur ganzen Aufgabe** unter der Überschrift.
+    - Der Knopf **🖼 Bilder** blendet alle Bilder aus und wieder ein – ohne Bilder ist die Aufgabe
+      schwerer, mit Bildern wird sie zur geführten Konstruktionsbeschreibung. Ein **Tipp auf ein
+      Bild** zeigt es groß. Gedruckt wird mit Bildern, wenn sie eingeblendet sind.
+    - Die Figuren werden **im Gerät gezeichnet** (Canvas, keine Bilddateien) und automatisch auf den
+      bemalten Bereich zugeschnitten – je Kette auf denselben Ausschnitt, damit nichts springt. Sie
+      werden **mit dem Projekt gespeichert**, sind also auch ohne Netz wieder da.
   - **Eigene Aufgaben aufheben:** Im selben Fenster lässt sich **„in meine Bibliothek aufnehmen"**
     ankreuzen und dazu **Fach und Jahrgangsstufe** wählen. Die Aufgabe wird dann **auf dem Gerät
     gespeichert** (unabhängig vom Projekt) und erscheint in der Auswahl unter dem Bereich **„Eigene
@@ -607,6 +624,9 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   geschrieben** (kurze, schülergerechte Sätze) – der Lehrplantext selbst wird nicht wiedergegeben.
 - **Fertige Zuordnungsaufgaben** (Zuordnen): Der Knopf **„Aufgaben"** öffnet eine Bibliothek mit
   **fertigen Aufgaben**, filterbar nach **Jahrgangsstufe** und **Thema**:
+  (Alle Bibliotheken **fertiger Aufgaben** – Zuordnen, Lückentext, Reihenfolge – tragen dasselbe
+  Symbol: **Buchrücken im Regal**. Das **aufgeschlagene Buch** bleibt dem **Glossar** und den
+  Lehrplanbegriffen vorbehalten, damit die beiden Quellen auf einen Blick zu unterscheiden sind.)
   - **Bruch und Dezimalbruch** (Jgst. 6): 1/4 ↔ 0,25, 5/8 ↔ 0,625, 1/3 ↔ 0,333…
   - **Brüche erweitern und kürzen** (Jgst. 6): 2/3 ↔ 8/12, 3/8 ↔ 6/16
   - **Unechter Bruch und gemischte Zahl** (Jgst. 6): 11/4 ↔ 2 3/4, 17/5 ↔ 3 2/5
