@@ -508,7 +508,9 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   - **Bilder zur Veranschaulichung:** Die geometrischen Ketten bringen **Figuren** mit, die beim
     Übernehmen erzeugt werden.
     - Bei den **Konstruktionen** (Mittelsenkrechte, Winkelhalbierende, Umkreis, Inkreis, SSS, SWS,
-      WSW, SsW) und den beiden geometrischen **Beweisen** (Satz des Thales, Winkelsumme im Dreieck)
+      WSW, SsW), den beiden geometrischen **Beweisen** (Satz des Thales, Winkelsumme im Dreieck) und
+      den beiden **Physik-Ketten** zum Elektromagnetismus (Kraft zwischen parallelen Leitern,
+      Magnetkugel im Kupferrohr – mit Magnetfeld, Stromrichtung und Kraftpfeilen)
       gehört **zu jedem Schritt ein eigenes Bild**: Es zeigt die Figur so, wie sie **nach diesem
       Schritt** aussieht – das jeweils **neu hinzukommende Element rot**, alles Frühere schwarz oder
       grau. Einstich, Zirkelöffnung und Hinweise erscheinen nur in ihrem eigenen Schritt, damit die
@@ -685,7 +687,7 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   eines Themas. Zwei Aufgaben mit **derselben Lösung** (etwa (x + 1)/(2x + 2) und (1/x) : (2/x),
   die beide 1/2 ergeben) werden dabei automatisch aussortiert, damit jede Zuordnung eindeutig ist.
 - **Texte für den Lückentext** (Lückentext): Der Knopf **„Texte"** öffnet eine Bibliothek mit
-  **81 Sachtexten, Alltagstexten und Geschichten** (je rund 200 bis 250 Wörter), passend zu den
+  **125 Sachtexten, Alltagstexten und Geschichten** (je rund 160 bis 250 Wörter), passend zu den
   Lernbereichen des LehrplanPLUS und sprachlich an die Jahrgangsstufe angepasst. Für die
   **Unterstufe** gibt es dabei auch **erfundene Geschichten** – Drachenturm, Elfenwiese, Piratenpizza,
   Hexenrezept, Koboldflohmarkt, Wichtelwerkstatt –, bei denen nur die **Fachbegriffe** zählen:
@@ -695,7 +697,16 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   entwickeln vier Texte die **Ursachenkette** Schritt für Schritt: **Lorentzkraft**, **Elektromotor**,
   **Kraft zwischen parallelen Leitern** und **Magnetkugel im Kupferrohr** (dort wird die Stromrichtung
   über die **Energiebilanz** begründet: Die Kugel kommt langsamer an als im freien Fall, die fehlende
-  Bewegungsenergie steckt in den Wirbelströmen). Gefiltert wird
+  Bewegungsenergie steckt in den Wirbelströmen).
+  **44 weitere Texte entstanden aus den Argumentationsketten** des Reihenfolge-Werkzeugs: Dieselben
+  Inhalte stehen damit einmal als **zu ordnende Kette** und einmal als **zusammenhängender Text** zur
+  Verfügung – Beweise (Thales, Winkelsumme, Irrationalität von Wurzel 2), die **Konstruktionen** mit
+  Zirkel und Lineal samt der vier **Kongruenzsätze**, die **Lösungswege** von der Bruchaddition über
+  Dreisatz, Gleichungen, Pythagoras, Strahlensatz und Pfadregeln bis zu Extremwertaufgaben,
+  Signifikanztest und Schnittpunkt von Gerade und Ebene, dazu **Heron-** und **Newton-Verfahren**,
+  das **Umschütträtsel** und aus der Physik unter anderem Messwerte auswerten, Linsengleichung,
+  schiefe Ebene, Halbwertszeit, **Wirbelstrombremse**, **Induktionsherd** und **Nordlichter**.
+  Gefiltert wird
   nach **Fach, Jahrgangsstufe, Themenbereich** und **Art** (Sachtext · Alltag · Geschichte); die
   Trefferliste zeigt Titel, Anfang und Wortzahl. Ein Klick übernimmt den Text, danach setzt man die
   Lücken wie gewohnt von Hand oder per **Zufällig**. Über **„📄 eigener Text …"** lässt sich auch

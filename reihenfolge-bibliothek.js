@@ -13,7 +13,7 @@
    hinzukommende Element rot. Gezeichnet wird zur Laufzeit auf Canvas,
    damit keine Bilddateien nötig sind.                                  */
 const FARB={lin:'#1f2430',hilf:'#94a3b8',neu:'#dc2626',erg:'#2563eb',gru:'#15803d',hell:'#cbd5e1'};
-const SW=300, SH=320;
+const SW=340, SH=340;
 function blatt(w,h){ const c=document.createElement('canvas');
   const dpr=2; c.width=w*dpr; c.height=h*dpr;
   const g=c.getContext('2d'); g.setTransform(dpr,0,0,dpr,0,0);
@@ -393,6 +393,140 @@ function fWsumme(g,st){ const A=[48,200], B=[256,194], C=[138,74];
    [9,neu=>{ if(neu) TXT(g,150,236,'α + γ + β = 180° – für jedes Dreieck',FARB.neu,12,'center',true); }]
   ]); }
 
+/* ---------------- Physik: Feld- und Stromsymbole ---------------- */
+const MAG={n:'#ea580c', s:'#2563eb', cu:'#b45309'};
+function KREUZ(g,x,y,r,col){ g.save(); g.strokeStyle=col||FARB.lin; g.fillStyle='#fff'; g.lineWidth=1.7;
+  g.beginPath(); g.arc(x,y,r,0,7); g.fill(); g.stroke(); const d=r*0.68;
+  g.beginPath(); g.moveTo(x-d,y-d); g.lineTo(x+d,y+d); g.moveTo(x+d,y-d); g.lineTo(x-d,y+d); g.stroke(); g.restore(); }
+function PUNKTF(g,x,y,r,col){ g.save(); g.strokeStyle=col||FARB.lin; g.fillStyle='#fff'; g.lineWidth=1.7;
+  g.beginPath(); g.arc(x,y,r,0,7); g.fill(); g.stroke();
+  g.fillStyle=col||FARB.lin; g.beginPath(); g.arc(x,y,2.3,0,7); g.fill(); g.restore(); }
+function ELL(g,cx,cy,rx,ry,col,bd,dash){ g.save(); g.strokeStyle=col||FARB.hilf; g.lineWidth=bd||1.4;
+  if(dash) g.setLineDash(dash); g.beginPath(); g.ellipse(cx,cy,rx,ry,0,0,7); g.stroke(); g.restore(); }
+function ELLSPITZE(g,cx,cy,rx,ry,col,nachRechts){ const x=cx, y=cy+ry, d=nachRechts?1:-1;
+  L(g,x,y,x-d*10,y-5,col,2.2); L(g,x,y,x-d*10,y+5,col,2.2); }
+function LADUNG(g,x,y,col){ g.save(); g.strokeStyle=col||FARB.lin; g.fillStyle='#fff'; g.lineWidth=1.4;
+  g.beginPath(); g.arc(x,y,6,0,7); g.fill(); g.stroke(); g.lineWidth=1.6;
+  g.beginPath(); g.moveTo(x-3,y); g.lineTo(x+3,y); g.moveTo(x,y-3); g.lineTo(x,y+3); g.stroke(); g.restore(); }
+function DURCH(g,x1,y1,x2,y2,col){ L(g,x1,y1,x2,y2,col||FARB.neu,2.4); }   /* Durchstreichen */
+function KUGEL(g,cx,cy,r,blass){
+  g.save(); g.lineWidth=1.6;
+  g.fillStyle=blass?'#fde7d7':'#fdba74'; g.strokeStyle=blass?'#e9c3a8':MAG.n;
+  g.beginPath(); g.arc(cx,cy,r,Math.PI,0); g.closePath(); g.fill(); g.stroke();
+  g.fillStyle=blass?'#dbe7fb':'#93c5fd'; g.strokeStyle=blass?'#c3d4ee':MAG.s;
+  g.beginPath(); g.arc(cx,cy,r,0,Math.PI); g.closePath(); g.fill(); g.stroke(); g.restore();
+  TXT(g,cx,cy-r*0.45,'N',blass?'#d9b79a':MAG.n,r*0.62,'center',true);
+  TXT(g,cx,cy+r*0.45,'S',MAG.s,r*0.62,'center',true); }
+
+/* ---------------- Kraft zwischen zwei parallelen Leitern ---------------- */
+function fLeiter(g,st){
+  const x1=92, x2=178, yo=56, yu=268, ym=162;
+  const ix1=252, ix2=300, iyo=112, iyu=252, iym=186;     /* Nebenbild: Gegenfall */
+  const draht=(x,y0,y1,col,bd)=>L(g,x,y0,x,y1,col,bd||3.2);
+  const hinweis=(t)=>TXT(g,150,26,t,FARB.neu,11.5);
+  malen(g,st,[
+   [0,neu=>{ const col=CL(neu); draht(x1,yo,yu,col); draht(x2,yo,yu,col);
+     PFEIL(g,x1,yo+46,x1,yo+6,col,2.4); PFEIL(g,x2,yo+46,x2,yo+6,col,2.4);
+     TXT(g,x1-11,yo+26,'I₁',col,13,'right',true); TXT(g,x2+11,yo+26,'I₂',col,13,'left',true); }],
+   [1,neu=>{ if(!neu) return; PFEIL(g,x1+9,yu+16,x1+34,yu+16,FARB.neu,2.6);
+     PFEIL(g,x2-9,yu+16,x2-34,yu+16,FARB.neu,2.6);
+     TXT(g,135,yu+34,'Beobachtung: sie ziehen sich an',FARB.neu,11.5); }],
+   [2,neu=>{ const col=CL(neu,FARB.hilf); [30,58,86].forEach(r=>ELL(g,x1,ym,r,r*0.26,col,neu?1.9:1.3));
+     TXT(g,x1,ym-32,'B₁',col,12.5,'center',true); }],
+   [3,neu=>{ const col=neu?FARB.neu:FARB.hilf;
+     PUNKTF(g,x1-58,ym,8,col); KREUZ(g,x1+58,ym,8,col);
+     if(neu) hinweis('Rechte-Hand-Regel: Daumen = I₁'); }],
+   [4,neu=>{ const col=neu?FARB.neu:FARB.lin; KREUZ(g,x2,ym,9,col);
+     TXT(g,x2+15,ym-13,'B₁',col,12.5,'left',true);
+     if(neu) hinweis('am zweiten Draht: B₁ senkrecht ins Blatt'); }],
+   [5,neu=>{ const col=neu?FARB.neu:FARB.lin; [-58,-34,34].forEach(d=>LADUNG(g,x2,ym+d,col));
+     if(neu){ PFEIL(g,x2+22,ym+70,x2+22,ym+44,FARB.neu,2); TXT(g,x2+30,ym+58,'v',FARB.neu,12.5,'left',true);
+       hinweis('im zweiten Draht bewegen sich Ladungen'); } }],
+   [6,neu=>{ if(!neu) return; PFEIL(g,x2-10,ym-34,x2-44,ym-34,FARB.neu,2.4);
+     TXT(g,x2-27,ym-48,'F',FARB.neu,12.5,'center',true); hinweis('Lorentzkraft auf jede bewegte Ladung'); }],
+   [7,neu=>{ const col=neu?FARB.neu:FARB.erg; PFEIL(g,x2-7,ym+76,x2-36,ym+76,col,3);
+     TXT(g,x2-21,ym+62,'F₂',col,13,'center',true); }],
+   [8,neu=>{ const col=neu?FARB.neu:FARB.lin;
+     draht(ix1,iyo,iyu,col,2.6); draht(ix2,iyo,iyu,col,2.6);
+     PFEIL(g,ix1,iyo+40,ix1,iyo+4,col,2.2); PFEIL(g,ix2,iyu-40,ix2,iyu-4,col,2.2);
+     TXT(g,ix1-10,iyo+22,'I₁',col,12,'right',true); TXT(g,ix2+10,iyu-22,'I₂',col,12,'left',true);
+     PFEIL(g,ix1-6,iym,ix1-30,iym,col,2.4); PFEIL(g,ix2+6,iym,ix2+30,iym,col,2.4);
+     TXT(g,276,iyo-16,'Gegenfall',col,11.5);
+     if(neu) hinweis('Richtung: Drei-Finger-Regel'); }],
+   [9,neu=>{ const col=neu?FARB.neu:FARB.gru;
+     TXT(g,135,yu+52,'gleiche Richtung → Anziehung',col,11.5);
+     TXT(g,276,iyu+18,'entgegengesetzt',col,11); TXT(g,276,iyu+32,'→ Abstoßung',col,11); }],
+   [10,neu=>{ const col=neu?FARB.neu:FARB.erg; PFEIL(g,x1+7,ym+76,x1+36,ym+76,col,3);
+     TXT(g,x1+21,ym+62,'F₁',col,13,'center',true);
+     if(neu) hinweis('Wechselwirkung: F₁ = F₂, entgegengesetzt'); }],
+   [11,neu=>{ const col=neu?FARB.neu:FARB.hilf;
+     PFEIL(g,x1+5,yo+58,x2-5,yo+58,col,1.6); PFEIL(g,x2-5,yo+58,x1+5,yo+58,col,1.6);
+     TXT(g,135,yo+46,'r',col,12.5,'center',true);
+     if(neu) hinweis('F wächst mit I₁ und I₂ und nimmt mit r ab'); }]
+  ]); }
+
+/* ---------------- Magnetkugel fällt durch ein Kupferrohr ---------------- */
+function fRohr(g,st){
+  const w1=62, w2=170, yo=46, yu=300, cx=(w1+w2)/2;
+  const ky=152, kr=22;                                    /* Kugel im Kupferrohr */
+  const p1=246, p2=304, py=268, pr=16;                    /* Kunststoffrohr */
+  const ru=[cx,214,54,13], ro=[cx,92,54,13];              /* Ringe unten / oben */
+  const rohr=(a,b,col,bd)=>{ L(g,a,yo,a,yu,col,bd); L(g,b,yo,b,yu,col,bd); };
+  malen(g,st,[
+   [0,neu=>{ const col=neu?FARB.neu:MAG.cu; rohr(w1,w2,col,4);
+     rohr(p1,p2,neu?FARB.neu:FARB.hilf,2.4);
+     KUGEL(g,cx,ky,kr); KUGEL(g,p2-(p2-p1)/2,py,pr);
+     TXT(g,cx,yo-14,'Kupfer',MAG.cu,12,'center',true); TXT(g,275,yo-14,'Kunststoff',FARB.hilf,12,'center',true);
+     TXT(g,cx,yu+18,'mehrere Sekunden',FARB.lin,11.5); TXT(g,275,yu+18,'Bruchteile',FARB.lin,11.5); }],
+   [1,neu=>{ if(!neu) return; const y=ky, mx=(cx+kr+w2)/2;
+     PFEIL(g,cx+kr+4,y,w2-6,y,FARB.hilf,2);
+     DURCH(g,mx-9,y-9,mx+9,y+9,FARB.neu); DURCH(g,mx+9,y-9,mx-9,y+9,FARB.neu);
+     TXT(g,170,yu+36,'Kupfer ist nicht magnetisch – keine Anziehung',FARB.neu,11.5); }],
+   [2,neu=>{ const col=neu?FARB.neu:FARB.hilf;
+     [1,-1].forEach(s=>{ g.save(); g.strokeStyle=col; g.lineWidth=neu?1.8:1.3; g.setLineDash([5,4]);
+       g.beginPath(); g.moveTo(cx+s*2,ky-kr-2);
+       g.bezierCurveTo(cx+s*46,ky-kr-26, cx+s*46,ky+kr+26, cx+s*2,ky+kr+2); g.stroke(); g.restore(); });
+     PFEIL(g,150,ky-10,150,ky+30,col,2.2); TXT(g,158,ky+12,'v',col,12.5,'left',true); }],
+   [3,neu=>{ const col=neu?FARB.neu:FARB.lin; ELL(g,ru[0],ru[1],ru[2],ru[3],col,neu?2.4:1.7);
+     if(neu){ [-26,0,26].forEach(d=>PFEIL(g,ru[0]+d,ru[1]-24,ru[0]+d,ru[1]-4,FARB.neu,1.6));
+       TXT(g,cx,yu+36,'Fluss durch den Ring ändert sich',FARB.neu,11.5); } }],
+   [4,neu=>{ if(!neu) return; TXT(g,ru[0]+ru[2]+8,ru[1]-16,'Uind',FARB.neu,12.5,'left',true);
+     TXT(g,cx,yu+36,'Induktionsgesetz: Spannung wird induziert',FARB.neu,11.5); }],
+   [5,neu=>{ const col=neu?FARB.neu:FARB.erg; ELL(g,ru[0],ru[1],ru[2],ru[3],col,neu?2.4:1.9);
+     ELLSPITZE(g,ru[0],ru[1],ru[2],ru[3],col,true);
+     TXT(g,ru[0]-ru[2]-8,ru[1]+2,'Iind',col,12.5,'right',true);
+     if(neu) TXT(g,cx,yu+36,'Kupfer leitet: es fließen Wirbelströme',FARB.neu,11.5); }],
+   [6,neu=>{ const col=neu?FARB.neu:FARB.hilf; PFEIL(g,ru[0],ru[1]+22,ru[0],ru[1]-22,col,2);
+     TXT(g,ru[0]+10,ru[1]+30,'Bind',col,12,'left',true); }],
+   [7,neu=>{ if(!neu) return; TXT(g,ru[0]+ru[2]+10,ru[1]+14,'?',FARB.neu,17,'left',true);
+     TXT(g,cx,yu+36,'Stromrichtung? Das klärt die Energiebilanz',FARB.neu,11.5); }],
+   [8,neu=>{ const col=neu?FARB.neu:FARB.hilf;
+     PFEIL(g,208,yo+4,208,yu-4,col,1.6); PFEIL(g,208,yu-4,208,yo+4,col,1.6);
+     TXT(g,216,(yo+yu)/2,'h',col,13,'left',true);
+     if(neu) TXT(g,170,yu+54,'gleiche Höhe → gleiche Lageenergie',FARB.neu,11.5); }],
+   [9,neu=>{ const col=neu?FARB.neu:FARB.lin;
+     TXT(g,w1-6,ky+52,'v klein',col,11.5,'right'); TXT(g,275,py-pr-14,'v groß',col,11.5);
+     if(neu) TXT(g,170,yu+54,'im Kupferrohr kommt sie langsamer an',FARB.neu,11.5); }],
+   [10,neu=>{ if(!neu) return;
+     TXT(g,170,yu+54,'fehlende Bewegungsenergie →',FARB.neu,11.5);
+     TXT(g,170,yu+70,'elektrische Energie → innere Energie',FARB.neu,11.5); }],
+   [11,neu=>{ if(!neu) return; PFEIL(g,w1-18,ky+30,w1-18,ky-18,FARB.hilf,2.2);
+     DURCH(g,w1-28,ky+16,w1-8,ky-8,FARB.neu); DURCH(g,w1-8,ky+16,w1-28,ky-8,FARB.neu);
+     TXT(g,170,yu+54,'beschleunigt? Dann Energie aus dem Nichts',FARB.neu,11.5); }],
+   [12,neu=>{ const col=neu?FARB.neu:FARB.gru; ELL(g,ru[0],ru[1],ru[2],ru[3],col,2.2);
+     ELLSPITZE(g,ru[0],ru[1],ru[2],ru[3],col,true);
+     if(neu) TXT(g,170,yu+54,'lenzsche Regel: wirkt der Ursache entgegen',FARB.neu,11.5); }],
+   [13,neu=>{ const col=neu?FARB.neu:FARB.erg; ELL(g,ro[0],ro[1],ro[2],ro[3],col,2);
+     ELLSPITZE(g,ro[0],ro[1],ro[2],ro[3],col,false);
+     PFEIL(g,cx-14,ky+kr+32,cx-14,ky+kr+6,col,2.4); PFEIL(g,cx+14,ky-kr-6,cx+14,ky-kr-32,col,2.4);
+     TXT(g,ru[0]+ru[2]+8,ru[1]+14,'stößt ab',col,11,'left'); TXT(g,ro[0]+ro[2]+8,ro[1]-14,'zieht an',col,11,'left');
+     if(neu) TXT(g,170,yu+54,'beide Kräfte zeigen nach oben',FARB.neu,11.5); }],
+   [14,neu=>{ const col=neu?FARB.neu:FARB.gru; const fx=w1+16;
+     PFEIL(g,fx,ky-6,fx,ky-50,col,2.8);  TXT(g,fx+8,ky-44,'F',col,12.5,'left',true);
+     PFEIL(g,fx,ky+6,fx,ky+50,FARB.lin,2.8); TXT(g,fx+8,ky+44,'Fg',FARB.lin,12.5,'left',true);
+     if(neu) TXT(g,170,yu+54,'F = Fg: die Kugel sinkt gleichmäßig',FARB.neu,11.5); }]
+  ]); }
+
 /* ---------------- Gesamtfiguren (eine je Aufgabe) ---------------- */
 function fPythagoras(g){ const F=[100,200], O=[100,62], W=[268,200];
   L(g,F[0],40,F[0],F[1],FARB.hilf,2.6); L(g,46,F[1],288,F[1],FARB.hilf,2.6);
@@ -446,7 +580,8 @@ function fLinse(g){ const M=[150,130], f=50, G=[150-112,130];
   TXT(g,150,236,'1/f = 1/g + 1/b      Abbildungsmaßstab B/G = b/g',FARB.hilf,11.5); }
 
 /* ---------------- Zuordnung Kette → Figur ---------------- */
-const SFIG={ ms:fMs, wh:fWh, uk:fUk, ik:fIk, sss:fSss, sws:fSws, wsw:fWsw, ssw:fSsw, thales:fThales, wsumme:fWsumme };
+const SFIG={ ms:fMs, wh:fWh, uk:fUk, ik:fIk, sss:fSss, sws:fSws, wsw:fWsw, ssw:fSsw, thales:fThales, wsumme:fWsumme,
+             leiter:fLeiter, rohr:fRohr };
 const SCHRITTBILD={
  'Konstruktion: Mittelsenkrechte einer Strecke':{k:'ms',   z:[0,1,2,3,4,5,6,7,8,9]},
  'Konstruktion: Winkelhalbierende':            {k:'wh',   z:[0,1,2,3,4,5,6,7,8,9]},
@@ -457,7 +592,9 @@ const SCHRITTBILD={
  'Konstruktion: Dreieck aus einer Seite und zwei Winkeln (WSW)':  {k:'wsw',z:[0,1,2,3,4,5,6,7,8,9,10]},
  'Konstruktion: Dreieck aus zwei Seiten und Gegenwinkel (SsW)':   {k:'ssw',z:[0,1,2,3,4,5,6,7,8,9,10]},
  'Beweis: Satz des Thales':                    {k:'thales',z:[0,1,2,3,4,5,6,7,7,8]},
- 'Beweis: Winkelsumme im Dreieck':             {k:'wsumme',z:[0,1,2,3,4,5,6,7,8,8,9]}
+ 'Beweis: Winkelsumme im Dreieck':             {k:'wsumme',z:[0,1,2,3,4,5,6,7,8,8,9]},
+ 'Kraft zwischen zwei parallelen Leitern':     {k:'leiter',z:[0,1,2,3,4,5,6,7,8,9,10,11]},
+ 'Magnetkugel fällt durch ein Kupferrohr':     {k:'rohr',  z:[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14]}
 };
 const GESAMTBILD={
  'Vorgehen: Sachaufgabe mit dem Satz des Pythagoras':fPythagoras,
