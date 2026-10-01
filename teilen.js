@@ -84,12 +84,12 @@ function aufbau(){
   st.textContent=
    '#tTeilen{position:fixed;inset:0;background:rgba(15,23,42,.45);display:none;align-items:center;justify-content:center;padding:12px;z-index:9997;}'+
    '#tTeilen.an{display:flex;}'+
-   '#tTeilenIn{background:#fff;border-radius:14px;padding:14px;max-width:min(560px,96vw);max-height:96vh;overflow:auto;'+
+   '#tTeilenIn{background:#fff;border-radius:14px;padding:12px;max-width:min(680px,97vw);max-height:97vh;overflow:auto;'+
      'display:flex;flex-direction:column;gap:9px;align-items:center;font:14px -apple-system,BlinkMacSystemFont,sans-serif;color:#1f2430;}'+
    '#tTeilenIn h3{margin:0;font-size:1.05em;align-self:flex-start;}'+
    '#tTeilenIn .hint{color:#64748b;font-size:.84em;align-self:flex-start;line-height:1.35;}'+
-   '#tTeilenBild{display:flex;align-items:center;justify-content:center;min-height:60px;}'+
-   '#tTeilenBild img,#tTeilenBild canvas{width:min(62vh,340px);height:auto;image-rendering:pixelated;}'+
+   '#tTeilenBild{display:flex;align-items:center;justify-content:center;min-height:60px;flex:0 0 auto;width:100%;}'+
+   '#tTeilenBild img,#tTeilenBild canvas{width:auto;height:auto;max-width:min(600px,100%);max-height:58vh;image-rendering:pixelated;}'+
    '#tTeilenLink{width:100%;border:1px solid #cfd6e0;border-radius:9px;padding:6px 8px;font:12px ui-monospace,monospace;color:#475569;}'+
    '#tTeilen .row{display:flex;gap:7px;align-self:stretch;justify-content:flex-end;flex-wrap:wrap;}'+
    '#tTeilen button{border:1px solid #cfd6e0;background:#fff;border-radius:9px;padding:6px 11px;font:inherit;font-weight:600;cursor:pointer;}'+
@@ -123,7 +123,7 @@ function qr(url){
   warn.hidden=true; warn.textContent='';
   if(typeof QRCode==='undefined'){ warn.hidden=false; warn.textContent='QR-Code nicht verfügbar – bitte den Link weitergeben.'; return; }
   const stufe=url.length>GRENZE?QRCode.CorrectLevel.L:QRCode.CorrectLevel.M;
-  try{ new QRCode(host,{text:url,width:620,height:620,correctLevel:stufe}); }
+  try{ new QRCode(host,{text:url,width:900,height:900,correctLevel:stufe}); }
   catch(e){ warn.hidden=false;
     warn.textContent='Die Aufgabe ist zu umfangreich für einen QR-Code. Bitte den Link kopieren und weitergeben.'; return; }
   if(url.length>GRENZE){ warn.hidden=false;
@@ -142,18 +142,27 @@ async function zeigen(datei,bauen){
 }
 
 /* ---------- Knopf in der Werkzeugleiste ---------- */
-function knopf(host,datei,bauen){
+const SYMBOL='<svg viewBox="0 0 32 20"><path d="M11.5 7.5H6.5v10h19v-10h-5"/>'+
+  '<path d="M16 13.5V2.6"/><path d="M12.3 6.3 16 2.6l3.7 3.7"/></svg>';
+function knopf(host,datei,bauen,opt){
   if(!host) return null;
+  opt=opt||{};
   const b=document.createElement('button');
-  b.className='tb tafelTeilenKnopf'; b.id='bTeilen';
+  b.type='button';
+  b.className=(opt.cls||'tb')+' tafelTeilenKnopf'; b.id='bTeilen';
   b.title='Diese Aufgabe per QR-Code an die Klasse geben';
-  b.innerHTML='<svg viewBox="0 0 32 20"><rect x="4" y="2" width="6" height="6"/><rect x="4" y="12" width="6" height="6"/>'+
-    '<rect x="14" y="2" width="6" height="6"/><path d="M14 12h3v3M20 12v6h-6M17 18v-3M24 4v3M27 9h-3M24 13v5M27 16h1"/></svg>'+
-    '<span>Teilen</span>';
+  b.innerHTML=opt.html||(SYMBOL+'<span>Teilen</span>');
   b.onclick=()=>zeigen(datei,bauen);
   host.appendChild(b);
   return b;
 }
 
-window.TafelTeilen={ knopf, zeigen, empfangen, istGeteilt, nurBenutzen, basis };
+/* Viele Werkzeuge bekommen ihren Zustand ohnehin über „embed-data" von der Tafel.
+   Ein geteilter Link spielt ihn auf demselben Weg ein – als Nachricht an das eigene Fenster. */
+function einspielen(daten){
+  try{ window.dispatchEvent(new MessageEvent('message',{data:{type:'embed-data',data:daten},source:window})); return true; }
+  catch(e){ return false; }
+}
+
+window.TafelTeilen={ knopf, zeigen, empfangen, istGeteilt, nurBenutzen, einspielen, basis };
 })();

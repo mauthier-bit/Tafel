@@ -624,9 +624,12 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     Begriffslisten in alle sieben Werkzeuge übernehmen.
   Die Begriffe folgen den Lernbereichen des Lehrplans, die **Erklärungen sind eigens für die Tafel
   geschrieben** (kurze, schülergerechte Sätze) – der Lehrplantext selbst wird nicht wiedergegeben.
-- **Teilen per QR-Code** (Zuordnen, Reihenfolge, Lückentext): Der Knopf **„Teilen"** zeigt einen
-  **QR-Code**. Wer ihn mit der Kamera scannt, öffnet **dasselbe Werkzeug mit genau der Aufgabe**, die
-  an der Tafel eingestellt ist – ohne Konto, ohne Anmeldung, ohne Server.
+- **Teilen per QR-Code** (zehn Werkzeuge): Der Knopf **„Teilen"** (Pfeil aus dem offenen Kasten)
+  zeigt einen **QR-Code**. Wer ihn mit der Kamera scannt, öffnet **dasselbe Werkzeug mit genau der
+  Aufgabe**, die an der Tafel eingestellt ist – ohne Konto, ohne Anmeldung, ohne Server.
+  Dabei sind: **Zuordnen**, **Reihenfolge**, **Lückentext**, **Stromkreis**, **Wellenwanne**,
+  **Optiklabor**, **Term-Umformer**, **Figuren und Körper**, **Messwert-Analyse** und
+  **Stellenwerttafel**.
   - **Wie es funktioniert:** Die Aufgabe steckt komprimiert im **Fragment der Adresse** (hinter dem
     `#`). Dieser Teil wird nie an einen Server geschickt. Stammt die Aufgabe aus einer **Bibliothek**,
     wandert nur ihr **Titel** mit und das Schülergerät baut sie selbst auf – dadurch bleibt der Code
@@ -634,10 +637,16 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     und die Konstruktionsfiguren der Reihenfolge-Ketten werden im Schülergerät neu gezeichnet. Nur
     **selbst eingetippte** Aufgaben reisen vollständig mit; der Code wird dann dichter, und ab etwa
     900 Zeichen weist das Fenster darauf hin, dass man ihn groß zeigen oder stattdessen den **Link
-    kopieren** sollte.
+    kopieren** sollte. Bei den Geräte-Werkzeugen wandert der eingestellte Aufbau mit: gemessen
+    wurden etwa **339 Zeichen** für einen Optikaufbau mit drei Bauteilen, **398** für eine Schaltung
+    mit drei Bauteilen und zwanzig Leitungsstücken, **306** für eine Wellenwanne, **205** für den
+    Term-Umformer, **319** für einen Quader mit Angaben und **196** für die Stellenwerttafel. Fotos
+    der Messwert-Analyse bleiben außen vor – sie wären zu groß für einen Code.
   - **Was die Schüler sehen:** Die geteilte Fassung öffnet im **Benutzen-Modus**. Bibliothek,
-    Bearbeiten, Drucken und der Umschalter fehlen, und die **Lösung lässt sich nicht aufdecken** –
-    **Prüfen** und **Mischen** bleiben. Was die Schüler eintragen, bleibt auf ihrem Gerät: Das Teilen
+    Vorlagen, Bearbeiten, Drucken und der Umschalter fehlen, und die **Lösung lässt sich nicht
+    aufdecken** – **Prüfen** und **Mischen** bleiben. Bei den Geräte-Werkzeugen heißt das: Der Aufbau
+    steht da und lässt sich **bedienen** (Welle starten, Schaltung schließen, Strahlen verfolgen),
+    aber nicht umbauen. Was die Schüler eintragen, bleibt auf ihrem Gerät: Das Teilen
     ist ein **Einbahnweg**, die Tafel sammelt nichts ein.
   - **Voraussetzungen:** Die Geräte brauchen Internet, denn der Code zeigt auf die veröffentlichte
     Tafel (`mauthier-bit.github.io/Tafel/`) – auch dann, wenn die Tafel gerade lokal läuft. Der Link

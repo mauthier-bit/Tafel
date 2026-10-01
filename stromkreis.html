@@ -95,6 +95,8 @@
     <div id="chart" hidden><div id="chHead"><b id="chTitle">Diagramm</b><span class="grow"></span><button class="chip U on" data-q="U">U</button><button class="chip I on" data-q="I">I</button><select id="chWin"><option value="5">5 s</option><option value="10" selected>10 s</option><option value="30">30 s</option><option value="60">60 s</option></select><button class="btn" id="chPause" title="Anhalten/Weiter">⏸</button><button class="btn" id="chBoard" title="Diagramm als Bild auf die Tafel">🖼</button><button class="btn" id="chClose" title="Diagramm schließen">✕</button></div><canvas id="chCv"></canvas></div></div>
 </div>
 <script src="modus.js"></script>
+<script src="vendor/qrcode.min.js"></script>
+<script src="teilen.js"></script>
 <script>
 "use strict";
 const $=id=>document.getElementById(id);
@@ -664,7 +666,7 @@ function copyImage(){ const im=renderImage(); if(!im){ toast('Noch keine Schaltu
 let syncT=null;
 function post(){ syncT=null; if(window.parent===window){ try{ localStorage.setItem(LS_KEY,JSON.stringify(data)); }catch(e){} return; } try{ parent.postMessage({type:'embed-data',data},'*'); }catch(e){} }
 function sync(now){ if(now){ clearTimeout(syncT); post(); return; } if(!syncT) syncT=setTimeout(post,300); }
-addEventListener('message',e=>{ if(window.parent===window||e.source!==window.parent) return; if(!(e.data&&e.data.type==='embed-data'&&e.data.data)) return; const d=e.data.data, def=defaults();
+addEventListener('message',e=>{ if(e.source!==window&&(window.parent===window||e.source!==window.parent)) return; if(!(e.data&&e.data.type==='embed-data'&&e.data.data)) return; const d=e.data.data, def=defaults();
   const sameCircuit=JSON.stringify(d.wires||null)===JSON.stringify(data.wires)&&JSON.stringify(d.parts||null)===JSON.stringify(data.parts);
   const keepSel=sel;
   data=Object.assign(def,d,{show:Object.assign(def.show,d.show||{})});
@@ -678,10 +680,17 @@ addEventListener('message',e=>{ if(window.parent===window||e.source!==window.par
 window.addEventListener('resize',resize);
 if(window.ResizeObserver) new ResizeObserver(resize).observe(cv);
 setTool('sel'); updUndo(); renderBar2(); resize();
-if(window.TafelModus) TafelModus.init({get:()=>data.edit!==false,
+const geteilt=window.TafelTeilen&&TafelTeilen.istGeteilt();
+if(window.TafelModus&&!geteilt) TafelModus.init({get:()=>data.edit!==false,
   set:v=>{ data.edit=v; if(!v) setTool('sel'); renderBar2(); resize(); sync(true); }});
+if(window.TafelTeilen&&!geteilt)
+  TafelTeilen.knopf($('barR'),'stromkreis.html',()=>({w:'str', d:data}));
 try{ parent.postMessage({type:'embed-ready'},'*'); }catch(e){}
-if(window.parent===window){                               // eigenständig: zuletzt bearbeitete Schaltung wiederherstellen
+if(geteilt){                                              /* geteilter Link: Schaltung aus der Adresse */
+  TafelTeilen.nurBenutzen(); data.edit=false;
+  $('fClose').hidden=true; $('chBoard').hidden=true;
+  TafelTeilen.empfangen().then(p=>{ if(p&&p.w==='str'&&p.d) TafelTeilen.einspielen(p.d); }).catch(()=>{});
+} else if(window.parent===window){                        // eigenständig: zuletzt bearbeitete Schaltung wiederherstellen
   $('fClose').hidden=false; $('chBoard').hidden=true; document.title='Stromkreis';
   let saved=null; try{ saved=JSON.parse(localStorage.getItem(LS_KEY)||'null'); }catch(e){}
   if(saved&&Array.isArray(saved.parts)&&Array.isArray(saved.wires)&&(saved.parts.length||saved.wires.length)) applyFile(saved,false);

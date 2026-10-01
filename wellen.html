@@ -69,6 +69,8 @@
 </div>
 <script src="shot.js"></script>
 <script src="modus.js"></script>
+<script src="vendor/qrcode.min.js"></script>
+<script src="teilen.js"></script>
 <script>
 "use strict";
 const $=id=>document.getElementById(id), cv=$('cv'), ctx=cv.getContext('2d');
@@ -507,7 +509,7 @@ let ready=false, syncT=null;
 function post(){ syncT=null; if(window.parent===window||!ready) return;
   D.parts=P; try{ parent.postMessage({type:'embed-data',data:D},'*'); }catch(e){} }
 function sync(){ if(!syncT) syncT=setTimeout(post,250); }
-addEventListener('message',e=>{ if(window.parent===window||e.source!==window.parent) return;
+addEventListener('message',e=>{ if(e.source!==window&&(window.parent===window||e.source!==window.parent)) return;
   if(!(e.data&&e.data.type==='embed-data'&&e.data.data)) return;
   D=Object.assign(D,e.data.data); ready=true;
   if(window.TafelModus) TafelModus.refresh();
@@ -515,11 +517,20 @@ addEventListener('message',e=>{ if(window.parent===window||e.source!==window.par
   $('bHuy').classList.toggle('on',!!D.huy); edgeBtn(); playBtn();
   document.documentElement.style.setProperty('--fs',Math.min(18,D.fontSize||14)+'px');
   calm(); renderBar2(); barFade(); });
+if(window.TafelTeilen&&!TafelTeilen.istGeteilt())
+  TafelTeilen.knopf(document.getElementById('barR'),'wellen.html',()=>({w:'wel', d:Object.assign({},D,{parts:P,sel:-1,run:false})}));
 addEventListener('resize',()=>{ resize(); barFade(); });
 window.addEventListener('load',()=>{
-  if(window.TafelModus) TafelModus.init({get:()=>D.edit!==false, set:v=>{ D.edit=v; renderBar2(); resize(); barFade(); sync(); }});
+  if(window.TafelModus&&!(window.TafelTeilen&&TafelTeilen.istGeteilt()))
+    TafelModus.init({get:()=>D.edit!==false, set:v=>{ D.edit=v; renderBar2(); resize(); barFade(); sync(); }});
   renderBar2(); resize(); barFade(); updUndo(); edgeBtn(); playBtn(); loop();
   if(window.ResizeObserver) new ResizeObserver(()=>{ resize(); barFade(); }).observe(cv);
+  const geteilt=window.TafelTeilen&&TafelTeilen.istGeteilt();
+  if(geteilt){ TafelTeilen.nurBenutzen('#shotBtns'); D.edit=false; ready=true;
+    TafelTeilen.knopf&&0;
+    TafelTeilen.empfangen().then(p=>{ if(p&&p.w==='wel'&&p.d) TafelTeilen.einspielen(p.d); })
+      .catch(()=>{});
+    return; }
   if(window.parent===window){ ready=true; loadTpl('Beugung am Spalt'); return; }
   try{ parent.postMessage({type:'embed-ready'},'*'); }catch(e){}
   setTimeout(()=>{ ready=true; if(!P.length) loadTpl('Beugung am Spalt'); },700);   /* neues Objekt: Standardversuch */

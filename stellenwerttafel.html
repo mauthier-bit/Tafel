@@ -58,6 +58,8 @@
   <div id="foot"><button id="add">＋ Zeile</button><span style="flex:1"></span><button class="fb" id="fsM" title="Schrift kleiner">A−</button><button class="fb" id="fsP" title="Schrift größer">A+</button><span id="shotBtns" style="display:inline-flex;gap:6px"></span></div>
 </div>
 <script src="shot.js"></script>
+<script src="vendor/qrcode.min.js"></script>
+<script src="teilen.js"></script>
 <script>
 "use strict";
 const $=id=>document.getElementById(id);
@@ -118,11 +120,19 @@ if(window.TafelShot) TafelShot.buttons($('shotBtns'),()=>TafelShot.rasterize($('
 $('t-pct').onclick=()=>{ data.pct=!data.pct; render(); sync(); };
 $('t-bruch').onclick=()=>{ data.bruch=!data.bruch; render(); sync(); };
 function sync(){ if(window.parent===window) return; /* allein geöffnet: nicht an sich selbst senden */ try{ parent.postMessage({type:'embed-data',data},'*'); }catch(e){} }
-addEventListener('message',e=>{ if(window.parent===window||e.source!==window.parent) return;   // eigene Nachrichten ignorieren
+addEventListener('message',e=>{ if(e.source!==window&&(window.parent===window||e.source!==window.parent)) return;   // eigene Nachrichten ignorieren
   if(e.data&&e.data.type==='embed-data'&&e.data.data){ const d=e.data.data;
   data={ type:UNITS[d.type]?d.type:'laenge', unitIndex:(d.unitIndex|0), rows:(Array.isArray(d.rows)&&d.rows.length?d.rows.map(r=>({dig:(r&&r.dig)||{}})):[{dig:{}}]), fontSize:d.fontSize||22, fontBold:!!d.fontBold, fontItalic:!!d.fontItalic, pct:!!d.pct, mark:(typeof d.mark==='number'&&d.mark>=0)?d.mark:null, bruch:!!d.bruch };
   if(data.unitIndex>=UNITS[data.type].length||data.unitIndex<0) data.unitIndex=DEFIDX[data.type]; render(); } });
-window.addEventListener('load',()=>{ render(); try{ parent.postMessage({type:'embed-ready'},'*'); }catch(e){} });
+window.addEventListener('load',()=>{
+  const geteilt=window.TafelTeilen&&TafelTeilen.istGeteilt();
+  if(window.TafelTeilen&&!geteilt)
+    TafelTeilen.knopf($('foot'),'stellenwerttafel.html',()=>({w:'swt', d:data}),{cls:'fb'});
+  render();
+  if(geteilt){ TafelTeilen.nurBenutzen();
+    TafelTeilen.empfangen().then(p=>{ if(p&&p.w==='swt'&&p.d) TafelTeilen.einspielen(p.d); }).catch(()=>{});
+    return; }
+  try{ parent.postMessage({type:'embed-ready'},'*'); }catch(e){} });
 $('bHelp').onclick=()=>{ const h=$('swHelp'); h.hidden=!h.hidden; $('bHelp').classList.toggle('on',!h.hidden); };
 </script>
 </body>

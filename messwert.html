@@ -10,6 +10,8 @@
   <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8/hammer.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="vendor/qrcode.min.js"></script>
+  <script src="teilen.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
 /* ── STANDALONE OVERRIDES ── */
@@ -3292,8 +3294,8 @@ async function saveDocFile() {
 // ═══════════════════════════════════════════════════
 //  SAVE / LOAD
 // ═══════════════════════════════════════════════════
-function saveProject() {
-  // Collect all current text field values into state before saving
+/* Die Projektdaten einmal zentral – zum Speichern mit Fotos, zum Teilen ohne. */
+function projektDaten(ohneFotos) {
   const snapshot = {
     version: 2,
     namen:    document.getElementById('exp-namen').value,
@@ -3304,7 +3306,7 @@ function saveProject() {
     ergebnis: document.getElementById('exp-ergebnis').value,
     teile:    S.teile,
     mvData:   S.mvData,
-    photos:   S.photos.map(ph => ({
+    photos:   ohneFotos ? [] : S.photos.map(ph => ({
       id:          ph.id,
       dataUrl:     ph.dataUrl,
       zoom:        ph.zoom,
@@ -3313,6 +3315,11 @@ function saveProject() {
       annotations: ph.annotations,
     })),
   };
+  return snapshot;
+}
+
+function saveProject() {
+  const snapshot = projektDaten(false);
   const json = JSON.stringify(snapshot, null, 2);
   const blob = new Blob([json], { type: 'application/json' });
   const url  = URL.createObjectURL(blob);
@@ -4494,6 +4501,19 @@ function standaloneLoadFile() {
 window.addEventListener('DOMContentLoaded', () => {
   S.teile = [{ id: SA_ID, name: '' }];  // empty name → no "MESSWERTE – " prefix
   S.mvData[SA_ID] = mkMv();
+  const geteilt = window.TafelTeilen && TafelTeilen.istGeteilt();
+  if (window.TafelTeilen && !geteilt)
+    TafelTeilen.knopf(document.getElementById('sa-hdr'), 'messwert.html',
+      () => { try { saveMvData(SA_ID); } catch(e) {}
+              return { w:'msw', d: S.mvData[SA_ID] || {} }; },
+      { cls:'hdr-btn', html:'⇪ Teilen' });
+  if (geteilt) {                                   /* geteilter Link: Messreihe aus der Adresse */
+    TafelTeilen.nurBenutzen();
+    TafelTeilen.empfangen()
+      .then(p => { if (p && p.w === 'msw' && p.d) S.mvData[SA_ID] = p.d; openMvModal(SA_ID); })
+      .catch(() => openMvModal(SA_ID));
+    return;
+  }
   try {
     const saved = localStorage.getItem('mvStandaloneData');
     if(saved) S.mvData[SA_ID] = JSON.parse(saved);

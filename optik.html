@@ -78,6 +78,8 @@
 </div>
 <script src="shot.js"></script>
 <script src="modus.js"></script>
+<script src="vendor/qrcode.min.js"></script>
+<script src="teilen.js"></script>
 <script>
 "use strict";
 const $=id=>document.getElementById(id), cv=$('cv'), ctx=cv.getContext('2d');
@@ -802,7 +804,7 @@ $('barMid').addEventListener('scroll',barFade);
 let ready=false;
 function sync(){ if(window.parent===window||!ready) return;
   D.parts=P; try{ parent.postMessage({type:'embed-data',data:D},'*'); }catch(e){} }
-addEventListener('message',e=>{ if(window.parent===window||e.source!==window.parent) return;
+addEventListener('message',e=>{ if(e.source!==window&&(window.parent===window||e.source!==window.parent)) return;
   if(!(e.data&&e.data.type==='embed-data'&&e.data.data)) return;
   D=Object.assign(D,e.data.data); ready=true;
   if(window.TafelModus) TafelModus.refresh();
@@ -810,11 +812,20 @@ addEventListener('message',e=>{ if(window.parent===window||e.source!==window.par
   $('bDark').classList.toggle('on',D.dark); $('bNorm').classList.toggle('on',D.norm); $('bGB').classList.toggle('on',!!D.gb); $('bVirt').classList.toggle('on',!!D.virt);
   document.documentElement.style.setProperty('--fs',Math.min(18,D.fontSize||14)+'px');
   setAnim(D.anim); renderBar2(); resize(); barFade(); });
+if(window.TafelTeilen&&!TafelTeilen.istGeteilt())
+  TafelTeilen.knopf(document.getElementById('barR'),'optik.html',()=>({w:'opt', d:Object.assign({},D,{parts:P,sel:-1})}));
 addEventListener('resize',()=>{ resize(); barFade(); });
 window.addEventListener('load',()=>{
-  if(window.TafelModus) TafelModus.init({get:()=>D.edit!==false, set:v=>{ D.edit=v; renderBar2(); resize(); barFade(); sync(); }});
+  if(window.TafelModus&&!(window.TafelTeilen&&TafelTeilen.istGeteilt()))
+    TafelModus.init({get:()=>D.edit!==false, set:v=>{ D.edit=v; renderBar2(); resize(); barFade(); sync(); }});
   renderBar2(); resize(); barFade(); updUndo();
   if(window.ResizeObserver){ new ResizeObserver(()=>{ resize(); barFade(); }).observe(cv); }
+  const geteilt=window.TafelTeilen&&TafelTeilen.istGeteilt();
+  if(geteilt){ TafelTeilen.nurBenutzen('#shotBtns'); D.edit=false; ready=true;
+    TafelTeilen.knopf&&0;
+    TafelTeilen.empfangen().then(p=>{ if(p&&p.w==='opt'&&p.d) TafelTeilen.einspielen(p.d); })
+      .catch(()=>{});
+    return; }
   if(window.parent===window){ ready=true; loadTpl('Sammellinse mit Brennpunkt'); return; }
   try{ parent.postMessage({type:'embed-ready'},'*'); }catch(e){}
   setTimeout(()=>{ ready=true; if(!P.length) loadTpl('Sammellinse mit Brennpunkt'); },700);   /* neues Objekt: Standardversuch */
