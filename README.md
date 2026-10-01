@@ -474,10 +474,21 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   - **🔀 Mischen** mischt neu (und sorgt dafür, dass die Lösung nicht zufällig schon dasteht),
     **✓ Prüfen** färbt jede Karte grün oder rot und zeigt „x von n an der richtigen Stelle",
     **🕘 Lösung** stellt die richtige Reihenfolge her.
-  - **📚 Aufgaben** öffnet die Bibliothek mit fertigen Ketten, filterbar nach **Fach, Jahrgangsstufe
-    und Themenbereich**: **Beweis des Satzes von Thales** (Jgst. 8), **Beweis der Irrationalität von
-    Wurzel 2** (Jgst. 9), **Magnetkugel fällt durch ein Kupferrohr** und **Kraft zwischen zwei
-    parallelen Leitern** (Physik, Jgst. 10). Mit **✎ Schritte** trägt man eigene Ketten ein: eine
+  - **📚 Aufgaben** öffnet die Bibliothek mit **20 fertigen Ketten**, filterbar nach **Fach,
+    Jahrgangsstufe und Themenbereich**. Sie umfasst drei Sorten:
+    - **Beweise und Ursache-Wirkungs-Ketten:** Satz des Thales (Jgst. 8), Irrationalität von
+      Wurzel 2 (Jgst. 9), Magnetkugel im Kupferrohr und Kraft zwischen parallelen Leitern
+      (Physik, Jgst. 10).
+    - **Knobelaufgabe:** das **Umschütträtsel** – mit einem 3-Liter- und einem 5-Liter-Gefäß genau
+      4 Liter abmessen (Jgst. 5).
+    - **Lösungsalgorithmen – „Wie gehe ich vor?":** lineare Gleichung (7), Textaufgabe in eine
+      Gleichung übersetzen (7), ungleichnamige Brüche addieren (6), Geradengleichung aus zwei
+      Punkten (8), Gleichungssystem mit dem Additionsverfahren (8), quadratische Gleichung (9),
+      Wurzelgleichung (9), Exponentialgleichung (10), Extremwertaufgabe mit quadratischer Funktion
+      (9) und mit Ableitung (11), Fläche zwischen Graph und x-Achse (13); in Physik: eine Aufgabe
+      systematisch rechnen (7), Bildkonstruktion an der Sammellinse (8), Gesamtwiderstand einer
+      gemischten Schaltung (9) und Bewegung mit konstanter Beschleunigung (11).
+    Mit **✎ Schritte** trägt man eigene Ketten ein: eine
     Überschrift und je Zeile ein Schritt, in der richtigen Reihenfolge – gemischt wird beim Übernehmen.
   - Dazu **A−/A+**, **🖨 Drucken** (Arbeitsblatt mit Ankreuzkästchen je Karte), **🖼 Tafel / 📋 Kopieren**
     und der Umschalter **Benutzen/Bearbeiten**. Reihenfolge und Stand werden **mit dem Tafel-Projekt
@@ -639,7 +650,8 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   Hauptsatz, Impulserhaltung, Schwingkreis und Fotoeffekt. Für den **Elektromagnetismus (Physik 10)**
   entwickeln vier Texte die **Ursachenkette** Schritt für Schritt: **Lorentzkraft**, **Elektromotor**,
   **Kraft zwischen parallelen Leitern** und **Magnetkugel im Kupferrohr** (dort wird die Stromrichtung
-  über die **Energieerhaltung** begründet). Gefiltert wird
+  über die **Energiebilanz** begründet: Die Kugel kommt langsamer an als im freien Fall, die fehlende
+  Bewegungsenergie steckt in den Wirbelströmen). Gefiltert wird
   nach **Fach, Jahrgangsstufe, Themenbereich** und **Art** (Sachtext · Alltag · Geschichte); die
   Trefferliste zeigt Titel, Anfang und Wortzahl. Ein Klick übernimmt den Text, danach setzt man die
   Lücken wie gewohnt von Hand oder per **Zufällig**. Über **„📄 eigener Text …"** lässt sich auch
