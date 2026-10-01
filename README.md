@@ -642,6 +642,13 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     mit drei Bauteilen und zwanzig Leitungsstücken, **306** für eine Wellenwanne, **205** für den
     Term-Umformer, **319** für einen Quader mit Angaben und **196** für die Stellenwerttafel. Fotos
     der Messwert-Analyse bleiben außen vor – sie wären zu groß für einen Code.
+  - **Arbeitsauftrag dazugeben:** Unter dem QR-Code steht ein Feld, in das man **freiwillig** einen
+    Arbeitsauftrag schreiben kann („Ordnet zu zweit … Zeit: 15 Minuten"). Mit **A+ / A−** stellt man
+    die Schriftgröße ein, damit der Auftrag auch aus der letzten Reihe lesbar ist; wird der Text
+    länger, **wächst das Feld und der QR-Code wird kleiner**. Der Auftrag reist im selben Link mit
+    und erscheint auf dem Schülergerät als **Leiste am unteren Rand**, die sich zusammenklappen
+    lässt. Innerhalb derselben Sitzung bleibt der zuletzt getippte Auftrag stehen, sodass er für
+    mehrere Aufgaben hintereinander nicht neu geschrieben werden muss.
   - **Was die Schüler sehen:** Die geteilte Fassung öffnet im **Benutzen-Modus**. Bibliothek,
     Vorlagen, Bearbeiten, Drucken und der Umschalter fehlen, und die **Lösung lässt sich nicht
     aufdecken** – **Prüfen** und **Mischen** bleiben. Bei den Geräte-Werkzeugen heißt das: Der Aufbau

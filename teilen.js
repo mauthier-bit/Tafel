@@ -57,7 +57,36 @@ async function auspacken(txt){
 /* ---------- Empfangen ---------- */
 function teil(){ const m=/[#&]t=([A-Za-z0-9\-_]+)/.exec(location.hash||''); return m?m[1]:null; }
 function istGeteilt(){ return !!teil(); }
-function empfangen(){ const t=teil(); return t?auspacken(t):Promise.reject(new Error('kein Code')); }
+function empfangen(){ const t=teil();
+  if(!t) return Promise.reject(new Error('kein Code'));
+  return auspacken(t).then(p=>{ if(p&&typeof p.a==='string') auftragAnzeigen(p.a); return p; }); }
+
+/* Der Arbeitsauftrag der Lehrkraft – auf dem Schülergerät unten eingeblendet, antippen klappt ihn zu */
+function auftragAnzeigen(text){
+  text=(text||'').trim();
+  if(!text||document.getElementById('tAuftrag')) return;
+  const st=document.createElement('style');
+  st.textContent=
+   '#tAuftrag{position:fixed;left:0;right:0;bottom:0;z-index:9996;background:#fff;border-top:2px solid #2563eb;'+
+     'box-shadow:0 -5px 16px rgba(15,23,42,.16);color:#1f2430;max-height:40vh;overflow:auto;'+
+     'font:16px/1.4 -apple-system,BlinkMacSystemFont,sans-serif;padding:9px 46px 11px 14px;'+
+     '-webkit-overflow-scrolling:touch;}'+
+   '#tAuftrag .l{display:block;font-size:11.5px;font-weight:700;letter-spacing:.06em;'+
+     'text-transform:uppercase;color:#2563eb;margin-bottom:3px;}'+
+   '#tAuftrag .t{white-space:pre-wrap;}'+
+   '#tAuftrag .k{position:absolute;top:5px;right:7px;border:0;background:transparent;color:#64748b;'+
+     'font:700 17px -apple-system,sans-serif;cursor:pointer;padding:2px 7px;line-height:1;}'+
+   '#tAuftrag.zu{max-height:none;overflow:hidden;padding:6px 46px 6px 14px;cursor:pointer;}'+
+   '#tAuftrag.zu .t{display:none;} #tAuftrag.zu .l{margin:0;}';
+  document.head.appendChild(st);
+  const d=document.createElement('div'); d.id='tAuftrag';
+  d.innerHTML='<span class="l">Arbeitsauftrag</span><div class="t"></div><button class="k" title="ein-/ausklappen">▾</button>';
+  d.querySelector('.t').textContent=text;
+  const um=()=>{ const zu=d.classList.toggle('zu'); d.querySelector('.k').textContent=zu?'▴':'▾'; };
+  d.querySelector('.k').onclick=e=>{ e.stopPropagation(); um(); };
+  d.addEventListener('click',()=>{ if(d.classList.contains('zu')) um(); });
+  document.body.appendChild(d);
+}
 
 /* Geteilte Fassung: nur bedienen, keine Bibliothek, keine Lösung */
 function nurBenutzen(verstecken){
@@ -89,7 +118,13 @@ function aufbau(){
    '#tTeilenIn h3{margin:0;font-size:1.05em;align-self:flex-start;}'+
    '#tTeilenIn .hint{color:#64748b;font-size:.84em;align-self:flex-start;line-height:1.35;}'+
    '#tTeilenBild{display:flex;align-items:center;justify-content:center;min-height:60px;flex:0 0 auto;width:100%;}'+
-   '#tTeilenBild img,#tTeilenBild canvas{width:auto;height:auto;max-width:min(600px,100%);max-height:58vh;image-rendering:pixelated;}'+
+   '#tTeilenBild img,#tTeilenBild canvas{width:auto;height:auto;max-width:min(600px,100%);image-rendering:pixelated;}'+
+   '#tTeilenAuftrag{width:100%;display:flex;gap:7px;align-items:flex-start;}'+
+   '#tTeilenText{flex:1 1 auto;min-width:0;border:1px solid #cfd6e0;border-radius:10px;padding:7px 9px;'+
+     'font:inherit;line-height:1.35;resize:none;overflow:auto;min-height:38px;color:#1f2430;background:#fff;}'+
+   '#tTeilenText::placeholder{color:#94a3b8;font-size:13px;}'+
+   '#tTeilenAuftrag .fs{display:flex;flex-direction:column;gap:4px;flex:none;}'+
+   '#tTeilenAuftrag .fs button{padding:3px 8px;font-size:12px;}'+
    '#tTeilenLink{width:100%;border:1px solid #cfd6e0;border-radius:9px;padding:6px 8px;font:12px ui-monospace,monospace;color:#475569;}'+
    '#tTeilen .row{display:flex;gap:7px;align-self:stretch;justify-content:flex-end;flex-wrap:wrap;}'+
    '#tTeilen button{border:1px solid #cfd6e0;background:#fff;border-radius:9px;padding:6px 11px;font:inherit;font-weight:600;cursor:pointer;}'+
@@ -100,12 +135,23 @@ function aufbau(){
   d.innerHTML='<div id="tTeilenIn"><h3>Aufgabe teilen</h3>'+
     '<div class="hint">Mit der Kamera scannen – dann öffnet sich dasselbe Werkzeug mit dieser Aufgabe.</div>'+
     '<div id="tTeilenBild"></div><div id="tTeilenWarn" class="warn" hidden></div>'+
+    '<div id="tTeilenAuftrag"><textarea id="tTeilenText" rows="1" spellcheck="false" '+
+      'placeholder="Arbeitsauftrag (freiwillig) – erscheint beim Scannen auf dem Schülergerät"></textarea>'+
+      '<span class="fs"><button id="tTeilenFsP" title="Schrift größer">A+</button>'+
+      '<button id="tTeilenFsM" title="Schrift kleiner">A−</button></span></div>'+
     '<input type="text" id="tTeilenLink" readonly>'+
     '<div class="row"><button id="tTeilenKopie">Link kopieren</button>'+
     '<button class="pri" id="tTeilenZu">Schließen</button></div></div>';
   document.body.appendChild(d);
   d.addEventListener('click',e=>{ if(e.target===d) zu(); });
   document.getElementById('tTeilenZu').onclick=zu;
+  const ta=document.getElementById('tTeilenText');
+  ta.value=auftrag;
+  ta.style.fontSize=schrift+'px';
+  ta.addEventListener('input',()=>{ auftrag=ta.value; merken(); hoehen(); neuerCode(); });
+  document.getElementById('tTeilenFsP').onclick=()=>schriftUm(2);
+  document.getElementById('tTeilenFsM').onclick=()=>schriftUm(-2);
+  addEventListener('resize',()=>{ if(document.querySelector('#tTeilen.an')) hoehen(); });
   document.getElementById('tTeilenKopie').onclick=()=>{
     const i=document.getElementById('tTeilenLink');
     i.select(); i.setSelectionRange(0,99999);
@@ -116,6 +162,61 @@ function aufbau(){
 }
 function zu(){ const d=document.getElementById('tTeilen'); if(d) d.classList.remove('an');
   if(raumAngefragt) raum(false); }
+
+/* ---------- Arbeitsauftrag ---------- */
+let auftrag='', schrift=17, letzteQuelle=null, codeT=null;
+try{ auftrag=sessionStorage.getItem('tafel_teilen_auftrag')||''; }catch(e){}
+try{ schrift=Math.max(13,Math.min(44,+localStorage.getItem('tafel_teilen_fs')||17)); }catch(e){}
+function merken(){ try{ sessionStorage.setItem('tafel_teilen_auftrag',auftrag); }catch(e){} }
+function schriftUm(d){
+  schrift=Math.max(13,Math.min(44,schrift+d));
+  try{ localStorage.setItem('tafel_teilen_fs',String(schrift)); }catch(e){}
+  const ta=document.getElementById('tTeilenText');
+  if(ta) ta.style.fontSize=schrift+'px';
+  hoehen();
+}
+/* Je länger der Auftrag, desto größer das Feld – und desto kleiner der QR-Code.
+   Beides hängt voneinander ab (schmaleres Bild → anderer Zeilenumbruch), deshalb wird
+   zwei-, dreimal nachgemessen, bis sich nichts mehr ändert.                          */
+function messen(){
+  const inn=document.getElementById('tTeilenIn'), bild=document.getElementById('tTeilenBild');
+  const ta=document.getElementById('tTeilenText');
+  if(!inn||!bild||!ta) return;
+  /* 1. Platz für den Code: alles andere im Fenster abziehen */
+  const bilder=bild.querySelectorAll('img,canvas');     /* die QR-Bibliothek legt beides an */
+  if(bilder.length){
+    let belegt=0;
+    Array.prototype.forEach.call(inn.children,c=>{ if(c!==bild&&!c.hidden) belegt+=c.getBoundingClientRect().height+9; });
+    const platz=Math.round(innerHeight*0.97)-belegt-28;
+    const hoch=Math.max(120,Math.min(platz,600))+'px';
+    Array.prototype.forEach.call(bilder,e=>{ e.style.maxHeight=hoch; });
+  }
+  /* 2. Feldhöhe an den Text anpassen */
+  const deckel=Math.round(innerHeight*0.42);
+  ta.style.height='auto';
+  const rand=ta.offsetHeight-ta.clientHeight;          /* Rahmen zählt bei border-box mit */
+  ta.style.height=Math.max(38,Math.min(ta.scrollHeight+rand,deckel))+'px';
+  if(ta.scrollHeight>ta.clientHeight+1)                /* letzte Zeile nicht abschneiden */
+    ta.style.height=Math.max(38,Math.min(ta.scrollHeight+rand+(ta.scrollHeight-ta.clientHeight),deckel))+'px';
+}
+function hoehen(){
+  messen();
+  requestAnimationFrame(()=>{ messen(); requestAnimationFrame(messen); });
+}
+function neuerCode(){                       /* der Auftrag steckt im Link – also neu erzeugen */
+  clearTimeout(codeT);
+  codeT=setTimeout(async()=>{ if(!letzteQuelle) return;
+    const url=await bauenUrl(letzteQuelle.datei,letzteQuelle.inhalt);
+    const feld=document.getElementById('tTeilenLink'); if(feld) feld.value=url;
+    qr(url); hoehen();
+  },350);
+}
+async function bauenUrl(datei,inhalt){
+  const paket=Object.assign({},inhalt);
+  const txt=(auftrag||'').trim();
+  if(txt) paket.a=txt; else delete paket.a;
+  return basis()+datei+'#t='+await packen(paket);
+}
 
 function qr(url){
   const host=document.getElementById('tTeilenBild'); host.innerHTML='';
@@ -134,11 +235,13 @@ async function zeigen(datei,bauen){
   const inhalt=bauen&&bauen();
   if(!inhalt){ window.TafelShot&&TafelShot.toast('Es ist noch keine Aufgabe geladen'); return; }
   aufbau();
-  const url=basis()+datei+'#t='+await packen(inhalt);
+  letzteQuelle={datei,inhalt};
+  const url=await bauenUrl(datei,inhalt);
   document.getElementById('tTeilenLink').value=url;
   qr(url);
   document.getElementById('tTeilen').classList.add('an');
   raum(true);
+  hoehen();
 }
 
 /* ---------- Knopf in der Werkzeugleiste ---------- */
@@ -164,5 +267,5 @@ function einspielen(daten){
   catch(e){ return false; }
 }
 
-window.TafelTeilen={ knopf, zeigen, empfangen, istGeteilt, nurBenutzen, einspielen, basis };
+window.TafelTeilen={ knopf, zeigen, empfangen, istGeteilt, nurBenutzen, einspielen, auftragAnzeigen, basis };
 })();
