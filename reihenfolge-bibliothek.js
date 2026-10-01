@@ -275,6 +275,269 @@ const A=[
  'Prüfe das Ergebnis auf Plausibilität, etwa ob ein Bremsweg zur Erfahrung passt.',
  'Zeichne wenn gefordert das Zeit-Geschwindigkeit-Diagramm; die Fläche darunter entspricht dem zurückgelegten Weg.'
 ]},
+{f:'M', j:6, g:'Dreisatz und Proportionalität', t:'Vorgehen: Dreisatz', s:[
+ 'Lies die Aufgabe und schreibe die beiden zusammengehörenden Größen heraus, zum Beispiel Anzahl und Preis.',
+ 'Prüfe, ob die Zuordnung proportional ist: Doppelt so viele Teile kosten doppelt so viel. Nur dann ist der Dreisatz erlaubt.',
+ 'Schreibe die gegebene Zuordnung in eine Zeile, die Größen sauber untereinander und mit Einheiten.',
+ 'Erster Schritt: Rechne von der gegebenen Menge auf eine Einheit herunter, meist durch Division.',
+ 'Schreibe diesen Zwischenwert auf; er gibt an, wie viel eine einzige Einheit ausmacht.',
+ 'Zweiter Schritt: Rechne von einer Einheit auf die gesuchte Menge hoch, meist durch Multiplikation.',
+ 'Achte bei antiproportionalen Zuordnungen auf die Umkehrung: Dort wird im zweiten Schritt geteilt statt malgenommen.',
+ 'Runde sinnvoll und schreibe die Einheit dazu.',
+ 'Prüfe mit einer Überschlagsrechnung, ob das Ergebnis in der richtigen Größenordnung liegt.',
+ 'Formuliere einen Antwortsatz.'
+]},
+
+{f:'M', j:6, g:'Prozentrechnung', t:'Vorgehen: Prozentaufgabe mit gesuchtem Grundwert', s:[
+ 'Lies die Aufgabe und suche die drei Größen der Prozentrechnung: Grundwert, Prozentsatz und Prozentwert.',
+ 'Der Grundwert ist das Ganze und entspricht 100 Prozent; er ist hier gesucht.',
+ 'Der Prozentwert ist der Anteil, der im Text als Betrag genannt wird.',
+ 'Schreibe auf, welche Angabe zu welcher Größe gehört, und notiere die gesuchte Größe mit einem Fragezeichen.',
+ 'Vorsicht bei Formulierungen wie „um 20 Prozent reduziert": Der genannte Preis entspricht dann nicht 20, sondern 80 Prozent.',
+ 'Rechne zuerst von den gegebenen Prozent auf ein Prozent herunter, indem du den Prozentwert durch die Prozentzahl teilst.',
+ 'Rechne dann von einem Prozent auf hundert Prozent hoch, indem du mit 100 malnimmst.',
+ 'Alternativ kannst du die Formel Grundwert gleich Prozentwert geteilt durch Prozentsatz verwenden.',
+ 'Runde auf sinnvolle Genauigkeit, bei Geldbeträgen auf zwei Nachkommastellen.',
+ 'Mache die Probe: Berechne aus dem gefundenen Grundwert den Prozentwert zurück.',
+ 'Formuliere einen Antwortsatz mit Einheit.'
+]},
+
+{f:'M', j:7, g:'Konstruktionen mit Zirkel und Lineal', t:'Konstruktion: Mittelsenkrechte einer Strecke', s:[
+ 'Zeichne die Strecke AB und lege das Geodreieck beiseite: Konstruiert wird nur mit Zirkel und Lineal.',
+ 'Stich mit dem Zirkel in den Punkt A ein.',
+ 'Wähle eine Zirkelöffnung, die größer als die Hälfte der Strecke AB ist. Sonst schneiden sich die Kreise später nicht.',
+ 'Zeichne mit dieser Öffnung einen Kreisbogen oberhalb und unterhalb der Strecke.',
+ 'Stich nun in den Punkt B ein und behalte dieselbe Zirkelöffnung bei.',
+ 'Zeichne wieder je einen Kreisbogen oberhalb und unterhalb der Strecke.',
+ 'Die Bögen schneiden sich in zwei Punkten, einem oberhalb und einem unterhalb der Strecke.',
+ 'Verbinde diese beiden Schnittpunkte mit dem Lineal zu einer Geraden.',
+ 'Diese Gerade ist die Mittelsenkrechte: Sie steht senkrecht auf AB und halbiert die Strecke.',
+ 'Begründung: Beide Schnittpunkte haben von A und von B denselben Abstand, nämlich die Zirkelöffnung. Alle Punkte mit dieser Eigenschaft liegen auf der Mittelsenkrechten.'
+]},
+
+{f:'M', j:7, g:'Konstruktionen mit Zirkel und Lineal', t:'Konstruktion: Winkelhalbierende', s:[
+ 'Zeichne den Winkel mit seinem Scheitel S und den beiden Schenkeln.',
+ 'Stich mit dem Zirkel in den Scheitel S ein.',
+ 'Zeichne mit beliebiger Öffnung einen Kreisbogen, der beide Schenkel schneidet.',
+ 'Benenne die beiden Schnittpunkte, etwa P auf dem ersten und Q auf dem zweiten Schenkel. Beide haben von S denselben Abstand.',
+ 'Stich nun in P ein und zeichne mit einer Öffnung, die größer als die halbe Strecke PQ ist, einen Bogen im Inneren des Winkels.',
+ 'Stich in Q ein und zeichne mit derselben Öffnung einen zweiten Bogen, der den ersten schneidet.',
+ 'Verbinde den Scheitel S mit diesem Schnittpunkt.',
+ 'Diese Gerade ist die Winkelhalbierende; sie teilt den Winkel in zwei gleich große Teilwinkel.',
+ 'Prüfe mit dem Geodreieck nach: Beide Teilwinkel müssen gleich groß sein.',
+ 'Begründung: Alle Punkte der Winkelhalbierenden haben von beiden Schenkeln denselben Abstand.'
+]},
+
+{f:'M', j:7, g:'Konstruktionen mit Zirkel und Lineal', t:'Konstruktion: Umkreis eines Dreiecks', s:[
+ 'Zeichne das Dreieck ABC.',
+ 'Überlege zuerst, was der Umkreis leisten muss: Er geht durch alle drei Eckpunkte, sein Mittelpunkt hat also von A, B und C denselben Abstand.',
+ 'Punkte mit gleichem Abstand von zwei Ecken liegen auf der Mittelsenkrechten der entsprechenden Seite.',
+ 'Konstruiere die Mittelsenkrechte der Seite AB mit dem Zirkel.',
+ 'Konstruiere die Mittelsenkrechte der Seite BC auf dieselbe Weise.',
+ 'Der Schnittpunkt der beiden Mittelsenkrechten ist der Umkreismittelpunkt M.',
+ 'Die dritte Mittelsenkrechte muss durch denselben Punkt gehen; zeichne sie als Probe.',
+ 'Stich mit dem Zirkel in M ein und stelle als Radius den Abstand zu einem Eckpunkt ein.',
+ 'Zeichne den Kreis; er muss durch alle drei Ecken verlaufen.',
+ 'Beachte die Lage von M: Im spitzwinkligen Dreieck liegt er innen, im rechtwinkligen auf der Hypotenuse, im stumpfwinkligen außerhalb.'
+]},
+
+{f:'M', j:7, g:'Konstruktionen mit Zirkel und Lineal', t:'Konstruktion: Inkreis eines Dreiecks', s:[
+ 'Zeichne das Dreieck ABC.',
+ 'Überlege, was der Inkreis leisten muss: Er berührt alle drei Seiten, sein Mittelpunkt hat also von allen Seiten denselben Abstand.',
+ 'Punkte mit gleichem Abstand von zwei Seiten liegen auf der Winkelhalbierenden des von ihnen eingeschlossenen Winkels.',
+ 'Konstruiere die Winkelhalbierende des Winkels bei A mit dem Zirkel.',
+ 'Konstruiere die Winkelhalbierende des Winkels bei B auf dieselbe Weise.',
+ 'Der Schnittpunkt der beiden Winkelhalbierenden ist der Inkreismittelpunkt M; er liegt immer innerhalb des Dreiecks.',
+ 'Fälle von M aus das Lot auf eine der Seiten.',
+ 'Der Abstand von M zu diesem Lotfußpunkt ist der Inkreisradius.',
+ 'Stich in M ein und zeichne den Kreis mit diesem Radius.',
+ 'Prüfe: Der Kreis muss jede Seite in genau einem Punkt berühren, nicht schneiden.'
+]},
+{f:'M', j:9, g:'Satz des Pythagoras', t:'Vorgehen: Sachaufgabe mit dem Satz des Pythagoras', s:[
+ 'Lies die Aufgabe und fertige eine Skizze der Situation an.',
+ 'Suche in der Skizze ein rechtwinkliges Dreieck und markiere den rechten Winkel.',
+ 'Findest du keines, ziehe eine Hilfslinie ein, etwa eine Höhe oder eine Diagonale.',
+ 'Benenne im Dreieck die Hypotenuse: Sie liegt dem rechten Winkel gegenüber und ist die längste Seite.',
+ 'Trage die bekannten Längen ein und bezeichne die gesuchte Seite mit einem Buchstaben.',
+ 'Achte darauf, dass alle Längen in derselben Einheit angegeben sind.',
+ 'Schreibe den Satz des Pythagoras für dieses Dreieck auf: Die Summe der Kathetenquadrate ist gleich dem Hypotenusenquadrat.',
+ 'Stelle die Gleichung nach der gesuchten Größe um – je nachdem, ob eine Kathete oder die Hypotenuse gesucht ist.',
+ 'Setze die Zahlen ein, quadriere zuerst und ziehe erst ganz am Schluss die Wurzel.',
+ 'Runde sinnvoll und prüfe: Die Hypotenuse muss länger sein als jede Kathete, aber kürzer als deren Summe.',
+ 'Formuliere einen Antwortsatz mit Einheit.'
+]},
+
+{f:'M', j:9, g:'Strahlensätze', t:'Vorgehen: Aufgabe mit dem Strahlensatz', s:[
+ 'Fertige eine Skizze an und suche das Zentrum, von dem die beiden Strahlen ausgehen.',
+ 'Prüfe die Voraussetzung: Die beiden geschnittenen Geraden müssen parallel sein. Ohne Parallelität gilt der Strahlensatz nicht.',
+ 'Markiere die Parallelen und das Zentrum farbig, damit die Figur übersichtlich wird.',
+ 'Benenne die Punkte und trage die bekannten Längen ein.',
+ 'Entscheide, welcher Strahlensatz passt: der erste für Abschnitte auf den Strahlen, der zweite für die Parallelstücke.',
+ 'Stelle die Verhältnisgleichung auf und achte darauf, dass in Zähler und Nenner jeweils zusammengehörende Strecken stehen.',
+ 'Vorsicht bei den Abschnitten: Wird vom Zentrum aus gemessen oder nur das Teilstück dazwischen? Rechne gegebenenfalls erst die Gesamtlänge aus.',
+ 'Löse die Verhältnisgleichung durch Überkreuzmultiplizieren nach der gesuchten Länge auf.',
+ 'Setze die Zahlen ein und berechne das Ergebnis.',
+ 'Prüfe die Plausibilität an der Skizze: Liegt die gesuchte Strecke näher am Zentrum, muss sie kürzer sein.',
+ 'Formuliere einen Antwortsatz mit Einheit.'
+]},
+
+{f:'M', j:9, g:'Mehrstufige Zufallsexperimente', t:'Vorgehen: Baumdiagramm und Pfadregeln', s:[
+ 'Lies die Aufgabe und bestimme, aus wie vielen Stufen das Zufallsexperiment besteht.',
+ 'Kläre, ob mit oder ohne Zurücklegen gezogen wird; davon hängen die Wahrscheinlichkeiten der zweiten Stufe ab.',
+ 'Zeichne die erste Stufe des Baumdiagramms mit allen möglichen Ergebnissen.',
+ 'Schreibe an jeden Ast seine Wahrscheinlichkeit; die Summe der Wahrscheinlichkeiten an einer Verzweigung ist immer 1.',
+ 'Zeichne die zweite Stufe an jedes Ende und beschrifte auch diese Äste.',
+ 'Markiere die Pfade, die zum gesuchten Ereignis gehören.',
+ 'Erste Pfadregel: Entlang eines Pfades werden die Wahrscheinlichkeiten multipliziert.',
+ 'Zweite Pfadregel: Die Wahrscheinlichkeiten mehrerer günstiger Pfade werden addiert.',
+ 'Prüfe bei Formulierungen wie „mindestens einmal", ob der Umweg über das Gegenereignis kürzer ist.',
+ 'Rechne aus und gib das Ergebnis als Bruch, Dezimalzahl oder Prozentwert an.',
+ 'Prüfe zur Kontrolle, ob die Summe aller Pfadwahrscheinlichkeiten 1 ergibt.'
+]},
+
+{f:'M', j:12, g:'Signifikanztest', t:'Vorgehen: Signifikanztest durchführen', s:[
+ 'Lies die Aufgabe und formuliere die Vermutung, die geprüft werden soll.',
+ 'Lege die Nullhypothese fest; sie beschreibt den bisher angenommenen Zustand.',
+ 'Lege die Gegenhypothese fest und entscheide, ob einseitig links, einseitig rechts oder zweiseitig getestet wird.',
+ 'Notiere den Stichprobenumfang n und das Signifikanzniveau, meist 5 Prozent.',
+ 'Benenne die Testgröße: die Anzahl der Treffer in der Stichprobe; sie ist unter der Nullhypothese binomialverteilt.',
+ 'Bestimme den Ablehnungsbereich, indem du mit der kumulierten Binomialverteilung die Grenze suchst, ab der die Wahrscheinlichkeit das Niveau unterschreitet.',
+ 'Schreibe Ablehnungs- und Annahmebereich vollständig auf.',
+ 'Führe die Stichprobe aus beziehungsweise entnimm der Aufgabe das Ergebnis.',
+ 'Vergleiche die Testgröße mit dem Ablehnungsbereich.',
+ 'Entscheide: Liegt sie im Ablehnungsbereich, wird die Nullhypothese verworfen, sonst nicht.',
+ 'Formuliere die Antwort im Sachzusammenhang und beachte: Nicht verwerfen heißt nicht beweisen.',
+ 'Benenne auf Nachfrage den Fehler erster Art, also die Nullhypothese fälschlich zu verwerfen.'
+]},
+
+{f:'M', j:13, g:'Geraden und Ebenen', t:'Vorgehen: Schnittpunkt von Gerade und Ebene', s:[
+ 'Schreibe die Gerade in Parameterform und die Ebene in Koordinatenform auf.',
+ 'Liegt die Ebene in Parameterform vor, wandle sie zuerst in die Koordinatenform um, etwa über den Normalenvektor.',
+ 'Setze die drei Koordinaten des Geradenpunkts, also die Terme mit dem Parameter, in die Ebenengleichung ein.',
+ 'Fasse die entstehende Gleichung zusammen; sie enthält nur noch den Parameter.',
+ 'Löse diese Gleichung nach dem Parameter auf.',
+ 'Prüfe die Sonderfälle: Bleibt eine wahre Aussage ohne Parameter, liegt die Gerade in der Ebene; bleibt eine falsche Aussage, ist sie echt parallel.',
+ 'Setze den gefundenen Parameterwert in die Geradengleichung ein.',
+ 'Berechne daraus die Koordinaten des Schnittpunkts.',
+ 'Mache die Probe: Die Koordinaten müssen die Ebenengleichung erfüllen.',
+ 'Gib den Schnittpunkt an und deute ihn, falls die Aufgabe einen Sachzusammenhang hat.'
+]},
+{f:'Ph', j:8, g:'Arbeitsweisen', t:'Vorgehen: Messwerte auswerten und Proportionalität prüfen', s:[
+ 'Schreibe vor dem Versuch auf, welche Größe du veränderst und welche du misst.',
+ 'Halte alle übrigen Größen konstant; sonst lässt sich der Zusammenhang nicht deuten.',
+ 'Lege eine Wertetabelle an, mit Formelzeichen und Einheit in der Kopfzeile.',
+ 'Miss jeden Wert mehrmals und trage den Mittelwert ein; so fallen Ausreißer weniger ins Gewicht.',
+ 'Zeichne ein Diagramm: die veränderte Größe nach rechts, die gemessene nach oben, beide Achsen beschriftet und sinnvoll eingeteilt.',
+ 'Trage die Messpunkte ein, ohne sie von Punkt zu Punkt zu verbinden.',
+ 'Lege eine Ausgleichsgerade so durch die Punktwolke, dass die Abweichungen nach oben und unten etwa gleich groß sind.',
+ 'Prüfe auf Proportionalität: Die Gerade muss durch den Ursprung gehen.',
+ 'Prüfe es zusätzlich rechnerisch: Bilde für jede Zeile den Quotienten der beiden Größen. Bleibt er im Rahmen der Messgenauigkeit gleich, sind die Größen zueinander proportional.',
+ 'Bestimme die Steigung der Ausgleichsgeraden aus einem großen Steigungsdreieck und gib ihre Einheit an.',
+ 'Deute die Steigung physikalisch, zum Beispiel als Widerstand, als Federhärte oder als Geschwindigkeit.',
+ 'Nenne mögliche Fehlerquellen und schätze ab, wie stark sie das Ergebnis beeinflussen.'
+]},
+
+{f:'Ph', j:8, g:'Optik', t:'Vorgehen: Aufgabe mit der Linsengleichung', s:[
+ 'Fertige eine Skizze mit Linse, Brennpunkten, Gegenstand und Bild an.',
+ 'Schreibe auf, was gegeben ist: Gegenstandsweite g, Bildweite b, Brennweite f, Gegenstandsgröße oder Bildgröße.',
+ 'Benenne die gesuchte Größe.',
+ 'Achte auf einheitliche Einheiten, meist Zentimeter oder Meter.',
+ 'Schreibe die Linsengleichung auf: Der Kehrwert der Brennweite ist gleich der Summe der Kehrwerte von Gegenstandsweite und Bildweite.',
+ 'Stelle die Gleichung nach der gesuchten Größe um; beachte dabei, dass du am Ende noch einmal den Kehrwert bilden musst.',
+ 'Setze die Zahlen ein und berechne das Ergebnis.',
+ 'Brauchst du die Bildgröße, nutze den Abbildungsmaßstab: Bildgröße zu Gegenstandsgröße verhält sich wie Bildweite zu Gegenstandsweite.',
+ 'Prüfe das Ergebnis mit der Skizze und mit den bekannten Fällen: Innerhalb der Brennweite entsteht ein virtuelles, aufrechtes und vergrößertes Bild.',
+ 'Formuliere einen Antwortsatz mit Einheit und beschreibe das Bild.'
+]},
+
+{f:'Ph', j:9, g:'Energie', t:'Vorgehen: Sachaufgabe mit dem Energieerhaltungssatz', s:[
+ 'Lies die Aufgabe und skizziere den Vorgang mit Anfangs- und Endzustand.',
+ 'Lege das System fest und entscheide, welche Körper dazugehören.',
+ 'Wähle ein Bezugsniveau für die Lageenergie, meist den tiefsten Punkt der Bewegung.',
+ 'Schreibe auf, welche Energieformen im Anfangszustand vorliegen, etwa Lageenergie oder Spannenergie.',
+ 'Schreibe auf, welche Energieformen im Endzustand vorliegen, etwa Bewegungsenergie.',
+ 'Formuliere den Energieerhaltungssatz: Die Summe der Energien im Anfangszustand ist gleich der Summe im Endzustand.',
+ 'Berücksichtige Reibung, indem du die dabei entstehende innere Energie als zusätzlichen Term auf der Endseite aufnimmst.',
+ 'Setze die Formeln der einzelnen Energieformen ein.',
+ 'Kürze gemeinsame Faktoren; häufig fällt die Masse heraus, was ein gutes Zwischenergebnis ist.',
+ 'Stelle nach der gesuchten Größe um und setze die Zahlen mit Einheiten ein.',
+ 'Prüfe die Einheit des Ergebnisses und die Größenordnung.',
+ 'Formuliere einen Antwortsatz.'
+]},
+
+{f:'Ph', j:10, g:'Mechanik', t:'Vorgehen: Kräftezerlegung an der schiefen Ebene', s:[
+ 'Zeichne die schiefe Ebene mit dem Neigungswinkel und dem Körper darauf.',
+ 'Zeichne die Gewichtskraft als Pfeil senkrecht nach unten im Schwerpunkt des Körpers.',
+ 'Lege ein gedrehtes Koordinatensystem fest: eine Achse parallel zur Ebene, die andere senkrecht dazu.',
+ 'Zerlege die Gewichtskraft in diese beiden Richtungen, indem du vom Pfeilende aus die Parallelen zu den Achsen einzeichnest.',
+ 'Die Komponente parallel zur Ebene heißt Hangabtriebskraft; sie zieht den Körper hangabwärts.',
+ 'Die Komponente senkrecht zur Ebene heißt Normalkraft; sie drückt den Körper auf die Unterlage.',
+ 'Suche den Winkel im Kräftedreieck: Er ist genauso groß wie der Neigungswinkel der Ebene, weil die Schenkel paarweise senkrecht aufeinander stehen.',
+ 'Berechne die Hangabtriebskraft mit dem Sinus des Neigungswinkels, die Normalkraft mit dem Kosinus.',
+ 'Prüfe die Grenzfälle: Bei 0 Grad ist die Hangabtriebskraft null, bei 90 Grad gleich der Gewichtskraft.',
+ 'Vergleiche die Hangabtriebskraft mit der Haftreibungskraft, um zu entscheiden, ob der Körper liegen bleibt oder rutscht.',
+ 'Formuliere das Ergebnis mit Zahlenwerten und Einheiten.'
+]},
+
+{f:'Ph', j:10, g:'Kernphysik', t:'Vorgehen: Altersbestimmung über die Halbwertszeit', s:[
+ 'Lies die Aufgabe und schreibe auf, welches Isotop verwendet wird und wie groß seine Halbwertszeit ist.',
+ 'Notiere den Anfangswert, also den Anteil zu Beginn, und den gemessenen Restanteil.',
+ 'Mache dir das Zerfallsgesetz klar: Nach jeder Halbwertszeit ist nur noch die Hälfte der Kerne vorhanden.',
+ 'Prüfe, ob der Restanteil ein einfacher Bruchteil ist, etwa ein Halb, ein Viertel oder ein Achtel.',
+ 'Ist das der Fall, zähle einfach die Halbierungsschritte: Ein Achtel bedeutet drei Halbwertszeiten.',
+ 'Multipliziere die Anzahl der Schritte mit der Halbwertszeit; das ergibt das gesuchte Alter.',
+ 'Ist der Restanteil kein einfacher Bruchteil, setze ihn in das Zerfallsgesetz ein.',
+ 'Löse die Gleichung nach der Zeit auf; weil die Zeit im Exponenten steht, brauchst du dafür den Logarithmus.',
+ 'Setze die Zahlen ein und berechne das Alter.',
+ 'Prüfe die Größenordnung: Je weniger übrig ist, desto älter muss der Fund sein.',
+ 'Beachte die Grenzen des Verfahrens: Ist kaum noch Aktivität messbar, wird die Angabe unsicher.',
+ 'Formuliere einen Antwortsatz mit Einheit.'
+]},
+{f:'Ph', j:10, g:'Elektromagnetismus', t:'Wirbelstrombremse', s:[
+ 'Eine Metallscheibe dreht sich und taucht dabei zwischen die Pole eines starken Magneten ein.',
+ 'Für jedes Flächenstück der Scheibe ändert sich beim Ein- und Austauchen der magnetische Fluss.',
+ 'Nach dem Induktionsgesetz wird bei dieser Flussänderung eine Spannung induziert.',
+ 'Die Scheibe ist aus einem Stück Metall und damit ein geschlossener Leiter; die Spannung treibt deshalb ringförmige Ströme an, die Wirbelströme.',
+ 'Jeder dieser Wirbelströme erzeugt ein eigenes Magnetfeld.',
+ 'Die Richtung der Ströme folgt aus der Energiebilanz: Die Scheibe wird messbar langsamer, ihre Rotationsenergie nimmt also ab.',
+ 'Diese Energie steckt in den Wirbelströmen und wird über den Widerstand des Metalls in innere Energie umgewandelt.',
+ 'Würde das induzierte Feld die Scheibe stattdessen antreiben, würde sie schneller und zugleich flösse Strom: Energie aus dem Nichts.',
+ 'Das Feld der Wirbelströme muss der Bewegung also entgegenwirken und bremsen. Genau das besagt die lenzsche Regel.',
+ 'Die Bremskraft wächst mit der Geschwindigkeit: Bei hoher Drehzahl bremst sie stark, bei kleiner schwach, im Stillstand gar nicht. Deshalb bremst eine Wirbelstrombremse sanft, aber nie bis zum völligen Halt.',
+ 'Als Gegenprobe schlitzt man die Scheibe radial ein: Die Wirbelströme können sich nicht mehr schließen und die Bremswirkung verschwindet fast völlig.',
+ 'Weil nichts berührt wird, gibt es keinen Verschleiß und keinen Bremsstaub; genutzt wird das in Zügen, in Lastwagen und in Fitnessgeräten.'
+]},
+
+{f:'Ph', j:10, g:'Elektromagnetismus', t:'Wie der Induktionsherd heizt', s:[
+ 'Unter der Glaskeramikplatte liegt eine flache Spule aus Kupferdraht.',
+ 'Durch diese Spule schickt die Elektronik einen hochfrequenten Wechselstrom mit etwa zwanzig- bis fünfzigtausend Schwingungen je Sekunde.',
+ 'Dadurch entsteht ein sich sehr schnell änderndes Magnetfeld.',
+ 'Die Glaskeramik ist weder magnetisch noch elektrisch leitend; das Feld geht praktisch ungehindert durch sie hindurch und die Platte selbst bleibt kalt.',
+ 'Steht ein Topf mit ferromagnetischem Boden darauf, durchsetzt das Wechselfeld diesen Boden.',
+ 'Der magnetische Fluss im Topfboden ändert sich damit ständig, und nach dem Induktionsgesetz wird in ihm eine Spannung induziert.',
+ 'Der Boden ist ein geschlossener Leiter, also fließen in ihm Wirbelströme.',
+ 'Der Boden hat einen elektrischen Widerstand; die Wirbelströme geben dort ihre Energie als innere Energie ab. Dazu kommt die Erwärmung durch das ständige Ummagnetisieren.',
+ 'Die Wärme entsteht also unmittelbar im Topfboden und nicht in der Kochfläche.',
+ 'Daraus folgen die bekannten Vorteile: Die Hitze wirkt sofort, lässt sich schnell regeln und es geht wenig Energie an die Umgebung verloren.',
+ 'Töpfe aus Aluminium oder Kupfer heizen dagegen kaum: Sie sind nicht ferromagnetisch und haben einen zu kleinen Widerstand. Der Magnettest am Topfboden verrät, ob ein Topf geeignet ist.',
+ 'Fehlt der Topf, erkennt die Elektronik die fehlende Last und schaltet ab; deshalb lässt sich eine leere Platte nicht aufheizen.'
+]},
+
+{f:'Ph', j:10, g:'Elektromagnetismus', t:'Wie Nordlichter entstehen', s:[
+ 'Die Sonne schleudert ständig geladene Teilchen ins All, vor allem Elektronen und Protonen; dieser Strom heißt Sonnenwind.',
+ 'Bei einem Sonnensturm sind es besonders viele und besonders schnelle Teilchen.',
+ 'Die Erde besitzt ein Magnetfeld, dessen Feldlinien ähnlich wie bei einem Stabmagneten von einem Pol zum anderen verlaufen.',
+ 'Auf bewegte Ladungen in einem Magnetfeld wirkt die Lorentzkraft.',
+ 'Diese Kraft steht immer senkrecht auf der Bewegungsrichtung und senkrecht auf dem Feld; sie lenkt die Teilchen also ab, statt sie abzubremsen.',
+ 'Deshalb können die Teilchen nicht geradlinig auf die Erde zufliegen: Das Magnetfeld wirkt wie ein Schutzschild.',
+ 'Die Geschwindigkeitskomponente längs der Feldlinien bleibt dabei erhalten, weil in dieser Richtung keine Kraft wirkt.',
+ 'Aus beidem zusammen ergibt sich eine Schraubenbahn: Die Teilchen kreisen um eine Feldlinie und wandern zugleich an ihr entlang.',
+ 'Die Feldlinien laufen an den magnetischen Polen zusammen; die Teilchen werden daher zu den Polargebieten geführt.',
+ 'Dort dringen sie in etwa hundert bis dreihundert Kilometern Höhe in die Atmosphäre ein.',
+ 'Beim Zusammenstoß mit Sauerstoff- und Stickstoffatomen geben sie Energie ab und regen diese Atome an, heben also Elektronen auf höhere Energieniveaus.',
+ 'Fallen die Elektronen kurz darauf zurück, wird die Energie als Licht abgestrahlt. Jede Atomsorte leuchtet dabei in ihrer eigenen Farbe: Sauerstoff grün und rot, Stickstoff blauviolett.',
+ 'Deshalb erscheinen die Nordlichter als Ringe um die Pole und sind nur bei starken Sonnenstürmen auch weiter südlich zu sehen.'
+]},
 
 ];
 

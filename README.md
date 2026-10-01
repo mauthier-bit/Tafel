@@ -474,20 +474,27 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   - **🔀 Mischen** mischt neu (und sorgt dafür, dass die Lösung nicht zufällig schon dasteht),
     **✓ Prüfen** färbt jede Karte grün oder rot und zeigt „x von n an der richtigen Stelle",
     **🕘 Lösung** stellt die richtige Reihenfolge her.
-  - **📚 Aufgaben** öffnet die Bibliothek mit **20 fertigen Ketten**, filterbar nach **Fach,
-    Jahrgangsstufe und Themenbereich**. Sie umfasst drei Sorten:
-    - **Beweise und Ursache-Wirkungs-Ketten:** Satz des Thales (Jgst. 8), Irrationalität von
-      Wurzel 2 (Jgst. 9), Magnetkugel im Kupferrohr und Kraft zwischen parallelen Leitern
-      (Physik, Jgst. 10).
-    - **Knobelaufgabe:** das **Umschütträtsel** – mit einem 3-Liter- und einem 5-Liter-Gefäß genau
-      4 Liter abmessen (Jgst. 5).
-    - **Lösungsalgorithmen – „Wie gehe ich vor?":** lineare Gleichung (7), Textaufgabe in eine
-      Gleichung übersetzen (7), ungleichnamige Brüche addieren (6), Geradengleichung aus zwei
-      Punkten (8), Gleichungssystem mit dem Additionsverfahren (8), quadratische Gleichung (9),
-      Wurzelgleichung (9), Exponentialgleichung (10), Extremwertaufgabe mit quadratischer Funktion
-      (9) und mit Ableitung (11), Fläche zwischen Graph und x-Achse (13); in Physik: eine Aufgabe
-      systematisch rechnen (7), Bildkonstruktion an der Sammellinse (8), Gesamtwiderstand einer
-      gemischten Schaltung (9) und Bewegung mit konstanter Beschleunigung (11).
+  - **📚 Aufgaben** öffnet die Bibliothek mit **39 fertigen Ketten** (rund 420 Schritte), filterbar
+    nach **Fach, Jahrgangsstufe und Themenbereich**. Sie umfasst drei Sorten:
+    - **Beweise:** Satz des Thales (Jgst. 8) und Irrationalität von Wurzel 2 (Jgst. 9).
+    - **Ursache-Wirkungs-Ketten aus der Physik** (Jgst. 10): Magnetkugel im Kupferrohr, Kraft
+      zwischen parallelen Leitern, **Wirbelstrombremse**, **Induktionsherd** und **Entstehung der
+      Nordlichter** – jeweils von der Beobachtung über Induktionsgesetz, Lorentzkraft und
+      Energiebilanz bis zur Erklärung. Dazu die **Knobelaufgabe Umschütträtsel**: mit einem
+      3-Liter- und einem 5-Liter-Gefäß genau 4 Liter abmessen (Jgst. 5).
+    - **Lösungsalgorithmen – „Wie gehe ich vor?":** Dreisatz (6), Prozentaufgabe mit gesuchtem
+      Grundwert (6), ungleichnamige Brüche addieren (6), lineare Gleichung (7), Textaufgabe in eine
+      Gleichung übersetzen (7), **Konstruktionen mit Zirkel und Lineal** – Mittelsenkrechte,
+      Winkelhalbierende, Umkreis und Inkreis (7), Geradengleichung aus zwei Punkten (8),
+      Gleichungssystem mit dem Additionsverfahren (8), quadratische Gleichung (9), Wurzelgleichung
+      (9), Sachaufgabe mit dem Satz des Pythagoras (9), Strahlensatzaufgabe (9), Baumdiagramm mit
+      Pfadregeln (9), Extremwertaufgabe mit quadratischer Funktion (9), Exponentialgleichung (10),
+      Extremwertaufgabe mit Ableitung (11), Signifikanztest (12), Schnittpunkt von Gerade und Ebene
+      (13), Fläche zwischen Graph und x-Achse (13); in Physik: eine Aufgabe systematisch rechnen
+      (7), Messwerte auswerten und Proportionalität prüfen (8), Bildkonstruktion an der Sammellinse
+      (8), Aufgabe mit der Linsengleichung (8), Sachaufgabe mit dem Energieerhaltungssatz (9),
+      Gesamtwiderstand einer gemischten Schaltung (9), Kräftezerlegung an der schiefen Ebene (10),
+      Altersbestimmung über die Halbwertszeit (10) und Bewegung mit konstanter Beschleunigung (11).
     Mit **✎ Schritte** trägt man eigene Ketten ein: eine
     Überschrift und je Zeile ein Schritt, in der richtigen Reihenfolge – gemischt wird beim Übernehmen.
   - Dazu **A−/A+**, **🖨 Drucken** (Arbeitsblatt mit Ankreuzkästchen je Karte), **🖼 Tafel / 📋 Kopieren**
