@@ -29,10 +29,14 @@
   #kopf .hinweis{color:#8a93a2;font-size:.82em;margin-top:2px;}
   #liste{flex:1;min-height:0;overflow:auto;-webkit-overflow-scrolling:touch;padding:8px 12px 18px;display:flex;flex-direction:column;gap:7px;}
   .schritt{display:flex;gap:9px;align-items:stretch;border:1.5px solid #d6dce5;border-radius:12px;background:#fff;
-    box-shadow:0 1px 2px rgba(15,23,42,.06);touch-action:none;}
-  .schritt .nr{flex:none;width:34px;display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;
-    background:#94a3b8;border-radius:10px 0 0 10px;font-size:.95em;}
-  .schritt .txt{flex:1 1 auto;min-width:0;padding:9px 4px 9px 0;line-height:1.4;cursor:grab;}
+    box-shadow:0 1px 2px rgba(15,23,42,.06);touch-action:pan-y;}
+  /* Gezogen wird nur am Griff – über der Karte selbst scrollt der Finger wie gewohnt */
+  .schritt .nr{flex:none;width:44px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+    font-weight:800;color:#fff;background:#94a3b8;border-radius:10px 0 0 10px;font-size:.95em;
+    cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;}
+  .schritt .nr .griff{font-size:.78em;line-height:1;opacity:.85;letter-spacing:1px;}
+  .schritt .nr:active{background:#2563eb;}
+  .schritt .txt{flex:1 1 auto;min-width:0;padding:9px 4px 9px 0;line-height:1.4;}
   .schritt .pfeile{flex:none;display:flex;flex-direction:column;justify-content:center;gap:3px;padding:4px 6px 4px 0;}
   .schritt .pfeile button{width:30px;height:26px;border:1px solid #e2e7ef;background:#f8fafc;border-radius:7px;
     font:800 13px -apple-system,sans-serif;color:#5b6472;cursor:pointer;padding:0;}
@@ -52,6 +56,18 @@
   #eIn input[type=text]{border:1px solid #cfd6e0;border-radius:9px;padding:7px 9px;font:inherit;}
   #eIn textarea{flex:1;min-height:200px;border:1px solid #cfd6e0;border-radius:10px;padding:9px;font:inherit;line-height:1.45;resize:none;}
   #eIn .row{display:flex;gap:7px;justify-content:flex-end;}
+  #eIn .erow{display:flex;gap:9px;align-items:center;flex-wrap:wrap;font-size:.9em;}
+  #eIn .erow label{display:inline-flex;gap:5px;align-items:center;font-weight:600;}
+  #eIn select{border:1px solid #cfd6e0;border-radius:9px;padding:5px 8px;font:inherit;}
+  #eigene{position:absolute;inset:0;background:rgba(15,23,42,.35);display:none;align-items:center;justify-content:center;padding:12px;z-index:61;}
+  #eigene.an{display:flex;}
+  #gIn{background:#fff;border-radius:14px;width:min(620px,96vw);max-height:88vh;display:flex;flex-direction:column;gap:8px;padding:14px;}
+  #gIn h3{margin:0;font-size:1.05em;}
+  #gListe{flex:1;min-height:60px;overflow:auto;display:flex;flex-direction:column;gap:6px;}
+  #gListe .gz{display:flex;gap:8px;align-items:center;border:1px solid #e2e7ef;border-radius:10px;padding:7px 9px;}
+  #gListe .gz .t{flex:1;min-width:0;}
+  #gListe .gz .t b{display:block;}
+  #gListe .gz .t small{color:#64748b;}
 </style>
 </head><body>
 <div id="wrap">
@@ -73,15 +89,27 @@
     <span class="sep"></span>
     <span id="stand" class="lbl"></span>
     <span class="grow"></span>
+    <button class="btn tafelEdit" id="bEigene" title="Eigene Aufgaben verwalten">📂 Eigene</button>
     <button class="btn red tafelEdit" id="bClear" title="Alle Schritte löschen">Leeren</button>
   </div>
   <div id="kopf"><h2 id="titel"></h2><div class="hinweis" id="hinweis"></div></div>
   <div id="liste"></div>
 </div>
 
+<div id="eigene"><div id="gIn">
+  <h3>Eigene Aufgaben</h3>
+  <div class="hint" style="color:#64748b;font-size:.85em">Auf diesem Gerät gespeichert – sie erscheinen in der Auswahl unter „Eigene Aufgaben".</div>
+  <div id="gListe"></div>
+  <div class="row" style="display:flex;justify-content:flex-end"><button class="btn" id="gZu">Schließen</button></div>
+</div></div>
 <div id="eingabe"><div id="eIn">
   <h3>Schritte eintragen</h3>
   <input type="text" id="eTitel" placeholder="Überschrift, z. B. Beweis: Satz des Thales">
+  <div class="erow">
+    <label><input type="checkbox" id="eSave"> in meine Bibliothek aufnehmen</label>
+    <select id="eFach"><option value="">Fach …</option><option value="M">Mathematik</option><option value="Ph">Physik</option></select>
+    <select id="eJg"><option value="0">Jgst. …</option></select>
+  </div>
   <div class="hint">Ein Schritt je Zeile, in der <b>richtigen</b> Reihenfolge – gemischt wird beim Übernehmen. Leere Zeilen werden übergangen.</div>
   <textarea id="eTa" spellcheck="false" placeholder="Gegeben ist …&#10;Daraus folgt …&#10;Also gilt …"></textarea>
   <div class="row"><button class="btn" id="eAb">Abbrechen</button><button class="btn pri" id="eOk">Übernehmen</button></div>
@@ -122,21 +150,24 @@ function render(){
   document.documentElement.style.setProperty('--fs',Math.max(11,Math.min(26,D.fontSize||15))+'px');
   $('titel').textContent=D.titel||'';
   $('titel').hidden=!(D.titel||'').trim();
-  $('hinweis').textContent=n()?'Karten an den Griffen ziehen oder mit ▲ ▼ verschieben – von der Voraussetzung bis zum Ergebnis.':'';
+  $('hinweis').textContent=n()?'Am Griff links ziehen oder mit ▲ ▼ verschieben – über der Karte selbst wischen scrollt die Liste.':'';
   const host=$('liste'); host.innerHTML='';
   if(!n()){ host.innerHTML='<div id="leer">Noch keine Schritte – über „Aufgaben“ eine fertige Kette laden oder mit „✎ Schritte“ eigene eintragen.</div>'; stand(); return; }
   D.order.forEach((idx,pos)=>{
     const el=document.createElement('div'); el.className='schritt'; el.dataset.pos=pos;
     if(D.geprueft) el.classList.add(idx===pos?'richtig':'falsch');
     if(D.shown) el.classList.add('loesung');
-    const nr=document.createElement('div'); nr.className='nr'; nr.textContent=pos+1;
+    const nr=document.createElement('div'); nr.className='nr'; nr.title='zum Verschieben ziehen';
+    const nz=document.createElement('div'); nz.textContent=pos+1;
+    const gr=document.createElement('div'); gr.className='griff'; gr.textContent='⠿';
+    nr.append(nz,gr);
     const tx=document.createElement('div'); tx.className='txt'; tx.textContent=D.schritte[idx];
     const pf=document.createElement('div'); pf.className='pfeile';
     const hoch=document.createElement('button'); hoch.textContent='▲'; hoch.title='nach oben'; hoch.disabled=pos===0;
     const run=document.createElement('button'); run.textContent='▼'; run.title='nach unten'; run.disabled=pos===D.order.length-1;
     hoch.onclick=()=>schieben(pos,pos-1); run.onclick=()=>schieben(pos,pos+1);
     pf.append(hoch,run);
-    tx.addEventListener('pointerdown',e=>zugStart(e,el,pos));
+    nr.addEventListener('pointerdown',e=>zugStart(e,el,pos));
     el.append(nr,tx,pf); host.appendChild(el);
   });
   stand();
@@ -153,7 +184,9 @@ function schieben(von,nach){ if(nach<0||nach>=D.order.length) return;
   D.order=o; D.geprueft=false; D.shown=false; render(); sync(); }
 
 /* ---------- Ziehen ---------- */
-let zug=null;
+let zug=null, rollT=null;
+function rollen(dy){ clearInterval(rollT); if(!dy){ rollT=null; return; }
+  rollT=setInterval(()=>{ const h=$('liste'); h.scrollTop+=dy; },16); }
 function zugStart(e,el,pos){
   if(e.button!==undefined&&e.button!==0) return;
   const r=el.getBoundingClientRect();
@@ -182,10 +215,12 @@ function zugMove(e){
   host.insertBefore(platz, andere[ziel]||null);
   /* an den Rändern mitscrollen, damit auch lange Ketten erreichbar bleiben */
   const hr=host.getBoundingClientRect();
-  if(e.clientY<hr.top+40) host.scrollTop-=12;
-  else if(e.clientY>hr.bottom-40) host.scrollTop+=12;
+  if(e.clientY<hr.top+48) rollen(-10);
+  else if(e.clientY>hr.bottom-48) rollen(10);
+  else rollen(0);
 }
 function zugEnde(e){
+  rollen(0);
   if(!zug) return;
   const el=zug.el, pos=zug.pos, bewegt=zug.bewegt;
   el.removeEventListener('pointermove',zugMove); el.removeEventListener('pointerup',zugEnde); el.removeEventListener('pointercancel',zugEnde);
@@ -222,13 +257,47 @@ $('eOk').onclick=()=>{
   const zeilen=$('eTa').value.split(/\r?\n/).map(z=>z.trim()).filter(Boolean);
   if(zeilen.length<2){ toast('Bitte mindestens zwei Schritte eintragen'); return; }
   D.titel=$('eTitel').value.trim(); D.schritte=zeilen; mischen();
+  if($('eSave').checked) eigeneSichern(D.titel, zeilen, $('eFach').value, $('eJg').value);
   $('eingabe').classList.remove('an'); render(); sync();
   toast(zeilen.length+' Schritte übernommen – jetzt ordnen'); };
+
+/* ---------- eigene Aufgaben (geräteweit gespeichert) ---------- */
+const EIGEN_KEY='tafel_reihen_eigene';
+function eigeneLesen(){ try{ const a=JSON.parse(localStorage.getItem(EIGEN_KEY)||'[]'); return Array.isArray(a)?a:[]; }catch(e){ return []; } }
+function eigeneSchreiben(a){ try{ localStorage.setItem(EIGEN_KEY,JSON.stringify(a)); }catch(e){ toast('Speichern nicht möglich – Speicher voll?'); } }
+function eigeneSichern(titel,schritte,fach,jg){
+  const a=eigeneLesen();
+  const neu={t:titel||'Eigene Aufgabe', s:schritte.slice(), f:fach||'', j:+jg||0, zeit:Date.now()};
+  const i=a.findIndex(x=>x.t===neu.t); if(i>=0) a[i]=neu; else a.push(neu);
+  eigeneSchreiben(a); eigeneKnopf();
+  toast(i>=0?'In der Bibliothek ersetzt: „'+neu.t+'"':'In die Bibliothek aufgenommen: „'+neu.t+'"');
+}
+function eigeneKnopf(){ const n=eigeneLesen().length; const b=$('bEigene');
+  b.textContent='📂 Eigene'+(n?(' ('+n+')'):''); b.disabled=!n; }
+function eigeneListe(){ const host=$('gListe'); host.innerHTML=''; const a=eigeneLesen();
+  if(!a.length){ host.innerHTML='<div style="color:#8a93a2;padding:14px;text-align:center">Noch keine eigenen Aufgaben</div>'; return; }
+  a.forEach((e,i)=>{ const z=document.createElement('div'); z.className='gz';
+    const t=document.createElement('div'); t.className='t';
+    t.innerHTML='<b></b><small></small>';
+    t.querySelector('b').textContent=e.t;
+    t.querySelector('small').textContent=e.s.length+' Schritte'+(e.f?(' · '+(e.f==='M'?'Mathematik':'Physik')):'')+(e.j?(' · Jgst. '+e.j):'');
+    const laden=document.createElement('button'); laden.className='btn'; laden.textContent='laden';
+    laden.onclick=()=>{ D.titel=e.t; D.schritte=e.s.slice(); mischen(); render(); sync();
+      $('eigene').classList.remove('an'); toast(e.s.length+' Schritte übernommen – jetzt ordnen'); };
+    const weg=document.createElement('button'); weg.className='btn red'; weg.textContent='🗑';
+    weg.title='aus der Bibliothek löschen';
+    weg.onclick=()=>{ if(!confirm('„'+e.t+'" aus der eigenen Bibliothek löschen?'))return;
+      const b=eigeneLesen(); b.splice(i,1); eigeneSchreiben(b); eigeneListe(); eigeneKnopf(); };
+    z.append(t,laden,weg); host.appendChild(z); });
+}
+$('bEigene').onclick=()=>{ eigeneListe(); $('eigene').classList.add('an'); };
+$('gZu').onclick=()=>$('eigene').classList.remove('an');
 
 /* ---------- Bibliothek ---------- */
 if(window.TafelLehrplan&&window.TafelReihen&&TafelReihen.verfuegbar()){
   $('bLib').onclick=()=>TafelLehrplan.oeffnen({ titel:'Fertige Argumentationsketten',
-    daten:TafelReihen.daten(),
+    daten:TafelReihen.daten().concat(eigeneLesen().map(e=>({ f:e.f||'', j:e.j||0, g:'Eigene Aufgaben', b:e.t,
+      e:e.s.length+' Schritte · '+e.s[0].slice(0,70)+(e.s[0].length>70?' …':''), schritte:e.s.slice() }))),
     hinweis:'Beweise und Ursache-Wirkungs-Ketten – die Schritte werden beim Übernehmen gemischt.',
     uebernehmen:l=>{ const d=l[0]; if(!d||!d.schritte) return;
       D.titel=d.b; D.schritte=d.schritte.slice(); mischen(); render(); sync();
@@ -270,6 +339,8 @@ function schmal(){ $('bar').classList.toggle('compact', innerWidth<640); }
 addEventListener('resize',schmal);
 window.addEventListener('load',()=>{
   if(window.TafelModus) TafelModus.init({get:()=>D.edit!==false, set:v=>{ D.edit=v; render(); sync(); }});
+  for(let j=5;j<=13;j++){ const o=document.createElement('option'); o.value=j; o.textContent='Jgst. '+j; $('eJg').appendChild(o); }
+  eigeneKnopf();
   schmal(); ordnungPruefen();
   if(!D.order.length||D.order.every((v,i)=>v===i)) mischen();
   render();

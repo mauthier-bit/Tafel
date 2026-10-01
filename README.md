@@ -468,9 +468,12 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
 - **Reihenfolge** (Diverses, `reihenfolge.html`): Eine **Argumentationskette** liegt **gemischt** als
   Kartenstapel vor und muss in die richtige Reihenfolge gebracht werden – von der Voraussetzung über
   die Begründungen bis zum Ergebnis.
-  - **Ordnen:** Karte am Text **anfassen und ziehen**; eine gestrichelte Lücke zeigt, wo sie landet,
-    und am Rand scrollt die Liste mit. Alternativ verschieben die Knöpfe **▲ ▼** eine Karte um einen
-    Platz – das ist auf dem iPad oft der ruhigere Weg.
+  - **Ordnen:** Jede Karte hat links einen **Ziehgriff** (die Nummer mit den Punkten darunter). Nur
+    dort beginnt das Verschieben – **über der Karte selbst wischt man wie gewohnt und die Liste
+    scrollt**. So kommt man auch bei langen Ketten überall hin, ohne aus Versehen etwas zu
+    verschieben. Beim Ziehen zeigt eine gestrichelte Lücke, wo die Karte landet; hält man den Finger
+    am oberen oder unteren Rand, **rollt die Liste von selbst weiter**. Alternativ verschieben die
+    Knöpfe **▲ ▼** eine Karte um einen Platz.
   - **🔀 Mischen** mischt neu (und sorgt dafür, dass die Lösung nicht zufällig schon dasteht),
     **✓ Prüfen** färbt jede Karte grün oder rot und zeigt „x von n an der richtigen Stelle",
     **🕘 Lösung** stellt die richtige Reihenfolge her.
@@ -497,6 +500,12 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
       Altersbestimmung über die Halbwertszeit (10) und Bewegung mit konstanter Beschleunigung (11).
     Mit **✎ Schritte** trägt man eigene Ketten ein: eine
     Überschrift und je Zeile ein Schritt, in der richtigen Reihenfolge – gemischt wird beim Übernehmen.
+  - **Eigene Aufgaben aufheben:** Im selben Fenster lässt sich **„in meine Bibliothek aufnehmen"**
+    ankreuzen und dazu **Fach und Jahrgangsstufe** wählen. Die Aufgabe wird dann **auf dem Gerät
+    gespeichert** (unabhängig vom Projekt) und erscheint in der Auswahl unter dem Bereich **„Eigene
+    Aufgaben"** – mit denselben Filtern wie die mitgelieferten Ketten. Der Knopf **📂 Eigene** zeigt,
+    wie viele es sind, und öffnet eine Liste zum **Laden** und **Löschen**. Eine Aufgabe mit gleicher
+    Überschrift wird ersetzt, nicht doppelt angelegt.
   - Dazu **A−/A+**, **🖨 Drucken** (Arbeitsblatt mit Ankreuzkästchen je Karte), **🖼 Tafel / 📋 Kopieren**
     und der Umschalter **Benutzen/Bearbeiten**. Reihenfolge und Stand werden **mit dem Tafel-Projekt
     gespeichert**.
