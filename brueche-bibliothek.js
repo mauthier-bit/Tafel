@@ -69,15 +69,17 @@ window.TafelBrueche={
     return {
       f:'M', j:6, g:'Brüche und Tortenstücke (kürzen und erweitern)',
       b:txt(e),
-      e:'Tortenstücke: '+alle.map(x=>x.z+'/'+x.n).join(' = '),
+      e:'Tortenstücke und erweiterte Brüche: '+alle.map(x=>x.z+'/'+x.n).join(' = '),
       art:'torte',
       bild:bruchBild(e.z,e.n,150,115),
       bild2:torte(e1.z,e1.n,150,115),
       /* paarweise: der Bruch und ein erweitertes Tortenbild – man muss also kürzen */
       paar:()=>({ links:bruchBild(e.z,e.n,300,240), rechts:torte(e1.z,e1.n,300,240) }),
-      /* als Gruppe: zum Bruch gehören das gekürzte und die erweiterten Tortenbilder */
+      /* als Gruppe: zum Bruch gehören die drei Tortenbilder (gekürzt und erweitert)
+         und dazu die erweiterten Brüche als Zahlenkarten */
       gruppe:()=>({ feld:bruchBild(e.z,e.n,300,240),
-                    karten:alle.map(x=>torte(x.z,x.n,300,240)),
+                    karten:alle.map(x=>torte(x.z,x.n,300,240))
+                           .concat(er.map(x=>bruchBild(x.z,x.n,300,240))),
                     name:txt(e) })
     }; }); }
 };

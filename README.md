@@ -558,9 +558,10 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   - **Unechter Bruch und gemischte Zahl** (Jgst. 6): 11/4 ↔ 2 3/4, 17/5 ↔ 3 2/5
   - **Brüche und Tortenstücke** (Jgst. 6, **zwölf Brüche**): Zu jedem Bruch gehören **drei
     Tortenbilder mit demselben Anteil** – das **gekürzte** und zwei **erweiterte** (z. B. 3/4 als
-    3 von 4, 6 von 8 und 9 von 12 Stücken). **Als Gruppe** steht der Bruch als Feld, die drei
-    Tortenbilder werden einsortiert; **paarweise** gehört zum Bruch ein **erweitertes** Tortenbild,
-    man muss also kürzen. Die Bilder werden beim Übernehmen gezeichnet.
+    3 von 4, 6 von 8 und 9 von 12 Stücken) – **und dazu die erweiterten Brüche als Zahlenkarten**
+    (6/8 und 9/12). **Als Gruppe** steht der gekürzte Bruch als Feld, die **fünf** Karten werden
+    einsortiert: drei Bilder und zwei Brüche. **Paarweise** gehört zum Bruch ein **erweitertes**
+    Tortenbild, man muss also kürzen. Die Bilder werden beim Übernehmen gezeichnet.
   - **Potenzterme** (Jgst. 5 bis 9, je zehn Paare mit wachsender Schwierigkeit): 2 · 2 · 2 ↔ 2³
     und 2⁵ ↔ 32 in Jgst. 5, negative Exponenten wie 10⁻² ↔ 0,01 in Jgst. 6, die Potenzgesetze
     a³ · a² ↔ a⁵ und (a²)³ ↔ a⁶ in Jgst. 7, Terme wie x⁻² ↔ 1/x² und (a/b)⁻¹ ↔ b/a in Jgst. 8,
