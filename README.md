@@ -306,6 +306,8 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   - **Suchfeld** rechts neben „Drucken“ (bricht auf schmalen Bildschirmen in die nächste Zeile um): filtert die Tabelle beim Tippen (Groß-/Kleinschreibung und Umlaute egal, „weiss“ findet „Weiß“), × leert die Suche. Die Tabelle passt ihre Höhe an das Fenster an (auch bei eingeblendeten Kategorien), sodass immer bis zur letzten Zeile gescrollt werden kann. Kompakte Knöpfe und Reiter; lange Kategorienamen in der Kopfzeile brechen um, damit die Tabelle auch im schmalen Fenster (680 px) ohne seitliches Scrollen passt. Vor den Namen steht eine **Nummernspalte** (fortlaufend in der aktuellen Sortierung; beim Suchen behält jeder Name seine Nummer; bleibt wie der Name beim seitlichen Scrollen stehen). Auch der Ausdruck hat die Spalte „Nr.“ (Kästchenliste jetzt mit 24 Spalten, damit sie auf A4 passt).
   - **Klassenliste:** die Namen der aktiven Klasse **alphabetisch** in einer **scrollbaren Tabelle**
     (Kopfzeile und Namensspalte bleiben beim Scrollen stehen); dahinter je **Kategorie eine Spalte**.
+    Die Tabelle nutzt bis zu **86 % der Bildschirmhöhe**, damit möglichst viele Namen auf einmal
+    zu sehen sind (dasselbe gilt für den Stundenplan im selben Fenster).
     - **Art der Kategorie:** *Zähler* (Zelle antippen = **+1**), *Haken* (Zelle antippen =
       **✓ setzen/entfernen**), *Karten*, *Noten* oder *Frei*. Standard: ⚠️ Verwarnung, 👍 Lob,
       ℹ️ Hinweis, 📚 Keine Hausaufgabe (Zähler), 🟨 **Karten**, 📝 **Noten** und ✏️ **Frei**;
@@ -562,6 +564,10 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     (6/8 und 9/12). **Als Gruppe** steht der gekürzte Bruch als Feld, die **fünf** Karten werden
     einsortiert: drei Bilder und zwei Brüche. **Paarweise** gehört zum Bruch ein **erweitertes**
     Tortenbild, man muss also kürzen. Die Bilder werden beim Übernehmen gezeichnet.
+    Eine zweite Wahlzeile **„Dezimalbrüche: ohne / mit"** nimmt den **Dezimalbruch** als weitere
+    Karte dazu (0,75 zu 3/4). Bei 1/3, 2/3, 1/6 und 5/6 erscheint er in **Periodenschreibweise**
+    mit Strich über der Periode; paarweise steht dann der Dezimalbruch links und das gekürzte
+    Tortenbild rechts.
   - **Potenzterme** (Jgst. 5 bis 9, je zehn Paare mit wachsender Schwierigkeit): 2 · 2 · 2 ↔ 2³
     und 2⁵ ↔ 32 in Jgst. 5, negative Exponenten wie 10⁻² ↔ 0,01 in Jgst. 6, die Potenzgesetze
     a³ · a² ↔ a⁵ und (a²)³ ↔ a⁶ in Jgst. 7, Terme wie x⁻² ↔ 1/x² und (a/b)⁻¹ ↔ b/a in Jgst. 8,

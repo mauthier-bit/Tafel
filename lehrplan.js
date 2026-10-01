@@ -48,6 +48,7 @@ function stil(){ if(css) return; css=true;
   #lpHinweis{font-size:11.5px;color:#94a3b8;padding:0 14px 8px;flex:none;}
   #lpArt{display:none;gap:6px;align-items:center;flex-wrap:wrap;padding:0 14px 8px;}
   #lpArt.an{display:flex;} #lpArt b{font-size:12px;color:#64748b;text-transform:uppercase;letter-spacing:.04em;}
+  #lpArt .lpWahl{display:inline-flex;gap:6px;align-items:center;flex-wrap:wrap;margin-right:14px;}
   #lpArt{flex:none;}
   /* niedriges Fenster: der Knopf „Übernehmen" bleibt sichtbar, die Filter rücken zusammen */
   /* je niedriger das Fenster, desto mehr Platz bekommt die Begriffsliste */
@@ -198,16 +199,21 @@ function oeffnen(opt){
   box.onclick=e=>{ if(e.target===box) zu(); };
   /* zusätzliche Auswahl, die das aufrufende Werkzeug anbietet (z. B. Paare oder Gruppen) */
   let art=(opt.arten&&opt.arten[0]&&opt.arten[0].id)||null;
-  if(opt.arten&&opt.arten.length>1){ const z=$l('#lpArt'); z.classList.add('an');
-    z.innerHTML='<b>'+(opt.artTitel||'Form')+'</b>';
-    opt.arten.forEach(a=>{ const b=document.createElement('button'); b.className='lpChip'+(a.id===art?' on':''); b.textContent=a.name;
-      b.onclick=()=>{ art=a.id; [...z.querySelectorAll('.lpChip')].forEach(x=>x.classList.toggle('on',x===b)); }; z.appendChild(b); }); }
+  let art2=(opt.arten2&&opt.arten2[0]&&opt.arten2[0].id)||null;
+  const wahlzeile=(liste,titel,setz,aktiv)=>{ const z=$l('#lpArt'); z.classList.add('an');
+    const g=document.createElement('span'); g.className='lpWahl';
+    g.innerHTML='<b>'+titel+'</b>';
+    liste.forEach(a=>{ const b=document.createElement('button'); b.className='lpChip'+(a.id===aktiv()?' on':''); b.textContent=a.name;
+      b.onclick=()=>{ setz(a.id); [...g.querySelectorAll('.lpChip')].forEach(x=>x.classList.toggle('on',x===b)); }; g.appendChild(b); });
+    z.appendChild(g); };
+  if(opt.arten&&opt.arten.length>1) wahlzeile(opt.arten, opt.artTitel||'Form', v=>{art=v;}, ()=>art);
+  if(opt.arten2&&opt.arten2.length>1) wahlzeile(opt.arten2, opt.art2Titel||'Zusatz', v=>{art2=v;}, ()=>art2);
   const uebernehmen=()=>{
     let l=[...gewaehlt];
     if(!l.length) l=textModus?sichtbar().slice(0,1):sichtbar();   // nichts angekreuzt: alles Sichtbare (beim Text der erste)
     if(!l.length){ zu(); return; }
     l.sort((a,b)=>String(a.f).localeCompare(String(b.f))||a.j-b.j||String(a.g).localeCompare(String(b.g),'de')||a.b.localeCompare(b.b,'de'));
-    zu(); if(opt.uebernehmen) opt.uebernehmen(l, art);
+    zu(); if(opt.uebernehmen) opt.uebernehmen(l, art, art2);
   };
   $l('#lpOk').onclick=uebernehmen; $l('#lpOk2').onclick=uebernehmen;
   chips(); liste();
