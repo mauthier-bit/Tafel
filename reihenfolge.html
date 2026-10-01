@@ -100,7 +100,13 @@
   <h3>Eigene Aufgaben</h3>
   <div class="hint" style="color:#64748b;font-size:.85em">Auf diesem Gerät gespeichert – sie erscheinen in der Auswahl unter „Eigene Aufgaben".</div>
   <div id="gListe"></div>
-  <div class="row" style="display:flex;justify-content:flex-end"><button class="btn" id="gZu">Schließen</button></div>
+  <div class="row" style="display:flex;gap:7px;align-items:center;flex-wrap:wrap">
+    <button class="btn" id="gExport" title="Alle eigenen Aufgaben als Datei sichern">⬆ Exportieren</button>
+    <button class="btn" id="gImport" title="Aufgaben aus einer Datei hinzufügen">⬇ Importieren</button>
+    <input type="file" id="gFile" accept=".json,.reihen,application/json" hidden>
+    <span class="grow" style="flex:1 1 auto"></span>
+    <button class="btn" id="gZu">Schließen</button>
+  </div>
 </div></div>
 <div id="eingabe"><div id="eIn">
   <h3>Schritte eintragen</h3>
@@ -273,7 +279,7 @@ function eigeneSichern(titel,schritte,fach,jg){
   toast(i>=0?'In der Bibliothek ersetzt: „'+neu.t+'"':'In die Bibliothek aufgenommen: „'+neu.t+'"');
 }
 function eigeneKnopf(){ const n=eigeneLesen().length; const b=$('bEigene');
-  b.textContent='📂 Eigene'+(n?(' ('+n+')'):''); b.disabled=!n; }
+  b.textContent='📂 Eigene'+(n?(' ('+n+')'):''); }
 function eigeneListe(){ const host=$('gListe'); host.innerHTML=''; const a=eigeneLesen();
   if(!a.length){ host.innerHTML='<div style="color:#8a93a2;padding:14px;text-align:center">Noch keine eigenen Aufgaben</div>'; return; }
   a.forEach((e,i)=>{ const z=document.createElement('div'); z.className='gz';
@@ -292,6 +298,27 @@ function eigeneListe(){ const host=$('gListe'); host.innerHTML=''; const a=eigen
 }
 $('bEigene').onclick=()=>{ eigeneListe(); $('eigene').classList.add('an'); };
 $('gZu').onclick=()=>$('eigene').classList.remove('an');
+/* Eigene Aufgaben als Datei sichern und auf anderen Geräten wieder einlesen */
+$('gExport').onclick=()=>{ const a=eigeneLesen();
+  if(!a.length){ toast('Es gibt noch keine eigenen Aufgaben'); return; }
+  const blob=new Blob([JSON.stringify({typ:'tafel-reihenfolge', v:1, aufgaben:a},null,1)],{type:'application/json'});
+  const l=document.createElement('a'); l.href=URL.createObjectURL(blob);
+  l.download='reihenfolge-aufgaben.json'; l.click();
+  setTimeout(()=>URL.revokeObjectURL(l.href),2000);
+  toast(a.length+(a.length===1?' Aufgabe gesichert':' Aufgaben gesichert')); };
+$('gImport').onclick=()=>$('gFile').click();
+$('gFile').onchange=async e=>{ const f=e.target.files[0]; e.target.value=''; if(!f) return;
+  let roh=null;
+  try{ roh=JSON.parse(await f.text()); }catch(err){ toast('Die Datei lässt sich nicht lesen'); return; }
+  const liste=Array.isArray(roh)?roh:(roh&&Array.isArray(roh.aufgaben)?roh.aufgaben:null);
+  if(!liste){ toast('In der Datei stehen keine Aufgaben'); return; }
+  const gut=liste.filter(x=>x&&typeof x.t==='string'&&Array.isArray(x.s)&&x.s.length>1&&x.s.every(z=>typeof z==='string'));
+  if(!gut.length){ toast('Keine brauchbaren Aufgaben gefunden'); return; }
+  const a=eigeneLesen(); let neuZahl=0, ersetzt=0;
+  gut.forEach(x=>{ const e2={t:x.t, s:x.s.slice(), f:(x.f==='M'||x.f==='Ph')?x.f:'', j:+x.j||0, zeit:Date.now()};
+    const i=a.findIndex(y=>y.t===e2.t); if(i>=0){ a[i]=e2; ersetzt++; } else { a.push(e2); neuZahl++; } });
+  eigeneSchreiben(a); eigeneListe(); eigeneKnopf();
+  toast(neuZahl+' neu'+(ersetzt?(' · '+ersetzt+' ersetzt'):'')+(gut.length<liste.length?(' · '+(liste.length-gut.length)+' übersprungen'):'')); };
 
 /* ---------- Bibliothek ---------- */
 if(window.TafelLehrplan&&window.TafelReihen&&TafelReihen.verfuegbar()){

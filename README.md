@@ -477,9 +477,10 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   - **🔀 Mischen** mischt neu (und sorgt dafür, dass die Lösung nicht zufällig schon dasteht),
     **✓ Prüfen** färbt jede Karte grün oder rot und zeigt „x von n an der richtigen Stelle",
     **🕘 Lösung** stellt die richtige Reihenfolge her.
-  - **📚 Aufgaben** öffnet die Bibliothek mit **39 fertigen Ketten** (rund 420 Schritte), filterbar
+  - **📚 Aufgaben** öffnet die Bibliothek mit **46 fertigen Ketten** (rund 500 Schritte), filterbar
     nach **Fach, Jahrgangsstufe und Themenbereich**. Sie umfasst drei Sorten:
-    - **Beweise:** Satz des Thales (Jgst. 8) und Irrationalität von Wurzel 2 (Jgst. 9).
+    - **Beweise:** Winkelsumme im Dreieck (Jgst. 7, über die Parallele durch C und die
+      Wechselwinkel), Satz des Thales (Jgst. 8) und Irrationalität von Wurzel 2 (Jgst. 9).
     - **Ursache-Wirkungs-Ketten aus der Physik** (Jgst. 10): Magnetkugel im Kupferrohr, Kraft
       zwischen parallelen Leitern, **Wirbelstrombremse**, **Induktionsherd** und **Entstehung der
       Nordlichter** – jeweils von der Beobachtung über Induktionsgesetz, Lorentzkraft und
@@ -488,11 +489,14 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     - **Lösungsalgorithmen – „Wie gehe ich vor?":** Dreisatz (6), Prozentaufgabe mit gesuchtem
       Grundwert (6), ungleichnamige Brüche addieren (6), lineare Gleichung (7), Textaufgabe in eine
       Gleichung übersetzen (7), **Konstruktionen mit Zirkel und Lineal** – Mittelsenkrechte,
-      Winkelhalbierende, Umkreis und Inkreis (7), Geradengleichung aus zwei Punkten (8),
+      Winkelhalbierende, Umkreis und Inkreis (7) –, **Dreieckskonstruktionen zu den Kongruenzsätzen
+      SSS, SWS, WSW und SsW** (7, jeweils mit Planfigur, Probe und der Begründung, warum die
+      Angaben eindeutig sind), Geradengleichung aus zwei Punkten (8),
       Gleichungssystem mit dem Additionsverfahren (8), quadratische Gleichung (9), Wurzelgleichung
       (9), Sachaufgabe mit dem Satz des Pythagoras (9), Strahlensatzaufgabe (9), Baumdiagramm mit
       Pfadregeln (9), Extremwertaufgabe mit quadratischer Funktion (9), Exponentialgleichung (10),
-      Extremwertaufgabe mit Ableitung (11), Signifikanztest (12), Schnittpunkt von Gerade und Ebene
+      Extremwertaufgabe mit Ableitung (11), **Heron-Verfahren** zur Wurzelberechnung (9),
+      **Newton-Verfahren** zur Nullstellensuche (11), Signifikanztest (12), Schnittpunkt von Gerade und Ebene
       (13), Fläche zwischen Graph und x-Achse (13); in Physik: eine Aufgabe systematisch rechnen
       (7), Messwerte auswerten und Proportionalität prüfen (8), Bildkonstruktion an der Sammellinse
       (8), Aufgabe mit der Linsengleichung (8), Sachaufgabe mit dem Energieerhaltungssatz (9),
@@ -506,6 +510,10 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     Aufgaben"** – mit denselben Filtern wie die mitgelieferten Ketten. Der Knopf **📂 Eigene** zeigt,
     wie viele es sind, und öffnet eine Liste zum **Laden** und **Löschen**. Eine Aufgabe mit gleicher
     Überschrift wird ersetzt, nicht doppelt angelegt.
+    Dort stehen auch **⬆ Exportieren** und **⬇ Importieren**: Der Export sichert alle eigenen
+    Aufgaben als `.json`-Datei, der Import liest sie auf einem anderen Gerät (oder nach dem Löschen
+    der Website-Daten) wieder ein. Gleichnamige Aufgaben werden ersetzt und unbrauchbare Einträge
+    übersprungen – dieselbe Datei zweimal einzulesen verdoppelt also nichts.
   - Dazu **A−/A+**, **🖨 Drucken** (Arbeitsblatt mit Ankreuzkästchen je Karte), **🖼 Tafel / 📋 Kopieren**
     und der Umschalter **Benutzen/Bearbeiten**. Reihenfolge und Stand werden **mit dem Tafel-Projekt
     gespeichert**.

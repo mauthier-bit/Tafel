@@ -538,6 +538,104 @@ const A=[
  'Fallen die Elektronen kurz darauf zurück, wird die Energie als Licht abgestrahlt. Jede Atomsorte leuchtet dabei in ihrer eigenen Farbe: Sauerstoff grün und rot, Stickstoff blauviolett.',
  'Deshalb erscheinen die Nordlichter als Ringe um die Pole und sind nur bei starken Sonnenstürmen auch weiter südlich zu sehen.'
 ]},
+{f:'M', j:7, g:'Symmetrie und Winkel', t:'Beweis: Winkelsumme im Dreieck', s:[
+ 'Gegeben ist ein beliebiges Dreieck ABC mit den Innenwinkeln Alpha bei A, Beta bei B und Gamma bei C.',
+ 'Behauptung: Die Summe der drei Innenwinkel beträgt 180°.',
+ 'Zeichne durch den Punkt C eine Gerade p, die parallel zur Seite AB verläuft.',
+ 'Dass es diese Parallele gibt und dass sie eindeutig ist, sichert das Parallelenaxiom.',
+ 'Die Gerade durch A und C schneidet nun zwei parallele Geraden, nämlich AB und p.',
+ 'An Parallelen sind Wechselwinkel gleich groß. Der Wechselwinkel zu Alpha liegt bei C auf der einen Seite von Gamma und ist deshalb ebenfalls Alpha groß.',
+ 'Ebenso schneidet die Gerade durch B und C die beiden Parallelen; der zugehörige Wechselwinkel bei C ist Beta groß.',
+ 'Am Punkt C liegen damit drei Winkel nebeneinander auf der Geraden p: Alpha, Gamma und Beta.',
+ 'Winkel, die nebeneinander auf einer Geraden liegen, ergänzen sich zum gestreckten Winkel von 180°.',
+ 'Also gilt Alpha + Gamma + Beta = 180°.',
+ 'Da das Dreieck beliebig gewählt war, gilt das für jedes Dreieck. Damit ist die Behauptung bewiesen.'
+]},
+
+{f:'M', j:9, g:'Quadratwurzeln', t:'Heron-Verfahren: Wurzel näherungsweise berechnen', s:[
+ 'Gesucht ist die Wurzel aus einer Zahl a, ohne die Wurzeltaste zu benutzen.',
+ 'Grundidee: Ein Rechteck mit dem Flächeninhalt a hat die Seiten x und a geteilt durch x. Je quadratischer dieses Rechteck wird, desto näher liegen die Seiten an der gesuchten Wurzel.',
+ 'Wähle einen Startwert x, zum Beispiel eine nahe liegende ganze Zahl.',
+ 'Berechne die zweite Rechteckseite, also a geteilt durch x.',
+ 'Vergleiche beide Werte: Ist x zu klein, so ist a geteilt durch x zu groß – und umgekehrt. Die gesuchte Wurzel liegt also immer zwischen den beiden.',
+ 'Bilde den Mittelwert der beiden Werte; er ist der neue, bessere Näherungswert.',
+ 'Berechne mit diesem neuen x wieder a geteilt durch x.',
+ 'Mittle erneut und wiederhole diesen Schritt.',
+ 'Jede Wiederholung verdoppelt ungefähr die Zahl der richtigen Stellen; schon nach wenigen Schritten ist die Genauigkeit sehr hoch.',
+ 'Brich ab, sobald sich die Stellen, auf die es dir ankommt, nicht mehr ändern oder x und a geteilt durch x übereinstimmen.',
+ 'Mache die Probe, indem du das Ergebnis quadrierst und mit a vergleichst.'
+]},
+
+{f:'M', j:11, g:'Differentialrechnung', t:'Newton-Verfahren: Nullstelle näherungsweise bestimmen', s:[
+ 'Gesucht ist eine Nullstelle der Funktion f, die sich nicht exakt berechnen lässt.',
+ 'Verschaffe dir zuerst einen Überblick: Zeichne den Graphen oder suche einen Vorzeichenwechsel von f, um die Nullstelle grob einzugrenzen.',
+ 'Wähle einen Startwert in der Nähe der vermuteten Nullstelle.',
+ 'Bilde die Ableitung f Strich; sie wird in jedem Schritt gebraucht.',
+ 'Grundidee: Ersetze den Graphen in der Nähe des Startwerts durch seine Tangente.',
+ 'Lege die Tangente im Punkt mit dem Startwert an den Graphen an.',
+ 'Berechne die Nullstelle dieser Tangente; sie liegt in der Regel näher an der gesuchten Nullstelle als der Startwert.',
+ 'In Formeln: Der neue Wert ist der alte minus f an dieser Stelle geteilt durch f Strich an dieser Stelle.',
+ 'Wiederhole den Schritt mit dem neuen Wert; das Verfahren ist eine Iteration.',
+ 'Brich ab, wenn sich die Werte in der geforderten Genauigkeit nicht mehr ändern oder der Funktionswert nahe genug bei null liegt.',
+ 'Mache die Probe, indem du den gefundenen Wert in f einsetzt.',
+ 'Beachte die Grenzen: Ist die Ableitung an einer Stelle null oder liegt der Startwert ungünstig, kann das Verfahren scheitern oder zu einer ganz anderen Nullstelle führen.'
+]},
+{f:'M', j:7, g:'Konstruktionen mit Zirkel und Lineal', t:'Konstruktion: Dreieck aus drei Seiten (SSS)', s:[
+ 'Gegeben sind die drei Seitenlängen a, b und c.',
+ 'Prüfe zuerst die Dreiecksungleichung: Je zwei Seiten zusammen müssen länger sein als die dritte. Sonst gibt es kein Dreieck.',
+ 'Fertige eine Planfigur an, eine freihändige Skizze mit allen gegebenen Stücken.',
+ 'Zeichne die längste Seite als Strecke; nenne ihre Endpunkte A und B. Das ist die Seite c.',
+ 'Stich mit dem Zirkel in A ein und stelle die Länge der Seite b ein.',
+ 'Zeichne damit einen Kreisbogen oberhalb der Strecke AB.',
+ 'Stich in B ein und stelle die Länge der Seite a ein.',
+ 'Zeichne damit einen zweiten Kreisbogen, der den ersten schneidet.',
+ 'Der Schnittpunkt der beiden Bögen ist der Punkt C.',
+ 'Verbinde A mit C und B mit C.',
+ 'Miss zur Probe alle drei Seiten nach; sie müssen mit den Vorgaben übereinstimmen.',
+ 'Nach dem Kongruenzsatz SSS ist das Dreieck durch die drei Seiten eindeutig festgelegt; die zweite Lösung unterhalb der Strecke ist nur die Spiegelung.'
+]},
+
+{f:'M', j:7, g:'Konstruktionen mit Zirkel und Lineal', t:'Konstruktion: Dreieck aus zwei Seiten und Zwischenwinkel (SWS)', s:[
+ 'Gegeben sind zwei Seiten und der Winkel, der von ihnen eingeschlossen wird, zum Beispiel b, c und Alpha.',
+ 'Fertige eine Planfigur an und markiere darin die gegebenen Stücke.',
+ 'Prüfe, dass der gegebene Winkel wirklich zwischen den beiden gegebenen Seiten liegt. Nur dann gilt der Satz SWS.',
+ 'Zeichne die Seite c als Strecke AB.',
+ 'Trage im Punkt A mit dem Geodreieck den Winkel Alpha an die Strecke AB an und zeichne den freien Schenkel.',
+ 'Stich mit dem Zirkel in A ein und stelle die Länge der Seite b ein.',
+ 'Schlage einen Kreisbogen, der den freien Schenkel schneidet.',
+ 'Der Schnittpunkt ist der Punkt C.',
+ 'Verbinde B mit C; damit ist das Dreieck fertig.',
+ 'Miss zur Probe die Seite b und den Winkel Alpha nach.',
+ 'Nach dem Kongruenzsatz SWS ist das Dreieck damit eindeutig bestimmt.'
+]},
+
+{f:'M', j:7, g:'Konstruktionen mit Zirkel und Lineal', t:'Konstruktion: Dreieck aus einer Seite und zwei Winkeln (WSW)', s:[
+ 'Gegeben sind eine Seite und die beiden Winkel, die an ihr anliegen, zum Beispiel c, Alpha und Beta.',
+ 'Prüfe, dass die Summe der beiden gegebenen Winkel kleiner als 180° ist. Sonst schneiden sich die Schenkel nicht.',
+ 'Fertige eine Planfigur an.',
+ 'Zeichne die Seite c als Strecke AB.',
+ 'Trage im Punkt A den Winkel Alpha an die Strecke an und zeichne den freien Schenkel.',
+ 'Trage im Punkt B den Winkel Beta an dieselbe Strecke an, und zwar auf derselben Seite wie Alpha.',
+ 'Zeichne auch hier den freien Schenkel.',
+ 'Die beiden freien Schenkel schneiden sich in einem Punkt; das ist der Punkt C.',
+ 'Zeichne die Seiten bis zu diesem Schnittpunkt aus.',
+ 'Miss zur Probe den dritten Winkel nach: Alle drei Winkel müssen zusammen 180° ergeben.',
+ 'Nach dem Kongruenzsatz WSW ist das Dreieck eindeutig bestimmt. Ist statt eines anliegenden Winkels der gegenüberliegende gegeben, rechne ihn zuerst über die Winkelsumme aus.'
+]},
+
+{f:'M', j:7, g:'Konstruktionen mit Zirkel und Lineal', t:'Konstruktion: Dreieck aus zwei Seiten und Gegenwinkel (SsW)', s:[
+ 'Gegeben sind zwei Seiten und der Winkel, der der längeren von beiden gegenüberliegt, zum Beispiel a, c und Alpha mit a größer als c.',
+ 'Prüfe genau diese Bedingung: Der gegebene Winkel muss der längeren Seite gegenüberliegen. Nur dann ist die Konstruktion eindeutig.',
+ 'Fertige eine Planfigur an und markiere die gegebenen Stücke.',
+ 'Zeichne die Seite c als Strecke AB.',
+ 'Trage im Punkt A den Winkel Alpha an und zeichne den freien Schenkel ausreichend lang.',
+ 'Stich mit dem Zirkel in B ein und stelle die Länge der Seite a ein.',
+ 'Schlage einen Kreisbogen um B.',
+ 'Weil a länger als c ist, schneidet der Bogen den freien Schenkel genau einmal im Bereich des Dreiecks; dieser Schnittpunkt ist C.',
+ 'Verbinde B mit C.',
+ 'Miss zur Probe die Seite a und den Winkel Alpha nach.',
+ 'Liegt der gegebene Winkel dagegen der kürzeren Seite gegenüber, schneidet der Bogen zweimal: Dann gibt es zwei verschiedene Dreiecke, und die Angaben legen die Figur nicht eindeutig fest.'
+]},
 
 ];
 
