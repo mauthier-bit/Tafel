@@ -465,6 +465,15 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   Objektgröße an; auch „Als eigene Seite anzeigen“.
 - **Lehrer-Stundenplan** (Diverses, `lehrerplan.html`): der **eigene** Wochenplan der Lehrkraft,
   unabhängig von der Klasse – Zeiten links, **Mo–Fr** (auf Wunsch **Mo–Sa**) als Spalten.
+  Er ist **kein Tafelobjekt, sondern ein eigenes Fenster**: Der Knopf öffnet ihn, das × schließt ihn,
+  und alles Eingetragene bleibt erhalten – der Plan gehört zur Lehrkraft, nicht zu einer Seite oder
+  Klasse, und wird **geräteweit gespeichert** (also in jedem Projekt derselbe). **🖼 Tafel** legt ihn
+  trotzdem jederzeit als Bild auf die aktuelle Seite.
+  - **Zweiter Reiter „🔁 Vertretungsplan":** Dort öffnet sich der **WebUntis-Zugang der Schule**
+    direkt im Fenster (Standard: `hca.webuntis.com`), mit **⟳ Neu laden** und **↗ Im Browser öffnen**;
+    über **✎ Link** lässt sich eine andere Adresse eintragen. Die Seite wird erst geladen, wenn man
+    den Reiter öffnet. Sollte die **Anmeldung im eingebetteten Fenster** scheitern (Safari blockiert
+    im iframe manchmal die nötigen Cookies), führt „↗ Im Browser öffnen" zum normalen Tab.
   - **Je Stunde drei Zeilen:** **Klasse** (z. B. „9c", „11/2"), **Fach** und **Raum**. **Gleiche Klasse
     bekommt dieselbe Farbe**, quer durch die Woche – so sieht man auf einen Blick, wann man wo ist.
   - **Aufsichten:** Die Zeile **„Vor dem Unterricht"** (7:45–8:00) und jede **Pause** haben eigene Felder
@@ -478,8 +487,8 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     blendet Räume und Aufsichtsorte aus, **A−/A+** ändert die Schriftgröße, **🖨 Drucken** gibt den
     Plan quer aus, **🖼 Tafel / 📋 Kopieren** legt ihn als Bild auf die Tafel. Der **heutige Tag** ist
     hervorgehoben, die **laufende Stunde** liegt auf gelbem Grund (aktualisiert sich jede Minute).
-  - Der Plan wird **mit dem Tafel-Objekt gespeichert**; Umschalter **Benutzen/Bearbeiten** wie bei den
-    anderen Werkzeugen.
+  - Der Plan wird **geräteweit gespeichert** (unabhängig vom Projekt) und steht beim nächsten Öffnen
+    des Fensters wieder genauso da.
 - **Galgenmännchen** (Diverses): Ratespiel für Fachbegriffe. Im **Bearbeiten-Modus** trägt die
   Lehrkraft unter **„✎ Begriffe"** einen oder mehrere Begriffe ein – wahlweise mit Hinweis
   (`Begriff = Hinweis`). Die Liste ist **nur im Bearbeiten-Modus sichtbar**; im **Benutzen-Modus**

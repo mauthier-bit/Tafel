@@ -1141,6 +1141,10 @@
     <div class="hint">Eigene Buchstaben oder Namen eintragen. Ein leeres Feld lässt die Stelle frei.</div></div></div>
 <div class="win" id="win-calc" style="left:70px;top:70px;min-width:260px;"><h3>Taschenrechner <span class="x" data-close="win-calc">×</span></h3>
   <div class="body"><div id="calcMode"><span id="calcHist"></span><span class="calcPills"><button type="button" id="calcSDV" class="calcPill" title="Ergebnis exakt oder als Dezimalzahl">exakt</button><button type="button" id="calcDR" class="calcPill" title="Winkel in Grad (DEG) oder Bogenmaß (RAD)">RAD</button></span></div><input id="calcDisp" type="text" value="0" readonly><div class="calc-grid" id="calcGrid"></div></div></div>
+<div class="win" id="win-lehrerplan" style="left:40px;top:56px;width:min(1040px,96vw);"><h3><span>🗓 Lehrer-Stundenplan</span> <span class="x" data-close="win-lehrerplan">×</span></h3>
+  <div class="body" style="padding:0;max-height:none">
+    <iframe id="lehrerplanFrame" title="Lehrer-Stundenplan" style="width:100%;height:min(76vh,820px);border:0;display:block;background:#fff"></iframe>
+  </div></div>
 <div class="win" id="win-insert" style="left:70px;top:70px;width:min(420px,92vw);"><h3>Einfügen <span class="x" data-close="win-insert">×</span></h3>
   <div class="body">
     <div class="wcap">Art</div>
@@ -3075,7 +3079,21 @@ function syncEmbeds(){ const p=page(), wanted=new Set();
     const c=embedCards.get(id); if(c){c.remove();embedCards.delete(id);} const pl=embedPills.get(id); if(pl){pl.remove();embedPills.delete(id);} } }
 }
 /* Sync mit eingebetteten Apps (Tabelle/Plotter/Vierfeldertafel/Baum) – Objekt über iframe-Quelle finden */
-addEventListener('message',e=>{ if(!e.data)return; let obj=null; for(const[id,fr] of embedEls){ if(fr.contentWindow===e.source){ obj=page().objects.find(o=>o.id===id); break; } }
+addEventListener('message',e=>{ if(!e.data)return;
+  const lpf=$('lehrerplanFrame');                      /* Lehrer-Stundenplan im eigenen Fenster */
+  if(lpf&&lpf.contentWindow&&lpf.contentWindow===e.source){
+    if(e.data.type==='embed-ready'){ let d=null; try{ d=JSON.parse(localStorage.getItem(LPLAN_KEY)||'null'); }catch(err){}
+      e.source.postMessage({type:'embed-data',data:d||{}},'*'); }
+    else if(e.data.type==='embed-data'){ try{ localStorage.setItem(LPLAN_KEY,JSON.stringify(e.data.data)); }catch(err){} }
+    else if(e.data.type==='embed-image'&&typeof e.data.url==='string'&&/^data:image\/(png|jpeg);/.test(e.data.url)){
+      const im=new Image();                            /* „🖼 Tafel“ legt den Plan als Bild auf die Seite */
+      im.onload=()=>{ const k=Math.min(1,(W*0.8/scale)/(e.data.w||im.width),(H*0.8/scale)/(e.data.h||im.height));
+        const w=(e.data.w||im.width)*k, h=(e.data.h||im.height)*k, c=toWorld(W/2,H/2);
+        const o={type:'image',id:uid(),x:c.x-w/2,y:c.y-h/2,w,h,src:e.data.url,_img:im,rot:0,groupId:null};
+        pushUndo(); page().objects.push(o); markDirty(); scheduleAutosave(); toast('Stundenplan als Bild auf die Tafel gelegt'); };
+      im.src=e.data.url; }
+    return; }
+  let obj=null; for(const[id,fr] of embedEls){ if(fr.contentWindow===e.source){ obj=page().objects.find(o=>o.id===id); break; } }
   if(!obj)return;
   if(e.data.type==='speech-start'){ if(embSpeech){ embSpeech.rec.stop(); embSpeech=null; }        // Werkzeug bittet die Tafel ums Zuhören
     const src=e.source;
@@ -5283,7 +5301,12 @@ $('w-pin').onclick=()=>addEmbedObject('pinnwand','pinnwand.html','Pinnwand',{});
 $('t-mindmap').onclick=()=>addEmbedObject('mindmap','mindmap.html','Mindmap',{},false);
 $('w-netz').onclick=()=>addEmbedObject('netz','begriffsnetz.html','Begriffsnetz',undefined,false);
 $('w-galgen').onclick=()=>addEmbedObject('galgen','galgen.html','Galgenmännchen',undefined,false);
-$('w-lehrerplan').onclick=()=>addEmbedObject('lehrerplan','lehrerplan.html','Lehrer-Stundenplan',undefined,false);
+/* Der Lehrer-Stundenplan ist kein Tafelobjekt, sondern ein eigenes Fenster – er gehört zur Lehrkraft,
+   nicht zu einer Seite, und bleibt beim Schließen erhalten (geräteweit gespeichert). */
+const LPLAN_KEY='tafel_lehrerplan';
+$('w-lehrerplan').onclick=()=>{ const f=$('lehrerplanFrame');
+  if(!f.getAttribute('src')) f.setAttribute('src','lehrerplan.html');
+  toggleWin('win-lehrerplan'); };
 $('w-kreuz').onclick=()=>addEmbedObject('kreuzwort','kreuzwort.html','Kreuzworträtsel',undefined,false);
 $('w-gitter').onclick=()=>addEmbedObject('wortgitter','wortgitter.html','Buchstabengitter',undefined,false);
 $('w-wolke').onclick=()=>addEmbedObject('wortwolke','wortwolke.html','Wortwolke',undefined,false);
