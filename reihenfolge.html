@@ -42,6 +42,8 @@
   .schritt .txt{flex:1 1 auto;min-width:0;padding:9px 4px 9px 0;line-height:1.4;display:flex;gap:10px;align-items:flex-start;}
   .schritt .txt .t{flex:1 1 auto;min-width:0;}
   .schritt .fig{flex:none;width:152px;border:1px solid #e2e7ef;border-radius:9px;background:#fff;cursor:zoom-in;}
+  .schritt.nurBild .txt{justify-content:center;padding:7px 4px 7px 0;}
+  .schritt.nurBild .fig{width:min(300px,100%);}
   @media (max-width:470px){ .schritt .txt{flex-direction:column;gap:6px;} .schritt .fig{width:min(200px,100%);} }
   .schritt .pfeile{flex:none;display:flex;flex-direction:column;justify-content:center;gap:3px;padding:4px 6px 4px 0;}
   .schritt .pfeile button{width:30px;height:26px;border:1px solid #e2e7ef;background:#f8fafc;border-radius:7px;
@@ -152,7 +154,7 @@ let D={ v:1, titel:'Beweis: Satz des Thales',
             'Der Winkel bei C setzt sich aus diesen beiden Basiswinkeln zusammen.',
             'Die Winkelsumme im Dreieck beträgt 180°, also ist der Winkel bei C genau 90°.'],
   order:[], geprueft:false, shown:false, fontSize:15, edit:true,
-  bilder:null, figur:'', bildAn:true, quelle:'' };
+  bilder:null, figur:'', bildAn:true, bildModus:'beides', quelle:'' };
 let ready=false;
 
 const n=()=>D.schritte.length;
@@ -163,14 +165,29 @@ function mischen(){ ordnungPruefen(); const o=D.order.slice();
   if(n()>2&&o.every((v,i)=>v===i)) [o[0],o[1]]=[o[1],o[0]];        /* nicht zufällig schon fertig */
   D.order=o; D.geprueft=false; D.shown=false; }
 
-/* ---------- Bilder zu den Schritten ---------- */
-function bildZu(idx){ if(D.bildAn===false||!Array.isArray(D.bilder)) return '';
+/* ---------- Bilder zu den Schritten ----------
+   Drei Darstellungen: Text und Bild, nur Bild (nur wenn jeder Schritt eines hat), nur Text. */
+function alleBilder(){ return Array.isArray(D.bilder)&&D.bilder.length===n()&&n()>0&&
+  D.bilder.every(b=>typeof b==='string'&&b); }
+function modus(){
+  let m=D.bildModus;
+  if(m!=='bild'&&m!=='text'&&m!=='beides') m=(D.bildAn===false)?'text':'beides';   /* ältere Projekte */
+  if(m==='bild'&&!alleBilder()) m='beides';
+  return m;
+}
+function bildZu(idx){ if(modus()==='text'||!Array.isArray(D.bilder)) return '';
   const b=D.bilder[idx]; return (typeof b==='string'&&b)?b:''; }
 function hatBilder(){ return !!(D.figur||(Array.isArray(D.bilder)&&D.bilder.some(b=>typeof b==='string'&&b))); }
 function lupe(src){ $('lupeBild').src=src; $('lupe').classList.add('an'); }
 $('lupe').onclick=()=>$('lupe').classList.remove('an');
 $('figur').onclick=()=>{ if(D.figur) lupe(D.figur); };
-$('bBild').onclick=()=>{ D.bildAn=D.bildAn===false; render(); sync(); };
+$('bBild').onclick=()=>{
+  const folge=alleBilder()?['beides','bild','text']:['beides','text'];
+  const i=folge.indexOf(modus());
+  D.bildModus=folge[(i+1)%folge.length];
+  D.bildAn=D.bildModus!=='text';                      /* ältere Fassungen lesen weiter bildAn */
+  render(); sync();
+};
 
 /* ---------- Anzeige ---------- */
 function render(){
@@ -179,10 +196,15 @@ function render(){
   $('titel').textContent=D.titel||'';
   $('titel').hidden=!(D.titel||'').trim();
   $('hinweis').textContent=n()?'Am Griff links ziehen oder mit ▲ ▼ verschieben – über der Karte selbst wischen scrollt die Liste.':'';
-  const hatB=hatBilder();
-  $('bBild').hidden=$('bBildSep').hidden=!hatB;
-  $('bBild').classList.toggle('pri', hatB&&D.bildAn!==false);
-  const fg=$('figur'); fg.hidden=!(D.figur&&D.bildAn!==false);
+  const hatB=hatBilder(), m=modus();
+  const fest=document.body.classList.contains('tafelGeteilt');   /* geteilt: Darstellung bleibt, wie sie geteilt wurde */
+  $('bBild').hidden=$('bBildSep').hidden=!hatB||fest;
+  $('bBild').textContent=m==='bild'?'🖼 nur Bilder':(m==='text'?'🖼 nur Text':'🖼 Text + Bild');
+  $('bBild').title=alleBilder()
+    ? 'Darstellung wechseln: Text und Bild · nur Bilder · nur Text'
+    : 'Bilder zu den Schritten ein- oder ausblenden';
+  $('bBild').classList.toggle('pri', hatB&&m!=='text');
+  const fg=$('figur'); fg.hidden=!(D.figur&&m!=='text');
   if(!fg.hidden&&fg.getAttribute('src')!==D.figur) fg.src=D.figur;
   const host=$('liste'); host.innerHTML='';
   if(!n()){ host.innerHTML='<div id="leer">Noch keine Schritte – über „Aufgaben“ eine fertige Kette laden oder mit „✎ Schritte“ eigene eintragen.</div>'; stand(); return; }
@@ -195,9 +217,12 @@ function render(){
     const gr=document.createElement('div'); gr.className='griff'; gr.textContent='⠿';
     nr.append(nz,gr);
     const tx=document.createElement('div'); tx.className='txt';
-    const tz=document.createElement('div'); tz.className='t'; tz.textContent=D.schritte[idx]; tx.appendChild(tz);
     const bq=bildZu(idx);
-    if(bq){ const im=document.createElement('img'); im.className='fig'; im.src=bq; im.alt='Bild zum Schritt';
+    const nurBild=(m==='bild'&&bq);
+    if(nurBild) el.classList.add('nurBild');
+    else { const tz=document.createElement('div'); tz.className='t'; tz.textContent=D.schritte[idx]; tx.appendChild(tz); }
+    if(bq){ const im=document.createElement('img'); im.className='fig'; im.src=bq;
+      im.alt=nurBild?'Schritt als Bild':'Bild zum Schritt';
       im.title='antippen zum Vergrößern'; im.onclick=()=>lupe(bq); tx.appendChild(im); }
     const pf=document.createElement('div'); pf.className='pfeile';
     const hoch=document.createElement('button'); hoch.textContent='▲'; hoch.title='nach oben'; hoch.disabled=pos===0;
@@ -360,7 +385,7 @@ function ketteLaden(d){
   try{ if(typeof d.bilder==='function'){ const b=d.bilder();
          if(Array.isArray(b)&&b.length===D.schritte.length) D.bilder=b; } }catch(err){}
   try{ if(typeof d.figur==='function') D.figur=d.figur()||''; }catch(err){}
-  if(hatBilder()) D.bildAn=true;
+  if(hatBilder()){ D.bildAn=true; if(modus()==='text') D.bildModus='beides'; }
   mischen(); render(); sync();
 }
 function ketteSuchen(titel){
@@ -384,10 +409,11 @@ $('bPrint').onclick=()=>{
   if(!n()){ toast('Keine Schritte zum Drucken'); return; }
   const esc=t=>String(t).replace(/[&<>"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));
   let h='<h1>'+esc(D.titel||'Reihenfolge')+'</h1><p class="a">Bringe die Schritte in die richtige Reihenfolge.</p><ol class="k">';
-  if(D.figur&&D.bildAn!==false) h+='<p class="fig"><img src="'+D.figur+'"></p>';
-  D.order.forEach(i=>{ const b=bildZu(i);
-    h+='<li><span class="kasten"></span><span class="t">'+esc(D.schritte[i])+
-       (b?'<br><img src="'+b+'">':'')+'</span></li>'; });
+  const m=modus();
+  if(D.figur&&m!=='text') h+='<p class="fig"><img src="'+D.figur+'"></p>';
+  D.order.forEach(i=>{ const b=bildZu(i), nurBild=(m==='bild'&&b);
+    h+='<li><span class="kasten"></span><span class="t">'+(nurBild?'':esc(D.schritte[i]))+
+       (b?(nurBild?'':'<br>')+'<img src="'+b+'">':'')+'</span></li>'; });
   h+='</ol>';
   const win=window.open('','_blank');
   if(!win){ toast('Bitte Pop-ups erlauben – dann klappt das Drucken'); return; }
@@ -410,16 +436,20 @@ if(window.TafelTeilen){
   TafelTeilen.knopf($('teilenBtn'),'reihenfolge.html',()=>{
     if(!n()) return null;
     /* Stammt die Kette aus der Bibliothek, genügt ihr Titel – die Bilder entstehen auf dem Schülergerät neu */
-    if(D.quelle&&ketteSuchen(D.quelle)) return {w:'r',k:D.quelle};
-    return {w:'r',t:D.titel,s:D.schritte};
+    const m=modus();
+    if(D.quelle&&ketteSuchen(D.quelle)) return {w:'r',k:D.quelle,m};
+    return {w:'r',t:D.titel,s:D.schritte,m};
   });
 }
 function geteiltLaden(p){
   if(!p||p.w!=='r') return false;
   const d=p.k&&ketteSuchen(p.k);
-  if(d){ ketteLaden(d); return true; }
+  if(d){ ketteLaden(d);
+    if(p.m){ D.bildModus=p.m; D.bildAn=p.m!=='text'; render(); }
+    return true; }
   if(Array.isArray(p.s)&&p.s.length>1){
     D.titel=p.t||''; D.schritte=p.s.slice(); D.bilder=null; D.figur=''; D.quelle='';
+    if(p.m){ D.bildModus=p.m; D.bildAn=p.m!=='text'; }
     mischen(); render(); return true;
   }
   return false;
@@ -439,7 +469,9 @@ function schmal(){ $('bar').classList.toggle('compact', innerWidth<640); }
 addEventListener('resize',schmal);
 window.addEventListener('load',()=>{
   const geteilt=window.TafelTeilen&&TafelTeilen.istGeteilt();
-  if(geteilt){ TafelTeilen.nurBenutzen('#bSol,#shotBtns'); D.edit=false; }
+  /* In der geteilten Fassung bleibt die Darstellung so, wie die Lehrkraft sie gewählt hat –
+     sonst käme man bei „nur Bilder" mit einem Tipp wieder an die Texte. */
+  if(geteilt){ TafelTeilen.nurBenutzen('#bSol,#shotBtns,#bBild,#bBildSep'); D.edit=false; }
   else if(window.TafelModus) TafelModus.init({get:()=>D.edit!==false, set:v=>{ D.edit=v; render(); sync(); }});
   for(let j=5;j<=13;j++){ const o=document.createElement('option'); o.value=j; o.textContent='Jgst. '+j; $('eJg').appendChild(o); }
   eigeneKnopf();

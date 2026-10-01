@@ -517,9 +517,15 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
       Zeichnung nicht zuwächst.
     - Bei vier Vorgehensketten (Pythagoras, Strahlensatz, schiefe Ebene, Linsengleichung) steht
       **eine Figur zur ganzen Aufgabe** unter der Überschrift.
-    - Der Knopf **🖼 Bilder** blendet alle Bilder aus und wieder ein – ohne Bilder ist die Aufgabe
-      schwerer, mit Bildern wird sie zur geführten Konstruktionsbeschreibung. Ein **Tipp auf ein
-      Bild** zeigt es groß. Gedruckt wird mit Bildern, wenn sie eingeblendet sind.
+    - Der Knopf in der zweiten Leiste schaltet die **Darstellung** weiter und zeigt dabei an, welche
+      gerade gilt: **🖼 Text + Bild** → **🖼 nur Bilder** → **🖼 nur Text**. Mit Bildern wird die Kette
+      zur geführten Konstruktionsbeschreibung, ohne Bilder ist sie anspruchsvoller – und **nur
+      Bilder** macht daraus eine rein geometrische Aufgabe: Die Karten zeigen allein die Figuren,
+      und die Reihenfolge muss aus der Zeichnung erschlossen werden. **Nur Bilder** erscheint nur
+      dort, wo **jeder** Schritt ein eigenes Bild hat, also bei den zwölf Ketten mit Schrittbildern.
+      Ein **Tipp auf ein Bild** zeigt es groß. Gedruckt wird in der gewählten Darstellung, und beim
+      **Teilen** bekommen die Schüler genau die Darstellung, die an der Tafel eingestellt war – ohne
+      Umschalter, damit „nur Bilder" nicht mit einem Tipp wieder zum Text wird.
     - Die Figuren werden **im Gerät gezeichnet** (Canvas, keine Bilddateien) und automatisch auf den
       bemalten Bereich zugeschnitten – je Kette auf denselben Ausschnitt, damit nichts springt. Sie
       werden **mit dem Projekt gespeichert**, sind also auch ohne Netz wieder da.
