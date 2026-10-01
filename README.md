@@ -465,6 +465,23 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   einen Ast, **↶** Rückgängig, **⟳ Ordnen** ordnet alles kreisförmig ohne Überlappungen an, **A−/A+** sowie
   Schrift (fett/kursiv) im Kontextmenü, **🖼 Tafel / 📋 Kopieren** als Bild. Passt sich automatisch der
   Objektgröße an; auch „Als eigene Seite anzeigen“.
+- **Reihenfolge** (Diverses, `reihenfolge.html`): Eine **Argumentationskette** liegt **gemischt** als
+  Kartenstapel vor und muss in die richtige Reihenfolge gebracht werden – von der Voraussetzung über
+  die Begründungen bis zum Ergebnis.
+  - **Ordnen:** Karte am Text **anfassen und ziehen**; eine gestrichelte Lücke zeigt, wo sie landet,
+    und am Rand scrollt die Liste mit. Alternativ verschieben die Knöpfe **▲ ▼** eine Karte um einen
+    Platz – das ist auf dem iPad oft der ruhigere Weg.
+  - **🔀 Mischen** mischt neu (und sorgt dafür, dass die Lösung nicht zufällig schon dasteht),
+    **✓ Prüfen** färbt jede Karte grün oder rot und zeigt „x von n an der richtigen Stelle",
+    **🕘 Lösung** stellt die richtige Reihenfolge her.
+  - **📚 Aufgaben** öffnet die Bibliothek mit fertigen Ketten, filterbar nach **Fach, Jahrgangsstufe
+    und Themenbereich**: **Beweis des Satzes von Thales** (Jgst. 8), **Beweis der Irrationalität von
+    Wurzel 2** (Jgst. 9), **Magnetkugel fällt durch ein Kupferrohr** und **Kraft zwischen zwei
+    parallelen Leitern** (Physik, Jgst. 10). Mit **✎ Schritte** trägt man eigene Ketten ein: eine
+    Überschrift und je Zeile ein Schritt, in der richtigen Reihenfolge – gemischt wird beim Übernehmen.
+  - Dazu **A−/A+**, **🖨 Drucken** (Arbeitsblatt mit Ankreuzkästchen je Karte), **🖼 Tafel / 📋 Kopieren**
+    und der Umschalter **Benutzen/Bearbeiten**. Reihenfolge und Stand werden **mit dem Tafel-Projekt
+    gespeichert**.
 - **Lehrer-Stundenplan** (Diverses, `lehrerplan.html`): der **eigene** Wochenplan der Lehrkraft,
   unabhängig von der Klasse – Zeiten links, **Mo–Fr** (auf Wunsch **Mo–Sa**) als Spalten.
   Er ist **kein Tafelobjekt, sondern ein eigenes Fenster**: Der Knopf öffnet ihn, das × schließt ihn,
@@ -613,8 +630,16 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   eines Themas. Zwei Aufgaben mit **derselben Lösung** (etwa (x + 1)/(2x + 2) und (1/x) : (2/x),
   die beide 1/2 ergeben) werden dabei automatisch aussortiert, damit jede Zuordnung eindeutig ist.
 - **Texte für den Lückentext** (Lückentext): Der Knopf **„Texte"** öffnet eine Bibliothek mit
-  **52 Sachtexten, Alltagstexten und Geschichten** (je rund 200 bis 250 Wörter), passend zu den
-  Lernbereichen des LehrplanPLUS und sprachlich an die Jahrgangsstufe angepasst. Gefiltert wird
+  **81 Sachtexten, Alltagstexten und Geschichten** (je rund 200 bis 250 Wörter), passend zu den
+  Lernbereichen des LehrplanPLUS und sprachlich an die Jahrgangsstufe angepasst. Für die
+  **Unterstufe** gibt es dabei auch **erfundene Geschichten** – Drachenturm, Elfenwiese, Piratenpizza,
+  Hexenrezept, Koboldflohmarkt, Wichtelwerkstatt –, bei denen nur die **Fachbegriffe** zählen:
+  Zahlengerade, Betrag, Gegenzahl, Nenner, kürzen, erweitern, Term, Äquivalenzumformung. Je höher die
+  Jahrgangsstufe, desto fachlicher werden die Texte, bis hin zu Ableitung, Binomialverteilung,
+  Hauptsatz, Impulserhaltung, Schwingkreis und Fotoeffekt. Für den **Elektromagnetismus (Physik 10)**
+  entwickeln vier Texte die **Ursachenkette** Schritt für Schritt: **Lorentzkraft**, **Elektromotor**,
+  **Kraft zwischen parallelen Leitern** und **Magnetkugel im Kupferrohr** (dort wird die Stromrichtung
+  über die **Energieerhaltung** begründet). Gefiltert wird
   nach **Fach, Jahrgangsstufe, Themenbereich** und **Art** (Sachtext · Alltag · Geschichte); die
   Trefferliste zeigt Titel, Anfang und Wortzahl. Ein Klick übernimmt den Text, danach setzt man die
   Lücken wie gewohnt von Hand oder per **Zufällig**. Über **„📄 eigener Text …"** lässt sich auch
@@ -1644,6 +1669,8 @@ figuren-koerper.html  ← Figuren & Körper berechnen (Flächen, Umfang, Volumen
 diagramm.html         ← Diagramm aus einer Tabelle (Säulen, Balken, Linien, Kreis …, verzerrende Darstellung)
 galgen.html           ← Galgenmännchen (Begriffe raten, Hinweise, Lehrplan-Import)
 lehrplan-texte.js     ← Textbibliothek für den Lückentext (Sachtexte, Alltag, Geschichten)
+reihenfolge.html      ← Reihenfolge (Argumentationsketten ordnen)
+reihenfolge-bibliothek.js ← fertige Argumentationsketten (Beweise, Ursache-Wirkungs-Ketten)
 funktionen-bibliothek.js ← Funktionsterme mit gezeichneten Graphen fürs Zuordnen
 zuordnen-bibliothek.js ← fertige Zuordnungspaare (Brüche, Zahlenrätsel, Terme)
 diagramme-bibliothek.js ← Diagramm-Paare (t-s, t-v, t-a; f, f′, f″)
