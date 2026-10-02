@@ -94,6 +94,9 @@ function oeffnen(opt){
   const textModus=!!opt.texte, eigen=!!opt.daten;
   let daten=eigen?opt.daten.slice():(textModus?texte():alle()), quelle=eigen?'eigen':(textModus?'tx':'lp');
   let fFach='', fJg=0, fBer='', fArt='', fQ='';
+  /* Jedes Werkzeug benennt seine Einträge selbst: Begriffe, Texte, Aufgaben, Ketten … */
+  const WORT=opt.einheit||'Begriffe';
+  const SUCHE=opt.suche||'Begriff oder Erklärung …';
   const gewaehlt=new Set();
 
   const box=document.createElement('div'); box.id='lpBox';
@@ -109,7 +112,7 @@ function oeffnen(opt){
       <div class="zeile" data-r="jg"><b>Jahrgang</b></div>
       <div class="zeile" data-r="ber"><b>Bereich</b></div>
       <div class="zeile" data-r="art" style="display:none"><b>Art</b></div>
-      <div class="zeile"><b>Suche</b><input id="lpSuche" type="search" placeholder="Begriff oder Erklärung …"></div>
+      <div class="zeile"><b>Suche</b><input id="lpSuche" type="search" placeholder="${SUCHE}"></div>
     </div>
     <div id="lpListe"></div>
     <div id="lpHinweis">${opt.hinweis||L.stand||''}</div>
@@ -185,11 +188,11 @@ function oeffnen(opt){
         +(textModus?(' · '+(ARTNAME[d.art]||'Text')+' · '+d.e.split(/\s+/).length+' Wörter'):'');
       z.appendChild(c); z.appendChild(t); box2.appendChild(z);
     });
-    if(!list.length) box2.innerHTML='<div style="padding:20px;text-align:center;color:#94a3b8">Keine Begriffe – Filter ändern</div>';
+    if(!list.length) box2.innerHTML='<div style="padding:20px;text-align:center;color:#94a3b8">Keine '+WORT+' – Filter ändern</div>';
     info();
   }
-  const info=()=>{ $l('#lpInfo').textContent=sichtbar().length+' Begriffe · '+gewaehlt.size+' gewählt';
-    $l('#lpInfo').title=sichtbar().length+' Begriffe sichtbar · '+gewaehlt.size+' ausgewählt'; };
+  const info=()=>{ $l('#lpInfo').textContent=sichtbar().length+' '+WORT+' · '+gewaehlt.size+' gewählt';
+    $l('#lpInfo').title=sichtbar().length+' '+WORT+' sichtbar · '+gewaehlt.size+' ausgewählt'; };
 
   box.querySelectorAll('#lpQuelle .lpChip').forEach(b=>b.onclick=()=>{
     if(b.dataset.q==='datei'){ $l('#lpFile').click(); return; }
@@ -204,7 +207,7 @@ function oeffnen(opt){
     if(!neu.length) return;
     quelle='datei'; daten=neu; gewaehlt.clear(); fFach=''; fJg=0; fBer='';
     box.querySelectorAll('#lpQuelle .lpChip').forEach(x=>x.classList.toggle('on',x.dataset.q==='datei'));
-    $l('#lpHinweis').textContent='Aus der Datei „'+f.name+'" – '+neu.length+' Begriffe';
+    $l('#lpHinweis').textContent='Aus der Datei „'+f.name+'" – '+neu.length+' '+WORT;
     chips(); liste(); };
   $l('#lpSuche').oninput=e=>{ fQ=e.target.value.trim().toLowerCase(); liste(); };
   $l('#lpAlle').onclick=()=>{ sichtbar().forEach(d=>gewaehlt.add(d)); liste(); };

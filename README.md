@@ -601,7 +601,11 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   Filtern **Fach · Jahrgangsstufe · Themenbereich** und einer Suche; man kreuzt Begriffe an,
   (der **Themenbereich** steht als **Auswahlfeld** da, sobald es mehr als acht gibt – als Reihe von
   Knöpfen wäre die Liste zu lang und würde abgeschnitten; die Zeile **Art** erscheint nur dort, wo es
-  wirklich Textsorten gibt, also beim Lückentext)
+  wirklich Textsorten gibt, also beim Lückentext). Jedes Werkzeug **benennt seine Einträge selbst**:
+  Das Fenster zählt **Begriffe**, im Buchstabengitter **Wörter**, im Lückentext **Texte**, beim
+  Zuordnen **Aufgaben** und beim Reihenfolge-Werkzeug **Ketten** – und die Suche fragt entsprechend
+  nach „Begriff oder Erklärung", „Titel oder Text", „Aufgabe oder Lösung" oder „Überschrift oder
+  Anfang".
   nimmt mit **„10 zufällig"** eine Stichprobe oder übernimmt einfach alles Gefilterte.
   **„Übernehmen" steht zusätzlich oben in der Kopfzeile** des Auswahlfensters und ist damit auch dann
   erreichbar, wenn das Werkzeug als kleines Objekt auf der Tafel liegt. Nach dem Schließen steht das
