@@ -928,8 +928,11 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   die Auswahl auf, damit die Objekte danach wirklich einzeln beweglich sind)
 - **Laserpointer** und **Scheinwerferspot** – nutzbar auch **mit dem Finger**, unabhängig von der Einstellung „Nur mit Stift schreiben"
 - Der Knopf **„Objekt bedienen" / „Bedienen beenden"** oben in der Mitte sitzt **bündig mit der
-  Unterkante der oberen Leisten** und nie unter der Statusleiste des iPads – er ist also auch am
-  oberen Bildschirmrand immer ganz antippbar (dasselbe gilt für „Aufnahme stoppen").
+  Unterkante der oberen Leisten** – auf dem iPad genau wie am Rechner. Die Leisten stehen selbst
+  schon unterhalb der Statusleiste; ein zusätzlicher Sicherheitsabstand hätte den Knopf auf dem
+  iPad nur tiefer gesetzt. Sind die Leisten **ausgeblendet**, rückt er stattdessen mit sicherem
+  Abstand unter die Statusleiste, damit er auch dort ganz antippbar bleibt (dasselbe gilt für
+  „Aufnahme stoppen").
 - **Werkzeuggruppe „Diverses"** (Zeigewerkzeuge, Symbol: **Werkzeugkoffer**): darin liegen **Mindmap**, **Begriffsnetz**, **Galgenmännchen**, **Pinnwand**,
   **Kreuzworträtsel**, **Zeitleiste**, **Wortwolke** und **Buchstabengitter**.
   - **Kreuzworträtsel:** Über **„✎ Begriffe"** eine Liste eintragen – je Zeile `Begriff = Hinweis` (der Hinweis darf
