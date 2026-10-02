@@ -832,6 +832,8 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
 - **„Als eigene Seite anzeigen":** Bei einem als Objekt eingefügten **Wahrscheinlichkeitsrechner**,
   **Messwert-Analyse**- oder **GeoGebra-App**-Objekt erscheint im Kontext-Panel eine Schaltfläche,
   die das Objekt nachträglich groß auf eine **neue eigene Seite** verschiebt (Inhalt bleibt erhalten).
+  Ein seitenfüllend eingefügtes Werkzeug hält nach **oben denselben Abstand wie zur senkrechten
+  Werkzeugleiste** (zehn Punkte), klebt also nicht an den oberen Leisten.
 - **„⤢ Vollbild":** Bei jedem bedienbaren eingebetteten Objekt (Mathe- und Physik-Werkzeuge, die
   Werkzeuge aus **Diverses**, Web- und H5P-Objekte) sowie bei **Dokumenten (PDF, PowerPoint-Seiten)
   und Bildern** steht im Kontext-Panel **„⤢ Vollbild"**. Bei einem Dokument erscheint die Seite in
