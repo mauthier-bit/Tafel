@@ -21,12 +21,12 @@ function stil(){ if(css) return; css=true;
   #lpKopf .lpBtn{padding:4px 11px;font-size:13.5px;}
   #lpKopf .x{cursor:pointer;color:#64748b;font-size:22px;line-height:1;padding:0 4px;}
   #lpQuelle{padding:7px 14px;border-bottom:1px solid #e2e7ef;display:flex;gap:6px;align-items:center;flex-wrap:wrap;flex:none;}
-  #lpQuelle b{font-size:12px;color:#64748b;text-transform:uppercase;letter-spacing:.04em;width:74px;flex:none;}
+  #lpQuelle b{font-size:12px;color:#64748b;text-transform:uppercase;letter-spacing:.04em;width:88px;flex:none;}
   #lpFilter{padding:8px 14px;border-bottom:1px solid #e2e7ef;display:flex;flex-direction:column;gap:6px;
     flex:0 1 auto;min-height:0;max-height:30vh;overflow:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;}
   #lpFilter .zeile{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
   #lpFilter .zeile[data-r="ber"]{max-height:84px;overflow:auto;-webkit-overflow-scrolling:touch;align-items:flex-start;align-content:flex-start;}
-  #lpFilter b{font-size:12px;color:#64748b;text-transform:uppercase;letter-spacing:.04em;width:74px;flex:none;}
+  #lpFilter b{font-size:12px;color:#64748b;text-transform:uppercase;letter-spacing:.04em;width:88px;flex:none;}
   .lpChip{border:1.5px solid #cfd6e0;background:#fff;border-radius:999px;padding:3px 11px;font:700 13px -apple-system,sans-serif;color:#475569;cursor:pointer;}
   .lpChip.on{background:#2563eb;border-color:#2563eb;color:#fff;}
   #lpSuche{flex:1 1 140px;border:1px solid #cfd6e0;border-radius:9px;padding:5px 9px;font:inherit;font-size:14px;min-width:120px;}
@@ -96,6 +96,9 @@ function oeffnen(opt){
   let fFach='', fJg=0, fBer='', fArt='', fQ='';
   /* Jedes Werkzeug benennt seine Einträge selbst: Begriffe, Texte, Aufgaben, Ketten … */
   const WORT=opt.einheit||'Begriffe';
+  /* „Art" heißt beim Lückentext Textsorte, beim Zuordnen Darstellung – Namen kommen vom Werkzeug */
+  const ARTEN=(opt.sorten&&opt.sorten.namen)||ARTNAME;
+  const ARTTITEL=(opt.sorten&&opt.sorten.titel)||'Art';
   const SUCHE=opt.suche||'Begriff oder Erklärung …';
   const gewaehlt=new Set();
 
@@ -139,7 +142,7 @@ function oeffnen(opt){
       const mk=(txt,val)=>{ const b=document.createElement('button'); b.className='lpChip'+(akt()===val?' on':''); b.textContent=txt;
         b.onclick=()=>{ setz(val); chips(); liste(); }; z.appendChild(b); };
       mk('alle',sel==='jg'?0:'');
-      werte.forEach(v=>mk(sel==='fach'?(FA[v]||v):(sel==='jg'?('Jgst. '+v):(sel==='art'?(ARTNAME[v]||v):v)), v)); };
+      werte.forEach(v=>mk(sel==='fach'?(FA[v]||v):(sel==='jg'?('Jgst. '+v):(sel==='art'?(ARTEN[v]||v):v)), v)); };
     const feld=(sel,werte,akt,setz,titel,alleText)=>{ const z=$l('.zeile[data-r="'+sel+'"]');
       z.innerHTML='<b>'+titel+'</b>';
       const s=document.createElement('select'); s.className='lpSel';
@@ -161,13 +164,13 @@ function oeffnen(opt){
     /* Viele Lehrplanthemen passen nicht als Chips in die Zeile – dann ein Auswahlfeld */
     if(bers.length>8) feld('ber',bers,()=>fBer,v=>{ fBer=v; },'Bereich','alle Bereiche');
     else bauen('ber',bers,()=>fBer,v=>{ fBer=v; },'Bereich');
-    /* „Art" meint die Textsorte – nur dort zeigen, wo es sie wirklich gibt (Lückentext-Bibliothek) */
+    /* Die Art-Zeile nur zeigen, wenn jeder Wert einen Namen hat – sonst stünden dort Kürzel */
     const arten=[...new Set(daten.map(d=>d.art).filter(Boolean))];
-    const textArten=arten.filter(a=>ARTNAME[a]);
-    const zeigeArt=textArten.length>1&&textArten.length===arten.length;
+    const benannt=arten.filter(a=>ARTEN[a]);
+    const zeigeArt=benannt.length>1&&benannt.length===arten.length;
     const za=$l('.zeile[data-r="art"]');
     za.style.display=zeigeArt?'':'none';
-    if(zeigeArt) bauen('art',arten,()=>fArt,v=>{ fArt=v; },'Art'); else fArt='';
+    if(zeigeArt) bauen('art',arten,()=>fArt,v=>{ fArt=v; },ARTTITEL); else fArt='';
   }
   function liste(){
     const box2=$l('#lpListe'); box2.innerHTML='';

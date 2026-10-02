@@ -600,8 +600,9 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   Bedienleiste steht, öffnet sich ein Fenster mit den
   Filtern **Fach · Jahrgangsstufe · Themenbereich** und einer Suche; man kreuzt Begriffe an,
   (der **Themenbereich** steht als **Auswahlfeld** da, sobald es mehr als acht gibt – als Reihe von
-  Knöpfen wäre die Liste zu lang und würde abgeschnitten; die Zeile **Art** erscheint nur dort, wo es
-  wirklich Textsorten gibt, also beim Lückentext). Jedes Werkzeug **benennt seine Einträge selbst**:
+  Knöpfen wäre die Liste zu lang und würde abgeschnitten; die vierte Zeile heißt beim Lückentext
+  **Art** (Sachtext · Alltag · Geschichte) und beim Zuordnen **Darstellung**, und sie erscheint nur,
+  wenn jeder Wert dort auch einen lesbaren Namen hat). Jedes Werkzeug **benennt seine Einträge selbst**:
   Das Fenster zählt **Begriffe**, im Buchstabengitter **Wörter**, im Lückentext **Texte**, beim
   Zuordnen **Aufgaben** und beim Reihenfolge-Werkzeug **Ketten** – und die Suche fragt entsprechend
   nach „Begriff oder Erklärung", „Titel oder Text", „Aufgabe oder Lösung" oder „Überschrift oder
@@ -678,9 +679,11 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     Tafel (`mauthier-bit.github.io/Tafel/`) – auch dann, wenn die Tafel gerade lokal läuft. Der Link
     ist nicht verschlüsselt: Wer sich auskennt, kann die Aufgabe daraus auslesen.
 - **Fertige Zuordnungsaufgaben** (Zuordnen): Der Knopf **„Aufgaben"** öffnet eine Bibliothek mit
-  **fertigen Aufgaben**, filterbar nach **Fach, Jahrgangsstufe** und **Bereich** (Lehrplanthema, als
-  Auswahlfeld). Unten wählt man die **Aufgabenart**: paarweise (zwei Karten) oder als Gruppe (alle
-  zugehörigen Karten):
+  **fertigen Aufgaben**, filterbar nach **Fach, Jahrgangsstufe**, **Bereich** (Lehrplanthema, als
+  Auswahlfeld) und **Darstellung**: **nur Text · Funktionsgraph · Diagramm · Tortenbild**. Über die
+  Darstellung findet man die Aufgaben **mit Bildern** quer durch alle Themen – etwa alle zwölf
+  Bruchaufgaben mit Tortenstücken. Unten wählt man die **Aufgabenart**: paarweise (zwei Karten) oder
+  als Gruppe (alle zugehörigen Karten):
   (Alle Bibliotheken **fertiger Aufgaben** – Zuordnen, Lückentext, Reihenfolge – tragen dasselbe
   Symbol: **Buchrücken im Regal**. Das **aufgeschlagene Buch** bleibt dem **Glossar** und den
   Lehrplanbegriffen vorbehalten, damit die beiden Quellen auf einen Blick zu unterscheiden sind.)
