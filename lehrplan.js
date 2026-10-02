@@ -30,6 +30,9 @@ function stil(){ if(css) return; css=true;
   .lpChip{border:1.5px solid #cfd6e0;background:#fff;border-radius:999px;padding:3px 11px;font:700 13px -apple-system,sans-serif;color:#475569;cursor:pointer;}
   .lpChip.on{background:#2563eb;border-color:#2563eb;color:#fff;}
   #lpSuche{flex:1 1 140px;border:1px solid #cfd6e0;border-radius:9px;padding:5px 9px;font:inherit;font-size:14px;min-width:120px;}
+  .lpSel{flex:1 1 200px;max-width:460px;border:1.5px solid #cfd6e0;border-radius:9px;padding:5px 9px;
+    font:700 13.5px -apple-system,sans-serif;color:#475569;background:#fff;}
+  .lpSel.on{border-color:#2563eb;color:#2563eb;}
   #lpListe{flex:1 1 380px;overflow:auto;-webkit-overflow-scrolling:touch;padding:6px 10px;min-height:170px;}
   .lpZ{display:flex;gap:8px;align-items:flex-start;padding:5px 4px;border-bottom:1px solid #f1f5f9;cursor:pointer;}
   .lpZ input{margin-top:3px;width:18px;height:18px;flex:none;}
@@ -134,18 +137,34 @@ function oeffnen(opt){
         b.onclick=()=>{ setz(val); chips(); liste(); }; z.appendChild(b); };
       mk('alle',sel==='jg'?0:'');
       werte.forEach(v=>mk(sel==='fach'?(FA[v]||v):(sel==='jg'?('Jgst. '+v):(sel==='art'?(ARTNAME[v]||v):v)), v)); };
+    const feld=(sel,werte,akt,setz,titel,alleText)=>{ const z=$l('.zeile[data-r="'+sel+'"]');
+      z.innerHTML='<b>'+titel+'</b>';
+      const s=document.createElement('select'); s.className='lpSel';
+      const opt=(t,v)=>{ const o=document.createElement('option'); o.textContent=t; o.value=String(v); s.appendChild(o); };
+      opt(alleText||'alle','');
+      werte.forEach(v=>opt(v,v));
+      s.value=String(akt()||'');
+      s.classList.toggle('on',!!akt());
+      s.onchange=()=>{ setz(s.value); chips(); liste(); };
+      z.appendChild(s); };
     const faecher=[...new Set(daten.map(d=>d.f))].filter(Boolean);
     $l('.zeile[data-r="fach"]').style.display=faecher.length?'':'none';
     bauen('fach',faecher,()=>fFach,v=>{ fFach=v; fBer=''; },'Fach');
     const jgs=[...new Set(daten.filter(d=>!fFach||d.f===fFach).map(d=>d.j))].filter(Boolean).sort((a,b)=>a-b);
     $l('.zeile[data-r="jg"]').style.display=jgs.length?'':'none';
     bauen('jg',jgs,()=>fJg,v=>{ fJg=v; fBer=''; },'Jahrgang');
-    const bers=[...new Set(daten.filter(d=>(!fFach||d.f===fFach)&&(!fJg||d.j===fJg)).map(d=>d.g))];
-    bauen('ber',bers,()=>fBer,v=>{ fBer=v; },'Bereich');
+    const bers=[...new Set(daten.filter(d=>(!fFach||d.f===fFach)&&(!fJg||d.j===fJg)).map(d=>d.g))].filter(Boolean);
+    $l('.zeile[data-r="ber"]').style.display=bers.length?'':'none';
+    /* Viele Lehrplanthemen passen nicht als Chips in die Zeile – dann ein Auswahlfeld */
+    if(bers.length>8) feld('ber',bers,()=>fBer,v=>{ fBer=v; },'Bereich','alle Bereiche');
+    else bauen('ber',bers,()=>fBer,v=>{ fBer=v; },'Bereich');
+    /* „Art" meint die Textsorte – nur dort zeigen, wo es sie wirklich gibt (Lückentext-Bibliothek) */
     const arten=[...new Set(daten.map(d=>d.art).filter(Boolean))];
+    const textArten=arten.filter(a=>ARTNAME[a]);
+    const zeigeArt=textArten.length>1&&textArten.length===arten.length;
     const za=$l('.zeile[data-r="art"]');
-    za.style.display=(arten.length>1)?'':'none';
-    if(arten.length>1) bauen('art',arten,()=>fArt,v=>{ fArt=v; },'Art');
+    za.style.display=zeigeArt?'':'none';
+    if(zeigeArt) bauen('art',arten,()=>fArt,v=>{ fArt=v; },'Art'); else fArt='';
   }
   function liste(){
     const box2=$l('#lpListe'); box2.innerHTML='';
