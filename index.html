@@ -2859,6 +2859,7 @@ const embedLayer=$('embedLayer'); const embedEls=new Map(); let embedInteract=fa
 const FSTOP=22;                                              /* Höhe der Griffleiste über dem Objekt */
 let fsId=null, fsScroll=0, fsMax=0, fsBarsVorher=false, fsBedienVorher=false, fsUiT=null;
 let pickerFs=null, pickerSel=null;   /* Werkzeug, das nur für ein Auswahlfenster im Vollbild ist */
+let pickerFsEigen=false;      /* true: das Vollbild wurde erst für das Auswahlfenster geholt */
 function fsUiZeigen(){ const u=$('fsUi'); u.classList.add('zeig'); clearTimeout(fsUiT); fsUiT=setTimeout(()=>u.classList.remove('zeig'),2600); }
 function fsBalken(){ const u=$('fsUi'), t=$('fsThumb'), bar=$('fsBar');
   u.classList.toggle('scrollbar',fsMax>2);
@@ -2898,10 +2899,16 @@ function vollbildAus(){
   if(!fsId&&!fsDocO) return;
   if(fsDocO){ fsDocO=null; $('fsDoc').classList.remove('an'); $('fsPages').classList.remove('an'); $('fsDocImg').src=''; }
   const fr=fsId?embedEls.get(fsId):null; if(fr) fr.dataset.fsAus='1';
-  fsId=null; fsScroll=0; fsMax=0; pickerFs=null;
+  /* War ein Auswahl- oder Teilen-Fenster offen, schließt es mit: im kleinen Objekt wäre es
+     abgeschnitten – und das Objekt bleibt ausgewählt und bedienbar, sonst hängt man fest. */
+  const pickerWar=pickerFs&&fsId===pickerFs?pickerFs:null;
+  const objWar=fsId?page().objects.find(o=>o.id===fsId):null;
+  if(pickerWar&&fr&&fr.contentWindow) try{ fr.contentWindow.postMessage({type:'picker-zu'},'*'); }catch(e){}
+  fsId=null; fsScroll=0; fsMax=0; pickerFs=null; pickerFsEigen=false;
   document.body.classList.remove('fs-mode'); $('fsUi').classList.remove('an','zeig','scrollbar');
   if(!fsBarsVorher) showBars();
-  if(!fsBedienVorher){ embedInteract=false; applyEmbedMode(); }
+  if(!fsBedienVorher&&!pickerWar){ embedInteract=false; applyEmbedMode(); }
+  if(pickerWar&&objWar){ selection=[objWar]; embedInteract=true; applyEmbedMode(); }
   redraw(); syncEmbeds(); refreshProps();        /* sonst bleiben „☰" und „Objekt bedienen" verschwunden */
 }
 function fsScrollen(d){ if(!fsId) return; fsScroll=Math.max(0,Math.min(fsMax,fsScroll+d)); syncEmbeds(); }
@@ -2989,7 +2996,9 @@ function positionAnnoToggle(){ const at=$('annoToggle'), rs=$('recStop');
      Die Leisten stehen selbst schon unterhalb der Statusleiste, ein zusätzlicher Sicherheitsabstand
      hätte den Knopf auf dem iPad (safe-area-inset) tiefer gesetzt als am Rechner. Nur bei
      ausgeblendeten Leisten greift weiter obenFrei(), weil es dann nichts zum Ausrichten gibt. */
-  const inGap=el=>Math.max(Math.round(sb.top),Math.round(Math.max(sb.bottom,pb.bottom)-el.offsetHeight));
+  const inGap=el=>{ const unten=Math.round(Math.max(sb.bottom,pb.bottom));
+    if(unten<=0) return obenFrei();                 /* Leisten fahren gerade weg oder herein */
+    return Math.max(Math.round(sb.top),unten-el.offsetHeight); };
   const annoOn=at.classList.contains('show')&&!barsHidden;
   let nextTop=null;
   if(at.classList.contains('show')){
@@ -3125,12 +3134,19 @@ addEventListener('message',e=>{ if(!e.data)return;
     if(neu){ neu.x=src.x+src.w+24/scale; neu.y=src.y; markDirty(); scheduleAutosave(); }
     toast('„'+(e.data.label||'Werkzeug')+'“ neben die Karte gelegt'); }
   else if(e.data.type==='picker-space'){        /* Begriffs-Auswahl braucht Höhe: Werkzeug so lange auf Vollbild */
-    if(e.data.on){ if(!fsId&&!fsDocO&&obj.type==='embed'){ pickerFs=obj.id; pickerSel=selection.slice(); vollbildAn(obj); } }
-    else if(pickerFs&&fsId===pickerFs){ const zurueck=pickerSel; pickerSel=null; vollbildAus();
-      const da=page().objects;                    /* danach steht das Werkzeug wieder da wie vorher */
-      selection=(zurueck||[]).filter(o=>da.includes(o));
-      if(!selection.length&&da.includes(obj)) selection=[obj];
-      refreshProps(); redraw(); } }
+    if(e.data.on&&obj.type==='embed'){
+      if(!fsId&&!fsDocO){ pickerFs=obj.id; pickerFsEigen=true; pickerSel=selection.slice(); vollbildAn(obj); }
+      else if(fsId===obj.id){ pickerFs=obj.id; pickerFsEigen=false; syncEmbeds(); }   /* schon im Vollbild: nur die Höhe */
+    }
+    else if(!e.data.on&&pickerFs===obj.id){
+      const eigen=pickerFsEigen; pickerFs=null; pickerFsEigen=false;
+      if(eigen&&fsId===obj.id){ const zurueck=pickerSel; pickerSel=null; vollbildAus();
+        const da=page().objects;                  /* danach steht das Werkzeug wieder da wie vorher */
+        selection=(zurueck||[]).filter(o=>da.includes(o));
+        if(!selection.length&&da.includes(obj)) selection=[obj];
+        refreshProps(); redraw(); }
+      else syncEmbeds();                          /* Vollbild war schon vorher da: nur die Höhe zurück */
+    } }
   else if(e.data.type==='tool-open'&&e.data.tool==='insert'){ toggleWin('win-insert'); }
   else if(e.data.type==='embed-image'&&typeof e.data.url==='string'&&/^data:image\/(png|jpeg);/.test(e.data.url)){   // z. B. Schaltung als Bild neben das Objekt legen
     const src=obj, im=new Image();
@@ -3361,7 +3377,9 @@ document.querySelectorAll('#flowSeg button').forEach(b=>b.onclick=()=>{
 function refreshFlowSeg(){ const f=doc.settings.flow||'both';
   document.querySelectorAll('#flowSeg button').forEach(b=>b.classList.toggle('active',b.dataset.flow===f)); }
 function applyBarsState(){ document.body.classList.toggle('bars-hidden',barsHidden); document.body.classList.toggle('mainbar-right',mainbarSide==='right'); document.body.classList.toggle('mainbar-bottom',mainbarSide==='bottom'); document.body.classList.toggle('bars-light',barTheme==='light');
-  const t=barTintDef(); document.body.style.setProperty('--bar',t[2]); document.body.style.setProperty('--bar2',t[3]); positionAnnoToggle(); placePopovers(); }
+  const t=barTintDef(); document.body.style.setProperty('--bar',t[2]); document.body.style.setProperty('--bar2',t[3]); positionAnnoToggle(); placePopovers();
+  clearTimeout(applyBarsState._t);                  /* die Leisten gleiten 0,28 s – danach noch einmal messen */
+  applyBarsState._t=setTimeout(positionAnnoToggle,320); }
 function hideBars(){ if(barsHidden)return; barsHidden=true; applyBarsState(); }
 function showBars(side){ if(side&&side!==mainbarSide){ mainbarSide=side; saveUI(); } if(!barsHidden){ applyBarsState(); return; } barsHidden=false; applyBarsState(); }
 /* Hauptleiste zur äußeren Kante wischen = ausblenden (Tippen auf Knöpfe bleibt unberührt) */

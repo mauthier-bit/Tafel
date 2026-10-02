@@ -668,6 +668,12 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     steht da und lässt sich **bedienen** (Welle starten, Schaltung schließen, Strahlen verfolgen),
     aber nicht umbauen. Was die Schüler eintragen, bleibt auf ihrem Gerät: Das Teilen
     ist ein **Einbahnweg**, die Tafel sammelt nichts ein.
+  - **Zusammenspiel mit dem Vollbild:** Das Fenster holt sich für den QR-Code so viel Platz wie
+    möglich. Liegt das Werkzeug **schon im Vollbild**, bekommt der Rahmen dafür genau die
+    Bildschirmhöhe, damit die Knöpfe unter dem Code nicht abgeschnitten werden. **Beendet man das
+    Vollbild**, während das Fenster offen ist, schließt es mit – im kleinen Objekt wäre es ohnehin
+    abgeschnitten – und das Werkzeug bleibt **ausgewählt und bedienbar** (dasselbe gilt für die
+    Bibliotheks-Auswahl).
   - **Voraussetzungen:** Die Geräte brauchen Internet, denn der Code zeigt auf die veröffentlichte
     Tafel (`mauthier-bit.github.io/Tafel/`) – auch dann, wenn die Tafel gerade lokal läuft. Der Link
     ist nicht verschlüsselt: Wer sich auskennt, kann die Aufgabe daraus auslesen.

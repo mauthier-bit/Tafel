@@ -162,6 +162,8 @@ function aufbau(){
 }
 function zu(){ const d=document.getElementById('tTeilen'); if(d) d.classList.remove('an');
   if(raumAngefragt) raum(false); }
+/* Beendet die Lehrkraft das Vollbild, während das Teilen-Fenster offen ist, schließt die Tafel es mit */
+addEventListener('message',e=>{ if(e.data&&e.data.type==='picker-zu') zu(); });
 
 /* ---------- Arbeitsauftrag ---------- */
 let auftrag='', schrift=17, letzteQuelle=null, codeT=null;

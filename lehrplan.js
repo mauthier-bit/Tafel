@@ -216,7 +216,10 @@ function oeffnen(opt){
     for(let i=l.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [l[i],l[j]]=[l[j],l[i]]; }
     l.slice(0,textModus?1:10).forEach(d=>gewaehlt.add(d)); liste(); };
   if(textModus){ $l('#lpZufall').textContent='zufällig'; $l('#lpAlle').hidden=true; }
-  const zu=()=>{ box.remove(); platzZurueck(); };
+  const zu=()=>{ box.remove(); platzZurueck(); removeEventListener('message',vonTafel); };
+  /* Beendet die Lehrkraft das Vollbild, während die Auswahl offen ist, schließt die Tafel sie mit */
+  const vonTafel=e=>{ if(e.data&&e.data.type==='picker-zu') zu(); };
+  addEventListener('message',vonTafel);
   $l('.x').onclick=zu; $l('#lpAb').onclick=zu;
   box.onclick=e=>{ if(e.target===box) zu(); };
   /* zusätzliche Auswahl, die das aufrufende Werkzeug anbietet (z. B. Paare oder Gruppen) */
