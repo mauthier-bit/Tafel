@@ -948,10 +948,11 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
 - **Gruppieren / Lösen / Duplizieren / Löschen** im Kontext-Panel („Lösen" hebt die Gruppe auf und
   die Auswahl auf, damit die Objekte danach wirklich einzeln beweglich sind)
 - **Laserpointer** und **Scheinwerferspot** – nutzbar auch **mit dem Finger**, unabhängig von der Einstellung „Nur mit Stift schreiben"
-- **Grauschleier, solange nicht bedient wird:** Eingebettete Objekte liegen leicht **ausgegraut und
-  durchscheinend** auf der Tafel, solange **„Objekt bedienen" aus** ist. Man erkennt sofort, was für
-  ein Werkzeug es ist und wie seine Oberfläche aussieht – aber ebenso, dass man es gerade nur
-  **verschieben, skalieren und drehen** kann. Mit „Objekt bedienen" verschwindet der Schleier.
+- **Grauschleier, solange nicht bedient wird:** Eingebettete Objekte liegen **ausgegraut** auf der
+  Tafel, solange **„Objekt bedienen" aus** ist. Man erkennt sofort, was für ein Werkzeug es ist und
+  wie seine Oberfläche aussieht – aber ebenso, dass man es gerade nur **verschieben, skalieren und
+  drehen** kann. Mit „Objekt bedienen" verschwindet der Schleier. Die Objekte bleiben dabei
+  **undurchsichtig**: Liegen zwei übereinander, scheint das hintere nicht durch das vordere.
 - Der Knopf **„Objekt bedienen" / „Bedienen beenden"** oben in der Mitte sitzt **bündig mit der
   Unterkante der oberen Leisten** – auf dem iPad genau wie am Rechner. Die Leisten stehen selbst
   schon unterhalb der Statusleiste; ein zusätzlicher Sicherheitsabstand hätte den Knopf auf dem
