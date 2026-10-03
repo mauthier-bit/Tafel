@@ -1,5 +1,5 @@
 /* Service Worker – macht die Tafel offline-fähig (App-Shell + Bibliotheken cachen). */
-const CACHE = 'tafel-v367';
+const CACHE = 'tafel-v368';
 const H5P_CACHE = 'tafel-h5p';   // entpackte .h5p-Inhalte (bleiben über App-Updates hinweg erhalten)
 const ASSETS = [
   './',
@@ -32,7 +32,7 @@ const ASSETS = [
   'modus.js',
   'speech.js',
   'venn.js',
-  'mindmap.html','begriffsnetz.html','galgen.html','lehrerplan.html','lehrplan-glossar.js','lehrplan-texte.js','funktionen-bibliothek.js','zuordnen-bibliothek.js','diagramme-bibliothek.js','brueche-bibliothek.js','reihenfolge.html','reihenfolge-bibliothek.js','lehrplan.js','teilen.js',
+  'mindmap.html','begriffsnetz.html','galgen.html','lehrerplan.html','lehrplan-glossar.js','lehrplan-texte.js','funktionen-bibliothek.js','zuordnen-bibliothek.js','diagramme-bibliothek.js','brueche-bibliothek.js','memory-bibliothek.js','reihenfolge.html','reihenfolge-bibliothek.js','lehrplan.js','teilen.js',
   'pinnwand.html',
   'kreuzwort.html',
   'wortgitter.html',

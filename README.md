@@ -681,10 +681,10 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     ist nicht verschlüsselt: Wer sich auskennt, kann die Aufgabe daraus auslesen.
 - **Fertige Zuordnungsaufgaben** (Zuordnen): Der Knopf **„Aufgaben"** öffnet eine Bibliothek mit
   **fertigen Aufgaben**, filterbar nach **Fach, Jahrgangsstufe**, **Bereich** (Lehrplanthema, als
-  Auswahlfeld) und **Darstellung**: **nur Text · Funktionsgraph · Diagramm · Tortenbild**. Über die
-  Darstellung findet man die Aufgaben **mit Bildern** quer durch alle Themen – etwa alle zwölf
-  Bruchaufgaben mit Tortenstücken. Unten wählt man die **Aufgabenart**: paarweise (zwei Karten) oder
-  als Gruppe (alle zugehörigen Karten):
+  Auswahlfeld) und **Darstellung**: **nur Text · Funktionsgraph · Diagramm · Tortenbild · Figur**.
+  Über die Darstellung findet man die Aufgaben **mit Bildern** quer durch alle Themen – etwa alle
+  zwölf Bruchaufgaben mit Tortenstücken. Unten wählt man die **Aufgabenart**: paarweise (zwei Karten)
+  oder als Gruppe (alle zugehörigen Karten). Insgesamt stehen rund **870 Paare** bereit:
   (Alle Bibliotheken **fertiger Aufgaben** – Zuordnen, Lückentext, Reihenfolge – tragen dasselbe
   Symbol: **Buchrücken im Regal**. Das **aufgeschlagene Buch** bleibt dem **Glossar** und den
   Lehrplanbegriffen vorbehalten, damit die beiden Quellen auf einen Blick zu unterscheiden sind.)
@@ -701,6 +701,22 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     Karte dazu (0,75 zu 3/4). Bei 1/3, 2/3, 1/6 und 5/6 erscheint er in **Periodenschreibweise**
     mit Strich über der Periode; paarweise steht dann der Dezimalbruch links und das gekürzte
     Tortenbild rechts.
+  - **Kartensätze aus dem Memory-Spiel** (`memory-bibliothek.js`, **73 Sätze, 582 Paare**,
+    Jgst. 5 bis 13, Mathematik und Physik): Die Sätze des Spiels **„Memory – Mathematik & Physik"**
+    aus der Spiele-Suite stehen hier ebenfalls zur Verfügung – von Potenz und Produkt, Primfaktoren,
+    Bruchrechnung, Termen, Logarithmen und Stammfunktionen bis zu Einheiten, Wärmelehre,
+    Schwingungen und Schaltzeichen. Jeder Satz ist ein eigener **Bereich**, so dass man ihn mit einem
+    Griff komplett übernimmt (acht Paare).
+    **52 Sätze sind reine Textpaare** – Potenzen erscheinen hochgestellt (a² · a ↔ a³), Brüche als
+    2/5 : 3/8, Indizes tiefgestellt (log₃ 9 ↔ 2). **21 Sätze bringen Zeichnungen mit**: Figuren und
+    Winkel, Punkte im Koordinatensystem, Körper, Schaltzeichen, Bewegungsdiagramme sowie Term und
+    Graph bei linearen, quadratischen, Potenz-, Exponential- und Sinusfunktionen. Sie zählen in der
+    Darstellung je nach Satz als **Figur**, **Funktionsgraph** oder **Diagramm**.
+    Die Paare entstehen wie im Spiel **beim Öffnen im Gerät** – aber mit einem **festen Startwert**,
+    damit jedes Gerät dieselben Paare erzeugt. Nur so findet ein **geteilter Link** die Aufgabe
+    wieder, denn er verweist auf Kartensatz und Kartentext, nicht auf die Bilder selbst.
+    (Die Kartensätze sind eine **Kopie** aus `memory.html`; wird das Spiel erweitert, muss die Datei
+    erneut übernommen werden.)
   - **Potenzterme** (Jgst. 5 bis 9, je zehn Paare mit wachsender Schwierigkeit): 2 · 2 · 2 ↔ 2³
     und 2⁵ ↔ 32 in Jgst. 5, negative Exponenten wie 10⁻² ↔ 0,01 in Jgst. 6, die Potenzgesetze
     a³ · a² ↔ a⁵ und (a²)³ ↔ a⁶ in Jgst. 7, Terme wie x⁻² ↔ 1/x² und (a/b)⁻¹ ↔ b/a in Jgst. 8,
@@ -1810,6 +1826,7 @@ reihenfolge-bibliothek.js ← fertige Argumentationsketten (Beweise, Ursache-Wir
 funktionen-bibliothek.js ← Funktionsterme mit gezeichneten Graphen fürs Zuordnen
 zuordnen-bibliothek.js ← fertige Zuordnungspaare (Brüche, Zahlenrätsel, Terme)
 diagramme-bibliothek.js ← Diagramm-Paare (t-s, t-v, t-a; f, f′, f″)
+memory-bibliothek.js  ← Kartensätze des Memory-Spiels (73 Sätze, Text- und Bildpaare)
 lehrplan-glossar.js   ← Fachbegriffe nach LehrplanPLUS Bayern G9 (Mathematik, Physik)
 lehrplan.js           ← gemeinsames Auswahlfenster für den Lehrplan-Import
 teilen.js             ← Teilen per QR-Code (Aufgabe steckt im Fragment der Adresse)
