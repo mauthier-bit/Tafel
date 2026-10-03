@@ -22,8 +22,10 @@ function stil(){ if(css) return; css=true;
   #lpKopf .x{cursor:pointer;color:#64748b;font-size:22px;line-height:1;padding:0 4px;}
   #lpQuelle{padding:7px 14px;border-bottom:1px solid #e2e7ef;display:flex;gap:6px;align-items:center;flex-wrap:wrap;flex:none;}
   #lpQuelle b{font-size:12px;color:#64748b;text-transform:uppercase;letter-spacing:.04em;width:88px;flex:none;}
+  /* Die Filter sind die Steuerung des Fensters – sie bleiben vollständig stehen.
+     Wird es eng, schrumpft die Trefferliste darunter, nicht die Filterzeilen. */
   #lpFilter{padding:9px 14px;border-bottom:1px solid #e2e7ef;display:flex;flex-direction:column;gap:11px;
-    flex:0 1 auto;min-height:0;max-height:30vh;overflow:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;}
+    flex:none;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;}
   #lpFilter .zeile{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
   #lpFilter .zeile[data-r="ber"]{max-height:84px;overflow:auto;-webkit-overflow-scrolling:touch;align-items:flex-start;align-content:flex-start;}
   #lpFilter b{font-size:12px;color:#64748b;text-transform:uppercase;letter-spacing:.04em;width:88px;flex:none;padding-right:10px;}
@@ -33,7 +35,7 @@ function stil(){ if(css) return; css=true;
   .lpSel{flex:1 1 200px;max-width:460px;border:1.5px solid #cfd6e0;border-radius:9px;padding:5px 9px;
     font:700 13.5px -apple-system,sans-serif;color:#475569;background:#fff;}
   .lpSel.on{border-color:#2563eb;color:#2563eb;}
-  #lpListe{flex:1 1 380px;overflow:auto;-webkit-overflow-scrolling:touch;padding:6px 10px;min-height:170px;}
+  #lpListe{flex:1 1 380px;overflow:auto;-webkit-overflow-scrolling:touch;padding:6px 10px;min-height:120px;}
   .lpZ{display:flex;gap:8px;align-items:flex-start;padding:5px 4px;border-bottom:1px solid #f1f5f9;cursor:pointer;}
   .lpZ input{margin-top:3px;width:18px;height:18px;flex:none;}
   .lpZ .t{flex:1 1 auto;min-width:0;}
@@ -56,13 +58,15 @@ function stil(){ if(css) return; css=true;
   /* niedriges Fenster: der Knopf „Übernehmen" bleibt sichtbar, die Filter rücken zusammen */
   /* je niedriger das Fenster, desto mehr Platz bekommt die Begriffsliste */
   @media (max-height:680px){ #lpHinweis{display:none;} }
-  @media (max-height:560px){ #lpFilter{max-height:26vh;padding:6px 14px;}
-    #lpFilter .zeile[data-r="ber"]{max-height:56px;} #lpListe{min-height:130px;} #lpFuss .info{display:none;} }
+  @media (max-height:620px){ #lpFilter{gap:8px;padding:7px 14px;}
+    #lpFilter .zeile[data-r="ber"]{max-height:56px;} #lpListe{min-height:96px;} #lpFuss .info{display:none;} }
   /* sehr niedriges Objektfenster: alles schmal, damit „Übernehmen" ganz sichtbar bleibt */
   @media (max-height:460px){ #lpIn{max-height:99vh;border-radius:12px;} #lpBox{padding:3px;}
-    #lpKopf{padding:6px 10px;} #lpQuelle{padding:4px 10px;} #lpFilter{padding:5px 10px;gap:6px;max-height:24vh;}
-    #lpListe{min-height:84px;padding:2px 8px;}
-    #lpFuss{padding:6px 10px;gap:6px;} #lpFuss .lpBtn{padding:5px 9px;font-size:13px;} }`;
+    #lpKopf{padding:6px 10px;} #lpQuelle{padding:4px 10px;} #lpFilter{padding:5px 10px;gap:6px;}
+    #lpListe{min-height:72px;padding:2px 8px;}
+    #lpFuss{padding:6px 10px;gap:6px;} #lpFuss .lpBtn{padding:5px 9px;font-size:13px;} }
+  /* Notnagel für sehr flache Fenster: dann dürfen die Filter doch rollen, damit der Fuß bleibt */
+  @media (max-height:380px){ #lpFilter{max-height:50vh;overflow:auto;} #lpListe{min-height:56px;} }`;
   document.head.appendChild(s); }
 
 /* Ein gespeichertes Glossar (Textformat „Begriff = Erklärung", Abschnitte mit „# …") einlesen */

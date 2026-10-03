@@ -599,7 +599,10 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   Knopf **📚 Begriffe** (im Glossar **📚 Lehrplan**), der in **jedem** dieser Werkzeuge oben in der
   Bedienleiste steht, öffnet sich ein Fenster mit den
   Filtern **Fach · Jahrgangsstufe · Themenbereich** und einer Suche; man kreuzt Begriffe an,
-  (das Fenster ist **880 Punkte breit**, damit die Jahrgangsstufen in **eine Zeile** passen; der
+  (das Fenster ist **880 Punkte breit**, damit die Jahrgangsstufen in **eine Zeile** passen. Die
+  **Filterzeilen stehen immer vollständig da** – wird das Fenster niedriger, schrumpft die
+  **Trefferliste** darunter, nicht die Steuerung; bis hinunter zu 270 Punkten Höhe bleiben Filter
+  und „Übernehmen" sichtbar. Der
   **Themenbereich** steht als **Auswahlfeld** da, sobald es mehr als acht gibt – als Reihe von
   Knöpfen wäre die Liste zu lang und würde abgeschnitten; die vierte Zeile heißt beim Lückentext
   **Art** (Sachtext · Alltag · Geschichte) und beim Zuordnen **Darstellung**, und sie erscheint nur,
