@@ -599,7 +599,8 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   Knopf **📚 Begriffe** (im Glossar **📚 Lehrplan**), der in **jedem** dieser Werkzeuge oben in der
   Bedienleiste steht, öffnet sich ein Fenster mit den
   Filtern **Fach · Jahrgangsstufe · Themenbereich** und einer Suche; man kreuzt Begriffe an,
-  (der **Themenbereich** steht als **Auswahlfeld** da, sobald es mehr als acht gibt – als Reihe von
+  (das Fenster ist **880 Punkte breit**, damit die Jahrgangsstufen in **eine Zeile** passen; der
+  **Themenbereich** steht als **Auswahlfeld** da, sobald es mehr als acht gibt – als Reihe von
   Knöpfen wäre die Liste zu lang und würde abgeschnitten; die vierte Zeile heißt beim Lückentext
   **Art** (Sachtext · Alltag · Geschichte) und beim Zuordnen **Darstellung**, und sie erscheint nur,
   wenn jeder Wert dort auch einen lesbaren Namen hat). Jedes Werkzeug **benennt seine Einträge selbst**:
@@ -947,6 +948,10 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
 - **Gruppieren / Lösen / Duplizieren / Löschen** im Kontext-Panel („Lösen" hebt die Gruppe auf und
   die Auswahl auf, damit die Objekte danach wirklich einzeln beweglich sind)
 - **Laserpointer** und **Scheinwerferspot** – nutzbar auch **mit dem Finger**, unabhängig von der Einstellung „Nur mit Stift schreiben"
+- **Grauschleier, solange nicht bedient wird:** Eingebettete Objekte liegen leicht **ausgegraut und
+  durchscheinend** auf der Tafel, solange **„Objekt bedienen" aus** ist. Man erkennt sofort, was für
+  ein Werkzeug es ist und wie seine Oberfläche aussieht – aber ebenso, dass man es gerade nur
+  **verschieben, skalieren und drehen** kann. Mit „Objekt bedienen" verschwindet der Schleier.
 - Der Knopf **„Objekt bedienen" / „Bedienen beenden"** oben in der Mitte sitzt **bündig mit der
   Unterkante der oberen Leisten** – auf dem iPad genau wie am Rechner. Die Leisten stehen selbst
   schon unterhalb der Statusleiste; ein zusätzlicher Sicherheitsabstand hätte den Knopf auf dem
