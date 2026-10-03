@@ -600,9 +600,12 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   Bedienleiste steht, öffnet sich ein Fenster mit den
   Filtern **Fach · Jahrgangsstufe · Themenbereich** und einer Suche; man kreuzt Begriffe an,
   (das Fenster ist **880 Punkte breit**, damit die Jahrgangsstufen in **eine Zeile** passen. Die
-  **Filterzeilen stehen immer vollständig da** – wird das Fenster niedriger, schrumpft die
-  **Trefferliste** darunter, nicht die Steuerung; bis hinunter zu 270 Punkten Höhe bleiben Filter
-  und „Übernehmen" sichtbar. Der
+  **Filterzeilen stehen immer vollständig da** – wird das Fenster niedriger, geben nacheinander die
+  **Trefferliste**, dann die **Wahlzeilen** unten nach, und erst unterhalb von 285 Punkten Höhe
+  rollen auch die Filter. Geprüft in allen Werkzeugen mit diesem Fenster (Zuordnen, Reihenfolge,
+  Lückentext, Glossar, Mindmap, Begriffsnetz, Pinnwand, Kreuzworträtsel, Buchstabengitter,
+  Galgenmännchen): Bis hinunter zu 300 Punkten Fensterhöhe bleiben alle Filter und „Übernehmen"
+  sichtbar. Der
   **Themenbereich** steht als **Auswahlfeld** da, sobald es mehr als acht gibt – als Reihe von
   Knöpfen wäre die Liste zu lang und würde abgeschnitten; die vierte Zeile heißt beim Lückentext
   **Art** (Sachtext · Alltag · Geschichte) und beim Zuordnen **Darstellung**, und sie erscheint nur,

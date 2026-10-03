@@ -64,9 +64,15 @@ function stil(){ if(css) return; css=true;
   @media (max-height:460px){ #lpIn{max-height:99vh;border-radius:12px;} #lpBox{padding:3px;}
     #lpKopf{padding:6px 10px;} #lpQuelle{padding:4px 10px;} #lpFilter{padding:5px 10px;gap:6px;}
     #lpListe{min-height:72px;padding:2px 8px;}
+    .lpChip{padding:2px 9px;font-size:12.5px;} .lpSel,#lpSuche{padding:3px 8px;font-size:13px;}
+    #lpArt{padding:0 10px 5px;max-height:30vh;overflow:auto;}
     #lpFuss{padding:6px 10px;gap:6px;} #lpFuss .lpBtn{padding:5px 9px;font-size:13px;} }
-  /* Notnagel für sehr flache Fenster: dann dürfen die Filter doch rollen, damit der Fuß bleibt */
-  @media (max-height:380px){ #lpFilter{max-height:50vh;overflow:auto;} #lpListe{min-height:56px;} }`;
+  /* Sehr flache Fenster: zuerst geben Trefferliste und Wahlzeilen nach, die Filter bleiben ganz */
+  @media (max-height:380px){ #lpListe{min-height:44px;} #lpArt{max-height:58px;} }
+  @media (max-height:330px){ #lpListe{min-height:38px;} #lpArt{max-height:30px;}
+    #lpKopf{padding:4px 10px;} #lpFuss{padding:4px 10px;} }
+  /* Darunter bleibt nichts anderes übrig, als auch die Filter rollen zu lassen */
+  @media (max-height:285px){ #lpFilter{max-height:46vh;overflow:auto;} }`;
   document.head.appendChild(s); }
 
 /* Ein gespeichertes Glossar (Textformat „Begriff = Erklärung", Abschnitte mit „# …") einlesen */
