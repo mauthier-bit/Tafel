@@ -690,7 +690,7 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   Auswahlfeld) und **Darstellung**: **nur Text · Funktionsgraph · Diagramm · Tortenbild · Figur**.
   Über die Darstellung findet man die Aufgaben **mit Bildern** quer durch alle Themen – etwa alle
   zwölf Bruchaufgaben mit Tortenstücken. Unten wählt man die **Aufgabenart**: paarweise (zwei Karten)
-  oder als Gruppe (alle zugehörigen Karten). Insgesamt stehen rund **870 Paare** bereit:
+  oder als Gruppe (alle zugehörigen Karten). Insgesamt stehen rund **940 Paare** bereit:
   (Alle Bibliotheken **fertiger Aufgaben** – Zuordnen, Lückentext, Reihenfolge – tragen dasselbe
   Symbol: **Buchrücken im Regal**. Das **aufgeschlagene Buch** bleibt dem **Glossar** und den
   Lehrplanbegriffen vorbehalten, damit die beiden Quellen auf einen Blick zu unterscheiden sind.)
@@ -731,7 +731,17 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     1/2 + 1/x ↔ (x + 2)/(2x) – Kürzen, Erweitern, Addieren, Multiplizieren und Dividieren
   - **Wurzelterme vereinfachen** (Jgst. 9): √50 ↔ 5√2 · √8 + √2 ↔ 3√2 · 1/√2 ↔ √2/2 ·
     √(a²) ↔ |a| – teilweises Radizieren, Zusammenfassen und rationaler Nenner
+  - **Binomische Formeln** (Jgst. 8, zweimal 14 Paare): einmal **ausmultiplizieren**
+    ((a + 2)² ↔ a² + 4a + 4 · (2a + b)² ↔ 4a² + 4ab + b² · (x + 6)(x − 6) ↔ x² − 36) und einmal
+    **faktorisieren**, also der umgekehrte Blick (x² − 9 ↔ (x + 3)(x − 3) · 9x² − 12x + 4 ↔ (3x − 2)²).
+  - **Teilweises Wurzelziehen** (Jgst. 9, 16 Paare mit Zahlen): √8 ↔ 2√2 · √108 ↔ 6√3 ·
+    √200 ↔ 10√2 · 3√12 ↔ 6√3
+  - **Teilweises Wurzelziehen mit Variablen** (Jgst. 9, 14 Paare, nicht negative Variablen):
+    √(a³) ↔ a√a · √(x⁵) ↔ x²√x · √(8a³) ↔ 2a√(2a) · √(27x⁵) ↔ 3x²√(3x)
   - **Logarithmusterme** (Jgst. 10): log₂(8) ↔ 3 · log₁₀(0,1) ↔ −1 · log₄(2) ↔ 0,5
+  - **Logarithmusgesetze** (Jgst. 10, 16 Paare): die Gesetze selbst (log(a · b) ↔ log(a) + log(b) ·
+    log(aⁿ) ↔ n · log(a) · log(√a) ↔ 0,5 · log(a)), dazu Werte mit natürlichem Logarithmus
+    (ln(e³) ↔ 3 · ln(1/e) ↔ −1) und Umkehrungen wie 2^(log₂(7)) ↔ 7
   - **Zahlenrätsel und Gleichungen** (Jgst. 7): „Das Dreifache einer Zahl, vermindert um 5, ergibt
     16." ↔ 3x − 5 = 16 – vierzehn Rätsel vom einfachen Ansatz bis zu Klammer und Nachfolgerzahl
   - **Term und umgeformter Term** (Jgst. 7): 3 · (x + 4) ↔ 3x + 12, (x + 3)² ↔ x² + 6x + 9,
