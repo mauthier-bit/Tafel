@@ -1360,7 +1360,8 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
 - **Zufall** (Mathe & Physik, Würfel-Symbol mit fünf Augen): ein Werkzeug mit **fünf Reitern**.
   Die früheren Einzelwerkzeuge „Würfel" und „Glücksrad" stecken darin; **alte Tafelseiten werden beim
   Laden automatisch umgestellt** und öffnen gleich im passenden Reiter.
-  - **Münze:** **1 bis 100 Würfe** auf einmal – die Münzen erscheinen als goldenes **K** (Kopf) und
+  - **Münze:** **1 bis 100 Würfe** auf einmal – die Anzahl lässt sich mit **−/+** ändern oder **direkt
+    eintippen** – die Münzen erscheinen als goldenes **K** (Kopf) und
     silbernes **Z** (Zahl) und passen ihre Größe an die Anzahl an. Ein Knopf schaltet zwischen
     **fairer Münze (p = 0,5)** und **gezinkt**; dann lässt sich **p(Kopf)** frei einstellen (0,01 bis 0,99).
     Unter den Münzen stehen die Trefferzahlen und der Anteil Kopf, darunter eine **Gesamtzählung über
