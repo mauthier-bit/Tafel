@@ -754,12 +754,12 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   - **Logarithmusgesetze** (Jgst. 10, 16 Paare): die Gesetze selbst (log(a · b) ↔ log(a) + log(b) ·
     log(aⁿ) ↔ n · log(a) · log(√a) ↔ 0,5 · log(a)), dazu Werte mit natürlichem Logarithmus
     (ln(e³) ↔ 3 · ln(1/e) ↔ −1) und Umkehrungen wie 2^(log₂(7)) ↔ 7
-  - **Zufallsexperimente und Urnenmodelle** (Jgst. 11, **Gruppenaufgabe**): 21 Alltags- und
+  - **Zufallsexperimente und Urnenmodelle** (Jgst. 11, **Gruppenaufgabe**): 22 Alltags- und
     Spielsituationen werden den **vier Urnenmodellen** zugeordnet – *mit Zurücklegen · Reihenfolge zählt*
     (Münzwurf, Zahlenschloss, dreimal würfeln, Toto, Korbwurf, Kennwort), *ohne Zurücklegen ·
     Reihenfolge zählt* (Gold/Silber/Bronze, Pferderennen, Ämterwahl, drei Eissorten auf der Waffel,
     Staffelreihenfolge), *ohne Zurücklegen · Reihenfolge egal* (Lotto, drei aus zehn Aufgaben,
-    Mannschaft, Tombola, Skatblatt) und *mit Zurücklegen · Reihenfolge egal* (drei Kugeln Eis im Becher,
+    Mannschaft, Tombola, Skatblatt, Gruppe aus der Klasse) und *mit Zurücklegen · Reihenfolge egal* (drei Kugeln Eis im Becher,
     Gummibärchen, Dart, Semmeln, drei Würfel gleichzeitig). Jedes **Modell ist ein Feld**, die
     Situationen sind die Karten; man kann auch nur zwei Modelle auswählen. Weil zu einem Feld mehrere
     Karten gehören, wird diese Aufgabe **immer als Gruppenaufgabe** geladen – paarweise wäre sie nicht
@@ -801,13 +801,17 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   eines Themas. Zwei Aufgaben mit **derselben Lösung** (etwa (x + 1)/(2x + 2) und (1/x) : (2/x),
   die beide 1/2 ergeben) werden dabei automatisch aussortiert, damit jede Zuordnung eindeutig ist.
 - **Texte für den Lückentext** (Lückentext): Der Knopf **„Texte"** öffnet eine Bibliothek mit
-  **125 Sachtexten, Alltagstexten und Geschichten** (je rund 160 bis 250 Wörter), passend zu den
+  **126 Sachtexten, Alltagstexten und Geschichten** (je rund 160 bis 250 Wörter), passend zu den
   Lernbereichen des LehrplanPLUS und sprachlich an die Jahrgangsstufe angepasst. Für die
   **Unterstufe** gibt es dabei auch **erfundene Geschichten** – Drachenturm, Elfenwiese, Piratenpizza,
   Hexenrezept, Koboldflohmarkt, Wichtelwerkstatt –, bei denen nur die **Fachbegriffe** zählen:
   Zahlengerade, Betrag, Gegenzahl, Nenner, kürzen, erweitern, Term, Äquivalenzumformung. Je höher die
   Jahrgangsstufe, desto fachlicher werden die Texte, bis hin zu Ableitung, Binomialverteilung,
-  Hauptsatz, Impulserhaltung, Schwingkreis und Fotoeffekt. Für den **Elektromagnetismus (Physik 10)**
+  Hauptsatz, Impulserhaltung, Schwingkreis und Fotoeffekt. Zur **Kombinatorik** gehört der Text
+  **„Vier Modelle für das Ziehen aus einer Urne"** (Jgst. 11): Er führt die beiden Leitfragen
+  – zurücklegen oder nicht, Reihenfolge oder nicht – und daraus die vier Modelle samt nᵏ,
+  fallendem Produkt und Binomialkoeffizient ein, mit Zahlenschloss, Siegerehrung, Lotto und
+  Eiskugeln als Beispielen; er passt zur gleichnamigen Zuordnungsaufgabe. Für den **Elektromagnetismus (Physik 10)**
   entwickeln vier Texte die **Ursachenkette** Schritt für Schritt: **Lorentzkraft**, **Elektromotor**,
   **Kraft zwischen parallelen Leitern** und **Magnetkugel im Kupferrohr** (dort wird die Stromrichtung
   über die **Energiebilanz** begründet: Die Kugel kommt langsamer an als im freien Fall, die fehlende

@@ -250,7 +250,8 @@ const GR=[
    'Aus zehn Aufgaben drei zum Rechnen auswählen',
    'Eine Mannschaft aus fünf von zwölf Spielern aufstellen',
    'Drei Lose aus der Tombola ziehen und behalten',
-   'Fünf Karten aus dem Skatblatt auf die Hand nehmen' ] ],
+   'Fünf Karten aus dem Skatblatt auf die Hand nehmen',
+   'Aus der Klasse eine Gruppe von vier Kindern bilden' ] ],
  ['mit Zurücklegen · Reihenfolge egal', [
    'Drei Kugeln Eis aus acht Sorten in einem Becher',
    'Fünf Gummibärchen aus vier Farben in eine Tüte',
