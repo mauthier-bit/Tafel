@@ -1260,8 +1260,21 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   nächsten „Berechnen“; „Berechnete leeren“. Ältere Bäume zeigen ihre Pfadprodukte wie bisher. Über jedem Knoten lässt sich per Tipp ein **Ereignisname** eintragen – die Eingabe `nichtA` erscheint als **Ā** (A mit Querstrich). Oben kann zusätzlich ein **Stichprobenumfang n** eingegeben werden; ist er gesetzt, stehen unter den Ereignissen die **absoluten Häufigkeiten** n·P(Pfad) (an der Wurzel n selbst). Oben rechts: **A−/A+** für die Schriftgröße (auch im Kontextmenü) und **🖼 Tafel / 📋 Kopieren**: Baum als Bild.
 - **Wahrscheinlichkeitsrechner** (Werkzeug): Binomial- und Normalverteilung – Wahrscheinlichkeiten
   (=, ≤, <, ≥, >, zwischen) mit Histogramm bzw. Glockenkurve und markiertem Bereich; bei Binomial
-  zusätzlich eine **scrollbare Wertetabelle** (k, P(X=k), P(X≤k)). Rechts neben dem Ergebnis: **A−/A+** für die Schriftgröße (auch im Kontextmenü) und **🖼 Tafel / 📋 Kopieren** –
+  zusätzlich eine **scrollbare Wertetabelle** (k, P(X=k), P(X≤k)). Rechts neben dem Ergebnis: **A−/A+** für die Schriftgröße (auch im Kontextmenü), **📊 Daten** sowie **🖼 Tafel / 📋 Kopieren** und **Teilen** –
   Eingaben, Ergebnis, Diagramm und sichtbarer Teil der Tabelle als Bild.
+  - **📊 Daten – eigener Datensatz mit Anpassung:** Im Fenster lassen sich **Messwerte eingeben oder
+    einfügen** (getrennt durch Leerzeichen, Komma, Semikolon oder Zeilenumbruch, Dezimalkomma erlaubt;
+    je Zeile geht auch `Wert = Anzahl` für eine Häufigkeitstabelle) oder als **Textdatei einlesen**
+    (📂 Datei …, auch CSV). Ein **Beispiel**-Knopf füllt passende Zahlen ein. „Übernehmen & anpassen"
+    schätzt die Parameter **je nach Reiter**: im Reiter **Normal** werden **μ = x̄** und **σ = s** aus
+    den Daten gesetzt, im Reiter **Binomial** wird **p = x̄ / n** bestimmt. Ist das **n** nicht bekannt,
+    schätzt der Haken **„n aus den Daten schätzen"** es über die Momentenmethode mit (x̄ = n·p und
+    s² = n·p·(1−p), also p = 1 − s²/x̄).
+  - Der Datensatz bleibt danach **über der Verteilung sichtbar**: bei Binomial als **rot umrandete
+    Säulen** der relativen Häufigkeiten über den blauen Modellsäulen, bei Normal als **rotes
+    Histogramm** (Dichte, Klassenzahl ≈ √N) unter der Glockenkurve – so sieht man auf einen Blick, wie
+    gut die Näherung passt. Eine rote Pille neben dem Ergebnis zeigt N, x̄, s und die Spannweite;
+    „Entfernen" nimmt den Datensatz wieder heraus.
 - **Messwert-Analyse** (Werkzeug): bindet das Messdaten-Tool ein (als Objekt oder eigene Seite;
   die **Kurvenanpassung** rechnet die Gerade exakt (gewichtete Ausgleichsrechnung) und findet auch
   bei e-Funktion, Potenz- und Sinusanpassung die richtigen Parameter – Startwerte kommen aus einer
@@ -1329,9 +1342,11 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     sagen dabei, welche Rolle eine Strecke hat: **grün** die kurzen Strahlenabschnitte (SA, SB), **blau**
     die langen (SA′, SB′) – bei einer dritten Parallelen kommt **violett** dazu – und bei **F und Z**
     **orange** die **Parallelenabschnitte** (AB, A′B′). In der Verhältnisgleichung sind dieselben Strecken
-    in denselben Farben unterlegt. Weil die Strecken vom Scheitel aus ineinanderliegen (SA steckt in SA′),
-    liegen ihre Marker **gestaffelt neben dem Strahl** – wie die Maßbänder in einem Schulbuch. Die Figur
-    selbst bleibt schwarz. **V** und **X** zeigen den
+    in denselben Farben unterlegt. Versetzt werden die Marker nur dort, wo sie sich sonst überdecken
+    würden: In der **V- und F-Figur** liegen die Strecken vom Scheitel aus ineinander (SA steckt in SA′),
+    deshalb liegen ihre Marker dort **gestaffelt neben dem Strahl** – wie die Maßbänder in einem
+    Schulbuch. In der **X- und Z-Figur** liegen sie auf **verschiedenen Seiten** des Scheitels und können
+    sich gar nicht überdecken; dort liegt der Marker **direkt auf der Strecke**. Die Figur selbst bleibt schwarz. **V** und **X** zeigen den
     **1. Strahlensatz** (Abschnitte auf den Strahlen, auch in der Form SA : AA′ = SB : BB′), **F** und **Z**
     den **2. Strahlensatz** (Parallelenabschnitte, SA : SA′ = AB : A′B′). V und F gehören zur V-Figur,
     X und Z zur X-Figur – ein Tipp auf X oder Z stellt die Figur gleich mit um.

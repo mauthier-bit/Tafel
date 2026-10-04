@@ -29,6 +29,19 @@
   .vt th{position:sticky;top:0;background:#f4f6fa;padding:6px;border-bottom:1px solid #e2e7ef;font-size:calc(var(--fs,13px)*0.9);color:#5b6472;}
   .vt td{padding:4px 6px;text-align:center;border-bottom:1px solid #f0f3f8;font-variant-numeric:tabular-nums;}
   .vt tr.hl td{background:#e8f0fe;font-weight:var(--fwm,600);color:#1e40af;}
+  #dlg{position:fixed;inset:0;background:rgba(15,23,42,.45);display:none;align-items:center;justify-content:center;padding:12px;z-index:60;}
+  #dlg.an{display:flex;}
+  #dlgIn{background:#fff;border-radius:14px;padding:12px;width:min(520px,96vw);max-height:94vh;overflow:auto;display:flex;flex-direction:column;gap:8px;}
+  #dlgIn h3{margin:0;font-size:1.05em;}
+  #dlgIn .hint{color:#64748b;font-size:12.5px;line-height:1.4;}
+  #dlgIn code{background:#f1f5f9;border-radius:4px;padding:0 4px;}
+  #dIn{width:100%;min-height:120px;border:1px solid #cfd6e0;border-radius:9px;padding:7px 9px;font:13px ui-monospace,monospace;
+    -webkit-user-select:text;user-select:text;resize:vertical;text-align:left;}
+  #dlgIn .z{display:flex;gap:7px;align-items:center;flex-wrap:wrap;}
+  .tb2.pri{background:#2563eb;border-color:#2563eb;color:#fff;}
+  #dInfo{font-weight:600;color:#1f2430;}
+  #datenPill{display:none;align-items:center;gap:5px;background:#fee2e2;color:#b91c1c;border-radius:999px;padding:3px 9px;font-size:12px;font-weight:700;white-space:nowrap;}
+  #datenPill.an{display:inline-flex;}
 </style>
 </head>
 <body>
@@ -43,12 +56,32 @@
     <div id="pN" style="display:none">
       <div class="row"><label>μ =</label><input id="mu" type="number" value="0"><label>σ =</label><input id="sig" type="number" step="0.1" value="1"><span class="vsep"></span><label>P( X</label><select id="opN"><option value="≤" selected>≤</option><option value="≥">≥</option><option value="zw">zwischen</option></select><input id="xN" type="number" value="1"><span id="xN2wrap" style="display:none">…<input id="xN2" type="number" value="2"></span><label>)</label></div>
     </div>
-    <div class="row"><span id="res">–</span><span id="stat"></span><span style="flex:1 1 auto;min-width:8px"></span><span id="tools" style="display:inline-flex;gap:5px"><button type="button" class="tb2" id="fsM" title="Schrift kleiner">A−</button><button type="button" class="tb2" id="fsP" title="Schrift größer">A+</button></span></div>
+    <div class="row"><span id="res">–</span><span id="stat"></span><span style="flex:1 1 auto;min-width:8px"></span><span id="datenPill" title="Dieser Datensatz liegt über der Verteilung"></span><span id="tools" style="display:inline-flex;gap:5px"><button type="button" class="tb2" id="bDaten" title="Eigene Messwerte eingeben oder einlesen und die Verteilung daran anpassen">📊 Daten</button><button type="button" class="tb2" id="fsM" title="Schrift kleiner">A−</button><button type="button" class="tb2" id="fsP" title="Schrift größer">A+</button></span></div>
   </div>
   <div id="chartWrap"><canvas id="chart"></canvas></div>
   <div id="binTable"></div>
 </div>
+<div id="dlg"><div id="dlgIn">
+  <h3>Datensatz</h3>
+  <div class="hint">Zahlen eingeben oder einfügen – getrennt durch Leerzeichen, Komma, Semikolon oder Zeilenumbruch.
+    Häufigkeiten gehen auch, je Zeile <code>Wert = Anzahl</code> (z. B. <code>3 = 12</code>). Dezimalkomma ist erlaubt.</div>
+  <textarea id="dIn" spellcheck="false" placeholder="172 168 181 175 169 …"></textarea>
+  <div class="hint" id="dInfo">–</div>
+  <label class="hint" id="dNWrap" style="display:flex;gap:6px;align-items:center;color:#1f2430;font-weight:600">
+    <input type="checkbox" id="dSchaetzN" style="width:auto"> n aus den Daten schätzen (sonst bleibt das eingetragene n)</label>
+  <div class="z">
+    <button type="button" class="tb2" id="dFileBtn">📂 Datei …</button>
+    <input type="file" id="dFile" accept=".txt,.csv,.dat,text/plain,text/csv" style="display:none">
+    <button type="button" class="tb2" id="dBsp">Beispiel</button>
+    <span style="flex:1 1 auto"></span>
+    <button type="button" class="tb2" id="dClear">Entfernen</button>
+    <button type="button" class="tb2" id="dCancel">Abbrechen</button>
+    <button type="button" class="tb2 pri" id="dOk">Übernehmen &amp; anpassen</button>
+  </div>
+</div></div>
 <script src="shot.js"></script>
+<script src="vendor/qrcode.min.js"></script>
+<script src="teilen.js"></script>
 <script>
 "use strict";
 const $=id=>document.getElementById(id);
@@ -64,6 +97,43 @@ const normCDF=(x,mu,sig)=>0.5*(1+erf((x-mu)/(sig*Math.SQRT2)));
 const normPdf=(x,mu,sig)=>Math.exp(-0.5*((x-mu)/sig)**2)/(sig*Math.sqrt(2*Math.PI));
 function fmt(v){ if(!isFinite(v))return '–'; return (Math.round(v*1e6)/1e6).toString(); }
 
+/* ===================== Eigener Datensatz =====================
+   Die Werte werden eingegeben oder aus einer Textdatei gelesen und dann als
+   Histogramm bzw. Säulen über die Verteilung gelegt. „Anpassen" schätzt die
+   Parameter aus den Daten (Momentenmethode). */
+let daten=null, schaetzeN=false;
+function datenLesen(txt){ const out=[];
+  String(txt||'').split(/\r?\n/).forEach(z=>{
+    const h=/^\s*(-?[\d.,]+)\s*[:=xX*]\s*(\d+)\s*$/.exec(z);          // „Wert = Anzahl"
+    if(h){ const v=+h[1].replace(',','.'), a=Math.min(100000,+h[2]);
+      if(isFinite(v)) for(let i=0;i<a;i++) out.push(v); return; }
+    z.split(/[^\d,.\-]+/).forEach(t=>{ if(!t)return; const v=+t.replace(',','.'); if(isFinite(v)&&t.replace(/[^\d]/g,'')) out.push(v); });
+  });
+  return out.slice(0,200000); }
+function kennzahlen(a){ const N=a.length; if(!N) return null;
+  const m=a.reduce((x,y)=>x+y,0)/N;
+  const v=N>1?a.reduce((x,y)=>x+(y-m)*(y-m),0)/(N-1):0;
+  return {N, m, s:Math.sqrt(v), v, min:Math.min(...a), max:Math.max(...a)}; }
+function datenInfo(){ const k=daten&&kennzahlen(daten); if(!k) return '';
+  return 'N = '+k.N+' · x̄ = '+fmt(Math.round(k.m*1000)/1000)+' · s = '+fmt(Math.round(k.s*1000)/1000)
+    +' · von '+fmt(k.min)+' bis '+fmt(k.max); }
+function pilleZeigen(){ const el=$('datenPill'); el.classList.toggle('an',!!(daten&&daten.length));
+  if(daten&&daten.length) el.textContent='Daten: '+datenInfo(); }
+/* Parameter aus den Daten schätzen */
+function anpassen(){ if(!daten||!daten.length) return;
+  const k=kennzahlen(daten);
+  if(mode==='N'){ $('mu').value=Math.round(k.m*1000)/1000; $('sig').value=Math.round(Math.max(1e-6,k.s)*1000)/1000; }
+  else {
+    let n=Math.max(1,Math.round(+$('n').value||1)), p;
+    const ganz=daten.every(v=>Math.abs(v-Math.round(v))<1e-9&&v>=0);
+    if(schaetzeN&&ganz&&k.v<k.m&&k.m>0){                      // Momentenmethode: x̄ = n·p, s² = n·p·(1−p)
+      p=1-k.v/k.m; n=Math.max(Math.ceil(k.max), Math.max(1,Math.round(k.m/Math.max(1e-6,p))));
+      p=Math.min(1,Math.max(0,k.m/n)); $('n').value=n; }
+    else { n=Math.max(n, Math.ceil(k.max)); $('n').value=n; p=Math.min(1,Math.max(0,k.m/n)); }
+    $('p').value=Math.round(p*10000)/10000;
+  }
+  compute(); }
+
 let region={a:0,b:0}; // hervorgehobener Bereich
 function compute(){
   if(mode==='B'){
@@ -78,7 +148,7 @@ function compute(){
     else if(op==='>'){ P=1-cum(k); a=k+1;b=n; }
     else { if(k2<k)[k,k2]=[k2,k]; P=cum(k2)-cum(k-1); a=k;b=k2; }
     region={a,b}; $('res').textContent='P = '+fmt(P); $('stat').textContent='μ = n·p = '+fmt(n*p)+'   ·   σ = √(n·p·(1−p)) = '+fmt(Math.sqrt(n*p*(1-p)));
-    drawBin(n,p); buildBinTable(n,p);
+    pilleZeigen(); drawBin(n,p); buildBinTable(n,p);
   } else {
     const mu=+$('mu').value||0, sig=Math.max(1e-6,+$('sig').value||1), op=$('opN').value;
     let x=+$('xN').value||0, x2=+$('xN2').value||0; $('xN2wrap').style.display=op==='zw'?'inline':'none';
@@ -87,7 +157,7 @@ function compute(){
     else if(op==='≥'){ P=1-normCDF(x,mu,sig); a=x;b=Infinity; }
     else { if(x2<x)[x,x2]=[x2,x]; P=normCDF(x2,mu,sig)-normCDF(x,mu,sig); a=x;b=x2; }
     region={a,b}; $('res').textContent='P = '+fmt(P); $('stat').textContent='μ = '+fmt(mu)+'   ·   σ = '+fmt(sig);
-    drawNorm(mu,sig);
+    pilleZeigen(); drawNorm(mu,sig);
   }
   sync();
 }
@@ -96,8 +166,16 @@ const labFont=()=>Math.max(9,fontSize-3);
 const padBot=()=>Math.max(22, labFont()+14);        // Platz für die Achsenbeschriftung – wächst mit der Schrift
 function drawBin(n,p){ sz(); const W=cv.clientWidth,H=cv.clientHeight; ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,W,H); ctx.fillStyle='#fff'; ctx.fillRect(0,0,W,H);
   const pad=22, pb=padBot(), base=H-pb, bw=(W-2*pad)/(n+1); let mx=0; const pm=[]; for(let k=0;k<=n;k++){ pm[k]=binPmf(n,k,p); mx=Math.max(mx,pm[k]); }
+  /* relative Häufigkeiten des Datensatzes – dieselbe Skala wie die Wahrscheinlichkeiten */
+  let hrel=null;
+  if(daten&&daten.length){ hrel=new Array(n+1).fill(0); let gez=0;
+    daten.forEach(v=>{ const k=Math.round(v); if(k>=0&&k<=n){ hrel[k]++; gez++; } });
+    if(gez){ for(let k=0;k<=n;k++){ hrel[k]/=gez; mx=Math.max(mx,hrel[k]); } } else hrel=null; }
   for(let k=0;k<=n;k++){ const h=(pm[k]/mx)*Math.max(4,base-pad); const x=pad+k*bw, y=base-h;
     ctx.fillStyle=(k>=region.a&&k<=region.b)?'#2563eb':'#c3d4ef'; ctx.fillRect(x+1,y,Math.max(1,bw-2),h); }
+  if(hrel){ ctx.strokeStyle='#dc2626'; ctx.lineWidth=Math.min(2.4,Math.max(1.2,bw*0.12));
+    for(let k=0;k<=n;k++){ if(!hrel[k])continue; const h=(hrel[k]/mx)*Math.max(4,base-pad);
+      const x=pad+k*bw+bw*0.22, br=Math.max(1,bw*0.56); ctx.strokeRect(x,base-h,br,h); } }
   ctx.strokeStyle='#c9d2df'; ctx.beginPath(); ctx.moveTo(pad,base); ctx.lineTo(W-pad,base); ctx.stroke();
   ctx.fillStyle='#8a93a2'; ctx.font=fontPrefix()+labFont()+'px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='top';
   // Schrittweite so wählen, dass sich die Zahlen auch bei großer Schrift nicht überlappen
@@ -106,8 +184,23 @@ function drawBin(n,p){ sz(); const W=cv.clientWidth,H=cv.clientHeight; ctx.setTr
   for(let k=0;k<=n;k+=stepK) ctx.fillText(k, pad+k*bw+bw/2, base+6);
   ctx.textBaseline='alphabetic'; }
 function drawNorm(mu,sig){ sz(); const W=cv.clientWidth,H=cv.clientHeight; ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,W,H); ctx.fillStyle='#fff'; ctx.fillRect(0,0,W,H);
-  const pad=22, pb=padBot(), base=H-pb, xmin=mu-4*sig, xmax=mu+4*sig, mxY=normPdf(mu,mu,sig);
+  const pad=22, pb=padBot(), base=H-pb;
+  /* Histogramm des Datensatzes als Dichte – dann liegt es in derselben Skala wie die Kurve */
+  let hist=null;
+  if(daten&&daten.length>1){ const k=kennzahlen(daten);
+    const nb=Math.max(5,Math.min(25,Math.round(Math.sqrt(k.N))));
+    const lo=Math.min(k.min,mu-3*sig), hi=Math.max(k.max,mu+3*sig);
+    const br=(k.max-k.min)/nb||1, a0=k.min, zel=new Array(nb).fill(0);
+    daten.forEach(v=>{ let i=Math.floor((v-a0)/br); if(i>=nb)i=nb-1; if(i<0)i=0; zel[i]++; });
+    hist={a0,br,nb,dichte:zel.map(c=>c/(k.N*br)),lo,hi}; }
+  const xmin=hist?Math.min(mu-4*sig,hist.a0-hist.br):mu-4*sig;
+  const xmax=hist?Math.max(mu+4*sig,hist.a0+hist.nb*hist.br+hist.br):mu+4*sig;
+  const mxY=Math.max(normPdf(mu,mu,sig), hist?Math.max(...hist.dichte):0);
   const X=x=>pad+(x-xmin)/(xmax-xmin)*(W-2*pad), Y=y=>base-(y/mxY)*Math.max(4,base-pad);
+  if(hist){ ctx.fillStyle='rgba(220,38,38,.18)'; ctx.strokeStyle='#dc2626'; ctx.lineWidth=1.2;
+    for(let i=0;i<hist.nb;i++){ if(!hist.dichte[i])continue;
+      const x0=X(hist.a0+i*hist.br), x1=X(hist.a0+(i+1)*hist.br), y=Y(hist.dichte[i]);
+      ctx.fillRect(x0,y,Math.max(1,x1-x0),base-y); ctx.strokeRect(x0,y,Math.max(1,x1-x0),base-y); } }
   // Fläche
   ctx.fillStyle='rgba(37,99,235,.22)'; ctx.beginPath(); const a=Math.max(xmin,region.a), b=Math.min(xmax,region.b);
   ctx.moveTo(X(a),Y(0)); for(let x=a;x<=b;x+=(xmax-xmin)/300) ctx.lineTo(X(x),Y(normPdf(x,mu,sig))); ctx.lineTo(X(b),Y(0)); ctx.closePath(); ctx.fill();
@@ -126,21 +219,54 @@ function buildBinTable(n,p){ let cum=0, h='<table class="vt"><tr><th>k</th><th>P
   for(let k=0;k<=n;k++){ const pk=binPmf(n,k,p); cum+=pk; const hl=(k>=region.a&&k<=region.b)?' class="hl"':'';
     h+='<tr'+hl+'><td>'+k+'</td><td>'+(Math.round(pk*1e6)/1e6)+'</td><td>'+(Math.round(cum*1e6)/1e6)+'</td></tr>'; }
   $('binTable').innerHTML=h+'</table>'; }
+/* ---------- Daten-Dialog ---------- */
+function dlgAuf(){ $('dIn').value=daten&&daten.length?daten.join(' '):'';
+  $('dNWrap').style.display=(mode==='B')?'flex':'none'; $('dSchaetzN').checked=schaetzeN;
+  $('dInfo').textContent=daten&&daten.length?datenInfo():'Noch kein Datensatz.';
+  $('dlg').classList.add('an'); }
+function dlgZu(){ $('dlg').classList.remove('an'); }
+$('bDaten').onclick=dlgAuf;
+$('dCancel').onclick=dlgZu;
+$('dIn').addEventListener('input',()=>{ const a=datenLesen($('dIn').value); const k=kennzahlen(a);
+  $('dInfo').textContent=k?('N = '+k.N+' · x̄ = '+fmt(Math.round(k.m*1000)/1000)+' · s = '+fmt(Math.round(k.s*1000)/1000)):'Noch keine Zahlen erkannt.'; });
+$('dIn').addEventListener('keydown',e=>e.stopPropagation());
+$('dSchaetzN').onchange=()=>{ schaetzeN=$('dSchaetzN').checked; };
+$('dFileBtn').onclick=()=>$('dFile').click();
+$('dFile').onchange=async e=>{ const f=e.target.files[0]; if(!f)return;
+  try{ $('dIn').value=await f.text(); $('dIn').dispatchEvent(new Event('input')); }catch(err){}
+  e.target.value=''; };
+$('dBsp').onclick=()=>{ $('dIn').value=(mode==='B')
+  ? '6 13 9 11 8 12 10 14 7 10 11 9 12 8 10 13 6 11 9 12 10 8 14 10 7 11 13 9 10 12'
+  : '172 168 181 175 169 177 173 170 185 166 174 178 171 176 180 167 173 179 172 175 170 183 168 177 174';
+  $('dIn').dispatchEvent(new Event('input')); };
+$('dClear').onclick=()=>{ daten=null; $('dIn').value=''; dlgZu(); compute(); };
+$('dOk').onclick=()=>{ const a=datenLesen($('dIn').value);
+  if(!a.length){ daten=null; dlgZu(); compute(); return; }
+  daten=a; dlgZu(); anpassen(); };
+
 $('tabB').onclick=()=>{ mode='B'; $('tabB').classList.add('on'); $('tabN').classList.remove('on'); $('pB').style.display=''; $('pN').style.display='none'; $('binTable').style.display='block'; compute(); };
 $('tabN').onclick=()=>{ mode='N'; $('tabN').classList.add('on'); $('tabB').classList.remove('on'); $('pN').style.display=''; $('pB').style.display='none'; $('binTable').style.display='none'; compute(); };
 document.querySelectorAll('input,select').forEach(el=>el.addEventListener('input',compute));
 addEventListener('resize',()=>{ mode==='B'?drawBin(Math.max(1,Math.round(+$('n').value||1)),Math.min(1,Math.max(0,+$('p').value||0))):drawNorm(+$('mu').value||0,Math.max(1e-6,+$('sig').value||1)); });
 
-function collect(){ return { mode, n:$('n').value,p:$('p').value,opB:$('opB').value,kB:$('kB').value,kB2:$('kB2').value, mu:$('mu').value,sig:$('sig').value,opN:$('opN').value,xN:$('xN').value,xN2:$('xN2').value, fontSize, fontBold, fontItalic }; }
+function collect(){ return { daten:(daten&&daten.length<=4000)?daten:null, schaetzeN, mode, n:$('n').value,p:$('p').value,opB:$('opB').value,kB:$('kB').value,kB2:$('kB2').value, mu:$('mu').value,sig:$('sig').value,opN:$('opN').value,xN:$('xN').value,xN2:$('xN2').value, fontSize, fontBold, fontItalic }; }
 function sync(){ if(window.parent===window) return; /* allein geöffnet: nicht an sich selbst senden */ try{ parent.postMessage({type:'embed-data',data:collect()},'*'); }catch(e){} }
-addEventListener('message',e=>{ if(window.parent===window||e.source!==window.parent) return;   // eigene Nachrichten ignorieren
+addEventListener('message',e=>{ if(e.source!==window&&(window.parent===window||e.source!==window.parent)) return;   // eigene Nachrichten ignorieren
   if(e.data&&e.data.type==='embed-data'&&e.data.data){ const d=e.data.data;
+  daten=Array.isArray(d.daten)&&d.daten.length?d.daten.slice():null; schaetzeN=!!d.schaetzeN;
   ['n','p','kB','kB2','mu','sig','xN','xN2'].forEach(id=>{ if(d[id]!==undefined)$(id).value=d[id]; });
   if(d.opB)$('opB').value=d.opB; if(d.opN)$('opN').value=d.opN;
   if(d.fontSize)fontSize=d.fontSize; fontBold=!!d.fontBold; fontItalic=!!d.fontItalic; applyFont();
   if(d.mode==='N'){ $('tabN').onclick(); } else { $('tabB').onclick(); } } });
 for(const [id,d] of [['fsM',-1],['fsP',1]]){ $(id).addEventListener('pointerdown',e=>e.preventDefault()); $(id).onclick=()=>{ fontSize=Math.max(9,Math.min(36,(fontSize||13)+d)); applyFont(); compute(); }; }
 if(window.TafelShot) TafelShot.buttons($('tools'),()=>TafelShot.rasterize($('app'),{exclude:'#tabs,#tools'}),'tb2');
+if(window.TafelTeilen){
+  const _tg=TafelTeilen.istGeteilt();
+  if(!_tg) TafelTeilen.knopf($('tools'),'wahrscheinlichkeit.html',()=>({w:'wkt', d:collect()}),{cls:'tb2'});
+  else window.addEventListener('load',()=>{
+    TafelTeilen.empfangen().then(p=>{ if(p&&p.w==='wkt'&&p.d) TafelTeilen.einspielen(p.d); })
+      .catch(()=>{}).then(()=>TafelTeilen.nurBenutzen()); });
+}
 window.addEventListener('load',()=>{ applyFont(); if(mode==='B')$('binTable').style.display='block'; compute(); try{ parent.postMessage({type:'embed-ready'},'*'); }catch(e){} });
 </script>
 </body>
