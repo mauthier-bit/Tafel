@@ -649,7 +649,7 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     Begriffslisten in alle sieben Werkzeuge übernehmen.
   Die Begriffe folgen den Lernbereichen des Lehrplans, die **Erklärungen sind eigens für die Tafel
   geschrieben** (kurze, schülergerechte Sätze) – der Lehrplantext selbst wird nicht wiedergegeben.
-- **Teilen per QR-Code** (25 Werkzeuge): Der Knopf **„Teilen"** (Pfeil aus dem offenen Kasten)
+- **Teilen per QR-Code** (27 Werkzeuge): Der Knopf **„Teilen"** (Pfeil aus dem offenen Kasten)
   zeigt einen **QR-Code**. Wer ihn mit der Kamera scannt, öffnet **dasselbe Werkzeug mit genau der
   Aufgabe**, die an der Tafel eingestellt ist – ohne Konto, ohne Anmeldung, ohne Server.
   Dabei sind: **Zuordnen**, **Reihenfolge**, **Lückentext**, **Stromkreis**, **Wellenwanne**,
@@ -657,7 +657,8 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   **Stellenwerttafel**, **Strahlensätze**, **Baumdiagramm**, **Vierfeldertafel**,
   **Kreuzworträtsel**, **Buchstabengitter**, **Galgenmännchen**, **Glossar**, **Lernlandkarte**,
   **Begriffsnetz**, **Pinnwand**, **Wortwolke**, **Zeitleiste**, **Diagramm**,
-  **Formel umstellen** und **Bruch**.
+  **Formel umstellen**, **Bruch**, **Wahrscheinlichkeitsrechner** (mit dem eingelesenen Datensatz)
+  und **3D-Koordinatensystem** (mit allen eingetragenen Punkten, Geraden und Ebenen).
   - In der geteilten Fassung sind die **Bearbeiten-Werkzeuge und der Umschalter „Bearbeiten"
     ausgeblendet** – und mit ihnen die **Lösung**: Beim Kreuzworträtsel und beim Buchstabengitter
     verschwinden die Wortliste, der Lösungsschalter und die Begriffsknöpfe, beim Rest die jeweilige
