@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Zufall</title>
+<style>
+  *{box-sizing:border-box;-webkit-user-select:none;user-select:none;}
+  html,body{margin:0;height:100%;font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#1f2430;overflow:hidden;}
+  #wrap{height:100%;display:flex;flex-direction:column;}
+  /* ---- Reiter ---- */
+  #tabs{display:flex;gap:4px;padding:6px 8px 0;flex:none;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;}
+  #tabs::-webkit-scrollbar{display:none;}
+  .tab{flex:0 0 auto;font:700 13px inherit;padding:7px 11px;border:none;border-radius:11px 11px 0 0;background:#eef2f7;color:#53617a;cursor:pointer;white-space:nowrap;}
+  .tab.on{background:#3b82f6;color:#fff;}
+  .panel{display:none;flex:1;min-height:0;flex-direction:column;padding:8px;gap:7px;}
+  .panel.on{display:flex;}
+  /* ---- Bedienzeile ---- */
+  .ctrl{display:flex;gap:9px;align-items:center;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;font-size:13px;flex:none;padding-bottom:2px;-webkit-overflow-scrolling:touch;scrollbar-width:thin;}
+  .ctrl>*{flex:0 0 auto;}
+  .ctrl::-webkit-scrollbar{height:4px;} .ctrl::-webkit-scrollbar-thumb{background:#cfd6e0;border-radius:2px;}
+  .ctrl label{display:flex;gap:4px;align-items:center;white-space:nowrap;}
+  select{font-size:14px;padding:3px 5px;border:1px solid #cfd6e0;border-radius:8px;font-family:inherit;background:#fff;}
+  .step{width:25px;height:25px;border:1px solid #cfd6e0;background:#f8fafc;border-radius:8px;font:700 15px inherit;cursor:pointer;color:#334155;padding:0;}
+  .val{min-width:20px;text-align:center;font-weight:800;font-variant-numeric:tabular-nums;}
+  .sw{border:1px solid #cfd6e0;background:#f8fafc;border-radius:999px;padding:5px 11px;font:700 12px inherit;cursor:pointer;color:#334155;white-space:nowrap;}
+  .sw.on{background:#3b82f6;border-color:#3b82f6;color:#fff;}
+  .go{font:800 16px inherit;padding:10px;border:none;border-radius:13px;background:#3b82f6;color:#fff;cursor:pointer;flex:none;}
+  .go.ghost{background:#eef2f7;color:#334155;}
+  .go:disabled{opacity:.45;cursor:default;}
+  .zeile{display:flex;gap:7px;flex:none;}
+  .info{text-align:center;font-size:15px;color:#334155;min-height:20px;font-weight:700;}
+  /* ---- Würfel ---- */
+  #wBox{flex:1;display:flex;flex-wrap:wrap;gap:14px;align-items:center;justify-content:center;min-height:0;}
+  .die{background:#fff;border:2px solid #1f2430;border-radius:14%;box-shadow:0 2px 6px rgba(0,0,0,.12);display:grid;
+    grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);padding:7%;flex:none;cursor:pointer;transition:background .12s ease;}
+  .die.num{display:flex;align-items:center;justify-content:center;font-weight:800;}
+  .die>span{display:flex;align-items:center;justify-content:center;}
+  .pip{width:82%;aspect-ratio:1;border-radius:50%;background:#1f2430;}
+  /* ---- Glücksrad ---- */
+  #rCv{flex:1;min-height:0;width:100%;}
+  #rRes{text-align:center;font-size:18px;font-weight:800;min-height:24px;color:#2563eb;}
+  /* ---- Urne & Verteilen ---- */
+  .buehne{flex:1 1 auto;min-height:0;overflow:auto;display:flex;flex-direction:column;gap:7px;}
+  .kasten{border:1.5px solid #dbe2ea;border-radius:12px;padding:7px 8px 8px;background:#fbfcfe;}
+  .kasten>h4{margin:0 0 5px;font:800 11px inherit;letter-spacing:.05em;text-transform:uppercase;color:#93a0b4;}
+  .reihe{display:flex;flex-wrap:wrap;gap:6px;align-items:center;}
+  .kugel{border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;flex:none;cursor:pointer;
+    box-shadow:inset 0 -3px 6px rgba(0,0,0,.18);transition:opacity .25s ease,transform .25s ease;}
+  .kugel.weg{opacity:.16;transform:scale(.82);}
+  .platz{border:2px dashed #c3cbd6;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:none;
+    color:#aab3c0;font-weight:800;position:relative;}
+  .platz .kugel{cursor:default;animation:plop .28s ease;}
+  @keyframes plop{from{transform:scale(.3);opacity:0}60%{transform:scale(1.12)}to{transform:scale(1);opacity:1}}
+  .platznr{position:absolute;bottom:-16px;left:50%;transform:translateX(-50%);white-space:nowrap;font:700 10px inherit;color:#93a0b4;}
+  .rech{flex:0 1 auto;min-height:0;max-height:46%;overflow:auto;display:none;background:#f4f7fb;border:1px solid #e2e8f0;border-radius:12px;padding:8px 10px;font-size:13px;line-height:1.5;}
+  .rech.on{display:block;}
+  .rech b{color:#1d4ed8;}
+  .rech .gross{font-size:16px;font-weight:800;}
+  .rech .perm{display:flex;flex-wrap:wrap;gap:4px 10px;margin-top:5px;}
+  .rech .permz{display:flex;gap:3px;align-items:center;background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:2px 5px;}
+  .mini{width:15px;height:15px;border-radius:50%;flex:none;}
+  .hinweis{color:#64748b;}
+  /* ---- Ziehen & Verteilen ---- */
+  .person{border-radius:50% 50% 45% 45%;display:flex;align-items:center;justify-content:center;font-weight:800;flex:none;
+    box-shadow:inset 0 -3px 6px rgba(0,0,0,.18);transition:opacity .25s ease;}
+  .person.weg{opacity:.18;}
+  .stuhl{border:2px solid #c3cbd6;border-bottom-width:4px;border-radius:5px 5px 9px 9px;display:flex;align-items:center;justify-content:center;
+    flex:none;color:#aab3c0;font-weight:800;background:#fff;position:relative;}
+  .stuhl.voll{border-color:#3b82f6;background:#eff6ff;}
+  .stuhl .person{animation:plop .28s ease;}
+  #vSicht{font-size:13px;font-weight:700;color:#334155;flex:none;}
+  #vProd{font-size:15px;font-weight:800;color:#1d4ed8;min-height:20px;flex:none;font-variant-numeric:tabular-nums;}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="tabs">
+    <button class="tab on" data-t="wuerfel">Würfel</button>
+    <button class="tab" data-t="rad">Glücksrad</button>
+    <button class="tab" data-t="urne">Urne</button>
+    <button class="tab" data-t="vert">Ziehen &amp; Verteilen</button>
+  </div>
+
+  <!-- ================= Würfel ================= -->
+  <div class="panel on" id="p-wuerfel">
+    <div class="ctrl">
+      <label>Anzahl <select id="wN"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option></select></label>
+      <label>Seiten <select id="wS"><option>2</option><option>4</option><option selected>6</option><option>8</option><option>10</option><option>12</option><option>20</option></select></label>
+    </div>
+    <div id="wBox"></div>
+    <div id="wSum" class="info"></div>
+    <button class="go" id="wRoll">🎲 Würfeln</button>
+  </div>
+
+  <!-- ================= Glücksrad ================= -->
+  <div class="panel" id="p-rad">
+    <canvas id="rCv"></canvas>
+    <div id="rRes">–</div>
+    <button class="go" id="rSpin">🎡 Drehen</button>
+  </div>
+
+  <!-- ================= Urne ================= -->
+  <div class="panel" id="p-urne">
+    <div class="ctrl">
+      <label>Kugeln <button class="step" id="uNm">−</button><span class="val" id="uNv">6</span><button class="step" id="uNp">+</button></label>
+      <label>Züge <button class="step" id="uZm">−</button><span class="val" id="uZv">2</span><button class="step" id="uZp">+</button></label>
+      <button class="sw" id="uBack" title="Wird die gezogene Kugel zurückgelegt?">ohne Zurücklegen</button>
+      <button class="sw" id="uOrd" title="Zählt die Reihenfolge der gezogenen Kugeln?">Reihenfolge zählt</button>
+      <button class="sw" id="uNum" title="Kugeln nummerieren">Nummern</button>
+      <button class="sw" id="uFarb" title="Farben der Kugeln (einzelne Kugel antippen geht auch)">🎨 Farben</button>
+      <button class="sw" id="uRechSw" title="Anzahl der möglichen Ziehungen zeigen">Rechnung</button>
+    </div>
+    <div class="buehne">
+      <div class="kasten"><h4>Urne</h4><div class="reihe" id="uUrne"></div></div>
+      <div class="kasten"><h4 id="uPlTitel">Plätze</h4><div class="reihe" id="uPlaetze" style="gap:12px 10px;padding-bottom:14px"></div></div>
+      <div id="uErg" class="info"></div>
+    </div>
+    <div class="rech" id="uRech"></div>
+    <div class="zeile">
+      <button class="go" id="uGo" style="flex:1">Ziehen</button>
+      <button class="go ghost" id="uReset" title="Alle Kugeln zurück in die Urne">↺</button>
+    </div>
+  </div>
+
+  <!-- ================= Ziehen und Verteilen ================= -->
+  <div class="panel" id="p-vert">
+    <div class="ctrl">
+      <label>Schüler <button class="step" id="vAm">−</button><span class="val" id="vAv">9</span><button class="step" id="vAp">+</button></label>
+      <label>Stühle <button class="step" id="vBm">−</button><span class="val" id="vBv">5</span><button class="step" id="vBp">+</button></label>
+      <button class="sw" id="vSwap" title="Schüler und Stühle vertauschen – die Rechnung bleibt dieselbe">⇄ Rollen tauschen</button>
+      <button class="sw" id="vRechSw">Rechnung</button>
+    </div>
+    <div id="vSicht"></div>
+    <div class="buehne">
+      <div class="kasten"><h4 id="vSTitel">Schüler</h4><div class="reihe" id="vSchueler"></div></div>
+      <div class="kasten"><h4 id="vTTitel">Stühle</h4><div class="reihe" id="vStuehle"></div></div>
+    </div>
+    <div id="vProd"></div>
+    <div class="rech" id="vRech"></div>
+    <div class="zeile">
+      <button class="go" id="vGo" style="flex:1">▶ Ein Platz</button>
+      <button class="go ghost" id="vAll" title="Alle Plätze auf einmal">▶▶</button>
+      <button class="go ghost" id="vReset">↺</button>
+    </div>
+  </div>
+</div>
+<script>
+"use strict";
+const $=id=>document.getElementById(id);
+const ZAHL=n=>Number(n).toLocaleString('de-DE');
+const fak=n=>{ let f=1; for(let i=2;i<=n;i++)f*=i; return f; };
+
+/* Alle vier Reiter teilen sich einen Datensatz. Würfel- und Glücksradfelder liegen
+   bewusst ganz oben: so lesen sich auch Tafelobjekte, die noch mit den alten
+   Einzelwerkzeugen „Würfel“ und „Glücksrad“ angelegt wurden, ohne Umbau. */
+let data={ tab:'wuerfel',
+  n:1, sides:6, colors:[0],
+  sectors:[],
+  urne:{ anzahl:6, zuege:2, zurueck:false, ordnung:true, nummern:true, schema:1, farben:[] },
+  vert:{ a:9, b:5 } };
+
+/* ============================ Würfel ============================ */
+const PIPS={1:[4],2:[0,8],3:[0,4,8],4:[0,2,6,8],5:[0,2,4,6,8],6:[0,2,3,5,6,8]};
+const WCOL=[{bg:'#ffffff'},{bg:'#fee2e2'},{bg:'#ffedd5'},{bg:'#fef9c3'},{bg:'#dcfce7'},{bg:'#dbeafe'},{bg:'#ede9fe'},{bg:'#fce7f3'}];
+function wColors(){ if(!Array.isArray(data.colors))data.colors=[]; for(let i=0;i<data.n;i++) if(data.colors[i]==null)data.colors[i]=0; data.colors.length=data.n; }
+function wDie(val,sides,size,idx){ const d=document.createElement('div');
+  d.className='die'; d.style.width=size+'px'; d.style.height=size+'px';
+  if(sides===6){ for(let i=0;i<9;i++){ const cell=document.createElement('span'); if(PIPS[val].includes(i)){ const p=document.createElement('span'); p.className='pip'; cell.appendChild(p);} d.appendChild(cell);} }
+  else { d.classList.add('num'); d.style.fontSize=(size*0.5)+'px'; d.textContent=val; }
+  d.style.background=WCOL[(data.colors[idx]||0)%WCOL.length].bg;
+  d.onclick=()=>{ data.colors[idx]=((data.colors[idx]||0)+1)%WCOL.length; d.style.background=WCOL[data.colors[idx]].bg; sync(); };   // Antippen = nächste Farbe
+  return d; }
+let wVals=[1];
+function wRender(vals){ wVals=vals; wColors(); const box=$('wBox'); box.innerHTML='';
+  const n=vals.length, cols=Math.ceil(Math.sqrt(n)), rows=Math.ceil(n/cols), gap=14;
+  const cw=box.clientWidth||280, ch=box.clientHeight||200;
+  const size=Math.max(40, Math.floor(Math.min((cw-gap*(cols+1))/cols,(ch-gap*(rows+1))/rows)));
+  vals.forEach((v,i)=>box.appendChild(wDie(v,data.sides,size,i)));
+  $('wSum').textContent = vals.length>1 ? ('Summe: '+vals.reduce((a,b)=>a+b,0)) : ''; }
+let wRolling=false;
+function wRoll(){ if(wRolling)return; wRolling=true; const n=data.n, s=data.sides; let t=0;
+  const iv=setInterval(()=>{ wRender(Array.from({length:n},()=>1+Math.floor(Math.random()*s))); if(++t>=10){ clearInterval(iv); wRolling=false; } },55); }
+$('wN').onchange=()=>{ data.n=+$('wN').value; wColors(); wRender(Array.from({length:data.n},()=>1)); sync(); };
+$('wS').onchange=()=>{ data.sides=+$('wS').value; wRender(Array.from({length:data.n},()=>1)); sync(); };
+$('wRoll').onclick=wRoll;
+
+/* ============================ Glücksrad ============================ */
+const PAL=['#ef4444','#f59e0b','#eab308','#22c55e','#0ea5e9','#3b82f6','#8b5cf6','#ec4899','#14b8a6','#f97316','#84cc16','#6366f1'];
+const radDef=()=>Array.from({length:6},(_,i)=>({label:String(i+1),color:PAL[i%PAL.length]}));
+let rot=0, rSpinning=false;
+const rCv=$('rCv'), rCtx=rCv.getContext('2d');
+function rResize(){ const dpr=window.devicePixelRatio||1, w=rCv.clientWidth||300, h=rCv.clientHeight||300;
+  rCv.width=Math.round(w*dpr); rCv.height=Math.round(h*dpr); rCtx.setTransform(dpr,0,0,dpr,0,0); rDraw(); }
+function rDraw(){ const w=rCv.clientWidth, h=rCv.clientHeight; if(!w||!h)return; rCtx.clearRect(0,0,w,h);
+  const secs=data.sectors.length?data.sectors:radDef(), N=secs.length;
+  const cx=w/2, cy=h/2, R=Math.min(w,h)/2-18, seg=2*Math.PI/N;   /* Platz für den Zeiger oben */
+  for(let i=0;i<N;i++){ const a0=rot+i*seg, a1=a0+seg;
+    rCtx.beginPath(); rCtx.moveTo(cx,cy); rCtx.arc(cx,cy,R,a0,a1); rCtx.closePath();
+    rCtx.fillStyle=secs[i].color||PAL[i%PAL.length]; rCtx.fill(); rCtx.strokeStyle='#fff'; rCtx.lineWidth=2; rCtx.stroke();
+    const mid=a0+seg/2; rCtx.save(); rCtx.translate(cx,cy); rCtx.textBaseline='middle';
+    rCtx.fillStyle='#fff'; rCtx.font='bold '+Math.max(12,Math.min(26,R*0.16))+'px -apple-system,sans-serif';
+    const t=String(secs[i].label==null?'':secs[i].label), tt=t.length>10?t.slice(0,9)+'…':t;
+    if(Math.cos(mid)<0){ rCtx.rotate(mid+Math.PI); rCtx.textAlign='left'; rCtx.fillText(tt,-(R-10),0); }
+    else { rCtx.rotate(mid); rCtx.textAlign='right'; rCtx.fillText(tt,R-10,0); }
+    rCtx.restore(); }
+  rCtx.beginPath(); rCtx.arc(cx,cy,R*0.10,0,7); rCtx.fillStyle='#1f2430'; rCtx.fill();
+  const zb=Math.max(11,R*0.085), zl=Math.max(17,R*0.115);
+  rCtx.save(); rCtx.shadowColor='rgba(15,23,42,.45)'; rCtx.shadowBlur=6; rCtx.shadowOffsetY=2;
+  rCtx.beginPath(); rCtx.moveTo(cx-zb,cy-R-13); rCtx.lineTo(cx+zb,cy-R-13); rCtx.lineTo(cx,cy-R+zl); rCtx.closePath();
+  rCtx.fillStyle='#dc2626'; rCtx.fill();
+  rCtx.shadowColor='transparent'; rCtx.lineJoin='round';
+  rCtx.strokeStyle='#1f2430'; rCtx.lineWidth=5.5; rCtx.stroke();
+  rCtx.strokeStyle='#fff'; rCtx.lineWidth=3; rCtx.stroke(); rCtx.restore(); }
+function rWinner(){ const secs=data.sectors.length?data.sectors:radDef(), N=secs.length, seg=2*Math.PI/N;
+  let a=(-Math.PI/2-rot)%(2*Math.PI); if(a<0)a+=2*Math.PI; return secs[Math.floor(a/seg)%N]; }
+function rSpin(){ if(rSpinning)return; const secs=data.sectors.length?data.sectors:radDef(); if(!secs.length)return;
+  rSpinning=true; $('rRes').textContent='…'; const start=rot, extra=2*Math.PI*(4+Math.random()*3)+Math.random()*2*Math.PI;
+  const dur=3200+Math.random()*800, t0=performance.now();
+  (function anim(t){ const p=Math.min(1,(t-t0)/dur), e=1-Math.pow(1-p,3); rot=start+extra*e; rDraw();
+    if(p<1) requestAnimationFrame(anim); else { rSpinning=false; const w=rWinner(); $('rRes').textContent='➜ '+(w?w.label:''); } })(t0);
+}
+$('rSpin').onclick=rSpin; rCv.onclick=rSpin;
+
+/* ============================ Urne ============================ */
+const UPAL=['#3b82f6','#ef4444','#22c55e','#eab308','#8b5cf6','#f97316','#14b8a6','#ec4899'];
+const SCHEMA=['einfarbig','zwei Farben','drei Farben','bunt'];
+let uZug=[];                 // gezogene Kugeln (Index in der Urne), in der Reihenfolge der Züge
+const U=()=>data.urne;
+function uFarbenSetzen(){ const u=U(), f=[];
+  for(let i=0;i<u.anzahl;i++){
+    if(u.schema===0) f.push(UPAL[0]);
+    else if(u.schema===1) f.push(UPAL[i<Math.ceil(u.anzahl/2)?0:1]);
+    else if(u.schema===2) f.push(UPAL[Math.floor(i*3/u.anzahl)]);
+    else f.push(UPAL[i%UPAL.length]); }
+  u.farben=f; }
+function uPruefen(){ const u=U();
+  u.anzahl=Math.max(2,Math.min(20,u.anzahl|0||6));
+  if(!Array.isArray(u.farben)||u.farben.length!==u.anzahl) uFarbenSetzen();
+  const max=u.zurueck?8:Math.min(8,u.anzahl);
+  u.zuege=Math.max(1,Math.min(max,u.zuege|0||1)); }
+const dunkel=c=>{ const r=parseInt(c.slice(1,3),16),g=parseInt(c.slice(3,5),16),b=parseInt(c.slice(5,7),16); return (0.299*r+0.587*g+0.114*b)<150; };
+function uKugel(i,size,imPlatz){ const u=U(), d=document.createElement('div');
+  d.className='kugel'; d.style.width=d.style.height=size+'px'; d.style.fontSize=Math.max(9,size*0.45)+'px';
+  const c=u.farben[i]||UPAL[0]; d.style.background=c; d.style.color=dunkel(c)?'#fff':'#1f2430';
+  if(u.nummern) d.textContent=String(i+1);
+  if(!imPlatz) d.onclick=()=>{ const k=UPAL.indexOf(u.farben[i]); u.farben[i]=UPAL[(k+1)%UPAL.length]; uRender(); sync(); };   // einzelne Kugel umfärben
+  return d; }
+function uGroesse(n){ const w=$('uUrne').clientWidth||260; const proZeile=Math.max(4,Math.floor(w/40));
+  return Math.max(18,Math.min(38,Math.floor((w-6*(proZeile+1))/proZeile))); }
+function uRender(){ uPruefen(); const u=U();
+  $('uNv').textContent=u.anzahl; $('uZv').textContent=u.zuege;
+  $('uBack').textContent=u.zurueck?'mit Zurücklegen':'ohne Zurücklegen'; $('uBack').classList.toggle('on',u.zurueck);
+  $('uOrd').textContent=u.ordnung?'Reihenfolge zählt':'Reihenfolge egal'; $('uOrd').classList.toggle('on',u.ordnung);
+  $('uNum').classList.toggle('on',u.nummern);
+  $('uFarb').textContent='🎨 '+SCHEMA[u.schema%4];
+  const size=uGroesse(u.anzahl), box=$('uUrne'); box.innerHTML='';
+  const weg=u.zurueck?[]:uZug;
+  for(let i=0;i<u.anzahl;i++){ const k=uKugel(i,size,false); if(weg.includes(i)) k.classList.add('weg'); box.appendChild(k); }
+  const pl=$('uPlaetze'); pl.innerHTML='';
+  for(let j=0;j<u.zuege;j++){ const p=document.createElement('div'); p.className='platz';
+    p.style.width=p.style.height=(size+8)+'px';
+    if(uZug[j]!=null) p.appendChild(uKugel(uZug[j],size,true)); else p.textContent='?';
+    const nr=document.createElement('span'); nr.className='platznr'; nr.textContent=(j+1)+'.'; p.appendChild(nr);
+    pl.appendChild(p); }
+  $('uPlTitel').textContent=u.ordnung?'Plätze':'Gezogene Kugeln';
+  $('uGo').textContent=(uZug.length>=u.zuege)?'↺ Neu ziehen':('Ziehen ('+(uZug.length+1)+'. Zug)');
+  if(uZug.length>=u.zuege){ const liste=uZug.map(i=>i+1);
+    $('uErg').textContent=u.ordnung?('Ziehung: '+liste.join(' – ')):('Gezogen: {'+liste.slice().sort((a,b)=>a-b).join(', ')+'}'); }
+  else $('uErg').textContent='';
+  uRechnung(); }
+function uZiehen(){ const u=U();
+  if(uZug.length>=u.zuege){ uZug=[]; uRender(); return; }
+  const frei=[]; for(let i=0;i<u.anzahl;i++) if(u.zurueck||!uZug.includes(i)) frei.push(i);
+  if(!frei.length) return;
+  uZug.push(frei[Math.floor(Math.random()*frei.length)]); uRender(); }
+/* Anzahl der möglichen Ziehungen – mit Rechenweg zum Vorzeigen */
+function uRechnung(){ const u=U(), box=$('uRech'); if(!box.classList.contains('on'))return;
+  const N=u.anzahl, k=u.zuege; let h='';
+  const folge=[]; for(let i=0;i<k;i++) folge.push(u.zurueck?N:N-i);
+  const produkt=folge.reduce((a,b)=>a*b,1);
+  if(u.zurueck && u.ordnung){
+    h+='<b>Mit Zurücklegen, Reihenfolge zählt.</b><br>Vor jedem Zug liegen wieder alle '+N+' Kugeln in der Urne:<br>'+
+       folge.join(' · ')+' = <span class="gross">'+N+'<sup>'+k+'</sup> = '+ZAHL(produkt)+'</span> mögliche Ziehungen.';
+  } else if(!u.zurueck && u.ordnung){
+    h+='<b>Ohne Zurücklegen, Reihenfolge zählt.</b><br>Mit jedem Zug wird eine Kugel weniger:<br>'+
+       folge.map((f,i)=>(i+1)+'. Zug: '+f).join(' · ')+'<br>'+folge.join(' · ')+' = <span class="gross">'+ZAHL(produkt)+'</span> mögliche Ziehungen.';
+  } else if(!u.zurueck && !u.ordnung){
+    const p=fak(k), erg=produkt/p;
+    h+='<b>Ohne Zurücklegen, Reihenfolge egal.</b><br>Zuerst wie oben mit Reihenfolge: '+folge.join(' · ')+' = '+ZAHL(produkt)+'.<br>'+
+       'Dieselben '+k+' Kugeln lassen sich aber auf '+k+'! = '+ZAHL(p)+' Arten anordnen – das ist jedes Mal <i>dieselbe</i> Ziehung.<br>'+
+       ZAHL(produkt)+' : '+ZAHL(p)+' = <span class="gross">'+ZAHL(erg)+'</span> mögliche Ziehungen.'+
+       uPermutationen();
+  } else {
+    const erg=Math.round(binom(N+k-1,k));
+    h+='<b>Mit Zurücklegen, Reihenfolge egal.</b><br>Hier hilft das Teilen durch '+k+'! <u>nicht</u>: Ziehungen mit gleichen Kugeln (z. B. 3|3) haben weniger Anordnungen als Ziehungen mit lauter verschiedenen.<br>'+
+       'Man ordnet stattdessen '+k+' Kugeln und '+(N-1)+' Trennstriche in einer Reihe („Sterne und Striche"):<br>'+
+       'C('+(N+k-1)+'; '+k+') = <span class="gross">'+ZAHL(erg)+'</span> mögliche Ziehungen.';
+  }
+  box.innerHTML=h; }
+function binom(n,k){ k=Math.min(k,n-k); let r=1; for(let i=1;i<=k;i++) r=r*(n-k+i)/i; return r; }
+/* Veranschaulichung: alle Anordnungen einer Ziehung stehen für dieselbe Auswahl */
+function uPermutationen(){ const u=U(), k=u.zuege;
+  const basis=(uZug.length===k?uZug:Array.from({length:k},(_,i)=>i)).slice();
+  const alle=[]; (function perm(rest,akt){ if(alle.length>=24) return;
+    if(!rest.length){ alle.push(akt.slice()); return; }
+    for(let i=0;i<rest.length;i++){ const r=rest.slice(); const [x]=r.splice(i,1); perm(r,akt.concat([x])); } })(basis,[]);
+  const ges=fak(k), zeig=alle.slice(0,12);
+  let h='<div class="hinweis" style="margin-top:6px">Dieselbe Ziehung – nur anders angeordnet:</div><div class="perm">';
+  zeig.forEach(p=>{ h+='<span class="permz">'+p.map(i=>'<span class="mini" style="background:'+(u.farben[i]||UPAL[0])+'"></span>'+(u.nummern?('<span style="font-size:11px;font-weight:700">'+(i+1)+'</span>'):'')).join('')+'</span>'; });
+  h+='</div>';
+  if(ges>zeig.length) h+='<div class="hinweis">… zusammen '+k+'! = '+ZAHL(ges)+' Anordnungen, die alle als eine Ziehung zählen.</div>';
+  else h+='<div class="hinweis">'+k+'! = '+ZAHL(ges)+' Anordnungen, die alle als eine Ziehung zählen.</div>';
+  return h; }
+$('uNm').onclick=()=>{ U().anzahl--; uZug=[]; uFarbenSetzen(); uRender(); sync(); };
+$('uNp').onclick=()=>{ U().anzahl++; uZug=[]; uFarbenSetzen(); uRender(); sync(); };
+$('uZm').onclick=()=>{ U().zuege--; uZug=[]; uRender(); sync(); };
+$('uZp').onclick=()=>{ U().zuege++; uZug=[]; uRender(); sync(); };
+$('uBack').onclick=()=>{ U().zurueck=!U().zurueck; uZug=[]; uRender(); sync(); };
+$('uOrd').onclick=()=>{ U().ordnung=!U().ordnung; uRender(); sync(); };
+$('uNum').onclick=()=>{ U().nummern=!U().nummern; uRender(); sync(); };
+$('uFarb').onclick=()=>{ U().schema=(U().schema+1)%4; uFarbenSetzen(); uRender(); sync(); };
+$('uRechSw').onclick=()=>{ const on=$('uRech').classList.toggle('on'); $('uRechSw').classList.toggle('on',on); uRechnung(); };
+$('uGo').onclick=uZiehen;
+$('uReset').onclick=()=>{ uZug=[]; uRender(); };
+
+/* ==================== Ziehen und Verteilen ==================== */
+/* Zwei Blickrichtungen auf dieselbe Rechnung: 9 Schüler auf 5 Stühle (die Stühle
+   ziehen Schüler) und 5 Schüler auf 9 Stühle (die Schüler suchen sich Stühle). */
+const V=()=>data.vert;
+let vBelegt=[];              // je Schritt {stuhl, schueler}
+function vPruefen(){ const v=V(); v.a=Math.max(1,Math.min(12,v.a|0||1)); v.b=Math.max(1,Math.min(12,v.b|0||1)); }
+function vSicht(){ const v=V(); return v.a>v.b?'ziehen':(v.a<v.b?'verteilen':'gleich'); }
+function vSchritte(){ const v=V(); return Math.min(v.a,v.b); }
+function vToken(kind,i,size,gross){ const d=document.createElement('div');
+  if(kind==='s'){ d.className='person'; d.style.width=size+'px'; d.style.height=(size*1.1)+'px';
+    const c=UPAL[i%UPAL.length]; d.style.background=c; d.style.color=dunkel(c)?'#fff':'#1f2430';
+    d.style.fontSize=Math.max(9,size*0.45)+'px'; d.textContent=String(i+1); }
+  else { d.className='stuhl'; d.style.width=size+'px'; d.style.height=(size*1.1)+'px';
+    d.style.fontSize=Math.max(9,size*0.42)+'px'; d.textContent=String(i+1); }
+  return d; }
+function vRender(){ vPruefen(); const v=V();
+  $('vAv').textContent=v.a; $('vBv').textContent=v.b;
+  const sicht=vSicht(), gross=Math.max(v.a,v.b), klein=Math.min(v.a,v.b);
+  $('vSicht').innerHTML = sicht==='ziehen'
+    ? '<b>Ziehen:</b> Die '+v.b+' Stühle sind die Plätze. Für jeden Stuhl wird ein Schüler aus den '+v.a+' gezogen – ohne Zurücklegen.'
+    : (sicht==='verteilen'
+      ? '<b>Verteilen:</b> Die '+v.a+' Schüler werden verteilt. Jeder sucht sich einen der '+v.b+' Stühle – keiner doppelt.'
+      : '<b>Gleich viele:</b> Jeder der '+v.a+' Schüler bekommt genau einen Stuhl.');
+  const breite=$('vSchueler').clientWidth||260;
+  const size=Math.max(20,Math.min(40,Math.floor((breite-6*(gross+1))/Math.max(gross,1))));
+  const sb=$('vSchueler'); sb.innerHTML='';
+  for(let i=0;i<v.a;i++){ const t=vToken('s',i,size); if(vBelegt.some(b=>b.schueler===i)) t.classList.add('weg'); sb.appendChild(t); }
+  const tb=$('vStuehle'); tb.innerHTML='';
+  for(let j=0;j<v.b;j++){ const b=vBelegt.find(x=>x.stuhl===j);
+    if(b){ const st=document.createElement('div'); st.className='stuhl voll';
+      st.style.width=size+'px'; st.style.height=(size*1.1)+'px'; st.style.padding='2px';
+      const p=vToken('s',b.schueler,size*0.78); st.appendChild(p); tb.appendChild(st); }
+    else tb.appendChild(vToken('t',j,size)); }
+  const terme=[]; for(let i=0;i<vBelegt.length;i++) terme.push(gross-i);
+  const ges=[]; for(let i=0;i<klein;i++) ges.push(gross-i);
+  const gesamt=ges.reduce((a,b)=>a*b,1);
+  $('vProd').textContent = vBelegt.length
+    ? (terme.join(' · ')+(vBelegt.length>=klein?(' = '+ZAHL(gesamt)+' Möglichkeiten'):' · …'))
+    : '';
+  $('vGo').textContent=(vBelegt.length>=klein)?'↺ Neu':'▶ Ein Platz';
+  $('vSTitel').textContent='Schüler ('+v.a+')'; $('vTTitel').textContent='Stühle ('+v.b+')';
+  vRechnung(); }
+function vSchritt(){ const v=V(), klein=vSchritte();
+  if(vBelegt.length>=klein){ vBelegt=[]; vRender(); return; }
+  const freiS=[]; for(let i=0;i<v.a;i++) if(!vBelegt.some(b=>b.schueler===i)) freiS.push(i);
+  const freiT=[]; for(let j=0;j<v.b;j++) if(!vBelegt.some(b=>b.stuhl===j)) freiT.push(j);
+  if(!freiS.length||!freiT.length) return;
+  /* „Ziehen“ geht die Stühle der Reihe nach durch, „Verteilen“ die Schüler –
+     die Zufallswahl trifft jeweils die andere Seite. */
+  const sicht=vSicht();
+  const stuhl = (sicht==='verteilen') ? freiT[Math.floor(Math.random()*freiT.length)] : freiT[0];
+  const schueler = (sicht==='verteilen') ? freiS[0] : freiS[Math.floor(Math.random()*freiS.length)];
+  vBelegt.push({stuhl,schueler}); vRender(); }
+function vRechnung(){ const box=$('vRech'); if(!box.classList.contains('on'))return;
+  const v=V(), gross=Math.max(v.a,v.b), klein=Math.min(v.a,v.b);
+  const ges=[]; for(let i=0;i<klein;i++) ges.push(gross-i);
+  const gesamt=ges.reduce((a,b)=>a*b,1);
+  let h='<b>Ziehen – '+v.a+' Schüler, '+v.b+' Stühle:</b><br>';
+  if(v.a>=v.b){ for(let i=0;i<Math.min(v.b,6);i++) h+='&nbsp;&nbsp;'+(i+1)+'. Stuhl: '+(v.a-i)+' Schüler zur Auswahl<br>'; if(v.b>6)h+='&nbsp;&nbsp;…<br>'; }
+  else h+='&nbsp;&nbsp;Es sind mehr Stühle als Schüler – hier passt die Sicht „Verteilen“ besser.<br>';
+  h+='<b>Verteilen – '+v.a+' Schüler, '+v.b+' Stühle:</b><br>';
+  if(v.b>=v.a){ for(let i=0;i<Math.min(v.a,6);i++) h+='&nbsp;&nbsp;'+(i+1)+'. Schüler: '+(v.b-i)+' freie Stühle<br>'; if(v.a>6)h+='&nbsp;&nbsp;…<br>'; }
+  else h+='&nbsp;&nbsp;Es sind mehr Schüler als Stühle – hier passt die Sicht „Ziehen“ besser.<br>';
+  h+='<div style="margin-top:5px">'+ges.join(' · ')+' = <span class="gross">'+ZAHL(gesamt)+'</span> Möglichkeiten.</div>'+
+     '<div class="hinweis" style="margin-top:5px">Gezogen wird immer aus der <b>größeren</b> Menge ('+gross+'), die <b>kleinere</b> ('+klein+') liefert die Plätze. '+
+     'Deshalb führen '+v.a+' Schüler auf '+v.b+' Stühle und '+v.b+' Schüler auf '+v.a+' Stühle auf dieselbe Rechnung – „⇄ Rollen tauschen“ zeigt es.</div>';
+  box.innerHTML=h; }
+$('vAm').onclick=()=>{ V().a--; vBelegt=[]; vRender(); sync(); };
+$('vAp').onclick=()=>{ V().a++; vBelegt=[]; vRender(); sync(); };
+$('vBm').onclick=()=>{ V().b--; vBelegt=[]; vRender(); sync(); };
+$('vBp').onclick=()=>{ V().b++; vBelegt=[]; vRender(); sync(); };
+$('vSwap').onclick=()=>{ const v=V(), t=v.a; v.a=v.b; v.b=t; vBelegt=[]; vRender(); sync(); };
+$('vRechSw').onclick=()=>{ const on=$('vRech').classList.toggle('on'); $('vRechSw').classList.toggle('on',on); vRechnung(); };
+$('vGo').onclick=vSchritt;
+$('vAll').onclick=()=>{ if(vBelegt.length>=vSchritte()) vBelegt=[]; let n=0; const iv=setInterval(()=>{ vSchritt(); if(vBelegt.length>=vSchritte()||++n>20) clearInterval(iv); },260); };
+$('vReset').onclick=()=>{ vBelegt=[]; vRender(); };
+
+/* ============================ Reiter ============================ */
+function setTab(t,still){ data.tab=t;
+  document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('on',b.dataset.t===t));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('on',p.id==='p-'+t));
+  if(t==='wuerfel') wRender(wVals);
+  if(t==='rad') requestAnimationFrame(rResize);              // erst jetzt hat das Canvas eine Größe
+  if(t==='urne') uRender();
+  if(t==='vert') vRender();
+  if(!still) sync(); }
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>setTab(b.dataset.t));
+
+/* ============================ Tafel-Anbindung ============================ */
+function sync(){ if(window.parent===window) return;   /* allein geöffnet: nicht an sich selbst senden */
+  try{ parent.postMessage({type:'embed-data',data},'*'); }catch(e){} }
+function uebernehmen(d){
+  data.tab=['wuerfel','rad','urne','vert'].includes(d.tab)?d.tab:(Array.isArray(d.sectors)&&d.sectors.length?'rad':'wuerfel');
+  data.n=Math.max(1,Math.min(6,d.n||1)); data.sides=Math.max(2,d.sides||6);
+  data.colors=Array.isArray(d.colors)?d.colors.slice():[];
+  data.sectors=(Array.isArray(d.sectors)&&d.sectors.length)?d.sectors:radDef();
+  const u=(d.urne&&typeof d.urne==='object')?d.urne:{};
+  data.urne={ anzahl:u.anzahl||6, zuege:u.zuege||2, zurueck:!!u.zurueck, ordnung:u.ordnung!==false,
+    nummern:u.nummern!==false, schema:(u.schema|0)%4, farben:Array.isArray(u.farben)?u.farben.slice():[] };
+  const v=(d.vert&&typeof d.vert==='object')?d.vert:{};
+  data.vert={ a:v.a||9, b:v.b||5 };
+  uZug=[]; vBelegt=[]; wColors(); uPruefen(); wVals=Array.from({length:data.n},()=>1);
+  $('wN').value=data.n; $('wS').value=data.sides; $('rRes').textContent='–';
+  setTab(data.tab,true); }
+addEventListener('message',e=>{ if(window.parent===window||e.source!==window.parent) return;   // eigene Nachrichten ignorieren
+  if(e.data&&e.data.type==='embed-data'&&e.data.data) uebernehmen(e.data.data); });
+window.addEventListener('resize',()=>{ if(data.tab==='wuerfel') wRender(wVals); if(data.tab==='rad') rResize(); if(data.tab==='urne') uRender(); if(data.tab==='vert') vRender(); });
+window.addEventListener('load',()=>{
+  if(!data.sectors.length) data.sectors=radDef();
+  uPruefen(); setTab(data.tab,true); wRender([1]);
+  if(window.ResizeObserver){ new ResizeObserver(()=>{ if(data.tab==='wuerfel') wRender(wVals); }).observe($('wBox')); }
+  try{ parent.postMessage({type:'embed-ready'},'*'); }catch(e){} });
+</script>
+</body>
+</html>

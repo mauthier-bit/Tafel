@@ -943,9 +943,10 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   (das Original bleibt stehen, die Bildfigur ist ausgewählt), Strecken schaltet sich ab und das Werkzeug
   von vorher ist wieder aktiv. Der **Stift malt während des Streckens nicht**; „Abbrechen" im Hinweisband
   oder Esc bricht ab, **Rückgängig** nimmt die Streckung komplett zurück. Mehrere bzw. gruppierte Objekte
-  werden gemeinsam gestreckt (die Bildfigur wird dabei zu einer eigenen Gruppe). Strichstärken und
-  Schriftgrößen wachsen mit |k|; **Texte bleiben lesbar** (nicht auf den Kopf gestellt), ebenso die
-  Bedienoberfläche eingebetteter Werkzeuge – **Bilder** werden bei negativem k punktgespiegelt.
+  werden gemeinsam gestreckt (die Bildfigur wird dabei zu einer eigenen Gruppe). **Strichstärken und
+  Schriftgrößen bleiben unverändert** – nur die Figur selbst wird gestreckt. **Texte bleiben lesbar**
+  (nicht auf den Kopf gestellt), ebenso die Bedienoberfläche eingebetteter Werkzeuge – **Bilder**
+  werden bei negativem k punktgespiegelt.
   Am Objekt erscheint ein **kleiner Button (☰)** –
   ein Tipp klappt das **Kontext-Panel** auf/zu (Farbe, Dicke/Größe, Füllung, Kopieren usw.),
   damit es nicht ständig im Weg ist.
@@ -1300,18 +1301,38 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
    ein **Zeit**-Button (Uhr, Stoppuhr, Timer);
    ein **Klasse & Interaktion**-Button (Sozialform, Gruppen bilden, Umfrage, Zufälliger Name, Punktestand)
    und ein **Mathe & Physik**-Button (Gleichungslöser, Funktionsplotter, **Ableitungen**, **Term-Umformer**, **Figuren & Körper**, **Diagramm**, **Formel umstellen**, **Einheitskreis**, **3D-Koordinatensystem**, Vierfeldertafel, Baumdiagramm,
-   Wahrscheinlichkeitsrechner, GeoGebra-App, **CODAP**, Messwert-Analyse, **Würfel** und **Glücksrad**).
+   Wahrscheinlichkeitsrechner, GeoGebra-App, **CODAP**, Messwert-Analyse und **Zufall**).
    Die Aufklappmenüs legen sich **nie über die Werkzeugleiste**: Sie öffnen neben ihr, bleiben unter
    der oberen Leiste und nehmen bei schmalem Fenster **weniger Spalten** (bei wenig Höhe lassen sie
    sich scrollen) – so ist jeder Knopf erreichbar, auch im geteilten Bildschirm.
-- **Würfel** (Zufallsgenerator, Mathe & Physik): 1–6 Würfel mit wählbarer Seitenzahl (2–20),
-  „Würfeln" rollt, Summe wird angezeigt. **Antippen eines Würfels wechselt seine Farbe**
-  (durch eine Palette) – so kann man mehrere Würfel zur Unterscheidung einfärben; die Farben
-  bleiben beim Würfeln erhalten. (Nur die **Würfelfläche** wird gefärbt, die Augen bleiben schwarz.)
-- **Glücksrad** (Zufallsgenerator, Mathe & Physik): dreht auf einen zufälligen Sektor. **Anzahl der
-  Sektoren sowie Beschriftung (Zahl) und Farbe je Sektor** lassen sich im **Kontextmenü** einstellen.
-  Der **Zeiger oben** ist rot mit weißem Saum und schwarzem Rand und sitzt über dem Radrand, damit auch
-  von hinten im Klassenzimmer klar zu sehen ist, welcher Sektor getroffen wurde.
+- **Zufall** (Mathe & Physik, Würfel-Symbol mit fünf Augen): ein Werkzeug mit **vier Reitern**.
+  Die früheren Einzelwerkzeuge „Würfel" und „Glücksrad" stecken darin; **alte Tafelseiten werden beim
+  Laden automatisch umgestellt** und öffnen gleich im passenden Reiter.
+  - **Würfel:** 1–6 Würfel mit wählbarer Seitenzahl (2–20), „Würfeln" rollt, Summe wird angezeigt.
+    **Antippen eines Würfels wechselt seine Farbe** (durch eine Palette) – so kann man mehrere Würfel
+    zur Unterscheidung einfärben; die Farben bleiben beim Würfeln erhalten. (Nur die **Würfelfläche**
+    wird gefärbt, die Augen bleiben schwarz.)
+  - **Glücksrad:** dreht auf einen zufälligen Sektor. **Anzahl der Sektoren sowie Beschriftung (Zahl)
+    und Farbe je Sektor** lassen sich im **Kontextmenü** einstellen (die Zeile erscheint dort, sobald
+    dieser Reiter offen ist). Der **Zeiger oben** ist rot mit weißem Saum und schwarzem Rand und sitzt
+    über dem Radrand, damit auch von hinten im Klassenzimmer klar zu sehen ist, welcher Sektor getroffen wurde.
+  - **Urne:** 2–20 Kugeln, **mit oder ohne Zurücklegen**, **1–8 Züge** (das sind die Plätze, auf die
+    gezogen wird) und **Reihenfolge zählt / egal**. Die Kugeln lassen sich **nummerieren** (an/aus) und
+    einfärben – ein Knopf schaltet zwischen **einfarbig, zwei, drei Farben und bunt**, einzelnes Antippen
+    färbt eine Kugel um. „Ziehen" zieht Zug für Zug; ohne Zurücklegen blasst die gezogene Kugel in der
+    Urne aus. **„Rechnung"** blendet die **Anzahl der möglichen Ziehungen** mit dem Rechenweg ein –
+    je nach Einstellung N<sup>k</sup>, das fallende Produkt N · (N−1) · …, oder (bei egaler Reihenfolge)
+    dasselbe Produkt **geteilt durch k!**; dazu werden die **k! Anordnungen derselben Ziehung** als kleine
+    Kugelreihen **gezeigt**, damit sichtbar wird, warum geteilt wird. Für „mit Zurücklegen, Reihenfolge egal"
+    erklärt das Fenster, warum das Teilen durch k! dort **nicht** passt, und rechnet mit „Sterne und Striche".
+  - **Ziehen und Verteilen:** zeigt die **zwei Sichtweisen auf dieselbe Rechnung** am Beispiel
+    Schüler/Stühle. Bei **9 Schülern auf 5 Stühle** werden die Stühle der Reihe nach besetzt – für jeden
+    wird ein Schüler **gezogen** (9 · 8 · 7 · 6 · 5). Bei **5 Schülern auf 9 Stühle** sucht sich jeder
+    Schüler einen freien Stuhl, die Schüler werden also **verteilt** – und es steht dieselbe Rechnung da.
+    Ein Knopf **„⇄ Rollen tauschen"** springt zwischen beiden Fällen, „▶ Ein Platz" spielt Schritt für
+    Schritt durch (der Faktor jedes Schritts wächst im Produkt mit), „Rechnung" schreibt beide
+    Sichtweisen untereinander. Merksatz im Fenster: gezogen wird immer aus der **größeren** Menge,
+    die **kleinere** liefert die Plätze.
 - **Bruch** (Mathe & Physik): acht Reiter, jeweils als **Kreis oder Rechteck** (Knopf „◯ Kreis / ▭ Rechteck“),
   wahlweise **einfarbig, 🍕 Pizza** (Sauce, Käse, Peperoni, Kruste), **🍰 Kuchen** (Torte mit schmalem Guss-Rand,
   Sahnehäubchen mit Kirsche, Blechkuchen mit Guss und verteilten Früchten) **oder 🍫 Schokolade**
