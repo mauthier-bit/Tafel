@@ -231,7 +231,7 @@ const G=[
    nicht eindeutig zuzuordnen, deshalb stehen sie als Gruppe (Feld + Karten). */
 const GR=[
 
-{ j:11, g:'Zufallsexperimente und Urnenmodelle', felder:[
+{ j:12, g:'Zufallsexperimente und Urnenmodelle', felder:[
  ['mit Zurücklegen · Reihenfolge zählt (nᵏ)', [
    'Eine Münze fünfmal werfen und die Folge notieren',
    'Zahlenschloss mit vier Ziffern von 0 bis 9',
