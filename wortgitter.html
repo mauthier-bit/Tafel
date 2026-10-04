@@ -34,7 +34,7 @@
         <button type="button" id="bEdit">✎ Wörter</button>
         <button type="button" id="bImp" title="Wörter aus einem Glossar oder dem Lehrplan übernehmen">📚 Begriffe</button>
         <button type="button" id="bNew" title="Buchstaben neu anordnen">🎲 Neu mischen</button>
-        <label><input type="checkbox" id="cSol"> Lösung</label>
+        <label id="lSol"><input type="checkbox" id="cSol"> Lösung</label>
         <button type="button" id="bPrint" title="Als Arbeitsblatt drucken">🖨 Drucken</button>
         <span id="msg"></span>
       </div>
@@ -57,6 +57,8 @@
   <div id="area"><canvas id="cv"></canvas></div>
 </div>
 <script src="shot.js"></script>
+<script src="vendor/qrcode.min.js"></script>
+<script src="teilen.js"></script>
 <script src="lehrplan-glossar.js"></script>
 <script src="lehrplan.js"></script>
 <script>
@@ -192,7 +194,7 @@ if(window.TafelShot) TafelShot.buttons($('shotBtns'),()=>TafelShot.rasterize($('
 /* ---------- Tafel-Anbindung ---------- */
 function sync(){ if(window.parent===window) return; /* allein geöffnet: nicht an sich selbst senden */
   try{ parent.postMessage({type:'embed-data',data:D},'*'); }catch(e){} }
-addEventListener('message',e=>{ if(window.parent===window||e.source!==window.parent) return;   // eigene Nachrichten ignorieren
+addEventListener('message',e=>{ if(e.source!==window&&(window.parent===window||e.source!==window.parent)) return;   // eigene Nachrichten ignorieren
   if(!(e.data&&e.data.type==='embed-data'&&e.data.data)) return; const d=e.data.data;
   D=Object.assign(D,d);
   $('wIn').value=D.words||''; $('gN').value=D.size; $('gN2').textContent=D.size;
@@ -216,5 +218,14 @@ if(window.TafelLehrplan&&TafelLehrplan.verfuegbar()&&$('bImp')){
       ta.dispatchEvent(new Event('change',{bubbles:true}));
       if(window.TafelShot) TafelShot.toast(woerter.length+' Wörter eingefügt'+(woerter.length<l.length?(' – '+(l.length-woerter.length)+' mehrteilige oder zu lange Begriffe passen nicht ins Gitter'):'')); } });
 } else { const b=$('bImp'); if(b) b.hidden=true; }
+
+/* ---------- Teilen: Aufgabe per QR-Code an die Klasse ---------- */
+if(window.TafelTeilen){
+  const _tg=TafelTeilen.istGeteilt();
+  if(!_tg) TafelTeilen.knopf(document.getElementById('shotBtns'),'wortgitter.html',()=>({w:'wg', d:D}));
+  else window.addEventListener('load',()=>{
+    TafelTeilen.empfangen().then(p=>{ if(p&&p.w==='wg'&&p.d){ if(typeof p.d==='object') p.d.edit=false; TafelTeilen.einspielen(p.d); } })
+      .catch(()=>{}).then(()=>TafelTeilen.nurBenutzen('#words,#bEdit,#bImp,#bNew,#lSol')); });
+}
 </script>
 </body></html>

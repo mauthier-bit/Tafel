@@ -94,7 +94,8 @@ function nurBenutzen(verstecken){
   if(!document.getElementById('tafelTeilenCSS')){
     const st=document.createElement('style'); st.id='tafelTeilenCSS';
     st.textContent='body.nurBenutzen .tafelEdit{display:none!important;}'+
-      'body.tafelGeteilt .tafelTeilenKnopf,body.tafelGeteilt .tafelLoesung{display:none!important;}';
+      'body.tafelGeteilt .tafelTeilenKnopf,body.tafelGeteilt .tafelLoesung{display:none!important;}'+
+      'body.tafelGeteilt #tafelModus{display:none!important;}';   /* kein Zurück ins Bearbeiten */
     document.head.appendChild(st);
   }
   if(verstecken) document.querySelectorAll(verstecken).forEach(el=>{ el.hidden=true; el.disabled=true; });

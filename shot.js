@@ -62,6 +62,8 @@ function copy(im){ if(!im) return;
 /* zwei Knöpfe anlegen; make() liefert {canvas,w,h} */
 function buttons(container,make,cls,style){ const mk=(txt,title,fn)=>{ const b=document.createElement('button'); b.type='button'; b.textContent=txt; b.title=title; if(cls) b.className=cls; if(style) b.style.cssText=style;
     b.addEventListener('pointerdown',e=>e.preventDefault()); b.onclick=()=>{ let im=null; try{ im=make(); }catch(e){ toast('Bild konnte nicht erstellt werden'); } fn(im); }; container.appendChild(b); return b; };
-  return [mk('🖼 Tafel','Als Bild neben das Werkzeug auf die Tafel legen',toBoard), mk('📋 Kopieren','Als Bild in die Zwischenablage kopieren',copy)]; }
+  const tf=mk('🖼 Tafel','Als Bild neben das Werkzeug auf die Tafel legen',toBoard);
+  tf.classList.add('tafelNurImBrett'); if(!inBoard()) tf.hidden=true;        /* allein geöffnet (z. B. geteilter Link) gibt es keine Tafel */
+  return [tf, mk('📋 Kopieren','Als Bild in die Zwischenablage kopieren',copy)]; }
 window.TafelShot={rasterize,toBoard,copy,buttons,toast};
 })();

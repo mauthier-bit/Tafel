@@ -75,6 +75,8 @@
   </div>
 </div>
 <script src="shot.js"></script>
+<script src="vendor/qrcode.min.js"></script>
+<script src="teilen.js"></script>
 <script src="modus.js"></script>
 <script src="venn.js"></script>
 <script>
@@ -193,7 +195,8 @@ function computeTree(){ clearCalcVals(); const B=branches, S=stages, st={pct:fal
   renderVf(); renderVenn(); sync(); }
 $('bCalc').addEventListener('pointerdown',e=>e.preventDefault()); $('bCalc').onclick=computeTree;
 $('bClr').onclick=()=>{ clearCalcVals(); setMsg(''); if(lastPos) drawLabels(lastPos); renderVf(); renderVenn(); sync(); };
-function sync(){ if(window.parent===window) return; try{ parent.postMessage({type:'embed-data',data:{stages,branches,probs,leaves:leafVals,calc:[...calcSet],names,nsize,vf4:vf4On, venn:vennOn,fontSize,fontBold,fontItalic,edit}},'*'); }catch(e){} }
+function zustand(){ return {stages,branches,probs,leaves:leafVals,calc:[...calcSet],names,nsize,vf4:vf4On, venn:vennOn,fontSize,fontBold,fontItalic,edit}; }
+function sync(){ if(window.parent===window) return; try{ parent.postMessage({type:'embed-data',data:zustand()},'*'); }catch(e){} }
 /* ---- Zugehörige Vierfeldertafel (nur 2 Stufen × 2 Äste) ---- */
 let vf4On=false;
 const vfOk=()=>stages===2&&branches===2;
@@ -295,6 +298,15 @@ window.addEventListener('load',()=>{
   if(window.parent===window&&edit===undefined) edit=true;
   if(window.TafelModus) TafelModus.init({get:()=>edit!==false, set:v=>{ edit=v; fitArea(); build(); sync(); }});
   build(); try{ parent.postMessage({type:'embed-ready'},'*'); }catch(e){} });
+
+/* ---------- Teilen: Aufgabe per QR-Code an die Klasse ---------- */
+if(window.TafelTeilen){
+  const _tg=TafelTeilen.istGeteilt();
+  if(!_tg) TafelTeilen.knopf(document.getElementById('shotBtns'),'baum.html',()=>({w:'bau', d:zustand()}));
+  else window.addEventListener('load',()=>{
+    TafelTeilen.empfangen().then(p=>{ if(p&&p.w==='bau'&&p.d){ if(typeof p.d==='object') p.d.edit=false; TafelTeilen.einspielen(p.d); } })
+      .catch(()=>{}).then(()=>TafelTeilen.nurBenutzen()); });
+}
 </script>
 </body>
 </html>

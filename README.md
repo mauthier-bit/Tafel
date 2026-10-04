@@ -649,12 +649,20 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     Begriffslisten in alle sieben Werkzeuge übernehmen.
   Die Begriffe folgen den Lernbereichen des Lehrplans, die **Erklärungen sind eigens für die Tafel
   geschrieben** (kurze, schülergerechte Sätze) – der Lehrplantext selbst wird nicht wiedergegeben.
-- **Teilen per QR-Code** (zehn Werkzeuge): Der Knopf **„Teilen"** (Pfeil aus dem offenen Kasten)
+- **Teilen per QR-Code** (25 Werkzeuge): Der Knopf **„Teilen"** (Pfeil aus dem offenen Kasten)
   zeigt einen **QR-Code**. Wer ihn mit der Kamera scannt, öffnet **dasselbe Werkzeug mit genau der
   Aufgabe**, die an der Tafel eingestellt ist – ohne Konto, ohne Anmeldung, ohne Server.
   Dabei sind: **Zuordnen**, **Reihenfolge**, **Lückentext**, **Stromkreis**, **Wellenwanne**,
-  **Optiklabor**, **Term-Umformer**, **Figuren und Körper**, **Messwert-Analyse** und
-  **Stellenwerttafel**.
+  **Optiklabor**, **Term-Umformer**, **Figuren und Körper**, **Messwert-Analyse**,
+  **Stellenwerttafel**, **Strahlensätze**, **Baumdiagramm**, **Vierfeldertafel**,
+  **Kreuzworträtsel**, **Buchstabengitter**, **Galgenmännchen**, **Glossar**, **Lernlandkarte**,
+  **Begriffsnetz**, **Pinnwand**, **Wortwolke**, **Zeitleiste**, **Diagramm**,
+  **Formel umstellen** und **Bruch**.
+  - In der geteilten Fassung sind die **Bearbeiten-Werkzeuge und der Umschalter „Bearbeiten"
+    ausgeblendet** – und mit ihnen die **Lösung**: Beim Kreuzworträtsel und beim Buchstabengitter
+    verschwinden die Wortliste, der Lösungsschalter und die Begriffsknöpfe, beim Rest die jeweilige
+    Bearbeitungsleiste. Der Knopf **„Auf Tafel"** erscheint nur im Tafel-Betrieb; am Schülergerät
+    bleibt **„Kopieren"**.
   - **Wie es funktioniert:** Die Aufgabe steckt komprimiert im **Fragment der Adresse** (hinter dem
     `#`). Dieser Teil wird nie an einen Server geschickt. Stammt die Aufgabe aus einer **Bibliothek**,
     wandert nur ihr **Titel** mit und das Schülergerät baut sie selbst auf – dadurch bleibt der Code
@@ -931,8 +939,12 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
 - **Auswählen, Verschieben, Skalieren, Drehen:** Objekt antippen → Rahmen mit Griffen
   (Eck- und Kantengriffe = Größe, Kreis oben = drehen). Beim Ziehen an einem Griff bleibt die **gegenüberliegende
   Kante bzw. Ecke stehen** – das Objekt wächst nur in Zugrichtung (auch bei gedrehten Objekten).
-  Im Kontextmenü unter **Drehung** (mit Anzeige des aktuellen Winkels): **⟲ 90° / ⟳ 90°** dreht exakt um 90°,
-  **⊾ Gerade ausrichten** richtet schräg (z. B. mit zwei Fingern) gedrehte Objekte auf das nächste Vielfache von 90° aus.
+  Im Kontextmenü unter **Drehen & Strecken** (mit Anzeige des aktuellen Winkels): **⟲ 90° / ⟳ 90°** dreht exakt um 90°,
+  **⊾ Gerade** richtet schräg (z. B. mit zwei Fingern) gedrehte Objekte auf das nächste Vielfache von 90° aus.
+  Das **Kontextmenü** ist dafür **etwas breiter (380 statt 320 Punkte) und deutlich flacher** geworden:
+  Drehen/Strecken und die vier Ebenen-Knöpfe stehen jetzt in je **einer** Zeile statt in zweien, die
+  Trennlinien sind weg. Bei einem Dreieck sind das **441 statt 619 Punkte Höhe**. Wird es durch die
+  Einstellungen eines Werkzeugs trotzdem einmal höher als der Bildschirm, lässt es sich **scrollen**.
   Mehrere bzw. gruppierte Objekte drehen gemeinsam um ihre gemeinsame Mitte.
 - **⊹ Strecken (zentrisch)** – ebenfalls im Kontextmenü unter **Drehung**: eine echte **zentrische Streckung**.
   Ablauf: Knopf antippen → **Zentrum Z** auf der Tafel antippen (es wird als Punkt mit „Z" angezeigt) →
@@ -1301,10 +1313,26 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
    ein **Zeit**-Button (Uhr, Stoppuhr, Timer);
    ein **Klasse & Interaktion**-Button (Sozialform, Gruppen bilden, Umfrage, Zufälliger Name, Punktestand)
    und ein **Mathe & Physik**-Button (Gleichungslöser, Funktionsplotter, **Ableitungen**, **Term-Umformer**, **Figuren & Körper**, **Diagramm**, **Formel umstellen**, **Einheitskreis**, **3D-Koordinatensystem**, Vierfeldertafel, Baumdiagramm,
-   Wahrscheinlichkeitsrechner, GeoGebra-App, **CODAP**, Messwert-Analyse und **Zufall**).
+   Wahrscheinlichkeitsrechner, **Strahlensätze**, GeoGebra-App, **CODAP**, Messwert-Analyse und **Zufall**).
    Die Aufklappmenüs legen sich **nie über die Werkzeugleiste**: Sie öffnen neben ihr, bleiben unter
    der oberen Leiste und nehmen bei schmalem Fenster **weniger Spalten** (bei wenig Höhe lassen sie
    sich scrollen) – so ist jeder Knopf erreichbar, auch im geteilten Bildschirm.
+- **Strahlensätze** (Mathe & Physik): die Strahlensatzfigur mit Scheitel **S**, zwei Strahlen und zwei
+  Parallelen (**A, B** und **A′, B′**). Ein Knopf legt fest, ob die Parallelen auf **derselben Seite**
+  des Scheitels liegen (V-Figur) oder auf **verschiedenen** (X-Figur); je ein weiterer Knopf schaltet
+  einen **3. Strahl** (Punkte C, C′) und eine **3. Parallele** (A″, B″, C″) hinzu.
+  - Die Knöpfe **V, F, X und Z** heben den jeweiligen Satz in der Figur hervor und schreiben seine
+    **Verhältnisgleichung** darüber – mit den eingetragenen Zahlen in Klammern. **V** und **X** zeigen den
+    **1. Strahlensatz** (Abschnitte auf den Strahlen, auch in der Form SA : AA′ = SB : BB′), **F** und **Z**
+    den **2. Strahlensatz** (Parallelenabschnitte, SA : SA′ = AB : A′B′). V und F gehören zur V-Figur,
+    X und Z zur X-Figur – ein Tipp auf X oder Z stellt die Figur gleich mit um.
+  - **Rechnen wie beim Baumdiagramm:** rechts steht zu jeder Strecke ein Eingabefeld – zu den Strecken
+    **vom Scheitel aus** (SA, SA′) ebenso wie zu den **Teilstrecken** (AA′) und den Parallelenabschnitten
+    (AB, A′B′). „Berechnen" ergänzt alles, was sich daraus ergibt, in **Blau**; „Leeren" nimmt die
+    berechneten Werte wieder heraus. In der X-Figur wird richtig gerechnet, dass die Teilstrecke AA′
+    **durch den Scheitel** läuft (AA′ = SA + SA′). Die Längen stehen auch an der Figur.
+  - Die Figur ist **maßstäblich**: Sind die Verhältnisse bekannt, rücken die Parallelen entsprechend.
+    Dazu **A− / A+**, **Auf Tafel**, **Kopieren** und **Teilen** (QR-Code).
 - **Zufall** (Mathe & Physik, Würfel-Symbol mit fünf Augen): ein Werkzeug mit **vier Reitern**.
   Die früheren Einzelwerkzeuge „Würfel" und „Glücksrad" stecken darin; **alte Tafelseiten werden beim
   Laden automatisch umgestellt** und öffnen gleich im passenden Reiter.

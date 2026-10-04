@@ -30,7 +30,7 @@
         <button type="button" id="bEdit">✎ Begriffe</button>
         <button type="button" id="bImp" title="Begriffe aus einem Glossar oder dem Lehrplan übernehmen">📚 Begriffe</button>
         <button type="button" id="bNew" title="Anordnung neu berechnen">🎲 Neu anordnen</button>
-        <label><input type="checkbox" id="cSol"> Lösung</label>
+        <label id="lSol"><input type="checkbox" id="cSol"> Lösung</label>
         <button type="button" id="bPrint" title="Als Arbeitsblatt drucken">🖨 Drucken</button>
         <span id="msg"></span>
       </div>
@@ -49,6 +49,8 @@
   <div id="area"><canvas id="cv"></canvas></div>
 </div>
 <script src="shot.js"></script>
+<script src="vendor/qrcode.min.js"></script>
+<script src="teilen.js"></script>
 <script src="lehrplan-glossar.js"></script>
 <script src="lehrplan.js"></script>
 <script>
@@ -218,7 +220,7 @@ if(window.TafelShot) TafelShot.buttons($('shotBtns'),()=>TafelShot.rasterize($('
 /* ---------- Tafel-Anbindung ---------- */
 function sync(){ if(window.parent===window) return; /* allein geöffnet: nicht an sich selbst senden */
   try{ parent.postMessage({type:'embed-data',data:D},'*'); }catch(e){} }
-addEventListener('message',e=>{ if(window.parent===window||e.source!==window.parent) return;   // eigene Nachrichten ignorieren
+addEventListener('message',e=>{ if(e.source!==window&&(window.parent===window||e.source!==window.parent)) return;   // eigene Nachrichten ignorieren
   if(!(e.data&&e.data.type==='embed-data'&&e.data.data)) return; const d=e.data.data;
   D=Object.assign(D,d);
   $('wIn').value=D.words||''; $('cSol').checked=!!D.sol; $('cClues').checked=D.clues!==false;
@@ -239,5 +241,14 @@ if(window.TafelLehrplan&&TafelLehrplan.verfuegbar()&&$('bImp')){
       ta.dispatchEvent(new Event('change',{bubbles:true}));
       if(window.TafelShot) TafelShot.toast(l.length+' Begriffe eingefügt'); } });
 } else { const b=$('bImp'); if(b) b.hidden=true; }
+
+/* ---------- Teilen: Aufgabe per QR-Code an die Klasse ---------- */
+if(window.TafelTeilen){
+  const _tg=TafelTeilen.istGeteilt();
+  if(!_tg) TafelTeilen.knopf(document.getElementById('shotBtns'),'kreuzwort.html',()=>({w:'kw', d:D}));
+  else window.addEventListener('load',()=>{
+    TafelTeilen.empfangen().then(p=>{ if(p&&p.w==='kw'&&p.d){ if(typeof p.d==='object') p.d.edit=false; TafelTeilen.einspielen(p.d); } })
+      .catch(()=>{}).then(()=>TafelTeilen.nurBenutzen('#words,#bEdit,#bImp,#bNew,#lSol,#bPrint')); });
+}
 </script>
 </body></html>
