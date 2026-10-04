@@ -702,7 +702,7 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   Auswahlfeld) und **Darstellung**: **nur Text · Funktionsgraph · Diagramm · Tortenbild · Figur**.
   Über die Darstellung findet man die Aufgaben **mit Bildern** quer durch alle Themen – etwa alle
   zwölf Bruchaufgaben mit Tortenstücken. Unten wählt man die **Aufgabenart**: paarweise (zwei Karten)
-  oder als Gruppe (alle zugehörigen Karten). Insgesamt stehen rund **940 Paare** bereit:
+  oder als Gruppe (alle zugehörigen Karten). Insgesamt stehen rund **960 Karten** bereit:
   (Alle Bibliotheken **fertiger Aufgaben** – Zuordnen, Lückentext, Reihenfolge – tragen dasselbe
   Symbol: **Buchrücken im Regal**. Das **aufgeschlagene Buch** bleibt dem **Glossar** und den
   Lehrplanbegriffen vorbehalten, damit die beiden Quellen auf einen Blick zu unterscheiden sind.)
@@ -754,6 +754,17 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   - **Logarithmusgesetze** (Jgst. 10, 16 Paare): die Gesetze selbst (log(a · b) ↔ log(a) + log(b) ·
     log(aⁿ) ↔ n · log(a) · log(√a) ↔ 0,5 · log(a)), dazu Werte mit natürlichem Logarithmus
     (ln(e³) ↔ 3 · ln(1/e) ↔ −1) und Umkehrungen wie 2^(log₂(7)) ↔ 7
+  - **Zufallsexperimente und Urnenmodelle** (Jgst. 11, **Gruppenaufgabe**): 21 Alltags- und
+    Spielsituationen werden den **vier Urnenmodellen** zugeordnet – *mit Zurücklegen · Reihenfolge zählt*
+    (Münzwurf, Zahlenschloss, dreimal würfeln, Toto, Korbwurf, Kennwort), *ohne Zurücklegen ·
+    Reihenfolge zählt* (Gold/Silber/Bronze, Pferderennen, Ämterwahl, drei Eissorten auf der Waffel,
+    Staffelreihenfolge), *ohne Zurücklegen · Reihenfolge egal* (Lotto, drei aus zehn Aufgaben,
+    Mannschaft, Tombola, Skatblatt) und *mit Zurücklegen · Reihenfolge egal* (drei Kugeln Eis im Becher,
+    Gummibärchen, Dart, Semmeln, drei Würfel gleichzeitig). Jedes **Modell ist ein Feld**, die
+    Situationen sind die Karten; man kann auch nur zwei Modelle auswählen. Weil zu einem Feld mehrere
+    Karten gehören, wird diese Aufgabe **immer als Gruppenaufgabe** geladen – paarweise wäre sie nicht
+    eindeutig. Gegensatzpaare wie *Eis auf der Waffel* (Reihenfolge zählt) und *Eis im Becher*
+    (Reihenfolge egal) machen den Unterschied der Modelle sichtbar.
   - **Zahlenrätsel und Gleichungen** (Jgst. 7): „Das Dreifache einer Zahl, vermindert um 5, ergibt
     16." ↔ 3x − 5 = 16 – vierzehn Rätsel vom einfachen Ansatz bis zu Klammer und Nachfolgerzahl
   - **Term und umgeformter Term** (Jgst. 7): 3 · (x + 4) ↔ 3x + 12, (x + 3)² ↔ x² + 6x + 9,

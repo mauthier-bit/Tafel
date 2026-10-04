@@ -226,12 +226,49 @@ const G=[
  ['2^(log₂(7))','7'] ] }
 ];
 
+/* ---------- Gruppenaufgaben: ein Feld, mehrere Karten ----------
+   Hier gehören mehrere Situationen zu demselben Urnenmodell – als Paare wären sie
+   nicht eindeutig zuzuordnen, deshalb stehen sie als Gruppe (Feld + Karten). */
+const GR=[
+
+{ j:11, g:'Zufallsexperimente und Urnenmodelle', felder:[
+ ['mit Zurücklegen · Reihenfolge zählt (nᵏ)', [
+   'Eine Münze fünfmal werfen und die Folge notieren',
+   'Zahlenschloss mit vier Ziffern von 0 bis 9',
+   'Dreimal würfeln und die Augenzahlen der Reihe nach aufschreiben',
+   'Toto: für elf Spiele je 1, X oder 2 tippen',
+   'Beim Korbwurf dreimal werfen und Treffer oder Fehlwurf notieren',
+   'Ein Kennwort aus fünf Buchstaben bilden' ] ],
+ ['ohne Zurücklegen · Reihenfolge zählt (n · (n−1) · …)', [
+   'Gold, Silber und Bronze unter acht Läuferinnen vergeben',
+   'Die ersten drei Pferde eines Rennens in der richtigen Reihenfolge tippen',
+   'Aus zwölf Kindern Sprecher, Vertreter und Kassenwart wählen',
+   'Drei verschiedene Eissorten auf der Waffel übereinander',
+   'Die Startreihenfolge der fünf Schwimmer einer Staffel festlegen' ] ],
+ ['ohne Zurücklegen · Reihenfolge egal (n über k)', [
+   'Lotto: sechs Zahlen aus 49 ziehen',
+   'Aus zehn Aufgaben drei zum Rechnen auswählen',
+   'Eine Mannschaft aus fünf von zwölf Spielern aufstellen',
+   'Drei Lose aus der Tombola ziehen und behalten',
+   'Fünf Karten aus dem Skatblatt auf die Hand nehmen' ] ],
+ ['mit Zurücklegen · Reihenfolge egal', [
+   'Drei Kugeln Eis aus acht Sorten in einem Becher',
+   'Fünf Gummibärchen aus vier Farben in eine Tüte',
+   'Beim Dart dreimal werfen – nur die getroffenen Felder zählen, nicht die Reihenfolge',
+   'Sechs Semmeln aus vier Sorten beim Bäcker kaufen',
+   'Drei Würfel gleichzeitig werfen und nur notieren, welche Augenzahlen fallen' ] ]
+]}
+
+];
+
 window.TafelPaare={
   verfuegbar:()=>G.length>0,
-  anzahl:()=>G.reduce((s,g)=>s+g.paare.length,0),
-  /* gleiche Struktur wie die anderen Quellen: b = linke Karte, e = rechte Karte */
+  anzahl:()=>G.reduce((s,g)=>s+g.paare.length,0)+GR.reduce((s,g)=>s+g.felder.reduce((t,f)=>t+f[1].length,0),0),
+  /* gleiche Struktur wie die anderen Quellen: b = linke Karte, e = rechte Karte.
+     Gruppeneinträge bringen zusätzlich k = die Karten, die in dieses Feld gehören. */
   daten(){ const out=[];
     G.forEach(gr=>gr.paare.forEach(p=>out.push({ f:'M', j:gr.j, g:gr.g, b:p[0], e:p[1] })));
+    GR.forEach(gr=>gr.felder.forEach(f=>out.push({ f:'M', j:gr.j, g:gr.g, b:f[0], e:f[1].join(' · '), k:f[1].slice() })));
     return out; }
 };
 })();

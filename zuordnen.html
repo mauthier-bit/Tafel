@@ -497,19 +497,23 @@ if(window.TafelLehrplan&&((window.TafelFunktionen&&TafelFunktionen.verfuegbar())
         /* Zwei Aufgaben mit derselben Lösung (z. B. (x+1)/(2x+2) und (1/x):(2/x) ergeben beide 1/2)
            wären nicht eindeutig zuzuordnen – solche Dubletten fallen heraus. */
         const gesehen=new Set(); let raus=0;
-        const l=l0.filter(d=>{ if(d.paar||d.bild||d.voll) return true;
+        const l=l0.filter(d=>{ if(d.paar||d.bild||d.voll||Array.isArray(d.k)) return true;
           const k='L'+String(d.b).trim()+'#R'+String(d.e).trim();
           const kl='L'+String(d.b).trim(), kr='R'+String(d.e).trim();
           if(gesehen.has(kl)||gesehen.has(kr)){ raus++; return false; }
           gesehen.add(kl); gesehen.add(kr); return true; });
         const bilder={}; let nb=0; const zeilen=[];
         const bild=src=>{ const k='b'+(++nb); bilder[k]=src; return '['+k+']'; };
-        if(art==='gruppe'){
+        const mehrKarten=l.some(d=>Array.isArray(d.k)&&d.k.length>1);
+        if(mehrKarten&&art!=='gruppe') setTimeout(()=>TafelShot&&TafelShot.toast('Zu jedem Feld gehören mehrere Karten – wird als Gruppenaufgabe geladen'),900);
+        if(art==='gruppe'||mehrKarten){
           /* Eine Aufgabe je Eintrag: das erste Diagramm ist das Feld, die übrigen sind die Karten.
              Bei Aufgaben ohne dritte Karte (Terme, Begriffe) steht links die Aufgabe, rechts die Lösung. */
           let mitGruppe=0;
           l.forEach(d=>{
-            if(d.gruppe){ const g=d.gruppe(mitDez); mitGruppe++;
+            if(Array.isArray(d.k)){ mitGruppe++;
+              zeilen.push('"'+String(d.b).replace(/"/g,'\u201d')+'" = '+d.k.map(x=>'"'+String(x).replace(/"/g,'\u201d')+'"').join(', ')); }
+            else if(d.gruppe){ const g=d.gruppe(mitDez); mitGruppe++;
               zeilen.push('"'+bild(g.feld)+'" = '+g.karten.map(k=>'"'+bild(k)+'"').join(', ')); }
             else if(d.paar){ const p=d.paar(mitDez);
               zeilen.push('"'+bild(p.links)+'" = "'+bild(p.rechts)+'"'); }
