@@ -1357,9 +1357,15 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     **durch den Scheitel** läuft (AA′ = SA + SA′). Die Längen stehen auch an der Figur.
   - Die Figur ist **maßstäblich**: Sind die Verhältnisse bekannt, rücken die Parallelen entsprechend.
     Dazu **A− / A+**, **Auf Tafel**, **Kopieren** und **Teilen** (QR-Code).
-- **Zufall** (Mathe & Physik, Würfel-Symbol mit fünf Augen): ein Werkzeug mit **vier Reitern**.
+- **Zufall** (Mathe & Physik, Würfel-Symbol mit fünf Augen): ein Werkzeug mit **fünf Reitern**.
   Die früheren Einzelwerkzeuge „Würfel" und „Glücksrad" stecken darin; **alte Tafelseiten werden beim
   Laden automatisch umgestellt** und öffnen gleich im passenden Reiter.
+  - **Münze:** **1 bis 100 Würfe** auf einmal – die Münzen erscheinen als goldenes **K** (Kopf) und
+    silbernes **Z** (Zahl) und passen ihre Größe an die Anzahl an. Ein Knopf schaltet zwischen
+    **fairer Münze (p = 0,5)** und **gezinkt**; dann lässt sich **p(Kopf)** frei einstellen (0,01 bis 0,99).
+    Unter den Münzen stehen die Trefferzahlen und der Anteil Kopf, darunter eine **Gesamtzählung über
+    alle Würfe** – so sieht man beim Weiterwerfen, wie sich die relative Häufigkeit der
+    Wahrscheinlichkeit nähert. „↺ Zählung" setzt sie zurück.
   - **Würfel:** 1–6 Würfel mit wählbarer Seitenzahl (2–20), „Würfeln" rollt, Summe wird angezeigt.
     **Antippen eines Würfels wechselt seine Farbe** (durch eine Palette) – so kann man mehrere Würfel
     zur Unterscheidung einfärben; die Farben bleiben beim Würfeln erhalten. (Nur die **Würfelfläche**

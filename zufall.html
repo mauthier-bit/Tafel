@@ -30,6 +30,14 @@
   .go:disabled{opacity:.45;cursor:default;}
   .zeile{display:flex;gap:7px;flex:none;}
   .info{text-align:center;font-size:15px;color:#334155;min-height:20px;font-weight:700;}
+  /* ---- Münze ---- */
+  .ctrl input[type=number]{width:62px;padding:3px 5px;border:1px solid #cfd6e0;border-radius:8px;font:600 14px inherit;text-align:center;
+    -webkit-user-select:text;user-select:text;}
+  #mBox{flex:1 1 auto;min-height:0;display:flex;flex-wrap:wrap;gap:7px;align-items:center;justify-content:center;align-content:center;overflow:auto;}
+  .muenze{border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;flex:none;
+    box-shadow:inset 0 -3px 7px rgba(0,0,0,.2), 0 1px 3px rgba(0,0,0,.18);animation:plop .25s ease;}
+  .muenze.k{background:linear-gradient(145deg,#fde68a,#f59e0b);color:#7c2d12;border:2px solid #d97706;}
+  .muenze.z{background:linear-gradient(145deg,#f1f5f9,#cbd5e1);color:#475569;border:2px solid #94a3b8;}
   /* ---- Würfel ---- */
   #wBox{flex:1;display:flex;flex-wrap:wrap;gap:14px;align-items:center;justify-content:center;min-height:0;}
   .die{background:#fff;border:2px solid #1f2430;border-radius:14%;box-shadow:0 2px 6px rgba(0,0,0,.12);display:grid;
@@ -76,10 +84,25 @@
 <body>
 <div id="wrap">
   <div id="tabs">
+    <button class="tab" data-t="muenze">Münze</button>
     <button class="tab on" data-t="wuerfel">Würfel</button>
     <button class="tab" data-t="rad">Glücksrad</button>
     <button class="tab" data-t="urne">Urne</button>
     <button class="tab" data-t="vert">Ziehen &amp; Verteilen</button>
+  </div>
+
+  <!-- ================= Münze ================= -->
+  <div class="panel" id="p-muenze">
+    <div class="ctrl">
+      <label>Würfe <button class="step" id="mWm">−</button><span class="val" id="mWv">1</span><button class="step" id="mWp">+</button></label>
+      <button class="sw" id="mFair" title="Faire Münze oder gezinkt?">faire Münze · p = 0,5</button>
+      <label id="mPWrap" style="display:none">p(Kopf) <input id="mPz" type="number" min="0.01" max="0.99" step="0.05" value="0.7"></label>
+      <button class="sw" id="mReset" title="Die Gesamtzählung wieder auf null setzen">↺ Zählung</button>
+    </div>
+    <div class="buehne" id="mBox"></div>
+    <div id="mErg" class="info"></div>
+    <div id="mGes" class="info" style="font-size:13px;color:#64748b"></div>
+    <button class="go" id="mGo">🪙 Werfen</button>
   </div>
 
   <!-- ================= Würfel ================= -->
@@ -155,10 +178,57 @@ const fak=n=>{ let f=1; for(let i=2;i<=n;i++)f*=i; return f; };
    bewusst ganz oben: so lesen sich auch Tafelobjekte, die noch mit den alten
    Einzelwerkzeugen „Würfel“ und „Glücksrad“ angelegt wurden, ohne Umbau. */
 let data={ tab:'wuerfel',
+  muenze:{ anzahl:1, gezinkt:false, p:0.7, gesamtK:0, gesamtN:0 },
   n:1, sides:6, colors:[0],
   sectors:[],
   urne:{ anzahl:6, zuege:2, zurueck:false, ordnung:true, nummern:true, schema:1, farben:[] },
   vert:{ a:9, b:5 } };
+
+/* ============================ Münze ============================ */
+const M=()=>data.muenze;
+let mWurf=[];                                   // zuletzt geworfen: 1 = Kopf, 0 = Zahl
+function mPruefen(){ const m=M();
+  m.anzahl=Math.max(1,Math.min(100,m.anzahl|0||1));
+  m.p=Math.max(0.01,Math.min(0.99,+m.p||0.5));
+  m.gesamtK=Math.max(0,m.gesamtK|0); m.gesamtN=Math.max(0,m.gesamtN|0); }
+const pKopf=()=>M().gezinkt?M().p:0.5;
+function mGroesse(n){ const b=$('mBox'), w=b.clientWidth||280, h=b.clientHeight||160;
+  const sp=Math.max(1,Math.floor(Math.sqrt(n*w/Math.max(h,1))));
+  const z=Math.ceil(n/sp);
+  return Math.max(24,Math.min(90,Math.floor(Math.min((w-7*(sp+1))/sp,(h-7*(z+1))/z)))); }
+function mRender(){ mPruefen(); const m=M();
+  $('mWv').textContent=m.anzahl;
+  $('mFair').classList.toggle('on',m.gezinkt);
+  $('mFair').textContent=m.gezinkt?('gezinkt · p = '+String(m.p).replace('.',',')):'faire Münze · p = 0,5';
+  $('mPWrap').style.display=m.gezinkt?'flex':'none'; $('mPz').value=m.p;
+  const box=$('mBox'); box.innerHTML='';
+  const wurf=mWurf.length?mWurf:new Array(m.anzahl).fill(null);
+  const gr=mGroesse(wurf.length);
+  wurf.forEach(v=>{ const d=document.createElement('div');
+    d.className='muenze '+(v===1?'k':(v===0?'z':'z'));
+    d.style.width=d.style.height=gr+'px'; d.style.fontSize=Math.max(11,gr*0.46)+'px';
+    if(v===null){ d.style.opacity='.35'; d.textContent='?'; } else d.textContent=v?'K':'Z';
+    box.appendChild(d); });
+  if(mWurf.length){ const k=mWurf.filter(v=>v).length, n=mWurf.length;
+    $('mErg').textContent='Kopf: '+k+' · Zahl: '+(n-k)+(n>1?('  ('+(Math.round(k/n*1000)/10).toString().replace('.',',')+' % Kopf)'):''); }
+  else $('mErg').textContent='';
+  $('mGes').textContent=m.gesamtN?('Insgesamt '+m.gesamtN+' Würfe · '+m.gesamtK+' Kopf ('+
+    (Math.round(m.gesamtK/m.gesamtN*1000)/10).toString().replace('.',',')+' %)'):'';
+  $('mGo').textContent=(M().anzahl>1?'🪙 '+M().anzahl+'× werfen':'🪙 Werfen'); }
+let mLaeuft=false;
+function mWerfen(){ if(mLaeuft)return; const m=M(); mLaeuft=true; const p=pKopf(); let t=0;
+  const iv=setInterval(()=>{
+    mWurf=Array.from({length:m.anzahl},()=>Math.random()<p?1:0);
+    mRender();
+    if(++t>=9){ clearInterval(iv); mLaeuft=false;
+      m.gesamtN+=mWurf.length; m.gesamtK+=mWurf.filter(v=>v).length; mRender(); sync(); } },60); }
+$('mWm').onclick=()=>{ M().anzahl--; mWurf=[]; mRender(); sync(); };
+$('mWp').onclick=()=>{ M().anzahl++; mWurf=[]; mRender(); sync(); };
+$('mFair').onclick=()=>{ M().gezinkt=!M().gezinkt; mRender(); sync(); };
+$('mPz').oninput=()=>{ M().p=Math.max(0.01,Math.min(0.99,+$('mPz').value||0.5)); mRender(); sync(); };
+$('mPz').onkeydown=e=>e.stopPropagation();
+$('mReset').onclick=()=>{ M().gesamtK=0; M().gesamtN=0; mWurf=[]; mRender(); sync(); };
+$('mGo').onclick=mWerfen;
 
 /* ============================ Würfel ============================ */
 const PIPS={1:[4],2:[0,8],3:[0,4,8],4:[0,2,6,8],5:[0,2,4,6,8],6:[0,2,3,5,6,8]};
@@ -463,6 +533,7 @@ $('vReset').onclick=()=>{ vBelegt=[]; vRender(); };
 function setTab(t,still){ data.tab=t;
   document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('on',b.dataset.t===t));
   document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('on',p.id==='p-'+t));
+  if(t==='muenze') requestAnimationFrame(mRender);
   if(t==='wuerfel') wRender(wVals);
   if(t==='rad') requestAnimationFrame(rResize);              // erst jetzt hat das Canvas eine Größe
   if(t==='urne') uRender();
@@ -474,7 +545,9 @@ document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>setTab(b.dataset.t));
 function sync(){ if(window.parent===window) return;   /* allein geöffnet: nicht an sich selbst senden */
   try{ parent.postMessage({type:'embed-data',data},'*'); }catch(e){} }
 function uebernehmen(d){
-  data.tab=['wuerfel','rad','urne','vert'].includes(d.tab)?d.tab:(Array.isArray(d.sectors)&&d.sectors.length?'rad':'wuerfel');
+  data.tab=['muenze','wuerfel','rad','urne','vert'].includes(d.tab)?d.tab:(Array.isArray(d.sectors)&&d.sectors.length?'rad':'wuerfel');
+  const mz=(d.muenze&&typeof d.muenze==='object')?d.muenze:{};
+  data.muenze={ anzahl:mz.anzahl||1, gezinkt:!!mz.gezinkt, p:mz.p||0.7, gesamtK:mz.gesamtK||0, gesamtN:mz.gesamtN||0 };
   data.n=Math.max(1,Math.min(6,d.n||1)); data.sides=Math.max(2,d.sides||6);
   data.colors=Array.isArray(d.colors)?d.colors.slice():[];
   data.sectors=(Array.isArray(d.sectors)&&d.sectors.length)?d.sectors:radDef();
@@ -483,15 +556,15 @@ function uebernehmen(d){
     nummern:u.nummern!==false, schema:(u.schema|0)%4, farben:Array.isArray(u.farben)?u.farben.slice():[] };
   const v=(d.vert&&typeof d.vert==='object')?d.vert:{};
   data.vert={ a:v.a||9, b:v.b||5 };
-  uZug=[]; vBelegt=[]; wColors(); uPruefen(); wVals=Array.from({length:data.n},()=>1);
+  uZug=[]; vBelegt=[]; mWurf=[]; wColors(); uPruefen(); mPruefen(); wVals=Array.from({length:data.n},()=>1);
   $('wN').value=data.n; $('wS').value=data.sides; $('rRes').textContent='–';
   setTab(data.tab,true); }
 addEventListener('message',e=>{ if(window.parent===window||e.source!==window.parent) return;   // eigene Nachrichten ignorieren
   if(e.data&&e.data.type==='embed-data'&&e.data.data) uebernehmen(e.data.data); });
-window.addEventListener('resize',()=>{ if(data.tab==='wuerfel') wRender(wVals); if(data.tab==='rad') rResize(); if(data.tab==='urne') uRender(); if(data.tab==='vert') vRender(); });
+window.addEventListener('resize',()=>{ if(data.tab==='muenze') mRender(); if(data.tab==='wuerfel') wRender(wVals); if(data.tab==='rad') rResize(); if(data.tab==='urne') uRender(); if(data.tab==='vert') vRender(); });
 window.addEventListener('load',()=>{
   if(!data.sectors.length) data.sectors=radDef();
-  uPruefen(); setTab(data.tab,true); wRender([1]);
+  uPruefen(); mPruefen(); setTab(data.tab,true); wRender([1]);
   if(window.ResizeObserver){ new ResizeObserver(()=>{ if(data.tab==='wuerfel') wRender(wVals); }).observe($('wBox')); }
   try{ parent.postMessage({type:'embed-ready'},'*'); }catch(e){} });
 </script>
