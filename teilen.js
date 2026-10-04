@@ -248,7 +248,11 @@ async function zeigen(datei,bauen){
 }
 
 /* ---------- Knopf in der Werkzeugleiste ---------- */
-const SYMBOL='<svg viewBox="0 0 32 20"><path d="M11.5 7.5H6.5v10h19v-10h-5"/>'+
+/* Das Symbol bringt Größe und Strichfarbe selbst mit – sonst sieht es in Werkzeugen,
+   die keine eigene Regel für Knopf-Grafiken haben, riesig und falsch gefüllt aus. */
+const SYMBOL='<svg viewBox="0 0 32 20" width="17" height="11" fill="none" stroke="currentColor" '+
+  'stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;display:block">'+
+  '<path d="M11.5 7.5H6.5v10h19v-10h-5"/>'+
   '<path d="M16 13.5V2.6"/><path d="M12.3 6.3 16 2.6l3.7 3.7"/></svg>';
 function knopf(host,datei,bauen,opt){
   if(!host) return null;
@@ -258,6 +262,7 @@ function knopf(host,datei,bauen,opt){
   b.className=(opt.cls||'tb')+' tafelTeilenKnopf'; b.id='bTeilen';
   b.title='Diese Aufgabe per QR-Code an die Klasse geben';
   b.innerHTML=opt.html||(SYMBOL+'<span>Teilen</span>');
+  if(!opt.html) b.style.cssText+='display:inline-flex;align-items:center;gap:5px;white-space:nowrap;';
   b.onclick=()=>zeigen(datei,bauen);
   host.appendChild(b);
   return b;

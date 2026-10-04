@@ -31,7 +31,8 @@
   .seg input:focus{outline:2px solid #93c5fd;outline-offset:-1px;}
   #eq{flex:none;min-height:26px;background:#f4f7fb;border:1px solid #e2e8f0;border-radius:9px;padding:5px 9px;font-size:14px;line-height:1.5;overflow-x:auto;white-space:nowrap;}
   #eq.leer{display:none;}
-  #eq b{font-size:1.06em;}
+  #eq b{font-size:1.06em;color:#334155;}
+  #eq .mk{border-radius:5px;padding:1px 4px;font-weight:800;}
   #eq .z{color:#64748b;font-size:.88em;margin-left:4px;}
   #msg{font-size:12px;color:#b45309;flex:none;}
   #msg:empty{display:none;}
@@ -76,8 +77,10 @@
 "use strict";
 const $=id=>document.getElementById(id);
 const BUCH=['A','B','C'], STRICH=['','′','″'];
-const FARBE=['#2563eb','#d97706','#16a34a'];          /* Strahl 1, 2, 3 */
+const FARBE=['#334155','#334155','#334155'];          /* Figur bleibt schwarz – Farbe tragen nur die Marker */
 const SATZFARBE={V:'#16a34a',F:'#d97706',X:'#7c3aed',Z:'#db2777'};
+/* Marker-Farben nach Rolle: kurze Strahlenabschnitte, lange, ganz lange – und die Parallelenabschnitte */
+const MFARBE=['#16a34a','#2563eb','#7c3aed'], MPAR='#ea580c';
 
 let D={ seite:'gleich', strahlen:2, parallelen:2, werte:{}, calc:[], satz:'', fontSize:15, edit:true };
 let ready=false;
@@ -94,7 +97,7 @@ function strecken(){ const L=[];
   for(let i=1;i<=D.strahlen;i++){ const g=[];
     for(let b=1;b<=D.parallelen;b++) g.push('r'+i+':0-'+b);                 // Strecken ab dem Scheitel
     for(let a=1;a<=D.parallelen;a++) for(let b=a+1;b<=D.parallelen;b++) g.push('r'+i+':'+a+'-'+b);   // Teilstrecken
-    L.push({titel:'Strahl '+i+' (durch '+pName(i,1)+')', keys:g, farbe:FARBE[i-1]}); }
+    L.push({titel:'Strahl '+i+' (durch '+pName(i,1)+')', keys:g, farbe:'#475569'}); }
   for(let j=1;j<=D.parallelen;j++){ const g=[];
     for(let i=1;i<=D.strahlen;i++) for(let k=i+1;k<=D.strahlen;k++) g.push('p'+j+':'+i+'-'+k);
     L.push({titel:'Parallele '+j+' (durch '+pName(1,j)+')', keys:g, farbe:'#475569'}); }
@@ -226,11 +229,27 @@ function zeichnen(){
   const X=p=>ox+p.x*sc, Y=p=>oy+p.y*sc;
   const S={x:ox, y:oy};
   geo={pts,S,X,Y,sc};
-  const hl=hervor();                                        // hervorgehobene Strecken
-  const dick=(k)=>hl&&hl.has(k);
   const linie=(a,b,farbe,breite,gestrichelt)=>{ ctx.save(); ctx.strokeStyle=farbe; ctx.lineWidth=breite; ctx.lineCap='round';
     if(gestrichelt) ctx.setLineDash([5,4]);
     ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke(); ctx.restore(); };
+  /* ---- Marker: wie mit dem Textmarker über die beteiligten Strecken ----
+     Die Strecken vom Scheitel aus liegen ineinander (SA steckt in SA′), deshalb liegen ihre
+     Marker gestaffelt neben dem Strahl – wie die Maßbänder in einem Schulbuch. */
+  let mx0=S.x, my0=S.y, mn=1;
+  for(let i=1;i<=nr;i++) for(let j=1;j<=D.parallelen;j++){ mx0+=X(pts[i-1][j-1]); my0+=Y(pts[i-1][j-1]); mn++; }
+  mx0/=mn; my0/=mn;
+  const marker=(a,b,farbe,stufe)=>{ const dx=b.x-a.x, dy=b.y-a.y, L=Math.hypot(dx,dy)||1;
+    let nx=dy/L, ny=-dx/L;
+    const mx=(a.x+b.x)/2, my=(a.y+b.y)/2;
+    if((mx-mx0)*nx+(my-my0)*ny<0){ nx=-nx; ny=-ny; }            // immer nach außen versetzen
+    const off=(stufe<0)?0:(stufe+1)*9.5, br=(stufe<0)?12:9;
+    ctx.save(); ctx.strokeStyle=farbe; ctx.globalAlpha=(stufe<0)?.38:.5; ctx.lineWidth=br; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(a.x+nx*off,a.y+ny*off); ctx.lineTo(b.x+nx*off,b.y+ny*off); ctx.stroke(); ctx.restore(); };
+  if(D.satz){ const P=(i,j)=>({x:X(pts[i-1][j-1]),y:Y(pts[i-1][j-1])});
+    const strahlen=(D.satz==='V'||D.satz==='X')?Array.from({length:nr},(_,i)=>i+1):[1];
+    for(const i of strahlen) for(let j=1;j<=D.parallelen;j++) marker(S,P(i,j),MFARBE[j-1],j-1);
+    if(D.satz==='F'||D.satz==='Z') for(let j=1;j<=D.parallelen;j++) marker(P(1,j),P(2,j),MPAR,-1);
+  }
   /* Strahlen (bis etwas über den äußersten Punkt hinaus) */
   for(let i=1;i<=nr;i++){ const t=Math.tan(winkel(i));
     const enden=[Math.min(...xs), Math.max(...xs)].map(v=>v+(v>=0?0.22:-0.22));
@@ -243,21 +262,19 @@ function zeichnen(){
   /* Strecken auf den Strahlen */
   for(let i=1;i<=nr;i++){ let vor={x:S.x,y:S.y}, vorIdx=0;
     for(let j=1;j<=D.parallelen;j++){ const p={x:X(pts[i-1][j-1]),y:Y(pts[i-1][j-1])};
-      const k='r'+i+':'+vorIdx+'-'+j;
-      linie(vor,p, dick(k)?satzFarbe():FARBE[i-1], dick(k)?4.5:2.2,false);
+      linie(vor,p, FARBE[i-1], 2.4, false);
       vor=p; vorIdx=j; } }
   /* Strecken auf den Parallelen */
   for(let j=1;j<=D.parallelen;j++) for(let i=1;i<nr;i++){
     const a={x:X(pts[i-1][j-1]),y:Y(pts[i-1][j-1])}, b={x:X(pts[i][j-1]),y:Y(pts[i][j-1])};
-    const k='p'+j+':'+i+'-'+(i+1);
-    linie(a,b, dick(k)?satzFarbe():'#334155', dick(k)?4.5:2.2,false); }
+    linie(a,b, '#334155', 2.4, false); }
   /* Punkte und Namen */
   ctx.font='700 '+fs+'px -apple-system,sans-serif'; ctx.textBaseline='middle';
   const punkt=(x,y,name,farbe,rechts)=>{ ctx.beginPath(); ctx.arc(x,y,3.4,0,7); ctx.fillStyle=farbe; ctx.fill();
     ctx.fillStyle='#1f2430'; ctx.textAlign=rechts?'left':'right'; ctx.fillText(name, x+(rechts?8:-8), y); };
   punkt(S.x,S.y,'S','#1f2430',false);
   for(let i=1;i<=nr;i++) for(let j=1;j<=D.parallelen;j++){ const p=pts[i-1][j-1];
-    punkt(X(p),Y(p),pName(i,j),FARBE[i-1], p.x>=0); }
+    punkt(X(p),Y(p),pName(i,j),'#1f2430', p.x>=0); }
   /* Längen an die Strecken schreiben */
   ctx.font='600 '+(fs*0.82)+'px -apple-system,sans-serif'; ctx.textAlign='center';
   const beschriften=(a,b,k)=>{ const t=D.werte[k]; if(!t) return;
@@ -274,44 +291,36 @@ function zeichnen(){
     beschriften({x:X(pts[i-1][j-1]),y:Y(pts[i-1][j-1])},{x:X(pts[i][j-1]),y:Y(pts[i][j-1])},'p'+j+':'+i+'-'+(i+1));
 }
 const satzFarbe=()=>SATZFARBE[D.satz]||'#2563eb';
-/* Welche Strecken gehören zum gewählten Satz? */
-function hervor(){ if(!D.satz) return null; const s=new Set();
-  if(D.satz==='V'||D.satz==='X'){                      // 1. Strahlensatz: Abschnitte auf den Strahlen
-    for(let i=1;i<=D.strahlen;i++) for(let j=1;j<=D.parallelen;j++) s.add('r'+i+':'+(j-1)+'-'+j);
-  } else {                                             // 2. Strahlensatz: ein Strahl und die Parallelen
-    for(let j=1;j<=D.parallelen;j++){ s.add('r1:'+(j-1)+'-'+j); s.add('p'+j+':1-2'); }
-  }
-  return s; }
 
 /* ---------- Verhältnisgleichung ---------- */
+/* Die Strecken stehen in denselben Farben wie die Marker in der Figur. */
+function mark(txt,farbe){ return '<span class="mk" style="background:'+farbe+'33;color:'+farbe+'">'+txt+'</span>'; }
 function gleichung(){ const e=$('eq');
   if(!D.satz){ e.className='leer'; e.innerHTML=''; return; }
-  const F=satzFarbe(), np=D.parallelen, nr=D.strahlen;
-  const farbig=t=>'<span style="color:'+F+';font-weight:800">'+t+'</span>';
-  const wert=k=>D.werte[k]||null;
+  const np=D.parallelen, nr=D.strahlen, wert=k=>D.werte[k]||null;
   let titel, zeilen=[];
   if(D.satz==='V'||D.satz==='X'){
     titel=(D.satz==='V'?'V-Figur':'X-Figur')+' · 1. Strahlensatz';
     const kette=[], zahlen=[];
     for(let i=1;i<=nr;i++){ const teile=[], zt=[];
-      for(let j=1;j<=np;j++){ teile.push(sName('r'+i+':0-'+j)); zt.push(wert('r'+i+':0-'+j)); }
-      kette.push(farbig(teile.join(' : '))); zahlen.push(zt); }
+      for(let j=1;j<=np;j++){ teile.push(mark(sName('r'+i+':0-'+j),MFARBE[j-1])); zt.push(wert('r'+i+':0-'+j)); }
+      kette.push(teile.join(' : ')); zahlen.push(zt); }
     zeilen.push({t:kette.join(' = '), z:zahlen.every(z=>z.every(v=>v))?zahlen.map(z=>z.join(' : ')).join(' = '):''});
     const k2=[], z2=[];
-    for(let i=1;i<=nr;i++){ k2.push(farbig(sName('r'+i+':0-1')+' : '+sName('r'+i+':1-2')));
+    for(let i=1;i<=nr;i++){ k2.push(mark(sName('r'+i+':0-1'),MFARBE[0])+' : '+mark(sName('r'+i+':1-2'),MFARBE[1]));
       z2.push([wert('r'+i+':0-1'),wert('r'+i+':1-2')]); }
     zeilen.push({t:k2.join(' = '), z:z2.every(z=>z[0]&&z[1])?z2.map(z=>z.join(' : ')).join(' = '):''});
   } else {
     titel=(D.satz==='F'?'F-Figur':'Z-Figur')+' · 2. Strahlensatz';
     const a=[], b=[], za=[], zb=[];
-    for(let j=1;j<=np;j++){ a.push(sName('r1:0-'+j)); za.push(wert('r1:0-'+j));
-      b.push(sName('p'+j+':1-2')); zb.push(wert('p'+j+':1-2')); }
-    zeilen.push({t:farbig(a.join(' : '))+' = '+farbig(b.join(' : ')),
+    for(let j=1;j<=np;j++){ a.push(mark(sName('r1:0-'+j),MFARBE[j-1])); za.push(wert('r1:0-'+j));
+      b.push(mark(sName('p'+j+':1-2'),MPAR)); zb.push(wert('p'+j+':1-2')); }
+    zeilen.push({t:a.join(' : ')+' = '+b.join(' : '),
       z:(za.every(v=>v)&&zb.every(v=>v))?(za.join(' : ')+' = '+zb.join(' : ')):''});
-    zeilen.push({t:'<span style="color:#64748b">Die Parallelenabschnitte verhalten sich wie die Strahlenabschnitte vom Scheitel aus.</span>', z:''});
+    zeilen.push({t:'<span style="color:#64748b">Die '+mark('Parallelenabschnitte',MPAR)+' verhalten sich wie die Strahlenabschnitte vom Scheitel aus.</span>', z:''});
   }
   e.className='';
-  e.innerHTML='<b style="color:'+F+'">'+titel+':</b> '+
+  e.innerHTML='<b>'+titel+':</b> '+
     zeilen.map(z=>z.t+(z.z?'<span class="z">('+z.z+')</span>':'')).join('<br>'); }
 
 /* ---------- Bedienung ---------- */

@@ -224,6 +224,7 @@ $('rSpin').onclick=rSpin; rCv.onclick=rSpin;
 
 /* ============================ Urne ============================ */
 const UPAL=['#3b82f6','#ef4444','#22c55e','#eab308','#8b5cf6','#f97316','#14b8a6','#ec4899'];
+const UNAME={'#3b82f6':'blau','#ef4444':'rot','#22c55e':'grün','#eab308':'gelb','#8b5cf6':'violett','#f97316':'orange','#14b8a6':'türkis','#ec4899':'pink'};
 const SCHEMA=['einfarbig','zwei Farben','drei Farben','bunt'];
 let uZug=[];                 // gezogene Kugeln (Index in der Urne), in der Reihenfolge der Züge
 const U=()=>data.urne;
@@ -265,8 +266,12 @@ function uRender(){ uPruefen(); const u=U();
     pl.appendChild(p); }
   $('uPlTitel').textContent=u.ordnung?'Plätze':'Gezogene Kugeln';
   $('uGo').textContent=(uZug.length>=u.zuege)?'↺ Neu ziehen':('Ziehen ('+(uZug.length+1)+'. Zug)');
-  if(uZug.length>=u.zuege){ const liste=uZug.map(i=>i+1);
-    $('uErg').textContent=u.ordnung?('Ziehung: '+liste.join(' – ')):('Gezogen: {'+liste.slice().sort((a,b)=>a-b).join(', ')+'}'); }
+  if(uZug.length>=u.zuege){
+    if(u.nummern){ const liste=uZug.map(i=>i+1);
+      $('uErg').textContent=u.ordnung?('Ziehung: '+liste.join(' – ')):('Gezogen: {'+liste.slice().sort((a,b)=>a-b).join(', ')+'}'); }
+    else { const pkt=i=>'<span class="mini" style="background:'+(u.farben[i]||UPAL[0])+'"></span>';
+      const liste=u.ordnung?uZug:uZug.slice().sort((a,b)=>UPAL.indexOf(u.farben[a])-UPAL.indexOf(u.farben[b]));
+      $('uErg').innerHTML=(u.ordnung?'Ziehung: ':'Gezogen: ')+'<span style="display:inline-flex;gap:4px;vertical-align:-2px">'+liste.map(pkt).join('')+'</span>'; } }
   else $('uErg').textContent='';
   uRechnung(); }
 function uZiehen(){ const u=U();
@@ -297,8 +302,61 @@ function uRechnung(){ const u=U(), box=$('uRech'); if(!box.classList.contains('o
        'Man ordnet stattdessen '+k+' Kugeln und '+(N-1)+' Trennstriche in einer Reihe („Sterne und Striche"):<br>'+
        'C('+(N+k-1)+'; '+k+') = <span class="gross">'+ZAHL(erg)+'</span> mögliche Ziehungen.';
   }
+  if(!u.nummern) h+=ohneNummern(N,k);
   box.innerHTML=h; }
 function binom(n,k){ k=Math.min(k,n-k); let r=1; for(let i=1;i<=k;i++) r=r*(n-k+i)/i; return r; }
+/* Welche Farben liegen wie oft in der Urne? */
+function farbGruppen(){ const u=U(), m=new Map();
+  for(let i=0;i<u.anzahl;i++){ const c=u.farben[i]||UPAL[0]; m.set(c,(m.get(c)||0)+1); }
+  return [...m.entries()].map(([farbe,n])=>({farbe,n,name:UNAME[farbe]||'eine Farbe'})); }
+/* Alle Farbmuster (m₁,m₂,…) mit Σ mᵢ = k und mᵢ ≤ nᵢ */
+function farbMuster(gr,k,mitZurueck){ const out=[];
+  (function rek(i,rest,akt){ if(i===gr.length){ if(rest===0) out.push(akt.slice()); return; }
+    const max=Math.min(mitZurueck?rest:gr[i].n,rest);
+    for(let m=0;m<=max;m++){ akt.push(m); rek(i+1,rest-m,akt); akt.pop(); } })(0,k,[]);
+  return out; }
+const anordnungen=(m,k)=>{ let f=fak(k); m.forEach(x=>{ f/=fak(x); }); return Math.round(f); };
+function musterText(gr,m){ return m.map((x,i)=>x?(x+'× '+gr[i].name):null).filter(Boolean).join(' + ')||'–'; }
+function musterPunkte(gr,m){ let h='';
+  m.forEach((x,i)=>{ for(let t=0;t<x;t++) h+='<span class="mini" style="background:'+gr[i].farbe+'"></span>'; });
+  return '<span style="display:inline-flex;gap:3px;vertical-align:-2px">'+h+'</span>'; }
+/* Ohne Nummerierung sind gleichfarbige Kugeln nicht zu unterscheiden – der Teil erklärt, wie
+   man von der Rechnung „mit Nummern" durch Herausteilen der Vertauschungen dorthin kommt. */
+function ohneNummern(N,k){ const u=U(), gr=farbGruppen(), c=gr.length;
+  let h='<hr style="border:0;border-top:1px solid #dbe2ea;margin:7px 0"><b>Ohne Nummern</b> sehen gleichfarbige Kugeln gleich aus.';
+  if(c===N) return h+' Hier hat jede Kugel ihre eigene Farbe – es ändert sich nichts.';
+  if(c===1&&!u.zurueck&&k<N) return h+' Alle Kugeln sind gleich – es gibt nur <span class="gross">1</span> mögliche Ziehung.';
+  const zahl=gr.map(g=>g.n+'× '+g.name).join(', ');
+  h+='<br>In der Urne liegen '+zahl+'.';
+  if(u.zurueck){
+    if(u.ordnung){ h+='<br>Jeder Zug hat jetzt nur noch '+c+' unterscheidbare Ausgänge – die Farben:<br>'+
+      new Array(k).fill(c).join(' · ')+' = <span class="gross">'+c+'<sup>'+k+'</sup> = '+ZAHL(Math.pow(c,k))+'</span> unterscheidbare Ziehungen.'; }
+    else { const erg=Math.round(binom(c+k-1,k));
+      h+='<br>Es zählt nur noch, wie viele Kugeln jeder Farbe dabei sind:<br>C('+(c+k-1)+'; '+k+') = <span class="gross">'+ZAHL(erg)+'</span> unterscheidbare Ziehungen.'; }
+    return h; }
+  const muster=farbMuster(gr,k,false);
+  if(u.ordnung){
+    const gesamt=muster.reduce((a,m)=>a+anordnungen(m,k),0);
+    if(k===N){
+      const p=gr.reduce((a,g)=>a*fak(g.n),1);
+      h+='<br><b>Der Trick:</b> zuerst so rechnen, als wären die Kugeln nummeriert – das sind '+ZAHL(fak(N))+' = '+N+'! Reihenfolgen.'+
+         '<br>Die gleichfarbigen Kugeln lassen sich untereinander vertauschen, ohne dass man etwas sieht: '+
+         gr.map(g=>g.n+'!').join(' · ')+' = '+ZAHL(p)+' Vertauschungen je Bild.'+
+         '<br>'+ZAHL(fak(N))+' : '+ZAHL(p)+' = <span class="gross">'+ZAHL(gesamt)+'</span> unterscheidbare Reihenfolgen.';
+      if(c===2) h+='<br><span class="hinweis">Bei zwei Farben ist das genau der <b>Binomialkoeffizient</b> C('+N+'; '+gr[0].n+') = '+ZAHL(gesamt)+'.</span>';
+      return h; }
+    h+='<br><b>Der Trick:</b> je Farbmuster zuerst alle '+k+'! Anordnungen zählen und die Vertauschungen gleicher Kugeln herausteilen:';
+    h+='<div class="perm">'+muster.slice(0,8).map(m=>'<span class="permz">'+musterPunkte(gr,m)+
+        '<span style="font-size:11px;font-weight:700">'+k+'!'+(m.filter(x=>x>1).length?(' : '+m.filter(x=>x>1).map(x=>x+'!').join('·')):'')+' = '+anordnungen(m,k)+'</span></span>').join('')+'</div>';
+    if(muster.length>8) h+='<div class="hinweis">… '+muster.length+' Muster insgesamt.</div>';
+    h+='Zusammen <span class="gross">'+ZAHL(gesamt)+'</span> unterscheidbare Ziehungen.';
+    return h; }
+  h+='<br>Ohne Reihenfolge bleibt nur, <b>wie viele Kugeln jeder Farbe</b> dabei sind. Das sind diese Fälle:';
+  h+='<div class="perm">'+muster.slice(0,10).map(m=>'<span class="permz">'+musterPunkte(gr,m)+
+      '<span style="font-size:11px">'+musterText(gr,m)+'</span></span>').join('')+'</div>';
+  if(muster.length>10) h+='<div class="hinweis">… </div>';
+  h+='Also <span class="gross">'+ZAHL(muster.length)+'</span> unterscheidbare Ziehungen statt '+ZAHL(Math.round(binom(N,k)))+' mit Nummern.';
+  return h; }
 /* Veranschaulichung: alle Anordnungen einer Ziehung stehen für dieselbe Auswahl */
 function uPermutationen(){ const u=U(), k=u.zuege;
   const basis=(uZug.length===k?uZug:Array.from({length:k},(_,i)=>i)).slice();

@@ -953,7 +953,10 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   durch die Eckpunkte** zeigen die Zuordnung. Zieht man **über das Zentrum hinaus**, wird k **negativ** und
   die Bildfigur erscheint punktgespiegelt auf der anderen Seite. Beim Loslassen entsteht die **neue Figur**
   (das Original bleibt stehen, die Bildfigur ist ausgewählt), Strecken schaltet sich ab und das Werkzeug
-  von vorher ist wieder aktiv. Der **Stift malt während des Streckens nicht**; „Abbrechen" im Hinweisband
+  von vorher ist wieder aktiv. Im Kontextmenü steht neben „Drehen & Strecken" der Schalter
+  **„Zentrum behalten"**: ist er an, bleibt das Zentrum Z nach dem Strecken als **kleiner Punkt** auf der
+  Tafel liegen (sonst verschwindet es, wie bisher). Die Einstellung wird gemerkt.
+  Der **Stift malt während des Streckens nicht**; „Abbrechen" im Hinweisband
   oder Esc bricht ab, **Rückgängig** nimmt die Streckung komplett zurück. Mehrere bzw. gruppierte Objekte
   werden gemeinsam gestreckt (die Bildfigur wird dabei zu einer eigenen Gruppe). **Strichstärken und
   Schriftgrößen bleiben unverändert** – nur die Figur selbst wird gestreckt. **Texte bleiben lesbar**
@@ -1321,8 +1324,14 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   Parallelen (**A, B** und **A′, B′**). Ein Knopf legt fest, ob die Parallelen auf **derselben Seite**
   des Scheitels liegen (V-Figur) oder auf **verschiedenen** (X-Figur); je ein weiterer Knopf schaltet
   einen **3. Strahl** (Punkte C, C′) und eine **3. Parallele** (A″, B″, C″) hinzu.
-  - Die Knöpfe **V, F, X und Z** heben den jeweiligen Satz in der Figur hervor und schreiben seine
-    **Verhältnisgleichung** darüber – mit den eingetragenen Zahlen in Klammern. **V** und **X** zeigen den
+  - Die Knöpfe **V, F, X und Z** heben die beteiligten Strecken **wie mit einem Textmarker** hervor und
+    schreiben die **Verhältnisgleichung** darüber – mit den eingetragenen Zahlen in Klammern. Die Farben
+    sagen dabei, welche Rolle eine Strecke hat: **grün** die kurzen Strahlenabschnitte (SA, SB), **blau**
+    die langen (SA′, SB′) – bei einer dritten Parallelen kommt **violett** dazu – und bei **F und Z**
+    **orange** die **Parallelenabschnitte** (AB, A′B′). In der Verhältnisgleichung sind dieselben Strecken
+    in denselben Farben unterlegt. Weil die Strecken vom Scheitel aus ineinanderliegen (SA steckt in SA′),
+    liegen ihre Marker **gestaffelt neben dem Strahl** – wie die Maßbänder in einem Schulbuch. Die Figur
+    selbst bleibt schwarz. **V** und **X** zeigen den
     **1. Strahlensatz** (Abschnitte auf den Strahlen, auch in der Form SA : AA′ = SB : BB′), **F** und **Z**
     den **2. Strahlensatz** (Parallelenabschnitte, SA : SA′ = AB : A′B′). V und F gehören zur V-Figur,
     X und Z zur X-Figur – ein Tipp auf X oder Z stellt die Figur gleich mit um.
@@ -1353,6 +1362,15 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     dasselbe Produkt **geteilt durch k!**; dazu werden die **k! Anordnungen derselben Ziehung** als kleine
     Kugelreihen **gezeigt**, damit sichtbar wird, warum geteilt wird. Für „mit Zurücklegen, Reihenfolge egal"
     erklärt das Fenster, warum das Teilen durch k! dort **nicht** passt, und rechnet mit „Sterne und Striche".
+  - **Ohne Nummerierung** sind gleichfarbige Kugeln **nicht zu unterscheiden** – dann gibt es weniger
+    Möglichkeiten, und das Fenster rechnet es vor: erst so, **als wären die Kugeln nummeriert**, dann
+    werden die Vertauschungen gleichfarbiger Kugeln wieder **herausgeteilt**. Werden **alle** Kugeln
+    gezogen (Reihenfolge zählt), steht dort der Klassiker: bei 3 blauen und 2 roten Kugeln
+    5! = 120, geteilt durch 3! · 2! = 12, also **10** unterscheidbare Reihenfolgen – und das Fenster
+    nennt es beim Namen: der **Binomialkoeffizient** C(5; 3). Zieht man nur einen Teil, steht die
+    Rechnung **je Farbmuster** da (mit den Mustern als kleine Kugelreihen); ohne Reihenfolge werden
+    schlicht die möglichen Farbmuster aufgezählt. Auch das Ergebnis der Ziehung erscheint dann als
+    **Farbpunkte** statt als Zahlen.
   - **Ziehen und Verteilen:** zeigt die **zwei Sichtweisen auf dieselbe Rechnung** am Beispiel
     Schüler/Stühle. Bei **9 Schülern auf 5 Stühle** werden die Stühle der Reihe nach besetzt – für jeden
     wird ein Schüler **gezogen** (9 · 8 · 7 · 6 · 5). Bei **5 Schülern auf 9 Stühle** sucht sich jeder

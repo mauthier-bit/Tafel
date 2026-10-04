@@ -913,7 +913,9 @@
     <div id="whList" style="display:flex;flex-direction:column;gap:4px;max-height:150px;overflow:auto"></div>
   </div>
   <hr class="psep">
-  <div class="pcap">Drehen &amp; Strecken <span id="rotV" style="font-weight:600;color:#8a93a2"></span></div>
+  <div class="pcap" style="display:flex;align-items:center;gap:6px">Drehen &amp; Strecken <span id="rotV" style="font-weight:600;color:#8a93a2"></span>
+    <label class="propToggle" id="streckZLab" style="margin-left:auto;text-transform:none;letter-spacing:0;font-size:11px;gap:5px" title="Nach dem Strecken bleibt das Zentrum Z als kleiner Punkt auf der Tafel liegen"><span>Zentrum behalten</span><div class="sw2" id="streckZ"></div></label>
+  </div>
   <div class="prow" id="rotRow" style="gap:4px">
     <button class="p" id="pr-rotL" title="Um 90° gegen den Uhrzeigersinn drehen">⟲ 90°</button>
     <button class="p" id="pr-rotR" title="Um 90° im Uhrzeigersinn drehen">⟳ 90°</button>
@@ -1306,6 +1308,7 @@ const bgHex=()=>bgHexOf(pageBg(page()));
 const isBgDark=()=>isBgDarkOf(pageBg(page()));
 let scale=1, ox=0, oy=0; const MINS=0.2, MAXS=8;
 let tool='pen', color='#111111', penWidth=3, markerWidth=32, textSize=28;   // Stift wie bisher (Stufe 2), Marker eine Stufe stärker
+let streckZeigen=false;              // bleibt das Streckzentrum nach dem Strecken als Punkt stehen?
 let eraserWidth=14, eraserPos=null;   // Radierer hat seine eigene Größe (Radius in Bildschirmpunkten) – 14 = bisheriger Wert
 const ERAS_F=1.75;                    // Umrechnung Stärkestufe → Radierer-Radius (Stufe 8 ergibt die bisherigen 14)
 let toolColors={pen:'#111111', line:'#111111', marker:'#eab308', text:'#111111', laser:'#ff2828'};   // Stift, Linien/Formen, Marker, Text und Laserpointer merken sich ihre Farbe getrennt
@@ -2569,6 +2572,9 @@ function streckUp(e){ const st=streck; if(!st||st.phase!=='ziehen') return;
   if(Math.abs(st.k-1)<0.03){ streckKopienWeg(); st.phase='bereit'; st.snap=null;
     streckHinweis('Noch nichts gestreckt – vom Zentrum weg oder zu ihm hin ziehen'); markDirty(); return; }
   pushSnap(page(),st.snap);                                   // Rückgängig führt zurück auf den Stand vor der Streckung
+  if(streckZeigen){                                           // das Zentrum als kleiner Punkt (ein Strich aus einem Punkt)
+    const d=Math.max(7,penWidth*2.2)/scale;
+    page().objects.push({type:'stroke',id:uid(),tool:'pen',color,width:d,points:[{x:st.Z.x,y:st.Z.y,p:.5}],rot:0,groupId:null}); }
   const kopien=st.copies, k=st.k, vor=st.prevTool;
   streck=null; streckHinweis(null); hideMeasure();
   if(tool!==vor) setTool(vor);                                 // zurück in den Modus von vorher
@@ -2590,6 +2596,8 @@ function drawStreck(){ const st=streck; if(!st||!st.Z) return; ctx.save();
   ctx.font='700 '+(13/scale)+'px -apple-system,sans-serif'; ctx.textBaseline='alphabetic'; ctx.textAlign='left';
   ctx.fillText('Z',st.Z.x+14/scale,st.Z.y-10/scale); ctx.restore(); }
 $('pr-streck').onclick=streckStart;
+$('streckZ').onclick=()=>{ streckZeigen=!streckZeigen; $('streckZ').classList.toggle('on',streckZeigen); saveUI();
+  toast(streckZeigen?'Das Streckzentrum bleibt als Punkt stehen':'Das Streckzentrum verschwindet nach dem Strecken'); };
 $('streckAb').onclick=streckAbbrechen;
 $('pr-fwd').onclick=()=>layerMove('fwd'); $('pr-bwd').onclick=()=>layerMove('bwd');
 $('pr-front').onclick=()=>layerMove('front'); $('pr-back').onclick=()=>layerMove('back');
@@ -2671,7 +2679,7 @@ function refreshProps(){ const has=selection.length>0 && tool==='select';
     $('modeBtn').classList.toggle('on',edit);
     $('modeBtn').title=edit?'Bearbeiten beenden – nur noch benutzen':'Bedienelemente einblenden (bearbeiten)'; }
   const show=has&&propsOpen; $('props').classList.toggle('show',show);
-  if(show){ refreshPropActive(); refreshRotLabel();
+  if(show){ refreshPropActive(); refreshRotLabel(); $('streckZ').classList.toggle('on',streckZeigen);
     const usesPen=o=>o.type==='stroke'||o.type==='shape'||o.type==='text'||o.type==='numline'||(o.type==='embed'&&o.etype==='plotter');
     const pen=selection.some(usesPen);                       // Farbe & Dicke nur zeigen, wenn sie hier etwas bewirken
     $('colorRow').style.display=pen?'flex':'none'; $('widthRow').style.display=pen?'flex':'none'; $('propFillRow').style.display=selection.some(o=>o.type==='shape')?'flex':'none';
@@ -3480,12 +3488,12 @@ $('pageMenu').addEventListener('pointerdown',e=>e.stopPropagation());
 document.addEventListener('pointerdown',e=>{ if($('pageMenu').classList.contains('show') && !e.target.closest('#pageMenu') && !e.target.closest('.pmBtn')) closePageMenu(); }, true);
 $('setMin').onclick=()=>{ $('settingsbar').classList.toggle('min'); rotateChev('setMin',$('settingsbar').classList.contains('min'),true); saveUI(); positionAnnoToggle(); };
 function rotateChev(id,min){ $(id).querySelector('svg').style.transform=min?'scaleX(-1)':''; }
-function saveUI(){ try{ localStorage.setItem('tafel_ui',JSON.stringify({page:$('pagebar').classList.contains('min'),set:$('settingsbar').classList.contains('min'),side:mainbarSide,theme:barTheme,tint:barTint,favs,pxcm:PXCM,pal:palette,cols:toolColors,rec:shapeRecog,wv:2,pw:penWidth,mw:markerWidth,ew:eraserWidth,rul:{len:ruler.len,color:ruler.color,mm:ruler.mm,nums:ruler.nums,pct:ruler.pct,fs:ruler.fs},geo:{size:geo.size,color:geo.color,mm:geo.mm,nums:geo.nums,fs:geo.fs}})); }catch(e){} }
+function saveUI(){ try{ localStorage.setItem('tafel_ui',JSON.stringify({page:$('pagebar').classList.contains('min'),set:$('settingsbar').classList.contains('min'),side:mainbarSide,theme:barTheme,tint:barTint,favs,pxcm:PXCM,pal:palette,cols:toolColors,rec:shapeRecog,wv:2,pw:penWidth,mw:markerWidth,ew:eraserWidth,sz:streckZeigen,rul:{len:ruler.len,color:ruler.color,mm:ruler.mm,nums:ruler.nums,pct:ruler.pct,fs:ruler.fs},geo:{size:geo.size,color:geo.color,mm:geo.mm,nums:geo.nums,fs:geo.fs}})); }catch(e){} }
 function restoreUI(){ try{ const u=JSON.parse(localStorage.getItem('tafel_ui')||'{}'); if(u.page){$('pagebar').classList.add('min');pageChev(true);} if(u.set){$('settingsbar').classList.add('min');rotateChev('setMin',true);} if(u.side==='right'||u.side==='bottom')mainbarSide=u.side; if(u.theme==='light'||u.theme==='dark')barTheme=u.theme; if(u.tint&&typeof u.tint==='object')barTint=Object.assign(barTint,u.tint); if(Array.isArray(u.favs))favs=u.favs.slice(0,FAV_MAX);
   if(+u.pxcm>0&&Math.abs(+u.pxcm-37.8)>0.2) PXCM=Math.max(28,Math.min(64,+u.pxcm));   // alter Standard 37,8 → neuer, am iPad gemessener Wert
   if(Array.isArray(u.pal)&&u.pal.length===palette.length&&u.pal.every(c=>/^#[0-9a-f]{6}$/i.test(c))) palette=u.pal.slice();
   if(u.rec){ shapeRecog=true; $('shapeRecogSw').classList.add('on'); }
-  if(u.cols&&typeof u.cols==='object')Object.assign(toolColors,u.cols); if(u.wv===2){ if(+u.pw>0)penWidth=+u.pw; if(+u.mw>0)markerWidth=+u.mw; } if(+u.ew>0)eraserWidth=+u.ew;   // ältere Stärken (4 Stufen) verwerfen
+  if(u.cols&&typeof u.cols==='object')Object.assign(toolColors,u.cols); if(u.wv===2){ if(+u.pw>0)penWidth=+u.pw; if(+u.mw>0)markerWidth=+u.mw; } if(+u.ew>0)eraserWidth=+u.ew; streckZeigen=!!u.sz;   // ältere Stärken (4 Stufen) verwerfen
   if(u.rul)Object.assign(ruler,{len:+u.rul.len||ruler.len,color:u.rul.color||ruler.color,mm:u.rul.mm!==false,nums:u.rul.nums!==false,pct:!!u.rul.pct,fs:+u.rul.fs||11});
   if(u.geo)Object.assign(geo,{size:+u.geo.size||geo.size,color:u.geo.color||geo.color,mm:u.geo.mm!==false,nums:u.geo.nums!==false,fs:+u.geo.fs||11});
   applyBarsState(); refreshBarTheme(); renderFavs(); buildFavList(); buildPalEdit(); repaintPalette(); applyToolColor(); refreshCal(); }catch(e){} }
