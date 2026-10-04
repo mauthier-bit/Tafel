@@ -135,7 +135,11 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
 - **Zirkel** (Werkzeug): Kreisbögen in **zwei Schritten** – **1)** Mittelpunkt antippen und
   Radius aufziehen, loslassen (der Radius wird gefixt, ein gestrichelter Kreis bleibt als
   Hilfe stehen); **2)** einmal herumziehen, um den Bogen zu zeichnen. Radius/Winkel live.
-- **Scheinwerfer:** Größe des Spots mit **zwei Fingern (Aufziehen)** einstellen
+- **Scheinwerfer:** Größe und **Form** des Spots mit **zwei Fingern** einstellen – **waagrecht**
+  aufgezogen wird er nur **breiter**, **senkrecht** nur **höher** (also ellipsenförmig, gut für eine
+  Zeile oder eine Spalte), **diagonal** wächst bzw. schrumpft der ganze Fleck. Die Richtung wird beim
+  Aufsetzen der Finger festgelegt und wechselt während des Ziehens nicht. Beim erneuten Einschalten
+  ist der Spot wieder rund.
 - **Endlose Seite:** beliebig nach unten/rechts weiterschreiben – mit dem Finger schieben
   (bzw. Pencil schreibt, Finger schiebt) oder am Desktop mit dem Mausrad/Trackpad scrollen
 - **Tabellenkalkulation** einfügen (eigene Seite): Zellbezüge **relativ (A1) und absolut ($A$1)**,
@@ -895,7 +899,11 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   einfügen (als Bild). Umgekehrt fügt **„Aus Zwischenablage einfügen"** im Einfügen-Fenster (oder
   ⌘/Strg + V) Objekte, Bilder oder Text **aus anderen Apps** in die Tafel ein. Zusätzlich gibt es
   in der **Einstellungs-Leiste (oben links)** einen eigenen Knopf **„Aus der Zwischenablage einfügen"**.
-- **Radierer:** radiert Teile von Strichen weg (nicht nur ganze Striche) – **Rückgängig macht auch das Radieren wieder rückgängig**
+- **Radierer:** radiert Teile von Strichen weg (nicht nur ganze Striche) – **Rückgängig macht auch das Radieren wieder rückgängig**.
+  Der Radierer hat – wie Stift und Marker – seine **eigene Größe**: bei gewähltem Radierer zeigt
+  **„Farbe & Dicke"** die Reihe **Radierer-Größe** (sechs Stufen von sehr fein bis grob, Farben sind dort
+  ausgeblendet, weil sie nichts bewirken). Die Größe bleibt gespeichert. Beim Radieren zeigt ein
+  **roter gestrichelter Kreis** am Stift, wie viel gerade weggenommen wird.
 - **Schnell aufeinanderfolgende Striche:** Bleibt ein Strich „offen", weil das System das
   Loslassen des Stifts verschluckt hat, wird er jetzt **sauber übernommen** und der nächste Strich
   beginnt sofort – vorher ging in solchen Fällen jeder zweite kurze Strich verloren (typisch beim
@@ -925,7 +933,20 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   Kante bzw. Ecke stehen** – das Objekt wächst nur in Zugrichtung (auch bei gedrehten Objekten).
   Im Kontextmenü unter **Drehung** (mit Anzeige des aktuellen Winkels): **⟲ 90° / ⟳ 90°** dreht exakt um 90°,
   **⊾ Gerade ausrichten** richtet schräg (z. B. mit zwei Fingern) gedrehte Objekte auf das nächste Vielfache von 90° aus.
-  Mehrere bzw. gruppierte Objekte drehen gemeinsam um ihre gemeinsame Mitte. Am Objekt erscheint ein **kleiner Button (☰)** –
+  Mehrere bzw. gruppierte Objekte drehen gemeinsam um ihre gemeinsame Mitte.
+- **⊹ Strecken (zentrisch)** – ebenfalls im Kontextmenü unter **Drehung**: eine echte **zentrische Streckung**.
+  Ablauf: Knopf antippen → **Zentrum Z** auf der Tafel antippen (es wird als Punkt mit „Z" angezeigt) →
+  mit dem **Stift aufsetzen und ziehen**: vom Zentrum **weg** vergrößert, zum Zentrum **hin** verkleinert.
+  Der **Streckfaktor k** steht live neben dem Stift (Schritte von 0,05), gestrichelte **Strahlen vom Zentrum
+  durch die Eckpunkte** zeigen die Zuordnung. Zieht man **über das Zentrum hinaus**, wird k **negativ** und
+  die Bildfigur erscheint punktgespiegelt auf der anderen Seite. Beim Loslassen entsteht die **neue Figur**
+  (das Original bleibt stehen, die Bildfigur ist ausgewählt), Strecken schaltet sich ab und das Werkzeug
+  von vorher ist wieder aktiv. Der **Stift malt während des Streckens nicht**; „Abbrechen" im Hinweisband
+  oder Esc bricht ab, **Rückgängig** nimmt die Streckung komplett zurück. Mehrere bzw. gruppierte Objekte
+  werden gemeinsam gestreckt (die Bildfigur wird dabei zu einer eigenen Gruppe). Strichstärken und
+  Schriftgrößen wachsen mit |k|; **Texte bleiben lesbar** (nicht auf den Kopf gestellt), ebenso die
+  Bedienoberfläche eingebetteter Werkzeuge – **Bilder** werden bei negativem k punktgespiegelt.
+  Am Objekt erscheint ein **kleiner Button (☰)** –
   ein Tipp klappt das **Kontext-Panel** auf/zu (Farbe, Dicke/Größe, Füllung, Kopieren usw.),
   damit es nicht ständig im Weg ist.
 - **Finger-Bedienung im Auswahl-Modus** (Einstellungen, standardmäßig **aus**): ist der Schalter
