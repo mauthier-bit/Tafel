@@ -1920,8 +1920,22 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
 - **Einheitenumrechner** (Mathe & Physik): rechnet gängige physikalische Größen des Schulbetriebs um –
   **Dichte, Stromstärke, Spannung, Widerstand, Länge, Fläche, Volumen, Masse, Geschwindigkeit,
   Beschleunigung, Kraft, Temperatur (°C/K/°F), Impuls, Wärmekapazität, Kapazität, Ladung, Leistung,
-  Magnetische Flussdichte, Energie**. Größe wählen,
-  Wert + Ausgangseinheit eingeben → alle Einheiten werden live angezeigt.
+  Magnetische Flussdichte, Energie**. Die Größe wird oben gewählt und gilt für **drei Reiter**:
+  - **Umrechnung:** Wert + Ausgangseinheit eingeben → alle Einheiten werden live angezeigt.
+  - **Erklärung:** zwei Einheiten wählen (⇄ tauscht die Richtung) – darüber steht groß die
+    **Umrechnungszahl** (bei Temperaturen die Formel, z. B. °F = °C · 1,8 + 32) und darunter die
+    Gegenrichtung. In **einer Zeile** wird die Zahl dann erklärt, wo möglich mit einem Beispiel aus
+    dem Alltag: „Wer jede Sekunde einen Meter schafft, kommt in einer Stunde 3600 m weit – das sind
+    3,6 km", „1 Ampere bedeutet 1 Coulomb je Sekunde, und eine Stunde hat 3600 Sekunden", „1 cal
+    erwärmt 1 g Wasser um 1 °C". Bei **Flächen und Volumina** erklärt die Zeile über die Kantenlänge
+    („1 m = 10 dm – und weil ein Volumen drei Längen hat: 10 · 10 · 10 = 1000"), bei reinen
+    Vorsilben über die Zehnerschritte („Die Vorsilbe k steht für tausend … das Komma wandert um
+    6 Stellen"). Dazu eine Zeile mit einem **Zahlenbeispiel**. Krumme Faktoren werden gerundet und
+    mit **≈** gekennzeichnet.
+  - **Vorsilben:** eine Tabelle aller Vorsilben von **Peta bis Femto** mit Zeichen, **Zehnerpotenz**,
+    Bedeutung (Wort und ausgeschriebene Zahl) und einem Beispiel – 1 PB = 1000 TB, 3 GHz,
+    1 km = 1000 m, 1 ha = 100 a, 1 µm (Haardicke 60 µm), 500 nm (grünes Licht), 1 fm (Atomkern).
+    Die Zeile für die Einheit selbst (10⁰) ist hervorgehoben.
 2. **Seiten-Leiste (unten rechts, senkrecht):** blättern (‹ ›), Seite hinzufügen/löschen, Zoom
    zurücksetzen. Der **Minimier-Pfeil zeigt nach unten** (⌄) – klar unterscheidbar von den
    Blätter-Pfeilen. Minimiert bleiben Minimier-Pfeil und **+** (neue Seite) sichtbar.

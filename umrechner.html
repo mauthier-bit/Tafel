@@ -20,13 +20,44 @@
   .r .u{color:#334155;font-weight:600;}
   .r .v{font-variant-numeric:tabular-nums;font-weight:700;}
   .r.act .v{color:#2563eb;}
+  #tabs{display:flex;gap:4px;flex:none;}
+  #tabs button{flex:1;border:1px solid #cfd6e0;background:#f4f6fa;border-radius:10px;padding:7px;font:700 14px -apple-system,sans-serif;color:#53617a;cursor:pointer;}
+  #tabs button.on{background:#2563eb;border-color:#2563eb;color:#fff;}
+  .panel{display:none;flex:1;min-height:0;flex-direction:column;gap:8px;}
+  .panel.on{display:flex;}
+  #erow{display:flex;gap:7px;align-items:center;}
+  #erow select{flex:1;min-width:0;}
+  #eSwap{flex:none;border:1px solid #cfd6e0;background:#f8fafc;border-radius:9px;padding:7px 10px;font:700 15px inherit;cursor:pointer;color:#334155;}
+  #ebox{flex:1;min-height:0;overflow:auto;border:1px solid #e2e7ef;border-radius:10px;padding:12px 13px;display:flex;flex-direction:column;gap:10px;}
+  #ekopf{font-size:clamp(19px,5.2vw,30px);font-weight:800;color:#2563eb;line-height:1.25;font-variant-numeric:tabular-nums;}
+  #etext{font-size:clamp(14px,3.5vw,17px);line-height:1.5;color:#1f2430;}
+  #ebsp{font-size:clamp(13px,3.1vw,15px);color:#64748b;line-height:1.45;}
+  #ebsp b{color:#334155;}
+  #ptab{flex:1;min-height:0;overflow:auto;border:1px solid #e2e7ef;border-radius:10px;}
+  #ptab table{width:100%;border-collapse:collapse;font-size:clamp(12px,3.2vw,15px);}
+  #ptab th{position:sticky;top:0;background:#f4f6fa;padding:6px 8px;text-align:left;font-size:.86em;color:#5b6472;border-bottom:1px solid #e2e7ef;}
+  #ptab td{padding:5px 8px;border-bottom:1px solid #f0f3f8;vertical-align:top;}
+  #ptab tr.eins td{background:#eff6ff;font-weight:700;}
+  #ptab .z{font-weight:800;color:#2563eb;font-size:1.05em;}
+  #ptab .p{font-weight:700;}
+  #ptab .pot{font-variant-numeric:tabular-nums;white-space:nowrap;}
+  #ptab .bsp{color:#64748b;}
+  @media (max-width:430px){ #ptab .bsp{display:none;} }
 </style>
 </head>
 <body>
 <div id="wrap">
   <select id="q"></select>
-  <div id="inrow"><input id="val" type="text" inputmode="decimal" value="1"><select id="from"></select></div>
-  <div id="list"></div>
+  <div id="tabs"><button type="button" id="tabU" class="on">Umrechnung</button><button type="button" id="tabE">Erklärung</button><button type="button" id="tabP">Vorsilben</button></div>
+  <div class="panel on" id="pU">
+    <div id="inrow"><input id="val" type="text" inputmode="decimal" value="1"><select id="from"></select></div>
+    <div id="list"></div>
+  </div>
+  <div class="panel" id="pP"><div id="ptab"></div></div>
+  <div class="panel" id="pE">
+    <div id="erow"><select id="eA"></select><button type="button" id="eSwap" title="Richtung tauschen">⇄</button><select id="eB"></select></div>
+    <div id="ebox"><div id="ekopf"></div><div id="etext"></div><div id="ebsp"></div></div>
+  </div>
 </div>
 <script>
 "use strict";
@@ -53,7 +84,7 @@ const Q={
   'Magn. Flussdichte (T)':[['T',F(1)],['mT',F(1e-3)],['µT',F(1e-6)],['nT',F(1e-9)],['G',F(1e-4)]],
   'Energie (J)':[['J',F(1)],['kJ',F(1000)],['MJ',F(1e6)],['mJ',F(1e-3)],['Wh',F(3600)],['kWh',F(3.6e6)],['cal',F(4.184)],['kcal',F(4184)],['eV',F(1.602176634e-19)]]
 };
-let data={ q:'Dichte (kg/m³)', from:'kg/m³', val:'1' };
+let data={ q:'Dichte (kg/m³)', from:'kg/m³', val:'1', tab:'u', eA:'g/cm³', eB:'kg/m³' };
 function fmt(v){ if(!isFinite(v))return '–'; if(v===0)return '0';
   const a=Math.abs(v); let s = (a>=1e7||a<1e-4) ? v.toExponential(4) : String(Math.round(v*1e8)/1e8);
   return s.replace('.',','); }
@@ -64,14 +95,170 @@ function fillFrom(){ const us=units(); if(!us.some(u=>u[0]===data.from)) data.fr
 function calc(){ const us=units(); const fromU=us.find(u=>u[0]===data.from)||us[0];
   const x=parseFloat(String(data.val).replace(',','.')); const base=isFinite(x)?fromU[1].to(x):NaN;
   $('list').innerHTML=us.map(u=>{ const v=u[1].from(base); return '<div class="r'+(u[0]===data.from?' act':'')+'"><span class="u">'+u[0]+'</span><span class="v">'+fmt(v)+'</span></div>'; }).join(''); }
-function render(){ fillQ(); fillFrom(); $('val').value=data.val; calc(); }
-$('q').onchange=()=>{ data.q=$('q').value; const us=units(); data.from=us[0][0]; fillFrom(); calc(); sync(); };
+function render(){ fillQ(); fillFrom(); $('val').value=data.val; calc(); setTab(data.tab); }
+$('q').onchange=()=>{ data.q=$('q').value; const us=units(); data.from=us[0][0]; data.eA=us[0][0]; data.eB=(us[1]||us[0])[0];
+  fillFrom(); calc(); if(data.tab==='e') erklaerungBauen(); sync(); };
 $('from').onchange=()=>{ data.from=$('from').value; calc(); sync(); };
 $('val').addEventListener('input',()=>{ data.val=$('val').value.replace(/[^0-9,.\-]/g,''); if($('val').value!==data.val)$('val').value=data.val; calc(); sync(); });
+
+/* ===================== Reiter „Erklärung" =====================
+   Für zwei Einheiten derselben Größe wird die Umrechnungszahl in einer Zeile
+   erklärt – wo es sich anbietet mit einem Beispiel aus dem Alltag, sonst über
+   die Kantenlänge (Flächen, Volumina) oder über die Zehnerschritte. */
+const ERKL={
+ 'Dichte (kg/m³)':{
+  'g/cm³|kg/m³':'In 1 m³ stecken 1 000 000 cm³, und 1 g ist 0,001 kg: 1 000 000 · 0,001 = 1000. Wasser hat also 1 g/cm³ = 1000 kg/m³.',
+  'kg/L|g/cm³':'1 L sind 1000 cm³ und 1 kg sind 1000 g – die Tausender kürzen sich weg, die Zahl bleibt gleich.',
+  'g/mL|g/cm³':'1 mL ist genau 1 cm³, deshalb steht in beiden Angaben dieselbe Zahl.',
+  'g/L|kg/m³':'1 m³ sind 1000 L und 1 kg sind 1000 g – beide Tausender heben sich auf, die Zahl bleibt gleich.',
+  'g/cm³|g/L':'1 L sind 1000 cm³: In einem Liter steckt also das Tausendfache der Masse eines Kubikzentimeters.'},
+ 'Geschwindigkeit (m/s)':{
+  'm/s|km/h':'Wer jede Sekunde einen Meter schafft, kommt in einer Stunde 3600 m weit – das sind 3,6 km. Also 1 m/s = 3,6 km/h.',
+  'km/s|km/h':'Eine Stunde hat 3600 Sekunden: Aus 1 km je Sekunde werden 3600 km je Stunde.',
+  'm/s|cm/s':'1 m sind 100 cm – die Zeit bleibt dieselbe, also zählt nur die Länge.'},
+ 'Ladung (C)':{
+  'C|Ah':'1 Ampere bedeutet 1 Coulomb je Sekunde, und eine Stunde hat 3600 Sekunden: 1 Ah = 3600 C.',
+  'C|mAh':'1 mAh ist ein Tausendstel von 1 Ah (3600 C), also 3,6 C.',
+  'Ah|mAh':'Auf Akkus steht meist die größere Zahl: 2 Ah sind 2000 mAh.'},
+ 'Energie (J)':{
+  'J|Wh':'1 Watt bedeutet 1 Joule je Sekunde, und eine Stunde hat 3600 Sekunden: 1 Wh = 3600 J.',
+  'J|kWh':'1000 Watt eine Stunde lang: 1000 · 3600 Joule = 3 600 000 J. So viel ist eine Kilowattstunde.',
+  'kWh|MJ':'1000 Watt mal 3600 Sekunden sind 3 600 000 J – also genau 3,6 MJ.',
+  'J|cal':'1 Kalorie erwärmt 1 g Wasser um 1 °C – dafür braucht man 4,184 J.',
+  'J|kcal':'1 Kilokalorie (die Angabe auf der Packung) erwärmt 1 kg Wasser um 1 °C: 4184 J.',
+  'J|eV':'Ein Elektron, das eine Spannung von 1 V durchläuft, nimmt 1 eV auf – das sind nur 1,602 · 10⁻¹⁹ J.',
+  'Wh|kWh':'Die Vorsilbe k steht für das Tausendfache: 1 kWh = 1000 Wh.',
+  'cal|kcal':'Die Vorsilbe k steht für das Tausendfache: 1 kcal = 1000 cal.'},
+ 'Leistung (W)':{
+  'W|PS':'1 PS ist die Leistung, mit der man 75 kg in einer Sekunde einen Meter hoch hebt: 75 · 9,81 ≈ 735,5 W.',
+  'W|kW':'Die Vorsilbe k steht für das Tausendfache – ein Wasserkocher hat etwa 2 kW = 2000 W.'},
+ 'Volumen (m³)':{
+  'L|dm³':'Ein Würfel mit 10 cm Kantenlänge fasst genau einen Liter: 1 L = 1 dm³.',
+  'm³|L':'In den Würfel mit 1 m Kante passen 10 · 10 · 10 = 1000 Liter-Würfel.',
+  'mL|cm³':'1 mL ist genau ein Würfel mit 1 cm Kantenlänge: 1 mL = 1 cm³.',
+  'm³|hl':'1 hl sind 100 L, und in 1 m³ passen 1000 L – also 10 hl.',
+  'L|hl':'„hekto" steht für hundert: 1 hl = 100 L.'},
+ 'Masse (kg)':{
+  't|kg':'1 t sind 1000 kg – so viel wiegt ein Kubikmeter Wasser.',
+  'kg|g':'„kilo" steht für tausend: 1 kg = 1000 g.'},
+ 'Fläche (m²)':{
+  'ha|m²':'1 ha ist ein Quadrat mit 100 m Seitenlänge: 100 · 100 = 10 000 m².',
+  'a|m²':'1 a ist ein Quadrat mit 10 m Seitenlänge: 10 · 10 = 100 m².',
+  'ha|a':'„Hektar" heißt wörtlich „hundert Ar": 1 ha = 100 a.',
+  'km²|ha':'Ein Quadrat mit 1 km Kante fasst 100 Quadrate mit 100 m Kante: 1 km² = 100 ha.'},
+ 'Beschleunigung (m/s²)':{
+  'm/s²|g (9,81)':'1 g ist die Fallbeschleunigung auf der Erde: In jeder Sekunde kommen 9,81 m/s dazu.'},
+ 'Wärmekapazität (J/K)':{
+  'J/K|cal/K':'Dieselbe Zahl wie bei der Energie: 1 cal = 4,184 J, also 1 cal/K = 4,184 J/K.'},
+ 'Magn. Flussdichte (T)':{
+  'T|G':'1 T sind 10 000 Gauß. Das Erdmagnetfeld ist mit etwa 0,5 G (50 µT) sehr schwach.'},
+ 'Temperatur':{
+  '°C|K':'Die Schritte sind gleich groß, nur der Nullpunkt liegt anders: 0 °C sind 273,15 K, und bei −273,15 °C ist der absolute Nullpunkt erreicht.',
+  '°C|°F':'0 °C sind 32 °F, 100 °C sind 212 °F: 100 Celsius-Schritte entsprechen 180 Fahrenheit-Schritten, deshalb der Faktor 1,8.',
+  'K|°F':'Erst von Kelvin nach Celsius (−273,15), dann wie gewohnt mal 1,8 und plus 32.'}
+};
+const VORS={'k':'tausend','M':'eine Million','G':'eine Milliarde','h':'hundert','da':'zehn',
+  'd':'ein Zehntel','c':'ein Hundertstel','m':'ein Tausendstel','µ':'ein Millionstel','n':'ein Milliardstel','p':'ein Billionstel'};
+function gross(v){ if(!isFinite(v)) return '–';
+  const a=Math.abs(v);
+  if(a!==0&&(a>=1e10||a<1e-6)){ const t=v.toExponential(3).split('e');
+    return t[0].replace(/0+$/,'').replace(/[.,]$/,'').replace('.',',')+'·10'+hoch(t[1].replace('+','')); }
+  let s=String(Math.round(v*1e9)/1e9).replace('.',',').replace('-','−');
+  const t=s.split(','); t[0]=t[0].replace(/\B(?=(\d{3})+(?!\d))/g,' ');
+  return t.join(','); }
+const kante=u=>u.replace(/[²³]$/,'');
+/* Krumme Faktoren (1 km/h = 0,2777… m/s) werden gerundet und als „≈" gekennzeichnet */
+function genau(v){ return !isFinite(v)||v===0||Math.abs(Number(v.toPrecision(6))-v)<Math.abs(v)*1e-12; }
+function gr(v){ if(!isFinite(v)) return '–'; if(v===0) return '0';
+  return gross(Number(v.toPrecision(genau(v)?6:4))); }
+const zeichen=v=>genau(v)?'= ':'≈ ';
+function eUnits(){ return units(); }
+function eFind(n){ return eUnits().find(u=>u[0]===n)||eUnits()[0]; }
+function erklaerungBauen(){
+  const us=eUnits();
+  if(!us.some(u=>u[0]===data.eA)) data.eA=us[0][0];
+  if(!us.some(u=>u[0]===data.eB)) data.eB=(us[1]||us[0])[0];
+  if(data.eA===data.eB) data.eB=(us.find(u=>u[0]!==data.eA)||us[0])[0];
+  $('eA').innerHTML=us.map(u=>'<option'+(u[0]===data.eA?' selected':'')+'>'+u[0]+'</option>').join('');
+  $('eB').innerHTML=us.map(u=>'<option'+(u[0]===data.eB?' selected':'')+'>'+u[0]+'</option>').join('');
+  const A=eFind(data.eA), B=eFind(data.eB);
+  /* y = m·x + c aus zwei Stützstellen – damit sind auch °C/°F/K abgedeckt */
+  const y0=B[1].from(A[1].to(0)), y1=B[1].from(A[1].to(1)), m=y1-y0, c=y0;
+  const affin=Math.abs(c)>1e-12;
+  $('ekopf').innerHTML = affin
+    ? (data.eB+' = '+data.eA+(Math.abs(m-1)<1e-12?'':' · '+gr(m))+(c>0?' + ':' − ')+gr(Math.abs(c)))
+    : ('1 '+data.eA+' '+zeichen(m)+gr(m)+' '+data.eB+
+       (Math.abs(m-1)<1e-12?'':'<div style="font-size:.55em;font-weight:700;color:#64748b;margin-top:3px">umgekehrt: 1 '+data.eB+' '+zeichen(1/m)+gr(1/m)+' '+data.eA+'</div>'));
+  /* Erklärung: feste Zeile, sonst über Kantenlänge oder Zehnerschritte */
+  const T=ERKL[data.q]||{};
+  let txt=T[data.eA+'|'+data.eB]||T[data.eB+'|'+data.eA]||'';
+  if(!txt&&!affin){
+    const f=m>=1?m:1/m, gU=m>=1?data.eA:data.eB, kU=m>=1?data.eB:data.eA;
+    const dim=/Fläche/.test(data.q)?2:(/Volumen/.test(data.q)&&/[³]/.test(gU)&&/[³]/.test(kU)?3:1);
+    const r=Math.pow(f,1/dim);
+    if(dim>1&&Math.abs(r-Math.round(r))<1e-9)
+      txt='1 '+kante(gU)+' = '+gross(r)+' '+kante(kU)+' – und weil '+(dim===2?'eine Fläche zwei':'ein Volumen drei')+' Längen hat: '+
+          new Array(dim).fill(gross(r)).join(' · ')+' = '+gross(f)+'. Also 1 '+gU+' = '+gross(f)+' '+kU+'.';
+    else {
+      const stufen=Math.log10(f), v=/^(da|[kMGhdcmµnp])/.exec(gU);
+      txt='1 '+gU+' = '+gross(f)+' '+kU+'.';
+      if(Math.abs(stufen-Math.round(stufen))<1e-9) txt+=' Beim Umrechnen wandert das Komma um '+Math.round(stufen)+' Stelle'+(Math.round(stufen)===1?'':'n')+' nach rechts.';
+      if(v&&VORS[v[1]]) txt='Die Vorsilbe „'+v[1]+'" steht für '+VORS[v[1]]+': '+txt;
+    }
+  }
+  $('etext').textContent=txt||('1 '+data.eA+' = '+gross(m)+' '+data.eB+'.');
+  /* Beispiel mit einer runden Zahl */
+  const bsp=affin?({'K':300,'°F':68}[data.eA]||20):2.5;   // bei Temperaturen eine alltagsnahe Zahl
+  const erg=B[1].from(A[1].to(bsp));
+  $('ebsp').innerHTML='Beispiel: <b>'+gross(bsp)+' '+data.eA+' '+zeichen(erg)+gr(erg)+' '+data.eB+'</b>';
+}
+
+/* ===================== Reiter „Vorsilben" ===================== */
+const VORSILBEN=[
+ ['Peta','P',15,'eine Billiarde','1 PB (Petabyte) = 1000 TB'],
+ ['Tera','T',12,'eine Billion','1 TB Festplatte = 1000 GB'],
+ ['Giga','G',9,'eine Milliarde','3 GHz Prozessortakt = 3 000 000 000 Schwingungen je Sekunde'],
+ ['Mega','M',6,'eine Million','1 MW Windrad = 1 000 000 W'],
+ ['Kilo','k',3,'tausend','1 km = 1000 m · 1 kg = 1000 g'],
+ ['Hekto','h',2,'hundert','1 hl = 100 L · 1 ha = 100 a'],
+ ['Deka','da',1,'zehn','1 dag = 10 g (heute selten)'],
+ ['—','',0,'eins','die Einheit selbst: m, g, s, A'],
+ ['Dezi','d',-1,'ein Zehntel','1 dm = 0,1 m · 1 dL = 0,1 L'],
+ ['Zenti','c',-2,'ein Hundertstel','1 cm = 0,01 m'],
+ ['Milli','m',-3,'ein Tausendstel','1 mm = 0,001 m · 1 mA = 0,001 A'],
+ ['Mikro','µ',-6,'ein Millionstel','1 µm = 0,001 mm – ein Haar ist etwa 60 µm dick'],
+ ['Nano','n',-9,'ein Milliardstel','grünes Licht hat etwa 500 nm Wellenlänge'],
+ ['Piko','p',-12,'ein Billionstel','1 pF – Kondensatoren in der Elektronik'],
+ ['Femto','f',-15,'ein Billiardstel','1 fm – so groß ist etwa ein Atomkern']
+];
+const HOCH={'-':'⁻','0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹'};
+const hoch=n=>String(n).split('').map(c=>HOCH[c]||c).join('');
+function zahlWort(e){ if(e>6||e<-6) return '';            // zu lang zum Ausschreiben
+  if(e>=0) return gross(Math.pow(10,e));
+  return '0,'+new Array(-e-1).fill('0').join('')+'1'; }
+function vorsilbenBauen(){
+  let h='<table><tr><th>Vorsilbe</th><th>Zeichen</th><th>Zehnerpotenz</th><th>Bedeutung</th><th class="bsp">Beispiel</th></tr>';
+  VORSILBEN.forEach(v=>{ const [name,z,e,wort,bsp]=v; const zahl=zahlWort(e);
+    h+='<tr'+(e===0?' class="eins"':'')+'><td class="p">'+name+'</td><td class="z">'+(z||'–')+'</td>'+
+       '<td class="pot">10'+hoch(e)+'</td><td>'+wort+(zahl?'<br><span class="pot">'+zahl+'</span>':'')+'</td>'+
+       '<td class="bsp">'+bsp+'</td></tr>'; });
+  $('ptab').innerHTML=h+'</table>'; }
+function setTab(t){ data.tab=['u','e','p'].includes(t)?t:'u';
+  [['u','tabU','pU'],['e','tabE','pE'],['p','tabP','pP']].forEach(([k,b,pn])=>{
+    $(b).classList.toggle('on',data.tab===k); $(pn).classList.toggle('on',data.tab===k); });
+  if(data.tab==='e') erklaerungBauen();
+  if(data.tab==='p'&&!$('ptab').innerHTML) vorsilbenBauen(); }
+$('tabU').onclick=()=>{ setTab('u'); sync(); };
+$('tabE').onclick=()=>{ setTab('e'); sync(); };
+$('tabP').onclick=()=>{ setTab('p'); sync(); };
+$('eA').onchange=()=>{ data.eA=$('eA').value; erklaerungBauen(); sync(); };
+$('eB').onchange=()=>{ data.eB=$('eB').value; erklaerungBauen(); sync(); };
+$('eSwap').onclick=()=>{ const t=data.eA; data.eA=data.eB; data.eB=t; erklaerungBauen(); sync(); };
 function sync(){ if(window.parent===window) return; /* allein geöffnet: nicht an sich selbst senden */ try{ parent.postMessage({type:'embed-data',data},'*'); }catch(e){} }
 addEventListener('message',e=>{ if(window.parent===window||e.source!==window.parent) return;   // eigene Nachrichten ignorieren
   if(e.data&&e.data.type==='embed-data'&&e.data.data){ const d=e.data.data;
-  data={ q:Q[d.q]?d.q:'Dichte (kg/m³)', from:d.from||'', val:(d.val!=null?String(d.val):'1') }; render(); } });
+  data={ q:Q[d.q]?d.q:'Dichte (kg/m³)', from:d.from||'', val:(d.val!=null?String(d.val):'1'),
+    tab:['u','e','p'].includes(d.tab)?d.tab:'u', eA:d.eA||'', eB:d.eB||'' }; render(); } });
 window.addEventListener('load',()=>{ render(); try{ parent.postMessage({type:'embed-ready'},'*'); }catch(e){} });
 </script>
 </body>
