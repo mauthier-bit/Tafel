@@ -703,7 +703,7 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   Auswahlfeld) und **Darstellung**: **nur Text · Funktionsgraph · Diagramm · Tortenbild · Figur**.
   Über die Darstellung findet man die Aufgaben **mit Bildern** quer durch alle Themen – etwa alle
   zwölf Bruchaufgaben mit Tortenstücken. Unten wählt man die **Aufgabenart**: paarweise (zwei Karten)
-  oder als Gruppe (alle zugehörigen Karten). Insgesamt stehen rund **1110 Karten** bereit:
+  oder als Gruppe (alle zugehörigen Karten). Insgesamt stehen rund **1120 Karten** bereit:
   (Alle Bibliotheken **fertiger Aufgaben** – Zuordnen, Lückentext, Reihenfolge – tragen dasselbe
   Symbol: **Buchrücken im Regal**. Das **aufgeschlagene Buch** bleibt dem **Glossar** und den
   Lehrplanbegriffen vorbehalten, damit die beiden Quellen auf einen Blick zu unterscheiden sind.)
@@ -774,7 +774,9 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     (15,996 m/s (3) ↔ 16,0 m/s), **führende Nullen zählen nicht** und für große wie winzige Werte die
     **Zehnerpotenz**, weil „1230 J" sonst nicht erkennen ließe, wie viele Ziffern gelten
     (1234,7 J (3) ↔ 1,23 · 10³ J · 1498,6 Ω (3) ↔ 1,50 · 10³ Ω). In Jgst. 11 kommen die
-    **Naturkonstanten** dazu (299 792 458 m/s (4) ↔ 2,998 · 10⁸ m/s).
+    **Naturkonstanten** dazu (299 792 458 m/s (4) ↔ 2,998 · 10⁸ m/s). Dazu kommt ein Satz
+    **ohne Einheiten** (14 Paare) – reine Zahlen, die in **jeder Jahrgangsstufe** passen:
+    5,6789 (3) ↔ 5,68 · 3,0049 (3) ↔ 3,00 · 249,51 (3) ↔ 2,50 · 10² · 45,678 (1 gültige Ziffer) ↔ 5 · 10¹.
   - **Zufallsexperimente und Urnenmodelle** (Jgst. 12, **Gruppenaufgabe**): 22 Alltags- und
     Spielsituationen werden den **vier Urnenmodellen** zugeordnet – *mit Zurücklegen · Reihenfolge zählt*
     (Münzwurf, Zahlenschloss, dreimal würfeln, Toto, Korbwurf, Kennwort), *ohne Zurücklegen ·
@@ -1931,6 +1933,8 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   Beschleunigung, Kraft, Temperatur (°C/K/°F), Impuls, Wärmekapazität, Kapazität, Ladung, Leistung,
   Magnetische Flussdichte, Energie**. Die Größe wird oben gewählt und gilt für **drei Reiter**:
   - **Umrechnung:** Wert + Ausgangseinheit eingeben → alle Einheiten werden live angezeigt.
+  Neben der Größenauswahl stellen **A− / A+** die Schriftgröße für alle drei Reiter ein (auch über das
+  Kontextmenü der Tafel).
   - **Erklärung:** zwei Einheiten wählen (⇄ tauscht die Richtung) – darüber steht groß die
     **Umrechnungszahl** (bei Temperaturen die Formel, z. B. °F = °C · 1,8 + 32) und darunter die
     Gegenrichtung. In **einer Zeile** wird die Zahl dann erklärt, wo möglich mit einem Beispiel aus

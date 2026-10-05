@@ -403,6 +403,22 @@ const G=[
  ['1,00794 u (3 gültige Ziffern)','1,01 u'],
  ['0,0909091 kg (3 gültige Ziffern)','0,0909 kg'],
  ['7,6543 · 10⁵ Pa (2 gültige Ziffern)','7,7 · 10⁵ Pa'] ] },
+
+{ f:'Ph', j:7, g:'Gültige Ziffern (ohne Einheiten)', paare:[
+ ['5,6789 (3 gültige Ziffern)','5,68'],
+ ['0,012345 (2 gültige Ziffern)','0,012'],
+ ['19,9876 (4 gültige Ziffern)','19,99'],
+ ['3,0049 (3 gültige Ziffern)','3,00'],
+ ['0,99499 (2 gültige Ziffern)','0,99'],
+ ['7,8912 (2 gültige Ziffern)','7,9'],
+ ['0,0070513 (3 gültige Ziffern)','0,00705'],
+ ['249,51 (3 gültige Ziffern)','2,50 · 10²'],
+ ['0,66666 (4 gültige Ziffern)','0,6667'],
+ ['98765 (3 gültige Ziffern)','9,88 · 10⁴'],
+ ['1,0049 (4 gültige Ziffern)','1,005'],
+ ['0,00098765 (2 gültige Ziffern)','9,9 · 10⁻⁴'],
+ ['45,678 (1 gültige Ziffer)','5 · 10¹'],
+ ['0,04321 (1 gültige Ziffer)','0,04'] ] },
 ];
 
 /* ---------- Gruppenaufgaben: ein Feld, mehrere Karten ----------
