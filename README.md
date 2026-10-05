@@ -703,7 +703,7 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   Auswahlfeld) und **Darstellung**: **nur Text · Funktionsgraph · Diagramm · Tortenbild · Figur**.
   Über die Darstellung findet man die Aufgaben **mit Bildern** quer durch alle Themen – etwa alle
   zwölf Bruchaufgaben mit Tortenstücken. Unten wählt man die **Aufgabenart**: paarweise (zwei Karten)
-  oder als Gruppe (alle zugehörigen Karten). Insgesamt stehen rund **1070 Karten** bereit:
+  oder als Gruppe (alle zugehörigen Karten). Insgesamt stehen rund **1110 Karten** bereit:
   (Alle Bibliotheken **fertiger Aufgaben** – Zuordnen, Lückentext, Reihenfolge – tragen dasselbe
   Symbol: **Buchrücken im Regal**. Das **aufgeschlagene Buch** bleibt dem **Glossar** und den
   Lehrplanbegriffen vorbehalten, damit die beiden Quellen auf einen Blick zu unterscheiden sind.)
@@ -766,6 +766,15 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     - **Energie** (Jgst. 9): 1 kWh ↔ 3,6 MJ, 0,25 kWh ↔ 900000 J, 36000 J ↔ 0,01 kWh
     - **Ladung** (Jgst. 9): 1 Ah ↔ 3600 C, 1 mAh ↔ 3,6 C, 5000 mAh ↔ 18000 C, 0,8 Ah ↔ 800 mAh –
       die Angaben auf Akkus werden damit vergleichbar
+  - **Gültige Ziffern (Physik)** – vier Sätze zu je **zehn Paaren** für die Jahrgangsstufen **7, 8, 9
+    und 11**: Links steht das **Taschenrechnerergebnis** mit der geforderten Stellenzahl, rechts der
+    sinnvoll **gerundete Wert** – 8,3741 m (3 gültige Ziffern) ↔ 8,37 m · 0,004567 kg (2) ↔ 0,0046 kg ·
+    0,23456 A (3) ↔ 0,235 A. Dabei sind gezielt die Stolperstellen: **nachfolgende Nullen gehören
+    dazu** (2,3049 g/cm³ (3) ↔ 2,30 g/cm³ · 12,0049 V (4) ↔ 12,00 V), der **Übertrag beim Runden**
+    (15,996 m/s (3) ↔ 16,0 m/s), **führende Nullen zählen nicht** und für große wie winzige Werte die
+    **Zehnerpotenz**, weil „1230 J" sonst nicht erkennen ließe, wie viele Ziffern gelten
+    (1234,7 J (3) ↔ 1,23 · 10³ J · 1498,6 Ω (3) ↔ 1,50 · 10³ Ω). In Jgst. 11 kommen die
+    **Naturkonstanten** dazu (299 792 458 m/s (4) ↔ 2,998 · 10⁸ m/s).
   - **Zufallsexperimente und Urnenmodelle** (Jgst. 12, **Gruppenaufgabe**): 22 Alltags- und
     Spielsituationen werden den **vier Urnenmodellen** zugeordnet – *mit Zurücklegen · Reihenfolge zählt*
     (Münzwurf, Zahlenschloss, dreimal würfeln, Toto, Korbwurf, Kennwort), *ohne Zurücklegen ·

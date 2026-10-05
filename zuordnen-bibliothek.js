@@ -354,6 +354,55 @@ const G=[
  ['1500 mAh','1,5 Ah'],
  ['2500 mAh','2,5 Ah'],
  ['0,8 Ah','800 mAh'] ] },
+
+/* ---------- Physik: gültige Ziffern (Taschenrechnerwert → sinnvoll gerundet) ---------- */
+{ f:'Ph', j:7, g:'Gültige Ziffern', paare:[
+ ['8,3741 m (3 gültige Ziffern)','8,37 m'],
+ ['12,4567 cm (4 gültige Ziffern)','12,46 cm'],
+ ['0,004567 kg (2 gültige Ziffern)','0,0046 kg'],
+ ['2,3049 g/cm³ (3 gültige Ziffern)','2,30 g/cm³'],
+ ['145,82 g (4 gültige Ziffern)','145,8 g'],
+ ['7,0952 L (3 gültige Ziffern)','7,10 L'],
+ ['0,07846 m³ (2 gültige Ziffern)','0,078 m³'],
+ ['36,249 mm (3 gültige Ziffern)','36,2 mm'],
+ ['1,8356 kg (2 gültige Ziffern)','1,8 kg'],
+ ['0,51283 L (3 gültige Ziffern)','0,513 L'] ] },
+
+{ f:'Ph', j:8, g:'Gültige Ziffern', paare:[
+ ['23,4567 m/s (3 gültige Ziffern)','23,5 m/s'],
+ ['0,082345 kWh (2 gültige Ziffern)','0,082 kWh'],
+ ['1234,7 J (3 gültige Ziffern)','1,23 · 10³ J'],
+ ['96,049 km/h (4 gültige Ziffern)','96,05 km/h'],
+ ['0,0039876 kWh (3 gültige Ziffern)','0,00399 kWh'],
+ ['15,996 m/s (3 gültige Ziffern)','16,0 m/s'],
+ ['847,32 J (2 gültige Ziffern)','8,5 · 10² J'],
+ ['3,6049 kJ (3 gültige Ziffern)','3,60 kJ'],
+ ['0,74851 kW (3 gültige Ziffern)','0,749 kW'],
+ ['58,347 km/h (2 gültige Ziffern)','58 km/h'] ] },
+
+{ f:'Ph', j:9, g:'Gültige Ziffern', paare:[
+ ['0,23456 A (3 gültige Ziffern)','0,235 A'],
+ ['229,87 V (4 gültige Ziffern)','229,9 V'],
+ ['4,7051 Ω (3 gültige Ziffern)','4,71 Ω'],
+ ['0,0062849 A (2 gültige Ziffern)','0,0063 A'],
+ ['1498,6 Ω (3 gültige Ziffern)','1,50 · 10³ Ω'],
+ ['12,0049 V (4 gültige Ziffern)','12,00 V'],
+ ['0,98765 W (2 gültige Ziffern)','0,99 W'],
+ ['36,452 °C (3 gültige Ziffern)','36,5 °C'],
+ ['4186,8 J/(kg·K) (3 gültige Ziffern)','4,19 · 10³ J/(kg·K)'],
+ ['0,00049982 F (2 gültige Ziffern)','5,0 · 10⁻⁴ F'] ] },
+
+{ f:'Ph', j:11, g:'Gültige Ziffern', paare:[
+ ['9,80665 m/s² (3 gültige Ziffern)','9,81 m/s²'],
+ ['299792458 m/s (4 gültige Ziffern)','2,998 · 10⁸ m/s'],
+ ['6,67430 · 10⁻¹¹ N·m²/kg² (3 gültige Ziffern)','6,67 · 10⁻¹¹ N·m²/kg²'],
+ ['1,602176634 · 10⁻¹⁹ C (3 gültige Ziffern)','1,60 · 10⁻¹⁹ C'],
+ ['6,62607015 · 10⁻³⁴ J·s (4 gültige Ziffern)','6,626 · 10⁻³⁴ J·s'],
+ ['0,000123456 s (3 gültige Ziffern)','1,23 · 10⁻⁴ s'],
+ ['54321 N (2 gültige Ziffern)','5,4 · 10⁴ N'],
+ ['1,00794 u (3 gültige Ziffern)','1,01 u'],
+ ['0,0909091 kg (3 gültige Ziffern)','0,0909 kg'],
+ ['7,6543 · 10⁵ Pa (2 gültige Ziffern)','7,7 · 10⁵ Pa'] ] },
 ];
 
 /* ---------- Gruppenaufgaben: ein Feld, mehrere Karten ----------
