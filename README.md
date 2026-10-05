@@ -1931,7 +1931,7 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
 - **Einheitenumrechner** (Mathe & Physik): rechnet gängige physikalische Größen des Schulbetriebs um –
   **Dichte, Stromstärke, Spannung, Widerstand, Länge, Fläche, Volumen, Masse, Geschwindigkeit,
   Beschleunigung, Kraft, Temperatur (°C/K/°F), Impuls, Wärmekapazität, Kapazität, Ladung, Leistung,
-  Magnetische Flussdichte, Energie**. Die Größe wird oben gewählt und gilt für **drei Reiter**:
+  Magnetische Flussdichte, Energie**. Die Größe wird oben gewählt und gilt für **vier Reiter**:
   - **Umrechnung:** Wert + Ausgangseinheit eingeben → alle Einheiten werden live angezeigt.
   Neben der Größenauswahl stellen **A− / A+** die Schriftgröße für alle drei Reiter ein (auch über das
   Kontextmenü der Tafel).
@@ -1949,6 +1949,14 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     Bedeutung (Wort und ausgeschriebene Zahl) und einem Beispiel – 1 PB = 1000 TB, 3 GHz,
     1 km = 1000 m, 1 ha = 100 a, 1 µm (Haardicke 60 µm), 500 nm (grünes Licht), 1 fm (Atomkern).
     Die Zeile für die Einheit selbst (10⁰) ist hervorgehoben.
+  - **Gültige Ziffern:** Zahl eintippen, gewünschte Stellenzahl mit **− / +** wählen – die Zahl wird
+    dann **eingefärbt**: **blau** die Ziffern, die bleiben, **rot** die erste wegfallende (sie
+    entscheidet über das Runden), **grau** der Rest und die führenden Nullen, die ja nicht mitzählen.
+    Darunter steht das Ergebnis und **warum** es so lautet: „Die erste wegfallende Ziffer ist eine 1 –
+    kleiner als 5, also wird abgerundet." Nachfolgende Nullen werden eigens begründet („Die Null am
+    Ende muss stehen bleiben"), und wo die Dezimalschreibweise die Stellenzahl verschleiern würde,
+    gibt das Werkzeug die **Zehnerpotenz** aus (249,51 auf 3 gültige Ziffern → 2,50 · 10², nicht 250)
+    und sagt auch, warum. Sind weniger Ziffern vorhanden als gefordert, werden Nullen angehängt.
 2. **Seiten-Leiste (unten rechts, senkrecht):** blättern (‹ ›), Seite hinzufügen/löschen, Zoom
    zurücksetzen. Der **Minimier-Pfeil zeigt nach unten** (⌄) – klar unterscheidbar von den
    Blätter-Pfeilen. Minimiert bleiben Minimier-Pfeil und **+** (neue Seite) sichtbar.
