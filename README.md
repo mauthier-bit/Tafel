@@ -703,7 +703,7 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   Auswahlfeld) und **Darstellung**: **nur Text · Funktionsgraph · Diagramm · Tortenbild · Figur**.
   Über die Darstellung findet man die Aufgaben **mit Bildern** quer durch alle Themen – etwa alle
   zwölf Bruchaufgaben mit Tortenstücken. Unten wählt man die **Aufgabenart**: paarweise (zwei Karten)
-  oder als Gruppe (alle zugehörigen Karten). Insgesamt stehen rund **960 Karten** bereit:
+  oder als Gruppe (alle zugehörigen Karten). Insgesamt stehen rund **1000 Karten** bereit:
   (Alle Bibliotheken **fertiger Aufgaben** – Zuordnen, Lückentext, Reihenfolge – tragen dasselbe
   Symbol: **Buchrücken im Regal**. Das **aufgeschlagene Buch** bleibt dem **Glossar** und den
   Lehrplanbegriffen vorbehalten, damit die beiden Quellen auf einen Blick zu unterscheiden sind.)
@@ -770,6 +770,17 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     16." ↔ 3x − 5 = 16 – vierzehn Rätsel vom einfachen Ansatz bis zu Klammer und Nachfolgerzahl
   - **Term und umgeformter Term** (Jgst. 7): 3 · (x + 4) ↔ 3x + 12, (x + 3)² ↔ x² + 6x + 9,
     5x + 10 ↔ 5 · (x + 2) – Ausmultiplizieren, Ausklammern, Zusammenfassen und binomische Formeln
+  - **Distributivgesetz** – dieselbe Idee über drei Jahrgangsstufen, je **vierzehn Paare**; links steht
+    die Produktform, rechts die ausmultiplizierte Summe, und in jedem Satz sind auch Aufgaben mit
+    **drei Summanden** dabei:
+    - **ganze Zahlen** (Jgst. 5): 7 · (20 + 3) ↔ 7 · 20 + 7 · 3 · 9 · (30 − 2) ↔ 9 · 30 − 9 · 2 ·
+      (12 + 5) · 3 ↔ 12 · 3 + 5 · 3 · 5 · (10 + 4 + 2) ↔ 5 · 10 + 5 · 4 + 5 · 2; dazu das
+      **vorteilhafte Rechnen** (7 · 102 ↔ 7 · 100 + 7 · 2, 6 · 98 ↔ 6 · 100 − 6 · 2)
+    - **Brüche und Dezimalzahlen** (Jgst. 6): 1/2 · (8 + 6) ↔ 1/2 · 8 + 1/2 · 6 ·
+      3/4 · (8 − 4) ↔ 3/4 · 8 − 3/4 · 4 · 2,5 · (1,2 + 0,8) ↔ 2,5 · 1,2 + 2,5 · 0,8 ·
+      0,25 · (40 + 8 + 4) ↔ 0,25 · 40 + 0,25 · 8 + 0,25 · 4
+    - **Terme** (Jgst. 7): 4 · (x + 5) ↔ 4x + 20 · 7 · (2x − 3) ↔ 14x − 21 · −3 · (x − 2) ↔ −3x + 6 ·
+      2a · (3a + 4) ↔ 6a² + 8a · a · (b + c + d) ↔ ab + ac + ad · 3x · (x + 2y + 5) ↔ 3x² + 6xy + 15x
   - **Bewegungsdiagramme** (Physik, Jgst. 10): **zwölf Bewegungen** in drei Sammlungen –
     **t-s und t-v**, **t-v und t-a** sowie **t-s und t-a**. Dabei sind gleichförmige Fahrt,
     Beschleunigung aus dem Stand, Abbremsen bis zum Stillstand, Stillstand, Rückwärtsfahrt,
