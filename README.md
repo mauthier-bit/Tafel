@@ -703,7 +703,7 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   Auswahlfeld) und **Darstellung**: **nur Text · Funktionsgraph · Diagramm · Tortenbild · Figur**.
   Über die Darstellung findet man die Aufgaben **mit Bildern** quer durch alle Themen – etwa alle
   zwölf Bruchaufgaben mit Tortenstücken. Unten wählt man die **Aufgabenart**: paarweise (zwei Karten)
-  oder als Gruppe (alle zugehörigen Karten). Insgesamt stehen rund **1000 Karten** bereit:
+  oder als Gruppe (alle zugehörigen Karten). Insgesamt stehen rund **1070 Karten** bereit:
   (Alle Bibliotheken **fertiger Aufgaben** – Zuordnen, Lückentext, Reihenfolge – tragen dasselbe
   Symbol: **Buchrücken im Regal**. Das **aufgeschlagene Buch** bleibt dem **Glossar** und den
   Lehrplanbegriffen vorbehalten, damit die beiden Quellen auf einen Blick zu unterscheiden sind.)
@@ -755,6 +755,17 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   - **Logarithmusgesetze** (Jgst. 10, 16 Paare): die Gesetze selbst (log(a · b) ↔ log(a) + log(b) ·
     log(aⁿ) ↔ n · log(a) · log(√a) ↔ 0,5 · log(a)), dazu Werte mit natürlichem Logarithmus
     (ln(e³) ↔ 3 · ln(1/e) ↔ −1) und Umkehrungen wie 2^(log₂(7)) ↔ 7
+  - **Einheiten umrechnen (Physik)** – fünf Sätze zu je **vierzehn Paaren**, nach Jahrgangsstufen:
+    - **Dichte** (Jgst. 7): g/cm³ ↔ kg/m³ an echten Stoffwerten – 2,7 g/cm³ ↔ 2700 kg/m³ (Aluminium),
+      11,3 g/cm³ ↔ 11300 kg/m³ (Blei), 0,0013 g/cm³ ↔ 1,3 kg/m³ (Luft); dazu **kg/dm³** und g/dm³,
+      damit auffällt, dass g/cm³ und kg/dm³ **dieselbe** Zahl haben (5 g/cm³ ↔ 5 kg/dm³)
+    - **Geschwindigkeit** (Jgst. 8): 36 km/h ↔ 10 m/s, 3,6 km/h ↔ 1 m/s, 50 m/s ↔ 180 km/h – in beide
+      Richtungen, dazu 100 km/h ↔ rund 27,8 m/s als Beispiel mit Rundung
+    - **Temperatur** (Jgst. 9): 0 °C ↔ 273,15 K, −273,15 °C ↔ 0 K, 77 K ↔ −196,15 °C (flüssiger
+      Stickstoff), 4,2 K ↔ −268,95 °C (flüssiges Helium)
+    - **Energie** (Jgst. 9): 1 kWh ↔ 3,6 MJ, 0,25 kWh ↔ 900000 J, 36000 J ↔ 0,01 kWh
+    - **Ladung** (Jgst. 9): 1 Ah ↔ 3600 C, 1 mAh ↔ 3,6 C, 5000 mAh ↔ 18000 C, 0,8 Ah ↔ 800 mAh –
+      die Angaben auf Akkus werden damit vergleichbar
   - **Zufallsexperimente und Urnenmodelle** (Jgst. 12, **Gruppenaufgabe**): 22 Alltags- und
     Spielsituationen werden den **vier Urnenmodellen** zugeordnet – *mit Zurücklegen · Reihenfolge zählt*
     (Münzwurf, Zahlenschloss, dreimal würfeln, Toto, Korbwurf, Kennwort), *ohne Zurücklegen ·

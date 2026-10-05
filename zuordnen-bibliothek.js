@@ -272,7 +272,88 @@ const G=[
  ['ln(e³)','3'],
  ['ln(1/e)','−1'],
  ['log₁₀(10ˣ)','x'],
- ['2^(log₂(7))','7'] ] }
+ ['2^(log₂(7))','7'] ] },
+
+/* ---------- Physik: Einheiten umrechnen ---------- */
+{ f:'Ph', j:7, g:'Dichte: g/cm³, kg/dm³ und kg/m³', paare:[
+ ['1 g/cm³','1000 kg/m³'],
+ ['2,7 g/cm³','2700 kg/m³'],
+ ['7,8 g/cm³','7800 kg/m³'],
+ ['0,92 g/cm³','920 kg/m³'],
+ ['11,3 g/cm³','11300 kg/m³'],
+ ['19,3 g/cm³','19300 kg/m³'],
+ ['13,6 g/cm³','13600 kg/m³'],
+ ['0,8 g/cm³','800 kg/m³'],
+ ['2,5 g/cm³','2500 kg/m³'],
+ ['0,0013 g/cm³','1,3 kg/m³'],
+ ['5 g/cm³','5 kg/dm³'],
+ ['3,2 kg/dm³','3200 kg/m³'],
+ ['850 kg/m³','0,85 g/cm³'],
+ ['1500 g/dm³','1,5 kg/dm³'] ] },
+
+{ f:'Ph', j:8, g:'Geschwindigkeit: km/h und m/s', paare:[
+ ['36 km/h','10 m/s'],
+ ['72 km/h','20 m/s'],
+ ['18 km/h','5 m/s'],
+ ['90 km/h','25 m/s'],
+ ['108 km/h','30 m/s'],
+ ['54 km/h','15 m/s'],
+ ['3,6 km/h','1 m/s'],
+ ['1,8 km/h','0,5 m/s'],
+ ['100 km/h','rund 27,8 m/s'],
+ ['12 m/s','43,2 km/h'],
+ ['2,5 m/s','9 km/h'],
+ ['0,2 m/s','0,72 km/h'],
+ ['50 m/s','180 km/h'],
+ ['8 m/s','28,8 km/h'] ] },
+
+{ f:'Ph', j:9, g:'Temperatur: °C und K', paare:[
+ ['0 °C','273,15 K'],
+ ['100 °C','373,15 K'],
+ ['20 °C','293,15 K'],
+ ['25 °C','298,15 K'],
+ ['37 °C','310,15 K'],
+ ['10 °C','283,15 K'],
+ ['−18 °C','255,15 K'],
+ ['−40 °C','233,15 K'],
+ ['1000 °C','1273,15 K'],
+ ['−273,15 °C','0 K'],
+ ['300 K','26,85 °C'],
+ ['500 K','226,85 °C'],
+ ['77 K','−196,15 °C'],
+ ['4,2 K','−268,95 °C'] ] },
+
+{ f:'Ph', j:9, g:'Energie: J und kWh', paare:[
+ ['1 kWh','3,6 MJ'],
+ ['2 kWh','7,2 MJ'],
+ ['0,5 kWh','1,8 MJ'],
+ ['10 kWh','36 MJ'],
+ ['3 kWh','10,8 MJ'],
+ ['5 kWh','18 MJ'],
+ ['20 kWh','72 MJ'],
+ ['100 kWh','360 MJ'],
+ ['2,5 kWh','9 MJ'],
+ ['0,1 kWh','360000 J'],
+ ['0,25 kWh','900000 J'],
+ ['1,5 kWh','5400000 J'],
+ ['36000 J','0,01 kWh'],
+ ['720000 J','0,2 kWh'] ] },
+
+{ f:'Ph', j:9, g:'Ladung: C, Ah und mAh', paare:[
+ ['1 Ah','3600 C'],
+ ['2 Ah','7200 C'],
+ ['10 Ah','36000 C'],
+ ['4,5 Ah','16200 C'],
+ ['0,25 Ah','900 C'],
+ ['0,05 Ah','180 C'],
+ ['1 mAh','3,6 C'],
+ ['100 mAh','360 C'],
+ ['500 mAh','1800 C'],
+ ['5000 mAh','18000 C'],
+ ['3000 mAh','3 Ah'],
+ ['1500 mAh','1,5 Ah'],
+ ['2500 mAh','2,5 Ah'],
+ ['0,8 Ah','800 mAh'] ] },
 ];
 
 /* ---------- Gruppenaufgaben: ein Feld, mehrere Karten ----------
@@ -317,8 +398,8 @@ window.TafelPaare={
   /* gleiche Struktur wie die anderen Quellen: b = linke Karte, e = rechte Karte.
      Gruppeneinträge bringen zusätzlich k = die Karten, die in dieses Feld gehören. */
   daten(){ const out=[];
-    G.forEach(gr=>gr.paare.forEach(p=>out.push({ f:'M', j:gr.j, g:gr.g, b:p[0], e:p[1] })));
-    GR.forEach(gr=>gr.felder.forEach(f=>out.push({ f:'M', j:gr.j, g:gr.g, b:f[0], e:f[1].join(' · '), k:f[1].slice() })));
+    G.forEach(gr=>gr.paare.forEach(p=>out.push({ f:gr.f||'M', j:gr.j, g:gr.g, b:p[0], e:p[1] })));
+    GR.forEach(gr=>gr.felder.forEach(f=>out.push({ f:gr.f||'M', j:gr.j, g:gr.g, b:f[0], e:f[1].join(' · '), k:f[1].slice() })));
     return out; }
 };
 })();
