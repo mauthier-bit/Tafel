@@ -649,7 +649,7 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     Begriffslisten in alle sieben Werkzeuge übernehmen.
   Die Begriffe folgen den Lernbereichen des Lehrplans, die **Erklärungen sind eigens für die Tafel
   geschrieben** (kurze, schülergerechte Sätze) – der Lehrplantext selbst wird nicht wiedergegeben.
-- **Teilen per QR-Code** (27 Werkzeuge): Der Knopf **„Teilen"** (Pfeil aus dem offenen Kasten)
+- **Teilen per QR-Code** (28 Werkzeuge): Der Knopf **„Teilen"** (Pfeil aus dem offenen Kasten)
   zeigt einen **QR-Code**. Wer ihn mit der Kamera scannt, öffnet **dasselbe Werkzeug mit genau der
   Aufgabe**, die an der Tafel eingestellt ist – ohne Konto, ohne Anmeldung, ohne Server.
   Dabei sind: **Zuordnen**, **Reihenfolge**, **Lückentext**, **Stromkreis**, **Wellenwanne**,
@@ -658,7 +658,8 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   **Kreuzworträtsel**, **Buchstabengitter**, **Galgenmännchen**, **Glossar**, **Lernlandkarte**,
   **Begriffsnetz**, **Pinnwand**, **Wortwolke**, **Zeitleiste**, **Diagramm**,
   **Formel umstellen**, **Bruch**, **Wahrscheinlichkeitsrechner** (mit dem eingelesenen Datensatz)
-  und **3D-Koordinatensystem** (mit allen eingetragenen Punkten, Geraden und Ebenen).
+  und **3D-Koordinatensystem** (mit allen eingetragenen Punkten, Geraden und Ebenen)
+  sowie der **Funktionsplotter** (Terme, Parameter, Tabelle, Maschinen – auch verdeckte Terme bleiben verdeckt).
   - In der geteilten Fassung sind die **Bearbeiten-Werkzeuge und der Umschalter „Bearbeiten"
     ausgeblendet** – und mit ihnen die **Lösung**: Beim Kreuzworträtsel und beim Buchstabengitter
     verschwinden die Wortliste, der Lösungsschalter und die Begriffsknöpfe, beim Rest die jeweilige
@@ -1256,7 +1257,25 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   dem Finger anfassen. Das kleine **⚙ im Zifferblatt** (zwischen Mitte und 12) öffnet ihr Menü mit
   **Größe**, **Schulstunden**, **Digitalanzeige**, **„Wieder als Objekt auf die Seite"** (legt sie mit
   gleicher Größe und Position zurück auf die aktuelle Seite) und **„Uhr ausblenden"**.
-- **Funktionsplotter** (Werkzeug): Funktionsterm eingeben (mit Parametern **a, b, c** → Schieberegler),
+- **Funktionsplotter** (Werkzeug) – **drei Reiter: Graph, Tabelle, Maschine.** Der Funktionsterm lässt
+  sich **in jedem Reiter** eingeben und gilt sofort in allen dreien; „＋“ legt überall eine weitere Funktion an
+  (im Graph eine Eingabezeile, in der Tabelle eine Zeile, bei der Maschine eine weitere Maschine).
+  **Tabelle:** in der Kopfzeile stehen die **x-Werte zum Eintippen** („＋ x-Wert“ hängt eine Spalte an und
+  setzt den bisherigen Schritt fort, „− x-Wert“ nimmt die letzte weg); darunter für **jede Funktion eine
+  Zeile** mit den berechneten y-Werten in der Farbe der Funktion.
+  **Maschine:** oben der x-Wert, der durch einen Trichter in die Maschine (Zahnräder, darin die
+  Funktionsvorschrift) fällt, darunter der **Rechenweg mit eingesetztem x** (`f₁(−1,5) = 2·(−1,5)² + (−3)·(−1,5) + 1`;
+  negative Werte werden nur geklammert, wo es nötig ist) und unten der ausgeworfene y-Wert.
+  **Term verdecken (👁 neben der Eingabe):** Der Term bleibt erhalten und wirkt weiter, ist aber **nirgends mehr
+  zu sehen** – statt seiner steht „? ? ?“ (auch in der Maschine und in Bildern für die Tafel). So wird aus jeder
+  Funktion eine Aufgabe: *Welche Funktion steckt dahinter?* Ein zweiter Tipp zeigt ihn wieder.
+  **„x“ und „y“ (im Reiter Graph):** blenden einen **beweglichen Punkt auf der x- bzw. y-Achse** ein. Zu einem
+  x-Wert zeigen gestrichelte Linien zu **jedem Graphen** und weiter zur y-Achse den zugehörigen y-Wert; zu einem
+  y-Wert sucht das Werkzeug **alle sichtbaren x-Stellen** mit f(x) = y (auch Berührpunkte wie Scheitel) und zeigt
+  sie an. Beide Punkte zieht man mit dem Finger die Achse entlang, der Wert rastet auf einem Zehntel des
+  Achsenschritts ein. **⤴ Teilen** gibt den ganzen Zustand (Terme, Parameter, Tabelle, Maschinen, Reiter,
+  verdeckte Terme) als Link und QR-Code an die Klasse.
+  Funktionsterm eingeben (mit Parametern **a, b, c** → Schieberegler),
   Malpunkte dürfen fehlen (`2x`, `ax^2+bx+c`, `3(x+1)`, `2sin(x)`, `(x+1)(x−1)`), `|x|` ist der Betrag;
   das Minuszeichen bindet **schwächer als die Potenz** (`-x^2` ist also −(x²), `2^-3` bleibt möglich),
   und ein Term mit Tippfehler wird **nicht** gezeichnet, statt eine falsche Kurve zu zeigen;
@@ -1268,8 +1287,9 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   sofort für Punkt, Beschriftung und **Graph** und wird mit dem Tafel-Projekt gespeichert.
   **Farbe und Linienstärke**
   im **Kontextmenü** wirken auf den **aktiven Graphen** (die farblich hervorgehobene Eingabezeile –
-  im Bedien-Modus die Zeile antippen, um sie auszuwählen). **⌨ Formeln** blendet eine **Formel-Tastatur** ein (Ziffern, x, a/b/c, + − × ÷ ^ ², Klammern, sin/cos/tan, √, ln, eˣ, |x|, π – schreibt in die aktive Eingabezeile, die iPad-Tastatur bleibt zu; „ABC“ wechselt zur normalen Tastatur). **A−/A+** (neben „Ansicht“) für die Schriftgröße – Achsenbeschriftung, Eingabezeilen und Parameterregler wachsen mit (auch im Kontextmenü, dort zusätzlich fett/kursiv); **🖼 Tafel / 📋 Kopieren**: Graph mit
-  Legende (Terme, Parameterwerte) als Bild neben das Werkzeug legen bzw. in die Zwischenablage kopieren.
+  im Bedien-Modus die Zeile antippen, um sie auszuwählen). **⌨ Formeln** blendet eine **Formel-Tastatur** ein (Ziffern, x, a/b/c, + − × ÷ ^ ², Klammern, sin/cos/tan, √, ln, eˣ, |x|, π – schreibt in die aktive Eingabezeile, die iPad-Tastatur bleibt zu; „ABC“ wechselt zur normalen Tastatur). **A−/A+** (neben „Ansicht“) für die Schriftgröße – Achsenbeschriftung, Eingabezeilen und Parameterregler wachsen mit (auch im Kontextmenü, dort zusätzlich fett/kursiv); **🖼 Tafel / 📋 Kopieren**: Bild **des gerade
+  geöffneten Reiters** – Graph mit Legende (Terme, Parameterwerte), die **Wertetabelle** oder die **Maschinen** –
+  neben das Werkzeug legen bzw. in die Zwischenablage kopieren.
 - **Vierfeldertafel** (Werkzeug): 2×2-Tabelle mit editierbaren Beschriftungen. **Alle neun Felder** (vier innere,
   Zeilen- und Spaltensummen, Gesamt) sind eintragbar – beliebige gegebene Werte eintragen und **„Berechnen“** tippen:
   fehlende Felder werden **blau** ergänzt. Eingaben als Zahl, Dezimalzahl (Punkt oder Komma), Bruch (`1/4`) oder
