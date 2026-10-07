@@ -1364,7 +1364,14 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   **Mehrere Seiten auswählen:** Der Knopf **„☑ Auswählen"** oben rechts schaltet die Übersicht in den
   **Auswahlmodus** – jede Miniatur bekommt einen **Haken-Kreis**, Antippen wählt aus bzw. ab (statt zur Seite
   zu springen), ausgewählte Seiten sind blau umrandet. Unten erscheint eine Leiste mit der Anzahl und den
-  Knöpfen **Alle**, **Keine**, **📑 Als PDF** und **Fertig**. „Als PDF" legt die ausgewählten Seiten in
+  Knöpfen **Alle**, **Keine**, **⋮ Menü**, **📑 Als PDF** und **Fertig**.
+  **⋮ Menü** öffnet dasselbe Kontextmenü wie bei einer einzelnen Seite, nur **für die ganze Auswahl**:
+  **Muster** und **Hintergrundfarbe** lassen sich damit für alle ausgewählten Seiten **auf einmal**
+  setzen (statt Seite für Seite), dazu **Duplizieren, Kopieren, Ausschneiden, Einfügen** und
+  **🗑 Löschen** für die gesamte Auswahl. Haben die ausgewählten Seiten **unterschiedliche** Muster
+  oder Farben, ist nichts hervorgehoben – der erste Tipp macht sie dann alle gleich. Ändert sich die
+  Auswahl, während das Menü offen ist, **zieht es sofort nach**. Kopierte Seiten lassen sich auch über
+  das ⋮-Menü einer **einzelnen** Seite wieder einfügen (sie landen hinter dieser Seite). „Als PDF" legt die ausgewählten Seiten in
   **Seitenreihenfolge** in **eine** PDF-Datei (Name z. B. `Mathe-8b-Seiten-1-3-4.pdf`, bei mehr als vier
   Seiten `Mathe-8b-Auswahl-7-Seiten.pdf`). Im Auswahlmodus sind ⋮, ×, die Kachel „Neue Seite" und das
   Verschieben per Langdruck ausgeblendet, damit sich die Auswahl nicht unter der Hand verschiebt;
