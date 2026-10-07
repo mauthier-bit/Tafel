@@ -178,7 +178,7 @@
   .pp-thumb.pp-new{border-style:dashed;border-color:#b9c4d6;background:#f8fafc;display:flex;flex-direction:column;}
   .pp-thumb.pp-new .plus{height:110px;display:flex;align-items:center;justify-content:center;font-size:40px;line-height:1;color:var(--accent);}
   .pp-thumb.pp-new:hover{background:#eef4ff;border-color:var(--accent);}
-  #pageMenu{position:fixed;z-index:52;display:none;background:var(--panel);color:var(--panelText);border-radius:14px;box-shadow:var(--shadow);padding:10px;min-width:214px;max-width:264px;flex-direction:column;gap:8px;}
+  #pageMenu{position:fixed;z-index:52;display:none;background:var(--panel);color:var(--panelText);border-radius:14px;box-shadow:var(--shadow);padding:10px;min-width:250px;max-width:min(304px,calc(100vw - 20px));flex-direction:column;gap:8px;}
   #pageMenu.show{display:flex;}
   #pageMenu .pm-title{font-weight:700;font-size:14px;padding:0 2px 6px;border-bottom:1px solid #e3e7ee;display:flex;align-items:center;justify-content:space-between;gap:8px;}
   #pageMenu .pm-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
@@ -841,7 +841,7 @@
     <button class="tbtn" id="s-settings" title="Einstellungen / Hintergrund / Klassen"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 13a7 7 0 0 0 0-2l2-1.5-2-3.4-2.3 1a7 7 0 0 0-1.7-1L15 3H9l-.4 2.6a7 7 0 0 0-1.7 1l-2.3-1-2 3.4 2 1.5a7 7 0 0 0 0 2l-2 1.5 2 3.4 2.3-1a7 7 0 0 0 1.7 1L9 21h6l.4-2.6a7 7 0 0 0 1.7-1l2.3 1 2-3.4Z"/></svg></button>
     <button class="tbtn" id="s-save" title="Projekt speichern"><svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg></button>
     <button class="tbtn" id="s-load" title="Projekt laden"><svg viewBox="0 0 24 24"><path d="M3 20V9.5a1.8 1.8 0 0 1 1.8-1.8h3.9l1.8 1.8H18a1.8 1.8 0 0 1 1.8 1.8v1"/><path d="M3 20l2.4-6.6h16L19 20Z"/><path d="M12 7V1.8M9.6 4.2 12 1.8l2.4 2.4"/></svg></button>
-    <button class="tbtn" id="w-export" title="Als PDF exportieren"><svg viewBox="0 0 24 24"><path d="M6 2h9l5 5v15H6Z"/><path d="M12 11v6M9 14l3 3 3-3"/></svg></button>
+    <button class="tbtn" id="w-export" title="Alle Seiten als PDF (teilen oder sichern)"><svg viewBox="0 0 24 24"><path d="M6 2h9l5 5v15H6Z"/><path d="M12 11v6M9 14l3 3 3-3"/></svg></button>
     <button class="tbtn" id="s-paste" title="Aus der Zwischenablage einfügen"><svg viewBox="0 0 24 24"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M8 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2"/><path d="M9 13h6M9 17h4"/></svg></button>
   </div>
 </div>
@@ -3400,7 +3400,7 @@ function openPageMenu(idx, anchor){ pmIdx=idx; const p=doc.pages[idx]; const m=$
   const nm=document.createElement('span'); nm.className='pm-name'; nm.textContent=(p.name||('Seite '+(idx+1))); title.appendChild(nm);
   const cx=document.createElement('span'); cx.className='pm-x'; cx.textContent='×'; cx.title='Menü schließen'; cx.onclick=e=>{ e.stopPropagation(); closePageMenu(); }; title.appendChild(cx);
   m.appendChild(title);
-  const acts=[['rename','✏️ Umbenennen'],['dup','⧉ Duplizieren'],['copy','📄 Kopieren'],['cut','✂️ Ausschneiden'],['paste','📋 Einfügen']];
+  const acts=[['rename','✏️ Umbenennen'],['dup','⧉ Duplizieren'],['copy','📄 Kopieren'],['cut','✂️ Ausschneiden'],['paste','📋 Einfügen'],['pdf','📑 Als PDF']];
   const ag=document.createElement('div'); ag.className='pm-acts';
   acts.forEach(([a,lbl])=>{ const b=document.createElement('button'); b.textContent=lbl; if(a==='del')b.className='danger'; if(a==='paste'&&!pageClip)b.disabled=true; b.onclick=()=>pageAction(a,idx,anchor); ag.appendChild(b); });
   m.appendChild(ag);
@@ -3422,6 +3422,7 @@ function openPageMenu(idx, anchor){ pmIdx=idx; const p=doc.pages[idx]; const m=$
   m.style.left=Math.max(8,left)+'px'; m.style.top=top+'px'; }
 function pageStyleChanged(idx){ renderThumbs(); if(idx===doc.cur){ applyBg(); markDirty(); } scheduleAutosave(); }
 function pageAction(a, idx, anchor){ const p=doc.pages[idx], curPage=doc.pages[doc.cur];
+  if(a==='pdf'){ closePageMenu(); seitePdf(idx); return; }            /* nur diese eine Seite als PDF */
   if(a==='rename'){ const nm=prompt('Name der Seite:', p.name||''); if(nm===null)return; p.name=nm.trim()||null; }
   else if(a==='dup'){ doc.pages.splice(idx+1,0,clonePage(p)); }
   else if(a==='copy'){ pageClip=clonePage(p); closePageMenu(); toast('Seite kopiert'); return; }
@@ -5801,7 +5802,7 @@ function ensurePageImg(p){ if(p.bg&&!p._img){const im=new Image();im.onload=mark
 function ensureImgs(){ ensurePageImg(page()); for(const o of page().objects) ensureImg(o); }
 
 /* ============ PDF-Export ============ */
-$('w-export').onclick=exportPDF;
+$('w-export').onclick=()=>exportPDF();
 function pageContentBounds(p){ let a=1e9,b=1e9,c=-1e9,d=-1e9,any=false;
   if(p._img){const bx=p.bgX||0,by=p.bgY||0; a=Math.min(a,bx);b=Math.min(b,by);c=Math.max(c,bx+p._img.width);d=Math.max(d,by+p._img.height);any=true;}
   for(const o of p.objects){const bb=geomBounds(o);a=Math.min(a,bb.x);b=Math.min(b,bb.y);c=Math.max(c,bb.x+bb.w);d=Math.max(d,bb.y+bb.h);any=true;}
@@ -5810,17 +5811,39 @@ function renderPageToCanvas(p,maxW=1600){ const bd=pageContentBounds(p),sc=Math.
   cx2.fillStyle=bgHexOf(pageBg(p));cx2.fillRect(0,0,c.width,c.height); cx2.setTransform(sc,0,0,sc,-bd.x*sc,-bd.y*sc);
   paintPattern(cx2, bd.x,bd.y,bd.x+bd.w,bd.y+bd.h, pagePat(p), isBgDarkOf(pageBg(p)), sc);
   if(p._img){try{cx2.drawImage(p._img,p.bgX||0,p.bgY||0);}catch(e){}} for(const o of p.objects) drawObject(o,cx2); return c; }
-function exportPDF(){ if(!window.jspdf){toast('PDF-Bibliothek fehlt');return;} showBusy(true,'PDF wird erstellt…');
-  setTimeout(()=>{ try{ const {jsPDF}=window.jspdf; let pdf=null;
-    doc.pages.forEach(p=>{ let c;
-      if(p.embed){ c=document.createElement('canvas');c.width=1400;c.height=990;const g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,1400,990);g.fillStyle='#555';g.font='40px sans-serif';g.fillText('Eingebettete Seite: '+(p.embed.label||p.embed.type),80,120);g.font='24px sans-serif';g.fillText(p.embed.src.slice(0,90),80,180);
-        const bd=pageContentBounds(p),sc=Math.min(1400/Math.max(bd.w,1400),2);g.save();g.setTransform(sc,0,0,sc,-bd.x*sc,-bd.y*sc);for(const o of p.objects)drawObject(o,g);g.restore(); }
-      else c=renderPageToCanvas(p);
-      const orient=c.width>=c.height?'l':'p'; if(!pdf)pdf=new jsPDF({orientation:orient,unit:'mm',format:'a4'});else pdf.addPage('a4',orient);
-      const iw=orient==='l'?297:210, ih=orient==='l'?210:297, r=Math.min(iw/c.width,ih/c.height), w=c.width*r, h=c.height*r;
-      pdf.addImage(c.toDataURL('image/jpeg',0.85),'JPEG',(iw-w)/2,(ih-h)/2,w,h); });
-    pdf.save('tafel-'+new Date().toISOString().slice(0,10)+'.pdf'); toast('PDF exportiert');
-  }catch(err){ toast('Export-Fehler: '+err.message); } showBusy(false); },50); }
+/* ---- PDF: eine Seite aufs Blatt ---- */
+function pdfSeiteCanvas(p){
+  if(!p.embed) return renderPageToCanvas(p);
+  const c=document.createElement('canvas'); c.width=1400; c.height=990; const g=c.getContext('2d');
+  g.fillStyle='#fff'; g.fillRect(0,0,1400,990); g.fillStyle='#555'; g.font='40px sans-serif';
+  g.fillText('Eingebettete Seite: '+(p.embed.label||p.embed.type),80,120);
+  g.font='24px sans-serif'; g.fillText(p.embed.src.slice(0,90),80,180);
+  const bd=pageContentBounds(p), sc=Math.min(1400/Math.max(bd.w,1400),2);
+  g.save(); g.setTransform(sc,0,0,sc,-bd.x*sc,-bd.y*sc); for(const o of p.objects) drawObject(o,g); g.restore();
+  return c; }
+function pdfBauen(seiten){ const {jsPDF}=window.jspdf; let pdf=null;
+  seiten.forEach(p=>{ const c=pdfSeiteCanvas(p);
+    const orient=c.width>=c.height?'l':'p'; if(!pdf)pdf=new jsPDF({orientation:orient,unit:'mm',format:'a4'});else pdf.addPage('a4',orient);
+    const iw=orient==='l'?297:210, ih=orient==='l'?210:297, r=Math.min(iw/c.width,ih/c.height), w=c.width*r, h=c.height*r;
+    pdf.addImage(c.toDataURL('image/jpeg',0.85),'JPEG',(iw-w)/2,(ih-h)/2,w,h); });
+  return pdf; }
+const pdfName=t=>String(t).replace(/\s+/g,' ').trim().replace(/[^\wäöüÄÖÜß.\- ]+/g,'').replace(/ /g,'-').replace(/-+/g,'-').replace(/^-|-$/g,'')||'tafel';
+/* Weitergeben: auf dem iPad das Teilen-Blatt (AirDrop, Mail, „In Dateien sichern“), sonst herunterladen */
+async function pdfAusgeben(pdf, datei, meldung){
+  try{ const blob=pdf.output('blob'); const f=new File([blob],datei,{type:'application/pdf'});
+    if(navigator.canShare&&navigator.canShare({files:[f]})){ await navigator.share({files:[f],title:datei}); toast(meldung); return; } }
+  catch(e){ if(e&&e.name==='AbortError') return; }                 /* Teilen abgebrochen: nichts herunterladen */
+  pdf.save(datei); toast(meldung); }
+function exportPDF(seiten, datei){ if(!window.jspdf){toast('PDF-Bibliothek fehlt');return;}
+  const liste=(seiten&&seiten.length)?seiten:doc.pages;
+  const name=datei||(pdfName(doc.name||'tafel')+'-'+new Date().toISOString().slice(0,10)+'.pdf');
+  showBusy(true,'PDF wird erstellt…');
+  setTimeout(()=>{ let pdf=null;
+    try{ pdf=pdfBauen(liste); }catch(err){ toast('Export-Fehler: '+err.message); showBusy(false); return; }
+    showBusy(false);
+    pdfAusgeben(pdf,name,liste.length===1?'Seite als PDF':'PDF mit '+liste.length+' Seiten'); },50); }
+function seitePdf(idx){ const p=doc.pages[idx]; if(!p) return;
+  exportPDF([p], pdfName((doc.name||'tafel')+' '+(p.name||('Seite '+(idx+1))))+'.pdf'); }
 
 /* ============ Speichern / Laden ============ */
 function stripObj(o){ const c={...o}; delete c._img; delete c._imgs; delete c._hidden; delete c._lock; delete c._prev; delete c._guide; delete c._straight; if(c.type==='embed'&&(c.etype==='clip'||c.etype==='audio')&&!c.keep)c.src=''; return c; }

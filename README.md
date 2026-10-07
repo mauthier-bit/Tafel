@@ -1351,7 +1351,9 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   fragt beim Einfügen nach). Braucht Internet (nutzt Chart.js u. a. per CDN).
 - **Seitenübersicht:** auf die **Seitenzahl** (z. B. „2/5") tippen → Miniaturen aller Seiten,
   eine antippen wechselt direkt dorthin. Jede Miniatur hat oben rechts ein **⋮-Menü** (mit **×** zum
-  Schließen) mit **Umbenennen, Duplizieren, Kopieren, Ausschneiden, Einfügen** sowie **Seitenstil** (Muster
+  Schließen) mit **Umbenennen, Duplizieren, Kopieren, Ausschneiden, Einfügen**, **📑 Als PDF**
+  (**nur diese eine Seite** als PDF – Dateiname aus Projekt- und Seitenname, z. B. `Mathe-8b-Hausaufgabe.pdf`)
+  sowie **Seitenstil** (Muster
   Kein/Karo/Linien/Punkte/Noten/Dreiecke **und** Hintergrundfarbe) – **je Seite einzeln** einstellbar –
   und oben links ein **rotes ×** zum **Löschen** der Seite
   (der Seitenname erscheint auch in der Kopfzeile). Hinter der letzten Seite steht eine gestrichelte
@@ -1369,7 +1371,11 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   Fenster) oder **CSV importieren** (Name in der 1. Spalte); Button „Zufälliger Name" zieht per Zufall
   eine Person (ohne Wiederholung) – **animiert wie ein Spielautomat**: die Namen laufen im Slot-Fenster
   durch, werden langsamer und bleiben auf dem gezogenen Namen stehen.
-- **PDF-Export** der ganzen Tafel
+- **PDF-Export**: die **ganze Tafel** über den Werkzeugknopf oder **eine einzelne Seite** über
+  **📑 Als PDF** im ⋮-Menü der Seitenübersicht. Auf dem iPad öffnet sich dabei das gewohnte
+  **Teilen-Blatt** (AirDrop, Mail, Nachrichten, „In Dateien sichern“) – so lässt sich eine einzelne Tafelseite
+  direkt weitergeben; wo das Gerät das nicht kann, wird die Datei wie bisher **heruntergeladen**.
+  Der Dateiname der Gesamtausgabe trägt jetzt den **Projektnamen** (z. B. `Mathe-8b-2026-10-07.pdf`).
 - **Vollbild-Button** (oben links in der Einstellungs-Leiste; wird beim **Minimieren** der Leiste
   mit ausgeblendet)
 - **Speichern/Laden** als `.tafel`-Datei + automatische Sicherung im Browser
