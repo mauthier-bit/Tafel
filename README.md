@@ -1361,6 +1361,14 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   Die Miniaturen behalten immer **dieselbe Größe** (werden bei vielen Seiten nicht gequetscht) –
   bei Bedarf wird die Übersicht **scrollbar**. Die Spaltenzahl wird auch beim **Drehen des iPads**
   neu berechnet, sodass keine Seite mehr seitlich aus dem Fenster rutscht.
+  **Mehrere Seiten auswählen:** Der Knopf **„☑ Auswählen"** oben rechts schaltet die Übersicht in den
+  **Auswahlmodus** – jede Miniatur bekommt einen **Haken-Kreis**, Antippen wählt aus bzw. ab (statt zur Seite
+  zu springen), ausgewählte Seiten sind blau umrandet. Unten erscheint eine Leiste mit der Anzahl und den
+  Knöpfen **Alle**, **Keine**, **📑 Als PDF** und **Fertig**. „Als PDF" legt die ausgewählten Seiten in
+  **Seitenreihenfolge** in **eine** PDF-Datei (Name z. B. `Mathe-8b-Seiten-1-3-4.pdf`, bei mehr als vier
+  Seiten `Mathe-8b-Auswahl-7-Seiten.pdf`). Im Auswahlmodus sind ⋮, ×, die Kachel „Neue Seite" und das
+  Verschieben per Langdruck ausgeblendet, damit sich die Auswahl nicht unter der Hand verschiebt;
+  **Fertig** stellt alles zurück.
   **Bedienung der Miniaturen:** **antippen** springt zur Seite, **streichen** scrollt die Übersicht
   (auch direkt auf einer Miniatur), **lange gedrückt halten** (ca. eine halbe Sekunde) und ziehen
   ordnet die Seiten neu. Zusätzlich gibt es oben rechts **▲/▼-Knöpfe** zum seitenweisen Scrollen
@@ -1371,10 +1379,10 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   Fenster) oder **CSV importieren** (Name in der 1. Spalte); Button „Zufälliger Name" zieht per Zufall
   eine Person (ohne Wiederholung) – **animiert wie ein Spielautomat**: die Namen laufen im Slot-Fenster
   durch, werden langsamer und bleiben auf dem gezogenen Namen stehen.
-- **PDF-Export**: die **ganze Tafel** über den Werkzeugknopf oder **eine einzelne Seite** – entweder
-  über den **Teilen-Knopf in der Seiten-Leiste** (gibt immer die gerade aufgeschlagene Seite weiter)
-  oder über **📑 Als PDF** im ⋮-Menü der Seitenübersicht (dort jede beliebige Seite, auch eine
-  andere als die aktuelle). Auf dem iPad öffnet sich dabei das gewohnte
+- **PDF-Export** in vier Abstufungen: die **ganze Tafel** über den Werkzeugknopf oben links, die
+  **aktuelle Seite** über den **Teilen-Knopf in der Seiten-Leiste**, **eine beliebige Seite** über
+  **📑 Als PDF** im ⋮-Menü der Seitenübersicht und **mehrere ausgewählte Seiten** über
+  **„☑ Auswählen"** in der Seitenübersicht (Haken setzen, dann „📑 Als PDF"). Auf dem iPad öffnet sich dabei das gewohnte
   **Teilen-Blatt** (AirDrop, Mail, Nachrichten, „In Dateien sichern“) – so lässt sich eine einzelne Tafelseite
   direkt weitergeben; wo das Gerät das nicht kann, wird die Datei wie bisher **heruntergeladen**.
   Der Dateiname der Gesamtausgabe trägt jetzt den **Projektnamen** (z. B. `Mathe-8b-2026-10-07.pdf`).

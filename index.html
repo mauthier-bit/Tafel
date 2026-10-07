@@ -175,6 +175,21 @@
   .pp-thumb .pmBtn{position:absolute;top:4px;right:4px;background:rgba(31,36,48,.82);color:#fff;border:none;border-radius:7px;width:28px;height:24px;font-size:17px;line-height:1;cursor:pointer;padding:0;}
   .pp-thumb .pmDel{position:absolute;top:4px;left:4px;background:#ef4444;color:#fff;border:none;border-radius:7px;width:26px;height:24px;font-size:17px;line-height:1;cursor:pointer;padding:0;}
   .pp-thumb .pmDel:hover{background:#dc2626;}
+  /* ---- Mehrere Seiten auswählen ---- */
+  .pp-thumb .pmPick{position:absolute;top:4px;left:4px;width:26px;height:26px;border-radius:50%;border:2px solid #fff;
+    background:rgba(31,36,48,.38);color:#fff;font-size:15px;line-height:22px;text-align:center;display:none;pointer-events:none;}
+  #pagePreview.pick .pp-thumb .pmPick{display:block;}
+  #pagePreview.pick .pp-thumb .pmBtn,#pagePreview.pick .pp-thumb .pmDel,#pagePreview.pick .pp-thumb.pp-new{display:none;}
+  #pagePreview.pick .pp-thumb.sel{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent);}
+  #pagePreview.pick .pp-thumb.sel .pmPick{background:var(--accent);}
+  .pp-pickbar{display:none;align-items:center;gap:8px;flex-wrap:wrap;padding:9px 14px;background:#eef2f8;border-top:1px solid #e1e6ee;font-size:14px;flex:none;}
+  #pagePreview.pick .pp-pickbar{display:flex;}
+  .pp-pickbar .sp{flex:1 1 auto;}
+  .pp-pickbar button{border:1px solid #cfd6e0;background:#fff;border-radius:8px;padding:7px 11px;font-size:13px;cursor:pointer;font-family:inherit;color:#1f2430;}
+  .pp-pickbar button.pri{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700;}
+  .pp-pickbar button:disabled{opacity:.45;cursor:default;}
+  #ppPick{border:1px solid #cfd6e0;background:#fff;border-radius:8px;padding:6px 10px;font-size:13px;cursor:pointer;font-family:inherit;color:#42506a;white-space:nowrap;}
+  #ppPick.on{background:var(--accent);border-color:var(--accent);color:#fff;}
   .pp-thumb.pp-new{border-style:dashed;border-color:#b9c4d6;background:#f8fafc;display:flex;flex-direction:column;}
   .pp-thumb.pp-new .plus{height:110px;display:flex;align-items:center;justify-content:center;font-size:40px;line-height:1;color:var(--accent);}
   .pp-thumb.pp-new:hover{background:#eef4ff;border-color:var(--accent);}
@@ -977,7 +992,7 @@
 </div>
 <!-- Namensziehung -->
 <div id="namePick"><div id="nameWin"><div id="nameBig">–</div></div><div class="row"><button class="btn pri" id="nameAgain">Nochmal</button><button class="btn" id="nameReset">Zurücksetzen</button><button class="btn" id="nameClose">Schließen</button></div><div class="hint" id="nameInfo" style="color:#bbb"></div></div>
-<div id="pagePreview"><div class="pp-inner"><div class="pp-head"><span>Seiten <small style="font-weight:400;color:#8a93a2">· ⋮ = Menü · lang drücken = verschieben</small></span><span style="display:flex;align-items:center;gap:6px"><button class="ppScroll" id="ppUp" title="nach oben">▲</button><button class="ppScroll" id="ppDown" title="nach unten">▼</button><span class="x" id="ppClose">×</span></span></div><div class="pp-grid" id="ppGrid"></div></div></div>
+<div id="pagePreview"><div class="pp-inner"><div class="pp-head"><span>Seiten <small id="ppHint" style="font-weight:400;color:#8a93a2">· ⋮ = Menü · lang drücken = verschieben</small></span><span style="display:flex;align-items:center;gap:6px"><button id="ppPick" title="Mehrere Seiten auswählen und gemeinsam als PDF ausgeben">☑ Auswählen</button><button class="ppScroll" id="ppUp" title="nach oben">▲</button><button class="ppScroll" id="ppDown" title="nach unten">▼</button><span class="x" id="ppClose">×</span></span></div><div class="pp-grid" id="ppGrid"></div><div class="pp-pickbar" id="ppPickBar"><span id="ppPickInfo">Keine Seite ausgewählt</span><span class="sp"></span><button id="ppAll">Alle</button><button id="ppNone">Keine</button><button class="pri" id="ppPdf">📑 Als PDF</button><button id="ppPickEnd">Fertig</button></div></div></div>
 <div id="pageMenu"></div>
 <div id="fsUi"><div id="fsTop"></div><button id="fsClose" type="button"><span class="griff">⠿</span>⤢ Vollbild beenden</button><div id="fsHint">Von oben nach unten wischen beendet das Vollbild</div><div id="fsBar"><div id="fsThumb"></div></div></div>
 <div id="fsDoc"><img id="fsDocImg" alt=""></div>
@@ -3376,11 +3391,14 @@ function renderThumbs(){ const grid=$('ppGrid'); grid.innerHTML='';
   fitPreviewGrid();
   doc.pages.forEach((p,i)=>{ const cell=document.createElement('div'); cell.className='pp-thumb'+(i===doc.cur?' cur':''); cell.dataset.idx=i;
     let url=''; try{ url=renderPageToCanvas(p,320).toDataURL('image/jpeg',0.72); }catch(e){}
-    cell.innerHTML='<img src="'+url+'"><div class="lbl"></div><button class="pmDel" title="Seite löschen">×</button><button class="pmBtn" title="Seiten-Menü">⋮</button>';
+    cell.innerHTML='<img src="'+url+'"><div class="lbl"></div><button class="pmDel" title="Seite löschen">×</button><button class="pmBtn" title="Seiten-Menü">⋮</button><span class="pmPick"></span>';
+    if(ppPick&&ppSel.has(i)){ cell.classList.add('sel'); cell.querySelector('.pmPick').textContent='✓'; }
     cell.querySelector('.lbl').textContent = p.name ? p.name : ('Seite '+(i+1));
     cell.querySelector('.pmBtn').onclick=ev=>{ ev.stopPropagation(); openPageMenu(i, ev.currentTarget); };
     cell.querySelector('.pmDel').onclick=ev=>{ ev.stopPropagation(); closePageMenu(); pageAction('del', i, null); };
-    cell.onclick=()=>{ if(pmSuppressClick){ pmSuppressClick=false; return; } closePageMenu(); goPage(i); $('pagePreview').classList.remove('show'); };
+    cell.onclick=()=>{ if(pmSuppressClick){ pmSuppressClick=false; return; }
+      if(ppPick){ ppUmschalten(i,cell); return; }                      /* Auswahlmodus: tippen wählt aus, statt zu blättern */
+      closePageMenu(); goPage(i); $('pagePreview').classList.remove('show'); };
     attachThumbDrag(cell, i);
     grid.appendChild(cell); });
   const add=document.createElement('div');                            // Kachel: neue Seite am Ende
@@ -3392,6 +3410,28 @@ function renderThumbs(){ const grid=$('ppGrid'); grid.innerHTML='';
 /* ---- Seite kopieren/klonen (frische Objekt-IDs) ---- */
 function clonePage(p){ return { objects:(p.objects||[]).map(o=>{ const c=JSON.parse(JSON.stringify(stripObj(o))); c.id=uid(); return c; }),
   redo:[], bg:p.bg||null, bgX:p.bgX||0, bgY:p.bgY||0, _img:null, embed:null, name:p.name||null, bgColor:p.bgColor||null, pattern:p.pattern||null }; }
+/* ---- Mehrere Seiten auswählen und zusammen als PDF ausgeben ---- */
+let ppPick=false; const ppSel=new Set();
+function ppInfo(){ const n=ppSel.size;
+  $('ppPickInfo').textContent = n===0?'Keine Seite ausgewählt' : (n===1?'1 Seite ausgewählt':n+' Seiten ausgewählt');
+  $('ppPdf').disabled=!n; $('ppNone').disabled=!n; $('ppAll').disabled=(n===doc.pages.length);
+  $('ppHint').textContent = ppPick?'· tippen = auswählen':'· ⋮ = Menü · lang drücken = verschieben'; }
+function ppUmschalten(i,cell){ if(ppSel.has(i)) ppSel.delete(i); else ppSel.add(i);
+  const an=ppSel.has(i); cell.classList.toggle('sel',an); cell.querySelector('.pmPick').textContent=an?'✓':''; ppInfo(); }
+function ppModus(an){ ppPick=!!an; ppSel.clear();
+  $('pagePreview').classList.toggle('pick',ppPick); $('ppPick').classList.toggle('on',ppPick);
+  $('ppPick').textContent=ppPick?'✕ Auswahl beenden':'☑ Auswählen';
+  closePageMenu(); renderThumbs(); ppInfo(); fitPreviewHeight(); }
+function ppAlsPdf(){ const idx=[...ppSel].sort((a,b)=>a-b); if(!idx.length) return;
+  if(idx.length===1){ seitePdf(idx[0]); return; }
+  const nr=idx.map(i=>i+1);
+  const teil = nr.length<=4 ? ('Seiten-'+nr.join('-')) : ('Auswahl-'+nr.length+'-Seiten');
+  exportPDF(idx.map(i=>doc.pages[i]), pdfName((doc.name||'tafel')+' '+teil)+'.pdf'); }
+$('ppPick').onclick=()=>ppModus(!ppPick);
+$('ppPickEnd').onclick=()=>ppModus(false);
+$('ppAll').onclick=()=>{ doc.pages.forEach((_,i)=>ppSel.add(i)); renderThumbs(); ppInfo(); };
+$('ppNone').onclick=()=>{ ppSel.clear(); renderThumbs(); ppInfo(); };
+$('ppPdf').onclick=ppAlsPdf;
 /* ---- Seiten-Kontextmenü ---- */
 let pageClip=null, pmIdx=-1;
 const PMPATS=[['none','Kein'],['grid','Karo'],['lines','Linien'],['dots','Punkte'],['staff','Noten'],['triangles','Dreiecke']];
@@ -3434,7 +3474,7 @@ function pageAction(a, idx, anchor){ const p=doc.pages[idx], curPage=doc.pages[d
   closePageMenu(); ensureAllImages(); selection=[]; refreshProps(); refreshPage(); renderThumbs(); markDirty(); scheduleAutosave(); }
 /* ---- Vorschau lang drücken = verschieben ---- */
 let pmDragging=false, pmDragIdx=-1, pmLongTimer=null, pmStart=null, pmSuppressClick=false, pmScrolling=false, pmLastY=0;
-function attachThumbDrag(cell, idx){ cell.addEventListener('pointerdown', e=>{ if(e.target.closest('.pmBtn')||e.target.closest('.pmDel'))return;
+function attachThumbDrag(cell, idx){ cell.addEventListener('pointerdown', e=>{ if(ppPick||e.target.closest('.pmBtn')||e.target.closest('.pmDel'))return;
   pmStart={x:e.clientX,y:e.clientY}; pmLastY=e.clientY; pmScrolling=false; clearTimeout(pmLongTimer);
   pmLongTimer=setTimeout(()=>{ startThumbDrag(cell); }, 500); }); }
 function startThumbDrag(cell){ if(pmScrolling)return; pmDragging=true; pmStart=null; closePageMenu(); cell.classList.add('pm-drag'); $('ppGrid').classList.add('reordering'); try{navigator.vibrate&&navigator.vibrate(12);}catch(_){} }
@@ -3474,14 +3514,15 @@ function fitPreviewHeight(){ const grid=$('ppGrid'), head=document.querySelector
   fitPreviewGrid();                                     // Spaltenzahl an die neue Breite anpassen
   const h=Math.round(visH()*0.88);                      // sichtbare Höhe (iPad-Safari: vh/innerHeight reichen hinter die Leisten)
   if(inner) inner.style.maxHeight=h+'px';
-  grid.style.maxHeight=Math.max(120,h-head.offsetHeight)+'px';
+  const pb=$('ppPickBar'), ph=(pb&&pb.offsetParent)?pb.offsetHeight:0;
+  grid.style.maxHeight=Math.max(120,h-head.offsetHeight-ph)+'px';
   const over=grid.scrollHeight>grid.clientHeight+2;      // Scroll-Knöpfe nur zeigen, wenn es etwas zu scrollen gibt
   $('ppUp').style.display=$('ppDown').style.display=over?'inline-flex':'none'; }
 addEventListener('resize',()=>{ if($('pagePreview').classList.contains('show')) fitPreviewHeight(); });
 if(window.visualViewport) visualViewport.addEventListener('resize',()=>{ if($('pagePreview').classList.contains('show')) fitPreviewHeight(); });
 addEventListener('orientationchange',()=>{ if($('pagePreview').classList.contains('show')) setTimeout(fitPreviewHeight,250); });
 function ppScroll(d){ const g=$('ppGrid'); g.scrollBy({top:d*Math.max(120,g.clientHeight-60),behavior:'smooth'}); }
-function openPagePreview(){ closePageMenu(); ensureAllImages(); renderThumbs(); $('pagePreview').classList.add('show'); $('ppGrid').scrollTop=0; fitPreviewHeight(); setTimeout(()=>{ if($('pagePreview').classList.contains('show')){ renderThumbs(); fitPreviewHeight(); } },320); }
+function openPagePreview(){ closePageMenu(); ensureAllImages(); ppModus(false); renderThumbs(); $('pagePreview').classList.add('show'); $('ppGrid').scrollTop=0; fitPreviewHeight(); setTimeout(()=>{ if($('pagePreview').classList.contains('show')){ renderThumbs(); fitPreviewHeight(); } },320); }
 $('pageInfo').onclick=openPagePreview;
 $('ppClose').onclick=()=>{ closePageMenu(); $('pagePreview').classList.remove('show'); };
 $('ppUp').onclick=e=>{ e.stopPropagation(); ppScroll(-1); }; $('ppDown').onclick=e=>{ e.stopPropagation(); ppScroll(1); };
