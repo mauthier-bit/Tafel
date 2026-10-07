@@ -1364,7 +1364,8 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   **Mehrere Seiten auswählen:** Der Knopf **„☑ Auswählen"** oben rechts schaltet die Übersicht in den
   **Auswahlmodus** – jede Miniatur bekommt einen **Haken-Kreis**, Antippen wählt aus bzw. ab (statt zur Seite
   zu springen), ausgewählte Seiten sind blau umrandet. Unten erscheint eine Leiste mit der Anzahl und den
-  Knöpfen **Alle**, **Keine**, **⋮ Menü**, **📑 Als PDF** und **Fertig**.
+  Knöpfen **Alle**, **⋮ Menü**, **📑 Als PDF** und **Fertig** (zum Verwerfen der Auswahl genügt
+  **Fertig** – der nächste Tipp auf „☑ Auswählen" fängt wieder bei null an).
   **⋮ Menü** öffnet dasselbe Kontextmenü wie bei einer einzelnen Seite, nur **für die ganze Auswahl**:
   **Muster** und **Hintergrundfarbe** lassen sich damit für alle ausgewählten Seiten **auf einmal**
   setzen (statt Seite für Seite), dazu **Duplizieren, Kopieren, Ausschneiden, Einfügen** und
