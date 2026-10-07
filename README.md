@@ -1371,8 +1371,10 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   Fenster) oder **CSV importieren** (Name in der 1. Spalte); Button „Zufälliger Name" zieht per Zufall
   eine Person (ohne Wiederholung) – **animiert wie ein Spielautomat**: die Namen laufen im Slot-Fenster
   durch, werden langsamer und bleiben auf dem gezogenen Namen stehen.
-- **PDF-Export**: die **ganze Tafel** über den Werkzeugknopf oder **eine einzelne Seite** über
-  **📑 Als PDF** im ⋮-Menü der Seitenübersicht. Auf dem iPad öffnet sich dabei das gewohnte
+- **PDF-Export**: die **ganze Tafel** über den Werkzeugknopf oder **eine einzelne Seite** – entweder
+  über den **Teilen-Knopf in der Seiten-Leiste** (gibt immer die gerade aufgeschlagene Seite weiter)
+  oder über **📑 Als PDF** im ⋮-Menü der Seitenübersicht (dort jede beliebige Seite, auch eine
+  andere als die aktuelle). Auf dem iPad öffnet sich dabei das gewohnte
   **Teilen-Blatt** (AirDrop, Mail, Nachrichten, „In Dateien sichern“) – so lässt sich eine einzelne Tafelseite
   direkt weitergeben; wo das Gerät das nicht kann, wird die Datei wie bisher **heruntergeladen**.
   Der Dateiname der Gesamtausgabe trägt jetzt den **Projektnamen** (z. B. `Mathe-8b-2026-10-07.pdf`).
@@ -1986,8 +1988,9 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
 2. **Seiten-Leiste (unten rechts, senkrecht):** blättern (‹ ›), Seite hinzufügen/löschen, Zoom
    zurücksetzen. Der **Minimier-Pfeil zeigt nach unten** (⌄) – klar unterscheidbar von den
    Blätter-Pfeilen. Minimiert bleiben Minimier-Pfeil und **+** (neue Seite) sichtbar.
-2b. **Seiten-Leiste (oben rechts, waagrecht):** blättern, Seite +/−, Zoom, Seitenzahl (= Übersicht).
-   Lässt sich **vollständig einklappen** – dann bleibt nur der Aufklapp-Pfeil.
+2b. **Seiten-Leiste (oben rechts, waagrecht):** blättern, Seite +/−, Zoom, Seitenzahl (= Übersicht)
+   und ein **Teilen-Knopf** (Pfeil aus dem offenen Kasten), der die **gerade aufgeschlagene Seite**
+   als PDF weitergibt. Lässt sich **vollständig einklappen** – dann bleibt nur der Aufklapp-Pfeil.
 3. **Einstellungs-Leiste (oben links):** Projekt-Auswahl, Vollbild, **Zurück/Vor (Rückgängig)**,
    **Seite leeren**, Einstellungen (Hintergrund, Klassenlisten), Speichern, Laden, **PDF-Export**.
    Lässt sich ebenfalls **vollständig einklappen** (nur der Aufklapp-Pfeil bleibt).
