@@ -908,7 +908,7 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     (Netz als Bild), **Neu**, **Speichern/Laden** als `.json` und der Umschalter
     **Benutzen/Bearbeiten**. Das Netz wird **mit dem Tafel-Projekt gespeichert**; im kleinen
     Objektfenster verkleinert es sich so weit, dass immer das ganze Netz zu sehen ist.
-- **Gleichungslöser** (Mathe & Physik): bewegliches Objekt mit großem Eingabefeld und zwei Modi:
+- **Gleichungslöser** (Mathe & Physik): bewegliches Objekt mit großem Eingabefeld und drei Reitern:
   - **Gleichung** (Variable x): tippt man z. B. `2x+3=7`, `x^2-5x+6=0` oder `3/(x-2)=2/(x+1)`.
     **Lineare, quadratische und Bruchgleichungen** werden mit Lösungsweg gelöst – bei Bruchgleichungen
     mit **Definitionsmenge 𝔻**, **Hauptnenner** (in Linearfaktoren), der Gleichung nach dem
@@ -916,6 +916,25 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     liegen, werden rot als „entfällt" markiert (z. B. `x/(x-2)=2/(x-2)`). Ergebnisse als **Bruch**
     (z. B. −3/5), sonst gerundet; höhere Grade werden numerisch gelöst. `:` = geteilt, Komma als
     Dezimalzeichen möglich.
+  - **Waage** – Äquivalenzumformungen zum Anfassen. Eine Gleichung wie `3x+2 = x+8` kommt mit
+    **„⚖ Auf die Waage"** als **Balkenwaage** aufs Bild: Die blauen **Kisten** sind die gesuchte Größe
+    **x**, die grauen Würfel wiegen je **1**. Beides liegt in genau der Anzahl auf den Schalen, die in
+    der Gleichung steht.
+    - **„Auf beiden Seiten":** **− 1 · + 1 · − x · + x** und **: 2, : 3 …** (die Teiler erscheinen nur,
+      wenn beide Seiten wirklich restlos in gleiche Teile passen). Alles, was auf beiden Seiten gleich
+      geschieht, lässt die Waage **im Gleichgewicht** – das ist der Kern der Äquivalenzumformung.
+    - **„Nur links" / „Nur rechts":** verändert absichtlich **eine** Seite – die Waage **kippt**
+      sichtbar und eine rote Meldung erklärt, dass die Gleichung nun nicht mehr stimmt (im Protokoll
+      steht dann `3x + 1 ≠ x + 8`). Gut, um zu zeigen, **warum** man immer beides tun muss.
+    - Darunter wächst das **Protokoll** in der gewohnten Schreibweise mit, Umformung für Umformung:
+      `3x + 2 = x + 8 | −1`, `3x + 1 = x + 7 | −1`, `3x = x + 6 | −x`, `2x = 6 | :2`, `x = 3`.
+      Bleibt links eine Kiste und rechts nur Gewichte, steht grün da: **„x = 3 – eine Kiste wiegt
+      3 Gewichte"** – so wird das **unbekannte Gewicht bestimmt**. **↩ Schritt zurück** und
+      **⟲ Von vorn** jederzeit.
+    - Klammern und Brüche in der Eingabe sind erlaubt (`2(x+3)=x+7`), das Ergebnis muss aber auf eine
+      Waage passen: **ganze, nicht negative Anzahlen**. `x+5=2` (Lösung −3), `x/2+3=5` (eine halbe
+      Kiste) oder `x²`-Terme lehnt das Werkzeug mit einem erklärenden Satz ab, statt etwas
+      Unphysikalisches zu zeichnen.
   - **Einfache trigonometrische Gleichungen** (sin, cos, tan mit linearem Argument, z. B. `2sin(x)=1`,
     `cos(2x+30)=0,5`, auch quadratisch wie `2sin^2(x)-sin(x)-1=0` per Substitution): allgemeine Lösung
     mit k ∈ ℤ und alle Lösungen in [0°; 360°[. Umschalter **Grad / Bogenmaß** (dann z. B. π/6, 5π/12).
