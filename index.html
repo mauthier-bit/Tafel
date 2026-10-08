@@ -1897,7 +1897,7 @@ function selectObject(o,add){ if(!o){ if(!add)selection=[]; refreshProps(); retu
 /* ============ Eingabe ============ */
 const pointers=new Map(); let cur=null, drawId=null, navBase=null, rulerDrag=null, moveDrag=null, xform=null, objGesture=null;
 let lastTap={t:0,o:null};
-const isDraw=e=>(e.pointerType==='pen'||e.pointerType==='mouse')?true:(e.pointerType==='touch'&&(tool==='laser'||tool==='spot'||!doc.settings.penOnly||(tool==='select'&&doc.settings.fingerSelect)));   // Laser/Scheinwerfer hinterlassen nichts → immer auch mit dem Finger
+const isDraw=e=>(e.pointerType==='pen'||e.pointerType==='mouse')?true:(e.pointerType==='touch'&&(tool==='laser'||tool==='spot'||!doc.settings.penOnly||((tool==='select'||tool==='lasso')&&doc.settings.fingerSelect)));   // Laser/Scheinwerfer hinterlassen nichts → immer auch mit dem Finger; Lasso ist ein Auswahlwerkzeug
 const navList=()=>{const a=[];for(const[,p]of pointers)if(p.nav)a.push(p);return a;};
 
 cv.addEventListener('pointerdown',e=>{ if(e.pointerType==='mouse'&&e.button!==0) return;   // Rechts-/Mittelklick nicht als Strich werten
@@ -4254,7 +4254,7 @@ const evStart=e=>{ const [y,m,d]=(e.date||'').split('-').map(Number), [hh,mm]=(e
 const REMIND_OPTS=[[0,'nicht vorher erinnern'],[5,'5 Min vorher'],[10,'10 Min vorher'],[15,'15 Min vorher'],[30,'30 Min vorher'],[60,'1 Std vorher'],[1440,'1 Tag vorher'],[2880,'2 Tage vorher'],[7200,'5 Tage vorher'],[10080,'1 Woche vorher']];
 const evRemLabel=m=>m>=10080?(m/10080===1?'1 Woche':(m/10080)+' Wochen'):(m>=1440?(m/1440===1?'1 Tag':(m/1440)+' Tagen'):(m>=60?(m/60)+' Std':m+' Min'));
 let calMonth=null, calSel=null, evKindSel='termin';
-const evVisible=e=>$('calAll').checked||e.cls===activeId;
+const evVisible=e=>$('calAll').checked||!e.cls||e.cls===activeId;   /* ohne Klasse = Termin der Lehrkraft: in jeder Klasse sichtbar */
 REMIND_OPTS.forEach(([v,l])=>{ const o=document.createElement('option'); o.value=v; o.textContent=l; $('evRemind').appendChild(o); });
 function initEvForm(){ const now=new Date(); if(!calSel) calSel=evIso(now); if(!$('evDate').value) $('evDate').value=calSel;
   if(!$('evTime').value){ const t=new Date(now.getTime()+15*60000); t.setMinutes(Math.ceil(t.getMinutes()/15)*15); $('evTime').value=evPad(t.getHours())+':'+evPad(t.getMinutes()); } }
@@ -4345,7 +4345,7 @@ function showEvPop(e,phase){ const pid='pop_'+e.id+'_'+phase; if(document.getEle
   const c=document.createElement('button'); c.className='btn'; c.textContent='Schließen'; c.onclick=()=>p.remove(); bb.appendChild(c);
   p.append(h,ti,sub,bb); $('evPops').appendChild(p); evChime(); }
 function checkEvents(){ const now=Date.now(); let changed=false;
-  for(const e of evList){ if(e.cls!==activeId) continue;   // nur die aktive Klasse poppt auf – spätestens beim Öffnen dieser Klasse
+  for(const e of evList){ if(e.cls&&e.cls!==activeId) continue;   // nur die aktive Klasse poppt auf – Termine ohne Klasse überall
     const st=evStart(e);
     if(e.kind==='termin'){
       if(e.remind&&!e.remShown&&now>=st-e.remind*60000&&now<st){ e.remShown=true; changed=true; showEvPop(e,'vorher'); }
@@ -4354,6 +4354,10 @@ function checkEvents(){ const now=Date.now(); let changed=false;
   checkDuty(now);
   if(changed){ saveEvents(); refreshCalIfOpen(); } }
 setInterval(checkEvents,15000); setTimeout(checkEvents,1500);
+/* Der Lehrer-Stundenplan schreibt in denselben Speicher – seine Änderungen sofort übernehmen */
+addEventListener('storage',ev=>{ if(ev.key!==EV_KEY) return;
+  try{ const a=JSON.parse(ev.newValue||'[]'); if(Array.isArray(a)) evList=a; }catch(e){}
+  refreshCalIfOpen(); });
 document.addEventListener('pointerdown',()=>fxCtx(),{once:true,capture:true});   // Ton für die Popups freischalten (iPadOS)
 
 /* ============ Schulferien (Bayern) – geräteweit, frei änderbar ============ */

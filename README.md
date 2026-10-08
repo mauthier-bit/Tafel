@@ -565,6 +565,27 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     einer eingebetteten fremden Seite die Sitzungs-Cookies nicht. Über **✎ Link** lässt sich eine
     andere Adresse hinterlegen; hat die Schule einen **öffentlichen Vertretungs-Monitor** (ohne
     Anmeldung), zeigt ihn **„trotzdem hier versuchen"** direkt im Fenster an.
+  - **Dritter Reiter „📅 Termine" – der Terminkalender der Lehrkraft.** Monatsansicht mit Punkten an
+    belegten Tagen, darunter die Einträge des gewählten Tages und eine Liste **„Anstehend"**.
+    Hier lassen sich **Termine und Erinnerungen eintragen, die keine Klasse betreffen** (Konferenz,
+    Fortbildung, Noten eintragen …) – mit Datum, Uhrzeit und wahlweise einer Erinnerung **vorher**.
+    Umgekehrt stehen hier **die Termine aller Klassen** mit, jeweils mit dem Klassennamen darunter;
+    der Haken **„Klassentermine"** blendet sie aus, wenn nur die eigenen Sachen interessieren.
+    Beides ist **derselbe Speicher** wie bei **Einstellungen → Klasse → 📅 Termine**: Was hier
+    eingetragen wird, erscheint dort sofort und umgekehrt. Ein Termin **ohne Klasse** gilt in
+    **jedem Projekt** und erinnert auch dort – egal, welche Klasse gerade geöffnet ist.
+    - **📥 ICS – Kalenderdatei einlesen:** eine `.ics`-Datei (das übliche Format von Apple Kalender,
+      Google Kalender, Outlook, WebUntis …) auswählen, einen Namen für den Kalender vergeben – die
+      Termine landen im Kalender und tragen diesen Namen. **Ganztägige** Einträge poppen auf der
+      Tafel **nicht** auf, Termine **mit Uhrzeit** schon. Einfache **Serientermine**
+      (täglich/wöchentlich – auch „Mo und Mi" –, monatlich, jährlich, mit Anzahl oder Enddatum)
+      werden aufgelöst; eingelesen wird das Fenster von **60 Tagen zurück bis 500 Tagen voraus**.
+    - **🔗 Abos – Kalender abonnieren:** eine **ICS-Adresse** (`https://…` oder `webcal://…`)
+      hinterlegen; der Kalender wird beim Öffnen des Reiters erneuert, höchstens alle **6 Stunden**,
+      und beim Erneuern werden seine alten Einträge ersetzt (keine Dubletten). **⟳** aktualisiert
+      sofort, **×** entfernt das Abo **samt seiner Termine**. Hinweis im Fenster: Viele Anbieter
+      geben ihre ICS-Datei einer fremden Webseite **nicht direkt** heraus (CORS) – dann die Datei
+      einmal herunterladen und über **📥 ICS** einlesen, das klappt immer.
   - **Je Stunde drei Zeilen:** **Klasse** (z. B. „9c", „11/2"), **Fach** und **Raum**. **Gleiche Klasse
     bekommt dieselbe Farbe**, quer durch die Woche – so sieht man auf einen Blick, wann man wo ist.
   - **Aufsichten:** Die Zeile **„Vor dem Unterricht"** (7:45–8:00) und jede **Pause** haben eigene Felder
@@ -981,7 +1002,9 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   schreibt der Pencil trotzdem weiter (bisher blockierte eine solche Berührung das Schreiben, bis
   man die Hand anhob). Nur bei **zwei** Fingern (Zoomen/Schieben) hält sich der Stift heraus.
 - **Lineal:** einblendbar, mit Pencil verschieben/drehen, Striche schnappen an die Kante
-- **Lasso-Auswahl** (in der Leiste **Auswählen & Werkzeuge**): einen Bereich mit dem Stift **einrahmen** (ist die Kurve nicht
+- **Lasso-Auswahl** (in der Leiste **Auswählen & Werkzeuge**): einen Bereich **einrahmen** – mit dem
+  Stift immer, **mit dem Finger**, sobald „Finger wählt aus (Auswahl-Modus)" eingeschaltet ist
+  (dieselbe Regel wie beim Auswahl-Werkzeug) (ist die Kurve nicht
   geschlossen, wird sie automatisch mit einer geraden Strecke geschlossen). Nach dem Loslassen
   erscheint ein Menü mit **Kopieren · Ausschneiden · Gruppieren · Löschen** für alle eingerahmten
   Objekte. (Die Rechteck-Auswahl im Auswahl-Modus bleibt zusätzlich erhalten.)
