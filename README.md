@@ -1389,7 +1389,12 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   fehlende Felder werden **blau** ergänzt. Eingaben als Zahl, Dezimalzahl (Punkt oder Komma), Bruch (`1/4`) oder
   Prozent (`30 %`); das Ergebnis erscheint im selben Stil. **Wahrscheinlichkeiten** (Prozent, Brüche oder nur Werte
   zwischen 0 und 1): die Gesamtsumme ist **fest 1 bzw. 100 %** (ein anderer Wert wird als Fehler gemeldet). **Absolute
-  Zahlen** (Werte größer 1): Gesamt = Stichprobenumfang, frei; Mischen von Prozent und absoluten Zahlen wird gemeldet. Hinweise bei **nicht eindeutigen** Angaben, **Widersprüchen** und **negativen Werten**.
+  Zahlen** (Werte größer 1): Gesamt = Stichprobenumfang, frei; Mischen von Prozent und absoluten Zahlen wird gemeldet. **Widersprüche werden beim Berechnen gemeldet** und die beteiligten Felder **rot** markiert – sowohl
+  wenn eine Summe nicht aufgeht („A∩B + A∩B̄ ≠ Σ A") als auch, wenn sich daraus etwas Unmögliches
+  ergibt (eine **negative** Zahl oder bei Wahrscheinlichkeiten ein Wert **außerhalb von 0 bis 1**);
+  das gilt **auch dann, wenn noch Felder offen sind** – „Σ A = 120" bei „Gesamt = 100" ist ein
+  Widerspruch und keine bloß unvollständige Angabe. Fehlt dagegen wirklich nur etwas, heißt es wie
+  bisher **„Nicht eindeutig"**.
   Ändert man eine Eingabe, verschwinden die berechneten Werte bis zum nächsten „Berechnen“; ein überschriebenes blaues
   Feld wird zur Vorgabe. **„🌳 Baumdiagramme“** blendet unter der Tafel die **beiden zugehörigen Bäume** ein
   (einmal zuerst A, einmal zuerst B) – mit den bedingten Wahrscheinlichkeiten an den Ästen (blau) und den
@@ -1553,6 +1558,10 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     berechneten Werte wieder heraus. In der X-Figur wird richtig gerechnet, dass die Teilstrecke AA′
     **durch den Scheitel** läuft (AA′ = SA + SA′). Die Längen stehen auch an der Figur.
   - Die Figur ist **maßstäblich**: Sind die Verhältnisse bekannt, rücken die Parallelen entsprechend.
+    **Widersprüchliche Längen werden beim Berechnen gemeldet:** Jede eingetragene Strecke wird mit der
+    Figur verglichen; passt eine nicht, erscheint rot „Widerspruch: SB′ = 12 passt nicht zu den übrigen
+    Angaben (daraus ergäbe sich 9)" und das Feld wird rot. Gerundete Eingaben (3,3 statt 3,33…) lösen
+    die Meldung **nicht** aus – erst eine Abweichung von mehr als rund 1,5 %.
     Dazu **A− / A+**, **Auf Tafel**, **Kopieren** und **Teilen** (QR-Code). **A− / A+** vergrößert
     bzw. verkleinert **alles**: die Beschriftung der Figur **und** rechts die Überschriften,
     Streckennamen, Eingabefelder, berechneten Werte und die Verhältnisgleichung – die rechte Spalte

@@ -29,13 +29,15 @@
   .seg span{font-weight:700;font-size:calc(var(--k) * 16px);color:#475569;white-space:nowrap;}
   .seg input{width:100%;min-width:0;flex:1 1 auto;border:1px solid #cfd6e0;border-radius:6px;padding:2px 4px;font:600 calc(var(--k) * 12px) -apple-system,sans-serif;color:#1f2430;background:#fff;text-align:right;}
   .seg input.calc{color:#2563eb;background:#eff6ff;border-color:#bfdbfe;}
+  .seg input.bad{color:#b91c1c;background:#fef2f2;border-color:#fca5a5;}
   .seg input:focus{outline:2px solid #93c5fd;outline-offset:-1px;}
   #eq{flex:none;min-height:26px;background:#f4f7fb;border:1px solid #e2e8f0;border-radius:9px;padding:5px 9px;font-size:calc(var(--k) * 14px);line-height:1.5;overflow-x:auto;white-space:nowrap;}
   #eq.leer{display:none;}
   #eq b{font-size:1.06em;color:#334155;}
   #eq .mk{border-radius:5px;padding:1px 4px;font-weight:800;}
   #eq .z{color:#64748b;font-size:.88em;margin-left:4px;}
-  #msg{font-size:calc(var(--k) * 12px);color:#b45309;flex:none;}
+  #msg{font-size:calc(var(--k) * 12px);color:#b45309;flex:none;line-height:1.35;}
+  #msg.err{color:#b91c1c;font-weight:700;}
   #msg:empty{display:none;}
   #hilfe{font-size:calc(var(--k) * 12px);color:#64748b;line-height:1.4;}
   #shotBtns{display:inline-flex;gap:5px;}
@@ -186,16 +188,26 @@ function rechnen(){ const bekannt={}; let anzahl=0;
   strecken().forEach(g=>g.keys.forEach(k=>{ const v=zahl(D.werte[k]); if(v!=null&&!D.calc.includes(k)){ bekannt[k]=v; anzahl++; } }));
   if(!anzahl){ melden('Zuerst mindestens zwei Längen eintragen.'); return; }
   const {out}=loesen(bekannt);
+  /* Passen die eingetragenen Längen überhaupt zueinander? Jede Angabe gegen das Modell prüfen.
+     Toleranz, weil Längen oft gerundet eingetragen werden (3,3 statt 3,333…). */
+  const streit=[];
+  for(const k of Object.keys(bekannt)){ const soll=out[k];
+    if(soll==null||!isFinite(soll)) continue;
+    if(Math.abs(soll-bekannt[k])>Math.max(0.02,Math.abs(soll)*0.015)) streit.push({k,soll}); }
   let neu=0, offen=0;
   strecken().forEach(g=>g.keys.forEach(k=>{
     if(bekannt[k]!=null) return;
     if(out[k]!=null&&isFinite(out[k])&&out[k]>0){ D.werte[k]=fmt(out[k]); if(!D.calc.includes(k))D.calc.push(k); neu++; }
     else { offen++; if(D.calc.includes(k)){ D.werte[k]=''; D.calc=D.calc.filter(x=>x!==k); } } }));
   bauen(); zeichnen(); gleichung(); sync();
+  if(streit.length){ streit.forEach(s=>{ const e=$('in_'+s.k); if(e) e.classList.add('bad'); });
+    melden('Widerspruch: '+streit.map(s=>sName(s.k)+' = '+(D.werte[s.k]||'')+' passt nicht zu den übrigen Angaben (daraus ergäbe sich '+fmt(s.soll)+')').join('; ')+'.', true);
+    return; }
   melden(neu? (offen? neu+' Strecken berechnet · '+offen+' bleiben offen (zu wenig Angaben)' : neu+' Strecken berechnet')
             : 'Daraus lässt sich noch nichts berechnen – eine Länge auf dem zweiten Strahl fehlt.'); }
 let msgT=null;
-function melden(t){ $('msg').textContent=t; clearTimeout(msgT); msgT=setTimeout(()=>{ $('msg').textContent=''; },6000); }
+function melden(t,bleibt){ $('msg').textContent=t; $('msg').classList.toggle('err',!!bleibt);
+  clearTimeout(msgT); if(!bleibt) msgT=setTimeout(()=>{ $('msg').textContent=''; },6000); }
 function leeren(){ D.calc.forEach(k=>{ D.werte[k]=''; }); D.calc=[]; bauen(); zeichnen(); gleichung(); sync(); melden(''); }
 
 /* ---------- Figur ---------- */
