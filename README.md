@@ -1418,7 +1418,8 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   Fenster) oder **CSV importieren** (Name in der 1. Spalte); Button „Zufälliger Name" zieht per Zufall
   eine Person (ohne Wiederholung) – **animiert wie ein Spielautomat**: die Namen laufen im Slot-Fenster
   durch, werden langsamer und bleiben auf dem gezogenen Namen stehen.
-- **PDF-Export** in vier Abstufungen: die **ganze Tafel** über den Werkzeugknopf oben links, die
+- **PDF-Export** in vier Abstufungen: die **ganze Tafel** über **Einstellungen → Projekt & Klasse →
+  „📑 Alle Seiten als PDF"**, die
   **aktuelle Seite** über den **Teilen-Knopf in der Seiten-Leiste**, **eine beliebige Seite** über
   **📑 Als PDF** im ⋮-Menü der Seitenübersicht und **mehrere ausgewählte Seiten** über
   **„☑ Auswählen"** in der Seitenübersicht (Haken setzen, dann „📑 Als PDF"). Auf dem iPad öffnet sich dabei das gewohnte
@@ -2040,7 +2041,7 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
    und ein **Teilen-Knopf** (Pfeil aus dem offenen Kasten), der die **gerade aufgeschlagene Seite**
    als PDF weitergibt. Lässt sich **vollständig einklappen** – dann bleibt nur der Aufklapp-Pfeil.
 3. **Einstellungs-Leiste (oben links):** Projekt-Auswahl, Vollbild, **Zurück/Vor (Rückgängig)**,
-   **Seite leeren**, Einstellungen (Hintergrund, Klassenlisten), Speichern, Laden, **PDF-Export**.
+   **Seite leeren**, Einstellungen (Hintergrund, Klassenlisten), Speichern, Laden, Einfügen.
    Lässt sich ebenfalls **vollständig einklappen** (nur der Aufklapp-Pfeil bleibt).
 
 **Alle Leisten weg-/hervorwischen (Präsentation):** Die **vertikale Leiste zur äußeren Kante
