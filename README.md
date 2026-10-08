@@ -1891,6 +1891,31 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     Gleichungslöser & Co. samt ihrer Hilfsdateien in die HTML-Datei eingebettet und öffnen sich beim
     Antippen in einem Fenster auf der Karte. So genügt **eine einzige Datei** – je nach Anzahl der
     Aktivitäten etwa 100–400 KB. (Aktivitäten vom Typ „Datei einfügen" brauchen weiterhin die Tafel.)
+- **Bild beschriften** (Diverses, `beschriften.html`): ein **Bild aus einer Datei** einfügen, selbst
+  etwas **malen** oder eine **Vorlage** nehmen – und an die richtigen Stellen **Beschriftungen** setzen.
+  - Im **Bearbeiten-Modus** legt die Lehrkraft die Stellen fest: auf das Bild tippen setzt einen Punkt
+    mit einem Kästchen daneben, in das die Beschriftung getippt wird. **Punkt und Kästchen lassen sich
+    einzeln verschieben**, die Verbindungslinie zieht mit; **×** entfernt eine Beschriftung. Kästchen
+    am Rand werden automatisch ins Bild hineingeschoben, damit nichts abgeschnitten wird.
+  - Im **Benutzen-Modus** sind die Kästchen leer („?"), und unter dem Bild liegen die Beschriftungen
+    **gemischt** als Kärtchen. Die Klasse zieht sie **per Drag-and-drop** an die richtige Stelle –
+    oder tippt erst das Kärtchen und dann das Kästchen an, was am Beamer oft leichter ist. Ein Tipp
+    auf ein belegtes Kästchen legt die Beschriftung wieder zurück.
+    **✓ Prüfen** färbt richtig grün und falsch rot und zählt mit, **↺ Noch einmal** räumt ab,
+    **👁 Lösung** trägt alles richtig ein.
+  - **📚 Vorlagen** mit fertigen Zeichnungen und Beschriftungen: **Das Auge** (Hornhaut, Pupille, Iris,
+    Linse, Glaskörper, Netzhaut, Sehnerv, Lederhaut), **Das Ohr** (Ohrmuschel, Gehörgang, Trommelfell,
+    Gehörknöchelchen, Bogengänge, Schnecke, Hörnerv, Ohrtrompete), **Zahlbereiche als Mengenblasen**
+    (ℕ ⊂ ℤ ⊂ ℚ ⊂ ℝ, jeder Ring mit Beispielzahlen wie 1 2 3, −12, ¾, √2 und π) und das
+    **Fadenstrahlrohr** (Glaskolben, Helmholtzspulen, Glühkathode, Anode, Elektronenstrahl, Magnetfeld B).
+    Die Zeichnungen werden gerechnet, nicht als Bild gespeichert – sie bleiben also in jeder Größe scharf.
+  - **✏️ Malen** zeichnet mit dem Stift auf das Bild (**↩** nimmt den letzten Strich zurück),
+    **🖼 Bild** fügt ein Foto ein (wird auf 1200 px verkleinert), **🗑 Bild** räumt Bild und Zeichnung
+    weg und lässt die Beschriftungen stehen.
+  - Dazu die gewohnten Knöpfe: **A− / A+**, **🖼 Tafel / 📋 Kopieren**, **⤴ Teilen** (QR-Code) sowie
+    **💾 / 📂** zum Sichern und Laden der Aufgabe als Datei. Ein **eingefügtes Foto ist für einen
+    QR-Code zu groß** – dann wird die Aufgabe ohne Bild geteilt und sagt es auch; Vorlagen und
+    Zeichnungen gehen vollständig mit.
 - **Lückentext** (Diverses): Text eingeben oder über **📋 Einfügen** aus der Zwischenablage holen
   (**Laden** liest auch eine .txt-Datei). Dann die Lücken festlegen: **Wählen** – die Wörter im Text
   antippen (nochmal antippen hebt die Lücke auf, ein kleines × zeigt das an) – oder **Zufällig**, wobei in der zweiten Zeile
@@ -2191,6 +2216,8 @@ lehrplan-glossar.js   ← Fachbegriffe nach LehrplanPLUS Bayern G9 (Mathematik, 
 lehrplan.js           ← gemeinsames Auswahlfenster für den Lehrplan-Import
 teilen.js             ← Teilen per QR-Code (Aufgabe steckt im Fragment der Adresse)
 formel.html           ← Formel umstellen (nach einer Größe auflösen, Schritt für Schritt, mit Formelsammlung)
+beschriften.html      ← Bild beschriften (Beschriftungen setzen und zuordnen)
+beschriften-vorlagen.js ← Vorlagen dafür (Auge, Ohr, Zahlbereiche, Fadenstrahlrohr)
 motiontracker.html    ← Motion-Tracker (Bewegung und Abstand per Kamera-KI; braucht Kamera, Mikrofon und Internet)
 stromkreis.html       ← Stromkreis-Editor mit Simulation (U, I, R, C, L, Ladungsfluss, Bild-Export)
 optik.html            ← Optiklabor (Strahlenoptik, Schatten, Mondphasen und Finsternisse)
