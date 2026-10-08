@@ -139,7 +139,13 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   aufgezogen wird er nur **breiter**, **senkrecht** nur **höher** (also ellipsenförmig, gut für eine
   Zeile oder eine Spalte), **diagonal** wächst bzw. schrumpft der ganze Fleck. Die Richtung wird beim
   Aufsetzen der Finger festgelegt und wechselt während des Ziehens nicht. Beim erneuten Einschalten
-  ist der Spot wieder rund.
+  ist der Spot wieder rund. In den **Einstellungen → Bedienung** lässt sich wählen, ob der
+  Lichtfleck ein **Kreis bzw. eine Ellipse** ist (wie bisher) oder ein **Rechteck** – der Kasten
+  rahmt eine Textzeile, einen Absatz oder eine einzelne Aufgabe genauer ein. Beide Formen werden
+  mit denselben Gesten aufgezogen, die Einstellung bleibt auf dem Gerät gespeichert.
+- **Laserpointer – Nachleuchten einstellbar** (Einstellungen → Bedienung): Wie lange die Leuchtspur
+  hinter dem Punkt stehen bleibt, ist in Schritten von **0,1 s bis 3 s** wählbar (Standard 0,7 s).
+  Länger heißt: Die Klasse sieht den ganzen gezeigten Weg; kürzer heißt: nur den Punkt selbst.
 - **Endlose Seite:** beliebig nach unten/rechts weiterschreiben – mit dem Finger schieben
   (bzw. Pencil schreibt, Finger schiebt) oder am Desktop mit dem Mausrad/Trackpad scrollen
 - **Tabellenkalkulation** einfügen (eigene Seite): Zellbezüge **relativ (A1) und absolut ($A$1)**,
@@ -975,7 +981,7 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   schreibt der Pencil trotzdem weiter (bisher blockierte eine solche Berührung das Schreiben, bis
   man die Hand anhob). Nur bei **zwei** Fingern (Zoomen/Schieben) hält sich der Stift heraus.
 - **Lineal:** einblendbar, mit Pencil verschieben/drehen, Striche schnappen an die Kante
-- **Lasso-Auswahl** (Werkzeug): einen Bereich mit dem Stift **einrahmen** (ist die Kurve nicht
+- **Lasso-Auswahl** (in der Leiste **Auswählen & Werkzeuge**): einen Bereich mit dem Stift **einrahmen** (ist die Kurve nicht
   geschlossen, wird sie automatisch mit einer geraden Strecke geschlossen). Nach dem Loslassen
   erscheint ein Menü mit **Kopieren · Ausschneiden · Gruppieren · Löschen** für alle eingerahmten
   Objekte. (Die Rechteck-Auswahl im Auswahl-Modus bleibt zusätzlich erhalten.)
@@ -1106,6 +1112,8 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   - Alle vier Werkzeuge haben wie gewohnt **A− / A+** (auch über die Schriftgröße im Kontextmenü), **🖼 Tafel**,
     **📋 Kopieren** und **🖨 Drucken** (öffnet das fertige Blatt als Druckvorschau); Umlaute bleiben erhalten,
     ß wird zu SS.
+- In der Gruppe **„Diverses"** liegen neben den Werkzeugen unten auch die **Lärmampel** und der
+  **Taschenrechner** (früher einzeln in der Werkzeugleiste).
 - **Pinnwand** (in der Gruppe „Diverses"): Karten anheften wie auf einer Korkwand.
   **+ Karte** öffnet einen Dialog mit Text (auch **🎙 Diktieren**), **Farbe** (7 Zettelfarben), **Bild**
   (Foto/Kamera, wird verkleinert gespeichert), **Link** (antippbar), **👍-Zähler** und **Namen aus der Klassenliste** der aktiven Klasse (Auswahlliste getrennt nach „noch nicht vergeben“ / „schon auf anderen Karten“, **🎲 Zufall** wählt bevorzugt einen noch freien Namen, mehrere Namen pro Karte, × entfernt; ohne Klassenliste Namen eintippen) – die Namen stehen mit 👤 auf der Karte; ✎ auf der Karte oder
@@ -1410,8 +1418,9 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
    angeordnet (damit man beim
    Schreiben nicht versehentlich etwas auslöst). Oben **untereinander** vier immer sichtbare Buttons –
    die **Schwunglinie** = Schreiben (Stiftwerkzeuge), der **Auswahl-Cursor** = Auswählen &
-   Werkzeuge (Objekte auswählen/verschieben + Zeit, Klasse & Interaktion, Lärmampel, QR,
-   Namensziehung, Taschenrechner, Einfügen …), der **Laserpointer** und der **Scheinwerfer**.
+   Werkzeuge (Objekte auswählen/verschieben, **Lasso-Auswahl** + Zeit, Klasse & Interaktion,
+   Diverses mit Lärmampel, Taschenrechner, QR …, Mathe & Physik, Screenshot, Aufnahme, Kamera,
+   Einfügen), der **Laserpointer** und der **Scheinwerfer**.
    Ein **Trennstrich** trennt diese Buttons vom jeweiligen Werkzeugmenü (das bei Bedarf **scrollt**).
    Die Leiste beginnt **unter der oberen Einstellungs-Leiste** und
    wächst nach unten. Ihr **Platz** ist in den **Einstellungen → Werkzeugleisten** wählbar:
