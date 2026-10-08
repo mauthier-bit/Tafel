@@ -908,7 +908,7 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     (Netz als Bild), **Neu**, **Speichern/Laden** als `.json` und der Umschalter
     **Benutzen/Bearbeiten**. Das Netz wird **mit dem Tafel-Projekt gespeichert**; im kleinen
     Objektfenster verkleinert es sich so weit, dass immer das ganze Netz zu sehen ist.
-- **Gleichungslöser** (Mathe & Physik): bewegliches Objekt mit großem Eingabefeld und drei Reitern:
+- **Gleichungslöser** (Mathe & Physik): bewegliches Objekt mit großem Eingabefeld und fünf Reitern:
   - **Gleichung** (Variable x): tippt man z. B. `2x+3=7`, `x^2-5x+6=0` oder `3/(x-2)=2/(x+1)`.
     **Lineare, quadratische und Bruchgleichungen** werden mit Lösungsweg gelöst – bei Bruchgleichungen
     mit **Definitionsmenge 𝔻**, **Hauptnenner** (in Linearfaktoren), der Gleichung nach dem
@@ -935,6 +935,24 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
       Waage passen: **ganze, nicht negative Anzahlen**. `x+5=2` (Lösung −3), `x/2+3=5` (eine halbe
       Kiste) oder `x²`-Terme lehnt das Werkzeug mit einem erklärenden Satz ab, statt etwas
       Unphysikalisches zu zeichnen.
+  - **Umkehr & Tausch** – für die **5. und 6. Klasse**. Man tippt die Aufgabe mit **Platzhalter**
+    (`_`, `?`, `□` oder `x`), etwa `12 + _ = 20`, `_ · 6 = 42` oder `36 : _ = 9`, und bekommt den Weg
+    Schritt für Schritt: **Aufgabe → (Tauschaufgabe) → Umkehraufgabe → Lösung → Probe**.
+    Die **Tauschaufgabe** erscheint nur, wo sie hingehört – bei **Plus und Mal mit dem Platzhalter
+    vorne** (`_ + 9 = 17` wird zu `9 + □ = 17`); bei Minus und Geteilt führt die **Umkehraufgabe**
+    direkt zum Ziel. Zu jedem Schritt steht ein Satz, **warum** das geht („Vom Ganzen den bekannten
+    Teil abziehen", „Das Ergebnis mit dem Teiler malnehmen").
+    Daneben lässt sich ein **Beispiel mit ganz kleinen Zahlen** einblenden (`□ · 2 = 6` zu `□ · 6 = 42`):
+    dieselbe Aufgabenart, derselbe Aufbau – und **dieselben Farben für dieselben Rollen**, nämlich
+    **blau** für die bekannte Zahl, **grün** für das Ergebnis und **orange** für die gesuchte Zahl.
+    So sieht man am leichten Beispiel, was im eigenen, größeren zu tun ist.
+    Rückmeldungen gibt es auch, wenn etwas nicht aufgeht: Teilen durch 0, ein negatives Ergebnis
+    („negative Zahlen kommen erst später dran") oder eine krumme Zahl.
+  - **Formel umstellen** – das **ganze Werkzeug „Formel umstellen"** steckt als Reiter mit drin
+    (es gibt es daneben weiterhin als eigenes Objekt in der Gruppe **Mathe & Physik**). So lässt sich
+    am selben Objekt erst eine Gleichung lösen und dann eine Formel nach einer anderen Größe auflösen,
+    ohne ein zweites Werkzeug auf die Tafel zu holen. **A− / A+** des Gleichungslösers stellen auch
+    hier die Schrift, und **„🖼 Rechenweg → Tafel"** legt das Bild wie gewohnt neben das Objekt.
   - **Einfache trigonometrische Gleichungen** (sin, cos, tan mit linearem Argument, z. B. `2sin(x)=1`,
     `cos(2x+30)=0,5`, auch quadratisch wie `2sin^2(x)-sin(x)-1=0` per Substitution): allgemeine Lösung
     mit k ∈ ℤ und alle Lösungen in [0°; 360°[. Umschalter **Grad / Bogenmaß** (dann z. B. π/6, 5π/12).
