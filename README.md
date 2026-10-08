@@ -1422,6 +1422,14 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   bei e-Funktion, Potenz- und Sinusanpassung die richtigen Parameter – Startwerte kommen aus einer
   logarithmischen bzw. doppelt-logarithmischen Ausgleichsgeraden, danach wird parameterweise nachgeschärft;
   fragt beim Einfügen nach). Braucht Internet (nutzt Chart.js u. a. per CDN).
+- **Motion-Tracker** (Mathe & Physik, `motiontracker.html`): misst **Bewegung und Abstand von
+  Personen per Kamera-KI** – ohne zusätzlichen Sensor. Drei Reiter: **① Aufzeichnung** (Bewegung
+  aufnehmen und einblenden), **② Bewegungsziel** und **③ Battle** (zwei Spieler gegeneinander).
+  Beim Einfügen fragt die Tafel wie bei der Messwert-Analyse, ob das Werkzeug eine **eigene Seite**
+  werden soll – dafür ist es gemacht, auf einer ganzen Seite hat das Kamerabild genug Platz.
+  **Braucht Kamera und Mikrofon** (die Tafel gibt dem Objekt dafür eigens die Kamera-Erlaubnis; beim
+  ersten Start fragt das iPad nach) **und Internet**, weil das KI-Modell zur Körpererkennung aus dem
+  Netz geladen wird. Die Bilder selbst bleiben auf dem Gerät.
 - **Seitenübersicht:** auf die **Seitenzahl** (z. B. „2/5") tippen → Miniaturen aller Seiten,
   eine antippen wechselt direkt dorthin. Jede Miniatur hat oben rechts ein **⋮-Menü** (mit **×** zum
   Schließen) mit **Umbenennen, Duplizieren, Kopieren, Ausschneiden, Einfügen**, **📑 Als PDF**
@@ -1497,7 +1505,7 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
    ein **Zeit**-Button (Uhr, Stoppuhr, Timer);
    ein **Klasse & Interaktion**-Button (Sozialform, Gruppen bilden, Umfrage, Zufälliger Name, Punktestand)
    und ein **Mathe & Physik**-Button (Gleichungslöser – mit Waage, Umkehraufgabe und **Formel umstellen** –, Funktionsplotter, **Ableitungen**, **Term-Umformer**, **Figuren & Körper**, **Diagramm**, **Einheitskreis**, **3D-Koordinatensystem**, Vierfeldertafel, Baumdiagramm,
-   Wahrscheinlichkeitsrechner, **Strahlensätze**, GeoGebra-App, **CODAP**, Messwert-Analyse und **Zufall**).
+   Wahrscheinlichkeitsrechner, **Strahlensätze**, GeoGebra-App, **CODAP**, Messwert-Analyse, **Motion-Tracker** und **Zufall**).
    Die Aufklappmenüs legen sich **nie über die Werkzeugleiste**: Sie öffnen neben ihr, bleiben unter
    der oberen Leiste und nehmen bei schmalem Fenster **weniger Spalten** (bei wenig Höhe lassen sie
    sich scrollen) – so ist jeder Knopf erreichbar, auch im geteilten Bildschirm.
@@ -2150,6 +2158,7 @@ lehrplan-glossar.js   ← Fachbegriffe nach LehrplanPLUS Bayern G9 (Mathematik, 
 lehrplan.js           ← gemeinsames Auswahlfenster für den Lehrplan-Import
 teilen.js             ← Teilen per QR-Code (Aufgabe steckt im Fragment der Adresse)
 formel.html           ← Formel umstellen (nach einer Größe auflösen, Schritt für Schritt, mit Formelsammlung)
+motiontracker.html    ← Motion-Tracker (Bewegung und Abstand per Kamera-KI; braucht Kamera, Mikrofon und Internet)
 stromkreis.html       ← Stromkreis-Editor mit Simulation (U, I, R, C, L, Ladungsfluss, Bild-Export)
 optik.html            ← Optiklabor (Strahlenoptik, Schatten, Mondphasen und Finsternisse)
 wellen.html           ← Wellenwanne (Reflexion, Brechung, Beugung, Interferenz, Huygens)
