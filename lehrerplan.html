@@ -79,6 +79,29 @@
   #tGrid .cd .dots i{width:4px;height:4px;border-radius:50%;background:#2563eb;}
   #tGrid .cd .dots i.rem{background:#d97706;} #tGrid .cd .dots i.ics{background:#0d9488;}
   #tGrid .cd.sel .dots i{background:#fff;}
+  .seg3{display:inline-flex;border:1px solid #cfd6e0;border-radius:9px;overflow:hidden;}
+  .seg3 button{border:none;background:#fff;padding:5px 11px;font:inherit;font-weight:600;font-size:.88em;color:#5b6472;cursor:pointer;}
+  .seg3 button.on{background:#2563eb;color:#fff;}
+  #tWoche{flex:1 1 100%;display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
+  #tWoche .wd{border:1px solid #e8ecf3;border-radius:9px;padding:4px;min-height:92px;background:#fff;cursor:pointer;
+    display:flex;flex-direction:column;gap:3px;overflow:hidden;}
+  #tWoche .wd.out{background:#fcfdff;}
+  #tWoche .wd.today{border-color:#2563eb;}
+  #tWoche .wd.sel{box-shadow:0 0 0 2px #2563eb;}
+  #tWoche .wd .kopf{font-size:.74em;font-weight:700;color:#8a93a2;display:flex;justify-content:space-between;gap:4px;flex:none;}
+  #tWoche .wd .kopf .nr{color:#1f2430;font-size:1.1em;}
+  #tWoche .wd.today .kopf .nr{color:#1d4ed8;}
+  #tWoche .wd .ev{font-size:.72em;line-height:1.3;border-radius:5px;padding:2px 4px;background:#eef2f7;color:#1f2430;}
+  #tWoche .wd .ev.rem{background:#fef3c7;} #tWoche .wd .ev.ics{background:#ccfbf1;}
+  #tWoche .wd .ev .zt{color:#64748b;}
+  #tWoche .wd .mehr{font-size:.7em;color:#8a93a2;}
+  @media (max-width:560px){
+    #tWoche{grid-template-columns:1fr;}
+    #tWoche .wd{min-height:0;flex-direction:row;align-items:flex-start;flex-wrap:wrap;gap:4px;}
+    #tWoche .wd .kopf{flex:0 0 72px;display:block;}
+    #tWoche .wd .kopf .nr{margin-left:5px;}
+    #tWoche .wd .ev{flex:1 1 100%;}
+  }
   #tNeu{margin-top:10px;border:1px solid #e2e7ef;border-radius:12px;padding:8px;background:#f8fafc;display:flex;flex-direction:column;gap:6px;}
   #tNeu input,#tNeu select{border:1px solid #cfd6e0;border-radius:8px;padding:6px 8px;font:inherit;background:#fff;color:#1f2430;min-width:0;}
   .trow{display:flex;gap:5px;flex-wrap:wrap;} .trow>*{flex:1 1 90px;}
@@ -176,6 +199,7 @@
       <b id="tTitel"></b>
       <button type="button" class="btn" id="tNext" title="Monat vor">›</button>
       <button type="button" class="btn" id="tHeute">Heute</button>
+      <span class="seg3" id="tAns"><button type="button" data-a="monat" class="on">Monat</button><button type="button" data-a="woche">Woche</button></span>
       <label class="chk"><input type="checkbox" id="tKlassen" checked> Klassentermine</label>
       <span class="grow"></span>
       <button type="button" class="btn" id="tKal" title="Kalender ein- und ausblenden">🗂 Kalender</button>
@@ -183,6 +207,7 @@
       <button type="button" class="btn tafelEdit" id="tAbo" title="Kalender abonnieren (ICS-Adresse)">🔗 Abos</button>
     </div>
     <div id="tBody">
+      <div id="tWoche" hidden></div>
       <div id="tLinks">
         <div id="tGrid"></div>
         <div id="tNeu" class="tafelEdit">
@@ -463,16 +488,45 @@ function kalBox(){ kalLaden(); const b=$('kalBox'); b.hidden=false; b.innerHTML=
   const p=document.createElement('p'); p.textContent='Die Einstellung gilt auch für den Kalender in den Einstellungen der Tafel (Klasse → Termine).'; b.appendChild(p); }
 $('tKal').onclick=()=>{ const b=$('kalBox'); if(!b.hidden){ b.hidden=true; return; } $('aboBox').hidden=true; kalBox(); };
 
+const wocheAb=d=>{ const q=new Date(d); q.setHours(12,0,0,0); q.setDate(q.getDate()-((q.getDay()+6)%7)); return q; };
+function wocheTitel(a){ const b=new Date(a); b.setDate(b.getDate()+6);
+  const mo=t=>t.toLocaleDateString('de-DE',{month:'long'});
+  if(a.getMonth()===b.getMonth()) return a.getDate()+'.–'+b.getDate()+'. '+mo(a)+' '+a.getFullYear();
+  if(a.getFullYear()===b.getFullYear()) return a.getDate()+'. '+mo(a)+' – '+b.getDate()+'. '+mo(b)+' '+a.getFullYear();
+  return a.getDate()+'. '+mo(a)+' '+a.getFullYear()+' – '+b.getDate()+'. '+mo(b)+' '+b.getFullYear(); }
+function wocheAufbauen(){ const heute=new Date(), hIso=isoT(heute);
+  const start=wocheAb(new Date(calTag+'T12:00'));
+  $('tTitel').textContent=wocheTitel(start);
+  const w=$('tWoche'); w.innerHTML='';
+  for(let i=0;i<7;i++){ const d=new Date(start); d.setDate(d.getDate()+i); const sIso=isoT(d);
+    const c=document.createElement('div');
+    c.className='wd'+(i>4?' out':'')+(sIso===hIso?' today':'')+(sIso===calTag?' sel':'');
+    const k=document.createElement('div'); k.className='kopf';
+    k.innerHTML='<span>'+d.toLocaleDateString('de-DE',{weekday:'short'})+'</span><span class="nr">'+d.getDate()+'</span>';
+    c.appendChild(k);
+    const evs=evList.filter(e=>e.date===sIso&&evSicht(e)).sort((a,b)=>evAnfang(a)-evAnfang(b));
+    evs.slice(0,4).forEach(e=>{ const x=document.createElement('div');
+      x.className='ev'+(e.kind==='erinnerung'?' rem':(e.src==='ics'?' ics':''));
+      x.innerHTML=(e.time?'<span class="zt">'+e.time+'</span> ':'')+'';
+      x.appendChild(document.createTextNode(e.title)); x.title=(e.time?e.time+' · ':'')+e.title+(e.clsName?(' · '+e.clsName):'');
+      c.appendChild(x); });
+    if(evs.length>4){ const m=document.createElement('div'); m.className='mehr'; m.textContent='+'+(evs.length-4)+' weitere'; c.appendChild(m); }
+    c.onclick=()=>{ calTag=sIso; $('tDate').value=sIso; calMonat=new Date(d.getFullYear(),d.getMonth(),1); termineAufbauen(); };
+    w.appendChild(c); } }
 function termineAufbauen(){ evLaden();
   const heute=new Date(), hIso=isoT(heute);
-  if(!calMonat) calMonat=new Date(heute.getFullYear(),heute.getMonth(),1);
   if(!calTag) calTag=hIso;
+  if(!calMonat) calMonat=new Date(new Date(calTag+'T12:00').getFullYear(),new Date(calTag+'T12:00').getMonth(),1);
+  const woche=D.tAnsicht==='woche';
+  $('tGrid').hidden=woche; $('tWoche').hidden=!woche;
+  document.querySelectorAll('#tAns button').forEach(b=>b.classList.toggle('on',(b.dataset.a==='woche')===woche));
+  if(woche) wocheAufbauen();
   const y=calMonat.getFullYear(), m=calMonat.getMonth();
-  $('tTitel').textContent=calMonat.toLocaleDateString('de-DE',{month:'long',year:'numeric'});
+  if(!woche) $('tTitel').textContent=calMonat.toLocaleDateString('de-DE',{month:'long',year:'numeric'});
   const g=$('tGrid'); g.innerHTML='';
-  ['Mo','Di','Mi','Do','Fr','Sa','So'].forEach(t=>{ const d=document.createElement('div'); d.className='cw'; d.textContent=t; g.appendChild(d); });
+  if(!woche) ['Mo','Di','Mi','Do','Fr','Sa','So'].forEach(t=>{ const d=document.createElement('div'); d.className='cw'; d.textContent=t; g.appendChild(d); });
   const off=(new Date(y,m,1).getDay()+6)%7;
-  for(let i=0;i<42;i++){ const d=new Date(y,m,1-off+i), s=isoT(d);
+  for(let i=0;i<(woche?0:42);i++){ const d=new Date(y,m,1-off+i), s=isoT(d);
     const c=document.createElement('div');
     c.className='cd'+(d.getMonth()!==m?' out':'')+(s===hIso?' today':'')+(s===calTag?' sel':'');
     c.textContent=d.getDate();
@@ -520,8 +574,13 @@ $('tArt').querySelectorAll('button').forEach(b=>b.onclick=()=>{ evArt=b.dataset.
   $('tArt').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));
   $('tRem').style.display=evArt==='termin'?'':'none';
   $('tTitle').placeholder=evArt==='termin'?'Titel, z. B. Konferenz':'z. B. Kopien holen, Noten eintragen'; });
-$('tPrev').onclick=()=>{ calMonat=new Date(calMonat.getFullYear(),calMonat.getMonth()-1,1); termineAufbauen(); };
-$('tNext').onclick=()=>{ calMonat=new Date(calMonat.getFullYear(),calMonat.getMonth()+1,1); termineAufbauen(); };
+function blaettern(v){ if(D.tAnsicht==='woche'){ const d=new Date(calTag+'T12:00'); d.setDate(d.getDate()+7*v);
+    calTag=isoT(d); calMonat=new Date(d.getFullYear(),d.getMonth(),1); $('tDate').value=calTag; }
+  else calMonat=new Date(calMonat.getFullYear(),calMonat.getMonth()+v,1);
+  termineAufbauen(); }
+$('tPrev').onclick=()=>blaettern(-1);
+$('tNext').onclick=()=>blaettern(1);
+document.querySelectorAll('#tAns button').forEach(b=>b.onclick=()=>{ D.tAnsicht=b.dataset.a; termineAufbauen(); sync(); });
 $('tHeute').onclick=()=>{ const n=new Date(); calMonat=new Date(n.getFullYear(),n.getMonth(),1); calTag=isoT(n); $('tDate').value=calTag; termineAufbauen(); };
 $('tKlassen').onchange=termineAufbauen;
 $('tSave').onclick=()=>{ const t=$('tTitle').value.trim(); if(!t){ toast('Bitte einen Titel eingeben'); $('tTitle').focus(); return; }

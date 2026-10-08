@@ -572,8 +572,13 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     einer eingebetteten fremden Seite die Sitzungs-Cookies nicht. Über **✎ Link** lässt sich eine
     andere Adresse hinterlegen; hat die Schule einen **öffentlichen Vertretungs-Monitor** (ohne
     Anmeldung), zeigt ihn **„trotzdem hier versuchen"** direkt im Fenster an.
-  - **Dritter Reiter „📅 Termine" – der Terminkalender der Lehrkraft.** Monatsansicht mit Punkten an
-    belegten Tagen, darunter die Einträge des gewählten Tages und eine Liste **„Anstehend"**.
+  - **Dritter Reiter „📅 Termine" – der Terminkalender der Lehrkraft.** Umschaltbar zwischen
+    **Monat** und **Woche**: Die Monatsansicht zeigt Punkte an belegten Tagen, die **Wochenansicht**
+    über die ganze Breite sieben Tagesspalten **mit den Einträgen im Klartext** (Uhrzeit und Titel,
+    Erinnerungen gelb, eingelesene Kalender türkis; bei mehr als vier Terminen steht „+n weitere").
+    ‹ und › blättern je nach Ansicht um einen **Monat** oder eine **Woche**, **Heute** springt zurück.
+    Ist das Werkzeug schmal, stehen die sieben Tage **untereinander** statt nebeneinander.
+    Darunter stehen die Einträge des gewählten Tages und eine Liste **„Anstehend"**.
     Hier lassen sich **Termine und Erinnerungen eintragen, die keine Klasse betreffen** (Konferenz,
     Fortbildung, Noten eintragen …) – mit Datum, Uhrzeit und wahlweise einer Erinnerung **vorher**.
     Umgekehrt stehen hier **die Termine aller Klassen** mit, jeweils mit dem Klassennamen darunter;
@@ -1548,7 +1553,10 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     berechneten Werte wieder heraus. In der X-Figur wird richtig gerechnet, dass die Teilstrecke AA′
     **durch den Scheitel** läuft (AA′ = SA + SA′). Die Längen stehen auch an der Figur.
   - Die Figur ist **maßstäblich**: Sind die Verhältnisse bekannt, rücken die Parallelen entsprechend.
-    Dazu **A− / A+**, **Auf Tafel**, **Kopieren** und **Teilen** (QR-Code).
+    Dazu **A− / A+**, **Auf Tafel**, **Kopieren** und **Teilen** (QR-Code). **A− / A+** vergrößert
+    bzw. verkleinert **alles**: die Beschriftung der Figur **und** rechts die Überschriften,
+    Streckennamen, Eingabefelder, berechneten Werte und die Verhältnisgleichung – die rechte Spalte
+    wird dabei etwas breiter, damit die Felder nicht gequetscht werden.
 - **Zufall** (Mathe & Physik, Würfel-Symbol mit fünf Augen): ein Werkzeug mit **fünf Reitern**.
   Die früheren Einzelwerkzeuge „Würfel" und „Glücksrad" stecken darin; **alte Tafelseiten werden beim
   Laden automatisch umgestellt** und öffnen gleich im passenden Reiter.
