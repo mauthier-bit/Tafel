@@ -1004,7 +1004,8 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
 - **Lineal:** einblendbar, mit Pencil verschieben/drehen, Striche schnappen an die Kante
 - **Lasso-Auswahl** (in der Leiste **Auswählen & Werkzeuge**): einen Bereich **einrahmen** – mit dem
   Stift immer, **mit dem Finger**, sobald „Finger wählt aus (Auswahl-Modus)" eingeschaltet ist
-  (dieselbe Regel wie beim Auswahl-Werkzeug) (ist die Kurve nicht
+  (dieselbe Regel wie beim Auswahl-Werkzeug). **Erneutes Antippen** des Knopfes schaltet das Lasso
+  wieder aus (zurück zum Auswählen) – wie bei Laserpointer und Scheinwerfer (ist die Kurve nicht
   geschlossen, wird sie automatisch mit einer geraden Strecke geschlossen). Nach dem Loslassen
   erscheint ein Menü mit **Kopieren · Ausschneiden · Gruppieren · Löschen** für alle eingerahmten
   Objekte. (Die Rechteck-Auswahl im Auswahl-Modus bleibt zusätzlich erhalten.)
