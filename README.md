@@ -378,6 +378,13 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   - Popups erscheinen **nur für die aktive Klasse** – fällige Einträge einer anderen Klasse kommen
     spätestens, wenn du dieses Projekt öffnest. Gespeichert werden alle Termine geräteweit; der
     Kalender zeigt die Einträge der aktiven Klasse, mit **„alle Klassen"** alle (mit Klassennamen).
+  - **🗂 Kalender ein-/ausblenden:** Darunter lässt sich eine Liste aufklappen, in der **jeder Kalender
+    einzeln** steht – **Meine Termine (ohne Klasse)**, jede Klasse und jeder **eingelesene oder
+    abonnierte** Kalender, mit der Anzahl seiner Einträge. Haken weg heißt: Dieser Kalender
+    verschwindet aus Monatsansicht, Tagesliste und „Anstehend". Aufgeführt wird nur, was hier auch
+    auftauchen kann – andere Klassen also erst mit gesetztem Haken **„alle Klassen"**.
+    Die Einstellung gilt **geräteweit** und **gemeinsam mit dem Terminkalender im Lehrer-Stundenplan**:
+    Was dort ausgeblendet wird, ist auch hier weg und umgekehrt, ohne Neuladen.
   - **🏖 Schulferien (Bayern)** lassen sich einblenden (Ferientage sind im Kalender hell hinterlegt).
     Voreingetragen sind die **amtlichen bayerischen Ferientermine 2025–2030** (aus dem iCal-Export des
     Kultusministeriums). Unter „bearbeiten" lässt sich jeder Zeitraum ändern, löschen oder ergänzen
@@ -570,16 +577,25 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     Hier lassen sich **Termine und Erinnerungen eintragen, die keine Klasse betreffen** (Konferenz,
     Fortbildung, Noten eintragen …) – mit Datum, Uhrzeit und wahlweise einer Erinnerung **vorher**.
     Umgekehrt stehen hier **die Termine aller Klassen** mit, jeweils mit dem Klassennamen darunter;
-    der Haken **„Klassentermine"** blendet sie aus, wenn nur die eigenen Sachen interessieren.
+    der Haken **„Klassentermine"** blendet sie alle auf einmal aus, **🗂 Kalender** jeden einzeln.
     Beides ist **derselbe Speicher** wie bei **Einstellungen → Klasse → 📅 Termine**: Was hier
     eingetragen wird, erscheint dort sofort und umgekehrt. Ein Termin **ohne Klasse** gilt in
     **jedem Projekt** und erinnert auch dort – egal, welche Klasse gerade geöffnet ist.
     - **📥 ICS – Kalenderdatei einlesen:** eine `.ics`-Datei (das übliche Format von Apple Kalender,
       Google Kalender, Outlook, WebUntis …) auswählen, einen Namen für den Kalender vergeben – die
-      Termine landen im Kalender und tragen diesen Namen. **Ganztägige** Einträge poppen auf der
+      Termine landen im Kalender, tragen diesen Namen und lassen sich darüber auch wieder
+      **ein- und ausblenden**; liest man dieselbe Datei erneut ein, werden ihre Einträge **ersetzt**
+      statt verdoppelt. **Ganztägige** Einträge poppen auf der
       Tafel **nicht** auf, Termine **mit Uhrzeit** schon. Einfache **Serientermine**
       (täglich/wöchentlich – auch „Mo und Mi" –, monatlich, jährlich, mit Anzahl oder Enddatum)
       werden aufgelöst; eingelesen wird das Fenster von **60 Tagen zurück bis 500 Tagen voraus**.
+    - **🗂 Kalender ein-/ausblenden:** Der Knopf listet **jeden Kalender einzeln** auf – **Meine Termine
+      (ohne Klasse)**, jede **Klasse** und jeden **eingelesenen oder abonnierten** Kalender, mit der
+      Anzahl der Einträge daneben. Haken weg heißt: Dieser Kalender verschwindet aus Monatsansicht,
+      Tagesliste und „Anstehend"; **Alle anzeigen / Alle ausblenden** schaltet in einem Rutsch.
+      Die Einstellung gilt **geräteweit und für beide Kalender** – was hier ausgeblendet ist, ist auch
+      unter **Einstellungen → Klasse → 📅 Termine** ausgeblendet und umgekehrt; beide Fenster ziehen
+      sofort nach.
     - **🔗 Abos – Kalender abonnieren:** eine **ICS-Adresse** (`https://…` oder `webcal://…`)
       hinterlegen; der Kalender wird beim Öffnen des Reiters erneuert, höchstens alle **6 Stunden**,
       und beim Erneuern werden seine alten Einträge ersetzt (keine Dubletten). **⟳** aktualisiert
