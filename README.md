@@ -1135,8 +1135,11 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   - Alle vier Werkzeuge haben wie gewohnt **A− / A+** (auch über die Schriftgröße im Kontextmenü), **🖼 Tafel**,
     **📋 Kopieren** und **🖨 Drucken** (öffnet das fertige Blatt als Druckvorschau); Umlaute bleiben erhalten,
     ß wird zu SS.
-- In der Gruppe **„Diverses"** liegen neben den Werkzeugen unten auch die **Lärmampel** und der
-  **Taschenrechner** (früher einzeln in der Werkzeugleiste).
+- In der Gruppe **„Diverses"** stehen in der **ersten Zeile** die vier oft gebrauchten Helfer:
+  **Lärmampel**, **Taschenrechner**, **Lehrer-Stundenplan** und **QR-Code-Generator**; darunter
+  folgen die übrigen Werkzeuge (Mindmap, Begriffsnetz, Pinnwand, Galgenmännchen, Kreuzworträtsel,
+  Zeitleiste, Wortwolke, Zuordnen, Lückentext, Tabelle, Lernlandkarte, Glossar, Reihenfolge,
+  Buchstabengitter).
 - **Pinnwand** (in der Gruppe „Diverses"): Karten anheften wie auf einer Korkwand.
   **+ Karte** öffnet einen Dialog mit Text (auch **🎙 Diktieren**), **Farbe** (7 Zettelfarben), **Bild**
   (Foto/Kamera, wird verkleinert gespeichert), **Link** (antippbar), **👍-Zähler** und **Namen aus der Klassenliste** der aktiven Klasse (Auswahlliste getrennt nach „noch nicht vergeben“ / „schon auf anderen Karten“, **🎲 Zufall** wählt bevorzugt einen noch freien Namen, mehrere Namen pro Karte, × entfernt; ohne Klassenliste Namen eintippen) – die Namen stehen mit 👤 auf der Karte; ✎ auf der Karte oder
