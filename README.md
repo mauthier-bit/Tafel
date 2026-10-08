@@ -948,10 +948,11 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     So sieht man am leichten Beispiel, was im eigenen, größeren zu tun ist.
     Rückmeldungen gibt es auch, wenn etwas nicht aufgeht: Teilen durch 0, ein negatives Ergebnis
     („negative Zahlen kommen erst später dran") oder eine krumme Zahl.
-  - **Formel umstellen** – das **ganze Werkzeug „Formel umstellen"** steckt als Reiter mit drin
-    (es gibt es daneben weiterhin als eigenes Objekt in der Gruppe **Mathe & Physik**). So lässt sich
-    am selben Objekt erst eine Gleichung lösen und dann eine Formel nach einer anderen Größe auflösen,
-    ohne ein zweites Werkzeug auf die Tafel zu holen. **A− / A+** des Gleichungslösers stellen auch
+  - **Formel umstellen** – das **ganze Werkzeug „Formel umstellen"** steckt als Reiter mit drin;
+    einen eigenen Knopf in der Gruppe **Mathe & Physik** gibt es dafür nicht mehr, es wohnt jetzt hier.
+    (Ältere Projekte mit einem eigenständigen Formel-Objekt öffnen weiterhin ganz normal.) So lässt
+    sich am selben Objekt erst eine Gleichung lösen und dann eine Formel nach einer anderen Größe
+    auflösen, ohne ein zweites Werkzeug auf die Tafel zu holen. **A− / A+** des Gleichungslösers stellen auch
     hier die Schrift, und **„🖼 Rechenweg → Tafel"** legt das Bild wie gewohnt neben das Objekt.
   - **Einfache trigonometrische Gleichungen** (sin, cos, tan mit linearem Argument, z. B. `2sin(x)=1`,
     `cos(2x+30)=0,5`, auch quadratisch wie `2sin^2(x)-sin(x)-1=0` per Substitution): allgemeine Lösung
@@ -1495,7 +1496,7 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
    **und** Kreis, Gerade, Zirkel, Zahlenstrahl, Koordinatensystem (alle Knöpfe gleich groß);
    ein **Zeit**-Button (Uhr, Stoppuhr, Timer);
    ein **Klasse & Interaktion**-Button (Sozialform, Gruppen bilden, Umfrage, Zufälliger Name, Punktestand)
-   und ein **Mathe & Physik**-Button (Gleichungslöser, Funktionsplotter, **Ableitungen**, **Term-Umformer**, **Figuren & Körper**, **Diagramm**, **Formel umstellen**, **Einheitskreis**, **3D-Koordinatensystem**, Vierfeldertafel, Baumdiagramm,
+   und ein **Mathe & Physik**-Button (Gleichungslöser – mit Waage, Umkehraufgabe und **Formel umstellen** –, Funktionsplotter, **Ableitungen**, **Term-Umformer**, **Figuren & Körper**, **Diagramm**, **Einheitskreis**, **3D-Koordinatensystem**, Vierfeldertafel, Baumdiagramm,
    Wahrscheinlichkeitsrechner, **Strahlensätze**, GeoGebra-App, **CODAP**, Messwert-Analyse und **Zufall**).
    Die Aufklappmenüs legen sich **nie über die Werkzeugleiste**: Sie öffnen neben ihr, bleiben unter
    der oberen Leiste und nehmen bei schmalem Fenster **weniger Spalten** (bei wenig Höhe lassen sie
@@ -1939,7 +1940,7 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   Analyse-Knöpfe VZ/M/K, Tangente, Fläche/Integral, Intervalle, Symbolleiste, Ableitungsrelation,
   Krümmungs-Smileys, Linienstil, Anleitung (?). Der eingestellte Zustand (Funktion, Parameter, sichtbare
   Graphen, Analyse-Knöpfe, Zoom, Farben, Freihand-Kurve) wird **mit dem Tafel-Projekt gespeichert**.
-- **Formel umstellen** (Mathe & Physik): Formel eintippen (`F = m · a`) oder aus der **Formelsammlung**
+- **Formel umstellen** (im **Gleichungslöser** der fünfte Reiter): Formel eintippen (`F = m · a`) oder aus der **Formelsammlung**
   wählen – Mechanik, Elektrizität, Wärme, Geometrie und Mathematik, jeweils mit Einheiten. Dann die
   **gesuchte Größe antippen**; das Werkzeug stellt **Schritt für Schritt** um und schreibt an jede Zeile
   die Rechenregel: „| : m", „| − b", „| √ (x > 0)", „| Seiten tauschen".
