@@ -46,6 +46,10 @@
     border-radius:4px;background:#2563eb;border:2px solid #fff;box-shadow:0 1px 3px rgba(15,23,42,.3);cursor:pointer;}
   #bahn .mk.sel{background:#ea580c;}
   #bahn .mk.fertig{background:#16a34a;}
+  #bahn .mk.aus{background:#cbd5e1;}
+  #bahn .weg{position:absolute;top:0;bottom:0;background:repeating-linear-gradient(135deg,#dbe2ea,#dbe2ea 5px,#eef2f7 5px,#eef2f7 10px);border-radius:7px;}
+  #schnitt{flex:none;display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:calc(var(--k)*12px);color:#64748b;}
+  #schnitt b{color:#475569;}
   #zeit{font:700 calc(var(--k)*13px) -apple-system,sans-serif;color:#475569;font-variant-numeric:tabular-nums;white-space:nowrap;}
   /* Marken-Editor */
   #edit{flex:none;border:1px solid #e6eaf0;border-radius:12px;padding:9px;background:#fbfcfe;display:flex;flex-direction:column;gap:7px;}
@@ -90,7 +94,6 @@
     <span class="sep"></span>
     <button class="btn" id="fsM" title="Schrift kleiner">A−</button><button class="btn" id="fsP" title="Schrift größer">A+</button>
     <span id="teilenBtn" style="display:inline-flex"></span>
-    <span id="shotBtns" style="display:inline-flex;gap:5px"></span>
   </div>
   <div id="stage">
     <div id="vbox">
@@ -103,8 +106,16 @@
     </div>
     <div id="leiste">
       <button class="btn" id="bPlay" title="Abspielen / Pause">▶</button>
+      <button class="btn" id="bStart" title="Zurück zum Anfang"><svg viewBox="0 0 24 24"><path d="M19 5.5v13L9.5 12Z" fill="currentColor" stroke="none"/><path d="M6 5.5v13" stroke-width="2.4"/></svg></button>
       <div id="bahn"><div id="fort"></div></div>
       <span id="zeit">0:00 / 0:00</span>
+      <button class="btn" id="bReset" title="Alle Fragen auf unbeantwortet zurücksetzen und ans Ende des Anfangs springen">↺<span class="t"> Zurücksetzen</span></button>
+    </div>
+    <div id="schnitt" class="tafelEdit">
+      <b>Ausschnitt</b><span id="schnittText">ganzes Video</span>
+      <button class="btn" id="bSchnittA" title="Der Ausschnitt beginnt an der aktuellen Stelle">⇤ Start hier</button>
+      <button class="btn" id="bSchnittB" title="Der Ausschnitt endet an der aktuellen Stelle">Ende hier ⇥</button>
+      <button class="btn" id="bSchnittWeg" title="Wieder das ganze Video verwenden">ganzes Video</button>
     </div>
     <div id="edit" class="tafelEdit"></div>
     <div id="erg"></div>
@@ -128,7 +139,7 @@ const $=id=>document.getElementById(id);
 const toast=m=>window.TafelShot&&TafelShot.toast(m);
 const uid=()=>'m'+Math.random().toString(36).slice(2,8);
 const ARTEN={hinweis:'Hinweis', mc:'Multiple Choice', wf:'Wahr oder falsch', text:'Kurzantwort'};
-let D={ v:1, titel:'', quelle:{art:'',src:'',name:''}, marken:[], fontSize:16, edit:true, ergebnis:{} };
+let D={ v:1, titel:'', quelle:{art:'',src:'',name:''}, schnitt:{a:0,b:0}, marken:[], fontSize:16, edit:true, ergebnis:{} };
 let ready=false, gewaehlt=null, aktiv=null, erledigt={}, objUrl='', ytApi=null, ytBereit=false, tickT=null;
 
 /* ================= Abspielen: Videodatei/Link oder YouTube ================= */
@@ -146,6 +157,10 @@ const P={
   springe(s){ if(this.art()==='yt'){ if(ytApi&&ytBereit) ytApi.seekTo(Math.max(0,s),true); return; }
     const v=this.el(); if(v) v.currentTime=Math.max(0,s); }
 };
+/* Ausschnitt: a = Beginn, b = Ende (0 = bis zum Schluss) */
+const sA=()=>Math.max(0,(D.schnitt&&+D.schnitt.a)||0);
+const sB=()=>{ const d=P.dauer()||0, b=(D.schnitt&&+D.schnitt.b)||0; return (b>0&&(!d||b<=d+0.5))?b:d; };
+const imSchnitt=t=>{ const b=sB(); return t>=sA()-0.01&&(!b||t<=b+0.01); };
 const mmss=s=>{ s=Math.max(0,Math.floor(s||0)); return Math.floor(s/60)+':'+String(s%60).padStart(2,'0'); };
 const ytId=u=>{ const m=/(?:v=|youtu\.be\/|embed\/|shorts\/)([A-Za-z0-9_-]{6,})/.exec(String(u||'')); return m?m[1]:''; };
 
@@ -177,24 +192,43 @@ function videoBauen(){ const box=$('vbox');
   box.appendChild(v); }
 
 /* ================= Zeitleiste ================= */
-function bahnBauen(){ const b=$('bahn'); [...b.querySelectorAll('.mk')].forEach(e=>e.remove());
-  const d=P.dauer()||0;
+function bahnBauen(){ const b=$('bahn'); [...b.querySelectorAll('.mk,.weg')].forEach(e=>e.remove());
+  const d=P.dauer()||0, a0=sA(), b0=sB();
+  if(d>0){                                            /* weggeschnittene Teile schraffieren */
+    if(a0>0.05){ const w=document.createElement('div'); w.className='weg'; w.style.left='0'; w.style.width=Math.min(100,a0/d*100)+'%'; b.appendChild(w); }
+    if(b0>0&&b0<d-0.05){ const w=document.createElement('div'); w.className='weg'; w.style.left=(b0/d*100)+'%'; w.style.right='0'; b.appendChild(w); } }
   (D.marken||[]).slice().sort((a,b2)=>a.t-b2.t).forEach(m=>{
-    const el=document.createElement('div'); el.className='mk'+(gewaehlt===m.id?' sel':'')+(erledigt[m.id]?' fertig':'');
+    const el=document.createElement('div'); el.className='mk'+(gewaehlt===m.id?' sel':'')+(erledigt[m.id]?' fertig':'')+(imSchnitt(m.t)?'':' aus');
     el.style.left=(d>0?Math.min(99.5,Math.max(0.5,m.t/d*100)):0)+'%';
-    el.title=mmss(m.t)+' · '+(ARTEN[m.art]||'')+(m.frage?(' · '+m.frage):'');
+    el.title=mmss(m.t)+' · '+(ARTEN[m.art]||'')+(m.frage?(' · '+m.frage):'')+(imSchnitt(m.t)?'':' · liegt außerhalb des Ausschnitts');
     el.onclick=e=>{ e.stopPropagation(); gewaehlt=m.id; P.springe(Math.max(0,m.t-0.3)); editBauen(); bahnBauen(); };
     b.appendChild(el); }); }
-function takt(){ const d=P.dauer()||0, t=P.zeit()||0;
+function schnittUI(){ const a=sA(), b=(D.schnitt&&+D.schnitt.b)||0;
+  $('schnittText').textContent=(a||b)?(mmss(a)+' – '+(b?mmss(b):'Ende')):'ganzes Video'; }
+function takt(){ const d=P.dauer()||0, t=P.zeit()||0, a0=sA(), b0=sB();
   $('fort').style.width=(d>0?Math.min(100,t/d*100):0)+'%';
   $('zeit').textContent=mmss(t)+' / '+mmss(d);
   $('bPlay').textContent=P.laeuft()?'❚❚':'▶';
   if(!$('bahn').querySelector('.mk')&&(D.marken||[]).length) bahnBauen();
+  if(P.laeuft()&&!aktiv){                                      /* nur den Ausschnitt abspielen */
+    if(t<a0-0.4) P.springe(a0);
+    else if(b0>0&&t>=b0-0.05){ P.pause(); if(D.edit===false) ergBauen(); } }
   if(D.edit===false&&P.laeuft()&&!aktiv){                       /* im Benutzen-Modus an der Marke anhalten */
-    const faellig=(D.marken||[]).filter(m=>!erledigt[m.id]&&t>=m.t&&t-m.t<1.2).sort((a,b)=>a.t-b.t)[0];
+    const faellig=(D.marken||[]).filter(m=>!erledigt[m.id]&&imSchnitt(m.t)&&t>=m.t&&t-m.t<1.2).sort((a,b)=>a.t-b.t)[0];
     if(faellig) frageZeigen(faellig); } }
 setInterval(takt,160);
 $('bPlay').onclick=()=>{ if(aktiv) return; P.laeuft()?P.pause():P.spiele(); takt(); };
+$('bStart').onclick=()=>{ P.springe(sA()); setTimeout(takt,120); };
+$('bReset').onclick=()=>{ D.ergebnis={}; erledigt={}; aktiv=null; $('frage').classList.remove('show');
+  P.pause(); P.springe(sA()); bahnBauen(); ergBauen(); sync(); setTimeout(takt,150);
+  toast('Zurückgesetzt – alle Fragen sind wieder offen'); };
+$('bSchnittA').onclick=()=>{ D.schnitt=D.schnitt||{a:0,b:0}; D.schnitt.a=Math.max(0,Math.round(P.zeit()*10)/10);
+  if(D.schnitt.b&&D.schnitt.b<=D.schnitt.a) D.schnitt.b=0;
+  schnittUI(); bahnBauen(); sync(); toast('Ausschnitt beginnt bei '+mmss(D.schnitt.a)); };
+$('bSchnittB').onclick=()=>{ D.schnitt=D.schnitt||{a:0,b:0}; const t=Math.max(0,Math.round(P.zeit()*10)/10);
+  if(t<=sA()+0.2){ toast('Das Ende muss nach dem Start liegen'); return; }
+  D.schnitt.b=t; schnittUI(); bahnBauen(); sync(); toast('Ausschnitt endet bei '+mmss(t)); };
+$('bSchnittWeg').onclick=()=>{ D.schnitt={a:0,b:0}; schnittUI(); bahnBauen(); sync(); toast('Wieder das ganze Video'); };
 $('bahn').onclick=e=>{ if(e.target.classList.contains('mk')) return; const r=$('bahn').getBoundingClientRect();
   const d=P.dauer(); if(d>0) P.springe((e.clientX-r.left)/r.width*d); setTimeout(takt,120); };
 
@@ -291,7 +325,7 @@ function frageZeigen(m){ aktiv=m; P.pause();
   ergBauen(); }
 function ergBauen(){ const e=$('erg');
   if(D.edit!==false){ e.textContent=''; return; }
-  const n=(D.marken||[]).filter(m=>m.art!=='hinweis').length;
+  const n=(D.marken||[]).filter(m=>m.art!=='hinweis'&&imSchnitt(m.t)).length;   /* nur Fragen im Ausschnitt zählen */
   if(!n){ e.textContent=''; return; }
   const r=Object.keys(D.ergebnis||{}).filter(k=>D.ergebnis[k]).length, b=Object.keys(D.ergebnis||{}).length;
   e.innerHTML='Beantwortet: '+b+' von '+n+' · richtig: <b>'+r+'</b>'+(b>=n?' – geschafft!':''); }
@@ -345,9 +379,10 @@ function uebernehmen(d){ const alteQuelle=JSON.stringify(D.quelle||{});
   D=Object.assign(D,d);
   if(!Array.isArray(D.marken)) D.marken=[];
   if(!D.quelle||typeof D.quelle!=='object') D.quelle={art:'',src:'',name:''};
+  if(!D.schnitt||typeof D.schnitt!=='object') D.schnitt={a:0,b:0};
   if(!D.ergebnis||typeof D.ergebnis!=='object') D.ergebnis={};
   D.marken.forEach(m=>{ if(!m.id) m.id=uid(); if(!m.art) m.art='mc'; if(!Array.isArray(m.antworten)) m.antworten=[]; });
-  $('titel').value=D.titel||''; schrift(); modusUI();
+  $('titel').value=D.titel||''; schrift(); modusUI(); schnittUI();
   if(JSON.stringify(D.quelle)!==alteQuelle) videoBauen();
   bahnBauen(); takt(); }
 function sync(){ if(window.parent===window||!ready) return;
@@ -355,7 +390,6 @@ function sync(){ if(window.parent===window||!ready) return;
 addEventListener('message',e=>{ if(e.source!==window&&(window.parent===window||e.source!==window.parent)) return;
   if(e.data&&e.data.type==='embed-data'&&e.data.data) uebernehmen(e.data.data); });
 
-if(window.TafelShot) TafelShot.buttons($('shotBtns'),()=>TafelShot.rasterize($('stage'),{pad:8}),'btn');
 if(window.TafelTeilen&&!TafelTeilen.istGeteilt())
   TafelTeilen.knopf($('teilenBtn'),'video-interaktiv.html',()=>{
     const d=JSON.parse(JSON.stringify(D)); d.edit=false; d.ergebnis={};
@@ -365,10 +399,10 @@ if(window.TafelTeilen&&!TafelTeilen.istGeteilt())
 
 window.addEventListener('load',()=>{
   const geteilt=window.TafelTeilen&&TafelTeilen.istGeteilt();
-  schrift(); modusUI(); bahnBauen(); takt();
+  schrift(); modusUI(); schnittUI(); bahnBauen(); takt();
   if(geteilt){ D.edit=false; ready=true; modusUI();
     TafelTeilen.empfangen().then(p=>{ if(p&&p.w==='ivid'&&p.d){ p.d.edit=false; uebernehmen(p.d); } })
-      .catch(()=>{}).then(()=>TafelTeilen.nurBenutzen('#shotBtns'));
+      .catch(()=>{}).then(()=>TafelTeilen.nurBenutzen());
     return; }
   if(window.TafelModus) TafelModus.init({get:()=>D.edit!==false, set:v=>{ D.edit=v; erledigt={}; aktiv=null;
     $('frage').classList.remove('show'); modusUI(); bahnBauen(); sync(); }});

@@ -1930,9 +1930,22 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     Bild, die Klasse antwortet, richtig wird grün und falsch rot gezeigt, **↺ Noch einmal** erlaubt einen
     zweiten Versuch, **▶ Weiter** spielt weiter. Unten zählt eine Zeile mit, wie viele Fragen beantwortet
     und wie viele richtig waren; beantwortete Marken werden auf der Zeitleiste grün.
+    Neben **▶** liegen **⏮ zum Anfang** und **↺ Zurücksetzen** – letzteres stellt **alle Fragen wieder
+    auf unbeantwortet** und spult zurück, sodass die nächste Klasse von vorn anfangen kann. Beide
+    Knöpfe sind auch im Benutzen-Modus da.
+  - **Ausschnitt (Trimmen):** Braucht man nur einen Teil des Films, setzt man mit **⇤ Start hier** und
+    **Ende hier ⇥** die Grenzen auf die aktuelle Stelle; **ganzes Video** hebt das wieder auf. Auf der
+    Zeitleiste sind die weggeschnittenen Teile schraffiert, Marken außerhalb werden grau und lösen
+    nicht mehr aus (sie bleiben aber erhalten), und die Zählung bezieht sich nur auf den Ausschnitt.
+    Abgespielt wird nur zwischen den Grenzen: Startet man davor, springt das Video an den Anfang des
+    Ausschnitts, am Ende hält es an. **Kleiner wird die Datei dadurch nicht** – der Ausschnitt steuert
+    nur, was abgespielt wird; die Videodatei selbst bleibt unverändert (echtes Kürzen hieße neu
+    kodieren).
+  - **Kein „🖼 Tafel / 📋 Kopieren":** Ein Standbild eines Videoplayers bringt auf der Tafel nichts –
+    die Knöpfe gibt es hier deshalb nicht.
   - **💾 / 📂** sichert die Aufgabe als Datei und lädt sie wieder – **mit** dem Video, wenn es klein
     genug war (sonst sagt das Werkzeug beim Sichern, dass nur die Fragen mitgehen, und nennt beim Laden
-    den Dateinamen des fehlenden Videos). Dazu **A− / A+**, **🖼 Tafel / 📋 Kopieren** und **⤴ Teilen**
+    den Dateinamen des fehlenden Videos). Dazu **A− / A+** und **⤴ Teilen**
     (QR-Code; eine **Videodatei** lässt sich so nicht teilen – dafür einen Link verwenden).
   - **Kein H5P:** Ein echter H5P-Editor braucht einen Server (deshalb ist Lumi eine eigene App); die
     Tafel **spielt** `.h5p`-Dateien weiterhin ab (**Einfügen → Datei**), erzeugt sie aber nicht.
