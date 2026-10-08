@@ -1916,6 +1916,26 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     **💾 / 📂** zum Sichern und Laden der Aufgabe als Datei. Ein **eingefügtes Foto ist für einen
     QR-Code zu groß** – dann wird die Aufgabe ohne Bild geteilt und sagt es auch; Vorlagen und
     Zeichnungen gehen vollständig mit.
+- **Interaktives Video** (Diverses, `video-interaktiv.html`): ein Video mit **Fragen und Hinweisen an
+  bestimmten Stellen** – das, wofür man sonst H5P nimmt, nur in der Logik der Tafel.
+  - **🎬 Video** wählt die Quelle: eine **Videodatei** vom Gerät (bis **12 MB** wird sie mit dem Projekt
+    gespeichert, größere laufen nur bis zum Neuladen), ein **YouTube-Link** (braucht Internet, läuft
+    auch im geteilten Link) oder ein **direkter Link** auf eine mp4/webm-Datei, z. B. aus der Schul-Cloud.
+  - Im **Bearbeiten-Modus** das Video an die gewünschte Stelle bringen und **＋ Marke** tippen. Darunter
+    steht der Marken-Editor: **Zeit** (mit „⟲ hierher" auf die aktuelle Stelle), **Art** und die Inhalte.
+    Vier Arten: **Hinweis** (Text einblenden), **Multiple Choice** (beliebig viele Antworten, eine oder
+    mehrere richtig), **Wahr oder falsch** und **Kurzantwort** (erwartete Antwort, mehrere Varianten mit
+    `|` getrennt). Die Marken sitzen als Fähnchen auf der **Zeitleiste**; ein Tipp darauf springt hin.
+  - Im **Benutzen-Modus** läuft das Video und **hält an jeder Marke an**: Die Frage legt sich über das
+    Bild, die Klasse antwortet, richtig wird grün und falsch rot gezeigt, **↺ Noch einmal** erlaubt einen
+    zweiten Versuch, **▶ Weiter** spielt weiter. Unten zählt eine Zeile mit, wie viele Fragen beantwortet
+    und wie viele richtig waren; beantwortete Marken werden auf der Zeitleiste grün.
+  - **💾 / 📂** sichert die Aufgabe als Datei und lädt sie wieder – **mit** dem Video, wenn es klein
+    genug war (sonst sagt das Werkzeug beim Sichern, dass nur die Fragen mitgehen, und nennt beim Laden
+    den Dateinamen des fehlenden Videos). Dazu **A− / A+**, **🖼 Tafel / 📋 Kopieren** und **⤴ Teilen**
+    (QR-Code; eine **Videodatei** lässt sich so nicht teilen – dafür einen Link verwenden).
+  - **Kein H5P:** Ein echter H5P-Editor braucht einen Server (deshalb ist Lumi eine eigene App); die
+    Tafel **spielt** `.h5p`-Dateien weiterhin ab (**Einfügen → Datei**), erzeugt sie aber nicht.
 - **Lückentext** (Diverses): Text eingeben oder über **📋 Einfügen** aus der Zwischenablage holen
   (**Laden** liest auch eine .txt-Datei). Dann die Lücken festlegen: **Wählen** – die Wörter im Text
   antippen (nochmal antippen hebt die Lücke auf, ein kleines × zeigt das an) – oder **Zufällig**, wobei in der zweiten Zeile
@@ -2218,6 +2238,7 @@ teilen.js             ← Teilen per QR-Code (Aufgabe steckt im Fragment der Adr
 formel.html           ← Formel umstellen (nach einer Größe auflösen, Schritt für Schritt, mit Formelsammlung)
 beschriften.html      ← Bild beschriften (Beschriftungen setzen und zuordnen)
 beschriften-vorlagen.js ← Vorlagen dafür (Auge, Ohr, Zahlbereiche, Fadenstrahlrohr)
+video-interaktiv.html ← Interaktives Video (Fragen und Hinweise an Zeitmarken)
 motiontracker.html    ← Motion-Tracker (Bewegung und Abstand per Kamera-KI; braucht Kamera, Mikrofon und Internet)
 stromkreis.html       ← Stromkreis-Editor mit Simulation (U, I, R, C, L, Ladungsfluss, Bild-Export)
 optik.html            ← Optiklabor (Strahlenoptik, Schatten, Mondphasen und Finsternisse)

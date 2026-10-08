@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Interaktives Video</title>
+<style>
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  :root{--k:1;}
+  html,body{margin:0;height:100%;font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#1f2430;overflow:hidden;}
+  #app{height:100%;display:flex;flex-direction:column;}
+  #bar{display:flex;gap:5px;align-items:center;flex-wrap:wrap;padding:6px 8px;border-bottom:1px solid #e6eaf0;flex:none;padding-right:104px;}
+  .btn{border:1px solid #cfd6e0;background:#fff;border-radius:9px;padding:6px 10px;font:600 calc(var(--k)*13px) -apple-system,sans-serif;color:#1f2430;cursor:pointer;white-space:nowrap;}
+  .btn.on{background:#2563eb;border-color:#2563eb;color:#fff;}
+  .btn.pri{background:#2563eb;border-color:#2563eb;color:#fff;font-weight:800;}
+  .btn.dang{color:#b91c1c;border-color:#fca5a5;}
+  .btn:disabled{opacity:.4;cursor:default;}
+  .btn svg{width:calc(var(--k)*17px);height:calc(var(--k)*17px);fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;display:block;}
+  .sep{width:1px;height:20px;background:#e2e8f0;}
+  #titel{border:1px solid transparent;border-radius:8px;padding:5px 8px;font:800 calc(var(--k)*15px) inherit;background:none;color:#1f2430;min-width:80px;flex:1 1 110px;}
+  #titel:focus{border-color:#cfd6e0;outline:none;}
+  @media (max-width:560px){ #bar .t{display:none;} #bar .btn{padding:6px 7px;} }
+  #stage{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;gap:6px;padding:7px 8px 8px;overflow:auto;-webkit-overflow-scrolling:touch;}
+  #vbox{position:relative;width:100%;background:#0b0f18;border-radius:12px;overflow:hidden;flex:none;aspect-ratio:16/9;}
+  #vbox video,#vbox iframe{position:absolute;inset:0;width:100%;height:100%;border:0;display:block;background:#0b0f18;}
+  #leer{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;color:#cbd5e1;text-align:center;padding:14px;font-size:calc(var(--k)*13px);}
+  /* Einblendung an einer Marke */
+  #frage{position:absolute;inset:0;z-index:5;background:rgba(8,12,20,.82);display:none;align-items:center;justify-content:center;padding:12px;}
+  #frage.show{display:flex;}
+  #frage .k{background:#fff;border-radius:14px;padding:12px 14px;max-width:560px;width:100%;max-height:100%;overflow:auto;}
+  #frage .typ{font-size:calc(var(--k)*11px);font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#8a93a2;}
+  #frage h4{margin:3px 0 9px;font-size:calc(var(--k)*16px);line-height:1.35;}
+  #frage .aw{display:flex;align-items:center;gap:8px;border:1.5px solid #cfd6e0;border-radius:10px;padding:calc(var(--k)*7px) calc(var(--k)*10px);margin-bottom:6px;cursor:pointer;font-size:calc(var(--k)*14px);}
+  #frage .aw.sel{border-color:#2563eb;background:#eff6ff;}
+  #frage .aw.ok{border-color:#16a34a;background:#f0fdf4;color:#15803d;}
+  #frage .aw.no{border-color:#dc2626;background:#fef2f2;color:#b91c1c;}
+  #frage input[type=text]{width:100%;border:1.5px solid #cfd6e0;border-radius:10px;padding:calc(var(--k)*8px) calc(var(--k)*10px);font:inherit;font-size:calc(var(--k)*15px);}
+  #frage .rm{margin:7px 0 0;font-size:calc(var(--k)*13px);font-weight:700;}
+  #frage .rm.ok{color:#15803d;} #frage .rm.no{color:#b91c1c;}
+  #frage .b{display:flex;gap:7px;margin-top:10px;flex-wrap:wrap;}
+  /* Zeitleiste */
+  #leiste{flex:none;display:flex;gap:7px;align-items:center;}
+  #bahn{position:relative;flex:1 1 auto;height:calc(var(--k)*22px);background:#eef2f7;border-radius:7px;cursor:pointer;}
+  #fort{position:absolute;left:0;top:0;bottom:0;background:#bfdbfe;border-radius:7px;width:0;}
+  #bahn .mk{position:absolute;top:-3px;width:calc(var(--k)*13px);height:calc(var(--k)*28px);margin-left:calc(var(--k)*-6.5px);
+    border-radius:4px;background:#2563eb;border:2px solid #fff;box-shadow:0 1px 3px rgba(15,23,42,.3);cursor:pointer;}
+  #bahn .mk.sel{background:#ea580c;}
+  #bahn .mk.fertig{background:#16a34a;}
+  #zeit{font:700 calc(var(--k)*13px) -apple-system,sans-serif;color:#475569;font-variant-numeric:tabular-nums;white-space:nowrap;}
+  /* Marken-Editor */
+  #edit{flex:none;border:1px solid #e6eaf0;border-radius:12px;padding:9px;background:#fbfcfe;display:flex;flex-direction:column;gap:7px;}
+  #edit .zeile{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
+  #edit .lbl{font-size:calc(var(--k)*12px);font-weight:700;color:#64748b;}
+  #edit input[type=text],#edit textarea,#edit select,#edit input[type=number]{border:1px solid #cfd6e0;border-radius:8px;padding:calc(var(--k)*6px) calc(var(--k)*8px);font:inherit;font-size:calc(var(--k)*14px);background:#fff;color:#1f2430;}
+  #edit input.gross{flex:1 1 180px;min-width:0;}
+  #edit textarea{width:100%;resize:vertical;min-height:calc(var(--k)*52px);}
+  #awListe{display:flex;flex-direction:column;gap:5px;}
+  #awListe .r{display:flex;gap:6px;align-items:center;}
+  #awListe .r input[type=text]{flex:1 1 auto;min-width:0;}
+  #awListe .r .ri{display:inline-flex;align-items:center;gap:4px;font-size:calc(var(--k)*12px);color:#15803d;font-weight:700;white-space:nowrap;}
+  #hin{font-size:calc(var(--k)*12px);color:#8a93a2;line-height:1.45;}
+  #erg{font-size:calc(var(--k)*13.5px);color:#475569;}
+  #erg b{color:#15803d;}
+  #qbox{position:absolute;inset:0;z-index:40;background:rgba(15,23,42,.45);display:none;align-items:center;justify-content:center;padding:14px;}
+  #qbox.show{display:flex;}
+  #qbox .k{background:#fff;border-radius:16px;padding:14px;max-width:520px;width:100%;box-shadow:0 12px 40px rgba(15,23,42,.3);}
+  #qbox h3{margin:0 0 9px;font-size:calc(var(--k)*16px);display:flex;justify-content:space-between;align-items:center;}
+  #qbox h3 .x{cursor:pointer;color:#8a93a2;font-size:1.3em;}
+  #qbox .q{display:flex;gap:8px;align-items:center;border:1px solid #e6eaf0;border-radius:11px;padding:9px;margin-bottom:7px;cursor:pointer;background:#fbfcfe;}
+  #qbox .q:hover{background:#eef4ff;border-color:#2563eb;}
+  #qbox .q b{display:block;font-size:calc(var(--k)*14px);} #qbox .q small{color:#64748b;font-size:calc(var(--k)*12px);}
+  #qbox input[type=text]{width:100%;border:1px solid #cfd6e0;border-radius:9px;padding:8px 10px;font:inherit;font-size:calc(var(--k)*14px);margin-top:4px;}
+  body.nurBenutzen #bar,body.nurBenutzen #edit{display:none!important;}
+  [hidden]{display:none!important;}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="bar" class="tafelEdit">
+    <input type="text" id="titel" placeholder="Überschrift (z. B. Fotosynthese)">
+    <span class="sep"></span>
+    <button class="btn" id="bQuelle" title="Video auswählen: Datei, YouTube-Link oder direkter Link">🎬<span class="t"> Video</span></button>
+    <button class="btn pri" id="bAdd" title="An der aktuellen Stelle eine Marke einfügen">＋<span class="t"> Marke</span></button>
+    <button class="btn dang" id="bDel" title="Ausgewählte Marke löschen">🗑<span class="t"> Marke</span></button>
+    <span class="sep"></span>
+    <button class="btn" id="bSave" title="Aufgabe als Datei sichern">💾</button>
+    <button class="btn" id="bLoad" title="Aufgabe aus einer Datei laden">📂</button>
+    <input type="file" id="fVideo" accept="video/*" hidden>
+    <input type="file" id="fDatei" accept=".json,application/json" hidden>
+    <span class="sep"></span>
+    <button class="btn" id="fsM" title="Schrift kleiner">A−</button><button class="btn" id="fsP" title="Schrift größer">A+</button>
+    <span id="teilenBtn" style="display:inline-flex"></span>
+    <span id="shotBtns" style="display:inline-flex;gap:5px"></span>
+  </div>
+  <div id="stage">
+    <div id="vbox">
+      <div id="leer">Noch kein Video gewählt.<br>Über <b>🎬 Video</b> eine Datei, einen YouTube-Link oder einen direkten Link angeben.</div>
+      <div id="frage"><div class="k">
+        <div class="typ" id="fTyp"></div><h4 id="fFrage"></h4>
+        <div id="fBody"></div><div class="rm" id="fRueck"></div>
+        <div class="b" id="fBtn"></div>
+      </div></div>
+    </div>
+    <div id="leiste">
+      <button class="btn" id="bPlay" title="Abspielen / Pause">▶</button>
+      <div id="bahn"><div id="fort"></div></div>
+      <span id="zeit">0:00 / 0:00</span>
+    </div>
+    <div id="edit" class="tafelEdit"></div>
+    <div id="erg"></div>
+    <div id="hin">Im <b>Bearbeiten-Modus</b> das Video an die gewünschte Stelle bringen und <b>＋ Marke</b> tippen. Im <b>Benutzen-Modus</b> hält das Video dort an und stellt die Frage.</div>
+  </div>
+  <div id="qbox"><div class="k">
+    <h3><span>Video auswählen</span><span class="x" id="qZu">×</span></h3>
+    <div class="q" id="qFile"><div><b>🎞 Videodatei vom Gerät</b><small>bis 12 MB wird sie mit dem Projekt gespeichert, größere laufen nur bis zum Neuladen</small></div></div>
+    <div class="q" id="qYt"><div style="flex:1"><b>▶ YouTube-Link</b><small>braucht Internet; läuft auch im geteilten Link</small>
+      <input type="text" id="qYtUrl" placeholder="https://www.youtube.com/watch?v=…"></div></div>
+    <div class="q" id="qUrl"><div style="flex:1"><b>🔗 Direkter Link auf eine Videodatei</b><small>z. B. mp4 oder webm von der Schul-Cloud</small>
+      <input type="text" id="qUrlV" placeholder="https://…/film.mp4"></div></div>
+  </div></div>
+</div>
+<script src="shot.js"></script>
+<script src="modus.js"></script>
+<script src="teilen.js"></script>
+<script>
+"use strict";
+const $=id=>document.getElementById(id);
+const toast=m=>window.TafelShot&&TafelShot.toast(m);
+const uid=()=>'m'+Math.random().toString(36).slice(2,8);
+const ARTEN={hinweis:'Hinweis', mc:'Multiple Choice', wf:'Wahr oder falsch', text:'Kurzantwort'};
+let D={ v:1, titel:'', quelle:{art:'',src:'',name:''}, marken:[], fontSize:16, edit:true, ergebnis:{} };
+let ready=false, gewaehlt=null, aktiv=null, erledigt={}, objUrl='', ytApi=null, ytBereit=false, tickT=null;
+
+/* ================= Abspielen: Videodatei/Link oder YouTube ================= */
+const P={
+  art:()=>D.quelle&&D.quelle.art||'',
+  el:()=>$('vbox').querySelector('video'),
+  dauer(){ if(this.art()==='yt') return (ytApi&&ytBereit&&ytApi.getDuration&&ytApi.getDuration())||0;
+    const v=this.el(); return (v&&isFinite(v.duration))?v.duration:0; },
+  zeit(){ if(this.art()==='yt') return (ytApi&&ytBereit&&ytApi.getCurrentTime&&ytApi.getCurrentTime())||0;
+    const v=this.el(); return v?v.currentTime:0; },
+  laeuft(){ if(this.art()==='yt') return !!(ytApi&&ytBereit&&ytApi.getPlayerState&&ytApi.getPlayerState()===1);
+    const v=this.el(); return !!(v&&!v.paused&&!v.ended); },
+  spiele(){ if(this.art()==='yt'){ if(ytApi&&ytBereit) ytApi.playVideo(); return; } const v=this.el(); if(v) v.play().catch(()=>{}); },
+  pause(){ if(this.art()==='yt'){ if(ytApi&&ytBereit) ytApi.pauseVideo(); return; } const v=this.el(); if(v) v.pause(); },
+  springe(s){ if(this.art()==='yt'){ if(ytApi&&ytBereit) ytApi.seekTo(Math.max(0,s),true); return; }
+    const v=this.el(); if(v) v.currentTime=Math.max(0,s); }
+};
+const mmss=s=>{ s=Math.max(0,Math.floor(s||0)); return Math.floor(s/60)+':'+String(s%60).padStart(2,'0'); };
+const ytId=u=>{ const m=/(?:v=|youtu\.be\/|embed\/|shorts\/)([A-Za-z0-9_-]{6,})/.exec(String(u||'')); return m?m[1]:''; };
+
+function videoBauen(){ const box=$('vbox');
+  [...box.querySelectorAll('video,iframe')].forEach(e=>e.remove());
+  ytApi=null; ytBereit=false;
+  const q=D.quelle||{};
+  $('leer').hidden=!!q.art;
+  if(!q.art) return;
+  if(q.art==='yt'){
+    const d=document.createElement('div'); d.id='ytHost'; box.appendChild(d);
+    const start=()=>{ try{ ytApi=new YT.Player('ytHost',{ videoId:q.src, playerVars:{rel:0,modestbranding:1,playsinline:1},
+        events:{ onReady:()=>{ ytBereit=true; takt(); }, onStateChange:()=>{} } }); }catch(e){ $('leer').hidden=false; $('leer').textContent='YouTube konnte nicht geladen werden.'; } };
+    if(window.YT&&window.YT.Player) start();
+    else { window.onYouTubeIframeAPIReady=start;
+      if(!document.querySelector('script[data-yt]')){ const s=document.createElement('script'); s.src='https://www.youtube.com/iframe_api'; s.dataset.yt='1';
+        s.onerror=()=>{ $('leer').hidden=false; $('leer').innerHTML='YouTube ist nicht erreichbar – für YouTube-Videos braucht die Tafel <b>Internet</b>.'; };
+        document.head.appendChild(s); } }
+    return; }
+  if(q.art==='datei'&&!objUrl&&!q.src){            /* Datei war zu groß zum Mitspeichern */
+    $('leer').hidden=false;
+    $('leer').innerHTML='Die Videodatei '+(q.name?('<b>'+q.name.replace(/[<>]/g,'')+'</b> '):'')+
+      'ist <b>nicht mitgespeichert</b> (über 12 MB).<br>Die Fragen sind alle da – bitte das Video über <b>🎬 Video</b> noch einmal auswählen.';
+    return; }
+  const v=document.createElement('video'); v.controls=true; v.playsInline=true; v.preload='metadata';
+  v.src=(q.art==='datei'&&objUrl)?objUrl:q.src;
+  v.onloadedmetadata=()=>takt(); v.onerror=()=>{ $('leer').hidden=false;
+    $('leer').innerHTML='Das Video lässt sich nicht abspielen.'+(q.art==='datei'?'<br>Große Dateien werden <b>nicht</b> mit dem Projekt gespeichert – bitte neu auswählen.':''); };
+  box.appendChild(v); }
+
+/* ================= Zeitleiste ================= */
+function bahnBauen(){ const b=$('bahn'); [...b.querySelectorAll('.mk')].forEach(e=>e.remove());
+  const d=P.dauer()||0;
+  (D.marken||[]).slice().sort((a,b2)=>a.t-b2.t).forEach(m=>{
+    const el=document.createElement('div'); el.className='mk'+(gewaehlt===m.id?' sel':'')+(erledigt[m.id]?' fertig':'');
+    el.style.left=(d>0?Math.min(99.5,Math.max(0.5,m.t/d*100)):0)+'%';
+    el.title=mmss(m.t)+' · '+(ARTEN[m.art]||'')+(m.frage?(' · '+m.frage):'');
+    el.onclick=e=>{ e.stopPropagation(); gewaehlt=m.id; P.springe(Math.max(0,m.t-0.3)); editBauen(); bahnBauen(); };
+    b.appendChild(el); }); }
+function takt(){ const d=P.dauer()||0, t=P.zeit()||0;
+  $('fort').style.width=(d>0?Math.min(100,t/d*100):0)+'%';
+  $('zeit').textContent=mmss(t)+' / '+mmss(d);
+  $('bPlay').textContent=P.laeuft()?'❚❚':'▶';
+  if(!$('bahn').querySelector('.mk')&&(D.marken||[]).length) bahnBauen();
+  if(D.edit===false&&P.laeuft()&&!aktiv){                       /* im Benutzen-Modus an der Marke anhalten */
+    const faellig=(D.marken||[]).filter(m=>!erledigt[m.id]&&t>=m.t&&t-m.t<1.2).sort((a,b)=>a.t-b.t)[0];
+    if(faellig) frageZeigen(faellig); } }
+setInterval(takt,160);
+$('bPlay').onclick=()=>{ if(aktiv) return; P.laeuft()?P.pause():P.spiele(); takt(); };
+$('bahn').onclick=e=>{ if(e.target.classList.contains('mk')) return; const r=$('bahn').getBoundingClientRect();
+  const d=P.dauer(); if(d>0) P.springe((e.clientX-r.left)/r.width*d); setTimeout(takt,120); };
+
+/* ================= Marken bearbeiten ================= */
+function marke(id){ return (D.marken||[]).find(m=>m.id===id)||null; }
+function editBauen(){ const box=$('edit'); box.innerHTML='';
+  if(D.edit===false){ box.hidden=true; return; } box.hidden=false;
+  const m=marke(gewaehlt);
+  if(!m){ box.innerHTML='<div class="lbl">Noch keine Marke ausgewählt. Video an die Stelle bringen und <b>＋ Marke</b> tippen – oder unten auf eine blaue Marke tippen.</div>'; return; }
+  const z1=document.createElement('div'); z1.className='zeile';
+  z1.innerHTML='<span class="lbl">Zeit</span>';
+  const zt=document.createElement('input'); zt.type='text'; zt.value=mmss(m.t); zt.size=6; zt.title='Minuten:Sekunden';
+  zt.onchange=()=>{ const p=String(zt.value).split(':').map(Number); const s=(p.length>1?p[0]*60+(p[1]||0):p[0]||0);
+    m.t=Math.max(0,s||0); zt.value=mmss(m.t); bahnBauen(); sync(); };
+  const jetzt=document.createElement('button'); jetzt.className='btn'; jetzt.textContent='⟲ hierher';
+  jetzt.title='Die Marke auf die aktuelle Stelle im Video setzen';
+  jetzt.onclick=()=>{ m.t=Math.max(0,P.zeit()); editBauen(); bahnBauen(); sync(); };
+  const art=document.createElement('select');
+  Object.keys(ARTEN).forEach(k=>{ const o=document.createElement('option'); o.value=k; o.textContent=ARTEN[k]; art.appendChild(o); });
+  art.value=m.art; art.onchange=()=>{ m.art=art.value;
+    if(m.art==='wf'&&(!m.antworten||m.antworten.length!==2)) m.antworten=[{t:'wahr',r:true},{t:'falsch',r:false}];
+    if(m.art==='mc'&&(!m.antworten||!m.antworten.length)) m.antworten=[{t:'',r:true},{t:'',r:false}];
+    editBauen(); sync(); };
+  z1.append(zt,jetzt,Object.assign(document.createElement('span'),{className:'lbl',textContent:'Art'}),art);
+  box.appendChild(z1);
+  const f=document.createElement('input'); f.type='text'; f.className='gross'; f.value=m.frage||'';
+  f.placeholder=m.art==='hinweis'?'Überschrift des Hinweises':'Frage';
+  f.oninput=()=>{ m.frage=f.value; bahnBauen(); sync(); };
+  const z2=document.createElement('div'); z2.className='zeile'; z2.append(Object.assign(document.createElement('span'),{className:'lbl',textContent:m.art==='hinweis'?'Titel':'Frage'}),f);
+  box.appendChild(z2);
+  if(m.art==='hinweis'){ const ta=document.createElement('textarea'); ta.value=m.text||''; ta.placeholder='Text, der eingeblendet wird';
+    ta.oninput=()=>{ m.text=ta.value; sync(); }; box.appendChild(ta); }
+  else if(m.art==='text'){ const l=document.createElement('input'); l.type='text'; l.className='gross'; l.value=m.loesung||'';
+    l.placeholder='erwartete Antwort – mehrere mit | trennen'; l.oninput=()=>{ m.loesung=l.value; sync(); };
+    const z=document.createElement('div'); z.className='zeile'; z.append(Object.assign(document.createElement('span'),{className:'lbl',textContent:'Lösung'}),l); box.appendChild(z); }
+  else { const liste=document.createElement('div'); liste.id='awListe';
+    (m.antworten||[]).forEach((a,i)=>{ const r=document.createElement('div'); r.className='r';
+      const t=document.createElement('input'); t.type='text'; t.value=a.t||''; t.placeholder='Antwort '+(i+1);
+      t.oninput=()=>{ a.t=t.value; sync(); }; t.disabled=(m.art==='wf');
+      const lab=document.createElement('label'); lab.className='ri';
+      const cb=document.createElement('input'); cb.type=(m.art==='wf')?'radio':'checkbox'; cb.name='r_'+m.id; cb.checked=!!a.r;
+      cb.onchange=()=>{ if(m.art==='wf') m.antworten.forEach(x=>x.r=false); a.r=cb.checked; editBauen(); sync(); };
+      lab.append(cb,document.createTextNode('richtig'));
+      r.append(t,lab);
+      if(m.art==='mc'&&(m.antworten||[]).length>2){ const x=document.createElement('button'); x.className='btn'; x.textContent='×';
+        x.onclick=()=>{ m.antworten.splice(i,1); editBauen(); sync(); }; r.appendChild(x); }
+      liste.appendChild(r); });
+    box.appendChild(liste);
+    if(m.art==='mc'){ const add=document.createElement('button'); add.className='btn'; add.textContent='＋ Antwort';
+      add.onclick=()=>{ m.antworten.push({t:'',r:false}); editBauen(); sync(); };
+      const z=document.createElement('div'); z.className='zeile'; z.appendChild(add); box.appendChild(z); } }
+}
+$('bAdd').onclick=()=>{ if(!D.quelle.art){ toast('Zuerst ein Video auswählen'); return; }
+  const m={id:uid(), t:Math.max(0,Math.round(P.zeit()*10)/10), art:'mc', frage:'', text:'', loesung:'', antworten:[{t:'',r:true},{t:'',r:false}]};
+  D.marken.push(m); gewaehlt=m.id; P.pause(); editBauen(); bahnBauen(); sync(); toast('Marke bei '+mmss(m.t)+' gesetzt'); };
+$('bDel').onclick=()=>{ const m=marke(gewaehlt); if(!m){ toast('Keine Marke ausgewählt'); return; }
+  D.marken=D.marken.filter(x=>x!==m); gewaehlt=null; editBauen(); bahnBauen(); sync(); };
+
+/* ================= Benutzen-Modus: Frage einblenden ================= */
+function frageZeigen(m){ aktiv=m; P.pause();
+  const k=$('frage'); k.classList.add('show');
+  $('fTyp').textContent=(ARTEN[m.art]||'')+' · '+mmss(m.t);
+  $('fFrage').textContent=m.frage||(m.art==='hinweis'?'Hinweis':'Frage');
+  const body=$('fBody'), rueck=$('fRueck'), btn=$('fBtn');
+  body.innerHTML=''; rueck.textContent=''; rueck.className='rm'; btn.innerHTML='';
+  let wahl=new Set(), feld=null;
+  if(m.art==='hinweis'){ const p=document.createElement('div'); p.style.fontSize='calc(var(--k)*14px)'; p.style.lineHeight='1.5';
+    p.style.whiteSpace='pre-wrap'; p.textContent=m.text||''; body.appendChild(p); }
+  else if(m.art==='text'){ feld=document.createElement('input'); feld.type='text'; feld.placeholder='Antwort eintippen';
+    feld.onkeydown=e=>{ e.stopPropagation(); if(e.key==='Enter') pruefen(); }; body.appendChild(feld); }
+  else { (m.antworten||[]).forEach((a,i)=>{ const r=document.createElement('div'); r.className='aw'; r.textContent=a.t||('Antwort '+(i+1));
+      r.onclick=()=>{ if(rueck.textContent) return;
+        if(m.art==='wf'||(m.antworten||[]).filter(x=>x.r).length<2){ wahl.clear(); body.querySelectorAll('.aw').forEach(x=>x.classList.remove('sel')); }
+        if(wahl.has(i)){ wahl.delete(i); r.classList.remove('sel'); } else { wahl.add(i); r.classList.add('sel'); } };
+      body.appendChild(r); }); }
+  const weiter=()=>{ k.classList.remove('show'); aktiv=null; erledigt[m.id]=true; bahnBauen(); ergBauen(); P.spiele(); };
+  function pruefen(){
+    if(m.art==='hinweis'){ weiter(); return; }
+    let richtig=false;
+    if(m.art==='text'){ const soll=String(m.loesung||'').split('|').map(x=>x.trim().toLowerCase()).filter(Boolean);
+      const ist=String(feld.value||'').trim().toLowerCase();
+      richtig=soll.length?soll.includes(ist):!!ist; }
+    else { const soll=new Set((m.antworten||[]).map((a,i)=>a.r?i:-1).filter(i=>i>=0));
+      richtig=(wahl.size===soll.size)&&[...wahl].every(i=>soll.has(i));
+      body.querySelectorAll('.aw').forEach((el,i)=>{ el.classList.remove('sel');
+        if((m.antworten[i]||{}).r) el.classList.add('ok'); else if(wahl.has(i)) el.classList.add('no'); }); }
+    D.ergebnis[m.id]=richtig; ergBauen(); sync();
+    rueck.textContent=richtig?'✓ Richtig':'✗ Noch nicht richtig'; rueck.className='rm '+(richtig?'ok':'no');
+    btn.innerHTML=''; const w=document.createElement('button'); w.className='btn pri'; w.textContent='▶ Weiter'; w.onclick=weiter; btn.appendChild(w);
+    if(!richtig){ const n=document.createElement('button'); n.className='btn'; n.textContent='↺ Noch einmal';
+      n.onclick=()=>frageZeigen(m); btn.appendChild(n); } }
+  if(m.art==='hinweis'){ const w=document.createElement('button'); w.className='btn pri'; w.textContent='▶ Weiter'; w.onclick=weiter; btn.appendChild(w); }
+  else { const p=document.createElement('button'); p.className='btn pri'; p.textContent='✓ Antworten'; p.onclick=pruefen; btn.appendChild(p); }
+  ergBauen(); }
+function ergBauen(){ const e=$('erg');
+  if(D.edit!==false){ e.textContent=''; return; }
+  const n=(D.marken||[]).filter(m=>m.art!=='hinweis').length;
+  if(!n){ e.textContent=''; return; }
+  const r=Object.keys(D.ergebnis||{}).filter(k=>D.ergebnis[k]).length, b=Object.keys(D.ergebnis||{}).length;
+  e.innerHTML='Beantwortet: '+b+' von '+n+' · richtig: <b>'+r+'</b>'+(b>=n?' – geschafft!':''); }
+
+/* ================= Videoquelle ================= */
+$('bQuelle').onclick=()=>$('qbox').classList.add('show');
+$('qZu').onclick=()=>$('qbox').classList.remove('show');
+$('qbox').onclick=e=>{ if(e.target.id==='qbox') $('qbox').classList.remove('show'); };
+$('qFile').onclick=()=>{ $('fVideo').value=''; $('fVideo').click(); };
+$('fVideo').onchange=function(){ const f=this.files[0]; if(!f) return; $('qbox').classList.remove('show');
+  if(objUrl) URL.revokeObjectURL(objUrl);
+  objUrl=URL.createObjectURL(f);
+  D.quelle={art:'datei',src:'',name:f.name};
+  if(f.size<=12*1024*1024){ const rd=new FileReader();
+    rd.onload=()=>{ D.quelle.src=String(rd.result); videoBauen(); sync(); toast('Video eingefügt – es wird mit dem Projekt gespeichert'); };
+    rd.readAsDataURL(f); }
+  else { videoBauen(); sync(); toast('Video eingefügt – über 12 MB, läuft nur bis zum Neuladen'); }
+  videoBauen(); };
+$('qYt').onclick=e=>{ if(e.target.tagName==='INPUT') return; const id=ytId($('qYtUrl').value);
+  if(!id){ toast('Bitte einen YouTube-Link einfügen'); return; }
+  D.quelle={art:'yt',src:id,name:''}; $('qbox').classList.remove('show'); videoBauen(); sync(); };
+$('qYtUrl').onkeydown=e=>{ e.stopPropagation(); if(e.key==='Enter') $('qYt').click(); };
+$('qUrl').onclick=e=>{ if(e.target.tagName==='INPUT') return; const u=String($('qUrlV').value||'').trim();
+  if(!/^https?:\/\//i.test(u)){ toast('Bitte eine vollständige Adresse mit https:// angeben'); return; }
+  D.quelle={art:'url',src:u,name:''}; $('qbox').classList.remove('show'); videoBauen(); sync(); };
+$('qUrlV').onkeydown=e=>{ e.stopPropagation(); if(e.key==='Enter') $('qUrl').click(); };
+
+/* ================= Dateien, Schrift, Tafel-Anbindung ================= */
+$('bSave').onclick=()=>{ const name=(prompt('Dateiname:', (D.titel||'interaktives-video').replace(/[\\/:*?"<>|]+/g,'_'))||'').trim(); if(!name) return;
+  const blob=new Blob([JSON.stringify(D)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name.replace(/\.json$/i,'')+'.json';
+  document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },2000);
+  toast((D.quelle.art==='datei'&&!D.quelle.src)
+    ? 'Gesichert – ohne das Video (über 12 MB), nur die Fragen'
+    : 'Gesichert – Fragen und Video sind in der Datei'); };
+$('bLoad').onclick=()=>{ $('fDatei').value=''; $('fDatei').click(); };
+$('fDatei').onchange=function(){ const f=this.files[0]; if(!f) return; const rd=new FileReader();
+  rd.onload=()=>{ try{ const o=JSON.parse(String(rd.result)); if(!o||!Array.isArray(o.marken)) throw new Error('x');
+      uebernehmen(Object.assign({edit:D.edit},o)); sync(); toast('Geladen: '+f.name); }
+    catch(e){ toast('Die Datei passt nicht zu diesem Werkzeug'); } };
+  rd.readAsText(f); };
+for(const [id,d] of [['fsM',-1],['fsP',1]]) $(id).onclick=()=>{ D.fontSize=Math.max(10,Math.min(34,(D.fontSize||16)+d)); schrift(); sync(); };
+function schrift(){ document.documentElement.style.setProperty('--k',(D.fontSize||16)/16); }
+$('titel').oninput=()=>{ D.titel=$('titel').value; sync(); };
+function modusUI(){ const bearb=D.edit!==false;
+  if(bearb){ $('frage').classList.remove('show'); aktiv=null; }   /* beim Bearbeiten keine offene Frage */
+  document.body.classList.toggle('nurBenutzen',!bearb);
+  if(window.TafelModus) TafelModus.refresh();
+  $('edit').hidden=!bearb; editBauen(); ergBauen(); }
+function uebernehmen(d){ const alteQuelle=JSON.stringify(D.quelle||{});
+  D=Object.assign(D,d);
+  if(!Array.isArray(D.marken)) D.marken=[];
+  if(!D.quelle||typeof D.quelle!=='object') D.quelle={art:'',src:'',name:''};
+  if(!D.ergebnis||typeof D.ergebnis!=='object') D.ergebnis={};
+  D.marken.forEach(m=>{ if(!m.id) m.id=uid(); if(!m.art) m.art='mc'; if(!Array.isArray(m.antworten)) m.antworten=[]; });
+  $('titel').value=D.titel||''; schrift(); modusUI();
+  if(JSON.stringify(D.quelle)!==alteQuelle) videoBauen();
+  bahnBauen(); takt(); }
+function sync(){ if(window.parent===window||!ready) return;
+  try{ parent.postMessage({type:'embed-data',data:D},'*'); }catch(e){} }
+addEventListener('message',e=>{ if(e.source!==window&&(window.parent===window||e.source!==window.parent)) return;
+  if(e.data&&e.data.type==='embed-data'&&e.data.data) uebernehmen(e.data.data); });
+
+if(window.TafelShot) TafelShot.buttons($('shotBtns'),()=>TafelShot.rasterize($('stage'),{pad:8}),'btn');
+if(window.TafelTeilen&&!TafelTeilen.istGeteilt())
+  TafelTeilen.knopf($('teilenBtn'),'video-interaktiv.html',()=>{
+    const d=JSON.parse(JSON.stringify(D)); d.edit=false; d.ergebnis={};
+    if(d.quelle&&d.quelle.art==='datei'){ d.quelle={art:'',src:'',name:d.quelle.name};
+      toast('Eine Videodatei lässt sich nicht per QR-Code teilen – geteilt werden nur die Fragen. Für geteilte Aufgaben einen Link verwenden.'); }
+    return {w:'ivid', d}; },{cls:'btn'});
+
+window.addEventListener('load',()=>{
+  const geteilt=window.TafelTeilen&&TafelTeilen.istGeteilt();
+  schrift(); modusUI(); bahnBauen(); takt();
+  if(geteilt){ D.edit=false; ready=true; modusUI();
+    TafelTeilen.empfangen().then(p=>{ if(p&&p.w==='ivid'&&p.d){ p.d.edit=false; uebernehmen(p.d); } })
+      .catch(()=>{}).then(()=>TafelTeilen.nurBenutzen('#shotBtns'));
+    return; }
+  if(window.TafelModus) TafelModus.init({get:()=>D.edit!==false, set:v=>{ D.edit=v; erledigt={}; aktiv=null;
+    $('frage').classList.remove('show'); modusUI(); bahnBauen(); sync(); }});
+  if(window.parent===window){ ready=true; return; }
+  try{ parent.postMessage({type:'embed-ready'},'*'); }catch(e){}
+  setTimeout(()=>{ ready=true; },700); });
+</script>
+</body></html>
