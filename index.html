@@ -2061,7 +2061,7 @@ function endAction(e){ clearTimeout(dwellTimer); cancelGeoRay(); hideMeasure(); 
       else if(cur.shape==='arc'){ if(Math.abs(cur.a1-cur.a0)>0.03){ delete cur._prev; commit(cur); arcState=null; } }
       else if(Math.hypot(cur.x1-cur.x0,cur.y1-cur.y0)>3) commit(cur);
     } else if(cur.points.length){ const sh=shapeRecog?recogShape(cur):null;
-      if(sh){ commit(sh); toast('→ '+(SHAPE_DE[sh.shape]||'Form')); } else commit(cur);
+      if(sh){ commit(sh); toast('→ '+((sh.shape==='polygon'&&ECKNAME[(sh.pn||[]).length])||SHAPE_DE[sh.shape]||'Form')); } else commit(cur);
     } cur=null; markDirty(); } }
 // Im Schreibmodus: 2 s am Ende halten -> aus der Linie wird eine gerade Strecke (Anfang → gehaltener Punkt)
 function scheduleStraighten(){ clearTimeout(dwellTimer); dwellTimer=setTimeout(()=>{ if(cur&&cur.type==='stroke'&&!cur.rulerSnap&&cur.points.length>2){ cur.points=[cur.points[0],cur.points[cur.points.length-1]]; cur._straight=true; cur.varw=false; markDirty(); toast('→ gerade Strecke'); } },1000); }
@@ -2074,6 +2074,41 @@ function rdpSimplify(pts,eps){ if(pts.length<3) return pts.slice();
     for(let i=s+1;i<e;i++){ const d=dist(pts[i],pts[s],pts[e]); if(d>mx){ mx=d; mi=i; } }
     return (mx>eps&&mi>0) ? rec(s,mi).slice(0,-1).concat(rec(mi,e)) : [pts[s],pts[e]]; };
   return rec(0,pts.length-1); }
+/* Ecken eines geschlossenen Kritzels bestimmen: vereinfachen, zu nahe Punkte zusammenfassen und
+   nur echte Richtungswechsel als Ecke zählen. Sonst wird aus dem Startpunkt mitten auf einer Seite
+   eine zusätzliche „Ecke" – und aus dem Dreieck ein Viereck. */
+function strokeEcken(p,diag){
+  let s=rdpSimplify(p,diag*0.05);
+  const nah=(a,b,f)=>Math.hypot(a.x-b.x,a.y-b.y)<diag*f;
+  if(s.length>2&&nah(s[0],s[s.length-1],0.12)) s=s.slice(0,-1);          /* Ring: Schluss = Anfang */
+  const zus=[];
+  for(const q of s){ const l=zus[zus.length-1]; if(l&&nah(q,l,0.12)) continue; zus.push(q); }
+  while(zus.length>2&&nah(zus[0],zus[zus.length-1],0.12)) zus.pop();
+  const n=zus.length; if(n<3) return zus;
+  const echt=[];
+  for(let i=0;i<n;i++){ const a=zus[(i-1+n)%n], b=zus[i], c=zus[(i+1)%n];
+    let d=Math.abs(Math.atan2(c.y-b.y,c.x-b.x)-Math.atan2(b.y-a.y,b.x-a.x));
+    while(d>Math.PI) d=Math.abs(d-2*Math.PI);
+    if(d>0.42) echt.push({x:b.x,y:b.y,w:d}); }                           /* mindestens ~24° Knick */
+  return echt; }                                                        /* ein runder Kritzel hat gar keine */
+/* Wie gut passt der Kritzel auf das Vieleck? Mittlerer Abstand zur nächsten Kante, in Bruchteilen
+   der Diagonale – damit lässt sich „echtes Vieleck" von „krakeliger Kreis" sauber unterscheiden. */
+function polyFehler(p,E,diag){ const ab=(q,a,b)=>{ const A=b.x-a.x, B=b.y-a.y, L=A*A+B*B;
+    let t=L?((q.x-a.x)*A+(q.y-a.y)*B)/L:0; t=t<0?0:(t>1?1:t);
+    return Math.hypot(q.x-(a.x+A*t), q.y-(a.y+B*t)); };
+  let sum=0; const n=E.length;
+  for(const q of p){ let m=Infinity; for(let i=0;i<n;i++){ const d=ab(q,E[i],E[(i+1)%n]); if(d<m) m=d; } sum+=m; }
+  return sum/p.length/diag; }
+/* Vier Ecken, alle Winkel ~90° und die Seiten ungefähr waagrecht/senkrecht → sauberes Rechteck */
+function istRechteck(E){ if(E.length!==4) return false;
+  for(let i=0;i<4;i++){ const a=E[(i+3)%4], b=E[i], c=E[(i+1)%4];
+    let d=Math.abs(Math.atan2(c.y-b.y,c.x-b.x)-Math.atan2(b.y-a.y,b.x-a.x));
+    while(d>Math.PI) d=Math.abs(d-2*Math.PI);
+    if(Math.abs(d-Math.PI/2)>0.35) return false;                         /* ±20° um den rechten Winkel */
+    const w=Math.abs(Math.atan2(c.y-b.y,c.x-b.x))%Math.PI;
+    const schief=Math.min(w,Math.abs(w-Math.PI/2),Math.abs(w-Math.PI));
+    if(schief>0.25) return false; }                                      /* Seiten ±14° an den Achsen */
+  return true; }
 function recogShape(o){
   if(!o||o.type!=='stroke'||o.tool!=='pen'||o.rulerSnap||o._straight||o._geoRay) return null;
   const p=o.points; if(!p||p.length<10) return null;
@@ -2086,6 +2121,11 @@ function recogShape(o){
   const first=p[0], last=p[p.length-1], gap=Math.hypot(last.x-first.x,last.y-first.y);
   const closed=gap<0.25*diag;
   const mk=(kind,a,b,c,d)=>({type:'shape',id:uid(),shape:kind,color:o.color,width:o.width,fill:false,x0:a,y0:b,x1:c,y1:d,rot:0,groupId:null});
+  /* Vieleck aus den wirklich gezeichneten Ecken – so bleibt ein schiefes Dreieck auch schief */
+  const viel=E=>{ let a0=Infinity,b0=Infinity,a1=-Infinity,b1=-Infinity;
+    E.forEach(q=>{ a0=Math.min(a0,q.x); b0=Math.min(b0,q.y); a1=Math.max(a1,q.x); b1=Math.max(b1,q.y); });
+    if(a1-a0<1e-3) a1=a0+1e-3; if(b1-b0<1e-3) b1=b0+1e-3;
+    const s=mk('polygon',a0,b0,a1,b1); s.pn=E.map(q=>[(q.x-a0)/(a1-a0),(q.y-b0)/(b1-b0)]); return s; };
   if(!closed){                                                          // Gerade?
     const A=last.x-first.x, B=last.y-first.y, L=Math.hypot(A,B)||1; let dev=0;
     for(const q of p) dev=Math.max(dev,Math.abs((q.x-first.x)*B-(q.y-first.y)*A)/L);
@@ -2093,17 +2133,27 @@ function recogShape(o){
     return null; }
   if(len<1.2*diag) return null;                                        // geschlossene Figur braucht genug Umfang
   const cx=(x0+x1)/2, cy=(y0+y1)/2, rx=Math.max(w/2,1), ry=Math.max(h/2,1);
-  let eErr=0, rErr=0;
-  for(const q of p){ eErr+=Math.abs(Math.hypot((q.x-cx)/rx,(q.y-cy)/ry)-1);
-    rErr+=Math.min(Math.abs(q.x-x0),Math.abs(q.x-x1),Math.abs(q.y-y0),Math.abs(q.y-y1)); }
-  eErr/=p.length; rErr/=(p.length*diag);
-  const corners=Math.max(0,rdpSimplify(p,diag*0.05).length-1);
-  if(eErr<0.13 && rErr>0.07) return mk('ellipse',x0,y0,x1,y1);          // Punkte liegen auf der Ellipse, nicht am Rand
-  if(corners===3) return mk('triangle',x0,y0,x1,y1);
-  if(rErr<0.07 && corners<=5) return mk('rect',x0,y0,x1,y1);            // Punkte kleben am Rechteck-Rand
-  if(eErr<0.2 && corners>=6) return mk('ellipse',x0,y0,x1,y1);
+  let eErr=0;
+  for(const q of p) eErr+=Math.abs(Math.hypot((q.x-cx)/rx,(q.y-cy)/ry)-1);
+  eErr/=p.length;
+  const E=strokeEcken(p,diag);
+  if(E.length===3) return viel(E);                                      // Dreieck mit den gezeichneten Ecken
+  if(E.length===4) return istRechteck(E) ? mk('rect',x0,y0,x1,y1) : viel(E);   // nur achsenparallel wird Rechteck
+  if(E.length===5){                                     /* eine Ecke zu viel durch Zittern? */
+    let k=0; for(let i=1;i<5;i++) if((E[i].w||9)<(E[k].w||9)) k=i;      /* die schwächste Ecke weglassen */
+    const vier=E.filter((q,i)=>i!==k);
+    if(istRechteck(vier)) return mk('rect',x0,y0,x1,y1); }
+  if(E.length>=5 && E.length<=6){                                       // Fünfeck, Sechseck
+    /* darüber hinaus nicht: Sieben- und Achtecke zeichnet niemand frei Hand, wohl aber krakelige
+       Kreise – die blieben sonst als Vieleck hängen */
+    /* Nur wenn das Vieleck wirklich besser passt als die Ellipse – sonst bleibt ein krakeliger
+       Kreis ein Kreis und wird nicht zum Achteck. */
+    const ellAbstand=eErr*((rx+ry)/2)/diag;
+    if(polyFehler(p,E,diag) < ellAbstand*0.9) return viel(E); }
+  if(eErr<0.2) return mk('ellipse',x0,y0,x1,y1);                        // keine Knicke → rund
   return null; }
-const SHAPE_DE={line:'Linie',rect:'Rechteck',ellipse:'Ellipse',triangle:'Dreieck'};
+const SHAPE_DE={line:'Linie',rect:'Rechteck',ellipse:'Ellipse',triangle:'Dreieck',polygon:'Vieleck'};
+const ECKNAME={3:'Dreieck',4:'Viereck',5:'Fünfeck',6:'Sechseck',7:'Siebeneck',8:'Achteck'};
 $('shapeRecogSw').onclick=function(){ this.classList.toggle('on'); shapeRecog=this.classList.contains('on'); saveUI();
   toast(shapeRecog?'Freihand wird in Formen umgewandelt':'Freihand-Erkennung aus'); };
 function polyTap(e,w){

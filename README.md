@@ -50,9 +50,23 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   dadurch keine Polygon-Ecken mehr, ohne zusätzliche Punkte (gleicher Speicherbedarf) und sogar
   etwas schneller als vorher.
 - **Freihand → Form** (Schalter „Freihand erkennen" im **Formen**-Menü): Ist er an, werden mit dem
-  **Stift** gezeichnete Kritzel beim Loslassen automatisch zu einer sauberen **Linie, einem Rechteck,
-  einer Ellipse oder einem Dreieck**, wenn die Zeichnung eindeutig genug ist – sonst bleibt der Strich
-  als Freihand stehen. Farbe und Strichstärke werden übernommen, „Rückgängig" nimmt die Umwandlung
+  **Stift** gezeichnete Kritzel beim Loslassen automatisch zu einer sauberen Form, wenn die Zeichnung
+  eindeutig genug ist – sonst bleibt der Strich als Freihand stehen.
+  - Die Erkennung zählt zuerst die **Ecken**: Sie vereinfacht den Zug, fasst dicht beieinander
+    liegende Punkte zusammen und lässt nur echte Richtungswechsel (ab etwa 24°) als Ecke gelten.
+    Dadurch wird der Startpunkt mitten auf einer Seite nicht mehr als zusätzliche Ecke gezählt –
+    früher wurde daraus schon mal aus einem Dreieck ein Viereck.
+  - **Drei Ecken → Dreieck mit genau den gezeichneten Ecken.** Ein schiefes oder rechtwinkliges
+    Dreieck bleibt schief bzw. rechtwinklig; früher kam immer ein gleichschenkliges Dreieck im
+    umgebenden Rechteck heraus.
+  - **Vier Ecken:** Nur wenn alle Winkel nahe 90° liegen **und** die Seiten ungefähr waagrecht und
+    senkrecht verlaufen, wird daraus ein **Rechteck**. Sonst bleibt die Figur als **Viereck** mit den
+    gezeichneten Ecken stehen – Trapez und Raute werden also nicht mehr zum Rechteck gestaucht.
+  - **Fünf und sechs Ecken** werden als Vieleck übernommen, aber nur, wenn das Vieleck den Zug
+    wirklich besser trifft als eine Ellipse. Ein krakelig gezeichneter Kreis bleibt dadurch ein Kreis
+    und wird nicht zum Achteck.
+  - **Keine Ecken → Ellipse** (bzw. Kreis), ein offener gerader Zug → **Linie**.
+  Farbe und Strichstärke werden übernommen, „Rückgängig" nimmt die Umwandlung
   zurück. Marker, Lineal-Striche und geglättete Strecken bleiben unberührt. Die Schalter „Gefüllt"
   und „Freihand erkennen" stehen kompakt direkt untereinander.
 - **Freihand → gerade Strecke:** Beim normalen Schreiben am Ende einer Linie **1 Sekunde
