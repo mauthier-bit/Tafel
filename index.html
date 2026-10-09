@@ -288,6 +288,12 @@
   #props .sw.active{outline:3px solid var(--accent);}
   #props .prow{display:flex;gap:9px;align-items:center;flex-wrap:wrap;}
   #props hr.psep{border:none;border-top:1px solid #e6eaf1;margin:1px 0;width:100%;}
+  /* Griff zum Verschieben – bleibt beim Blättern im Panel oben stehen */
+  #props .pgrip{position:sticky;top:0;z-index:3;background:var(--panel);display:flex;align-items:center;justify-content:center;height:26px;margin:-6px 0 -4px;cursor:grab;touch-action:none;}
+  #props .pgrip i{display:block;width:46px;height:5px;border-radius:999px;background:#c7ccd6;}
+  #props .pgrip.zieht{cursor:grabbing;} #props .pgrip.zieht i{background:var(--accent);}
+  #props .pauto{position:absolute;right:0;top:50%;transform:translateY(-50%);display:none;border:none;background:#eef1f6;color:#5b6472;border-radius:8px;padding:4px 9px;font:600 11px -apple-system,BlinkMacSystemFont,sans-serif;cursor:pointer;}
+  #props.verschoben .pauto{display:block;}
   #props .pcap{font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#98a1b0;margin:1px 0 -2px;}
   #props .psep{margin:3px 0;}
   #props .phint{font-size:11px;line-height:1.35;color:#8a93a2;margin:0;}
@@ -883,6 +889,7 @@
 <button id="propsBtn" title="Kontextmenü ein-/ausklappen">☰</button>
 <button id="modeBtn" title="Zwischen Benutzen und Bearbeiten umschalten">✎</button>
 <div id="props">
+  <div class="pgrip" id="propsGrip" title="Ziehen: Kontextmenü an eine andere Stelle schieben"><i></i><button class="pauto" id="propsAuto" title="Kontextmenü wieder automatisch neben das Objekt stellen">↺ automatisch</button></div>
   <div class="prow" id="colorRow" style="font-size:13px"><b>Farbe</b><div class="swatches" id="propColors"></div></div>
   <div class="prow" id="widthRow" style="font-size:13px"><b>Dicke/Größe</b><div class="widths" id="propWidths"></div></div>
   <div class="prow" id="propFillRow"><label class="propToggle"><span>Gefüllt</span><div class="sw2" id="propFill"></div></label><span class="flbl">Transparenz</span><input type="range" id="propAlpha" min="0" max="100" step="5" value="80" title="Wie durchsichtig die Füllung ist – 0 % deckt ganz, 100 % ist unsichtbar"><span class="fval" id="propAlphaV">80 %</span></div>
@@ -3070,10 +3077,14 @@ function positionProps(){ if(!selection.length)return; const b=selCenterBounds()
   const btn=$('propsBtn'), mb=$('modeBtn'), el=$('props'), offen=el.classList.contains('show');
   /* 1) zuerst das Panel setzen, damit die Knöpfe sich danach richten können */
   if(offen){
-    const topS=toScreen(b.x,b.y).y, botS=toScreen(b.x,b.y+b.h).y, leftS=toScreen(b.x,b.y).x;
-    let left=leftS, top=botS+18;                                      // Panel UNTEN (Dreh-Griff sitzt oben -> gegenüber)
-    if(top+el.offsetHeight>innerHeight-8) top=topS-el.offsetHeight-40; // sonst oben, mit Platz für den Dreh-Griff
     const oM=obenFrei();
+    let left,top;
+    if(propPos){ left=propPos.l; top=propPos.t; }                      // von Hand verschoben: dort bleibt es
+    else{
+      const topS=toScreen(b.x,b.y).y, botS=toScreen(b.x,b.y+b.h).y, leftS=toScreen(b.x,b.y).x;
+      left=leftS; top=botS+18;                                        // Panel UNTEN (Dreh-Griff sitzt oben -> gegenüber)
+      if(top+el.offsetHeight>innerHeight-8) top=topS-el.offsetHeight-40; // sonst oben, mit Platz für den Dreh-Griff
+    }
     left=Math.max(8,Math.min(left,innerWidth-el.offsetWidth-8)); top=Math.max(oM,Math.min(top,innerHeight-el.offsetHeight-8));
     el.style.left=left+'px'; el.style.top=top+'px';
   }
@@ -3091,6 +3102,29 @@ function positionProps(){ if(!selection.length)return; const b=selCenterBounds()
   btn.style.left=bl+'px'; btn.style.top=bt+'px';
   if(mb.classList.contains('show')){ mb.style.left=bl+'px';                            // direkt darunter
     mb.style.top=Math.max(oMin,Math.min(bt+46,innerHeight-mb.offsetHeight-8))+'px'; } }
+
+/* ---- Kontextmenü am Griff verschieben: sonst deckt es genau die Form zu, die man gerade bearbeitet ---- */
+let propPos=null, propDrag=null, propHint=false;
+function propPosSetzen(p){ propPos=p; $('props').classList.toggle('verschoben',!!p); }
+$('propsGrip').addEventListener('pointerdown',e=>{ if(e.target.closest('.pauto'))return;
+  const r=$('props').getBoundingClientRect();
+  propDrag={dx:e.clientX-r.left,dy:e.clientY-r.top,x0:e.clientX,y0:e.clientY,moved:false};
+  $('propsGrip').classList.add('zieht'); e.preventDefault(); });
+window.addEventListener('pointermove',e=>{ if(!propDrag)return;
+  if(Math.abs(e.clientX-propDrag.x0)>4||Math.abs(e.clientY-propDrag.y0)>4) propDrag.moved=true;
+  if(!propDrag.moved)return;
+  const el=$('props');
+  const l=Math.max(8,Math.min(e.clientX-propDrag.dx,innerWidth-el.offsetWidth-8));
+  const t=Math.max(obenFrei(),Math.min(e.clientY-propDrag.dy,innerHeight-el.offsetHeight-8));
+  propPosSetzen({l,t}); positionProps();                    // zieht die Knöpfe ☰ und ✎ gleich mit
+  e.preventDefault(); },{passive:false});
+function propDragEnde(){ if(!propDrag)return; const bewegt=propDrag.moved; propDrag=null;
+  $('propsGrip').classList.remove('zieht');
+  if(!bewegt)return;
+  saveUI();
+  if(!propHint){ propHint=true; saveUI(); toast('Das Kontextmenü bleibt jetzt hier stehen – „↺ automatisch" stellt es wieder neben das Objekt'); } }
+window.addEventListener('pointerup',propDragEnde); window.addEventListener('pointercancel',propDragEnde);
+$('propsAuto').onclick=()=>{ propPosSetzen(null); saveUI(); positionProps(); toast('Kontextmenü steht wieder neben dem Objekt'); };
 
 /* ============ Seiten ============ */
 function refreshPage(){ invalidateSnap(); const p=page(); $('pageInfo').textContent=(p.name?p.name+' ':'')+(doc.cur+1)+' / '+doc.pages.length; refreshEmbedUI(); applyBg(); }
@@ -3671,12 +3705,12 @@ $('pageMenu').addEventListener('pointerdown',e=>e.stopPropagation());
 document.addEventListener('pointerdown',e=>{ if($('pageMenu').classList.contains('show') && !e.target.closest('#pageMenu') && !e.target.closest('.pmBtn') && !e.target.closest('#ppMore')) closePageMenu(); }, true);
 $('setMin').onclick=()=>{ $('settingsbar').classList.toggle('min'); rotateChev('setMin',$('settingsbar').classList.contains('min'),true); saveUI(); positionAnnoToggle(); };
 function rotateChev(id,min){ $(id).querySelector('svg').style.transform=min?'scaleX(-1)':''; }
-function saveUI(){ try{ localStorage.setItem('tafel_ui',JSON.stringify({page:$('pagebar').classList.contains('min'),set:$('settingsbar').classList.contains('min'),side:mainbarSide,theme:barTheme,tint:barTint,favs,pxcm:PXCM,pal:palette,cols:toolColors,rec:shapeRecog,wv:2,pw:penWidth,mw:markerWidth,ew:eraserWidth,sz:streckZeigen,sa:shapeAlpha,spf:spotForm,lms:laserMs,rul:{len:ruler.len,color:ruler.color,mm:ruler.mm,nums:ruler.nums,pct:ruler.pct,fs:ruler.fs},geo:{size:geo.size,color:geo.color,mm:geo.mm,nums:geo.nums,fs:geo.fs}})); }catch(e){} }
+function saveUI(){ try{ localStorage.setItem('tafel_ui',JSON.stringify({page:$('pagebar').classList.contains('min'),set:$('settingsbar').classList.contains('min'),side:mainbarSide,theme:barTheme,tint:barTint,favs,pxcm:PXCM,pal:palette,cols:toolColors,rec:shapeRecog,wv:2,pp:propPos,ppH:propHint,pw:penWidth,mw:markerWidth,ew:eraserWidth,sz:streckZeigen,sa:shapeAlpha,spf:spotForm,lms:laserMs,rul:{len:ruler.len,color:ruler.color,mm:ruler.mm,nums:ruler.nums,pct:ruler.pct,fs:ruler.fs},geo:{size:geo.size,color:geo.color,mm:geo.mm,nums:geo.nums,fs:geo.fs}})); }catch(e){} }
 function restoreUI(){ try{ const u=JSON.parse(localStorage.getItem('tafel_ui')||'{}'); if(u.page){$('pagebar').classList.add('min');pageChev(true);} if(u.set){$('settingsbar').classList.add('min');rotateChev('setMin',true);} if(u.side==='right'||u.side==='bottom')mainbarSide=u.side; if(u.theme==='light'||u.theme==='dark')barTheme=u.theme; if(u.tint&&typeof u.tint==='object')barTint=Object.assign(barTint,u.tint); if(Array.isArray(u.favs))favs=u.favs.filter(f=>f!=='w-export').slice(0,FAV_MAX);   // PDF-Export sitzt jetzt in den Einstellungen
   if(+u.pxcm>0&&Math.abs(+u.pxcm-37.8)>0.2) PXCM=Math.max(28,Math.min(64,+u.pxcm));   // alter Standard 37,8 → neuer, am iPad gemessener Wert
   if(Array.isArray(u.pal)&&u.pal.length===palette.length&&u.pal.every(c=>/^#[0-9a-f]{6}$/i.test(c))) palette=u.pal.slice();
   if(u.rec){ shapeRecog=true; $('shapeRecogSw').classList.add('on'); }
-  if(u.cols&&typeof u.cols==='object')Object.assign(toolColors,u.cols); if(u.wv===2){ if(+u.pw>0)penWidth=+u.pw; if(+u.mw>0)markerWidth=+u.mw; } if(+u.ew>0)eraserWidth=+u.ew; if(+u.sa>=0&&+u.sa<=1)shapeAlpha=+u.sa; streckZeigen=!!u.sz;   // ältere Stärken (4 Stufen) verwerfen
+  if(u.cols&&typeof u.cols==='object')Object.assign(toolColors,u.cols); if(u.wv===2){ if(+u.pw>0)penWidth=+u.pw; if(+u.mw>0)markerWidth=+u.mw; } if(+u.ew>0)eraserWidth=+u.ew; if(+u.sa>=0&&+u.sa<=1)shapeAlpha=+u.sa; propHint=!!u.ppH; if(u.pp&&isFinite(u.pp.l)&&isFinite(u.pp.t)) propPosSetzen({l:+u.pp.l,t:+u.pp.t}); streckZeigen=!!u.sz;   // ältere Stärken (4 Stufen) verwerfen
   if(u.spf==='rect'||u.spf==='ellipse') spotForm=u.spf; if(+u.lms>=100&&+u.lms<=3000) laserMs=+u.lms;
   if(u.rul)Object.assign(ruler,{len:+u.rul.len||ruler.len,color:u.rul.color||ruler.color,mm:u.rul.mm!==false,nums:u.rul.nums!==false,pct:!!u.rul.pct,fs:+u.rul.fs||11});
   if(u.geo)Object.assign(geo,{size:+u.geo.size||geo.size,color:u.geo.color||geo.color,mm:u.geo.mm!==false,nums:u.geo.nums!==false,fs:+u.geo.fs||11});
