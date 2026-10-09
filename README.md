@@ -42,7 +42,11 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   Raute, Drachenviereck, Sechseck, Vieleck) und bei Quader, Prisma und Pyramide **„Ecken beschriften“** (A, B, C …; Pyramidenspitze S,
   Quader ABCD unten/EFGH oben) und **„Seiten/Kanten beschriften“** (a, b, c …; im Dreieck liegt a gegenüber von A) einschalten.
   Die Beschriftung steht außen an der Figur, bleibt beim Drehen waagrecht und hat die Farbe der Form; ihre **Schriftgröße**
-  stellt man daneben im Kontextmenü mit − / + ein. Alle im **Formen**-Popover. Ein **erneutes Tippen auf „Formen"**
+  stellt man daneben im Kontextmenü mit − / + ein. Neben dem Schalter **„Gefüllt"** steht im Kontextmenü ein
+  **Regler „Transparenz"** (0–100 %, in 5er-Schritten): **0 % deckt ganz**, der Standard **80 %** entspricht der
+  bisherigen zarten Füllung, **100 %** macht die Füllung unsichtbar. Der Regler wirkt sofort auf alle ausgewählten
+  Formen; zieht man ihn bei ausgeschalteter Füllung, wird „Gefüllt" automatisch eingeschaltet. Der zuletzt
+  eingestellte Wert gilt geräteweit für neu gezeichnete Formen. Alle im **Formen**-Popover. Ein **erneutes Tippen auf „Formen"**
   klappt die Auswahl wieder zu (das Werkzeug bleibt aktiv). Sind Formen-Auswahl und **Farbpalette**
   gleichzeitig offen, weichen sie einander aus, statt sich zu überdecken.
 - **Glatte Striche:** Auch druckabhängige Striche (Apple Pencil) werden als **Kurven** gezeichnet –
