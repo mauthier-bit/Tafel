@@ -50,7 +50,7 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   „Farbe", „Dicke/Größe" und „Gefüllt" beginnen in derselben Spalte, sodass Farbfelder, Stärken und Schalter genau
   untereinander stehen; die Farbfelder sind höher und haben mehr Luft zueinander (sauberer zu treffen), und eine feine
   Trennlinie setzt den allgemeinen Teil von den formabhängigen Einstellungen ab. Dort stehen „Ecken/Seiten beschriften"
-  nebeneinander, „Schrift: − + " in einer eigenen Zeile und „✎ Beschriftung ändern" über die volle Breite.
+  nebeneinander, und „Schrift: − + " teilt sich eine Zeile mit dem Knopf **„✎ Beschriftung"**.
   Alle im **Formen**-Popover. Ein **erneutes Tippen auf „Formen"**
   klappt die Auswahl wieder zu (das Werkzeug bleibt aktiv). Sind Formen-Auswahl und **Farbpalette**
   gleichzeitig offen, weichen sie einander aus, statt sich zu überdecken.
@@ -1095,7 +1095,8 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   geschlossen, wird sie automatisch mit einer geraden Strecke geschlossen). Nach dem Loslassen
   erscheint ein Menü mit **Kopieren · Ausschneiden · Gruppieren · Löschen** für alle eingerahmten
   Objekte. (Die Rechteck-Auswahl im Auswahl-Modus bleibt zusätzlich erhalten.)
-- **Beschriftungen ändern:** Bei beschriftbaren Formen öffnet **✎ Texte** im Kontextmenü ein Fenster mit je einem
+- **Beschriftungen ändern:** Bei beschriftbaren Formen öffnet **✎ Beschriftung** im Kontextmenü (rechts neben der
+  Schriftgröße) ein Fenster mit je einem
   Feld pro Ecke und Seite/Kante. Dort lassen sich eigene Buchstaben oder Namen eintragen (z. B. Süd, Ost, Nord oder
   „Weg 1“); ein leeres Feld lässt die Stelle frei, **Standard wiederherstellen** bringt A, B, C … und a, b, c … zurück.
   Dasselbe Fenster gibt es über einen eigenen, breiten Knopf unter der Schrift-Zeile auch beim **Koordinatensystem** (**✎ Achsen & Ursprung**): Namen der beiden Achsen und des
