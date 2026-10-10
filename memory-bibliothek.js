@@ -1387,6 +1387,12 @@ function alsBild(h){
     const d=document.createElement('div'); d.innerHTML=txt;
     const sv=d.querySelector('svg');
     if(sv){ if(!sv.getAttribute('xmlns')) sv.setAttribute('xmlns','http://www.w3.org/2000/svg');
+      /* Die Bilder stehen hier mit width="100%" – im <img> hat so ein SVG dann gar keine
+         Eigengröße. In einer Flex-Box schrumpft es auf 0 (die Karte bleibt leer), sonst
+         wird es so breit wie der Platz und quillt aus seinem Rahmen. Darum die Maße der
+         viewBox als feste Breite und Höhe eintragen. */
+      const vb=(sv.getAttribute('viewBox')||'').trim().split(/[\s,]+/).map(Number);
+      if(vb.length===4&&vb[2]>0&&vb[3]>0){ sv.setAttribute('width',vb[2]); sv.setAttribute('height',vb[3]); }
       txt=new XMLSerializer().serializeToString(sv); }
   }catch(e){}
   return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(txt.replace(/\s+/g,' '));

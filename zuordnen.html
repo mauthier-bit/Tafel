@@ -155,7 +155,31 @@ function mische(reset){
   for(let i=D.order.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [D.order[i],D.order[j]]=[D.order[j],D.order[i]]; }
   if(reset!==false){ D.place={}; karten.forEach(k=>D.place[k.id]=null); D.check={}; D.shown=false; }
 }
-const bildVon=t=>{ const m=String(t).match(/\[(b\d+)\]/); return m?D.images[m[1]]:null; };   /* Bild auch zusammen mit Text */
+/* SVG-Bilder, die mit width="100%" gespeichert sind, haben im <img> keine eigene Größe:
+   In einer Karte schrumpfen sie auf nichts zusammen, in einem Gruppenfeld quellen sie aus
+   dem Rahmen. Deshalb bekommen sie hier die Maße ihrer viewBox – das greift auch bei alten
+   gespeicherten Aufgaben und bei selbst hochgeladenen SVG-Dateien. */
+const svgSpeicher={};
+function mitMass(src){
+  if(typeof src!=='string'||!/^data:image\/svg\+xml;/i.test(src)||/;base64,/i.test(src)) return src;
+  if(svgSpeicher[src]) return svgSpeicher[src];
+  let out=src;
+  try{
+    const roh=decodeURIComponent(src.slice(src.indexOf(',')+1));
+    const kopf=/<svg[^>]*>/i.exec(roh);
+    if(kopf&&!/\swidth="[^"%]*"/i.test(kopf[0])){
+      const vb=/viewBox="([^"]+)"/i.exec(kopf[0]);
+      const z=vb?vb[1].trim().split(/[\s,]+/).map(Number):null;
+      if(z&&z.length===4&&z[2]>0&&z[3]>0){
+        const neu=kopf[0].replace(/\swidth="[^"]*"/i,'').replace(/\sheight="[^"]*"/i,'')
+          .replace(/^<svg/i,'<svg width="'+z[2]+'" height="'+z[3]+'"');
+        out='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(roh.replace(kopf[0],neu));
+      }
+    }
+  }catch(e){}
+  svgSpeicher[src]=out; return out;
+}
+const bildVon=t=>{ const m=String(t).match(/\[(b\d+)\]/); return m?mitMass(D.images[m[1]]):null; };   /* Bild auch zusammen mit Text */
 const textOhneBild=t=>String(t).replace(/\[(b\d+)\]/g,'').trim();
 
 /* ---------- Darstellung ---------- */

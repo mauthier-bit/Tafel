@@ -726,6 +726,9 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   - Beim **Zuordnen** wählt man im Auswahlfenster unter **„Aufgabe"** die Form: **paarweise**
     (Begriff ↔ Erklärung, zum Verbinden) oder **als Gruppen** – dann werden die Themenbereiche zu
     Feldern, in die die Begriffe einsortiert werden.
+  - **Bilder aus der Bibliothek** (Schaltzeichen, Figuren, Tortenbilder, Diagramme, Graphen) werden
+    mit ihrer eigenen Größe eingesetzt und passen sich dem Rahmen an – auf der Karte höchstens
+    70 px hoch, in der Paarkarte 96 px, im Kopf eines Gruppenfelds 110 px.
   - **Eigene Glossare:** Im selben Fenster lässt sich über **„📄 eigenes Glossar …"** eine mit dem
     Glossar-Werkzeug **gespeicherte Datei** laden – dann filtert man statt nach Fach und
     Jahrgangsstufe nach den **Abschnitten dieser Datei**. So lassen sich auch selbst gepflegte
