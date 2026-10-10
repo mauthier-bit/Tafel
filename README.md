@@ -480,7 +480,8 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   hell = Cremeweiß, Hellblau, Hellgelb, Beige, Hellgrau (Voreinstellung). Gilt für alle drei Leisten samt Stift-/Formen-
   Popovers; jede Variante merkt sich ihren Farbton. Die Einstellung gilt geräteweit (projektübergreifend).
   Bei dunklem Hintergrund schreibt der Stift automatisch weiß.
-- **Kontextmenü verschieben:** Oben im Kontextmenü sitzt ein **Griff** (der kleine graue Balken). Daran lässt sich das
+- **Kontextmenü verschieben:** Oben im Kontextmenü sitzt ein **Griff** (der kleine graue Balken, durch eine feine
+  Linie vom Inhalt darunter abgesetzt). Daran lässt sich das
   Menü an eine beliebige Stelle schieben – praktisch, wenn es gerade die Form verdeckt, die man bearbeitet.
   Einmal verschoben, bleibt es dort stehen (auch bei einem anderen Objekt und nach dem Neuladen); der kleine runde
   Knopf **↺** oben rechts stellt es wieder neben das ausgewählte Objekt. Die ☰- und ✎-Knöpfe wandern mit.
