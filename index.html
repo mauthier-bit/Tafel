@@ -534,7 +534,10 @@
   #mkTable td.mkCell.grade{min-width:72px;white-space:nowrap;}
   #mkTable td.mkCell.cards{min-width:66px;white-space:nowrap;}
   /* --- Stundenplan --- */
-  #planWrap{overflow:auto;-webkit-overflow-scrolling:touch;border:1px solid #e3e7ee;border-radius:10px;}
+  #planWrap{position:relative;overflow:auto;-webkit-overflow-scrolling:touch;border:1px solid #e3e7ee;border-radius:10px;}
+  /* rote Linie quer durch den Plan: wo steht gerade die Uhr? */
+  .jetztLinie{position:absolute;left:0;height:0;border-top:2px solid #dc2626;z-index:1;pointer-events:none;}
+  .jetztLinie::before{content:'';position:absolute;left:0;top:-4px;width:7px;height:7px;border-radius:50%;background:#dc2626;}
   #planTable{border-collapse:collapse;width:100%;font-size:14px;}
   #planTable th{position:sticky;top:0;z-index:2;background:#f5f7fb;border-bottom:1px solid #dfe4ec;padding:7px 6px;font-size:13px;color:#5b6472;}
   #planTable th.heute{background:#e8efff;color:#1d4ed8;}
@@ -4331,7 +4334,23 @@ function renderPlan(){ ensurePlan();
       rm.oninput=()=>{ const v=rm.value.trim(); if(v) doc.plan.r[s.id+'|'+di]=v; else delete doc.plan.r[s.id+'|'+di]; scheduleAutosave(); };
       rm.onkeydown=e=>e.stopPropagation();
       box.append(inp,rm); faerbeFach(box,inp); c.appendChild(box); }); });
-  host.appendChild(t); planFit(); host.scrollLeft=sL; host.scrollTop=sT; }
+  host.appendChild(t); planFit(); host.scrollLeft=sL; host.scrollTop=sT; planJetzt(); }
+/* Die rote Linie sitzt innerhalb der laufenden Einheit anteilig zur verstrichenen Zeit. */
+function planJetzt(){ const wrap=$('planWrap'), t=$('planTable'); if(!wrap)return;
+  let el=wrap.querySelector('.jetztLinie');
+  const d=new Date(), min=d.getHours()*60+d.getMinutes();
+  const rows=(t&&t.tBodies[0])?t.tBodies[0].rows:[], slots=(doc.plan&&doc.plan.slots)||[];
+  let y=null;
+  for(let i=0;i<slots.length&&i<rows.length;i++){ const s=slots[i], tr=rows[i];
+    if(min>=s.a&&min<s.b){ y=tr.offsetTop+tr.offsetHeight*(min-s.a)/Math.max(1,s.b-s.a); break; }
+    const n=slots[i+1];
+    if(n&&min>=s.b&&min<n.a){ y=tr.offsetTop+tr.offsetHeight; break; }     /* in einer Lücke: auf die Trennlinie */
+    if(i===0&&min<s.a){ y=tr.offsetTop; break; }                           /* vor der ersten Stunde */
+  }
+  if(y===null){ if(el) el.remove(); return; }                              /* nach der letzten Stunde: keine Linie */
+  if(!el){ el=document.createElement('div'); el.className='jetztLinie'; wrap.appendChild(el); }
+  el.style.top=Math.round(y)+'px'; el.style.width=t.offsetWidth+'px'; }
+setInterval(()=>{ const w=$('win-class'); if(w&&getComputedStyle(w).display!=='none'&&!$('clsPlan').hidden) planJetzt(); },30000);
 /* Tabelle so hoch machen, dass sie ganz ins Fenster passt (wie bei der Klassenliste) */
 function planFit(){ const wrap=$('planWrap'), win=$('win-class');
   if(!wrap||!win||getComputedStyle(win).display==='none'||$('clsPlan').hidden) return;

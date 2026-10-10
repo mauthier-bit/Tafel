@@ -442,6 +442,11 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     Deutsch, Natur und Technik, Religion, Ethik, Sport …) hilft beim Tippen. **Gleiches Fach = gleiche
     Farbe**, quer durch die Woche. **Pausen** laufen als graues Band durch alle Tage. Der **heutige Tag**
     ist in der Kopfzeile hervorgehoben, die **laufende Stunde** liegt auf gelbem Grund.
+  - **Rote Linie für die aktuelle Uhrzeit:** Quer durch den Plan läuft eine dünne rote Linie mit einem
+    Punkt am linken Rand. Sie steht **innerhalb der laufenden Stunde anteilig zur verstrichenen Zeit** –
+    um 12:11 in einer Stunde von 11:30 bis 12:15 also fast ganz unten. In einer Lücke zwischen zwei
+    Einheiten liegt sie auf der Trennlinie, vor der ersten Stunde ganz oben; nach der letzten Stunde
+    verschwindet sie. Sie wandert alle 30 Sekunden weiter, solange der Plan offen ist.
   - **🚪 Räume:** Unter jedem Fach steht eine zweite, kleine Zeile für den **Raum** (z. B. „B204",
     „NWT 1"). Das Feld bietet sich erst an, wenn ein Fach dasteht. Der Knopf **„🚪 Räume"** blendet
     diese Zeile ein und aus – eingetragene Räume bleiben dabei erhalten.
@@ -593,6 +598,8 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   und alles Eingetragene bleibt erhalten – der Plan gehört zur Lehrkraft, nicht zu einer Seite oder
   Klasse, und wird **geräteweit gespeichert** (also in jedem Projekt derselbe). **🖼 Tafel** legt ihn
   trotzdem jederzeit als Bild auf die aktuelle Seite.
+  - **Rote Linie für die aktuelle Uhrzeit:** wie beim Klassen-Stundenplan – eine dünne rote Linie quer
+    durch den Plan, anteilig innerhalb der laufenden Einheit, alle 30 Sekunden nachgeführt.
   - **Zweiter Reiter „🔁 Vertretungsplan":** Dort steht eine Karte mit der hinterlegten Adresse
     (Standard: `hca.webuntis.com`) und dem Knopf **„↗ Vertretungsplan öffnen"**, der die Seite im
     **eigenen Tab** öffnet. Das ist kein Umweg, sondern nötig: **WebUntis lässt sich zwar einbetten,
