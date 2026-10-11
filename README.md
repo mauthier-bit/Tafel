@@ -1328,6 +1328,7 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   „Foto auf Tafel" legt einen Schnappschuss als bewegliches Objekt ab.
   - Die Knöpfe sind in Paaren angeordnet: **Kamera starten / Kamera wechseln**, **📷 Foto auf Tafel /
     ● Video auf Tafel**, **📄 Scannen / 🔎 Dokumentenkamera**, darunter der aufklappbare Look-Bereich.
+    Alle Knöpfe sind **gleich breit** und haben **denselben Abstand** zueinander.
     Im Knopf **„● Video auf Tafel"** sitzt rechts ein kleiner Schalter **„mit Ton"** – blau heißt: Die
     Aufnahme bekommt eine Tonspur. Während der Aufnahme ist er ausgeblendet (der Knopf zeigt dann die
     laufende Zeit und, falls zutreffend, „Ton").
@@ -1363,6 +1364,18 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   rote **×** oben rechts schließt es wieder (danach wird die Kamera abgeschaltet, sofern kein
   weiteres Livebild läuft). Mehrere Livebilder gleichzeitig sind möglich; gespeichert werden sie
   nicht – beim Laden eines Projekts ist das Livebild weg.
+  - **Entzerren (schräges iPad):** Im Knopf „🔎 Dokumentenkamera" sitzt rechts der kleine Schalter
+    **„entzerren"**. Eingeschaltet erscheinen **vier Punkte** über dem Kamerabild; schiebt man sie auf
+    die Ecken des Blattes, zeigt das Livebild auf der Tafel die Seite **gerade von oben** – auch wenn
+    das iPad schief daneben steht. **„Ecken automatisch"** setzt die Punkte mit derselben Erkennung
+    wie beim Scannen, **„Ecken zurücksetzen"** stellt das Rechteck wieder her. Die Ecken werden
+    **einmal festgelegt** und dann für jedes Bild verwendet – es wird also nicht laufend nachgesucht,
+    sonst würde das Bild bei jeder Handbewegung zittern. Sie bleiben **geräteweit gespeichert**, das
+    schief stehende iPad muss also nicht jede Stunde neu eingestellt werden. Gerechnet wird in
+    **WebGL** (eine Projektivabbildung je Bildpunkt auf der Grafikeinheit) – der Pixel-für-Pixel-Weg des
+    Scanners wäre für 30 Bilder in der Sekunde viel zu langsam. Das Livebild bekommt dabei das
+    **Seitenverhältnis des geradegezogenen Blattes**. Gilt **nur für die Dokumentenkamera**: Foto,
+    Videoclip und Vorschau bleiben unverzerrt.
   **„📄 Scannen"** (in derselben Reihe) fotografiert ein Blatt und öffnet den **Scan-Editor**: Die Tafel sucht die
   Blattecken selbst (hellste zusammenhängende Fläche), die vier Griffe lassen sich nachziehen, dann wird
   die Seite **perspektivisch entzerrt** – mit **bilinearer Abtastung** (glatte Kanten statt Treppchen), bis
