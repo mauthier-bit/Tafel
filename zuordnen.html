@@ -39,11 +39,19 @@
   .zone h3.bildkopf{padding:5px;background:var(--c,#2563eb);}
   .zone h3.bildkopf img{height:auto;max-height:110px;max-width:100%;border-radius:6px;background:#fff;}
   .zone.bildzone{min-width:190px;flex:1 0 190px;}
+  /* Teilmenge: sitzt im Kasten der Obermenge, immer unter deren eigenen Karten */
+  /* Die Teilmenge steht oben im Kasten, die eigenen Karten der Obermenge sammeln sich darunter –
+     so wandert der innere Kasten beim Einsortieren nicht hin und her. */
+  .zone.innen{flex:1 1 100%;min-width:0;margin:0 0 2px;border-width:2px;}
+  .zone.innen h3{font-size:.86em;padding:4px 8px;}
+  .zone.innen .zbody{padding:6px;}
   .zbody{flex:1;min-height:0;overflow-y:auto;padding:7px;display:flex;flex-wrap:wrap;gap:7px;align-content:flex-start;}
   .karte{border:1.5px solid #cfd6e0;background:#fff;border-radius:10px;padding:6px 10px;font-weight:600;cursor:grab;touch-action:none;
          box-shadow:0 1px 2px rgba(15,23,42,.08);display:flex;align-items:center;gap:6px;max-width:100%;}
   .karte img{max-height:70px;max-width:130px;border-radius:6px;display:block;}
   .karte.ok{border-color:#16a34a;background:#f0fdf4;} .karte.no{border-color:#dc2626;background:#fef2f2;}
+  /* liegt in einer umschließenden Menge: richtig, aber nicht genau genug */
+  .karte.fast{border-color:#d97706;background:#fffbeb;}
   .karte.ghost{position:fixed;z-index:99;pointer-events:none;opacity:.92;transform:rotate(-2deg);box-shadow:0 8px 20px rgba(15,23,42,.25);}
   .karte.drag{opacity:.35;}
   /* Paarweise: zwei Spalten, dazwischen die Verbindungslinien */
@@ -99,7 +107,11 @@
       untereinander, rechts erscheinen die Partner gemischt; verbunden wird durch Antippen beider
       Karten oder durch Ziehen, ein Tipp auf die Linie löst sie wieder.
       Bilder über <b>🖼 Bild</b> hinzufügen und mit <b>[b1]</b>, <b>[b2]</b> … in eine Zeile schreiben
-      (auf beiden Seiten möglich).</div>
+      (auf beiden Seiten möglich).<br>
+      <b>Teilmengen:</b> Ein <b>&gt;</b> am Zeilenanfang legt die Gruppe <b>in die Zeile darüber</b>
+      (<b>&gt;&gt;</b> eine Ebene tiefer usw.) – z. B. <b>ℝ = π, √2</b> / <b>&gt; ℚ = 0,75</b> /
+      <b>&gt;&gt; ℤ = −7</b>. Gesucht ist dann immer die <b>kleinste passende Menge</b>; eine Karte in
+      einer umschließenden Menge wird beim Prüfen <b>orange</b> statt rot.</div>
     <textarea id="ta" spellcheck="false"></textarea>
     <div id="imgs"></div>
     <div style="display:flex;gap:6px;justify-content:flex-end">
@@ -131,13 +143,22 @@ let cats=[], karten=[];
 /* ---------- Aufgabe einlesen ---------- */
 function parse(){
   cats=[]; karten=[];
+  const letzteJeTiefe=[];
   (D.text||'').split(/\r?\n/).forEach(line=>{
-    const t=line.trim(); if(!t) return;
+    let t=line.trim(); if(!t) return;
+    /* Führende „>" verschachteln die Gruppe in die darüberstehende: „> ℚ = …" liegt in ℝ.
+       So lassen sich Teilmengen abbilden – eine Zahl gehört dann sichtbar auch zu allen
+       Mengen, die ihre Menge umschließen. */
+    const vt=/^(>+)\s*/.exec(t); const tiefe=vt?vt[1].length:0; if(vt) t=t.slice(vt[0].length).trim();
+    if(!t) return;
     /* Name in Anführungszeichen: dann darf er selbst ein Gleichheitszeichen enthalten (z. B. f(x) = x²) */
     const q=t.match(/^\s*"([^"]+)"\s*[=:]\s*(.*)$/);
     const m=q||t.match(/^(.+?)\s*[=:]\s*(.*)$/);
     const name=(m?m[1]:t).trim();
-    const ci=cats.length; cats.push({name,idx:ci});
+    const ci=cats.length;
+    const eltern=(tiefe>0&&letzteJeTiefe[tiefe-1]!==undefined)?letzteJeTiefe[tiefe-1]:null;
+    cats.push({name,idx:ci,tiefe:eltern===null?0:cats[eltern].tiefe+1,parent:eltern});
+    letzteJeTiefe[tiefe]=ci; letzteJeTiefe.length=tiefe+1;
     const rest=m?m[2]:'';
     /* Steht die rechte Seite in Anführungszeichen, ist jedes Zitat eine Karte.
        So überleben Kommas in Erklärungssätzen, und mehrere Zitate ergeben mehrere Karten. */
@@ -190,11 +211,15 @@ function karteEl(k){
     const rest=textOhneBild(k.t); if(rest) e.appendChild(document.createTextNode(rest)); }
   else e.textContent=k.t;
   const st=(D.check||{})[k.id];
-  if(D.shown||st){ e.classList.add(st==='no'?'no':'ok'); }
+  if(D.shown||st){ e.classList.add(st==='no'?'no':(st==='fast'?'fast':'ok')); }
   e.addEventListener('pointerdown',ev=>dragStart(ev,k,e));
   return e;
 }
-const paarModus=()=>D.mode==='paare'||(D.mode==='auto'&&cats.length>1&&karten.length===cats.length);
+const verschachtelt=()=>cats.some(c=>c.parent!==null&&c.parent!==undefined);
+/* Liegt die Menge „aussen" um „innen" herum? */
+function umschliesst(aussen,innen){ let p=cats[innen]&&cats[innen].parent;
+  while(p!==null&&p!==undefined){ if(p===aussen) return true; p=cats[p].parent; } return false; }
+const paarModus=()=>!verschachtelt()&&(D.mode==='paare'||(D.mode==='auto'&&cats.length>1&&karten.length===cats.length));
 function render(){
   parse();
   const paare=paarModus(), zug=paare&&D.paarArt==='zug';
@@ -208,6 +233,7 @@ function render(){
   if(paare&&!zug){ renderPaare(); renderBar2(); sync(); return; }
   const pool=$('pool'); pool.innerHTML=''; pool.dataset.zone='-1';
   const zs=$('zones'); zs.innerHTML=''; zs.classList.toggle('paare',paare);
+  const koerper=[];                                   // je Gruppe der Platz, in den ihre Karten kommen
   cats.forEach((c,i)=>{
     const z=document.createElement('div'); z.className='zone'; z.style.setProperty('--c',COLS[i%COLS.length]); z.dataset.zone=String(i);
     const h=document.createElement('h3');
@@ -219,12 +245,15 @@ function render(){
     }
     else h.textContent=c.name;
     const b=document.createElement('div'); b.className='zbody'; b.dataset.zone=String(i);
-    z.append(h,b); zs.appendChild(z);
+    z.append(h,b); koerper[i]=b;
+    const e=c.parent; 
+    if(e!==null&&e!==undefined&&koerper[e]){ z.classList.add('innen'); koerper[e].appendChild(z); }
+    else zs.appendChild(z);
   });
   D.order.forEach(id=>{
     const k=karten.find(x=>x.id===id); if(!k) return;
     const wo=D.shown?k.cat:D.place[k.id];
-    const ziel=(wo===null||wo===undefined)?pool:$('zones').children[wo].querySelector('.zbody');
+    const ziel=(wo===null||wo===undefined)?pool:koerper[wo];
     if(ziel) ziel.appendChild(karteEl(k));
   });
   renderBar2(); sync();
@@ -328,10 +357,11 @@ function renderBar2(){
   if(paarModus()) el('span','lbl',karten.length+' Paare · noch '+offen+' offen · '+(D.paarArt==='zug'
       ? 'Karte auf den passenden Begriff ziehen'
       : 'antippen oder ziehen zum Verbinden, Linie antippen löst sie wieder'));
-  else el('span','lbl',karten.length+' Karten in '+cats.length+' Gruppen · noch '+offen+' im Vorrat');
+  else el('span','lbl',karten.length+' Karten in '+cats.length+' Gruppen · noch '+offen+' im Vorrat'
+      +(verschachtelt()?' · in die kleinste passende Menge legen':''));
   const ids=Object.keys(D.check||{}), geprüft=ids.length;
-  if(geprüft){ const ok=ids.filter(i=>D.check[i]==='ok').length;
-    el('span','lbl','· '+ok+' von '+geprüft+' richtig'); }
+  if(geprüft){ const ok=ids.filter(i=>D.check[i]==='ok').length, fast=ids.filter(i=>D.check[i]==='fast').length;
+    el('span','lbl','· '+ok+' von '+geprüft+' richtig'+(fast?' · '+fast+' zu weit außen':'')); }
   el('span','sep tafelEdit');
   el('span','lbl tafelEdit','Schrift'); el('button','btn tafelEdit','A−',()=>fontBy(-1)); el('button','btn tafelEdit','A+',()=>fontBy(1));
   el('span','grow');
@@ -383,12 +413,19 @@ $('bPArt').onclick=()=>{ D.paarArt=(D.paarArt==='zug')?'linie':'zug'; render();
 $('bMode').onclick=()=>{ D.mode=paarModus()?'gruppen':'paare'; render();
   toast(paarModus()?'Paarweise Zuordnung':'Zuordnung in Gruppen'); };
 $('bCheck').onclick=()=>{
-  let ok=0, zu=0; D.check={};
+  let ok=0, fast=0, zu=0; D.check={};
   karten.forEach(k=>{ const p=D.place[k.id];
     if(p===null||p===undefined) return;
-    zu++; D.check[k.id]=(p===k.cat)?'ok':'no'; if(p===k.cat) ok++; });
+    zu++;
+    /* In einer umschließenden Menge liegt die Karte zwar richtig, aber nicht genau genug:
+       −2 gehört zu ℝ – gesucht ist aber die kleinste passende Menge ℤ. */
+    const st=(p===k.cat)?'ok':(umschliesst(p,k.cat)?'fast':'no');
+    D.check[k.id]=st; if(st==='ok') ok++; else if(st==='fast') fast++; });
   if(!zu){ toast('Zuerst Karten in die Gruppen ziehen'); return; }
-  render(); toast(ok+' von '+zu+' richtig zugeordnet'+(zu<karten.length?' – es fehlen noch Karten':''));
+  render();
+  toast(ok+' von '+zu+' richtig zugeordnet'
+    +(fast?' · '+fast+(fast===1?' Karte liegt':' Karten liegen')+' in einer größeren Menge (es geht genauer)':'')
+    +(zu<karten.length?' · es fehlen noch Karten':''));
 };
 $('bSol').onclick=()=>{ D.shown=!D.shown; $('bSol').classList.toggle('on',D.shown);
   D.check={}; render(); toast(D.shown?'Lösung':'Lösung ausgeblendet'); };
@@ -529,14 +566,16 @@ if(window.TafelLehrplan&&((window.TafelFunktionen&&TafelFunktionen.verfuegbar())
         const bilder={}; let nb=0; const zeilen=[];
         const bild=src=>{ const k='b'+(++nb); bilder[k]=src; return '['+k+']'; };
         const mehrKarten=l.some(d=>Array.isArray(d.k)&&d.k.length>1);
+        const mitTiefe=l.some(d=>typeof d.t==='number');        // ineinander liegende Mengen
         if(mehrKarten&&art!=='gruppe') setTimeout(()=>TafelShot&&TafelShot.toast('Zu jedem Feld gehören mehrere Karten – wird als Gruppenaufgabe geladen'),900);
-        if(art==='gruppe'||mehrKarten){
+        if(art==='gruppe'||mehrKarten||mitTiefe){
           /* Eine Aufgabe je Eintrag: das erste Diagramm ist das Feld, die übrigen sind die Karten.
              Bei Aufgaben ohne dritte Karte (Terme, Begriffe) steht links die Aufgabe, rechts die Lösung. */
           let mitGruppe=0;
           l.forEach(d=>{
             if(Array.isArray(d.k)){ mitGruppe++;
-              zeilen.push('"'+String(d.b).replace(/"/g,'\u201d')+'" = '+d.k.map(x=>'"'+String(x).replace(/"/g,'\u201d')+'"').join(', ')); }
+              zeilen.push('>'.repeat(typeof d.t==='number'?d.t:0)
+                +'"'+String(d.b).replace(/"/g,'\u201d')+'" = '+d.k.map(x=>'"'+String(x).replace(/"/g,'\u201d')+'"').join(', ')); }
             else if(d.gruppe){ const g=d.gruppe(mitDez); mitGruppe++;
               zeilen.push('"'+bild(g.feld)+'" = '+g.karten.map(k=>'"'+bild(k)+'"').join(', ')); }
             else if(d.paar){ const p=d.paar(mitDez);

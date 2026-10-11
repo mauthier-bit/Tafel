@@ -457,14 +457,36 @@ const GR=[
 
 ];
 
+
+/* ---------- Verschachtelte Mengen: eine Gruppe liegt in der anderen ----------
+   Die Zahl in der Mitte ist die Tiefe: 0 = äußere Menge, 1 = darin enthalten …
+   Jede Karte gehört damit auch zu allen Mengen, die ihre Menge umschließen –
+   gesucht ist beim Einsortieren immer die kleinste passende. */
+const GV=[
+{ f:'M', j:6, g:'Zahlbereiche (ineinander liegende Mengen)', felder:[
+ ['ℝ – reelle Zahlen', 0, ['π','√2','−√3','e','0,101001000…']],
+ ['ℚ – rationale Zahlen', 1, ['0,75','−2/3','3,5','−1,2','2/7']],
+ ['ℤ – ganze Zahlen', 2, ['−7','−2','−15','−100','−1']],
+ ['ℕ – natürliche Zahlen', 3, ['1','5','42','100','0']] ]},
+
+{ f:'M', j:6, g:'Brüche (Stamm- und Scheinbrüche als Teilmengen)', felder:[
+ ['echte Brüche (Zähler < Nenner)', 0, ['2/3','3/5','7/9','5/8','4/7']],
+ ['Stammbrüche (Zähler 1)', 1, ['1/2','1/5','1/8','1/12','1/3']],
+ ['unechte Brüche (Zähler ≥ Nenner)', 0, ['7/4','9/5','11/3','8/5','13/6']],
+ ['Scheinbrüche (gehen glatt auf)', 1, ['4/4','6/3','10/5','12/4','9/9']] ]}
+];
+
 window.TafelPaare={
   verfuegbar:()=>G.length>0,
-  anzahl:()=>G.reduce((s,g)=>s+g.paare.length,0)+GR.reduce((s,g)=>s+g.felder.reduce((t,f)=>t+f[1].length,0),0),
+  anzahl:()=>G.reduce((s,g)=>s+g.paare.length,0)+GR.reduce((s,g)=>s+g.felder.reduce((t,f)=>t+f[1].length,0),0)
+    +GV.reduce((s,g)=>s+g.felder.reduce((t,f)=>t+f[2].length,0),0),
   /* gleiche Struktur wie die anderen Quellen: b = linke Karte, e = rechte Karte.
      Gruppeneinträge bringen zusätzlich k = die Karten, die in dieses Feld gehören. */
   daten(){ const out=[];
     G.forEach(gr=>gr.paare.forEach(p=>out.push({ f:gr.f||'M', j:gr.j, g:gr.g, b:p[0], e:p[1] })));
     GR.forEach(gr=>gr.felder.forEach(f=>out.push({ f:gr.f||'M', j:gr.j, g:gr.g, b:f[0], e:f[1].join(' · '), k:f[1].slice() })));
+    /* t = Tiefe: Diese Felder liegen ineinander und werden immer als Gruppenaufgabe geladen. */
+    GV.forEach(gr=>gr.felder.forEach(f=>out.push({ f:gr.f||'M', j:gr.j, g:gr.g, b:f[0], e:f[2].join(' · '), k:f[2].slice(), t:f[1] })));
     return out; }
 };
 })();

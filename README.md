@@ -733,6 +733,15 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   - Beim **Zuordnen** wählt man im Auswahlfenster unter **„Aufgabe"** die Form: **paarweise**
     (Begriff ↔ Erklärung, zum Verbinden) oder **als Gruppen** – dann werden die Themenbereiche zu
     Feldern, in die die Begriffe einsortiert werden.
+  - **Teilmengen (ineinander liegende Gruppen):** Ein **`>`** am Zeilenanfang legt eine Gruppe **in die
+    darüberstehende** hinein (`>>` eine Ebene tiefer usw.). Die Felder werden dann **ineinander
+    gezeichnet**, und gesucht ist immer die **kleinste passende Menge**. Beim Prüfen gibt es drei
+    Rückmeldungen: **grün** (genau richtig), **orange** (liegt in einer umschließenden Menge – stimmt,
+    geht aber genauer) und **rot** (falsch); die Meldung zählt beides getrennt. In der Bibliothek
+    stecken dazu zwei fertige Aufgaben: **„Zahlbereiche (ineinander liegende Mengen)"** mit
+    ℕ ⊂ ℤ ⊂ ℚ ⊂ ℝ – −7 gehört damit sichtbar auch zu ℚ und ℝ – und **„Brüche (Stamm- und
+    Scheinbrüche als Teilmengen)"** mit Stammbrüchen in den echten und Scheinbrüchen in den
+    unechten Brüchen.
   - **Bilder aus der Bibliothek** (Schaltzeichen, Figuren, Tortenbilder, Diagramme, Graphen) werden
     mit ihrer eigenen Größe eingesetzt und passen sich dem Rahmen an – auf der Karte höchstens
     70 px hoch, in der Paarkarte 96 px, im Kopf eines Gruppenfelds 110 px.
