@@ -5049,7 +5049,29 @@ function hellDrauf(g,W,H){ const k=hellFaktor()-1; if(k<=0.002) return;
   try{ g.drawImage(g.canvas,0,0,W,H); }catch(e){}
   g.restore(); }
 const camFxAktiv=()=>!!camLook||camHell>0;
-const schwerLook=()=>{ const L=lookDef(); return !!(L.rechnen||L.green); };   // wird Bild für Bild gerechnet
+/* Kennt dieser Browser den Canvas-Filter? Safari erst ab 17 – ohne ihn bliebe „Schwarz-weiß"
+   wirkungslos (und „Alter Film" zeigte nur Korn und Vignette). Dann wird von Hand gerechnet. */
+let CTX_FILTER=(()=>{ try{ const c=document.createElement('canvas').getContext('2d');
+  if(typeof c.filter!=='string') return false; c.filter='blur(1px)'; const ok=c.filter!=='none'; c.filter='none'; return ok;
+}catch(e){ return false; } })();
+/* grayscale, sepia, saturate, brightness und contrast selbst rechnen – dieselben Formeln wie im Filter */
+function cssOps(css){ const out=[]; const re=/(grayscale|sepia|saturate|brightness|contrast)\(\s*([\d.]+)(%?)\s*\)/g; let m;
+  while((m=re.exec(css))) out.push([m[1], m[3]==='%'?parseFloat(m[2])/100:parseFloat(m[2])]);
+  return out; }
+function cssManuell(g,W,H,css){ const ops=cssOps(css); if(!ops.length) return;
+  let d; try{ d=g.getImageData(0,0,W,H); }catch(e){ return; }
+  const p=d.data, k=v=>v<0?0:v>255?255:v;
+  for(let i=0;i<p.length;i+=4){ let r=p[i], gr=p[i+1], b=p[i+2];
+    for(let o=0;o<ops.length;o++){ const n=ops[o][0], a=ops[o][1];
+      if(n==='grayscale'){ const l=0.2126*r+0.7152*gr+0.0722*b; r+=(l-r)*a; gr+=(l-gr)*a; b+=(l-b)*a; }
+      else if(n==='saturate'){ const l=0.2126*r+0.7152*gr+0.0722*b; r=l+(r-l)*a; gr=l+(gr-l)*a; b=l+(b-l)*a; }
+      else if(n==='brightness'){ r*=a; gr*=a; b*=a; }
+      else if(n==='contrast'){ r=(r-127.5)*a+127.5; gr=(gr-127.5)*a+127.5; b=(b-127.5)*a+127.5; }
+      else if(n==='sepia'){ const nr=0.393*r+0.769*gr+0.189*b, ng=0.349*r+0.686*gr+0.168*b, nb=0.272*r+0.534*gr+0.131*b;
+        r+=(nr-r)*a; gr+=(ng-gr)*a; b+=(nb-b)*a; } }
+    p[i]=k(r); p[i+1]=k(gr); p[i+2]=k(b); }
+  g.putImageData(d,0,0); }
+const schwerLook=()=>{ const L=lookDef(); return !!(L.rechnen||L.green||(L.css&&!CTX_FILTER)); };   // wird Bild für Bild gerechnet
 
 /* Filmkorn einmal erzeugen und nur noch versetzt darüberlegen */
 let kornCv=null;
@@ -5301,9 +5323,10 @@ function rahmenPolaroid(g,W,H){
 function camFxPaint(g,v,W,H,q){
   const L=lookDef();
   if(L.green){ gsStanzen(g,W,H,v,q); }
-  else { g.save(); g.filter=L.css||'none';
+  else { g.save(); if(CTX_FILTER) g.filter=L.css||'none';
     try{ g.drawImage(v, q.sx,q.sy,q.sw,q.sh, 0,0,W,H); }catch(e){}
-    g.restore(); }
+    g.restore();
+    if(!CTX_FILTER&&L.css) cssManuell(g,W,H,L.css); }
   hellDrauf(g,W,H);                       // aufhellen, bevor Korn, Vignette und Rahmen daraufkommen
   if(L.rechnen) rechne(g,W,H,L.rechnen);
   if(L.scan){ g.fillStyle='rgba(0,0,0,.16)'; const d=Math.max(2,Math.round(H/220));

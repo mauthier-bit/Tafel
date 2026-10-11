@@ -1337,7 +1337,10 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     denselben Wert. Gilt für **Vorschau, Foto, Videoclip und Dokumentenkamera** gleichermaßen und wirkt sofort.
     Gerechnet wird ohne `ctx.filter` (den kennt Safari erst ab Version 17 – auf älteren iPads bliebe das
     Bild sonst unverändert): Das fertige Bild wird additiv auf sich selbst gezeichnet, was einer
-    Multiplikation entspricht und auf jeder Grafikeinheit läuft. Gerechnet wird auf der Grafikeinheit – im
+    Multiplikation entspricht und auf jeder Grafikeinheit läuft. **Dasselbe gilt für die Looks:**
+    Fehlt der Canvas-Filter, rechnet die Tafel **grayscale, sepia, saturate, brightness und contrast
+    selbst** (gleiche Formeln wie der Filter, Abweichung unter 1 % – geprüft gegen den Browser-Filter).
+    Solche Looks laufen dann wie die gerechneten etwas kleiner und mit etwas weniger Bildern je Sekunde. Gerechnet wird auf der Grafikeinheit – im
     entzerrten Livebild direkt im Shader, sonst über den Canvas-Filter –, es kostet also keine
     Bildrate. Die Einstellung bleibt geräteweit gespeichert.
     Im Knopf **„● Video auf Tafel"** sitzt rechts ein kleiner Schalter **„mit Ton"** – blau heißt: Die
