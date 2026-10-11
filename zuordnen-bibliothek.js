@@ -463,9 +463,16 @@ const GR=[
    Jede Karte gehört damit auch zu allen Mengen, die ihre Menge umschließen –
    gesucht ist beim Einsortieren immer die kleinste passende. */
 const GV=[
+/* Jahrgangsstufe 6: nur bis zu den rationalen Zahlen – negative Zahlen und Brüche sind
+   dort neu, die reellen Zahlen kommen erst mit den Wurzeln. */
+{ f:'M', j:6, g:'Zahlbereiche ℕ ⊂ ℤ ⊂ ℚ (ineinander liegende Mengen)', felder:[
+ ['ℚ – rationale Zahlen (Brüche und Dezimalzahlen)', 0, ['0,5','3/4','−1,25','2/5','−7/2']],
+ ['ℤ – ganze Zahlen (auch negative)', 1, ['−3','−12','−40','−1','−250']],
+ ['ℕ – natürliche Zahlen', 2, ['7','23','150','0','1000']] ]},
+
 /* Jahrgangsstufe 9: ℕ, ℤ und ℚ stehen schon in 5/6, die reellen Zahlen kommen aber
    erst mit den Wurzeln dazu – vorher lässt sich die äußerste Menge nicht füllen. */
-{ f:'M', j:9, g:'Zahlbereiche (ineinander liegende Mengen)', felder:[
+{ f:'M', j:9, g:'Zahlbereiche ℕ ⊂ ℤ ⊂ ℚ ⊂ ℝ (ineinander liegende Mengen)', felder:[
  ['ℝ – reelle Zahlen', 0, ['π','√2','−√3','e','0,101001000…']],
  ['ℚ – rationale Zahlen', 1, ['0,75','−2/3','3,5','−1,2','2/7']],
  ['ℤ – ganze Zahlen', 2, ['−7','−2','−15','−100','−1']],
