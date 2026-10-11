@@ -1334,7 +1334,10 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     zwischen einer **kleinen und einer großen Sonne**, rechts der Prozentwert –, sodass man die Wirkung
     beim Schieben direkt sieht. Denselben Regler gibt es **unten im Livebild auf der Tafel**, man kann
     also mitten im Unterricht nachregeln, ohne das Kamerafenster zu öffnen; beide zeigen immer
-    denselben Wert. Gilt für **Vorschau, Foto, Videoclip und Dokumentenkamera** gleichermaßen und wirkt sofort. Gerechnet wird auf der Grafikeinheit – im
+    denselben Wert. Gilt für **Vorschau, Foto, Videoclip und Dokumentenkamera** gleichermaßen und wirkt sofort.
+    Gerechnet wird ohne `ctx.filter` (den kennt Safari erst ab Version 17 – auf älteren iPads bliebe das
+    Bild sonst unverändert): Das fertige Bild wird additiv auf sich selbst gezeichnet, was einer
+    Multiplikation entspricht und auf jeder Grafikeinheit läuft. Gerechnet wird auf der Grafikeinheit – im
     entzerrten Livebild direkt im Shader, sonst über den Canvas-Filter –, es kostet also keine
     Bildrate. Die Einstellung bleibt geräteweit gespeichert.
     Im Knopf **„● Video auf Tafel"** sitzt rechts ein kleiner Schalter **„mit Ton"** – blau heißt: Die

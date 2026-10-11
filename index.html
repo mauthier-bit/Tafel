@@ -5041,7 +5041,13 @@ const lookDef=()=>CAM_LOOKS.find(l=>l.id===camLook)||CAM_LOOKS[0];
 let camHell=0;
 const hellFaktor=()=>1+0.9*(camHell/100);
 const hellKontrast=()=>1+0.3*(camHell/100);
-const hellCss=()=>camHell?('brightness('+hellFaktor().toFixed(3)+') contrast('+hellKontrast().toFixed(3)+')'):'';
+/* Aufhellen im 2D-Pfad: das fertige Bild additiv auf sich selbst zeichnen – das entspricht
+   einer Multiplikation mit (1+Alpha) und läuft auf der Grafikeinheit. Bewusst nicht über
+   `ctx.filter`: den gibt es in Safari erst ab Version 17, auf älteren iPads bliebe das Bild gleich. */
+function hellDrauf(g,W,H){ const k=hellFaktor()-1; if(k<=0.002) return;
+  g.save(); g.globalCompositeOperation='lighter'; g.globalAlpha=Math.min(1,k);
+  try{ g.drawImage(g.canvas,0,0,W,H); }catch(e){}
+  g.restore(); }
 const camFxAktiv=()=>!!camLook||camHell>0;
 const schwerLook=()=>{ const L=lookDef(); return !!(L.rechnen||L.green); };   // wird Bild für Bild gerechnet
 
@@ -5294,10 +5300,11 @@ function rahmenPolaroid(g,W,H){
 /* ein Bild mit dem gewählten Look zeichnen */
 function camFxPaint(g,v,W,H,q){
   const L=lookDef();
-  if(L.green){ gsStanzen(g,W,H,v,q); if(camHell){ g.save(); g.filter=hellCss(); g.globalCompositeOperation='copy'; try{ g.drawImage(g.canvas,0,0); }catch(e){} g.restore(); } }
-  else { g.save(); g.filter=[L.css||'',hellCss()].filter(Boolean).join(' ')||'none';
+  if(L.green){ gsStanzen(g,W,H,v,q); }
+  else { g.save(); g.filter=L.css||'none';
     try{ g.drawImage(v, q.sx,q.sy,q.sw,q.sh, 0,0,W,H); }catch(e){}
     g.restore(); }
+  hellDrauf(g,W,H);                       // aufhellen, bevor Korn, Vignette und Rahmen daraufkommen
   if(L.rechnen) rechne(g,W,H,L.rechnen);
   if(L.scan){ g.fillStyle='rgba(0,0,0,.16)'; const d=Math.max(2,Math.round(H/220));
     for(let y=0;y<H;y+=d*2) g.fillRect(0,y,W,d); }
