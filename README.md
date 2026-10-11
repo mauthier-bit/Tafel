@@ -1577,8 +1577,13 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
    **und** Kreis, Gerade, Zirkel, Zahlenstrahl, Koordinatensystem (alle Knöpfe gleich groß);
    ein **Zeit**-Button (Uhr, Stoppuhr, Timer);
    ein **Klasse & Interaktion**-Button (Sozialform, Gruppen bilden, Umfrage, Zufälliger Name, Punktestand)
-   und ein **Mathe & Physik**-Button (Gleichungslöser – mit Waage, Umkehraufgabe und **Formel umstellen** –, Funktionsplotter, **Ableitungen**, **Term-Umformer**, **Figuren & Körper**, **Diagramm**, **Einheitskreis**, **3D-Koordinatensystem**, Vierfeldertafel, Baumdiagramm,
-   Wahrscheinlichkeitsrechner, **Strahlensätze**, GeoGebra-App, **CODAP**, Messwert-Analyse, **Motion-Tracker** und **Zufall**).
+   und ein **Mathe & Physik**-Button mit 25 Werkzeugen in **fünf Reihen**, vom Rechnen zur Physik geordnet:
+   **1.** Stellenwerttafel · Bruch · Term-Umformer · Gleichungslöser (mit Waage, Umkehraufgabe und
+   **Formel umstellen**) · Funktionsplotter — **2.** Ableitungen · Einheitskreis · Strahlensätze ·
+   Figuren & Körper · 3D-Koordinatensystem — **3.** GeoGebra-App · CODAP · Diagramm · Zufall ·
+   Vierfeldertafel — **4.** Baumdiagramm · Wahrscheinlichkeitsrechner · Motion-Tracker ·
+   Messwert-Analyse · Einheitenumrechner — **5.** Stromkreis · Optiklabor · Wellenwanne ·
+   Periodensystem · Nuklidkarte.
    Die Aufklappmenüs legen sich **nie über die Werkzeugleiste**: Sie öffnen neben ihr, bleiben unter
    der oberen Leiste und nehmen bei schmalem Fenster **weniger Spalten** (bei wenig Höhe lassen sie
    sich scrollen) – so ist jeder Knopf erreichbar, auch im geteilten Bildschirm.
