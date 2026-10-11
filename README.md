@@ -1329,6 +1329,11 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   - Die Knöpfe sind in Paaren angeordnet: **Kamera starten / Kamera wechseln**, **📷 Foto auf Tafel /
     ● Video auf Tafel**, **📄 Scannen / 🔎 Dokumentenkamera**, darunter der aufklappbare Look-Bereich.
     Alle Knöpfe sind **gleich breit** und haben **denselben Abstand** zueinander.
+  - **Aufhellen (Regler, 0–100 %):** Hebt bei schwachem Licht über dem Heft die Helligkeit an (dazu
+    etwas Kontrast, damit es nicht flau wird). Gilt für **Vorschau, Foto, Videoclip und
+    Dokumentenkamera** gleichermaßen und wirkt sofort. Gerechnet wird auf der Grafikeinheit – im
+    entzerrten Livebild direkt im Shader, sonst über den Canvas-Filter –, es kostet also keine
+    Bildrate. Die Einstellung bleibt geräteweit gespeichert.
     Im Knopf **„● Video auf Tafel"** sitzt rechts ein kleiner Schalter **„mit Ton"** – blau heißt: Die
     Aufnahme bekommt eine Tonspur. Während der Aufnahme ist er ausgeblendet (der Knopf zeigt dann die
     laufende Zeit und, falls zutreffend, „Ton").
@@ -1370,7 +1375,9 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     **„entzerren"**. Eingeschaltet erscheinen **vier Punkte** über dem Kamerabild; schiebt man sie auf
     die Ecken des Blattes, zeigt das Livebild auf der Tafel die Seite **gerade von oben** – auch wenn
     das iPad schief daneben steht. **„Ecken automatisch"** setzt die Punkte mit derselben Erkennung
-    wie beim Scannen, **„Ecken zurücksetzen"** stellt das Rechteck wieder her.
+    wie beim Scannen, **„Ecken zurücksetzen"** stellt das Rechteck wieder her. Die vier Punkte bleiben
+    immer **innerhalb des sichtbaren Vorschaubereichs** – die Vorschau zeigt wegen des 4:3-Rahmens
+    nicht das ganze Kamerabild, und außerhalb davon ließen sie sich nicht mehr anfassen.
   - **„Karo erkennen":** Bei kariertem Papier geht es **ohne Blattecken**. Die beiden Scharen der
     Karolinien laufen in der Schrägansicht auf je einen **Fluchtpunkt** zu; aus beiden ergibt sich die
     Lage der Blattebene. Zusätzlich wird der **Abstand der Linien** in beiden Richtungen gemessen –
