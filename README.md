@@ -2349,6 +2349,13 @@ Falls doch einmal etwas über den Leisten liegt, gibt es in **Einstellungen → 
 **„Abstand der oberen Leisten"** (0–48 px): Damit rücken Seiten- und Einstellungsleiste so weit nach
 unten, dass sie wieder frei stehen – unabhängig davon, was das Betriebssystem oben zeichnet.
 
+**Alle Werkzeuge tragen dieselben drei Angaben** (`apple-mobile-web-app-capable: yes`,
+`apple-mobile-web-app-status-bar-style: black`, Viewport **ohne** `viewport-fit=cover`). Damit startet
+auch jedes einzelne Werkzeug – vom Motion-Tracker bis zur Zeitleiste – als **randlose App**, wenn man
+es für sich auf den Home-Bildschirm legt, und die Statusleiste legt sich nirgends über den Inhalt.
+In der Tafel eingebettet spielen diese Angaben keine Rolle; sie gelten nur beim Start vom
+Home-Bildschirm.
+
 ## Auf GitHub Pages hosten
 
 1. Diesen Ordner (`tafel/`) in ein GitHub-Repository legen — am einfachsten den **Inhalt**
