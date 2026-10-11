@@ -1330,8 +1330,11 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     ● Video auf Tafel**, **📄 Scannen / 🔎 Dokumentenkamera**, darunter der aufklappbare Look-Bereich.
     Alle Knöpfe sind **gleich breit** und haben **denselben Abstand** zueinander.
   - **Aufhellen (Regler, 0–100 %):** Hebt bei schwachem Licht über dem Heft die Helligkeit an (dazu
-    etwas Kontrast, damit es nicht flau wird). Gilt für **Vorschau, Foto, Videoclip und
-    Dokumentenkamera** gleichermaßen und wirkt sofort. Gerechnet wird auf der Grafikeinheit – im
+    etwas Kontrast, damit es nicht flau wird). Der Regler liegt **unten im Kamerabild selbst** –
+    zwischen einer **kleinen und einer großen Sonne**, rechts der Prozentwert –, sodass man die Wirkung
+    beim Schieben direkt sieht. Denselben Regler gibt es **unten im Livebild auf der Tafel**, man kann
+    also mitten im Unterricht nachregeln, ohne das Kamerafenster zu öffnen; beide zeigen immer
+    denselben Wert. Gilt für **Vorschau, Foto, Videoclip und Dokumentenkamera** gleichermaßen und wirkt sofort. Gerechnet wird auf der Grafikeinheit – im
     entzerrten Livebild direkt im Shader, sonst über den Canvas-Filter –, es kostet also keine
     Bildrate. Die Einstellung bleibt geräteweit gespeichert.
     Im Knopf **„● Video auf Tafel"** sitzt rechts ein kleiner Schalter **„mit Ton"** – blau heißt: Die

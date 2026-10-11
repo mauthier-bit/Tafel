@@ -336,10 +336,20 @@
   #win-cam .row.fill .btn{flex:1 1 0;min-width:0;box-sizing:border-box;min-height:37px;}
   #win-cam [hidden]{display:none!important;}   /* .row setzt display:flex und würde [hidden] sonst überstimmen */
   #camEntzBar .btn{font-size:12.5px;white-space:nowrap;padding-left:6px;padding-right:6px;}   /* drei Knöpfe in einer Zeile */
-  #camHellRow{align-items:center;gap:10px;}
-  #camHellRow .hellLbl{flex:0 0 auto;font-size:14px;font-weight:700;color:#1f2430;}
-  #camHellRow input[type=range]{flex:1 1 auto;min-width:60px;accent-color:var(--accent,#2563eb);}
-  #camHellRow .hellVal{flex:0 0 46px;text-align:right;font-size:13px;font-weight:700;color:#1f2430;font-variant-numeric:tabular-nums;}
+  /* Aufhellen sitzt direkt im Kamerabild – dort sieht man die Wirkung beim Schieben */
+  #camHellRow{position:absolute;left:10px;right:10px;bottom:8px;z-index:2;display:flex;align-items:center;gap:9px;
+    background:rgba(17,20,26,.55);backdrop-filter:blur(3px);border-radius:999px;padding:5px 12px;touch-action:none;}
+  #camHellRow .hellLbl{flex:0 0 auto;line-height:1;color:#fff;}
+  #camHellRow .hellLbl.klein{font-size:12px;opacity:.72;}   /* kleine Sonne = dunkel, große = hell */
+  #camHellRow .hellLbl.gross{font-size:18px;}
+  #camHellRow input[type=range]{flex:1 1 auto;min-width:50px;accent-color:#fbbf24;}
+  #camHellRow .hellVal{flex:0 0 42px;text-align:right;font-size:12px;font-weight:700;color:#fff;font-variant-numeric:tabular-nums;}
+  #camQuad .qh{z-index:3;}
+  /* derselbe Regler im Livebild auf der Tafel */
+  .liveWrap .lvHell{position:absolute;left:62px;right:116px;bottom:11px;height:22px;pointer-events:auto;
+    accent-color:#fbbf24;margin:0;min-width:30px;}
+  .liveWrap .lvSonne{position:absolute;left:42px;bottom:9px;font-size:13px;line-height:1;color:#fff;
+    text-shadow:0 1px 3px rgba(0,0,0,.6);pointer-events:none;}
   #win-cam #camLookHead{margin-top:8px!important;}
   #camWrap{position:relative;overflow:hidden;border-radius:8px;background:#000;aspect-ratio:4/3;touch-action:none;}
   #camFx{position:absolute;inset:0;width:100%;height:100%;display:none;object-fit:contain;}
@@ -1106,6 +1116,7 @@
 <div class="win" id="win-cam" style="left:70px;top:36px;max-width:94vw;"><h3>Kamera <span class="x" data-close="win-cam">×</span></h3>
   <div class="body">
     <div id="camWrap"><video id="camVideo" playsinline autoplay muted></video><canvas id="camFx"></canvas><div id="camZoomBadge">1,0×</div>
+      <div id="camHellRow" title="Bei schwachem Licht das Bild aufhellen – gilt für Vorschau, Foto, Video und Dokumentenkamera"><span class="hellLbl klein">☀</span><input type="range" id="camHell" min="0" max="100" step="5" value="0"><span class="hellLbl gross">☀</span><span class="hellVal" id="camHellV">0 %</span></div>
       <div id="camQuad" hidden><svg viewBox="0 0 100 100" preserveAspectRatio="none"><polygon id="camQuadPoly" vector-effect="non-scaling-stroke"></polygon></svg><div class="qh" data-i="0"></div><div class="qh" data-i="1"></div><div class="qh" data-i="2"></div><div class="qh" data-i="3"></div></div>
     </div>
     <div class="hint" style="margin:4px 0 0">Zwei Finger im Bild = zoomen · Doppeltipp = zurück</div>
@@ -1114,7 +1125,6 @@
     <div class="row fill" style="margin-top:6px"><button class="btn" id="camScan">📄 Scannen</button><button class="btn" id="camLive"><span>🔎 Dokumentenkamera</span><span class="inbtn" id="camEntzBtn" role="button" tabindex="0" title="Schräge Ansicht geradeziehen: die vier Punkte im Bild auf die Ecken des Blattes schieben">entzerren</span></button></div>
     <div class="row fill" id="camEntzBar" hidden style="margin-top:8px"><button class="btn" id="camEntzKaro" title="Aus den Linien eines Karoblatts berechnen – dafür müssen keine Blattecken zu sehen sein">Karo erkennen</button><button class="btn" id="camEntzAuto" title="Blattecken im Bild suchen (wie beim Scannen)">Ecken automatisch</button><button class="btn" id="camEntzReset">Ecken zurücksetzen</button></div>
     <div class="hint" id="camEntzHint" hidden style="margin:4px 0 0">Die vier Punkte auf die Ecken des Blattes ziehen – das Livebild auf der Tafel wird dann geradegezogen.</div>
-    <div class="row fill" id="camHellRow" style="margin-top:8px"><b class="hellLbl">Aufhellen</b><input type="range" id="camHell" min="0" max="100" step="5" value="0" title="Bei schwachem Licht das Bild aufhellen – gilt für Vorschau, Foto, Video und Dokumentenkamera"><span class="hellVal" id="camHellV">0 %</span></div>
     <button class="btn" id="camLookHead" style="width:100%;text-align:left;margin-top:2px">🎨 Look: Ohne <span style="float:right">▾</span></button>
     <div id="camLookBox" hidden>
       <div class="hint" style="margin:6px 0 5px">Gilt für Vorschau, Foto, Video und Dokumentenkamera.</div>
@@ -3404,6 +3414,13 @@ function syncEmbeds(){ const p=page(), wanted=new Set();
         mk('lvZ2','−',()=>setLiveZoom(o,(o.zoom||1)-0.5));
         const bl=mk('lvL','💡',()=>torchSchalten());                 // Blatt ausleuchten
         bl.classList.toggle('an',camTorch); bl.title=camTorch?'Licht aus':'Blatt mit dem Kameralicht ausleuchten';
+        const hr=document.createElement('input'); hr.type='range'; hr.className='lvHell';   // Aufhellen direkt am Livebild
+        hr.min=0; hr.max=100; hr.step=5; hr.value=camHell; hr.title='Bild aufhellen';
+        hr.addEventListener('pointerdown',e=>e.stopPropagation());
+        hr.addEventListener('input',e=>{ e.stopPropagation(); hellSetzen(hr.value); });
+        hr.addEventListener('change',()=>saveUI());
+        const so=document.createElement('span'); so.className='lvSonne'; so.textContent='☀';
+        fr.append(hr,so);
         const zv=document.createElement('div'); zv.className='lvZv'; fr.appendChild(zv);
         fr._video=v; fr._zv=zv;
       }
@@ -5738,15 +5755,19 @@ function karoQuad(){
      kämen als Rechtecke heraus. */
   return {q:quad.map(q=>({x:Math.max(0,Math.min(1,q.x)), y:Math.max(0,Math.min(1,q.y))})), ar:arBekannt?(e-c)/(b-a):0};
 }
-/* Regler fürs Aufhellen: wirkt sofort auf Vorschau, Aufnahme und Dokumentenkamera */
-function hellUI(){ $('camHell').value=camHell; $('camHellV').textContent=camHell+' %'; }
-$('camHell').oninput=function(){ const vorher=camFxAktiv();
-  camHell=Math.max(0,Math.min(100,+this.value||0)); $('camHellV').textContent=camHell+' %';
+/* Regler fürs Aufhellen: wirkt sofort auf Vorschau, Aufnahme und Dokumentenkamera.
+   Er steht an zwei Stellen – im Kamerabild und im Livebild auf der Tafel – und zeigt überall denselben Wert. */
+function hellUI(){ $('camHell').value=camHell; $('camHellV').textContent=camHell+' %';
+  document.querySelectorAll('.liveWrap .lvHell').forEach(r=>{ if(+r.value!==camHell) r.value=camHell; }); }
+function hellSetzen(w){ const vorher=camFxAktiv();
+  camHell=Math.max(0,Math.min(100,+w||0)); hellUI();
   $('camWrap').classList.toggle('fx',camFxAktiv());
   if(camFxAktiv()&&!vorher&&camStream){ camPrevStart(); camCompStart(); }     // Rechen-Leinwand erst jetzt anwerfen
   if(!camFxAktiv()&&!liveObjs().length&&!camRecording()) camCompStop();
-  liveNeuVerdrahten(); markDirty(); };
+  liveNeuVerdrahten(); markDirty(); }
+$('camHell').oninput=function(){ hellSetzen(this.value); };
 $('camHell').onchange=()=>saveUI();
+$('camHellRow').addEventListener('pointerdown',e=>e.stopPropagation());   // sonst zoomt die Vorschau mit
 $('camEntzKaro').onclick=()=>{ if(!$('camVideo').videoWidth){ toast('Erst Kamera starten'); return; }
   const r=karoQuad();
   if(!r){ toast('Keine Karolinien erkannt – Blatt formatfüllend und hell genug? Sonst Punkte von Hand ziehen'); return; }
