@@ -2334,7 +2334,15 @@ Oben rechts liegt der **Vollbild-Knopf**.
 ## Auf dem iPad nutzen
 
 Nach dem Hosting (siehe unten) die Seite in **Safari** öffnen, dann
-**Teilen → Zum Home-Bildschirm**. Die Tafel läuft dann als Vollbild-App und offline.
+**Teilen → Zum Home-Bildschirm**. Die Tafel läuft dann als eigene App ohne Safari-Leisten und offline.
+
+**Statusleiste:** Die Tafel startet mit `apple-mobile-web-app-status-bar-style: default` – die
+Zeichenfläche beginnt also **unterhalb** der Statusleiste. Das kostet oben ein paar Millimeter, dafür
+legt sich der (in neueren iPadOS-Fassungen weich auslaufende) Hintergrund der Statusleiste nicht über
+die oberen Werkzeugleisten. Ganz **ausblenden** lässt sich die Statusleiste in einer Web-App nicht;
+wer sie loswerden will, nutzt den **Geführten Zugriff** (Einstellungen → Bedienungshilfen → Geführter
+Zugriff; dann dreimal die obere Taste drücken). Eine Änderung dieser Angabe wirkt erst, wenn die
+App **ganz geschlossen** (aus der App-Übersicht wischen) und neu gestartet wird.
 
 ## Auf GitHub Pages hosten
 
