@@ -282,7 +282,9 @@
   #props .swatches{display:flex;flex:1;gap:6px;}
   #props .swatches .sw{flex:1 1 0;min-width:0;width:auto;height:26px;border-radius:999px;}
   /* Farbe, Dicke/Größe und Gefüllt beginnen in derselben Spalte – dadurch stehen auch die Bedienelemente untereinander */
-  #props #colorRow>b,#props #widthRow>b,#props #propFillRow .propToggle>span{min-width:84px;font-weight:700;}
+  #props #colorRow>b,#props #widthRow>b,#props #propDashRow>b,#props #propFillRow .propToggle>span{min-width:84px;font-weight:700;}
+  #props .dashBtn{flex:1 1 0;min-width:0;padding:6px 4px;display:flex;align-items:center;justify-content:center;}
+  #props .dashBtn svg{width:100%;max-width:62px;height:12px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;}
   #props .widths{gap:8px;}
   #props .sw{width:22px;height:22px;border:2px solid #0002;}
   #props .sw.active{outline:3px solid var(--accent);}
@@ -864,7 +866,7 @@
   <button class="tbtn pmin pnav" id="p-prev" title="vorige Seite"><svg viewBox="0 0 24 24"><path d="M16 5 8 12l8 7Z"/></svg></button>
   <span id="pageInfo" title="Seitenübersicht (tippen)">1 / 1</span>
   <button class="tbtn pmin pnav" id="p-next" title="nächste Seite"><svg viewBox="0 0 24 24"><path d="M8 5l8 7-8 7Z"/></svg></button>
-  <button class="tbtn pmin" id="t-clear" title="Seite leeren – der Inhalt verschwindet, die Seite bleibt"><svg viewBox="0 0 24 24"><g transform="rotate(-12 12 10)"><rect x="5" y="4.6" width="14" height="9.2" rx="2.4"/><path d="M5 9.2h14"/></g><path d="M4.3 18.6h5M11.6 18.6h3.6M17.3 18.6h2.4"/></svg></button>
+  <button class="tbtn pmin" id="t-clear" title="Seite leeren – der Inhalt verschwindet, die Seite bleibt"><svg viewBox="0 0 24 24"><g transform="rotate(-12 12 10)"><rect x="5" y="4.6" width="14" height="9.2" rx="2.4" style="fill:currentColor;fill-opacity:.2"/></g><path d="M4.3 18.6h5M11.6 18.6h3.6M17.3 18.6h2.4"/></svg></button>
   <button class="tbtn pmin" id="p-del" title="Seite löschen"><svg viewBox="0 0 24 24"><path d="M6 7h12l-1 13H7ZM9 7V4h6v3"/></svg></button>
   <button class="tbtn pmin" id="z-reset" title="Zoom zurücksetzen"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M11 8v6M8 11h6M21 21l-4-4"/></svg></button>
   <button class="tbtn" id="p-add" title="neue Seite"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
@@ -895,6 +897,7 @@
   <div class="pgrip" id="propsGrip" title="Ziehen: Kontextmenü an eine andere Stelle schieben"><i></i><button class="pauto" id="propsAuto" title="Kontextmenü wieder automatisch neben das Objekt stellen">↺</button></div>
   <div class="prow" id="colorRow" style="font-size:13px"><b>Farbe</b><div class="swatches" id="propColors"></div></div>
   <div class="prow" id="widthRow" style="font-size:13px"><b>Dicke/Größe</b><div class="widths" id="propWidths"></div></div>
+  <div class="prow" id="propDashRow" style="display:none;font-size:13px"><b>Linie</b><button class="p dashBtn" id="dash0" title="durchgezogen"><svg viewBox="0 0 56 12"><path d="M3 6h50"/></svg></button><button class="p dashBtn" id="dash1" title="gestrichelt"><svg viewBox="0 0 56 12"><path d="M3 6h50" stroke-dasharray="9 6"/></svg></button><button class="p dashBtn" id="dash2" title="gepunktet"><svg viewBox="0 0 56 12"><path d="M3 6h50" stroke-dasharray="0.01 7"/></svg></button></div>
   <div class="prow" id="propFillRow"><label class="propToggle"><span>Gefüllt</span><div class="sw2" id="propFill"></div></label><span class="flbl">Transparenz</span><input type="range" id="propAlpha" min="0" max="100" step="5" value="80" title="Wie durchsichtig die Füllung ist – 0 % deckt ganz, 100 % ist unsichtbar"><span class="fval" id="propAlphaV">80 %</span></div>
   <div class="prow" id="textRow" style="display:none;flex-direction:column;align-items:stretch;gap:6px;font-size:13px">
     <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
@@ -1469,17 +1472,29 @@ function textLines(o,c){ c=c||ctx; c.font=(o.italic?'italic ':'')+(o.bold?'bold 
       if(!line || c.measureText(t).width<=o.w) line=t; else { out.push(line); line=wd; } }
     out.push(line); }
   return out; }
+/* Linienart: 0 = durchgezogen, 1 = gestrichelt, 2 = gepunktet.
+   Bei den Körpern gibt es sie nicht – dort sind gestrichelte Linien schon die verdeckten Kanten. */
+const KOERPER=['cuboid','prism','pyramid','cylinder','cone'];
+const darfStrich=o=>!!o&&(o.type==='stroke'||(o.type==='shape'&&!KOERPER.includes(o.shape)));
+function setzeStrich(c,o){ const a=darfStrich(o)?(o.dash|0):0, w=Math.max(.6,o.width||2);
+  if(a===1) c.setLineDash([w*3.2,w*2.4]);
+  else if(a===2){ c.setLineDash([0.01,w*2.2]); c.lineCap='round'; }
+  else c.setLineDash([]); }
 function drawObjectRaw(o,c){
-  c.lineJoin='round'; c.lineCap='round'; c.globalAlpha=1;
+  c.lineJoin='round'; c.lineCap='round'; c.globalAlpha=1; c.setLineDash([]);
   c.textAlign='left'; c.textBaseline='alphabetic';   // sonst erbt ein Objekt die Ausrichtung des vorigen
 
   if(o.type==='stroke'){ const pts=o.points; if(!pts.length)return;
     if(o.tool==='marker') c.globalAlpha=.32;
     c.strokeStyle=o.color; c.fillStyle=o.color; c.lineWidth=o.width;
+    const art=darfStrich(o)?(o.dash|0):0; setzeStrich(c,o);
     if(pts.length===1){ c.beginPath(); c.arc(pts[0].x,pts[0].y,Math.max(o.width/2,.6),0,7); c.fill(); }
-    else if(strokePath(pts,o.width,o.varw&&o.tool==='pen',c)){} else c.stroke();
-    c.globalAlpha=1;
-  } else if(o.type==='shape'){ c.strokeStyle=o.color; c.lineWidth=o.width;
+    /* gestrichelt/gepunktet nur über einen durchgehenden Pfad – die druckabhängige
+       Darstellung zeichnet in Stücken, dabei finge das Muster jedes Mal neu an */
+    else if(!art && strokePath(pts,o.width,o.varw&&o.tool==='pen',c)){}
+    else { strokePath(pts,o.width,false,c); c.stroke(); }
+    c.setLineDash([]); c.globalAlpha=1;
+  } else if(o.type==='shape'){ c.strokeStyle=o.color; c.lineWidth=o.width; setzeStrich(c,o);
     const x=Math.min(o.x0,o.x1),y=Math.min(o.y0,o.y1),w=Math.abs(o.x1-o.x0),h=Math.abs(o.y1-o.y0); c.beginPath();
     if(o.shape==='rect')c.rect(x,y,w,h);
     else if(o.shape==='ellipse')c.ellipse(x+w/2,y+h/2,w/2,h/2,0,0,7);
@@ -1514,7 +1529,7 @@ function drawObjectRaw(o,c){
       const spitze=(px,py,w)=>{ c.moveTo(px,py);c.lineTo(px-L*Math.cos(w-.4),py-L*Math.sin(w-.4));c.moveTo(px,py);c.lineTo(px-L*Math.cos(w+.4),py-L*Math.sin(w+.4)); };
       spitze(o.x1,o.y1,a); if(o.both) spitze(o.x0,o.y0,a+Math.PI);}   /* both = Doppelpfeil */
     if(o.fill&&['rect','ellipse','circle','triangle','square','rtriangle','gtriangle','parallelogram','trapez','kite','kreis','rhombus','hexagon','polygon'].includes(o.shape)){c.fillStyle=o.color;c.globalAlpha=(typeof o.fillA==='number')?o.fillA:.2;c.fill();c.globalAlpha=1;}
-    c.stroke();
+    c.stroke(); c.setLineDash([]);
     if(o.shape==='arc'||o.shape==='circle'){ c.beginPath(); c.arc(o.x0,o.y0,Math.max(o.width*0.9,1.6),0,7); c.fillStyle=o.color; c.fill(); }  // Mittelpunkt sichtbar (Zirkel & Kreis)
     if((o.lblV||o.lblE)&&LABEL_SHAPES.includes(o.shape)) drawShapeLabels(c,o,x,y,w,h);
   } else if(o.type==='text'){ c.fillStyle=o.color; c.textBaseline='top'; c.textAlign='left';
@@ -2601,6 +2616,12 @@ $('propFill').onclick=function(){ this.classList.toggle('on'); const on=this.cla
   selection.forEach(o=>{ if(o.type==='shape'){ o.fill=on;
     if(on&&!(o.fillA>0)) o.fillA=(shapeAlpha>0)?shapeAlpha:.2; } });   // ganz durchsichtig eingeschaltet lassen hieße: nichts zu sehen
   shapeFill=on; alphaUI(); scheduleAutosave(); markDirty(); };
+/* Linienart der ausgewählten Striche und ebenen Formen */
+function dashUI(){ const l=selection.filter(darfStrich); const a=l.length?(l[0].dash|0):0;
+  for(let i=0;i<3;i++) $('dash'+i).classList.toggle('on',i===a); }
+[0,1,2].forEach(i=>{ $('dash'+i).onclick=()=>{ const l=selection.filter(darfStrich); if(!l.length)return;
+  pushUndo(); l.forEach(o=>{ if(i) o.dash=i; else delete o.dash; });
+  dashUI(); markDirty(); scheduleAutosave(); }; });
 /* Transparenz der Füllung: 0 % deckt ganz, 100 % ist unsichtbar */
 function alphaUI(){ const sh=selection.filter(o=>o.type==='shape');
   const a=sh.length?((typeof sh[0].fillA==='number')?sh[0].fillA:.2):shapeAlpha;
@@ -2812,6 +2833,7 @@ function refreshProps(){ const has=selection.length>0 && tool==='select';
     const usesPen=o=>o.type==='stroke'||o.type==='shape'||o.type==='text'||o.type==='numline'||(o.type==='embed'&&o.etype==='plotter');
     const pen=selection.some(usesPen);                       // Farbe & Dicke nur zeigen, wenn sie hier etwas bewirken
     $('colorRow').style.display=pen?'flex':'none'; $('widthRow').style.display=pen?'flex':'none'; $('propFillRow').style.display=selection.some(o=>o.type==='shape')?'flex':'none';
+    $('propDashRow').style.display=selection.some(darfStrich)?'flex':'none';
     const txo=(selection.length>0 && selection.every(o=>o.type==='text'))?selection[0]:null; $('textRow').style.display=txo?'flex':'none';
     if(txo){ $('txtBold').classList.toggle('on',!!txo.bold); $('txtItalic').classList.toggle('on',!!txo.italic); $('txtBullet').classList.toggle('on',!!txo.bullet); $('txtSizeV').textContent=txo.size||28; }
     const clk=(selection.length===1&&selection[0].type==='clock')?selection[0]:null; $('clockRow').style.display=clk?'flex':'none';
@@ -3068,7 +3090,7 @@ function embFsStep(d){ const o=selection[0]; if(!o||o.type!=='embed'||FONT_DEF[o
 $('embFsM').onclick=()=>embFsStep(-1); $('embFsP').onclick=()=>embFsStep(1);
 function embStyleToggle(key,btn){ const o=selection[0]; if(!o||o.type!=='embed'||FONT_DEF[o.etype]===undefined)return; o.data=o.data||{}; o.data[key]=!o.data[key]; $(btn).classList.toggle('on',!!o.data[key]); postToEmbed(o,o.data); markDirty(); scheduleAutosave(); }
 $('embBold').onclick=()=>embStyleToggle('fontBold','embBold'); $('embItalic').onclick=()=>embStyleToggle('fontItalic','embItalic');
-function refreshPropActive(){ const c=selection[0]&&selection[0].color; $('propColors').querySelectorAll('.sw').forEach(s=>s.classList.toggle('active',s.dataset.c===c)); const fill=selection.some(o=>o.type==='shape'&&o.fill); $('propFill').classList.toggle('on',fill); alphaUI();
+function refreshPropActive(){ const c=selection[0]&&selection[0].color; $('propColors').querySelectorAll('.sw').forEach(s=>s.classList.toggle('active',s.dataset.c===c)); const fill=selection.some(o=>o.type==='shape'&&o.fill); $('propFill').classList.toggle('on',fill); alphaUI(); dashUI();
   const w=propWidthVal(); let best=-1;
   if(w!=null){ best=0; widths.forEach((x,i)=>{ if(Math.abs(x-w)<Math.abs(widths[best]-w)) best=i; }); }
   pwEl.querySelectorAll('.wbtn').forEach((b,i)=>b.classList.toggle('active',i===best)); }

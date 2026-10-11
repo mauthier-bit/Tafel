@@ -46,7 +46,12 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   **Regler „Transparenz"** (0–100 %, in 5er-Schritten): **0 % deckt ganz**, der Standard **80 %** entspricht der
   bisherigen zarten Füllung, **100 %** macht die Füllung unsichtbar. Der Regler wirkt sofort auf alle ausgewählten
   Formen; zieht man ihn bei ausgeschalteter Füllung, wird „Gefüllt" automatisch eingeschaltet. Der zuletzt
-  eingestellte Wert gilt geräteweit für neu gezeichnete Formen. Der **obere Teil des Kontextmenüs** ist dafür aufgeräumt:
+  eingestellte Wert gilt geräteweit für neu gezeichnete Formen. Eine Zeile darüber steht die **Linienart**:
+  **durchgezogen · gestrichelt · gepunktet** (drei Knöpfe mit einer Musterlinie darauf). Sie gilt für
+  **ausgewählte Freihandstriche und ebene Formen** – Hilfslinien lassen sich so nachträglich stricheln.
+  Bei den **Körpern** (Quader, Prisma, Pyramide, Zylinder, Kegel) erscheint die Zeile **nicht**: Dort sind
+  gestrichelte Linien schon für die verdeckten Kanten vergeben. Gestrichelte und gepunktete Striche werden
+  in gleichmäßiger Stärke gezeichnet, die Druckstärke des Stifts wirkt nur bei durchgezogenen. Der **obere Teil des Kontextmenüs** ist dafür aufgeräumt:
   „Farbe", „Dicke/Größe" und „Gefüllt" beginnen in derselben Spalte, sodass Farbfelder, Stärken und Schalter genau
   untereinander stehen; die Farbfelder sind höher und haben mehr Luft zueinander (sauberer zu treffen), und eine feine
   Trennlinie setzt den allgemeinen Teil von den formabhängigen Einstellungen ab. Dort stehen „Ecken/Seiten beschriften"
