@@ -485,8 +485,12 @@ window.TafelPaare={
   daten(){ const out=[];
     G.forEach(gr=>gr.paare.forEach(p=>out.push({ f:gr.f||'M', j:gr.j, g:gr.g, b:p[0], e:p[1] })));
     GR.forEach(gr=>gr.felder.forEach(f=>out.push({ f:gr.f||'M', j:gr.j, g:gr.g, b:f[0], e:f[1].join(' · '), k:f[1].slice() })));
-    /* t = Tiefe: Diese Felder liegen ineinander und werden immer als Gruppenaufgabe geladen. */
-    GV.forEach(gr=>gr.felder.forEach(f=>out.push({ f:gr.f||'M', j:gr.j, g:gr.g, b:f[0], e:f[2].join(' · '), k:f[2].slice(), t:f[1] })));
+    /* t = Tiefe, ord = Platz in dieser Bibliothek. Die Tiefe allein genügt nicht: Der
+       Auswahldialog sortiert alphabetisch, und dann läge „Scheinbrüche" plötzlich in den
+       echten statt in den unechten Brüchen. Mit ord wird die ursprüngliche Reihenfolge
+       beim Übernehmen wiederhergestellt. */
+    let nr=0;
+    GV.forEach(gr=>gr.felder.forEach(f=>out.push({ f:gr.f||'M', j:gr.j, g:gr.g, b:f[0], e:f[2].join(' · '), k:f[2].slice(), t:f[1], ord:nr++ })));
     return out; }
 };
 })();
