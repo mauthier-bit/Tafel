@@ -4996,7 +4996,9 @@ async function camStartFn(){ try{ camClipStop(); setCamZoom(1); if(camStream)cam
     $('camVideo').srcObject=camStream; $('camVideo').muted=true;   // Vorschau stumm (sonst Rückkopplung)
     $('camStart').textContent='Neu starten'; $('camHint').style.display='none';
     camLookSet(camLook);                                   // Look auf Vorschau, Aufnahme und Dokumentenkamera anwenden
-    $('camVideo').addEventListener('loadedmetadata',()=>{ entzUI(); warpGroesseSetzen(); },{once:true});
+    $('camVideo').addEventListener('loadedmetadata',()=>{ entzUI(); warpGroesseSetzen();
+      if(camFxAktiv()){ camPrevStart(); camCompStart(); }    // jetzt erst stimmen die Maße
+      liveNeuVerdrahten(); },{once:true});
     entzUI();                                              // Eckengriffe an die neue Bildgröße setzen
   }catch(e){ $('camHint').innerHTML='<b>Kein Kamerazugriff.</b> Bitte über https öffnen und Zugriff erlauben.'; } }
 $('camStart').onclick=camStartFn;
@@ -5454,11 +5456,18 @@ async function camClipStart(){
   camClipUI(); camRecTimer=setInterval(camClipUI,500); }
 /* Ein Canvas rechnet Zoom und Look ins Bild – daraus speisen sich Videoaufnahme und Dokumentenkamera */
 let camComp=null, camCompCtx=null, camCompFx=null, camCompRAF=0, camCompStream=null;
-function camCompStart(){ const v=$('camVideo'), c=camCrop(v,camZoom);
-  if(camComp) return camCompStream?camCompStream.getVideoTracks():[];
-  const breit=schwerLook()?640:Math.min(1280,Math.round(c.sw));
-  camComp=document.createElement('canvas'); camComp.width=Math.max(2,breit);
-  camComp.height=Math.max(2,Math.round(breit*c.sh/c.sw)); camCompCtx=camComp.getContext('2d');
+function camCompStart(){ const v=$('camVideo');
+  /* Erst rechnen, wenn die Kamera ihre Maße kennt: Sonst käme eine Leinwand mit 2×0 Punkten
+     heraus (0/0 ergibt NaN), deren aufgenommener Strom zwar „live" meldet, aber schwarz bleibt –
+     und weil die Leinwand nur einmal angelegt wird, bliebe sie es für immer. */
+  if(!v.videoWidth||!v.videoHeight) return [];
+  const c=camCrop(v,camZoom);
+  if(camComp){ if(camComp.width>2&&camComp.height>2) return camCompStream?camCompStream.getVideoTracks():[];
+    camCompStop(); }                                   // untaugliche Leinwand verwerfen und neu bauen
+  const breit=Math.max(2,schwerLook()?640:Math.min(1280,Math.round(c.sw)));
+  const hoch=Math.max(2,Math.round(breit*c.sh/c.sw)||2);
+  camComp=document.createElement('canvas'); camComp.width=breit; camComp.height=hoch;
+  camCompCtx=camComp.getContext('2d');
   /* Look und Aufhellung werden auf einer eigenen Leinwand gerechnet; in die aufgenommene
      Leinwand kommt immer nur ein fertiges drawImage. Rechenschritte wie putImageData oder
      zusammengesetzte Zeichenmodi vertragen sich in Safari nicht mit captureStream – daher
