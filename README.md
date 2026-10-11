@@ -1340,7 +1340,12 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     Multiplikation entspricht und auf jeder Grafikeinheit läuft. **Dasselbe gilt für die Looks:**
     Fehlt der Canvas-Filter, rechnet die Tafel **grayscale, sepia, saturate, brightness und contrast
     selbst** (gleiche Formeln wie der Filter, Abweichung unter 1 % – geprüft gegen den Browser-Filter).
-    Solche Looks laufen dann wie die gerechneten etwas kleiner und mit etwas weniger Bildern je Sekunde. Gerechnet wird auf der Grafikeinheit – im
+    Solche Looks laufen dann wie die gerechneten etwas kleiner und mit etwas weniger Bildern je Sekunde.
+    **Wichtig für Dokumentenkamera und Videoaufnahme:** Look und Aufhellung werden auf einer eigenen
+    Leinwand gerechnet; in die aufgenommene Leinwand kommt immer nur ein fertiges Bild. Rechenschritte
+    wie das Zurückschreiben einzelner Bildpunkte vertragen sich in Safari nicht mit der Bildaufzeichnung –
+    sonst blieben Livebild und Aufnahme schwarz. Scheitert ein Effekt trotzdem, wird das **unbearbeitete
+    Kamerabild** gezeigt statt gar keines. Gerechnet wird auf der Grafikeinheit – im
     entzerrten Livebild direkt im Shader, sonst über den Canvas-Filter –, es kostet also keine
     Bildrate. Die Einstellung bleibt geräteweit gespeichert.
     Im Knopf **„● Video auf Tafel"** sitzt rechts ein kleiner Schalter **„mit Ton"** – blau heißt: Die

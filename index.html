@@ -5041,13 +5041,22 @@ const lookDef=()=>CAM_LOOKS.find(l=>l.id===camLook)||CAM_LOOKS[0];
 let camHell=0;
 const hellFaktor=()=>1+0.9*(camHell/100);
 const hellKontrast=()=>1+0.3*(camHell/100);
-/* Aufhellen im 2D-Pfad: das fertige Bild additiv auf sich selbst zeichnen – das entspricht
+/* Aufhellen im 2D-Pfad: das fertige Bild additiv ein zweites Mal darüberzeichnen – das entspricht
    einer Multiplikation mit (1+Alpha) und läuft auf der Grafikeinheit. Bewusst nicht über
-   `ctx.filter`: den gibt es in Safari erst ab Version 17, auf älteren iPads bliebe das Bild gleich. */
+   `ctx.filter`: den gibt es in Safari erst ab Version 17, auf älteren iPads bliebe das Bild gleich.
+   Die Kopie läuft über eine eigene Leinwand – eine Leinwand auf sich selbst zu zeichnen ist zwar
+   erlaubt, liefert in Safari aber ein schwarzes Bild (und damit auch schwarze Aufnahmen). */
+let hellCv=null;
 function hellDrauf(g,W,H){ const k=hellFaktor()-1; if(k<=0.002) return;
-  g.save(); g.globalCompositeOperation='lighter'; g.globalAlpha=Math.min(1,k);
-  try{ g.drawImage(g.canvas,0,0,W,H); }catch(e){}
-  g.restore(); }
+  try{
+    if(!hellCv) hellCv=document.createElement('canvas');
+    if(hellCv.width!==W||hellCv.height!==H){ hellCv.width=W; hellCv.height=H; }
+    const hg=hellCv.getContext('2d');
+    hg.clearRect(0,0,W,H); hg.drawImage(g.canvas,0,0,W,H);
+    g.save(); g.globalCompositeOperation='lighter'; g.globalAlpha=Math.min(1,k);
+    g.drawImage(hellCv,0,0,W,H); g.restore();
+  }catch(e){}
+}
 const camFxAktiv=()=>!!camLook||camHell>0;
 /* Kennt dieser Browser den Canvas-Filter? Safari erst ab 17 – ohne ihn bliebe „Schwarz-weiß"
    wirkungslos (und „Alter Film" zeigte nur Korn und Vignette). Dann wird von Hand gerechnet. */
@@ -5356,7 +5365,8 @@ function camPrevStart(){ cancelAnimationFrame(camPrevRAF);
     const q=camCrop(v,camZoom), ar=q.sh/q.sw;
     const W=Math.min(breit,Math.round(q.sw)), H=Math.round(W*ar);
     if(c.width!==W||c.height!==H){ c.width=W; c.height=H; }
-    camFxPaint(g,v,W,H,q);
+    try{ camFxPaint(g,v,W,H,q); }
+    catch(e){ try{ g.drawImage(v, q.sx,q.sy,q.sw,q.sh, 0,0,W,H); }catch(e2){} }   // lieber ohne Effekt als schwarz
   })(0); }
 function camLookSet(id){ camLook=id; try{ localStorage.setItem('tafel_camlook',id); }catch(e){}
   [...$('camLooks').children].forEach(b=>b.classList.toggle('on',b.dataset.look===id));
@@ -5443,22 +5453,30 @@ async function camClipStart(){
   }catch(err){ toast('Aufnahme-Fehler: '+err.message); camRec=null; return; }
   camClipUI(); camRecTimer=setInterval(camClipUI,500); }
 /* Ein Canvas rechnet Zoom und Look ins Bild – daraus speisen sich Videoaufnahme und Dokumentenkamera */
-let camComp=null, camCompCtx=null, camCompRAF=0, camCompStream=null;
+let camComp=null, camCompCtx=null, camCompFx=null, camCompRAF=0, camCompStream=null;
 function camCompStart(){ const v=$('camVideo'), c=camCrop(v,camZoom);
   if(camComp) return camCompStream?camCompStream.getVideoTracks():[];
   const breit=schwerLook()?640:Math.min(1280,Math.round(c.sw));
   camComp=document.createElement('canvas'); camComp.width=Math.max(2,breit);
   camComp.height=Math.max(2,Math.round(breit*c.sh/c.sw)); camCompCtx=camComp.getContext('2d');
+  /* Look und Aufhellung werden auf einer eigenen Leinwand gerechnet; in die aufgenommene
+     Leinwand kommt immer nur ein fertiges drawImage. Rechenschritte wie putImageData oder
+     zusammengesetzte Zeichenmodi vertragen sich in Safari nicht mit captureStream – daher
+     kamen Dokumentenkamera und Videoaufnahme schwarz heraus. */
+  camCompFx=document.createElement('canvas'); camCompFx.width=camComp.width; camCompFx.height=camComp.height;
+  const fg=camCompFx.getContext('2d');
   let letzte=0;
   (function draw(ts){ if(!camCompCtx)return; camCompRAF=requestAnimationFrame(draw);
     if(ts-letzte<(schwerLook()?55:32)) return; letzte=ts||0;
-    const q=camCrop(v,camZoom);
-    if(camFxAktiv()) camFxPaint(camCompCtx,v,camComp.width,camComp.height,q);
-    else { try{ camCompCtx.drawImage(v, q.sx,q.sy,q.sw,q.sh, 0,0,camComp.width,camComp.height); }catch(e){} }
+    const q=camCrop(v,camZoom), W=camComp.width, H=camComp.height;
+    try{
+      if(camFxAktiv()){ camFxPaint(fg,v,W,H,q); camCompCtx.drawImage(camCompFx,0,0,W,H); }
+      else camCompCtx.drawImage(v, q.sx,q.sy,q.sw,q.sh, 0,0,W,H);
+    }catch(e){ try{ camCompCtx.drawImage(v, q.sx,q.sy,q.sw,q.sh, 0,0,W,H); }catch(e2){} }   // lieber ohne Effekt als schwarz
   })(0);
   camCompStream=camComp.captureStream(30);
   return camCompStream.getVideoTracks(); }
-function camCompStop(){ cancelAnimationFrame(camCompRAF); camCompRAF=0; camCompCtx=null; camComp=null;
+function camCompStop(){ cancelAnimationFrame(camCompRAF); camCompRAF=0; camCompCtx=null; camComp=null; camCompFx=null;
   if(camCompStream){ try{ camCompStream.getTracks().forEach(t=>t.stop()); }catch(e){} camCompStream=null; } }
 /* Quelle für die Dokumentenkamera-Objekte: mit Look das gerechnete Bild, sonst direkt die Kamera */
 function camLiveQuelle(){
