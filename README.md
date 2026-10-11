@@ -1360,7 +1360,9 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   **„🔎 Dokumentenkamera"** legt das **Livebild** als Objekt auf die Tafel – ideal, um ein Heft
   unter der Kamera gemeinsam zu korrigieren. Das Kamerafenster schließt sich dabei, das Bild bleibt
   sichtbar und lässt sich wie jedes Objekt **verschieben und über die Eckgriffe vergrößern**;
-  **− / +** unten rechts im Bild zoomen stufenweise (1,0× bis 8,0×, Anzeige daneben), das kleine
+  **− / +** unten rechts im Bild zoomen stufenweise (1,0× bis 8,0×, Anzeige daneben), **💡** unten
+  links schaltet die **Kamera-Leuchte** ein, um das Blatt auszuleuchten (nur wo der Browser das
+  erlaubt – das iPad gibt die Leuchte bisher nicht frei und sagt das dann auch), das kleine
   rote **×** oben rechts schließt es wieder (danach wird die Kamera abgeschaltet, sofern kein
   weiteres Livebild läuft). Mehrere Livebilder gleichzeitig sind möglich; gespeichert werden sie
   nicht – beim Laden eines Projekts ist das Livebild weg.
@@ -1383,7 +1385,9 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     schief stehende iPad muss also nicht jede Stunde neu eingestellt werden. Gerechnet wird in
     **WebGL** (eine Projektivabbildung je Bildpunkt auf der Grafikeinheit) – der Pixel-für-Pixel-Weg des
     Scanners wäre für 30 Bilder in der Sekunde viel zu langsam. Das Livebild bekommt dabei das
-    **Seitenverhältnis des geradegezogenen Blattes**. Gilt **nur für die Dokumentenkamera**: Foto,
+    **Seitenverhältnis des geradegezogenen Blattes** – und zwar **fortlaufend**: Ändert man die Ecken
+    nachträglich oder schaltet das Entzerren um, passt sich der Rahmen des Livebildes sofort mit an,
+    sodass nie etwas gestaucht oder abgeschnitten wirkt. Gilt **nur für die Dokumentenkamera**: Foto,
     Videoclip und Vorschau bleiben unverzerrt.
   **„📄 Scannen"** (in derselben Reihe) fotografiert ein Blatt und öffnet den **Scan-Editor**: Die Tafel sucht die
   Blattecken selbst (hellste zusammenhängende Fläche), die vier Griffe lassen sich nachziehen, dann wird

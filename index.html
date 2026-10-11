@@ -367,6 +367,7 @@
     box-shadow:0 1px 4px rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;}
   .liveWrap .lvX{right:6px;top:6px;color:#b91c1c;}
   .liveWrap .lvZ1{right:6px;bottom:6px;} .liveWrap .lvZ2{right:42px;bottom:6px;}
+  .liveWrap .lvL{left:6px;bottom:6px;} .liveWrap .lvL.an{background:#fbbf24;}
   .liveWrap .lvZv{position:absolute;right:78px;bottom:6px;pointer-events:none;background:rgba(255,255,255,.88);
     border-radius:8px;padding:3px 8px;font:700 13px -apple-system,sans-serif;color:#1f2430;}
   #camWrap video{width:100%;height:100%;object-fit:cover;display:block;transform-origin:center center;}
@@ -3395,6 +3396,8 @@ function syncEmbeds(){ const p=page(), wanted=new Set();
         mk('lvX','×',()=>closeLive(o));
         mk('lvZ1','+',()=>setLiveZoom(o,(o.zoom||1)+0.5));
         mk('lvZ2','−',()=>setLiveZoom(o,(o.zoom||1)-0.5));
+        const bl=mk('lvL','💡',()=>torchSchalten());                 // Blatt ausleuchten
+        bl.classList.toggle('an',camTorch); bl.title=camTorch?'Licht aus':'Blatt mit dem Kameralicht ausleuchten';
         const zv=document.createElement('div'); zv.className='lvZv'; fr.appendChild(zv);
         fr._video=v; fr._zv=zv;
       }
@@ -5432,6 +5435,27 @@ async function startLiveCam(){
   toast('Livebild auf der Tafel – Zoom mit + / −, Größe über die Eckgriffe, × schließt es');
 }
 function setLiveZoom(o,z){ o.zoom=Math.max(1,Math.min(8,Math.round(z*10)/10)); markDirty(); }
+/* Seitenverhältnis des Livebildes: beim Entzerren das des geradegezogenen Blattes, sonst das der Kamera */
+function liveAr(){ if(camEntz.an&&warpCv&&warpCv.width) return warpCv.height/warpCv.width;
+  const v=$('camVideo'); return (v.videoWidth&&v.videoHeight)?(v.videoHeight/v.videoWidth):0.75; }
+/* Den Rahmen auf dieses Verhältnis bringen – sonst schneidet das Bild oben und unten ab
+   oder wirkt gequetscht, sobald die Ecken nachträglich verändert werden. */
+function liveArSync(){ const ar=liveAr(); if(!(ar>0.05&&ar<20)) return; let ge=false;
+  liveObjs().forEach(o=>{ const soll=o.w*ar;
+    if(Math.abs(soll-o.h)>Math.max(1,o.h*0.01)){ const h0=o.h; o.h=soll; o.y+=(h0-o.h)/2; ge=true; } });
+  if(ge){ markDirty(); scheduleAutosave(); } }
+
+/* ---- Licht der Kamera (Taschenlampe) ---- */
+let camTorch=false;
+function torchTrack(){ try{ return camStream&&camStream.getVideoTracks?camStream.getVideoTracks()[0]:null; }catch(e){ return null; } }
+function torchGeht(){ const t=torchTrack();
+  try{ return !!(t&&t.getCapabilities&&t.getCapabilities().torch); }catch(e){ return false; } }
+async function torchSchalten(){ const t=torchTrack();
+  if(!t){ toast('Erst Kamera starten'); return; }
+  if(!torchGeht()){ toast('Dieses Gerät gibt die Kamera-Leuchte im Browser nicht frei'); return; }
+  try{ await t.applyConstraints({advanced:[{torch:!camTorch}]}); camTorch=!camTorch;
+    refreshEmbedUI(); toast(camTorch?'Licht an':'Licht aus'); }
+  catch(e){ toast('Das Licht ließ sich nicht schalten'); } }
 function closeLive(o){ pushUndo(); page().objects=page().objects.filter(x=>x!==o);
   selection=selection.filter(x=>x!==o); refreshProps(); refreshEmbedUI(); markDirty();
   if(!liveObjs().length&&!$('win-cam').classList.contains('show')) camStop();
@@ -5491,7 +5515,7 @@ function warpGroesseSetzen(){ if(!warpCv) return;
   if(camEntz.ar>0) h=w*camEntz.ar;                 // aus den Karos bekanntes Seitenverhältnis
   const k=Math.min(1,1280/Math.max(40,w,h));
   w=Math.max(40,Math.round(w*k)); h=Math.max(40,Math.round(h*k));
-  if(warpCv.width!==w||warpCv.height!==h){ warpCv.width=w; warpCv.height=h; warpGl.viewport(0,0,w,h); } }
+  if(warpCv.width!==w||warpCv.height!==h){ warpCv.width=w; warpCv.height=h; warpGl.viewport(0,0,w,h); liveArSync(); } }
 function warpMatrix(){ const q=camEntz.q, A=[], b=[];              // Ausgabe (0..1) → Quelle (0..1)
   [[0,0,q[0]],[1,0,q[1]],[1,1,q[2]],[0,1,q[3]]].forEach(([x,y,P])=>{
     A.push([x,y,1,0,0,0,-x*P.x,-y*P.x]); b.push(P.x);
@@ -5535,7 +5559,7 @@ $('camEntzBtn').onclick=e=>{ e.stopPropagation();
   camEntz.an=!camEntz.an; entzUI(); saveUI();
   if(camEntz.an){ if(camStream) warpStart(); toast('Entzerren an – die vier Punkte auf die Blattecken ziehen'); }
   else { warpStop(); toast('Entzerren aus'); }
-  liveNeuVerdrahten(); };
+  liveNeuVerdrahten(); liveArSync(); };
 
 /* ---- „Karo erkennen": Entzerrung aus den Linien eines karierten Blattes ----
    Zwei Scharen paralleler Karolinien laufen in der Schrägansicht auf je einen Fluchtpunkt zu.
