@@ -1562,7 +1562,7 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   **Messwert-Analyse**, weil beide zur Auswertung eines Versuchs gehören.
 - **Mathe und Physik Geschichte** (Mathe & Physik, `geschichte.html`): **Zeitleiste der Mathematik,
   Physik und Astronomie** mit ihren Wechselwirkungen – dazu Chroniken und eine Karte. Letzter Knopf der
-  Gruppe, Symbol: **Sanduhr** (Timer und Stoppuhr sind runde Uhren, die Sanduhr ist also eindeutig).
+  Symbol: **Sanduhr** (Timer und Stoppuhr sind runde Uhren, die Sanduhr ist also eindeutig).
 - **Motion-Tracker** (Mathe & Physik, `motiontracker.html`): misst **Bewegung und Abstand von
   Personen per Kamera-KI** – ohne zusätzlichen Sensor. Drei Reiter: **① Aufzeichnung** (Bewegung
   aufnehmen und einblenden), **② Bewegungsziel** und **③ Battle** (zwei Spieler gegeneinander).
@@ -1650,9 +1650,9 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
    **Formel umstellen**) · Funktionsplotter — **2.** Ableitungen · Einheitskreis · Strahlensätze ·
    Figuren & Körper · 3D-Koordinatensystem — **3.** GeoGebra-App · CODAP · Diagramm · Zufall ·
    Vierfeldertafel — **4.** Baumdiagramm · Wahrscheinlichkeitsrechner · **Tabellenkalkulation** ·
-   Motion-Tracker · Einheitenumrechner — **5.** Stromkreis · Optiklabor · Wellenwanne ·
+   Motion-Tracker · **Mathe und Physik Geschichte** — **5.** Stromkreis · Optiklabor · Wellenwanne ·
    Periodensystem · Nuklidkarte — **6.** **Video-Physik** · **Audio-Physik** · Messwert-Analyse ·
-   **Versuchsprotokoll** · **Mathe und Physik Geschichte**.
+   **Versuchsprotokoll** · Einheitenumrechner.
    Die Aufklappmenüs legen sich **nie über die Werkzeugleiste**: Sie öffnen neben ihr, bleiben unter
    der oberen Leiste und nehmen bei schmalem Fenster **weniger Spalten** (bei wenig Höhe lassen sie
    sich scrollen) – so ist jeder Knopf erreichbar, auch im geteilten Bildschirm.
