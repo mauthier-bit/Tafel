@@ -739,9 +739,9 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     Rückmeldungen: **grün** (genau richtig), **orange** (liegt in einer umschließenden Menge – stimmt,
     geht aber genauer) und **rot** (falsch); die Meldung zählt beides getrennt. In der Bibliothek
     stecken dazu zwei fertige Aufgaben: **„Zahlbereiche (ineinander liegende Mengen)"** mit
-    ℕ ⊂ ℤ ⊂ ℚ ⊂ ℝ – −7 gehört damit sichtbar auch zu ℚ und ℝ – und **„Brüche (Stamm- und
-    Scheinbrüche als Teilmengen)"** mit Stammbrüchen in den echten und Scheinbrüchen in den
-    unechten Brüchen.
+    ℕ ⊂ ℤ ⊂ ℚ ⊂ ℝ – −7 gehört damit sichtbar auch zu ℚ und ℝ; sie steht unter **Jgst. 9**, weil die
+    reellen Zahlen erst mit den Wurzeln dazukommen – und **„Brüche (Stamm- und Scheinbrüche als
+    Teilmengen)"** (Jgst. 6) mit Stammbrüchen in den echten und Scheinbrüchen in den unechten Brüchen.
   - **Bilder aus der Bibliothek** (Schaltzeichen, Figuren, Tortenbilder, Diagramme, Graphen) werden
     mit ihrer eigenen Größe eingesetzt und passen sich dem Rahmen an – auf der Karte höchstens
     70 px hoch, in der Paarkarte 96 px, im Kopf eines Gruppenfelds 110 px.
