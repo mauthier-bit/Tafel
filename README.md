@@ -1555,9 +1555,14 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   einem Video – Punkte Bild für Bild verfolgen und daraus Weg, Geschwindigkeit und Beschleunigung
   gewinnen. Braucht die Kamera bzw. eine Videodatei. Symbol: Videobild mit einer Punktbahn.
 - **Audio-Physik** (Mathe & Physik, `singmyfunction.html`): **Töne aufnehmen und analysieren** –
-  Frequenz, Obertöne und Klangspektrum, dazu Synthese. Braucht das Mikrofon. Symbol: Mikrofon mit Wellen.
+  Frequenz, Obertöne und Klangspektrum, dazu Synthese. Braucht das Mikrofon. Symbol: Mikrofon mit einer
+  **Sinuswelle darunter**.
 - **Versuchsprotokoll** (Mathe & Physik, `versuchsprotokoll.html`): **Messreihen eintragen, auswerten
-  und als Protokoll ausgeben** (mit Diagrammen). Symbol: Klemmbrett mit Kurve.
+  und als Protokoll ausgeben** (mit Diagrammen). Symbol: Klemmbrett mit Kurve. Davor steht die
+  **Messwert-Analyse**, weil beide zur Auswertung eines Versuchs gehören.
+- **Mathe und Physik Geschichte** (Mathe & Physik, `geschichte.html`): **Zeitleiste der Mathematik,
+  Physik und Astronomie** mit ihren Wechselwirkungen – dazu Chroniken und eine Karte. Letzter Knopf der
+  Gruppe, Symbol: **Sanduhr** (Timer und Stoppuhr sind runde Uhren, die Sanduhr ist also eindeutig).
 - **Motion-Tracker** (Mathe & Physik, `motiontracker.html`): misst **Bewegung und Abstand von
   Personen per Kamera-KI** – ohne zusätzlichen Sensor. Drei Reiter: **① Aufzeichnung** (Bewegung
   aufnehmen und einblenden), **② Bewegungsziel** und **③ Battle** (zwei Spieler gegeneinander).
@@ -1640,14 +1645,14 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
    **und** Kreis, Gerade, Zirkel, Zahlenstrahl, Koordinatensystem (alle Knöpfe gleich groß);
    ein **Zeit**-Button (Uhr, Stoppuhr, Timer);
    ein **Klasse & Interaktion**-Button (Sozialform, Gruppen bilden, Umfrage, Zufälliger Name, Punktestand)
-   und ein **Mathe & Physik**-Button mit 29 Werkzeugen, vom Rechnen zur Physik geordnet:
+   und ein **Mathe & Physik**-Button mit 30 Werkzeugen in **sechs Reihen**, vom Rechnen zur Physik geordnet:
    **1.** Stellenwerttafel · Bruch · Term-Umformer · Gleichungslöser (mit Waage, Umkehraufgabe und
    **Formel umstellen**) · Funktionsplotter — **2.** Ableitungen · Einheitskreis · Strahlensätze ·
    Figuren & Körper · 3D-Koordinatensystem — **3.** GeoGebra-App · CODAP · Diagramm · Zufall ·
    Vierfeldertafel — **4.** Baumdiagramm · Wahrscheinlichkeitsrechner · **Tabellenkalkulation** ·
-   Motion-Tracker · Messwert-Analyse — **5.** Einheitenumrechner · Stromkreis · Optiklabor ·
-   Wellenwanne · Periodensystem — **6.** Nuklidkarte · **Video-Physik** · **Audio-Physik** ·
-   **Versuchsprotokoll**.
+   Motion-Tracker · Einheitenumrechner — **5.** Stromkreis · Optiklabor · Wellenwanne ·
+   Periodensystem · Nuklidkarte — **6.** **Video-Physik** · **Audio-Physik** · Messwert-Analyse ·
+   **Versuchsprotokoll** · **Mathe und Physik Geschichte**.
    Die Aufklappmenüs legen sich **nie über die Werkzeugleiste**: Sie öffnen neben ihr, bleiben unter
    der oberen Leiste und nehmen bei schmalem Fenster **weniger Spalten** (bei wenig Höhe lassen sie
    sich scrollen) – so ist jeder Knopf erreichbar, auch im geteilten Bildschirm.
