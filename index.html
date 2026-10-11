@@ -1106,7 +1106,7 @@
     <div class="row fill" style="margin-top:6px"><button class="btn pri" id="camStart">Kamera starten</button><button class="btn" id="camSwitch">Kamera wechseln</button></div>
     <div class="row fill" style="margin-top:6px"><button class="btn" id="camSnap">📷 Foto auf Tafel</button><button class="btn" id="camClip"><span id="camClipTxt">● Video auf Tafel</span><span class="inbtn" id="camSound" role="button" tabindex="0" title="Ton mitaufnehmen – ein- und ausschalten">mit Ton</span></button></div>
     <div class="row fill" style="margin-top:6px"><button class="btn" id="camScan">📄 Scannen</button><button class="btn" id="camLive"><span>🔎 Dokumentenkamera</span><span class="inbtn" id="camEntzBtn" role="button" tabindex="0" title="Schräge Ansicht geradeziehen: die vier Punkte im Bild auf die Ecken des Blattes schieben">entzerren</span></button></div>
-    <div class="row fill" id="camEntzBar" hidden style="margin-top:8px"><button class="btn" id="camEntzAuto">Ecken automatisch</button><button class="btn" id="camEntzReset">Ecken zurücksetzen</button></div>
+    <div class="row fill" id="camEntzBar" hidden style="margin-top:8px"><button class="btn" id="camEntzKaro" title="Aus den Linien eines Karoblatts berechnen – dafür müssen keine Blattecken zu sehen sein">Karo erkennen</button><button class="btn" id="camEntzAuto" title="Blattecken im Bild suchen (wie beim Scannen)">Ecken automatisch</button><button class="btn" id="camEntzReset">Ecken zurücksetzen</button></div>
     <div class="hint" id="camEntzHint" hidden style="margin:4px 0 0">Die vier Punkte auf die Ecken des Blattes ziehen – das Livebild auf der Tafel wird dann geradegezogen.</div>
     <button class="btn" id="camLookHead" style="width:100%;text-align:left;margin-top:2px">🎨 Look: Ohne <span style="float:right">▾</span></button>
     <div id="camLookBox" hidden>
@@ -3769,7 +3769,7 @@ function restoreUI(){ try{ const u=JSON.parse(localStorage.getItem('tafel_ui')||
   if(+u.pxcm>0&&Math.abs(+u.pxcm-37.8)>0.2) PXCM=Math.max(28,Math.min(64,+u.pxcm));   // alter Standard 37,8 → neuer, am iPad gemessener Wert
   if(Array.isArray(u.pal)&&u.pal.length===palette.length&&u.pal.every(c=>/^#[0-9a-f]{6}$/i.test(c))) palette=u.pal.slice();
   if(u.rec){ shapeRecog=true; $('shapeRecogSw').classList.add('on'); }
-  if(u.cols&&typeof u.cols==='object')Object.assign(toolColors,u.cols); if(u.wv===2){ if(+u.pw>0)penWidth=+u.pw; if(+u.mw>0)markerWidth=+u.mw; } if(+u.ew>0)eraserWidth=+u.ew; if(+u.sa>=0&&+u.sa<=1)shapeAlpha=+u.sa; propHint=!!u.ppH; if(u.ent&&Array.isArray(u.ent.q)&&u.ent.q.length===4) camEntz={an:!!u.ent.an,q:u.ent.q.map(p=>({x:+p.x||0,y:+p.y||0}))}; if(u.pp&&isFinite(u.pp.l)&&isFinite(u.pp.t)) propPosSetzen({l:+u.pp.l,t:+u.pp.t}); streckZeigen=!!u.sz;   // ältere Stärken (4 Stufen) verwerfen
+  if(u.cols&&typeof u.cols==='object')Object.assign(toolColors,u.cols); if(u.wv===2){ if(+u.pw>0)penWidth=+u.pw; if(+u.mw>0)markerWidth=+u.mw; } if(+u.ew>0)eraserWidth=+u.ew; if(+u.sa>=0&&+u.sa<=1)shapeAlpha=+u.sa; propHint=!!u.ppH; if(u.ent&&Array.isArray(u.ent.q)&&u.ent.q.length===4) camEntz={an:!!u.ent.an,ar:+u.ent.ar||0,q:u.ent.q.map(p=>({x:+p.x||0,y:+p.y||0}))}; if(u.pp&&isFinite(u.pp.l)&&isFinite(u.pp.t)) propPosSetzen({l:+u.pp.l,t:+u.pp.t}); streckZeigen=!!u.sz;   // ältere Stärken (4 Stufen) verwerfen
   if(u.spf==='rect'||u.spf==='ellipse') spotForm=u.spf; if(+u.lms>=100&&+u.lms<=3000) laserMs=+u.lms;
   if(u.rul)Object.assign(ruler,{len:+u.rul.len||ruler.len,color:u.rul.color||ruler.color,mm:u.rul.mm!==false,nums:u.rul.nums!==false,pct:!!u.rul.pct,fs:+u.rul.fs||11});
   if(u.geo)Object.assign(geo,{size:+u.geo.size||geo.size,color:u.geo.color||geo.color,mm:u.geo.mm!==false,nums:u.geo.nums!==false,fs:+u.geo.fs||11});
@@ -5446,7 +5446,7 @@ $('win-cam').querySelector('.x').addEventListener('click',()=>{ if(!liveObjs().l
    Die vier Ecken stehen in Bildkoordinaten 0..1 des vollen Kamerabildes. Gerechnet wird
    in WebGL: eine Projektivabbildung je Bildpunkt – der Pixel-für-Pixel-Weg des Scanners
    wäre für 30 Bilder in der Sekunde um Größenordnungen zu langsam. */
-let camEntz={an:false, q:[{x:.10,y:.10},{x:.90,y:.10},{x:.90,y:.90},{x:.10,y:.90}]};
+let camEntz={an:false, ar:0, q:[{x:.10,y:.10},{x:.90,y:.10},{x:.90,y:.90},{x:.10,y:.90}]};
 const ENTZ_STD=()=>[{x:.10,y:.10},{x:.90,y:.10},{x:.90,y:.90},{x:.10,y:.90}];
 /* Bildpunkt (0..1 im vollen Kamerabild) → Prozentlage in der Vorschau (object-fit:cover + Zoom) */
 function entzNachSchirm(p){ const wrap=$('camWrap'), v=$('camVideo');
@@ -5474,6 +5474,7 @@ window.addEventListener('pointermove',e=>{ if(!entzDrag)return;
   camEntz.q[entzDrag.i]=entzVonSchirm(e.clientX-r.left, e.clientY-r.top);
   entzUI(); e.preventDefault(); },{passive:false});
 function entzDragEnde(){ if(!entzDrag)return; entzDrag.el.classList.remove('zieht'); entzDrag=null;
+  camEntz.ar=0;                                    // von Hand gesetzte Ecken bestimmen ihr Verhältnis selbst
   saveUI(); warpGroesseSetzen(); }
 window.addEventListener('pointerup',entzDragEnde); window.addEventListener('pointercancel',entzDragEnde);
 
@@ -5487,6 +5488,7 @@ const FS='precision mediump float;varying vec2 v;uniform sampler2D t;uniform mat
 function warpGroesseSetzen(){ if(!warpCv) return;
   const v=$('camVideo'), q=camEntz.q, d=(a,b)=>Math.hypot((a.x-b.x)*(v.videoWidth||4),(a.y-b.y)*(v.videoHeight||3));
   let w=(d(q[0],q[1])+d(q[3],q[2]))/2, h=(d(q[0],q[3])+d(q[1],q[2]))/2;
+  if(camEntz.ar>0) h=w*camEntz.ar;                 // aus den Karos bekanntes Seitenverhältnis
   const k=Math.min(1,1280/Math.max(40,w,h));
   w=Math.max(40,Math.round(w*k)); h=Math.max(40,Math.round(h*k));
   if(warpCv.width!==w||warpCv.height!==h){ warpCv.width=w; warpCv.height=h; warpGl.viewport(0,0,w,h); } }
@@ -5534,13 +5536,169 @@ $('camEntzBtn').onclick=e=>{ e.stopPropagation();
   if(camEntz.an){ if(camStream) warpStart(); toast('Entzerren an – die vier Punkte auf die Blattecken ziehen'); }
   else { warpStop(); toast('Entzerren aus'); }
   liveNeuVerdrahten(); };
+
+/* ---- „Karo erkennen": Entzerrung aus den Linien eines karierten Blattes ----
+   Zwei Scharen paralleler Karolinien laufen in der Schrägansicht auf je einen Fluchtpunkt zu.
+   Aus beiden Fluchtpunkten ergibt sich die Lage der Blattebene – ganz ohne sichtbare Blattecken.
+   Anschließend wird daraus dasselbe Viereck gemacht, das sonst von Hand gezogen wird. */
+function jacobi3(M){                                   // Eigenvektoren einer symmetrischen 3×3-Matrix
+  const a=[M[0].slice(),M[1].slice(),M[2].slice()];
+  let V=[[1,0,0],[0,1,0],[0,0,1]];
+  for(let s2=0;s2<24;s2++){
+    let p=0,q=1,gr=Math.abs(a[0][1]);
+    if(Math.abs(a[0][2])>gr){p=0;q=2;gr=Math.abs(a[0][2]);}
+    if(Math.abs(a[1][2])>gr){p=1;q=2;gr=Math.abs(a[1][2]);}
+    if(gr<1e-14) break;
+    const th=(a[q][q]-a[p][p])/(2*a[p][q]);
+    const t=Math.sign(th||1)/(Math.abs(th)+Math.sqrt(th*th+1));
+    const c=1/Math.sqrt(t*t+1), s3=t*c;
+    for(let k=0;k<3;k++){ const akp=a[k][p], akq=a[k][q];
+      a[k][p]=c*akp-s3*akq; a[k][q]=s3*akp+c*akq; }
+    for(let k=0;k<3;k++){ const apk=a[p][k], aqk=a[q][k];
+      a[p][k]=c*apk-s3*aqk; a[q][k]=s3*apk+c*aqk; }
+    for(let k=0;k<3;k++){ const vkp=V[k][p], vkq=V[k][q];
+      V[k][p]=c*vkp-s3*vkq; V[k][q]=s3*vkp+c*vkq; }
+  }
+  return {w:[a[0][0],a[1][1],a[2][2]], V};
+}
+const m3mul=(A,B)=>A.map((r,i)=>[0,1,2].map(j=>A[i][0]*B[0][j]+A[i][1]*B[1][j]+A[i][2]*B[2][j]));
+const m3app=(A,p)=>{ const x=A[0][0]*p[0]+A[0][1]*p[1]+A[0][2]*p[2], y=A[1][0]*p[0]+A[1][1]*p[1]+A[1][2]*p[2],
+  w=A[2][0]*p[0]+A[2][1]*p[1]+A[2][2]*p[2]; return [x,y,w]; };
+function m3inv(A){ const [a,b,c]=A[0],[d,e,f]=A[1],[g,h,i]=A[2];
+  const det=a*(e*i-f*h)-b*(d*i-f*g)+c*(d*h-e*g); if(!isFinite(det)||Math.abs(det)<1e-12) return null;
+  return [[(e*i-f*h)/det,(c*h-b*i)/det,(b*f-c*e)/det],
+          [(f*g-d*i)/det,(a*i-c*g)/det,(c*d-a*f)/det],
+          [(d*h-e*g)/det,(b*g-a*h)/det,(a*e-b*d)/det]]; }
+function karoQuad(){
+  const v=$('camVideo'); if(!v.videoWidth) return null;
+  const W=400, H=Math.max(40,Math.round(v.videoHeight*W/v.videoWidth));
+  const cv=document.createElement('canvas'); cv.width=W; cv.height=H;
+  const g=cv.getContext('2d',{willReadFrequently:true}); g.drawImage(v,0,0,W,H);
+  let d; try{ d=g.getImageData(0,0,W,H).data; }catch(e){ return null; }
+  const grau=new Float32Array(W*H);
+  for(let i=0;i<W*H;i++) grau[i]=d[i*4]*0.299+d[i*4+1]*0.587+d[i*4+2]*0.114;
+  /* Sobel: Kantenpunkte mit Richtung sammeln */
+  const pts=[]; const hist=new Float64Array(180);
+  for(let y=1;y<H-1;y++) for(let x=1;x<W-1;x++){
+    const o=y*W+x;
+    const gx=-grau[o-W-1]-2*grau[o-1]-grau[o+W-1]+grau[o-W+1]+2*grau[o+1]+grau[o+W+1];
+    const gy=-grau[o-W-1]-2*grau[o-W]-grau[o-W+1]+grau[o+W-1]+2*grau[o+W]+grau[o+W+1];
+    const m=Math.hypot(gx,gy); if(m<42) continue;
+    let a=Math.atan2(gx,-gy)*180/Math.PI;              // Richtung der Linie (senkrecht zum Gradienten)
+    a=((a%180)+180)%180;
+    pts.push(x,y,a,m); hist[Math.round(a)%180]+=m;
+  }
+  if(pts.length<4*400) return null;                    // zu wenig Struktur im Bild
+  const gl=new Float64Array(180);                      // Histogramm ringförmig glätten
+  for(let i=0;i<180;i++){ let s2=0; for(let k=-4;k<=4;k++) s2+=hist[(i+k+180)%180]*(5-Math.abs(k)); gl[i]=s2; }
+  let p1=0; for(let i=1;i<180;i++) if(gl[i]>gl[p1]) p1=i;
+  let p2=-1;                                           // zweiter Gipfel, mindestens 40° entfernt
+  for(let i=0;i<180;i++){ const dd=Math.min(Math.abs(i-p1),180-Math.abs(i-p1)); if(dd<40) continue;
+    if(p2<0||gl[i]>gl[p2]) p2=i; }
+  if(p2<0||gl[p2]<gl[p1]*0.12) return null;            // nur eine Linienschar (z. B. liniertes Papier)
+  const s=W/2, cx=W/2, cy=H/2;                         // zentrierte, skalierte Koordinaten
+  const flucht=peak=>{ const M=[[0,0,0],[0,0,0],[0,0,0]]; let n=0;
+    for(let i=0;i<pts.length;i+=4){ const a=pts[i+2];
+      let dd=Math.abs(a-peak); dd=Math.min(dd,180-dd); if(dd>32) continue;
+      const r=a*Math.PI/180, dx=Math.cos(r), dy=Math.sin(r);
+      const X=(pts[i]-cx)/s, Y=(pts[i+1]-cy)/s, w=pts[i+3];
+      const l=[-dy,dx,X*dy-Y*dx];                      // Gerade durch den Punkt in Linienrichtung
+      for(let r2=0;r2<3;r2++) for(let c2=0;c2<3;c2++) M[r2][c2]+=w*l[r2]*l[c2];
+      n+=w; }
+    if(n<2000) return null;
+    const {w,V}=jacobi3(M); let k=0; for(let i=1;i<3;i++) if(w[i]<w[k]) k=i;
+    return [V[0][k],V[1][k],V[2][k]]; };
+  const v1=flucht(p1), v2=flucht(p2); if(!v1||!v2) return null;
+  const hor=[v1[1]*v2[2]-v1[2]*v2[1], v1[2]*v2[0]-v1[0]*v2[2], v1[0]*v2[1]-v1[1]*v2[0]];
+  if(!isFinite(hor[0])||Math.abs(hor[2])<1e-9) return null;
+  const Hp=[[1,0,0],[0,1,0],[hor[0]/hor[2],hor[1]/hor[2],1]];      // Horizont ins Unendliche
+  const ri=p=>{ const q=m3app(Hp,p); const n=Math.hypot(q[0],q[1])||1; return [q[0]/n,q[1]/n]; };
+  let d1=ri(v1), d2=ri(v2), p1x=p1, p2x=p2;
+  if(Math.abs(d1[0])<Math.abs(d2[0])){ const t=d1; d1=d2; d2=t; const tp=p1x; p1x=p2x; p2x=tp; }   // die waagrechtere Schar wird zur x-Achse
+  if(d1[0]<0) d1=[-d1[0],-d1[1]];
+  if(d2[1]<0) d2=[-d2[0],-d2[1]];
+  const det=d1[0]*d2[1]-d1[1]*d2[0]; if(Math.abs(det)<0.08) return null;   // beide Scharen fast gleich gerichtet
+  const B=[[ d2[1]/det,-d2[0]/det,0],[-d1[1]/det, d1[0]/det,0],[0,0,1]];
+  let Hges=m3mul(B,Hp);
+  /* Jetzt stehen die beiden Scharen senkrecht aufeinander, sind aber noch ungleich gestaucht:
+     Eine Streckung längs einer Achse lässt die Richtungen unberührt. Deshalb den Abstand der
+     Linien in beiden Scharen messen – bei Karos muss er gleich sein. */
+  const rechne=(peak,achse)=>{ const vals=[];
+    for(let i=0;i<pts.length;i+=4){ const a=pts[i+2]; let dd=Math.abs(a-peak); dd=Math.min(dd,180-dd); if(dd>32) continue;
+      const X=(pts[i]-cx)/s, Y=(pts[i+1]-cy)/s, q2=m3app(Hges,[X,Y,1]); if(!q2[2]) continue;
+      vals.push(achse? q2[1]/q2[2] : q2[0]/q2[2]); }
+    if(vals.length<300) return 0;
+    const pr=vals.length>4000?Math.ceil(vals.length/4000):1, v2=vals.filter((_,i)=>i%pr===0);
+    const lo=Math.min(...v2), hi=Math.max(...v2), spanne=hi-lo; if(!(spanne>0)) return 0;
+    const guete=per=>{ let cr=0,ci=0;
+      for(const y of v2){ const al=2*Math.PI*y/per; cr+=Math.cos(al); ci+=Math.sin(al); }
+      return Math.hypot(cr,ci)/v2.length; };
+    let best=0, bp=0;
+    for(let per=spanne/60; per<=spanne/3; per*=1.015){ const m=guete(per); if(m>best){ best=m; bp=per; } }
+    if(!bp) return 0;
+    for(let per=bp*0.985; per<=bp*1.015; per+=bp*0.0015){ const m=guete(per); if(m>best){ best=m; bp=per; } }  // fein nachsuchen
+    return best>0.22?bp:0; };
+  const perY=rechne(p1x,1), perX=rechne(p2x,0);
+  let arBekannt=true;
+  if(perX>0&&perY>0){ const k=perY/perX;
+    if(k>0.2&&k<5) Hges=m3mul([[k,0,0],[0,1,0],[0,0,1]],Hges); else arBekannt=false; }
+  else arBekannt=false;
+  const Hinv=m3inv(Hges); if(!Hinv) return null;
+  /* Bildviereck entzerrt betrachten und ein möglichst großes achsenparalleles Rechteck hineinlegen */
+  const ecken=[[-1,-(H/W)*1],[1,-(H/W)*1],[1,(H/W)*1],[-1,(H/W)*1]].map(([X,Y])=>{
+    const q=m3app(Hges,[X,Y,1]); return [q[0]/q[2], q[1]/q[2]]; });
+  if(ecken.some(p=>!isFinite(p[0])||!isFinite(p[1]))) return null;
+  const mx=ecken.reduce((a,p)=>a+p[0],0)/4, my=ecken.reduce((a,p)=>a+p[1],0)/4;
+  const innen=(px,py)=>{ let vz=0;
+    for(let i=0;i<4;i++){ const A=ecken[i], Bq=ecken[(i+1)%4];
+      const kr=(Bq[0]-A[0])*(py-A[1])-(Bq[1]-A[1])*(px-A[0]);
+      if(kr>0) vz++; else if(kr<0) vz--; }
+    return Math.abs(vz)===4; };
+  const x0=Math.min(...ecken.map(p=>p[0])), x1=Math.max(...ecken.map(p=>p[0]));
+  const y0=Math.min(...ecken.map(p=>p[1])), y1=Math.max(...ecken.map(p=>p[1]));
+  let lo=0, hi=1;
+  for(let i=0;i<22;i++){ const t=(lo+hi)/2;
+    const a=mx+(x0-mx)*t, b=mx+(x1-mx)*t, c=my+(y0-my)*t, e=my+(y1-my)*t;
+    if(innen(a,c)&&innen(b,c)&&innen(b,e)&&innen(a,e)) lo=t; else hi=t; }
+  if(lo<0.12) return null;
+  let a=mx+(x0-mx)*lo, b=mx+(x1-mx)*lo, c=my+(y0-my)*lo, e=my+(y1-my)*lo;
+  /* Noch auf das helle Papier zusammenziehen – sonst bliebe viel Tischplatte im Bild. */
+  (function(){ let hell=0;
+    for(let i=0;i<W*H;i++) if(grau[i]>hell) hell=grau[i];
+    const grenze=hell*0.62, M=52; let bx0=1e9,bx1=-1e9,by0=1e9,by1=-1e9,n=0;
+    for(let i=0;i<=M;i++) for(let j=0;j<=M;j++){
+      const px2=a+(b-a)*i/M, py2=c+(e-c)*j/M;
+      const q2=m3app(Hinv,[px2,py2,1]); if(!q2[2]) continue;
+      const X=q2[0]/q2[2]*s+cx, Y=q2[1]/q2[2]*s+cy;
+      if(X<1||Y<1||X>W-2||Y>H-2) continue;
+      if(grau[(Y|0)*W+(X|0)]<grenze) continue;
+      n++; if(px2<bx0)bx0=px2; if(px2>bx1)bx1=px2; if(py2<by0)by0=py2; if(py2>by1)by1=py2; }
+    if(n<M*M*0.12) return;                                   // kaum helle Fläche gefunden: Ausschnitt lassen
+    const rx=(b-a)/M*0.8, ry=(e-c)/M*0.8;                    // eine Rasterbreite Luft
+    a=Math.max(a,bx0-rx); b=Math.min(b,bx1+rx); c=Math.max(c,by0-ry); e=Math.min(e,by1+ry); })();
+  if(!(b-a>0.05)||!(e-c>0.05)) return null;
+  const zurueck=(px,py)=>{ const q=m3app(Hinv,[px,py,1]); if(!q[2]) return null;
+    const X=q[0]/q[2], Y=q[1]/q[2];
+    return {x:(X*s+cx)/W, y:(Y*s+cy)/H}; };
+  const quad=[[a,c],[b,c],[b,e],[a,e]].map(([px,py])=>zurueck(px,py));
+  if(quad.some(q=>!q||!isFinite(q.x)||!isFinite(q.y)||q.x<-0.6||q.x>1.6||q.y<-0.6||q.y>1.6)) return null;
+  /* Weil die Karos quadratisch sind, ist das Seitenverhältnis des entzerrten Rechtecks bekannt –
+     ohne diese Angabe würde es aus den Kantenlängen im schrägen Bild geschätzt und die Karos
+     kämen als Rechtecke heraus. */
+  return {q:quad.map(q=>({x:Math.max(0,Math.min(1,q.x)), y:Math.max(0,Math.min(1,q.y))})), ar:arBekannt?(e-c)/(b-a):0};
+}
+$('camEntzKaro').onclick=()=>{ if(!$('camVideo').videoWidth){ toast('Erst Kamera starten'); return; }
+  const r=karoQuad();
+  if(!r){ toast('Keine Karolinien erkannt – Blatt formatfüllend und hell genug? Sonst Punkte von Hand ziehen'); return; }
+  camEntz.q=r.q; camEntz.ar=r.ar; entzUI(); saveUI(); warpGroesseSetzen();
+  toast('Aus den Karolinien berechnet – bei Bedarf nachziehen'); };
 $('camEntzAuto').onclick=()=>{ const v=$('camVideo'); if(!v.videoWidth){ toast('Erst Kamera starten'); return; }
   const t=document.createElement('canvas'); t.width=v.videoWidth; t.height=v.videoHeight;
   t.getContext('2d').drawImage(v,0,0);
   const q=scanDetect(t);                                     // dieselbe Eckenerkennung wie beim Scannen
-  if(q&&q.length===4){ camEntz.q=q.map(p=>({x:p.x/t.width, y:p.y/t.height})); entzUI(); saveUI(); warpGroesseSetzen(); toast('Ecken gesetzt – bei Bedarf nachziehen'); }
+  if(q&&q.length===4){ camEntz.q=q.map(p=>({x:p.x/t.width, y:p.y/t.height})); camEntz.ar=0; entzUI(); saveUI(); warpGroesseSetzen(); toast('Ecken gesetzt – bei Bedarf nachziehen'); }
   else toast('Keine Blattecken erkannt – Punkte von Hand setzen'); };
-$('camEntzReset').onclick=()=>{ camEntz.q=ENTZ_STD(); entzUI(); saveUI(); warpGroesseSetzen(); };
+$('camEntzReset').onclick=()=>{ camEntz.q=ENTZ_STD(); camEntz.ar=0; entzUI(); saveUI(); warpGroesseSetzen(); };
 
 /* ---- Dokumentenscanner: Kamerabild entzerren, aufhellen, als Seite/PDF ---- */
 let scanSrc=null, scanQuad=null, scanFilter='doc', scanPages=[];

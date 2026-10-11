@@ -1368,7 +1368,16 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     **„entzerren"**. Eingeschaltet erscheinen **vier Punkte** über dem Kamerabild; schiebt man sie auf
     die Ecken des Blattes, zeigt das Livebild auf der Tafel die Seite **gerade von oben** – auch wenn
     das iPad schief daneben steht. **„Ecken automatisch"** setzt die Punkte mit derselben Erkennung
-    wie beim Scannen, **„Ecken zurücksetzen"** stellt das Rechteck wieder her. Die Ecken werden
+    wie beim Scannen, **„Ecken zurücksetzen"** stellt das Rechteck wieder her.
+  - **„Karo erkennen":** Bei kariertem Papier geht es **ohne Blattecken**. Die beiden Scharen der
+    Karolinien laufen in der Schrägansicht auf je einen **Fluchtpunkt** zu; aus beiden ergibt sich die
+    Lage der Blattebene. Zusätzlich wird der **Abstand der Linien** in beiden Richtungen gemessen –
+    weil Karos quadratisch sind, kommt dabei auch das richtige Seitenverhältnis heraus, und zum Schluss
+    zieht sich der Ausschnitt auf die **helle Papierfläche** zusammen. Der große Vorteil: Es müssen
+    **keine Blattecken im Bild sein** – man kann mitten in ein Heft hineinzoomen. Gerechnet wird einmal
+    auf Knopfdruck (rund 50 ms); das Ergebnis landet in denselben vier Punkten und lässt sich danach
+    von Hand nachziehen. **Liniertes oder blankes Papier** reicht nicht (nur eine bzw. keine
+    Linienschar) – dann kommt die Meldung „Keine Karolinien erkannt" und man nimmt die Ecken. Die Ecken werden
     **einmal festgelegt** und dann für jedes Bild verwendet – es wird also nicht laufend nachgesucht,
     sonst würde das Bild bei jeder Handbewegung zittern. Sie bleiben **geräteweit gespeichert**, das
     schief stehende iPad muss also nicht jede Stunde neu eingestellt werden. Gerechnet wird in
