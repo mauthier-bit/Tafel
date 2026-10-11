@@ -1058,6 +1058,7 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   ändern, alle Inhalte und Einstellungen werden im Projekt gespeichert.
 - **GeoGebra-App** (Werkzeug): fügt ein vollständiges **GeoGebra-App-Fenster** ein (nicht nur eine
   .ggb-Datei) – wahlweise als bewegliches **Objekt** oder als **eigene Seite**. Braucht Internet.
+  Das Symbol ist eine **Ellipse mit fünf Punkten auf der Linie** – angelehnt an das GeoGebra-Zeichen.
 - **CODAP** (Werkzeug, Statistik): bettet das Statistik-Werkzeug **CODAP v3** (Concord Consortium,
   Open Source, codap3.concord.org) ein – Daten in **Tabellen** sammeln, per Ziehen in **Graphen**
   darstellen (Punkt-, Streu-, Säulen-, Boxplot …), Mittelwerte/Geraden einzeichnen, Beispieldaten
