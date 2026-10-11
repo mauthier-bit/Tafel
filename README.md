@@ -45,7 +45,9 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   stellt man daneben im Kontextmenü mit − / + ein. Neben dem Schalter **„Gefüllt"** steht im Kontextmenü ein
   **Regler „Transparenz"** (0–100 %, in 5er-Schritten): **0 % deckt ganz**, der Standard **80 %** entspricht der
   bisherigen zarten Füllung, **100 %** macht die Füllung unsichtbar. Der Regler wirkt sofort auf alle ausgewählten
-  Formen; zieht man ihn bei ausgeschalteter Füllung, wird „Gefüllt" automatisch eingeschaltet. Der zuletzt
+  Formen; zieht man ihn bei ausgeschalteter Füllung, wird „Gefüllt" automatisch eingeschaltet.
+  Beide Punkte erscheinen **nur bei Formen mit Innenfläche**. Bei **Linie, Pfeil, Gerade, Zirkelbogen
+  und Kreis (Mittelpunkt + Radius)** sowie bei den **Körpern** fehlen sie, weil sie dort nichts bewirken. Der zuletzt
   eingestellte Wert gilt geräteweit für neu gezeichnete Formen. Eine Zeile darüber steht die **Linienart**:
   **durchgezogen · gestrichelt · gepunktet** (drei Knöpfe mit einer Musterlinie darauf). Sie gilt für
   **ausgewählte Freihandstriche und ebene Formen** – Hilfslinien lassen sich so nachträglich stricheln.

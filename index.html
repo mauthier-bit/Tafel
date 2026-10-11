@@ -1476,6 +1476,14 @@ function textLines(o,c){ c=c||ctx; c.font=(o.italic?'italic ':'')+(o.bold?'bold 
    Bei den Körpern gibt es sie nicht – dort sind gestrichelte Linien schon die verdeckten Kanten. */
 const KOERPER=['cuboid','prism','pyramid','cylinder','cone'];
 const darfStrich=o=>!!o&&(o.type==='stroke'||(o.type==='shape'&&!KOERPER.includes(o.shape)));
+/* Formen mit Innenfläche – nur sie werden gefüllt gezeichnet. */
+const FUELLBAR=['rect','ellipse','circle','triangle','square','rtriangle','gtriangle','parallelogram','trapez','kite','kreis','rhombus','hexagon','polygon'];
+/* Was im Kontextmenü „Gefüllt“ und „Transparenz“ anbietet: dieselbe Liste ohne den
+   Konstruktionskreis (Mittelpunkt + Radius) – dort ist eine Füllung nicht gewollt.
+   Reine Linienformen (Linie, Pfeil, Gerade, Zirkelbogen) und die Körper (Quader, Prisma,
+   Pyramide, Zylinder, Kegel) stehen ohnehin nicht in der Liste: Bei ihnen bewirkt die
+   Einstellung nichts, deshalb hat sie im Menü nichts verloren. */
+const darfFuellen=o=>!!o&&o.type==='shape'&&o.shape!=='circle'&&FUELLBAR.includes(o.shape);
 function setzeStrich(c,o){ const a=darfStrich(o)?(o.dash|0):0, w=Math.max(.6,o.width||2);
   if(a===1) c.setLineDash([w*3.2,w*2.4]);
   else if(a===2){ c.setLineDash([0.01,w*2.2]); c.lineCap='round'; }
@@ -1528,7 +1536,7 @@ function drawObjectRaw(o,c){
     else if(o.shape==='arrow'){c.moveTo(o.x0,o.y0);c.lineTo(o.x1,o.y1);const a=Math.atan2(o.y1-o.y0,o.x1-o.x0),L=Math.max(10,o.width*3.5);
       const spitze=(px,py,w)=>{ c.moveTo(px,py);c.lineTo(px-L*Math.cos(w-.4),py-L*Math.sin(w-.4));c.moveTo(px,py);c.lineTo(px-L*Math.cos(w+.4),py-L*Math.sin(w+.4)); };
       spitze(o.x1,o.y1,a); if(o.both) spitze(o.x0,o.y0,a+Math.PI);}   /* both = Doppelpfeil */
-    if(o.fill&&['rect','ellipse','circle','triangle','square','rtriangle','gtriangle','parallelogram','trapez','kite','kreis','rhombus','hexagon','polygon'].includes(o.shape)){c.fillStyle=o.color;c.globalAlpha=(typeof o.fillA==='number')?o.fillA:.2;c.fill();c.globalAlpha=1;}
+    if(o.fill&&FUELLBAR.includes(o.shape)){c.fillStyle=o.color;c.globalAlpha=(typeof o.fillA==='number')?o.fillA:.2;c.fill();c.globalAlpha=1;}
     c.stroke(); c.setLineDash([]);
     if(o.shape==='arc'||o.shape==='circle'){ c.beginPath(); c.arc(o.x0,o.y0,Math.max(o.width*0.9,1.6),0,7); c.fillStyle=o.color; c.fill(); }  // Mittelpunkt sichtbar (Zirkel & Kreis)
     if((o.lblV||o.lblE)&&LABEL_SHAPES.includes(o.shape)) drawShapeLabels(c,o,x,y,w,h);
@@ -2613,7 +2621,7 @@ function propWidthVal(){ const o=selection[0]; if(!o)return null;
   if(o.type==='text') return ((o.size||28)-14)/4;
   return (typeof o.width==='number'&&isFinite(o.width))?o.width:null; }
 $('propFill').onclick=function(){ this.classList.toggle('on'); const on=this.classList.contains('on');
-  selection.forEach(o=>{ if(o.type==='shape'){ o.fill=on;
+  selection.forEach(o=>{ if(darfFuellen(o)){ o.fill=on;
     if(on&&!(o.fillA>0)) o.fillA=(shapeAlpha>0)?shapeAlpha:.2; } });   // ganz durchsichtig eingeschaltet lassen hieße: nichts zu sehen
   shapeFill=on; alphaUI(); scheduleAutosave(); markDirty(); };
 /* Linienart der ausgewählten Striche und ebenen Formen */
@@ -2623,13 +2631,13 @@ function dashUI(){ const l=selection.filter(darfStrich); const a=l.length?(l[0].
   pushUndo(); l.forEach(o=>{ if(i) o.dash=i; else delete o.dash; });
   dashUI(); markDirty(); scheduleAutosave(); }; });
 /* Transparenz der Füllung: 0 % deckt ganz, 100 % ist unsichtbar */
-function alphaUI(){ const sh=selection.filter(o=>o.type==='shape');
+function alphaUI(){ const sh=selection.filter(darfFuellen);
   const a=sh.length?((typeof sh[0].fillA==='number')?sh[0].fillA:.2):shapeAlpha;
   const t=Math.round((1-a)*100/5)*5; $('propAlpha').value=t; $('propAlphaV').textContent=t+' %';
   $('propFillRow').classList.toggle('aus',!(sh.length?sh.some(o=>o.fill):shapeFill)); }
 $('propAlpha').oninput=function(){ const t=+this.value; const a=Math.max(0,Math.min(1,1-t/100));
   $('propAlphaV').textContent=t+' %'; shapeAlpha=a;
-  selection.forEach(o=>{ if(o.type==='shape'){ o.fillA=a; if(!o.fill){ o.fill=true; $('propFill').classList.add('on'); shapeFill=true; } } });
+  selection.forEach(o=>{ if(darfFuellen(o)){ o.fillA=a; if(!o.fill){ o.fill=true; $('propFill').classList.add('on'); shapeFill=true; } } });
   $('propFillRow').classList.remove('aus'); markDirty(); };
 $('propAlpha').onchange=()=>{ saveUI(); scheduleAutosave(); };
 /* ---- Ebene (Stapelreihenfolge) ---- */
@@ -2832,7 +2840,7 @@ function refreshProps(){ const has=selection.length>0 && tool==='select';
   if(show){ refreshPropActive(); refreshRotLabel(); $('streckZ').classList.toggle('on',streckZeigen);
     const usesPen=o=>o.type==='stroke'||o.type==='shape'||o.type==='text'||o.type==='numline'||(o.type==='embed'&&o.etype==='plotter');
     const pen=selection.some(usesPen);                       // Farbe & Dicke nur zeigen, wenn sie hier etwas bewirken
-    $('colorRow').style.display=pen?'flex':'none'; $('widthRow').style.display=pen?'flex':'none'; $('propFillRow').style.display=selection.some(o=>o.type==='shape')?'flex':'none';
+    $('colorRow').style.display=pen?'flex':'none'; $('widthRow').style.display=pen?'flex':'none'; $('propFillRow').style.display=selection.some(darfFuellen)?'flex':'none';
     $('propDashRow').style.display=selection.some(darfStrich)?'flex':'none';
     const txo=(selection.length>0 && selection.every(o=>o.type==='text'))?selection[0]:null; $('textRow').style.display=txo?'flex':'none';
     if(txo){ $('txtBold').classList.toggle('on',!!txo.bold); $('txtItalic').classList.toggle('on',!!txo.italic); $('txtBullet').classList.toggle('on',!!txo.bullet); $('txtSizeV').textContent=txo.size||28; }
@@ -3090,7 +3098,7 @@ function embFsStep(d){ const o=selection[0]; if(!o||o.type!=='embed'||FONT_DEF[o
 $('embFsM').onclick=()=>embFsStep(-1); $('embFsP').onclick=()=>embFsStep(1);
 function embStyleToggle(key,btn){ const o=selection[0]; if(!o||o.type!=='embed'||FONT_DEF[o.etype]===undefined)return; o.data=o.data||{}; o.data[key]=!o.data[key]; $(btn).classList.toggle('on',!!o.data[key]); postToEmbed(o,o.data); markDirty(); scheduleAutosave(); }
 $('embBold').onclick=()=>embStyleToggle('fontBold','embBold'); $('embItalic').onclick=()=>embStyleToggle('fontItalic','embItalic');
-function refreshPropActive(){ const c=selection[0]&&selection[0].color; $('propColors').querySelectorAll('.sw').forEach(s=>s.classList.toggle('active',s.dataset.c===c)); const fill=selection.some(o=>o.type==='shape'&&o.fill); $('propFill').classList.toggle('on',fill); alphaUI(); dashUI();
+function refreshPropActive(){ const c=selection[0]&&selection[0].color; $('propColors').querySelectorAll('.sw').forEach(s=>s.classList.toggle('active',s.dataset.c===c)); const fill=selection.some(o=>darfFuellen(o)&&o.fill); $('propFill').classList.toggle('on',fill); alphaUI(); dashUI();
   const w=propWidthVal(); let best=-1;
   if(w!=null){ best=0; widths.forEach((x,i)=>{ if(Math.abs(x-w)<Math.abs(widths[best]-w)) best=i; }); }
   pwEl.querySelectorAll('.wbtn').forEach((b,i)=>b.classList.toggle('active',i===best)); }
