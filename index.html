@@ -362,6 +362,12 @@
   .bignum{font-variant-numeric:tabular-nums;font-size:44px;font-weight:700;text-align:center;letter-spacing:1px;}
   .row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:10px;}
   .row.fill .btn{flex:1 1 auto;min-width:0;}   /* Knöpfe füllen die Zeile aus */
+  /* „mit Ton" sitzt als kleiner Schalter im Knopf „Video auf Tafel" */
+  #camClip{position:relative;padding-right:76px;}
+  #camClip .inbtn{position:absolute;right:5px;top:50%;transform:translateY(-50%);background:#cfd6e0;color:#4b5563;
+    border-radius:8px;padding:4px 8px;font-size:12px;font-weight:700;line-height:1.15;white-space:nowrap;cursor:pointer;}
+  #camClip .inbtn.on{background:var(--accent,#2563eb);color:#fff;}
+  #camClip.dang .inbtn{display:none;}   /* während der Aufnahme nicht mehr umschaltbar – der Knopf zeigt dann die Zeit */
   .btn{border:none;border-radius:10px;padding:9px 14px;font-size:14px;cursor:pointer;background:#e7ebf1;color:#1f2430;font-weight:600;}
   .btn.pri{background:var(--accent);color:#fff;} .btn.dang{background:#ef4444;color:#fff;}
   input[type=number],select,input[type=text],textarea{padding:8px;border:1px solid #cfd6e0;border-radius:8px;font-size:15px;width:100%;font-family:inherit;-webkit-user-select:text;user-select:text;}
@@ -1078,9 +1084,8 @@
     <div id="camWrap"><video id="camVideo" playsinline autoplay muted></video><canvas id="camFx"></canvas><div id="camZoomBadge">1,0×</div></div>
     <div class="hint" style="margin:4px 0 0">Zwei Finger im Bild = zoomen · Doppeltipp = zurück</div>
     <div class="row fill" style="margin-top:6px"><button class="btn pri" id="camStart">Kamera starten</button><button class="btn" id="camSwitch">Kamera wechseln</button></div>
-    <div class="row fill" style="margin-top:6px"><button class="btn" id="camSnap">📷 Foto auf Tafel</button><button class="btn" id="camClip">● Video auf Tafel</button></div>
+    <div class="row fill" style="margin-top:6px"><button class="btn" id="camSnap">📷 Foto auf Tafel</button><button class="btn" id="camClip"><span id="camClipTxt">● Video auf Tafel</span><span class="inbtn" id="camSound" role="button" tabindex="0" title="Ton mitaufnehmen – ein- und ausschalten">mit Ton</span></button></div>
     <div class="row fill" style="margin-top:6px"><button class="btn" id="camScan">📄 Scannen</button><button class="btn" id="camLive">🔎 Dokumentenkamera</button></div>
-    <div class="toggle" style="margin:8px 0"><span>Video mit Ton</span><div class="sw2" id="camSound"></div></div>
     <button class="btn" id="camLookHead" style="width:100%;text-align:left;margin-top:2px">🎨 Look: Ohne <span style="float:right">▾</span></button>
     <div id="camLookBox" hidden>
       <div class="hint" style="margin:6px 0 5px">Gilt für Vorschau, Foto, Video und Dokumentenkamera.</div>
@@ -5319,15 +5324,18 @@ $('camSnap').onclick=()=>{ const v=$('camVideo'); if(!v.videoWidth){toast('Erst 
 
 /* ---- Videoclip der Kamera auf die Tafel legen (wahlweise mit Ton) ---- */
 let camWithSound=false, camRec=null, camChunks=[], camMicStream=null, camRecTimer=null, camRecStart=0;
-$('camSound').onclick=()=>{ camWithSound=!camWithSound; $('camSound').classList.toggle('on',camWithSound);
+$('camSound').onclick=e=>{ e.stopPropagation();   // sonst startet der umgebende Knopf die Aufnahme
+  camWithSound=!camWithSound; $('camSound').classList.toggle('on',camWithSound);
+  toast(camWithSound?'Video wird mit Ton aufgenommen':'Video wird ohne Ton aufgenommen');
   if(camStream) camStartFn();   // Kamera neu starten, damit die Tonspur direkt im Kamerastream steckt
 };
 const camRecording=()=>!!(camRec&&camRec.state==='recording');
 let camRecSound=false;
-function camClipUI(){ const b=$('camClip');
+function camClipUI(){ const b=$('camClip'), t=$('camClipTxt');
   if(camRecording()){ const s=Math.floor((performance.now()-camRecStart)/1000);
-    b.textContent='■ Beenden ('+String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')+(camRecSound?', Ton':'')+')'; b.classList.add('dang'); }
-  else { b.textContent='● Video auf Tafel'; b.classList.remove('dang'); } }
+    t.textContent='■ Beenden ('+String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')+(camRecSound?', Ton':'')+')'; b.classList.add('dang'); }
+  else { t.textContent='● Video auf Tafel'; b.classList.remove('dang'); }
+  $('camSound').classList.toggle('on',camWithSound); }
 async function camClipStart(){
   if(!camStream||!$('camVideo').videoWidth){ toast('Erst Kamera starten'); return; }
   if(!window.MediaRecorder){ toast('Videoaufnahme wird von diesem Browser nicht unterstützt'); return; }

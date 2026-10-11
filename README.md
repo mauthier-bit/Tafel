@@ -1327,8 +1327,10 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   der Zoom steckt auch im Foto und in der Videoaufnahme,
   „Foto auf Tafel" legt einen Schnappschuss als bewegliches Objekt ab.
   - Die Knöpfe sind in Paaren angeordnet: **Kamera starten / Kamera wechseln**, **📷 Foto auf Tafel /
-    ● Video auf Tafel**, **📄 Scannen / 🔎 Dokumentenkamera**, darunter „Video mit Ton" und der
-    aufklappbare Look-Bereich.
+    ● Video auf Tafel**, **📄 Scannen / 🔎 Dokumentenkamera**, darunter der aufklappbare Look-Bereich.
+    Im Knopf **„● Video auf Tafel"** sitzt rechts ein kleiner Schalter **„mit Ton"** – blau heißt: Die
+    Aufnahme bekommt eine Tonspur. Während der Aufnahme ist er ausgeblendet (der Knopf zeigt dann die
+    laufende Zeit und, falls zutreffend, „Ton").
   - **Looks (Filter und Rahmen):** Unter dem Bild lässt sich ein **Look** wählen – er gilt für
     **Vorschau, Foto, Videoclip und Dokumentenkamera** gleichermaßen, weil das Bild dafür durch ein
     Canvas läuft (ein reiner CSS-Filter würde beim Aufnehmen verlorengehen). Zur Wahl stehen:
@@ -1376,7 +1378,7 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   Das Kamera- und das Scan-Fenster sind deutlich größer (bis 900 bzw. 820 px breit); ihre Breite richtet sich
   zusätzlich nach der **Bildschirmhöhe**, damit Kamerabild und Knopfreihen immer vollständig sichtbar bleiben. **„Video auf Tafel"** nimmt
   einen Clip auf (nochmal antippen = beenden, mit laufender Zeitanzeige) und legt ihn als abspielbares
-  Videoobjekt auf die Tafel – wahlweise **mit Ton** (Schalter „Video mit Ton"; ohne Mikrofonfreigabe
+  Videoobjekt auf die Tafel – wahlweise **mit Ton** (kleiner Schalter „mit Ton" im Knopf selbst; ohne Mikrofonfreigabe
   wird stumm aufgenommen). Zum Abspielen oben „Objekt bedienen" antippen. Clips gelten nur für die
   laufende Sitzung: im gespeicherten Projekt bleibt ein Platzhalter statt der Videodaten – wer eine
   Aufnahme behalten will, wählt den Clip aus und tippt im **Kontextmenü** auf **„🎬 Video speichern"**
