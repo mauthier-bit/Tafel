@@ -2336,13 +2336,18 @@ Oben rechts liegt der **Vollbild-Knopf**.
 Nach dem Hosting (siehe unten) die Seite in **Safari** öffnen, dann
 **Teilen → Zum Home-Bildschirm**. Die Tafel läuft dann als eigene App ohne Safari-Leisten und offline.
 
-**Statusleiste:** Die Tafel startet mit `apple-mobile-web-app-status-bar-style: default` – die
-Zeichenfläche beginnt also **unterhalb** der Statusleiste. Das kostet oben ein paar Millimeter, dafür
-legt sich der (in neueren iPadOS-Fassungen weich auslaufende) Hintergrund der Statusleiste nicht über
-die oberen Werkzeugleisten. Ganz **ausblenden** lässt sich die Statusleiste in einer Web-App nicht;
-wer sie loswerden will, nutzt den **Geführten Zugriff** (Einstellungen → Bedienungshilfen → Geführter
-Zugriff; dann dreimal die obere Taste drücken). Eine Änderung dieser Angabe wirkt erst, wenn die
-App **ganz geschlossen** (aus der App-Übersicht wischen) und neu gestartet wird.
+**Statusleiste:** Entscheidend ist **nicht** nur der Stil der Statusleiste, sondern vor allem
+`viewport-fit`. Mit `viewport-fit=cover` reicht die Seite **unter** die Statusleiste – und neuere
+iPadOS-Fassungen zeichnen dort einen weich auslaufenden Hintergrund, der dann über den oberen
+Werkzeugleisten liegt. Die Tafel startet deshalb **ohne `viewport-fit=cover`** (wie die anderen
+Werkzeuge, die am iPad gut aussehen) und mit `apple-mobile-web-app-status-bar-style: black`.
+Ganz **ausblenden** lässt sich die Statusleiste in einer Web-App nicht; wer sie loswerden will, nutzt
+den **Geführten Zugriff** (Einstellungen → Bedienungshilfen → Geführter Zugriff; dann dreimal die
+obere Taste drücken). Änderungen an diesen Angaben wirken erst, wenn die App **ganz geschlossen**
+(aus der App-Übersicht wischen) und neu gestartet wird.
+Falls doch einmal etwas über den Leisten liegt, gibt es in **Einstellungen → Bedienung** den Wert
+**„Abstand der oberen Leisten"** (0–48 px): Damit rücken Seiten- und Einstellungsleiste so weit nach
+unten, dass sie wieder frei stehen – unabhängig davon, was das Betriebssystem oben zeichnet.
 
 ## Auf GitHub Pages hosten
 
