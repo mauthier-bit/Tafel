@@ -1,5 +1,5 @@
 /* Service Worker – macht die Tafel offline-fähig (App-Shell + Bibliotheken cachen). */
-const CACHE = 'tafel-v437';
+const CACHE = 'tafel-v438';
 const H5P_CACHE = 'tafel-h5p';   // entpackte .h5p-Inhalte (bleiben über App-Updates hinweg erhalten)
 const ASSETS = [
   './',
@@ -11,6 +11,9 @@ const ASSETS = [
   'wahrscheinlichkeit.html',
   'messwert.html',
   'motiontracker.html',
+  'videophysik.html',
+  'singmyfunction.html',
+  'versuchsprotokoll.html',
   'beschriften.html',
   'beschriften-vorlagen.js',
   'video-interaktiv.html',

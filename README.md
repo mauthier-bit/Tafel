@@ -1547,6 +1547,17 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   bei e-Funktion, Potenz- und Sinusanpassung die richtigen Parameter – Startwerte kommen aus einer
   logarithmischen bzw. doppelt-logarithmischen Ausgleichsgeraden, danach wird parameterweise nachgeschärft;
   fragt beim Einfügen nach). Braucht Internet (nutzt Chart.js u. a. per CDN).
+- **Tabellenkalkulation** (Mathe & Physik, `sheet.html`): dasselbe Werkzeug wie unter „Einfügen", jetzt
+  auch direkt in der Werkzeuggruppe. Symbol: ein Tabellenblatt mit **hervorgehobener Zelle und
+  Gleichheitszeichen** – damit nicht mit Stellenwerttafel (Gitter) oder Vierfeldertafel (vier Felder)
+  zu verwechseln.
+- **Video-Physik** (Mathe & Physik, `videophysik.html`): **Stroboskopbilder und Bewegungsanalyse** aus
+  einem Video – Punkte Bild für Bild verfolgen und daraus Weg, Geschwindigkeit und Beschleunigung
+  gewinnen. Braucht die Kamera bzw. eine Videodatei. Symbol: Videobild mit einer Punktbahn.
+- **Audio-Physik** (Mathe & Physik, `singmyfunction.html`): **Töne aufnehmen und analysieren** –
+  Frequenz, Obertöne und Klangspektrum, dazu Synthese. Braucht das Mikrofon. Symbol: Mikrofon mit Wellen.
+- **Versuchsprotokoll** (Mathe & Physik, `versuchsprotokoll.html`): **Messreihen eintragen, auswerten
+  und als Protokoll ausgeben** (mit Diagrammen). Symbol: Klemmbrett mit Kurve.
 - **Motion-Tracker** (Mathe & Physik, `motiontracker.html`): misst **Bewegung und Abstand von
   Personen per Kamera-KI** – ohne zusätzlichen Sensor. Drei Reiter: **① Aufzeichnung** (Bewegung
   aufnehmen und einblenden), **② Bewegungsziel** und **③ Battle** (zwei Spieler gegeneinander).
@@ -1629,13 +1640,14 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
    **und** Kreis, Gerade, Zirkel, Zahlenstrahl, Koordinatensystem (alle Knöpfe gleich groß);
    ein **Zeit**-Button (Uhr, Stoppuhr, Timer);
    ein **Klasse & Interaktion**-Button (Sozialform, Gruppen bilden, Umfrage, Zufälliger Name, Punktestand)
-   und ein **Mathe & Physik**-Button mit 25 Werkzeugen in **fünf Reihen**, vom Rechnen zur Physik geordnet:
+   und ein **Mathe & Physik**-Button mit 29 Werkzeugen, vom Rechnen zur Physik geordnet:
    **1.** Stellenwerttafel · Bruch · Term-Umformer · Gleichungslöser (mit Waage, Umkehraufgabe und
    **Formel umstellen**) · Funktionsplotter — **2.** Ableitungen · Einheitskreis · Strahlensätze ·
    Figuren & Körper · 3D-Koordinatensystem — **3.** GeoGebra-App · CODAP · Diagramm · Zufall ·
-   Vierfeldertafel — **4.** Baumdiagramm · Wahrscheinlichkeitsrechner · Motion-Tracker ·
-   Messwert-Analyse · Einheitenumrechner — **5.** Stromkreis · Optiklabor · Wellenwanne ·
-   Periodensystem · Nuklidkarte.
+   Vierfeldertafel — **4.** Baumdiagramm · Wahrscheinlichkeitsrechner · **Tabellenkalkulation** ·
+   Motion-Tracker · Messwert-Analyse — **5.** Einheitenumrechner · Stromkreis · Optiklabor ·
+   Wellenwanne · Periodensystem — **6.** Nuklidkarte · **Video-Physik** · **Audio-Physik** ·
+   **Versuchsprotokoll**.
    Die Aufklappmenüs legen sich **nie über die Werkzeugleiste**: Sie öffnen neben ihr, bleiben unter
    der oberen Leiste und nehmen bei schmalem Fenster **weniger Spalten** (bei wenig Höhe lassen sie
    sich scrollen) – so ist jeder Knopf erreichbar, auch im geteilten Bildschirm.
