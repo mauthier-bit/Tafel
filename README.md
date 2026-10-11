@@ -1371,8 +1371,11 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   **− / +** unten rechts im Bild zoomen stufenweise (1,0× bis 8,0×, Anzeige daneben), **💡** unten
   links schaltet die **Kamera-Leuchte** ein, um das Blatt auszuleuchten (nur wo der Browser das
   erlaubt – das iPad gibt die Leuchte bisher nicht frei und sagt das dann auch), das kleine
-  rote **×** oben rechts schließt es wieder (danach wird die Kamera abgeschaltet, sofern kein
-  weiteres Livebild läuft). Mehrere Livebilder gleichzeitig sind möglich; gespeichert werden sie
+  rote **×** oben rechts schließt es wieder. **Die Kamera schaltet sich danach selbst ab** – und zwar
+  auf jedem Weg: ob das Livebild über sein ×, über „Löschen" im Kontextmenü, über „Seite leeren" oder
+  beim Laden eines anderen Projekts verschwindet. Solange ein Kamerafenster offen ist, ein Livebild
+  auf **irgendeiner** Seite steht oder eine Aufnahme läuft, bleibt sie an; sonst geht sie binnen
+  weniger Sekunden aus (der grüne Punkt am iPad erlischt). Mehrere Livebilder gleichzeitig sind möglich; gespeichert werden sie
   nicht – beim Laden eines Projekts ist das Livebild weg.
   - **Entzerren (schräges iPad):** Im Knopf „🔎 Dokumentenkamera" sitzt rechts der kleine Schalter
     **„entzerren"**. Eingeschaltet erscheinen **vier Punkte** über dem Kamerabild; schiebt man sie auf

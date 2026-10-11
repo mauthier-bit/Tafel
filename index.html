@@ -3850,7 +3850,9 @@ $('fs').onclick=()=>{ const d=document.documentElement; if(!document.fullscreenE
 
 /* ============ Fenster ============ */
 document.querySelectorAll('.x[data-close]').forEach(x=>x.onclick=()=>$(x.dataset.close).classList.remove('show'));
-const toggleWin=id=>$(id).classList.toggle('show');
+const toggleWin=id=>{ const an=$(id).classList.toggle('show');
+  if(!an&&(id==='win-cam'||id==='win-scan')&&typeof camPruefen==='function') camPruefen();   // Kamera nicht unnötig weiterlaufen lassen
+  return an; };
 document.querySelectorAll('.win h3').forEach(h=>{ let d=null;
   h.addEventListener('pointerdown',e=>{if(e.target.classList.contains('x'))return;const w=h.parentElement,r=w.getBoundingClientRect();d={dx:e.clientX-r.left,dy:e.clientY-r.top,w};h.setPointerCapture(e.pointerId);});
   h.addEventListener('pointermove',e=>{if(!d)return;d.w.style.left=(e.clientX-d.dx)+'px';d.w.style.top=(e.clientY-d.dy)+'px';});
@@ -4990,6 +4992,7 @@ async function camStartFn(){ try{ camClipStop(); setCamZoom(1); if(camStream)cam
     const vidReq={facingMode:camFacing,width:{ideal:3840},height:{ideal:2160}};   // möglichst hoch auflösen (wichtig fürs Scannen)
     try{ camStream=await navigator.mediaDevices.getUserMedia({video:vidReq,audio:!!camWithSound}); }
     catch(e1){ camStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:camFacing},audio:!!camWithSound}); }
+    camGenutzt=performance.now();
     $('camVideo').srcObject=camStream; $('camVideo').muted=true;   // Vorschau stumm (sonst Rückkopplung)
     $('camStart').textContent='Neu starten'; $('camHint').style.display='none';
     camLookSet(camLook);                                   // Look auf Vorschau, Aufnahme und Dokumentenkamera anwenden
@@ -5454,6 +5457,7 @@ const liveObjs=()=>doc.pages.reduce((a,p)=>a.concat((p.objects||[]).filter(o=>o.
 async function startLiveCam(){
   if(!camStream){ await camStartFn(); }
   if(!camStream){ toast('Kamera konnte nicht gestartet werden'); return; }
+  camGenutzt=performance.now();
   addEmbedObject('live','','Dokumentenkamera',undefined,false);
   const o=selection[0]; if(o){ o.zoom=1;
     /* beim Entzerren gilt das Seitenverhältnis des geradegezogenen Blattes, sonst das der Kamera */
@@ -5488,12 +5492,25 @@ async function torchSchalten(){ const t=torchTrack();
   catch(e){ toast('Das Licht ließ sich nicht schalten'); } }
 function closeLive(o){ pushUndo(); page().objects=page().objects.filter(x=>x!==o);
   selection=selection.filter(x=>x!==o); refreshProps(); refreshEmbedUI(); markDirty();
-  if(!liveObjs().length&&!$('win-cam').classList.contains('show')) camStop();
-  else if(!liveObjs().length&&!camFxAktiv()&&!camRecording()) camCompStop(); }
+  camPruefen();
+  if(camStream&&!liveObjs().length&&!camFxAktiv()&&!camRecording()) camCompStop(); }
 $('camLive').onclick=startLiveCam;
+/* Die Kamera soll nur laufen, solange sie wirklich gebraucht wird. Sie wird an vielen Stellen
+   beendet (Livebild schließen, Fenster zu …), aber ein Livebild kann auch über das Kontextmenü,
+   „Seite leeren", einen Seitenwechsel oder das Laden eines Projekts verschwinden. Darum zusätzlich
+   eine regelmäßige Prüfung – sonst bliebe der Kamerapunkt am iPad an. */
+let camGenutzt=0;
+function camNochGebraucht(){
+  if($('win-cam').classList.contains('show')||$('win-scan').classList.contains('show')) return true;
+  if(liveObjs().length) return true;
+  if(typeof camRecording==='function'&&camRecording()) return true;
+  return performance.now()-camGenutzt<3000;        // kurze Schonfrist direkt nach dem Starten
+}
+function camPruefen(){ if(camStream&&!camNochGebraucht()) camStop(); }
+setInterval(camPruefen,2000);
 function camStop(){ camClipStop(); camCompStop(); warpStop(); cancelAnimationFrame(camPrevRAF);
   if(camStream){camStream.getTracks().forEach(t=>t.stop());camStream=null;$('camVideo').srcObject=null;$('camStart').textContent='Kamera starten';} }
-$('win-cam').querySelector('.x').addEventListener('click',()=>{ if(!liveObjs().length) camStop(); else camClipStop(); });
+$('win-cam').querySelector('.x').addEventListener('click',()=>{ camClipStop(); setTimeout(camPruefen,0); });
 
 
 /* ---- Live entzerren: schräg gesehenes Blatt gerade ziehen (nur Dokumentenkamera) ----
