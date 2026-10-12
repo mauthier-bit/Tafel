@@ -1079,9 +1079,20 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   sie zurück), damit in kleinen Objekten die ganze Fläche der Tabelle gehört.
   Dazu 🖼 Bild und 📋 Kopieren. Zeilen- und Spaltenzahl lassen sich weiterhin auch im **Kontextmenü**
   ändern, alle Inhalte und Einstellungen werden im Projekt gespeichert.
-- **GeoGebra-App** (Werkzeug): fügt ein vollständiges **GeoGebra-App-Fenster** ein (nicht nur eine
-  .ggb-Datei) – wahlweise als bewegliches **Objekt** oder als **eigene Seite**. Braucht Internet.
+- **GeoGebra-App** (Werkzeug): fügt ein vollständiges **GeoGebra-App-Fenster** ein – wahlweise als
+  bewegliches **Objekt** oder als **eigene Seite**. Braucht Internet.
   Das Symbol ist eine **Ellipse mit fünf Punkten auf der Linie** – angelehnt an das GeoGebra-Zeichen.
+  - **Eigene .ggb-Datei öffnen:** Über der App liegt eine schmale Leiste mit **„📂 ggb-Datei öffnen"**;
+    daneben steht der Name der geöffneten Datei. Die Datei wird vom Gerät gelesen und in der App
+    geöffnet – es muss also **nichts** auf geogebra.org liegen. Am Rechner lässt sich eine Datei auch
+    einfach **auf das Fenster ziehen**. Eine Datei bringt die **Classic**-Oberfläche mit (alle
+    Werkzeuge, Algebra- und Grafikfenster), die leere App startet wie bisher als Grafikrechner.
+  - **Wird mit dem Projekt gespeichert:** Die Konstruktion – ob aus einer Datei geladen oder von Hand
+    gebaut – wird nach jeder Eingabe in das Tafel-Projekt übernommen (bis etwa 4,5 MB) und ist beim
+    nächsten Öffnen wieder da. Früher war der Inhalt nach dem Neuladen verloren.
+  - Im Fenster **Einfügen → GeoGebra** gibt es dafür den Knopf **„📂 ggb-Datei vom Gerät wählen"**;
+    das Feld **Material-ID oder Link** bleibt für Materialien, die auf geogebra.org liegen (die
+    werden als Webseite eingebettet und nicht mitgespeichert).
 - **CODAP** (Werkzeug, Statistik): bettet das Statistik-Werkzeug **CODAP v3** (Concord Consortium,
   Open Source, codap3.concord.org) ein – Daten in **Tabellen** sammeln, per Ziehen in **Graphen**
   darstellen (Punkt-, Streu-, Säulen-, Boxplot …), Mittelwerte/Geraden einzeichnen, Beispieldaten

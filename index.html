@@ -1295,6 +1295,8 @@
     <label class="lbl">Material-ID oder Link</label>
     <div class="inrow"><input type="text" id="ins-ggb" placeholder="z. B. abcdEFGH"><button class="pastebtn" data-paste="ins-ggb" title="Aus Zwischenablage einfügen">📋</button></div>
     <div class="row fill" style="margin-top:6px"><button class="btn pri" id="ins-ggb-go">GeoGebra einbetten</button></div>
+    <div class="row fill" style="margin-top:6px"><button class="btn" id="ins-ggb-datei">📂 ggb-Datei vom Gerät wählen</button></div>
+    <div class="hint">Eine <b>.ggb-Datei</b> wird in der GeoGebra-App auf der Tafel geöffnet und bis 4,5 MB <b>mit dem Projekt gespeichert</b>. Die Material-ID gilt für Materialien, die auf geogebra.org liegen.</div>
 
     <hr class="wsep">
     <div class="wcap">Video</div>
@@ -6531,6 +6533,19 @@ $('ins-html-go').onclick=()=>{ const raw=$('ins-html').value||'', v=extractUrl(r
     if(r>0.15&&r<3){ const h0=o.h; o.h=o.w*r; o.y+=(h0-o.h)/2; markDirty(); scheduleAutosave(); } }
   $('win-insert').classList.remove('show'); toast(h5p?'H5P-Inhalt eingefügt':'Webseite eingefügt'); };
 $('ins-ggb-go').onclick=()=>{const v=$('ins-ggb').value.trim();if(!v)return;addEmbedObject('geogebra',ggbEmbed(v),'GeoGebra');$('win-insert').classList.remove('show');toast('GeoGebra eingefügt');};
+/* .ggb-Datei vom Gerät: wird der GeoGebra-App als Base64 mitgegeben und mit dem Projekt gespeichert */
+$('ins-ggb-datei').onclick=()=>{
+  const i=document.createElement('input'); i.type='file';
+  i.onchange=()=>{ const f=i.files&&i.files[0]; if(!f) return;
+    if(!/\.ggb$/i.test(f.name)){ toast('Bitte eine GeoGebra-Datei (.ggb) wählen'); return; }
+    const r=new FileReader();
+    r.onload=()=>{ let b64=String(r.result||''); const k=b64.indexOf(','); if(k>=0) b64=b64.slice(k+1);
+      if(b64.length>6000000){ toast('Die Datei ist zu groß (über 4,5 MB)'); return; }
+      const nam=f.name.replace(/\.ggb$/i,'');
+      addEmbedObject('ggbapp','geogebra.html','GeoGebra: '+nam,{ggb:b64,name:nam,app:'classic'});
+      $('win-insert').classList.remove('show'); toast('„'+nam+'" eingefügt'); };
+    r.readAsDataURL(f); };
+  i.click(); };
 $('ins-sheet').onclick=()=>{ addEmbedObject('sheet','sheet.html','Tabelle',{}); $('win-insert').classList.remove('show'); toast('Tabellenkalkulation eingefügt'); };
 async function importPDF(f){ showBusy(true,'PDF wird eingelesen…'); try{ const buf=await f.arrayBuffer(); const pdf=await pdfjsLib.getDocument({data:buf}).promise;
     const asPage=insAsPage(), asDoc=!asPage&&insAsDoc()&&pdf.numPages>1, urls=[];
