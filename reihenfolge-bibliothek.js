@@ -698,6 +698,18 @@ const A=[
  'Die Kraft wächst mit beiden Stromstärken und nimmt mit größerem Abstand ab. Über sie war früher die Einheit Ampere festgelegt.'
 ]},
 
+{f:'Ph', j:10, g:'Elektromagnetismus', t:'Gleichstrommotor: warum sich die Leiterschlaufe dreht', s:[
+ 'Zwischen den Polen eines Magneten ist eine rechteckige Leiterschlaufe drehbar gelagert. Durch sie fließt ein Gleichstrom.',
+ 'In den beiden Längsseiten der Schlaufe fließt der Strom in entgegengesetzte Richtungen – auf der einen Seite nach vorn, auf der anderen nach hinten.',
+ 'Auf bewegte Ladungen in einem Magnetfeld wirkt die Lorentzkraft. Ihre Richtung liefert die Drei-Finger-Regel: Weil die Stromrichtungen entgegengesetzt sind, wird die eine Längsseite nach oben gedrückt, die andere nach unten.',
+ 'Die beiden gleich großen, entgegengesetzt gerichteten Kräfte greifen im Abstand zur Drehachse an. Zusammen ergeben sie ein Drehmoment, und die Schlaufe dreht sich.',
+ 'Nach einer Vierteldrehung steht die Schlaufenebene senkrecht zu den Feldlinien. Die Kräfte wirken jetzt genau auf die Drehachse zu und voneinander weg – das Drehmoment ist null. Diese Stellung heißt Totpunkt.',
+ 'Über den Totpunkt hinweg hilft die Trägheit: Die Schlaufe ist in Bewegung und läuft von selbst ein Stück weiter.',
+ 'Gleich hinter dem Totpunkt stehen die Längsseiten jedoch vertauscht im Feld. Bei unveränderter Stromrichtung würde das Drehmoment die Schlaufe nun zurückdrehen – sie bliebe im Totpunkt pendeln, statt umzulaufen.',
+ 'Deshalb muss die Stromrichtung in der Schlaufe genau im Totpunkt umgekehrt werden. Das besorgt der Kommutator: ein geteilter Ring, dessen beide Hälften an je einem Ende der Schlaufe hängen und an dem zwei Schleifkontakte anliegen. Im Totpunkt laufen die Trennstellen unter den Schleifkontakten durch, und die Anschlüsse werden getauscht.',
+ 'Nach jeder halben Umdrehung kehrt sich der Strom in der Schlaufe also um. Das Drehmoment zeigt dadurch immer in denselben Drehsinn, und die Schlaufe läuft gleichmäßig weiter – der Motor dreht sich.'
+]},
+
 {f:'M', j:5, g:'Problemlösen', t:'Umschütträtsel: 4 Liter abmessen', s:[
  'Gegeben sind zwei Gefäße ohne Skala: eines fasst 3 Liter, das andere 5 Liter. Beide sind leer. Abgemessen werden sollen genau 4 Liter.',
  'Fülle das 3-Liter-Gefäß am Wasserhahn vollständig.',

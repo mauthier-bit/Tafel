@@ -535,14 +535,16 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     **✓ Prüfen** färbt jede Karte grün oder rot und zeigt „x von n an der richtigen Stelle",
     **🕘 Lösung** stellt die richtige Reihenfolge her.
   - **📚 Aufgaben** (Symbol: Buchrücken im Regal – das aufgeschlagene Buch steht fürs Glossar)
-    öffnet die Bibliothek mit **46 fertigen Ketten** (rund 500 Schritte), filterbar
+    öffnet die Bibliothek mit **47 fertigen Ketten** (rund 510 Schritte), filterbar
     nach **Fach, Jahrgangsstufe und Themenbereich**. Sie umfasst drei Sorten:
     - **Beweise:** Winkelsumme im Dreieck (Jgst. 7, über die Parallele durch C und die
       Wechselwinkel), Satz des Thales (Jgst. 8) und Irrationalität von Wurzel 2 (Jgst. 9).
     - **Ursache-Wirkungs-Ketten aus der Physik** (Jgst. 10): Magnetkugel im Kupferrohr, Kraft
       zwischen parallelen Leitern, **Wirbelstrombremse**, **Induktionsherd** und **Entstehung der
       Nordlichter** – jeweils von der Beobachtung über Induktionsgesetz, Lorentzkraft und
-      Energiebilanz bis zur Erklärung. Dazu die **Knobelaufgabe Umschütträtsel**: mit einem
+      Energiebilanz bis zur Erklärung. Dazu der **Gleichstrommotor** in neun Schritten: Lorentzkraft
+      auf die beiden Längsseiten der Leiterschlaufe, Drehmoment, Totpunkt und Trägheit, und daraus
+      die Notwendigkeit des Kommutators mit den Schleifkontakten. Dazu die **Knobelaufgabe Umschütträtsel**: mit einem
       3-Liter- und einem 5-Liter-Gefäß genau 4 Liter abmessen (Jgst. 5).
     - **Lösungsalgorithmen – „Wie gehe ich vor?":** Dreisatz (6), Prozentaufgabe mit gesuchtem
       Grundwert (6), ungleichnamige Brüche addieren (6), lineare Gleichung (7), Textaufgabe in eine
