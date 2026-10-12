@@ -697,7 +697,70 @@ function fGene(g,st){
      unten('umgepolt: außen behält die Spannung','immer dieselbe Richtung',238);
      MOT_komm(g,cx,296,21,false); }]
   ]); }
-const SFIG={ motor:fMotor, gene:fGene, ms:fMs, wh:fWh, uk:fUk, ik:fIk, sss:fSss, sws:fSws, wsw:fWsw, ssw:fSsw, thales:fThales, wsumme:fWsumme,
+/* ---------- Transformator: zwei Spulen auf einem Eisenkern ---------- */
+function fTrafo(g,st){
+  const ax=70, ay=70, bx=270, by=250;          /* Kern außen */
+  const ix=110, iy=112, jx=230, jy=208;        /* Kern innen (Fenster) */
+  const lx=(ax+ix)/2, rx=(jx+bx)/2;            /* Mitten der Schenkel */
+  function kern(){
+    g.save(); g.fillStyle='#eceff4'; g.strokeStyle=FARB.lin; g.lineWidth=1.6;
+    g.beginPath(); g.rect(ax,ay,bx-ax,by-ay); g.rect(ix,iy,jx-ix,jy-iy);
+    g.fill('evenodd'); g.stroke(); g.restore();
+    }
+  function spule(x,n,col,bd){ const y0=iy+10, y1=jy-10, d=(y1-y0)/(n-1);
+    for(let i=0;i<n;i++) ELL(g,x,y0+i*d,24,Math.min(8,d/2.4),col||FARB.lin,bd||2); }
+  function quelle(gleich,col){ const cx=26, cy=160, c=col||FARB.lin;
+    KREIS(g,cx,cy,16,c,1.8);
+    g.save(); g.strokeStyle=c; g.lineWidth=1.8;
+    if(gleich){ L(g,cx-7,cy-6,cx+7,cy-6,c,2.2); L(g,cx-4,cy+6,cx+4,cy+6,c,2.2); }
+    else { g.beginPath(); g.arc(cx-4,cy,4,Math.PI,0); g.arc(cx+4,cy,4,Math.PI,0,true); g.stroke(); }
+    g.restore();
+    L(g,lx-24,iy+10,cx,iy+10,c,1.5); L(g,cx,iy+10,cx,cy-16,c,1.5);
+    L(g,lx-24,jy-10,cx,jy-10,c,1.5); L(g,cx,jy-10,cx,cy+16,c,1.5); }
+  function messer(zeichen,col){ const cx=314, cy=160, c=col||FARB.lin;
+    KREIS(g,cx,cy,16,c,1.8); TXT(g,cx,cy,zeichen,c,13,'center',true);
+    L(g,rx+24,iy+10,cx,iy+10,c,1.5); L(g,cx,iy+10,cx,cy-16,c,1.5);
+    L(g,rx+24,jy-10,cx,jy-10,c,1.5); L(g,cx,jy-10,cx,cy+16,c,1.5); }
+  function lampe(col){ const cx=314, cy=160, c=col||FARB.neu;
+    KREIS(g,cx,cy,16,c,1.8);
+    L(g,cx-11,cy-11,cx+11,cy+11,c,1.5); L(g,cx+11,cy-11,cx-11,cy+11,c,1.5);
+    L(g,rx+24,iy+10,cx,iy+10,FARB.lin,1.5); L(g,cx,iy+10,cx,cy-16,FARB.lin,1.5);
+    L(g,rx+24,jy-10,cx,jy-10,FARB.lin,1.5); L(g,cx,jy-10,cx,cy+16,FARB.lin,1.5); }
+  function fluss(col){ const c=col||FARB.hilf, ym=(ay+iy)/2, yu=(jy+by)/2;
+    PFEIL(g,152,ym,196,ym,c,2.2); PFEIL(g,196,yu,152,yu,c,2.2);
+    TXT(g,174,ym-13,'Φ',c,13,'center',true); }
+  function unten(t1,t2){ if(t1) TXT(g,170,286,t1,FARB.neu,11.5);
+    if(t2) TXT(g,170,302,t2,FARB.neu,11.5); }
+  function szene(o){
+    kern();
+    if(!o.fluss) TXT(g,(ax+bx)/2,(ay+iy)/2,'Eisenkern',FARB.hilf,11);
+    spule(lx,4,o.p1||FARB.lin,o.p1?2.6:2);
+    spule(rx,8,o.p2||FARB.lin,o.p2?2.6:2);
+    if(o.gleich) quelle(true,FARB.neu); else quelle(false,o.q||FARB.lin);
+    if(o.lampe) lampe(); else messer(o.mess||'V',o.m||FARB.lin);
+    if(o.fluss) fluss(o.fluss);
+    TXT(g,26,124,'U₁',FARB.lin,13,'center',true);
+    TXT(g,314,124,'U₂',FARB.lin,13,'center',true);
+    if(o.n){ TXT(g,lx,by+14,'n₁ = 4',FARB.neu,12.5,'center',true);
+             TXT(g,rx,by+14,'n₂ = 8',FARB.neu,12.5,'center',true); } }
+  malen(g,st,[
+   [1,neu=>{ if(!neu) return; szene({});
+     TXT(g,170,28,'zwei Spulen auf einem Eisenkern',FARB.lin,12);
+     unten('links Wechselspannung, rechts ein Messgerät','beide Stromkreise sind nicht verbunden'); }],
+   [2,neu=>{ if(!neu) return; szene({p1:FARB.neu,q:FARB.neu,fluss:FARB.neu});
+     unten('der Wechselstrom erzeugt ein Magnetfeld','es ändert sich fortwährend'); }],
+   [3,neu=>{ if(!neu) return; szene({fluss:FARB.neu});
+     unten('der Eisenkern führt den Fluss im Ring herum','auch durch die zweite Spule'); }],
+   [4,neu=>{ if(!neu) return; szene({p2:FARB.neu,m:FARB.neu,mess:'~',fluss:FARB.neu});
+     unten('Flussänderung induziert Spannung','in der zweiten Spule: Wechselspannung'); }],
+   [5,neu=>{ if(!neu) return; szene({n:true,p1:FARB.neu,p2:FARB.neu});
+     unten('jede Windung liefert denselben Beitrag','U₁ : U₂ = n₁ : n₂'); }],
+   [6,neu=>{ if(!neu) return; szene({gleich:true,mess:'0',m:FARB.neu,fluss:FARB.hilf});
+     unten('Gleichspannung: der Fluss bleibt gleich','keine Änderung, keine Induktion'); }],
+   [7,neu=>{ if(!neu) return; szene({lampe:true,fluss:FARB.hilf});
+     unten('mit Verbraucher fließt Strom','U₁ · I₁ = U₂ · I₂'); }]
+  ]); }
+const SFIG={ motor:fMotor, gene:fGene, trafo:fTrafo, ms:fMs, wh:fWh, uk:fUk, ik:fIk, sss:fSss, sws:fSws, wsw:fWsw, ssw:fSsw, thales:fThales, wsumme:fWsumme,
              leiter:fLeiter, rohr:fRohr };
 const SCHRITTBILD={
  'Konstruktion: Mittelsenkrechte einer Strecke':{k:'ms',   z:[0,1,2,3,4,5,6,7,8,9]},
@@ -713,7 +776,8 @@ const SCHRITTBILD={
  'Kraft zwischen zwei parallelen Leitern':     {k:'leiter',z:[0,1,2,3,4,5,6,7,8,9,10,11]},
  'Magnetkugel fällt durch ein Kupferrohr':     {k:'rohr',  z:[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14]},
  'Gleichstrommotor: warum sich die Leiterschlaufe dreht':{k:'motor',z:[1,2,3,4,5,6,7]},
- 'Generator: warum beim Drehen der Leiterschlaufe Spannung entsteht':{k:'gene',z:[1,2,3,4,5,6,7]}
+ 'Generator: warum beim Drehen der Leiterschlaufe Spannung entsteht':{k:'gene',z:[1,2,3,4,5,6,7]},
+ 'Transformator: warum er nur mit Wechselspannung arbeitet':{k:'trafo',z:[1,2,3,4,5,6,7]}
 };
 const GESAMTBILD={
  'Vorgehen: Sachaufgabe mit dem Satz des Pythagoras':fPythagoras,
@@ -835,6 +899,16 @@ const A=[
  'Gleich hinter dem Totpunkt stehen die Längsseiten vertauscht im Feld, und sie laufen nun andersherum durch das Feld. Die Lorentzkraft schiebt die Ladungen deshalb in die Gegenrichtung: Die Spannung kehrt sich um. Greift man sie über zwei getrennte Schleifringe ab, erhält man genau das – eine Wechselspannung.',
  'Soll außen eine Gleichspannung herauskommen, muss der Anschluss genau im Totpunkt umgepolt werden. Das besorgt derselbe Kommutator wie beim Motor: ein geteilter Ring mit zwei Schleifkontakten, dessen Trennstellen im Totpunkt unter den Kontakten durchlaufen.',
  'Nach jeder halben Umdrehung werden die Anschlüsse getauscht. Die Spannung außen behält dadurch immer dieselbe Richtung – eine pulsierende Gleichspannung. Motor und Generator sind derselbe Aufbau, nur umgekehrt betrieben.'
+]},
+
+{f:'Ph', j:10, g:'Elektromagnetismus', t:'Transformator: warum er nur mit Wechselspannung arbeitet', s:[
+ 'Ein Transformator besteht aus zwei Spulen auf einem gemeinsamen Eisenkern. An der ersten Spule liegt eine Wechselspannung, die zweite ist zunächst nur mit einem Messgerät verbunden – die beiden Stromkreise berühren sich nirgends.',
+ 'Der Wechselstrom in der ersten Spule erzeugt ein Magnetfeld. Weil der Strom ständig anwächst, abnimmt und seine Richtung wechselt, ändert sich auch dieses Feld fortwährend.',
+ 'Der Eisenkern führt das Feld fast vollständig im Ring herum bis zur zweiten Spule. Dort ändert sich deshalb derselbe magnetische Fluss.',
+ 'Bei jeder Flussänderung wird nach dem Induktionsgesetz eine Spannung induziert. In der zweiten Spule entsteht also ebenfalls eine Wechselspannung, obwohl kein Draht die beiden Seiten verbindet.',
+ 'Jede Windung liefert denselben Beitrag zur induzierten Spannung. Die Spannungen verhalten sich deshalb wie die Windungszahlen: U₁ : U₂ = n₁ : n₂. Mehr Windungen auf der zweiten Spule bedeuten eine höhere Spannung.',
+ 'Mit Gleichspannung funktioniert das nicht: Ein gleichbleibender Strom erzeugt ein gleichbleibendes Feld, der Fluss ändert sich nicht, und es wird nichts induziert. Nur beim Ein- und beim Ausschalten zeigt das Messgerät kurz einen Ausschlag.',
+ 'Schließt man an die zweite Spule einen Verbraucher an, fließt dort Strom. Energie entsteht dabei nicht: Im günstigsten Fall ist die abgegebene Leistung so groß wie die aufgenommene, also U₁ · I₁ = U₂ · I₂. Eine hohe Spannung bedeutet deshalb eine kleine Stromstärke – darum wird elektrische Energie über große Entfernungen mit Hochspannung übertragen.'
 ]},
 
 {f:'M', j:5, g:'Problemlösen', t:'Umschütträtsel: 4 Liter abmessen', s:[
