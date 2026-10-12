@@ -580,7 +580,75 @@ function fLinse(g){ const M=[150,130], f=50, G=[150-112,130];
   TXT(g,150,236,'1/f = 1/g + 1/b      Abbildungsmaßstab B/G = b/g',FARB.hilf,11.5); }
 
 /* ---------------- Zuordnung Kette → Figur ---------------- */
-const SFIG={ ms:fMs, wh:fWh, uk:fUk, ik:fIk, sss:fSss, sws:fSws, wsw:fWsw, ssw:fSsw, thales:fThales, wsumme:fWsumme,
+/* ---------- Gleichstrommotor: Blick längs der Drehachse ----------
+   Polschuhe links (N) und rechts (S), waagrechte Feldlinien von N nach S,
+   die beiden Längsseiten der Schlaufe als Querschnitte (× hinein, • heraus).
+   Lorentzkraft: × nach unten, • nach oben – daraus der Drehsinn.          */
+function MOT_pol(g,x0,x1,yo,yu,name){
+  g.save(); g.fillStyle='#eef1f6'; g.strokeStyle=FARB.lin; g.lineWidth=1.6;
+  g.beginPath(); g.rect(x0,yo,x1-x0,yu-yo); g.fill(); g.stroke(); g.restore();
+  TXT(g,(x0+x1)/2,(yo+yu)/2,name,FARB.lin,19,'center',true); }
+function MOT_dreh(g,cx,cy,rad,a0,a1,col){
+  BOG(g,cx,cy,rad,Math.min(a0,a1),Math.max(a0,a1),col,2.1);
+  const s=(a1>a0?-0.17:0.17);
+  PFEIL(g,cx+Math.cos(a1+s)*rad,cy+Math.sin(a1+s)*rad,cx+Math.cos(a1)*rad,cy+Math.sin(a1)*rad,col,2.1); }
+/* Kommutator von vorn: geteilter Ring, zwei Schleifkontakte */
+function MOT_komm(g,cx,cy,r,hervor){
+  const col=hervor?FARB.neu:FARB.lin;
+  BOG(g,cx,cy,r,-1.33,1.33,col,3.4); BOG(g,cx,cy,r,1.81,4.47,col,3.4);
+  L(g,cx-r-15,cy-8,cx-r-15,cy+8,FARB.lin,5); L(g,cx+r+15,cy-8,cx+r+15,cy+8,FARB.lin,5);
+  L(g,cx-r-12,cy,cx-r+2,cy,FARB.lin,1.4);   L(g,cx+r+12,cy,cx+r-2,cy,FARB.lin,1.4); }
+function fMotor(g,st){
+  const cx=168, cy=142, r=58, po=68, pu=216;
+  const P=(th,s)=>[cx+Math.cos(th)*r*s, cy+Math.sin(th)*r*s];
+  function buehne(){
+    MOT_pol(g,16,54,po,pu,'N'); MOT_pol(g,282,320,po,pu,'S');
+    [78,106,142,178,206].forEach(y=>{ L(g,56,y,280,y,FARB.hell,1.4);
+      PFEIL(g,196,y,224,y,FARB.hell,1.5); });
+    TXT(g,252,66,'B',FARB.hilf,12.5,'center',true);
+    PKT(g,cx,cy,'',0,0,FARB.hilf);
+    TXT(g,cx-7,cy+22,'Drehachse',FARB.hilf,10.5,'right'); }
+  /* Schlaufe im Winkel th; kreuzS gibt an, an welchem Ende das Kreuz sitzt */
+  function schlaufe(th,kreuzS,kraefte,hervor){
+    const a=P(th,1), b=P(th,-1);
+    L(g,a[0],a[1],b[0],b[1],FARB.lin,2.2);
+    const k=kreuzS>0?a:b, pt=kreuzS>0?b:a;
+    KREUZ(g,k[0],k[1],9,hervor?FARB.neu:FARB.lin);
+    PUNKTF(g,pt[0],pt[1],9,hervor?FARB.neu:FARB.lin);
+    if(kraefte){
+      PFEIL(g,k[0],k[1]+11,k[0],k[1]+45,FARB.neu,2.6);
+      PFEIL(g,pt[0],pt[1]-11,pt[0],pt[1]-45,FARB.neu,2.6);
+      const seite=(x)=>x<cx?-1:1;              /* Beschriftung immer nach außen */
+      TXT(g,k[0]+15*seite(k[0]),k[1]+32,'F',FARB.neu,13,seite(k[0])<0?'right':'left',true);
+      TXT(g,pt[0]+15*seite(pt[0]),pt[1]-32,'F',FARB.neu,13,seite(pt[0])<0?'right':'left',true); } }
+  function unten(t1,t2,y){ const y0=y||258;
+    if(t1) TXT(g,cx,y0,t1,FARB.neu,11.5);
+    if(t2) TXT(g,cx,y0+16,t2,FARB.neu,11.5); }
+  const T=0.52, Z=Math.PI/2;                 /* 0 = waagrecht, Z = Totpunkt */
+  malen(g,st,[
+   [1,neu=>{ if(!neu) return; buehne(); schlaufe(0,1,false,true);
+     TXT(g,cx,24,'Leiterschlaufe zwischen den Polen',FARB.lin,12);
+     unten('× Strom hinein     • Strom heraus','in den Längsseiten entgegengesetzt'); }],
+   [2,neu=>{ if(!neu) return; buehne(); schlaufe(0,1,true,false);
+     MOT_dreh(g,cx,cy,88,-2.3,-0.85,FARB.neu);
+     unten('Lorentzkraft: die beiden Kräfte sind','entgegengesetzt und drehen die Schlaufe'); }],
+   [3,neu=>{ if(!neu) return; buehne(); schlaufe(Z,1,true,false);
+     unten('Totpunkt: die Kräfte ziehen nur auseinander','keine Drehung mehr'); }],
+   [4,neu=>{ if(!neu) return; buehne(); schlaufe(Z+0.30,1,false,false);
+     MOT_dreh(g,cx,cy,88,-2.3,-0.85,FARB.neu);
+     unten('die Trägheit trägt über den Totpunkt','die Schlaufe läuft von selbst weiter'); }],
+   [5,neu=>{ if(!neu) return; buehne(); schlaufe(Z+T,1,true,false);
+     MOT_dreh(g,cx,cy,106,-0.85,-2.35,FARB.neu);
+     unten('ohne Umschalten drehen die Kräfte zurück','die Schlaufe würde nur pendeln'); }],
+   [6,neu=>{ if(!neu) return; buehne(); schlaufe(Z,1,false,false);
+     unten('im Totpunkt laufen die Trennstellen des','Kommutators unter den Schleifkontakten durch',238);
+     MOT_komm(g,cx,296,21,true); }],
+   [7,neu=>{ if(!neu) return; buehne(); schlaufe(Z+T,-1,true,false);
+     MOT_dreh(g,cx,cy,106,-2.35,-0.85,FARB.neu);
+     unten('Strom umgekehrt: die Kräfte drehen','die Schlaufe im selben Sinn weiter',238);
+     MOT_komm(g,cx,296,21,false); }]
+  ]); }
+const SFIG={ motor:fMotor, ms:fMs, wh:fWh, uk:fUk, ik:fIk, sss:fSss, sws:fSws, wsw:fWsw, ssw:fSsw, thales:fThales, wsumme:fWsumme,
              leiter:fLeiter, rohr:fRohr };
 const SCHRITTBILD={
  'Konstruktion: Mittelsenkrechte einer Strecke':{k:'ms',   z:[0,1,2,3,4,5,6,7,8,9]},
@@ -594,7 +662,8 @@ const SCHRITTBILD={
  'Beweis: Satz des Thales':                    {k:'thales',z:[0,1,2,3,4,5,6,7,7,8]},
  'Beweis: Winkelsumme im Dreieck':             {k:'wsumme',z:[0,1,2,3,4,5,6,7,8,8,9]},
  'Kraft zwischen zwei parallelen Leitern':     {k:'leiter',z:[0,1,2,3,4,5,6,7,8,9,10,11]},
- 'Magnetkugel fällt durch ein Kupferrohr':     {k:'rohr',  z:[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14]}
+ 'Magnetkugel fällt durch ein Kupferrohr':     {k:'rohr',  z:[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14]},
+ 'Gleichstrommotor: warum sich die Leiterschlaufe dreht':{k:'motor',z:[1,2,3,4,5,6,7]}
 };
 const GESAMTBILD={
  'Vorgehen: Sachaufgabe mit dem Satz des Pythagoras':fPythagoras,
@@ -699,15 +768,13 @@ const A=[
 ]},
 
 {f:'Ph', j:10, g:'Elektromagnetismus', t:'Gleichstrommotor: warum sich die Leiterschlaufe dreht', s:[
- 'Zwischen den Polen eines Magneten ist eine rechteckige Leiterschlaufe drehbar gelagert. Durch sie fließt ein Gleichstrom.',
- 'In den beiden Längsseiten der Schlaufe fließt der Strom in entgegengesetzte Richtungen – auf der einen Seite nach vorn, auf der anderen nach hinten.',
- 'Auf bewegte Ladungen in einem Magnetfeld wirkt die Lorentzkraft. Ihre Richtung liefert die Drei-Finger-Regel: Weil die Stromrichtungen entgegengesetzt sind, wird die eine Längsseite nach oben gedrückt, die andere nach unten.',
- 'Die beiden gleich großen, entgegengesetzt gerichteten Kräfte greifen im Abstand zur Drehachse an. Zusammen ergeben sie ein Drehmoment, und die Schlaufe dreht sich.',
- 'Nach einer Vierteldrehung steht die Schlaufenebene senkrecht zu den Feldlinien. Die Kräfte wirken jetzt genau auf die Drehachse zu und voneinander weg – das Drehmoment ist null. Diese Stellung heißt Totpunkt.',
+ 'Zwischen den Polen eines Magneten ist eine rechteckige Leiterschlaufe drehbar gelagert. Durch sie fließt ein Gleichstrom, und zwar in den beiden Längsseiten in entgegengesetzte Richtungen – auf der einen Seite nach vorn, auf der anderen nach hinten.',
+ 'Auf bewegte Ladungen in einem Magnetfeld wirkt die Lorentzkraft. Ihre Richtung liefert die Drei-Finger-Regel: Weil die Stromrichtungen entgegengesetzt sind, wird die eine Längsseite nach oben gedrückt, die andere nach unten. Die beiden Kräfte greifen auf verschiedenen Seiten der Drehachse an und drehen die Schlaufe.',
+ 'Nach einer Vierteldrehung steht die Schlaufenebene senkrecht zu den Feldlinien. Die Kräfte zeigen jetzt genau voneinander weg und ziehen die Schlaufe nur noch auseinander, statt sie zu drehen. Diese Stellung heißt Totpunkt.',
  'Über den Totpunkt hinweg hilft die Trägheit: Die Schlaufe ist in Bewegung und läuft von selbst ein Stück weiter.',
- 'Gleich hinter dem Totpunkt stehen die Längsseiten jedoch vertauscht im Feld. Bei unveränderter Stromrichtung würde das Drehmoment die Schlaufe nun zurückdrehen – sie bliebe im Totpunkt pendeln, statt umzulaufen.',
+ 'Gleich hinter dem Totpunkt stehen die Längsseiten jedoch vertauscht im Feld. Bei unveränderter Stromrichtung würden die Kräfte die Schlaufe nun zurückdrehen – sie bliebe um den Totpunkt pendeln, statt umzulaufen.',
  'Deshalb muss die Stromrichtung in der Schlaufe genau im Totpunkt umgekehrt werden. Das besorgt der Kommutator: ein geteilter Ring, dessen beide Hälften an je einem Ende der Schlaufe hängen und an dem zwei Schleifkontakte anliegen. Im Totpunkt laufen die Trennstellen unter den Schleifkontakten durch, und die Anschlüsse werden getauscht.',
- 'Nach jeder halben Umdrehung kehrt sich der Strom in der Schlaufe also um. Das Drehmoment zeigt dadurch immer in denselben Drehsinn, und die Schlaufe läuft gleichmäßig weiter – der Motor dreht sich.'
+ 'Nach jeder halben Umdrehung kehrt sich der Strom in der Schlaufe also um. Die Kräfte drehen die Schlaufe dadurch immer in denselben Drehsinn weiter, und sie läuft gleichmäßig um – der Motor dreht sich.'
 ]},
 
 {f:'M', j:5, g:'Problemlösen', t:'Umschütträtsel: 4 Liter abmessen', s:[
