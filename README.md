@@ -2352,9 +2352,21 @@ unten, dass sie wieder frei stehen – unabhängig davon, was das Betriebssystem
 **Alle Werkzeuge tragen dieselben drei Angaben** (`apple-mobile-web-app-capable: yes`,
 `apple-mobile-web-app-status-bar-style: black`, Viewport **ohne** `viewport-fit=cover`). Damit startet
 auch jedes einzelne Werkzeug – vom Motion-Tracker bis zur Zeitleiste – als **randlose App**, wenn man
-es für sich auf den Home-Bildschirm legt, und die Statusleiste legt sich nirgends über den Inhalt.
-In der Tafel eingebettet spielen diese Angaben keine Rolle; sie gelten nur beim Start vom
-Home-Bildschirm.
+es für sich auf den Home-Bildschirm legt. In der Tafel eingebettet spielen diese Angaben keine Rolle;
+sie gelten nur beim Start vom Home-Bildschirm.
+
+**Scharfe Kante unter der Statusleiste.** iPadOS 26/27 zeichnet in Web-Apps vom Home-Bildschirm am
+oberen Rand zusätzlich einen weich auslaufenden Verlauf über den Inhalt – die obersten Bedienelemente
+liegen dann wie hinter Nebel. Abschalten lässt er sich weder über ein Meta-Tag noch über CSS. Er
+entfällt aber, wenn dort oben eine **deckende Leiste** liegt; ein bildschirmfüllender Kasten mit
+deckendem Hintergrund genügt **nicht** (am 13.10.2026 auf iPadOS 27 durchgemessen). Die Tafel selbst
+ist davon nie betroffen, weil ihre obersten 12 px frei sind und dort nur der weiße `#bgLayer` liegt.
+Alle **Werkzeuge** tragen deshalb ein kleines Skript im Kopf der Datei: Es legt beim Start als App
+einen 16 px hohen, deckenden Streifen in der Farbe des Seitenhintergrunds an den oberen Rand und
+rückt alles, was in diese 16 px hineinragt, um 16 px nach unten. Wo oben schon eine deckende Leiste
+sitzt – etwa die Formelzeile der Tabellenkalkulation –, bleibt alles unverändert. In Safari und in
+der Tafel eingebettet tut das Skript nichts; mit `#kante` in der Adresse lässt es sich zum Prüfen
+erzwingen und zeigt dann ein kleines Diagnosefeld.
 
 ## Auf GitHub Pages hosten
 
