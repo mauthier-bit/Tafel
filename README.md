@@ -1296,12 +1296,15 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   man schiebt also nur nach unten/rechts.
 - **Seiten:** hinzufügen, löschen, blättern
 - **Dokument beschriften (PDF „ausfüllen"):** Bei einem **Dokument-Objekt** (mehrseitiges PDF, PowerPoint
-  oder Scan, mit ‹ › blätterbar) steht im Kontextmenü **„✎ Beschriften"**. Ist der Schalter an, liegt ein
-  blau gestrichelter Rahmen um das Dokument, und alles, was mit **Stift, Marker, Formen oder Text** auf das
+  oder Scan, mit ‹ › blätterbar) steht im Kontextmenü **„✎ Beschriften"**. Ist der Schalter an, **leuchtet ein roter
+  Rahmen** um das Dokument – deutlich anders als der blaue Auswahlrahmen –, und oben in der Mitte steht der
+  rote Knopf **„✎ Beschriften beenden"**, mit dem sich der Modus jederzeit verlassen lässt (im Schreibmodus
+  ist das Kontextmenü ja nicht sichtbar). Alles, was mit **Stift, Marker, Formen oder Text** auf das
   Dokument geschrieben wird, gehört von da an **zur angezeigten Seite** – wie eine Folie, die fest auf der
   Seite liegt. Beim **Blättern** erscheint zu jeder Seite nur ihre eigene Folie. Der **Radierer** löscht
-  innerhalb des Dokuments nur Notizen, nicht das Dokument selbst; **„🧽 Notizen dieser Seite löschen"**
-  räumt eine Seite auf einmal frei.
+  innerhalb des Dokuments nur Notizen, nicht das Dokument selbst; **„🧽 Notizen"** räumt die
+  angezeigte Seite auf einmal frei. Die Knöpfe stehen als eigener, durch Trennlinien abgesetzter Block im
+  Kontextmenü: „Beschriften" oben, darunter die Blätter-Knöpfe mit „Notizen" daneben, darunter „Als PDF sichern".
   Mit **„✓ Beschriften beenden"** ist das Dokument wieder ein normales Objekt: **Verschieben, Skalieren und
   Drehen** nehmen die Notizen mit, als wären sie aufgedruckt – auch das Beschriften im **gedrehten** Zustand
   stimmt hinterher. Die Notizen werden **mit dem Projekt gespeichert**, erscheinen im **Vollbild** und in
