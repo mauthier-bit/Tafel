@@ -535,7 +535,7 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     **✓ Prüfen** färbt jede Karte grün oder rot und zeigt „x von n an der richtigen Stelle",
     **🕘 Lösung** stellt die richtige Reihenfolge her.
   - **📚 Aufgaben** (Symbol: Buchrücken im Regal – das aufgeschlagene Buch steht fürs Glossar)
-    öffnet die Bibliothek mit **47 fertigen Ketten** (rund 505 Schritte), filterbar
+    öffnet die Bibliothek mit **48 fertigen Ketten** (rund 510 Schritte), filterbar
     nach **Fach, Jahrgangsstufe und Themenbereich**. Sie umfasst drei Sorten:
     - **Beweise:** Winkelsumme im Dreieck (Jgst. 7, über die Parallele durch C und die
       Wechselwinkel), Satz des Thales (Jgst. 8) und Irrationalität von Wurzel 2 (Jgst. 9).
@@ -547,8 +547,12 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
       Notwendigkeit des Kommutators mit den Schleifkontakten. Zu jedem Schritt gehört ein Bild
       (Blick längs der Drehachse): Polschuhe, Feldlinien, die Querschnitte der beiden Längsseiten
       mit × und •, die Kraftpfeile und der Drehsinn, am Schluss der geteilte Ring mit den
-      Schleifkontakten. Dazu die **Knobelaufgabe Umschütträtsel**: mit einem
-      3-Liter- und einem 5-Liter-Gefäß genau 4 Liter abmessen (Jgst. 5).
+      Schleifkontakten. Als Gegenstück dazu der **Generator** in sieben Schritten – derselbe Aufbau,
+      nur von außen gedreht: Lorentzkraft auf die mitbewegten Ladungen längs des Drahtes, Totpunkt
+      ohne Spannung, Umkehr der Spannung dahinter (über zwei Schleifringe wäre das Wechselspannung)
+      und derselbe Kommutator, der daraus eine pulsierende Gleichspannung macht; dort zeigen die
+      Bilder statt der Kraftpfeile die Bewegungsrichtung der Längsseiten. Dazu die **Knobelaufgabe
+      Umschütträtsel**: mit einem 3-Liter- und einem 5-Liter-Gefäß genau 4 Liter abmessen (Jgst. 5).
     - **Lösungsalgorithmen – „Wie gehe ich vor?":** Dreisatz (6), Prozentaufgabe mit gesuchtem
       Grundwert (6), ungleichnamige Brüche addieren (6), lineare Gleichung (7), Textaufgabe in eine
       Gleichung übersetzen (7), **Konstruktionen mit Zirkel und Lineal** – Mittelsenkrechte,

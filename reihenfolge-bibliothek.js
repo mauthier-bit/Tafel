@@ -648,7 +648,56 @@ function fMotor(g,st){
      unten('Strom umgekehrt: die Kräfte drehen','die Schlaufe im selben Sinn weiter',238);
      MOT_komm(g,cx,296,21,false); }]
   ]); }
-const SFIG={ motor:fMotor, ms:fMs, wh:fWh, uk:fUk, ik:fIk, sss:fSss, sws:fSws, wsw:fWsw, ssw:fSsw, thales:fThales, wsumme:fWsumme,
+/* ---------- Generator: derselbe Aufbau, nur umgekehrt betrieben ----------
+   Die Schlaufe wird gedreht; die mitbewegten Ladungen erfahren die
+   Lorentzkraft laengs des Drahtes. Regel fuer den Strom im Querschnitt:
+   Leiter bewegt sich nach unten -> Strom aus der Ebene heraus (Punkt).   */
+function fGene(g,st){
+  const cx=168, cy=142, r=58, po=68, pu=216;
+  function buehne(){
+    MOT_pol(g,16,54,po,pu,'N'); MOT_pol(g,282,320,po,pu,'S');
+    [78,106,142,178,206].forEach(y=>{ L(g,56,y,280,y,FARB.hell,1.4);
+      PFEIL(g,196,y,224,y,FARB.hell,1.5); });
+    TXT(g,252,66,'B',FARB.hilf,12.5,'center',true);
+    PKT(g,cx,cy,'',0,0,FARB.hilf);
+    TXT(g,cx-7,cy+22,'Drehachse',FARB.hilf,10.5,'right'); }
+  function schlaufe(th,zeigV,zeigStrom,hervor){
+    const a=[cx+Math.cos(th)*r, cy+Math.sin(th)*r], b=[cx-Math.cos(th)*r, cy-Math.sin(th)*r];
+    L(g,a[0],a[1],b[0],b[1],FARB.lin,2.2);
+    [th, th+Math.PI].forEach(e=>{
+      const p=[cx+Math.cos(e)*r, cy+Math.sin(e)*r], tg=[-Math.sin(e), Math.cos(e)];
+      const col=hervor?FARB.neu:FARB.lin;
+      if(zeigStrom){ if(tg[1]>0) PUNKTF(g,p[0],p[1],9,col); else KREUZ(g,p[0],p[1],9,col); }
+      else { g.save(); g.fillStyle='#fff'; g.strokeStyle=FARB.lin; g.lineWidth=1.7;
+             g.beginPath(); g.arc(p[0],p[1],9,0,7); g.fill(); g.stroke(); g.restore(); }
+      if(zeigV){ PFEIL(g,p[0]+tg[0]*13,p[1]+tg[1]*13,p[0]+tg[0]*48,p[1]+tg[1]*48,FARB.erg,2.4);
+        TXT(g,p[0]+tg[0]*58+(tg[0]<0?-2:2),p[1]+tg[1]*58,'v',FARB.erg,13,'center',true); } }); }
+  function unten(t1,t2,y){ const y0=y||258;
+    if(t1) TXT(g,cx,y0,t1,FARB.neu,11.5);
+    if(t2) TXT(g,cx,y0+16,t2,FARB.neu,11.5); }
+  const T=0.52, Z=Math.PI/2;
+  malen(g,st,[
+   [1,neu=>{ if(!neu) return; buehne(); schlaufe(0,true,false,false);
+     MOT_dreh(g,cx,cy,96,-2.3,-0.85,FARB.erg);
+     TXT(g,cx,24,'die Schlaufe wird gedreht',FARB.lin,12);
+     unten('die beiden Längsseiten laufen gegenläufig','die eine nach oben, die andere nach unten'); }],
+   [2,neu=>{ if(!neu) return; buehne(); schlaufe(0,true,true,true);
+     unten('Lorentzkraft schiebt die Ladungen längs des Drahtes','× und •: der Strom ist am größten'); }],
+   [3,neu=>{ if(!neu) return; buehne(); schlaufe(Z,true,false,false);
+     unten('Totpunkt: die Seiten laufen längs der Feldlinien','keine Spannung'); }],
+   [4,neu=>{ if(!neu) return; buehne(); schlaufe(Z+0.30,false,false,false);
+     MOT_dreh(g,cx,cy,96,-2.3,-0.85,FARB.erg);
+     unten('der Schwung trägt über den Totpunkt','die Schlaufe läuft weiter'); }],
+   [5,neu=>{ if(!neu) return; buehne(); schlaufe(Z+T,true,true,true);
+     unten('die Seiten sind vertauscht: × und • kehren sich um','ohne Umschalten gibt das Wechselspannung'); }],
+   [6,neu=>{ if(!neu) return; buehne(); schlaufe(Z,false,false,false);
+     unten('im Totpunkt laufen die Trennstellen des','Kommutators unter den Schleifkontakten durch',238);
+     MOT_komm(g,cx,296,21,true); }],
+   [7,neu=>{ if(!neu) return; buehne(); schlaufe(Z+T,false,true,false);
+     unten('umgepolt: außen behält die Spannung','immer dieselbe Richtung',238);
+     MOT_komm(g,cx,296,21,false); }]
+  ]); }
+const SFIG={ motor:fMotor, gene:fGene, ms:fMs, wh:fWh, uk:fUk, ik:fIk, sss:fSss, sws:fSws, wsw:fWsw, ssw:fSsw, thales:fThales, wsumme:fWsumme,
              leiter:fLeiter, rohr:fRohr };
 const SCHRITTBILD={
  'Konstruktion: Mittelsenkrechte einer Strecke':{k:'ms',   z:[0,1,2,3,4,5,6,7,8,9]},
@@ -663,7 +712,8 @@ const SCHRITTBILD={
  'Beweis: Winkelsumme im Dreieck':             {k:'wsumme',z:[0,1,2,3,4,5,6,7,8,8,9]},
  'Kraft zwischen zwei parallelen Leitern':     {k:'leiter',z:[0,1,2,3,4,5,6,7,8,9,10,11]},
  'Magnetkugel fällt durch ein Kupferrohr':     {k:'rohr',  z:[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14]},
- 'Gleichstrommotor: warum sich die Leiterschlaufe dreht':{k:'motor',z:[1,2,3,4,5,6,7]}
+ 'Gleichstrommotor: warum sich die Leiterschlaufe dreht':{k:'motor',z:[1,2,3,4,5,6,7]},
+ 'Generator: warum beim Drehen der Leiterschlaufe Spannung entsteht':{k:'gene',z:[1,2,3,4,5,6,7]}
 };
 const GESAMTBILD={
  'Vorgehen: Sachaufgabe mit dem Satz des Pythagoras':fPythagoras,
@@ -775,6 +825,16 @@ const A=[
  'Gleich hinter dem Totpunkt stehen die Längsseiten jedoch vertauscht im Feld. Bei unveränderter Stromrichtung würden die Kräfte die Schlaufe nun zurückdrehen – sie bliebe um den Totpunkt pendeln, statt umzulaufen.',
  'Deshalb muss die Stromrichtung in der Schlaufe genau im Totpunkt umgekehrt werden. Das besorgt der Kommutator: ein geteilter Ring, dessen beide Hälften an je einem Ende der Schlaufe hängen und an dem zwei Schleifkontakte anliegen. Im Totpunkt laufen die Trennstellen unter den Schleifkontakten durch, und die Anschlüsse werden getauscht.',
  'Nach jeder halben Umdrehung kehrt sich der Strom in der Schlaufe also um. Die Kräfte drehen die Schlaufe dadurch immer in denselben Drehsinn weiter, und sie läuft gleichmäßig um – der Motor dreht sich.'
+]},
+
+{f:'Ph', j:10, g:'Elektromagnetismus', t:'Generator: warum beim Drehen der Leiterschlaufe Spannung entsteht', s:[
+ 'Zwischen den Polen eines Magneten ist eine rechteckige Leiterschlaufe drehbar gelagert. Diesmal wird sie von außen gedreht – die beiden Längsseiten laufen dabei gegenläufig, die eine nach oben, die andere nach unten.',
+ 'Mit dem Draht bewegen sich auch die Ladungen in ihm. Auf bewegte Ladungen im Magnetfeld wirkt die Lorentzkraft: Sie schiebt sie längs des Drahtes, in den beiden Längsseiten in entgegengesetzte Richtungen. So entsteht eine Spannung, und im geschlossenen Kreis fließt Strom. Am größten ist er, wenn die Längsseiten quer zu den Feldlinien laufen.',
+ 'Nach einer Vierteldrehung laufen die Längsseiten genau längs der Feldlinien. Dann schiebt die Lorentzkraft die Ladungen nicht mehr den Draht entlang – die Spannung ist null. Das ist auch hier der Totpunkt.',
+ 'Über den Totpunkt hinweg hilft wieder die Trägheit: Die Schlaufe ist in Bewegung und läuft von selbst ein Stück weiter.',
+ 'Gleich hinter dem Totpunkt stehen die Längsseiten vertauscht im Feld, und sie laufen nun andersherum durch das Feld. Die Lorentzkraft schiebt die Ladungen deshalb in die Gegenrichtung: Die Spannung kehrt sich um. Greift man sie über zwei getrennte Schleifringe ab, erhält man genau das – eine Wechselspannung.',
+ 'Soll außen eine Gleichspannung herauskommen, muss der Anschluss genau im Totpunkt umgepolt werden. Das besorgt derselbe Kommutator wie beim Motor: ein geteilter Ring mit zwei Schleifkontakten, dessen Trennstellen im Totpunkt unter den Kontakten durchlaufen.',
+ 'Nach jeder halben Umdrehung werden die Anschlüsse getauscht. Die Spannung außen behält dadurch immer dieselbe Richtung – eine pulsierende Gleichspannung. Motor und Generator sind derselbe Aufbau, nur umgekehrt betrieben.'
 ]},
 
 {f:'M', j:5, g:'Problemlösen', t:'Umschütträtsel: 4 Liter abmessen', s:[
