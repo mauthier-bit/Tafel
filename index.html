@@ -1012,6 +1012,8 @@
     <button class="p" id="pr-docPrev" title="Eine Seite zurück">‹ Seite</button>
     <span id="pr-docNum" style="min-width:66px;text-align:center;font-weight:600;color:#5b6472">1 / 1</span>
     <button class="p" id="pr-docNext" title="Eine Seite weiter">Seite ›</button>
+    <button class="p" id="pr-docNote" style="flex:1 0 100%" title="Mit dem Stift auf das Dokument schreiben – die Notizen bleiben an der Seite">✎ Beschriften</button>
+    <button class="p" id="pr-docNoteClr" style="flex:1 0 100%" title="Nur die Notizen der angezeigten Seite entfernen">🧽 Notizen dieser Seite löschen</button>
     <button class="p" id="pr-docPdf" style="flex:1 0 100%" title="Alle Seiten als PDF-Datei sichern">📄 Als PDF sichern</button>
   </div>
   <div class="prow" id="wheelRow" style="display:none;flex-direction:column;align-items:stretch;gap:6px;font-size:12px">
@@ -1613,6 +1615,9 @@ function drawObjectRaw(o,c){
   else if(o.type==='doc'){ ensureImg(o); const i=docCur(o), im=o._imgs&&o._imgs[i];       // Dokument: die aktuelle Seite
     c.fillStyle='#fff'; c.fillRect(o.x,o.y,o.w,o.h);
     if(im&&im.complete){try{c.drawImage(im,o.x,o.y,o.w,o.h);}catch(e){}}
+    docNotizMalen(c,o,i);                                        /* die Folie dieser Seite */
+    if(docNote===o){ c.save(); c.strokeStyle='#3b82f6'; c.lineWidth=Math.max(1.6,2.4/scale);
+      c.setLineDash([10/scale,7/scale]); c.strokeRect(o.x,o.y,o.w,o.h); c.restore(); }
     c.strokeStyle='rgba(120,130,150,.75)'; c.lineWidth=Math.max(1,1/scale); c.strokeRect(o.x,o.y,o.w,o.h);
     const t=(i+1)+' / '+o.pages.length, fs=Math.max(9,Math.min(o.h*0.045,20));
     c.save(); c.font='600 '+fs+'px -apple-system,sans-serif'; c.textAlign='right'; c.textBaseline='bottom';
@@ -2280,7 +2285,9 @@ function finishPolygon(){ const P=polyDraft.pts; let x0=Infinity,y0=Infinity,x1=
   const o={type:'shape',id:uid(),shape:'polygon',color:polyDraft.color,width:polyDraft.width,fill:polyDraft.fill,fillA:polyDraft.fillA,x0,y0,x1,y1,
     pn:P.map(q=>[(q.x-x0)/(x1-x0),(q.y-y0)/(y1-y0)]),rot:0,groupId:null};
   polyDraft=null; commit(o); markDirty(); toast('Vieleck mit '+P.length+' Ecken'); }
-function commit(o){ if(!o.id)o.id=uid(); pushUndo(); page().objects.push(o); scheduleAutosave(); }
+function commit(o){ if(!o.id)o.id=uid();
+  if(docNotizZiel(o)){ docNotizAnlegen(docNote,o); return; }     /* Beschriften: an die Dokumentseite heften */
+  pushUndo(); page().objects.push(o); scheduleAutosave(); }
 /* ===== Lasso-Auswahl ===== */
 let lassoPts=null, lassoSel=null;
 function pointInPoly(x,y,poly){ let inside=false; for(let i=0,j=poly.length-1;i<poly.length;j=i++){ const xi=poly[i].x,yi=poly[i].y,xj=poly[j].x,yj=poly[j].y;
@@ -2321,7 +2328,9 @@ function updateMeasureArc(e){ if(!cur)return; const sweep=Math.round(Math.abs(cu
 function hideMeasure(){ $('measure').style.display='none'; }
 
 let eraseSnap=null;
-function eraseAt(x,y){ const r=eraserWidth/scale; eraserPos={x,y}; const objs=page().objects; let changed=false;
+function eraseAt(x,y){ const r=eraserWidth/scale; eraserPos={x,y};
+  if(docNote && docNotizRadieren(x,y)){ markDirty(); return; }   /* im beschrifteten Dokument nur Notizen */
+  const objs=page().objects; let changed=false;
   for(let i=objs.length-1;i>=0;i--){ const o=objs[i];
     if(o.type==='stroke'&&!o.rot){ const segs=[]; let seg=[];
       for(const pt of o.points){ if(Math.hypot(pt.x-x,pt.y-y)<r+o.width/2){ if(seg.length>1)segs.push(seg); seg=[]; } else seg.push(pt); }
@@ -2948,6 +2957,11 @@ function refreshProps(){ const has=selection.length>0 && tool==='select';
       $('pr-trim').style.display=(cl.etype==='clip'&&cl.src)?'':'none'; }
     const io=(selection.length===1&&selection[0].type==='image')?selection[0]:null; $('imgRow').style.display=io?'flex':'none';
     const dk=(selection.length===1&&selection[0].type==='doc')?selection[0]:null; $('docRow').style.display=dk?'flex':'none';
+    if(dk){ const an=(docNote===dk); const b=$('pr-docNote');
+      b.textContent=an?'✓ Beschriften beenden':'✎ Beschriften';
+      b.classList.toggle('on',an);
+      $('pr-docNoteClr').style.display=(docNotizen(dk,docCur(dk)).length||an)?'block':'none'; }
+    if(docNote && docNote!==dk && selection.length) docNote=null;      /* anderes Objekt gewählt: Beschriften endet */
     if(dk){ $('pr-docNum').textContent=(docCur(dk)+1)+' / '+dk.pages.length;
       $('pr-docPrev').disabled=docCur(dk)<=0; $('pr-docNext').disabled=docCur(dk)>=dk.pages.length-1; }
     const wo=(selection.length===1&&selection[0].type==='embed'&&istRad(selection[0]))?selection[0]:null; $('wheelRow').style.display=wo?'flex':'none';
@@ -3255,7 +3269,8 @@ function fsDocZeigen(){
   if(!fsDocO) return;
   const bild=$('fsDocImg'), pg=$('fsPages');
   if(fsDocO.type==='doc'){ const i=docCur(fsDocO), n=fsDocO.pages.length;
-    bild.src=fsDocO.pages[i]||''; pg.classList.toggle('an',n>1);
+    const o=fsDocO; docSeiteBild(o,i,u=>{ if(fsDocO===o&&docCur(o)===i) bild.src=u; });
+    pg.classList.toggle('an',n>1);
     $('fsPageV').textContent=(i+1)+'/'+n; $('fsPrev').disabled=i<=0; $('fsNext').disabled=i>=n-1; }
   else { bild.src=fsDocO.src||''; pg.classList.remove('an'); }
 }
@@ -6097,15 +6112,22 @@ $('cropOk').onclick=()=>{ const o=cropObj, im=cropImg, R=cropRect;
 $('pr-crop').onclick=()=>{ if(selection.length===1) openCrop(selection[0]); };
 $('pr-docPrev').onclick=()=>{ const o=singleSel(); if(o) docTurn(o,-1); };
 $('pr-docNext').onclick=()=>{ const o=singleSel(); if(o) docTurn(o,1); };
+$('pr-docNote').onclick=()=>{ const o=singleSel(); if(!o||o.type!=='doc') return; docNotizAn(o,docNote!==o); };
+$('pr-docNoteClr').onclick=()=>{ const o=singleSel(); if(!o||o.type!=='doc') return;
+  const i=docCur(o), l=docNotizen(o,i);
+  if(!l.length){ toast('Auf dieser Seite stehen keine Notizen'); return; }
+  if(!confirm('Die Notizen auf Seite '+(i+1)+' löschen?')) return;
+  pushUndo(); o.notes[String(i)]=[]; markDirty(); scheduleAutosave(); toast('Notizen der Seite gelöscht'); };
 $('pr-docPdf').onclick=()=>{ const o=singleSel(); if(!o||o.type!=='doc') return;
   if(!window.jspdf){ toast('PDF-Bibliothek fehlt'); return; }
   showBusy(true,'PDF wird erstellt…'); setTimeout(()=>{ try{ const {jsPDF}=window.jspdf; let pdf=null; let done=0;
     const next=i=>{ if(i>=o.pages.length){ pdf.save((o.label||'dokument')+'.pdf'); toast(done+' Seite(n) als PDF gesichert'); showBusy(false); return; }
-      const im=new Image(); im.onload=()=>{ const orient=im.width>=im.height?'l':'p';
-        if(!pdf) pdf=new jsPDF({orientation:orient,unit:'mm',format:'a4'}); else pdf.addPage('a4',orient);
-        const iw=orient==='l'?297:210, ih=orient==='l'?210:297, r=Math.min((iw-10)/im.width,(ih-10)/im.height);
-        pdf.addImage(o.pages[i],'JPEG',(iw-im.width*r)/2,(ih-im.height*r)/2,im.width*r,im.height*r); done++; next(i+1); };
-      im.onerror=()=>next(i+1); im.src=o.pages[i]; };
+      docSeiteBild(o,i,u=>{                       /* Seite samt Notizen */
+        const im=new Image(); im.onload=()=>{ const orient=im.width>=im.height?'l':'p';
+          if(!pdf) pdf=new jsPDF({orientation:orient,unit:'mm',format:'a4'}); else pdf.addPage('a4',orient);
+          const iw=orient==='l'?297:210, ih=orient==='l'?210:297, r=Math.min((iw-10)/im.width,(ih-10)/im.height);
+          pdf.addImage(u,'PNG',(iw-im.width*r)/2,(ih-im.height*r)/2,im.width*r,im.height*r); done++; next(i+1); };
+        im.onerror=()=>next(i+1); im.src=u; }); };
     next(0);
   }catch(err){ toast('PDF-Fehler: '+err.message); showBusy(false); } },40); };
 addEventListener('resize',()=>{ if($('win-crop').classList.contains('show')) cropDraw(); });
@@ -6595,6 +6617,79 @@ function addDocObject(urls,label){ if(!urls||!urls.length) return;
     const o={type:'doc',id:uid(),x:c.x-w/2,y:c.y-h/2,w,h,rot:0,groupId:null,pages:urls.slice(),cur:0,label:label||'Dokument',_imgs:[]};
     pushUndo(); page().objects.push(o); ensureImg(o); setMode('write'); setTool('select'); selection=[o]; refreshProps(); markDirty(); scheduleAutosave(); };
   im.onerror=()=>toast('Seiten konnten nicht gelesen werden'); im.src=urls[0]; }
+/* ---------- Dokument beschriften ------------------------------------------
+   „Beschriften" heftet alles, was auf das Dokument geschrieben wird, an die
+   gerade sichtbare Seite - eine eigene Folie je Seite. Gespeichert wird je
+   Notiz das Rechteck des Dokuments im Augenblick des Schreibens; beim
+   Zeichnen wird von diesem Rechteck auf das aktuelle umgerechnet. So wandern
+   die Notizen beim Verschieben, Skalieren und Drehen mit und erscheinen nur
+   auf „ihrer" Seite.                                                        */
+let docNote=null;
+const NOTIZ_TYPEN=['stroke','shape','text'];
+function docNotizen(o,i){ if(!o.notes||typeof o.notes!=='object'||Array.isArray(o.notes)) o.notes={};
+  const k=String(i); if(!Array.isArray(o.notes[k])) o.notes[k]=[]; return o.notes[k]; }
+function docNotizenDa(o){ return !!(o&&o.notes&&Object.keys(o.notes).some(k=>Array.isArray(o.notes[k])&&o.notes[k].length)); }
+function docEntdreht(o,wx,wy){ if(!o.rot) return {x:wx,y:wy};
+  const b=geomBounds(o); return worldToLocal(wx,wy,b.x+b.w/2,b.y+b.h/2,o.rot); }
+function docDrin(o,wx,wy){ const p=docEntdreht(o,wx,wy);
+  return p.x>=o.x&&p.x<=o.x+o.w&&p.y>=o.y&&p.y<=o.y+o.h; }
+function notizBasis(n){ return n.b||{x:0,y:0,w:1,h:1,rot:0}; }
+function docZurNotiz(o,n,wx,wy){           /* Weltpunkt -> System, in dem die Notiz liegt */
+  const b=notizBasis(n); let p=docEntdreht(o,wx,wy);
+  p={x:b.x+(p.x-o.x)*b.w/(o.w||1), y:b.y+(p.y-o.y)*b.h/(o.h||1)};
+  if(b.rot){ const cx=b.x+b.w/2, cy=b.y+b.h/2, co=Math.cos(b.rot), si=Math.sin(b.rot), dx=p.x-cx, dy=p.y-cy;
+    p={x:cx+dx*co-dy*si, y:cy+dx*si+dy*co}; }
+  return p; }
+function notizStart(n){ if(n.type==='stroke') return n.points&&n.points[0];
+  if(n.type==='shape') return {x:n.x0,y:n.y0}; return {x:n.x,y:n.y}; }
+function docNotizZiel(n){                  /* gehoert das frisch Gezeichnete auf das Dokument? */
+  if(!docNote||!NOTIZ_TYPEN.includes(n.type)) return false;
+  if(!page().objects.includes(docNote)){ docNote=null; return false; }
+  const p=notizStart(n); return !!p && docDrin(docNote,p.x,p.y); }
+function docNotizAnlegen(o,n){
+  n.b={x:o.x,y:o.y,w:o.w,h:o.h,rot:o.rot||0};
+  pushUndo(); docNotizen(o,docCur(o)).push(n); markDirty(); scheduleAutosave(); }
+function docNotizMalen(c,o,i){
+  const list=(o.notes&&o.notes[String(i)])||[]; if(!list.length) return;
+  c.save(); c.beginPath(); c.rect(o.x,o.y,o.w,o.h); c.clip();
+  list.forEach(n=>{ const b=notizBasis(n); if(!(b.w>0&&b.h>0)) return;
+    c.save(); c.translate(o.x,o.y); c.scale(o.w/b.w,o.h/b.h); c.translate(-b.x,-b.y);
+    if(b.rot){ const cx=b.x+b.w/2, cy=b.y+b.h/2; c.translate(cx,cy); c.rotate(-b.rot); c.translate(-cx,-cy); }
+    try{ drawObjectRaw(n,c); }catch(err){}
+    c.restore(); });
+  c.restore(); }
+function notizTrifft(n,p,r){
+  if(n.type==='stroke'){ const w=(n.width||1)/2;
+    return (n.points||[]).some(q=>Math.hypot(q.x-p.x,q.y-p.y)<r+w); }
+  const b=geomBounds(n); return p.x>=b.x-r&&p.x<=b.x+b.w+r&&p.y>=b.y-r&&p.y<=b.y+b.h+r; }
+function docNotizRadieren(x,y){            /* true: der Radierer steckt im Dokument */
+  if(!docNote) return false;
+  if(!page().objects.includes(docNote)){ docNote=null; return false; }
+  const list=docNotizen(docNote,docCur(docNote)); let weg=false;
+  for(let i=list.length-1;i>=0;i--){ const n=list[i], b=notizBasis(n);
+    const p=docZurNotiz(docNote,n,x,y), r=(eraserWidth/scale)*(b.w/(docNote.w||1));
+    if(notizTrifft(n,p,r)){ if(!weg) pushUndo(); list.splice(i,1); weg=true; } }
+  if(weg){ markDirty(); scheduleAutosave(); }
+  return docDrin(docNote,x,y); }
+function docNotizAn(o,an){
+  if(an){ docNote=o; setMode('write');
+    if(!['pen','marker','eraser'].includes(tool)) setTool('pen');
+    toast('Beschriften: auf das Dokument schreiben – die Notizen bleiben an der Seite'); }
+  else { docNote=null; toast('Beschriften beendet'); }
+  refreshProps(); markDirty(); }
+/* Seite samt Notizen als Bild (fuer Vollbild und PDF-Sicherung) */
+function docSeiteBild(o,i,cb){
+  const url=(o.pages&&o.pages[i])||'';
+  const list=(o.notes&&o.notes[String(i)])||[];
+  if(!list.length){ cb(url); return; }
+  const im=new Image();
+  im.onload=()=>{ try{
+      const c=document.createElement('canvas'); c.width=im.naturalWidth||im.width; c.height=im.naturalHeight||im.height;
+      const g=c.getContext('2d'); g.drawImage(im,0,0,c.width,c.height);
+      docNotizMalen(g,{x:0,y:0,w:c.width,h:c.height,rot:0,notes:o.notes},i);
+      cb(c.toDataURL('image/png'));
+    }catch(err){ cb(url); } };
+  im.onerror=()=>cb(url); im.src=url; }
 function docTurn(o,d){ if(!o||o.type!=='doc') return; const n=o.pages.length;
   o.cur=Math.max(0,Math.min(n-1,docCur(o)+d)); ensureImg(o); markDirty(); refreshProps(); scheduleAutosave(); }
 function ensurePageImg(p){ if(p.bg&&!p._img){const im=new Image();im.onload=markDirty;im.src=p.bg;p._img=im;} }

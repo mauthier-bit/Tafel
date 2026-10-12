@@ -1295,6 +1295,22 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   ist **oben und links fest begrenzt** (Ursprung oben-links) und **nach unten und rechts unbegrenzt** –
   man schiebt also nur nach unten/rechts.
 - **Seiten:** hinzufügen, löschen, blättern
+- **Dokument beschriften (PDF „ausfüllen"):** Bei einem **Dokument-Objekt** (mehrseitiges PDF, PowerPoint
+  oder Scan, mit ‹ › blätterbar) steht im Kontextmenü **„✎ Beschriften"**. Ist der Schalter an, liegt ein
+  blau gestrichelter Rahmen um das Dokument, und alles, was mit **Stift, Marker, Formen oder Text** auf das
+  Dokument geschrieben wird, gehört von da an **zur angezeigten Seite** – wie eine Folie, die fest auf der
+  Seite liegt. Beim **Blättern** erscheint zu jeder Seite nur ihre eigene Folie. Der **Radierer** löscht
+  innerhalb des Dokuments nur Notizen, nicht das Dokument selbst; **„🧽 Notizen dieser Seite löschen"**
+  räumt eine Seite auf einmal frei.
+  Mit **„✓ Beschriften beenden"** ist das Dokument wieder ein normales Objekt: **Verschieben, Skalieren und
+  Drehen** nehmen die Notizen mit, als wären sie aufgedruckt – auch das Beschriften im **gedrehten** Zustand
+  stimmt hinterher. Die Notizen werden **mit dem Projekt gespeichert**, erscheinen im **Vollbild** und in
+  **„📄 Als PDF sichern"** sowie im PDF-Export der Tafelseite.
+  Was neben dem Dokument geschrieben wird, bleibt wie bisher ein gewöhnliches Objekt der Tafelseite.
+  *Warum als Folie und nicht im PDF?* Ein eingefügtes PDF liegt in der Tafel schon als **Bild je Seite** vor
+  (so lässt es sich überhaupt verschieben, zoomen und auf der Tafel zeigen); die PDF-Datei selbst ist dann
+  nicht mehr da. Die Folie ist außerdem **verlustfrei**: Striche bleiben Striche, lassen sich einzeln
+  radieren, bleiben beim Zoomen scharf und verändern das Dokument nie.
 - **Einbetten als bewegliches Objekt:** Bilder, **YouTube/Video**, **Webseiten/HTML**, **GeoGebra**
   und die **Tabellenkalkulation** – verschieben/skalieren/drehen wie jedes andere Objekt. Zum
   Bedienen (Video abspielen, Zellen auswählen, GeoGebra ziehen …) **oben** auf
