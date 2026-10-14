@@ -730,6 +730,17 @@
   .calc-grid button{border:none;border-radius:10px;padding:12px 0;font-size:16px;cursor:pointer;background:#eef1f6;color:#1f2430;font-weight:600;}
   .calc-grid button.op{background:#dbe4f0;} .calc-grid button.fn{background:#e7ecff;font-size:13px;} .calc-grid button.eq{background:var(--accent);color:#fff;} .calc-grid button.wide{grid-column:span 2;} .calc-grid button.small{font-size:11px;} .calc-grid button.on{background:#f59e0b;color:#fff;}
 
+  #lupeCv{position:fixed;z-index:14;display:none;pointer-events:none;background:#fff;
+    box-shadow:0 8px 30px rgba(0,0,0,.35);}
+  #lupeBar{position:fixed;z-index:16;display:none;flex-direction:column;align-items:center;gap:7px;
+    width:40px;padding:9px 0 11px;border-radius:999px;background:rgba(255,255,255,.94);
+    box-shadow:0 5px 18px rgba(0,0,0,.32);touch-action:none;-webkit-user-select:none;user-select:none;}
+  #lupeBar.an{display:flex;}
+  #lupeTrack{position:relative;width:9px;height:160px;border-radius:999px;background:#d7dce5;}
+  #lupeFill{position:absolute;left:0;right:0;bottom:0;border-radius:999px;background:var(--accent);}
+  #lupeKnob{position:absolute;left:50%;width:24px;height:24px;margin-left:-12px;margin-top:-12px;
+    border-radius:50%;background:#fff;border:2.5px solid var(--accent);box-shadow:0 2px 7px rgba(0,0,0,.28);}
+  #lupeVal{font:700 11.5px -apple-system,BlinkMacSystemFont,sans-serif;color:#2b3140;}
   #spot{position:fixed;inset:0;z-index:15;display:none;pointer-events:none;}
   /* Rechteck-Scheinwerfer: der helle Kasten stanzt sich aus der Verdunklung aus,
      der Innenschatten lässt die Kante weich auslaufen wie beim runden Fleck */
@@ -771,6 +782,8 @@
 <div id="edgeL" class="edgezone"><div class="edgegrip"></div></div>
 <div id="edgeR" class="edgezone"><div class="edgegrip"></div></div>
 <div id="edgeB" class="edgezone"><div class="edgegrip"></div></div>
+<canvas id="lupeCv"></canvas>
+<div id="lupeBar"><div id="lupeVal">2,0×</div><div id="lupeTrack"><div id="lupeFill"></div><div id="lupeKnob"></div></div></div>
 <div id="spot"><div id="spotR"></div></div>
 <div id="measure"></div>
 <textarea id="textEditor" spellcheck="false"></textarea>
@@ -1386,6 +1399,8 @@
     <label class="lbl">Scheinwerfer</label>
     <div class="seg" id="spotSeg"><button data-spot="ellipse" class="active">Kreis / Ellipse</button><button data-spot="rect">Rechteck</button></div>
     <div class="hint" style="margin-top:6px">Der Lichtfleck wird mit <b>zwei Fingern</b> aufgezogen: waagrecht nur breiter, senkrecht nur höher, diagonal insgesamt größer. Das Rechteck rahmt einen Textabschnitt oder eine Aufgabe genauer ein.</div>
+    <div class="toggle" style="margin-top:8px"><span>Lupe<br><small style="color:#888">(Regler neben dem Lichtfleck)</small></span><div class="sw2" id="spotLupe"></div></div>
+    <div class="hint" style="margin-top:6px">Mit der Lupe zeigt der Lichtfleck den Ausschnitt <b>vergrößert</b> – gut für kleine Schrift, ein Detail im Bild oder eine einzelne Zeile. Neben dem Fleck erscheint ein Regler für die Vergrößerung (<b>1-fach bis 6-fach</b>); bei 1-fach sieht alles aus wie ohne Lupe.</div>
     <label class="lbl">Laserpointer</label>
     <div style="display:flex;align-items:center;gap:6px;margin-top:4px;font-size:13px">
       <span style="flex:1;color:#555">Nachleuchten der Spur</span>
@@ -1802,6 +1817,7 @@ function redraw(){
     ctx.beginPath(); ctx.arc(eraserPos.x,eraserPos.y,eraserWidth/scale,0,7); ctx.stroke(); ctx.setLineDash([]); ctx.restore(); }
   if(tool==='arc' && arcState){ ctx.save(); ctx.strokeStyle='rgba(59,130,246,.45)'; ctx.setLineDash([6/scale,5/scale]); ctx.lineWidth=1.5/scale; ctx.beginPath(); ctx.arc(arcState.cx,arcState.cy,arcState.r,0,7); ctx.stroke(); ctx.setLineDash([]); ctx.beginPath(); ctx.arc(arcState.cx,arcState.cy,3.5/scale,0,7); ctx.fillStyle='rgba(59,130,246,.75)'; ctx.fill(); ctx.restore(); }
   drawLaser();
+  if(typeof lupeNachziehen==='function') lupeNachziehen();
   if(tool==='select') drawSelection();
   if(marquee) drawMarquee();
   if(rulerVisible) drawRuler();
@@ -2559,6 +2575,7 @@ function setTool(t){ if(streck) streckAbbrechen();   // anderes Werkzeug gewähl
   // Farbpalette NICHT automatisch öffnen; Formen-Auswahl bleibt (zum Wählen der Form)
   const sh=$('shapepop'); const showSh=(t==='shape'); const shA=anch('t-shape'); sh.classList.toggle('show',showSh); if(showSh){ place(sh,shA); avoidOverlap(sh,$('penpop')); } else if(t!=='marker'&&t!=='text'&&t!=='dict'&&t!=='pen'&&t!=='eraser') $('penpop').classList.remove('show');
   $('spot').style.display=(t==='spot')?'block':'none';
+  if(typeof lupeAktualisieren==='function') setTimeout(lupeAktualisieren,0);
   if(t==='spot'){ const r=Math.round((spotRX+spotRY)/2); spotRX=spotRY=r; moveSpot(spotMid.x||W/2,spotMid.y||H/2); }   // beim Einschalten wieder rund
   $('t-ruler').classList.toggle('active',rulerVisible); $('t-geo').classList.toggle('active',geoVisible); // Lineal/Geodreieck bleiben sichtbar
   if(t!=='arc'){ arcState=null; hideMeasure(); }
@@ -3843,13 +3860,14 @@ $('pageMenu').addEventListener('pointerdown',e=>e.stopPropagation());
 document.addEventListener('pointerdown',e=>{ if($('pageMenu').classList.contains('show') && !e.target.closest('#pageMenu') && !e.target.closest('.pmBtn') && !e.target.closest('#ppMore')) closePageMenu(); }, true);
 $('setMin').onclick=()=>{ $('settingsbar').classList.toggle('min'); rotateChev('setMin',$('settingsbar').classList.contains('min'),true); saveUI(); positionAnnoToggle(); };
 function rotateChev(id,min){ $(id).querySelector('svg').style.transform=min?'scaleX(-1)':''; }
-function saveUI(){ try{ localStorage.setItem('tafel_ui',JSON.stringify({page:$('pagebar').classList.contains('min'),set:$('settingsbar').classList.contains('min'),side:mainbarSide,theme:barTheme,tint:barTint,favs,pxcm:PXCM,pal:palette,cols:toolColors,rec:shapeRecog,wv:2,pp:propPos,ppH:propHint,ent:camEntz,hell:camHell,ob:obenPx,pw:penWidth,mw:markerWidth,ew:eraserWidth,sz:streckZeigen,sa:shapeAlpha,spf:spotForm,lms:laserMs,rul:{len:ruler.len,color:ruler.color,mm:ruler.mm,nums:ruler.nums,pct:ruler.pct,fs:ruler.fs},geo:{size:geo.size,color:geo.color,mm:geo.mm,nums:geo.nums,fs:geo.fs}})); }catch(e){} }
+function saveUI(){ try{ localStorage.setItem('tafel_ui',JSON.stringify({page:$('pagebar').classList.contains('min'),set:$('settingsbar').classList.contains('min'),side:mainbarSide,theme:barTheme,tint:barTint,favs,pxcm:PXCM,pal:palette,cols:toolColors,rec:shapeRecog,wv:2,pp:propPos,ppH:propHint,ent:camEntz,hell:camHell,ob:obenPx,pw:penWidth,mw:markerWidth,ew:eraserWidth,sz:streckZeigen,sa:shapeAlpha,spf:spotForm,lup:lupeAn,lupz:lupeZoom,lms:laserMs,rul:{len:ruler.len,color:ruler.color,mm:ruler.mm,nums:ruler.nums,pct:ruler.pct,fs:ruler.fs},geo:{size:geo.size,color:geo.color,mm:geo.mm,nums:geo.nums,fs:geo.fs}})); }catch(e){} }
 function restoreUI(){ try{ const u=JSON.parse(localStorage.getItem('tafel_ui')||'{}'); if(u.page){$('pagebar').classList.add('min');pageChev(true);} if(u.set){$('settingsbar').classList.add('min');rotateChev('setMin',true);} if(u.side==='right'||u.side==='bottom')mainbarSide=u.side; if(u.theme==='light'||u.theme==='dark')barTheme=u.theme; if(u.tint&&typeof u.tint==='object')barTint=Object.assign(barTint,u.tint); if(Array.isArray(u.favs))favs=u.favs.filter(f=>f!=='w-export').slice(0,FAV_MAX);   // PDF-Export sitzt jetzt in den Einstellungen
   if(+u.pxcm>0&&Math.abs(+u.pxcm-37.8)>0.2) PXCM=Math.max(28,Math.min(64,+u.pxcm));   // alter Standard 37,8 → neuer, am iPad gemessener Wert
   if(Array.isArray(u.pal)&&u.pal.length===palette.length&&u.pal.every(c=>/^#[0-9a-f]{6}$/i.test(c))) palette=u.pal.slice();
   if(u.rec){ shapeRecog=true; $('shapeRecogSw').classList.add('on'); }
   if(u.cols&&typeof u.cols==='object')Object.assign(toolColors,u.cols); if(u.wv===2){ if(+u.pw>0)penWidth=+u.pw; if(+u.mw>0)markerWidth=+u.mw; } if(+u.ew>0)eraserWidth=+u.ew; if(+u.sa>=0&&+u.sa<=1)shapeAlpha=+u.sa; propHint=!!u.ppH; if(+u.hell>=0&&+u.hell<=100) camHell=+u.hell; if(+u.ob>=0&&+u.ob<=48) obenPx=+u.ob; if(u.ent&&Array.isArray(u.ent.q)&&u.ent.q.length===4) camEntz={an:!!u.ent.an,ar:+u.ent.ar||0,q:u.ent.q.map(p=>({x:+p.x||0,y:+p.y||0}))}; if(u.pp&&isFinite(u.pp.l)&&isFinite(u.pp.t)) propPosSetzen({l:+u.pp.l,t:+u.pp.t}); streckZeigen=!!u.sz;   // ältere Stärken (4 Stufen) verwerfen
   if(u.spf==='rect'||u.spf==='ellipse') spotForm=u.spf; if(+u.lms>=100&&+u.lms<=3000) laserMs=+u.lms;
+  lupeAn=!!u.lup; if(+u.lupz>=1&&+u.lupz<=6) lupeZoom=+u.lupz;
   if(u.rul)Object.assign(ruler,{len:+u.rul.len||ruler.len,color:u.rul.color||ruler.color,mm:u.rul.mm!==false,nums:u.rul.nums!==false,pct:!!u.rul.pct,fs:+u.rul.fs||11});
   if(u.geo)Object.assign(geo,{size:+u.geo.size||geo.size,color:u.geo.color||geo.color,mm:u.geo.mm!==false,nums:u.geo.nums!==false,fs:+u.geo.fs||11});
   applyBarsState(); refreshBarTheme(); renderFavs(); buildFavList(); buildPalEdit(); repaintPalette(); applyToolColor(); refreshCal(); spotSegUI(); lasUI(); obenUI(); }catch(e){} }
@@ -6811,14 +6829,78 @@ function showBusy(on,msg){const b=$('busy');if(msg)b.textContent=msg;b.classList
 const spot=$('spot'); let spotRX=120, spotRY=120, spotBase=null, spotMid={x:0,y:0};
 /* Der Lichtfleck darf eine Ellipse sein: waagrecht aufziehen macht ihn nur breiter,
    senkrecht nur höher, diagonal wächst der ganze Fleck (Seitenverhältnis bleibt). */
-function moveSpot(x,y){ spotMid={x,y};
+function moveSpot(x,y){ spotMid={x,y}; setTimeout(lupeAktualisieren,0);
   const eckig=(spotForm==='rect'); spot.classList.toggle('rect',eckig);
   if(eckig){ spot.style.background='none'; const r=$('spotR');
     r.style.left=Math.round(x-spotRX)+'px'; r.style.top=Math.round(y-spotRY)+'px';
     r.style.width=Math.round(2*spotRX)+'px'; r.style.height=Math.round(2*spotRY)+'px'; return; }
   spot.style.background='radial-gradient('+Math.round(spotRX)+'px '+Math.round(spotRY)+'px at '+x+'px '+y+'px, rgba(0,0,0,0) 0, rgba(0,0,0,0) 90%, rgba(0,0,0,.82) 115%)'; }
 /* Einstellungen zu Scheinwerfer und Laser */
-function spotSegUI(){ document.querySelectorAll('#spotSeg button').forEach(b=>b.classList.toggle('active',b.dataset.spot===spotForm)); }
+function spotSegUI(){ document.querySelectorAll('#spotSeg button').forEach(b=>b.classList.toggle('active',b.dataset.spot===spotForm));
+  $('spotLupe').classList.toggle('on',lupeAn); }
+
+/* ---------- Lupe: der Lichtfleck zeigt den Ausschnitt vergrößert ----------
+   Der Ausschnitt wird in eine eigene Fläche neu gezeichnet (nicht das Bild
+   der Tafel vergrößert), damit Schrift und Striche scharf bleiben. Der
+   Weltpunkt unter der Mitte des Flecks bleibt dabei in der Mitte stehen.   */
+let lupeAn=false, lupeZoom=2, lupeZieht=false;
+const lupeKlemm=v=>Math.max(1,Math.min(6,v));
+function lupeFlaeche(){ return { w:Math.max(20,Math.round(2*spotRX)), h:Math.max(20,Math.round(2*spotRY)) }; }
+function lupeZeichnen(){
+  const c=$('lupeCv'); if(!c) return;
+  if(!(lupeAn&&tool==='spot')){ c.style.display='none'; return; }
+  const f=lupeFlaeche();
+  if(c.width!==Math.round(f.w*dpr)||c.height!==Math.round(f.h*dpr)){
+    c.width=Math.round(f.w*dpr); c.height=Math.round(f.h*dpr);
+    c.style.width=f.w+'px'; c.style.height=f.h+'px'; }
+  const g=c.getContext('2d');
+  g.setTransform(1,0,0,1,0,0); g.clearRect(0,0,c.width,c.height);
+  g.fillStyle=seitenGrund(); g.fillRect(0,0,c.width,c.height);
+  const m=toWorld(spotMid.x,spotMid.y), s=scale*lupeZoom*dpr;
+  g.setTransform(s,0,0,s, c.width/2-m.x*s, c.height/2-m.y*s);
+  try{ paintPattern(g, m.x-f.w/(2*scale*lupeZoom), m.y-f.h/(2*scale*lupeZoom),
+        m.x+f.w/(2*scale*lupeZoom), m.y+f.h/(2*scale*lupeZoom), pagePat(page()), isBgDark(), scale*lupeZoom); }catch(e){}
+  if(page()._img){ try{ g.drawImage(page()._img,page().bgX||0,page().bgY||0); }catch(e){} }
+  for(const o of page().objects){ try{ drawObject(o,g); }catch(e){} }
+  c.style.left=Math.round(spotMid.x-f.w/2)+'px'; c.style.top=Math.round(spotMid.y-f.h/2)+'px';
+  c.style.borderRadius=(spotForm==='rect')?'5px':'50%';
+  c.style.display='block';
+}
+function seitenGrund(){ try{ const p=page(); return (p.bgColor||doc.settings.bgColor)==='black'?'#14161b':'#ffffff'; }catch(e){ return '#ffffff'; } }
+function lupeBalken(){
+  const b=$('lupeBar'); if(!b) return;
+  const zeig=(lupeAn&&tool==='spot'); b.classList.toggle('an',zeig);
+  if(!zeig) return;
+  const br=44, hoehe=b.offsetHeight||200;
+  let x=spotMid.x+spotRX+14;
+  if(x+br>W-6) x=spotMid.x-spotRX-14-br;
+  if(x<6) x=6;
+  b.style.left=Math.round(x)+'px';
+  b.style.top=Math.round(Math.max(6,Math.min(H-hoehe-6,spotMid.y-hoehe/2)))+'px';
+  const t=$('lupeTrack'), k=$('lupeKnob'), fi=$('lupeFill');
+  const a=(lupeZoom-1)/5, hh=t.offsetHeight||160;
+  k.style.top=Math.round(hh*(1-a))+'px'; fi.style.height=Math.round(hh*a)+'px';
+  $('lupeVal').textContent=lupeZoom.toFixed(1).replace('.',',')+'×';
+}
+function lupeAktualisieren(){ lupeZeichnen(); lupeBalken(); }
+/* Beim Neuzeichnen der Tafel mitziehen (z. B. laufendes Video), aber gedrosselt */
+let lupeTakt=0;
+function lupeNachziehen(){ if(!(lupeAn&&tool==='spot')) return;
+  const n=performance.now(); if(n-lupeTakt<250) return; lupeTakt=n; lupeZeichnen(); }
+(function(){
+  const bar=$('lupeBar'), track=$('lupeTrack');
+  const setzen=cy=>{ const r=track.getBoundingClientRect();
+    const a=Math.max(0,Math.min(1,(r.bottom-cy)/(r.height||1)));
+    lupeZoom=lupeKlemm(Math.round((1+a*5)*10)/10); lupeAktualisieren(); };
+  bar.addEventListener('pointerdown',e=>{ lupeZieht=true; e.preventDefault(); e.stopPropagation();
+    try{ bar.setPointerCapture(e.pointerId); }catch(_){ } setzen(e.clientY); },{passive:false});
+  bar.addEventListener('pointermove',e=>{ if(lupeZieht){ e.preventDefault(); e.stopPropagation(); setzen(e.clientY); } },{passive:false});
+  const ende=e=>{ if(!lupeZieht) return; lupeZieht=false; e.stopPropagation(); saveUI(); };
+  bar.addEventListener('pointerup',ende); bar.addEventListener('pointercancel',ende);
+})();
+$('spotLupe').onclick=function(){ this.classList.toggle('on'); lupeAn=this.classList.contains('on');
+  lupeAktualisieren(); saveUI();
+  if(lupeAn&&tool!=='spot') toast('Lupe an – sie wirkt im Scheinwerfer'); };
 function lasUI(){ $('lasV').textContent=(laserMs/1000).toFixed(1).replace('.',',')+' s'; }
 /* Abstand der oberen Leisten – Notnagel, wenn die Statusleiste des iPads darüberliegt */
 let obenPx=0;
@@ -6842,9 +6924,11 @@ function updateSpot(){ const ps=[...pointers.values()]; if(!ps.length)return;
     if(B.art==='x') spotRX=spotKlemm(B.rx*Math.max(Math.abs(a.x-b.x),8)/B.dx);
     else if(B.art==='y') spotRY=spotKlemm(B.ry*Math.max(Math.abs(a.y-b.y),8)/B.dy);
     else { const f=Math.max(Math.hypot(a.x-b.x,a.y-b.y),8)/B.dist; spotRX=spotKlemm(B.rx*f); spotRY=spotKlemm(B.ry*f); }
+    setTimeout(lupeAktualisieren,0);
     moveSpot((a.x+b.x)/2,(a.y+b.y)/2); }
   else moveSpot(ps[0].x,ps[0].y); }
-addEventListener('pointermove',e=>{ if(tool==='spot'&&pointers.size===0) moveSpot(e.clientX,e.clientY); }); moveSpot(W/2,H/2);
+addEventListener('pointermove',e=>{ if(lupeZieht) return;
+  if(tool==='spot'&&pointers.size===0) moveSpot(e.clientX,e.clientY); }); moveSpot(W/2,H/2);
 addEventListener('contextmenu',e=>{ if(!/^(INPUT|TEXTAREA)$/.test(e.target.tagName)) e.preventDefault(); }); // Einfügen-Menü in Eingabefeldern zulassen
 document.addEventListener('gesturestart',e=>e.preventDefault());
 function isTypingTarget(el){ return !!el && (/^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName||'') || el.isContentEditable); }

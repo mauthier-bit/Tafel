@@ -173,6 +173,15 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   Lichtfleck ein **Kreis bzw. eine Ellipse** ist (wie bisher) oder ein **Rechteck** – der Kasten
   rahmt eine Textzeile, einen Absatz oder eine einzelne Aufgabe genauer ein. Beide Formen werden
   mit denselben Gesten aufgezogen, die Einstellung bleibt auf dem Gerät gespeichert.
+- **Lupe im Scheinwerfer** (Einstellungen → Bedienung, Schalter **„Lupe"**): Ist sie an, zeigt der
+  Lichtfleck seinen Ausschnitt **vergrößert**. Neben dem Fleck steht dann ein **senkrechter Regler**
+  für die Vergrößerung von **1-fach bis 6-fach**; der eingestellte Wert steht als „2,0×" darüber.
+  Bei 1-fach sieht alles aus wie ohne Lupe. Der Ausschnitt wird **neu gezeichnet**, nicht das
+  Tafelbild vergrößert – Schrift, Striche und Figuren bleiben dadurch **scharf**, auch bei 6-fach.
+  Der Punkt unter der Mitte des Flecks bleibt beim Vergrößern stehen, sodass man mit dem Finger
+  oder der Maus über die Tafel fährt und die Lupe mitwandert. Der Regler bewegt den Fleck nicht,
+  solange man an ihm zieht. Form (Kreis oder Rechteck) und Größe gelten wie gehabt, die Lupe
+  übernimmt beides. Einstellung und Vergrößerung bleiben auf dem Gerät gespeichert.
 - **Laserpointer – Nachleuchten einstellbar** (Einstellungen → Bedienung): Wie lange die Leuchtspur
   hinter dem Punkt stehen bleibt, ist in Schritten von **0,1 s bis 3 s** wählbar (Standard 0,7 s).
   Länger heißt: Die Klasse sieht den ganzen gezeigten Weg; kürzer heißt: nur den Punkt selbst.
