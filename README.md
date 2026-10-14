@@ -1462,7 +1462,11 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   **− / +** unten rechts im Bild zoomen stufenweise (1,0× bis 8,0×, Anzeige daneben), **💡** unten
   links schaltet die **Kamera-Leuchte** ein, um das Blatt auszuleuchten (nur wo der Browser das
   erlaubt – das iPad gibt die Leuchte bisher nicht frei und sagt das dann auch), das kleine
-  rote **×** oben rechts schließt es wieder. **Die Kamera schaltet sich danach selbst ab** – und zwar
+  rote **×** oben rechts schließt es wieder. Im **Kontextmenü** gibt es für das Livebild jetzt auch
+  **„Vollbild"**: Das Kamerabild füllt dann den ganzen Bildschirm, die eigenen Knöpfe (Zoom,
+  Leuchte, Aufhellen) bleiben erhalten und behalten ihre Größe – gut, wenn die ganze Klasse ein
+  Heft oder einen Versuch mitverfolgen soll. Beendet wird das Vollbild wie bei jedem Objekt:
+  über „Vollbild beenden" oder mit einem Wisch von oben nach unten. **Die Kamera schaltet sich danach selbst ab** – und zwar
   auf jedem Weg: ob das Livebild über sein ×, über „Löschen" im Kontextmenü, über „Seite leeren" oder
   beim Laden eines anderen Projekts verschwindet. Solange ein Kamerafenster offen ist, ein Livebild
   auf **irgendeiner** Seite steht oder eine Aufnahme läuft, bleibt sie an; sonst geht sie binnen
