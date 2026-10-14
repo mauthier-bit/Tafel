@@ -1321,8 +1321,9 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   ist **oben und links fest begrenzt** (Ursprung oben-links) und **nach unten und rechts unbegrenzt** –
   man schiebt also nur nach unten/rechts.
 - **Seiten:** hinzufügen, löschen, blättern
-- **Dokument beschriften (PDF „ausfüllen"):** Bei einem **Dokument-Objekt** (mehrseitiges PDF, PowerPoint
-  oder Scan, mit ‹ › blätterbar) steht im Kontextmenü **„✎ Beschriften"**. Ist der Schalter an, **leuchtet ein roter
+- **Dokument und Bild beschriften (PDF „ausfüllen"):** Bei einem **Dokument-Objekt** (mehrseitiges PDF,
+  PowerPoint oder Scan, mit ‹ › blätterbar) **und bei jedem eingefügten Bild** (Foto, Scan, Grafik,
+  Kamerabild) steht im Kontextmenü **„✎ Beschriften"**. Ist der Schalter an, **leuchtet ein roter
   Rahmen** um das Dokument – deutlich anders als der blaue Auswahlrahmen –, und oben in der Mitte steht der
   rote Knopf **„✎ Beschriften beenden"**, mit dem sich der Modus jederzeit verlassen lässt (im Schreibmodus
   ist das Kontextmenü ja nicht sichtbar). Alles, was mit **Stift, Marker, Formen oder Text** auf das
@@ -1332,11 +1333,14 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   die angezeigte Seite auf einmal frei. Die Knöpfe stehen als eigener, durch Trennlinien abgesetzter Block im
   Kontextmenü: „Beschriften" oben, darunter die Blätter-Knöpfe mit „Notizen löschen" daneben, darunter
   „Als PDF sichern".
-  Mit **„✓ Beschriften beenden"** ist das Dokument wieder ein normales Objekt: **Verschieben, Skalieren und
+  Beim **Bild** gilt alles genauso, nur ohne Blättern: Die Notizen gehören zu diesem einen Bild.
+  Mit **„✓ Beschriften beenden"** ist das Dokument bzw. Bild wieder ein normales Objekt: **Verschieben, Skalieren und
   Drehen** nehmen die Notizen mit, als wären sie aufgedruckt – auch das Beschriften im **gedrehten** Zustand
   stimmt hinterher. Die Notizen werden **mit dem Projekt gespeichert**, erscheinen im **Vollbild** und in
   **„📄 Als PDF sichern"** sowie im PDF-Export der Tafelseite.
   Was neben dem Dokument geschrieben wird, bleibt wie bisher ein gewöhnliches Objekt der Tafelseite.
+  Im Kontextmenü eines Bildes erscheinen deshalb dieselben zwei Knöpfe; die Blätter-Knöpfe und
+  „Als PDF sichern" bleiben den Dokumenten vorbehalten.
   *Warum als Folie und nicht im PDF?* Ein eingefügtes PDF liegt in der Tafel schon als **Bild je Seite** vor
   (so lässt es sich überhaupt verschieben, zoomen und auf der Tafel zeigen); die PDF-Datei selbst ist dann
   nicht mehr da. Die Folie ist außerdem **verlustfrei**: Striche bleiben Striche, lassen sich einzeln
