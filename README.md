@@ -56,12 +56,17 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   die Grundfläche flacher oder offener zeigen, je nachdem, worauf es in der Stunde ankommt.
   In derselben Zeile wie die Eckenzahl steht beim Prisma rechts ein Umschalter **„stehend / liegend"**:
   Liegend steht die Grundfläche **vorne** und der Körper reicht nach hinten – das klassische Bild
-  eines liegenden Prismas.
+  eines liegenden Prismas. Beim **liegenden** Prisma kommt unten ein **zweiter gelber Punkt** dazu,
+  mit dem sich die **Länge** einstellen lässt (0,6 bis 4,5 Grundflächen, Anzeige „Länge 2,2
+  Grundflächen") – vom kurzen Klotz bis zum langen Balken.
 - **Pfeilspitzen je Seite** (Kontextmenü beim Pfeil): zwei Zeilen – **Anfang** und **Ende** – mit je
   vier Möglichkeiten: **ohne Spitze · offene Spitze · gefüllte Spitze · Punkt**. Damit entstehen
   einfache Pfeile, Doppelpfeile, Vektorpfeile mit gefüllter Spitze und Strecken mit markiertem
   Anfangs- oder Endpunkt. Die zuletzt gewählte Kombination gilt auch für **neue** Pfeile. Ältere
   Doppelpfeile werden weiter richtig gezeichnet.
+  Im Kontextmenü stehen **Punkte**, **Linie** und **Gefüllt** in derselben Spalte untereinander,
+  ebenso die **− / +**-Knöpfe von **Schrift** und **Ecken**; der Regler für die **Transparenz** ist
+  dadurch breiter geworden.
 - **Gelber Formgriff** (wie in Word): Bei **Trapez, Parallelogramm, Drachenviereck und Raute** erscheint im
   ausgewählten Zustand zusätzlich zu den weißen Eckgriffen ein **gelber Punkt**, mit dem sich ein Detail der
   Figur verstellen lässt, ohne sie zu skalieren:
