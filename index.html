@@ -971,6 +971,7 @@
   <div class="pgrip" id="propsGrip" title="Ziehen: Kontextmenü an eine andere Stelle schieben"><i></i><button class="pauto" id="propsAuto" title="Kontextmenü wieder automatisch neben das Objekt stellen">↺</button></div>
   <div class="prow" id="colorRow" style="font-size:13px"><b>Farbe</b><div class="swatches" id="propColors"></div></div>
   <div class="prow" id="widthRow" style="font-size:13px"><b>Dicke/Größe</b><div class="widths" id="propWidths"></div></div>
+  <div class="prow" id="propPtRow" style="display:none;font-size:13px"><b>Endpunkte</b><button class="p ptBtn" id="pt0" title="ohne Punkte">ohne</button><button class="p ptBtn" id="pt1" title="Strecke: beide Endpunkte">beide</button><button class="p ptBtn" id="pt2" title="Strahl: nur der Anfangspunkt">nur Anfang</button><button class="p ptBtn" id="pt3" title="Strahl: nur der Endpunkt">nur Ende</button></div>
   <div class="prow" id="propDashRow" style="display:none;font-size:13px"><b>Linie</b><button class="p dashBtn" id="dash0" title="durchgezogen"><svg viewBox="0 0 56 12"><path d="M3 6h50"/></svg></button><button class="p dashBtn" id="dash1" title="gestrichelt"><svg viewBox="0 0 56 12"><path d="M3 6h50" stroke-dasharray="9 6"/></svg></button><button class="p dashBtn" id="dash2" title="gepunktet"><svg viewBox="0 0 56 12"><path d="M3 6h50" stroke-dasharray="0.01 7"/></svg></button></div>
   <div class="prow" id="propFillRow"><label class="propToggle"><span>Gefüllt</span><div class="sw2" id="propFill"></div></label><span class="flbl">Transparenz</span><input type="range" id="propAlpha" min="0" max="100" step="5" value="80" title="Wie durchsichtig die Füllung ist – 0 % deckt ganz, 100 % ist unsichtbar"><span class="fval" id="propAlphaV">80 %</span></div>
   <div class="prow" id="textRow" style="display:none;flex-direction:column;align-items:stretch;gap:6px;font-size:13px">
@@ -1579,7 +1580,7 @@ const FORM_HILFE={trapez:'obere Seite', parallelogram:'Neigung', kite:'Querecken
 function formF(o){ if(!o||o.type!=='shape') return null; const d=FORM_DEF[o.shape]; if(d===undefined) return null;
   const v=(typeof o.f==='number'&&isFinite(o.f))?o.f:d;
   return Math.max(FORM_MIN[o.shape],Math.min(FORM_MAX[o.shape],v)); }
-const FUELLBAR=['rect','ellipse','circle','triangle','square','rtriangle','gtriangle','parallelogram','trapez','kite','kreis','rhombus','hexagon','polygon'];
+const FUELLBAR=['rect','ellipse','circle','triangle','square','rtriangle','gtriangle','etriangle','parallelogram','trapez','kite','kreis','rhombus','hexagon','polygon'];
 /* Was im Kontextmenü „Gefüllt“ und „Transparenz“ anbietet: dieselbe Liste ohne den
    Konstruktionskreis (Mittelpunkt + Radius) – dort ist eine Füllung nicht gewollt.
    Reine Linienformen (Linie, Pfeil, Gerade, Zirkelbogen) und die Körper (Quader, Prisma,
@@ -1617,6 +1618,8 @@ function drawObjectRaw(o,c){
     else if(o.shape==='polygon'&&Array.isArray(o.pn)){ o.pn.forEach(([u,v],k)=>{ const px=o.x0+u*(o.x1-o.x0), py=o.y0+v*(o.y1-o.y0); k?c.lineTo(px,py):c.moveTo(px,py); }); c.closePath(); }
     else if(o.shape==='rtriangle'){ c.moveTo(x,y); c.lineTo(x,y+h); c.lineTo(x+w,y+h); c.closePath(); }
     else if(o.shape==='gtriangle'){ c.moveTo(x+w*0.15,y); c.lineTo(x+w,y+h*0.35); c.lineTo(x+w*0.55,y+h); c.closePath(); }
+    else if(o.shape==='etriangle'){ const s=Math.min(w,h*2/Math.sqrt(3)), cx=x+w/2, hh=s*Math.sqrt(3)/2;
+      c.moveTo(cx,y+h-hh); c.lineTo(cx+s/2,y+h); c.lineTo(cx-s/2,y+h); c.closePath(); }
     else if(o.shape==='parallelogram'){ const sh=w*formF(o); c.moveTo(x+sh,y); c.lineTo(x+w,y); c.lineTo(x+w-sh,y+h); c.lineTo(x,y+h); c.closePath(); }
     else if(o.shape==='trapez'){ const ins=w*formF(o); c.moveTo(x+ins,y); c.lineTo(x+w-ins,y); c.lineTo(x+w,y+h); c.lineTo(x,y+h); c.closePath(); }
     else if(o.shape==='kite'){ const cx=x+w/2, q=h*formF(o); c.moveTo(cx,y); c.lineTo(x+w,y+q); c.lineTo(cx,y+h); c.lineTo(x,y+q); c.closePath(); }
@@ -1641,7 +1644,12 @@ function drawObjectRaw(o,c){
       spitze(o.x1,o.y1,a); if(o.both) spitze(o.x0,o.y0,a+Math.PI);}   /* both = Doppelpfeil */
     if(o.fill&&FUELLBAR.includes(o.shape)){c.fillStyle=o.color;c.globalAlpha=(typeof o.fillA==='number')?o.fillA:.2;c.fill();c.globalAlpha=1;}
     c.stroke(); c.setLineDash([]);
-    if(o.shape==='arc'||o.shape==='circle'){ c.beginPath(); c.arc(o.x0,o.y0,Math.max(o.width*0.9,1.6),0,7); c.fillStyle=o.color; c.fill(); }  // Mittelpunkt sichtbar (Zirkel & Kreis)
+    if(o.shape==='arc'||o.shape==='circle'){ c.beginPath(); c.arc(o.x0,o.y0,Math.max(o.width*0.9,1.6),0,7); c.fillStyle=o.color; c.fill(); }
+    if(o.shape==='line'&&(o.pt|0)){                 /* Endpunkte: Strecke, Strahl oder Gegenstrahl */
+      const r=Math.max(o.width*1.5,2.2), a=(o.pt|0);
+      c.fillStyle=o.color;
+      if(a===1||a===2){ c.beginPath(); c.arc(o.x0,o.y0,r,0,7); c.fill(); }
+      if(a===1||a===3){ c.beginPath(); c.arc(o.x1,o.y1,r,0,7); c.fill(); } }  // Mittelpunkt sichtbar (Zirkel & Kreis)
     if((o.lblV||o.lblE)&&LABEL_SHAPES.includes(o.shape)) drawShapeLabels(c,o,x,y,w,h);
   } else if(o.type==='text'){ c.fillStyle=o.color; c.textBaseline='top'; c.textAlign='left';
     textLines(o,c).forEach((ln,i)=>c.fillText(ln,o.x,o.y+i*o.size*1.3));
@@ -1771,6 +1779,8 @@ function planeVerts(o,x,y,w,h){ switch(o.shape){
   case 'triangle': return [[x,y+h],[x+w,y+h],[x+w/2,y]];
   case 'rtriangle': return [[x,y+h],[x+w,y+h],[x,y]];
   case 'gtriangle': return [[x+w*0.55,y+h],[x+w,y+h*0.35],[x+w*0.15,y]];
+  case 'etriangle': { const s=Math.min(w,h*2/Math.sqrt(3)), cx=x+w/2, hh=s*Math.sqrt(3)/2;
+    return [[cx-s/2,y+h],[cx+s/2,y+h],[cx,y+h-hh]]; }
   case 'parallelogram': { const sh=w*formF(o); return [[x,y+h],[x+w-sh,y+h],[x+w,y],[x+sh,y]]; }
   case 'trapez': { const ins=w*formF(o); return [[x,y+h],[x+w,y+h],[x+w-ins,y],[x+ins,y]]; }
   case 'rhombus': { const dw=w*formF(o); return [[x+(w-dw)/2,y+h/2],[x+w/2,y+h],[x+(w+dw)/2,y+h/2],[x+w/2,y]]; }
@@ -1778,7 +1788,7 @@ function planeVerts(o,x,y,w,h){ switch(o.shape){
   case 'hexagon': { const r=Math.min(w/2,h/Math.sqrt(3)), cx=x+w/2, cy=y+h/2; return [120,60,0,300,240,180].map(g=>[cx+r*Math.cos(g*Math.PI/180),cy+r*Math.sin(g*Math.PI/180)]); }
   case 'polygon': return (o.pn||[]).map(([u,v])=>[o.x0+u*(o.x1-o.x0),o.y0+v*(o.y1-o.y0)]); }
   return null; }
-const LABEL_SHAPES=['rect','square','triangle','rtriangle','gtriangle','parallelogram','trapez','rhombus','kite','hexagon','polygon','cuboid','prism','pyramid'];
+const LABEL_SHAPES=['rect','square','triangle','rtriangle','gtriangle','etriangle','parallelogram','trapez','rhombus','kite','hexagon','polygon','cuboid','prism','pyramid'];
 const lblSizeOf=o=>o.lblSize||Math.round(Math.max(15,o.width*4.2));
 /* Standard-Beschriftungen einer Figur: Ecken A, B, C … (Pyramidenspitze S), Seiten a, b, c … */
 function shapeLabels(o,x,y,w,h){ const solid=['cuboid','prism','pyramid'].includes(o.shape);
@@ -2747,10 +2757,10 @@ function syncPenPop(){ const rad=(tool==='eraser');
 const wEl=$('widths');
 widths.forEach((w,i)=>{const b=document.createElement('button');b.className='wbtn'+(i===1?' active':'');const dot=document.createElement('i');dot.style.width=dot.style.height=Math.min(w+4,20)+'px';b.appendChild(dot);
   b.onclick=()=>{if(tool==='marker')markerWidth=w*4;else if(tool==='eraser')eraserWidth=w*ERAS_F;else{penWidth=w;textSize=Math.round(14+w*4);}wEl.querySelectorAll('.wbtn').forEach(x=>x.classList.remove('active'));b.classList.add('active');saveUI();markDirty();};wEl.appendChild(b);});
-const shapeDefs=[['line','<path d="M4 20 20 4"/>'],['rect','<rect x="4" y="7" width="16" height="10"/>'],['square','<rect x="6" y="6" width="12" height="12"/>'],['ellipse','<ellipse cx="12" cy="12" rx="9" ry="6"/>'],['kreis','<circle cx="12" cy="12" r="8"/>'],['gtriangle','<path d="M4 17 10 5 20 13Z"/>'],['rtriangle','<path d="M5 5v14h14Z"/>'],['triangle','<path d="M12 5 20 19 4 19Z"/>'],['parallelogram','<path d="M7 6h13l-3 12H4Z"/>'],['trapez','<path d="M8 6h8l3 12H5Z"/>'],['rhombus','<path d="M12 3 20 12 12 21 4 12Z"/>'],['kite','<path d="M12 3 19 10 12 21 5 10Z"/>'],['hexagon','<path d="M7.5 4.2h9L21 12l-4.5 7.8h-9L3 12Z"/>'],['polygon','<path d="M5 18 4 9l7-5 9 5-3 9Z"/><circle cx="5" cy="18" r="1.6" fill="currentColor"/><circle cx="4" cy="9" r="1.6" fill="currentColor"/><circle cx="11" cy="4" r="1.6" fill="currentColor"/><circle cx="20" cy="9" r="1.6" fill="currentColor"/><circle cx="17" cy="18" r="1.6" fill="currentColor"/>'],['arrow','<path d="M4 20 20 4M20 4h-6M20 4v6"/>'],['cuboid','<path d="M4 9h11v9H4Z"/><path d="M4 9l5-4h11M15 9l5-4v9l-5 4"/>'],['prism','<path d="M3 20h9L7.5 12Z"/><path d="M12 20l7-6-4.5-8L7.5 12"/><path d="M3 20l7-6h9" stroke-dasharray="2 2"/>'],['pyramid','<path d="M12 4 4 18l9 2 7-4Z"/><path d="M12 4 13 20"/>'],['cylinder','<ellipse cx="12" cy="6" rx="7" ry="2.4"/><path d="M5 6v11M19 6v11"/><path d="M5 17a7 2.4 0 0 0 14 0"/>'],['cone','<path d="M12 4 5 17M12 4 19 17"/><path d="M5 17a7 2.4 0 0 0 14 0"/>']];
+const shapeDefs=[['line','<path d="M4 20 20 4"/>'],['arrow','<path d="M4 20 20 4M20 4h-6M20 4v6"/>'],['kreis','<circle cx="12" cy="12" r="8"/>'],['ellipse','<ellipse cx="12" cy="12" rx="9" ry="6"/>'],['etriangle','<path d="M12 4.5 20.2 19H3.8Z"/>'],['triangle','<path d="M12 5 20 19 4 19Z"/>'],['rtriangle','<path d="M5 5v14h14Z"/>'],['rect','<rect x="4" y="7" width="16" height="10"/>'],['square','<rect x="6" y="6" width="12" height="12"/>'],['parallelogram','<path d="M7 6h13l-3 12H4Z"/>'],['trapez','<path d="M8 6h8l3 12H5Z"/>'],['rhombus','<path d="M12 3 20 12 12 21 4 12Z"/>'],['kite','<path d="M12 3 19 10 12 21 5 10Z"/>'],['hexagon','<path d="M7.5 4.2h9L21 12l-4.5 7.8h-9L3 12Z"/>'],['polygon','<path d="M5 18 4 9l7-5 9 5-3 9Z"/><circle cx="5" cy="18" r="1.6" fill="currentColor"/><circle cx="4" cy="9" r="1.6" fill="currentColor"/><circle cx="11" cy="4" r="1.6" fill="currentColor"/><circle cx="20" cy="9" r="1.6" fill="currentColor"/><circle cx="17" cy="18" r="1.6" fill="currentColor"/>'],['cuboid','<path d="M4 9h11v9H4Z"/><path d="M4 9l5-4h11M15 9l5-4v9l-5 4"/>'],['prism','<path d="M3 20h9L7.5 12Z"/><path d="M12 20l7-6-4.5-8L7.5 12"/><path d="M3 20l7-6h9" stroke-dasharray="2 2"/>'],['pyramid','<path d="M12 4 4 18l9 2 7-4Z"/><path d="M12 4 13 20"/>'],['cylinder','<ellipse cx="12" cy="6" rx="7" ry="2.4"/><path d="M5 6v11M19 6v11"/><path d="M5 17a7 2.4 0 0 0 14 0"/>'],['cone','<path d="M12 4 5 17M12 4 19 17"/><path d="M5 17a7 2.4 0 0 0 14 0"/>']];
 const shEl=$('shapeList');
 /* Kennungen sind historisch gewachsen: 'triangle' zeichnet die gleichschenklige, 'gtriangle' die allgemeine Form */
-const SHAPE_NAMES={prism:'Prisma (Eckenzahl der Grundfläche im Kontextmenü)',kreis:'Kreis',rhombus:'Raute',hexagon:'Regelmäßiges Sechseck',polygon:'Vieleck (Ecken antippen, zum Schließen den ersten Punkt erneut antippen)',line:'Linie',rect:'Rechteck',square:'Quadrat',ellipse:'Ellipse',triangle:'Gleichschenkliges Dreieck',rtriangle:'Rechtwinkliges Dreieck',gtriangle:'Dreieck',parallelogram:'Parallelogramm',trapez:'Trapez',arrow:'Pfeil',kite:'Drachenviereck',cuboid:'Quader',pyramid:'Pyramide (Eckenzahl der Grundfläche im Kontextmenü)',cylinder:'Zylinder',cone:'Kegel'};
+const SHAPE_NAMES={prism:'Prisma (Eckenzahl der Grundfläche im Kontextmenü)',kreis:'Kreis',rhombus:'Raute',hexagon:'Regelmäßiges Sechseck',polygon:'Vieleck (Ecken antippen, zum Schließen den ersten Punkt erneut antippen)',line:'Linie',rect:'Rechteck',square:'Quadrat',ellipse:'Ellipse',triangle:'Gleichschenkliges Dreieck',rtriangle:'Rechtwinkliges Dreieck',gtriangle:'Dreieck (alt)',etriangle:'Gleichseitiges Dreieck',parallelogram:'Parallelogramm',trapez:'Trapez',arrow:'Pfeil',kite:'Drachenviereck',cuboid:'Quader',pyramid:'Pyramide (Eckenzahl der Grundfläche im Kontextmenü)',cylinder:'Zylinder',cone:'Kegel'};
 shapeDefs.forEach(([k,svg],i)=>{const b=document.createElement('button');b.className='shbtn'+(i===1?' active':'');b.id='sh-'+k;b.title=SHAPE_NAMES[k]||k;b.innerHTML='<svg viewBox="0 0 24 24">'+svg+'</svg>';
   b.onclick=()=>{ if(tool!=='shape') setTool('shape'); if(k!==shapeKind) polyDraft=null; shapeKind=k; if(k==='polygon') toast('Vieleck: Ecken nacheinander antippen – zum Schließen den ersten Punkt erneut antippen'); shEl.querySelectorAll('.shbtn').forEach(x=>x.classList.remove('active')); b.classList.add('active'); syncFavState(); };
   shEl.appendChild(b);});
@@ -2778,6 +2788,11 @@ $('propFill').onclick=function(){ this.classList.toggle('on'); const on=this.cla
     if(on&&!(o.fillA>0)) o.fillA=(shapeAlpha>0)?shapeAlpha:.2; } });   // ganz durchsichtig eingeschaltet lassen hieße: nichts zu sehen
   shapeFill=on; alphaUI(); scheduleAutosave(); markDirty(); };
 /* Linienart der ausgewählten Striche und ebenen Formen */
+const darfPunkte=o=>!!o&&o.type==='shape'&&o.shape==='line';
+function ptUI(){ const l=selection.filter(darfPunkte); const a=l.length?(l[0].pt|0):0;
+  for(let i=0;i<4;i++) $('pt'+i).classList.toggle('on',a===i); }
+for(let i=0;i<4;i++) $('pt'+i).onclick=()=>{ const l=selection.filter(darfPunkte); if(!l.length) return;
+  pushUndo(); l.forEach(o=>o.pt=i); ptUI(); markDirty(); scheduleAutosave(); };
 function dashUI(){ const l=selection.filter(darfStrich); const a=l.length?(l[0].dash|0):0;
   for(let i=0;i<3;i++) $('dash'+i).classList.toggle('on',i===a); }
 [0,1,2].forEach(i=>{ $('dash'+i).onclick=()=>{ const l=selection.filter(darfStrich); if(!l.length)return;
@@ -2995,6 +3010,7 @@ function refreshProps(){ const has=selection.length>0 && tool==='select';
     const pen=selection.some(usesPen);                       // Farbe & Dicke nur zeigen, wenn sie hier etwas bewirken
     $('colorRow').style.display=pen?'flex':'none'; $('widthRow').style.display=pen?'flex':'none'; $('propFillRow').style.display=selection.some(darfFuellen)?'flex':'none';
     $('propDashRow').style.display=selection.some(darfStrich)?'flex':'none';
+    $('propPtRow').style.display=selection.some(darfPunkte)?'flex':'none';
     const txo=(selection.length>0 && selection.every(o=>o.type==='text'))?selection[0]:null; $('textRow').style.display=txo?'flex':'none';
     if(txo){ $('txtBold').classList.toggle('on',!!txo.bold); $('txtItalic').classList.toggle('on',!!txo.italic); $('txtBullet').classList.toggle('on',!!txo.bullet); $('txtSizeV').textContent=txo.size||28; }
     const clk=(selection.length===1&&selection[0].type==='clock')?selection[0]:null; $('clockRow').style.display=clk?'flex':'none';
@@ -3261,7 +3277,7 @@ function embFsStep(d){ const o=selection[0]; if(!o||o.type!=='embed'||FONT_DEF[o
 $('embFsM').onclick=()=>embFsStep(-1); $('embFsP').onclick=()=>embFsStep(1);
 function embStyleToggle(key,btn){ const o=selection[0]; if(!o||o.type!=='embed'||FONT_DEF[o.etype]===undefined)return; o.data=o.data||{}; o.data[key]=!o.data[key]; $(btn).classList.toggle('on',!!o.data[key]); postToEmbed(o,o.data); markDirty(); scheduleAutosave(); }
 $('embBold').onclick=()=>embStyleToggle('fontBold','embBold'); $('embItalic').onclick=()=>embStyleToggle('fontItalic','embItalic');
-function refreshPropActive(){ const c=selection[0]&&selection[0].color; $('propColors').querySelectorAll('.sw').forEach(s=>s.classList.toggle('active',s.dataset.c===c)); const fill=selection.some(o=>darfFuellen(o)&&o.fill); $('propFill').classList.toggle('on',fill); alphaUI(); dashUI();
+function refreshPropActive(){ const c=selection[0]&&selection[0].color; $('propColors').querySelectorAll('.sw').forEach(s=>s.classList.toggle('active',s.dataset.c===c)); const fill=selection.some(o=>darfFuellen(o)&&o.fill); $('propFill').classList.toggle('on',fill); alphaUI(); dashUI(); ptUI();
   const w=propWidthVal(); let best=-1;
   if(w!=null){ best=0; widths.forEach((x,i)=>{ if(Math.abs(x-w)<Math.abs(widths[best]-w)) best=i; }); }
   pwEl.querySelectorAll('.wbtn').forEach((b,i)=>b.classList.toggle('active',i===best)); }

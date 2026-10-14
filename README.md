@@ -30,11 +30,19 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   gespeichert; „Palette zurücksetzen" stellt die Standardfarben wieder her.
   Neben den festen Farben gibt es einen **bunten Punkt** – ein Tipp öffnet den vollen Farbwähler
   für beliebige Farben (auch bei der Objektfarbe im Kontextmenü).
-- **Formen:** Linie, Rechteck, **Quadrat**, Ellipse, **Dreieck** (allgemein), **rechtwinkliges
-  Dreieck**, **gleichschenkliges Dreieck**, **Parallelogramm**, **Trapez**, Pfeil (auch gefüllt), **Drachenviereck**,
-  **Kreis** (aufziehen), **Raute**, **regelmäßiges Sechseck** und **Vieleck**: Ecken nacheinander antippen – ein grüner
+- **Formen**, in dieser Reihenfolge: **Linie** und **Pfeil**, dann **Kreis** (aufziehen) und **Ellipse**,
+  dann die Dreiecke – **gleichseitig**, **gleichschenklig**, **rechtwinklig** –, dann die Vierecke –
+  **Rechteck**, **Quadrat**, **Parallelogramm**, **Trapez**, **Raute**, **Drachenviereck** –, dann
+  **regelmäßiges Sechseck** und **Vieleck**: Ecken nacheinander antippen – ein grüner
   Ring markiert den ersten Punkt; tippt man ihn erneut an (ab drei Ecken), wird das Vieleck geschlossen und gezeichnet.
   „Rückgängig“ nimmt während des Setzens die letzte Ecke zurück. Alle neuen Formen lassen sich füllen, verschieben und skalieren.
+  Ein **allgemeines Dreieck** gibt es nicht mehr als eigenen Knopf – dafür ist das **Vieleck** da, mit
+  dem sich jedes Dreieck über seine drei Ecken genau setzen lässt. Ältere Tafelbilder mit der alten
+  Form werden weiter richtig gezeichnet.
+- **Endpunkte der Linie** (Kontextmenü, nur bei der Linie): **ohne · beide · nur Anfang · nur Ende**.
+  Mit beiden Punkten wird aus der Linie eine **Strecke**, mit nur einem Punkt eine **Halbgerade
+  (Strahl)** – der gesetzte Punkt ist der Anfang, das andere Ende bleibt offen. Voreingestellt ist
+  **ohne**, bestehende Linien sehen also unverändert aus.
 - **Gelber Formgriff** (wie in Word): Bei **Trapez, Parallelogramm, Drachenviereck und Raute** erscheint im
   ausgewählten Zustand zusätzlich zu den weißen Eckgriffen ein **gelber Punkt**, mit dem sich ein Detail der
   Figur verstellen lässt, ohne sie zu skalieren:
