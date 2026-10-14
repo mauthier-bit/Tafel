@@ -44,8 +44,12 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   - **beide** – eine gewöhnliche **Strecke** (Voreinstellung, sieht aus wie bisher).
   - **nur Anfang** – eine **Halbgerade** vom Anfangspunkt aus **über den Endpunkt hinaus**.
   - **nur Ende** – eine **Halbgerade** vom Endpunkt aus **über den Anfangspunkt hinaus**.
-  Bei den Halbgeraden markiert ein kleiner Punkt den Ursprung; die Strecke bleibt ohne Punkte. Für
-  die beidseitig unbegrenzte **Gerade** gibt es weiterhin das eigene Werkzeug.
+  Für die beidseitig unbegrenzte **Gerade** gibt es weiterhin das eigene Werkzeug.
+- **Pfeilspitzen je Seite** (Kontextmenü beim Pfeil): zwei Zeilen – **Anfang** und **Ende** – mit je
+  vier Möglichkeiten: **ohne Spitze · offene Spitze · gefüllte Spitze · Punkt**. Damit entstehen
+  einfache Pfeile, Doppelpfeile, Vektorpfeile mit gefüllter Spitze und Strecken mit markiertem
+  Anfangs- oder Endpunkt. Die zuletzt gewählte Kombination gilt auch für **neue** Pfeile. Ältere
+  Doppelpfeile werden weiter richtig gezeichnet.
 - **Gelber Formgriff** (wie in Word): Bei **Trapez, Parallelogramm, Drachenviereck und Raute** erscheint im
   ausgewählten Zustand zusätzlich zu den weißen Eckgriffen ein **gelber Punkt**, mit dem sich ein Detail der
   Figur verstellen lässt, ohne sie zu skalieren:
@@ -342,6 +346,12 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   wechselt. Beim Wechsel zu den Schreibwerkzeugen ist sofort der **Stift** aktiv, bei den Werkzeugen das Auswählen.
   **Laserpointer und Scheinwerfer** schalten sich durch **erneutes Antippen** oder durch Tippen auf den Umschalter
   wieder aus (dann gilt wieder das zuletzt benutzte Werkzeug der aktiven Leiste, die Leiste bleibt).
+- **Favoriten und der Umschalter:** Tippt man einen Favoriten an, der zu den **Schreibwerkzeugen**
+  gehört (Stift, Marker, Text, Diktat, Formen, Radierer), **schaltet der Umschalter von selbst auf
+  „Schreiben"** – vorher blieb er auf „Auswählen & Werkzeuge" stehen, obwohl das Werkzeug schon
+  aktiv war. Werkzeuge der rechten Leiste entscheiden weiterhin selbst, in welchem Zustand sie
+  enden; Laserpointer, Scheinwerfer, Lineal und Geodreieck gehören zu keiner der beiden Seiten und
+  lassen den Umschalter unverändert.
 - **Favoriten:** Oben in der senkrechten Leiste – gleich unter Umschalter, Laserpointer und Scheinwerfer – lassen sich bis zu
   **8 Lieblingswerkzeuge** ablegen; sie sind in jedem Modus sichtbar. Einen beliebigen Knopf (aus jeder
   Leiste, auch aus den Untermenüs) **eine Sekunde gedrückt halten** → „★ Zu den Favoriten". Auf einem
