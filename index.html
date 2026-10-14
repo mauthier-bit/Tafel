@@ -1574,23 +1574,30 @@ const KOERPER=['cuboid','prism','pyramid','cylinder','cone'];
 /* Wirkliche Maße des gezeichneten Körpers, bezogen auf den Radius der Grundfläche.
    Die Schrägbilder werden in ihren Rahmen gestreckt – aus dem Rahmen lässt sich die
    Höhe zurückrechnen, sodass das Netz zum gezeigten Körper passt.                     */
+/* Wahre Maße eines gezeichneten Körpers: `hr` ist die Höhe in Einheiten des
+   Grundflächen-Radius, `e` die Länge einer solchen Einheit auf der Tafel.
+   Damit lässt sich das Netz in Originalgröße neben den Körper legen.       */
 function koerperMasse(o){
   const b=geomBounds({...o,rot:0}), w=Math.max(1,b.w), h=Math.max(1,b.h);
   if(o.shape==='cylinder'||o.shape==='cone'){
     const ry=Math.min(h*0.16,w*0.42), r=w/2;
     const H=(o.shape==='cylinder')?(h-2*ry):(h-ry);
-    return {hr:Math.max(.15,H/r)}; }
-  if(o.shape==='cuboid'){ const ox=w*0.28, oy=h*0.28;
-    return {a:w-ox, c:h-oy, b:0.79*Math.min(w,h)}; }
+    return {hr:Math.max(.15,H/r), e:r}; }
+  if(o.shape==='cuboid'){ const td=tiefeVon(o), ox=w*td, oy=h*td;
+    const tief=2*Math.hypot(ox,oy);                            /* Kabinettprojektion: die Tiefe ist halbiert gezeichnet */
+    return {a:w-ox, c:h-oy, b:tief, e:tief}; }                 /* das Netz rechnet in Einheiten der Tiefe */
   const n=eckenVon(o), d=tiefeVon(o);
-  if(o.shape==='prism'&&o.lieg) return {hr:laengeVon(o)};      /* liegend: die Länge steht am Griff */
   const a0=-Math.PI/2-Math.PI/n, X=[], Z=[];
   for(let k=0;k<n;k++){ const a=a0+2*Math.PI*k/n; X.push(Math.cos(a)); Z.push(Math.sin(a)); }
+  if(o.shape==='prism'&&o.lieg){                               /* liegend: die Länge zeigt nach hinten */
+    const LG=laengeVon(o), xr=(Math.max(...X)-Math.min(...X))||2;
+    return {hr:LG, e:w/(xr+d*LG)}; }
   const px=X.map((v,k)=>v+d*Z[k]);
   const Wm=(Math.max(...px)-Math.min(...px))||2;               /* Modellbreite bei Radius 1 */
-  const zr=(Math.max(...Z)-Math.min(...Z))||2;
-  const t=(h*Wm)/w - d*zr;                                     /* Höhe in Einheiten des Radius */
-  return {hr:Math.max(.15,Math.min(12,t))}; }
+  const zmin=Math.min(...Z), zmax=Math.max(...Z), HH=1.7;      /* Modellhöhe wie in drawSolid */
+  const yr=(o.shape==='prism')?(HH+d*(zmax-zmin)):(HH-d*zmin); /* Modellhöhe samt Schrägmaß */
+  const H=h*HH/(yr||1);                                        /* so hoch ist die Kante gezeichnet */
+  return {hr:Math.max(.15,Math.min(12,H*Wm/w)), e:w/Wm}; }
 /* ---------- Netz eines Körpers (aufgeklappt) ----------------------------
    Aufgebaut wird im Einheitssystem (y nach oben), danach gleichmäßig in den
    Rahmen des Objekts gesetzt – ein Netz darf nicht verzerrt werden.        */
@@ -1699,8 +1706,9 @@ function netzMalen(c2,o,x,y,w,h){
    Eine Seite liegt unten, die Figur füllt den aufgezogenen Rahmen so weit wie möglich. */
 const eckZahl=o=>Math.max(3,Math.min(12,(o&&o.n)|0||6));
 /* Schrägmaß des Körpers: wie tief die Grundfläche nach hinten versetzt gezeichnet wird */
-const TIEFE_MIN=0.15, TIEFE_MAX=0.8, TIEFE_DEF=0.38;
-function tiefeVon(o){ const v=(o&&typeof o.tf==='number'&&isFinite(o.tf))?o.tf:TIEFE_DEF;
+const TIEFE_MIN=0.15, TIEFE_MAX=0.8, TIEFE_DEF=0.38, TIEFE_QUADER=0.28;
+function tiefeVon(o){ const std=(o&&o.shape==='cuboid')?TIEFE_QUADER:TIEFE_DEF;   /* der Quader war immer flacher gezeichnet */
+  const v=(o&&typeof o.tf==='number'&&isFinite(o.tf))?o.tf:std;
   return Math.max(TIEFE_MIN,Math.min(TIEFE_MAX,v)); }
 /* Länge des liegenden Prismas (Vielfaches der Grundfläche) */
 const LAENG_MIN=0.6, LAENG_MAX=4.5, LAENG_DEF=2.2;
@@ -1776,7 +1784,7 @@ function drawObjectRaw(o,c){
     else if(o.shape==='parallelogram'){ const sh=w*formF(o); c.moveTo(x+sh,y); c.lineTo(x+w,y); c.lineTo(x+w-sh,y+h); c.lineTo(x,y+h); c.closePath(); }
     else if(o.shape==='trapez'){ const ins=w*formF(o); c.moveTo(x+ins,y); c.lineTo(x+w-ins,y); c.lineTo(x+w,y+h); c.lineTo(x,y+h); c.closePath(); }
     else if(o.shape==='kite'){ const cx=x+w/2, q=h*formF(o); c.moveTo(cx,y); c.lineTo(x+w,y+q); c.lineTo(cx,y+h); c.lineTo(x,y+q); c.closePath(); }
-    else if(o.shape==='cuboid'){ const ox=w*0.28,oy=h*0.28,fw=w-ox, dash=Math.max(6,(w+h)*0.028);
+    else if(o.shape==='cuboid'){ const td=tiefeVon(o), ox=w*td,oy=h*td,fw=w-ox, dash=Math.max(6,(w+h)*0.028);
       const A=[x,y+oy],B=[x+fw,y+oy],C=[x+fw,y+h],D=[x,y+h],A2=[x+ox,y],B2=[x+fw+ox,y],C2=[x+fw+ox,y+h-oy],D2=[x+ox,y+h-oy];
       c.save(); c.setLineDash([dash,dash*0.7]); c.beginPath(); c.moveTo(...A2); c.lineTo(...D2); c.lineTo(...C2); c.moveTo(...D); c.lineTo(...D2); c.stroke(); c.restore();
       c.beginPath(); c.moveTo(...A); c.lineTo(...B); c.lineTo(...C); c.lineTo(...D); c.closePath();
@@ -1931,7 +1939,7 @@ function drawSolid(c,kind,n,x,y,w,h,o){ n=Math.max(3,Math.min(12,n|0));
   edges.forEach((vis,key)=>{ if(vis) return; const [i,j]=key.split('_').map(Number); c.moveTo(...S(i)); c.lineTo(...S(j)); }); c.stroke(); c.restore();
   c.beginPath(); edges.forEach((vis,key)=>{ if(!vis) return; const [i,j]=key.split('_').map(Number); c.moveTo(...S(i)); c.lineTo(...S(j)); }); }
 /* Ecken und Kanten eines Körpers auf der Bildfläche (für Beschriftungen) */
-function solidGeom(kind,n,x,y,w,h){ if(kind==='cuboid'){ const ox=w*0.28,oy=h*0.28,fw=w-ox;
+function solidGeom(kind,n,x,y,w,h){ if(kind==='cuboid'){ const td=tiefeVon(arguments[6]), ox=w*td,oy=h*td,fw=w-ox;
     const pts=[[x,y+h],[x+fw,y+h],[x+fw+ox,y+h-oy],[x+ox,y+h-oy],[x,y+oy],[x+fw,y+oy],[x+fw+ox,y],[x+ox,y]];   // ABCD unten, EFGH oben
     const e=[[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]];
     return {pts,edges:e,names:'ABCDEFGH'.split('')}; }
@@ -2212,7 +2220,7 @@ function worldToLocal(px,py,cx,cy,rot){ const dx=px-cx,dy=py-cy,co=Math.cos(-rot
 function singleSel(){ return selection.length===1 ? selection[0] : null; }
 /* Lage des gelben Formgriffs im unrotierten System der Figur */
 function formGriffe(o){                                   /* alle gelben Punkte einer Figur */
-  if(o&&o.type==='shape'&&(o.shape==='prism'||o.shape==='pyramid')){
+  if(o&&o.type==='shape'&&(o.shape==='prism'||o.shape==='pyramid'||o.shape==='cuboid')){
     const b=geomBounds({...o,rot:0}), d=tiefeVon(o), L=[];
     L.push({art:'tiefe', x:b.x+b.w*((d-TIEFE_MIN)/(TIEFE_MAX-TIEFE_MIN)), y:b.y});
     if(o.shape==='prism'&&o.lieg){ const g=laengeVon(o);
@@ -2652,7 +2660,7 @@ function updateObjGesture(){ const g=objGesture; if(!g)return;
   refreshRotLabel(); positionProps(); markDirty(); }
 function zeigeFormWert(o){
   const e=xform&&xform.ev; if(!e) return;
-  if(o.shape==='prism'||o.shape==='pyramid'){
+  if(o.shape==='prism'||o.shape==='pyramid'||o.shape==='cuboid'){
     showMeasure(e, (xform&&xform.art==='laenge') ? ('Länge '+laengeVon(o).toFixed(1).replace('.',',')+' Grundflächen')
                                                  : ('Schrägmaß '+Math.round(tiefeVon(o)*100)+' %')); return; }
   const f=formF(o); if(f===null) return;
@@ -2667,7 +2675,7 @@ function applyXform(w){ const o=xform.o, C=xform.C, snap=xform.snap;
   if(xform.role==='form'){                      /* gelber Punkt: ein Detail der Figur verstellen */
     const b=geomBounds({...o,rot:0});
     let pl=w; if(o.rot) pl=worldToLocal(w.x,w.y,C.x,C.y,o.rot);
-    if(o.shape==='prism'||o.shape==='pyramid'){
+    if(o.shape==='prism'||o.shape==='pyramid'||o.shape==='cuboid'){
       const u=Math.max(0,Math.min(1,(pl.x-b.x)/(b.w||1)));
       if(xform.art==='laenge') o.lg=Math.round((LAENG_MIN+u*(LAENG_MAX-LAENG_MIN))*1000)/1000;
       else o.tf=Math.round((TIEFE_MIN+u*(TIEFE_MAX-TIEFE_MIN))*1000)/1000;
@@ -3336,8 +3344,8 @@ $('solNetz').onclick=()=>{ const o=selection[0];
   const b=geomBounds({...o,rot:0});
   const M=koerperMasse(o), hr=M.hr||1.3, ms=(o.shape==='cuboid')?M:null;
   const T=netzTeile(o.shape,eckenVon(o),hr,ms), R=netzRahmen(T);
-  const seite=Math.max(b.w,b.h)*1.25, bw=(R.c-R.a)||1, bh=(R.d-R.b)||1;
-  const k=seite/Math.max(bw,bh), w=bw*k, h=bh*k;
+  const bw=(R.c-R.a)||1, bh=(R.d-R.b)||1;
+  const k=M.e||1, w=bw*k, h=bh*k;                              /* Originalgröße: eine Netz-Einheit ist M.e groß */
   const n={type:'shape',id:uid(),shape:'netz',kind:o.shape,n:eckenVon(o),hr,ms,
     x0:b.x+b.w+24/scale, y0:b.y, x1:b.x+b.w+24/scale+w, y1:b.y+h,
     color:o.color, width:o.width, fill:false, rot:0, groupId:null};

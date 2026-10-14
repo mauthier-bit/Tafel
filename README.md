@@ -50,10 +50,12 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   darunter **„Ecken"** mit **− / +**, womit sich jedes regelmäßige Vieleck von **3 bis 12 Ecken**
   einstellen lässt – Fünfeck, Achteck, Zehneck. Eine Seite liegt dabei immer unten, und die Figur
   bleibt regelmäßig, egal wie der Rahmen aufgezogen wurde.
-- **Prisma: Schrägmaß und Lage.** Beim ausgewählten **Prisma** (und bei der **Pyramide**) sitzt oben
+- **Schrägmaß und Lage.** Beim ausgewählten **Prisma**, bei der **Pyramide** und beim **Quader** sitzt oben
   ein **gelber Punkt**: Waagrecht gezogen ändert er das **Schrägmaß** – also wie tief die Grundfläche
   nach hinten versetzt gezeichnet wird (15 % bis 80 %, Anzeige „Schrägmaß 38 %"). Damit lässt sich
   die Grundfläche flacher oder offener zeigen, je nachdem, worauf es in der Stunde ankommt.
+  Der Quader startet wie bisher bei **28 %**, Prisma und Pyramide bei 38 % – alte Zeichnungen sehen
+  also unverändert aus.
   In derselben Zeile wie die Eckenzahl steht beim Prisma rechts ein Umschalter **„stehend / liegend"**:
   Liegend steht die Grundfläche **vorne** und der Körper reicht nach hinten – das klassische Bild
   eines liegenden Prismas. Beim **liegenden** Prisma kommt unten ein **zweiter gelber Punkt** dazu,
@@ -70,11 +72,15 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     dritten.
   - **Zylinder:** der Mantel als Rechteck (Breite = Umfang) mit den beiden Kreisen.
   - **Kegel:** der Mantel als **Kreissektor** (Radius = Mantellinie) mit dem Grundkreis.
-  Die Maße folgen dem **gezeichneten Körper**: Aus dem Schrägbild werden Eckenzahl, Höhe und
-  Grundfläche zurückgerechnet, sodass das Netz **maßstäblich** zum Körper passt – ein schlanker
-  hoher Kegel bekommt einen **schmalen Sektor**, ein flacher einen fast vollen Kreis; bei Prisma
-  und Pyramide richten sich Rechteck- und Dreieckshöhe nach der Höhe des Körpers, beim Quader
-  nach Breite, Tiefe und Höhe. Das Netz wird **unverzerrt** in seinen Rahmen gesetzt.
+  Die Maße folgen dem **gezeichneten Körper**, und zwar **in Originalgröße**: Aus dem Schrägbild
+  werden Eckenzahl, Höhe und Grundfläche zurückgerechnet, und das Netz wird so groß daneben gelegt,
+  dass **jede Kante genau so lang ist wie am Körper**. Die Grundkante des Prismas, die Höhe, die
+  Vorderfläche des Quaders, der Grundkreis und die Mantellinie des Kegels lassen sich am Netz
+  nachmessen und stimmen mit dem Körper überein – man kann es also gedanklich (oder auf Papier)
+  zusammenfalten. Ein schlanker hoher Kegel bekommt dadurch einen **schmalen Sektor**, ein flacher
+  einen fast vollen Kreis. **In die Tiefe** verkürzt das Schrägbild wie üblich: Dort zeigt das Netz
+  die **wahre Länge** (Kabinettprojektion, die gezeichnete Tiefe ist halbiert). Das Netz bleibt
+  **unverzerrt**; zieht man es anschließend größer, ändert sich nur die Darstellung.
   - **Flächen beschriften** (Schalter im Kontextmenü des Netzes): schreibt **Grundfläche**,
     **Deckfläche** und **Mantel** (beim Quader **Seitenflächen**) in die passenden Teilflächen,
     Schriftgröße über **Schrift −/+**.
