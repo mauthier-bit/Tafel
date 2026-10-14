@@ -34,8 +34,19 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   Dreieck**, **gleichschenkliges Dreieck**, **Parallelogramm**, **Trapez**, Pfeil (auch gefüllt), **Drachenviereck**,
   **Kreis** (aufziehen), **Raute**, **regelmäßiges Sechseck** und **Vieleck**: Ecken nacheinander antippen – ein grüner
   Ring markiert den ersten Punkt; tippt man ihn erneut an (ab drei Ecken), wird das Vieleck geschlossen und gezeichnet.
-  „Rückgängig“ nimmt während des Setzens die letzte Ecke zurück. Alle neuen Formen lassen sich füllen, verschieben und skalieren,
-  sowie **Schrägbilder** von **Quader, Prisma, Pyramide, Zylinder und Kegel** (mit
+  „Rückgängig“ nimmt während des Setzens die letzte Ecke zurück. Alle neuen Formen lassen sich füllen, verschieben und skalieren.
+- **Gelber Formgriff** (wie in Word): Bei **Trapez, Parallelogramm, Drachenviereck und Raute** erscheint im
+  ausgewählten Zustand zusätzlich zu den weißen Eckgriffen ein **gelber Punkt**, mit dem sich ein Detail der
+  Figur verstellen lässt, ohne sie zu skalieren:
+  - **Trapez** – Länge der **oberen parallelen Seite** (der Punkt sitzt auf der oberen linken Ecke).
+  - **Parallelogramm** – **Neigung**, also die Verschiebung der zweiten Parallelen.
+  - **Drachenviereck** – Höhe der beiden **symmetrischen Querecken**.
+  - **Raute** – die **Winkel**: Der Punkt zieht die waagrechte Diagonale länger oder kürzer, aus einer
+    spitzen wird so eine breite Raute. Alle vier Seiten bleiben dabei gleich lang.
+  Beim Ziehen steht neben dem Finger der aktuelle Wert (z. B. „Neigung 41 %" oder „Winkel 62° / 118°").
+  Der Wert ist ein **Verhältnis**, bleibt beim Vergrößern und Drehen also erhalten, und wird mit dem
+  Projekt gespeichert.
+- Dazu kommen **Schrägbilder** von **Quader, Prisma, Pyramide, Zylinder und Kegel** (mit
   gestrichelten verdeckten Kanten). Bei **Prisma** (Standard: Dreiecksprisma) und **Pyramide** (Standard: vierseitig)
   legt man im **Kontextmenü** unter „Ecken der Grundfläche“ die Eckenzahl fest (3–12); die verdeckten Kanten werden
   jeweils passend gestrichelt. Im **Kontextmenü** lassen sich bei Vielecken (Rechteck, Quadrat, Dreiecke, Parallelogramm, Trapez,

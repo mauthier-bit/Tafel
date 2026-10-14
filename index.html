@@ -1570,6 +1570,15 @@ function textLines(o,c){ c=c||ctx; c.font=(o.italic?'italic ':'')+(o.bold?'bold 
 const KOERPER=['cuboid','prism','pyramid','cylinder','cone'];
 const darfStrich=o=>!!o&&(o.type==='stroke'||(o.type==='shape'&&!KOERPER.includes(o.shape)));
 /* Formen mit Innenfläche – nur sie werden gefüllt gezeichnet. */
+/* ---- Formgriff: ein gelber Punkt verstellt ein Detail der Figur (wie in Word) ----
+   f ist immer ein Verhältnis zur Breite bzw. Höhe, überlebt also Skalieren.   */
+const FORM_DEF={trapez:0.22, parallelogram:0.25, kite:0.38, rhombus:1};
+const FORM_MIN={trapez:0.02, parallelogram:0,   kite:0.08, rhombus:0.15};
+const FORM_MAX={trapez:0.48, parallelogram:0.75,kite:0.92, rhombus:1};
+const FORM_HILFE={trapez:'obere Seite', parallelogram:'Neigung', kite:'Querecken', rhombus:'Winkel'};
+function formF(o){ if(!o||o.type!=='shape') return null; const d=FORM_DEF[o.shape]; if(d===undefined) return null;
+  const v=(typeof o.f==='number'&&isFinite(o.f))?o.f:d;
+  return Math.max(FORM_MIN[o.shape],Math.min(FORM_MAX[o.shape],v)); }
 const FUELLBAR=['rect','ellipse','circle','triangle','square','rtriangle','gtriangle','parallelogram','trapez','kite','kreis','rhombus','hexagon','polygon'];
 /* Was im Kontextmenü „Gefüllt“ und „Transparenz“ anbietet: dieselbe Liste ohne den
    Konstruktionskreis (Mittelpunkt + Radius) – dort ist eine Füllung nicht gewollt.
@@ -1602,14 +1611,15 @@ function drawObjectRaw(o,c){
     else if(o.shape==='triangle'){ c.moveTo(x+w/2,y); c.lineTo(x+w,y+h); c.lineTo(x,y+h); c.closePath(); }
     else if(o.shape==='square'){ const s=Math.min(w,h); c.rect(x,y,s,s); }
     else if(o.shape==='kreis'){ const s=Math.min(w,h); c.arc(x+s/2,y+s/2,s/2,0,7); }
-    else if(o.shape==='rhombus'){ c.moveTo(x+w/2,y); c.lineTo(x+w,y+h/2); c.lineTo(x+w/2,y+h); c.lineTo(x,y+h/2); c.closePath(); }
+    else if(o.shape==='rhombus'){ const dw=w*formF(o), lx=x+(w-dw)/2, rx=x+(w+dw)/2;
+      c.moveTo(x+w/2,y); c.lineTo(rx,y+h/2); c.lineTo(x+w/2,y+h); c.lineTo(lx,y+h/2); c.closePath(); }
     else if(o.shape==='hexagon'){ const r=Math.min(w/2,h/Math.sqrt(3)), cx=x+w/2, cy=y+h/2; for(let k=0;k<6;k++){ const a=k*Math.PI/3; k?c.lineTo(cx+r*Math.cos(a),cy+r*Math.sin(a)):c.moveTo(cx+r*Math.cos(a),cy+r*Math.sin(a)); } c.closePath(); }
     else if(o.shape==='polygon'&&Array.isArray(o.pn)){ o.pn.forEach(([u,v],k)=>{ const px=o.x0+u*(o.x1-o.x0), py=o.y0+v*(o.y1-o.y0); k?c.lineTo(px,py):c.moveTo(px,py); }); c.closePath(); }
     else if(o.shape==='rtriangle'){ c.moveTo(x,y); c.lineTo(x,y+h); c.lineTo(x+w,y+h); c.closePath(); }
     else if(o.shape==='gtriangle'){ c.moveTo(x+w*0.15,y); c.lineTo(x+w,y+h*0.35); c.lineTo(x+w*0.55,y+h); c.closePath(); }
-    else if(o.shape==='parallelogram'){ const sh=w*0.25; c.moveTo(x+sh,y); c.lineTo(x+w,y); c.lineTo(x+w-sh,y+h); c.lineTo(x,y+h); c.closePath(); }
-    else if(o.shape==='trapez'){ const ins=w*0.22; c.moveTo(x+ins,y); c.lineTo(x+w-ins,y); c.lineTo(x+w,y+h); c.lineTo(x,y+h); c.closePath(); }
-    else if(o.shape==='kite'){ const cx=x+w/2; c.moveTo(cx,y); c.lineTo(x+w,y+h*0.38); c.lineTo(cx,y+h); c.lineTo(x,y+h*0.38); c.closePath(); }
+    else if(o.shape==='parallelogram'){ const sh=w*formF(o); c.moveTo(x+sh,y); c.lineTo(x+w,y); c.lineTo(x+w-sh,y+h); c.lineTo(x,y+h); c.closePath(); }
+    else if(o.shape==='trapez'){ const ins=w*formF(o); c.moveTo(x+ins,y); c.lineTo(x+w-ins,y); c.lineTo(x+w,y+h); c.lineTo(x,y+h); c.closePath(); }
+    else if(o.shape==='kite'){ const cx=x+w/2, q=h*formF(o); c.moveTo(cx,y); c.lineTo(x+w,y+q); c.lineTo(cx,y+h); c.lineTo(x,y+q); c.closePath(); }
     else if(o.shape==='cuboid'){ const ox=w*0.28,oy=h*0.28,fw=w-ox, dash=Math.max(6,(w+h)*0.028);
       const A=[x,y+oy],B=[x+fw,y+oy],C=[x+fw,y+h],D=[x,y+h],A2=[x+ox,y],B2=[x+fw+ox,y],C2=[x+fw+ox,y+h-oy],D2=[x+ox,y+h-oy];
       c.save(); c.setLineDash([dash,dash*0.7]); c.beginPath(); c.moveTo(...A2); c.lineTo(...D2); c.lineTo(...C2); c.moveTo(...D); c.lineTo(...D2); c.stroke(); c.restore();
@@ -1761,10 +1771,10 @@ function planeVerts(o,x,y,w,h){ switch(o.shape){
   case 'triangle': return [[x,y+h],[x+w,y+h],[x+w/2,y]];
   case 'rtriangle': return [[x,y+h],[x+w,y+h],[x,y]];
   case 'gtriangle': return [[x+w*0.55,y+h],[x+w,y+h*0.35],[x+w*0.15,y]];
-  case 'parallelogram': { const sh=w*0.25; return [[x,y+h],[x+w-sh,y+h],[x+w,y],[x+sh,y]]; }
-  case 'trapez': { const ins=w*0.22; return [[x,y+h],[x+w,y+h],[x+w-ins,y],[x+ins,y]]; }
-  case 'rhombus': return [[x,y+h/2],[x+w/2,y+h],[x+w,y+h/2],[x+w/2,y]];
-  case 'kite': return [[x+w/2,y+h],[x+w,y+h*0.38],[x+w/2,y],[x,y+h*0.38]];
+  case 'parallelogram': { const sh=w*formF(o); return [[x,y+h],[x+w-sh,y+h],[x+w,y],[x+sh,y]]; }
+  case 'trapez': { const ins=w*formF(o); return [[x,y+h],[x+w,y+h],[x+w-ins,y],[x+ins,y]]; }
+  case 'rhombus': { const dw=w*formF(o); return [[x+(w-dw)/2,y+h/2],[x+w/2,y+h],[x+(w+dw)/2,y+h/2],[x+w/2,y]]; }
+  case 'kite': { const q=h*formF(o); return [[x+w/2,y+h],[x+w,y+q],[x+w/2,y],[x,y+q]]; }
   case 'hexagon': { const r=Math.min(w/2,h/Math.sqrt(3)), cx=x+w/2, cy=y+h/2; return [120,60,0,300,240,180].map(g=>[cx+r*Math.cos(g*Math.PI/180),cy+r*Math.sin(g*Math.PI/180)]); }
   case 'polygon': return (o.pn||[]).map(([u,v])=>[o.x0+u*(o.x1-o.x0),o.y0+v*(o.y1-o.y0)]); }
   return null; }
@@ -2015,12 +2025,21 @@ function selCenterBounds(){ // gemeinsame (unrotierte) Bounds der Auswahl
 function localToWorld(px,py,cx,cy,rot){ const dx=px-cx,dy=py-cy,co=Math.cos(rot),si=Math.sin(rot); return {x:cx+dx*co-dy*si, y:cy+dx*si+dy*co}; }
 function worldToLocal(px,py,cx,cy,rot){ const dx=px-cx,dy=py-cy,co=Math.cos(-rot),si=Math.sin(-rot); return {x:cx+dx*co-dy*si, y:cy+dx*si+dy*co}; }
 function singleSel(){ return selection.length===1 ? selection[0] : null; }
+/* Lage des gelben Formgriffs im unrotierten System der Figur */
+function formGriffLokal(o){ const f=formF(o); if(f===null) return null;
+  const b=geomBounds({...o,rot:0}), x=b.x, y=b.y, w=b.w, h=b.h;
+  if(o.shape==='trapez'||o.shape==='parallelogram') return {x:x+w*f, y:y};
+  if(o.shape==='kite') return {x:x, y:y+h*f};
+  if(o.shape==='rhombus') return {x:x+(w+w*f)/2, y:y+h/2};
+  return null; }
 function handleList(){ // Bildschirm-Positionen der Griffe (nur bei Einzelauswahl)
   const o=singleSel(); if(!o) return [];
   const b=geomBounds(o), cx=b.x+b.w/2, cy=b.y+b.h/2, rot=o.rot||0;
   const L=[['nw',b.x,b.y],['n',cx,b.y],['ne',b.x+b.w,b.y],['e',b.x+b.w,cy],['se',b.x+b.w,b.y+b.h],['s',cx,b.y+b.h],['sw',b.x,b.y+b.h],['w',b.x,cy]];
   const out=L.map(([role,x,y])=>{const w=localToWorld(x,y,cx,cy,rot),s=toScreen(w.x,w.y);return {role,x:s.x,y:s.y};});
   const rw=localToWorld(cx,b.y-26/scale,cx,cy,rot),rs=toScreen(rw.x,rw.y); out.push({role:'rot',x:rs.x,y:rs.y});
+  const fl=formGriffLokal(o);
+  if(fl){ const fw=localToWorld(fl.x,fl.y,cx,cy,rot), fs=toScreen(fw.x,fw.y); out.push({role:'form',x:fs.x,y:fs.y}); }
   return out;
 }
 /* kleine Blätter-Knöpfe am ausgewählten mehrseitigen Dokument (Bildschirm-Positionen) */
@@ -2036,6 +2055,8 @@ function drawSelection(){ if(!selection.length)return;
   // Griffe (nur Einzelauswahl)
   for(const h of handleList()){ ctx.beginPath();
     if(h.role==='rot'){ ctx.arc(h.x,h.y,7,0,7); ctx.fillStyle='#3b82f6'; ctx.fill(); ctx.strokeStyle='#fff'; ctx.stroke(); ctx.strokeStyle='#3b82f6'; }
+    else if(h.role==='form'){ ctx.arc(h.x,h.y,7,0,7); ctx.fillStyle='#f5b301'; ctx.fill();   /* gelber Formgriff */
+      ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.stroke(); ctx.lineWidth=1.5; ctx.strokeStyle='#3b82f6'; }
     else { ctx.rect(h.x-5,h.y-5,10,10); ctx.fillStyle='#fff'; ctx.fill(); ctx.stroke(); } }
   // Blättern im Dokument
   for(const d of docBtnList()){ const i=docCur(d.o), n=d.o.pages.length;
@@ -2376,7 +2397,9 @@ function eraseAt(x,y){ const r=eraserWidth/scale; eraserPos={x,y};
   markDirty(); }   // immer neu zeichnen: der Ring zeigt, wie groß der Radierer gerade ist
 
 /* --- Auswahl-Interaktion (Move/Scale/Rotate/Doppeltipp) --- */
-function screenHandleAt(sx,sy){ for(const h of handleList()){ if(Math.hypot(h.x-sx,h.y-sy)<15) return h; } return null; }
+function screenHandleAt(sx,sy){ const L=handleList();
+  for(const h of L) if(h.role==='form'&&Math.hypot(h.x-sx,h.y-sy)<16) return h;   /* der gelbe Punkt zuerst */
+  for(const h of L){ if(Math.hypot(h.x-sx,h.y-sy)<15) return h; } return null; }
 function startSelect(e,w){
   const now=performance.now(); const hit=hitObject(w.x,w.y);
   // 1) Doppeltipp auf Text -> bearbeiten (hat Vorrang vor den Griffen)
@@ -2397,11 +2420,11 @@ function startSelect(e,w){
   lastTap={t:0,o:null}; selection=[]; refreshProps(); marquee={x0:e.clientX,y0:e.clientY,x1:e.clientX,y1:e.clientX}; markDirty();
 }
 function moveSelect(e,w){
-  if(xform){ applyXform(w); markDirty(); return; }
+  if(xform){ xform.ev=e; applyXform(w); markDirty(); return; }
   if(moveDrag){ const dx=w.x-moveDrag.lx,dy=w.y-moveDrag.ly; moveDrag.lx=w.x; moveDrag.ly=w.y; translateSel(dx,dy); positionProps(); markDirty(); return; }
   if(marquee){ marquee.x1=e.clientX; marquee.y1=e.clientY; markDirty(); } }
 function endSelect(e){
-  if(xform){ const o=xform.o; xform=null;
+  if(xform){ const o=xform.o; if(xform.role==='form') hideMeasure(); xform=null;
     if(o&&o.type==='coord'&&(o.cm||o.snap)) coordNachZiehen(o);   // maßstabsgetreu: statt zu strecken wächst der Achsenbereich
     if(o&&o.type==='numline'&&(o.cm||o.snap)) nlNachZiehen(o);
     scheduleAutosave(); return; }
@@ -2433,8 +2456,26 @@ function updateObjGesture(){ const g=objGesture; if(!g)return;
     const nx=g.mid.x+s*(rx*cos-ry*sin)+tx, ny=g.mid.y+s*(rx*sin+ry*cos)+ty;
     translateObj(o,nx-oc.x,ny-oc.y); }
   refreshRotLabel(); positionProps(); markDirty(); }
+function zeigeFormWert(o){
+  const f=formF(o); if(f===null) return;
+  const e=xform&&xform.ev; if(!e) return;
+  let txt;
+  if(o.shape==='trapez'){ const b=geomBounds({...o,rot:0}); txt='obere Seite '+Math.round(b.w*(1-2*f))+' von '+Math.round(b.w); }
+  else if(o.shape==='parallelogram') txt='Neigung '+Math.round(f*100)+' %';
+  else if(o.shape==='kite') txt='Querecken bei '+Math.round(f*100)+' %';
+  else { const b=geomBounds({...o,rot:0}); const a=2*Math.atan2(b.w*f/2,b.h/2)*180/Math.PI; txt='Winkel '+Math.round(a)+'° / '+Math.round(180-a)+'°'; }
+  showMeasure(e,txt); }
 function applyXform(w){ const o=xform.o, C=xform.C, snap=xform.snap;
   if(xform.role==='rot'){ o.rot=Math.atan2(w.y-C.y,w.x-C.x)-xform.startAngle; refreshRotLabel(); return; }
+  if(xform.role==='form'){                      /* gelber Punkt: ein Detail der Figur verstellen */
+    const b=geomBounds({...o,rot:0});
+    let pl=w; if(o.rot) pl=worldToLocal(w.x,w.y,C.x,C.y,o.rot);
+    let f;
+    if(o.shape==='kite') f=(pl.y-b.y)/(b.h||1);
+    else if(o.shape==='rhombus') f=2*(pl.x-(b.x+b.w/2))/(b.w||1);
+    else f=(pl.x-b.x)/(b.w||1);
+    o.f=Math.round(Math.max(FORM_MIN[o.shape],Math.min(FORM_MAX[o.shape],f))*1000)/1000;
+    zeigeFormWert(o); return; }
   const b=geomBounds({...snap,rot:0}), bw=b.w||1, bh=b.h||1;
   let pl=w; if(snap.rot){ pl=worldToLocal(w.x,w.y,C.x,C.y,snap.rot); }
   const role=xform.role; let sx=1, sy=1, ax=C.x, ay=C.y;          // gegenüberliegende Kante/Ecke bleibt stehen
