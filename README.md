@@ -2379,11 +2379,12 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
 2. **Seiten-Leiste (unten rechts, senkrecht):** blättern (‹ ›), Seite hinzufügen/löschen, Zoom
    zurücksetzen. Der **Minimier-Pfeil zeigt nach unten** (⌄) – klar unterscheidbar von den
    Blätter-Pfeilen. Minimiert bleiben Minimier-Pfeil und **+** (neue Seite) sichtbar.
-2b. **Seiten-Leiste (oben rechts, waagrecht):** blättern, **Seite leeren** (Schwamm), **Seite löschen**
+2b. **Seiten-Leiste (oben rechts, waagrecht):** blättern, **Seite leeren** (**Abzieher**), **Seite löschen**
    (Mülleimer), Seite +, Zoom, Seitenzahl (= Übersicht) und ein **Teilen-Knopf** (Pfeil aus dem offenen
    Kasten), der die **gerade aufgeschlagene Seite** als PDF weitergibt. Die beiden ähnlichen Knöpfe sind
-   bewusst verschieden gezeichnet: Der **Schwamm** wischt nur den Inhalt weg, die Seite selbst bleibt
-   stehen; der **Mülleimer** nimmt die ganze Seite aus dem Projekt. Lässt sich **vollständig einklappen**
+   bewusst verschieden gezeichnet: Der **T-förmige Abzieher** – Stiel, breites Blatt und darunter ein
+   paar angedeutete **Wischstreifen** der abgezogenen Bahn – wischt nur den Inhalt weg, die Seite selbst
+   bleibt stehen; der **Mülleimer** nimmt die ganze Seite aus dem Projekt. Lässt sich **vollständig einklappen**
    – dann bleibt nur der Aufklapp-Pfeil.
 3. **Einstellungs-Leiste (oben links):** Projekt-Auswahl, Vollbild, **Zurück/Vor (Rückgängig)**,
    Einstellungen (Hintergrund, Klassenlisten), Speichern, Laden, Einfügen.
