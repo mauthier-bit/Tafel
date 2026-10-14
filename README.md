@@ -59,7 +59,7 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   eines liegenden Prismas. Beim **liegenden** Prisma kommt unten ein **zweiter gelber Punkt** dazu,
   mit dem sich die **Länge** einstellen lässt (0,6 bis 4,5 Grundflächen, Anzeige „Länge 2,2
   Grundflächen") – vom kurzen Klotz bis zum langen Balken.
-- **Netz eines Körpers** (Kontextmenü, Knopf **„⬚ Netz"** rechts in der Zeile der Eckenzahl): legt das
+- **Netz eines Körpers** (Kontextmenü, Knopf **„Netz"** rechts in der Zeile der Eckenzahl): legt das
   **aufgeklappte Netz** des ausgewählten Körpers **daneben** auf die Tafel – für **Prisma, Pyramide,
   Quader, Zylinder und Kegel**. Es entsteht als gewöhnliches Objekt: verschiebbar, skalierbar,
   drehbar, füllbar, in Farbe und Strichart wie jede andere Form.
@@ -70,8 +70,14 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     dritten.
   - **Zylinder:** der Mantel als Rechteck (Breite = Umfang) mit den beiden Kreisen.
   - **Kegel:** der Mantel als **Kreissektor** (Radius = Mantellinie) mit dem Grundkreis.
-  Die Maße folgen dem Körper: Eckenzahl und Höhenverhältnis werden übernommen, das Netz wird
-  **unverzerrt** in seinen Rahmen gesetzt.
+  Die Maße folgen dem **gezeichneten Körper**: Aus dem Schrägbild werden Eckenzahl, Höhe und
+  Grundfläche zurückgerechnet, sodass das Netz **maßstäblich** zum Körper passt – ein schlanker
+  hoher Kegel bekommt einen **schmalen Sektor**, ein flacher einen fast vollen Kreis; bei Prisma
+  und Pyramide richten sich Rechteck- und Dreieckshöhe nach der Höhe des Körpers, beim Quader
+  nach Breite, Tiefe und Höhe. Das Netz wird **unverzerrt** in seinen Rahmen gesetzt.
+  - **Flächen beschriften** (Schalter im Kontextmenü des Netzes): schreibt **Grundfläche**,
+    **Deckfläche** und **Mantel** (beim Quader **Seitenflächen**) in die passenden Teilflächen,
+    Schriftgröße über **Schrift −/+**.
 - **Pfeilspitzen je Seite** (Kontextmenü beim Pfeil): zwei Zeilen – **Anfang** und **Ende** – mit je
   vier Möglichkeiten: **ohne Spitze · offene Spitze · gefüllte Spitze · Punkt**. Damit entstehen
   einfache Pfeile, Doppelpfeile, Vektorpfeile mit gefüllter Spitze und Strecken mit markiertem
