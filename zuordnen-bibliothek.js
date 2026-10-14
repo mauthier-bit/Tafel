@@ -424,6 +424,104 @@ const G=[
 /* ---------- Gruppenaufgaben: ein Feld, mehrere Karten ----------
    Hier gehören mehrere Situationen zu demselben Urnenmodell – als Paare wären sie
    nicht eindeutig zuzuordnen, deshalb stehen sie als Gruppe (Feld + Karten). */
+/* ---------- Kleine Bilder für die Induktionsaufgabe (Physik 10) ----------
+   Alle Bilder liegen auf derselben Fläche (200 x 120) und bestehen aus
+   wenigen Bausteinen: Induktionsspule mit Messgerät, Stabmagnet, Leiter-
+   schlaufe, homogenes Feld, gerade und gebogene Pfeile.                    */
+const IF={ rot:'#dc2626', blau:'#2563eb', lin:'#1f2430', grau:'#8d97a6', feld:'#7c9bd1' };
+function ibild(inner){
+  return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 120">'+
+    '<rect width="200" height="120" fill="#ffffff"/>'+
+    '<g font-family="-apple-system,Helvetica,Arial,sans-serif" font-size="11" fill="'+IF.lin+'">'+
+    inner+'</g></svg>');
+}
+function ipfeil(x1,y1,x2,y2,col,bd){
+  const c=col||IF.lin, w=bd||2.2, a=Math.atan2(y2-y1,x2-x1), s=8;
+  return '<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="'+c+'" stroke-width="'+w+'" stroke-linecap="round"/>'+
+    '<path d="M'+x2+' '+y2+' L'+(x2-Math.cos(a-0.45)*s)+' '+(y2-Math.sin(a-0.45)*s)+
+    ' L'+(x2-Math.cos(a+0.45)*s)+' '+(y2-Math.sin(a+0.45)*s)+' z" fill="'+c+'"/>';
+}
+function idreh(cx,cy,r,col){                 /* gebogener Pfeil (Drehung) */
+  const c=col||IF.lin, a0=-2.5, a1=-0.5;
+  const x0=cx+Math.cos(a0)*r, y0=cy+Math.sin(a0)*r, x1=cx+Math.cos(a1)*r, y1=cy+Math.sin(a1)*r;
+  const vx=cx+Math.cos(a1-0.22)*r, vy=cy+Math.sin(a1-0.22)*r;
+  return '<path d="M'+x0+' '+y0+' A'+r+' '+r+' 0 0 1 '+x1+' '+y1+'" fill="none" stroke="'+c+'" stroke-width="2.2"/>'+
+    ipfeil(vx,vy,x1,y1,c,2.2);
+}
+function ispule(cx,cy,senk){                 /* Induktionsspule mit Messgerät */
+  let s=''; const n=4;
+  if(senk){ for(let i=0;i<n;i++) s+='<ellipse cx="'+cx+'" cy="'+(cy-24+i*16)+'" rx="22" ry="7" fill="none" stroke="'+IF.lin+'" stroke-width="2.4"/>';
+    s+='<path d="M'+(cx+22)+' '+(cy-24)+' H'+(cx+40)+' V'+(cy+6)+'" fill="none" stroke="'+IF.lin+'" stroke-width="1.4"/>'+
+       '<path d="M'+(cx+22)+' '+(cy+24)+' H'+(cx+34)+' V'+(cy+22)+'" fill="none" stroke="'+IF.lin+'" stroke-width="1.4"/>'+
+       '<circle cx="'+(cx+40)+'" cy="'+(cy+14)+'" r="9" fill="#fff" stroke="'+IF.lin+'" stroke-width="1.6"/>'+
+       '<text x="'+(cx+40)+'" y="'+(cy+18)+'" text-anchor="middle" font-size="10" font-weight="700">V</text>';
+  } else { for(let i=0;i<n;i++) s+='<ellipse cx="'+(cx-24+i*16)+'" cy="'+cy+'" rx="7" ry="22" fill="none" stroke="'+IF.lin+'" stroke-width="2.4"/>';
+    s+='<path d="M'+(cx-24)+' '+(cy+22)+' V'+(cy+34)+' H'+(cx+8)+'" fill="none" stroke="'+IF.lin+'" stroke-width="1.4"/>'+
+       '<path d="M'+(cx+24)+' '+(cy+22)+' V'+(cy+34)+' H'+(cx+18)+'" fill="none" stroke="'+IF.lin+'" stroke-width="1.4"/>'+
+       '<circle cx="'+(cx+13)+'" cy="'+(cy+34)+'" r="9" fill="#fff" stroke="'+IF.lin+'" stroke-width="1.6"/>'+
+       '<text x="'+(cx+13)+'" y="'+(cy+38)+'" text-anchor="middle" font-size="10" font-weight="700">V</text>'; }
+  return s;
+}
+function imagnet(x,y,l,h,quer){              /* Stabmagnet, N rot / S blau */
+  if(quer) return '<rect x="'+x+'" y="'+y+'" width="'+h+'" height="'+(l/2)+'" fill="'+IF.rot+'"/>'+
+    '<rect x="'+x+'" y="'+(y+l/2)+'" width="'+h+'" height="'+(l/2)+'" fill="'+IF.blau+'"/>'+
+    '<text x="'+(x+h/2)+'" y="'+(y+l/4+4)+'" text-anchor="middle" fill="#fff" font-size="11" font-weight="700">N</text>'+
+    '<text x="'+(x+h/2)+'" y="'+(y+3*l/4+4)+'" text-anchor="middle" fill="#fff" font-size="11" font-weight="700">S</text>';
+  return '<rect x="'+x+'" y="'+y+'" width="'+(l/2)+'" height="'+h+'" fill="'+IF.rot+'"/>'+
+    '<rect x="'+(x+l/2)+'" y="'+y+'" width="'+(l/2)+'" height="'+h+'" fill="'+IF.blau+'"/>'+
+    '<text x="'+(x+l/4)+'" y="'+(y+h/2+4)+'" text-anchor="middle" fill="#fff" font-size="11" font-weight="700">N</text>'+
+    '<text x="'+(x+3*l/4)+'" y="'+(y+h/2+4)+'" text-anchor="middle" fill="#fff" font-size="11" font-weight="700">S</text>';
+}
+function ifeld(x,y,w,h,mitRand){             /* homogenes Feld: Pfeile nach rechts */
+  let s=mitRand?'<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" fill="#eef3fb" stroke="'+IF.feld+'" stroke-dasharray="5 4"/>':'';
+  const n=4;
+  for(let i=0;i<n;i++){ const yy=y+h*(i+0.5)/n; s+=ipfeil(x+6,yy,x+w-6,yy,IF.feld,1.6); }
+  s+='<text x="'+(x+w-6)+'" y="'+(y-4)+'" text-anchor="end" font-size="10" fill="'+IF.feld+'" font-weight="700">B</text>';
+  return s;
+}
+function ischlaufe(x,y,w,h,col){
+  return '<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" fill="none" stroke="'+(col||IF.lin)+'" stroke-width="2.6"/>'+
+    '<circle cx="'+(x+w/2)+'" cy="'+(y+h)+'" r="7" fill="#fff" stroke="'+(col||IF.lin)+'" stroke-width="1.6"/>'+
+    '<text x="'+(x+w/2)+'" y="'+(y+h+4)+'" text-anchor="middle" font-size="9" font-weight="700">V</text>';
+}
+function ielektro(x,y,zu){                   /* Elektromagnet mit Schalter */
+  let s='';
+  for(let i=0;i<4;i++) s+='<ellipse cx="'+(x+i*13)+'" cy="'+y+'" rx="6" ry="17" fill="none" stroke="'+IF.lin+'" stroke-width="2.2"/>';
+  s+='<path d="M'+x+' '+(y+17)+' V'+(y+32)+' H'+(x+39)+' V'+(y+17)+'" fill="none" stroke="'+IF.lin+'" stroke-width="1.4"/>';
+  s+='<line x1="'+(x+12)+'" y1="'+(y+32)+'" x2="'+(x+12)+'" y2="'+(y+24)+'" stroke="'+IF.lin+'" stroke-width="1.6"/>';
+  s+=zu?'<line x1="'+(x+12)+'" y1="'+(y+32)+'" x2="'+(x+26)+'" y2="'+(y+32)+'" stroke="'+IF.lin+'" stroke-width="2.4"/>'
+       :'<line x1="'+(x+12)+'" y1="'+(y+32)+'" x2="'+(x+25)+'" y2="'+(y+24)+'" stroke="'+IF.lin+'" stroke-width="2.4"/>';
+  s+='<line x1="'+(x+26)+'" y1="'+(y+28)+'" x2="'+(x+26)+'" y2="'+(y+36)+'" stroke="'+IF.lin+'" stroke-width="1.6"/>';
+  return s;
+}
+/* die vierzehn Vorgänge */
+const INDUKTION={
+ zu:       ()=>ibild(ispule(150,52)+imagnet(28,42,46,20)+ipfeil(80,52,112,52,IF.rot)),
+ heraus:   ()=>ibild(ispule(118,52)+imagnet(104,42,46,20)+ipfeil(96,80,52,80,IF.rot)),
+ magDreht: ()=>ibild(ispule(152,52)+imagnet(44,30,44,18,true)+idreh(53,52,30,IF.rot)),
+ einSchalt:()=>ibild(ispule(152,52)+ielektro(26,44,true)+ipfeil(70,96,100,96,IF.rot)+
+                     '<text x="26" y="20" font-size="10" font-weight="700">einschalten</text>'),
+ ausSchalt:()=>ibild(ispule(152,52)+ielektro(26,44,false)+
+                     '<text x="26" y="20" font-size="10" font-weight="700">ausschalten</text>'),
+ spuleDreht:()=>ibild(imagnet(18,42,44,20)+ispule(132,52)+idreh(132,52,38,IF.rot)),
+ schlaufeDreht:()=>ibild(ifeld(14,16,172,86,true)+ischlaufe(72,38,56,40)+idreh(100,58,36,IF.rot)),
+ zusammen: ()=>ibild(ifeld(14,16,172,86,true)+ischlaufe(70,38,60,40)+
+                     ipfeil(58,58,74,58,IF.rot)+ipfeil(142,58,126,58,IF.rot)),
+ rausZiehen:()=>ibild(ifeld(14,16,120,86,true)+ischlaufe(104,38,52,38)+ipfeil(110,96,170,96,IF.rot)),
+ ruht:     ()=>ibild(ispule(118,52)+imagnet(104,42,46,20)+
+                     '<text x="100" y="104" text-anchor="middle" font-size="11" font-weight="700" fill="'+IF.grau+'">in Ruhe</text>'),
+ laengs:   ()=>ibild(ifeld(14,16,172,86,true)+ischlaufe(60,38,52,38)+ipfeil(120,57,168,57,IF.rot)),
+ quer:     ()=>ibild(ifeld(14,10,172,100,true)+ischlaufe(72,46,54,38)+ipfeil(99,44,99,18,IF.rot)),
+ bleibtAn: ()=>ibild(ispule(152,52)+ielektro(26,44,true)+
+                     '<text x="26" y="20" font-size="10" font-weight="700">bleibt an</text>'+
+                     '<text x="44" y="104" text-anchor="middle" font-size="10" fill="'+IF.grau+'">I bleibt gleich</text>'),
+ still:    ()=>ibild(ifeld(14,16,172,86,true)+ischlaufe(72,38,56,40)+
+                     '<text x="100" y="112" text-anchor="middle" font-size="11" font-weight="700" fill="'+IF.grau+'">in Ruhe</text>'),
+ mit:      ()=>ibild(ispule(140,46)+imagnet(26,36,44,20)+ipfeil(76,46,100,46,IF.rot)+ipfeil(150,96,174,96,IF.rot)+
+                     '<text x="100" y="112" text-anchor="middle" font-size="10" fill="'+IF.grau+'">gleich schnell</text>')
+};
+
 const GR=[
 
 { j:12, g:'Zufallsexperimente und Urnenmodelle', felder:[
@@ -458,6 +556,33 @@ const GR=[
 ];
 
 
+/* ---------- Physik 10: Induktion – Bildkarten in zwei Felder ----------
+   Die Karten zeigen ein kleines Bild und eine kurze Zeile. Gefragt ist nur:
+   Ändert sich der magnetische Fluss durch die Spule bzw. die Schlaufe?     */
+const GB=[
+
+{ f:'Ph', j:10, g:'Induktion – wann entsteht eine Spannung?', felder:[
+ ['Es entsteht eine Induktionsspannung', [
+   [INDUKTION.zu,          'Magnet bewegt sich auf die Spule zu'],
+   [INDUKTION.heraus,      'Magnet wird aus der Spule herausgezogen'],
+   [INDUKTION.magDreht,    'Magnet dreht sich vor der Spule'],
+   [INDUKTION.spuleDreht,  'Spule dreht sich vor dem Magneten'],
+   [INDUKTION.einSchalt,   'Elektromagnet wird eingeschaltet'],
+   [INDUKTION.ausSchalt,   'Elektromagnet wird ausgeschaltet'],
+   [INDUKTION.schlaufeDreht,'Schlaufe dreht sich im homogenen Feld'],
+   [INDUKTION.zusammen,    'Schlaufe wird im Feld zusammengezogen'],
+   [INDUKTION.rausZiehen,  'Schlaufe wird aus dem Feld herausgezogen'] ] ],
+ ['Es entsteht keine Induktionsspannung', [
+   [INDUKTION.ruht,        'Magnet liegt ruhig in der Spule'],
+   [INDUKTION.bleibtAn,    'Elektromagnet bleibt eingeschaltet'],
+   [INDUKTION.laengs,      'Schlaufe bewegt sich längs der Feldlinien, ganz im Feld'],
+   [INDUKTION.quer,        'Schlaufe bewegt sich quer zu den Feldlinien, ganz im Feld'],
+   [INDUKTION.still,       'Schlaufe liegt still im homogenen Feld'],
+   [INDUKTION.mit,         'Magnet und Spule bewegen sich gleich schnell nebeneinander'] ] ]
+]}
+
+];
+
 /* ---------- Verschachtelte Mengen: eine Gruppe liegt in der anderen ----------
    Die Zahl in der Mitte ist die Tiefe: 0 = äußere Menge, 1 = darin enthalten …
    Jede Karte gehört damit auch zu allen Mengen, die ihre Menge umschließen –
@@ -488,7 +613,8 @@ const GV=[
 window.TafelPaare={
   verfuegbar:()=>G.length>0,
   anzahl:()=>G.reduce((s,g)=>s+g.paare.length,0)+GR.reduce((s,g)=>s+g.felder.reduce((t,f)=>t+f[1].length,0),0)
-    +GV.reduce((s,g)=>s+g.felder.reduce((t,f)=>t+f[2].length,0),0),
+    +GV.reduce((s,g)=>s+g.felder.reduce((t,f)=>t+f[2].length,0),0)
+    +GB.reduce((s,g)=>s+g.felder.reduce((t,f)=>t+f[1].length,0),0),
   /* gleiche Struktur wie die anderen Quellen: b = linke Karte, e = rechte Karte.
      Gruppeneinträge bringen zusätzlich k = die Karten, die in dieses Feld gehören. */
   daten(){ const out=[];
@@ -500,6 +626,10 @@ window.TafelPaare={
        beim Übernehmen wiederhergestellt. */
     let nr=0;
     GV.forEach(gr=>gr.felder.forEach(f=>out.push({ f:gr.f||'M', j:gr.j, g:gr.g, b:f[0], e:f[2].join(' · '), k:f[2].slice(), t:f[1], ord:nr++ })));
+    /* Bildkarten: k sind die Zeilen (Vorschau), kbild liefert Bild + Zeile je Karte */
+    GB.forEach(gr=>gr.felder.forEach(f=>out.push({ f:gr.f||'Ph', j:gr.j, g:gr.g, b:f[0],
+      e:f[1].map(k=>k[1]).join(' · '), k:f[1].map(k=>k[1]),
+      kbild:()=>f[1].map(k=>[k[0](),k[1]]) })));
     return out; }
 };
 })();
