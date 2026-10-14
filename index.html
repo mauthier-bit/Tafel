@@ -971,7 +971,7 @@
   <div class="pgrip" id="propsGrip" title="Ziehen: Kontextmenü an eine andere Stelle schieben"><i></i><button class="pauto" id="propsAuto" title="Kontextmenü wieder automatisch neben das Objekt stellen">↺</button></div>
   <div class="prow" id="colorRow" style="font-size:13px"><b>Farbe</b><div class="swatches" id="propColors"></div></div>
   <div class="prow" id="widthRow" style="font-size:13px"><b>Dicke/Größe</b><div class="widths" id="propWidths"></div></div>
-  <div class="prow" id="propPtRow" style="display:none;font-size:13px"><b>Endpunkte</b><button class="p ptBtn" id="pt0" title="ohne Punkte">ohne</button><button class="p ptBtn" id="pt1" title="Strecke: beide Endpunkte">beide</button><button class="p ptBtn" id="pt2" title="Strahl: nur der Anfangspunkt">nur Anfang</button><button class="p ptBtn" id="pt3" title="Strahl: nur der Endpunkt">nur Ende</button></div>
+  <div class="prow" id="propPtRow" style="display:none;font-size:13px;gap:5px"><b style="min-width:62px">Punkte</b><button class="p ptBtn" id="pt1" style="flex:1 1 0;padding:7px 4px" title="Strecke: beide Punkte begrenzen die Linie">beide</button><button class="p ptBtn" id="pt2" style="flex:1 1 0;padding:7px 4px" title="Halbgerade ab dem Anfangspunkt – über den Endpunkt hinaus">nur Anfang</button><button class="p ptBtn" id="pt3" style="flex:1 1 0;padding:7px 4px" title="Halbgerade ab dem Endpunkt – über den Anfangspunkt hinaus">nur Ende</button></div>
   <div class="prow" id="propDashRow" style="display:none;font-size:13px"><b>Linie</b><button class="p dashBtn" id="dash0" title="durchgezogen"><svg viewBox="0 0 56 12"><path d="M3 6h50"/></svg></button><button class="p dashBtn" id="dash1" title="gestrichelt"><svg viewBox="0 0 56 12"><path d="M3 6h50" stroke-dasharray="9 6"/></svg></button><button class="p dashBtn" id="dash2" title="gepunktet"><svg viewBox="0 0 56 12"><path d="M3 6h50" stroke-dasharray="0.01 7"/></svg></button></div>
   <div class="prow" id="propFillRow"><label class="propToggle"><span>Gefüllt</span><div class="sw2" id="propFill"></div></label><span class="flbl">Transparenz</span><input type="range" id="propAlpha" min="0" max="100" step="5" value="80" title="Wie durchsichtig die Füllung ist – 0 % deckt ganz, 100 % ist unsichtbar"><span class="fval" id="propAlphaV">80 %</span></div>
   <div class="prow" id="textRow" style="display:none;flex-direction:column;align-items:stretch;gap:6px;font-size:13px">
@@ -1569,6 +1569,8 @@ function textLines(o,c){ c=c||ctx; c.font=(o.italic?'italic ':'')+(o.bold?'bold 
 /* Linienart: 0 = durchgezogen, 1 = gestrichelt, 2 = gepunktet.
    Bei den Körpern gibt es sie nicht – dort sind gestrichelte Linien schon die verdeckten Kanten. */
 const KOERPER=['cuboid','prism','pyramid','cylinder','cone'];
+/* Linie: 1 = Strecke (beide Punkte begrenzen), 2 = ab dem Anfangspunkt, 3 = ab dem Endpunkt */
+function lineArt(o){ const a=o&&(o.pt|0); return (a===2||a===3)?a:1; }
 const darfStrich=o=>!!o&&(o.type==='stroke'||(o.type==='shape'&&!KOERPER.includes(o.shape)));
 /* Formen mit Innenfläche – nur sie werden gefüllt gezeichnet. */
 /* ---- Formgriff: ein gelber Punkt verstellt ein Detail der Figur (wie in Word) ----
@@ -1637,7 +1639,11 @@ function drawObjectRaw(o,c){
       c.beginPath(); c.moveTo(cx,y); c.lineTo(cx-rx,bcy); c.moveTo(cx,y); c.lineTo(cx+rx,bcy); c.moveTo(cx+rx,bcy); c.ellipse(cx,bcy,rx,ry,0,0,Math.PI); }
     else if(o.shape==='circle'){ const r=Math.hypot(o.x1-o.x0,o.y1-o.y0); c.arc(o.x0,o.y0,r,0,7); }
     else if(o.shape==='arc'){ c.arc(o.x0,o.y0,o.r,o.a0,o.a1,o.a1<o.a0); }
-    else if(o.shape==='line'){c.moveTo(o.x0,o.y0);c.lineTo(o.x1,o.y1);}
+    else if(o.shape==='line'){ const a=lineArt(o);
+      if(a===1){ c.moveTo(o.x0,o.y0); c.lineTo(o.x1,o.y1); }                 /* Strecke */
+      else { const dx=o.x1-o.x0, dy=o.y1-o.y0, L=Math.hypot(dx,dy)||1, ux=dx/L, uy=dy/L, BIG=100000;
+        if(a===2){ c.moveTo(o.x0,o.y0); c.lineTo(o.x1+ux*BIG,o.y1+uy*BIG); } /* ab dem Anfangspunkt über das Ende hinaus */
+        else { c.moveTo(o.x1,o.y1); c.lineTo(o.x0-ux*BIG,o.y0-uy*BIG); } } } /* ab dem Endpunkt über den Anfang hinaus */
     else if(o.shape==='gerade'){ const dx=o.x1-o.x0,dy=o.y1-o.y0,len=Math.hypot(dx,dy)||1,ux=dx/len,uy=dy/len,BIG=100000; c.moveTo(o.x0-ux*BIG,o.y0-uy*BIG); c.lineTo(o.x1+ux*BIG,o.y1+uy*BIG); }
     else if(o.shape==='arrow'){c.moveTo(o.x0,o.y0);c.lineTo(o.x1,o.y1);const a=Math.atan2(o.y1-o.y0,o.x1-o.x0),L=Math.max(10,o.width*3.5);
       const spitze=(px,py,w)=>{ c.moveTo(px,py);c.lineTo(px-L*Math.cos(w-.4),py-L*Math.sin(w-.4));c.moveTo(px,py);c.lineTo(px-L*Math.cos(w+.4),py-L*Math.sin(w+.4)); };
@@ -1645,11 +1651,9 @@ function drawObjectRaw(o,c){
     if(o.fill&&FUELLBAR.includes(o.shape)){c.fillStyle=o.color;c.globalAlpha=(typeof o.fillA==='number')?o.fillA:.2;c.fill();c.globalAlpha=1;}
     c.stroke(); c.setLineDash([]);
     if(o.shape==='arc'||o.shape==='circle'){ c.beginPath(); c.arc(o.x0,o.y0,Math.max(o.width*0.9,1.6),0,7); c.fillStyle=o.color; c.fill(); }
-    if(o.shape==='line'&&(o.pt|0)){                 /* Endpunkte: Strecke, Strahl oder Gegenstrahl */
-      const r=Math.max(o.width*1.5,2.2), a=(o.pt|0);
-      c.fillStyle=o.color;
-      if(a===1||a===2){ c.beginPath(); c.arc(o.x0,o.y0,r,0,7); c.fill(); }
-      if(a===1||a===3){ c.beginPath(); c.arc(o.x1,o.y1,r,0,7); c.fill(); } }  // Mittelpunkt sichtbar (Zirkel & Kreis)
+    if(o.shape==='line'){ const a=lineArt(o), r=Math.max(o.width*1.5,2.2);
+      if(a!==1){ c.fillStyle=o.color; c.beginPath();                          /* Halbgerade: der Ursprung wird markiert */
+        if(a===2) c.arc(o.x0,o.y0,r,0,7); else c.arc(o.x1,o.y1,r,0,7); c.fill(); } }  // Mittelpunkt sichtbar (Zirkel & Kreis)
     if((o.lblV||o.lblE)&&LABEL_SHAPES.includes(o.shape)) drawShapeLabels(c,o,x,y,w,h);
   } else if(o.type==='text'){ c.fillStyle=o.color; c.textBaseline='top'; c.textAlign='left';
     textLines(o,c).forEach((ln,i)=>c.fillText(ln,o.x,o.y+i*o.size*1.3));
@@ -2789,9 +2793,9 @@ $('propFill').onclick=function(){ this.classList.toggle('on'); const on=this.cla
   shapeFill=on; alphaUI(); scheduleAutosave(); markDirty(); };
 /* Linienart der ausgewählten Striche und ebenen Formen */
 const darfPunkte=o=>!!o&&o.type==='shape'&&o.shape==='line';
-function ptUI(){ const l=selection.filter(darfPunkte); const a=l.length?(l[0].pt|0):0;
-  for(let i=0;i<4;i++) $('pt'+i).classList.toggle('on',a===i); }
-for(let i=0;i<4;i++) $('pt'+i).onclick=()=>{ const l=selection.filter(darfPunkte); if(!l.length) return;
+function ptUI(){ const l=selection.filter(darfPunkte); const a=l.length?lineArt(l[0]):1;
+  for(let i=1;i<4;i++) $('pt'+i).classList.toggle('on',a===i); }
+for(let i=1;i<4;i++) $('pt'+i).onclick=()=>{ const l=selection.filter(darfPunkte); if(!l.length) return;
   pushUndo(); l.forEach(o=>o.pt=i); ptUI(); markDirty(); scheduleAutosave(); };
 function dashUI(){ const l=selection.filter(darfStrich); const a=l.length?(l[0].dash|0):0;
   for(let i=0;i<3;i++) $('dash'+i).classList.toggle('on',i===a); }

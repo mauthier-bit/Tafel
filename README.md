@@ -39,10 +39,13 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   Ein **allgemeines Dreieck** gibt es nicht mehr als eigenen Knopf – dafür ist das **Vieleck** da, mit
   dem sich jedes Dreieck über seine drei Ecken genau setzen lässt. Ältere Tafelbilder mit der alten
   Form werden weiter richtig gezeichnet.
-- **Endpunkte der Linie** (Kontextmenü, nur bei der Linie): **ohne · beide · nur Anfang · nur Ende**.
-  Mit beiden Punkten wird aus der Linie eine **Strecke**, mit nur einem Punkt eine **Halbgerade
-  (Strahl)** – der gesetzte Punkt ist der Anfang, das andere Ende bleibt offen. Voreingestellt ist
-  **ohne**, bestehende Linien sehen also unverändert aus.
+- **Punkte der Linie** (Kontextmenü, nur bei der Linie): **beide · nur Anfang · nur Ende**. Die
+  gesetzten Punkte **begrenzen** die Linie; wo keiner sitzt, läuft sie weiter.
+  - **beide** – eine gewöhnliche **Strecke** (Voreinstellung, sieht aus wie bisher).
+  - **nur Anfang** – eine **Halbgerade** vom Anfangspunkt aus **über den Endpunkt hinaus**.
+  - **nur Ende** – eine **Halbgerade** vom Endpunkt aus **über den Anfangspunkt hinaus**.
+  Bei den Halbgeraden markiert ein kleiner Punkt den Ursprung; die Strecke bleibt ohne Punkte. Für
+  die beidseitig unbegrenzte **Gerade** gibt es weiterhin das eigene Werkzeug.
 - **Gelber Formgriff** (wie in Word): Bei **Trapez, Parallelogramm, Drachenviereck und Raute** erscheint im
   ausgewählten Zustand zusätzlich zu den weißen Eckgriffen ein **gelber Punkt**, mit dem sich ein Detail der
   Figur verstellen lässt, ohne sie zu skalieren:
