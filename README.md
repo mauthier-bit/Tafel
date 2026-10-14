@@ -33,18 +33,30 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
 - **Formen**, in dieser Reihenfolge: **Linie** und **Pfeil**, dann **Kreis** (aufziehen) und **Ellipse**,
   dann die Dreiecke – **gleichseitig**, **gleichschenklig**, **rechtwinklig** –, dann die Vierecke –
   **Rechteck**, **Quadrat**, **Parallelogramm**, **Trapez**, **Raute**, **Drachenviereck** –, dann
-  **regelmäßiges Sechseck** und **Vieleck**: Ecken nacheinander antippen – ein grüner
+  **regelmäßiges Vieleck** und **Vieleck**: Ecken nacheinander antippen – ein grüner
   Ring markiert den ersten Punkt; tippt man ihn erneut an (ab drei Ecken), wird das Vieleck geschlossen und gezeichnet.
   „Rückgängig“ nimmt während des Setzens die letzte Ecke zurück. Alle neuen Formen lassen sich füllen, verschieben und skalieren.
   Ein **allgemeines Dreieck** gibt es nicht mehr als eigenen Knopf – dafür ist das **Vieleck** da, mit
   dem sich jedes Dreieck über seine drei Ecken genau setzen lässt. Ältere Tafelbilder mit der alten
   Form werden weiter richtig gezeichnet.
-- **Punkte der Linie** (Kontextmenü, nur bei der Linie): **beide · nur Anfang · nur Ende**. Die
+- **Punkte der Linie** (Kontextmenü, nur bei der Linie; die Zeile steht genau über der Zeile
+  **Linie** für durchgezogen/gestrichelt/gepunktet, beide gleich breit): **beide · nur Anfang · nur Ende**. Die
   gesetzten Punkte **begrenzen** die Linie; wo keiner sitzt, läuft sie weiter.
   - **beide** – eine gewöhnliche **Strecke** (Voreinstellung, sieht aus wie bisher).
   - **nur Anfang** – eine **Halbgerade** vom Anfangspunkt aus **über den Endpunkt hinaus**.
   - **nur Ende** – eine **Halbgerade** vom Endpunkt aus **über den Anfangspunkt hinaus**.
   Für die beidseitig unbegrenzte **Gerade** gibt es weiterhin das eigene Werkzeug.
+- **Regelmäßiges Vieleck:** Der Knopf zeichnet zunächst ein **Sechseck**; im **Kontextmenü** steht
+  darunter **„Ecken"** mit **− / +**, womit sich jedes regelmäßige Vieleck von **3 bis 12 Ecken**
+  einstellen lässt – Fünfeck, Achteck, Zehneck. Eine Seite liegt dabei immer unten, und die Figur
+  bleibt regelmäßig, egal wie der Rahmen aufgezogen wurde.
+- **Prisma: Schrägmaß und Lage.** Beim ausgewählten **Prisma** (und bei der **Pyramide**) sitzt oben
+  ein **gelber Punkt**: Waagrecht gezogen ändert er das **Schrägmaß** – also wie tief die Grundfläche
+  nach hinten versetzt gezeichnet wird (15 % bis 80 %, Anzeige „Schrägmaß 38 %"). Damit lässt sich
+  die Grundfläche flacher oder offener zeigen, je nachdem, worauf es in der Stunde ankommt.
+  In derselben Zeile wie die Eckenzahl steht beim Prisma rechts ein Umschalter **„stehend / liegend"**:
+  Liegend steht die Grundfläche **vorne** und der Körper reicht nach hinten – das klassische Bild
+  eines liegenden Prismas.
 - **Pfeilspitzen je Seite** (Kontextmenü beim Pfeil): zwei Zeilen – **Anfang** und **Ende** – mit je
   vier Möglichkeiten: **ohne Spitze · offene Spitze · gefüllte Spitze · Punkt**. Damit entstehen
   einfache Pfeile, Doppelpfeile, Vektorpfeile mit gefüllter Spitze und Strecken mit markiertem
