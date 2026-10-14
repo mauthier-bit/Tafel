@@ -1253,6 +1253,9 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
 - **Auswählen, Verschieben, Skalieren, Drehen:** Objekt antippen → Rahmen mit Griffen
   (Eck- und Kantengriffe = Größe, Kreis oben = drehen). Beim Ziehen an einem Griff bleibt die **gegenüberliegende
   Kante bzw. Ecke stehen** – das Objekt wächst nur in Zugrichtung (auch bei gedrehten Objekten).
+  Bei **Formen** (auch Körpern, Netzen und Pfeilen) bleibt die **Strichstärke dabei unverändert** – genau
+  die, die im Kontextmenü eingestellt ist, wie beim Zeichnen und wie bei der **zentrischen Streckung**.
+  Nur **Handschrift** wird samt Strichstärke größer, damit vergrößerte Notizen nicht dünn wirken.
   Im Kontextmenü unter **Drehen & Strecken** (mit Anzeige des aktuellen Winkels): **⟲ 90° / ⟳ 90°** dreht exakt um 90°,
   **⊾ Gerade** richtet schräg (z. B. mit zwei Fingern) gedrehte Objekte auf das nächste Vielfache von 90° aus.
   Das **Kontextmenü** ist dafür **etwas breiter (380 statt 320 Punkte) und deutlich flacher** geworden:
