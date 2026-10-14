@@ -1515,7 +1515,9 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   (.mp4 bzw. .webm). (Nur über https.)
 - **Punktestand** (Werkzeug): Score-Board für Spiele – Teams mit Namen, hoch-/runterzählen.
 - **Gruppen bilden** (Werkzeug): erzeugt aus der Klassenliste zufällige, ausgewogene Gruppen
-  in einstellbarer Größe; „Auf Tafel" schreibt die Gruppen auf die Tafel.
+  in einstellbarer Größe; „Auf Tafel" schreibt die Gruppen auf die Tafel. Das Symbol zeigt zwei
+  Personen **in einer Schale** – die Schale steht für die Gruppe, die sie zusammenfasst, und
+  unterscheidet den Knopf auf einen Blick von der **Sozialform** (zwei Personen ohne Schale).
 - **Uhr** (Werkzeug): fügt eine live laufende Analoguhr als bewegliches Objekt ein. Im **Kontextmenü**
   der Uhr lassen sich zwei Anzeigen zuschalten: **Schulstunden** markiert die **laufende Schulstunde
   farbig auf dem Zifferblatt** – das Blatt wird dabei als Minutenskala gelesen, die 2. Stunde
