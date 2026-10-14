@@ -826,16 +826,21 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   Lehrplanbegriffen vorbehalten, damit die beiden Quellen auf einen Blick zu unterscheiden sind.)
   - **Induktion – wann entsteht eine Spannung?** (Physik, Jgst. 10, **15 Bildkarten**): Jede Karte
     zeigt ein **kleines Bild** – Induktionsspule mit Messgerät, Stabmagnet, Leiterschlaufe im
-    homogenen Feld – und darunter **eine kurze Zeile**. Einsortiert wird in zwei Felder:
+    homogenen Feld – und daneben **eine kurze Zeile**. Damit die Lage eindeutig ist, steht das
+    homogene Feld in den Schlaufenbildern **senkrecht zur Zeichenebene** (⊗-Symbole, Beschriftung
+    „B in die Ebene"), die Schlaufe liegt also **in** der Zeichenebene. Einsortiert wird in zwei
+    Felder:
     **„Es entsteht eine Induktionsspannung"** (Magnet fährt auf die Spule zu oder aus ihr heraus,
     Magnet dreht sich vor der Spule, Spule dreht sich vor dem Magneten, Elektromagnet wird ein-
     bzw. ausgeschaltet, Schlaufe dreht sich im Feld, Schlaufe wird zusammengezogen, Schlaufe wird
     aus dem Feld herausgezogen) und **„Es entsteht keine Induktionsspannung"** (Magnet liegt ruhig
-    in der Spule, Elektromagnet bleibt eingeschaltet, Schlaufe bewegt sich **längs** oder **quer**
-    zu den Feldlinien, bleibt dabei aber **ganz im Feld**, Schlaufe liegt still, Magnet und Spule
-    bewegen sich **gleich schnell nebeneinander**). Die beiden Bewegungen im homogenen Feld sind
-    Absicht: Dort ändert sich der Fluss **nicht**, obwohl sich etwas bewegt – die Aufgabe prüft
-    genau diesen Punkt. Die Bilder werden beim Übernehmen gezeichnet.
+    in der Spule, Elektromagnet bleibt eingeschaltet, Schlaufe wird im Feld **verschoben** und
+    bleibt dabei **ganz im Feld**, Schlaufe liegt still, Magnet und Spule bewegen sich **gleich
+    schnell nebeneinander**, und – mit waagrechten Feldlinien gezeichnet – eine Schlaufe, deren
+    **Ebene parallel zu den Feldlinien** liegt und die herausgezogen wird). Diese beiden Fälle sind
+    Absicht: Es bewegt sich etwas, der Fluss ändert sich trotzdem **nicht** – einmal, weil die
+    Schlaufe im Feld bleibt, einmal, weil durch die hochkant stehende Schlaufe gar kein Fluss geht.
+    Die Bilder werden beim Übernehmen gezeichnet.
   - **Bruch und Dezimalbruch** (Jgst. 6): 1/4 ↔ 0,25, 5/8 ↔ 0,625, 1/3 ↔ 0,333…
   - **Brüche erweitern und kürzen** (Jgst. 6): 2/3 ↔ 8/12, 3/8 ↔ 6/16
   - **Unechter Bruch und gemischte Zahl** (Jgst. 6): 11/4 ↔ 2 3/4, 17/5 ↔ 3 2/5

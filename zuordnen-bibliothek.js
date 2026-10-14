@@ -473,6 +473,27 @@ function imagnet(x,y,l,h,quer){              /* Stabmagnet, N rot / S blau */
     '<text x="'+(x+l/4)+'" y="'+(y+h/2+4)+'" text-anchor="middle" fill="#fff" font-size="11" font-weight="700">N</text>'+
     '<text x="'+(x+3*l/4)+'" y="'+(y+h/2+4)+'" text-anchor="middle" fill="#fff" font-size="11" font-weight="700">S</text>';
 }
+function ikreuz(x,y,r,col){                  /* Feldlinie in die Zeichenebene hinein */
+  const c=col||IF.feld, d=r*0.72;
+  return '<circle cx="'+x+'" cy="'+y+'" r="'+r+'" fill="#fff" stroke="'+c+'" stroke-width="1.4"/>'+
+    '<path d="M'+(x-d)+' '+(y-d)+' L'+(x+d)+' '+(y+d)+' M'+(x+d)+' '+(y-d)+' L'+(x-d)+' '+(y+d)+
+    '" stroke="'+c+'" stroke-width="1.4"/>';
+}
+function ifeldRein(x,y,w,h){                /* homogenes Feld senkrecht in die Zeichenebene */
+  let s='<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" fill="#eef3fb" stroke="'+IF.feld+'" stroke-dasharray="5 4"/>';
+  const sp=5, ze=3;
+  for(let r=0;r<ze;r++) for(let c=0;c<sp;c++)
+    s+=ikreuz(x+w*(c+0.5)/sp, y+h*(r+0.5)/ze, 5);
+  s+='<text x="'+(x+w-4)+'" y="'+(y-4)+'" text-anchor="end" font-size="10" fill="'+IF.feld+'" font-weight="700">B in die Ebene</text>';
+  return s;
+}
+function ikante(x,y,w){                     /* Schlaufe von der Seite: Ebene parallel zu B */
+  return '<line x1="'+x+'" y1="'+y+'" x2="'+(x+w)+'" y2="'+y+'" stroke="'+IF.lin+'" stroke-width="4" stroke-linecap="round"/>'+
+    '<line x1="'+x+'" y1="'+(y-6)+'" x2="'+x+'" y2="'+(y+6)+'" stroke="'+IF.lin+'" stroke-width="2"/>'+
+    '<line x1="'+(x+w)+'" y1="'+(y-6)+'" x2="'+(x+w)+'" y2="'+(y+6)+'" stroke="'+IF.lin+'" stroke-width="2"/>'+
+    '<circle cx="'+(x+w/2)+'" cy="'+(y+16)+'" r="7" fill="#fff" stroke="'+IF.lin+'" stroke-width="1.6"/>'+
+    '<text x="'+(x+w/2)+'" y="'+(y+20)+'" text-anchor="middle" font-size="9" font-weight="700">V</text>';
+}
 function ifeld(x,y,w,h,mitRand){             /* homogenes Feld: Pfeile nach rechts */
   let s=mitRand?'<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" fill="#eef3fb" stroke="'+IF.feld+'" stroke-dasharray="5 4"/>':'';
   const n=4;
@@ -505,18 +526,19 @@ const INDUKTION={
  ausSchalt:()=>ibild(ispule(152,52)+ielektro(26,44,false)+
                      '<text x="26" y="20" font-size="10" font-weight="700">ausschalten</text>'),
  spuleDreht:()=>ibild(imagnet(18,42,44,20)+ispule(132,52)+idreh(132,52,38,IF.rot)),
- schlaufeDreht:()=>ibild(ifeld(14,16,172,86,true)+ischlaufe(72,38,56,40)+idreh(100,58,36,IF.rot)),
- zusammen: ()=>ibild(ifeld(14,16,172,86,true)+ischlaufe(70,38,60,40)+
-                     ipfeil(58,58,74,58,IF.rot)+ipfeil(142,58,126,58,IF.rot)),
- rausZiehen:()=>ibild(ifeld(14,16,120,86,true)+ischlaufe(104,38,52,38)+ipfeil(110,96,170,96,IF.rot)),
+ schlaufeDreht:()=>ibild(ifeldRein(14,20,172,82)+ischlaufe(74,40,54,38)+idreh(101,59,36,IF.rot)),
+ zusammen: ()=>ibild(ifeldRein(14,20,172,82)+ischlaufe(70,40,60,38)+
+                     ipfeil(56,59,72,59,IF.rot)+ipfeil(144,59,128,59,IF.rot)),
+ rausZiehen:()=>ibild(ifeldRein(10,20,118,82)+ischlaufe(100,40,52,38)+ipfeil(112,94,176,94,IF.rot)),
  ruht:     ()=>ibild(ispule(118,52)+imagnet(104,42,46,20)+
                      '<text x="100" y="104" text-anchor="middle" font-size="11" font-weight="700" fill="'+IF.grau+'">in Ruhe</text>'),
- laengs:   ()=>ibild(ifeld(14,16,172,86,true)+ischlaufe(60,38,52,38)+ipfeil(120,57,168,57,IF.rot)),
- quer:     ()=>ibild(ifeld(14,10,172,100,true)+ischlaufe(72,46,54,38)+ipfeil(99,44,99,18,IF.rot)),
+ verschoben:()=>ibild(ifeldRein(10,20,180,82)+ischlaufe(46,40,52,38)+ipfeil(106,59,160,59,IF.rot)),
+ parallel: ()=>ibild(ifeld(10,22,180,74,true)+ikante(44,60,62)+ipfeil(118,60,176,60,IF.rot)+
+                     '<text x="100" y="112" text-anchor="middle" font-size="10" fill="'+IF.grau+'">Schlaufenebene parallel zu B</text>'),
  bleibtAn: ()=>ibild(ispule(152,52)+ielektro(26,44,true)+
                      '<text x="26" y="20" font-size="10" font-weight="700">bleibt an</text>'+
                      '<text x="44" y="104" text-anchor="middle" font-size="10" fill="'+IF.grau+'">I bleibt gleich</text>'),
- still:    ()=>ibild(ifeld(14,16,172,86,true)+ischlaufe(72,38,56,40)+
+ still:    ()=>ibild(ifeldRein(14,16,172,82)+ischlaufe(72,36,56,38)+
                      '<text x="100" y="112" text-anchor="middle" font-size="11" font-weight="700" fill="'+IF.grau+'">in Ruhe</text>'),
  mit:      ()=>ibild(ispule(140,46)+imagnet(26,36,44,20)+ipfeil(76,46,100,46,IF.rot)+ipfeil(150,96,174,96,IF.rot)+
                      '<text x="100" y="112" text-anchor="middle" font-size="10" fill="'+IF.grau+'">gleich schnell</text>')
@@ -575,8 +597,8 @@ const GB=[
  ['Es entsteht keine Induktionsspannung', [
    [INDUKTION.ruht,        'Magnet liegt ruhig in der Spule'],
    [INDUKTION.bleibtAn,    'Elektromagnet bleibt eingeschaltet'],
-   [INDUKTION.laengs,      'Schlaufe bewegt sich längs der Feldlinien, ganz im Feld'],
-   [INDUKTION.quer,        'Schlaufe bewegt sich quer zu den Feldlinien, ganz im Feld'],
+   [INDUKTION.verschoben,  'Schlaufe wird im Feld verschoben, bleibt ganz im Feld'],
+   [INDUKTION.parallel,    'Schlaufenebene parallel zu den Feldlinien – Schlaufe wird herausgezogen'],
    [INDUKTION.still,       'Schlaufe liegt still im homogenen Feld'],
    [INDUKTION.mit,         'Magnet und Spule bewegen sich gleich schnell nebeneinander'] ] ]
 ]}
