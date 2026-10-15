@@ -553,7 +553,9 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
 - **Stoppuhr: Rundenzeiten und Hundertstel.** Die Stoppuhr läuft auf **Hundertstelsekunden**
   (`mm:ss.hh`). Ist in den Einstellungen der **Knopf für Rundenzeiten** eingeschaltet, steht neben
   „Start" ein Knopf **„Runde"**: Jeder Tipp schreibt eine Zeile mit **Rundennummer, Gesamtzeit und
-  Abstand zur Runde davor**, neueste oben; „Reset" leert die Liste wieder.
+  Abstand zur Runde davor**, neueste oben; „Reset" leert die Liste wieder. Die Liste ist auf
+  **170 px bzw. 28 % der Bildschirmhöhe** begrenzt und **scrollt** darin – das Fenster wächst also
+  auch nach vielen Runden nicht weiter, und die neueste Runde steht immer sichtbar obenan.
 - **Timer: Minuten einstellen.** Die Reihe der Vorgaben lautet **5 · 10 · 15 · 20 · 45** Minuten –
   die typischen Arbeitsphasen und eine ganze Stunde. Darunter steht das Eingabefeld zwischen einem
   **−** und einem **+**, die die Zeit **minutenweise** ändern (0 bis 180), daneben ausgeschrieben
@@ -564,8 +566,8 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   **Stoppuhr** der Schalter für den Rundenknopf, beim **Timer** die Erinnerung vor Schluss samt
   Restzeit, und bei beiden die **Schriftgröße** der Zeitanzeige (−/+, 30 bis 130 px in Achterschritten,
   je Uhr getrennt und **gemerkt**).
-- **Timer: Erinnerung vor Schluss.** Der Schalter **„🔔 Erinnerung vor Schluss"** (im Timer unter
-  „⚙ Einstellungen", in der Sozialform direkt beim Timer) mit der Auswahl **30 Sek · 1 · 2 · 3 · 5 Min Restzeit**. Ist er an,
+- **Timer: Erinnerung vor Schluss.** Der Schalter **„🔔 Erinnerung vor Schluss"** (im Timer-Fenster
+  unter „⚙ Einstellungen", in der Sozialform hinter dem **⚙**-Knopf neben „Start" und „Reset") mit der Auswahl **30 Sek · 1 · 2 · 3 · 5 Min Restzeit**. Ist er an,
   erklingen bei der eingestellten Restzeit **zwei weiche Schläge** – leiser als der Schlusston, damit
   beides auseinanderzuhalten ist – und eine kurze Einblendung sagt „Noch 1 Min". Der Ton kommt pro
   Durchlauf **genau einmal**; ist die eingestellte Laufzeit kürzer als die Vorwarnzeit, bleibt er aus.
