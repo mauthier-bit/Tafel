@@ -711,6 +711,23 @@
   #sNoiseLight{display:flex;gap:12px;align-items:center;}
   #sNoiseLight .lamp{width:46px;height:46px;}
   #social .hint2{position:absolute;bottom:24px;font-size:16px;color:#666;}
+  #socialHead{display:flex;flex-direction:column;align-items:center;gap:20px;}
+  .sGrip{display:none;}
+  /* Verkleinert: die Sozialform wird zum verschiebbaren Fenster, die Tafel bleibt sichtbar und bedienbar */
+  #social.mini{inset:auto;left:16px;top:86px;width:max-content;max-width:94vw;background:transparent;gap:0;align-items:stretch;justify-content:flex-start;}
+  #social.mini .hint2{display:none;}
+  #social.mini #socialShow{background:var(--panel);color:var(--panelText);border-radius:16px;box-shadow:var(--shadow);
+    padding:6px 14px 14px;gap:12px;max-height:84vh;overflow:auto;align-items:center;}
+  #social.mini .sGrip{display:block;align-self:stretch;padding:6px 0 2px;cursor:grab;touch-action:none;}
+  #social.mini .sGrip span{display:block;width:46px;height:5px;margin:0 auto;border-radius:3px;background:#c7cedb;}
+  #social.mini #socialHead{flex-direction:row;gap:12px;}
+  #social.mini #socialShow svg{width:46px;height:46px;}
+  #social.mini .label{font-size:21px;}
+  #social.mini #socialTools{gap:12px;max-width:none;}
+  #social.mini .sTimerDisp{font-size:30px;}
+  #social.mini .nzGauge{width:132px;height:78px;}
+  #social.mini #sNoiseLight .lamp{width:34px;height:34px;}
+  #social.mini #sNoiseLight .nzBars{height:48px;}
 
   #namePick{position:fixed;inset:0;z-index:36;display:none;align-items:center;justify-content:center;background:rgba(17,20,26,.92);flex-direction:column;gap:24px;color:#fff;}
   #namePick.show{display:flex;}
@@ -1100,7 +1117,8 @@
 <!-- Sozialform -->
 <div id="social">
   <div id="socialChoose"><div class="sTitle">Sozialform wählen</div><div class="sCards" id="sCards"></div></div>
-  <div id="socialShow"><div id="social-icon"></div><div class="label" id="social-label"></div>
+  <div id="socialShow"><div class="sGrip" id="socialGrip" title="Fenster verschieben"><span></span></div>
+    <div id="socialHead"><div id="social-icon"></div><div class="label" id="social-label"></div></div>
     <div id="socialTools">
       <div class="sTool off" id="sTimerTool">
         <button class="sToolBtn" id="sTimerToggle">⏱ Timer</button>
@@ -1120,7 +1138,7 @@
         <label class="sRow" style="cursor:pointer;flex-wrap:nowrap;justify-content:flex-start;text-align:left;gap:8px;max-width:290px;line-height:1.3"><input type="checkbox" id="sStkAuto" style="flex:0 0 auto;width:22px;height:22px;margin:0"><span>⭐ Sticker für die Klasse, wenn die Ampel bis zum Timer-Ende nicht rot wird</span></label>
       </div>
     </div>
-    <div class="sBtns"><button class="btn" id="socialBack">← Andere Form</button><button class="btn pri" id="socialCloseBtn">Schließen</button></div></div>
+    <div class="sBtns"><button class="btn" id="socialMini">⤡ Verkleinern</button><button class="btn" id="socialBack">← Andere Form</button><button class="btn pri" id="socialCloseBtn">Schließen</button></div></div>
   <div class="hint2">Tippen zum Schließen</div>
 </div>
 <!-- Namensziehung -->
@@ -4376,10 +4394,33 @@ function buildSocialCards(){ const host=$('sCards'); host.innerHTML=''; Object.k
   const c=document.createElement('div'); c.className='sCard'; c.innerHTML=s.svg+'<div class="cl">'+s.label+'</div>';
   c.onclick=e=>{ e.stopPropagation(); const ss=socialIcons[k]; $('social-icon').innerHTML=ss.svg; $('social-label').textContent=ss.label; $('social').classList.add('showing'); };
   host.appendChild(c); }); }
-$('w-social').onclick=()=>{ $('sStkAuto').checked=!!doc.settings.stickerAuto; buildSocialCards(); $('social').classList.remove('showing'); $('social').classList.add('show'); };
-$('socialBack').onclick=e=>{ e.stopPropagation(); $('social').classList.remove('showing'); };
+$('w-social').onclick=()=>{ $('sStkAuto').checked=!!doc.settings.stickerAuto; buildSocialCards(); socialMini(false); $('social').classList.remove('showing'); $('social').classList.add('show'); };
+$('socialBack').onclick=e=>{ e.stopPropagation(); socialMini(false); $('social').classList.remove('showing'); };
 $('socialCloseBtn').onclick=e=>{ e.stopPropagation(); $('social').classList.remove('show'); };
-$('social').onclick=e=>{ if(e.target===$('social')||e.target.classList.contains('hint2')) $('social').classList.remove('show'); };
+$('social').onclick=e=>{ if($('social').classList.contains('mini')) return;
+  if(e.target===$('social')||e.target.classList.contains('hint2')) $('social').classList.remove('show'); };
+/* Sozialform verkleinern: als verschiebbares Fenster über der Tafel, damit Arbeitsaufträge sichtbar bleiben */
+function socialMini(an){ const el=$('social'); el.classList.toggle('mini',!!an);
+  $('socialMini').textContent=an?'⤢ Vergrößern':'⤡ Verkleinern';
+  if(an){ if(!el.style.left){ el.style.left='16px'; el.style.top='86px'; } socialMiniHalten(); }
+  else { el.style.left=''; el.style.top=''; } }
+$('socialMini').onclick=e=>{ e.stopPropagation(); const an=!$('social').classList.contains('mini'); socialMini(an);
+  if(an) toast('Sozialform verkleinert – am Balken oben verschieben'); };
+function socialMiniHalten(){ const el=$('social'); if(!el.classList.contains('mini'))return;   // im Bild behalten
+  const r=el.getBoundingClientRect();
+  const x=Math.max(6,Math.min(innerWidth-r.width-6, parseFloat(el.style.left)||0));
+  const y=Math.max(6,Math.min(innerHeight-r.height-6, parseFloat(el.style.top)||0));
+  el.style.left=x+'px'; el.style.top=y+'px'; }
+addEventListener('resize',socialMiniHalten);
+(()=>{ const gr=$('socialGrip'); let zieh=null;        /* Zeiger am Fenster: Bewegung am Fenster verfolgen, nicht am Griff */
+  const zu=e=>{ if(!zieh)return; e.preventDefault(); const el=$('social');
+    el.style.left=(zieh.l+e.clientX-zieh.x)+'px'; el.style.top=(zieh.t+e.clientY-zieh.y)+'px'; };
+  const aus=()=>{ if(!zieh)return; zieh=null; gr.style.cursor='grab'; socialMiniHalten();
+    removeEventListener('pointermove',zu,true); removeEventListener('pointerup',aus,true); removeEventListener('pointercancel',aus,true); };
+  gr.addEventListener('pointerdown',e=>{ const el=$('social'); if(!el.classList.contains('mini'))return;
+    e.preventDefault(); e.stopPropagation(); gr.style.cursor='grabbing';
+    zieh={x:e.clientX,y:e.clientY,l:parseFloat(el.style.left)||0,t:parseFloat(el.style.top)||0};
+    addEventListener('pointermove',zu,true); addEventListener('pointerup',aus,true); addEventListener('pointercancel',aus,true); }); })();
 
 /* ============ Klasse: Sticker & Klassenliste (je Projekt = Klasse gespeichert) ============ */
 const STICKERS=['⭐','🌟','🏆','👑','🎉','👍','😊','💎','🚀','🌈','🍀','🦄','🦋','🐱','🐝','❤️'];

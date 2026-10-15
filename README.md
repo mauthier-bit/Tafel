@@ -550,6 +550,13 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   „Anzeigen/Verbergen", „Kategorien" und „Zurücksetzen" in einer Zeile. Reihenfolge der Reiter:
   **Klassenliste · Stundenplan · Termine · Sitzplan · Sticker · Notizen**, beim Öffnen ist die
   Klassenliste aktiv.
+- **Sozialform verkleinern.** Ist eine Sozialform gewählt, steht unten der Knopf **„⤡ Verkleinern"**.
+  Damit wird aus der bildschirmfüllenden Anzeige ein **kleines Fenster**, das **Sozialform, Timer und
+  Lärmampel** weiter zeigt – die **Tafel bleibt daneben sichtbar und bedienbar**, man kann also
+  weiterschreiben, während der Arbeitsauftrag an der Tafel steht. Das Fenster lässt sich am **Balken
+  oben** an jede Stelle **verschieben** und bleibt dabei immer ganz im Bild (auch wenn sich der
+  Bildschirm dreht). **„⤢ Vergrößern"** stellt die große Anzeige wieder her; „Andere Form" und das
+  Öffnen über das Werkzeug tun das ebenfalls.
 - **Lärmampel: drei Ansichten.** Über den Schaltern **Ampel · Zeiger · Balken** (im Fenster der
   Lärmampel und ebenso in der Sozialform-Ansicht) lässt sich die Darstellung wechseln:
   - **Ampel** – die bisherigen drei Leuchten rot/gelb/grün, von denen jeweils eine an ist.
@@ -1803,7 +1810,8 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
 - **Speichern/Laden** als `.tafel`-Datei + automatische Sicherung im Browser
 - **Widgets:** Lärmampel (Mikrofon; als Ampel, Zeiger oder Balkenkette), Stoppuhr, Timer, **Sozialform** (Auswahl-Bildschirm: Stillarbeit /
   Partnerarbeit / Gruppenarbeit antippen → große Anzeige mit gut erkennbaren Symbolen; in der Anzeige
-  lassen sich **optional ein Timer** für die Dauer **und die Lärmampel** einblenden), Umfrage
+  lassen sich **optional ein Timer** für die Dauer **und die Lärmampel** einblenden; auf Wunsch als
+  verschiebbares kleines Fenster über der Tafel), Umfrage
 - **Hintergrund:** Weiß / Karo / Linien / Punkte / Notenlinien / Dreiecke (Einstellungen)
 
 ## Leisten (Bedienung)
