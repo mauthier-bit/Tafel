@@ -554,6 +554,11 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   (`mm:ss.hh`). Ist in den Einstellungen der **Knopf für Rundenzeiten** eingeschaltet, steht neben
   „Start" ein Knopf **„Runde"**: Jeder Tipp schreibt eine Zeile mit **Rundennummer, Gesamtzeit und
   Abstand zur Runde davor**, neueste oben; „Reset" leert die Liste wieder.
+- **Timer: Minuten einstellen.** Die Reihe der Vorgaben lautet **5 · 10 · 15 · 20 · 45** Minuten –
+  die typischen Arbeitsphasen und eine ganze Stunde. Darunter steht das Eingabefeld zwischen einem
+  **−** und einem **+**, die die Zeit **minutenweise** ändern (0 bis 180), daneben ausgeschrieben
+  **„Minuten"** auf gleicher Höhe wie das Feld. Beides gibt es ebenso in der Sozialform, und beide
+  Fenster halten denselben Wert.
 - **Einstellungen bei Stoppuhr und Timer.** Beide Fenster haben – wie die Lärmampel – einen Knopf
   **„⚙ Einstellungen"**, hinter dem alles steckt, was nicht ständig gebraucht wird: bei der
   **Stoppuhr** der Schalter für den Rundenknopf, beim **Timer** die Erinnerung vor Schluss samt
