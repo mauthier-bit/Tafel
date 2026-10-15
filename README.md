@@ -610,8 +610,11 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   und schaltet sie auf einen Tipp wieder ab – das Mikrofon wird dabei freigegeben (außer eine
   Aufnahme braucht es gerade noch). Vorher stand dort nur „läuft…" und der Knopf war gesperrt.
 - **Aufgeräumte Sozialform:** In der Sozialform zeigt die Lärmampel nur noch **Anzeige, Mikrofon-Knopf
-  und Empfindlichkeit**. Ansicht, Warnton samt Schwelle und der Ruhe-Sticker stecken hinter dem Knopf
-  **„⚙ Einstellungen"**. Sind Timer oder Lärmampel aufgeklappt, wird das große Sozialform-Symbol
+  und Empfindlichkeit**. Ansicht, Warnton samt Schwelle und der Ruhe-Sticker stecken hinter einem
+  **⚙**-Knopf, der **neben „Mikrofon starten"** sitzt (beim Timer entsprechend neben „Start" und
+  „Reset"); solange die Einstellungen offen sind, ist er hervorgehoben. Durch den gewonnenen Platz
+  ist die **Anzeige größer** geworden: Zeiger und Balken rund **25 %**, die Ampellampen von 46 auf
+  56 px. Sind Timer oder Lärmampel aufgeklappt, wird das große Sozialform-Symbol
   **kleiner**, damit alles samt Knopfreihe auf den Bildschirm passt.
 - **Sticker bei Ruhe (Sozialform):** In der Sozialform-Ansicht gibt es bei der **Lärmampel** den
   Schalter **„⭐ Sticker für die Klasse, wenn die Ampel bis zum Timer-Ende nicht rot wird"**. Sind Timer und
