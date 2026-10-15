@@ -582,7 +582,9 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   weiterschreiben, während der Arbeitsauftrag an der Tafel steht. Das Fenster lässt sich am **Balken
   oben** an jede Stelle **verschieben** und bleibt dabei immer ganz im Bild (auch wenn sich der
   Bildschirm dreht). **„⤢ Vergrößern"** stellt die große Anzeige wieder her; „Andere Form" und das
-  Öffnen über das Werkzeug tun das ebenfalls.
+  Öffnen über das Werkzeug tun das ebenfalls. Im kleinen Fenster bleibt die **Lärmanzeige gut
+  ablesbar**: Zeiger 190 × 112, Balken 190 × 80 und Lampen 44 px – also nur wenig kleiner als in
+  der großen Ansicht.
 - **Lärmampel: drei Ansichten.** Über den Schaltern **Ampel · Zeiger · Balken** (im Fenster der
   Lärmampel und ebenso in der Sozialform-Ansicht) lässt sich die Darstellung wechseln:
   - **Ampel** – die bisherigen drei Leuchten rot/gelb/grün, von denen jeweils eine an ist.
