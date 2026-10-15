@@ -1601,8 +1601,10 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
 - **Punktestand** (Werkzeug): Score-Board für Spiele – Teams mit Namen, hoch-/runterzählen.
 - **Gruppen bilden** (Werkzeug): erzeugt aus der Klassenliste zufällige, ausgewogene Gruppen
   in einstellbarer Größe; „Auf Tafel" schreibt die Gruppen auf die Tafel. Das Symbol zeigt zwei
-  Personen **in einer Schale** – die Schale steht für die Gruppe, die sie zusammenfasst, und
-  unterscheidet den Knopf auf einen Blick von der **Sozialform** (zwei Personen ohne Schale).
+  Personen, die in einem **flachen, oben offenen Oval** stehen – schräg von oben gesehen, sodass
+  der Ring **hinter den beiden verschwindet** und sie aus der Öffnung herausragen. Der Ring steht
+  für die Gruppe, die sie zusammenfasst, und unterscheidet den Knopf auf einen Blick von der
+  **Sozialform** (zwei Personen ohne Ring).
 - **Uhr** (Werkzeug): fügt eine live laufende Analoguhr als bewegliches Objekt ein. Im **Kontextmenü**
   der Uhr lassen sich zwei Anzeigen zuschalten: **Schulstunden** markiert die **laufende Schulstunde
   farbig auf dem Zifferblatt** – das Blatt wird dabei als Minutenskala gelesen, die 2. Stunde
@@ -2470,7 +2472,8 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
    (Mülleimer), Seite +, Zoom, Seitenzahl (= Übersicht) und ein **Teilen-Knopf** (Pfeil aus dem offenen
    Kasten), der die **gerade aufgeschlagene Seite** als PDF weitergibt. Die beiden ähnlichen Knöpfe sind
    bewusst verschieden gezeichnet: Der **T-förmige Abzieher** steht **diagonal**, der Griff zeigt nach
-   **rechts unten**, und vom Blatt führen **drei Wischstreifen** senkrecht weg – die abgezogene Bahn.
+   **rechts unten**, und vom Blatt führt **eine graue Bahn** senkrecht weg – genau so breit wie das
+   Blatt, also die Fläche, die gerade abgezogen wurde.
    Er wischt nur den Inhalt weg, die Seite selbst bleibt stehen; der **Mülleimer** nimmt die ganze
    Seite aus dem Projekt. Lässt sich **vollständig einklappen**
    – dann bleibt nur der Aufklapp-Pfeil.
