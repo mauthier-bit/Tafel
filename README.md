@@ -569,6 +569,17 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   Alle drei zeigen denselben Messwert und dieselbe **Empfindlichkeit**; der Sticker bei Ruhe und die
   Rot-Erkennung laufen in jeder Ansicht weiter. Die gewählte Ansicht wird **gemerkt** und ist beim
   nächsten Start wieder da.
+- **Warnton** (Schalter **„🔔 Warnton bei Überschreiten"** samt Regler **Schwelle**, im Fenster und in
+  der Sozialform): Bleibt es lauter als die eingestellte Schwelle (25 % bis 95 %, Standard 70 %),
+  ertönt ein kurzer, freundlicher **Zweiklang**. Er kommt erst, wenn die Schwelle **drei Messungen
+  hintereinander** überschritten ist – ein einzelnes Husten oder ein fallendes Mäppchen löst ihn
+  also nicht aus – und danach frühestens **nach 5 Sekunden** wieder. Beim Einschalten erklingt er
+  einmal zur Probe; das gibt iPadOS zugleich die nötige Freigabe für Töne. Schalter und Schwelle
+  werden **gemerkt**.
+- **Kein Nachleuchten mehr:** Beim Zurückgehen der Anzeige blieben auf dem iPad manchmal die
+  **Leucht-Höfe** stehen. Der Schein der Balken ist jetzt – wie bei den Lampen – eine **eigene
+  Ebene**, deren Deckkraft überblendet wird, statt eines `box-shadow`, und er wird nie ganz auf
+  null gesetzt. Damit behält iPadOS die Fläche im Blick und zeichnet sie sauber neu.
 - **Sticker bei Ruhe (Sozialform):** In der Sozialform-Ansicht gibt es bei der **Lärmampel** den
   Schalter **„⭐ Sticker für die Klasse, wenn die Ampel bis zum Timer-Ende nicht rot wird"**. Sind Timer und
   Lärmampel beide aufgeklappt, sind ihre Bereiche **gleich hoch**. Laufen **Timer und Lärmampel** zusammen und

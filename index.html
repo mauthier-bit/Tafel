@@ -448,7 +448,7 @@
   /* Leuchtschein als eigene, zusammengesetzte Ebene statt box-shadow: Safari ließ den Schatten außerhalb der Lampe stehen */
   .lamp{position:relative;width:66px;height:66px;border-radius:50%;background:#333;opacity:.18;transition:opacity .15s;}
   .lamp::after{content:'';position:absolute;inset:-22px;border-radius:50%;pointer-events:none;
-    background:radial-gradient(circle,currentColor 0,currentColor 45%,transparent 72%);opacity:0;transition:opacity .15s;
+    background:radial-gradient(circle,currentColor 0,currentColor 45%,transparent 72%);opacity:.001;transition:opacity .15s;
     transform:translateZ(0);will-change:opacity;}
   .lamp.on{opacity:1;}
   .lamp.on::after{opacity:.55;}
@@ -463,9 +463,15 @@
   .nzNeedle{transform-box:view-box;transform-origin:100px 100px;transition:transform .12s linear;}
   .nzBars{display:flex;align-items:flex-end;gap:5px;height:92px;}
   #sNoiseLight .nzBars{height:66px;gap:4px;}
-  .nzBar{width:13px;border-radius:4px;background:#d8dee8;transition:background .12s,box-shadow .12s,opacity .12s;opacity:.55;}
+  .nzBar{position:relative;width:13px;border-radius:4px;background:#d8dee8;transition:background .12s,opacity .12s;opacity:.55;}
   #sNoiseLight .nzBar{width:10px;}
-  .nzBar.on{background:currentColor;opacity:1;box-shadow:0 0 9px currentColor;}
+  /* Schein wie bei den Lampen als eigene Ebene – ein box-shadow ließ auf dem iPad Höfe stehen */
+  .nzBar::after{content:'';position:absolute;inset:-7px -6px;border-radius:10px;pointer-events:none;
+    background:radial-gradient(circle,currentColor 0,currentColor 38%,transparent 72%);opacity:.001;transition:opacity .12s;
+    transform:translateZ(0);will-change:opacity;}
+  .nzBar.on{background:currentColor;opacity:1;}
+  .nzBar.on::after{opacity:.5;}
+  .nzBars{isolation:isolate;}
 
   #stkGrid{display:flex;flex-wrap:wrap;gap:6px;min-height:54px;padding:8px;background:#f7f9fc;border:1px solid #e2e7ef;border-radius:12px;align-items:center;}
   #stkGrid .stk{font-size:34px;line-height:1;position:relative;user-select:none;}
@@ -1135,6 +1141,8 @@
           <div class="nzView" data-nv="balken"><div class="nzBars" id="sNzBars"></div></div></div>
         <button class="btn pri" id="sNoiseStart">Mikrofon starten</button>
         <div class="sRow">Empfindlichkeit <input type="range" id="sNoiseSens" min="1" max="10" value="5"></div>
+        <label class="sRow" style="cursor:pointer"><input type="checkbox" id="sNoiseWarn" style="width:22px;height:22px;margin:0"> 🔔 Warnton</label>
+        <div class="sRow" id="sNoiseWarnRow">Schwelle <input type="range" id="sNoiseWarnLvl" min="25" max="95" value="70"> <b id="sNoiseWarnV">70 %</b></div>
         <label class="sRow" style="cursor:pointer;flex-wrap:nowrap;justify-content:flex-start;text-align:left;gap:8px;max-width:290px;line-height:1.3"><input type="checkbox" id="sStkAuto" style="flex:0 0 auto;width:22px;height:22px;margin:0"><span>⭐ Sticker für die Klasse, wenn die Ampel bis zum Timer-Ende nicht rot wird</span></label>
       </div>
     </div>
@@ -1158,6 +1166,8 @@
       <div class="nzView" data-nv="balken"><div class="nzBars" id="nzBars"></div></div></div>
     <div class="row"><button class="btn pri" id="noiseStart">Mikrofon starten</button></div>
     <label class="lbl">Empfindlichkeit</label><input type="range" id="noiseSens" min="1" max="10" value="5" style="width:100%">
+    <div class="toggle"><span>🔔 Warnton bei Überschreiten</span><div class="sw2" id="noiseWarn"></div></div>
+    <div id="noiseWarnRow" style="display:flex;gap:8px;align-items:center;font-size:14px"><span>Schwelle</span><input type="range" id="noiseWarnLvl" min="25" max="95" value="70" style="flex:1"><b id="noiseWarnV" style="min-width:48px;text-align:right">70 %</b></div>
     <div class="hint" id="noiseHint">Mikrofon geht nur über <b>https</b> (z. B. GitHub Pages).</div></div></div>
 <div class="win" id="win-stop" style="left:70px;top:70px;"><h3>Stoppuhr <span class="x" data-close="win-stop">×</span></h3>
   <div class="body"><div class="bignum" id="stopDisp">00:00.0</div><div class="row"><button class="btn pri" id="stopStart">Start</button><button class="btn" id="stopReset">Reset</button></div></div></div>
@@ -4374,6 +4384,28 @@ function setNoiseView(v){ noiseView=v; try{ localStorage.setItem('tafelNoiseView
   document.querySelectorAll('#noiseSeg button,#sNoiseSeg button').forEach(b=>b.classList.toggle('active',b.dataset.nv===v)); }
 document.querySelectorAll('#noiseSeg button,#sNoiseSeg button').forEach(b=>b.onclick=()=>setNoiseView(b.dataset.nv));
 nzBauBalken(); setNoiseView(noiseView);
+/* ---- Warnton, wenn es über einer eingestellten Schwelle bleibt ---- */
+let warnAn=false, warnSchwelle=.7, warnRun=0, warnSperre=0;
+try{ warnAn=localStorage.getItem('tafelWarnTon')==='1'; const w=+localStorage.getItem('tafelWarnLvl'); if(w>=25&&w<=95) warnSchwelle=w/100; }catch(e){}
+function warnUI(){ const p=Math.round(warnSchwelle*100);
+  const a=$('noiseWarn'); if(a) a.classList.toggle('on',warnAn);
+  const b=$('sNoiseWarn'); if(b) b.checked=warnAn;
+  ['noiseWarnLvl','sNoiseWarnLvl'].forEach(id=>{ const e=$(id); if(e&&+e.value!==p) e.value=p; });
+  ['noiseWarnV','sNoiseWarnV'].forEach(id=>{ const e=$(id); if(e) e.textContent=p+' %'; });
+  ['noiseWarnRow','sNoiseWarnRow'].forEach(id=>{ const e=$(id); if(e) e.style.opacity=warnAn?'1':'.45'; }); }
+function warnSetzen(an,p){ if(an!==null&&an!==undefined) warnAn=!!an;
+  if(p!=null) warnSchwelle=Math.max(.25,Math.min(.95,p/100));
+  try{ localStorage.setItem('tafelWarnTon',warnAn?'1':'0'); localStorage.setItem('tafelWarnLvl',Math.round(warnSchwelle*100)); }catch(e){}
+  warnRun=0; warnSperre=0; warnUI(); }
+function warnTon(){ const ac=fxCtx(); if(!ac)return;                 /* freundliches Zweiklang-Signal, kein Schreck */
+  try{ [1046.5,784].forEach((f,i)=>{ const o=ac.createOscillator(), g=ac.createGain(), t=ac.currentTime+i*0.17;
+    o.type='sine'; o.frequency.value=f;
+    g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.3,t+0.015); g.gain.exponentialRampToValueAtTime(0.0001,t+0.42);
+    o.connect(g); g.connect(ac.destination); o.start(t); o.stop(t+0.45); }); }catch(e){} }
+$('noiseWarn').onclick=()=>{ warnSetzen(!warnAn); if(warnAn) warnTon(); };        /* Tipp schaltet frei und zeigt den Ton */
+$('sNoiseWarn').onchange=function(){ warnSetzen(this.checked); if(warnAn) warnTon(); };
+['noiseWarnLvl','sNoiseWarnLvl'].forEach(id=>{ $(id).oninput=function(){ warnSetzen(null,+this.value); }; });
+warnUI();
 /* Lautstärke 0…1 auf alle drei Ansichten übertragen */
 function noiseAnzeige(lv){
   setLamp('R',lv>.66); setLamp('Y',lv>.33&&lv<=.66); setLamp('G',lv<=.33);
@@ -4388,7 +4420,10 @@ $('noiseStart').onclick=async function(){ if(await startMic()) micRunningUI(); e
 $('sNoiseStart').onclick=async function(){ if(await startMic()) micRunningUI(); else toast('Kein Mikrofon-Zugriff (nur über https).'); };
 $('sNoiseSens').oninput=function(){ $('noiseSens').value=this.value; };
 $('sNoiseToggle').onclick=()=>{ $('sNoiseTool').classList.toggle('off'); if(!$('sNoiseTool').classList.contains('off')&&micOn) micRunningUI(); syncSocialTools(); };
-setInterval(()=>{if(!micOn)return;analyser.getByteTimeDomainData(micData);let sum=0;for(let i=0;i<micData.length;i++){const v=(micData[i]-128)/128;sum+=v*v;}const rms=Math.sqrt(sum/micData.length);const sens=+$('noiseSens').value;const lv=Math.min(1,rms*sens*2.2); redRun=(lv>.66)?redRun+1:0; if(redRun>=3&&timerRun&&quietRun.active)quietRun.red=true; noiseAnzeige(lv);},120);
+setInterval(()=>{if(!micOn)return;analyser.getByteTimeDomainData(micData);let sum=0;for(let i=0;i<micData.length;i++){const v=(micData[i]-128)/128;sum+=v*v;}const rms=Math.sqrt(sum/micData.length);const sens=+$('noiseSens').value;const lv=Math.min(1,rms*sens*2.2); redRun=(lv>.66)?redRun+1:0; if(redRun>=3&&timerRun&&quietRun.active)quietRun.red=true; noiseAnzeige(lv);
+  if(warnAn){ warnRun=(lv>warnSchwelle)?warnRun+1:0;                 /* drei Messungen hintereinander, damit ein Huster nicht reicht */
+    if(warnRun>=3 && performance.now()>warnSperre){ warnTon(); warnSperre=performance.now()+5000; } }
+  else warnRun=0;},120);
 const socialIcons={einzel:{svg:'<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M5 21a7 7 0 0 1 14 0"/></svg>',label:'Stillarbeit'},partner:{svg:'<svg viewBox="0 0 24 24"><circle cx="8" cy="8" r="3.2"/><path d="M2 20a6 6 0 0 1 12 0"/><circle cx="17" cy="9" r="2.8"/><path d="M14 20a5 5 0 0 1 8-3.8"/></svg>',label:'Partnerarbeit'},gruppe:{svg:'<svg viewBox="0 0 24 24"><circle cx="7" cy="8" r="2.6"/><circle cx="17" cy="8" r="2.6"/><circle cx="12" cy="7" r="3"/><path d="M2 20a5 5 0 0 1 9-3M22 20a5 5 0 0 0-9-3M8 21a5 5 0 0 1 8 0"/></svg>',label:'Gruppenarbeit'}};
 function buildSocialCards(){ const host=$('sCards'); host.innerHTML=''; Object.keys(socialIcons).forEach(k=>{ const s=socialIcons[k];
   const c=document.createElement('div'); c.className='sCard'; c.innerHTML=s.svg+'<div class="cl">'+s.label+'</div>';
