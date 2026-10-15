@@ -561,8 +561,10 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   **−** und einem **+**, die die Zeit **minutenweise** ändern (0 bis 180), daneben ausgeschrieben
   **„Minuten"** auf gleicher Höhe wie das Feld. Beides gibt es ebenso in der Sozialform, und beide
   Fenster halten denselben Wert.
-- **Einstellungen bei Stoppuhr und Timer.** Beide Fenster haben – wie die Lärmampel – einen Knopf
-  **„⚙ Einstellungen"**, hinter dem alles steckt, was nicht ständig gebraucht wird: bei der
+- **Einstellungen bei Stoppuhr und Timer.** Beide Fenster haben – wie die Lärmampel – einen
+  Einstellungen-Knopf, hinter dem alles steckt, was nicht ständig gebraucht wird; beim **Timer**
+  sitzt er als **⚙** direkt neben „Start" und „Reset" und ist hervorgehoben, solange er offen ist.
+  Dahinter liegen: bei der
   **Stoppuhr** der Schalter für den Rundenknopf, beim **Timer** die Erinnerung vor Schluss samt
   Restzeit, und bei beiden die **Schriftgröße** der Zeitanzeige (−/+, 30 bis 130 px in Achterschritten,
   je Uhr getrennt und **gemerkt**). Auch der **Timer in der Sozialform** hat hinter seinem ⚙ eine
