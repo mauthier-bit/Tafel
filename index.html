@@ -461,17 +461,10 @@
   .nzGauge{width:210px;height:124px;display:block;}
   #sNoiseLight .nzGauge{width:168px;height:99px;}
   .nzNeedle{transform-box:view-box;transform-origin:100px 100px;transition:transform .12s linear;}
-  .nzBars{display:flex;align-items:flex-end;gap:5px;height:92px;}
-  #sNoiseLight .nzBars{height:66px;gap:4px;}
-  .nzBar{position:relative;width:13px;border-radius:4px;background:#d8dee8;transition:background .12s,opacity .12s;opacity:.55;}
-  #sNoiseLight .nzBar{width:10px;}
-  /* Schein wie bei den Lampen als eigene Ebene – ein box-shadow ließ auf dem iPad Höfe stehen */
-  .nzBar::after{content:'';position:absolute;inset:-7px -6px;border-radius:10px;pointer-events:none;
-    background:radial-gradient(circle,currentColor 0,currentColor 38%,transparent 72%);opacity:.001;transition:opacity .12s;
-    transform:translateZ(0);will-change:opacity;}
-  .nzBar.on{background:currentColor;opacity:1;}
-  .nzBar.on::after{opacity:.5;}
-  .nzBars{isolation:isolate;}
+  /* Die Balken werden gezeichnet, nicht gestylt: Ein Canvas wird vor jedem Bild komplett geleert,
+     dadurch kann kein Leuchtschein stehen bleiben (das Problem der CSS-Fassung auf iPadOS). */
+  .nzBars{display:block;width:222px;height:100px;}
+  #sNoiseLight .nzBars{width:178px;height:76px;}
 
   #stkGrid{display:flex;flex-wrap:wrap;gap:6px;min-height:54px;padding:8px;background:#f7f9fc;border:1px solid #e2e7ef;border-radius:12px;align-items:center;}
   #stkGrid .stk{font-size:34px;line-height:1;position:relative;user-select:none;}
@@ -690,6 +683,12 @@
   #social.show{display:flex;}
   #social svg{stroke:#1f2430;fill:none;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;}
   #socialChoose,#socialShow{display:none;flex-direction:column;align-items:center;gap:20px;}
+  #socialShow{max-height:94vh;overflow-y:auto;width:100%;}      /* aufgeklappte Einstellungen: scrollen statt überlappen */
+  /* Sind Timer oder Lärmampel aufgeklappt, braucht der Inhalt den Platz: Symbol kleiner, Hinweis weg */
+  #social.tools #socialShow{gap:12px;}
+  #social.tools #social-icon svg{width:15vmin;height:15vmin;}   /* zwei IDs: schlägt die spätere Regel für 30vmin */
+  #social.tools #social-label{font-size:4.2vmin;}
+  #social.tools .hint2{display:none;}
   #social:not(.showing) #socialChoose{display:flex;}
   #social.showing #socialShow{display:flex;}
   #socialShow svg{width:30vmin;height:30vmin;}
@@ -715,6 +714,8 @@
   .sRow input[type=number]{width:64px;padding:5px;border:1px solid #cfd6e0;border-radius:8px;font-family:inherit;}
   .sRow input[type=range]{width:130px;}
   #sNoiseLight{display:flex;gap:12px;align-items:center;}
+  #sNoiseOpts{display:none;flex-direction:column;align-items:center;gap:8px;padding-top:2px;}
+  #sNoiseOpts.on{display:flex;}
   #sNoiseLight .lamp{width:46px;height:46px;}
   #social .hint2{position:absolute;bottom:24px;font-size:16px;color:#666;}
   #socialHead{display:flex;flex-direction:column;align-items:center;gap:20px;}
@@ -733,7 +734,7 @@
   #social.mini .sTimerDisp{font-size:30px;}
   #social.mini .nzGauge{width:132px;height:78px;}
   #social.mini #sNoiseLight .lamp{width:34px;height:34px;}
-  #social.mini #sNoiseLight .nzBars{height:48px;}
+  #social.mini #sNoiseLight .nzBars{width:146px;height:56px;}
 
   #namePick{position:fixed;inset:0;z-index:36;display:none;align-items:center;justify-content:center;background:rgba(17,20,26,.92);flex-direction:column;gap:24px;color:#fff;}
   #namePick.show{display:flex;}
@@ -1134,16 +1135,19 @@
       </div>
       <div class="sTool off" id="sNoiseTool">
         <button class="sToolBtn" id="sNoiseToggle">🔊 Lärmampel</button>
-        <div class="seg" id="sNoiseSeg" style="max-width:270px"><button data-nv="ampel">Ampel</button><button data-nv="zeiger">Zeiger</button><button data-nv="balken">Balken</button></div>
         <div id="sNoiseLight">
           <div class="nzView" data-nv="ampel"><div class="lamp red" id="sLampR"></div><div class="lamp yel" id="sLampY"></div><div class="lamp grn" id="sLampG"></div></div>
           <div class="nzView" data-nv="zeiger"><svg class="nzGauge" viewBox="0 0 200 118"><defs><linearGradient id="sNzGrad" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#22c55e"/><stop offset=".46" stop-color="#f59e0b"/><stop offset="1" stop-color="#ef4444"/></linearGradient></defs><path d="M22 100A78 78 0 0 1 178 100" fill="none" stroke="url(#sNzGrad)" stroke-width="17" stroke-linecap="round"/><g stroke="#fff" stroke-width="2.4" stroke-linecap="round" opacity=".9"><path d="M65 39.4 57 25.5M100 30V14M135 39.4 143 25.5"/></g><g class="nzNeedle" id="sNzNeedle"><path d="M100 100 36 100" stroke="#1f2430" stroke-width="5" stroke-linecap="round" fill="none"/></g><circle cx="100" cy="100" r="8" fill="#1f2430"/></svg></div>
-          <div class="nzView" data-nv="balken"><div class="nzBars" id="sNzBars"></div></div></div>
+          <div class="nzView" data-nv="balken"><canvas class="nzBars" id="sNzBars"></canvas></div></div>
         <button class="btn pri" id="sNoiseStart">Mikrofon starten</button>
         <div class="sRow">Empfindlichkeit <input type="range" id="sNoiseSens" min="1" max="10" value="5"></div>
-        <label class="sRow" style="cursor:pointer"><input type="checkbox" id="sNoiseWarn" style="width:22px;height:22px;margin:0"> 🔔 Warnton</label>
-        <div class="sRow" id="sNoiseWarnRow">Schwelle <input type="range" id="sNoiseWarnLvl" min="25" max="95" value="70"> <b id="sNoiseWarnV">70 %</b></div>
-        <label class="sRow" style="cursor:pointer;flex-wrap:nowrap;justify-content:flex-start;text-align:left;gap:8px;max-width:290px;line-height:1.3"><input type="checkbox" id="sStkAuto" style="flex:0 0 auto;width:22px;height:22px;margin:0"><span>⭐ Sticker für die Klasse, wenn die Ampel bis zum Timer-Ende nicht rot wird</span></label>
+        <button class="btn" id="sNoiseOptsBtn">⚙ Einstellungen ▾</button>
+        <div id="sNoiseOpts">
+          <div class="seg" id="sNoiseSeg" style="max-width:270px"><button data-nv="ampel">Ampel</button><button data-nv="zeiger">Zeiger</button><button data-nv="balken">Balken</button></div>
+          <label class="sRow" style="cursor:pointer"><input type="checkbox" id="sNoiseWarn" style="width:22px;height:22px;margin:0"> 🔔 Warnton</label>
+          <div class="sRow" id="sNoiseWarnRow">Schwelle <input type="range" id="sNoiseWarnLvl" min="25" max="95" value="70"> <b id="sNoiseWarnV">70 %</b></div>
+          <label class="sRow" style="cursor:pointer;flex-wrap:nowrap;justify-content:flex-start;text-align:left;gap:8px;max-width:290px;line-height:1.3"><input type="checkbox" id="sStkAuto" style="flex:0 0 auto;width:22px;height:22px;margin:0"><span>⭐ Sticker für die Klasse, wenn die Ampel bis zum Timer-Ende nicht rot wird</span></label>
+        </div>
       </div>
     </div>
     <div class="sBtns"><button class="btn" id="socialMini">⤡ Verkleinern</button><button class="btn" id="socialBack">← Andere Form</button><button class="btn pri" id="socialCloseBtn">Schließen</button></div></div>
@@ -1163,7 +1167,7 @@
     <div id="noiseLight">
       <div class="nzView" data-nv="ampel"><div class="lamp red" id="lampR"></div><div class="lamp yel" id="lampY"></div><div class="lamp grn" id="lampG"></div></div>
       <div class="nzView" data-nv="zeiger"><svg class="nzGauge" viewBox="0 0 200 118"><defs><linearGradient id="nzGrad" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#22c55e"/><stop offset=".46" stop-color="#f59e0b"/><stop offset="1" stop-color="#ef4444"/></linearGradient></defs><path d="M22 100A78 78 0 0 1 178 100" fill="none" stroke="url(#nzGrad)" stroke-width="17" stroke-linecap="round"/><g stroke="#fff" stroke-width="2.4" stroke-linecap="round" opacity=".9"><path d="M65 39.4 57 25.5M100 30V14M135 39.4 143 25.5"/></g><g class="nzNeedle" id="nzNeedle"><path d="M100 100 36 100" stroke="#1f2430" stroke-width="5" stroke-linecap="round" fill="none"/></g><circle cx="100" cy="100" r="8" fill="#1f2430"/></svg></div>
-      <div class="nzView" data-nv="balken"><div class="nzBars" id="nzBars"></div></div></div>
+      <div class="nzView" data-nv="balken"><canvas class="nzBars" id="nzBars"></canvas></div></div>
     <div class="row"><button class="btn pri" id="noiseStart">Mikrofon starten</button></div>
     <label class="lbl">Empfindlichkeit</label><input type="range" id="noiseSens" min="1" max="10" value="5" style="width:100%">
     <div class="toggle"><span>🔔 Warnton bei Überschreiten</span><div class="sw2" id="noiseWarn"></div></div>
@@ -4368,22 +4372,38 @@ $('timerMin').onchange=function(){ if(!timerRun){ timerLeft=(+this.value||0)*600
 $('sTimerMin').onchange=function(){ $('timerMin').value=this.value; if(!timerRun){ timerLeft=(+this.value||0)*60000; tDisp(fmtTimer(timerLeft)); } };
 setInterval(()=>{if(timerRun){const left=timerEnd-performance.now();tDisp(fmtTimer(left)); if(quietRun.active){ quietRun.ticks++; if(micOn)quietRun.mic++; } if(left<=0){timerRun=false;tBtn('Start');timerLeft=0;flashTimer();quietDone();}}},200);
 function flashTimer(){const els=[$('timerDisp'),$('sTimerDisp')].filter(Boolean);let n=0;const iv=setInterval(()=>{const col=(n%2)?'#ef4444':'';els.forEach(d=>d.style.color=col);if(++n>7){clearInterval(iv);els.forEach(d=>d.style.color='');}},250);try{const ac=new(AudioContext||webkitAudioContext)();const o=ac.createOscillator(),g=ac.createGain();o.connect(g);g.connect(ac.destination);o.frequency.value=880;g.gain.value=.2;o.start();o.stop(ac.currentTime+.4);}catch(e){}}
-function syncSocialTools(){ $('socialTools').classList.toggle('both',!$('sTimerTool').classList.contains('off')&&!$('sNoiseTool').classList.contains('off')); }
+function syncSocialTools(){ const t=!$('sTimerTool').classList.contains('off'), n=!$('sNoiseTool').classList.contains('off');
+  $('socialTools').classList.toggle('both',t&&n); $('social').classList.toggle('tools',t||n); }
 $('sTimerToggle').onclick=()=>{ $('sTimerTool').classList.toggle('off'); syncSocialTools(); };
-let analyser,micData,micOn=false;
+let analyser,micData,micOn=false,micAC=null,micSrc=null;
 function setLamp(w,on){ const a=$('lamp'+w), b=$('sLamp'+w); if(a)a.classList.toggle('on',on); if(b)b.classList.toggle('on',on); }
 /* ---- Lärmampel: drei Ansichten – Ampel, Zeiger über der Skala, Balkenkette ---- */
 const NZ_BARS=12;
 const nzFarbe=t=>(t<0.5)?'#22c55e':(t<0.78?'#f59e0b':'#ef4444');
-function nzBauBalken(){ ['nzBars','sNzBars'].forEach(id=>{ const el=$(id); if(!el||el.children.length) return;
-  for(let i=0;i<NZ_BARS;i++){ const b=document.createElement('div'); b.className='nzBar';
-    b.style.height=Math.round(28+72*i/(NZ_BARS-1))+'%'; b.style.color=nzFarbe(i/(NZ_BARS-1)); el.appendChild(b); } }); }
+function nzKasten(g,x,y,w,h,r){ r=Math.min(r,w/2,h/2); g.beginPath();
+  g.moveTo(x+r,y); g.lineTo(x+w-r,y); g.quadraticCurveTo(x+w,y,x+w,y+r); g.lineTo(x+w,y+h-r);
+  g.quadraticCurveTo(x+w,y+h,x+w-r,y+h); g.lineTo(x+r,y+h); g.quadraticCurveTo(x,y+h,x,y+h-r);
+  g.lineTo(x,y+r); g.quadraticCurveTo(x,y,x+r,y); g.closePath(); }
+function nzBalkenMalen(el,lv){ if(!el) return; const b=el.getBoundingClientRect();
+  if(b.width<4||b.height<4) return;                                  /* unsichtbar: nichts zu zeichnen */
+  const dpr=Math.min(3,window.devicePixelRatio||1), W=Math.round(b.width), H=Math.round(b.height);
+  if(el.width!==Math.round(W*dpr)||el.height!==Math.round(H*dpr)){ el.width=Math.round(W*dpr); el.height=Math.round(H*dpr); }
+  const g=el.getContext('2d'); g.setTransform(dpr,0,0,dpr,0,0); g.clearRect(0,0,W,H);
+  const pad=Math.max(4,W*0.03), nutzB=W-2*pad, nutzH=H-2*pad;
+  const spalt=Math.max(3,nutzB*0.035), bw=(nutzB-spalt*(NZ_BARS-1))/NZ_BARS;
+  const an=Math.round(lv*NZ_BARS);
+  for(let i=0;i<NZ_BARS;i++){ const t=i/(NZ_BARS-1), hoch=nutzH*(0.28+0.72*t);
+    const x=pad+i*(bw+spalt), y=pad+nutzH-hoch, hell=i<an;
+    g.save(); g.fillStyle=hell?nzFarbe(t):'#d8dee8'; g.globalAlpha=hell?1:.5;
+    if(hell){ g.shadowColor=nzFarbe(t); g.shadowBlur=pad*1.6; }
+    nzKasten(g,x,y,bw,hoch,Math.min(4,bw/2.5)); g.fill(); g.restore(); } }
 let noiseView='ampel'; try{ noiseView=localStorage.getItem('tafelNoiseView')||'ampel'; }catch(e){}
 function setNoiseView(v){ noiseView=v; try{ localStorage.setItem('tafelNoiseView',v); }catch(e){}
   document.querySelectorAll('.nzView').forEach(el=>el.classList.toggle('on',el.dataset.nv===v));
-  document.querySelectorAll('#noiseSeg button,#sNoiseSeg button').forEach(b=>b.classList.toggle('active',b.dataset.nv===v)); }
+  document.querySelectorAll('#noiseSeg button,#sNoiseSeg button').forEach(b=>b.classList.toggle('active',b.dataset.nv===v));
+  if(v==='balken') requestAnimationFrame(()=>['nzBars','sNzBars'].forEach(id=>nzBalkenMalen($(id),nzPegel))); }
 document.querySelectorAll('#noiseSeg button,#sNoiseSeg button').forEach(b=>b.onclick=()=>setNoiseView(b.dataset.nv));
-nzBauBalken(); setNoiseView(noiseView);
+setNoiseView(noiseView);
 /* ---- Warnton, wenn es über einer eingestellten Schwelle bleibt ---- */
 let warnAn=false, warnSchwelle=.7, warnRun=0, warnSperre=0;
 try{ warnAn=localStorage.getItem('tafelWarnTon')==='1'; const w=+localStorage.getItem('tafelWarnLvl'); if(w>=25&&w<=95) warnSchwelle=w/100; }catch(e){}
@@ -4407,17 +4427,32 @@ $('sNoiseWarn').onchange=function(){ warnSetzen(this.checked); if(warnAn) warnTo
 ['noiseWarnLvl','sNoiseWarnLvl'].forEach(id=>{ $(id).oninput=function(){ warnSetzen(null,+this.value); }; });
 warnUI();
 /* Lautstärke 0…1 auf alle drei Ansichten übertragen */
-function noiseAnzeige(lv){
+let nzPegel=0;
+function noiseAnzeige(lv){ nzPegel=lv;
   setLamp('R',lv>.66); setLamp('Y',lv>.33&&lv<=.66); setLamp('G',lv<=.33);
   const grad=lv*180;
   ['nzNeedle','sNzNeedle'].forEach(id=>{ const n=$(id); if(n) n.style.transform='rotate('+grad.toFixed(1)+'deg)'; });
-  const an=Math.round(lv*NZ_BARS);
-  ['nzBars','sNzBars'].forEach(id=>{ const el=$(id); if(!el) return;
-    for(let i=0;i<el.children.length;i++) el.children[i].classList.toggle('on',i<an); }); }
-async function startMic(){ if(micOn)return true; try{ const st=await getMic(); const ac=new(AudioContext||webkitAudioContext)(); const src=ac.createMediaStreamSource(st); analyser=ac.createAnalyser(); analyser.fftSize=512; src.connect(analyser); micData=new Uint8Array(analyser.fftSize); micOn=true; return true; }catch(err){ return false; } }
-function micRunningUI(){ ['noiseStart','sNoiseStart'].forEach(id=>{ const b=$(id); if(b){ b.textContent='läuft…'; b.disabled=true; } }); const h=$('noiseHint'); if(h)h.style.display='none'; }
-$('noiseStart').onclick=async function(){ if(await startMic()) micRunningUI(); else $('noiseHint').innerHTML='<b>Kein Mikrofon-Zugriff.</b> Bitte über https öffnen und erlauben.'; };
-$('sNoiseStart').onclick=async function(){ if(await startMic()) micRunningUI(); else toast('Kein Mikrofon-Zugriff (nur über https).'); };
+  if(noiseView==='balken') ['nzBars','sNzBars'].forEach(id=>nzBalkenMalen($(id),lv)); }
+async function startMic(){ if(micOn)return true; try{ const st=await getMic(); const ac=new(AudioContext||webkitAudioContext)(); const src=ac.createMediaStreamSource(st); analyser=ac.createAnalyser(); analyser.fftSize=512; src.connect(analyser); micData=new Uint8Array(analyser.fftSize); micAC=ac; micSrc=src; micOn=true; return true; }catch(err){ return false; } }
+/* Lärmampel wieder ausschalten – derselbe Knopf, das Mikrofon wird dabei freigegeben */
+function stopMic(){ if(!micOn) return; micOn=false; warnRun=0;
+  try{ if(micSrc) micSrc.disconnect(); }catch(e){}
+  try{ if(micAC && micAC.state!=='closed') micAC.close(); }catch(e){}
+  micAC=null; micSrc=null; analyser=null; micData=null;
+  const nimmt=(typeof mediaRec!=='undefined'&&mediaRec&&mediaRec.state==='recording');
+  if(!nimmt && sharedMic){ sharedMic.getTracks().forEach(t=>t.stop()); sharedMic=null; }   // sonst braucht die Aufnahme das Mikro noch
+  noiseAnzeige(0); micUI(); }
+function micUI(){ ['noiseStart','sNoiseStart'].forEach(id=>{ const b=$(id); if(!b) return;
+    b.textContent=micOn?'⏹ Mikrofon aus':'Mikrofon starten'; b.disabled=false;
+    b.classList.toggle('dang',micOn); b.classList.toggle('pri',!micOn); });
+  const h=$('noiseHint'); if(h) h.style.display=micOn?'none':''; }
+function micRunningUI(){ micUI(); }
+async function micSchalten(fehler){ if(micOn){ stopMic(); return; }
+  if(await startMic()) micUI(); else fehler(); }
+$('noiseStart').onclick=()=>micSchalten(()=>{ $('noiseHint').style.display=''; $('noiseHint').innerHTML='<b>Kein Mikrofon-Zugriff.</b> Bitte über https öffnen und erlauben.'; });
+$('sNoiseStart').onclick=()=>micSchalten(()=>toast('Kein Mikrofon-Zugriff (nur über https).'));
+$('sNoiseOptsBtn').onclick=function(){ const o=$('sNoiseOpts').classList.toggle('on');
+  this.textContent=o?'⚙ Einstellungen ▴':'⚙ Einstellungen ▾'; };
 $('sNoiseSens').oninput=function(){ $('noiseSens').value=this.value; };
 $('sNoiseToggle').onclick=()=>{ $('sNoiseTool').classList.toggle('off'); if(!$('sNoiseTool').classList.contains('off')&&micOn) micRunningUI(); syncSocialTools(); };
 setInterval(()=>{if(!micOn)return;analyser.getByteTimeDomainData(micData);let sum=0;for(let i=0;i<micData.length;i++){const v=(micData[i]-128)/128;sum+=v*v;}const rms=Math.sqrt(sum/micData.length);const sens=+$('noiseSens').value;const lv=Math.min(1,rms*sens*2.2); redRun=(lv>.66)?redRun+1:0; if(redRun>=3&&timerRun&&quietRun.active)quietRun.red=true; noiseAnzeige(lv);

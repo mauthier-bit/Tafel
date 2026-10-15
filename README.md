@@ -576,10 +576,17 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   also nicht aus – und danach frühestens **nach 5 Sekunden** wieder. Beim Einschalten erklingt er
   einmal zur Probe; das gibt iPadOS zugleich die nötige Freigabe für Töne. Schalter und Schwelle
   werden **gemerkt**.
-- **Kein Nachleuchten mehr:** Beim Zurückgehen der Anzeige blieben auf dem iPad manchmal die
-  **Leucht-Höfe** stehen. Der Schein der Balken ist jetzt – wie bei den Lampen – eine **eigene
-  Ebene**, deren Deckkraft überblendet wird, statt eines `box-shadow`, und er wird nie ganz auf
-  null gesetzt. Damit behält iPadOS die Fläche im Blick und zeichnet sie sauber neu.
+- **Kein Nachleuchten mehr:** Beim Zurückgehen der Anzeige blieben auf dem iPad die **Leucht-Höfe**
+  stehen. Die Balken werden deshalb nicht mehr aus Bausteinen der Seite gebaut, sondern auf eine
+  **Zeichenfläche gemalt**, die vor jedem Bild komplett geleert wird – damit kann gar nichts mehr
+  stehen bleiben. Bei den Lampen bleibt es beim Überblenden einer eigenen Leuchtebene.
+- **Mikrofon wieder ausschalten:** Der Knopf heißt, während die Messung läuft, **„⏹ Mikrofon aus"**
+  und schaltet sie auf einen Tipp wieder ab – das Mikrofon wird dabei freigegeben (außer eine
+  Aufnahme braucht es gerade noch). Vorher stand dort nur „läuft…" und der Knopf war gesperrt.
+- **Aufgeräumte Sozialform:** In der Sozialform zeigt die Lärmampel nur noch **Anzeige, Mikrofon-Knopf
+  und Empfindlichkeit**. Ansicht, Warnton samt Schwelle und der Ruhe-Sticker stecken hinter dem Knopf
+  **„⚙ Einstellungen"**. Sind Timer oder Lärmampel aufgeklappt, wird das große Sozialform-Symbol
+  **kleiner**, damit alles samt Knopfreihe auf den Bildschirm passt.
 - **Sticker bei Ruhe (Sozialform):** In der Sozialform-Ansicht gibt es bei der **Lärmampel** den
   Schalter **„⭐ Sticker für die Klasse, wenn die Ampel bis zum Timer-Ende nicht rot wird"**. Sind Timer und
   Lärmampel beide aufgeklappt, sind ihre Bereiche **gleich hoch**. Laufen **Timer und Lärmampel** zusammen und
