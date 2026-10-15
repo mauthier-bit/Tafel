@@ -550,6 +550,18 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   „Anzeigen/Verbergen", „Kategorien" und „Zurücksetzen" in einer Zeile. Reihenfolge der Reiter:
   **Klassenliste · Stundenplan · Termine · Sitzplan · Sticker · Notizen**, beim Öffnen ist die
   Klassenliste aktiv.
+- **Lärmampel: drei Ansichten.** Über den Schaltern **Ampel · Zeiger · Balken** (im Fenster der
+  Lärmampel und ebenso in der Sozialform-Ansicht) lässt sich die Darstellung wechseln:
+  - **Ampel** – die bisherigen drei Leuchten rot/gelb/grün, von denen jeweils eine an ist.
+  - **Zeiger** – ein **Zeigerinstrument**: ein Zeiger schlägt über eine Skala aus, die mit
+    zunehmender Lautstärke von **grün über orange nach rot** läuft. Die Bewegung ist weich
+    (kurze Übergangszeit), damit der Zeiger nicht springt.
+  - **Balken** – eine **Balkenkette** wie bei einer Aussteuerungsanzeige: zwölf ansteigende Balken,
+    die von links nach rechts **grün, orange, rot** gefärbt sind. Je lauter es ist, desto mehr
+    Balken leuchten auf; die übrigen bleiben grau.
+  Alle drei zeigen denselben Messwert und dieselbe **Empfindlichkeit**; der Sticker bei Ruhe und die
+  Rot-Erkennung laufen in jeder Ansicht weiter. Die gewählte Ansicht wird **gemerkt** und ist beim
+  nächsten Start wieder da.
 - **Sticker bei Ruhe (Sozialform):** In der Sozialform-Ansicht gibt es bei der **Lärmampel** den
   Schalter **„⭐ Sticker für die Klasse, wenn die Ampel bis zum Timer-Ende nicht rot wird"**. Sind Timer und
   Lärmampel beide aufgeklappt, sind ihre Bereiche **gleich hoch**. Laufen **Timer und Lärmampel** zusammen und
@@ -1789,7 +1801,7 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
 - **Vollbild-Button** (oben links in der Einstellungs-Leiste; wird beim **Minimieren** der Leiste
   mit ausgeblendet)
 - **Speichern/Laden** als `.tafel`-Datei + automatische Sicherung im Browser
-- **Widgets:** Lärmampel (Mikrofon), Stoppuhr, Timer, **Sozialform** (Auswahl-Bildschirm: Stillarbeit /
+- **Widgets:** Lärmampel (Mikrofon; als Ampel, Zeiger oder Balkenkette), Stoppuhr, Timer, **Sozialform** (Auswahl-Bildschirm: Stillarbeit /
   Partnerarbeit / Gruppenarbeit antippen → große Anzeige mit gut erkennbaren Symbolen; in der Anzeige
   lassen sich **optional ein Timer** für die Dauer **und die Lärmampel** einblenden), Umfrage
 - **Hintergrund:** Weiß / Karo / Linien / Punkte / Notenlinien / Dreiecke (Einstellungen)
