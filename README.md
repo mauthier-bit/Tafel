@@ -550,6 +550,15 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   „Anzeigen/Verbergen", „Kategorien" und „Zurücksetzen" in einer Zeile. Reihenfolge der Reiter:
   **Klassenliste · Stundenplan · Termine · Sitzplan · Sticker · Notizen**, beim Öffnen ist die
   Klassenliste aktiv.
+- **Timer: Erinnerung vor Schluss.** Im Timer-Fenster und in der Sozialform steht der Schalter
+  **„🔔 Erinnerung vor Schluss"** mit der Auswahl **30 Sek · 1 · 2 · 3 · 5 Min Restzeit**. Ist er an,
+  erklingen bei der eingestellten Restzeit **zwei weiche Schläge** – leiser als der Schlusston, damit
+  beides auseinanderzuhalten ist – und eine kurze Einblendung sagt „Noch 1 Min". Der Ton kommt pro
+  Durchlauf **genau einmal**; ist die eingestellte Laufzeit kürzer als die Vorwarnzeit, bleibt er aus.
+  Beim Einschalten erklingt er einmal zur Probe (das gibt iPadOS zugleich die Freigabe für Töne).
+  Schalter und Zeit werden **gemerkt**.
+- **Größere Zeitanzeigen:** Timer und Stoppuhr zeigen die Zeit im Fenster mit **58 px** statt 44 px,
+  in der Sozialform mit **10 vmin** statt 8 vmin – aus der letzten Reihe deutlich besser zu lesen.
 - **Sozialform verkleinern.** Ist eine Sozialform gewählt, steht unten der Knopf **„⤡ Verkleinern"**.
   Damit wird aus der bildschirmfüllenden Anzeige ein **kleines Fenster**, das **Sozialform, Timer und
   Lärmampel** weiter zeigt – die **Tafel bleibt daneben sichtbar und bedienbar**, man kann also
