@@ -565,7 +565,10 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   **„⚙ Einstellungen"**, hinter dem alles steckt, was nicht ständig gebraucht wird: bei der
   **Stoppuhr** der Schalter für den Rundenknopf, beim **Timer** die Erinnerung vor Schluss samt
   Restzeit, und bei beiden die **Schriftgröße** der Zeitanzeige (−/+, 30 bis 130 px in Achterschritten,
-  je Uhr getrennt und **gemerkt**).
+  je Uhr getrennt und **gemerkt**). Auch der **Timer in der Sozialform** hat hinter seinem ⚙ eine
+  **Schriftgröße** (5 bis 18, Standard 10): Sie zählt in Anteilen der Bildschirmgröße, die Anzeige
+  wächst also auf jedem Gerät mit. Im **verkleinerten** Fenster bleibt sie davon unberührt und
+  kompakt.
 - **Timer: Erinnerung vor Schluss.** Der Schalter **„🔔 Erinnerung vor Schluss"** (im Timer-Fenster
   unter „⚙ Einstellungen", in der Sozialform hinter dem **⚙**-Knopf neben „Start" und „Reset") mit der Auswahl **30 Sek · 1 · 2 · 3 · 5 Min Restzeit**. Ist er an,
   erklingen bei der eingestellten Restzeit **zwei weiche Schläge** – leiser als der Schlusston, damit
