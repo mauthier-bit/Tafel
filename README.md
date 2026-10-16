@@ -417,7 +417,9 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   Im Reiter **Werkzeugleisten** stehen **Dunkel** und **Hell** als zwei **gleich breite** Knöpfe
   links, die **fünf Farbvorlagen** daneben statt darunter; die Knöpfe nehmen den Platz ein, der neben
   den Vorlagen frei bleibt. Die **Favoriten** haben einen **eigenen Reiter** bekommen – sie sind eine
-  Liste über alle Werkzeuge und passten nicht mehr zu den Leisten-Einstellungen. Die **Farbpalette** zeigt ihre acht Farben als **Pillen**,
+  Liste über alle Werkzeuge und passten nicht mehr zu den Leisten-Einstellungen. Dort nutzt die Liste
+  jetzt **gut die halbe Bildschirmhöhe** (auf dem iPad rund 430 statt 220 px), man scrollt also
+  deutlich weniger. Die **Farbpalette** zeigt ihre acht Farben als **Pillen**,
   wodurch **„Palette zurücksetzen"** daneben Platz findet. **„Abstand der oberen Leisten"** ist von
   **Bedienung** hierher gewandert – es gehört zu den Leisten, nicht zur Bedienung.
 - **Hintergrundfarben** (Einstellungen): Weiß, **Tafelgrün**, Schwarz, Dunkelgrau, **Dunkelblau**,
