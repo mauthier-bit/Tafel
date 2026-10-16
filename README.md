@@ -216,8 +216,10 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   wobei die **0 %-Marke stehen bleibt** – so legt man die 100 % auf eine vorgegebene Strecke
   (Säule, Strecke an der Tafel, Bildbreite) und liest daran direkt Prozente ab. Der **Dreh-Griff**
   rückt dabei ein Stück nach innen, damit sich die beiden Griffe nicht in die Quere kommen.
-  **Ausrichten und Schrift:** Im ⚙-Menü beider Werkzeuge stehen **„waagrecht"** (legt Lineal bzw.
-  Geodreieck exakt waagrecht) und **„⟳ 90°"** (dreht in 90°-Schritten weiter) sowie **A− / A+ für die
+  **Ausrichten und Schrift:** Im ⚙-Menü beider Werkzeuge stehen **drei Knöpfe in einer Zeile** –
+  **„waagrecht"** (legt Lineal bzw. Geodreieck exakt waagrecht), **„senkrecht"** (exakt senkrecht)
+  und **„⟳ 90°"** (dreht **aus der jetzigen Lage** um 90° weiter, eine Schräglage bleibt dabei
+  erhalten) – sowie **A− / A+ für die
   Schriftgröße der Beschriftung** (8–22 px). Damit die Zahlen dabei **auf dem Werkzeug bleiben**, wird
   automatisch **jede zweite, fünfte oder zehnte Zahl** beschriftet, sobald die Schrift für den
   Strichabstand zu groß wird; beim Geodreieck entfallen zusätzlich die Zahlen, für die in der
