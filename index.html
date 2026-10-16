@@ -29,11 +29,13 @@
   :root{--sat:env(safe-area-inset-top,0px);--oben:0px;}
   #embedLayer{position:fixed;inset:0;z-index:1;pointer-events:none;overflow:hidden;}
   #embedLayer iframe,#embedLayer video,#embedLayer audio{position:absolute;left:0;top:0;border:0;transform-origin:0 0;background:#fff;box-shadow:0 1px 6px rgba(0,0,0,.15);}
+  /* Notizen über einem Video: liegen über dem Bild, lassen aber jede Berührung durch */
+  #embedLayer .notizCv{position:absolute;left:0;top:0;transform-origin:0 0;pointer-events:none;}
   #embedLayer audio{border-radius:10px;}
   /* Solange „Objekt bedienen" aus ist, liegt ein Grauschleier über den Objekten: Man sieht,
      was es ist, kann es verschieben und zoomen – aber eben noch nicht bedienen. */
   #embedLayer>*{transition:filter .18s ease;}
-  body:not(.embedAn) #embedLayer>*{filter:grayscale(1) contrast(.62) brightness(1.08);}
+  body:not(.embedAn) #embedLayer>*:not(.notizCv){filter:grayscale(1) contrast(.62) brightness(1.08);}
   /* Vollbild für ein eingebettetes Objekt */
   #fsUi{position:fixed;inset:0;z-index:48;pointer-events:none;display:none;}   /* über dem Dokument-Vollbild */
   #fsUi.an{display:block;}
@@ -3093,7 +3095,8 @@ $('propAlpha').oninput=function(){ const t=+this.value; const a=Math.max(0,Math.
 $('propAlpha').onchange=()=>{ saveUI(); scheduleAutosave(); };
 /* ---- Ebene (Stapelreihenfolge) ---- */
 function layerReorderEmbeds(){ for(const o of page().objects){ const card=embedCards.get(o.id); if(card)embedLayer.appendChild(card);
-    const el=embedEls.get(o.id); if(el)embedLayer.appendChild(el); } }
+    const el=embedEls.get(o.id); if(el)embedLayer.appendChild(el);
+    const nf=notizFlaechen.get(o.id); if(nf)embedLayer.appendChild(nf); } }   /* Notizen direkt über ihr Video */
 function layerMove(mode){ const p=page(), objs=p.objects, isSel=o=>selection.includes(o);
   if(!selection.length)return;
   pushUndo();
@@ -3851,6 +3854,29 @@ function buildWebExtras(o,fr){
   pill.onclick=e=>{ e.stopPropagation(); window.open(o.src,'_blank','noopener'); };
   embedBarLayer.appendChild(pill); embedPills.set(o.id,pill);
 }
+/* Durchsichtige Zeichenfläche über einem Video: trägt die Notizen, nimmt keine Berührungen an.
+   Sie liegt in derselben Ebene wie das Video und bekommt dieselbe Lage – damit wandert,
+   dreht und skaliert die Beschriftung mit dem Video mit. */
+const notizFlaechen=new Map();
+function notizFlaecheHolen(o){ let cv=notizFlaechen.get(o.id);
+  if(!cv){ cv=document.createElement('canvas'); cv.className='notizCv'; cv.dataset.oid=o.id;
+    embedLayer.appendChild(cv); notizFlaechen.set(o.id,cv); }
+  return cv; }
+function notizFlaecheMalen(o,cv,tf){
+  const list=docNotizen(o,0), k=Math.min(3,(window.devicePixelRatio||1)*Math.max(1,scale));
+  const bw=Math.max(1,Math.round(o.w*k)), bh=Math.max(1,Math.round(o.h*k));
+  const kennung=list.length+'|'+o.w+'|'+o.h+'|'+bw+'|'+notizStand;
+  cv.style.width=o.w+'px'; cv.style.height=o.h+'px'; cv.style.transform=tf;
+  if(cv._kennung===kennung) return;                       /* nichts Neues – nicht neu malen */
+  cv._kennung=kennung;
+  if(cv.width!==bw||cv.height!==bh){ cv.width=bw; cv.height=bh; }
+  const g=cv.getContext('2d'); g.setTransform(k,0,0,k,0,0); g.clearRect(0,0,o.w,o.h);
+  list.forEach(n=>{ const b=notizBasis(n); if(!(b.w>0&&b.h>0)) return;
+    g.save(); g.scale(o.w/b.w,o.h/b.h); g.translate(-b.x,-b.y);
+    if(b.rot){ const cx=b.x+b.w/2, cy=b.y+b.h/2; g.translate(cx,cy); g.rotate(-b.rot); g.translate(-cx,-cy); }
+    try{ drawObjectRaw(n,g); }catch(err){}
+    g.restore(); }); }
+function notizFlaecheWeg(id){ const cv=notizFlaechen.get(id); if(cv){ cv.remove(); notizFlaechen.delete(id); } }
 function syncEmbeds(){ const p=page(), wanted=new Set();
   for(const o of p.objects){ if(o.type!=='embed')continue; wanted.add(o.id);
     let fr=embedEls.get(o.id);
@@ -3904,6 +3930,9 @@ function syncEmbeds(){ const p=page(), wanted=new Set();
       fr._video.style.transform='scale('+z+')'; if(fr._zv) fr._zv.textContent=z.toFixed(1).replace('.',',')+'×';
       const quelle=camLiveQuelle();
       if(quelle&&fr._video.srcObject!==quelle){ fr._video.srcObject=quelle; fr._video.play().catch(()=>{}); } }
+    if(istVideoObjekt(o)&&(docNotizen(o,0).length||docNote===o)){ const neu=!notizFlaechen.has(o.id);
+      notizFlaecheMalen(o,notizFlaecheHolen(o),tf); if(neu) layerReorderEmbeds(); }
+    else notizFlaecheWeg(o.id);
     const card=embedCards.get(o.id); if(card){ card.style.width=o.w+'px'; card.style.height=o.h+'px'; card.style.transform=tf; }
     const pill=embedPills.get(o.id); if(pill){ const c=toScreen(o.x,o.y); pill.style.transform='translate('+c.x+'px,'+c.y+'px)'; }
     if(fsId){                                                 /* Vollbild: ein Objekt füllt die Breite, der Rest ist ausgeblendet */
@@ -3919,7 +3948,11 @@ function syncEmbeds(){ const p=page(), wanted=new Set();
         fr.style.zIndex='30'; fr.style.pointerEvents='auto'; fr.style.boxShadow='none';
         andere.forEach(e=>e.style.display='none');
         fsBalken();
-      } else { fr.style.display='none'; andere.forEach(e=>e.style.display='none'); }
+        const nf=notizFlaechen.get(o.id);
+        if(nf){ nf.style.width=fr.style.width; nf.style.height=fr.style.height;
+          nf.style.transform=fr.style.transform; nf.style.zIndex='31'; nf.style.display=''; }
+      } else { fr.style.display='none'; andere.forEach(e=>e.style.display='none');
+        const nf=notizFlaechen.get(o.id); if(nf) nf.style.display='none'; }
     } else if(fr.dataset.fsAus==='1'||fr.style.zIndex==='30'||fr.style.display==='none'){
       /* zurück in den Normalzustand – auch die Objekte, die im Vollbild nur ausgeblendet waren */
       fr.style.display=''; fr.style.zIndex=''; fr.style.boxShadow=''; fr.dataset.fsAus='';
@@ -3928,6 +3961,7 @@ function syncEmbeds(){ const p=page(), wanted=new Set();
     }
   }
   if(fsId&&!wanted.has(fsId)) vollbildAus();                   /* Objekt ist weg – Vollbild beenden */
+  for(const id of [...notizFlaechen.keys()]) if(!wanted.has(id)) notizFlaecheWeg(id);
   for(const[id,fr] of embedEls){ if(!wanted.has(id)){ fr.remove(); embedEls.delete(id);
     const c=embedCards.get(id); if(c){c.remove();embedCards.delete(id);} const pl=embedPills.get(id); if(pl){pl.remove();embedPills.delete(id);} } }
 }
@@ -6750,7 +6784,7 @@ $('pr-docNoteClr').onclick=()=>{ const o=singleSel(); if(!notizFaehig(o)) return
   const i=notizSeite(o), l=docNotizen(o,i), bild=(o.type==='image');
   if(!l.length){ toast(bild?'Auf diesem Bild stehen keine Notizen':'Auf dieser Seite stehen keine Notizen'); return; }
   if(!confirm(bild?'Die Notizen auf diesem Bild löschen?':('Die Notizen auf Seite '+(i+1)+' löschen?'))) return;
-  pushUndo(); o.notes[String(i)]=[]; markDirty(); scheduleAutosave(); toast('Notizen der Seite gelöscht'); };
+  pushUndo(); o.notes[String(i)]=[]; notizStand++; markDirty(); scheduleAutosave(); toast('Notizen der Seite gelöscht'); };
 $('pr-docPdf').onclick=()=>{ const o=singleSel(); if(!o||o.type!=='doc') return;
   if(!window.jspdf){ toast('PDF-Bibliothek fehlt'); return; }
   showBusy(true,'PDF wird erstellt…'); setTimeout(()=>{ try{ const {jsPDF}=window.jspdf; let pdf=null; let done=0;
@@ -7259,8 +7293,13 @@ function addDocObject(urls,label){ if(!urls||!urls.length) return;
    auf „ihrer" Seite.                                                        */
 let docNote=null;
 const NOTIZ_TYPEN=['stroke','shape','text'];
-function notizSeite(o){ return (o&&o.type==='doc')?docCur(o):0; }      /* Bilder haben nur eine „Seite" */
-function notizFaehig(o){ return !!o&&(o.type==='doc'||o.type==='image'); }
+function notizSeite(o){ return (o&&o.type==='doc')?docCur(o):0; }      /* Bilder und Videos haben nur eine „Seite" */
+/* Videos liegen als echte Elemente über der Tafelfläche – ihre Notizen brauchen deshalb
+   eine eigene durchsichtige Zeichenfläche obendrauf (siehe notizFlaechen). */
+const VIDEO_ETYPEN=['clip','video'];
+function istVideoObjekt(o){ return !!o&&o.type==='embed'&&VIDEO_ETYPEN.includes(o.etype); }
+function notizFaehig(o){ return !!o&&(o.type==='doc'||o.type==='image'||istVideoObjekt(o)); }
+let notizStand=0;                                                     /* zählt Änderungen an den Notizen */
 function docNotizen(o,i){ if(!o.notes||typeof o.notes!=='object'||Array.isArray(o.notes)) o.notes={};
   const k=String(i); if(!Array.isArray(o.notes[k])) o.notes[k]=[]; return o.notes[k]; }
 function docNotizenDa(o){ return !!(o&&o.notes&&Object.keys(o.notes).some(k=>Array.isArray(o.notes[k])&&o.notes[k].length)); }
@@ -7283,7 +7322,7 @@ function docNotizZiel(n){                  /* gehoert das frisch Gezeichnete auf
   const p=notizStart(n); return !!p && docDrin(docNote,p.x,p.y); }
 function docNotizAnlegen(o,n){
   n.b={x:o.x,y:o.y,w:o.w,h:o.h,rot:o.rot||0};
-  pushUndo(); docNotizen(o,notizSeite(o)).push(n); markDirty(); scheduleAutosave(); }
+  pushUndo(); docNotizen(o,notizSeite(o)).push(n); notizStand++; markDirty(); scheduleAutosave(); }
 function docNotizMalen(c,o,i){
   const list=(o.notes&&o.notes[String(i)])||[]; if(!list.length) return;
   c.save(); c.beginPath(); c.rect(o.x,o.y,o.w,o.h); c.clip();
@@ -7304,13 +7343,14 @@ function docNotizRadieren(x,y){            /* true: der Radierer steckt im Dokum
   for(let i=list.length-1;i>=0;i--){ const n=list[i], b=notizBasis(n);
     const p=docZurNotiz(docNote,n,x,y), r=(eraserWidth/scale)*(b.w/(docNote.w||1));
     if(notizTrifft(n,p,r)){ if(!weg) pushUndo(); list.splice(i,1); weg=true; } }
-  if(weg){ markDirty(); scheduleAutosave(); }
+  if(weg){ notizStand++; markDirty(); scheduleAutosave(); }
   return docDrin(docNote,x,y); }
 function noteChipZeigen(){ const b=$('noteChip'); if(b) b.classList.toggle('an',!!docNote); }
 function docNotizAn(o,an){
   if(an){ docNote=o; setMode('write');
     if(!['pen','marker','eraser'].includes(tool)) setTool('pen');
-    toast(o.type==='image' ? 'Beschriften: auf das Bild schreiben – die Notizen bleiben am Bild'
+    toast(istVideoObjekt(o) ? 'Beschriften: auf das Video schreiben – die Notizen bleiben beim Abspielen stehen'
+        : o.type==='image' ? 'Beschriften: auf das Bild schreiben – die Notizen bleiben am Bild'
                            : 'Beschriften: auf das Dokument schreiben – die Notizen bleiben an der Seite'); }
   else { docNote=null; toast('Beschriften beendet'); }
   noteChipZeigen(); refreshProps(); markDirty(); }

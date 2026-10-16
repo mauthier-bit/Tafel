@@ -1485,6 +1485,19 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   Kontextmenü: „Beschriften" oben, darunter die Blätter-Knöpfe mit „Notizen löschen" daneben, darunter
   „Als PDF sichern".
   Beim **Bild** gilt alles genauso, nur ohne Blättern: Die Notizen gehören zu diesem einen Bild.
+- **Video beschriften.** Dasselbe gibt es jetzt auch bei **Videos** – beim Videoclip aus der Kamera, bei
+  einer eingefügten Videodatei und beim eingebetteten Video. Ein von Hand gezeichneter **Pfeil bleibt
+  beim Abspielen stehen**: Die Beschriftung liegt fest über dem Bild, das Video läuft darunter weiter.
+  Gut für „hier wirkt die Kraft", für Hilfslinien, Achsen oder einen markierten Bezugspunkt.
+  **Zum Abspielen kommt sich nichts in die Quere:** Solange **„Objekt bedienen" aus** ist, zeichnet der
+  Stift auf das Video; erst mit eingeschaltetem „Objekt bedienen" gehen Tipper an Play, Zeitleiste und
+  Ton. Die Beschriftung nimmt **nie** Berührungen an, die Bedienelemente des Videos bleiben also frei.
+  Technisch liegt sie auf einer eigenen durchsichtigen Fläche über dem Video – nötig, weil Videos
+  anders als PDFs nicht in die Tafelfläche gemalt werden, sondern als eigene Elemente darüber liegen.
+  Verschieben, Skalieren und Drehen nehmen die Beschriftung mit, der Radierer löscht im
+  Beschriften-Modus nur sie und nicht das Video, und sie bleibt auch im **Vollbild** stehen.
+  Die Notizen gelten vorerst für das **ganze Video**; sie an einen Zeitabschnitt zu binden, ist als
+  nächster Schritt vorgesehen.
   Mit **„✓ Beschriften beenden"** ist das Dokument bzw. Bild wieder ein normales Objekt: **Verschieben, Skalieren und
   Drehen** nehmen die Notizen mit, als wären sie aufgedruckt – auch das Beschriften im **gedrehten** Zustand
   stimmt hinterher. Die Notizen werden **mit dem Projekt gespeichert**, erscheinen im **Vollbild** und in
