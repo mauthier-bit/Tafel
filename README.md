@@ -617,6 +617,15 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
 - **Mikrofon wieder ausschalten:** Der Knopf heißt, während die Messung läuft, **„⏹ Mikrofon aus"**
   und schaltet sie auf einen Tipp wieder ab – das Mikrofon wird dabei freigegeben (außer eine
   Aufnahme braucht es gerade noch). Vorher stand dort nur „läuft…" und der Knopf war gesperrt.
+- **Teilen per QR-Code in weiteren Werkzeugen:** Auch **Video Physik**, **MotionTrace**, **Audio Physik**,
+  **Messwert-Analyse**, **Versuchsprotokoll**, die **Zeitleiste der Mathematik und Physik** und die
+  **Tabellenkalkulation** haben in ihrer Kopfleiste einen **Teilen-Knopf** mit QR-Code: Die Klasse
+  scannt und hat die App auf dem eigenen Gerät. Es ist derselbe Baustein wie in der Spiele-Suite –
+  die QR-Bibliothek steckt **in der Datei selbst**, der Knopf funktioniert deshalb auch in den
+  einzelnen Kopien ohne weitere Dateien. Wird die Datei lokal geöffnet, zeigt der Code auf die
+  veröffentlichte Fassung; über **„Adresse ändern"** lässt sich eine eigene Adresse hinterlegen.
+  Die 30 Werkzeuge mit `teilen.js` behalten ihren bisherigen Knopf, der zusätzlich die **eingestellte
+  Aufgabe** mitgibt.
 - **Aufgeräumte Sozialform:** In der Sozialform zeigt die Lärmampel nur noch **Anzeige, Mikrofon-Knopf
   und Empfindlichkeit**. Ansicht, Warnton samt Schwelle und der Ruhe-Sticker stecken hinter einem
   **⚙**-Knopf, der **neben „Mikrofon starten"** sitzt (beim Timer entsprechend neben „Start" und
