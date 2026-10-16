@@ -1505,13 +1505,22 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   anders als PDFs nicht in die Tafelfläche gemalt werden, sondern als eigene Elemente darüber liegen.
   Verschieben, Skalieren und Drehen nehmen die Beschriftung mit, der Radierer löscht im
   Beschriften-Modus nur sie und nicht das Video, und sie bleibt auch im **Vollbild** stehen.
-- **Notizen an die Abspielzeit binden.** Während des Beschriftens steht unter dem roten Knopf ein
-  zweiter Chip **„🕒 Zeit: …"**. Ein Tipp wechselt durch **immer · 2 s · 5 s · 10 s · ab hier**:
+- **Bedienleiste über dem Video.** Beim Beschriften eines Videos stehen **„✎ Beschriften beenden"**,
+  der Zeit-Chip und ein **Zeitregler** zusammen in **einer Zeile direkt über dem Video**; die Leiste
+  wandert mit, wenn man das Video verschiebt oder die Tafel zoomt, und bleibt am oberen Bildrand
+  stehen, statt hinauszurutschen. Mit dem **Regler** fährt man das Video an die Stelle, zu der man
+  etwas einzeichnen will – **ohne „Objekt bedienen" einzuschalten**, der Stift bleibt also die ganze
+  Zeit zum Zeichnen bereit. Rechts daneben steht die Stelle als Zeit (`0:02,4`). Bei einem
+  **zugeschnittenen Clip** läuft der Regler nur über den sichtbaren Ausschnitt.
+  Bei Dokumenten und Bildern bleibt alles wie bisher: Dort gibt es nur den roten Knopf oben.
+- **Notizen an die Abspielzeit binden.** Während des Beschriftens steht im selben Balken ein
+  Chip **„🕒 Zeit: …"**. Ein Tipp wechselt durch **immer · 2 s · 5 s · 10 s · ab hier**:
   - **immer** – die Notiz ist das ganze Video über zu sehen (wie bisher, Standardeinstellung).
   - **2 / 5 / 10 Sekunden** – die Notiz erscheint an der Stelle, an der sie gezeichnet wurde, und
     verschwindet nach der eingestellten Dauer wieder. So lässt sich eine Bewegung Schritt für Schritt
     kommentieren, ohne dass sich die Pfeile überlagern.
   - **ab hier** – die Notiz erscheint an dieser Stelle und bleibt bis zum Ende des Videos.
+  Zusammen mit dem Regler heißt das: Stelle wählen, Dauer wählen, zeichnen.
   Die Einstellung gilt für **neu gezeichnete** Notizen und wird gemerkt; vorhandene Notizen behalten,
   was sie haben. Jede Notiz bekommt einen Hauch Vorlauf (0,15 s), damit sie schon steht, wenn der
   Moment kommt. **Beim Beschriften** sind Notizen außerhalb ihres Zeitfensters **blass** zu sehen –

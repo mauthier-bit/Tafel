@@ -313,6 +313,19 @@
     box-shadow:0 5px 16px rgba(31,36,48,.4);cursor:pointer;}
   #noteZeitChip.an{display:flex;}
   #noteZeitChip.zeit{background:#2563eb;box-shadow:0 5px 16px rgba(37,99,235,.45);}
+  /* Beim Video stehen beide Knöpfe samt Zeitregler in einer Zeile direkt über dem Bild */
+  #noteBar{position:fixed;left:0;top:0;z-index:60;display:none;align-items:center;gap:8px;
+    padding:7px 10px;border-radius:16px;background:rgba(255,255,255,.97);
+    box-shadow:0 6px 22px rgba(15,23,42,.22);transform:translate(-50%,-100%);
+    flex-wrap:wrap;justify-content:center;max-width:94vw;}   /* auf dem iPad eine Zeile, auf schmalen Bildschirmen umbrechend */
+  #noteBar.an{display:flex;}
+  #noteBar>#noteChip,#noteBar>#noteZeitChip{position:static;transform:none;top:auto;left:auto;
+    box-shadow:none;padding:8px 13px;}
+  #noteZeitWrap{display:none;align-items:center;gap:7px;}
+  #noteBar #noteZeitWrap{display:flex;}
+  #noteZeit{width:min(30vw,180px);accent-color:#2563eb;}
+  #noteZeitAnz{font:700 12px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    color:#5b6472;font-variant-numeric:tabular-nums;min-width:46px;text-align:right;}
   #noteChip:active{background:#dc2626;}
   #props hr.psep{border:none;border-top:1px solid #e6eaf1;margin:1px 0;width:100%;}
   /* Griff zum Verschieben – bleibt beim Blättern im Panel oben stehen */
@@ -1023,6 +1036,7 @@
 <button id="modeBtn" title="Zwischen Benutzen und Bearbeiten umschalten">✎</button>
 <button id="noteChip" title="Beschriften beenden – danach lässt sich das Dokument wieder verschieben">✎ Beschriften beenden</button>
 <button id="noteZeitChip" title="Nur für Videos: Wie lange eine neu gezeichnete Notiz zu sehen ist. Antippen wechselt die Dauer.">🕒 Zeit: immer</button>
+<div id="noteBar"><span id="noteZeitWrap"><input type="range" id="noteZeit" min="0" max="1" step="0.02" value="0" title="Stelle im Video wählen – auch während des Beschriftens"><b id="noteZeitAnz">0:00,0</b></span></div>
 <div id="props">
   <div class="pgrip" id="propsGrip" title="Ziehen: Kontextmenü an eine andere Stelle schieben"><i></i><button class="pauto" id="propsAuto" title="Kontextmenü wieder automatisch neben das Objekt stellen">↺</button></div>
   <div class="prow" id="colorRow" style="font-size:13px"><b>Farbe</b><div class="swatches" id="propColors"></div></div>
@@ -3879,6 +3893,7 @@ function notizFlaecheMalen(o,cv,tf){
   const kennung=list.length+'|'+o.w+'|'+o.h+'|'+bw+'|'+notizStand+'|'+deck.join('');
   cv.style.width=o.w+'px'; cv.style.height=o.h+'px'; cv.style.transform=tf;
   notizZeitLauf(o,cv,v);
+  if(docNote===o) noteZeitReglerSetzen(o);                /* der Regler läuft auch mit, wenn das Video spielt */
   if(cv._kennung===kennung) return;                       /* nichts Neues – nicht neu malen */
   cv._kennung=kennung;
   if(cv.width!==bw||cv.height!==bh){ cv.width=bw; cv.height=bh; }
@@ -3905,7 +3920,7 @@ function notizHilfsflaeche(w,h){ if(!notizHilfe) notizHilfe=document.createEleme
    Die Tafel zeichnet von sich aus nur bei Änderungen neu – deshalb hier ein eigener kleiner Takt. */
 function notizZeitLauf(o,cv,v){
   if(!v||cv._takt) return;
-  const zeitnotizen=()=>docNotizen(o,0).some(n=>n.zt0!=null);
+  const zeitnotizen=()=>docNote===o||docNotizen(o,0).some(n=>n.zt0!=null);
   const neu=()=>{ if(!cv.isConnected){ stopp(); return; }
     const tf=cv.style.transform; notizFlaecheMalen(o,cv,tf);
     if(!v.paused&&!v.ended&&zeitnotizen()) cv._raf=requestAnimationFrame(neu); else cv._raf=0; };
@@ -3970,6 +3985,11 @@ function syncEmbeds(){ const p=page(), wanted=new Set();
       if(quelle&&fr._video.srcObject!==quelle){ fr._video.srcObject=quelle; fr._video.play().catch(()=>{}); } }
     if(istVideoObjekt(o)&&(docNotizen(o,0).length||docNote===o)){ const neu=!notizFlaechen.has(o.id);
       notizFlaecheMalen(o,notizFlaecheHolen(o),tf); if(neu) layerReorderEmbeds(); }
+    if(docNote===o&&istVideoObjekt(o)){ const bar=$('noteBar'), c=toScreen(o.x+o.w/2,o.y);
+      const hoch=bar.offsetHeight||44;
+      bar.style.left=Math.round(Math.max(bar.offsetWidth/2+6,Math.min(innerWidth-bar.offsetWidth/2-6,c.x)))+'px';
+      bar.style.top=Math.round(Math.max(hoch+8,c.y-10))+'px';                /* nie über den oberen Rand hinaus */
+      noteZeitReglerSetzen(o); }
     else notizFlaecheWeg(o.id);
     const card=embedCards.get(o.id); if(card){ card.style.width=o.w+'px'; card.style.height=o.h+'px'; card.style.transform=tf; }
     const pill=embedPills.get(o.id); if(pill){ const c=toScreen(o.x,o.y); pill.style.transform='translate('+c.x+'px,'+c.y+'px)'; }
@@ -7406,7 +7426,27 @@ function noteZeitChipZeigen(){ const b=$('noteZeitChip'); if(!b) return;
   const an=!!docNote&&istVideoObjekt(docNote);
   b.classList.toggle('an',an); b.classList.toggle('zeit',notizZeit!==0);
   b.textContent='🕒 Zeit: '+notizZeitText(notizZeit); }
-function noteChipZeigen(){ const b=$('noteChip'); if(b) b.classList.toggle('an',!!docNote); noteZeitChipZeigen(); }
+function noteChipZeigen(){ const b=$('noteChip'); if(b) b.classList.toggle('an',!!docNote); noteZeitChipZeigen(); noteBarSetzen(); }
+/* Beim Video wandern die beiden Knöpfe in die Leiste über dem Bild, sonst stehen sie wie bisher oben. */
+function noteBarSetzen(){ const bar=$('noteBar'); if(!bar) return;
+  const video=(docNote&&istVideoObjekt(docNote))?docNote:null;
+  if(video){ if($('noteChip').parentElement!==bar){ bar.insertBefore($('noteChip'),bar.firstChild); bar.insertBefore($('noteZeitChip'),$('noteZeitWrap')); }
+    bar.classList.add('an'); noteZeitReglerSetzen(video); }
+  else { if($('noteChip').parentElement===bar){ document.body.appendChild($('noteChip')); document.body.appendChild($('noteZeitChip')); }
+    bar.classList.remove('an'); } }
+const zeitText=t=>{ t=Math.max(0,t||0); const m=Math.floor(t/60), s2=t-m*60;
+  return m+':'+(s2<10?'0':'')+s2.toFixed(1).replace('.',','); };
+function noteZeitGrenzen(o){ const v=notizVideo(o), d=(v&&isFinite(v.duration))?v.duration:0;
+  const a=Math.max(0,o.t0||0), b=(o.t1&&o.t1>a)?Math.min(o.t1,d||o.t1):d;   /* zugeschnittene Clips: nur der sichtbare Teil */
+  return {a, b:Math.max(a+0.1,b||a+0.1), v}; }
+function noteZeitReglerSetzen(o){ const sl=$('noteZeit'); if(!sl) return;
+  const {a,b,v}=noteZeitGrenzen(o); sl.min=a; sl.max=b;
+  if(document.activeElement!==sl && v){ sl.value=Math.min(b,Math.max(a,v.currentTime||0)); }
+  $('noteZeitAnz').textContent=zeitText(v?v.currentTime:0); }
+$('noteZeit').oninput=function(){ const o=docNote; if(!o||!istVideoObjekt(o)) return;
+  const v=notizVideo(o); if(!v) return;
+  try{ v.currentTime=+this.value; }catch(e){}
+  $('noteZeitAnz').textContent=zeitText(+this.value); markDirty(); };
 function docNotizAn(o,an){
   if(an){ docNote=o; setMode('write');
     if(!['pen','marker','eraser'].includes(tool)) setTool('pen');
