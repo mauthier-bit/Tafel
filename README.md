@@ -15,7 +15,10 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   Stift, Linien und Marker); ein Tipp daneben übernimmt den Text als Objekt an dieser Stelle.
   Formeln erkennt das nicht, dafür bräuchte es einen Cloud-Dienst.
 - **Schreiben:** Stift (mit Apple-Pencil-Druckstärke), Marker; **eigener Farb-Button**
-  (Farbe & Dicke) mit **sechs Strichstärken** (eine feinere und eine dickere als früher).
+  (Farbe & Dicke) mit **sieben Strichstärken** (1,5 · 2,2 · 3 · 5 · 8 · 13 · 20). Die Stufe **2,2**
+  schließt die Lücke zwischen den beiden dünnsten Stärken – dort war der Sprung mit dem Faktor 2
+  deutlich größer als bei allen anderen Stufen (rund 1,6). Die Punkte in den Knöpfen sind leicht
+  gestaucht gezeichnet, damit auch die feinen Stufen auseinanderzuhalten sind.
   **Stift, Linien/Formen und Marker haben getrennte Farben** (Stift und Marker zusätzlich getrennte Strichstärken): der Stift
   schreibt standardmäßig **schwarz**, Linien und Formen ebenfalls **schwarz**, der Marker **gelb**,
   der **Laserpointer rot** – auch er hat eine **eigene Farbe**: bei aktivem Laser den Farb-Button
