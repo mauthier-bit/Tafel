@@ -410,12 +410,14 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   endlose Fläche) oder **nur nach unten**; dann bleibt die Breite die Bildschirmbreite, das Blatt ist
   also wie eine **endlose Rolle Papier**, und man kann sich beim Schreiben nicht seitlich „verlaufen".
   Beim Hineinzoomen bleibt der Bereich, der durch den Zoom entsteht, weiterhin seitlich erreichbar.
-- **Das Einstellungsfenster** ist in vier **Reiter** gegliedert – **Tafelblatt**, **Werkzeugleisten**,
-  **Bedienung** und **Projekt & Klasse** –, sodass kaum noch gescrollt werden muss. Die Reiter stehen
+- **Das Einstellungsfenster** ist in fünf **Reiter** gegliedert – **Tafelblatt**, **Werkzeugleisten**,
+  **Favoriten**, **Bedienung** und **Projekt & Klasse** –, sodass kaum noch gescrollt werden muss. Die Reiter stehen
   als **echte Reiterleiste** auf einer durchgehenden Linie; der geöffnete ist **farbig unterstrichen**
   statt als Knopf hervorgehoben – so ist auf den ersten Blick klar, dass es Reiter sind.
-  Im Reiter **Werkzeugleisten** steht das **Aussehen** (Dunkel/Hell) schmal links, die **fünf
-  Farbvorlagen** daneben statt darunter. Die **Farbpalette** zeigt ihre acht Farben als **Pillen**,
+  Im Reiter **Werkzeugleisten** stehen **Dunkel** und **Hell** als zwei **gleich breite** Knöpfe
+  links, die **fünf Farbvorlagen** daneben statt darunter; die Knöpfe nehmen den Platz ein, der neben
+  den Vorlagen frei bleibt. Die **Favoriten** haben einen **eigenen Reiter** bekommen – sie sind eine
+  Liste über alle Werkzeuge und passten nicht mehr zu den Leisten-Einstellungen. Die **Farbpalette** zeigt ihre acht Farben als **Pillen**,
   wodurch **„Palette zurücksetzen"** daneben Platz findet. **„Abstand der oberen Leisten"** ist von
   **Bedienung** hierher gewandert – es gehört zu den Leisten, nicht zur Bedienung.
 - **Hintergrundfarben** (Einstellungen): Weiß, **Tafelgrün**, Schwarz, Dunkelgrau, **Dunkelblau**,
