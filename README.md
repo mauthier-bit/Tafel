@@ -1517,6 +1517,11 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   und **„✂ Trimmen"**; bei Dokumenten und Bildern bleibt der Knopf wie gehabt in seiner eigenen Zeile.
   **„🧽 Notizen löschen"** fragt beim Video entsprechend „Die Notizen in diesem Video löschen?",
   beim Bild „… auf diesem Bild", beim Dokument „… auf Seite 3".
+- **Endlose Wiederholung.** Ist **„Objekt bedienen"** an, sitzt links oben auf dem Videoclip der Knopf
+  **„🔁 Wiederholen"**. Ein Tipp, und das Video läuft ohne Ende weiter – praktisch für einen kurzen
+  Bewegungsausschnitt, den die Klasse mehrfach sehen soll. Der Knopf färbt sich dabei blau und heißt
+  „🔁 Wiederholung an"; erneut antippen beendet die Schleife. Bei einem **zugeschnittenen Clip** wird
+  nur der gewählte Ausschnitt wiederholt. Die Einstellung wird **mit dem Projekt gespeichert**.
 - **Notizen an die Abspielzeit binden.** Während des Beschriftens steht im selben Balken ein
   Chip **„🕒 Zeit: …"**. Ein Tipp wechselt durch **immer · 2 s · 5 s · 10 s · ab hier**:
   - **immer** – die Notiz ist das ganze Video über zu sehen (wie bisher, Standardeinstellung).

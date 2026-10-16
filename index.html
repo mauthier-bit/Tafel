@@ -74,6 +74,7 @@
   .embedCard .ec-sub{font-size:13px;}
   .embedCard .ec-hint{font-size:12px;color:#8a93a2;max-width:90%;}
   .embedPill{position:absolute;left:0;top:0;transform-origin:0 0;pointer-events:auto;background:rgba(31,36,48,.85);color:#fff;border:none;border-radius:0 0 10px 0;font-size:13px;padding:6px 11px;cursor:pointer;box-shadow:0 1px 5px rgba(0,0,0,.3);white-space:nowrap;font-family:inherit;}
+  .embedPill.on{background:#2563eb;}
 
   .tbtn{width:44px;height:44px;flex:none;border:none;border-radius:12px;background:var(--bar2);color:var(--text);
     font-size:19px;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;}
@@ -3881,6 +3882,16 @@ function buildWebExtras(o,fr){
   pill.onclick=e=>{ e.stopPropagation(); window.open(o.src,'_blank','noopener'); };
   embedBarLayer.appendChild(pill); embedPills.set(o.id,pill);
 }
+/* Knopf über dem Videoclip, nur im Bedienmodus sichtbar: endlose Wiederholung an und aus */
+function clipPille(o,fr){ if(embedPills.has(o.id)) return;
+  const b=document.createElement('button'); b.className='embedPill';
+  const zeig=()=>{ fr.loop=!!o.loop; b.textContent=o.loop?'🔁 Wiederholung an':'🔁 Wiederholen';
+    b.classList.toggle('on',!!o.loop);
+    b.title=o.loop?'Endlose Wiederholung ausschalten':'Das Video ohne Ende wiederholen'; };
+  b.onclick=e=>{ e.stopPropagation(); o.loop=!o.loop; zeig();
+    if(o.loop&&fr.paused) fr.play().catch(()=>{});
+    toast(o.loop?'Das Video läuft jetzt in Endlosschleife':'Wiederholung aus'); scheduleAutosave(); };
+  zeig(); embedBarLayer.appendChild(b); embedPills.set(o.id,b); }
 /* Durchsichtige Zeichenfläche über einem Video: trägt die Notizen, nimmt keine Berührungen an.
    Sie liegt in derselben Ebene wie das Video und bekommt dieselbe Lage – damit wandert,
    dreht und skaliert die Beschriftung mit dem Video mit. */
@@ -3969,10 +3980,13 @@ function syncEmbeds(){ const p=page(), wanted=new Set();
       }
       else if(o.etype==='clip'){                               // Videoclip aus dem Kamera-Werkzeug
         if(o.src){ fr=document.createElement('video'); fr.setAttribute('playsinline',''); fr.playsInline=true; fr.controls=true; fr.preload='metadata'; fr.src=o.src; if(!o.sound)fr.muted=true;
+          fr.loop=!!o.loop;
           const A=()=>Math.max(0,o.t0||0), B=()=>((o.t1&&o.t1>(o.t0||0))?o.t1:Infinity), jump=v=>{ try{ fr.currentTime=v; }catch(_){} };
           fr.addEventListener('loadedmetadata',()=>{ if(A()>0&&fr.currentTime<A()) jump(A()); });
           fr.addEventListener('play',()=>{ if(fr.currentTime<A()-0.05||fr.currentTime>=B()-0.02) jump(A()); });
-          fr.addEventListener('timeupdate',()=>{ if(fr.currentTime>=B()){ fr.pause(); jump(A()); } else if(fr.currentTime<A()-0.3) jump(A()); }); }
+          fr.addEventListener('timeupdate',()=>{ if(fr.currentTime>=B()){ jump(A()); if(!o.loop) fr.pause(); }   /* zugeschnittener Clip: bei Wiederholung weiterlaufen lassen */
+            else if(fr.currentTime<A()-0.3) jump(A()); });
+          clipPille(o,fr); }
         else { fr=document.createElement('div'); fr.className='embedCard';
           fr.innerHTML='<div class="ec-ico">🎬</div><div class="ec-sub">'+((o.datei?(o.label||'Video'):'Videoclip').replace(/[<>&]/g,''))+'</div><div class="ec-hint">'+
             (o.datei?'Videodateien über 12 MB werden nicht mitgespeichert – bitte erneut einfügen.'
@@ -3990,12 +4004,12 @@ function syncEmbeds(){ const p=page(), wanted=new Set();
       if(quelle&&fr._video.srcObject!==quelle){ fr._video.srcObject=quelle; fr._video.play().catch(()=>{}); } }
     if(istVideoObjekt(o)&&(docNotizen(o,0).length||docNote===o)){ const neu=!notizFlaechen.has(o.id);
       notizFlaecheMalen(o,notizFlaecheHolen(o),tf); if(neu) layerReorderEmbeds(); }
+    else notizFlaecheWeg(o.id);
     if(docNote===o&&istVideoObjekt(o)){ const bar=$('noteBar'), c=toScreen(o.x+o.w/2,o.y);
       const hoch=bar.offsetHeight||44;
       bar.style.left=Math.round(Math.max(bar.offsetWidth/2+6,Math.min(innerWidth-bar.offsetWidth/2-6,c.x)))+'px';
       bar.style.top=Math.round(Math.max(hoch+8,c.y-10))+'px';                /* nie über den oberen Rand hinaus */
       noteZeitReglerSetzen(o); }
-    else notizFlaecheWeg(o.id);
     const card=embedCards.get(o.id); if(card){ card.style.width=o.w+'px'; card.style.height=o.h+'px'; card.style.transform=tf; }
     const pill=embedPills.get(o.id); if(pill){ const c=toScreen(o.x,o.y); pill.style.transform='translate('+c.x+'px,'+c.y+'px)'; }
     if(fsId){                                                 /* Vollbild: ein Objekt füllt die Breite, der Rest ist ausgeblendet */
