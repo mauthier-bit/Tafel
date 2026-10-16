@@ -1655,7 +1655,15 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   **„📄 Scannen"** (in derselben Reihe) fotografiert ein Blatt und öffnet den **Scan-Editor**: Die Tafel sucht die
   Blattecken selbst (hellste zusammenhängende Fläche), die vier Griffe lassen sich nachziehen, dann wird
   die Seite **perspektivisch entzerrt** – mit **bilinearer Abtastung** (glatte Kanten statt Treppchen), bis
-  **2400 px** Kantenlänge und in möglichst hoher Kameraauflösung (die Kamera wird mit bis zu 4K angefordert).
+  **3000 px** Kantenlänge und in möglichst hoher Kameraauflösung (die Kamera wird mit bis zu 4K angefordert).
+  **„📷 Foto scannen"** daneben (und „📷 Foto" im Scan-Fenster) nimmt das Bild statt aus dem Live-Strom
+  **mit der iPad-Kamera selbst** auf – also in **voller Sensorauflösung mit Autofokus**. Das ist der
+  deutlichste Qualitätsgewinn bei kleiner Schrift: Safari gibt den Live-Strom je nach Gerät oft nur mit
+  1280 × 720 heraus, das Foto dagegen mit zwölf Megapixeln. Die Quellauflösung steht unten im
+  Scan-Fenster („Quelle 4032 × 3024"), man sieht also sofort, womit gerade gearbeitet wird.
+  Nach dem Entzerren wird die Seite **nachgeschärft** (unscharfe Maske auf dem beleuchtungsbereinigten
+  Bild, also vor dem Spreizen – so wird die Schrift kantig, ohne dass Rauschen mitwächst), und Papier
+  oberhalb von 90 % Helligkeit wird **rein weiß** gesetzt, damit keine Papiertextur als Schleier stehen bleibt.
   Schwarz-weiße Seiten werden **verlustfrei als PNG** gesichert, Graustufen/Farbe als JPEG in hoher Qualität. Drei Aufbereitungen: **Schwarz-weiß** (Beleuchtung wird
   herausgerechnet – weißes Papier, schwarze Schrift, auch bei Schatten), **Graustufen**, **Farbe**.
   **„➕ Seite sichern"** sammelt mehrere Seiten, **„🖼 Als Bild auf die Tafel"** legt jede Seite als **bewegliches

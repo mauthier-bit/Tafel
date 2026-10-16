@@ -1239,7 +1239,7 @@
     <div class="hint" style="margin:4px 0 0">Zwei Finger im Bild = zoomen · Doppeltipp = zurück</div>
     <div class="row fill" style="margin-top:6px"><button class="btn pri" id="camStart">Kamera starten</button><button class="btn" id="camSwitch">Kamera wechseln</button></div>
     <div class="row fill" style="margin-top:6px"><button class="btn" id="camSnap">📷 Foto auf Tafel</button><button class="btn" id="camClip"><span id="camClipTxt">● Video auf Tafel</span><span class="inbtn" id="camSound" role="button" tabindex="0" title="Ton mitaufnehmen – ein- und ausschalten">mit Ton</span></button></div>
-    <div class="row fill" style="margin-top:6px"><button class="btn" id="camScan">📄 Scannen</button><button class="btn" id="camLive"><span>🔎 Dokumentenkamera</span><span class="inbtn" id="camEntzBtn" role="button" tabindex="0" title="Schräge Ansicht geradeziehen: die vier Punkte im Bild auf die Ecken des Blattes schieben">entzerren</span></button></div>
+    <div class="row fill" style="margin-top:6px"><button class="btn" id="camScan">📄 Scannen</button><button class="btn" id="camFoto" title="Mit der iPad-Kamera fotografieren – volle Auflösung, mit Autofokus">📷 Foto scannen</button><button class="btn" id="camLive"><span>🔎 Dokumentenkamera</span><span class="inbtn" id="camEntzBtn" role="button" tabindex="0" title="Schräge Ansicht geradeziehen: die vier Punkte im Bild auf die Ecken des Blattes schieben">entzerren</span></button></div>
     <div class="row fill" id="camEntzBar" hidden style="margin-top:8px"><button class="btn" id="camEntzKaro" title="Aus den Linien eines Karoblatts berechnen – dafür müssen keine Blattecken zu sehen sein">Karo erkennen</button><button class="btn" id="camEntzAuto" title="Blattecken im Bild suchen (wie beim Scannen)">Ecken automatisch</button><button class="btn" id="camEntzReset">Ecken zurücksetzen</button></div>
     <div class="hint" id="camEntzHint" hidden style="margin:4px 0 0">Die vier Punkte auf die Ecken des Blattes ziehen – das Livebild auf der Tafel wird dann geradegezogen.</div>
     <button class="btn" id="camLookHead" style="width:100%;text-align:left;margin-top:2px">🎨 Look: Ohne <span style="float:right">▾</span></button>
@@ -1260,12 +1260,13 @@
     </div>
     <div class="hint" id="camHint">Kamera geht nur über <b>https</b> (z. B. GitHub Pages) – Zugriff erlauben.</div>
   </div></div>
+<input type="file" id="scanFoto" accept="image/*" capture="environment" style="display:none">
 <div class="win" id="win-scan" style="left:60px;top:36px;"><h3>Dokument scannen <span class="x" data-close="win-scan">×</span></h3>
   <div class="body">
     <div id="scanStage"><canvas id="scanCv"></canvas></div>
     <div class="hint" style="margin:6px 0">Die vier Ecken auf die Blattecken ziehen – die Tafel entzerrt die Seite.</div>
     <div class="seg" id="scanSeg"><button data-f="doc" class="active">📄 Schwarz-weiß</button><button data-f="gray">Graustufen</button><button data-f="color">Farbe</button></div>
-    <div class="row fill" style="gap:6px;margin-top:8px"><button class="btn" id="scanAuto">Ecken automatisch</button><button class="btn" id="scanAgain">📷 Neu aufnehmen</button></div>
+    <div class="row fill" style="gap:6px;margin-top:8px"><button class="btn" id="scanAuto">Ecken automatisch</button><button class="btn" id="scanAgain">↺ Neu aufnehmen</button><button class="btn" id="scanFotoBtn" title="Mit der iPad-Kamera fotografieren – volle Auflösung">📷 Foto</button></div>
     <div class="row fill" style="gap:6px"><button class="btn" id="scanAdd">➕ Seite sichern</button><button class="btn pri" id="scanBoard">🖼 Als Bild auf die Tafel</button><button class="btn" id="scanDoc">📚 Als Dokument</button><button class="btn" id="scanPage">📄 Als Seite</button><button class="btn" id="scanPdf">PDF sichern</button></div>
     <div class="hint" id="scanInfo" style="margin:6px 0 0">Mehrseitig: „Seite sichern“, dann die nächste Seite aufnehmen.</div>
   </div></div>
@@ -6495,17 +6496,37 @@ $('camEntzReset').onclick=()=>{ camEntz.q=ENTZ_STD(); camEntz.ar=0; entzKlemmen(
 let scanSrc=null, scanQuad=null, scanFilter='doc', scanPages=[];
 const scanPt=(x,y)=>({x,y});
 function scanOpen(){ const v=$('camVideo'); if(!v.videoWidth){ toast('Erst Kamera starten'); return; }
-  const c=camCrop(v,camZoom); const k=Math.min(1,2800/Math.max(c.sw,c.sh));
+  const c=camCrop(v,camZoom); const k=Math.min(1,4200/Math.max(c.sw,c.sh));
   const cc=document.createElement('canvas'); cc.width=Math.round(c.sw*k); cc.height=Math.round(c.sh*k);
   const cg=cc.getContext('2d'); cg.imageSmoothingEnabled=true; cg.imageSmoothingQuality='high';
   cg.drawImage(v,c.sx,c.sy,c.sw,c.sh,0,0,cc.width,cc.height);
   scanSrc=cc; scanQuad=scanDetect(cc); $('win-scan').classList.add('show'); scanInfo(); scanDraw(); }
 $('camScan').onclick=scanOpen;
+/* Foto über die iPad-Kamera: liefert die volle Sensorauflösung samt Autofokus –
+   der Live-Strom gibt oft nur 1280 × 720 her, zu wenig für kleine Schrift. */
+async function scanFotoLaden(f){ if(!f) return; showBusy(true,'Foto wird geladen…');
+  try{ let bild=null;
+    try{ bild=await createImageBitmap(f,{imageOrientation:'from-image'}); }catch(e){}
+    if(!bild) bild=await new Promise((ok,fail)=>{ const i=new Image(), u=URL.createObjectURL(f);
+      i.onload=()=>{ URL.revokeObjectURL(u); ok(i); }; i.onerror=()=>{ URL.revokeObjectURL(u); fail(); }; i.src=u; });
+    const bw=bild.width||bild.naturalWidth, bh=bild.height||bild.naturalHeight;
+    const k=Math.min(1,4200/Math.max(bw,bh));
+    const cc=document.createElement('canvas'); cc.width=Math.round(bw*k); cc.height=Math.round(bh*k);
+    const cg=cc.getContext('2d'); cg.imageSmoothingEnabled=true; cg.imageSmoothingQuality='high';
+    cg.drawImage(bild,0,0,cc.width,cc.height); if(bild.close) bild.close();
+    scanSrc=cc; scanQuad=scanDetect(cc);
+    $('win-cam').classList.remove('show'); $('win-scan').classList.add('show'); scanInfo(); scanDraw();
+  }catch(e){ toast('Foto konnte nicht geladen werden'); }
+  showBusy(false); }
+$('scanFoto').onchange=function(){ const f=this.files&&this.files[0]; this.value=''; scanFotoLaden(f); };
+$('camFoto').onclick=()=>$('scanFoto').click();
+$('scanFotoBtn').onclick=()=>$('scanFoto').click();
 $('scanAgain').onclick=()=>{ $('win-scan').classList.remove('show'); $('win-cam').classList.add('show'); };
 $('scanAuto').onclick=()=>{ if(scanSrc){ scanQuad=scanDetect(scanSrc); scanDraw(); } };
 $('scanSeg').querySelectorAll('button').forEach(b=>b.onclick=()=>{ scanFilter=b.dataset.f;
   $('scanSeg').querySelectorAll('button').forEach(x=>x.classList.toggle('active',x===b)); });
-function scanInfo(){ $('scanInfo').textContent=scanPages.length?(scanPages.length+' Seite(n) gesichert – „Als Bild“, „Als Dokument“ (blätterbar), „Als Seite“ oder „PDF sichern“ legt alle zusammen ab.'):'Mehrseitig: „Seite sichern“, dann die nächste Seite aufnehmen.'; }
+function scanInfo(){ const q=scanSrc?(' · Quelle '+scanSrc.width+' × '+scanSrc.height):'';
+  $('scanInfo').textContent=(scanPages.length?(scanPages.length+' Seite(n) gesichert – „Als Bild“, „Als Dokument“ (blätterbar), „Als Seite“ oder „PDF sichern“ legt alle zusammen ab.'):'Mehrseitig: „Seite sichern“, dann die nächste Seite aufnehmen.')+q; }
 /* Blatt suchen: helle, zusammenhängende Fläche im verkleinerten Bild, davon die vier äußersten Ecken */
 function scanDetect(src){
   const W=240, H=Math.max(1,Math.round(src.height*W/src.width));
@@ -6563,7 +6584,7 @@ function scanSolve(A,b){ const n=b.length;
   return b.map((v,i)=>v/(A[i][i]||1e-12)); }
 function scanWarp(){ const q=scanQuad, dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
   let ow=Math.round((dist(q[0],q[1])+dist(q[3],q[2]))/2), oh=Math.round((dist(q[0],q[3])+dist(q[1],q[2]))/2);
-  const k=Math.min(1,2400/Math.max(ow,oh)); ow=Math.max(40,Math.round(ow*k)); oh=Math.max(40,Math.round(oh*k));
+  const k=Math.min(1,3000/Math.max(ow,oh)); ow=Math.max(40,Math.round(ow*k)); oh=Math.max(40,Math.round(oh*k));
   const A=[], b=[];                                   // Abbildung Ausgabe → Quelle
   [[0,0,q[0]],[ow,0,q[1]],[ow,oh,q[2]],[0,oh,q[3]]].forEach(([x,y,P])=>{
     A.push([x,y,1,0,0,0,-x*P.x,-y*P.x]); b.push(P.x);
@@ -6582,14 +6603,33 @@ function scanWarp(){ const q=scanQuad, dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
     D[o]  =S[i00]  *w00+S[i10]  *w10+S[i01]  *w01+S[i11]  *w11;
     D[o+1]=S[i00+1]*w00+S[i10+1]*w10+S[i01+1]*w01+S[i11+1]*w11;
     D[o+2]=S[i00+2]*w00+S[i10+2]*w10+S[i01+2]*w01+S[i11+2]*w11; D[o+3]=255; }
-  if(scanFilter!=='color') scanEnhance(D,ow,oh,scanFilter==='doc');
+  if(scanFilter!=='color') scanEnhance(D,ow,oh,scanFilter==='doc'); else scanScharfFarbe(D,ow,oh);
   og.putImageData(od,0,0); return out; }
+/* Weichzeichner (zwei Kastendurchgänge, laufende Summe) – Grundlage fürs Nachschärfen */
+function scanWeich(a,w,h,r){ const t=new Float32Array(a.length), o=new Float32Array(a.length), d=2*r+1;
+  const kx=x=>x<0?0:(x>w-1?w-1:x), ky=y=>y<0?0:(y>h-1?h-1:y);
+  for(let y=0;y<h;y++){ const row=y*w; let sm=0;
+    for(let x=-r;x<=r;x++) sm+=a[row+kx(x)];
+    for(let x=0;x<w;x++){ t[row+x]=sm/d; sm-=a[row+kx(x-r)]; sm+=a[row+kx(x+r+1)]; } }
+  for(let x=0;x<w;x++){ let sm=0;
+    for(let y=-r;y<=r;y++) sm+=t[ky(y)*w+x];
+    for(let y=0;y<h;y++){ o[y*w+x]=sm/d; sm-=t[ky(y-r)*w+x]; sm+=t[ky(y+r+1)*w+x]; } }
+  return o; }
+/* Unscharfe Maske: Kanten (Schrift) kräftiger, Flächen bleiben ruhig */
+function scanScharf(a,w,h,staerke,r){ const b=scanWeich(a,w,h,r||1);
+  for(let i=0;i<a.length;i++) a[i]+=staerke*(a[i]-b[i]); return a; }
+function scanScharfFarbe(D,w,h){ const n=w*h, g=new Float32Array(n);
+  for(let i=0;i<n;i++) g[i]=D[i*4]*0.299+D[i*4+1]*0.587+D[i*4+2]*0.114;
+  const b=scanWeich(g,w,h,1);
+  for(let i=0;i<n;i++){ const dl=0.55*(g[i]-b[i]);
+    for(let c=0;c<3;c++){ const v=D[i*4+c]+dl; D[i*4+c]=v<0?0:v>255?255:v; } } }
 /* Graustufen bzw. Dokumenten-Look: Beleuchtung herausrechnen (Bild durch weichgezeichneten Hintergrund teilen) */
 function scanEnhance(D,w,h,doc2){ const n=w*h, g=new Float32Array(n);
   for(let i=0;i<n;i++) g[i]=D[i*4]*0.299+D[i*4+1]*0.587+D[i*4+2]*0.114;
   const put=v=>{ v=v<0?0:v>255?255:v; return v; };
   if(!doc2){                                              // Graustufen: Helligkeit strecken
-    const hist=new Array(256).fill(0); for(let i=0;i<n;i++) hist[g[i]|0]++;
+    scanScharf(g,w,h,0.55,1);
+    const hist=new Array(256).fill(0); for(let i=0;i<n;i++){ const v=g[i]; hist[(v<0?0:v>255?255:v)|0]++; }
     let lo=0,hi=255,acc=0; for(let v=0;v<256;v++){ acc+=hist[v]; if(acc>n*0.02){ lo=v; break; } }
     acc=0; for(let v=255;v>=0;v--){ acc+=hist[v]; if(acc>n*0.02){ hi=v; break; } }
     const sc=255/Math.max(20,hi-lo);
@@ -6606,11 +6646,14 @@ function scanEnhance(D,w,h,doc2){ const n=w*h, g=new Float32Array(n);
     const x0=fx|0, y0=fy|0, tx=fx-x0, ty=fy-y0, x1=Math.min(gw-1,x0+1), y1=Math.min(gh-1,y0+1);
     return (bg[y0*gw+x0]*(1-tx)+bg[y0*gw+x1]*tx)*(1-ty)+(bg[y1*gw+x0]*(1-tx)+bg[y1*gw+x1]*tx)*ty; };
   const rat=new Float32Array(n); const hist2=new Uint32Array(128);
-  for(let y=0;y<h;y++) for(let x=0;x<w;x++){ const i=y*w+x, b2=Math.max(8,bgAt(x,y));
-    const q=g[i]/b2; rat[i]=q; hist2[Math.max(0,Math.min(127,Math.round(q*100)))]++; }   // Papier ≈ 1, Schrift deutlich kleiner
+  for(let y=0;y<h;y++) for(let x=0;x<w;x++){ const i=y*w+x, b2=Math.max(8,bgAt(x,y)); rat[i]=g[i]/b2; }
+  scanScharf(rat,w,h,0.8,1);                              // erst schärfen, dann spreizen – sonst wird das Rauschen mitgezogen
+  for(let i=0;i<n;i++) hist2[Math.max(0,Math.min(127,Math.round(rat[i]*100)))]++;   // Papier ≈ 1, Schrift deutlich kleiner
   let acc2=0, pap=100; for(let v=127;v>=0;v--){ acc2+=hist2[v]; if(acc2>n*0.18){ pap=Math.max(50,v); break; } }   // typische Papierhelligkeit
   const lo=pap*0.78/100, hi=pap/100, sc2=255/Math.max(0.05,hi-lo);
-  for(let i=0;i<n;i++){ const v=put((rat[i]-lo)*sc2); D[i*4]=D[i*4+1]=D[i*4+2]=v; } }
+  for(let i=0;i<n;i++){ let v=put((rat[i]-lo)*sc2);
+    if(v>228) v=255;                                      /* Papier ganz weiß – sonst bleibt die Papiertextur als Streifen stehen */
+    D[i*4]=D[i*4+1]=D[i*4+2]=v; } }
 function scanCurrent(){ const c=scanWarp(); if(!c) return null;
   const u=(scanFilter==='doc')?c.toDataURL('image/png'):c.toDataURL('image/jpeg',0.92);   // S/W-Seiten verlustfrei, sonst fein
   return {u,w:c.width,h:c.height}; }
