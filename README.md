@@ -406,7 +406,13 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   also wie eine **endlose Rolle Papier**, und man kann sich beim Schreiben nicht seitlich „verlaufen".
   Beim Hineinzoomen bleibt der Bereich, der durch den Zoom entsteht, weiterhin seitlich erreichbar.
 - **Das Einstellungsfenster** ist in vier **Reiter** gegliedert – **Tafelblatt**, **Werkzeugleisten**,
-  **Bedienung** und **Projekt & Klasse** –, sodass kaum noch gescrollt werden muss.
+  **Bedienung** und **Projekt & Klasse** –, sodass kaum noch gescrollt werden muss. Die Reiter stehen
+  als **echte Reiterleiste** auf einer durchgehenden Linie; der geöffnete ist **farbig unterstrichen**
+  statt als Knopf hervorgehoben – so ist auf den ersten Blick klar, dass es Reiter sind.
+  Im Reiter **Werkzeugleisten** steht das **Aussehen** (Dunkel/Hell) schmal links, die **fünf
+  Farbvorlagen** daneben statt darunter. Die **Farbpalette** zeigt ihre acht Farben als **Pillen**,
+  wodurch **„Palette zurücksetzen"** daneben Platz findet. **„Abstand der oberen Leisten"** ist von
+  **Bedienung** hierher gewandert – es gehört zu den Leisten, nicht zur Bedienung.
 - **Hintergrundfarben** (Einstellungen): Weiß, **Tafelgrün**, Schwarz, Dunkelgrau, **Dunkelblau**,
   **dunkles Weinrot**, Hellblau sowie **helles Gelb / Grün / Rot / Orange / Lila** und ein
   **Regenbogen-Button** für eine **beliebige Farbe** (Farbwähler) – die Farbkreise sind größer und
