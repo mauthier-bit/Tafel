@@ -1105,7 +1105,7 @@
     <button class="p" id="pr-docPrev" title="Eine Seite zurück">‹ Seite</button>
     <span id="pr-docNum" style="min-width:52px;text-align:center;font-weight:600;color:#5b6472">1 / 1</span>
     <button class="p" id="pr-docNext" title="Eine Seite weiter">Seite ›</button>
-    <button class="p" id="pr-docNoteClr" style="flex:1 1 auto" title="Nur die Notizen der angezeigten Seite entfernen">🧽 Notizen löschen</button>
+    <button class="p" id="pr-docNoteClr" style="flex:1 1 auto" title="Nur die Notizen dieses Objekts bzw. der angezeigten Seite entfernen">🧽 Notizen löschen</button>
     <button class="p" id="pr-docPdf" style="flex:1 0 100%" title="Alle Seiten als PDF-Datei sichern">📄 Als PDF sichern</button>
   </div>
   <hr class="psep" id="docSepU" style="display:none">
@@ -3371,7 +3371,7 @@ function refreshProps(){ const has=selection.length>0 && tool==='select';
     const fs=(fsSel&&((fsSel.type==='embed'&&!['audio','clip'].includes(fsSel.etype))||fsSel.type==='doc'||fsSel.type==='image'))?fsSel:null;
     $('fsRow').style.display=fs?'flex':'none';
     const cl=(selection.length===1&&selection[0].type==='embed'&&(selection[0].etype==='clip'||selection[0].etype==='audio'))?selection[0]:null; $('clipRow').style.display=cl?'flex':'none';
-    if(cl){ $('pr-clipsave').textContent=(cl.etype==='audio')?'🎙 Ton speichern':'🎬 Video speichern';
+    if(cl){ $('pr-clipsave').textContent=(cl.etype==='audio')?'🎙 Ton speichern':'🎬 Speichern';
       $('pr-trim').style.display=(cl.etype==='clip'&&cl.src)?'':'none'; }
     const io=(selection.length===1&&selection[0].type==='image')?selection[0]:null; $('imgRow').style.display=io?'flex':'none';
     /* Beschriften gilt für Dokumente und Bilder; blättern und „Als PDF" nur für Dokumente */
@@ -3380,6 +3380,11 @@ function refreshProps(){ const has=selection.length>0 && tool==='select';
     $('docRow').style.display=dk?'flex':'none';
     $('docSepO').style.display=dk?'block':'none'; $('docSepU').style.display=dk?'block':'none';
     ['pr-docPrev','pr-docNum','pr-docNext','pr-docPdf'].forEach(id=>$(id).style.display=dok?'':'none');
+    /* Beim Videoclip steht „Beschriften" in derselben Zeile wie Speichern und Trimmen */
+    { const b=$('pr-docNote'), inClip=!!(dk&&dk.type==='embed'&&dk.etype==='clip');
+      const ziel=inClip?$('clipRow'):$('docRow');
+      if(b.parentElement!==ziel){ if(inClip) ziel.appendChild(b); else ziel.insertBefore(b,ziel.firstElementChild); }
+      b.style.flex=inClip?'1 1 auto':'1 0 100%'; }
     if(dk){ const an=(docNote===dk); const b=$('pr-docNote');
       b.textContent=an?'✓ Beschriften beenden':'✎ Beschriften';
       b.classList.toggle('on',an);
@@ -6846,10 +6851,11 @@ $('noteZeitChip').onclick=()=>{ const i=NOTIZ_ZEITEN.indexOf(notizZeit);
       : notizZeit===Infinity ? 'Neue Notizen erscheinen ab der aktuellen Stelle und bleiben bis zum Schluss'
       : 'Neue Notizen sind '+notizZeit+' Sekunden lang zu sehen'); };
 $('pr-docNoteClr').onclick=()=>{ const o=singleSel(); if(!notizFaehig(o)) return;
-  const i=notizSeite(o), l=docNotizen(o,i), bild=(o.type==='image');
-  if(!l.length){ toast(bild?'Auf diesem Bild stehen keine Notizen':'Auf dieser Seite stehen keine Notizen'); return; }
-  if(!confirm(bild?'Die Notizen auf diesem Bild löschen?':('Die Notizen auf Seite '+(i+1)+' löschen?'))) return;
-  pushUndo(); o.notes[String(i)]=[]; notizStand++; markDirty(); scheduleAutosave(); toast('Notizen der Seite gelöscht'); };
+  const i=notizSeite(o), l=docNotizen(o,i), bild=(o.type==='image'), video=istVideoObjekt(o);
+  if(!l.length){ toast(video?'In diesem Video stehen keine Notizen':bild?'Auf diesem Bild stehen keine Notizen':'Auf dieser Seite stehen keine Notizen'); return; }
+  if(!confirm(video?'Die Notizen in diesem Video löschen?':bild?'Die Notizen auf diesem Bild löschen?':('Die Notizen auf Seite '+(i+1)+' löschen?'))) return;
+  pushUndo(); o.notes[String(i)]=[]; notizStand++; markDirty(); scheduleAutosave();
+  toast(video?'Notizen im Video gelöscht':bild?'Notizen am Bild gelöscht':'Notizen der Seite gelöscht'); };
 $('pr-docPdf').onclick=()=>{ const o=singleSel(); if(!o||o.type!=='doc') return;
   if(!window.jspdf){ toast('PDF-Bibliothek fehlt'); return; }
   showBusy(true,'PDF wird erstellt…'); setTimeout(()=>{ try{ const {jsPDF}=window.jspdf; let pdf=null; let done=0;

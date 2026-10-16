@@ -1513,6 +1513,10 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   Zeit zum Zeichnen bereit. Rechts daneben steht die Stelle als Zeit (`0:02,4`). Bei einem
   **zugeschnittenen Clip** läuft der Regler nur über den sichtbaren Ausschnitt.
   Bei Dokumenten und Bildern bleibt alles wie bisher: Dort gibt es nur den roten Knopf oben.
+  Im **Kontextmenü** des Videoclips steht **„✎ Beschriften"** in derselben Zeile wie **„🎬 Speichern"**
+  und **„✂ Trimmen"**; bei Dokumenten und Bildern bleibt der Knopf wie gehabt in seiner eigenen Zeile.
+  **„🧽 Notizen löschen"** fragt beim Video entsprechend „Die Notizen in diesem Video löschen?",
+  beim Bild „… auf diesem Bild", beim Dokument „… auf Seite 3".
 - **Notizen an die Abspielzeit binden.** Während des Beschriftens steht im selben Balken ein
   Chip **„🕒 Zeit: …"**. Ein Tipp wechselt durch **immer · 2 s · 5 s · 10 s · ab hier**:
   - **immer** – die Notiz ist das ganze Video über zu sehen (wie bisher, Standardeinstellung).
