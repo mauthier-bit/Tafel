@@ -1496,8 +1496,19 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   anders als PDFs nicht in die Tafelfläche gemalt werden, sondern als eigene Elemente darüber liegen.
   Verschieben, Skalieren und Drehen nehmen die Beschriftung mit, der Radierer löscht im
   Beschriften-Modus nur sie und nicht das Video, und sie bleibt auch im **Vollbild** stehen.
-  Die Notizen gelten vorerst für das **ganze Video**; sie an einen Zeitabschnitt zu binden, ist als
-  nächster Schritt vorgesehen.
+- **Notizen an die Abspielzeit binden.** Während des Beschriftens steht unter dem roten Knopf ein
+  zweiter Chip **„🕒 Zeit: …"**. Ein Tipp wechselt durch **immer · 2 s · 5 s · 10 s · ab hier**:
+  - **immer** – die Notiz ist das ganze Video über zu sehen (wie bisher, Standardeinstellung).
+  - **2 / 5 / 10 Sekunden** – die Notiz erscheint an der Stelle, an der sie gezeichnet wurde, und
+    verschwindet nach der eingestellten Dauer wieder. So lässt sich eine Bewegung Schritt für Schritt
+    kommentieren, ohne dass sich die Pfeile überlagern.
+  - **ab hier** – die Notiz erscheint an dieser Stelle und bleibt bis zum Ende des Videos.
+  Die Einstellung gilt für **neu gezeichnete** Notizen und wird gemerkt; vorhandene Notizen behalten,
+  was sie haben. Jede Notiz bekommt einen Hauch Vorlauf (0,15 s), damit sie schon steht, wenn der
+  Moment kommt. **Beim Beschriften** sind Notizen außerhalb ihres Zeitfensters **blass** zu sehen –
+  man weiß also, was an anderen Stellen des Videos schon eingezeichnet ist – beim normalen Abspielen
+  sind sie ganz weg. Während das Video läuft, tauchen sie auf die Zehntelsekunde genau auf und wieder
+  ab; dafür zeichnet die Tafel die Beschriftung des laufenden Videos eigens nach.
   Mit **„✓ Beschriften beenden"** ist das Dokument bzw. Bild wieder ein normales Objekt: **Verschieben, Skalieren und
   Drehen** nehmen die Notizen mit, als wären sie aufgedruckt – auch das Beschriften im **gedrehten** Zustand
   stimmt hinterher. Die Notizen werden **mit dem Projekt gespeichert**, erscheinen im **Vollbild** und in
