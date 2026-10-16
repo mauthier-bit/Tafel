@@ -1239,7 +1239,7 @@
     <div class="hint" style="margin:4px 0 0">Zwei Finger im Bild = zoomen · Doppeltipp = zurück</div>
     <div class="row fill" style="margin-top:6px"><button class="btn pri" id="camStart">Kamera starten</button><button class="btn" id="camSwitch">Kamera wechseln</button></div>
     <div class="row fill" style="margin-top:6px"><button class="btn" id="camSnap">📷 Foto auf Tafel</button><button class="btn" id="camClip"><span id="camClipTxt">● Video auf Tafel</span><span class="inbtn" id="camSound" role="button" tabindex="0" title="Ton mitaufnehmen – ein- und ausschalten">mit Ton</span></button></div>
-    <div class="row fill" style="margin-top:6px"><button class="btn" id="camScan">📄 Scannen</button><button class="btn" id="camFoto" title="Mit der iPad-Kamera fotografieren – volle Auflösung, mit Autofokus">📷 Foto scannen</button><button class="btn" id="camLive"><span>🔎 Dokumentenkamera</span><span class="inbtn" id="camEntzBtn" role="button" tabindex="0" title="Schräge Ansicht geradeziehen: die vier Punkte im Bild auf die Ecken des Blattes schieben">entzerren</span></button></div>
+    <div class="row fill" style="margin-top:6px"><button class="btn" id="camScan" title="Blatt mit der iPad-Kamera fotografieren – volle Auflösung, mit Autofokus">📄 Scannen</button><button class="btn" id="camLive"><span>🔎 Dokumentenkamera</span><span class="inbtn" id="camEntzBtn" role="button" tabindex="0" title="Schräge Ansicht geradeziehen: die vier Punkte im Bild auf die Ecken des Blattes schieben">entzerren</span></button></div>
     <div class="row fill" id="camEntzBar" hidden style="margin-top:8px"><button class="btn" id="camEntzKaro" title="Aus den Linien eines Karoblatts berechnen – dafür müssen keine Blattecken zu sehen sein">Karo erkennen</button><button class="btn" id="camEntzAuto" title="Blattecken im Bild suchen (wie beim Scannen)">Ecken automatisch</button><button class="btn" id="camEntzReset">Ecken zurücksetzen</button></div>
     <div class="hint" id="camEntzHint" hidden style="margin:4px 0 0">Die vier Punkte auf die Ecken des Blattes ziehen – das Livebild auf der Tafel wird dann geradegezogen.</div>
     <button class="btn" id="camLookHead" style="width:100%;text-align:left;margin-top:2px">🎨 Look: Ohne <span style="float:right">▾</span></button>
@@ -1266,7 +1266,7 @@
     <div id="scanStage"><canvas id="scanCv"></canvas></div>
     <div class="hint" style="margin:6px 0">Die vier Ecken auf die Blattecken ziehen – die Tafel entzerrt die Seite.</div>
     <div class="seg" id="scanSeg"><button data-f="doc" class="active">📄 Schwarz-weiß</button><button data-f="gray">Graustufen</button><button data-f="color">Farbe</button></div>
-    <div class="row fill" style="gap:6px;margin-top:8px"><button class="btn" id="scanAuto">Ecken automatisch</button><button class="btn" id="scanAgain">↺ Neu aufnehmen</button><button class="btn" id="scanFotoBtn" title="Mit der iPad-Kamera fotografieren – volle Auflösung">📷 Foto</button></div>
+    <div class="row fill" style="gap:6px;margin-top:8px"><button class="btn" id="scanAuto">Ecken automatisch</button><button class="btn" id="scanAgain">📷 Neu aufnehmen</button></div>
     <div class="row fill" style="gap:6px"><button class="btn" id="scanAdd">➕ Seite sichern</button><button class="btn pri" id="scanBoard">🖼 Als Bild auf die Tafel</button><button class="btn" id="scanDoc">📚 Als Dokument</button><button class="btn" id="scanPage">📄 Als Seite</button><button class="btn" id="scanPdf">PDF sichern</button></div>
     <div class="hint" id="scanInfo" style="margin:6px 0 0">Mehrseitig: „Seite sichern“, dann die nächste Seite aufnehmen.</div>
   </div></div>
@@ -6495,15 +6495,8 @@ $('camEntzReset').onclick=()=>{ camEntz.q=ENTZ_STD(); camEntz.ar=0; entzKlemmen(
 /* ---- Dokumentenscanner: Kamerabild entzerren, aufhellen, als Seite/PDF ---- */
 let scanSrc=null, scanQuad=null, scanFilter='doc', scanPages=[];
 const scanPt=(x,y)=>({x,y});
-function scanOpen(){ const v=$('camVideo'); if(!v.videoWidth){ toast('Erst Kamera starten'); return; }
-  const c=camCrop(v,camZoom); const k=Math.min(1,4200/Math.max(c.sw,c.sh));
-  const cc=document.createElement('canvas'); cc.width=Math.round(c.sw*k); cc.height=Math.round(c.sh*k);
-  const cg=cc.getContext('2d'); cg.imageSmoothingEnabled=true; cg.imageSmoothingQuality='high';
-  cg.drawImage(v,c.sx,c.sy,c.sw,c.sh,0,0,cc.width,cc.height);
-  scanSrc=cc; scanQuad=scanDetect(cc); $('win-scan').classList.add('show'); scanInfo(); scanDraw(); }
-$('camScan').onclick=scanOpen;
-/* Foto über die iPad-Kamera: liefert die volle Sensorauflösung samt Autofokus –
-   der Live-Strom gibt oft nur 1280 × 720 her, zu wenig für kleine Schrift. */
+/* Gescannt wird über die iPad-Kamera: Sie liefert die volle Sensorauflösung samt Autofokus –
+   der Live-Strom gibt je nach Gerät nur 1280 × 720 her, zu wenig für kleine Schrift. */
 async function scanFotoLaden(f){ if(!f) return; showBusy(true,'Foto wird geladen…');
   try{ let bild=null;
     try{ bild=await createImageBitmap(f,{imageOrientation:'from-image'}); }catch(e){}
@@ -6519,9 +6512,8 @@ async function scanFotoLaden(f){ if(!f) return; showBusy(true,'Foto wird geladen
   }catch(e){ toast('Foto konnte nicht geladen werden'); }
   showBusy(false); }
 $('scanFoto').onchange=function(){ const f=this.files&&this.files[0]; this.value=''; scanFotoLaden(f); };
-$('camFoto').onclick=()=>$('scanFoto').click();
-$('scanFotoBtn').onclick=()=>$('scanFoto').click();
-$('scanAgain').onclick=()=>{ $('win-scan').classList.remove('show'); $('win-cam').classList.add('show'); };
+$('camScan').onclick=()=>$('scanFoto').click();
+$('scanAgain').onclick=()=>$('scanFoto').click();
 $('scanAuto').onclick=()=>{ if(scanSrc){ scanQuad=scanDetect(scanSrc); scanDraw(); } };
 $('scanSeg').querySelectorAll('button').forEach(b=>b.onclick=()=>{ scanFilter=b.dataset.f;
   $('scanSeg').querySelectorAll('button').forEach(x=>x.classList.toggle('active',x===b)); });

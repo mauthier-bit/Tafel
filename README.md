@@ -1652,15 +1652,15 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     nachträglich oder schaltet das Entzerren um, passt sich der Rahmen des Livebildes sofort mit an,
     sodass nie etwas gestaucht oder abgeschnitten wirkt. Gilt **nur für die Dokumentenkamera**: Foto,
     Videoclip und Vorschau bleiben unverzerrt.
-  **„📄 Scannen"** (in derselben Reihe) fotografiert ein Blatt und öffnet den **Scan-Editor**: Die Tafel sucht die
-  Blattecken selbst (hellste zusammenhängende Fläche), die vier Griffe lassen sich nachziehen, dann wird
-  die Seite **perspektivisch entzerrt** – mit **bilinearer Abtastung** (glatte Kanten statt Treppchen), bis
-  **3000 px** Kantenlänge und in möglichst hoher Kameraauflösung (die Kamera wird mit bis zu 4K angefordert).
-  **„📷 Foto scannen"** daneben (und „📷 Foto" im Scan-Fenster) nimmt das Bild statt aus dem Live-Strom
-  **mit der iPad-Kamera selbst** auf – also in **voller Sensorauflösung mit Autofokus**. Das ist der
-  deutlichste Qualitätsgewinn bei kleiner Schrift: Safari gibt den Live-Strom je nach Gerät oft nur mit
-  1280 × 720 heraus, das Foto dagegen mit zwölf Megapixeln. Die Quellauflösung steht unten im
-  Scan-Fenster („Quelle 4032 × 3024"), man sieht also sofort, womit gerade gearbeitet wird.
+  **„📄 Scannen"** (in derselben Reihe) öffnet die **iPad-Kamera**, man fotografiert das Blatt, und
+  der **Scan-Editor** geht auf. Das Foto kommt damit in **voller Sensorauflösung mit Autofokus** – rund
+  zwölf Megapixel statt der 1280 × 720, die Safari aus dem Live-Strom je nach Gerät herausgibt; bei
+  kleiner Schrift ist das der entscheidende Unterschied. Die Kamera muss dafür **nicht laufen**, der
+  Knopf geht auch im geschlossenen Kamerafenster. Die Quellauflösung steht unten im Scan-Fenster
+  („Quelle 4032 × 3024"), man sieht also sofort, womit gerade gearbeitet wird.
+  Im Editor sucht die Tafel die Blattecken selbst (hellste zusammenhängende Fläche), die vier Griffe
+  lassen sich nachziehen, dann wird die Seite **perspektivisch entzerrt** – mit **bilinearer Abtastung**
+  (glatte Kanten statt Treppchen) und bis **3000 px** Kantenlänge.
   Nach dem Entzerren wird die Seite **nachgeschärft** (unscharfe Maske auf dem beleuchtungsbereinigten
   Bild, also vor dem Spreizen – so wird die Schrift kantig, ohne dass Rauschen mitwächst), und Papier
   oberhalb von 90 % Helligkeit wird **rein weiß** gesetzt, damit keine Papiertextur als Schleier stehen bleibt.
