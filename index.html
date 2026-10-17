@@ -1056,7 +1056,7 @@
   <div class="pgrip" id="propsGrip" title="Ziehen: Kontextmenü an eine andere Stelle schieben"><i></i><button class="pauto" id="propsAuto" title="Kontextmenü wieder automatisch neben das Objekt stellen">↺</button></div>
   <div class="prow" id="colorRow" style="font-size:13px"><b>Farbe</b><div class="swatches" id="propColors"></div></div>
   <div class="prow" id="widthRow" style="font-size:13px"><b>Dicke/Größe</b><div class="widths" id="propWidths"></div></div>
-  <div class="prow" id="propPtRow" style="display:none;font-size:13px;gap:5px"><b style="min-width:62px">Punkte</b><button class="p ptBtn" id="pt1" style="flex:1 1 0;padding:7px 4px" title="Strecke: beide Punkte begrenzen die Linie">beide</button><button class="p ptBtn" id="pt2" style="flex:1 1 0;padding:7px 4px" title="Halbgerade ab dem Anfangspunkt – über den Endpunkt hinaus">nur Anfang</button><button class="p ptBtn" id="pt3" style="flex:1 1 0;padding:7px 4px" title="Halbgerade ab dem Endpunkt – über den Anfangspunkt hinaus">nur Ende</button></div>
+  <div class="prow" id="propPtRow" style="display:none;font-size:13px;gap:5px"><b style="min-width:62px">Enden</b><button class="p ptBtn" id="pt1" style="flex:1 1 0;padding:7px 4px" title="Strecke: beide Punkte begrenzen die Linie">beide</button><button class="p ptBtn" id="pt2" style="flex:1 1 0;padding:7px 4px" title="Halbgerade ab dem Anfangspunkt – über den Endpunkt hinaus">nur Anfang</button><button class="p ptBtn" id="pt3" style="flex:1 1 0;padding:7px 4px" title="Halbgerade ab dem Endpunkt – über den Anfangspunkt hinaus">nur Ende</button></div>
   <div class="prow" id="propDashRow" style="display:none;font-size:13px;gap:5px"><b style="min-width:62px">Linie</b><button class="p dashBtn" id="dash0" title="durchgezogen"><svg viewBox="0 0 56 12"><path d="M3 6h50"/></svg></button><button class="p dashBtn" id="dash1" title="gestrichelt"><svg viewBox="0 0 56 12"><path d="M3 6h50" stroke-dasharray="9 6"/></svg></button><button class="p dashBtn" id="dash2" title="gepunktet"><svg viewBox="0 0 56 12"><path d="M3 6h50" stroke-dasharray="0.01 7"/></svg></button></div>
   <div class="prow" id="propFillRow" style="gap:5px"><label class="propToggle" style="gap:5px"><span>Gefüllt</span><div class="sw2" id="propFill"></div></label><span class="flbl">Transparenz</span><input type="range" id="propAlpha" min="0" max="100" step="5" value="80" title="Wie durchsichtig die Füllung ist – 0 % deckt ganz, 100 % ist unsichtbar"><span class="fval" id="propAlphaV">80 %</span></div>
   <div class="prow" id="textRow" style="display:none;flex-direction:column;align-items:stretch;gap:6px;font-size:13px">
@@ -1847,6 +1847,7 @@ function regelEcken(o,x,y,w,h){ const n=eckZahl(o), a0=-Math.PI/2-Math.PI/n;
   return ux.map((_,k)=>[ox+(ux[k]-mnx)*s, oy+(uy[k]-mny)*s]); }
 /* Pfeilspitzen: 0 = keine, 1 = offen, 2 = gefüllt, 3 = Punkt. ende=1 meint das Ende.
    Ältere Pfeile kennen nur „both" – daraus ergibt sich dieselbe Darstellung wie früher. */
+const PFEIL_V=1.45;                   /* gefüllte Spitze im Verhältnis zur offenen */
 function spitzeArt(o,ende){
   const k=ende?o.he:o.hs;
   if(k===0||k===1||k===2||k===3) return k;
@@ -1929,8 +1930,14 @@ function drawObjectRaw(o,c){
         if(a===2){ c.moveTo(o.x0,o.y0); c.lineTo(o.x1+ux*BIG,o.y1+uy*BIG); } /* ab dem Anfangspunkt über das Ende hinaus */
         else { c.moveTo(o.x1,o.y1); c.lineTo(o.x0-ux*BIG,o.y0-uy*BIG); } } } /* ab dem Endpunkt über den Anfang hinaus */
     else if(o.shape==='gerade'){ const dx=o.x1-o.x0,dy=o.y1-o.y0,len=Math.hypot(dx,dy)||1,ux=dx/len,uy=dy/len,BIG=100000; c.moveTo(o.x0-ux*BIG,o.y0-uy*BIG); c.lineTo(o.x1+ux*BIG,o.y1+uy*BIG); }
-    else if(o.shape==='arrow'){ c.moveTo(o.x0,o.y0); c.lineTo(o.x1,o.y1);
+    else if(o.shape==='arrow'){
       const a=Math.atan2(o.y1-o.y0,o.x1-o.x0), L=Math.max(10,o.width*3.5);
+      /* Vor einer gefüllten Spitze hört die Linie früher auf – sonst schaut ihr rundes Ende
+         vorne aus der Spitze heraus und die Spitze wirkt stumpf. */
+      const vor=k=>(k===2)?L*PFEIL_V*0.62:0;
+      const kx=Math.cos(a)*vor(spitzeArt(o,0)), ky=Math.sin(a)*vor(spitzeArt(o,0));
+      const ex=Math.cos(a)*vor(spitzeArt(o,1)), ey=Math.sin(a)*vor(spitzeArt(o,1));
+      c.moveTo(o.x0+kx,o.y0+ky); c.lineTo(o.x1-ex,o.y1-ey);
       const offen=(px,py,w)=>{ c.moveTo(px,py);c.lineTo(px-L*Math.cos(w-.4),py-L*Math.sin(w-.4));c.moveTo(px,py);c.lineTo(px-L*Math.cos(w+.4),py-L*Math.sin(w+.4)); };
       if(spitzeArt(o,1)===1) offen(o.x1,o.y1,a);                      /* offene Spitze wird mitgestrichelt */
       if(spitzeArt(o,0)===1) offen(o.x0,o.y0,a+Math.PI); }
@@ -1940,7 +1947,7 @@ function drawObjectRaw(o,c){
     if(o.shape==='netz'&&o.lblV) netzBeschriften(c,o);                 /* Flächennamen */
     if(o.shape==='arrow'){                                            /* gefüllte Spitze und Punkt eigens zeichnen */
       const a=Math.atan2(o.y1-o.y0,o.x1-o.x0), L=Math.max(10,o.width*3.5), r=Math.max(o.width*1.7,2.6);
-      const V=L*1.25;                                                 /* gefüllt wirkt kleiner – darum etwas größer */
+      const V=L*PFEIL_V;                                              /* gefüllt wirkt kleiner – darum größer */
       const voll=(px,py,w)=>{ c.beginPath(); c.moveTo(px,py);
         c.lineTo(px-V*Math.cos(w-.42),py-V*Math.sin(w-.42));
         c.lineTo(px-V*0.68*Math.cos(w),py-V*0.68*Math.sin(w));

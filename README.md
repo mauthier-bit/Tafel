@@ -42,9 +42,9 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   Ein **allgemeines Dreieck** gibt es nicht mehr als eigenen Knopf – dafür ist das **Vieleck** da, mit
   dem sich jedes Dreieck über seine drei Ecken genau setzen lässt. Ältere Tafelbilder mit der alten
   Form werden weiter richtig gezeichnet.
-- **Punkte der Linie** (Kontextmenü, nur bei der Linie; die Zeile steht genau über der Zeile
+- **Enden der Linie** (Kontextmenü, nur bei der Linie; die Zeile steht genau über der Zeile
   **Linie** für durchgezogen/gestrichelt/gepunktet, beide gleich breit): **beide · nur Anfang · nur Ende**. Die
-  gesetzten Punkte **begrenzen** die Linie; wo keiner sitzt, läuft sie weiter.
+  gesetzten Enden **begrenzen** die Linie; wo keines sitzt, läuft sie weiter.
   - **beide** – eine gewöhnliche **Strecke** (Voreinstellung, sieht aus wie bisher).
   - **nur Anfang** – eine **Halbgerade** vom Anfangspunkt aus **über den Endpunkt hinaus**.
   - **nur Ende** – eine **Halbgerade** vom Endpunkt aus **über den Anfangspunkt hinaus**.
@@ -92,7 +92,10 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   einfache Pfeile, Doppelpfeile, Vektorpfeile mit gefüllter Spitze und Strecken mit markiertem
   Anfangs- oder Endpunkt. Die zuletzt gewählte Kombination gilt auch für **neue** Pfeile. Ältere
   Doppelpfeile werden weiter richtig gezeichnet.
-  Im Kontextmenü stehen **Punkte**, **Linie** und **Gefüllt** in derselben Spalte untereinander,
+  Die **gefüllte Spitze** ist etwas **größer**, und die Linie endet **kurz vor ihr**: Vorher lief sie
+  bis zum Pfeilende durch, und ihr rundes Ende schaute vorne aus der Spitze heraus – stark vergrößert
+  sah der Pfeil dadurch stumpf aus statt spitz.
+  Im Kontextmenü stehen **Enden**, **Linie** und **Gefüllt** in derselben Spalte untereinander,
   ebenso die **− / +**-Knöpfe von **Schrift** und **Ecken**; der Regler für die **Transparenz** ist
   dadurch breiter geworden.
 - **Gelber Formgriff** (wie in Word): Bei **Trapez, Parallelogramm, Drachenviereck und Raute** erscheint im
