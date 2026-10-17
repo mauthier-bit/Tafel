@@ -53,23 +53,27 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   darunter **„Ecken"** mit **− / +**, womit sich jedes regelmäßige Vieleck von **3 bis 12 Ecken**
   einstellen lässt – Fünfeck, Achteck, Zehneck. Eine Seite liegt dabei immer unten, und die Figur
   bleibt regelmäßig, egal wie der Rahmen aufgezogen wurde.
-- **Schrägmaß und Lage.** Beim ausgewählten **Prisma**, bei der **Pyramide** und beim **Quader** sitzt oben
-  ein **gelber Punkt**: Waagrecht gezogen ändert er das **Schrägmaß** – also wie tief die Grundfläche
-  nach hinten versetzt gezeichnet wird (15 % bis 80 %, beim Quader bis 50 %, Anzeige
-  „Schrägmaß 38 %"). Damit lässt sich die Grundfläche flacher oder offener zeigen, je nachdem,
-  worauf es in der Stunde ankommt.
-  Der Quader startet wie bisher bei **28 %**, Prisma und Pyramide bei 38 % – alte Zeichnungen sehen
-  also unverändert aus.
-  **Die Vorderfläche bleibt dabei gleich groß:** Der Rahmen des Objekts wächst mit, wenn die Tiefe
-  zunimmt. Vorher musste der Körper in denselben Rahmen passen – ein größeres Schrägmaß ließ deshalb
-  die Vorderfläche schrumpfen, und beim liegenden Prisma wirkten die **beiden** gelben Punkte fast
-  gleich. Jetzt ändert der obere Punkt nur, **wie schräg** die Tiefe gezeichnet wird, der untere nur,
-  **wie lang** der Körper ist.
+- **Tiefe, Schrägmaß und Winkel.** Bei **Prisma**, **Pyramide** und **Quader** sind die drei Größen
+  des Schrägbilds **vollständig getrennt**:
+  - **Breite und Höhe** kommen allein aus dem **Rahmen** – die Vorderfläche ist genau so groß, wie
+    der Rahmen vorgibt.
+  - Die **Tiefe** („Länge nach hinten") stellt der **gelbe Punkt** ein. Er sitzt am **hinteren Ende
+    der Tiefenkante** (beim Quader auf der Ecke H) und wird in dieser Richtung gezogen – angezeigt
+    wird „Tiefe 1,25 × Breite", von 0,15 bis 3,5 Breiten. **Die Vorderfläche bleibt dabei gleich
+    groß:** Der Rahmen wächst mit, wenn der Körper tiefer wird.
+  - **Schrägmaß** und **Winkel** stehen im **Kontextmenü**, jeweils mit **− / +**: das Schrägmaß
+    (20 % bis 100 %, Standard **55 %**) sagt, wie stark die Tiefe beim Zeichnen **verkürzt** wird
+    (Kabinettprojektion: 50 %), der Winkel (15° bis 75°, Standard **45°**), unter welchem Winkel die
+    Tiefenkanten nach hinten laufen. Auch hier bleibt die Vorderfläche stehen und nur der Rahmen
+    wächst – so lässt sich am selben Körper vorführen, was Schrägmaß und Winkel jeweils bewirken.
+  Vorher hing alles an einem einzigen Wert: Der gelbe Punkt veränderte das Schrägmaß **und** die
+  Vorderfläche, und beim liegenden Prisma wirkten die **beiden** gelben Punkte fast gleich.
+  Die Standardtiefe ist so gewählt, dass die **Grundfläche regelmäßig** ist (beim Quader 0,75
+  Breiten, beim liegenden Prisma 2 Breiten) – zieht man den gelben Punkt weiter, wird aus dem
+  regelmäßigen Sechseck ein in die Tiefe gestrecktes; das ist gewollt und am Körper gut zu sehen.
   In derselben Zeile wie die Eckenzahl steht beim Prisma rechts ein Umschalter **„stehend / liegend"**:
   Liegend steht die Grundfläche **vorne** und der Körper reicht nach hinten – das klassische Bild
-  eines liegenden Prismas. Beim **liegenden** Prisma kommt unten ein **zweiter gelber Punkt** dazu,
-  mit dem sich die **Länge** einstellen lässt (0,6 bis 4,5 Grundflächen, Anzeige „Länge 2,2
-  Grundflächen") – vom kurzen Klotz bis zum langen Balken.
+  eines liegenden Prismas; der gelbe Punkt stellt dann seine **Länge** ein.
 - **Netz eines Körpers** (Kontextmenü, Knopf **„Netz"** rechts in der Zeile der Eckenzahl): legt das
   **aufgeklappte Netz** des ausgewählten Körpers **daneben** auf die Tafel – für **Prisma, Pyramide,
   Quader, Zylinder und Kegel**. Es entsteht als gewöhnliches Objekt: verschiebbar, skalierbar,
@@ -88,7 +92,8 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   nachmessen und stimmen mit dem Körper überein – man kann es also gedanklich (oder auf Papier)
   zusammenfalten. Ein schlanker hoher Kegel bekommt dadurch einen **schmalen Sektor**, ein flacher
   einen fast vollen Kreis. **In die Tiefe** verkürzt das Schrägbild wie üblich: Dort zeigt das Netz
-  die **wahre Länge** (Kabinettprojektion, die gezeichnete Tiefe ist halbiert). Das Netz bleibt
+  die **wahre Länge** – die gezeichnete Tiefe wird dafür durch das eingestellte **Schrägmaß**
+  geteilt. Das Netz bleibt
   **unverzerrt**; zieht man es anschließend größer, ändert sich nur die Darstellung.
   - **Flächen beschriften** (Schalter im Kontextmenü des Netzes): schreibt **Grundfläche**,
     **Deckfläche** und **Mantel** (beim Quader **Seitenflächen**) in die passenden Teilflächen,
