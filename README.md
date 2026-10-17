@@ -2159,9 +2159,10 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     markiert); wer schon genug hat, bekommt nichts mehr – dann erscheint ein Hinweis. **„alles verteilen“** macht
     es in einem Schritt, **„↺“** setzt zurück. Jeder Teller zeigt seinen Anteil (z. B. 2/3), und ist alles gerecht
     verteilt, erscheint es grün. Unten steht die Rechnung, z. B. 2 : 3 = 2/3 oder 5 : 3 = 5/3 = 1 2/3.
-  - **„Vergleichen“:** zwei Brüche mit einem **„?“** dazwischen – zunächst ohne Bild. **„👁 Bilder“** zeigt beide
-    als Zeichnung, jeder Bruch lässt sich einzeln **erweitern** (antippen oder „links“/„rechts“), bis der Vergleich
-    klappt. Je nach Lage hilft ein Hinweis weiter: gleiche Nenner (größerer Zähler gewinnt), **gleiche Zähler**
+  - **„Vergleichen“:** zwei Brüche mit einem **„?“** dazwischen – zunächst ohne Bild. Jeder Bruch lässt sich
+    einzeln **erweitern** („links“/„rechts“ mit der Zahl daneben), bis der Vergleich klappt; dabei **bleiben die
+    Bilder aus**, man sieht also nur, wie sich die Brüche ändern. **„👁 Bilder“** zeigt beide als Zeichnung –
+    dann lässt sich auch ein Bild direkt **antippen**, um diesen Bruch zu erweitern. Je nach Lage hilft ein Hinweis weiter: gleiche Nenner (größerer Zähler gewinnt), **gleiche Zähler**
     (kleinerer Nenner gewinnt) oder gemeinsamer Nenner. **„Zeichen“** setzt schließlich **<, > oder =** ein.
   - **„+ und −“:** die drei Bilder stehen **nebeneinander** (1. Bruch + 2. Bruch = Ergebnis). Solange die Nenner
     verschieden sind, bleibt das Ergebnis ein gestricheltes „?“. Die beiden Summanden lassen sich **einzeln
