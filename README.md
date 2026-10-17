@@ -74,6 +74,10 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   In derselben Zeile wie die Eckenzahl steht beim Prisma rechts ein Umschalter **„stehend / liegend"**:
   Liegend steht die Grundfläche **vorne** und der Körper reicht nach hinten – das klassische Bild
   eines liegenden Prismas; der gelbe Punkt stellt dann seine **Länge** ein.
+  Beim Umschalten bleibt es **dasselbe Prisma**, nur anders hingelegt: Grundfläche und Länge werden
+  umgerechnet, Tiefe und Rahmen passen sich an. Ein liegendes Prisma mit **wenig Tiefe** wird dadurch
+  zu einem stehenden mit **geringer Höhe**, ein langer liegender Balken zu einer hohen Säule – und das
+  **Netz bleibt gleich**. Zweimal umschalten führt genau auf die Ausgangsform zurück.
 - **Netz eines Körpers** (Kontextmenü, Knopf **„Netz"** rechts in der Zeile der Eckenzahl): legt das
   **aufgeklappte Netz** des ausgewählten Körpers **daneben** auf die Tafel – für **Prisma, Pyramide,
   Quader, Zylinder und Kegel**. Es entsteht als gewöhnliches Objekt: verschiebbar, skalierbar,

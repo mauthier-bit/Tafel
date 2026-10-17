@@ -3605,9 +3605,20 @@ $('solNetz').onclick=()=>{ const o=selection[0];
     color:o.color, width:o.width, fill:false, rot:0, groupId:null};
   pushUndo(); page().objects.push(n); selection=[n]; refreshProps(); markDirty(); scheduleAutosave();
   toast('Netz daneben gelegt – wie jede Form verschiebbar und skalierbar'); };
+/* Stehend und liegend zeigen dasselbe Prisma, nur anders hingelegt.
+   Drei wahre Maße beschreiben es (alles in Tafellängen, nichts verkürzt):
+     A = Breite der Grundfläche, B = ihre zweite Ausdehnung, C = Länge des Prismas.
+   Stehend liegt B in der Tiefe und C ist die Höhe, liegend ist es umgekehrt –
+   beim Umschalten werden Tiefe und Rahmen deshalb neu berechnet.                  */
 $('solLieg').onclick=()=>{ const o=selection[0]; if(!o||o.type!=='shape'||o.shape!=='prism')return;
-  pushUndo(); o.lieg=!o.lieg; $('solLieg').textContent=o.lieg?'liegend':'stehend';
-  $('solLieg').classList.toggle('on',!!o.lieg); markDirty(); scheduleAutosave(); };
+  pushUndo();
+  const b=geomBounds({...o,rot:0}), M=schraegMasse(o,b.w,b.h), q=schraegQ(o), tief=M.L/q;
+  const A=M.Wf, B=o.lieg?M.Hf:tief, C=o.lieg?tief:M.Hf;
+  o.lieg=!o.lieg;
+  o.tief=Math.round(Math.max(TIEF_MIN,Math.min(TIEF_MAX,(o.lieg?C:B)/(A||1)))*1e5)/1e5;   /* fein genug, damit Hin und Her genau zurückführt */
+  schraegRahmenSetzen(o, A, o.lieg?B:C);
+  $('solLieg').textContent=o.lieg?'liegend':'stehend';
+  $('solLieg').classList.toggle('on',!!o.lieg); positionProps(); markDirty(); scheduleAutosave(); };
 /* Schrägbild einstellen: Schrägmaß (Verkürzung der Tiefe) und Winkel der Tiefenkanten */
 const SCHRAEG_KOERPER=['prism','pyramid','cuboid'];
 function schraegWerteZeigen(o){ $('sqV').textContent=Math.round(schraegQ(o)*100)+' %';
