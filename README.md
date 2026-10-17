@@ -99,9 +99,12 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   einen fast vollen Kreis. **In die Tiefe** verkürzt das Schrägbild wie üblich: Dort zeigt das Netz
   die **wahre Länge** – die gezeichnete Tiefe wird dafür durch das eingestellte **Schrägmaß**
   geteilt; das gilt für die Tiefe des Quaders ebenso wie für die Länge des **liegenden Prismas**.
-  Zieht man die Tiefe eines **stehenden** Prismas oder einer Pyramide weit auf, ist seine Grundfläche
-  kein regelmäßiges Vieleck mehr; das Netz zeigt dann weiter das regelmäßige Vieleck zur gezeichneten
-  Grundkante. Das Netz bleibt
+  Zieht man die **Tiefe** eines Prismas oder einer Pyramide auf, ist die Grundfläche **kein
+  regelmäßiges Vieleck mehr** – das Netz zeigt dann genau diese gestreckte Grundfläche: Beim Prisma
+  bekommt jede Seitenfläche ihre **eigene Breite**, bei der Pyramide ist jedes Mantel-Dreieck
+  **unterschiedlich** und nicht mehr gleichschenklig (die Spitze steht ja über der Mitte, ihr Lot
+  trifft die Grundkante also nicht mehr in deren Mitte). Alle Kanten passen weiterhin **paarweise
+  zusammen**, das Netz lässt sich also wirklich zum gezeigten Körper falten. Das Netz bleibt
   **unverzerrt**; zieht man es anschließend größer, ändert sich nur die Darstellung.
   - **Flächen beschriften** (Schalter im Kontextmenü des Netzes): schreibt **Grundfläche**,
     **Deckfläche** und **Mantel** (beim Quader **Seitenflächen**) in die passenden Teilflächen,

@@ -1731,9 +1731,15 @@ function koerperMasse(o){
     return {a:M.Wf, c:M.Hf, b:tief, e:tief}; }                 /* das Netz rechnet in Einheiten der Tiefe */
   const B=basisMasse(eckenVon(o));
   const e=M.Wf/(B.xr||2);                                      /* Tafellänge eines Umkreisradius der Grundfläche */
-  if(o.shape==='prism'&&o.lieg)                                /* liegend: die Länge zeigt nach hinten */
-    return {hr:Math.max(.15,Math.min(12,M.L/schraegQ(o)/(e||1))), e};   /* gezeichnet verkürzt – wahr also geteilt durch das Schrägmaß */
-  return {hr:Math.max(.15,Math.min(12,M.Hf/(e||1))), e}; }
+  const tief=M.L/schraegQ(o);                                  /* gezeichnet verkürzt – wahr also geteilt durch das Schrägmaß */
+  /* Die wirkliche Grundfläche in Tafellängen: breit nach dem Rahmen, in die zweite
+     Richtung nach Tiefe (stehend) bzw. Höhe (liegend). Wird die Tiefe verstellt, ist
+     sie kein regelmäßiges Vieleck mehr – genau so muss sie auch im Netz stehen.     */
+  const quer=(o.shape==='prism'&&o.lieg)?M.Hf:tief;
+  const sx=M.Wf/(B.xr||2), sq=quer/(B.zr||2);
+  const G=B.X.map((x,k)=>[(x-B.x0)*sx, (B.Z[k]-B.z0)*sq]);
+  const H=(o.shape==='prism'&&o.lieg)?tief:M.Hf;               /* Länge des Körpers */
+  return {hr:Math.max(.15,Math.min(12,H/(e||1))), e:1, G, H}; }
 /* ---------- Netz eines Körpers (aufgeklappt) ----------------------------
    Aufgebaut wird im Einheitssystem (y nach oben), danach gleichmäßig in den
    Rahmen des Objekts gesetzt – ein Netz darf nicht verzerrt werden.        */
@@ -1742,6 +1748,23 @@ function nEckAnKante(ax,ay,bx,by,n){        /* regelmäßiges n-Eck links der Ri
   let w=Math.atan2(by-ay,bx-ax);
   for(let k=2;k<n;k++){ w+=2*Math.PI/n; const q=P[P.length-1]; P.push([q[0]+s*Math.cos(w), q[1]+s*Math.sin(w)]); }
   return P; }
+/* Ein Vieleck G so hinlegen, dass seine Kante k auf der Strecke A→B liegt und die
+   Fläche links (bzw. mit `rechts` rechts) davon steht. Beim Aufklappen des Mantels
+   kommt die Deckfläche nach oben und die Grundfläche spiegelbildlich nach unten.   */
+function flaecheAnKante(G,k,ax,ay,bx,by,rechts){
+  const m=G.length, a=G[k], c=G[(k+1)%m];
+  const ux=c[0]-a[0], uy=c[1]-a[1], L=Math.hypot(ux,uy)||1;
+  const Ux=bx-ax, Uy=by-ay, LL=Math.hypot(Ux,Uy)||1;
+  const e1=[ux/L,uy/L], e2=[-uy/L,ux/L];                  /* Rahmen an der Kante von G */
+  const E1=[Ux/LL,Uy/LL], E2=[-Uy/LL,Ux/LL];              /* Rahmen an der Zielkante */
+  const lok=pt=>[ (pt[0]-a[0])*e1[0]+(pt[1]-a[1])*e1[1], (pt[0]-a[0])*e2[0]+(pt[1]-a[1])*e2[1] ];
+  let sy=0; G.forEach(pt=>{ sy+=lok(pt)[1]; });
+  const sp=((sy<0)?-1:1)*(rechts?-1:1);                   /* auf die gewünschte Seite legen */
+  return G.map(pt=>{ const q=lok(pt);
+    return [ax+q[0]*E1[0]+sp*q[1]*E2[0], ay+q[0]*E1[1]+sp*q[1]*E2[1]]; }); }
+/* Lotfußpunkt von P auf die Gerade A→B */
+function lotFuss(px,py,ax,ay,bx,by){ const ux=bx-ax, uy=by-ay, q=(ux*ux+uy*uy)||1;
+  const t=((px-ax)*ux+(py-ay)*uy)/q; return [ax+t*ux, ay+t*uy]; }
 function netzTeile(kind,n,hr,ms){
   n=Math.max(3,Math.min(12,n|0)); const H=Math.max(.2,hr||1.7), T=[];
   const poly=pts=>T.push({t:'p',pts});
@@ -1766,22 +1789,31 @@ function netzTeile(kind,n,hr,ms){
     for(let i=0;i<=48;i++){ const wk=a0+(a1-a0)*i/48, yy=L*Math.sin(wk); if(yy<uy) uy=yy; }
     T.push({t:'k',cx:0,cy:uy-r-0.25*r,r});               /* Grundkreis darunter */
     return T; }
-  const s=2*Math.sin(Math.PI/n);            /* Seitenlänge des n-Ecks mit Umkreis 1 */
-  if(kind==='prism'){
-    for(let k=0;k<n;k++) poly([[k*s,0],[(k+1)*s,0],[(k+1)*s,H],[k*s,H]]);
-    const m=Math.floor(n/2);
-    poly(nEckAnKante(m*s,H,(m+1)*s,H,n));                /* Deckfläche oben */
-    poly(nEckAnKante((m+1)*s,0,m*s,0,n));                /* Grundfläche unten */
+  /* Grundfläche: die wirklich gezeichnete, sonst das regelmäßige n-Eck mit Umkreis 1 */
+  let G, Hh=H;
+  if(ms&&Array.isArray(ms.G)&&ms.G.length>2){ G=ms.G.map(p=>[p[0],p[1]]); Hh=Math.max(.01,ms.H||H); }
+  else { G=[]; const a0=-Math.PI/2-Math.PI/n;
+    for(let k=0;k<n;k++){ const a=a0+2*Math.PI*k/n; G.push([Math.cos(a),Math.sin(a)]); } }
+  const m=G.length, seite=k=>Math.hypot(G[(k+1)%m][0]-G[k][0], G[(k+1)%m][1]-G[k][1]);
+  if(kind==='prism'){                       /* Mantel: je Kante ein Rechteck, nebeneinander */
+    const xk=[]; let x=0;
+    for(let k=0;k<m;k++){ const sk=seite(k); xk.push(x); poly([[x,0],[x+sk,0],[x+sk,Hh],[x,Hh]]); x+=sk; }
+    const mi=Math.floor(m/2), x0=xk[mi], x1=xk[mi]+seite(mi);
+    poly(flaecheAnKante(G,mi,x0,Hh,x1,Hh,false));        /* Deckfläche oben */
+    poly(flaecheAnKante(G,mi,x0,0,x1,0,true));           /* Grundfläche unten – spiegelbildlich */
     return T; }
-  /* Pyramide: Grundfläche mit einem Dreieck an jeder Kante */
-  const G=[]; const a0=-Math.PI/2-Math.PI/n;
-  for(let k=0;k<n;k++){ const a=a0+2*Math.PI*k/n; G.push([Math.cos(a),Math.sin(a)]); }
-  poly(G.concat([G[0]]).slice(0,n));
-  const kante=Math.sqrt(1+H*H), hoehe=Math.sqrt(Math.max(0.04,kante*kante-(s/2)*(s/2)));
-  for(let k=0;k<n;k++){ const A=G[k], B=G[(k+1)%n];
-    const mx=(A[0]+B[0])/2, my=(A[1]+B[1])/2, L=Math.hypot(B[0]-A[0],B[1]-A[1])||1;
-    const nx=mx/Math.hypot(mx,my||1e-9), ny=my/Math.hypot(mx||1e-9,my);   /* nach außen */
-    poly([A,B,[mx+nx*hoehe,my+ny*hoehe]]); }
+  /* Pyramide: Grundfläche mit einem Dreieck an jeder Kante.
+     Die Spitze steht über der Mitte F; ihr Lotfußpunkt auf einer Kante ist derselbe
+     wie der von F – bei verzerrter Grundfläche sind die Dreiecke daher nicht gleichschenklig. */
+  poly(G.map(p=>[p[0],p[1]]));
+  let fx=0, fy=0; G.forEach(p=>{ fx+=p[0]/m; fy+=p[1]/m; });
+  for(let k=0;k<m;k++){ const A=G[k], B=G[(k+1)%m];
+    const P=lotFuss(fx,fy,A[0],A[1],B[0],B[1]);
+    const d=Math.hypot(fx-P[0],fy-P[1]), hoehe=Math.sqrt(Hh*Hh+d*d);
+    let nx=P[0]-fx, ny=P[1]-fy, nl=Math.hypot(nx,ny);    /* von der Mitte nach außen */
+    if(nl<1e-9){ const ux=B[0]-A[0], uy=B[1]-A[1], ul=Math.hypot(ux,uy)||1; nx=uy/ul; ny=-ux/ul; }
+    else { nx/=nl; ny/=nl; }
+    poly([A,B,[P[0]+nx*hoehe, P[1]+ny*hoehe]]); }
   return T; }
 /* Namen der Flächen ins Netz schreiben */
 function netzNamen(kind){
@@ -3596,7 +3628,8 @@ function solStep(dl){ const o=selection[0];
 $('solNetz').onclick=()=>{ const o=selection[0];
   if(!o||o.type!=='shape'||!['prism','pyramid','cuboid','cylinder','cone'].includes(o.shape)) return;
   const b=geomBounds({...o,rot:0});
-  const M=koerperMasse(o), hr=M.hr||1.3, ms=(o.shape==='cuboid')?M:null;
+  const M=koerperMasse(o), hr=M.hr||1.3;
+  const ms=(o.shape==='cuboid')?M:(M.G?{G:M.G.map(p=>[+p[0].toFixed(3),+p[1].toFixed(3)]), H:+M.H.toFixed(3)}:null);
   const T=netzTeile(o.shape,eckenVon(o),hr,ms), R=netzRahmen(T);
   const bw=(R.c-R.a)||1, bh=(R.d-R.b)||1;
   const k=M.e||1, w=bw*k, h=bh*k;                              /* Originalgröße: eine Netz-Einheit ist M.e groß */
