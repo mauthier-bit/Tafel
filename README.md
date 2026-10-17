@@ -611,6 +611,10 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   **−** und einem **+**, die die Zeit **minutenweise** ändern (0 bis 180), daneben ausgeschrieben
   **„Minuten"** auf gleicher Höhe wie das Feld. Beides gibt es ebenso in der Sozialform, und beide
   Fenster halten denselben Wert.
+- **Einstellungen bei der Lärmampel.** Auch das eigene Lärmampel-Fenster hat neben „Mikrofon starten"
+  ein **⚙**, hervorgehoben, solange es offen ist. Dahinter liegen die **Anzeige** (Ampel · Zeiger ·
+  Balken) und der **Warnton** samt Schwelle. Im Fenster stehen dadurch nur noch die Anzeige, der
+  Mikrofon-Knopf und die Empfindlichkeit – wie in der Sozialform-Ansicht.
 - **Einstellungen bei Stoppuhr und Timer.** Beide Fenster haben – wie die Lärmampel – einen
   Einstellungen-Knopf, hinter dem alles steckt, was nicht ständig gebraucht wird: ein **⚙** direkt
   neben „Start" und „Reset" (bei der Stoppuhr hinter „Runde"), hervorgehoben, solange er offen ist.
@@ -641,8 +645,9 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   Öffnen über das Werkzeug tun das ebenfalls. Im kleinen Fenster bleibt die **Lärmanzeige gut
   ablesbar**: Zeiger 190 × 112, Balken 190 × 80 und Lampen 44 px – also nur wenig kleiner als in
   der großen Ansicht.
-- **Lärmampel: drei Ansichten.** Über den Schaltern **Ampel · Zeiger · Balken** (im Fenster der
-  Lärmampel und ebenso in der Sozialform-Ansicht) lässt sich die Darstellung wechseln:
+- **Lärmampel: drei Ansichten.** Über die Schalter **Ampel · Zeiger · Balken** lässt sich die
+  Darstellung wechseln – in **beiden** Fenstern hinter dem **⚙** (siehe unten), und die Wahl gilt
+  für das eigene Fenster und die Sozialform gemeinsam. Voreingestellt ist der **Zeiger**.
   - **Ampel** – die bisherigen drei Leuchten rot/gelb/grün, von denen jeweils eine an ist.
   - **Zeiger** – ein **Zeigerinstrument**: ein Zeiger schlägt über eine Skala aus, die mit
     zunehmender Lautstärke von **grün über orange nach rot** läuft. Die Bewegung ist weich
@@ -1789,7 +1794,8 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   für die Gruppe, die sie zusammenfasst, und unterscheidet den Knopf auf einen Blick von der
   **Sozialform** (zwei Personen ohne Ring).
 - **Uhr** (Werkzeug): fügt eine live laufende Analoguhr als bewegliches Objekt ein. Im **Kontextmenü**
-  der Uhr lassen sich zwei Anzeigen zuschalten: **Schulstunden** markiert die **laufende Schulstunde
+  der Uhr lassen sich zwei Anzeigen zuschalten – sie stehen **nebeneinander in einer Zeile**, wie im
+  Menü der schwebenden Uhr: **Schulstunden** markiert die **laufende Schulstunde
   farbig auf dem Zifferblatt** – das Blatt wird dabei als Minutenskala gelesen, die 2. Stunde
   (8:45–9:30) färbt also den Bereich von Minute 45 bis Minute 30 ein; der bereits vergangene Teil ist
   kräftiger, darunter stehen Name, Zeitspanne und die **Restzeit** („2. Stunde · 8:45–9:30 · 20 min
