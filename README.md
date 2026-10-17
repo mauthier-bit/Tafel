@@ -55,10 +55,16 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   bleibt regelmäßig, egal wie der Rahmen aufgezogen wurde.
 - **Schrägmaß und Lage.** Beim ausgewählten **Prisma**, bei der **Pyramide** und beim **Quader** sitzt oben
   ein **gelber Punkt**: Waagrecht gezogen ändert er das **Schrägmaß** – also wie tief die Grundfläche
-  nach hinten versetzt gezeichnet wird (15 % bis 80 %, Anzeige „Schrägmaß 38 %"). Damit lässt sich
-  die Grundfläche flacher oder offener zeigen, je nachdem, worauf es in der Stunde ankommt.
+  nach hinten versetzt gezeichnet wird (15 % bis 80 %, beim Quader bis 50 %, Anzeige
+  „Schrägmaß 38 %"). Damit lässt sich die Grundfläche flacher oder offener zeigen, je nachdem,
+  worauf es in der Stunde ankommt.
   Der Quader startet wie bisher bei **28 %**, Prisma und Pyramide bei 38 % – alte Zeichnungen sehen
   also unverändert aus.
+  **Die Vorderfläche bleibt dabei gleich groß:** Der Rahmen des Objekts wächst mit, wenn die Tiefe
+  zunimmt. Vorher musste der Körper in denselben Rahmen passen – ein größeres Schrägmaß ließ deshalb
+  die Vorderfläche schrumpfen, und beim liegenden Prisma wirkten die **beiden** gelben Punkte fast
+  gleich. Jetzt ändert der obere Punkt nur, **wie schräg** die Tiefe gezeichnet wird, der untere nur,
+  **wie lang** der Körper ist.
   In derselben Zeile wie die Eckenzahl steht beim Prisma rechts ein Umschalter **„stehend / liegend"**:
   Liegend steht die Grundfläche **vorne** und der Körper reicht nach hinten – das klassische Bild
   eines liegenden Prismas. Beim **liegenden** Prisma kommt unten ein **zweiter gelber Punkt** dazu,
@@ -92,7 +98,8 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   einfache Pfeile, Doppelpfeile, Vektorpfeile mit gefüllter Spitze und Strecken mit markiertem
   Anfangs- oder Endpunkt. Die zuletzt gewählte Kombination gilt auch für **neue** Pfeile. Ältere
   Doppelpfeile werden weiter richtig gezeichnet.
-  Die **gefüllte Spitze** ist etwas **größer**, und die Linie endet **kurz vor ihr**: Vorher lief sie
+  **Beide Spitzen sind größer** geworden (offene und gefüllte). Die Linie endet außerdem
+  **kurz vor der gefüllten Spitze**: Vorher lief sie
   bis zum Pfeilende durch, und ihr rundes Ende schaute vorne aus der Spitze heraus – stark vergrößert
   sah der Pfeil dadurch stumpf aus statt spitz.
   Im Kontextmenü stehen **Enden**, **Linie** und **Gefüllt** in derselben Spalte untereinander,

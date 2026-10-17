@@ -1698,6 +1698,21 @@ const KOERPER=['cuboid','prism','pyramid','cylinder','cone'];
 /* Wirkliche Maße des gezeichneten Körpers, bezogen auf den Radius der Grundfläche.
    Die Schrägbilder werden in ihren Rahmen gestreckt – aus dem Rahmen lässt sich die
    Höhe zurückrechnen, sodass das Netz zum gezeigten Körper passt.                     */
+/* Wie viel Breite und Höhe die Zeichnung eines Körpers braucht – gemessen in Einheiten
+   der Vorderfläche. Ändert sich das Schrägmaß (oder die Länge), wächst dieser Bedarf;
+   der Rahmen des Objekts wird dann mitgezogen, damit die Vorderfläche gleich groß bleibt. */
+function koerperRahmen(o){
+  if(o.shape==='cuboid'){ const t=1-tiefeVon(o); return {wx:1/Math.max(.05,t), hy:1/Math.max(.05,t)}; }
+  if(o.shape!=='prism'&&o.shape!=='pyramid') return {wx:1,hy:1};
+  const n=eckenVon(o), d=tiefeVon(o), HH=1.7, X=[], Z=[];
+  const a0=-Math.PI/2-Math.PI/n;
+  for(let k=0;k<n;k++){ const a=a0+2*Math.PI*k/n; X.push(Math.cos(a)); Z.push(Math.sin(a)); }
+  const xr=Math.max(...X)-Math.min(...X), zr=Math.max(...Z)-Math.min(...Z), zmin=Math.min(...Z);
+  if(o.shape==='prism'&&o.lieg){ const LG=laengeVon(o);
+    return {wx:xr+d*LG, hy:zr+d*LG}; }                 /* liegend: die Länge zeigt nach hinten */
+  const px=X.map((v,k)=>v+d*Z[k]);
+  const Wm=Math.max(...px)-Math.min(...px);
+  return {wx:Wm, hy:(o.shape==='prism')?(HH+d*zr):(HH-d*zmin)}; }
 /* Wahre Maße eines gezeichneten Körpers: `hr` ist die Höhe in Einheiten des
    Grundflächen-Radius, `e` die Länge einer solchen Einheit auf der Tafel.
    Damit lässt sich das Netz in Originalgröße neben den Körper legen.       */
@@ -1831,9 +1846,12 @@ function netzMalen(c2,o,x,y,w,h){
 const eckZahl=o=>Math.max(3,Math.min(12,(o&&o.n)|0||6));
 /* Schrägmaß des Körpers: wie tief die Grundfläche nach hinten versetzt gezeichnet wird */
 const TIEFE_MIN=0.15, TIEFE_MAX=0.8, TIEFE_DEF=0.38, TIEFE_QUADER=0.28;
+/* Beim Quader zählt das Schrägmaß anteilig zum Rahmen: Bei 0,5 ist die Tiefe schon so lang wie
+   die Vorderfläche breit, darüber würde der Körper zum endlosen Balken. Darum hier früher Schluss. */
+const tiefeMax=o=>(o&&o.shape==='cuboid')?0.5:TIEFE_MAX;
 function tiefeVon(o){ const std=(o&&o.shape==='cuboid')?TIEFE_QUADER:TIEFE_DEF;   /* der Quader war immer flacher gezeichnet */
   const v=(o&&typeof o.tf==='number'&&isFinite(o.tf))?o.tf:std;
-  return Math.max(TIEFE_MIN,Math.min(TIEFE_MAX,v)); }
+  return Math.max(TIEFE_MIN,Math.min(tiefeMax(o),v)); }
 /* Länge des liegenden Prismas (Vielfaches der Grundfläche) */
 const LAENG_MIN=0.6, LAENG_MAX=4.5, LAENG_DEF=2.2;
 function laengeVon(o){ const v=(o&&typeof o.lg==='number'&&isFinite(o.lg))?o.lg:LAENG_DEF;
@@ -1848,6 +1866,7 @@ function regelEcken(o,x,y,w,h){ const n=eckZahl(o), a0=-Math.PI/2-Math.PI/n;
 /* Pfeilspitzen: 0 = keine, 1 = offen, 2 = gefüllt, 3 = Punkt. ende=1 meint das Ende.
    Ältere Pfeile kennen nur „both" – daraus ergibt sich dieselbe Darstellung wie früher. */
 const PFEIL_V=1.45;                   /* gefüllte Spitze im Verhältnis zur offenen */
+const PFEIL_L=o=>Math.max(13,(o.width||2)*4.4);   /* Länge der Spitze – etwas großzügiger als früher */
 function spitzeArt(o,ende){
   const k=ende?o.he:o.hs;
   if(k===0||k===1||k===2||k===3) return k;
@@ -1931,7 +1950,7 @@ function drawObjectRaw(o,c){
         else { c.moveTo(o.x1,o.y1); c.lineTo(o.x0-ux*BIG,o.y0-uy*BIG); } } } /* ab dem Endpunkt über den Anfang hinaus */
     else if(o.shape==='gerade'){ const dx=o.x1-o.x0,dy=o.y1-o.y0,len=Math.hypot(dx,dy)||1,ux=dx/len,uy=dy/len,BIG=100000; c.moveTo(o.x0-ux*BIG,o.y0-uy*BIG); c.lineTo(o.x1+ux*BIG,o.y1+uy*BIG); }
     else if(o.shape==='arrow'){
-      const a=Math.atan2(o.y1-o.y0,o.x1-o.x0), L=Math.max(10,o.width*3.5);
+      const a=Math.atan2(o.y1-o.y0,o.x1-o.x0), L=PFEIL_L(o);
       /* Vor einer gefüllten Spitze hört die Linie früher auf – sonst schaut ihr rundes Ende
          vorne aus der Spitze heraus und die Spitze wirkt stumpf. */
       const vor=k=>(k===2)?L*PFEIL_V*0.62:0;
@@ -1946,7 +1965,7 @@ function drawObjectRaw(o,c){
     if(o.shape==='arc'||o.shape==='circle'){ c.beginPath(); c.arc(o.x0,o.y0,Math.max(o.width*0.9,1.6),0,7); c.fillStyle=o.color; c.fill(); }
     if(o.shape==='netz'&&o.lblV) netzBeschriften(c,o);                 /* Flächennamen */
     if(o.shape==='arrow'){                                            /* gefüllte Spitze und Punkt eigens zeichnen */
-      const a=Math.atan2(o.y1-o.y0,o.x1-o.x0), L=Math.max(10,o.width*3.5), r=Math.max(o.width*1.7,2.6);
+      const a=Math.atan2(o.y1-o.y0,o.x1-o.x0), L=PFEIL_L(o), r=Math.max(o.width*1.7,2.6);
       const V=L*PFEIL_V;                                              /* gefüllt wirkt kleiner – darum größer */
       const voll=(px,py,w)=>{ c.beginPath(); c.moveTo(px,py);
         c.lineTo(px-V*Math.cos(w-.42),py-V*Math.sin(w-.42));
@@ -2353,7 +2372,7 @@ function singleSel(){ return selection.length===1 ? selection[0] : null; }
 function formGriffe(o){                                   /* alle gelben Punkte einer Figur */
   if(o&&o.type==='shape'&&(o.shape==='prism'||o.shape==='pyramid'||o.shape==='cuboid')){
     const b=geomBounds({...o,rot:0}), d=tiefeVon(o), L=[];
-    L.push({art:'tiefe', x:b.x+b.w*((d-TIEFE_MIN)/(TIEFE_MAX-TIEFE_MIN)), y:b.y});
+    L.push({art:'tiefe', x:b.x+b.w*((d-TIEFE_MIN)/(tiefeMax(o)-TIEFE_MIN)), y:b.y});
     if(o.shape==='prism'&&o.lieg){ const g=laengeVon(o);
       L.push({art:'laenge', x:b.x+b.w*((g-LAENG_MIN)/(LAENG_MAX-LAENG_MIN)), y:b.y+b.h}); }
     return L; }
@@ -2807,9 +2826,20 @@ function applyXform(w){ const o=xform.o, C=xform.C, snap=xform.snap;
     const b=geomBounds({...o,rot:0});
     let pl=w; if(o.rot) pl=worldToLocal(w.x,w.y,C.x,C.y,o.rot);
     if(o.shape==='prism'||o.shape==='pyramid'||o.shape==='cuboid'){
-      const u=Math.max(0,Math.min(1,(pl.x-b.x)/(b.w||1)));
+      /* Der Weg des Fingers wird am Rahmen vom Ziehbeginn gemessen – der Rahmen wächst ja gleich mit */
+      const bs=geomBounds({...snap,rot:0});
+      const u=Math.max(0,Math.min(1,(pl.x-bs.x)/(bs.w||1)));
+      const vor=koerperRahmen(snap);
       if(xform.art==='laenge') o.lg=Math.round((LAENG_MIN+u*(LAENG_MAX-LAENG_MIN))*1000)/1000;
-      else o.tf=Math.round((TIEFE_MIN+u*(TIEFE_MAX-TIEFE_MIN))*1000)/1000;
+      else o.tf=Math.round((TIEFE_MIN+u*(tiefeMax(o)-TIEFE_MIN))*1000)/1000;
+      const nach=koerperRahmen(o);
+      /* Vorderfläche festhalten: der Rahmen wächst im selben Verhältnis wie der Platzbedarf.
+         Links unten bleibt stehen – dort sitzt die Vorderfläche. */
+      const nw=Math.max(12,bs.w*nach.wx/(vor.wx||1)), nh=Math.max(12,bs.h*nach.hy/(vor.hy||1));
+      o.x0=bs.x; o.x1=bs.x+nw; o.y1=bs.y+bs.h; o.y0=bs.y+bs.h-nh;
+      if(o.rot){ const A0=localToWorld(bs.x,bs.y+bs.h,C.x,C.y,o.rot), nb=geomBounds({...o,rot:0});
+        const A1=localToWorld(bs.x,bs.y+bs.h,nb.x+nb.w/2,nb.y+nb.h/2,o.rot);
+        translateObj(o,A0.x-A1.x,A0.y-A1.y); }
       zeigeFormWert(o); return; }
     let f;
     if(o.shape==='kite') f=(pl.y-b.y)/(b.h||1);
