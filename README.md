@@ -86,14 +86,18 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   - **Zylinder:** der Mantel als Rechteck (Breite = Umfang) mit den beiden Kreisen.
   - **Kegel:** der Mantel als **Kreissektor** (Radius = Mantellinie) mit dem Grundkreis.
   Die Maße folgen dem **gezeichneten Körper**, und zwar **in Originalgröße**: Aus dem Schrägbild
-  werden Eckenzahl, Höhe und Grundfläche zurückgerechnet, und das Netz wird so groß daneben gelegt,
+  werden Eckenzahl, Höhe und Grundfläche zurückgerechnet (bei **Prisma und Pyramide** über die
+  **waagrechte** Grundkante, die unverkürzt gezeichnet ist), und das Netz wird so groß daneben gelegt,
   dass **jede Kante genau so lang ist wie am Körper**. Die Grundkante des Prismas, die Höhe, die
   Vorderfläche des Quaders, der Grundkreis und die Mantellinie des Kegels lassen sich am Netz
   nachmessen und stimmen mit dem Körper überein – man kann es also gedanklich (oder auf Papier)
   zusammenfalten. Ein schlanker hoher Kegel bekommt dadurch einen **schmalen Sektor**, ein flacher
   einen fast vollen Kreis. **In die Tiefe** verkürzt das Schrägbild wie üblich: Dort zeigt das Netz
   die **wahre Länge** – die gezeichnete Tiefe wird dafür durch das eingestellte **Schrägmaß**
-  geteilt. Das Netz bleibt
+  geteilt; das gilt für die Tiefe des Quaders ebenso wie für die Länge des **liegenden Prismas**.
+  Zieht man die Tiefe eines **stehenden** Prismas oder einer Pyramide weit auf, ist seine Grundfläche
+  kein regelmäßiges Vieleck mehr; das Netz zeigt dann weiter das regelmäßige Vieleck zur gezeichneten
+  Grundkante. Das Netz bleibt
   **unverzerrt**; zieht man es anschließend größer, ändert sich nur die Darstellung.
   - **Flächen beschriften** (Schalter im Kontextmenü des Netzes): schreibt **Grundfläche**,
     **Deckfläche** und **Mantel** (beim Quader **Seitenflächen**) in die passenden Teilflächen,
@@ -110,17 +114,26 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   Im Kontextmenü stehen **Enden**, **Linie** und **Gefüllt** in derselben Spalte untereinander,
   ebenso die **− / +**-Knöpfe von **Schrift** und **Ecken**; der Regler für die **Transparenz** ist
   dadurch breiter geworden.
-- **Gelber Formgriff** (wie in Word): Bei **Trapez, Parallelogramm, Drachenviereck und Raute** erscheint im
+- **Gelber Formgriff** (wie in Word): Bei **Trapez, Parallelogramm und Drachenviereck** erscheint im
   ausgewählten Zustand zusätzlich zu den weißen Eckgriffen ein **gelber Punkt**, mit dem sich ein Detail der
   Figur verstellen lässt, ohne sie zu skalieren:
   - **Trapez** – Länge der **oberen parallelen Seite** (der Punkt sitzt auf der oberen linken Ecke).
   - **Parallelogramm** – **Neigung**, also die Verschiebung der zweiten Parallelen.
   - **Drachenviereck** – Höhe der beiden **symmetrischen Querecken**.
-  - **Raute** – die **Winkel**: Der Punkt zieht die waagrechte Diagonale länger oder kürzer, aus einer
-    spitzen wird so eine breite Raute. Alle vier Seiten bleiben dabei gleich lang.
-  Beim Ziehen steht neben dem Finger der aktuelle Wert (z. B. „Neigung 41 %" oder „Winkel 62° / 118°").
-  Der Wert ist ein **Verhältnis**, bleibt beim Vergrößern und Drehen also erhalten, und wird mit dem
-  Projekt gespeichert.
+  Die **Raute** hat keinen gelben Punkt: Sie füllt ihren Rahmen immer ganz aus, ihre Diagonalen sind also
+  genau Breite und Höhe des Rahmens – das lässt sich mit den Eckgriffen genauso einfach einstellen.
+- **Roter Punkt bei Parallelogramm und Trapez:** Neben dem gelben Punkt sitzt oben in der **Mitte der
+  oberen Seite** ein **roter Punkt**. Er **verschiebt die obere Seite waagrecht**, ohne ihre **Länge** und
+  ohne die **Höhe** der Figur zu ändern – die untere Seite bleibt, wo sie ist, und der **Rahmen wächst
+  mit**, wenn die obere Seite seitlich übersteht.
+  - Beim **Trapez** entsteht so ein **schiefes Trapez** (bis zu 2,5 Grundseiten nach links oder rechts);
+    der gelbe Punkt regelt weiterhin, **wie lang** die obere Seite ist.
+  - Beim **Parallelogramm** neigt sich die Figur stärker oder schwächer, **ohne schmaler zu werden**;
+    über die Senkrechte hinaus neigt sie sich auch **nach links**. Der gelbe Punkt neigt dagegen
+    innerhalb des bestehenden Rahmens, die Seiten werden dabei also kürzer.
+  Beim Ziehen steht neben dem Finger der aktuelle Wert (z. B. „Neigung 41 %" oder „Versatz 35 % der
+  Grundseite"). Alle Werte sind **Verhältnisse**, bleiben beim Vergrößern und Drehen also erhalten, und
+  werden mit dem Projekt gespeichert.
 - Dazu kommen **Schrägbilder** von **Quader, Prisma, Pyramide, Zylinder und Kegel** (mit
   gestrichelten verdeckten Kanten). Bei **Prisma** (Standard: Dreiecksprisma) und **Pyramide** (Standard: vierseitig)
   legt man im **Kontextmenü** unter „Ecken der Grundfläche“ die Eckenzahl fest (3–12); die verdeckten Kanten werden

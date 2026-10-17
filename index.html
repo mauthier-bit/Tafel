@@ -1705,10 +1705,7 @@ const KOERPER=['cuboid','prism','pyramid','cylinder','cone'];
    der Rahmen des Objekts wird dann mitgezogen, damit die Vorderfläche gleich groß bleibt. */
 function schraegRahmenSetzen(o,Wf,Hf){
   const b=geomBounds({...o,rot:0}), C={x:b.x+b.w/2, y:b.y+b.h/2};
-  const q=schraegQ(o), al=schraegW(o)*Math.PI/180, T=tiefeVon(o);
-  const fy=(o.shape==='pyramid')?0.5:1;
-  const nw=Math.max(12,Wf*(1+T*q*Math.cos(al)));
-  const nh=Math.max(12,Hf+T*Wf*q*Math.sin(al)*fy);
+  const R=schraegRahmen(o,Wf,Hf), nw=R.w, nh=R.h;
   const ax=b.x, ay=b.y+b.h;                                  /* links unten bleibt stehen */
   const A0=o.rot?localToWorld(ax,ay,C.x,C.y,o.rot):{x:ax,y:ay};
   o.x0=ax; o.x1=ax+nw; o.y1=ay; o.y0=ay-nh;
@@ -1735,7 +1732,7 @@ function koerperMasse(o){
   const B=basisMasse(eckenVon(o));
   const e=M.Wf/(B.xr||2);                                      /* Tafellänge eines Umkreisradius der Grundfläche */
   if(o.shape==='prism'&&o.lieg)                                /* liegend: die Länge zeigt nach hinten */
-    return {hr:Math.max(.15,Math.min(12,M.L/(e||1))), e};
+    return {hr:Math.max(.15,Math.min(12,M.L/schraegQ(o)/(e||1))), e};   /* gezeichnet verkürzt – wahr also geteilt durch das Schrägmaß */
   return {hr:Math.max(.15,Math.min(12,M.Hf/(e||1))), e}; }
 /* ---------- Netz eines Körpers (aufgeklappt) ----------------------------
    Aufgebaut wird im Einheitssystem (y nach oben), danach gleichmäßig in den
@@ -1871,11 +1868,27 @@ function basisMasse(n){ n=Math.max(3,Math.min(12,n|0)); const a0=-Math.PI/2-Math
   const xr=Math.max(...X)-Math.min(...X), zr=Math.max(...Z)-Math.min(...Z);
   return {X,Z,xr,zr,x0:Math.min(...X),z0:Math.min(...Z)}; }
 /* Vorderfläche und gezeichnete Tiefe aus dem Rahmen: W = Vorderfläche + Tiefe·cos α */
-function schraegMasse(o,w,h){ const q=schraegQ(o), al=schraegW(o)*Math.PI/180, T=tiefeVon(o);
-  const cx=Math.cos(al), cy=Math.sin(al);
-  const fy=(o&&o.shape==='pyramid')?0.5:1;          /* die Spitze sitzt nur halb so weit hinten */
-  const Wf=Math.max(2,w/(1+T*q*cx)), L=T*Wf*q, Hf=Math.max(2,h-L*cy*fy);
-  return {Wf,Hf,L,cx,cy,fy,q,al,T}; }
+/* Wie breit die Zeichnung im Verhältnis zur Grundfläche wird und wie weit die Spitze
+   nach hinten sitzt. Bei ungerader Eckenzahl steht die Grundfläche nicht symmetrisch
+   zur Tiefe – dann ist der Platzbedarf kleiner als Breite + Tiefenversatz.          */
+function schraegPlatz(o){ const q=schraegQ(o), al=schraegW(o)*Math.PI/180, T=tiefeVon(o);
+  const cx=Math.cos(al), cy=Math.sin(al), lam=cx*T*q;
+  const kind=o&&o.shape, lieg=!!(o&&o.lieg&&kind==='prism');
+  let EX=1+lam, fy=1, uc=0.5, vc=0.5;
+  if((kind==='prism'||kind==='pyramid')&&!lieg){
+    const B=basisMasse(eckenVon(o));
+    const U=B.X.map(v=>(v-B.x0)/B.xr), V=B.Z.map(v=>(v-B.z0)/B.zr);
+    const Px=U.map((u,k)=>u+lam*V[k]);
+    uc=(0-B.x0)/B.xr; vc=(0-B.z0)/B.zr;                /* Mitte der Grundfläche */
+    if(kind==='pyramid'){ Px.push(uc+lam*vc); fy=vc; }
+    EX=Math.max(...Px)-Math.min(...Px); }
+  return {q,al,T,cx,cy,lam,EX:Math.max(.2,EX),fy,uc,vc}; }
+function schraegMasse(o,w,h){ const E=schraegPlatz(o);
+  const Wf=Math.max(2,w/E.EX), L=E.T*E.q*Wf, Hf=Math.max(2,h-L*E.cy*E.fy);
+  return {Wf,Hf,L,cx:E.cx,cy:E.cy,fy:E.fy,uc:E.uc,vc:E.vc,q:E.q,al:E.al,T:E.T,EX:E.EX}; }
+/* Umgekehrt: welcher Rahmen gehört zu einer festgehaltenen Vorderfläche? */
+function schraegRahmen(o,Wf,Hf){ const E=schraegPlatz(o), L=E.T*E.q*Wf;
+  return {w:Math.max(12,Wf*E.EX), h:Math.max(12,Math.max(Hf+L*E.cy*E.fy, L*E.cy))}; }
 function regelEcken(o,x,y,w,h){ const n=eckZahl(o), a0=-Math.PI/2-Math.PI/n;
   const ux=[],uy=[];
   for(let k=0;k<n;k++){ const a=a0+2*Math.PI*k/n; ux.push(Math.cos(a)); uy.push(Math.sin(a)); }
@@ -1897,10 +1910,35 @@ const darfStrich=o=>!!o&&(o.type==='stroke'||(o.type==='shape'&&!KOERPER.include
 /* Formen mit Innenfläche – nur sie werden gefüllt gezeichnet. */
 /* ---- Formgriff: ein gelber Punkt verstellt ein Detail der Figur (wie in Word) ----
    f ist immer ein Verhältnis zur Breite bzw. Höhe, überlebt also Skalieren.   */
-const FORM_DEF={trapez:0.22, parallelogram:0.25, kite:0.38, rhombus:1};
-const FORM_MIN={trapez:0.02, parallelogram:0,   kite:0.08, rhombus:0.15};
-const FORM_MAX={trapez:0.48, parallelogram:0.75,kite:0.92, rhombus:1};
-const FORM_HILFE={trapez:'obere Seite', parallelogram:'Neigung', kite:'Querecken', rhombus:'Winkel'};
+const FORM_DEF={trapez:0.22, parallelogram:0.25, kite:0.38};
+const FORM_MIN={trapez:0.02, parallelogram:-0.75,kite:0.08};
+const FORM_MAX={trapez:0.48, parallelogram:0.75, kite:0.92};
+const FORM_HILFE={trapez:'obere Seite', parallelogram:'Neigung', kite:'Querecken'};
+/* Die Raute füllt ihren Rahmen immer ganz aus – Breite und Höhe regelt der Rahmen
+   genauso einfach, ein eigener Punkt dafür ist überflüssig.                        */
+/* ---- Parallelogramm und Trapez ------------------------------------------------
+   Die Rohform wird in Einheiten der unteren Seite beschrieben: unten immer 0…1,
+   oben je nach Neigung (Parallelogramm) bzw. Einzug und Versatz (Trapez).
+   Anschließend wird sie gleichmäßig in den Rahmen gesetzt – so steht die Figur
+   auch dann bündig im Rahmen, wenn die obere Seite seitlich übersteht.             */
+const VERS_MAX=2.5;
+function versatzVon(o){ const v=(o&&typeof o.vs==='number'&&isFinite(o.vs))?o.vs:0;
+  return Math.max(-VERS_MAX,Math.min(VERS_MAX,v)); }
+function viereckRoh(o){ const f=formF(o)||0;
+  if(o.shape==='parallelogram'){ const d=f/(1-Math.abs(f)); return {u0:0,u1:1,o0:d,o1:1+d}; }
+  const v=versatzVon(o); return {u0:0,u1:1,o0:f+v,o1:1-f+v}; }
+function viereckPts(o,x,y,w,h){ const R=viereckRoh(o);
+  const mn=Math.min(R.u0,R.o0), mx=Math.max(R.u1,R.o1), sp=(mx-mn)||1, k=w/sp, X=u=>x+(u-mn)*k;
+  return {ul:X(R.u0), ur:X(R.u1), ol:X(R.o0), or:X(R.o1), k, mn, sp}; }
+/* Rahmen neu setzen: die untere Seite bleibt, wo sie ist, die Höhe bleibt gleich. */
+function viereckRahmenSetzen(o,ulx,uy,k,h){
+  const b=geomBounds({...o,rot:0}), C={x:b.x+b.w/2, y:b.y+b.h/2};
+  const A0=localToWorld(ulx,uy,C.x,C.y,o.rot||0);
+  const R=viereckRoh(o), mn=Math.min(R.u0,R.o0), mx=Math.max(R.u1,R.o1);
+  o.x0=ulx+mn*k; o.x1=ulx+mx*k; o.y1=uy; o.y0=uy-h;
+  if(o.rot){ const nb=geomBounds({...o,rot:0});
+    const A1=localToWorld(ulx,uy,nb.x+nb.w/2,nb.y+nb.h/2,o.rot);
+    translateObj(o,A0.x-A1.x,A0.y-A1.y); } }
 function formF(o){ if(!o||o.type!=='shape') return null; const d=FORM_DEF[o.shape]; if(d===undefined) return null;
   const v=(typeof o.f==='number'&&isFinite(o.f))?o.f:d;
   return Math.max(FORM_MIN[o.shape],Math.min(FORM_MAX[o.shape],v)); }
@@ -1936,8 +1974,8 @@ function drawObjectRaw(o,c){
     else if(o.shape==='triangle'){ c.moveTo(x+w/2,y); c.lineTo(x+w,y+h); c.lineTo(x,y+h); c.closePath(); }
     else if(o.shape==='square'){ const s=Math.min(w,h); c.rect(x,y,s,s); }
     else if(o.shape==='kreis'){ const s=Math.min(w,h); c.arc(x+s/2,y+s/2,s/2,0,7); }
-    else if(o.shape==='rhombus'){ const dw=w*formF(o), lx=x+(w-dw)/2, rx=x+(w+dw)/2;
-      c.moveTo(x+w/2,y); c.lineTo(rx,y+h/2); c.lineTo(x+w/2,y+h); c.lineTo(lx,y+h/2); c.closePath(); }
+    else if(o.shape==='rhombus'){
+      c.moveTo(x+w/2,y); c.lineTo(x+w,y+h/2); c.lineTo(x+w/2,y+h); c.lineTo(x,y+h/2); c.closePath(); }
     else if(o.shape==='hexagon'){ const E=eckZahl(o), P=regelEcken(o,x,y,w,h);
       P.forEach(([px,py],k)=>k?c.lineTo(px,py):c.moveTo(px,py)); c.closePath(); }
     else if(o.shape==='polygon'&&Array.isArray(o.pn)){ o.pn.forEach(([u,v],k)=>{ const px=o.x0+u*(o.x1-o.x0), py=o.y0+v*(o.y1-o.y0); k?c.lineTo(px,py):c.moveTo(px,py); }); c.closePath(); }
@@ -1945,8 +1983,8 @@ function drawObjectRaw(o,c){
     else if(o.shape==='gtriangle'){ c.moveTo(x+w*0.15,y); c.lineTo(x+w,y+h*0.35); c.lineTo(x+w*0.55,y+h); c.closePath(); }
     else if(o.shape==='etriangle'){ const s=Math.min(w,h*2/Math.sqrt(3)), cx=x+w/2, hh=s*Math.sqrt(3)/2;
       c.moveTo(cx,y+h-hh); c.lineTo(cx+s/2,y+h); c.lineTo(cx-s/2,y+h); c.closePath(); }
-    else if(o.shape==='parallelogram'){ const sh=w*formF(o); c.moveTo(x+sh,y); c.lineTo(x+w,y); c.lineTo(x+w-sh,y+h); c.lineTo(x,y+h); c.closePath(); }
-    else if(o.shape==='trapez'){ const ins=w*formF(o); c.moveTo(x+ins,y); c.lineTo(x+w-ins,y); c.lineTo(x+w,y+h); c.lineTo(x,y+h); c.closePath(); }
+    else if(o.shape==='parallelogram'||o.shape==='trapez'){ const P=viereckPts(o,x,y,w,h);
+      c.moveTo(P.ol,y); c.lineTo(P.or,y); c.lineTo(P.ur,y+h); c.lineTo(P.ul,y+h); c.closePath(); }
     else if(o.shape==='kite'){ const cx=x+w/2, q=h*formF(o); c.moveTo(cx,y); c.lineTo(x+w,y+q); c.lineTo(cx,y+h); c.lineTo(x,y+q); c.closePath(); }
     else if(o.shape==='pyramid'||o.shape==='prism'||o.shape==='cuboid'){ drawSolid(c,o.shape,eckenVon(o),x,y,w,h,o); }
     else if(o.shape==='netz'){ netzMalen(c,o,x,y,w,h); }
@@ -2106,15 +2144,15 @@ function koerperBau(kind,n,o,x,y,w,h){
       F.push([...Array(n).keys()]); F.push([...Array(n).keys()].map(k=>n+k).reverse());
       for(let k=0;k<n;k++){ const k1=(k+1)%n; F.push([k,k1,n+k1,n+k]); }
     } else {
-      P.push([M.Wf/2,M.Hf,M.L/2]);
+      P.push([M.uc*M.Wf,M.Hf,M.vc*M.L]);        /* Spitze über der Mitte der Grundfläche */
       F.push([...Array(n).keys()]);
       for(let k=0;k<n;k++) F.push([k,(k+1)%n,n]);
     }
   }
   /* auf die Fläche projizieren und in den Rahmen setzen */
   const X=P.map(q=>q[0]+M.cx*q[2]), Y=P.map(q=>q[1]+M.cy*q[2]);
-  const hoch=Math.max(M.Hf+M.L*M.cy*M.fy, M.L*M.cy);
-  const pts=P.map((q,k)=>[x+X[k], y+hoch-Y[k]]);
+  const links=Math.min(...X), hoch=Math.max(...Y);           /* bündig im Rahmen */
+  const pts=P.map((q,k)=>[x+X[k]-links, y+hoch-Y[k]]);
   return {P,F,pts,V:[M.cx,M.cy,-1],M}; }
 function drawSolid(c,kind,n,x,y,w,h,o){
   const G=koerperBau(kind,n,o,x,y,w,h), P=G.P, F=G.F, V=G.V;
@@ -2150,9 +2188,9 @@ function planeVerts(o,x,y,w,h){ switch(o.shape){
   case 'gtriangle': return [[x+w*0.55,y+h],[x+w,y+h*0.35],[x+w*0.15,y]];
   case 'etriangle': { const s=Math.min(w,h*2/Math.sqrt(3)), cx=x+w/2, hh=s*Math.sqrt(3)/2;
     return [[cx-s/2,y+h],[cx+s/2,y+h],[cx,y+h-hh]]; }
-  case 'parallelogram': { const sh=w*formF(o); return [[x,y+h],[x+w-sh,y+h],[x+w,y],[x+sh,y]]; }
-  case 'trapez': { const ins=w*formF(o); return [[x,y+h],[x+w,y+h],[x+w-ins,y],[x+ins,y]]; }
-  case 'rhombus': { const dw=w*formF(o); return [[x+(w-dw)/2,y+h/2],[x+w/2,y+h],[x+(w+dw)/2,y+h/2],[x+w/2,y]]; }
+  case 'parallelogram': case 'trapez': { const P=viereckPts(o,x,y,w,h);
+    return [[P.ul,y+h],[P.ur,y+h],[P.or,y],[P.ol,y]]; }
+  case 'rhombus': return [[x,y+h/2],[x+w/2,y+h],[x+w,y+h/2],[x+w/2,y]];
   case 'kite': { const q=h*formF(o); return [[x+w/2,y+h],[x+w,y+q],[x+w/2,y],[x,y+q]]; }
   case 'hexagon': { const P=regelEcken(o,x,y,w,h); return P.slice().reverse(); }
   case 'polygon': return (o.pn||[]).map(([u,v])=>[o.x0+u*(o.x1-o.x0),o.y0+v*(o.y1-o.y0)]); }
@@ -2408,15 +2446,17 @@ function singleSel(){ return selection.length===1 ? selection[0] : null; }
 function formGriffe(o){                                   /* alle gelben Punkte einer Figur */
   if(o&&o.type==='shape'&&(o.shape==='prism'||o.shape==='pyramid'||o.shape==='cuboid')){
     const b=geomBounds({...o,rot:0}), M=schraegMasse(o,b.w,b.h);
-    const ax=b.x, ay=b.y+b.h-M.Hf;                       /* vordere obere linke Ecke */
+    const ax=b.x, ay=b.y+b.h;                            /* vordere untere linke Ecke */
     return [{art:'tiefe', x:ax+M.L*M.cx, y:ay-M.L*M.cy}]; }
+  if(o&&o.type==='shape'&&(o.shape==='parallelogram'||o.shape==='trapez')){
+    const b=geomBounds({...o,rot:0}), P=viereckPts(o,b.x,b.y,b.w,b.h);
+    return [{art:'form', x:P.ol, y:b.y},                      /* gelb: Neigung bzw. obere Seite */
+            {art:'versatz', x:(P.ol+P.or)/2, y:b.y}]; }       /* rot: obere Seite verschieben */
   const p=formGriffLokal(o); return p?[{art:'form',x:p.x,y:p.y}]:[]; }
 function formGriffLokal(o){
   const f=formF(o); if(f===null) return null;
   const b=geomBounds({...o,rot:0}), x=b.x, y=b.y, w=b.w, h=b.h;
-  if(o.shape==='trapez'||o.shape==='parallelogram') return {x:x+w*f, y:y};
   if(o.shape==='kite') return {x:x, y:y+h*f};
-  if(o.shape==='rhombus') return {x:x+(w+w*f)/2, y:y+h/2};
   return null; }
 function handleList(){ // Bildschirm-Positionen der Griffe (nur bei Einzelauswahl)
   const o=singleSel(); if(!o) return [];
@@ -2441,7 +2481,7 @@ function drawSelection(){ if(!selection.length)return;
   // Griffe (nur Einzelauswahl)
   for(const h of handleList()){ ctx.beginPath();
     if(h.role==='rot'){ ctx.arc(h.x,h.y,7,0,7); ctx.fillStyle='#3b82f6'; ctx.fill(); ctx.strokeStyle='#fff'; ctx.stroke(); ctx.strokeStyle='#3b82f6'; }
-    else if(h.role==='form'){ ctx.arc(h.x,h.y,7,0,7); ctx.fillStyle='#f5b301'; ctx.fill();   /* gelber Formgriff */
+    else if(h.role==='form'){ ctx.arc(h.x,h.y,7,0,7); ctx.fillStyle=(h.art==='versatz')?'#e02424':'#f5b301'; ctx.fill();   /* gelber Formgriff, rot für den Versatz */
       ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.stroke(); ctx.lineWidth=1.5; ctx.strokeStyle='#3b82f6'; }
     else { ctx.rect(h.x-5,h.y-5,10,10); ctx.fillStyle='#fff'; ctx.fill(); ctx.stroke(); } }
   // Blättern im Dokument
@@ -2784,7 +2824,8 @@ function eraseAt(x,y){ const r=eraserWidth/scale; eraserPos={x,y};
 
 /* --- Auswahl-Interaktion (Move/Scale/Rotate/Doppeltipp) --- */
 function screenHandleAt(sx,sy){ const L=handleList();
-  for(const h of L) if(h.role==='form'&&Math.hypot(h.x-sx,h.y-sy)<16) return h;   /* der gelbe Punkt zuerst */
+  for(const h of L) if(h.role==='form'&&h.art==='versatz'&&Math.hypot(h.x-sx,h.y-sy)<16) return h;  /* der rote Punkt zuerst */
+  for(const h of L) if(h.role==='form'&&Math.hypot(h.x-sx,h.y-sy)<16) return h;   /* dann der gelbe */
   for(const h of L){ if(Math.hypot(h.x-sx,h.y-sy)<15) return h; } return null; }
 function startSelect(e,w){
   const now=performance.now(); const hit=hitObject(w.x,w.y);
@@ -2848,10 +2889,12 @@ function zeigeFormWert(o){
     showMeasure(e, 'Tiefe '+tiefeVon(o).toFixed(2).replace('.',',')+' × Breite'); return; }
   const f=formF(o); if(f===null) return;
   let txt;
-  if(o.shape==='trapez'){ const b=geomBounds({...o,rot:0}); txt='obere Seite '+Math.round(b.w*(1-2*f))+' von '+Math.round(b.w); }
-  else if(o.shape==='parallelogram') txt='Neigung '+Math.round(f*100)+' %';
-  else if(o.shape==='kite') txt='Querecken bei '+Math.round(f*100)+' %';
-  else { const b=geomBounds({...o,rot:0}); const a=2*Math.atan2(b.w*f/2,b.h/2)*180/Math.PI; txt='Winkel '+Math.round(a)+'° / '+Math.round(180-a)+'°'; }
+  if(o.shape==='parallelogram'||o.shape==='trapez'){
+    const b=geomBounds({...o,rot:0}), P=viereckPts(o,b.x,b.y,b.w,b.h), R=viereckRoh(o);
+    if(xform&&xform.art==='versatz') txt='Versatz '+Math.round(((R.o0+R.o1)/2-0.5)*100)+' % der Grundseite';
+    else if(o.shape==='trapez') txt='obere Seite '+Math.round(P.or-P.ol)+' von '+Math.round(P.ur-P.ul);
+    else txt='Neigung '+Math.round(f*100)+' %'; }
+  else txt='Querecken bei '+Math.round(f*100)+' %';
   showMeasure(e,txt); }
 function applyXform(w){ const o=xform.o, C=xform.C, snap=xform.snap;
   if(xform.role==='rot'){ o.rot=Math.atan2(w.y-C.y,w.x-C.x)-xform.startAngle; refreshRotLabel(); return; }
@@ -2861,16 +2904,30 @@ function applyXform(w){ const o=xform.o, C=xform.C, snap=xform.snap;
     if(o.shape==='prism'||o.shape==='pyramid'||o.shape==='cuboid'){
       /* Die Vorderfläche vom Ziehbeginn bleibt stehen; gemessen wird entlang der Tiefenkante. */
       const bs=geomBounds({...snap,rot:0}), M0=schraegMasse(snap,bs.w,bs.h);
-      const ax=bs.x, ay=bs.y+bs.h-M0.Hf;                 /* vordere obere linke Ecke */
+      const ax=bs.x, ay=bs.y+bs.h;                       /* vordere untere linke Ecke */
       const Ln=Math.max(0,(pl.x-ax)*M0.cx+(ay-pl.y)*M0.cy);
       const T=Ln/Math.max(1e-6,schraegQ(o)*M0.Wf);
       o.tief=Math.round(Math.max(TIEF_MIN,Math.min(TIEF_MAX,T))*1000)/1000;
       schraegRahmenSetzen(o,M0.Wf,M0.Hf);
       zeigeFormWert(o); return; }
-    let f;
-    if(o.shape==='kite') f=(pl.y-b.y)/(b.h||1);
-    else if(o.shape==='rhombus') f=2*(pl.x-(b.x+b.w/2))/(b.w||1);
-    else f=(pl.x-b.x)/(b.w||1);
+    if(o.shape==='parallelogram'||o.shape==='trapez'){
+      const bs=geomBounds({...snap,rot:0}), S=viereckPts(snap,bs.x,bs.y,bs.w,bs.h);
+      if(xform.art==='versatz'){
+        /* Rot: die untere Seite bleibt stehen, die obere wird nur verschoben –
+           ihre Länge und die Höhe bleiben gleich, der Rahmen wächst mit.        */
+        const m=(pl.x-S.ul)/(S.k||1)-0.5;                   /* Mitte der oberen Seite */
+        if(o.shape==='parallelogram'){ const d=Math.max(-3,Math.min(3,m));
+          o.f=Math.round(d/(1+Math.abs(d))*1000)/1000; }
+        else o.vs=Math.round(Math.max(-VERS_MAX,Math.min(VERS_MAX,m))*1000)/1000;
+        viereckRahmenSetzen(o,S.ul,bs.y+bs.h,S.k,bs.h);
+        zeigeFormWert(o); return; }
+      /* Gelb: im festen Rahmen neigen bzw. die obere Seite kürzen */
+      let f=(pl.x-b.x)/(b.w||1);
+      if(o.shape==='trapez'){ const P=viereckPts(o,b.x,b.y,b.w,b.h); f=P.mn+f*P.sp-versatzVon(o); }
+      else f=Math.max(0,f);
+      o.f=Math.round(Math.max(FORM_MIN[o.shape],Math.min(FORM_MAX[o.shape],f))*1000)/1000;
+      zeigeFormWert(o); return; }
+    const f=(pl.y-b.y)/(b.h||1);                            /* Drachenviereck */
     o.f=Math.round(Math.max(FORM_MIN[o.shape],Math.min(FORM_MAX[o.shape],f))*1000)/1000;
     zeigeFormWert(o); return; }
   const b=geomBounds({...snap,rot:0}), bw=b.w||1, bh=b.h||1;
