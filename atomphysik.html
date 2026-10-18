@@ -13,7 +13,9 @@
   #tabs button{border:1px solid #cfd6e0;background:#fff;border-radius:8px;padding:5px 11px;font:700 13px -apple-system,sans-serif;cursor:pointer;color:#1f2430;white-space:nowrap;}
   #tabs button.on{background:#2563eb;border-color:#2563eb;color:#fff;}
   #tabs #shotBtns{margin-left:auto;display:inline-flex;gap:5px;}
-  #tabs #shotBtns button{font-weight:600;}
+  #tabs #teilenBtn{display:inline-flex;gap:5px;}
+  #tabs #shotBtns:empty+#teilenBtn,#tabs #shotBtns[hidden]+#teilenBtn{margin-left:auto;}
+  #tabs #shotBtns button,#tabs #teilenBtn button{font-weight:600;}
   #views{flex:1;position:relative;min-height:0;}
   .view{position:absolute;inset:0;display:none;flex-direction:column;}
   .view.on{display:flex;}
@@ -218,7 +220,7 @@
     <button type="button" data-t="nuklid">Nuklidkarte</button>
     <button type="button" data-t="huelle">Hülle</button>
     <button type="button" data-t="topf">Kernpotentialtopf</button>
-    <span id="shotBtns"></span>
+    <span id="shotBtns"></span><span id="teilenBtn"></span>
   </div>
   <div id="views">
     <div class="view on" data-v="pse"><iframe id="fPse" title="Periodensystem"></iframe></div>
@@ -238,6 +240,7 @@
         <button type="button" id="eAll" title="alle Elektronen auf einmal einsetzen">alle</button>
         <button type="button" id="eNull" title="von vorn beginnen">↺</button>
         <span class="trenn"></span>
+        <button type="button" id="hAuf" class="on" title="Die Hauptschalen in ihre Unterschalen (s, p, d, f) aufspalten">Aufspaltung</button>
         <button type="button" id="hSchale" class="on" title="Schalenbild rechts zeigen">Schalenbild</button>
       </div>
       <div class="flaeche"><canvas id="cvH"></canvas></div>
@@ -259,6 +262,8 @@
   </div>
 </div>
 <script src="shot.js"></script>
+<script src="vendor/qrcode.min.js"></script>
+<script src="teilen.js"></script>
 <script src="pse-data.js"></script>
 <script src="nuklid-data.js"></script>
 <script>
@@ -279,6 +284,11 @@ let D={ v:1, tab:'pse', fontSize:13, fontBold:false, fontItalic:false,
 const fontStr=(px,bold)=>(D.fontItalic?'italic ':'')+((bold||D.fontBold)?'800 ':'600 ')+px+'px -apple-system,BlinkMacSystemFont,sans-serif';
 const HOCH={'0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹'};
 const hoch=n=>String(n).split('').map(c=>HOCH[c]||c).join('');
+/* Zeile schreiben und notfalls so weit verkleinern, dass sie in die Breite passt */
+function zeile(ctx,t,x,y,px,bold,farbe,maxW){
+  let p=px; ctx.font=fontStr(p,bold);
+  while(p>px*0.68 && ctx.measureText(t).width>maxW){ p-=0.5; ctx.font=fontStr(p,bold); }
+  ctx.fillStyle=farbe; ctx.fillText(t,x,y); }
 const JA=3.15576e7;
 function hlText(s){
   if(s===0) return 'stabil';
@@ -314,6 +324,10 @@ document.querySelectorAll('#tabs button[data-t]').forEach(b=>b.onclick=()=>setTa
 const ORB=[['1s',0],['2s',0],['2p',1],['3s',0],['3p',1],['4s',0],['3d',2],['4p',1],['5s',0],['4d',2],['5p',1],
            ['6s',0],['4f',3],['5d',2],['6p',1],['7s',0],['5f',3],['6d',2],['7p',1]];
 const SCHALENNAME=['K','L','M','N','O','P','Q'];
+/* Jede Hauptschale bekommt ihre eigene Farbe – so sieht man auch in der
+   Aufbaureihenfolge sofort, dass 4s vor 3d besetzt wird.                */
+const SCHALFARBE=['#2563eb','#16a34a','#ea8c00','#7c3aed','#dc2626','#0891b2','#92400e'];
+const schalFarbe=n=>SCHALFARBE[(n-1)%SCHALFARBE.length];
 function besetzung(e){ const L=[]; let rest=e;
   for(const o of ORB){ const cap=2*(2*o[1]+1), k=Math.max(0,Math.min(cap,rest)); rest-=k;
     L.push({nm:o[0], n:+o[0][0], l:o[1], cap, k}); }
@@ -341,43 +355,61 @@ function zeichneHuelle(){
   const cv=$('cvH'), ctx=cv.getContext('2d'), w=cv.clientWidth, h=cv.clientHeight;
   ctx.clearRect(0,0,w,h); ctx.fillStyle='#fff'; ctx.fillRect(0,0,w,h);
   const fs=Math.max(10,D.fontSize||13), el=elOf(D.hz), e=hElektronen(), L=besetzung(e), S=schalen(L);
+  const auf=D.auf!==false;
   const textH=fs*6.2, unten=h-textH, diaW=D.hs?Math.max(w*0.52,w-Math.min(w*0.46,unten*0.95)):w;
 
-  /* ---- Energiestufen mit Kästchen ---- */
-  const voll=L.filter(o=>o.k>0).length, zeigen=Math.min(ORB.length, Math.max(4, voll+2));
-  const padL=fs*2.6, padR=10, padT=10, padB=8;
-  const rowH=Math.max(fs*1.5,(unten-padT-padB)/zeigen), box=Math.min(rowH*0.55,fs*1.8);
+  /* ---- Zeilen aufbauen: aufgespalten die Unterschalen, sonst nur die Hauptschalen ---- */
+  let rows=[];
+  if(auf){ const voll=L.filter(o=>o.k>0).length, zeigen=Math.min(ORB.length,Math.max(4,voll+2));
+    for(let i=0;i<zeigen;i++){ const o=L[i];
+      rows.push({nm:o.nm, n:o.n, boxen:2*o.l+1, cap:o.cap, k:o.k, neu:(e<el.z&&o.k>0&&i===voll-1)}); } }
+  else { let nmax=1; L.forEach(o=>{ if(o.k) nmax=Math.max(nmax,o.n); });
+    nmax=Math.min(7,nmax+1);
+    for(let n=1;n<=nmax;n++) rows.push({nm:SCHALENNAME[n-1]+' (n='+n+')', n, boxen:0, cap:2*n*n, k:S[n-1]||0}); }
+
+  /* ---- Energiestufen ---- */
+  const padL=fs*(auf?3.0:4.6), padR=10, padT=10, padB=8;
+  const rowH=Math.max(fs*1.5,(unten-padT-padB)/rows.length), box=Math.min(rowH*0.55,fs*1.8);
+  /* Ohne Aufspaltung: alle Plätze gleich breit – die Linie zeigt, wie viele Plätze die Schale hat */
+  const capMax=Math.max(2,...rows.map(r=>r.cap));
+  const brMax=Math.min(diaW-padL-padR-fs*4.2, fs*17);
+  const schritt=(brMax-8)/capMax, punkt=Math.min(schritt*0.42,rowH*0.16,fs*0.55);
+  const alsBalken=punkt<3.2;                       /* zu eng für einzelne Punkte: besetzter Teil als Balken */
   ctx.textBaseline='middle';
-  for(let i=0;i<zeigen;i++){ const o=L[i], y=unten-padB-rowH*(i+0.5);
-    ctx.font=fontStr(fs*0.92,true); ctx.textAlign='right'; ctx.fillStyle='#475569';
-    ctx.fillText(o.nm, padL-6, y);
-    const anz=2*o.l+1, bw=Math.min(box, (diaW-padL-padR)/Math.max(anz,1)-3);
-    let x=padL;
-    for(let k=0;k<anz;k++){
-      ctx.strokeStyle='#94a3b8'; ctx.lineWidth=1.2;
-      ctx.strokeRect(x, y-bw/2, bw, bw);
-      x+=bw+3; }
-    /* Elektronen nach der Hundschen Regel: erst einzeln, dann paaren */
-    const einzeln=Math.min(o.k,anz), paare=Math.max(0,o.k-anz);
-    ctx.strokeStyle='#1d4ed8'; ctx.lineWidth=Math.max(1.4,bw*0.1); ctx.lineCap='round';
-    for(let k=0;k<anz;k++){ const bx=padL+k*(bw+3), m=bx+bw/2;
-      const pfeil=(oben,hoch2)=>{ const yy=y+(oben?-1:1)*bw*0.06, l=bw*0.56, sp=bw*0.17, dx=(oben?-sp:sp);
-        ctx.beginPath(); ctx.moveTo(m+dx, yy+l/2*(oben?1:-1)); ctx.lineTo(m+dx, yy-l/2*(oben?1:-1));
-        ctx.lineTo(m+dx-bw*0.12, yy-l/2*(oben?1:-1)+(oben?bw*0.16:-bw*0.16)); ctx.moveTo(m+dx, yy-l/2*(oben?1:-1));
-        ctx.lineTo(m+dx+bw*0.12, yy-l/2*(oben?1:-1)+(oben?bw*0.16:-bw*0.16)); ctx.stroke(); };
-      if(k<einzeln) pfeil(true);
-      if(k<paare) pfeil(false); }
-    /* zuletzt gesetztes Elektron hervorheben */
-    if(e<el.z && o.k>0 && (i===voll-1)){ const bx=padL+Math.max(0,Math.min(anz-1,(o.k<=anz?o.k-1:o.k-anz-1)))*(bw+3);
-      ctx.strokeStyle='#f59e0b'; ctx.lineWidth=2.4; ctx.strokeRect(bx-1.5,y-bw/2-1.5,bw+3,bw+3); }
-    /* Schalenname links an der ersten Stufe jeder Schale */
-    if(i===0||L[i-1].n!==o.n){ ctx.font=fontStr(fs*0.8,false); ctx.textAlign='left'; ctx.fillStyle='#94a3b8';
-      ctx.fillText(SCHALENNAME[o.n-1]||'', 3, y); }
-  }
   ctx.strokeStyle='#e2e8f0'; ctx.lineWidth=1.4; ctx.beginPath();
-  ctx.moveTo(padL-3,unten-padB); ctx.lineTo(padL-3,padT+fs*0.4); ctx.stroke();
-  ctx.font=fontStr(fs*0.82,false); ctx.textAlign='left'; ctx.textBaseline='middle'; ctx.fillStyle='#94a3b8';
+  ctx.moveTo(padL-6,unten-padB); ctx.lineTo(padL-6,padT+fs*0.4); ctx.stroke();
+  ctx.font=fontStr(fs*0.82,false); ctx.textAlign='left'; ctx.fillStyle='#94a3b8';
   ctx.fillText('Energie ↑', 3, padT+fs*0.5);
+  rows.forEach((r,i)=>{
+    const y=unten-padB-rowH*(i+0.5), col=schalFarbe(r.n);
+    ctx.font=fontStr(fs*0.92,true); ctx.textAlign='right'; ctx.fillStyle=col;
+    ctx.fillText(r.nm, padL-10, y);
+    if(r.boxen>0){                                   /* Kästchen mit Elektronenpfeilen */
+      const bw=Math.min(box,(diaW-padL-padR)/Math.max(r.boxen,1)-3);
+      for(let k=0;k<r.boxen;k++){ ctx.strokeStyle=col; ctx.globalAlpha=.55; ctx.lineWidth=1.3;
+        ctx.strokeRect(padL+k*(bw+3), y-bw/2, bw, bw); ctx.globalAlpha=1; }
+      const einzeln=Math.min(r.k,r.boxen), paare=Math.max(0,r.k-r.boxen);
+      ctx.strokeStyle=col; ctx.lineWidth=Math.max(1.4,bw*0.1); ctx.lineCap='round';
+      for(let k=0;k<r.boxen;k++){ const m=padL+k*(bw+3)+bw/2;
+        const pfeil=oben=>{ const yy=y+(oben?-1:1)*bw*0.06, l=bw*0.56, sp=bw*0.17, dx=(oben?-sp:sp);
+          ctx.beginPath(); ctx.moveTo(m+dx, yy+l/2*(oben?1:-1)); ctx.lineTo(m+dx, yy-l/2*(oben?1:-1));
+          ctx.lineTo(m+dx-bw*0.12, yy-l/2*(oben?1:-1)+(oben?bw*0.16:-bw*0.16)); ctx.moveTo(m+dx, yy-l/2*(oben?1:-1));
+          ctx.lineTo(m+dx+bw*0.12, yy-l/2*(oben?1:-1)+(oben?bw*0.16:-bw*0.16)); ctx.stroke(); };
+        if(k<einzeln) pfeil(true);
+        if(k<paare) pfeil(false); }
+      if(r.neu){ const k=Math.max(0,Math.min(r.boxen-1,(r.k<=r.boxen?r.k-1:r.k-r.boxen-1)));
+        ctx.strokeStyle='#f59e0b'; ctx.lineWidth=2.4; ctx.strokeRect(padL+k*(bw+3)-1.5,y-bw/2-1.5,bw+3,bw+3); }
+    } else {                                         /* nur die Hauptschale: eine Stufe mit ihren Elektronen */
+      const br=8+r.cap*schritt;
+      ctx.strokeStyle=col; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(padL+br,y); ctx.stroke();
+      ctx.fillStyle=col;
+      if(alsBalken){ const bh=Math.max(4,Math.min(rowH*0.26,fs*0.9));
+        if(r.k) ctx.fillRect(padL+4, y-bh-2, r.k*schritt, bh); }
+      else for(let k=0;k<r.k;k++){
+        ctx.beginPath(); ctx.arc(padL+4+(k+0.5)*schritt, y-punkt-2, punkt, 0, 7); ctx.fill(); }
+      ctx.font=fontStr(fs*0.78,false); ctx.textAlign='left'; ctx.fillStyle='#94a3b8';
+      ctx.fillText(r.k+' von '+r.cap, padL+br+6, y); }
+  });
 
   /* ---- Schalenbild (Bohr) ---- */
   if(D.hs && (w-diaW)>60 && (unten-padT)>60){
@@ -385,12 +417,12 @@ function zeichneHuelle(){
     const nmax=Math.max(1,S.reduce((m,v,i)=>v>0?i+1:m,1));
     const R=Math.max(14,Math.min((w-diaW)/2-8,(unten-padT)/2-8));
     ctx.save(); ctx.lineWidth=1.2;
-    for(let n=1;n<=nmax;n++){ const r=R*n/nmax;
+    for(let n=1;n<=nmax;n++){ const r=R*n/nmax, col=schalFarbe(n);
       ctx.strokeStyle='#cbd5e1'; ctx.beginPath(); ctx.arc(cx,cy,r,0,7); ctx.stroke();
       const anz=S[n-1]; if(!anz) continue;
       for(let k=0;k<anz;k++){ const a=-Math.PI/2+2*Math.PI*k/anz;
-        ctx.fillStyle='#1d4ed8'; ctx.beginPath(); ctx.arc(cx+r*Math.cos(a), cy+r*Math.sin(a), Math.max(2.2,R*0.035), 0, 7); ctx.fill(); }
-      ctx.font=fontStr(fs*0.78,true); ctx.fillStyle='#64748b'; ctx.textAlign='center'; ctx.textBaseline='bottom';
+        ctx.fillStyle=col; ctx.beginPath(); ctx.arc(cx+r*Math.cos(a), cy+r*Math.sin(a), Math.max(2.2,R*0.035), 0, 7); ctx.fill(); }
+      ctx.font=fontStr(fs*0.78,true); ctx.fillStyle=col; ctx.textAlign='center'; ctx.textBaseline='bottom';
       ctx.fillText((SCHALENNAME[n-1]||'')+' '+anz, cx, cy-r-2); }
     ctx.fillStyle='#ef4444'; ctx.beginPath(); ctx.arc(cx,cy,Math.max(9,R*0.14),0,7); ctx.fill();
     ctx.font=fontStr(Math.max(9,R*0.13),true); ctx.fillStyle='#fff'; ctx.textAlign='center'; ctx.textBaseline='middle';
@@ -404,7 +436,7 @@ function zeichneHuelle(){
   const zeilen=[
     el.name+' '+el.sym+' · Z = '+el.z+' · '+e+' von '+el.z+' Elektronen',
     konfText(L)||'noch kein Elektron',
-    'Schalen: '+S.map((v,i)=>v?((SCHALENNAME[i]||'')+' '+v):null).filter(Boolean).join(' · ')||'–',
+    'Schalen: '+(S.map((v,i)=>v?((SCHALENNAME[i]||'')+' '+v):null).filter(Boolean).join(' · ')||'–'),
     'Periode '+per+' · '+gruppe+(e<el.z?(' · noch '+(el.z-e)+' Elektron'+(el.z-e===1?'':'en')+' fehlen')
         :((sp<=2||sp>=13)?(' · '+aussen+' Außenelektron'+(aussen===1?'':'en')):''))
   ];
@@ -413,9 +445,8 @@ function zeichneHuelle(){
     if(echt && !konfGleich(echt,gebaut)) zeilen.push('Tatsächlich: '+mapText(echt)+'  –  eine Ausnahme von der Reihenfolge'); }
   ctx.textAlign='left'; ctx.textBaseline='top';
   let y=unten+4;
-  zeilen.forEach((t,i)=>{ ctx.font=fontStr(i===0?fs*1.08:fs*0.92,i===0);
-    ctx.fillStyle=i===0?'#1f2430':(i===4?'#b45309':'#475569');
-    ctx.fillText(t,8,y); y+=fs*1.22; });
+  zeilen.forEach((t,i)=>{ zeile(ctx,t,8,y,i===0?fs*1.08:fs*0.92,i===0,
+    i===0?'#1f2430':(i===4?'#b45309':'#475569'), w-16); y+=fs*1.22; });
 }
 
 /* ============ Kernpotentialtopf ============ */
@@ -425,79 +456,96 @@ function zeichneTopf(){
   const cv=$('cvK'), ctx=cv.getContext('2d'), w=cv.clientWidth, h=cv.clientHeight;
   ctx.clearRect(0,0,w,h); ctx.fillStyle='#fff'; ctx.fillRect(0,0,w,h);
   const fs=Math.max(10,D.fontSize||13), z=D.kz, n=D.kn, el=elOf(z), e=nukOf(z,n);
-  const textH=fs*5.6, unten=h-textH, padT=fs*3.2;        /* Platz für den Coulombwall über dem Rand */
-  const tw=Math.max(80,Math.min((w-70)/2, 210)), gap=Math.min(40,Math.max(16,(w-2*tw)/3));
-  const x0=(w-2*tw-gap)/2;
+  const textH=fs*5.6, unten=h-textH;
 
-  const topf=(x,anz,art)=>{
-    const col=art==='p'?'#ef4444':'#2563eb', hell=art==='p'?'#fee2e2':'#dbeafe';
-    /* wie viele Schalen zeigen? alle besetzten und eine freie */
-    let rest=anz, voll=0; const fuell=[];
-    for(let i=0;i<KAP.length;i++){ const k=Math.max(0,Math.min(KAP[i],rest)); rest-=k; fuell.push(k); if(k>0) voll=i; }
-    const zeigen=Math.min(KAP.length, voll+2);
-    const randOben=padT, grund=unten-fs*1.6, hoeheT=grund-randOben;
-    /* Der Protonentopf ist flacher: Die gleichnamigen Ladungen stoßen sich ab, der Boden
-       liegt höher. Dadurch sitzen die Protonenstufen über den Neutronenstufen.          */
-    const boden=grund-(art==='p'?hoeheT*0.16:0);
-    /* Topfwände */
-    ctx.save();
-    ctx.fillStyle=hell; ctx.globalAlpha=.5; ctx.fillRect(x,randOben,tw,boden-randOben); ctx.globalAlpha=1;
-    ctx.strokeStyle='#64748b'; ctx.lineWidth=2; ctx.beginPath();
-    ctx.moveTo(x-14,randOben); ctx.lineTo(x,randOben); ctx.lineTo(x,boden); ctx.lineTo(x+tw,boden);
-    ctx.lineTo(x+tw,randOben); ctx.lineTo(x+tw+14,randOben); ctx.stroke();
-    if(art==='p'){                                          /* Coulombwall außen am Rand */
-      ctx.strokeStyle='#f59e0b'; ctx.lineWidth=2; ctx.beginPath();
-      ctx.moveTo(x-14,randOben); ctx.quadraticCurveTo(x-6,randOben-fs*1.5,x,randOben-fs*1.5);
-      ctx.moveTo(x+tw,randOben-fs*1.5); ctx.quadraticCurveTo(x+tw+6,randOben-fs*1.5,x+tw+14,randOben);
-      ctx.stroke();
-      ctx.font=fontStr(fs*0.72,false); ctx.fillStyle='#b45309'; ctx.textAlign='center'; ctx.textBaseline='bottom';
-      ctx.fillText('Coulombwall', x+tw/2, randOben-fs*1.7); }
-    /* Stufen */
-    const innen=boden-randOben, dy=innen/(zeigen+0.6);
-    for(let i=0;i<zeigen;i++){ const y=boden-dy*(i+0.9), k=fuell[i]||0, cap=KAP[i];
-      ctx.strokeStyle=(D.kmag&&k===cap)?'#16a34a':'#94a3b8'; ctx.lineWidth=(D.kmag&&k===cap)?2.4:1.3;
-      ctx.beginPath(); ctx.moveTo(x+6,y); ctx.lineTo(x+tw-6,y); ctx.stroke();
-      const r=Math.max(2.4,Math.min(dy*0.28,(tw-20)/cap/2.3,fs*0.95));
-      for(let s=0;s<k;s++){ const px=x+10+ (s+0.5)*((tw-20)/cap);
+  /* Ein Topf mit zwei Hälften: links die Protonen, rechts die Neutronen.
+     Der Protonenboden liegt höher und außen steht der Coulombwall – beides wächst
+     mit der Kernladung, denn die Protonen stoßen sich gegenseitig ab.            */
+  const aussen=Math.min(78,Math.max(34,w*0.15));
+  const xA=aussen, xB=w-aussen, xM=(xA+xB)/2, halb=(xB-xA)/2;
+  const grund=unten-fs*1.7;                                  /* Boden des Neutronentopfs */
+  const wall=(grund-fs*3)*0.26*Math.min(1,Math.max(0,z)/92); /* Höhe des Coulombwalls, qualitativ ~ Z */
+  const yNull=fs*1.9+wall;                                   /* Rand des Topfes (Energie 0) */
+  const tiefe=grund-yNull;
+  const coul=tiefe*0.30*Math.min(1,z/92);                    /* so viel höher liegt der Protonenboden */
+  const bodenP=grund-coul, bodenN=grund;
+
+  /* ---- Umriss ---- */
+  ctx.save(); ctx.strokeStyle='#64748b'; ctx.lineWidth=2;
+  ctx.beginPath();
+  if(wall>1){                                                /* Coulombwall: Spitze am Kernrand, nach außen wie 1/r */
+    const N=26;
+    for(let i=0;i<=N;i++){ const x=xA-aussen*0.92+(aussen*0.92)*i/N, r=(xM-x)/halb;
+      const y=yNull-wall/Math.max(1,r); i?ctx.lineTo(x,y):ctx.moveTo(x,y); }
+  } else { ctx.moveTo(xA-aussen*0.92,yNull); ctx.lineTo(xA,yNull); }
+  ctx.lineTo(xA,bodenP); ctx.lineTo(xM,bodenP); ctx.lineTo(xM,bodenN); ctx.lineTo(xB,bodenN);
+  ctx.lineTo(xB,yNull); ctx.lineTo(xB+aussen*0.92,yNull);
+  ctx.stroke();
+  /* Trennlinie in der Mitte und zarte Füllung der beiden Hälften */
+  ctx.globalAlpha=.4; ctx.fillStyle='#fee2e2'; ctx.fillRect(xA+1,bodenP-tiefe-coul+coul,0,0);
+  ctx.fillStyle='#fee2e2'; ctx.fillRect(xA+1,yNull,halb-1,bodenP-yNull);
+  ctx.fillStyle='#dbeafe'; ctx.fillRect(xM+1,yNull,halb-1,bodenN-yNull);
+  ctx.globalAlpha=1;
+  ctx.strokeStyle='#cbd5e1'; ctx.lineWidth=1.4; ctx.setLineDash([5,4]);
+  ctx.beginPath(); ctx.moveTo(xM,yNull); ctx.lineTo(xM,bodenN); ctx.stroke(); ctx.setLineDash([]);
+  /* Nulllinie: nur außen, damit sie nicht durch den Topf läuft */
+  ctx.strokeStyle='#e2e8f0'; ctx.lineWidth=1; ctx.setLineDash([4,4]); ctx.beginPath();
+  ctx.moveTo(xB,yNull); ctx.lineTo(w-2,yNull); ctx.stroke(); ctx.setLineDash([]);
+  ctx.font=fontStr(fs*0.7,false); ctx.fillStyle='#94a3b8'; ctx.textAlign='right'; ctx.textBaseline='bottom';
+  ctx.fillText('Energie 0', w-3, yNull-3);
+  if(wall>3){ ctx.font=fontStr(fs*0.72,false); ctx.fillStyle='#b45309'; ctx.textAlign='left'; ctx.textBaseline='bottom';
+    ctx.fillText('Coulombwall', 2, yNull-wall-3); }
+  ctx.restore();
+
+  /* ---- Stufen und Nukleonen ---- */
+  const fuellung=anz=>{ let rest=anz, voll=-1; const f=[];
+    for(let i=0;i<KAP.length;i++){ const k=Math.max(0,Math.min(KAP[i],rest)); rest-=k; f.push(k); if(k>0) voll=i; }
+    return {f,voll}; };
+  const P=fuellung(z), N=fuellung(n);
+  const zeigen=Math.min(KAP.length, Math.max(P.voll,N.voll)+2);
+  const dy=(grund-yNull)/(zeigen+0.8);
+  const stufen=(x0,fuell,boden,col)=>{
+    for(let i=0;i<zeigen;i++){ const y=boden-dy*(i+0.9), k=fuell.f[i]||0, cap=KAP[i];
+      if(y<yNull+2) break;
+      ctx.strokeStyle=(D.kmag&&k===cap)?'#16a34a':'#94a3b8'; ctx.lineWidth=(D.kmag&&k===cap)?2.4:1.2;
+      ctx.beginPath(); ctx.moveTo(x0+6,y); ctx.lineTo(x0+halb-6,y); ctx.stroke();
+      const r=Math.max(2.2,Math.min(dy*0.3,(halb-20)/cap/2.3,fs*0.8));
+      for(let s2=0;s2<k;s2++){ const px=x0+10+(s2+0.5)*((halb-20)/cap);
         ctx.fillStyle=col; ctx.beginPath(); ctx.arc(px,y-r-1.5,r,0,7); ctx.fill(); }
-      if(D.kmag){ const summe=MAGIC[i];
-        ctx.font=fontStr(fs*0.7,k===cap); ctx.textAlign='right'; ctx.textBaseline='middle';
-        ctx.fillStyle=(k===cap)?'#16a34a':'#cbd5e1'; ctx.fillText(String(summe), x+tw-5, y-dy*0.42); } }
-    ctx.font=fontStr(fs*0.95,true); ctx.textAlign='center'; ctx.textBaseline='top'; ctx.fillStyle=col;
-    ctx.fillText((art==='p'?'Protonen ':'Neutronen ')+anz, x+tw/2, grund+4);
-    ctx.restore(); };
-
-  topf(x0,z,'p'); topf(x0+tw+gap,n,'n');
+      if(D.kmag){ ctx.font=fontStr(fs*0.68,k===cap); ctx.textAlign='right'; ctx.textBaseline='middle';
+        ctx.fillStyle=(k===cap)?'#16a34a':'#cbd5e1'; ctx.fillText(String(MAGIC[i]), x0+halb-5, y-dy*0.45); } } };
+  stufen(xA,P,bodenP,'#ef4444'); stufen(xM,N,bodenN,'#2563eb');
+  ctx.font=fontStr(fs*0.95,true); ctx.textAlign='center'; ctx.textBaseline='top';
+  ctx.fillStyle='#ef4444'; ctx.fillText('Protonen '+z, xA+halb/2, grund+5);
+  ctx.fillStyle='#2563eb'; ctx.fillText('Neutronen '+n, xM+halb/2, grund+5);
 
   /* ---- Text unten ---- */
   const A=z+n, sym=el.sym||'?';
-  const kopf=hoch(A)+sym+'  '+(el.name||'')+' · Z = '+z+' · N = '+n+' · A = '+A;
-  const zeilen=[kopf];
+  const zeilen=[hoch(A)+sym+'  '+(el.name||'')+' · Z = '+z+' · N = '+n+' · A = '+A];
   if(!e) zeilen.push(z>94?'Zu diesem Kern liegen hier keine Daten (Tabelle bis Z = 94).':'Dieses Nuklid gibt es in der Tabelle nicht – ein solcher Kern hält nicht zusammen.');
   else if(e[2]===0){ zeilen.push('stabil'+(e[7]?(' · natürliche Häufigkeit '+String(e[7]).replace('.',',')+' %'):''));
-    zeilen.push('Beide Töpfe sind etwa gleich hoch gefüllt – das ist der Grund für die Stabilität.'); }
+    zeilen.push('Beide Hälften sind etwa gleich hoch gefüllt – das ist der Grund für die Stabilität.'); }
   else { const art=e[3]||'';
     zeilen.push('Halbwertszeit '+hlText(e[2])+' · '+(ART[art]||art||'Umwandlung'));
-    const erkl={'B-':'Ein Neutron wird zum Proton: der Neutronentopf ist zu voll.',
-                'B+':'Ein Proton wird zum Neutron: der Protonentopf ist zu voll.',
-                'A':'Zwei Protonen und zwei Neutronen verlassen den Kern als α-Teilchen.',
+    const erkl={'B-':'Ein Neutron wird zum Proton: die Neutronenhälfte ist zu hoch gefüllt.',
+                'B+':'Ein Proton wird zum Neutron: die Protonenhälfte ist zu hoch gefüllt.',
+                'A':'Zwei Protonen und zwei Neutronen verlassen den Kern als α-Teilchen – durch den Coulombwall hindurch.',
                 'N':'Ein Neutron verlässt den Kern.','P':'Ein Proton verlässt den Kern.',
                 'SF':'Der Kern zerfällt in zwei große Bruchstücke.'}[art];
     if(erkl) zeilen.push(erkl);
-    const p=produkt(z,n,art);
-    if(p) zeilen.push('Danach: '+hoch(p[0]+p[1])+(elOf(p[0]).sym||'?')+'  (Z = '+p[0]+', N = '+p[1]+')'); }
+    const pr=produkt(z,n,art);
+    if(pr) zeilen.push('Danach: '+hoch(pr[0]+pr[1])+(elOf(pr[0]).sym||'?')+'  (Z = '+pr[0]+', N = '+pr[1]+')'); }
   const mz=MAGIC.includes(z), mn=MAGIC.includes(n);
   if(mz||mn) zeilen.push((mz&&mn?'Z und N sind magische Zahlen':mz?'Z ist eine magische Zahl':'N ist eine magische Zahl')+' – abgeschlossene Schale, besonders fest gebunden.');
   ctx.textAlign='left'; ctx.textBaseline='top';
   let y=unten+2;
-  zeilen.forEach((t,i)=>{ ctx.font=fontStr(i===0?fs*1.08:fs*0.9,i===0);
-    ctx.fillStyle=i===0?'#1f2430':(/magische/.test(t)?'#16a34a':'#475569');
-    ctx.fillText(t,8,y); y+=fs*1.2; });
+  zeilen.forEach((t,i)=>{ zeile(ctx,t,8,y,i===0?fs*1.08:fs*0.9,i===0,
+    i===0?'#1f2430':(/magische/.test(t)?'#16a34a':'#475569'), w-16); y+=fs*1.2; });
 }
 
 /* ============ Bedienung ============ */
 function setzeHuelle(){ $('hSel').value=String(D.hz); $('eV').textContent=hElektronen();
-  $('hSchale').classList.toggle('on',D.hs!==false); }
+  $('hSchale').classList.toggle('on',D.hs!==false); $('hAuf').classList.toggle('on',D.auf!==false); }
 function setzeTopf(){ $('zV').textContent=D.kz; $('nV').textContent=D.kn;
   $('kMag').classList.toggle('on',D.kmag!==false);
   const e=nukOf(D.kz,D.kn), art=e&&e[2]!==0?(e[3]||''):'';
@@ -516,6 +564,7 @@ $('eP').onclick=()=>{ D.he=Math.min(D.hz,hElektronen()+1); neu(); };
 $('eAll').onclick=()=>{ D.he=null; neu(); };
 $('eNull').onclick=()=>{ D.he=0; neu(); };
 $('hSchale').onclick=()=>{ D.hs=!D.hs; neu(); };
+$('hAuf').onclick=()=>{ D.auf=(D.auf===false); neu(); };
 
 $('zM').onclick=()=>{ D.kz=Math.max(0,D.kz-1); neu(); };
 $('zP').onclick=()=>{ D.kz=Math.min(118,D.kz+1); neu(); };
@@ -537,6 +586,10 @@ addEventListener('resize',resize);
 
 if(window.TafelShot) TafelShot.buttons($('shotBtns'),()=>{
   const v=document.querySelector('.view.on'); return TafelShot.rasterize(v,{exclude:'.bar',pad:6}); });
+/* Teilen: Der QR-Code gibt den ganzen Stand weiter – Reiter, Element, Elektronen,
+   Protonen und Neutronen und auch die Einstellungen der beiden Karten. */
+if(window.TafelTeilen){ TafelTeilen.knopf($('teilenBtn'),'atomphysik.html',()=>D);
+  if(TafelTeilen.istGeteilt()) TafelTeilen.empfangen().then(p=>{ try{ if(p) uebernehmen(p); }catch(e){} }); }
 
 /* ============ Tafel-Anbindung ============ */
 function sync(){ if(window.parent===window) return;

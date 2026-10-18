@@ -222,6 +222,11 @@
         <option value="cat">Kategorien</option>
         <option value="state">Zustand bei 20 °C</option>
         <option value="metal">Metall / Nichtmetall</option>
+        <option value="en">Elektronegativität</option>
+        <option value="ion">Ionisierungsenergie</option>
+        <option value="melt">Schmelzpunkt</option>
+        <option value="boil">Siedepunkt</option>
+        <option value="dens">Dichte</option>
         <option value="none">ohne Farbe</option>
       </select>
       <label><input type="checkbox" id="cMass" checked> Atommasse</label>
@@ -244,10 +249,31 @@ const NONMETAL=new Set(['nichtmetall','edelgas']);
 let D={ v:1, neben:true, lan:true, color:'cat', mass:true, name:true, sel:0, fontSize:13, fontBold:false, fontItalic:false };
 let cells=[], hitBoxes=[];
 
+/* Farbskalen: je Größe ein eigener Farbton, von hell (klein) nach kräftig (groß).
+   Die Schrift bleibt dunkel, deshalb geht die Helligkeit nur bis 60 %.          */
+const SKALA={
+  en:  {n:'Elektronegativität', e:'', d:v=>v.toFixed(2).replace('.',','), h:220, f:e=>(window.PSE_EN||[])[e.z-1]},
+  ion: {n:'Ionisierungsenergie', e:' eV', d:v=>v.toFixed(2).replace('.',','), h:275, f:e=>(window.PSE_ION||[])[e.z-1]},
+  melt:{n:'Schmelzpunkt', e:' °C', d:v=>String(Math.round(v)), h:25, f:e=>e.melt},
+  boil:{n:'Siedepunkt', e:' °C', d:v=>String(Math.round(v)), h:0, f:e=>e.boil},
+  dens:{n:'Dichte', e:' g/cm³', d:v=>(v<1?v.toFixed(3):v.toFixed(2)).replace('.',','), h:150, f:e=>e.dens, wurzel:true}
+};
+const istSkala=()=>!!SKALA[D.color];
+let skalaBereich=null;                       /* kleinster und größter Wert der gewählten Größe */
+function bereich(){ const S=SKALA[D.color]; if(!S) return null;
+  let lo=Infinity, hi=-Infinity;
+  EL.forEach(e=>{ const v=S.f(e); if(v===null||v===undefined||!isFinite(v)) return;
+    const x=S.wurzel?Math.sqrt(v):v; if(x<lo) lo=x; if(x>hi) hi=x; });
+  return (lo<hi)?{lo,hi}:null; }
 const state=e=>{ if(e.melt===null||e.melt===undefined) return '?';
   if(e.melt>20) return 'fest'; if(e.boil!==null&&e.boil<20) return 'gasförmig'; return 'flüssig'; };
 function colorOf(e){
   if(D.color==='none') return '#f8fafc';
+  if(istSkala()){ const S=SKALA[D.color], v=S.f(e);
+    if(v===null||v===undefined||!isFinite(v)) return '#f1f5f9';          /* kein Wert bekannt */
+    const B=skalaBereich||bereich(); if(!B) return '#f1f5f9';
+    const x=S.wurzel?Math.sqrt(v):v, t=Math.max(0,Math.min(1,(x-B.lo)/(B.hi-B.lo)));
+    return 'hsl('+S.h+',72%,'+(94-32*t).toFixed(1)+'%)'; }
   if(D.color==='cat') return (CATS[e.cat]||CATS.unbekannt)[1];
   if(D.color==='metal') return NONMETAL.has(e.cat)?'#bfdbfe':(e.cat==='halbmetall'?'#a7f3d0':'#fde68a');
   const s=state(e); return s==='fest'?'#e2e8f0':(s==='flüssig'?'#bae6fd':(s==='gasförmig'?'#fecdd3':'#f1f5f9'));
@@ -277,6 +303,7 @@ function resize(){ const dpr=window.devicePixelRatio||1, w=cv.clientWidth||320, 
   cv.width=Math.round(w*dpr); cv.height=Math.round(h*dpr); ctx.setTransform(dpr,0,0,dpr,0,0); draw(); }
 function draw(){
   build();
+  skalaBereich=istSkala()?bereich():null;
   const w=cv.clientWidth, h=cv.clientHeight;
   ctx.clearRect(0,0,w,h); ctx.fillStyle='#fff'; ctx.fillRect(0,0,w,h);
   const colsMax=D.neben?18:8, rowsMax=(D.lan&&D.neben)?10.4:7.2;
@@ -307,7 +334,26 @@ function draw(){
     hitBoxes.push({x:x+1,y:y+1,w:s,h:s,z:e.z});
   });
   /* Legende */
-  if(legend){ const fs=Math.max(8,Math.min(D.fontSize,legend*0.62)); ctx.font=fontStr(fs); ctx.textBaseline='middle'; ctx.textAlign='left';
+  if(legend&&istSkala()){                      /* Farbverlauf mit kleinstem und größtem Wert */
+    const S=SKALA[D.color], B=skalaBereich, fs=Math.max(8,Math.min(D.fontSize,legend*0.62));
+    ctx.font=fontStr(fs); ctx.textBaseline='middle'; ctx.textAlign='left';
+    const ly=h-legend/2, bh=fs*1.1;
+    if(B){ const txtL=S.d(S.wurzel?B.lo*B.lo:B.lo)+S.e, txtR=S.d(S.wurzel?B.hi*B.hi:B.hi)+S.e;
+      const lw=Math.min(w*0.42, Math.max(90, w*0.3));
+      let lx=x0+2;
+      ctx.fillStyle='#475569'; ctx.fillText(S.n+':', lx, ly); lx+=ctx.measureText(S.n+':').width+fs*0.6;
+      ctx.fillText(txtL, lx, ly); lx+=ctx.measureText(txtL).width+fs*0.4;
+      const g=ctx.createLinearGradient(lx,0,lx+lw,0);
+      for(let i=0;i<=10;i++) g.addColorStop(i/10,'hsl('+S.h+',72%,'+(94-32*i/10).toFixed(1)+'%)');
+      ctx.fillStyle=g; ctx.fillRect(lx,ly-bh/2,lw,bh);
+      ctx.strokeStyle='#94a3b8'; ctx.lineWidth=0.8; ctx.strokeRect(lx,ly-bh/2,lw,bh);
+      lx+=lw+fs*0.4; ctx.fillStyle='#475569'; ctx.fillText(txtR, lx, ly);
+      lx+=ctx.measureText(txtR).width+fs*1.1;
+      if(lx<w-fs*5){ ctx.fillStyle='#f1f5f9'; ctx.fillRect(lx,ly-bh/2,bh,bh);
+        ctx.strokeStyle='#94a3b8'; ctx.strokeRect(lx,ly-bh/2,bh,bh);
+        ctx.fillStyle='#94a3b8'; ctx.fillText('kein Wert', lx+bh*1.3, ly); } }
+  }
+  else if(legend){ const fs=Math.max(8,Math.min(D.fontSize,legend*0.62)); ctx.font=fontStr(fs); ctx.textBaseline='middle'; ctx.textAlign='left';
     let lx=x0+2, ly=h-legend/2;
     const keys=D.color==='cat'?Object.keys(CATS).filter(k=>k!=='unbekannt')
       :(D.color==='metal'?['metall','halbmetall','nichtmetall']:['fest','flüssig','gasförmig']);
@@ -332,7 +378,10 @@ function drawCard(e,w,h,cell){
   const lines=[['Ordnungszahl',String(e.z)],['Atommasse',String(e.mass)+' u'],
     ['Kategorie',(CATS[e.cat]||CATS.unbekannt)[0]],['Zustand (20 °C)',state(e)],
     ['Schmelzpunkt',e.melt===null?'–':(e.melt+' °C')],['Siedepunkt',e.boil===null?'–':(e.boil+' °C')],
-    ['Dichte',e.dens?(e.dens+' g/cm³'):'–'],['Konfiguration',e.conf||'–']];
+    ['Dichte',e.dens?(e.dens+' g/cm³'):'–'],
+    ['Elektronegativität',(()=>{const v=(window.PSE_EN||[])[e.z-1]; return (v===null||v===undefined)?'–':String(v).replace('.',',');})()],
+    ['Ionisierungsenergie',(()=>{const v=(window.PSE_ION||[])[e.z-1]; return (v===null||v===undefined)?'–':(String(v).replace('.',',')+' eV');})()],
+    ['Konfiguration',e.conf||'–']];
   ctx.font=fontStr(fs);
   const bw=Math.min(w*0.44, Math.max(...lines.map(l=>ctx.measureText(l[0]+': '+l[1]).width))+fs*1.6);
   const bh=(lines.length+1.8)*fs*1.35;

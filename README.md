@@ -2230,18 +2230,29 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   sich seinen Stand, auch über das Speichern des Projekts hinweg.
   - **Periodensystem** und **Nuklidkarte** sind unverändert die bisherigen Werkzeuge (siehe unten) –
     sie laufen im Reiter mit allen Knöpfen weiter wie zuvor.
+  - Rechts in der Reiterleiste stehen **🖼 Tafel**, **📋 Kopieren** (für die beiden eigenen Reiter) und
+    **⇪ Teilen**: Der QR-Code gibt den **ganzen Stand** weiter – Reiter, Element, gesetzte Elektronen,
+    Protonen und Neutronen und auch die Einstellungen der beiden Karten.
   - **Hülle: Schalen und Energien** zeigt links die **Energiestufen** (1s, 2s, 2p, 3s …) als Kästchen
     mit Elektronenpfeilen und rechts das **Schalenbild** (K, L, M … mit der Zahl der Elektronen) zum
-    ausgewählten Element. Die Elektronen lassen sich **einzeln setzen** (− / + / alle / ↺): So entsteht
+    ausgewählten Element. Jede **Hauptschale hat ihre eigene Farbe** (K blau, L grün, M orange, N
+    violett …) – dadurch sieht man in der Aufbaureihenfolge auf einen Blick, dass **4s vor 3d**
+    besetzt wird. Der Schalter **„Aufspaltung"** schaltet zwischen beiden Sichtweisen um: mit
+    Aufspaltung die **Unterschalen** s, p, d, f als einzelne Energiestufen, ohne sie nur die
+    **Hauptschalen** K, L, M … als je eine Stufe, deren Länge die Zahl der Plätze (2n²) zeigt und
+    deren Balken angibt, wie weit sie gefüllt ist. Die Elektronen lassen sich **einzeln setzen** (− / + / alle / ↺): So entsteht
     die Besetzung Schritt für Schritt nach der **Aufbaureihenfolge**, das zuletzt gesetzte Elektron ist
     hervorgehoben, und in den Kästchen sieht man die **Hundsche Regel** (erst einfach besetzen, dann
     paaren). Unten stehen Konfiguration, Schalenbesetzung, **Periode und Gruppe** sowie die Zahl der
     **Außenelektronen** – damit wird die Anordnung im Periodensystem erklärt. Weicht die wirkliche
     Konfiguration von der Reihenfolge ab (Chrom, Kupfer, Silber, Gold …), steht sie als Hinweis darunter.
-  - **Kernpotentialtopf** stellt **Protonen und Neutronen** in zwei Töpfen nebeneinander dar, gefüllt
-    nach den Schalen der magischen Zahlen **2, 8, 20, 28, 50, 82, 126**; eine abgeschlossene Schale wird
-    grün hervorgehoben. Der **Protonentopf ist flacher** (gleiche Ladungen stoßen sich ab) und hat außen
-    den **Coulombwall** – deshalb liegen die Protonenstufen höher als die Neutronenstufen. Protonen und
+  - **Kernpotentialtopf** zeigt **einen Topf mit zwei Hälften**: links die **Protonen**, rechts die
+    **Neutronen**, gefüllt nach den Schalen der magischen Zahlen **2, 8, 20, 28, 50, 82, 126**; eine
+    abgeschlossene Schale wird grün hervorgehoben. Die **linke Hälfte ist flacher** (gleiche Ladungen
+    stoßen sich ab) und hat außen den **Coulombwall**, der von der Kernladung aus nach außen wie 1/r
+    abfällt – **beides wächst mit Z**: Bei Wasserstoff ist kaum etwas davon zu sehen, beim Uran ist der
+    Wall hoch und der Protonenboden deutlich angehoben. Deshalb liegen die Protonenstufen höher als die
+    Neutronenstufen, und man sieht, warum schwere Kerne mehr Neutronen als Protonen brauchen. Protonen und
     Neutronen lassen sich **einzeln hinzufügen und wegnehmen**; darunter stehen Nuklid, Massenzahl,
     **Halbwertszeit und Zerfallsart** aus denselben Daten wie in der Nuklidkarte, dazu der Grund
     („Ein Neutron wird zum Proton: der Neutronentopf ist zu voll") und der **Tochterkern**.
@@ -2260,7 +2271,13 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   Siedepunkt, Dichte, Elektronenkonfiguration); das **Suchfeld** findet Symbol, Name oder Ordnungszahl.
   **„Nebengruppen"** klappt die Gruppen 3–12 weg (Kurzform mit den Hauptgruppen), **„La/Ac"** blendet die
   Lanthanoide und Actinoide ein oder aus. Die **Einfärbung** lässt sich umstellen: Kategorien, Zustand bei 20 °C,
-  Metalle/Nichtmetalle oder ohne Farbe – jeweils mit Legende. Dazu **Atommasse** und **Name** ein-/ausblendbar,
+  Metalle/Nichtmetalle, **Elektronegativität**, **Ionisierungsenergie**, **Schmelzpunkt**,
+  **Siedepunkt**, **Dichte** – oder ohne Farbe. Die fünf Größen bekommen einen **Farbverlauf**
+  (hell = klein, kräftig = groß) mit einer Legende, die den kleinsten und den größten Wert nennt;
+  Elemente ohne Wert (z. B. Edelgase bei der Elektronegativität) bleiben grau. So werden die
+  **Trends im Periodensystem** sichtbar: Die Elektronegativität nimmt nach rechts oben zu, die
+  Ionisierungsenergie ebenso, die hohen Schmelzpunkte liegen in der Mitte der Nebengruppen.
+  Elektronegativität und Ionisierungsenergie stehen auch in der **Infokarte** jedes Elements. Dazu **Atommasse** und **Name** ein-/ausblendbar,
   A−/A+, 🖼 Tafel, 📋 Kopieren und **🖨 Drucken** (Querformat). Läuft vollständig offline.
 - **Nuklidkarte** (im Reiter „Nuklidkarte" der Atomphysik): alle **3082 Nuklide bis Plutonium (Z ≤ 94)** – N waagerecht,
   Z senkrecht, eingefärbt nach Zerfallsart: **stabil** (schwarz), **α** (gelb), **β⁻** (blau),
