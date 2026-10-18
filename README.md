@@ -1353,8 +1353,11 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   oder Videoadresse) und **Webseite/H5P**. Er öffnet das **QR-Fenster** mit der Adresse, von der der
   Inhalt stammt – die Klasse scannt den Code und hat **denselben Inhalt** auf dem eigenen Gerät;
   dieselbe Logik wie der Teilen-Knopf der Tafel-Werkzeuge. Bei YouTube wird die kurze Adresse
-  (`youtu.be/…`) genommen, der Code bleibt dadurch grob. Der Code ist schon im Fenster **groß genug
-  zum Abscannen**, **„Auf Seite einfügen"** legt ihn zusätzlich als Bild auf die Tafel. Objekte,
+  (`youtu.be/…`) genommen, der Code bleibt dadurch grob. Der Code ist schon im Fenster groß genug
+  zum Abscannen; **„🔍 Groß zeigen"** blendet ihn **bildschirmfüllend** auf weißem Grund ein (mit
+  der Adresse darunter), sodass ihn die ganze Klasse **vom Beamerbild aus der letzten Reihe**
+  scannen kann – Tippen oder Esc schließt wieder. **„Auf Seite einfügen"** legt ihn zusätzlich als
+  Bild auf die Tafel. Objekte,
   deren Inhalt **im Projekt** liegt (eingebettete ggb-, HTML-, Audio- oder Videodatei), haben den
   Knopf nicht – zu ihnen gibt es keine Adresse im Netz.
 - **„⤢ Vollbild":** Bei jedem bedienbaren eingebetteten Objekt (Mathe- und Physik-Werkzeuge, die

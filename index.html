@@ -786,6 +786,14 @@
   #social.mini #sNoiseLight .lamp{width:44px;height:44px;}
   #social.mini #sNoiseLight .nzBars{width:190px;height:80px;}
 
+  /* QR-Code groß: zum Abscannen vom Beamerbild aus der letzten Reihe.
+     Weißer Grund und harte Pixelkanten – beides hilft den Kameras beim Erkennen. */
+  #qrBig{position:fixed;inset:0;z-index:47;display:none;align-items:center;justify-content:center;
+         flex-direction:column;gap:14px;background:#fff;padding:14px;}
+  #qrBig.show{display:flex;}
+  #qrBigImg{width:min(76vh,76vw);height:min(76vh,76vw);image-rendering:pixelated;}
+  #qrBigLink{font-size:clamp(13px,2.1vmin,20px);color:#1f2430;max-width:92vw;text-align:center;overflow-wrap:anywhere;}
+  #qrBigHint{font-size:12.5px;color:#8a93a2;}
   #namePick{position:fixed;inset:0;z-index:36;display:none;align-items:center;justify-content:center;background:rgba(17,20,26,.92);flex-direction:column;gap:24px;color:#fff;}
   #namePick.show{display:flex;}
   #nameWin{position:relative;overflow:hidden;width:min(84vw,760px);height:24vmin;min-height:120px;display:flex;align-items:center;justify-content:center;border-radius:20px;background:rgba(255,255,255,.06);box-shadow:inset 0 0 0 2px rgba(255,255,255,.16);}
@@ -1263,7 +1271,8 @@
   <div class="body"><label class="lbl">Text oder Link</label><input type="text" id="qrText" placeholder="https://…">
     <div id="qrPreview" style="display:flex;justify-content:center;margin:10px 0"></div>
     <div class="hint" id="qrHint" style="margin:0 0 8px">Der Code lässt sich schon hier abscannen.</div>
-    <div class="row"><button class="btn pri" id="qrMake">Auf Seite einfügen</button></div></div></div>
+    <div class="row" style="flex-wrap:nowrap"><button class="btn pri" id="qrBigBtn" title="Den Code bildschirmfüllend zeigen – auch aus der letzten Reihe scannbar">🔍 Groß zeigen</button><button class="btn" id="qrMake">Auf Seite einfügen</button></div></div></div>
+<div id="qrBig"><img id="qrBigImg" alt="QR-Code"><div id="qrBigLink"></div><div id="qrBigHint">Tippen zum Schließen</div></div>
 <div class="win" id="win-record" style="left:70px;top:70px;width:min(400px,92vw);"><h3>Aufnahme <span class="x" data-close="win-record">×</span></h3>
   <div class="body">
     <div class="row fill"><button class="btn pri" id="recToggle">● Tafel + Ton</button><button class="btn" id="recAudio">🎙 Nur Ton</button></div>
@@ -7458,6 +7467,13 @@ $('qrText').addEventListener('input',qrVorschau);
 function qrFenster(text,hinweis){ $('qrText').value=text;
   $('qrHint').textContent=hinweis||'Der Code lässt sich schon hier abscannen.';
   $('win-qr').classList.add('show'); qrVorschau(); }
+/* Groß zeigen: Der Code füllt den Bildschirm, damit ihn die ganze Klasse vom
+   Beamerbild abscannen kann. Ein Tippen schließt die Ansicht wieder. */
+async function qrGross(text){ text=(text||'').trim(); if(!text){ toast('Bitte Text/Link eingeben'); return; }
+  const url=await qrBild(text); if(!url){ toast('QR fehlgeschlagen'); return; }
+  $('qrBigImg').src=url; $('qrBigLink').textContent=text; $('qrBig').classList.add('show'); }
+$('qrBigBtn').onclick=()=>qrGross($('qrText').value);
+$('qrBig').onclick=()=>$('qrBig').classList.remove('show');
 $('qrMake').onclick=()=>{ const text=$('qrText').value.trim(); if(!text){toast('Bitte Text/Link eingeben');return;}
   const tmp=document.createElement('div'); new QRCode(tmp,{text,width:512,height:512,correctLevel:QRCode.CorrectLevel.M});
   setTimeout(()=>{ const cvs=tmp.querySelector('canvas'),img=tmp.querySelector('img'); const url=cvs?cvs.toDataURL('image/png'):(img?img.src:null); if(!url){toast('QR fehlgeschlagen');return;}
@@ -7955,6 +7971,7 @@ addEventListener('contextmenu',e=>{ if(!/^(INPUT|TEXTAREA)$/.test(e.target.tagNa
 document.addEventListener('gesturestart',e=>e.preventDefault());
 function isTypingTarget(el){ return !!el && (/^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName||'') || el.isContentEditable); }
 addEventListener('keydown',e=>{ if(editing)return;
+  if(e.key==='Escape'&&$('qrBig').classList.contains('show')){ $('qrBig').classList.remove('show'); return; }
   if(e.key==='Escape'&&shotCv.classList.contains('show')){ shotClose(); $('win-shot').classList.add('show'); return; }
   if(e.key==='Escape'&&streck){ streckAbbrechen(); return; }
   // In Eingabefeldern (z. B. Sektor-Beschriftung des Glücksrads) keine Tafel-Kürzel: Backspace löscht dort Text, nicht das Objekt.
