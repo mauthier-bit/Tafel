@@ -33,6 +33,12 @@ h1{margin:0;font-size:1.3rem;letter-spacing:-.01em;text-wrap:balance}
 h1 span{color:var(--muted);font-weight:500}
 .seg{display:inline-flex;background:var(--surface);border:1px solid var(--rule);border-radius:10px;padding:3px;gap:3px}
 .seg button{border:0;background:transparent;padding:7px 14px;border-radius:7px;cursor:pointer;font-weight:600;color:var(--muted);min-height:38px}
+/* Knöpfe der Tafel (Bild auf die Tafel legen, kopieren, per QR-Code teilen) */
+#shotBtns{display:inline-flex;gap:6px;flex:0 0 auto}
+#shotBtns button{border:1px solid var(--rule);background:var(--surface);color:var(--ink);border-radius:9px;
+  padding:7px 11px;font:600 .88rem var(--font);cursor:pointer;display:inline-flex;align-items:center;gap:5px;
+  white-space:nowrap;min-height:38px}
+#shotBtns button:hover{background:var(--surface2)}
 .seg button[aria-pressed="true"]{background:var(--accent);color:var(--onAccent)}
 .seg button:focus-visible,.btn:focus-visible,.chap:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 nav.chapters{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;scrollbar-width:thin}
@@ -130,6 +136,7 @@ dl.vals dt.uind{font-family:var(--font);font-size:.9rem}
       <button id="mFilm" aria-pressed="true">Film</button>
       <button id="mLab" aria-pressed="false">Selbst ausprobieren</button>
     </div>
+    <span id="shotBtns"></span>
   </header>
   <div class="levels" role="tablist" aria-label="Niveau">
     <button role="tab" id="lvQ" aria-selected="true">Klasse 10<small>qualitativ · LehrplanPlus</small></button>
@@ -242,6 +249,9 @@ dl.vals dt.uind{font-family:var(--font);font-size:.9rem}
   </main>
 </div>
 
+<script src="shot.js"></script>
+<script src="vendor/qrcode.min.js"></script>
+<script src="teilen.js"></script>
 <script>
 (function(){
 "use strict";
@@ -727,6 +737,23 @@ function frame(now){
   requestAnimationFrame(frame);
 }
 fit(); gotoChapter(0,false); setLevel('q'); setMode('film');
+
+/* ---- Knöpfe der Tafel: Bild auf die Tafel legen, kopieren, Einstellung teilen ----
+   Geteilt wird, was gerade eingestellt ist: Modus, Niveau, Kapitel, Zeitpunkt und
+   die Regler des Experiments. Wer den QR-Code scannt, sieht genau dasselbe Bild.   */
+function zustand(){ return {mode:mode, ci:ci, level:level, t:Math.round(t*100)/100, lab:Object.assign({},lab)}; }
+function zustandSetzen(d){ if(!d||typeof d!=='object') return;
+  if(d.level==='q'||d.level==='o') setLevel(d.level);
+  if(d.lab&&typeof d.lab==='object') Object.assign(lab,d.lab);
+  const i=Math.max(0,Math.min(chapters.length-1,+d.ci||0));
+  gotoChapter(i,false);
+  setMode(d.mode==='lab'?'lab':'film');
+  if(d.mode!=='lab') t=Math.max(0,Math.min(chapters[i].T,+d.t||0));
+  syncLab(); showCaption(); }
+if(window.TafelShot) TafelShot.buttons($('shotBtns'),()=>TafelShot.rasterize(document.querySelector('.viz'),{pad:8,scale:2}));
+if(window.TafelTeilen){ TafelTeilen.knopf($('shotBtns'),'induktion.html',zustand);
+  if(TafelTeilen.istGeteilt()) TafelTeilen.empfangen().then(p=>{ try{ zustandSetzen(p); }catch(e){} }); }
+
 requestAnimationFrame(frame);
 })();
 </script>

@@ -2251,6 +2251,10 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   daneben lässt sich alles **selbst ausprobieren**. Zwei Niveaus: **Klasse 10** (qualitativ, LehrplanPlus)
   und **Oberstufe** (mit Induktionsgesetz). Die Szene zeigt Magnet, **Feldlinien** und Spule, darunter
   laufen **Zahl der Feldlinien** und **Spannung** als Diagramme über der Zeit mit.
+  In der Kopfzeile stehen dieselben drei Knöpfe wie in den übrigen Werkzeugen: **🖼 Tafel** legt Szene
+  und Diagramme als Bild neben das Werkzeug, **📋 Kopieren** nimmt sie in die Zwischenablage, und
+  **⇪ Teilen** gibt den QR-Code an die Klasse – geteilt wird **genau die eingestellte Lage**: Modus,
+  Niveau, Kapitel, Zeitpunkt und alle Regler des Experiments.
 - **Periodensystem** (im Reiter „Periodensystem" der Atomphysik): alle **118 Elemente** mit Symbol, Name, Ordnungszahl und Atommasse.
   Ein Tipp auf ein Element öffnet eine **Infokarte** (Atommasse, Kategorie, Zustand bei 20 °C, Schmelz- und
   Siedepunkt, Dichte, Elektronenkonfiguration); das **Suchfeld** findet Symbol, Name oder Ordnungszahl.
