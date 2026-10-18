@@ -1334,12 +1334,9 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     **Material-ID oder Link** bleibt für Materialien, die auf geogebra.org liegen (die werden als
     Webseite eingebettet und nicht mitgespeichert).
   - **„⇪ Teilen (QR-Code)":** Bei einem über **Material-ID oder Link** eingebetteten Material steht
-    im Kontextmenü ein Teilen-Knopf. Er öffnet das **QR-Fenster** mit der Adresse des Materials
-    (`geogebra.org/m/…`): Die Klasse scannt den Code und hat **dasselbe Material** auf dem eigenen
-    Gerät – dieselbe Logik wie der Teilen-Knopf der Tafel-Werkzeuge. Der Code ist schon im Fenster
-    groß genug zum Abscannen, **„Auf Seite einfügen"** legt ihn zusätzlich als Bild auf die Tafel.
-    Bei einer **eingebetteten ggb-Datei** gibt es den Knopf nicht – sie liegt ja nur im Projekt und
-    hat keine Adresse im Netz.
+    im Kontextmenü ein Teilen-Knopf – siehe unten; er gibt die Materialseite (`geogebra.org/m/…`)
+    an die Klasse weiter. Bei einer **eingebetteten ggb-Datei** gibt es ihn nicht, sie liegt ja nur
+    im Projekt und hat keine Adresse im Netz.
 - **CODAP** (Werkzeug, Statistik): bettet das Statistik-Werkzeug **CODAP v3** (Concord Consortium,
   Open Source, codap3.concord.org) ein – Daten in **Tabellen** sammeln, per Ziehen in **Graphen**
   darstellen (Punkt-, Streu-, Säulen-, Boxplot …), Mittelwerte/Geraden einzeichnen, Beispieldaten
@@ -1351,6 +1348,15 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   die das Objekt nachträglich groß auf eine **neue eigene Seite** verschiebt (Inhalt bleibt erhalten).
   Ein seitenfüllend eingefügtes Werkzeug hält nach **oben denselben Abstand wie zur senkrechten
   Werkzeugleiste** (zehn Punkte), klebt also nicht an den oberen Leisten.
+- **„⇪ Teilen (QR-Code)":** Bei allen Objekten, die einen Inhalt **aus dem Netz** zeigen, steht im
+  Kontextmenü ein Teilen-Knopf: **GeoGebra-Material** (Material-ID oder Link), **Video** (YouTube
+  oder Videoadresse) und **Webseite/H5P**. Er öffnet das **QR-Fenster** mit der Adresse, von der der
+  Inhalt stammt – die Klasse scannt den Code und hat **denselben Inhalt** auf dem eigenen Gerät;
+  dieselbe Logik wie der Teilen-Knopf der Tafel-Werkzeuge. Bei YouTube wird die kurze Adresse
+  (`youtu.be/…`) genommen, der Code bleibt dadurch grob. Der Code ist schon im Fenster **groß genug
+  zum Abscannen**, **„Auf Seite einfügen"** legt ihn zusätzlich als Bild auf die Tafel. Objekte,
+  deren Inhalt **im Projekt** liegt (eingebettete ggb-, HTML-, Audio- oder Videodatei), haben den
+  Knopf nicht – zu ihnen gibt es keine Adresse im Netz.
 - **„⤢ Vollbild":** Bei jedem bedienbaren eingebetteten Objekt (Mathe- und Physik-Werkzeuge, die
   Werkzeuge aus **Diverses**, Web- und H5P-Objekte) sowie bei **Dokumenten (PDF, PowerPoint-Seiten)
   und Bildern** steht im Kontext-Panel **„⤢ Vollbild"**. Bei einem Dokument erscheint die Seite in
@@ -1624,7 +1630,7 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   **Seitenverhältnis**. So lassen sich auch **H5P-Inhalte** einbetten (h5p.org, H5P.com, Moodle, Lumi-Cloud):
   im H5P-Inhalt auf **„Einbetten"** tippen, den Code kopieren und hier einfügen – das Objekt heißt dann „H5P-Inhalt"
   und ist über **„Objekt bedienen"** interaktiv nutzbar.
-- **H5P-Datei (.h5p) einfügen – auch offline:** über **Einfügen → Datei** („PDF / Bild / ppt / H5P / HTML / Audio
+- **H5P-Datei (.h5p) einfügen – auch offline:** über **Einfügen → Datei** („PDF / Bild / ppt / ggb / H5P / HTML / Audio
   wählen") lässt sich eine heruntergeladene **.h5p-Datei** direkt auf die Tafel legen. Die Tafel entpackt sie im
   Browser und spielt sie mit einem **eingebauten H5P-Player** ab (h5p-standalone, liegt im Ordner `h5p/`) – ganz
   ohne Internet. Das Objekt trägt den Titel des Inhalts, lässt sich wie jedes andere verschieben und skalieren und
@@ -1637,9 +1643,11 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   **„Einbettungen bedienen" → „↗ Öffnen"** (oben links am Objekt) lässt sich die Seite im Browser öffnen.
   Direkte Inhalts-URLs (z. B. **PhET-Simulationen**) funktionieren dagegen problemlos.
 - Im Einfügen-Fenster steht der Abschnitt **Datei** mit dem blauen, einzeiligen Knopf
-  **„PDF / Bild / ppt / H5P / HTML / Audio / Video wählen"**; die ausführlichen Erläuterungen dazu
-  stecken darunter hinter **„ℹ️ Was kommt wie auf die Tafel?"** und klappen erst auf Tippen auf.
-- **PDF einfügen:** über **Einfügen → Datei** („PDF / Bild / ppt / H5P / HTML / Audio / Video wählen"). Jede PDF-Seite wird
+  **„PDF / Bild / ppt / ggb / H5P / HTML / Audio / Video"**; die ausführlichen Erläuterungen dazu
+  stecken darunter hinter der Zeile **„ℹ️ Was kommt wie auf die Tafel?"** und klappen erst auf Tippen
+  auf. Die Zeile ist bewusst **kein Knopf**, sondern nur Text mit einem kleinen Pfeil rechts – sie
+  gehört zum Hinweis, nicht zur Bedienung.
+- **PDF einfügen:** über **Einfügen → Datei** („PDF / Bild / ppt / ggb / H5P / HTML / Audio / Video"). Jede PDF-Seite wird
   gerendert; zwei Schalter bestimmen die Form:
   **„Als eigene Seite einfügen"** (aus) macht aus jeder PDF-Seite eine eigene Tafelseite.
   Sonst entscheidet **„Mehrseitiges als Dokument"** (standardmäßig **an**): bei mehr als einer Seite entsteht
@@ -1652,7 +1660,7 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   gespeichert** – nach dem Neuladen ist sie also wieder da. Dafür muss die Datei **alles enthalten,
   was sie braucht** (Bilder, Stile und Skripte im Dokument selbst oder als Web-Adresse); Verweise auf
   Nachbardateien funktionieren nicht – darauf weist die Tafel beim Einfügen hin. Grenze: 3 MB.
-- **Audiodatei einfügen (mp3 …):** über **Einfügen → Datei** („PDF / Bild / ppt / H5P / HTML / Audio / Video wählen").
+- **Audiodatei einfügen (mp3 …):** über **Einfügen → Datei** („PDF / Bild / ppt / ggb / H5P / HTML / Audio / Video").
   Unterstützt **mp3, m4a, aac, wav, ogg, opus**; die Datei landet als kleiner **Abspieler** (Play,
   Position, Lautstärke) als bewegliches Objekt auf der Tafel – zum Abspielen oben auf **„Einbettung
   bedienen"** tippen. Dateien **bis 4 MB werden mit dem Projekt gespeichert** und sind nach dem
