@@ -259,6 +259,7 @@
         <button type="button" id="nM">−</button><span class="wert" id="nV">6</span><button type="button" id="nP">+</button>
         <span class="trenn"></span>
         <button type="button" id="kUm" title="Den Zerfall ausführen und zum Tochterkern wechseln">Umwandlung ausführen</button>
+        <button type="button" id="kUnter" title="Jede Hauptschale in ihre Unterschalen aufteilen (1g7/2, 2d5/2 …)">Unterschalen</button>
         <button type="button" id="kMag" class="on" title="Magische Zahlen (abgeschlossene Schalen) hervorheben">magische Zahlen</button>
       </div>
       <div class="flaeche"><canvas id="cvK"></canvas></div>
@@ -282,7 +283,7 @@ const elOf=z=>EL[z-1]||{z,sym:'?',name:'',conf:''};
 
 let D={ v:1, tab:'pse', fontSize:13, fontBold:false, fontItalic:false,
         hz:11, he:null, hs:true,            /* Hülle: Ordnungszahl, gesetzte Elektronen (null = alle), Schalenbild */
-        kz:6, kn:6, kmag:true,              /* Kernpotentialtopf: Protonen, Neutronen, magische Zahlen */
+        kz:6, kn:6, kmag:true, ksub:false,  /* Kern: Protonen, Neutronen, magische Zahlen, Unterschalen */
         pse:null, nuklid:null };
 
 const fontStr=(px,bold)=>(D.fontItalic?'italic ':'')+((bold||D.fontBold)?'800 ':'600 ')+px+'px -apple-system,BlinkMacSystemFont,sans-serif';
@@ -479,8 +480,19 @@ function zeichneHuelle(){
 }
 
 /* ============ Kernpotentialtopf ============ */
-const MAGIC=[2,8,20,28,50,82,126];
-const KAP=[2,6,12,8,22,32,44];           /* Abstände der magischen Zahlen = Platz je Schale */
+const MAGIC=[2,8,20,28,50,82,126,184];   /* 184 ist die erwartete nächste magische Zahl */
+const KAP=[2,6,12,8,22,32,44,58];        /* Abstände der magischen Zahlen = Platz je Schale */
+/* Jede Hauptschale besteht aus Unterschalen (übliche Lehrbuchfolge; bei schweren Kernen
+   kann sich die Reihenfolge innerhalb einer Schale leicht verschieben).                 */
+const UNTER=[
+  [['1s1/2',2]],
+  [['1p3/2',4],['1p1/2',2]],
+  [['1d5/2',6],['2s1/2',2],['1d3/2',4]],
+  [['1f7/2',8]],
+  [['2p3/2',4],['1f5/2',6],['2p1/2',2],['1g9/2',10]],
+  [['1g7/2',8],['2d5/2',6],['2d3/2',4],['3s1/2',2],['1h11/2',12]],
+  [['1h9/2',10],['2f7/2',8],['2f5/2',6],['3p3/2',4],['3p1/2',2],['1i13/2',14]],
+  [['2g9/2',10],['1i11/2',12],['1j15/2',16],['3d5/2',6],['4s1/2',2],['2g7/2',8],['3d3/2',4]]];
 function zeichneTopf(){
   const cv=$('cvK'), ctx=cv.getContext('2d'), w=cv.clientWidth, h=cv.clientHeight;
   ctx.clearRect(0,0,w,h); ctx.fillStyle='#fff'; ctx.fillRect(0,0,w,h);
@@ -496,7 +508,31 @@ function zeichneTopf(){
   const wall=(grund-fs*3)*0.26*Math.min(1,Math.max(0,z)/92); /* Höhe des Coulombwalls, qualitativ ~ Z */
   const yNull=fs*1.9+wall;                                   /* Rand des Topfes (Energie 0) */
   const tiefe=grund-yNull;
-  const coul=tiefe*0.30*Math.min(1,z/92);                    /* so viel höher liegt der Protonenboden */
+  const unter=!!D.ksub;
+  const fuellung=anz=>{ let rest=anz, voll=-1; const f=[];
+    for(let i=0;i<KAP.length;i++){ const k=Math.max(0,Math.min(KAP[i],rest)); rest-=k; f.push(k); if(k>0) voll=i; }
+    return {f,voll}; };
+  const P=fuellung(z), N=fuellung(n);
+  const zeigen=Math.min(KAP.length, Math.max(P.voll,N.voll)+2);
+  const dy=(grund-yNull)/(zeigen+0.8);
+  /* Wie hoch (in Stufenabständen) liegt das oberste besetzte Niveau? */
+  const hoehe=anz=>{ let rest=anz, h=0;
+    for(let i=0;i<KAP.length;i++){ const g=Math.max(0,Math.min(KAP[i],rest)); if(g<=0) break;
+      if(!unter) h=i+0.9;
+      else { const subs=UNTER[i], m=subs.length, sp=(m>1)?0.5/(m-1):0; let r2=g, j=0;
+        for(let x=0;x<m;x++){ if(r2<=0) break; r2-=Math.min(subs[x][1],r2); j=x; }
+        h=i+0.9+j*sp; }
+      rest-=g; if(rest<=0) break; }
+    return h; };
+  /* Das Bezugsisotop: das häufigste stabile dieses Elements, sonst das langlebigste. */
+  const bezugN=zz=>{ let best=null,bh=-1,lang=null,lt=-1;
+    NUK.forEach(e=>{ if(e[0]!==zz) return;
+      if(e[2]===0){ const hh=e[7]||0; if(hh>bh){ bh=hh; best=e[1]; } }
+      const t=(e[2]===-1)?0:e[2]; if(t>lt){ lt=t; lang=e[1]; } });
+    return (best!==null)?best:((lang!==null)?lang:zz); };
+  /* Der Protonenboden wird so angehoben, dass beim Bezugsisotop beide Seiten gleich
+     hoch gefüllt sind – genau das macht die Abstoßung der Protonen im Kern aus.     */
+  const coul=Math.max(0,Math.min(tiefe*0.5,(hoehe(bezugN(z))-hoehe(z))*dy));
   const bodenP=grund-coul, bodenN=grund;
 
   /* ---- Umriss ---- */
@@ -527,31 +563,50 @@ function zeichneTopf(){
   ctx.restore();
 
   /* ---- Stufen und Nukleonen ---- */
-  const fuellung=anz=>{ let rest=anz, voll=-1; const f=[];
-    for(let i=0;i<KAP.length;i++){ const k=Math.max(0,Math.min(KAP[i],rest)); rest-=k; f.push(k); if(k>0) voll=i; }
-    return {f,voll}; };
-  const P=fuellung(z), N=fuellung(n);
-  const zeigen=Math.min(KAP.length, Math.max(P.voll,N.voll)+2);
-  const dy=(grund-yNull)/(zeigen+0.8);
-  const stufen=(x0,fuell,boden,col)=>{
-    for(let i=0;i<zeigen;i++){ const y=boden-dy*(i+0.9), k=fuell.f[i]||0, cap=KAP[i];
-      if(y<yNull+2) break;
-      ctx.strokeStyle=(D.kmag&&k===cap)?'#16a34a':'#94a3b8'; ctx.lineWidth=(D.kmag&&k===cap)?2.4:1.2;
-      ctx.beginPath(); ctx.moveTo(x0+6,y); ctx.lineTo(x0+halb-6,y); ctx.stroke();
-      const r=Math.max(2.2,Math.min(dy*0.3,(halb-20)/cap/2.3,fs*0.8));
-      for(let s2=0;s2<k;s2++){ const px=x0+10+(s2+0.5)*((halb-20)/cap);
-        ctx.fillStyle=col; ctx.beginPath(); ctx.arc(px,y-r-1.5,r,0,7); ctx.fill(); }
-      if(D.kmag){ ctx.font=fontStr(fs*0.68,k===cap); ctx.textAlign='right'; ctx.textBaseline='middle';
-        ctx.fillStyle=(k===cap)?'#16a34a':'#cbd5e1'; ctx.fillText(String(MAGIC[i]), x0+halb-5, y-dy*0.45); } } };
-  stufen(xA,P,bodenP,'#ef4444'); stufen(xM,N,bodenN,'#2563eb');
+  /* Alle gezeichneten Stufen einer Hälfte, von unten nach oben */
+  const niveaus=(anz,boden)=>{ const L=[]; let rest=anz;
+    for(let i=0;i<zeigen;i++){ const yS=boden-dy*(i+0.9), gesamt=Math.max(0,Math.min(KAP[i],rest));
+      if(!unter){ const k=gesamt; rest-=k;
+        L.push({y:yS,cap:KAP[i],k,schale:i,vollSchale:k===KAP[i],nm:null,sp:dy*0.42}); }
+      else { const subs=UNTER[i], m=subs.length, band=dy*0.5;
+        const vollSchale=(gesamt===KAP[i]), sp=(m>1)?band/(m-1):dy*0.42;
+        for(let j=0;j<m;j++){ const c2=subs[j][1], k=Math.max(0,Math.min(c2,rest)); rest-=k;
+          L.push({y:yS-j*sp, cap:c2, k, schale:i, vollSchale, nm:subs[j][0], oben:j===m-1, sp}); } } }
+    return L; };
+  const stufen=(x0,L,col)=>{
+    let fermi=-1; L.forEach((v,i)=>{ if(v.k>0) fermi=i; });
+    L.forEach((v,i)=>{
+      if(v.y<yNull+2) return;
+      const gruen=D.kmag&&v.vollSchale&&(!unter||v.oben);
+      ctx.strokeStyle=gruen?'#16a34a':(v.k===v.cap&&v.k>0?'#7a8698':'#c3cbd6');
+      ctx.lineWidth=gruen?2.4:(unter?1:1.2);
+      ctx.beginPath(); ctx.moveTo(x0+6,v.y); ctx.lineTo(x0+halb-6,v.y); ctx.stroke();
+      const r=Math.max(1.6,Math.min(v.sp*0.44,(halb-20)/v.cap/2.3,fs*0.8));
+      for(let s2=0;s2<v.k;s2++){ const px=x0+10+(s2+0.5)*((halb-20)/v.cap);
+        ctx.fillStyle=col; ctx.beginPath(); ctx.arc(px,v.y-r-1.5,r,0,7); ctx.fill(); }
+      if(unter&&i===fermi&&v.nm){                      /* Name der obersten besetzten Unterschale */
+        ctx.font=fontStr(fs*0.62,false); ctx.textAlign='right'; ctx.textBaseline='bottom';
+        ctx.fillStyle='#94a3b8'; ctx.fillText(v.nm, x0+halb-7, v.y-r*2-2); }
+    });
+    if(D.kmag){ for(let i=0;i<zeigen;i++){ const yS=(L.find(v=>v.schale===i)||{}).y;
+      if(yS===undefined||yS<yNull+2) continue;
+      const voll=(L.filter(v=>v.schale===i).every(v=>v.k===v.cap));
+      ctx.font=fontStr(fs*0.68,voll); ctx.textAlign='right'; ctx.textBaseline='middle';
+      ctx.fillStyle=voll?'#16a34a':'#cbd5e1'; ctx.fillText(String(MAGIC[i]), x0+halb-5, yS+dy*0.22); } } };
+  const LP=niveaus(z,bodenP), LN=niveaus(n,bodenN);
+  stufen(xA,LP,'#ef4444'); stufen(xM,LN,'#2563eb');
+  ctx.font=fontStr(fs*0.95,true); ctx.textAlign='center'; ctx.textBaseline='top';
+  ctx.fillStyle='#ef4444'; ctx.fillText('Protonen '+z, xA+halb/2, grund+5);
+  ctx.fillStyle='#2563eb'; ctx.fillText('Neutronen '+n, xM+halb/2, grund+5);
 
   /* Massenunterschied sichtbar machen: Ein Neutron ist um 1,29 MeV schwerer als ein
      Proton; 0,51 MeV gehen in das Elektron, 0,78 MeV bleiben übrig. So weit darf ein
      Neutron UNTER dem Protonenniveau liegen und sich trotzdem noch umwandeln.
      Maßstab: ein Schalenschritt steht für rund 5 MeV.                              */
-  if(z>0&&n>0&&P.voll>=0){
-    const yP=bodenP-dy*(P.voll+0.9), dM=Math.max(3.5,dy*0.78/5);
-    if(yP>yNull+6&&yP+dM<bodenN-2){
+  if(z>0&&n>0){
+    let yP=null; LP.forEach(v=>{ if(v.k>0) yP=v.y; });
+    const dM=Math.max(3.5,dy*0.78/5);
+    if(yP!==null&&yP>yNull+6&&yP+dM<bodenN-2){
       ctx.save();
       ctx.fillStyle='rgba(245,158,11,.25)'; ctx.fillRect(xM+1,yP,halb-1,dM);
       ctx.strokeStyle='#f59e0b'; ctx.lineWidth=1.3; ctx.setLineDash([5,3]);
@@ -565,9 +620,6 @@ function zeichneTopf(){
       ctx.fillText('0,78 MeV', xM-7, yP+dM/2+(dM<fs?-fs*0.8:0));
       ctx.restore(); }
   }
-  ctx.font=fontStr(fs*0.95,true); ctx.textAlign='center'; ctx.textBaseline='top';
-  ctx.fillStyle='#ef4444'; ctx.fillText('Protonen '+z, xA+halb/2, grund+5);
-  ctx.fillStyle='#2563eb'; ctx.fillText('Neutronen '+n, xM+halb/2, grund+5);
 
   /* ---- Text unten ---- */
   const A=z+n, sym=el.sym||'?';
@@ -588,7 +640,9 @@ function zeichneTopf(){
     if(pr) zeilen.push('Danach: '+hoch(pr[0]+pr[1])+(elOf(pr[0]).sym||'?')+'  (Z = '+pr[0]+', N = '+pr[1]+')'); }
   const mz=MAGIC.includes(z), mn=MAGIC.includes(n);
   if(mz||mn) zeilen.push((mz&&mn?'Z und N sind magische Zahlen':mz?'Z ist eine magische Zahl':'N ist eine magische Zahl')+' – abgeschlossene Schale, besonders fest gebunden.');
-  zeilen.push('Die Stufen sind schematisch gleich weit auseinander; ein Schritt steht für etwa 5 MeV.');
+  zeilen.push(D.ksub
+    ? 'Unterschalen in der üblichen Reihenfolge; ein Schalenschritt steht für etwa 5 MeV.'
+    : 'Die Stufen sind schematisch gleich weit auseinander; ein Schritt steht für etwa 5 MeV.');
   ctx.textAlign='left'; ctx.textBaseline='top';
   let y=unten+2;
   zeilen.forEach((t,i)=>{ zeile(ctx,t,8,y,i===0?fs*1.08:fs*0.9,i===0,
@@ -599,7 +653,7 @@ function zeichneTopf(){
 function setzeHuelle(){ $('hSel').value=String(D.hz); $('eV').textContent=hElektronen();
   $('hSchale').classList.toggle('on',D.hs!==false); $('hAuf').classList.toggle('on',D.auf!==false); }
 function setzeTopf(){ $('zV').textContent=D.kz; $('nV').textContent=D.kn;
-  $('kMag').classList.toggle('on',D.kmag!==false);
+  $('kMag').classList.toggle('on',D.kmag!==false); $('kUnter').classList.toggle('on',!!D.ksub);
   const e=nukOf(D.kz,D.kn), art=e&&e[2]!==0?(e[3]||''):'';
   const geht=!!(art&&produkt(D.kz,D.kn,art));
   $('kUm').disabled=!geht; $('kUm').style.opacity=geht?'1':'.45'; }
@@ -623,6 +677,7 @@ $('zP').onclick=()=>{ D.kz=Math.min(118,D.kz+1); neu(); };
 $('nM').onclick=()=>{ D.kn=Math.max(0,D.kn-1); neu(); };
 $('nP').onclick=()=>{ D.kn=Math.min(180,D.kn+1); neu(); };
 $('kMag').onclick=()=>{ D.kmag=!D.kmag; neu(); };
+$('kUnter').onclick=()=>{ D.ksub=!D.ksub; neu(); };
 $('kUm').onclick=()=>{ const e=nukOf(D.kz,D.kn); if(!e||e[2]===0) return;
   const p=produkt(D.kz,D.kn,e[3]||''); if(!p) return;
   D.kz=Math.max(0,p[0]); D.kn=Math.max(0,p[1]); neu(); };

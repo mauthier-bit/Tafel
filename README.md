@@ -2268,8 +2268,17 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     **0,78 MeV** angetragen: Ein Neutron ist um 1,29 MeV schwerer als ein Proton, davon gehen
     0,51 MeV in das Elektron. Ein Neutron darf deshalb bis zu 0,78 MeV **unter** dem Protonenniveau
     liegen und sich trotzdem noch umwandeln – ohne diesen Streifen sieht ein β⁻-Zerfall im Bild
-    manchmal unmöglich aus. Die Stufen stehen **schematisch** gleich weit auseinander; ein Schritt
-    steht für etwa 5 MeV, die wirklichen Abstände innerhalb einer Schale sind kleiner.
+    manchmal unmöglich aus. Ein Schalenschritt steht dabei für etwa **5 MeV**.
+    Der Schalter **„Unterschalen"** teilt jede Hauptschale in ihre **Unterschalen** auf
+    (1s1/2, 1p3/2, 1p1/2, 1d5/2 … in der üblichen Reihenfolge); die oberste besetzte ist beschriftet.
+    Damit wird sichtbar, dass zwei Kerne mit gleicher Schale sehr unterschiedlich hoch gefüllt sein
+    können – bei ¹²⁷Te sitzen die Protonen ganz unten in der 82er-Schale (1g7/2), die Neutronen schon
+    ganz oben (1h11/2). Ausgeschaltet bleibt die einfache Darstellung mit einer Stufe je Hauptschale.
+    Wie weit die Protonenhälfte angehoben wird, rechnet das Werkzeug **aus dem Modell**: so weit, dass
+    beim **häufigsten stabilen Isotop** des Elements beide Hälften gleich hoch gefüllt sind. Dadurch
+    stimmt das Bild für stabile Kerne, und neutronenreiche bzw. protonenreiche Kerne zeigen von selbst
+    die zu hohe Seite. Die Schalen reichen bis zur erwarteten magischen Zahl **184**, sodass auch
+    schwere Kerne mit mehr als 126 Neutronen vollständig dargestellt werden.
 - **Induktion und Feldlinien** (Mathe & Physik, Symbol: eine **Spule**): Wann entsteht eine Spannung?
   Ein **Film** führt in Kapiteln durch Grundidee, bewegten Magneten, bewegte Spule und Homogenität,
   daneben lässt sich alles **selbst ausprobieren**. Zwei Niveaus: **Klasse 10** (qualitativ, LehrplanPlus)
