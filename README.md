@@ -2284,10 +2284,15 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   daneben lässt sich alles **selbst ausprobieren**. Zwei Niveaus: **Klasse 10** (qualitativ, LehrplanPlus)
   und **Oberstufe** (mit Induktionsgesetz). Die Szene zeigt Magnet, **Feldlinien** und Spule, darunter
   laufen **Zahl der Feldlinien** und **Spannung** als Diagramme über der Zeit mit.
-  In der Kopfzeile stehen dieselben drei Knöpfe wie in den übrigen Werkzeugen: **🖼 Tafel** legt Szene
-  und Diagramme als Bild neben das Werkzeug, **📋 Kopieren** nimmt sie in die Zwischenablage, und
-  **⇪ Teilen** gibt den QR-Code an die Klasse – geteilt wird **genau die eingestellte Lage**: Modus,
-  Niveau, Kapitel, Zeitpunkt und alle Regler des Experiments.
+  In der Kopfzeile stehen **A− / A+** für die Schriftgröße und dieselben drei Knöpfe wie in den
+  übrigen Werkzeugen: **🖼 Tafel** legt Szene und Diagramme als Bild neben das Werkzeug,
+  **📋 Kopieren** nimmt sie in die Zwischenablage, und **⇪ Teilen** gibt den QR-Code an die Klasse –
+  geteilt wird **genau die eingestellte Lage**: Modus, Niveau, Kapitel, Zeitpunkt und alle Regler des
+  Experiments. **A− / A+** vergrößern Kopfzeile, Reiter, Bildunterschriften und Messwerte; dasselbe
+  macht die Schriftgröße im **Kontextmenü der Tafel**.
+  Der Umschalter **Film / Selbst ausprobieren** sitzt rechts **neben den Niveau-Reitern**, Kopfzeile
+  und Reiterzeile brauchen dadurch nur noch **je eine Zeile** – bei schmalem Objekt entfällt der
+  Untertitel und der Schalter heißt kurz **„Experiment"**.
 - **Periodensystem** (im Reiter „Periodensystem" der Atomphysik): alle **118 Elemente** mit Symbol, Name, Ordnungszahl und Atommasse.
   Ein Tipp auf ein Element öffnet eine **Infokarte** (Atommasse, Kategorie, Zustand bei 20 °C, Schmelz- und
   Siedepunkt, Dichte, Elektronenkonfiguration); das **Suchfeld** findet Symbol, Name oder Ordnungszahl.
