@@ -8,14 +8,18 @@
   html,body{margin:0;height:100%;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#fff;color:#1f2430;overflow:hidden;}
   #app{display:flex;flex-direction:column;height:100%;}
   /* Reiterleiste über allen vier Ansichten */
-  #tabs{flex:none;display:flex;gap:6px;align-items:center;padding:6px 8px;border-bottom:1px solid #e6eaf0;overflow-x:auto;}
+  #tabs{flex:none;display:flex;gap:2px;align-items:flex-end;padding:0 8px;border-bottom:1px solid #e6eaf0;overflow-x:auto;}
   #tabs>*{flex:0 0 auto;}
-  #tabs button{border:1px solid #cfd6e0;background:#fff;border-radius:8px;padding:5px 11px;font:700 13px -apple-system,sans-serif;cursor:pointer;color:#1f2430;white-space:nowrap;}
-  #tabs button.on{background:#2563eb;border-color:#2563eb;color:#fff;}
-  #tabs #shotBtns{margin-left:auto;display:inline-flex;gap:5px;}
-  #tabs #teilenBtn{display:inline-flex;gap:5px;}
+  #tabs button[data-t]{border:none;border-bottom:3px solid transparent;background:transparent;border-radius:8px 8px 0 0;
+    padding:9px 11px 7px;margin-bottom:-1px;font:600 13.5px -apple-system,BlinkMacSystemFont,sans-serif;
+    color:#1f2430;cursor:pointer;opacity:.6;white-space:nowrap;}
+  #tabs button[data-t]:active{background:rgba(127,127,127,.12);}
+  #tabs button[data-t].on{border-bottom-color:#2563eb;color:#2563eb;opacity:1;}
+  #tabs #shotBtns button,#tabs #teilenBtn button{border:1px solid #cfd6e0;background:#fff;border-radius:7px;
+    padding:4px 9px;font:600 13px -apple-system,sans-serif;cursor:pointer;color:#1f2430;white-space:nowrap;}
+  #tabs #shotBtns{margin-left:auto;display:inline-flex;gap:5px;align-self:center;padding-bottom:4px;}
+  #tabs #teilenBtn{display:inline-flex;gap:5px;align-self:center;padding-bottom:4px;}
   #tabs #shotBtns:empty+#teilenBtn,#tabs #shotBtns[hidden]+#teilenBtn{margin-left:auto;}
-  #tabs #shotBtns button,#tabs #teilenBtn button{font-weight:600;}
   #views{flex:1;position:relative;min-height:0;}
   .view{position:absolute;inset:0;display:none;flex-direction:column;}
   .view.on{display:flex;}
@@ -219,7 +223,7 @@
     <button type="button" data-t="pse" class="on">Periodensystem</button>
     <button type="button" data-t="nuklid">Nuklidkarte</button>
     <button type="button" data-t="huelle">Hülle</button>
-    <button type="button" data-t="topf">Kernpotentialtopf</button>
+    <button type="button" data-t="topf">Kern</button>
     <span id="shotBtns"></span><span id="teilenBtn"></span>
   </div>
   <div id="views">
@@ -368,8 +372,12 @@ function zeichneHuelle(){
     for(let n=1;n<=nmax;n++) rows.push({nm:SCHALENNAME[n-1]+' (n='+n+')', n, boxen:0, cap:2*n*n, k:S[n-1]||0}); }
 
   /* ---- Energiestufen ---- */
-  const padL=fs*(auf?3.0:4.6), padR=10, padT=10, padB=8;
+  const padT=10, padB=8, padR=10, achse=fs*0.9;
+  /* Mit Aufspaltung: links die Hauptschale, von dort Äste zu ihren Unterschalen. */
+  const hauptX=auf?fs*2.0:fs*4.8, hauptL=auf?fs*1.9:0, astB=auf?fs*2.2:0;
+  const padL=auf?(hauptX+hauptL+astB+fs*2.3):hauptX;      /* hier beginnen Kästchen bzw. Stufenlinie */
   const rowH=Math.max(fs*1.5,(unten-padT-padB)/rows.length), box=Math.min(rowH*0.55,fs*1.8);
+  const ys=rows.map((r,i)=>unten-padB-rowH*(i+0.5));
   /* Ohne Aufspaltung: alle Plätze gleich breit – die Linie zeigt, wie viele Plätze die Schale hat */
   const capMax=Math.max(2,...rows.map(r=>r.cap));
   const brMax=Math.min(diaW-padL-padR-fs*4.2, fs*17);
@@ -377,15 +385,34 @@ function zeichneHuelle(){
   const alsBalken=punkt<3.2;                       /* zu eng für einzelne Punkte: besetzter Teil als Balken */
   ctx.textBaseline='middle';
   ctx.strokeStyle='#e2e8f0'; ctx.lineWidth=1.4; ctx.beginPath();
-  ctx.moveTo(padL-6,unten-padB); ctx.lineTo(padL-6,padT+fs*0.4); ctx.stroke();
+  ctx.moveTo(achse,unten-padB); ctx.lineTo(achse,padT+fs*0.4); ctx.stroke();
   ctx.font=fontStr(fs*0.82,false); ctx.textAlign='left'; ctx.fillStyle='#94a3b8';
   ctx.fillText('Energie ↑', 3, padT+fs*0.5);
+
+  /* Hauptschalen mit ihren Ästen zu den Unterschalen */
+  if(auf){
+    const grup=new Map();
+    rows.forEach((r,i)=>{ if(!grup.has(r.n)) grup.set(r.n,[]); grup.get(r.n).push(i); });
+    grup.forEach((idx,n)=>{
+      const col=schalFarbe(n), ym=idx.reduce((a,i)=>a+ys[i],0)/idx.length;
+      ctx.strokeStyle=col; ctx.lineWidth=2.4; ctx.beginPath();
+      ctx.moveTo(hauptX,ym); ctx.lineTo(hauptX+hauptL,ym); ctx.stroke();
+      ctx.font=fontStr(fs*0.9,true); ctx.textAlign='right'; ctx.fillStyle=col;
+      ctx.fillText(SCHALENNAME[n-1]||String(n), hauptX-4, ym);
+      ctx.strokeStyle=col; ctx.globalAlpha=.5; ctx.lineWidth=1.3;
+      idx.forEach(i=>{ const y=ys[i], xe=padL-fs*2.2;      /* Ast zur Unterschale */
+        ctx.beginPath(); ctx.moveTo(hauptX+hauptL,ym);
+        ctx.bezierCurveTo(hauptX+hauptL+astB*0.6,ym, xe-astB*0.5,y, xe,y);
+        ctx.stroke(); });
+      ctx.globalAlpha=1; });
+  }
+
   rows.forEach((r,i)=>{
-    const y=unten-padB-rowH*(i+0.5), col=schalFarbe(r.n);
+    const y=ys[i], col=schalFarbe(r.n);
     ctx.font=fontStr(fs*0.92,true); ctx.textAlign='right'; ctx.fillStyle=col;
-    ctx.fillText(r.nm, padL-10, y);
+    ctx.fillText(r.nm, padL-(auf?6:10), y);
     if(r.boxen>0){                                   /* Kästchen mit Elektronenpfeilen */
-      const bw=Math.min(box,(diaW-padL-padR)/Math.max(r.boxen,1)-3);
+      const bw=Math.min(box,(diaW-padL-padR-fs*1.2)/Math.max(r.boxen,1)-3);
       for(let k=0;k<r.boxen;k++){ ctx.strokeStyle=col; ctx.globalAlpha=.55; ctx.lineWidth=1.3;
         ctx.strokeRect(padL+k*(bw+3), y-bw/2, bw, bw); ctx.globalAlpha=1; }
       const einzeln=Math.min(r.k,r.boxen), paare=Math.max(0,r.k-r.boxen);
@@ -399,6 +426,8 @@ function zeichneHuelle(){
         if(k<paare) pfeil(false); }
       if(r.neu){ const k=Math.max(0,Math.min(r.boxen-1,(r.k<=r.boxen?r.k-1:r.k-r.boxen-1)));
         ctx.strokeStyle='#f59e0b'; ctx.lineWidth=2.4; ctx.strokeRect(padL+k*(bw+3)-1.5,y-bw/2-1.5,bw+3,bw+3); }
+      if(r.k){ ctx.font=fontStr(fs*0.76,false); ctx.textAlign='left'; ctx.fillStyle='#94a3b8';
+        ctx.fillText(String(r.k)+' e⁻', padL+r.boxen*(bw+3)+3, y); }
     } else {                                         /* nur die Hauptschale: eine Stufe mit ihren Elektronen */
       const br=8+r.cap*schritt;
       ctx.strokeStyle=col; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(padL+br,y); ctx.stroke();

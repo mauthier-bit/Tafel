@@ -2227,7 +2227,8 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     bzw. Hundertstel. **Besondere Winkel** markiert diese am Kreis, **Bogenmaß** beschriftet sie mit π.
 - **Atomphysik** (Mathe & Physik): ein Werkzeug mit **vier Reitern**, die zusammen vom Periodensystem
   bis in den Kern führen. Oben steht die Reiterleiste, darunter der jeweilige Inhalt; jeder Reiter merkt
-  sich seinen Stand, auch über das Speichern des Projekts hinweg.
+  sich seinen Stand, auch über das Speichern des Projekts hinweg. Die vier Reiter sind als
+  **Reiterleiste** gestaltet (der gewählte ist unterstrichen), nicht als Knopfreihe.
   - **Periodensystem** und **Nuklidkarte** sind unverändert die bisherigen Werkzeuge (siehe unten) –
     sie laufen im Reiter mit allen Knöpfen weiter wie zuvor.
   - Rechts in der Reiterleiste stehen **🖼 Tafel**, **📋 Kopieren** (für die beiden eigenen Reiter) und
@@ -2237,16 +2238,19 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     mit Elektronenpfeilen und rechts das **Schalenbild** (K, L, M … mit der Zahl der Elektronen) zum
     ausgewählten Element. Jede **Hauptschale hat ihre eigene Farbe** (K blau, L grün, M orange, N
     violett …) – dadurch sieht man in der Aufbaureihenfolge auf einen Blick, dass **4s vor 3d**
-    besetzt wird. Der Schalter **„Aufspaltung"** schaltet zwischen beiden Sichtweisen um: mit
-    Aufspaltung die **Unterschalen** s, p, d, f als einzelne Energiestufen, ohne sie nur die
-    **Hauptschalen** K, L, M … als je eine Stufe, deren Länge die Zahl der Plätze (2n²) zeigt und
-    deren Balken angibt, wie weit sie gefüllt ist. Die Elektronen lassen sich **einzeln setzen** (− / + / alle / ↺): So entsteht
+    besetzt wird. Der Schalter **„Aufspaltung"** schaltet zwischen beiden Sichtweisen um:
+    **mit Aufspaltung** steht links die **Hauptschale** als eine Stufe, und von ihr führen **Äste**
+    zu ihren **Unterschalen** s, p, d, f mit Kästchen, Pfeilen und der Zahl der Elektronen – man
+    sieht also die Schale *und* ihre energetische Aufspaltung, auch dass das 3d der M-Schale über
+    dem 4s der N-Schale liegt. **Ohne Aufspaltung** bleiben nur die **Hauptschalen** K, L, M …
+    als je eine Stufe, deren Länge die Zahl der Plätze (2n²) zeigt und deren Balken angibt, wie
+    weit sie gefüllt ist. Die Elektronen lassen sich **einzeln setzen** (− / + / alle / ↺): So entsteht
     die Besetzung Schritt für Schritt nach der **Aufbaureihenfolge**, das zuletzt gesetzte Elektron ist
     hervorgehoben, und in den Kästchen sieht man die **Hundsche Regel** (erst einfach besetzen, dann
     paaren). Unten stehen Konfiguration, Schalenbesetzung, **Periode und Gruppe** sowie die Zahl der
     **Außenelektronen** – damit wird die Anordnung im Periodensystem erklärt. Weicht die wirkliche
     Konfiguration von der Reihenfolge ab (Chrom, Kupfer, Silber, Gold …), steht sie als Hinweis darunter.
-  - **Kernpotentialtopf** zeigt **einen Topf mit zwei Hälften**: links die **Protonen**, rechts die
+  - **Kern** zeigt den **Potentialtopf mit zwei Hälften**: links die **Protonen**, rechts die
     **Neutronen**, gefüllt nach den Schalen der magischen Zahlen **2, 8, 20, 28, 50, 82, 126**; eine
     abgeschlossene Schale wird grün hervorgehoben. Die **linke Hälfte ist flacher** (gleiche Ladungen
     stoßen sich ab) und hat außen den **Coulombwall**, der von der Kernladung aus nach außen wie 1/r
