@@ -741,8 +741,10 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   **nochmal antippen** = Text ändern (Enter fertig, Esc abbrechen, Tab = weiterer Unterpunkt), **ziehen** =
   verschieben (Unterpunkte wandern mit), **🎙** diktiert den Knotentext, **🗑** löscht einen Ast, **🎨** färbt
   einen Ast, **↶** Rückgängig, **⟳ Ordnen** ordnet alles kreisförmig ohne Überlappungen an, **A−/A+** sowie
-  Schrift (fett/kursiv) im Kontextmenü, **🖼 Tafel / 📋 Kopieren** als Bild. Passt sich automatisch der
-  Objektgröße an; auch „Als eigene Seite anzeigen“.
+  Schrift (fett/kursiv) im Kontextmenü, **🖼 Tafel / 📋 Kopieren** als Bild und **⇪ Teilen**: Der
+  QR-Code gibt die **ganze Mindmap** an die Klasse – wer ihn scannt, hat sie auf dem eigenen Gerät und
+  kann dort **weiterarbeiten** (auf der geteilten Fassung ist der Teilen-Knopf ausgeblendet).
+  Passt sich automatisch der Objektgröße an; auch „Als eigene Seite anzeigen“.
 - **Reihenfolge** (Diverses, `reihenfolge.html`): Eine **Argumentationskette** liegt **gemischt** als
   Kartenstapel vor und muss in die richtige Reihenfolge gebracht werden – von der Voraussetzung über
   die Begründungen bis zum Ergebnis.
