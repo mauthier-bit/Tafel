@@ -2241,11 +2241,11 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     mit Elektronenpfeilen und rechts das **Schalenbild** (K, L, M … mit der Zahl der Elektronen) zum
     ausgewählten Element. Jede **Hauptschale hat ihre eigene Farbe** (K blau, L grün, M orange, N
     violett …) – dadurch sieht man in der Aufbaureihenfolge auf einen Blick, dass **4s vor 3d**
-    besetzt wird. Der Schalter **„Aufspaltung"** schaltet zwischen beiden Sichtweisen um:
-    **mit Aufspaltung** steht links die **Hauptschale** als eine Stufe, und von ihr führen **Äste**
+    besetzt wird. Der Schalter **„Unterschalen"** schaltet zwischen beiden Sichtweisen um:
+    **eingeschaltet** steht links die **Hauptschale** als eine Stufe, und von ihr führen **Äste**
     zu ihren **Unterschalen** s, p, d, f mit Kästchen, Pfeilen und der Zahl der Elektronen – man
     sieht also die Schale *und* ihre energetische Aufspaltung, auch dass das 3d der M-Schale über
-    dem 4s der N-Schale liegt. **Ohne Aufspaltung** bleiben nur die **Hauptschalen** K, L, M …
+    dem 4s der N-Schale liegt. **Ausgeschaltet** bleiben nur die **Hauptschalen** K, L, M …
     als je eine Stufe, deren Länge die Zahl der Plätze (2n²) zeigt und deren Balken angibt, wie
     weit sie gefüllt ist. Die Elektronen lassen sich **einzeln setzen** (− / + / alle / ↺): So entsteht
     die Besetzung Schritt für Schritt nach der **Aufbaureihenfolge**, das zuletzt gesetzte Elektron ist
