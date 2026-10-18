@@ -2181,7 +2181,10 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     verteilt, erscheint es grün. Unten steht die Rechnung, z. B. 2 : 3 = 2/3 oder 5 : 3 = 5/3 = 1 2/3.
   - **„Vergleichen“:** zwei Brüche mit einem **„?“** dazwischen – zunächst ohne Bild. Jeder Bruch lässt sich
     einzeln **erweitern** („links“/„rechts“ mit der Zahl daneben), bis der Vergleich klappt; dabei **bleiben die
-    Bilder aus**, man sieht also nur, wie sich die Brüche ändern. **„👁 Bilder“** zeigt beide als Zeichnung –
+    Bilder aus**, man sieht also nur, wie sich die Brüche ändern. Beim Erweitern steht oben in **zwei
+    Zeilen** der **ursprüngliche** Bruch groß und darunter der **erweiterte** („= 4/6“); unter den
+    Bildern stehen die Brüche nicht noch einmal – dort würden sie nur den Hinweis überdecken.
+    **„👁 Bilder“** zeigt beide als Zeichnung –
     dann lässt sich auch ein Bild direkt **antippen**, um diesen Bruch zu erweitern. Je nach Lage hilft ein Hinweis weiter: gleiche Nenner (größerer Zähler gewinnt), **gleiche Zähler**
     (kleinerer Nenner gewinnt) oder gemeinsamer Nenner. **„Zeichen“** setzt schließlich **<, > oder =** ein.
   - **„+ und −“:** die drei Bilder stehen **nebeneinander** (1. Bruch + 2. Bruch = Ergebnis). Solange die Nenner
@@ -2261,6 +2264,12 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     **Halbwertszeit und Zerfallsart** aus denselben Daten wie in der Nuklidkarte, dazu der Grund
     („Ein Neutron wird zum Proton: der Neutronentopf ist zu voll") und der **Tochterkern**.
     **„Umwandlung ausführen"** springt dorthin – so wird die Nuklidkarte von innen heraus verständlich.
+    Am obersten besetzten Protonenniveau ist der **Massenunterschied** als gelber Streifen von
+    **0,78 MeV** angetragen: Ein Neutron ist um 1,29 MeV schwerer als ein Proton, davon gehen
+    0,51 MeV in das Elektron. Ein Neutron darf deshalb bis zu 0,78 MeV **unter** dem Protonenniveau
+    liegen und sich trotzdem noch umwandeln – ohne diesen Streifen sieht ein β⁻-Zerfall im Bild
+    manchmal unmöglich aus. Die Stufen stehen **schematisch** gleich weit auseinander; ein Schritt
+    steht für etwa 5 MeV, die wirklichen Abstände innerhalb einer Schale sind kleiner.
 - **Induktion und Feldlinien** (Mathe & Physik, Symbol: eine **Spule**): Wann entsteht eine Spannung?
   Ein **Film** führt in Kapiteln durch Grundidee, bewegten Magneten, bewegte Spule und Homogenität,
   daneben lässt sich alles **selbst ausprobieren**. Zwei Niveaus: **Klasse 10** (qualitativ, LehrplanPlus)

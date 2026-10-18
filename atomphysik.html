@@ -485,7 +485,7 @@ function zeichneTopf(){
   const cv=$('cvK'), ctx=cv.getContext('2d'), w=cv.clientWidth, h=cv.clientHeight;
   ctx.clearRect(0,0,w,h); ctx.fillStyle='#fff'; ctx.fillRect(0,0,w,h);
   const fs=Math.max(10,D.fontSize||13), z=D.kz, n=D.kn, el=elOf(z), e=nukOf(z,n);
-  const textH=fs*5.6, unten=h-textH;
+  const textH=fs*6.6, unten=h-textH;
 
   /* Ein Topf mit zwei Hälften: links die Protonen, rechts die Neutronen.
      Der Protonenboden liegt höher und außen steht der Coulombwall – beides wächst
@@ -544,6 +544,27 @@ function zeichneTopf(){
       if(D.kmag){ ctx.font=fontStr(fs*0.68,k===cap); ctx.textAlign='right'; ctx.textBaseline='middle';
         ctx.fillStyle=(k===cap)?'#16a34a':'#cbd5e1'; ctx.fillText(String(MAGIC[i]), x0+halb-5, y-dy*0.45); } } };
   stufen(xA,P,bodenP,'#ef4444'); stufen(xM,N,bodenN,'#2563eb');
+
+  /* Massenunterschied sichtbar machen: Ein Neutron ist um 1,29 MeV schwerer als ein
+     Proton; 0,51 MeV gehen in das Elektron, 0,78 MeV bleiben übrig. So weit darf ein
+     Neutron UNTER dem Protonenniveau liegen und sich trotzdem noch umwandeln.
+     Maßstab: ein Schalenschritt steht für rund 5 MeV.                              */
+  if(z>0&&n>0&&P.voll>=0){
+    const yP=bodenP-dy*(P.voll+0.9), dM=Math.max(3.5,dy*0.78/5);
+    if(yP>yNull+6&&yP+dM<bodenN-2){
+      ctx.save();
+      ctx.fillStyle='rgba(245,158,11,.25)'; ctx.fillRect(xM+1,yP,halb-1,dM);
+      ctx.strokeStyle='#f59e0b'; ctx.lineWidth=1.3; ctx.setLineDash([5,3]);
+      ctx.beginPath(); ctx.moveTo(xA+6,yP); ctx.lineTo(xB-6,yP);
+      ctx.moveTo(xM+1,yP+dM); ctx.lineTo(xB-6,yP+dM); ctx.stroke(); ctx.setLineDash([]);
+      ctx.strokeStyle='#b45309'; ctx.lineWidth=1.4;      /* Doppelpfeil an der Mitte */
+      ctx.beginPath(); ctx.moveTo(xM,yP+1.5); ctx.lineTo(xM,yP+dM-1.5);
+      ctx.moveTo(xM-2.5,yP+4); ctx.lineTo(xM,yP+1.2); ctx.lineTo(xM+2.5,yP+4);
+      ctx.moveTo(xM-2.5,yP+dM-4); ctx.lineTo(xM,yP+dM-1.2); ctx.lineTo(xM+2.5,yP+dM-4); ctx.stroke();
+      ctx.font=fontStr(fs*0.7,true); ctx.fillStyle='#b45309'; ctx.textAlign='right'; ctx.textBaseline='middle';
+      ctx.fillText('0,78 MeV', xM-7, yP+dM/2+(dM<fs?-fs*0.8:0));
+      ctx.restore(); }
+  }
   ctx.font=fontStr(fs*0.95,true); ctx.textAlign='center'; ctx.textBaseline='top';
   ctx.fillStyle='#ef4444'; ctx.fillText('Protonen '+z, xA+halb/2, grund+5);
   ctx.fillStyle='#2563eb'; ctx.fillText('Neutronen '+n, xM+halb/2, grund+5);
@@ -553,11 +574,12 @@ function zeichneTopf(){
   const zeilen=[hoch(A)+sym+'  '+(el.name||'')+' · Z = '+z+' · N = '+n+' · A = '+A];
   if(!e) zeilen.push(z>94?'Zu diesem Kern liegen hier keine Daten (Tabelle bis Z = 94).':'Dieses Nuklid gibt es in der Tabelle nicht – ein solcher Kern hält nicht zusammen.');
   else if(e[2]===0){ zeilen.push('stabil'+(e[7]?(' · natürliche Häufigkeit '+String(e[7]).replace('.',',')+' %'):''));
-    zeilen.push('Beide Hälften sind etwa gleich hoch gefüllt – das ist der Grund für die Stabilität.'); }
+    zeilen.push('Beide Hälften sind etwa gleich hoch gefüllt – das ist der Grund für die Stabilität.');
+    zeilen.push('Der gelbe Streifen zeigt 0,78 MeV: So viel bringt ein Neutron als größere Masse mit.'); }
   else { const art=e[3]||'';
     zeilen.push('Halbwertszeit '+hlText(e[2])+' · '+(ART[art]||art||'Umwandlung'));
-    const erkl={'B-':'Ein Neutron wird zum Proton: die Neutronenhälfte ist zu hoch gefüllt.',
-                'B+':'Ein Proton wird zum Neutron: die Protonenhälfte ist zu hoch gefüllt.',
+    const erkl={'B-':'Ein Neutron wird zum Proton – dafür darf es sogar bis zu 0,78 MeV unter dem Protonenniveau liegen (gelber Streifen).',
+                'B+':'Ein Proton wird zum Neutron: Elektroneneinfang ab 0,78 MeV Überschuss, β⁺ erst ab 1,80 MeV (das Positron muss mit entstehen).',
                 'A':'Zwei Protonen und zwei Neutronen verlassen den Kern als α-Teilchen – durch den Coulombwall hindurch.',
                 'N':'Ein Neutron verlässt den Kern.','P':'Ein Proton verlässt den Kern.',
                 'SF':'Der Kern zerfällt in zwei große Bruchstücke.'}[art];
@@ -566,6 +588,7 @@ function zeichneTopf(){
     if(pr) zeilen.push('Danach: '+hoch(pr[0]+pr[1])+(elOf(pr[0]).sym||'?')+'  (Z = '+pr[0]+', N = '+pr[1]+')'); }
   const mz=MAGIC.includes(z), mn=MAGIC.includes(n);
   if(mz||mn) zeilen.push((mz&&mn?'Z und N sind magische Zahlen':mz?'Z ist eine magische Zahl':'N ist eine magische Zahl')+' – abgeschlossene Schale, besonders fest gebunden.');
+  zeilen.push('Die Stufen sind schematisch gleich weit auseinander; ein Schritt steht für etwa 5 MeV.');
   ctx.textAlign='left'; ctx.textBaseline='top';
   let y=unten+2;
   zeilen.forEach((t,i)=>{ zeile(ctx,t,8,y,i===0?fs*1.08:fs*0.9,i===0,
