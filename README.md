@@ -1328,9 +1328,18 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   - **Wird mit dem Projekt gespeichert:** Die Konstruktion – ob aus einer Datei geladen oder von Hand
     gebaut – wird nach jeder Eingabe in das Tafel-Projekt übernommen (bis etwa 4,5 MB) und ist beim
     nächsten Öffnen wieder da. Früher war der Inhalt nach dem Neuladen verloren.
-  - Im Fenster **Einfügen → GeoGebra** gibt es dafür den Knopf **„📂 ggb-Datei vom Gerät wählen"**;
-    das Feld **Material-ID oder Link** bleibt für Materialien, die auf geogebra.org liegen (die
-    werden als Webseite eingebettet und nicht mitgespeichert).
+  - Im Fenster **Einfügen → GeoGebra** gibt es dafür den Knopf **„📂 ggb-Datei vom Gerät wählen"**.
+    Dieselbe Datei lässt sich auch über den allgemeinen Dateiknopf unter **Einfügen → Datei**
+    wählen – eine **.ggb**-Datei landet von dort genauso in der GeoGebra-App auf der Tafel. Das Feld
+    **Material-ID oder Link** bleibt für Materialien, die auf geogebra.org liegen (die werden als
+    Webseite eingebettet und nicht mitgespeichert).
+  - **„⇪ Teilen (QR-Code)":** Bei einem über **Material-ID oder Link** eingebetteten Material steht
+    im Kontextmenü ein Teilen-Knopf. Er öffnet das **QR-Fenster** mit der Adresse des Materials
+    (`geogebra.org/m/…`): Die Klasse scannt den Code und hat **dasselbe Material** auf dem eigenen
+    Gerät – dieselbe Logik wie der Teilen-Knopf der Tafel-Werkzeuge. Der Code ist schon im Fenster
+    groß genug zum Abscannen, **„Auf Seite einfügen"** legt ihn zusätzlich als Bild auf die Tafel.
+    Bei einer **eingebetteten ggb-Datei** gibt es den Knopf nicht – sie liegt ja nur im Projekt und
+    hat keine Adresse im Netz.
 - **CODAP** (Werkzeug, Statistik): bettet das Statistik-Werkzeug **CODAP v3** (Concord Consortium,
   Open Source, codap3.concord.org) ein – Daten in **Tabellen** sammeln, per Ziehen in **Graphen**
   darstellen (Punkt-, Streu-, Säulen-, Boxplot …), Mittelwerte/Geraden einzeichnen, Beispieldaten
