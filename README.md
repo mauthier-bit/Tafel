@@ -2030,7 +2030,7 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
    Figuren & Körper · 3D-Koordinatensystem — **3.** GeoGebra-App · CODAP · Diagramm · Zufall ·
    Vierfeldertafel — **4.** Baumdiagramm · Wahrscheinlichkeitsrechner · **Tabellenkalkulation** ·
    Motion-Tracker · **Mathe und Physik Geschichte** — **5.** Stromkreis · Optiklabor · Wellenwanne ·
-   Periodensystem · Nuklidkarte — **6.** **Video-Physik** · **Audio-Physik** · Messwert-Analyse ·
+   **Atomphysik** · **Induktion** — **6.** **Video-Physik** · **Audio-Physik** · Messwert-Analyse ·
    **Versuchsprotokoll** · Einheitenumrechner.
    Die Aufklappmenüs legen sich **nie über die Werkzeugleiste**: Sie öffnen neben ihr, bleiben unter
    der oberen Leiste und nehmen bei schmalem Fenster **weniger Spalten** (bei wenig Höhe lassen sie
@@ -2225,14 +2225,40 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   - **Einrasten:** besondere Winkel (Vielfache von 30° und 45°) und die zugehörigen Werte
     (0, ±½, ±½√2, ±½√3, ±1; bei tan 0, ±⅓√3, ±1, ±√3) rasten beim Ziehen ein; ohne Einrasten ganze Grad
     bzw. Hundertstel. **Besondere Winkel** markiert diese am Kreis, **Bogenmaß** beschriftet sie mit π.
-- **Periodensystem** (Mathe & Physik): alle **118 Elemente** mit Symbol, Name, Ordnungszahl und Atommasse.
+- **Atomphysik** (Mathe & Physik): ein Werkzeug mit **vier Reitern**, die zusammen vom Periodensystem
+  bis in den Kern führen. Oben steht die Reiterleiste, darunter der jeweilige Inhalt; jeder Reiter merkt
+  sich seinen Stand, auch über das Speichern des Projekts hinweg.
+  - **Periodensystem** und **Nuklidkarte** sind unverändert die bisherigen Werkzeuge (siehe unten) –
+    sie laufen im Reiter mit allen Knöpfen weiter wie zuvor.
+  - **Hülle: Schalen und Energien** zeigt links die **Energiestufen** (1s, 2s, 2p, 3s …) als Kästchen
+    mit Elektronenpfeilen und rechts das **Schalenbild** (K, L, M … mit der Zahl der Elektronen) zum
+    ausgewählten Element. Die Elektronen lassen sich **einzeln setzen** (− / + / alle / ↺): So entsteht
+    die Besetzung Schritt für Schritt nach der **Aufbaureihenfolge**, das zuletzt gesetzte Elektron ist
+    hervorgehoben, und in den Kästchen sieht man die **Hundsche Regel** (erst einfach besetzen, dann
+    paaren). Unten stehen Konfiguration, Schalenbesetzung, **Periode und Gruppe** sowie die Zahl der
+    **Außenelektronen** – damit wird die Anordnung im Periodensystem erklärt. Weicht die wirkliche
+    Konfiguration von der Reihenfolge ab (Chrom, Kupfer, Silber, Gold …), steht sie als Hinweis darunter.
+  - **Kernpotentialtopf** stellt **Protonen und Neutronen** in zwei Töpfen nebeneinander dar, gefüllt
+    nach den Schalen der magischen Zahlen **2, 8, 20, 28, 50, 82, 126**; eine abgeschlossene Schale wird
+    grün hervorgehoben. Der **Protonentopf ist flacher** (gleiche Ladungen stoßen sich ab) und hat außen
+    den **Coulombwall** – deshalb liegen die Protonenstufen höher als die Neutronenstufen. Protonen und
+    Neutronen lassen sich **einzeln hinzufügen und wegnehmen**; darunter stehen Nuklid, Massenzahl,
+    **Halbwertszeit und Zerfallsart** aus denselben Daten wie in der Nuklidkarte, dazu der Grund
+    („Ein Neutron wird zum Proton: der Neutronentopf ist zu voll") und der **Tochterkern**.
+    **„Umwandlung ausführen"** springt dorthin – so wird die Nuklidkarte von innen heraus verständlich.
+- **Induktion und Feldlinien** (Mathe & Physik, Symbol: eine **Spule**): Wann entsteht eine Spannung?
+  Ein **Film** führt in Kapiteln durch Grundidee, bewegten Magneten, bewegte Spule und Homogenität,
+  daneben lässt sich alles **selbst ausprobieren**. Zwei Niveaus: **Klasse 10** (qualitativ, LehrplanPlus)
+  und **Oberstufe** (mit Induktionsgesetz). Die Szene zeigt Magnet, **Feldlinien** und Spule, darunter
+  laufen **Zahl der Feldlinien** und **Spannung** als Diagramme über der Zeit mit.
+- **Periodensystem** (im Reiter „Periodensystem" der Atomphysik): alle **118 Elemente** mit Symbol, Name, Ordnungszahl und Atommasse.
   Ein Tipp auf ein Element öffnet eine **Infokarte** (Atommasse, Kategorie, Zustand bei 20 °C, Schmelz- und
   Siedepunkt, Dichte, Elektronenkonfiguration); das **Suchfeld** findet Symbol, Name oder Ordnungszahl.
   **„Nebengruppen"** klappt die Gruppen 3–12 weg (Kurzform mit den Hauptgruppen), **„La/Ac"** blendet die
   Lanthanoide und Actinoide ein oder aus. Die **Einfärbung** lässt sich umstellen: Kategorien, Zustand bei 20 °C,
   Metalle/Nichtmetalle oder ohne Farbe – jeweils mit Legende. Dazu **Atommasse** und **Name** ein-/ausblendbar,
   A−/A+, 🖼 Tafel, 📋 Kopieren und **🖨 Drucken** (Querformat). Läuft vollständig offline.
-- **Nuklidkarte** (Mathe & Physik): alle **3082 Nuklide bis Plutonium (Z ≤ 94)** – N waagerecht,
+- **Nuklidkarte** (im Reiter „Nuklidkarte" der Atomphysik): alle **3082 Nuklide bis Plutonium (Z ≤ 94)** – N waagerecht,
   Z senkrecht, eingefärbt nach Zerfallsart: **stabil** (schwarz), **α** (gelb), **β⁻** (blau),
   **β⁺/e⁻-Einfang** (rot), **Protonen-** und **Neutronen-Emission**, **spontane Spaltung**; dazu eine Legende.
   **Zoomen** mit zwei Fingern, den Knöpfen **− / +** oder am Rechner mit dem Mausrad, **Verschieben**
@@ -2357,7 +2383,7 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     oder Video) oder eines von rund **28 Werkzeugen** aus **Mathe & Physik** (Gleichungslöser,
     Funktionsplotter, Ableitungen, Einheitskreis, 3D-Koordinatensystem, Vierfeldertafel, Baumdiagramm,
     Wahrscheinlichkeitsrechner, Messwert-Analyse, Bruch, Stellenwerttafel, Einheitenumrechner,
-    Stromkreis, Optiklabor, Wellenwanne, Periodensystem, Nuklidkarte, Tabellenkalkulation) und
+    Stromkreis, Optiklabor, Wellenwanne, Atomphysik, Induktion, Tabellenkalkulation) und
     **Diverses** (Tabelle, Lückentext, Zuordnen, Glossar, Kreuzworträtsel, Buchstabengitter, Wortwolke,
     Zeitleiste, Mindmap, Pinnwand). Orte mit Aktivität tragen ein kleines **▸** bzw. **i**, bei mehreren
     die **Anzahl**. Beim Antippen öffnet sich ein Fenster mit allen Aufträgen und je einem Knopf pro
@@ -2801,6 +2827,8 @@ luecken.html          ← Lückentext (Lücken wählen oder zufällig, tippen od
 lernkarte.html        ← Lernlandkarte (Orte, Wege, Freischaltung, Unterkarten)
 nuklid.html, nuklid-data.js ← Nuklidkarte bis Z = 94 mit Zerfallsreihen (offline)
 pse.html, pse-data.js ← Periodensystem der Elemente (alle 118 Elemente, offline)
+atomphysik.html       ← Atomphysik: vier Reiter (Periodensystem, Nuklidkarte, Hülle, Kernpotentialtopf)
+induktion.html        ← Induktion und Feldlinien (Film und eigenes Ausprobieren)
 mindmap.html          ← Mindmap (Diverses)
 pinnwand.html         ← Pinnwand mit Karten (Diverses)
 kreuzwort.html        ← Kreuzworträtsel aus einer Begriffsliste

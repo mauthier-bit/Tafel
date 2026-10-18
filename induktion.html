@@ -1,0 +1,734 @@
+<!doctype html><html lang="de" data-theme="light"><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Induktion und Feldlinien</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: Film-Bühne links (Szene, Diagramm, Steuerung), Messpult rechts; schmal: alles untereinander */
+:root{
+  --bg:#ebeff4; --surface:#ffffff; --surface2:#f4f6f9; --ink:#141d29; --muted:#5a6576; --rule:#d3dae3;
+  --field:#7d8ca6; --flux:#df7a00; --fluxSoft:rgba(223,122,0,.15); --u:#0d857f; --uSoft:rgba(13,133,127,.16);
+  --north:#cf3434; --south:#2a9652; --copper:#b2622a; --iron:#a3abb6;
+  --accent:#1d5bb8; --onAccent:#ffffff; --flux2:#5a4fd0;
+  --font: system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --mono: ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0e131a; --surface:#171f29; --surface2:#1d2632; --ink:#e5eaf1; --muted:#9aa6b5; --rule:#2b3644;
+  --field:#6e809c; --flux:#ffae3a; --fluxSoft:rgba(255,174,58,.16); --u:#3cc5bc; --uSoft:rgba(60,197,188,.16);
+  --north:#e2524a; --south:#41b26b; --copper:#d4884c; --iron:#5d6876;
+  --accent:#6fa3f0; --onAccent:#0e131a; --flux2:#9a92f5; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#0e131a; --surface:#171f29; --surface2:#1d2632; --ink:#e5eaf1; --muted:#9aa6b5; --rule:#2b3644;
+  --field:#6e809c; --flux:#ffae3a; --fluxSoft:rgba(255,174,58,.16); --u:#3cc5bc; --uSoft:rgba(60,197,188,.16);
+  --north:#e2524a; --south:#41b26b; --copper:#d4884c; --iron:#5d6876;
+  --accent:#6fa3f0; --onAccent:#0e131a; --flux2:#9a92f5; color-scheme:dark }
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.45;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:12px 20px;
+  -webkit-tap-highlight-color:transparent}
+button,input{font:inherit;color:inherit}
+.app{max-width:1280px;margin:0 auto;display:flex;flex-direction:column;gap:10px}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+h1{margin:0;font-size:1.3rem;letter-spacing:-.01em;text-wrap:balance}
+h1 span{color:var(--muted);font-weight:500}
+.seg{display:inline-flex;background:var(--surface);border:1px solid var(--rule);border-radius:10px;padding:3px;gap:3px}
+.seg button{border:0;background:transparent;padding:7px 14px;border-radius:7px;cursor:pointer;font-weight:600;color:var(--muted);min-height:38px}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--onAccent)}
+.seg button:focus-visible,.btn:focus-visible,.chap:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+nav.chapters{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;scrollbar-width:thin}
+.chap{flex:0 0 auto;display:flex;align-items:center;gap:8px;border:1px solid var(--rule);background:var(--surface);border-radius:999px;padding:6px 13px 6px 6px;cursor:pointer;min-height:38px;white-space:nowrap}
+.chap b{display:grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--surface2);font-size:.8rem;font-variant-numeric:tabular-nums}
+.chap[aria-current="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.chap[aria-current="true"] b{background:var(--accent);color:var(--onAccent)}
+.chap.done b{background:var(--fluxSoft);color:var(--flux)}
+main{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:12px;align-items:start}
+.viz{min-width:0;display:flex;flex-direction:column;gap:8px}
+.sceneWrap{position:relative;background:var(--surface);border:1px solid var(--rule);border-radius:14px;overflow:hidden;aspect-ratio:2/1;max-width:100%}
+.sceneWrap canvas,.graphWrap canvas{display:block;width:100%;height:100%}
+.tag{position:absolute;left:12px;top:10px;font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;pointer-events:none}
+.bigplay{position:absolute;inset:0;margin:auto;width:84px;height:84px;border-radius:50%;border:0;background:var(--accent);color:var(--onAccent);cursor:pointer;display:grid;place-items:center;box-shadow:0 6px 24px rgba(0,0,0,.25)}
+.bigplay svg{width:34px;height:34px;margin-left:5px}
+.graphWrap{position:relative;background:var(--surface);border:1px solid var(--rule);border-radius:14px;overflow:hidden;height:150px}
+.graphWrap.tall{height:230px}
+.controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--rule);border-radius:14px;padding:8px 12px}
+.btn{border:1px solid var(--rule);background:var(--surface2);border-radius:9px;min-width:42px;min-height:42px;padding:0 12px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;font-weight:600}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--onAccent)}
+.btn svg{width:18px;height:18px}
+#scrub{flex:1 1 160px;min-width:120px;accent-color:var(--accent);height:30px}
+.time{font-variant-numeric:tabular-nums;color:var(--muted);font-size:.9rem;min-width:96px;text-align:right}
+aside.panel{display:flex;flex-direction:column;gap:10px;min-width:0}
+.card{background:var(--surface);border:1px solid var(--rule);border-radius:14px;padding:14px}
+.lbl{font-size:.74rem;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:650}
+.count{display:flex;align-items:baseline;gap:10px;margin-top:2px}
+.count .n{font-size:3rem;font-weight:750;line-height:1;color:var(--flux);font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.count .unit{color:var(--muted);font-size:.92rem;line-height:1.25}
+.rate{margin-top:8px;font-variant-numeric:tabular-nums;font-size:.95rem}
+.rate b{font-family:var(--mono);font-weight:600}
+.chip{display:inline-block;margin-top:8px;padding:4px 10px;border-radius:999px;font-size:.85rem;font-weight:650;background:var(--surface2);color:var(--muted)}
+.chip.on{background:var(--uSoft);color:var(--u)}
+.meter{position:relative}
+.meter svg{width:100%;height:auto;display:block}
+.meter.covered svg{opacity:.18}
+.meterHidden{position:absolute;inset:34px 14px 14px;display:flex;align-items:center;justify-content:center;text-align:center;color:var(--muted);font-weight:600;font-size:.92rem}
+.meter .arc{fill:none;stroke:var(--rule);stroke-width:2}
+.meter .tick{stroke:var(--muted);stroke-width:1.5}
+.meter .tick.zero{stroke:var(--ink);stroke-width:2}
+.meter text{fill:var(--muted);font-family:var(--font);font-size:13px}
+.meter .needle{stroke:var(--u);stroke-width:3;stroke-linecap:round}
+.meter .hub{fill:var(--ink)}
+.caption p{margin:6px 0 0;font-size:1.08rem;line-height:1.5;max-width:60ch;transition:opacity .25s}
+.dots{display:flex;gap:5px;margin-top:10px}
+.dots i{width:22px;height:4px;border-radius:2px;background:var(--rule)}
+.dots i.on{background:var(--accent)}
+.merk{margin-top:12px;border-top:1px solid var(--rule);padding-top:10px;font-size:.95rem}
+.merk ul{margin:6px 0 0;padding-left:1.1em}
+.merk li{margin:3px 0}
+.next{margin-top:12px}
+.levels{display:flex;gap:4px;border-bottom:2px solid var(--rule)}
+.levels button{border:0;background:transparent;cursor:pointer;padding:10px 16px 9px;margin-bottom:-2px;border-bottom:3px solid transparent;font-weight:700;font-size:1rem;color:var(--muted);display:flex;flex-direction:column;align-items:flex-start;line-height:1.2;min-height:44px}
+.levels button small{font-weight:500;font-size:.8rem}
+.levels button[aria-selected="true"]{color:var(--accent);border-bottom-color:var(--accent)}
+.levels button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.trend{margin-top:8px;font-size:1rem;font-weight:650;display:flex;align-items:center;gap:8px}
+.trend i{font-style:normal;display:grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--surface2);color:var(--muted)}
+.trend.up i,.trend.down i{background:var(--fluxSoft);color:var(--flux)}
+dl.vals{display:grid;grid-template-columns:auto 1fr;gap:5px 12px;margin:8px 0 0;font-variant-numeric:tabular-nums}
+dl.vals dt{color:var(--muted);font-size:.9rem}
+dl.vals dd{margin:0;text-align:right;font-family:var(--mono);font-size:.92rem;font-weight:600}
+dl.vals .phi{color:var(--flux)}
+dl.vals .phi2{color:var(--flux2)}
+.diagHidden{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;padding:10px 16px;background:repeating-linear-gradient(135deg,var(--surface) 0 10px,var(--surface2) 10px 20px);text-align:center}
+.diagHidden p{margin:0;color:var(--muted);font-weight:600}
+.chap.task{border-style:dashed}
+.chap.task b{background:var(--fluxSoft);color:var(--flux)}
+.task-text{margin-top:6px;font-size:1rem;line-height:1.5}
+.task-text p{margin:0 0 8px}
+.task-text ol{margin:0;padding-left:1.3em}
+.task-text li{margin:4px 0}
+details.sol{margin-top:12px;border-top:1px solid var(--rule);padding-top:10px}
+details.sol summary{cursor:pointer;font-weight:700;color:var(--accent);min-height:32px;display:flex;align-items:center}
+details.sol ul{margin:6px 0 0;padding-left:1.1em;font-size:.95rem}
+details.sol li{margin:5px 0}
+dl.vals .uind{color:var(--u);font-size:1.15rem}
+dl.vals dt.uind{font-family:var(--font);font-size:.9rem}
+.lab .row{display:flex;flex-direction:column;gap:4px;margin-top:12px}
+.lab .row label{display:flex;justify-content:space-between;gap:8px;font-weight:600;font-size:.92rem}
+.lab .row label span{font-variant-numeric:tabular-nums;color:var(--muted);font-weight:500}
+.lab input[type=range]{width:100%;accent-color:var(--accent);height:30px}
+.lab .hint{margin-top:12px;color:var(--muted);font-size:.88rem}
+.lab .seg{margin-top:10px;width:100%}
+.lab .seg button{flex:1;font-size:.88rem;padding:7px 8px}
+@media (max-width:880px){ main{grid-template-columns:minmax(0,1fr)} .count .n{font-size:2.5rem} }
+@media (max-width:520px){ .sceneWrap{aspect-ratio:1.55/1} .graphWrap{height:130px} h1{font-size:1.1rem} }
+@media (prefers-reduced-motion:reduce){ .caption p{transition:none} }
+</style>
+
+<div class="app">
+  <header>
+    <h1>Induktion und Feldlinien <span>· Wann entsteht eine Spannung?</span></h1>
+    <div class="seg" role="group" aria-label="Modus">
+      <button id="mFilm" aria-pressed="true">Film</button>
+      <button id="mLab" aria-pressed="false">Selbst ausprobieren</button>
+    </div>
+  </header>
+  <div class="levels" role="tablist" aria-label="Niveau">
+    <button role="tab" id="lvQ" aria-selected="true">Klasse 10<small>qualitativ · LehrplanPlus</small></button>
+    <button role="tab" id="lvO" aria-selected="false">Oberstufe<small>mit Induktionsgesetz</small></button>
+  </div>
+  <nav class="chapters" id="chapters" aria-label="Kapitel"></nav>
+
+  <main>
+    <section class="viz">
+      <div class="sceneWrap" id="sceneWrap">
+        <canvas id="scene" aria-label="Animation: Magnetfeld, Feldlinien und Spule"></canvas>
+        <div class="tag" id="tag"></div>
+        <button class="bigplay" id="bigplay" aria-label="Abspielen"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M6 4l15 8-15 8z"/></svg></button>
+      </div>
+      <div class="graphWrap" id="graphWrap"><canvas id="graph" aria-label="Diagramm: Anzahl der Feldlinien und Induktionsspannung über der Zeit"></canvas>
+        <div class="diagHidden" id="diagHidden" hidden><p>Diagramm ausgeblendet: Skizziere zuerst deine Vermutung.</p><button class="btn primary" id="diagShow">Diagramm einblenden</button></div></div>
+      <div class="controls" id="controls">
+        <button class="btn primary" id="play" aria-label="Abspielen"></button>
+        <button class="btn" id="restart" aria-label="Von vorn"><svg viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" d="M4 12a8 8 0 1 0 2.4-5.7M4 4v4.5h4.5"/></svg></button>
+        <input type="range" id="scrub" min="0" max="12" step="0.01" value="0" aria-label="Zeit">
+        <span class="time" id="time">0,0 s / 12,0 s</span>
+        <button class="btn" id="diagBtn" aria-pressed="false" hidden>Diagramm einblenden</button>
+        <div class="seg" role="group" aria-label="Tempo">
+          <button id="sp05" aria-pressed="false">0,5×</button>
+          <button id="sp1" aria-pressed="true">1×</button>
+        </div>
+      </div>
+    </section>
+
+    <aside class="panel">
+      <div class="card">
+        <div class="lbl">Feldlinien durch die Spule</div>
+        <div class="count" id="cntBox"><span class="n" id="cnt">0</span><span class="unit" id="cntUnit">Feldlinien</span></div>
+        <div id="roQ"><div class="trend" id="trend"><i>=</i><span>Die Anzahl bleibt gleich.</span></div></div>
+        <dl class="vals" id="roO" hidden>
+          <dt class="phi">Feldlinien durch die Spule</dt><dd class="phi" id="oCnt"></dd>
+          <dt>Flussdichte B</dt><dd id="oB"></dd>
+          <dt id="oAlbl">durchsetzte Fläche A</dt><dd id="oA"></dd>
+          <dt class="phi">Fluss Φ = B · A</dt><dd class="phi" id="oPhi"></dd>
+          <dt>Änderung dΦ/dt</dt><dd id="oDphi"></dd>
+          <dt>Windungszahl n</dt><dd id="oN"></dd>
+          <dt class="uind">U<sub>ind</sub> = −n · dΦ/dt</dt><dd class="uind" id="oU"></dd>
+        </dl>
+        <dl class="vals" id="roT" hidden>
+          <dt class="phi">Feldlinien durch Spule 1</dt><dd class="phi" id="tN1"></dd>
+          <dt class="phi2">Feldlinien durch Spule 2</dt><dd class="phi2" id="tN2"></dd>
+          <dt class="tO">Fluss Φ₁ / Φ₂</dt><dd class="tO" id="tPhi"></dd>
+          <dt class="tO tU">U₁ / U₂</dt><dd class="tO tU" id="tU12"></dd>
+          <dt class="uind tO tU">U = ½ (U₁ + U₂)</dt><dd class="uind tO tU" id="tU"></dd>
+        </dl>
+        <span class="chip" id="chip">keine Induktionsspannung</span>
+      </div>
+      <div class="card meter" id="meterCard">
+        <div class="lbl">Spannungsmessgerät an der Spule</div>
+        <svg viewBox="0 0 220 122" aria-hidden="true">
+          <path class="arc" d="M 40.7 75 A 80 80 0 0 1 179.3 75"/>
+          <g id="ticks"></g>
+          <text x="38" y="100" text-anchor="middle" id="mL">−</text>
+          <text x="110" y="16" text-anchor="middle">0</text>
+          <text x="182" y="100" text-anchor="middle" id="mR">+</text>
+          <text x="70" y="114" text-anchor="middle" id="mUnit"></text>
+          <text x="150" y="112" text-anchor="middle" style="font-weight:700;fill:var(--ink)">U</text>
+          <line class="needle" id="needle" x1="110" y1="115" x2="110" y2="42"/>
+          <circle class="hub" cx="110" cy="115" r="5"/>
+        </svg>
+        <div class="meterHidden" id="meterHidden" hidden>Messgerät verdeckt.<br>Es erscheint zusammen mit dem Diagramm.</div>
+      </div>
+      <div class="card caption" id="captionCard">
+        <div class="lbl" id="capTitle">Kapitel</div>
+        <p id="caption"></p>
+        <div class="dots" id="dots"></div>
+        <div class="task-text" id="taskText" hidden></div>
+        <details class="sol" id="sol" hidden><summary>Lösungshinweise</summary><div id="solText"></div></details>
+        <div class="merk" id="merkQ" hidden>
+          <b>Merke</b>
+          <ul>
+            <li>In einer Spule wird nur dann eine Spannung induziert, wenn sich die Anzahl der Feldlinien durch die Spule ändert.</li>
+            <li>Das gelingt durch Bewegung von Magnet oder Spule, durch ein stärker oder schwächer werdendes Feld, durch eine größer oder kleiner werdende Spulenfläche oder durch Drehen der Spule (Generator).</li>
+            <li>Je schneller die Änderung und je mehr Windungen die Spule hat, desto größer ist die Induktionsspannung.</li>
+            <li>Nimmt die Anzahl zu statt ab (oder umgekehrt), kehrt sich die Polung der Spannung um.</li>
+          </ul>
+        </div>
+        <div class="merk" id="merkO" hidden>
+          <b>Merke</b>
+          <ul>
+            <li>Magnetischer Fluss: Φ = B · A (B senkrecht zu A), Einheit 1 Wb = 1 T·m².</li>
+            <li>Induktionsgesetz: U<sub>ind</sub> = −n · dΦ/dt, also U<sub>ind</sub> = −n · (A · dB/dt + B · dA/dt).</li>
+            <li>Φ konstant ⇒ U<sub>ind</sub> = 0, auch bei Bewegung und auch bei großem B.</li>
+            <li>Drehung mit φ = ω · t: Φ = B · A · cos φ, U<sub>ind</sub> = n · B · A · ω · sin(ω · t) (Generator).</li>
+            <li>Das Minuszeichen beschreibt die lenzsche Regel.</li>
+          </ul>
+        </div>
+        <button class="btn primary next" id="next" hidden>Nächstes Kapitel ▸</button>
+      </div>
+      <div class="card lab" id="lab" hidden>
+        <div class="lbl">Selbst ausprobieren</div>
+        <div class="seg" role="group" aria-label="Feld">
+          <button id="fSmall" aria-pressed="true">Kleiner Magnet</button>
+          <button id="fBig" aria-pressed="false">Großes homogenes Feld</button>
+        </div>
+        <div class="row"><label for="sMag">Position Magnet <span id="vMag"></span></label><input type="range" id="sMag" min="-5.5" max="5.5" step="0.01"></div>
+        <div class="row"><label for="sCoil">Position Spule <span id="vCoil"></span></label><input type="range" id="sCoil" min="-5.5" max="5.5" step="0.01"></div>
+        <div class="row"><label for="sI">Stromstärke im Elektromagneten <span id="vI"></span></label><input type="range" id="sI" min="0" max="3" step="0.01"></div>
+        <div class="row"><label for="sA">Querschnittsfläche der Spule <span id="vA"></span></label><input type="range" id="sA" min="1" max="3.5" step="0.01"></div>
+        <div class="row" id="rowN"><label for="sN">Windungszahl n <span id="vN"></span></label><input type="range" id="sN" min="50" max="500" step="10"></div>
+        <p class="hint" id="labHint">Magnet und Spule lassen sich auch direkt im Bild mit dem Finger verschieben. Achte auf das Messgerät: Es schlägt nur aus, solange sich die Zahl oben ändert.</p>
+        <button class="btn" id="reset">Zurücksetzen</button>
+      </div>
+    </aside>
+  </main>
+</div>
+
+<script>
+(function(){
+"use strict";
+const d=0.5, H=2.4, PT=0.32, KX=0.5, KY=0.36, UMAX=24;
+const SMALL={W:3.5,D:3.5}, BIG={W:11.5,D:4.5};
+const BAYER=[[0,8,2,10],[12,4,14,6],[3,11,1,9],[15,7,13,5]];
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+function seg(t,p){ if(t<=p[0][0]) return p[0][1]; for(let i=1;i<p.length;i++){ if(t<=p[i][0]){const a=p[i-1],b=p[i]; return a[1]+(b[1]-a[1])*(t-a[0])/(b[0]-a[0]);} } return p[p.length-1][1]; }
+function fmt(v,dig){ const s=Math.abs(v).toFixed(dig).replace('.',','); const zero=!/[1-9]/.test(s); return (v<0&&!zero?'−':'')+s; }
+function fmtS(v,dig){ const s=fmt(v,dig); return (v>0&&/[1-9]/.test(s)?'+':'')+s; }
+const base=(o)=>Object.assign({mx:0,W:SMALL.W,D:SMALL.D,cx:0,a:2.5,b:2.5,B:1,el:false,reveal:null},o);
+
+const chapters=[
+ {short:'Grundidee',title:{q:'Feldlinien durch die Spule zählen',o:'Magnetischer Fluss Φ = B · A'},T:12,
+  state:t=>base({reveal:t<3?-1:clamp((t-3)/4,0,1)}),
+  caps:{q:[[0,'Zwischen den Polen eines Magneten herrscht ein Magnetfeld. Wir zeichnen es mit Feldlinien: Je dichter die Linien, desto stärker das Feld.'],
+        [3,'Ein Teil der Feldlinien führt durch die Spule. Wir zählen diese Feldlinien.'],
+        [7.5,'Solange sich die Anzahl nicht ändert, zeigt das Messgerät keine Spannung an, obwohl ein kräftiges Feld durch die Spule geht.']],
+       o:[[0,'Zwischen den Polschuhen herrscht ein homogenes Feld mit der Flussdichte B = 100 mT. Die Dichte der Feldlinien veranschaulicht B.'],
+        [3,'Wir zählen die Feldlinien durch die Spulenfläche A. Ihre Anzahl ist proportional zum magnetischen Fluss Φ = B · A (B senkrecht zu A). Hier steht jede Linie für 10 µWb.'],
+        [7.5,'Φ = 100 mT · 25 cm² = 250 µWb ist konstant. Also ist dΦ/dt = 0 und damit U_ind = 0, obwohl B ≠ 0 ist.']]}},
+ {short:'Magnet bewegt',title:{q:'Der Magnet bewegt sich',o:'Relativbewegung: Magnet bewegt sich'},T:14,
+  state:t=>base({mx:seg(t,[[1.5,-5.5],[5,0],[8,0],[11.5,5.5]])}),
+  caps:{q:[[0,'Jetzt wird der Magnet bewegt. Die Spule bleibt in Ruhe.'],
+        [2.6,'Der Magnet schiebt sich über die Spule: Immer mehr Feldlinien führen hindurch. Die Anzahl ändert sich, also wird eine Spannung induziert.'],
+        [5,'Der Magnet steht still. Die Anzahl der Feldlinien bleibt gleich: keine Spannung.'],
+        [8,'Der Magnet wird weggezogen: Die Anzahl nimmt ab. Wieder entsteht eine Spannung, jetzt mit umgekehrter Polung.'],
+        [11.5,'Entscheidend ist also nicht, ob ein Feld da ist, sondern ob sich die Anzahl der Feldlinien durch die Spule ändert.']],
+       o:[[0,'Der Magnet bewegt sich mit v ≈ 3,1 cm/s auf die ruhende Spule zu (n = 200, Seitenlänge b = 5 cm).'],
+        [2.6,'Das Feld durchsetzt einen wachsenden Teil der Spule: A = b · x wächst linear, also auch Φ. Mit dΦ/dt = B · b · v ist U_ind = −n · B · b · v ≈ −31 mV konstant.'],
+        [5,'Die Spule liegt vollständig im Feld: Φ = 250 µWb bleibt konstant, also U_ind = 0.'],
+        [8,'Beim Wegziehen nimmt Φ mit gleicher Rate ab: U_ind ≈ +31 mV. Das Vorzeichen kehrt sich um (lenzsche Regel).'],
+        [11.5,'Nur die zeitliche Änderung des Flusses zählt: U_ind = −n · dΦ/dt.']]}},
+ {short:'Spule bewegt',title:{q:'Die Spule bewegt sich',o:'Relativbewegung: Spule bewegt sich'},T:14,
+  state:t=>base({cx:seg(t,[[1.5,-5.5],[5,0],[8,0],[11.5,5.5]])}),
+  caps:{q:[[0,'Nun bleibt der Magnet stehen, und die Spule wird bewegt.'],
+        [2.6,'Die Spule fährt ins Feld: Die Anzahl der Feldlinien durch die Spule nimmt zu. Es wird eine Spannung induziert.'],
+        [5,'Die Spule ruht im Feld: gleichbleibende Anzahl, keine Spannung.'],
+        [8,'Die Spule verlässt das Feld: Die Anzahl nimmt ab, die Spannung hat umgekehrte Polung.'],
+        [11.5,'Es kommt nur auf die Bewegung von Magnet und Spule zueinander an. Wer sich bewegt, ist gleichgültig.']],
+       o:[[0,'Jetzt ruht der Magnet, und die Spule bewegt sich mit v ≈ 3,1 cm/s.'],
+        [2.6,'Gleiches Ergebnis: A wächst, Φ steigt linear, U_ind = −n · B · b · v ≈ −31 mV. Entscheidend ist die Relativbewegung.'],
+        [5,'Φ konstant ⇒ U_ind = 0.'],
+        [8,'Beim Verlassen des Feldes sinkt Φ: U_ind ≈ +31 mV.'],
+        [11.5,'Hintergrund: Hier wirkt die Lorentzkraft auf die bewegten Leitungselektronen. Beide Sichtweisen führen auf dasselbe Induktionsgesetz.']]}},
+ {short:'Homogenes Feld',title:{q:'Bewegung ohne Änderung',o:'Bewegung bei konstantem Fluss'},T:12,
+  state:t=>base({W:BIG.W,D:BIG.D,cx:seg(t,[[1.5,-3],[5.5,3],[7,3],[10.5,-3]])}),
+  caps:{q:[[0,'Ein Sonderfall: Die Spule bewegt sich in einem großen, überall gleich starken Feld.'],
+        [2,'Die Spule bewegt sich, doch es führen immer gleich viele Feldlinien hindurch.'],
+        [6,'Die Anzahl ändert sich nicht, also wird keine Spannung induziert. Bewegung allein reicht nicht aus!']],
+       o:[[0,'Die Spule bewegt sich vollständig innerhalb eines homogenen Feldes.'],
+        [2,'B und die durchsetzte Fläche A bleiben konstant, also auch Φ = B · A = 250 µWb.'],
+        [6,'dΦ/dt = 0 ⇒ U_ind = 0. In der Lorentzkraft-Sicht: Die Spannungen in den gegenüberliegenden Leiterstücken heben sich auf.']]}},
+ {short:'Feldstärke',title:{q:'Das Feld wird stärker oder schwächer',o:'Änderung der Flussdichte B'},T:13,
+  state:t=>base({el:true,B:seg(t,[[1.5,0],[5.5,1],[8,1],[9.5,0]])}),
+  caps:{q:[[0,'Jetzt ein Elektromagnet. Die Stromstärke I in seinen Windungen bestimmt, wie stark das Feld ist.'],
+        [1.5,'Die Stromstärke steigt langsam: Das Feld wird stärker, die Feldlinien liegen dichter. Mehr Feldlinien führen durch die Spule.'],
+        [5.5,'Konstante Stromstärke bedeutet konstantes Feld und gleichbleibende Anzahl: keine Spannung.'],
+        [8,'Der Strom wird schnell abgeschaltet: Die Anzahl sinkt in kurzer Zeit. Der Ausschlag ist größer als beim langsamen Einschalten.'],
+        [10.5,'Je schneller sich die Anzahl der Feldlinien ändert, desto größer ist die Induktionsspannung.']],
+       o:[[0,'Elektromagnet: B ist proportional zur Stromstärke I, bei I = 3,0 A ist B = 100 mT. Die Fläche A = 25 cm² bleibt konstant.'],
+        [1.5,'I steigt in 4 s gleichmäßig: dB/dt = 25 mT/s. Mit dΦ/dt = A · dB/dt = 62,5 µWb/s folgt U_ind = −n · A · dB/dt ≈ −12,5 mV.'],
+        [5.5,'B konstant ⇒ Φ konstant ⇒ U_ind = 0.'],
+        [8,'Abschalten in 1,5 s: dB/dt ≈ −66,7 mT/s. U_ind ≈ +33 mV ist fast dreimal so groß wie beim Einschalten.'],
+        [10.5,'Ändert sich nur B, gilt U_ind = −n · A · dB/dt.']]}},
+ {short:'Fläche',title:{q:'Die Spulenfläche ändert sich',o:'Änderung der Fläche A'},T:12.5,
+  state:t=>{const s=Math.sqrt(seg(t,[[1.5,2.25],[5,12.25],[7.5,12.25],[9.5,2.25]])); return base({W:BIG.W,D:BIG.D,a:s,b:s});},
+  caps:{q:[[0,'Zuletzt bleibt das Feld gleich, aber die Querschnittsfläche der Spule ändert sich, zum Beispiel bei einer dehnbaren Leiterschleife.'],
+        [1.5,'Die Fläche wird größer: Mehr Feldlinien führen hindurch. Es wird eine Spannung induziert.'],
+        [5,'Die Fläche bleibt gleich: gleichbleibende Anzahl, keine Spannung.'],
+        [7.5,'Die Fläche wird schnell kleiner: Die Anzahl nimmt rasch ab. Größerer Ausschlag, umgekehrte Polung.'],
+        [10,'Auch hier gilt: Nur eine Änderung der Feldlinienzahl erzeugt eine Spannung.']],
+       o:[[0,'Jetzt ist B = 100 mT konstant, aber die Fläche A der Leiterschleife ändert sich.'],
+        [1.5,'A wächst in 3,5 s gleichmäßig von 9 cm² auf 49 cm²: dA/dt ≈ 11,4 cm²/s, also U_ind = −n · B · dA/dt ≈ −23 mV.'],
+        [5,'A konstant ⇒ Φ konstant ⇒ U_ind = 0.'],
+        [7.5,'A schrumpft in 2 s von 49 cm² auf 9 cm²: dA/dt = −20 cm²/s, also U_ind = +40 mV.'],
+        [10,'Ändert sich nur A, gilt U_ind = −n · B · dA/dt.']]}},
+ {short:'Drehung',title:{q:'Die Spule dreht sich im Feld',o:'Drehung: Φ = B · A · cos φ'},T:15,nW:80,umax:55,signed:true,
+  state:t=>{ const t1=1.5, t2=t1+2*Math.PI, t3=t2+2*Math.PI; const ph=t<t1?0:t<t2?(t-t1):t<t3?2*Math.PI+2*(t-t2):6*Math.PI; return base({W:BIG.W,D:BIG.D,rot:ph}); },
+  caps:{q:[[0,'Die Spule steht in einem großen, gleichmäßigen Feld. Jetzt wird sie um eine waagrechte Achse gedreht.'],
+        [1.5,'Kippt die Spule, führen immer weniger Feldlinien hindurch. Liegt sie parallel zu den Feldlinien, ist es keine einzige mehr.'],
+        [4.6,'Nach einer halben Drehung führen die Feldlinien wieder durch die Spule, aber von der anderen Seite (violett). Die Spannung wechselt ständig ihre Polung: Es entsteht eine Wechselspannung.'],
+        [7.8,'Jetzt dreht sich die Spule doppelt so schnell: Die Anzahl ändert sich schneller, der Ausschlag ist größer und wechselt doppelt so oft.'],
+        [12.5,'So funktioniert ein Generator: Durch das Drehen ändert sich ständig die Anzahl der Feldlinien durch die Spule.']],
+       o:[[0,'Die Spule (n = 80, A = 25 cm²) dreht sich im homogenen Feld B = 100 mT. φ ist der Winkel zwischen Flächennormale und Feldrichtung.'],
+        [1.5,'Wirksam ist nur die Projektion der Fläche senkrecht zum Feld: Φ = B · A · cos φ. Bei φ = 90° ist Φ = 0.'],
+        [4.6,'Für φ > 90° wird Φ negativ: Die Feldlinien durchsetzen die Fläche von der anderen Seite. Mit φ = ω · t folgt U_ind = n · B · A · ω · sin(ω · t).'],
+        [7.8,'Bei ω = 1 s⁻¹ war Û = 20 mV. Jetzt ist ω = 2 s⁻¹: Amplitude und Frequenz verdoppeln sich, Û = 40 mV.'],
+        [12.5,'U_ind ist maximal, wo Φ = 0 ist (größte Änderungsrate), und null, wo |Φ| maximal ist. Das ist das Generatorprinzip.']]}},
+ {short:'Zusammenfassung',title:{q:'Zusammenfassung',o:'Induktionsgesetz'},T:9,merk:true,
+  state:t=>base({}),
+  caps:{q:[[0,'Eine Induktionsspannung entsteht genau dann, wenn sich die Anzahl der Feldlinien durch die Spule ändert.'],
+        [3,'Das gelingt durch Bewegung von Magnet oder Spule, durch Änderung der Feldstärke, durch Änderung der Spulenfläche oder durch Drehen der Spule.'],
+        [6,'Je schneller sich die Anzahl ändert, desto größer ist die Spannung. Mehr Windungen verstärken den Effekt.']],
+       o:[[0,'Induktionsgesetz: U_ind = −n · dΦ/dt mit dem magnetischen Fluss Φ = B · A.'],
+        [3,'Produktregel: dΦ/dt = A · dB/dt + B · dA/dt. Feldänderung steckt im ersten Term, Bewegung und Flächenänderung im zweiten.'],
+        [6,'Das Minuszeichen drückt die lenzsche Regel aus: Der Induktionsstrom wirkt seiner Ursache entgegen.']]}},
+ {short:'Aufgabe',task:true,title:{q:'Magnet fällt durch zwei Spulen',o:'Magnet fällt durch zwei Spulen'},T:10.5,
+  state:t=>{ const tr=Math.max(0,(t-TK.hold)/TK.SL); return {my:TK.y0-0.5*TK.g*tr*tr, vy:-TK.g*tr, tr}; },
+  caps:{q:[[0,'']],o:[[0,'']]},
+  text:{q:'<p>Ein Stabmagnet fällt mit dem Nordpol nach unten durch zwei gleiche Spulen. Die Spulen stehen übereinander und sind parallel an ein Spannungsmessgerät angeschlossen.</p><ol><li>Beschreibe, wie sich die Anzahl der Feldlinien durch Spule 1 und durch Spule 2 im Lauf der Zeit ändert.</li><li>Skizziere den zeitlichen Verlauf der angezeigten Spannung.</li><li>Begründe, warum der zweite Spannungsstoß größer, aber kürzer ist als der erste.</li></ol>',
+        o:'<p>Ein Stabmagnet (Nordpol unten) fällt aus der Ruhe durch zwei gleiche, gleichsinnig gewickelte Spulen (je n = 500, Radius 5 cm). Sie stehen im Abstand von 23 cm übereinander und sind parallel an ein ideales Spannungsmessgerät angeschlossen. Der Magnet startet 9 cm über der Mitte von Spule 1; die Bremswirkung der Induktionsströme wird vernachlässigt.</p><ol><li>Skizziere Φ₁(t), Φ₂(t) und die angezeigte Spannung U(t).</li><li>Begründe Vorzeichen und Nullstellen von U(t) mit dem Induktionsgesetz.</li><li>Begründe, warum die Stöße an Spule 2 höher und schmaler sind, und vergleiche die Flächen unter den Teilstößen.</li><li>Zeige, dass bei gleichen Spulen für die Parallelschaltung U = ½ (U₁ + U₂) gilt.</li></ol>'},
+  sol:{q:'<ul><li>Nähert sich der Magnet einer Spule, nimmt die Anzahl der Feldlinien durch sie zu: Es wird eine Spannung induziert.</li><li>Steckt der Magnet mittig in der Spule, ändert sich die Anzahl einen Moment lang nicht: Die Spannung ist kurz null.</li><li>Beim Verlassen nimmt die Anzahl ab: Spannung mit umgekehrter Polung. Jede Spule liefert also einen Doppelausschlag; dazwischen ist die Spannung fast null.</li><li>Der Magnet wird beim Fallen immer schneller. In Spule 2 ändert sich die Anzahl schneller: größerer Ausschlag, der aber schneller vorbei ist.</li><li>Weil beide Spulen parallel am selben Messgerät hängen, erscheinen beide Doppelausschläge nacheinander in einem Diagramm.</li></ul>',
+       o:'<ul><li>U<sub>i</sub> = −n · dΦ<sub>i</sub>/dt. Annäherung: Φ<sub>i</sub> steigt, U &lt; 0. Magnetmitte in der Spulenebene: Φ<sub>i</sub> maximal, dΦ<sub>i</sub>/dt = 0, also U = 0. Entfernen: Φ<sub>i</sub> fällt, U &gt; 0.</li><li>dΦ<sub>i</sub>/dt = (dΦ<sub>i</sub>/dy) · v. Bei Spule 2 ist v größer (v₁ ≈ 1,3 m/s, v₂ ≈ 2,5 m/s): Stöße etwa 1,9-mal so hoch und nur gut halb so lang.</li><li>Fläche eines Teilstoßes: |∫U<sub>i</sub> dt| = n · ΔΦ<sub>i</sub> ≈ n · Φ<sub>max</sub>, unabhängig von v. Alle vier Teilflächen sind (nahezu) gleich groß.</li><li>Parallelschaltung mit gleichen Innenwiderständen R<sub>i</sub>: Ausgleichsstrom I = (U₁ − U₂)/(2R<sub>i</sub>), also U = U₁ − I · R<sub>i</sub> = ½ (U₁ + U₂). Die Stöße sind deshalb nur halb so hoch wie bei einer einzelnen Spule.</li></ul>'}}
+];
+
+// ideales Modell: N = B · (überdeckte Fläche) / d²
+function model(st){
+  if(st.rot!=null) return st.B*st.a*st.b*Math.cos(st.rot)/(d*d);
+  const ox=Math.max(0,Math.min(st.mx+st.W/2,st.cx+st.a/2)-Math.max(st.mx-st.W/2,st.cx-st.a/2));
+  const oz=Math.max(0,Math.min(st.D/2,st.b/2)-Math.max(-st.D/2,-st.b/2));
+  return st.B*ox*oz/(d*d);
+}
+const DT=1/60;
+const TK={y0:3.6,yc1:1.8,yc2:-2.8,R:1,g:196.2,SL:30,hold:1,n:500,phiMax:60e-6,UMAX:0.8};
+const fT=h=>Math.pow(1+h*h/(TK.R*TK.R),-1.5), dfT=h=>-3*h/(TK.R*TK.R)*Math.pow(1+h*h/(TK.R*TK.R),-2.5);
+function taskVals(st){ const h1=TK.yc1-st.my, h2=TK.yc2-st.my;
+  const U1=-TK.n*TK.phiMax*dfT(h1)*(-st.vy), U2=-TK.n*TK.phiMax*dfT(h2)*(-st.vy);
+  return {N1:12*fT(h1),N2:12*fT(h2),U1,U2,U:(U1+U2)/2,h1,h2}; }
+chapters.forEach(c=>{
+  if(c.task){ const n=Math.ceil(c.T/DT)+1; c.V=[]; for(let i=0;i<n;i++) c.V.push(taskVals(c.state(i*DT))); c.N=c.V; return; }
+  const n=Math.ceil(c.T/DT)+1; c.N=new Float32Array(n); c.U=new Float32Array(n);
+  for(let i=0;i<n;i++) c.N[i]=model(c.state(i*DT));
+  for(let i=0;i<n;i++){ const a=c.N[Math.max(0,i-1)], b=c.N[Math.min(n-1,i+1)], k=(Math.min(n-1,i+1)-Math.max(0,i-1))*DT; c.U[i]=-(b-a)/k; }
+  let m=0; for(const v of c.N) m=Math.max(m,Math.abs(v)); c.nMax=Math.max(10,Math.ceil(m*1.25/5)*5);
+});
+
+// ---------- DOM ----------
+const $=id=>document.getElementById(id);
+const sc=$('scene'), sx=sc.getContext('2d'), gc=$('graph'), gx=gc.getContext('2d');
+let dpr=Math.min(2,window.devicePixelRatio||1);
+function fit(){ dpr=Math.min(2,window.devicePixelRatio||1);
+  for(const c of [sc,gc]){ const r=c.getBoundingClientRect(); c.width=Math.max(1,Math.round(r.width*dpr)); c.height=Math.max(1,Math.round(r.height*dpr)); } }
+new ResizeObserver(fit).observe($('sceneWrap')); new ResizeObserver(fit).observe($('graphWrap'));
+
+const ticksG=$('ticks'); for(let a=-60;a<=60;a+=10){ const r=Math.PI*a/180, cx=110, cy=115, r1=a%30===0?66:71, r2=78;
+  const l=document.createElementNS('http://www.w3.org/2000/svg','line'); l.setAttribute('x1',cx+r1*Math.sin(r)); l.setAttribute('y1',cy-r1*Math.cos(r)); l.setAttribute('x2',cx+r2*Math.sin(r)); l.setAttribute('y2',cy-r2*Math.cos(r)); l.setAttribute('class','tick'+(a===0?' zero':'')); ticksG.appendChild(l); }
+
+const ICON_PLAY='<svg viewBox="0 0 24 24"><path fill="currentColor" d="M7 4.5l13 7.5-13 7.5z"/></svg>';
+const ICON_PAUSE='<svg viewBox="0 0 24 24"><path fill="currentColor" d="M6 4h4.5v16H6zM13.5 4H18v16h-4.5z"/></svg>';
+
+// ---------- Zustand ----------
+let mode='film', ci=0, t=0, playing=false, speed=1, lastCap=-2, done=new Set();
+let level='q', lastSign=1;
+const lab={mx:-1.75,cx:0,I:2,a:2.5,big:false,n:200};
+let hist=[], labT=0, labPrevN=null, labRate=0, needle=0;
+
+const navEl=$('chapters');
+chapters.forEach((c,i)=>{ const b=document.createElement('button'); b.className='chap'+(c.task?' task':''); b.innerHTML='<b>'+(c.task?'?':(i+1))+'</b>'+c.short; b.onclick=()=>gotoChapter(i,true); navEl.appendChild(b); });
+function gotoChapter(i,autoplay){ ci=i; t=0; lastCap=-2; playing=!!autoplay; const c=chapters[ci];
+  $('scrub').max=c.T; $('next').hidden=true; applyLevelText();
+  [...navEl.children].forEach((b,k)=>{ b.setAttribute('aria-current',k===ci?'true':'false'); b.classList.toggle('done',done.has(k)&&k!==ci); });
+  navEl.children[ci].scrollIntoView({block:'nearest',inline:'nearest'});
+  syncButtons(); }
+function applyLevelText(){ const c=chapters[ci];
+  $('capTitle').textContent=(c.task?'Aufgabe · ':'Kapitel '+(ci+1)+' · ')+c.title[level]; if(mode==='film') $('tag').textContent=c.short;
+  $('caption').hidden=!!c.task; $('dots').hidden=!!c.task; $('taskText').hidden=!c.task; $('sol').hidden=!c.task;
+  if(c.task){ $('taskText').innerHTML=c.text[level]; $('solText').innerHTML=c.sol[level]; }
+  syncTaskUI();
+  $('merkQ').hidden=!(c.merk&&level==='q'); $('merkO').hidden=!(c.merk&&level==='o');
+  const dots=$('dots'); dots.innerHTML=''; c.caps[level].forEach(()=>dots.appendChild(document.createElement('i'))); lastCap=-2; }
+function setLevel(l){ level=l; $('lvQ').setAttribute('aria-selected',l==='q'); $('lvO').setAttribute('aria-selected',l==='o');
+  $('rowN').hidden=l!=='o';
+
+  $('labHint').textContent=l==='q'?'Magnet und Spule lassen sich auch direkt im Bild mit dem Finger verschieben. Achte auf das Messgerät: Es schlägt nur aus, solange sich die Zahl oben ändert.'
+    :'Magnet und Spule lassen sich auch im Bild verschieben. Prüfe U_ind = −n · dΦ/dt: Verdopple n oder die Geschwindigkeit und beobachte den Ausschlag.';
+  hist=[]; applyLevelText(); syncLab(); }
+$('lvQ').onclick=()=>setLevel('q'); $('lvO').onclick=()=>setLevel('o');
+let showDiag=false;
+function isTask(){ return mode==='film'&&!!chapters[ci].task; }
+function syncTaskUI(){ const T=isTask();
+  $('diagBtn').hidden=!T; $('diagBtn').setAttribute('aria-pressed',showDiag); $('diagBtn').textContent=showDiag?'Diagramm ausblenden':'Diagramm einblenden';
+  $('diagHidden').hidden=!(T&&!showDiag); const cov=T&&!showDiag; $('meterCard').classList.toggle('covered',cov); $('meterHidden').hidden=!cov; $('chip').hidden=cov; $('graphWrap').classList.toggle('tall',T);
+  $('roT').hidden=!T; $('cntBox').hidden=T||level!=='q'; $('roQ').hidden=T||level!=='q'; $('roO').hidden=T||level!=='o';
+  document.querySelectorAll('#roT .tO').forEach(e=>e.hidden=level!=='o');
+  document.querySelectorAll('#roT .tU').forEach(e=>e.hidden=level!=='o'||!showDiag);
+  const lbl=$('roO').previousElementSibling.previousElementSibling.previousElementSibling;
+  lbl.textContent=T?'Feldlinien durch die Spulen':(level==='q'?'Feldlinien durch die Spule':'Messwerte');
+  $('mL').textContent=level==='q'?'−':(T?'−0,8':'−50'); $('mR').textContent=level==='q'?'+':(T?'+0,8':'+50'); $('mUnit').textContent=level==='q'?'':(T?'V':'mV'); }
+$('diagBtn').onclick=()=>{ showDiag=!showDiag; syncTaskUI(); };
+$('diagShow').onclick=()=>{ showDiag=true; syncTaskUI(); };
+function syncButtons(){ $('play').innerHTML=playing?ICON_PAUSE:ICON_PLAY; $('play').setAttribute('aria-label',playing?'Pause':'Abspielen');
+  $('bigplay').hidden=!(mode==='film'&&!playing&&t===0); }
+$('play').onclick=()=>{ const c=chapters[ci]; if(!playing&&t>=c.T-1e-6){ t=0; lastCap=-2; } playing=!playing; syncButtons(); };
+$('bigplay').onclick=()=>{ playing=true; syncButtons(); };
+$('restart').onclick=()=>{ t=0; lastCap=-2; playing=true; $('next').hidden=true; syncButtons(); };
+$('scrub').oninput=e=>{ t=parseFloat(e.target.value); playing=false; syncButtons(); };
+$('next').onclick=()=>gotoChapter(Math.min(chapters.length-1,ci+1),true);
+function setSpeed(v){ speed=v; $('sp05').setAttribute('aria-pressed',v===0.5); $('sp1').setAttribute('aria-pressed',v===1); }
+$('sp05').onclick=()=>setSpeed(0.5); $('sp1').onclick=()=>setSpeed(1);
+document.addEventListener('keydown',e=>{ if(e.code==='Space'&&mode==='film'&&e.target.tagName!=='INPUT'){ e.preventDefault(); $('play').click(); } });
+
+function setMode(m){ mode=m; $('mFilm').setAttribute('aria-pressed',m==='film'); $('mLab').setAttribute('aria-pressed',m==='lab');
+  $('chapters').hidden=m!=='film'; $('controls').hidden=m!=='film'; $('captionCard').hidden=m!=='film'; $('lab').hidden=m!=='lab';
+  syncTaskUI();
+  if(m==='lab'){ playing=false; hist=[]; labT=0; labPrevN=null; labRate=0; $('tag').textContent='Experiment'; sc.style.touchAction='none'; syncLab(); }
+  else { $('tag').textContent=chapters[ci].short; sc.style.touchAction='pan-y'; }
+  syncButtons(); }
+$('mFilm').onclick=()=>setMode('film'); $('mLab').onclick=()=>setMode('lab');
+
+// Labor
+const sMag=$('sMag'), sCoil=$('sCoil'), sI=$('sI'), sA=$('sA'), sN=$('sN');
+function syncLab(){ sMag.value=lab.mx; sCoil.value=lab.cx; sI.value=lab.I; sA.value=lab.a; sN.value=lab.n; $('vN').textContent=lab.n;
+  $('vMag').textContent=fmt(lab.mx*2,1)+' cm'; $('vCoil').textContent=fmt(lab.cx*2,1)+' cm';
+  $('vI').textContent=fmt(lab.I,2)+' A'+(level==='o'?' · B = '+fmt(lab.I/3*100,0)+' mT':''); $('vA').textContent=fmt(Math.pow(lab.a*2,2),0)+' cm²';
+  $('fSmall').setAttribute('aria-pressed',!lab.big); $('fBig').setAttribute('aria-pressed',lab.big); }
+sMag.oninput=()=>{lab.mx=+sMag.value;syncLab();}; sCoil.oninput=()=>{lab.cx=+sCoil.value;syncLab();};
+sI.oninput=()=>{lab.I=+sI.value;syncLab();}; sN.oninput=()=>{lab.n=+sN.value;syncLab();}; sA.oninput=()=>{lab.a=+sA.value;syncLab();};
+$('fSmall').onclick=()=>{lab.big=false;syncLab();}; $('fBig').onclick=()=>{lab.big=true;lab.mx=0;syncLab();};
+$('reset').onclick=()=>{ Object.assign(lab,{mx:-1.75,cx:0,I:2,a:2.5,big:false,n:200}); syncLab(); };
+function labState(){ const f=lab.big?BIG:SMALL; return base({mx:lab.mx,W:f.W,D:f.D,cx:lab.cx,a:lab.a,b:Math.min(lab.a,lab.big?4.4:3.5),B:lab.I/3,el:true}); }
+
+// Ziehen im Bild
+let drag=null, geo=null;
+sc.addEventListener('pointerdown',e=>{ if(mode!=='lab'||!geo) return; const r=sc.getBoundingClientRect(); const x=(e.clientX-r.left)*dpr, y=(e.clientY-r.top)*dpr;
+  const inB=(b)=>x>=b[0]&&x<=b[2]&&y>=b[1]&&y<=b[3];
+  if(inB(geo.coil)) drag={k:'cx',x0:x,v0:lab.cx}; else if(inB(geo.mag)&&!lab.big) drag={k:'mx',x0:x,v0:lab.mx}; else return;
+  sc.setPointerCapture(e.pointerId); e.preventDefault(); });
+sc.addEventListener('pointermove',e=>{ if(!drag) return; const r=sc.getBoundingClientRect(); const x=(e.clientX-r.left)*dpr;
+  lab[drag.k]=clamp(drag.v0+(x-drag.x0)/geo.s,-5.5,5.5); syncLab(); });
+const endDrag=()=>{drag=null;}; sc.addEventListener('pointerup',endDrag); sc.addEventListener('pointercancel',endDrag);
+
+// ---------- Zeichnen ----------
+let C={};
+function readColors(){ const cs=getComputedStyle(document.documentElement);
+  for(const k of ['surface','ink','muted','rule','field','flux','flux2','fluxSoft','u','uSoft','north','south','copper','iron']) C[k]=cs.getPropertyValue('--'+k).trim(); C.font=cs.getPropertyValue('--font').trim(); }
+
+function poly(ctx,pts,fill,shade){ ctx.beginPath(); ctx.moveTo(pts[0][0],pts[0][1]); for(let i=1;i<pts.length;i++) ctx.lineTo(pts[i][0],pts[i][1]); ctx.closePath();
+  ctx.fillStyle=fill; ctx.fill(); if(shade){ ctx.fillStyle=shade; ctx.fill(); } }
+
+function drawScene(st){
+  const ctx=sx, cw=sc.width, ch=sc.height; ctx.clearRect(0,0,cw,ch);
+  const s=Math.min(cw/17.4, ch/8.5), ox=cw/2, oy=ch/2+s*0.1;
+  const P=(x,y,z)=>[ox+s*(x+KX*z), oy-s*(y+KY*z)];
+  const x0=st.mx-st.W/2, x1=st.mx+st.W/2, z0=-st.D/2, z1=st.D/2;
+  const R0=st.rot!=null, cs=R0?Math.cos(st.rot):1, sn=R0?Math.sin(st.rot):0, hb=st.b/2*Math.abs(cs);
+  const cl=st.cx-st.a/2, cr=st.cx+st.a/2, cf=-hb, cb=hb;
+  const hlCol=cs>=0?C.flux:C.flux2; lastSign=cs>=0?1:-1;
+  const yHit=z=>R0&&Math.abs(cs)>1e-6?z*sn/cs:0;
+  const nx=Math.round(st.W/d), nz=Math.round(st.D/d);
+  const lines=[];
+  for(let i=0;i<nx;i++) for(let j=0;j<nz;j++){
+    const x=x0+d*(i+.5), z=z0+d*(j+.5);
+    const op=st.el?clamp(st.B*16-BAYER[j%4][i%4],0,1):1; if(op<=0.001) continue;
+    lines.push({x,z,op,inside:x>=cl&&x<cr&&z>=cf&&z<cb,hl:false}); }
+  const ins=lines.filter(l=>l.inside);
+  if(st.reveal!==null){ if(st.reveal>=0){ ins.sort((p,q)=>(q.z-p.z)||(p.x-q.x)); const k=Math.floor(st.reveal*ins.length+1e-6); ins.forEach((l,n)=>l.hl=n<k); } }
+  else ins.forEach(l=>l.hl=true);
+  let count=0; for(const l of lines) if(l.hl) count+=l.op;
+
+  const lw=Math.max(1,s*0.032), lwH=Math.max(2,s*0.06), ar=s*0.1;
+  const seg3=(l,ya,yb,arrow)=>{ const a=P(l.x,ya,l.z), b=P(l.x,yb,l.z);
+    ctx.globalAlpha=l.op; ctx.strokeStyle=l.hl?hlCol:C.field; ctx.lineWidth=l.hl?lwH:lw;
+    ctx.beginPath(); ctx.moveTo(a[0],a[1]); ctx.lineTo(b[0],b[1]); ctx.stroke();
+    if(arrow){ const m=P(l.x,H*0.5,l.z), r=l.hl?ar*1.25:ar; ctx.beginPath(); ctx.moveTo(m[0]-r,m[1]-r*0.6); ctx.lineTo(m[0],m[1]+r*0.5); ctx.lineTo(m[0]+r,m[1]-r*0.6); ctx.stroke(); }
+    ctx.globalAlpha=1; };
+  const plateCol=(top)=> st.el?C.iron:(top?C.north:C.south);
+
+  // unterer Polschuh (S)
+  ctx.lineJoin='round'; ctx.lineCap='round';
+  const box=(ya,yb,col)=>{ poly(ctx,[P(x0,yb,z0),P(x1,yb,z0),P(x1,yb,z1),P(x0,yb,z1)],col,'rgba(255,255,255,.22)');
+    poly(ctx,[P(x0,ya,z0),P(x1,ya,z0),P(x1,yb,z0),P(x0,yb,z0)],col);
+    poly(ctx,[P(x1,ya,z0),P(x1,ya,z1),P(x1,yb,z1),P(x1,yb,z0)],col,'rgba(0,0,0,.22)'); };
+  box(-H-PT,-H,plateCol(false));
+
+  const after=[];
+  for(const l of lines){
+    if(l.inside){ seg3(l,-H,yHit(l.z),false); after.push(l); }
+    else if(l.z<cf||l.x>=cr) after.push(l);
+    else seg3(l,-H,H,true); }
+
+  // Spule
+  const hw=st.b/2, cp3=(u,w,off)=>P(st.cx+u, w*sn+off*cs, w*cs-off*sn);
+  const q=off=>[cp3(-st.a/2,-hw,off),cp3(st.a/2,-hw,off),cp3(st.a/2,hw,off),cp3(-st.a/2,hw,off)];
+  if(R0){ ctx.setLineDash([5*dpr,5*dpr]); ctx.strokeStyle=C.muted; ctx.lineWidth=Math.max(1,s*0.025); const a1=P(cl-0.7,0,0), a2=P(cr+0.7,0,0); ctx.beginPath(); ctx.moveTo(a1[0],a1[1]); ctx.lineTo(a2[0],a2[1]); ctx.stroke(); ctx.setLineDash([]);
+    ctx.font='500 '+Math.round(s*0.2)+'px '+C.font; ctx.fillStyle=C.muted; ctx.textAlign='right'; ctx.textBaseline='middle'; ctx.fillText('Drehachse',a1[0]-s*0.1,a1[1]); }
+  if(cs>=0) poly(ctx,q(0),C.fluxSoft); else { ctx.globalAlpha=0.16; poly(ctx,q(0),C.flux2); ctx.globalAlpha=1; }
+  for(const l of lines) if(l.hl){ const p=P(l.x,yHit(l.z),l.z); ctx.globalAlpha=l.op; ctx.fillStyle=hlCol; ctx.beginPath(); ctx.arc(p[0],p[1],Math.max(2,s*0.07),0,7); ctx.fill(); ctx.globalAlpha=1; }
+  ctx.strokeStyle=C.copper; ctx.lineWidth=Math.max(1.5,s*0.05);
+  for(const y of [-0.1,0,0.1]){ const pts=q(y); ctx.beginPath(); ctx.moveTo(pts[0][0],pts[0][1]); for(let k=1;k<4;k++) ctx.lineTo(pts[k][0],pts[k][1]); ctx.closePath(); ctx.stroke(); }
+
+  for(const l of after){ if(l.inside) seg3(l,yHit(l.z),H,true); else seg3(l,-H,H,true); }
+
+  // oberer Polschuh (N)
+  box(H,H+PT,plateCol(true));
+  if(st.el){ ctx.strokeStyle=C.copper; ctx.lineWidth=Math.max(1,s*0.035);
+    for(let x=x0+0.12;x<x1;x+=0.2){ const a=P(x,H,z0), b=P(x,H+PT,z0); ctx.beginPath(); ctx.moveTo(a[0],a[1]); ctx.lineTo(b[0],b[1]); ctx.stroke(); } }
+  // Pol-Beschriftung
+  const fs=Math.round(s*0.26);
+  ctx.font='700 '+fs+'px '+C.font; ctx.textAlign='center'; ctx.textBaseline='middle';
+  const lab1=(y,txt)=>{ const p=P(st.mx,y,z0); if(st.el){ ctx.globalAlpha=st.B; ctx.fillStyle=C.ink; ctx.fillText(txt,p[0],p[1]); ctx.globalAlpha=1; } else { ctx.fillStyle='#fff'; ctx.fillText(txt,p[0],p[1]); } };
+  if(!st.el){ lab1(H+PT/2,'N'); lab1(-H-PT/2,'S'); }
+  else { const pa=P(st.mx-st.W/2+0.4,H+PT/2,z0); ctx.globalAlpha=st.B; ctx.fillStyle=C.ink; ctx.fillText('N',pa[0],pa[1]); const pb=P(st.mx-st.W/2+0.4,-H-PT/2,z0); ctx.fillText('S',pb[0],pb[1]); ctx.globalAlpha=1; }
+  if(st.el){ const p=P(x0,H+PT,z1); ctx.font='600 '+Math.round(s*0.24)+'px '+C.font; ctx.textAlign='left'; ctx.textBaseline='bottom'; ctx.fillStyle=C.ink;
+    ctx.fillText('Elektromagnet · I = '+fmt(st.B*3,1)+' A'+(level==='o'?' · B = '+fmt(st.B*100,0)+' mT':''),p[0],p[1]-s*0.12); }
+
+  // Zuleitungen zum Messgerät
+  const wa=q(0.08)[1], wb=q(-0.08)[1], ex=cw-2*dpr, ey=ch-s*0.45;
+  ctx.strokeStyle=C.copper; ctx.lineWidth=Math.max(1.2,s*0.035);
+  for(const [p,off] of [[wa,0],[wb,s*0.14]]){ ctx.beginPath(); ctx.moveTo(p[0],p[1]); ctx.bezierCurveTo(p[0]+s*1.2,p[1]+s*0.6,ex-s*1.4,ey+off,ex,ey+off); ctx.stroke(); }
+  ctx.font='500 '+Math.round(s*0.22)+'px '+C.font; ctx.fillStyle=C.muted; ctx.textAlign='right'; ctx.textBaseline='bottom';
+  ctx.fillText('zum Messgerät',ex-s*0.1,ey-s*0.08);
+  const sp=q(-0.1)[0]; ctx.textAlign='right'; ctx.textBaseline='top'; ctx.fillStyle=C.copper; ctx.font='600 '+Math.round(s*0.24)+'px '+C.font;
+  ctx.fillText('Spule',sp[0]-s*0.12,sp[1]+s*0.05);
+
+  // Trefferflächen fürs Ziehen
+  const cp=[...q(0.12),...q(-0.12)]; const bb=pts=>{let a=1e9,b=1e9,c=-1e9,e=-1e9; for(const p of pts){a=Math.min(a,p[0]);b=Math.min(b,p[1]);c=Math.max(c,p[0]);e=Math.max(e,p[1]);} return [a-s*0.3,b-s*0.3,c+s*0.3,e+s*0.3];};
+  geo={s,coil:bb(cp),mag:bb([P(x0,-H-PT,z0),P(x1,H+PT,z1),P(x1,-H-PT,z0),P(x0,H+PT,z1)])};
+  return count;
+}
+
+// ---------- Aufgabe: Magnet fällt durch zwei Spulen ----------
+const TLINES=[1,2,3,4,5,6].map(i=>{ const u=(i-0.5)/(6*TK.R); return {u,k:1/u}; });
+function innerRho(k,h){ h=Math.abs(h); if(h<1e-6) return 0; let a=0,b=0.9553; for(let it=0;it<40;it++){ const m=(a+b)/2; if(k*Math.sin(m)**2*Math.cos(m)<h) a=m; else b=m; } return h*Math.tan((a+b)/2); }
+function drawTaskScene(st){
+  const ctx=sx, cw=sc.width, ch=sc.height; ctx.clearRect(0,0,cw,ch);
+  const s=Math.min(cw/17.4, ch/8.8), ox=cw/2-s*0.8, oy=ch/2-s*0.1;
+  const P=(x,y)=>[ox+s*x, oy-s*y];
+  const R=TK.R, my=st.my, rx=R*s, ry=0.27*R*s;
+  const V=taskVals(st);
+  const thr=[[],[]]; let n1=0,n2=0;
+  TLINES.forEach(L=>{ const a=L.u<fT(V.h1)/R, b=L.u<fT(V.h2)/R; thr[0].push(a); thr[1].push(b); if(a) n1+=2; if(b) n2+=2; });
+  ctx.lineJoin='round'; ctx.lineCap='round';
+  // Fallachse
+  ctx.setLineDash([4*dpr,6*dpr]); ctx.strokeStyle=C.rule; ctx.lineWidth=1*dpr; ctx.beginPath(); ctx.moveTo(ox,0); ctx.lineTo(ox,ch); ctx.stroke(); ctx.setLineDash([]);
+  const coil=(yc,half)=>{ const c=P(0,yc); ctx.strokeStyle=C.copper; ctx.lineWidth=Math.max(1.5,s*0.05);
+    for(let dy=-0.12;dy<=0.121;dy+=0.08){ ctx.beginPath(); ctx.ellipse(c[0],c[1]-dy*s,rx,ry,0,half?Math.PI:0,half?2*Math.PI:Math.PI); ctx.stroke(); } };
+  coil(TK.yc1,true); coil(TK.yc2,true);
+  // Feldlinien eines Dipols (Nordpol unten): r = k·sin²θ
+  const lw=Math.max(1,s*0.03), lwH=Math.max(2,s*0.055);
+  TLINES.forEach((L,i)=>{ const col=thr[0][i]?C.flux:thr[1][i]?C.flux2:C.field, hl=thr[0][i]||thr[1][i];
+    ctx.strokeStyle=col; ctx.lineWidth=hl?lwH:lw;
+    for(const sg of [1,-1]){ ctx.beginPath(); for(let j=0;j<=240;j++){ const th=0.004+j*(Math.PI-0.008)/240, r=L.k*Math.sin(th)**2;
+        const p=P(sg*r*Math.sin(th), my+r*Math.cos(th)); j?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]); } ctx.stroke();
+      const r=L.k, m=P(sg*r,my); if(m[0]>-20&&m[0]<cw+20){ const a=s*(hl?0.13:0.1); ctx.beginPath(); ctx.moveTo(m[0]-a*0.6,m[1]+a*0.5); ctx.lineTo(m[0],m[1]-a*0.5); ctx.lineTo(m[0]+a*0.6,m[1]+a*0.5); ctx.stroke(); } } });
+  // Magnet
+  const mw=0.17, ml=0.6, a=P(-mw,my+ml), b=P(mw,my);
+  ctx.fillStyle=C.south; ctx.fillRect(a[0],a[1],b[0]-a[0],b[1]-a[1]);
+  const c2=P(-mw,my), d2=P(mw,my-ml); ctx.fillStyle=C.north; ctx.fillRect(c2[0],c2[1],d2[0]-c2[0],d2[1]-c2[1]);
+  ctx.fillStyle='#fff'; ctx.font='700 '+Math.round(s*0.24)+'px '+C.font; ctx.textAlign='center'; ctx.textBaseline='middle';
+  let q=P(0,my+ml/2); ctx.fillText('S',q[0],q[1]); q=P(0,my-ml/2); ctx.fillText('N',q[0],q[1]);
+  coil(TK.yc1,false); coil(TK.yc2,false);
+  // Durchstoßpunkte
+  [[TK.yc1,V.h1,0,C.flux],[TK.yc2,V.h2,1,C.flux2]].forEach(([yc,h,j,col])=>{ TLINES.forEach((L,i)=>{ if(!thr[j][i]) return; const rho=innerRho(L.k,h);
+    for(const sg of [1,-1]){ const p=P(sg*rho,yc); ctx.fillStyle=col; ctx.beginPath(); ctx.arc(p[0],p[1],Math.max(2.5,s*0.075),0,7); ctx.fill(); } }); });
+  // Parallelschaltung
+  ctx.strokeStyle=C.copper; ctx.lineWidth=Math.max(1.2,s*0.035);
+  const bA=2.4, bB=2.75, line=(p1,p2)=>{ const u=P(...p1), v=P(...p2); ctx.beginPath(); ctx.moveTo(u[0],u[1]); ctx.lineTo(v[0],v[1]); ctx.stroke(); };
+  for(const yc of [TK.yc1,TK.yc2]){ line([R,yc+0.08],[bA,yc+0.08]); line([R,yc-0.08],[bB,yc-0.08]); }
+  line([bA,TK.yc1+0.08],[bA,TK.yc2+0.08]); line([bB,TK.yc1-0.08],[bB,TK.yc2-0.08]);
+  const ym=(TK.yc1+TK.yc2)/2, ex=(cw-2*dpr-ox)/s;
+  line([bA,ym+0.1],[ex,ym+0.1]); line([bB,ym-0.1],[ex,ym-0.1]);
+  ctx.fillStyle=C.copper; for(const pt of [[bA,TK.yc1+0.08],[bA,TK.yc2+0.08],[bB,TK.yc1-0.08],[bB,TK.yc2-0.08],[bA,ym+0.1],[bB,ym-0.1]]){ const p=P(...pt); ctx.beginPath(); ctx.arc(p[0],p[1],Math.max(2,s*0.05),0,7); ctx.fill(); }
+  ctx.font='500 '+Math.round(s*0.22)+'px '+C.font; ctx.fillStyle=C.muted; ctx.textAlign='right'; ctx.textBaseline='bottom';
+  q=P(ex,ym+0.1); ctx.fillText('zum Messgerät',q[0]-s*0.1,q[1]-s*0.08);
+  ctx.font='600 '+Math.round(s*0.25)+'px '+C.font; ctx.textBaseline='middle';
+  q=P(-R-0.3,TK.yc1); ctx.fillStyle=C.flux; ctx.fillText('Spule 1',q[0],q[1]);
+  q=P(-R-0.3,TK.yc2); ctx.fillStyle=C.flux2; ctx.fillText('Spule 2',q[0],q[1]);
+  // Zeitlupen-Hinweis
+  ctx.font='600 '+Math.round(13*dpr)+'px '+C.font; ctx.fillStyle=C.muted; ctx.textAlign='right'; ctx.textBaseline='top';
+  ctx.fillText(level==='o'?'Zeitlupe 1 : 30 · t = '+fmt(st.tr*1000,0)+' ms':'Zeitlupe', cw-12*dpr, 10*dpr);
+  if(st.tr===0){ ctx.textAlign='left'; q=P(0.4,my+0.3); ctx.fillStyle=C.ink; ctx.fillText('Magnet wird losgelassen …',q[0],q[1]); }
+  return {n1,n2,V};
+}
+function drawTaskGraph(c,i){
+  const ctx=gx, w=gc.width, h=gc.height; ctx.clearRect(0,0,w,h);
+  const L=92*dpr, R=14*dpr, T=10*dpr, B=22*dpr, gap=12*dpr, ph=(h-T-B-gap)/2, Q=level==='q';
+  const X=k=>L+k*DT/c.T*(w-L-R), yN=v=>T+ph-v/14*ph, uTop=T+ph+gap, yU=v=>uTop+ph/2-clamp(v/TK.UMAX,-1,1)*ph/2;
+  ctx.strokeStyle=C.rule; ctx.lineWidth=1*dpr; ctx.strokeRect(L,T,w-L-R,ph); ctx.strokeRect(L,uTop,w-L-R,ph);
+  ctx.beginPath(); ctx.moveTo(L,uTop+ph/2); ctx.lineTo(w-R,uTop+ph/2); ctx.stroke();
+  ctx.textBaseline='middle'; ctx.textAlign='right';
+  ctx.font='600 '+(12*dpr)+'px '+C.font; ctx.fillStyle=C.flux; ctx.fillText(Q?'Feldlinien':'Φ₁, Φ₂',L-8*dpr,T+ph/2-7*dpr);
+  ctx.font='500 '+(11*dpr)+'px '+C.font; ctx.fillStyle=C.flux2; ctx.fillText(Q?'Spule 1 / 2':'in µWb',L-8*dpr,T+ph/2+8*dpr);
+  ctx.font='600 '+(12*dpr)+'px '+C.font; ctx.fillStyle=C.u; ctx.fillText(Q?'Spannung':'U',L-8*dpr,uTop+ph/2-7*dpr);
+  ctx.font='500 '+(11*dpr)+'px '+C.font; ctx.fillStyle=C.muted; ctx.fillText(Q?'U':'in V',L-8*dpr,uTop+ph/2+8*dpr);
+  if(!Q){ ctx.textAlign='left'; ctx.fillText('70',L+4*dpr,T+8*dpr); ctx.fillText('+0,8',L+4*dpr,uTop+8*dpr); ctx.fillText('−0,8',L+4*dpr,uTop+ph-8*dpr); }
+  ctx.textBaseline='top'; ctx.textAlign='center';
+  if(!Q){ for(let ms=0;ms<=300;ms+=50){ const k=(TK.hold+ms/1000*TK.SL)/DT, x=X(k); ctx.strokeStyle=C.rule; ctx.beginPath(); ctx.moveTo(x,uTop+ph); ctx.lineTo(x,uTop+ph+3*dpr); ctx.stroke(); ctx.fillText(String(ms),x,uTop+ph+4*dpr); } }
+  ctx.textAlign='right'; ctx.fillText(Q?'Zeit →':'t in ms',L-8*dpr,uTop+ph+4*dpr);
+  ctx.save(); ctx.beginPath(); ctx.rect(L,0,w-L-R,h); ctx.clip();
+  const V=c.V, n=V.length;
+  const path=(from,to,fy)=>{ ctx.beginPath(); for(let k=from;k<=to;k++){ const x=X(k),y=fy(V[k]); k===from?ctx.moveTo(x,y):ctx.lineTo(x,y); } ctx.stroke(); };
+  // ganze Kurve blass, bis jetzt kräftig
+  ctx.lineJoin='round';
+  for(const [alpha,to,wid] of [[0.22,n-1,1.6],[1,i,2.4]]){ ctx.globalAlpha=alpha; ctx.lineWidth=wid*dpr;
+    ctx.strokeStyle=C.flux; path(0,to,v=>yN(v.N1)); ctx.strokeStyle=C.flux2; path(0,to,v=>yN(v.N2)); ctx.strokeStyle=C.u; path(0,to,v=>yU(v.U)); }
+  ctx.globalAlpha=1;
+  ctx.beginPath(); ctx.moveTo(X(0),yU(0)); for(let k=0;k<=i;k++) ctx.lineTo(X(k),yU(V[k].U)); ctx.lineTo(X(i),yU(0)); ctx.closePath(); ctx.fillStyle=C.uSoft; ctx.fill();
+  const e=V[i]; for(const [y,col] of [[yN(e.N1),C.flux],[yN(e.N2),C.flux2],[yU(e.U),C.u]]){ ctx.fillStyle=col; ctx.beginPath(); ctx.arc(X(i),y,4*dpr,0,7); ctx.fill(); }
+  ctx.strokeStyle=C.muted; ctx.globalAlpha=.5; ctx.lineWidth=1*dpr; ctx.beginPath(); ctx.moveTo(X(i),T); ctx.lineTo(X(i),uTop+ph); ctx.stroke();
+  ctx.restore();
+}
+function readoutTask(r,dt){
+  const V=r.V, tr=(v)=>v>0.05?' ↑':v<-0.05?' ↓':' =';
+  const on=Math.abs(V.U)>0.02; $('chip').classList.toggle('on',on); $('chip').textContent=on?'Spannung wird induziert':'keine Induktionsspannung';
+  // Trend aus Vorzeichen der Spannung (U<0 heißt: Anzahl nimmt zu)
+  $('tN1').textContent=r.n1+(level==='q'?tr(-V.U1):''); $('tN2').textContent=r.n2+(level==='q'?tr(-V.U2):'');
+  $('tPhi').textContent=fmt(V.N1*5,0)+' / '+fmt(V.N2*5,0)+' µWb';
+  $('tU12').textContent=fmtS(V.U1,2)+' / '+fmtS(V.U2,2)+' V'; $('tU').textContent=fmtS(V.U,2)+' V';
+  const target=showDiag?clamp(V.U/TK.UMAX,-1,1)*58:0; needle+=(target-needle)*Math.min(1,dt*20);
+  $('needle').setAttribute('transform','rotate('+needle.toFixed(2)+' 110 115)');
+}
+
+function drawGraph(o){
+  const ctx=gx, w=gc.width, h=gc.height; ctx.clearRect(0,0,w,h);
+  const L=92*dpr, R=14*dpr, T=10*dpr, B=22*dpr, gap=12*dpr, ph=(h-T-B-gap)/2;
+  const X=tt=>L+(tt-o.t0)/(o.t1-o.t0)*(w-L-R);
+  const um=o.uMax||UMAX, yN=v=>o.signed?T+ph/2-v/o.nMax*ph/2:T+ph-v/o.nMax*ph, uTop=T+ph+gap, un=p=>level==='o'?p[2]*p[3]*0.01/50:p[2]/um, yU=p=>uTop+ph/2-clamp(un(p),-1,1)*ph/2;
+  ctx.font='600 '+(12*dpr)+'px '+C.font; ctx.textBaseline='middle';
+  ctx.strokeStyle=C.rule; ctx.lineWidth=1*dpr;
+  ctx.strokeRect(L,T,w-L-R,ph); ctx.strokeRect(L,uTop,w-L-R,ph);
+  ctx.beginPath(); ctx.moveTo(L,uTop+ph/2); ctx.lineTo(w-R,uTop+ph/2); if(o.signed){ ctx.moveTo(L,T+ph/2); ctx.lineTo(w-R,T+ph/2); } ctx.stroke();
+  ctx.textAlign='right';
+  const Q=level==='q';
+  ctx.fillStyle=C.flux; ctx.fillText(Q?'Anzahl der':'Fluss Φ',L-8*dpr,T+ph/2-7*dpr); ctx.fillStyle=C.muted; ctx.font='500 '+(11*dpr)+'px '+C.font; ctx.fillText(Q?'Feldlinien':'in µWb',L-8*dpr,T+ph/2+8*dpr);
+  ctx.font='600 '+(12*dpr)+'px '+C.font; ctx.fillStyle=C.u; ctx.fillText(Q?'Spannung':'U_ind',L-8*dpr,uTop+ph/2-7*dpr); ctx.fillStyle=C.muted; ctx.font='500 '+(11*dpr)+'px '+C.font; ctx.fillText(Q?'U':'in mV',L-8*dpr,uTop+ph/2+8*dpr);
+  if(Q&&o.signed){ ctx.textAlign='left'; ctx.fillText('+ von oben',L+4*dpr,T+8*dpr); ctx.fillText('− von unten',L+4*dpr,T+ph-8*dpr); }
+  if(!Q){ ctx.textAlign='left'; ctx.fillText(String(o.nMax*10),L+4*dpr,T+8*dpr); if(o.signed) ctx.fillText('−'+o.nMax*10,L+4*dpr,T+ph-8*dpr); ctx.fillText('+50',L+4*dpr,uTop+8*dpr); ctx.fillText('−50',L+4*dpr,uTop+ph-8*dpr); }
+  // Zeitachse
+  ctx.textAlign='center'; ctx.textBaseline='top'; ctx.fillStyle=C.muted;
+  const step=(o.t1-o.t0)>12?2:1;
+  for(let k=Math.ceil(o.t0/step)*step;k<=o.t1+1e-6;k+=step){ const x=X(k); ctx.strokeStyle=C.rule; ctx.beginPath(); ctx.moveTo(x,T+ph); ctx.lineTo(x,T+ph+3*dpr); ctx.moveTo(x,uTop+ph); ctx.lineTo(x,uTop+ph+3*dpr); ctx.stroke();
+    if(o.labels&&!Q) ctx.fillText(String(k).replace('.',','),x,uTop+ph+4*dpr); }
+  ctx.textAlign='right'; ctx.fillText(Q?'Zeit →':(o.labels?'t in s':'letzte 10 s'),L-8*dpr,uTop+ph+4*dpr);
+  const pts=o.pts; if(pts.length<2) return;
+  ctx.save(); ctx.beginPath(); ctx.rect(L,0,w-L-R,h); ctx.clip();
+  // U-Fläche
+  const y0=uTop+ph/2; ctx.beginPath(); ctx.moveTo(X(pts[0][0]),y0); for(const p of pts) ctx.lineTo(X(p[0]),yU(p)); ctx.lineTo(X(pts[pts.length-1][0]),y0); ctx.closePath(); ctx.fillStyle=C.uSoft; ctx.fill();
+  ctx.lineWidth=2.2*dpr; ctx.lineJoin='round';
+  ctx.strokeStyle=C.u; ctx.beginPath(); pts.forEach((p,i)=>i?ctx.lineTo(X(p[0]),yU(p)):ctx.moveTo(X(p[0]),yU(p))); ctx.stroke();
+  ctx.strokeStyle=C.flux; ctx.beginPath(); pts.forEach((p,i)=>i?ctx.lineTo(X(p[0]),yN(p[1])):ctx.moveTo(X(p[0]),yN(p[1]))); ctx.stroke();
+  const e=pts[pts.length-1]; ctx.fillStyle=C.flux; ctx.beginPath(); ctx.arc(X(e[0]),yN(e[1]),4*dpr,0,7); ctx.fill();
+  ctx.fillStyle=C.u; ctx.beginPath(); ctx.arc(X(e[0]),yU(e),4*dpr,0,7); ctx.fill();
+  ctx.strokeStyle=C.muted; ctx.globalAlpha=.5; ctx.lineWidth=1*dpr; ctx.beginPath(); ctx.moveTo(X(e[0]),T); ctx.lineTo(X(e[0]),uTop+ph); ctx.stroke();
+  ctx.restore();
+}
+
+function showCaption(){ const c=chapters[ci], caps=c.caps[level]; let k=0; caps.forEach((cp,i)=>{ if(t>=cp[0]-1e-6) k=i; });
+  if(k!==lastCap){ lastCap=k; const p=$('caption'); p.style.opacity=0; setTimeout(()=>{ p.textContent=caps[k][1]; p.style.opacity=1; },lastCap<0?0:140);
+    [...$('dots').children].forEach((d,i)=>d.classList.toggle('on',i<=k)); } }
+
+function readout(count,rate,dt,st,n,um){ um=um||UMAX;
+  $('cnt').textContent=Math.round(count);
+  const on=Math.abs(rate)>0.3; const chip=$('chip'); chip.classList.toggle('on',on);
+  chip.textContent=on?'Spannung wird induziert':'keine Induktionsspannung';
+  const UmV=-n*rate*0.01; let target;
+  if(level==='q'){ const tr=$('trend'); const rr=st.rot!=null?rate*lastSign:rate; const k=rr>0.3?'up':rr<-0.3?'down':'';
+    tr.className='trend '+k; tr.innerHTML=k==='up'?'<i>↑</i><span>Die Anzahl nimmt zu.</span>':k==='down'?'<i>↓</i><span>Die Anzahl nimmt ab.</span>':'<i>=</i><span>Die Anzahl bleibt gleich.</span>';
+    if(st.rot!=null&&Math.round(count)>0) tr.querySelector('span').textContent+=lastSign>0?' (von oben)':' (von unten)';
+    target=clamp(-rate/um,-1,1)*58; }
+  else { const ox=Math.max(0,Math.min(st.mx+st.W/2,st.cx+st.a/2)-Math.max(st.mx-st.W/2,st.cx-st.a/2)), oz=Math.max(0,Math.min(st.D/2,st.b/2)-Math.max(-st.D/2,-st.b/2));
+    const A=st.rot!=null?st.a*st.b*4*Math.cos(st.rot):ox*oz*4, B=st.B*100;
+    $('oAlbl').textContent=st.rot!=null?'A · cos φ (φ = '+fmt((st.rot*180/Math.PI)%360,0)+'°)':'durchsetzte Fläche A';
+    $('oCnt').textContent=(st.rot!=null&&lastSign<0&&Math.round(count)>0?'−':'')+Math.round(count); $('oB').textContent=fmt(B,0)+' mT'; $('oA').textContent=fmt(A,1)+' cm²'; $('oPhi').textContent=fmt(B*A*0.1,0)+' µWb';
+    $('oDphi').textContent=fmtS(rate*10,0)+' µWb/s'; $('oN').textContent=n; $('oU').textContent=fmtS(UmV,1)+' mV';
+    target=clamp(UmV/50,-1,1)*58; }
+  needle+=(target-needle)*Math.min(1,dt*14);
+  $('needle').setAttribute('transform','rotate('+needle.toFixed(2)+' 110 115)');
+}
+
+let last=performance.now();
+function frame(now){
+  const dt=Math.min(0.05,(now-last)/1000); last=now; readColors();
+  if(mode==='film'){
+    const c=chapters[ci];
+    if(playing){ t+=dt*speed; if(t>=c.T){ t=c.T; playing=false; done.add(ci); if(ci<chapters.length-1) $('next').hidden=false; syncButtons(); } }
+    $('scrub').value=t; $('time').textContent=fmt(t,1)+' s / '+fmt(c.T,1)+' s';
+    const st=c.state(t);
+    if(c.task){ const r=drawTaskScene(st); const i=Math.min(c.V.length-1,Math.round(t/DT)); if(showDiag) drawTaskGraph(c,i); else gx.clearRect(0,0,gc.width,gc.height); readoutTask(r,dt); requestAnimationFrame(frame); return; }
+    const count=drawScene(st);
+    const i=Math.min(c.N.length-1,Math.round(t/DT)); const U=c.U[i];
+    const nW=c.nW||200; const pts=[]; for(let k=0;k<=i;k++) pts.push([k*DT,c.N[k],c.U[k],nW]);
+    drawGraph({t0:0,t1:c.T,nMax:c.nMax,pts,labels:true,signed:!!c.signed,uMax:c.umax});
+    readout(count,-U,dt,st,nW,c.umax); showCaption();
+  } else {
+    labT+=dt; const st=labState(); const count=drawScene(st); const N=model(st);
+    if(labPrevN!==null&&dt>0){ const r=(N-labPrevN)/dt; labRate+=(r-labRate)*Math.min(1,dt/0.12); } labPrevN=N;
+    if(Math.abs(labRate)<0.02) labRate=0;
+    hist.push([labT,N,-labRate,lab.n]); while(hist.length&&hist[0][0]<labT-10) hist.shift();
+    drawGraph({t0:labT-10,t1:labT,nMax:60,pts:hist,labels:false});
+    readout(count,labRate,dt,st,lab.n);
+  }
+  requestAnimationFrame(frame);
+}
+fit(); gotoChapter(0,false); setLevel('q'); setMode('film');
+requestAnimationFrame(frame);
+})();
+</script>
+
+</body></html>
