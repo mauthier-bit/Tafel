@@ -1830,8 +1830,8 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   dem Finger anfassen. Das kleine **⚙ im Zifferblatt** (zwischen Mitte und 12) öffnet ihr Menü mit
   **Größe**, **Schulstunden**, **Digitalanzeige**, **„Wieder als Objekt auf die Seite"** (legt sie mit
   gleicher Größe und Position zurück auf die aktuelle Seite) und **„Uhr ausblenden"**.
-- **Funktionsplotter** (Werkzeug) – **drei Reiter: Graph, Tabelle, Maschine.** Der Funktionsterm lässt
-  sich **in jedem Reiter** eingeben und gilt sofort in allen dreien; „＋“ legt überall eine weitere Funktion an
+- **Funktionsplotter** (Werkzeug) – **vier Reiter: Graph, Tabelle, Maschine, Transformationen.** Der Funktionsterm lässt
+  sich **in den ersten drei Reitern** eingeben und gilt sofort in allen dreien; „＋“ legt überall eine weitere Funktion an
   (im Graph eine Eingabezeile, in der Tabelle eine Zeile, bei der Maschine eine weitere Maschine).
   **Tabelle:** in der Kopfzeile stehen die **x-Werte zum Eintippen** („＋ x-Wert“ hängt eine Spalte an und
   setzt den bisherigen Schritt fort, „− x-Wert“ nimmt die letzte weg); darunter für **jede Funktion eine
@@ -1839,6 +1839,25 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   **Maschine:** oben der x-Wert, der durch einen Trichter in die Maschine (Zahnräder, darin die
   Funktionsvorschrift) fällt, darunter der **Rechenweg mit eingesetztem x** (`f₁(−1,5) = 2·(−1,5)² + (−3)·(−1,5) + 1`;
   negative Werte werden nur geklammert, wo es nötig ist) und unten der ausgeworfene y-Wert.
+  **Transformationen:** Hier steht eine **Ausgangsfunktion f** – entweder aus der Liste
+  (Parabel, kubisch, Wurzel, Hyperbel, Betrag, Sinus, Kosinus, e-Funktion, Logarithmus, eine
+  unsymmetrische Funktion) oder als **eigener Term**. Vier Schieberegler bauen daraus
+  **g(x) = a · f(b · (x + c)) + d**:
+  - **„Einzelwirkungen"** zeigt die Zwischenschritte als gestrichelte Graphen in der Reihenfolge, in der
+    sie wirken: erst **c** (waagrechte Verschiebung, türkis), dann **b** (waagrechtes Strecken/Stauchen,
+    grün), dann **a** (senkrechtes Strecken/Stauchen, pink), zuletzt **d** – das Ergebnis **g** ist
+    dick in Gold, die Ausgangsfunktion **f** dünn in Grau. Darunter steht dieselbe Reihenfolge in
+    Worten, farblich passend, mit den Faktoren (z. B. „b = 3: waagrecht gestaucht (Faktor 0,333)").
+  - **„Term"** schreibt den **transformierten Term** aus: Aus f(x) = x² und a = 2, b = 3, c = 1, d = −4
+    wird **g(x) = 2·(3·(x + 1))² − 4** – der eingegebene Term wird dabei wirklich eingesetzt, auch bei
+    sin, Wurzel oder einem eigenen Polynom, und nur dort geklammert, wo es nötig ist.
+  - **„Reihenfolge"** greift die klassische Stolperstelle auf und zeichnet die **vertauschte Variante**
+    violett gestrichelt dazu: **innen** f(b·x + c) statt f(b·(x + c)) – das verschiebt nur um c/b, weil
+    innen alles **umgekehrt** wirkt; **außen** a·(f(…) + d) statt a·f(…) + d – das verschiebt um a·d
+    statt um d. Beide Fälle stehen mit Term und Begründung darunter.
+  Die Zeichenfläche lässt sich **ziehen und zoomen** (zwei Finger oder Mausrad), **„Ansicht"** stellt das
+  Standardfenster wieder her, **„↺"** setzt a, b, c, d auf 1, 1, 0, 0 zurück. Der ganze Stand – Term,
+  Regler und Schalter – wird mit dem Projekt gespeichert und vom **Teilen**-Knopf mitgegeben.
   **Term verdecken (👁 neben der Eingabe):** Der Term bleibt erhalten und wirkt weiter, ist aber **nirgends mehr
   zu sehen** – statt seiner steht „? ? ?“ (auch in der Maschine und in Bildern für die Tafel). So wird aus jeder
   Funktion eine Aufgabe: *Welche Funktion steckt dahinter?* Ein zweiter Tipp zeigt ihn wieder.
