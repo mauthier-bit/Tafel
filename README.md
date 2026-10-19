@@ -2296,7 +2296,13 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   - Im **Experiment** schaltet ein Umschalter den Elektromagneten zwischen **Gleichstrom** und
     **Wechselstrom** um; bei Wechselstrom kommt ein Regler für die **Frequenz** (0,1 bis 2 Hz) dazu, und
     die Stromstärke wird als **Scheitelwert Î** (Oberstufe zusätzlich **B̂** und die Periodendauer T)
-    angezeigt.
+    angezeigt. Die **Spannungsskala wächst dabei mit**: Bei hoher Frequenz werden die Spitzen nicht mehr
+    abgeschnitten, sondern die Achse springt auf den nächsten passenden Wert (z. B. ±500 mV statt ±50 mV).
+  - Ein zweiter Umschalter stellt die **Spule waagrecht oder senkrecht**. Senkrecht liegt ihre Fläche
+    **parallel zu den Feldlinien**: Es geht keine einzige hindurch, Φ = A · cos 90° = 0, und auch beim
+    Bewegen entsteht keine Spannung – die Erfahrung aus dem Kapitel „Drehung" zum Selbstausprobieren.
+  - Feldlinien, die **nicht** durch die Spule gehen, sind **blasser** gezeichnet; die gezählten stechen
+    dadurch deutlich hervor.
   In der Kopfzeile stehen **A− / A+** für die Schriftgröße und dieselben drei Knöpfe wie in den
   übrigen Werkzeugen: **🖼 Tafel** legt Szene und Diagramme als Bild neben das Werkzeug,
   **📋 Kopieren** nimmt sie in die Zwischenablage, und **⇪ Teilen** gibt den QR-Code an die Klasse –
