@@ -2339,11 +2339,16 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     dadurch deutlich hervor.
   - **Im Experiment sitzen die beiden Anzeigen klein oben links im Bild:** die **Zahl der Feldlinien**
     und das **Spannungsmessgerät**. Zwei Knöpfe darüber (**„Feldlinien"**, **„Messgerät"**) blenden sie
-    einzeln ein und aus. Dadurch bleibt rechts Platz für den **Einstellungsblock**, der nun **neben dem
-    Experiment** steht: Man sieht beim Schieben der Regler zu, was im Bild passiert, statt scrollen zu
-    müssen. Im **Film** bleibt alles wie gehabt – dort stehen beide Anzeigen groß in der rechten Spalte.
-    Ist die Szene sehr klein (schmales Objekt auf der Tafel) und sind in der Oberstufe alle Messwerte
-    eingeblendet, scrollt die Werteliste in sich; das Messgerät bleibt dabei sichtbar.
+    einzeln ein und aus. Beide Fenster sind bewusst **schmal**: Bei der Zahl steht nur noch
+    **„13 Feldlinien"** (die Zeilen „Die Anzahl bleibt gleich" und „keine Induktionsspannung" entfallen
+    hier, in der Oberstufe bleibt die Werteliste), und vom Messgerät ist nur der **Zeigerbereich** zu
+    sehen – dadurch ist die Anzeige **größer, ohne breiter zu werden**. Es geht im Bild nur darum,
+    **dass** der Zeiger ausschlägt; **wie groß** die Spannung ist, zeigen die **Diagramme** darunter,
+    die im Experiment **höher** sind.
+    Dadurch bleibt rechts Platz für den **Einstellungsblock**, der nun **neben dem Experiment** steht
+    und **genauso hoch** ist wie Bild und Diagramme zusammen: Man sieht beim Schieben der Regler zu,
+    was im Bild passiert, statt scrollen zu müssen. **„Zurücksetzen"** sitzt unten am Blockende.
+    Im **Film** bleibt alles wie gehabt – dort stehen beide Anzeigen groß in der rechten Spalte.
   In der Kopfzeile stehen **A− / A+** für die Schriftgröße und dieselben drei Knöpfe wie in den
   übrigen Werkzeugen: **🖼 Tafel** legt Szene und Diagramme als Bild neben das Werkzeug,
   **📋 Kopieren** nimmt sie in die Zwischenablage, und **⇪ Teilen** gibt den QR-Code an die Klasse –
