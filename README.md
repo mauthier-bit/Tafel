@@ -2332,9 +2332,13 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     die Stromstärke wird als **Scheitelwert Î** (Oberstufe zusätzlich **B̂** und die Periodendauer T)
     angezeigt. Die **Spannungsskala wächst dabei mit**: Bei hoher Frequenz werden die Spitzen nicht mehr
     abgeschnitten, sondern die Achse springt auf den nächsten passenden Wert (z. B. ±500 mV statt ±50 mV).
-  - Ein zweiter Umschalter stellt die **Spule waagrecht oder senkrecht**. Senkrecht liegt ihre Fläche
-    **parallel zu den Feldlinien**: Es geht keine einzige hindurch, Φ = A · cos 90° = 0, und auch beim
-    Bewegen entsteht keine Spannung – die Erfahrung aus dem Kapitel „Drehung" zum Selbstausprobieren.
+  - Unter **„Orientierung der Spule"** stellen **drei Knopfe mit Sinnbildern** die Spule **waagrecht**,
+    **senkrecht 1** (um die Querachse gekippt, die Fläche steht quer zum Blick) oder **senkrecht 2**
+    (um die Hochachse gedreht, die Fläche steht in die Tiefe). Beide senkrechten Stellungen sind
+    **physikalisch gleichwertig** – die Fläche liegt **parallel zu den Feldlinien**, es geht keine
+    einzige hindurch, Φ = A · cos 90° = 0, und auch beim Bewegen entsteht keine Spannung –, im Bild
+    sieht man aber beide Möglichkeiten. Das ist die Erfahrung aus dem Kapitel „Drehung" zum
+    Selbstausprobieren.
   - Feldlinien, die **nicht** durch die Spule gehen, sind **blasser** gezeichnet; die gezählten stechen
     dadurch deutlich hervor.
   - **Im Experiment sitzen die beiden Anzeigen klein oben links im Bild:** die **Zahl der Feldlinien**

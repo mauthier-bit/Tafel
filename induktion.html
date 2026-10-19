@@ -172,11 +172,21 @@ dl.vals dt.uind{font-family:var(--font);font-size:.9rem}
 .lab .row label span{font-variant-numeric:tabular-nums;color:var(--muted);font-weight:500}
 .lab input[type=range]{width:100%;accent-color:var(--accent);height:30px}
 body.labm #lab{display:flex;flex-direction:column;overflow:auto}   /* genauso hoch wie Szene + Diagramme */
-body.labm .lab .row{margin-top:9px}
-body.labm .lab .seg{margin-top:9px}
+body.labm .lab .row{margin-top:7px}
+body.labm .lab .seg{margin-top:7px}
+body.labm .lab input[type=range]{height:26px}
+body.labm .lab .row label{font-size:.9rem}
 body.labm #reset{margin-top:auto}
 .lab .seg{margin-top:10px;width:100%}
 .lab .seg button{flex:1;font-size:.88rem;padding:7px 8px}
+.lab .grpLbl{margin-top:11px;font-weight:600;font-size:.92rem}
+body.labm .lab .grpLbl{margin-top:7px;font-size:.9rem}
+.seg.segOri button{display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;font-size:.72rem;line-height:1.1;min-height:0}
+.seg.segOri svg{width:28px;height:24px;display:block;overflow:visible}
+.seg.segOri svg path{fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.seg.segOri svg .fl{opacity:.5}
+.seg.segOri svg .sp{stroke-width:2;stroke:var(--flux)}
+.seg.segOri button[aria-pressed="true"] svg .sp{stroke:currentColor}
 @media (max-width:880px){ main{grid-template-columns:minmax(0,1fr)} .count .n{font-size:2.5rem} }
 @media (max-width:520px){ .sceneWrap{aspect-ratio:1.55/1} .graphWrap{height:130px} h1{font-size:1.1rem} }
 @media (prefers-reduced-motion:reduce){ .caption p{transition:none} }
@@ -301,9 +311,20 @@ body.labm #reset{margin-top:auto}
         </div>
         <div class="row"><label for="sMag">Position Magnet <span id="vMag"></span></label><input type="range" id="sMag" min="-5.5" max="5.5" step="0.01"></div>
         <div class="row"><label for="sCoil">Position Spule <span id="vCoil"></span></label><input type="range" id="sCoil" min="-5.5" max="5.5" step="0.01"></div>
-        <div class="seg" id="segLage" role="group" aria-label="Lage der Spule">
-          <button id="lgFlach" aria-pressed="true">Spule waagrecht</button>
-          <button id="lgHoch" aria-pressed="false">Spule senkrecht</button>
+        <div class="grpLbl">Orientierung der Spule</div>
+        <div class="seg segOri" id="segLage" role="group" aria-label="Orientierung der Spule">
+          <button id="ori0" aria-pressed="true" title="Spulenfläche waagrecht: Die Feldlinien gehen hindurch.">
+            <svg viewBox="0 0 28 24" aria-hidden="true">
+              <g class="fl"><path d="M7 2v19M21 2v19"/><path d="M4.6 17.6 7 21l2.4-3.4M18.6 17.6 21 21l2.4-3.4"/></g>
+              <path class="sp" d="M5 15h13l5-4H10z"/></svg><span>waagrecht</span></button>
+          <button id="ori1" aria-pressed="false" title="Senkrecht, quer zum Blick: Die Fläche liegt parallel zu den Feldlinien – es geht keine hindurch.">
+            <svg viewBox="0 0 28 24" aria-hidden="true">
+              <g class="fl"><path d="M4 2v19M24 2v19"/><path d="M1.6 17.6 4 21l2.4-3.4M21.6 17.6 24 21l2.4-3.4"/></g>
+              <path class="sp" d="M9 4h10v16H9z"/></svg><span>senkrecht 1</span></button>
+          <button id="ori2" aria-pressed="false" title="Senkrecht, in die Tiefe gedreht: Die Fläche liegt ebenfalls parallel zu den Feldlinien.">
+            <svg viewBox="0 0 28 24" aria-hidden="true">
+              <g class="fl"><path d="M5 2v19M23 2v19"/><path d="M2.6 17.6 5 21l2.4-3.4M20.6 17.6 23 21l2.4-3.4"/></g>
+              <path class="sp" d="M11 20v-9l6-5v9z"/></svg><span>senkrecht 2</span></button>
         </div>
         <div class="row"><label for="sI">Stromstärke im Elektromagneten <span id="vI"></span></label><input type="range" id="sI" min="0" max="3" step="0.01"></div>
         <div class="seg" id="segAC" role="group" aria-label="Stromart">
@@ -489,7 +510,7 @@ const ICON_PAUSE='<svg viewBox="0 0 24 24"><path fill="currentColor" d="M6 4h4.5
 // ---------- Zustand ----------
 let mode='film', ci=0, t=0, playing=false, speed=1, lastCap=-2, done=new Set();
 let level='q', lastSign=1;
-const lab={mx:-1.75,cx:0,I:2,a:2.5,big:false,n:200,ac:false,f:0.5,senk:false,zN:true,zU:true};
+const lab={mx:-1.75,cx:0,I:2,a:2.5,big:false,n:200,ac:false,f:0.5,ori:0,zN:true,zU:true};
 let hist=[], labT=0, labPrevN=null, labRate=0, needle=0;
 /* Spannungsskala im Experiment: Sie wächst mit, sonst werden hohe Frequenzen abgeschnitten.
    Sie springt erst, wenn der Platz wirklich nicht reicht (oder viel zu groß geworden ist).  */
@@ -576,7 +597,7 @@ const sMag=$('sMag'), sCoil=$('sCoil'), sI=$('sI'), sA=$('sA'), sN=$('sN');
 function syncLab(){ sMag.value=lab.mx; sCoil.value=lab.cx; sI.value=lab.I; sA.value=lab.a; sN.value=lab.n; $('vN').textContent=lab.n;
   $('vMag').textContent=fmt(lab.mx*2,1)+' cm'; $('vCoil').textContent=fmt(lab.cx*2,1)+' cm';
   $('acDC').setAttribute('aria-pressed',!lab.ac); $('acAC').setAttribute('aria-pressed',lab.ac);
-  $('lgFlach').setAttribute('aria-pressed',!lab.senk); $('lgHoch').setAttribute('aria-pressed',lab.senk);
+  for(let i=0;i<3;i++) $('ori'+i).setAttribute('aria-pressed',(lab.ori|0)===i);
   $('rowF').hidden=!lab.ac; $('sF').value=lab.f; ovlSync();
   $('vF').textContent=fmt(lab.f,2)+' Hz'+(level==='o'?' · T = '+fmt(1/lab.f,1)+' s':'');
   $('vI').textContent=(lab.ac?'Î = ':'')+fmt(lab.I,2)+' A'+(level==='o'?' · '+(lab.ac?'B̂ = ':'B = ')+fmt(lab.I/3*100,0)+' mT':''); $('vA').textContent=fmt(Math.pow(lab.a*2,2),0)+' cm²';
@@ -585,15 +606,17 @@ sMag.oninput=()=>{lab.mx=+sMag.value;syncLab();}; sCoil.oninput=()=>{lab.cx=+sCo
 sI.oninput=()=>{lab.I=+sI.value;syncLab();}; sN.oninput=()=>{lab.n=+sN.value;syncLab();}; sA.oninput=()=>{lab.a=+sA.value;syncLab();};
 $('fSmall').onclick=()=>{lab.big=false;syncLab();}; $('fBig').onclick=()=>{lab.big=true;lab.mx=0;syncLab();};
 $('acDC').onclick=()=>{lab.ac=false;syncLab();}; $('acAC').onclick=()=>{lab.ac=true;syncLab();};
-$('lgFlach').onclick=()=>{lab.senk=false;syncLab();}; $('lgHoch').onclick=()=>{lab.senk=true;syncLab();};
+for(let i=0;i<3;i++) $('ori'+i).onclick=()=>{lab.ori=i;syncLab();};
 $('sF').oninput=()=>{lab.f=+$('sF').value;syncLab();};
-$('reset').onclick=()=>{ Object.assign(lab,{mx:-1.75,cx:0,I:2,a:2.5,big:false,n:200,ac:false,f:0.5,senk:false,zN:true,zU:true}); syncLab(); };
+$('reset').onclick=()=>{ Object.assign(lab,{mx:-1.75,cx:0,I:2,a:2.5,big:false,n:200,ac:false,f:0.5,ori:0,zN:true,zU:true}); syncLab(); };
 function labState(){ const f=lab.big?BIG:SMALL;
   /* Wechselstrom: Die Stromstärke schwingt, das Feld kehrt dabei seine Richtung um. */
   const B=(lab.I/3)*(lab.ac?Math.sin(2*Math.PI*lab.f*labT):1);
-  /* Senkrecht gestellt liegt die Spulenfläche parallel zu den Feldlinien: Es geht keine hindurch. */
+  /* Senkrecht gestellt liegt die Spulenflaeche parallel zu den Feldlinien: Es geht keine hindurch.
+     Zwei senkrechte Stellungen sind moeglich – physikalisch gleich (cos 90° = 0), im Bild verschieden:
+     um die x-Achse gekippt (ori 1) oder um die Hochachse gedreht (ori 2). */
   const st=base({mx:lab.mx,W:f.W,D:f.D,cx:lab.cx,a:lab.a,b:Math.min(lab.a,lab.big?4.4:3.5),B,el:true});
-  if(lab.senk) st.rot=Math.PI/2;
+  st.ori=lab.ori|0; if(st.ori) st.rot=Math.PI/2;
   return st; }
 
 // Ziehen im Bild
@@ -660,7 +683,10 @@ function drawScene(st){
     else seg3(l,-H,H,true); }
 
   // Spule
-  const hw=st.b/2, cp3=(u,w,off)=>P(st.cx+u, w*sn+off*cs, w*cs-off*sn);
+  const hw=st.b/2;
+  /* ori 2: Die Flaeche spannt Tiefe und Hoehe auf, die Normale zeigt waagrecht aus dem Bild heraus. */
+  const cp3=(st.ori===2) ? ((u,w,off)=>P(st.cx+off, w, u))
+                         : ((u,w,off)=>P(st.cx+u, w*sn+off*cs, w*cs-off*sn));
   const q=off=>[cp3(-st.a/2,-hw,off),cp3(st.a/2,-hw,off),cp3(st.a/2,hw,off),cp3(-st.a/2,hw,off)];
   if(R0&&st.achse){ ctx.setLineDash([5*dpr,5*dpr]); ctx.strokeStyle=C.muted; ctx.lineWidth=Math.max(1,s*0.025); const a1=P(cl-0.7,0,0), a2=P(cr+0.7,0,0); ctx.beginPath(); ctx.moveTo(a1[0],a1[1]); ctx.lineTo(a2[0],a2[1]); ctx.stroke(); ctx.setLineDash([]);
     ctx.font='500 '+Math.round(s*0.2)+'px '+C.font; ctx.fillStyle=C.muted; ctx.textAlign='right'; ctx.textBaseline='middle'; ctx.fillText('Drehachse',a1[0]-s*0.1,a1[1]); }
@@ -886,7 +912,9 @@ fit(); gotoChapter(0,false); setLevel('q'); setMode('film');
 function zustand(){ return {mode:mode, ci:ci, level:level, t:Math.round(t*100)/100, lab:Object.assign({},lab)}; }
 function zustandSetzen(d){ if(!d||typeof d!=='object') return;
   if(d.level==='q'||d.level==='o') setLevel(d.level);
-  if(d.lab&&typeof d.lab==='object') Object.assign(lab,d.lab);
+  if(d.lab&&typeof d.lab==='object'){ Object.assign(lab,d.lab);
+    if(d.lab.ori===undefined&&typeof d.lab.senk==='boolean') lab.ori=d.lab.senk?1:0;   /* aeltere Links */
+    delete lab.senk; lab.ori=Math.max(0,Math.min(2,lab.ori|0)); }
   const i=Math.max(0,Math.min(chapters.length-1,+d.ci||0));
   gotoChapter(i,false);
   setMode(d.mode==='lab'?'lab':'film');
