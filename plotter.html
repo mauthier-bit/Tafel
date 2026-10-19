@@ -90,6 +90,8 @@
   #trSl{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:2px 12px;}
   #trSl .sl{display:flex;align-items:center;gap:6px;}
   #trSl .sl label{font:800 calc(var(--k) * 13px) inherit;font-style:italic;width:calc(var(--k) * 14px);color:#1f2430;}
+  #trSl .sl .trCol{width:calc(var(--k) * 16px);height:calc(var(--k) * 16px);border-radius:50%;border:2px solid #fff;
+                   box-shadow:0 0 0 1px #cfd6e0;padding:0;cursor:pointer;flex:0 0 auto;}
   #trSl .sl input{flex:1;min-width:60px;}
   #trSl .sl .v{font:700 calc(var(--k) * 13px) ui-monospace,Menlo,monospace;min-width:38px;text-align:right;color:#53617a;}
   #trOut{font-size:calc(var(--k) * 13px);line-height:1.45;color:#1f2430;}
@@ -512,7 +514,7 @@ function farbwahl(i,el){
   colPop.style.top=((r.bottom+6+ph>innerHeight)?Math.max(6,r.top-ph-6):r.bottom+6)+'px';
 }
 document.addEventListener('pointerdown',e=>{ if(!colPop.classList.contains('show')) return;
-  if(!e.target.closest('#colPop')&&!e.target.closest('.fcol')) farbeZu(); },true);
+  if(!e.target.closest('#colPop')&&!e.target.closest('.fcol')&&!e.target.closest('.trCol')) farbeZu(); },true);
 addEventListener('resize',farbeZu);
 
 /* ---- Parameter-Schieberegler (über alle Funktionen) ---- */
@@ -762,10 +764,15 @@ const TR_BSP=[['x^2','Parabel x²'],['x^3','kubisch x³'],['sqrt(x)','Wurzel √
   ['sin(x)','Sinus'],['cos(x)','Kosinus'],['exp(x)','e-Funktion eˣ'],['2^x','Exponential 2ˣ'],
   ['ln(x)','Logarithmus'],['0.25*x^3-0.5*x^2-x+1','Grad 3, unsymmetrisch'],
   ['0.05*x^4-0.1*x^3-0.8*x^2+0.6*x+2','Grad 4, unsymmetrisch']];
-const TRC={f:'#94a3b8', g:'#b45309', c1:'#0891b2', c2:'#16a34a', c3:'#db2777', alt:'#7c3aed'};
-let tr={term:'x^2',a:1,b:1,c:0,d:0,einzel:true,zTerm:true,reihe:false,rSeite:'x'};
+const TRC={f:'#94a3b8', alt:'#b45309'};        /* Ausgangsfunktion grau, vertauschte Reihenfolge braun */
+const TRSTD={a:'#16a34a', b:'#2563eb', c:'#dc2626', d:'#7c3aed'};   /* a grün, b blau, c rot, d violett */
+let tr={term:'x^2',a:1,b:1,c:0,d:0,einzel:true,zTerm:true,reihe:false,rSeite:'x',col:Object.assign({},TRSTD)};
 let trToks=tokenize(tr.term);
 let trView={ox:0,oy:0,unit:40}, trW=0, trH=0;
+const trCol=k=>(tr.col&&tr.col[k])||TRSTD[k];
+/* Das Ergebnis bekommt die Farbe des zuletzt wirkenden Parameters */
+function trGCol(){ if(tr.d!==0) return trCol('d'); if(tr.c!==0) return trCol('c');
+  if(tr.b!==1) return trCol('b'); if(tr.a!==1) return trCol('a'); return trCol('d'); }
 const nf1=v=>(Math.round(v*10)/10).toFixed(1).replace('.',',').replace('-','−');
 const nfk=v=>{ const r=Math.round(v*1000)/1000; return String(r).replace('.',',').replace('-','−'); };
 /* Klammern nur, wenn der Term auf oberster Ebene ein Plus oder Minus enthält */
@@ -824,11 +831,11 @@ function trDraw(){ if(tab!=='r'||!trW) return;
   if(!trToks.length){ trText(); return; }
   trKurve(c2,trF,TRC.f,1.8);                                    /* Ausgangsfunktion */
   if(tr.einzel){
-    if(tr.a!==1&&(tr.b!==1||tr.c!==0||tr.d!==0)) trKurve(c2,trS1,TRC.c1,1.6,[6,5]);
-    if(tr.b!==1&&(tr.c!==0||tr.d!==0))           trKurve(c2,trS2,TRC.c2,1.6,[6,5]);
-    if(tr.c!==0&&tr.d!==0)                       trKurve(c2,trS3,TRC.c3,1.6,[6,5]); }
+    if(tr.a!==1&&(tr.b!==1||tr.c!==0||tr.d!==0)) trKurve(c2,trS1,trCol('a'),1.6,[6,5]);
+    if(tr.b!==1&&(tr.c!==0||tr.d!==0))           trKurve(c2,trS2,trCol('b'),1.6,[6,5]);
+    if(tr.c!==0&&tr.d!==0)                       trKurve(c2,trS3,trCol('c'),1.6,[6,5]); }
   if(tr.reihe) trKurve(c2,tr.rSeite==='y'?trAy:trAx,TRC.alt,2,[3,4]);
-  trKurve(c2,trG,TRC.g,2.8);                                    /* Ergebnis */
+  trKurve(c2,trG,trGCol(),2.8);                                 /* Ergebnis in der Farbe des letzten Schrittes */
   trText(); }
 
 /* ---- Term und Erklärung ---- */
@@ -849,12 +856,12 @@ function trText(){ const out=$('trOut'); const L=[];
   kurz += (tr.a===1?'':(tr.a===-1?'−':nfk(tr.a)+'·'))+'f('+trInnen()+')';
   if(tr.d!==0) kurz+=(tr.d>0?' + ':' − ')+nfk(Math.abs(tr.d));
   L.push('<b>'+kurz+'</b>');
-  if(tr.zTerm&&trToks.length) L.push('<span class="zg">g(x) = '+trTermG()+'</span>');
+  if(tr.zTerm&&trToks.length) L.push('<span style="color:'+trGCol()+'">g(x) = '+trTermG()+'</span>');
   if(tr.einzel){ const t=[];
-    if(tr.a!==1) t.push(chip(TRC.c1,'a = '+nf1(tr.a)+': senkrecht '+(Math.abs(tr.a)>1?'gestreckt':'gestaucht')+' (Faktor '+nfk(Math.abs(tr.a))+')'+(tr.a<0?', an der x-Achse gespiegelt':'')));
-    if(tr.b!==1) t.push(chip(TRC.c2,'b = '+nf1(tr.b)+': waagrecht '+(Math.abs(tr.b)>1?'gestaucht':'gestreckt')+' (Faktor '+nfk(Math.round(1000/Math.abs(tr.b))/1000)+')'+(tr.b<0?', an der y-Achse gespiegelt':'')));
-    if(tr.c!==0) t.push(chip(TRC.c3,'c = '+nf1(tr.c)+': um '+nfk(Math.abs(tr.c))+' nach '+(tr.c>0?'links':'rechts')));
-    if(tr.d!==0) t.push(chip(TRC.g,'d = '+nf1(tr.d)+': um '+nfk(Math.abs(tr.d))+' nach '+(tr.d>0?'oben':'unten')));
+    if(tr.a!==1) t.push(chip(trCol('a'),'a = '+nf1(tr.a)+': senkrecht '+(Math.abs(tr.a)>1?'gestreckt':'gestaucht')+' (Faktor '+nfk(Math.abs(tr.a))+')'+(tr.a<0?', an der x-Achse gespiegelt':'')));
+    if(tr.b!==1) t.push(chip(trCol('b'),'b = '+nf1(tr.b)+': waagrecht '+(Math.abs(tr.b)>1?'gestaucht':'gestreckt')+' (Faktor '+nfk(Math.round(1000/Math.abs(tr.b))/1000)+')'+(tr.b<0?', an der y-Achse gespiegelt':'')));
+    if(tr.c!==0) t.push(chip(trCol('c'),'c = '+nf1(tr.c)+': um '+nfk(Math.abs(tr.c))+' nach '+(tr.c>0?'links':'rechts')));
+    if(tr.d!==0) t.push(chip(trCol('d'),'d = '+nf1(tr.d)+': um '+nfk(Math.abs(tr.d))+' nach '+(tr.d>0?'oben':'unten')));
     L.push(t.length?('<span class="zf">Zwischenschritte: </span>'+t.join('<span class="zf"> → </span>')
       +'<span class="zf"> (erst strecken, dann verschieben)</span>')
       :'<span class="zf">Noch keine Veränderung: a = 1, b = 1, c = 0, d = 0.</span>'); }
@@ -884,12 +891,33 @@ function trFit(){ if(!trW) return;
   trView.oy=trH/2+ver*trView.unit; trDraw(); }
 
 /* ---- Bedienung ---- */
+/* Farbwähler je Parameter – gleiche Auswahl wie bei den Funktionsfarben */
+function trFarbwahl(k,el){
+  colPop.innerHTML='';
+  FARBEN.forEach(c=>{ const b=document.createElement('button'); b.style.background=c; b.dataset.c=c; b.title=c;
+    b.classList.toggle('on',trCol(k)===c);
+    b.onclick=()=>{ trSetzeFarbe(k,c); farbeZu(); }; colPop.appendChild(b); });
+  const std=document.createElement('button'); std.style.background=TRSTD[k]; std.title='Standardfarbe';
+  std.textContent='↺'; std.style.color='#fff'; std.style.fontWeight='800';
+  std.onclick=()=>{ trSetzeFarbe(k,TRSTD[k]); farbeZu(); }; colPop.appendChild(std);
+  const eig=document.createElement('input'); eig.type='color';
+  eig.value=/^#[0-9a-f]{6}$/i.test(trCol(k))?trCol(k):TRSTD[k];
+  eig.title='eigene Farbe'; eig.oninput=()=>trSetzeFarbe(k,eig.value); colPop.appendChild(eig);
+  colPop.classList.add('show');
+  const r=el.getBoundingClientRect(), pw=colPop.offsetWidth, ph=colPop.offsetHeight;
+  colPop.style.left=Math.max(6,Math.min(innerWidth-pw-6,r.left-6))+'px';
+  colPop.style.top=((r.bottom+6+ph>innerHeight)?Math.max(6,r.top-ph-6):r.bottom+6)+'px'; }
+function trSetzeFarbe(k,c){ tr.col=Object.assign({},TRSTD,tr.col); tr.col[k]=c;
+  const row=document.querySelector('#trSl .sl[data-k="'+k+'"] .trCol'); if(row) row.style.background=c;
+  colPop.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.c===c));
+  trDraw(); sync(); }
 function trUiNeu(){ if(!$('trTerm')) return;
   $('trTerm').value=tr.term; $('trEinzel').checked=tr.einzel; $('trTermAn').checked=tr.zTerm;
   $('trReihe').checked=tr.reihe; $('trReiheWahl').hidden=!tr.reihe;
   $('trRx').classList.toggle('on',tr.rSeite!=='y'); $('trRy').classList.toggle('on',tr.rSeite==='y');
   document.querySelectorAll('#trSl .sl').forEach(row=>{ const k=row.dataset.k;
-    row.querySelector('input').value=tr[k]; row.querySelector('.v').textContent=nf1(tr[k]); }); }
+    row.querySelector('input').value=tr[k]; row.querySelector('.v').textContent=nf1(tr[k]);
+    const fb=row.querySelector('.trCol'); if(fb) fb.style.background=trCol(k); }); }
 (function trBuild(){
   const sel=$('trBsp'); sel.innerHTML='<option value="">Beispiel …</option>'+TR_BSP.map(b=>'<option value="'+b[0]+'">'+b[1]+'</option>').join('');
   sel.onchange=()=>{ if(!sel.value) return; tr.term=sel.value; trToks=tokenize(tr.term); sel.value=''; trUiNeu(); trFit(); sync(); };
@@ -900,8 +928,11 @@ function trUiNeu(){ if(!$('trTerm')) return;
   const sl=$('trSl');
   [['a',-3,3],['b',-3,3],['c',-5,5],['d',-5,5]].forEach(([k,mn,mx])=>{
     const row=document.createElement('div'); row.className='sl'; row.dataset.k=k;
-    row.innerHTML='<label>'+k+'</label><input type="range" min="'+mn+'" max="'+mx+'" step="0.1"><span class="v"></span>';
-    const r=row.querySelector('input'), v=row.querySelector('.v');
+    row.innerHTML='<button type="button" class="trCol" title="Farbe für '+k+' wählen"></button><label>'+k+'</label>'+
+      '<input type="range" min="'+mn+'" max="'+mx+'" step="0.1"><span class="v"></span>';
+    const r=row.querySelector('input'), v=row.querySelector('.v'), fb=row.querySelector('.trCol');
+    fb.style.background=trCol(k);
+    fb.onclick=()=>trFarbwahl(k,fb);
     r.value=tr[k]; v.textContent=nf1(tr[k]);
     r.oninput=()=>{ tr[k]=Math.round(+r.value*10)/10; v.textContent=nf1(tr[k]); trDraw(); sync(); };
     sl.appendChild(row); });

@@ -1849,8 +1849,13 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   **g(x) = a · f(b · (x + c)) + d**:
   - **„Zwischenschritte"** zeigt die Schritte als gestrichelte Graphen in der Reihenfolge
     **a → b → c → d**, also **erst strecken, dann verschieben**: **a** (senkrechtes Strecken/Stauchen,
-    türkis), **b** (waagrechtes Strecken/Stauchen, grün), **c** (waagrechte Verschiebung, pink),
-    zuletzt **d** – das Ergebnis **g** ist dick in Gold, die Ausgangsfunktion **f** dünn in Grau.
+    **grün**), **b** (waagrechtes Strecken/Stauchen, **blau**), **c** (waagrechte Verschiebung, **rot**),
+    zuletzt **d** (senkrechte Verschiebung, **violett**) – das Ergebnis **g** ist dick in der Farbe des
+    **letzten wirksamen Parameters**, die Ausgangsfunktion **f** dünn in Grau. Jeder Regler hat links einen
+    **farbigen Punkt**: ein Tippen darauf öffnet den **Farbwähler** (dieselbe Palette wie bei den
+    Funktionsfarben, dazu ein freier Farbton und „↺“ für die Standardfarbe), sodass sich die Farbe
+    **jedes Parameters** einzeln einstellen lässt; die Farben gelten für Graph, Beschriftung und Term
+    und werden beim Kopieren, auf der Tafel und beim Teilen mit übernommen.
     In dieser Reihenfolge ist **jeder Schritt eine Streckung an einer Achse oder eine Verschiebung**;
     würde man zuerst verschieben und dann strecken, müsste man an der **verschobenen** Achse strecken.
     Darunter steht dieselbe Reihenfolge in Worten, farblich passend, mit den Faktoren
