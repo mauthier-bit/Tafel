@@ -2332,6 +2332,10 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     die Stromstärke wird als **Scheitelwert Î** (Oberstufe zusätzlich **B̂** und die Periodendauer T)
     angezeigt. Die **Spannungsskala wächst dabei mit**: Bei hoher Frequenz werden die Spitzen nicht mehr
     abgeschnitten, sondern die Achse springt auf den nächsten passenden Wert (z. B. ±500 mV statt ±50 mV).
+  - Im Kapitel **„Drehung"** steht die Spule beim Durchgang durch die **Senkrechte** genauso da wie
+    im Experiment („senkrecht 1"): Die Fläche liegt parallel zu den Feldlinien, und es wird jetzt
+    auch **keine einzige** mehr gezählt – vorher blieb je nach Raster eine Reihe übrig, obwohl die
+    Fläche praktisch auf eine Kante geschrumpft war.
   - Unter **„Orientierung der Spule"** stellen **drei Knopfe mit Sinnbildern** die Spule **waagrecht**,
     **senkrecht 1** (um die Querachse gekippt, die Fläche steht quer zum Blick) oder **senkrecht 2**
     (um die Hochachse gedreht, die Fläche steht in die Tiefe). Beide senkrechten Stellungen sind
