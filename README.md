@@ -2337,6 +2337,13 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     Bewegen entsteht keine Spannung – die Erfahrung aus dem Kapitel „Drehung" zum Selbstausprobieren.
   - Feldlinien, die **nicht** durch die Spule gehen, sind **blasser** gezeichnet; die gezählten stechen
     dadurch deutlich hervor.
+  - **Im Experiment sitzen die beiden Anzeigen klein oben links im Bild:** die **Zahl der Feldlinien**
+    und das **Spannungsmessgerät**. Zwei Knöpfe darüber (**„Feldlinien"**, **„Messgerät"**) blenden sie
+    einzeln ein und aus. Dadurch bleibt rechts Platz für den **Einstellungsblock**, der nun **neben dem
+    Experiment** steht: Man sieht beim Schieben der Regler zu, was im Bild passiert, statt scrollen zu
+    müssen. Im **Film** bleibt alles wie gehabt – dort stehen beide Anzeigen groß in der rechten Spalte.
+    Ist die Szene sehr klein (schmales Objekt auf der Tafel) und sind in der Oberstufe alle Messwerte
+    eingeblendet, scrollt die Werteliste in sich; das Messgerät bleibt dabei sichtbar.
   In der Kopfzeile stehen **A− / A+** für die Schriftgröße und dieselben drei Knöpfe wie in den
   übrigen Werkzeugen: **🖼 Tafel** legt Szene und Diagramme als Bild neben das Werkzeug,
   **📋 Kopieren** nimmt sie in die Zwischenablage, und **⇪ Teilen** gibt den QR-Code an die Klasse –

@@ -119,6 +119,36 @@ dl.vals dt{color:var(--muted);font-size:.9rem}
 dl.vals dd{margin:0;text-align:right;font-family:var(--mono);font-size:.92rem;font-weight:600}
 dl.vals .phi{color:var(--flux)}
 dl.vals .phi2{color:var(--flux2)}
+/* Experiment: Feldlinien-Anzeige und Messgerät klein oben links in die Szene,
+   damit der Einstellungsblock daneben Platz hat und das Experiment sichtbar bleibt. */
+.ovl{position:absolute;left:10px;top:32px;bottom:10px;width:min(46%,225px);display:flex;flex-direction:column;gap:6px;z-index:4}
+.ovlBtns{display:flex;gap:6px}
+.ovlBtns .btn{min-width:0;min-height:26px;padding:0 9px;font-size:.76rem;border-radius:8px;background:var(--surface);box-shadow:0 1px 5px rgba(0,0,0,.08)}
+.ovlBtns .btn[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--onAccent)}
+.ovlCards{display:flex;flex-direction:column;gap:6px;min-height:0;max-height:calc(100% - 34px);overflow:hidden}
+.ovl #roCard{overflow:auto;min-height:0}    /* in der Oberstufe scrollt die Werteliste in sich … */
+.ovl #meterCard{flex:0 0 auto}              /* … das Messgerät bleibt immer sichtbar */
+.ovl .card{padding:7px 9px;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,.08)}
+.ovl .lbl{display:none}                      /* die Knoepfe darueber sagen schon, was es ist */
+.ovl .meter svg{width:auto;max-width:100%;max-height:72px;margin:0 auto}
+.ovl .count{margin-top:1px;gap:6px}
+.ovl .count .n{font-size:1.7rem}
+.ovl .count .unit{font-size:.7rem;line-height:1.15}
+.ovl .trend{margin-top:4px;font-size:.76rem;gap:6px}
+.ovl .trend i{width:18px;height:18px;font-size:.8rem}
+.ovl dl.vals{gap:2px 8px;margin-top:4px}
+.ovl dl.vals dt{font-size:.66rem}
+.ovl dl.vals dd{font-size:.68rem}
+.ovl dl.vals .uind{font-size:.8rem}
+.ovl dl.vals dt.uind{font-size:.66rem}
+.ovl .chip{margin-top:5px;padding:2px 8px;font-size:.68rem}
+.ovl #roO:not([hidden]) ~ .chip{display:none}   /* Oberstufe: U_ind steht schon in der Liste */
+.ovl .meter svg{margin-top:1px}
+/* Kleine Szene (Objekt auf der Tafel): Anzeigen noch etwas knapper, damit beides hineinpasst */
+@media (max-width:700px){ .ovl{width:min(46%,200px)} .ovl .count .n{font-size:1.45rem}
+  .ovl dl.vals dt,.ovl dl.vals dd{font-size:.62rem} .ovl dl.vals .uind{font-size:.72rem}
+  .ovl .meter svg{max-height:58px} .ovl .card{padding:6px 8px} }
+@media (max-width:520px){ .ovl{width:min(48%,150px);top:28px} }
 .diagHidden{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;padding:10px 16px;background:repeating-linear-gradient(135deg,var(--surface) 0 10px,var(--surface2) 10px 20px);text-align:center}
 .diagHidden p{margin:0;color:var(--muted);font-weight:600}
 .chap.task{border-style:dashed}
@@ -167,6 +197,13 @@ dl.vals dt.uind{font-family:var(--font);font-size:.9rem}
       <div class="sceneWrap" id="sceneWrap">
         <canvas id="scene" aria-label="Animation: Magnetfeld, Feldlinien und Spule"></canvas>
         <div class="tag" id="tag"></div>
+        <div class="ovl" id="ovl" hidden>
+          <div class="ovlBtns">
+            <button class="btn" id="ovlN" aria-pressed="true" title="Anzeige der Feldlinien ein- oder ausblenden">Feldlinien</button>
+            <button class="btn" id="ovlU" aria-pressed="true" title="Spannungsmessgerät ein- oder ausblenden">Messgerät</button>
+          </div>
+          <div class="ovlCards" id="ovlCards"></div>
+        </div>
         <button class="bigplay" id="bigplay" aria-label="Abspielen"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M6 4l15 8-15 8z"/></svg></button>
       </div>
       <div class="graphWrap" id="graphWrap"><canvas id="graph" aria-label="Diagramm: Anzahl der Feldlinien und Induktionsspannung über der Zeit"></canvas>
@@ -185,7 +222,7 @@ dl.vals dt.uind{font-family:var(--font);font-size:.9rem}
     </section>
 
     <aside class="panel">
-      <div class="card">
+      <div class="card" id="roCard">
         <div class="lbl">Feldlinien durch die Spule</div>
         <div class="count" id="cntBox"><span class="n" id="cnt">0</span><span class="unit" id="cntUnit">Feldlinien</span></div>
         <div id="roQ"><div class="trend" id="trend"><i>=</i><span>Die Anzahl bleibt gleich.</span></div></div>
@@ -437,7 +474,7 @@ const ICON_PAUSE='<svg viewBox="0 0 24 24"><path fill="currentColor" d="M6 4h4.5
 // ---------- Zustand ----------
 let mode='film', ci=0, t=0, playing=false, speed=1, lastCap=-2, done=new Set();
 let level='q', lastSign=1;
-const lab={mx:-1.75,cx:0,I:2,a:2.5,big:false,n:200,ac:false,f:0.5,senk:false};
+const lab={mx:-1.75,cx:0,I:2,a:2.5,big:false,n:200,ac:false,f:0.5,senk:false,zN:true,zU:true};
 let hist=[], labT=0, labPrevN=null, labRate=0, needle=0;
 /* Spannungsskala im Experiment: Sie wächst mit, sonst werden hohe Frequenzen abgeschnitten.
    Sie springt erst, wenn der Platz wirklich nicht reicht (oder viel zu groß geworden ist).  */
@@ -495,8 +532,21 @@ function setSpeed(v){ speed=v; $('sp05').setAttribute('aria-pressed',v===0.5); $
 $('sp05').onclick=()=>setSpeed(0.5); $('sp1').onclick=()=>setSpeed(1);
 document.addEventListener('keydown',e=>{ if(e.code==='Space'&&mode==='film'&&e.target.tagName!=='INPUT'){ e.preventDefault(); $('play').click(); } });
 
+/* Im Experiment wandern die beiden Anzeigekarten in die Szene (klein, einblendbar),
+   im Film stehen sie wie gehabt gross in der Spalte rechts. */
+function ovlSetzen(an){ const ovl=$('ovl'), ro=$('roCard'), me=$('meterCard');
+  if(an){ $('ovlCards').appendChild(ro); $('ovlCards').appendChild(me); ovl.hidden=false; }
+  else { const p=document.querySelector('aside.panel'), vor=$('captionCard');
+         p.insertBefore(ro,vor); p.insertBefore(me,vor); ovl.hidden=true; ro.hidden=false; me.hidden=false; }
+  ovlSync(); }
+function ovlSync(){ $('ovlN').setAttribute('aria-pressed',!!lab.zN); $('ovlU').setAttribute('aria-pressed',!!lab.zU);
+  if(mode==='lab'){ $('roCard').hidden=!lab.zN; $('meterCard').hidden=!lab.zU; } }
+$('ovlN').onclick=()=>{ lab.zN=!lab.zN; ovlSync(); };
+$('ovlU').onclick=()=>{ lab.zU=!lab.zU; ovlSync(); };
+
 function setMode(m){ mode=m; $('mFilm').setAttribute('aria-pressed',m==='film'); $('mLab').setAttribute('aria-pressed',m==='lab');
   $('chapters').hidden=m!=='film'; $('controls').hidden=m!=='film'; $('captionCard').hidden=m!=='film'; $('lab').hidden=m!=='lab';
+  ovlSetzen(m==='lab');
   syncTaskUI();
   if(m==='lab'){ playing=false; hist=[]; labT=0; labPrevN=null; labRate=0; labUm=UMAX; labUmv=50; $('tag').textContent='Experiment'; sc.style.touchAction='none'; syncLab(); }
   else { $('tag').textContent=chapters[ci].short; sc.style.touchAction='pan-y'; }
@@ -509,7 +559,7 @@ function syncLab(){ sMag.value=lab.mx; sCoil.value=lab.cx; sI.value=lab.I; sA.va
   $('vMag').textContent=fmt(lab.mx*2,1)+' cm'; $('vCoil').textContent=fmt(lab.cx*2,1)+' cm';
   $('acDC').setAttribute('aria-pressed',!lab.ac); $('acAC').setAttribute('aria-pressed',lab.ac);
   $('lgFlach').setAttribute('aria-pressed',!lab.senk); $('lgHoch').setAttribute('aria-pressed',lab.senk);
-  $('rowF').hidden=!lab.ac; $('sF').value=lab.f;
+  $('rowF').hidden=!lab.ac; $('sF').value=lab.f; ovlSync();
   $('vF').textContent=fmt(lab.f,2)+' Hz'+(level==='o'?' · T = '+fmt(1/lab.f,1)+' s':'');
   $('vI').textContent=(lab.ac?'Î = ':'')+fmt(lab.I,2)+' A'+(level==='o'?' · '+(lab.ac?'B̂ = ':'B = ')+fmt(lab.I/3*100,0)+' mT':''); $('vA').textContent=fmt(Math.pow(lab.a*2,2),0)+' cm²';
   $('fSmall').setAttribute('aria-pressed',!lab.big); $('fBig').setAttribute('aria-pressed',lab.big); }
@@ -519,7 +569,7 @@ $('fSmall').onclick=()=>{lab.big=false;syncLab();}; $('fBig').onclick=()=>{lab.b
 $('acDC').onclick=()=>{lab.ac=false;syncLab();}; $('acAC').onclick=()=>{lab.ac=true;syncLab();};
 $('lgFlach').onclick=()=>{lab.senk=false;syncLab();}; $('lgHoch').onclick=()=>{lab.senk=true;syncLab();};
 $('sF').oninput=()=>{lab.f=+$('sF').value;syncLab();};
-$('reset').onclick=()=>{ Object.assign(lab,{mx:-1.75,cx:0,I:2,a:2.5,big:false,n:200,ac:false,f:0.5,senk:false}); syncLab(); };
+$('reset').onclick=()=>{ Object.assign(lab,{mx:-1.75,cx:0,I:2,a:2.5,big:false,n:200,ac:false,f:0.5,senk:false,zN:true,zU:true}); syncLab(); };
 function labState(){ const f=lab.big?BIG:SMALL;
   /* Wechselstrom: Die Stromstärke schwingt, das Feld kehrt dabei seine Richtung um. */
   const B=(lab.I/3)*(lab.ac?Math.sin(2*Math.PI*lab.f*labT):1);
