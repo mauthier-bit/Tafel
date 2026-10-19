@@ -258,6 +258,11 @@ dl.vals dt.uind{font-family:var(--font);font-size:.9rem}
         <div class="row"><label for="sMag">Position Magnet <span id="vMag"></span></label><input type="range" id="sMag" min="-5.5" max="5.5" step="0.01"></div>
         <div class="row"><label for="sCoil">Position Spule <span id="vCoil"></span></label><input type="range" id="sCoil" min="-5.5" max="5.5" step="0.01"></div>
         <div class="row"><label for="sI">Stromstärke im Elektromagneten <span id="vI"></span></label><input type="range" id="sI" min="0" max="3" step="0.01"></div>
+        <div class="seg" id="segAC" role="group" aria-label="Stromart">
+          <button id="acDC" aria-pressed="true">Gleichstrom</button>
+          <button id="acAC" aria-pressed="false">Wechselstrom</button>
+        </div>
+        <div class="row" id="rowF" hidden><label for="sF">Frequenz <span id="vF"></span></label><input type="range" id="sF" min="0.1" max="2" step="0.05"></div>
         <div class="row"><label for="sA">Querschnittsfläche der Spule <span id="vA"></span></label><input type="range" id="sA" min="1" max="3.5" step="0.01"></div>
         <div class="row" id="rowN"><label for="sN">Windungszahl n <span id="vN"></span></label><input type="range" id="sN" min="50" max="500" step="10"></div>
         <p class="hint" id="labHint">Magnet und Spule lassen sich auch direkt im Bild mit dem Finger verschieben. Achte auf das Messgerät: Es schlägt nur aus, solange sich die Zahl oben ändert.</p>
@@ -335,6 +340,20 @@ const chapters=[
         [5.5,'B konstant ⇒ Φ konstant ⇒ U_ind = 0.'],
         [8,'Abschalten in 1,5 s: dB/dt ≈ −66,7 mT/s. U_ind ≈ +33 mV ist fast dreimal so groß wie beim Einschalten.'],
         [10.5,'Ändert sich nur B, gilt U_ind = −n · A · dB/dt.']]}},
+ {short:'Wechselfeld',title:{q:'Wechselstrom im Elektromagneten',o:'Wechselfeld: B(t) = B̂ · sin(2πft)'},T:12,nW:60,umax:70,signed:true,
+  state:t=>{ const t1=1.5, t2=6.5;
+    const B = t<t1 ? 0 : (t<t2 ? Math.sin(2*Math.PI*0.2*(t-t1)) : Math.sin(2*Math.PI*0.4*(t-t2)));
+    return base({el:true,B}); },
+  caps:{q:[[0,'Der Elektromagnet wird jetzt an Wechselstrom angeschlossen: Die Stromstärke wechselt ständig ihre Richtung.'],
+        [1.5,'Das Feld wird stärker und schwächer – und kehrt dabei seine Richtung um. Die Feldlinien zeigen abwechselnd nach unten und nach oben; Nord- und Südpol tauschen den Platz.'],
+        [3.5,'Die Anzahl der Feldlinien durch die Spule ändert sich ununterbrochen. Deshalb liegt dauernd eine Spannung an, die ebenfalls ständig ihre Polung wechselt.'],
+        [6.5,'Jetzt wechselt der Strom doppelt so schnell: Die Anzahl ändert sich schneller, der Ausschlag wird größer.'],
+        [10,'Ein Wechselfeld erzeugt also ganz ohne Bewegung eine Wechselspannung. Genau das macht ein Transformator.']],
+       o:[[0,'Der Elektromagnet liegt an Wechselstrom: I(t) = Î · sin(2πft), also B(t) = B̂ · sin(2πft) mit B̂ = 100 mT. Die Spule (n = 60, A = 25 cm²) ruht.'],
+        [1.5,'f = 0,2 Hz. Aus Φ = B · A folgt U_ind = −n · A · dB/dt = −n · A · B̂ · 2πf · cos(2πft).'],
+        [3.5,'Û = n · A · B̂ · 2πf = 60 · 25 cm² · 100 mT · 1,26 s⁻¹ ≈ 19 mV. U ist null, wo |Φ| am größten ist, und maximal bei den Nulldurchgängen von Φ – die Spannung eilt dem Fluss um eine Viertelperiode voraus.'],
+        [6.5,'Doppelte Frequenz f = 0,4 Hz: Û verdoppelt sich auf ≈ 38 mV, denn Û ∝ f.'],
+        [10,'Ohne jede Bewegung entsteht eine Wechselspannung – das Transformatorprinzip (dort mit Eisenkern und zweiter Spule).']]}},
  {short:'Fläche',title:{q:'Die Spulenfläche ändert sich',o:'Änderung der Fläche A'},T:12.5,
   state:t=>{const s=Math.sqrt(seg(t,[[1.5,2.25],[5,12.25],[7.5,12.25],[9.5,2.25]])); return base({W:BIG.W,D:BIG.D,a:s,b:s});},
   caps:{q:[[0,'Zuletzt bleibt das Feld gleich, aber die Querschnittsfläche der Spule ändert sich, zum Beispiel bei einer dehnbaren Leiterschleife.'],
@@ -414,7 +433,7 @@ const ICON_PAUSE='<svg viewBox="0 0 24 24"><path fill="currentColor" d="M6 4h4.5
 // ---------- Zustand ----------
 let mode='film', ci=0, t=0, playing=false, speed=1, lastCap=-2, done=new Set();
 let level='q', lastSign=1;
-const lab={mx:-1.75,cx:0,I:2,a:2.5,big:false,n:200};
+const lab={mx:-1.75,cx:0,I:2,a:2.5,big:false,n:200,ac:false,f:0.5};
 let hist=[], labT=0, labPrevN=null, labRate=0, needle=0;
 
 const navEl=$('chapters');
@@ -474,13 +493,21 @@ $('mFilm').onclick=()=>setMode('film'); $('mLab').onclick=()=>setMode('lab');
 const sMag=$('sMag'), sCoil=$('sCoil'), sI=$('sI'), sA=$('sA'), sN=$('sN');
 function syncLab(){ sMag.value=lab.mx; sCoil.value=lab.cx; sI.value=lab.I; sA.value=lab.a; sN.value=lab.n; $('vN').textContent=lab.n;
   $('vMag').textContent=fmt(lab.mx*2,1)+' cm'; $('vCoil').textContent=fmt(lab.cx*2,1)+' cm';
-  $('vI').textContent=fmt(lab.I,2)+' A'+(level==='o'?' · B = '+fmt(lab.I/3*100,0)+' mT':''); $('vA').textContent=fmt(Math.pow(lab.a*2,2),0)+' cm²';
+  $('acDC').setAttribute('aria-pressed',!lab.ac); $('acAC').setAttribute('aria-pressed',lab.ac);
+  $('rowF').hidden=!lab.ac; $('sF').value=lab.f;
+  $('vF').textContent=fmt(lab.f,2)+' Hz'+(level==='o'?' · T = '+fmt(1/lab.f,1)+' s':'');
+  $('vI').textContent=(lab.ac?'Î = ':'')+fmt(lab.I,2)+' A'+(level==='o'?' · '+(lab.ac?'B̂ = ':'B = ')+fmt(lab.I/3*100,0)+' mT':''); $('vA').textContent=fmt(Math.pow(lab.a*2,2),0)+' cm²';
   $('fSmall').setAttribute('aria-pressed',!lab.big); $('fBig').setAttribute('aria-pressed',lab.big); }
 sMag.oninput=()=>{lab.mx=+sMag.value;syncLab();}; sCoil.oninput=()=>{lab.cx=+sCoil.value;syncLab();};
 sI.oninput=()=>{lab.I=+sI.value;syncLab();}; sN.oninput=()=>{lab.n=+sN.value;syncLab();}; sA.oninput=()=>{lab.a=+sA.value;syncLab();};
 $('fSmall').onclick=()=>{lab.big=false;syncLab();}; $('fBig').onclick=()=>{lab.big=true;lab.mx=0;syncLab();};
-$('reset').onclick=()=>{ Object.assign(lab,{mx:-1.75,cx:0,I:2,a:2.5,big:false,n:200}); syncLab(); };
-function labState(){ const f=lab.big?BIG:SMALL; return base({mx:lab.mx,W:f.W,D:f.D,cx:lab.cx,a:lab.a,b:Math.min(lab.a,lab.big?4.4:3.5),B:lab.I/3,el:true}); }
+$('acDC').onclick=()=>{lab.ac=false;syncLab();}; $('acAC').onclick=()=>{lab.ac=true;syncLab();};
+$('sF').oninput=()=>{lab.f=+$('sF').value;syncLab();};
+$('reset').onclick=()=>{ Object.assign(lab,{mx:-1.75,cx:0,I:2,a:2.5,big:false,n:200,ac:false,f:0.5}); syncLab(); };
+function labState(){ const f=lab.big?BIG:SMALL;
+  /* Wechselstrom: Die Stromstärke schwingt, das Feld kehrt dabei seine Richtung um. */
+  const B=(lab.I/3)*(lab.ac?Math.sin(2*Math.PI*lab.f*labT):1);
+  return base({mx:lab.mx,W:f.W,D:f.D,cx:lab.cx,a:lab.a,b:Math.min(lab.a,lab.big?4.4:3.5),B,el:true}); }
 
 // Ziehen im Bild
 let drag=null, geo=null;
@@ -507,13 +534,15 @@ function drawScene(st){
   const x0=st.mx-st.W/2, x1=st.mx+st.W/2, z0=-st.D/2, z1=st.D/2;
   const R0=st.rot!=null, cs=R0?Math.cos(st.rot):1, sn=R0?Math.sin(st.rot):0, hb=st.b/2*Math.abs(cs);
   const cl=st.cx-st.a/2, cr=st.cx+st.a/2, cf=-hb, cb=hb;
-  const hlCol=cs>=0?C.flux:C.flux2; lastSign=cs>=0?1:-1;
+  /* Negatives B = umgepoltes Feld (Wechselstrom): Pfeile, Pole und Farbe drehen sich um. */
+  const bNeg=st.B<0, bAbs=Math.abs(st.B), sgn=(cs>=0?1:-1)*(bNeg?-1:1);
+  const hlCol=sgn>=0?C.flux:C.flux2; lastSign=sgn;
   const yHit=z=>R0&&Math.abs(cs)>1e-6?z*sn/cs:0;
   const nx=Math.round(st.W/d), nz=Math.round(st.D/d);
   const lines=[];
   for(let i=0;i<nx;i++) for(let j=0;j<nz;j++){
     const x=x0+d*(i+.5), z=z0+d*(j+.5);
-    const op=st.el?clamp(st.B*16-BAYER[j%4][i%4],0,1):1; if(op<=0.001) continue;
+    const op=st.el?clamp(bAbs*16-BAYER[j%4][i%4],0,1):1; if(op<=0.001) continue;
     lines.push({x,z,op,inside:x>=cl&&x<cr&&z>=cf&&z<cb,hl:false}); }
   const ins=lines.filter(l=>l.inside);
   if(st.reveal!==null){ if(st.reveal>=0){ ins.sort((p,q)=>(q.z-p.z)||(p.x-q.x)); const k=Math.floor(st.reveal*ins.length+1e-6); ins.forEach((l,n)=>l.hl=n<k); } }
@@ -524,7 +553,8 @@ function drawScene(st){
   const seg3=(l,ya,yb,arrow)=>{ const a=P(l.x,ya,l.z), b=P(l.x,yb,l.z);
     ctx.globalAlpha=l.op; ctx.strokeStyle=l.hl?hlCol:C.field; ctx.lineWidth=l.hl?lwH:lw;
     ctx.beginPath(); ctx.moveTo(a[0],a[1]); ctx.lineTo(b[0],b[1]); ctx.stroke();
-    if(arrow){ const m=P(l.x,H*0.5,l.z), r=l.hl?ar*1.25:ar; ctx.beginPath(); ctx.moveTo(m[0]-r,m[1]-r*0.6); ctx.lineTo(m[0],m[1]+r*0.5); ctx.lineTo(m[0]+r,m[1]-r*0.6); ctx.stroke(); }
+    if(arrow){ const m=P(l.x,H*0.5,l.z), r=l.hl?ar*1.25:ar, dz=bNeg?-1:1;
+      ctx.beginPath(); ctx.moveTo(m[0]-r,m[1]-r*0.6*dz); ctx.lineTo(m[0],m[1]+r*0.5*dz); ctx.lineTo(m[0]+r,m[1]-r*0.6*dz); ctx.stroke(); }
     ctx.globalAlpha=1; };
   const plateCol=(top)=> st.el?C.iron:(top?C.north:C.south);
 
@@ -546,7 +576,7 @@ function drawScene(st){
   const q=off=>[cp3(-st.a/2,-hw,off),cp3(st.a/2,-hw,off),cp3(st.a/2,hw,off),cp3(-st.a/2,hw,off)];
   if(R0){ ctx.setLineDash([5*dpr,5*dpr]); ctx.strokeStyle=C.muted; ctx.lineWidth=Math.max(1,s*0.025); const a1=P(cl-0.7,0,0), a2=P(cr+0.7,0,0); ctx.beginPath(); ctx.moveTo(a1[0],a1[1]); ctx.lineTo(a2[0],a2[1]); ctx.stroke(); ctx.setLineDash([]);
     ctx.font='500 '+Math.round(s*0.2)+'px '+C.font; ctx.fillStyle=C.muted; ctx.textAlign='right'; ctx.textBaseline='middle'; ctx.fillText('Drehachse',a1[0]-s*0.1,a1[1]); }
-  if(cs>=0) poly(ctx,q(0),C.fluxSoft); else { ctx.globalAlpha=0.16; poly(ctx,q(0),C.flux2); ctx.globalAlpha=1; }
+  if(sgn>=0) poly(ctx,q(0),C.fluxSoft); else { ctx.globalAlpha=0.16; poly(ctx,q(0),C.flux2); ctx.globalAlpha=1; }
   for(const l of lines) if(l.hl){ const p=P(l.x,yHit(l.z),l.z); ctx.globalAlpha=l.op; ctx.fillStyle=hlCol; ctx.beginPath(); ctx.arc(p[0],p[1],Math.max(2,s*0.07),0,7); ctx.fill(); ctx.globalAlpha=1; }
   ctx.strokeStyle=C.copper; ctx.lineWidth=Math.max(1.5,s*0.05);
   for(const y of [-0.1,0,0.1]){ const pts=q(y); ctx.beginPath(); ctx.moveTo(pts[0][0],pts[0][1]); for(let k=1;k<4;k++) ctx.lineTo(pts[k][0],pts[k][1]); ctx.closePath(); ctx.stroke(); }
@@ -560,9 +590,11 @@ function drawScene(st){
   // Pol-Beschriftung
   const fs=Math.round(s*0.26);
   ctx.font='700 '+fs+'px '+C.font; ctx.textAlign='center'; ctx.textBaseline='middle';
-  const lab1=(y,txt)=>{ const p=P(st.mx,y,z0); if(st.el){ ctx.globalAlpha=st.B; ctx.fillStyle=C.ink; ctx.fillText(txt,p[0],p[1]); ctx.globalAlpha=1; } else { ctx.fillStyle='#fff'; ctx.fillText(txt,p[0],p[1]); } };
+  const lab1=(y,txt)=>{ const p=P(st.mx,y,z0); if(st.el){ ctx.globalAlpha=bAbs; ctx.fillStyle=C.ink; ctx.fillText(txt,p[0],p[1]); ctx.globalAlpha=1; } else { ctx.fillStyle='#fff'; ctx.fillText(txt,p[0],p[1]); } };
   if(!st.el){ lab1(H+PT/2,'N'); lab1(-H-PT/2,'S'); }
-  else { const pa=P(st.mx-st.W/2+0.4,H+PT/2,z0); ctx.globalAlpha=st.B; ctx.fillStyle=C.ink; ctx.fillText('N',pa[0],pa[1]); const pb=P(st.mx-st.W/2+0.4,-H-PT/2,z0); ctx.fillText('S',pb[0],pb[1]); ctx.globalAlpha=1; }
+  else { const pa=P(st.mx-st.W/2+0.4,H+PT/2,z0), pb=P(st.mx-st.W/2+0.4,-H-PT/2,z0);
+    ctx.globalAlpha=bAbs; ctx.fillStyle=C.ink;
+    ctx.fillText(bNeg?'S':'N',pa[0],pa[1]); ctx.fillText(bNeg?'N':'S',pb[0],pb[1]); ctx.globalAlpha=1; }
   if(st.el){ const p=P(x0,H+PT,z1); ctx.font='600 '+Math.round(s*0.24)+'px '+C.font; ctx.textAlign='left'; ctx.textBaseline='bottom'; ctx.fillStyle=C.ink;
     ctx.fillText('Elektromagnet · I = '+fmt(st.B*3,1)+' A'+(level==='o'?' · B = '+fmt(st.B*100,0)+' mT':''),p[0],p[1]-s*0.12); }
 
@@ -716,14 +748,15 @@ function readout(count,rate,dt,st,n,um){ um=um||UMAX;
   const on=Math.abs(rate)>0.3; const chip=$('chip'); chip.classList.toggle('on',on);
   chip.textContent=on?'Spannung wird induziert':'keine Induktionsspannung';
   const UmV=-n*rate*0.01; let target;
-  if(level==='q'){ const tr=$('trend'); const rr=st.rot!=null?rate*lastSign:rate; const k=rr>0.3?'up':rr<-0.3?'down':'';
+  const umgepolt=(st.rot!=null)||(st.B<0);     /* Zählrichtung kann sich umdrehen */
+  if(level==='q'){ const tr=$('trend'); const rr=umgepolt?rate*lastSign:rate; const k=rr>0.3?'up':rr<-0.3?'down':'';
     tr.className='trend '+k; tr.innerHTML=k==='up'?'<i>↑</i><span>Die Anzahl nimmt zu.</span>':k==='down'?'<i>↓</i><span>Die Anzahl nimmt ab.</span>':'<i>=</i><span>Die Anzahl bleibt gleich.</span>';
-    if(st.rot!=null&&Math.round(count)>0) tr.querySelector('span').textContent+=lastSign>0?' (von oben)':' (von unten)';
+    if(umgepolt&&Math.round(count)>0) tr.querySelector('span').textContent+=lastSign>0?' (von oben)':' (von unten)';
     target=clamp(-rate/um,-1,1)*58; }
   else { const ox=Math.max(0,Math.min(st.mx+st.W/2,st.cx+st.a/2)-Math.max(st.mx-st.W/2,st.cx-st.a/2)), oz=Math.max(0,Math.min(st.D/2,st.b/2)-Math.max(-st.D/2,-st.b/2));
     const A=st.rot!=null?st.a*st.b*4*Math.cos(st.rot):ox*oz*4, B=st.B*100;
     $('oAlbl').textContent=st.rot!=null?'A · cos φ (φ = '+fmt((st.rot*180/Math.PI)%360,0)+'°)':'durchsetzte Fläche A';
-    $('oCnt').textContent=(st.rot!=null&&lastSign<0&&Math.round(count)>0?'−':'')+Math.round(count); $('oB').textContent=fmt(B,0)+' mT'; $('oA').textContent=fmt(A,1)+' cm²'; $('oPhi').textContent=fmt(B*A*0.1,0)+' µWb';
+    $('oCnt').textContent=(umgepolt&&lastSign<0&&Math.round(count)>0?'−':'')+Math.round(count); $('oB').textContent=fmt(B,0)+' mT'; $('oA').textContent=fmt(A,1)+' cm²'; $('oPhi').textContent=fmt(B*A*0.1,0)+' µWb';
     $('oDphi').textContent=fmtS(rate*10,0)+' µWb/s'; $('oN').textContent=n; $('oU').textContent=fmtS(UmV,1)+' mV';
     target=clamp(UmV/50,-1,1)*58; }
   needle+=(target-needle)*Math.min(1,dt*14);
@@ -746,10 +779,11 @@ function frame(now){
     readout(count,-U,dt,st,nW,c.umax); showCaption();
   } else {
     labT+=dt; const st=labState(); const count=drawScene(st); const N=model(st);
-    if(labPrevN!==null&&dt>0){ const r=(N-labPrevN)/dt; labRate+=(r-labRate)*Math.min(1,dt/0.12); } labPrevN=N;
+    const tau=lab.ac?Math.min(0.12,1/(16*Math.max(0.1,lab.f))):0.12;   /* schnelle Schwingung nicht wegglätten */
+    if(labPrevN!==null&&dt>0){ const r=(N-labPrevN)/dt; labRate+=(r-labRate)*Math.min(1,dt/tau); } labPrevN=N;
     if(Math.abs(labRate)<0.02) labRate=0;
     hist.push([labT,N,-labRate,lab.n]); while(hist.length&&hist[0][0]<labT-10) hist.shift();
-    drawGraph({t0:labT-10,t1:labT,nMax:60,pts:hist,labels:false});
+    drawGraph({t0:labT-10,t1:labT,nMax:60,pts:hist,labels:false,signed:lab.ac});   /* Wechselfeld: Zahl wird negativ */
     readout(count,labRate,dt,st,lab.n);
   }
   requestAnimationFrame(frame);

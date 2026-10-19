@@ -2282,10 +2282,21 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     die zu hohe Seite. Die Schalen reichen bis zur erwarteten magischen Zahl **184**, sodass auch
     schwere Kerne mit mehr als 126 Neutronen vollständig dargestellt werden.
 - **Induktion und Feldlinien** (Mathe & Physik, Symbol: eine **Spule**): Wann entsteht eine Spannung?
-  Ein **Film** führt in Kapiteln durch Grundidee, bewegten Magneten, bewegte Spule und Homogenität,
-  daneben lässt sich alles **selbst ausprobieren**. Zwei Niveaus: **Klasse 10** (qualitativ, LehrplanPlus)
+  Ein **Film** führt in zehn Kapiteln durch Grundidee, bewegten Magneten, bewegte Spule, Homogenität,
+  Feldstärke, **Wechselfeld**, Fläche, Drehung, Zusammenfassung und eine Aufgabe; daneben lässt sich
+  alles **selbst ausprobieren**. Zwei Niveaus: **Klasse 10** (qualitativ, LehrplanPlus)
   und **Oberstufe** (mit Induktionsgesetz). Die Szene zeigt Magnet, **Feldlinien** und Spule, darunter
   laufen **Zahl der Feldlinien** und **Spannung** als Diagramme über der Zeit mit.
+  - **Kapitel „Wechselfeld"** (nach „Feldstärke"): Der Elektromagnet liegt an **Wechselstrom**. Das Feld
+    wird nicht nur stärker und schwächer, sondern **kehrt seine Richtung um** – die Feldlinien zeigen
+    abwechselnd nach unten und nach oben (dann violett), **Nord- und Südpol tauschen den Platz** und die
+    Zahl der Feldlinien wird im Diagramm negativ. So entsteht **ohne jede Bewegung** eine Wechsel­spannung;
+    in der zweiten Hälfte verdoppelt sich die Frequenz und damit der Ausschlag (Û ∝ f). Das ist der
+    Übergang zum **Transformator**.
+  - Im **Experiment** schaltet ein Umschalter den Elektromagneten zwischen **Gleichstrom** und
+    **Wechselstrom** um; bei Wechselstrom kommt ein Regler für die **Frequenz** (0,1 bis 2 Hz) dazu, und
+    die Stromstärke wird als **Scheitelwert Î** (Oberstufe zusätzlich **B̂** und die Periodendauer T)
+    angezeigt.
   In der Kopfzeile stehen **A− / A+** für die Schriftgröße und dieselben drei Knöpfe wie in den
   übrigen Werkzeugen: **🖼 Tafel** legt Szene und Diagramme als Bild neben das Werkzeug,
   **📋 Kopieren** nimmt sie in die Zwischenablage, und **⇪ Teilen** gibt den QR-Code an die Klasse –
