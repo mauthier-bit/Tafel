@@ -97,6 +97,13 @@
   #trOut{font-size:calc(var(--k) * 13px);line-height:1.45;color:#1f2430;}
   #trOut .zg{color:#b45309;} #trOut .zf{color:#64748b;} #trOut .zv{color:#7c3aed;}
   #trOut b{font-weight:800;}
+  /* Termkasten: deutlich groesser als der Erklaertext, Parameter in ihrer Farbe */
+  #trOut .trBox{display:inline-block;margin:calc(var(--k) * 3px) 0 calc(var(--k) * 4px);
+                padding:calc(var(--k) * 5px) calc(var(--k) * 11px);border:1px solid #dbe2ec;
+                border-radius:calc(var(--k) * 10px);background:#f7f9fc;max-width:100%;overflow-x:auto;}
+  #trOut .trT{font-size:calc(var(--k) * 18px);font-weight:800;line-height:1.35;white-space:nowrap;}
+  #trOut .trT2{margin-top:calc(var(--k) * 2px);}
+  #trOut .trT i{font-style:italic;}
   #trPlotWrap{flex:1;position:relative;min-height:0;}
   #plotR{position:absolute;inset:0;width:100%;height:100%;touch-action:none;}
   body.t-r #sliders{display:none;}
@@ -433,13 +440,15 @@ function evalAt(x, T){ let p=0; const sc={x,a:params.a,b:params.b,c:params.c,pi:
 
 /* ---- Term lesbar schreiben: a*x^2 → a·x², mit Einsetzen von x und den Parametern ---- */
 const SYM={pi:'π',sqrt:'√'};
-function termText(toks,xv,mitP,zus){ let s='';
+/* xvH: dieselbe Einsetzung, nur eingefaerbt – die Klammerfrage entscheidet immer xv (reiner Text) */
+function termText(toks,xv,mitP,zus,xvH){ let s='';
   for(let i=0;i<toks.length;i++){ const t=toks[i];
     if(t.k==='num'){ s+=zahl(t.v); continue; }
     if(t.k==='id'){ if(t.v==='x'&&xv!=null){ const vor=i>0?toks[i-1].k:null, nach=toks[i+1]?toks[i+1].k:null;
         /* zusammengesetztes Argument klammern – ausser es steht schon allein in Klammern wie bei sin(x) */
         const noetig=(xv.charAt(0)==='−'&&vor!=='(')||(zus&&!(vor==='('&&nach===')'));
-        s+= noetig ? '('+xv+')' : xv; }
+        const ein=xvH||xv;
+        s+= noetig ? '('+ein+')' : ein; }
       else if(mitP&&(t.v==='a'||t.v==='b'||t.v==='c')) s+=klammer(params[t.v]);
       else s+=(SYM[t.v]||t.v);
       continue; }
@@ -839,24 +848,29 @@ function trDraw(){ if(tab!=='r'||!trW) return;
   trText(); }
 
 /* ---- Term und Erklärung ---- */
-function trInnen(){ const b=tr.b, c=tr.c;
+/* h = true: Parameter in ihrer Farbe einfaerben (HTML), sonst reiner Text */
+const trPar=(k,txt,h)=>h?('<span style="color:'+trCol(k)+'">'+txt+'</span>'):txt;
+function trInnen(h){ const b=tr.b, c=tr.c;
   let s='x';
-  if(c!==0) s='x '+(c>0?'+ ':'− ')+nfk(Math.abs(c));
-  if(b!==1) s=(c!==0)?(nfk(b)+'·('+s+')'):(b===-1?'−x':nfk(b)+'·x');
+  if(c!==0) s='x '+trPar('c',(c>0?'+ ':'− ')+nfk(Math.abs(c)),h);
+  if(b!==1) s=(c!==0)?(trPar('b',nfk(b),h)+'·('+s+')')
+                     :(b===-1?trPar('b','−',h)+'x':trPar('b',nfk(b),h)+'·x');
   return s; }
-function trTermG(fn){ if(!trToks.length) return '';
-  const innen=fn||trInnen(), zus=!/^[-−]?x$/.test(innen);
-  let s=termText(trToks,innen,false,zus);
-  if(tr.a!==1){ const k=trNoetig(s)?('('+s+')'):s; s=(tr.a===-1?'−':nfk(tr.a)+'·')+k; }
-  if(tr.d!==0) s+=(tr.d>0?' + ':' − ')+nfk(Math.abs(tr.d));
+function trTermG(h){ if(!trToks.length) return '';
+  const roh=trInnen(false), zus=!/^[-−]?x$/.test(roh);
+  const klammer=trNoetig(termText(trToks,roh,false,zus));   /* Klammerfrage am reinen Text entscheiden */
+  let s=termText(trToks,roh,false,zus,h?trInnen(true):null);
+  if(tr.a!==1){ s=trPar('a',(tr.a===-1?'−':nfk(tr.a)+'·'),h)+(klammer?('('+s+')'):s); }
+  if(tr.d!==0) s+=' '+trPar('d',(tr.d>0?'+ ':'− ')+nfk(Math.abs(tr.d)),h);
   return s; }
 function trText(){ const out=$('trOut'); const L=[];
   const chip=(col,txt)=>'<span style="color:'+col+'"><b>■</b> '+txt+'</span>';
-  let kurz='g(x) = ';
-  kurz += (tr.a===1?'':(tr.a===-1?'−':nfk(tr.a)+'·'))+'f('+trInnen()+')';
-  if(tr.d!==0) kurz+=(tr.d>0?' + ':' − ')+nfk(Math.abs(tr.d));
-  L.push('<b>'+kurz+'</b>');
-  if(tr.zTerm&&trToks.length) L.push('<span style="color:'+trGCol()+'">g(x) = '+trTermG()+'</span>');
+  const gk='<span style="color:'+trGCol()+'">g</span>(<i>x</i>) = ';
+  let kurz=gk+trPar('a',(tr.a===1?'':(tr.a===-1?'−':nfk(tr.a)+'·')),true)+'f('+trInnen(true)+')';
+  if(tr.d!==0) kurz+=' '+trPar('d',(tr.d>0?'+ ':'− ')+nfk(Math.abs(tr.d)),true);
+  const kasten=['<div class="trT">'+kurz+'</div>'];
+  if(tr.zTerm&&trToks.length) kasten.push('<div class="trT trT2">'+gk+trTermG(true)+'</div>');
+  L.push('<div class="trBox">'+kasten.join('')+'</div>');
   if(tr.einzel){ const t=[];
     if(tr.a!==1) t.push(chip(trCol('a'),'a = '+nf1(tr.a)+': senkrecht '+(Math.abs(tr.a)>1?'gestreckt':'gestaucht')+' (Faktor '+nfk(Math.abs(tr.a))+')'+(tr.a<0?', an der x-Achse gespiegelt':'')));
     if(tr.b!==1) t.push(chip(trCol('b'),'b = '+nf1(tr.b)+': waagrecht '+(Math.abs(tr.b)>1?'gestaucht':'gestreckt')+' (Faktor '+nfk(Math.round(1000/Math.abs(tr.b))/1000)+')'+(tr.b<0?', an der y-Achse gespiegelt':'')));
@@ -867,7 +881,7 @@ function trText(){ const out=$('trOut'); const L=[];
       :'<span class="zf">Noch keine Veränderung: a = 1, b = 1, c = 0, d = 0.</span>'); }
   if(tr.reihe){
     if(tr.rSeite==='y'){
-      const alt='g(x) = '+(tr.a===1?'':(tr.a===-1?'−':nfk(tr.a)+'·'))+'( f('+trInnen()+')'+(tr.d>0?' + ':' − ')+nfk(Math.abs(tr.d))+' )';
+      const alt='g(x) = '+(tr.a===1?'':(tr.a===-1?'−':nfk(tr.a)+'·'))+'( f('+trInnen(false)+')'+(tr.d>0?' + ':' − ')+nfk(Math.abs(tr.d))+' )';
       L.push('<span class="zv"><b>■</b> Erst verschieben, dann strecken: '+alt+'</span>');
       L.push('<span class="zf">Das ist <b>a·f(…) + a·d</b>, verschiebt also um '+nfk(tr.a*tr.d)+' statt um '+nfk(tr.d)+'. Deshalb: erst strecken (a), dann verschieben (d).</span>');
     } else {

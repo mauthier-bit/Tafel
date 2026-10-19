@@ -1860,6 +1860,9 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     würde man zuerst verschieben und dann strecken, müsste man an der **verschobenen** Achse strecken.
     Darunter steht dieselbe Reihenfolge in Worten, farblich passend, mit den Faktoren
     (z. B. „b = 3: waagrecht gestaucht (Faktor 0,333)").
+  - Beide Terme – die Kurzform **g(x) = a·f(b·(x + c)) + d** und der ausgeschriebene Term –
+    stehen groß in einem eigenen **Kasten** über dem Graphen, und **jeder Parameter steht in seiner
+    Farbe** (a grün, b blau, c rot, d violett), das „g" in der Farbe des Ergebnisgraphen.
   - **„Term"** schreibt den **transformierten Term** aus: Aus f(x) = x² und a = 2, b = 3, c = 1, d = −4
     wird **g(x) = 2·(3·(x + 1))² − 4** – der eingegebene Term wird dabei wirklich eingesetzt, auch bei
     sin, Wurzel oder einem eigenen Polynom, und nur dort geklammert, wo es nötig ist.
