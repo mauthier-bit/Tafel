@@ -1839,9 +1839,11 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   **Maschine:** oben der x-Wert, der durch einen Trichter in die Maschine (Zahnräder, darin die
   Funktionsvorschrift) fällt, darunter der **Rechenweg mit eingesetztem x** (`f₁(−1,5) = 2·(−1,5)² + (−3)·(−1,5) + 1`;
   negative Werte werden nur geklammert, wo es nötig ist) und unten der ausgeworfene y-Wert.
-  **Transformationen:** Hier steht eine **Ausgangsfunktion f** – entweder aus der Liste
-  (Parabel, kubisch, Wurzel, Hyperbel, Betrag, Sinus, Kosinus, e-Funktion, Logarithmus, eine
-  unsymmetrische Funktion) oder als **eigener Term**. Vier Schieberegler bauen daraus
+  **Transformationen:** Dieser Reiter steht **für sich** – er hat seine **eigene Funktion** und
+  seine eigene Zeichenfläche, die Funktionen der drei anderen Reiter bleiben unberührt.
+  Hier steht eine **Ausgangsfunktion f** – entweder aus der Liste
+  (Parabel, kubisch, Wurzel, Hyperbel, Sinus, Kosinus, e-Funktion, 2ˣ, Logarithmus sowie je eine
+  unsymmetrische Funktion vom **Grad 3** und vom **Grad 4**) oder als **eigener Term**. Vier Schieberegler bauen daraus
   **g(x) = a · f(b · (x + c)) + d**:
   - **„Einzelwirkungen"** zeigt die Zwischenschritte als gestrichelte Graphen in der Reihenfolge, in der
     sie wirken: erst **c** (waagrechte Verschiebung, türkis), dann **b** (waagrechtes Strecken/Stauchen,
