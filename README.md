@@ -1840,7 +1840,9 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   Funktionsvorschrift) fällt, darunter der **Rechenweg mit eingesetztem x** (`f₁(−1,5) = 2·(−1,5)² + (−3)·(−1,5) + 1`;
   negative Werte werden nur geklammert, wo es nötig ist) und unten der ausgeworfene y-Wert.
   **Transformationen:** Dieser Reiter steht **für sich** – er hat seine **eigene Funktion** und
-  seine eigene Zeichenfläche, die Funktionen der drei anderen Reiter bleiben unberührt.
+  seine eigene Zeichenfläche, die Funktionen der drei anderen Reiter bleiben unberührt. Das zeigt auch
+  die Reiterleiste: **Graph, Tabelle und Maschine** sitzen als **eine Gruppe** in einem gemeinsamen
+  Rahmen (sie teilen sich dieselben Funktionen), **Transformationen** steht mit Abstand daneben.
   Hier steht eine **Ausgangsfunktion f** – entweder aus der Liste
   (Parabel, kubisch, Wurzel, Hyperbel, Sinus, Kosinus, e-Funktion, 2ˣ, Logarithmus sowie je eine
   unsymmetrische Funktion vom **Grad 3** und vom **Grad 4**) oder als **eigener Term**. Vier Schieberegler bauen daraus
