@@ -1845,7 +1845,12 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   Rahmen (sie teilen sich dieselben Funktionen), **Transformationen** steht mit Abstand daneben.
   Hier steht eine **Ausgangsfunktion f** – entweder aus der Liste
   (Parabel, kubisch, Wurzel, Hyperbel, Sinus, Kosinus, e-Funktion, 2ˣ, Logarithmus sowie je eine
-  unsymmetrische Funktion vom **Grad 3** und vom **Grad 4**) oder als **eigener Term**. Vier Schieberegler bauen daraus
+  unsymmetrische Funktion vom **Grad 3** und vom **Grad 4**), als **eigener Term** oder
+  **„Freihand – selbst zeichnen"**: Dann zieht man mit dem Finger eine **eigene Kurve** in die
+  Zeichenfläche, und **diese Skizze** wird gestreckt, gespiegelt und verschoben. Im Term steht dann
+  nur noch **f** (z. B. **g(x) = −1,5·f(x + 2)**) – es gibt ja keine Formel dazu. **„✎ neu zeichnen"**
+  startet eine neue Skizze, ein getippter Term löst sie wieder ab; die Skizze wird mit dem Projekt
+  gespeichert und beim Teilen mitgegeben. Vier Schieberegler bauen daraus
   **g(x) = a · f(b · (x + c)) + d**:
   - **„Zwischenschritte"** zeigt die Schritte als gestrichelte Graphen in der Reihenfolge
     **a → b → c → d**, also **erst strecken, dann verschieben**: **a** (senkrechtes Strecken/Stauchen,
@@ -1858,8 +1863,10 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     und werden beim Kopieren, auf der Tafel und beim Teilen mit übernommen.
     In dieser Reihenfolge ist **jeder Schritt eine Streckung an einer Achse oder eine Verschiebung**;
     würde man zuerst verschieben und dann strecken, müsste man an der **verschobenen** Achse strecken.
-  - **Rechts neben dem Graphen steht eine eigene Spalte** mit dem, was man gerade zeigen will –
-    vier Häkchen oben steuern sie:
+  - **Rechts neben dem Graphen steht eine eigene Spalte** mit allem, was nicht der Graph ist:
+    oben die **vier Schieberegler** für a, b, c, d, darunter die **Wortbeschreibung** und der
+    **Term** (auf dem iPad passt das zusammen genau neben das Graphenfenster). Häkchen oben
+    steuern, was davon zu sehen ist:
     **„Graph"** blendet die Zeichenfläche selbst ein und aus (ausgeblendet füllt die Spalte die
     ganze Breite – gut, wenn die Klasse den Graphen erst **vorhersagen** soll);
     **„Zwischenschritte"** zeichnet wie bisher die gestrichelten Zwischengraphen;
@@ -1880,10 +1887,16 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   - Der ausgeschriebene Term: Aus f(x) = x² und a = 2, b = 3, c = 1, d = −4
     wird **g(x) = 2·(3·(x + 1))² − 4** – der eingegebene Term wird dabei wirklich eingesetzt, auch bei
     sin, Wurzel oder einem eigenen Polynom, und nur dort geklammert, wo es nötig ist.
-  - **„Reihenfolge"** greift die klassische Stolperstelle auf und zeichnet die **vertauschte Variante**
-    violett gestrichelt dazu: **innen** f(b·x + c) statt f(b·(x + c)) – das verschiebt nur um c/b, weil
-    innen alles **umgekehrt** wirkt; **außen** a·(f(…) + d) statt a·f(…) + d – das verschiebt um a·d
-    statt um d. Beide Fälle stehen mit Term und Begründung unten in der Spalte.
+  - **„Reihenfolge"** greift die klassische Stolperstelle auf – und zwar als **Ablauf zum Mitfahren**:
+    Zwei Regler führen dieselben zwei Schritte in **verschiedener Reihenfolge** vor. Beim oberen
+    (**„erst strecken, dann verschieben"**) wird in der **ersten Hälfte** des Reglerwegs gestreckt
+    und in der **zweiten Hälfte** verschoben, beim unteren (**„erst verschieben, dann strecken"**)
+    genau andersherum; daneben steht mit, was gerade passiert („strecken 60 %", „verschieben 40 %",
+    „fertig"). Zwei Kurven laufen dabei mit – die eine in der Farbe des Ergebnisses, die andere
+    braun. **So sieht man, wo der Unterschied entsteht:** Am Ende liegen beide **nicht** aufeinander,
+    **innen** verschiebt f(b·x + c) nur um c : b statt um c, **außen** verschiebt a·(f(…) + d) um
+    a·d statt um d. Umgeschaltet wird zwischen **innen (b und c)** und **außen (a und d)**; Terme und
+    Begründung stehen unten in der Spalte.
   Die Zeichenfläche lässt sich **ziehen und zoomen** (zwei Finger oder Mausrad), **„Ansicht"** stellt das
   Standardfenster wieder her, **„↺"** setzt a, b, c, d auf 1, 1, 0, 0 zurück. Der ganze Stand – Term,
   Regler und Schalter – wird mit dem Projekt gespeichert und vom **Teilen**-Knopf mitgegeben.
