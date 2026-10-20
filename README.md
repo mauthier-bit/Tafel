@@ -2330,19 +2330,25 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   - Im **Experiment** schaltet ein Umschalter den Elektromagneten zwischen **Gleichstrom** und
     **Wechselstrom** um; bei Wechselstrom kommt ein Regler für die **Frequenz** (0,1 bis 2 Hz) dazu, und
     die Stromstärke wird als **Scheitelwert Î** (Oberstufe zusätzlich **B̂** und die Periodendauer T)
-    angezeigt. Die **Spannungsskala wächst dabei mit**: Bei hoher Frequenz werden die Spitzen nicht mehr
-    abgeschnitten, sondern die Achse springt auf den nächsten passenden Wert (z. B. ±500 mV statt ±50 mV).
+    angezeigt. **Doppelte Frequenz heißt doppelter Ausschlag** (Û = n · A · B̂ · 2πf): Sobald etwas
+    schwingt oder sich dreht, liegt die **Spannungsachse auf dem größtmöglichen Ausschlag** (höchste
+    einstellbare Frequenz) und bleibt beim Drehen am Frequenzregler **stehen** – sonst würde eine
+    mitwachsende Achse genau den Effekt verschlucken, den man zeigen will. Abgeschnitten wird dabei
+    nichts.
   - Im Kapitel **„Drehung"** steht die Spule beim Durchgang durch die **Senkrechte** genauso da wie
     im Experiment („senkrecht 1"): Die Fläche liegt parallel zu den Feldlinien, und es wird jetzt
     auch **keine einzige** mehr gezählt – vorher blieb je nach Raster eine Reihe übrig, obwohl die
     Fläche praktisch auf eine Kante geschrumpft war.
-  - Unter **„Orientierung der Spule"** stellen **drei Knopfe mit Sinnbildern** die Spule **waagrecht**,
+  - Unter **„Orientierung der Spule"** stellen **vier Knöpfe mit Sinnbildern** die Spule **waagrecht**,
     **senkrecht 1** (um die Querachse gekippt, die Fläche steht quer zum Blick) oder **senkrecht 2**
     (um die Hochachse gedreht, die Fläche steht in die Tiefe). Beide senkrechten Stellungen sind
     **physikalisch gleichwertig** – die Fläche liegt **parallel zu den Feldlinien**, es geht keine
     einzige hindurch, Φ = A · cos 90° = 0, und auch beim Bewegen entsteht keine Spannung –, im Bild
-    sieht man aber beide Möglichkeiten. Das ist die Erfahrung aus dem Kapitel „Drehung" zum
-    Selbstausprobieren.
+    sieht man aber beide Möglichkeiten. Der vierte Knopf **„drehen"** lässt die Spule **ständig
+    rotieren** – der **Generator** zum Selbstausprobieren: Ein Regler **Drehzahl** (0,1 bis 1 Umdrehung
+    pro Sekunde) bestimmt, wie schnell sie sich dreht, die Zahl der Feldlinien läuft mit **cos φ** auf
+    und ab (in der Oberstufe steht φ in der Messwertliste), und am Messgerät entsteht eine
+    **Wechselspannung**, deren Ausschlag mit der Drehzahl wächst.
   - Feldlinien, die **nicht** durch die Spule gehen, sind **blasser** gezeichnet; die gezählten stechen
     dadurch deutlich hervor.
   - **Im Experiment sitzen die beiden Anzeigen klein oben links im Bild:** die **Zahl der Feldlinien**

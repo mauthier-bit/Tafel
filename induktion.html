@@ -325,7 +325,13 @@ body.labm .lab .grpLbl{margin-top:7px;font-size:.9rem}
             <svg viewBox="0 0 28 24" aria-hidden="true">
               <g class="fl"><path d="M5 2v19M23 2v19"/><path d="M2.6 17.6 5 21l2.4-3.4M20.6 17.6 23 21l2.4-3.4"/></g>
               <path class="sp" d="M11 20v-9l6-5v9z"/></svg><span>senkrecht 2</span></button>
+          <button id="ori3" aria-pressed="false" title="Die Spule dreht sich ständig im Feld – wie ein Generator.">
+            <svg viewBox="0 0 28 24" aria-hidden="true">
+              <g class="fl"><path d="M4 2v19M24 2v19"/><path d="M1.6 17.6 4 21l2.4-3.4M21.6 17.6 24 21l2.4-3.4"/></g>
+              <path d="M8 13.5a6 5 0 1 1 5.5 4.4"/><path d="M15.6 15.6 13 18.1l2.2 2.6"/>
+              <path class="sp" d="M9.5 15.5 18.5 9"/></svg><span>drehen</span></button>
         </div>
+        <div class="row" id="rowFd" hidden><label for="sFd">Drehzahl <span id="vFd"></span></label><input type="range" id="sFd" min="0.1" max="1" step="0.05"></div>
         <div class="row"><label for="sI">Stromstärke im Elektromagneten <span id="vI"></span></label><input type="range" id="sI" min="0" max="3" step="0.01"></div>
         <div class="seg" id="segAC" role="group" aria-label="Stromart">
           <button id="acDC" aria-pressed="true">Gleichstrom</button>
@@ -510,15 +516,23 @@ const ICON_PAUSE='<svg viewBox="0 0 24 24"><path fill="currentColor" d="M6 4h4.5
 // ---------- Zustand ----------
 let mode='film', ci=0, t=0, playing=false, speed=1, lastCap=-2, done=new Set();
 let level='q', lastSign=1;
-const lab={mx:-1.75,cx:0,I:2,a:2.5,big:false,n:200,ac:false,f:0.5,ori:0,zN:true,zU:true};
+const lab={mx:-1.75,cx:0,I:2,a:2.5,big:false,n:200,ac:false,f:0.5,ori:0,fd:0.5,zN:true,zU:true};
 let hist=[], labT=0, labPrevN=null, labRate=0, needle=0;
 /* Spannungsskala im Experiment: Sie wächst mit, sonst werden hohe Frequenzen abgeschnitten.
    Sie springt erst, wenn der Platz wirklich nicht reicht (oder viel zu groß geworden ist).  */
 let labUm=UMAX, labUmv=50;
 function stufe(v,min){ v=Math.max(v,min); const p=Math.pow(10,Math.floor(Math.log10(v)));
   for(const f of [1,1.5,2,3,5,7.5]){ if(p*f>=v-1e-9) return p*f; } return p*10; }
+/* Die Skala darf **nicht** an der Frequenz haengen, sonst sieht eine doppelt so schnelle
+   Schwingung genauso hoch aus wie vorher. Schwingt oder dreht sich etwas, wird die Achse
+   deshalb auf den **groesstmoeglichen** Ausschlag gelegt (hoechste einstellbare Frequenz):
+   U^ = N^ * 2*pi*f, und N^ (die Zahl der Feldlinien) haengt nicht von f ab. Doppelte
+   Frequenz heisst dann wirklich doppelt so hoher Ausschlag. */
 function labSkalen(){ let mq=0, mv=0;
-  for(const p of hist){ const a=Math.abs(p[2]); if(a>mq) mq=a; const b=Math.abs(p[2]*p[3]*0.01); if(b>mv) mv=b; }
+  const fMax=(lab.ac?2:0)+(lab.ori===3?1:0);
+  if(fMax>0){ let mN=0; for(const p of hist) mN=Math.max(mN,Math.abs(p[1]));
+    mq=mN*2*Math.PI*fMax; mv=mq*lab.n*0.01; }
+  else for(const p of hist){ const a=Math.abs(p[2]); if(a>mq) mq=a; const b=Math.abs(p[2]*p[3]*0.01); if(b>mv) mv=b; }
   const nq=stufe(mq*1.15,UMAX), nv=stufe(mv*1.15,50);
   if(nq>labUm||nq<labUm*0.45) labUm=nq;
   if(nv>labUmv||nv<labUmv*0.45) labUmv=nv; }
@@ -597,7 +611,8 @@ const sMag=$('sMag'), sCoil=$('sCoil'), sI=$('sI'), sA=$('sA'), sN=$('sN');
 function syncLab(){ sMag.value=lab.mx; sCoil.value=lab.cx; sI.value=lab.I; sA.value=lab.a; sN.value=lab.n; $('vN').textContent=lab.n;
   $('vMag').textContent=fmt(lab.mx*2,1)+' cm'; $('vCoil').textContent=fmt(lab.cx*2,1)+' cm';
   $('acDC').setAttribute('aria-pressed',!lab.ac); $('acAC').setAttribute('aria-pressed',lab.ac);
-  for(let i=0;i<3;i++) $('ori'+i).setAttribute('aria-pressed',(lab.ori|0)===i);
+  for(let i=0;i<4;i++) $('ori'+i).setAttribute('aria-pressed',(lab.ori|0)===i);
+  $('rowFd').hidden=(lab.ori|0)!==3; $('sFd').value=lab.fd; $('vFd').textContent=fmt(lab.fd,2)+' /s';
   $('rowF').hidden=!lab.ac; $('sF').value=lab.f; ovlSync();
   $('vF').textContent=fmt(lab.f,2)+' Hz'+(level==='o'?' · T = '+fmt(1/lab.f,1)+' s':'');
   $('vI').textContent=(lab.ac?'Î = ':'')+fmt(lab.I,2)+' A'+(level==='o'?' · '+(lab.ac?'B̂ = ':'B = ')+fmt(lab.I/3*100,0)+' mT':''); $('vA').textContent=fmt(Math.pow(lab.a*2,2),0)+' cm²';
@@ -606,9 +621,10 @@ sMag.oninput=()=>{lab.mx=+sMag.value;syncLab();}; sCoil.oninput=()=>{lab.cx=+sCo
 sI.oninput=()=>{lab.I=+sI.value;syncLab();}; sN.oninput=()=>{lab.n=+sN.value;syncLab();}; sA.oninput=()=>{lab.a=+sA.value;syncLab();};
 $('fSmall').onclick=()=>{lab.big=false;syncLab();}; $('fBig').onclick=()=>{lab.big=true;lab.mx=0;syncLab();};
 $('acDC').onclick=()=>{lab.ac=false;syncLab();}; $('acAC').onclick=()=>{lab.ac=true;syncLab();};
-for(let i=0;i<3;i++) $('ori'+i).onclick=()=>{lab.ori=i;syncLab();};
+for(let i=0;i<4;i++) $('ori'+i).onclick=()=>{lab.ori=i;syncLab();};
+$('sFd').oninput=()=>{lab.fd=+$('sFd').value;syncLab();};
 $('sF').oninput=()=>{lab.f=+$('sF').value;syncLab();};
-$('reset').onclick=()=>{ Object.assign(lab,{mx:-1.75,cx:0,I:2,a:2.5,big:false,n:200,ac:false,f:0.5,ori:0,zN:true,zU:true}); syncLab(); };
+$('reset').onclick=()=>{ Object.assign(lab,{mx:-1.75,cx:0,I:2,a:2.5,big:false,n:200,ac:false,f:0.5,ori:0,fd:0.5,zN:true,zU:true}); syncLab(); };
 function labState(){ const f=lab.big?BIG:SMALL;
   /* Wechselstrom: Die Stromstärke schwingt, das Feld kehrt dabei seine Richtung um. */
   const B=(lab.I/3)*(lab.ac?Math.sin(2*Math.PI*lab.f*labT):1);
@@ -616,7 +632,9 @@ function labState(){ const f=lab.big?BIG:SMALL;
      Zwei senkrechte Stellungen sind moeglich – physikalisch gleich (cos 90° = 0), im Bild verschieden:
      um die x-Achse gekippt (ori 1) oder um die Hochachse gedreht (ori 2). */
   const st=base({mx:lab.mx,W:f.W,D:f.D,cx:lab.cx,a:lab.a,b:Math.min(lab.a,lab.big?4.4:3.5),B,el:true});
-  st.ori=lab.ori|0; if(st.ori) st.rot=Math.PI/2;
+  st.ori=lab.ori|0;
+  if(st.ori===3){ st.rot=2*Math.PI*lab.fd*labT; st.achse=true; }   /* Generator: ständig drehen */
+  else if(st.ori) st.rot=Math.PI/2;
   return st; }
 
 // Ziehen im Bild
@@ -898,12 +916,13 @@ function frame(now){
     readout(count,-U,dt,st,nW,c.umax); showCaption();
   } else {
     labT+=dt; const st=labState(); const count=drawScene(st); const N=model(st);
-    const tau=lab.ac?Math.min(0.12,1/(16*Math.max(0.1,lab.f))):0.12;   /* schnelle Schwingung nicht wegglätten */
+    const fSig=(lab.ac?lab.f:0)+(lab.ori===3?lab.fd:0);               /* was gerade schwingt oder sich dreht */
+    const tau=fSig>0?Math.min(0.12,1/(16*fSig)):0.12;                 /* schnelle Schwingung nicht wegglätten */
     if(labPrevN!==null&&dt>0){ const r=(N-labPrevN)/dt; labRate+=(r-labRate)*Math.min(1,dt/tau); } labPrevN=N;
     if(Math.abs(labRate)<0.02) labRate=0;
     hist.push([labT,N,-labRate,lab.n]); while(hist.length&&hist[0][0]<labT-10) hist.shift();
     labSkalen();
-    drawGraph({t0:labT-10,t1:labT,nMax:60,pts:hist,labels:false,signed:lab.ac,uMax:labUm,uMv:labUmv});
+    drawGraph({t0:labT-10,t1:labT,nMax:60,pts:hist,labels:false,signed:lab.ac||lab.ori===3,uMax:labUm,uMv:labUmv});
     readout(count,labRate,dt,st,lab.n,labUm,labUmv);
   }
   requestAnimationFrame(frame);
@@ -918,7 +937,7 @@ function zustandSetzen(d){ if(!d||typeof d!=='object') return;
   if(d.level==='q'||d.level==='o') setLevel(d.level);
   if(d.lab&&typeof d.lab==='object'){ Object.assign(lab,d.lab);
     if(d.lab.ori===undefined&&typeof d.lab.senk==='boolean') lab.ori=d.lab.senk?1:0;   /* aeltere Links */
-    delete lab.senk; lab.ori=Math.max(0,Math.min(2,lab.ori|0)); }
+    delete lab.senk; lab.ori=Math.max(0,Math.min(3,lab.ori|0)); }
   const i=Math.max(0,Math.min(chapters.length-1,+d.ci||0));
   gotoChapter(i,false);
   setMode(d.mode==='lab'?'lab':'film');
