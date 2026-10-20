@@ -1887,7 +1887,10 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   - Der ausgeschriebene Term: Aus f(x) = x² und a = 2, b = 3, c = 1, d = −4
     wird **g(x) = 2·(3·(x + 1))² − 4** – der eingegebene Term wird dabei wirklich eingesetzt, auch bei
     sin, Wurzel oder einem eigenen Polynom, und nur dort geklammert, wo es nötig ist.
-  - **„Reihenfolge"** greift die klassische Stolperstelle auf – und zwar als **Ablauf zum Mitfahren**:
+  - **„Reihenfolge"** ist ein **Knopf** neben „Ansicht" (kein Häkchen – es wird ja nichts ein- oder
+    ausgeblendet, sondern etwas vorgeführt). Er öffnet unter der Knopfzeile eine eigene Zeile mit
+    dem Umschalter **innen / außen** und den **beiden Ablaufreglern** gleich daneben.
+    Die greifen die klassische Stolperstelle auf – als **Ablauf zum Mitfahren**:
     Zwei Regler führen dieselben zwei Schritte in **verschiedener Reihenfolge** vor. Beim oberen
     (**„erst strecken, dann verschieben"**) wird in der **ersten Hälfte** des Reglerwegs gestreckt
     und in der **zweiten Hälfte** verschoben, beim unteren (**„erst verschieben, dann strecken"**)

@@ -87,13 +87,16 @@
          font:700 calc(var(--k) * 12.5px) inherit;color:#53617a;cursor:pointer;white-space:nowrap;}
   .trSeg.on{background:#2563eb;border-color:#2563eb;color:#fff;}
   .trWahl{gap:4px;}
-  #trSl,#trSl2{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:3px 12px;}
-  #trSl{margin-bottom:calc(var(--k) * 6px);}
-  #trSl[hidden],#trSl2[hidden]{display:none;}
+  #trSl{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:3px 12px;
+        margin-bottom:calc(var(--k) * 6px);}
+  #trSl[hidden]{display:none;}
+  /* Die beiden Ablaufregler stehen neben den Umschaltknöpfen */
+  #trSl2{flex:1 1 320px;display:grid;grid-template-columns:repeat(auto-fit,minmax(265px,1fr));gap:2px 14px;}
+  #trSl2 .ablauf{min-width:0;}
+  #trSl2 .grp{font:700 calc(var(--k) * 11.5px) inherit;color:#64748b;line-height:1.2;}
   #trSl2[hidden]{display:none;}
 
   #trSl2 .sl .trPkt{width:calc(var(--k) * 12px);height:calc(var(--k) * 12px);border-radius:50%;flex:0 0 auto;}
-  #trSl2 .grp{grid-column:1/-1;font:700 calc(var(--k) * 12px) inherit;color:#64748b;margin-top:calc(var(--k) * 2px);}
   .trHin{font:600 calc(var(--k) * 12px) inherit;color:#64748b;}
   .trHin.ok{color:#16a34a;}
   #trSl .sl,#trSl2 .sl{display:flex;align-items:center;gap:6px;}
@@ -102,7 +105,7 @@
                    box-shadow:0 0 0 1px #cfd6e0;padding:0;cursor:pointer;flex:0 0 auto;}
   #trSl .sl input,#trSl2 .sl input{flex:1;min-width:60px;}
   #trSl .sl .v,#trSl2 .sl .v{font:700 calc(var(--k) * 13px) ui-monospace,Menlo,monospace;min-width:38px;text-align:right;color:#53617a;}
-  #trSl2 .sl span.v{min-width:calc(var(--k) * 86px);white-space:nowrap;text-align:right;
+  #trSl2 .sl span.v{min-width:calc(var(--k) * 112px);white-space:nowrap;text-align:right;
                      font:600 calc(var(--k) * 11.5px) inherit;color:#53617a;}
   #trSl2 .sl label{width:auto;}
   #trSl2 .sl input{min-width:40px;}
@@ -386,7 +389,8 @@
           <label><input type="checkbox" id="trTermAn" checked> Terme</label>
           <label><input type="checkbox" id="trWortAn" checked> Wortbeschreibung</label>
           <label><input type="checkbox" id="trParAn" checked title="Regler und Zahlenwerte verstecken – dann sollen a, b, c, d aus Graph oder Wortbeschreibung bestimmt werden"> Parameter</label>
-          <label><input type="checkbox" id="trReihe"> Reihenfolge</label>
+
+          <button type="button" id="trReihe" class="trSeg" title="Zeigt, wie sich dieselben zwei Schritte in anderer Reihenfolge auswirken">Reihenfolge</button>
           <button type="button" id="trNeu" class="trSeg" hidden title="Die Freihand-Kurve neu zeichnen">✎ neu zeichnen</button>
           <button type="button" id="trFit" class="trSeg" title="Standardfenster wiederherstellen (x von −8 bis 8)">Ansicht</button>
           <button type="button" id="trReset" class="trSeg" title="a, b, c, d zurücksetzen">↺</button>
@@ -394,14 +398,13 @@
         <div class="trRow trWahl" id="trReiheWahl" hidden>
           <button type="button" id="trRx" class="trSeg on">innen: b und c</button>
           <button type="button" id="trRy" class="trSeg">außen: a und d</button>
-          <span class="trHin" id="trRHin"></span>
+          <div id="trSl2" class="trSlBox"></div>
         </div>
       </div>
       <div id="trMain">
         <div id="trPlotWrap"><canvas id="plotR"></canvas></div>
         <aside id="trSide">
           <div id="trSl"></div>
-          <div id="trSl2" class="trSlBox" hidden></div>
           <div id="trOut"></div>
         </aside>
       </div>
@@ -1059,8 +1062,9 @@ function trPhase(t,erstStrecken){
   if(t<=0.5) return A+' '+Math.round(t*200)+' %';
   return t>=1 ? 'fertig' : B+' '+Math.round((t-0.5)*200)+' %'; }
 function trSl2Bau(){ const box=$('trSl2'); if(!box) return; box.innerHTML='';
-  box.hidden=!tr.reihe; if(!tr.reihe) return;
+  if(!tr.reihe) return;
   const mk=(k,titel,col,erst)=>{
+    const wrap=document.createElement('div'); wrap.className='ablauf';
     const g=document.createElement('div'); g.className='grp'; g.textContent=titel; g.style.color=col;
     const row=document.createElement('div'); row.className='sl'; row.dataset.k=k;
     row.innerHTML='<span class="trPkt"></span><label>▸</label>'+
@@ -1069,7 +1073,7 @@ function trSl2Bau(){ const box=$('trSl2'); if(!box) return; box.innerHTML='';
     const r=row.querySelector('input'), v=row.querySelector('.v');
     r.value=tr[k]; v.textContent=trPhase(tr[k],erst);
     r.oninput=()=>{ tr[k]=Math.round(+r.value*50)/50; trUiWerte(); trDraw(); sync(); };
-    box.appendChild(g); box.appendChild(row); };
+    wrap.appendChild(g); wrap.appendChild(row); box.appendChild(wrap); };
   mk('p1','erst strecken, dann verschieben',trGCol(),true);
   mk('p2','erst verschieben, dann strecken',TRC.alt,false); }
 
@@ -1080,7 +1084,7 @@ function trUiNeu(){ if(!$('trTerm')) return;
   $('trNeu').hidden=!frei; $('plotR').style.cursor=trZeichnet?'crosshair':''; $('trEinzel').checked=tr.einzel; $('trTermAn').checked=tr.zTerm;
   $('trWortAn').checked=tr.zWort!==false; $('trGraphAn').checked=tr.zGraph!==false;
   $('trParAn').checked=tr.zPar!==false; $('trSl').hidden=tr.zPar===false;
-  $('trReihe').checked=tr.reihe; $('trReiheWahl').hidden=!tr.reihe;
+  $('trReihe').classList.toggle('on',!!tr.reihe); $('trReiheWahl').hidden=!tr.reihe;
   $('trRx').classList.toggle('on',tr.rSeite!=='y'); $('trRy').classList.toggle('on',tr.rSeite==='y');
   trSl2Bau(); trUiWerte();
   document.querySelectorAll('#trSl .sl').forEach(row=>{ const fb=row.querySelector('.trCol');
@@ -1112,7 +1116,7 @@ function trUiNeu(){ if(!$('trTerm')) return;
   $('trWortAn').onchange=()=>{ tr.zWort=$('trWortAn').checked; trDraw(); sync(); };
   $('trGraphAn').onchange=()=>{ tr.zGraph=$('trGraphAn').checked; trDraw(); sync(); };
   $('trParAn').onchange=()=>{ tr.zPar=$('trParAn').checked; $('trSl').hidden=!tr.zPar; trDraw(); sync(); };
-  $('trReihe').onchange=()=>{ tr.reihe=$('trReihe').checked; $('trReiheWahl').hidden=!tr.reihe;
+  $('trReihe').onclick=()=>{ tr.reihe=!tr.reihe;
     if(tr.reihe){ tr.p1=1; tr.p2=1; }                                 /* beide Abläufe am Ende zeigen */
     trUiNeu(); trDraw(); sync(); };
   $('trRx').onclick=()=>{ tr.rSeite='x'; trUiNeu(); trDraw(); sync(); };
