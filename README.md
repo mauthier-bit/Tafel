@@ -1858,18 +1858,27 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     und werden beim Kopieren, auf der Tafel und beim Teilen mit übernommen.
     In dieser Reihenfolge ist **jeder Schritt eine Streckung an einer Achse oder eine Verschiebung**;
     würde man zuerst verschieben und dann strecken, müsste man an der **verschobenen** Achse strecken.
-    Darunter steht dieselbe Reihenfolge in Worten, farblich passend, mit den Faktoren
-    (z. B. „b = 3: waagrecht gestaucht (Faktor 0,333)").
-  - Beide Terme – die Kurzform **g(x) = a·f(b·(x + c)) + d** und der ausgeschriebene Term –
-    stehen groß in einem eigenen **Kasten** über dem Graphen, und **jeder Parameter steht in seiner
-    Farbe** (a grün, b blau, c rot, d violett), das „g" in der Farbe des Ergebnisgraphen.
-  - **„Term"** schreibt den **transformierten Term** aus: Aus f(x) = x² und a = 2, b = 3, c = 1, d = −4
+  - **Rechts neben dem Graphen steht eine eigene Spalte** mit dem, was man gerade zeigen will –
+    vier Häkchen oben steuern sie:
+    **„Graph"** blendet die Zeichenfläche selbst ein und aus (ausgeblendet füllt die Spalte die
+    ganze Breite – gut, wenn die Klasse den Graphen erst **vorhersagen** soll);
+    **„Zwischenschritte"** zeichnet wie bisher die gestrichelten Zwischengraphen;
+    **„Terme"** zeigt in der Spalte **beide Termformen** – die Kurzform
+    **g(x) = a·f(b·(x + c)) + d** und den ausgeschriebenen Term – groß in einem Kasten, mit
+    **jedem Parameter in seiner Farbe** (a grün, b blau, c rot, d violett) und dem „g" in der Farbe
+    des Ergebnisgraphen;
+    **„Wortbeschreibung"** stellt die Schritte als **Liste** darunter, eine Zeile je Parameter in
+    seiner Farbe (z. B. „b = 3: waagrecht gestaucht (Faktor 0,333)"), darunter die Erinnerung
+    „der Reihe nach: erst strecken, dann verschieben".
+    Ist nichts davon angehakt, verschwindet die Spalte und der Graph bekommt die ganze Breite;
+    auf schmalen Geräten rückt sie unter den Graphen.
+  - Der ausgeschriebene Term: Aus f(x) = x² und a = 2, b = 3, c = 1, d = −4
     wird **g(x) = 2·(3·(x + 1))² − 4** – der eingegebene Term wird dabei wirklich eingesetzt, auch bei
     sin, Wurzel oder einem eigenen Polynom, und nur dort geklammert, wo es nötig ist.
   - **„Reihenfolge"** greift die klassische Stolperstelle auf und zeichnet die **vertauschte Variante**
     violett gestrichelt dazu: **innen** f(b·x + c) statt f(b·(x + c)) – das verschiebt nur um c/b, weil
     innen alles **umgekehrt** wirkt; **außen** a·(f(…) + d) statt a·f(…) + d – das verschiebt um a·d
-    statt um d. Beide Fälle stehen mit Term und Begründung darunter.
+    statt um d. Beide Fälle stehen mit Term und Begründung unten in der Spalte.
   Die Zeichenfläche lässt sich **ziehen und zoomen** (zwei Finger oder Mausrad), **„Ansicht"** stellt das
   Standardfenster wieder her, **„↺"** setzt a, b, c, d auf 1, 1, 0, 0 zurück. Der ganze Stand – Term,
   Regler und Schalter – wird mit dem Projekt gespeichert und vom **Teilen**-Knopf mitgegeben.

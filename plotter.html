@@ -98,13 +98,32 @@
   #trOut .zg{color:#b45309;} #trOut .zf{color:#64748b;} #trOut .zv{color:#7c3aed;}
   #trOut b{font-weight:800;}
   /* Termkasten: deutlich groesser als der Erklaertext, Parameter in ihrer Farbe */
-  #trOut .trBox{display:inline-block;margin:calc(var(--k) * 3px) 0 calc(var(--k) * 4px);
+  #trOut .trBox{display:block;margin:0 0 calc(var(--k) * 4px);
                 padding:calc(var(--k) * 5px) calc(var(--k) * 11px);border:1px solid #dbe2ec;
                 border-radius:calc(var(--k) * 10px);background:#f7f9fc;max-width:100%;overflow-x:auto;}
-  #trOut .trT{font-size:calc(var(--k) * 18px);font-weight:800;line-height:1.35;white-space:nowrap;}
+  #trOut .trT{font-size:calc(var(--k) * 17px);font-weight:800;line-height:1.35;white-space:nowrap;}
   #trOut .trT2{margin-top:calc(var(--k) * 2px);}
   #trOut .trT i{font-style:italic;}
-  #trPlotWrap{flex:1;position:relative;min-height:0;}
+  /* Graph links, Terme und Wortbeschreibung rechts daneben */
+  #trMain{flex:1;display:flex;gap:calc(var(--k) * 8px);min-height:0;padding:0 8px 8px;}
+  #trPlotWrap{flex:1;position:relative;min-height:0;min-width:0;border:1px solid #e6ebf3;border-radius:12px;overflow:hidden;}
+  #trSide{flex:0 0 clamp(200px, 32%, 340px);min-height:0;overflow:auto;background:#fff;
+          border:1px solid #e6ebf3;border-radius:12px;padding:calc(var(--k) * 7px) calc(var(--k) * 10px);}
+  #trMain > [hidden]{display:none;}
+  #trPlotWrap[hidden] ~ #trSide{flex:1 1 auto;}   /* ohne Graph nimmt die Spalte die ganze Breite */
+  @media (max-width:720px){ #trMain{flex-direction:column;}
+    #trSide{flex:0 1 auto;max-height:45%;} }
+  /* Wortbeschreibung: eigene Ueberschrift, je Schritt eine Zeile in der Farbe des Parameters */
+  #trOut .wTitel{margin:calc(var(--k) * 8px) 0 calc(var(--k) * 3px);font-size:calc(var(--k) * 11px);
+                 font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#64748b;}
+  #trOut .wTitel:first-child{margin-top:0;}
+  #trOut .wList{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:calc(var(--k) * 5px);}
+  #trOut .wList li{background:#f7f9fc;border:1px solid #e6ebf3;border-left:4px solid #94a3b8;
+                   border-radius:8px;padding:calc(var(--k) * 5px) calc(var(--k) * 8px);
+                   font-size:calc(var(--k) * 13.5px);line-height:1.35;}
+  #trOut .wList li .p{font-weight:800;}
+  #trOut .wNote{margin-top:calc(var(--k) * 4px);color:#64748b;font-size:calc(var(--k) * 12px);}
+  #trOut .wLeer{color:#64748b;}
   #plotR{position:absolute;inset:0;width:100%;height:100%;touch-action:none;}
   body.t-r #sliders{display:none;}
   canvas{position:absolute;inset:0;width:100%;height:100%;background:#fff;}
@@ -346,8 +365,10 @@
       <div id="trTop">
         <div class="trRow"><label class="trLbl">f(x) =</label><input id="trTerm" class="trIn" spellcheck="false" autocomplete="off" value="x^2"><select id="trBsp" title="Beispielfunktion"></select></div>
         <div class="trRow trChk">
+          <label><input type="checkbox" id="trGraphAn" checked> Graph</label>
           <label><input type="checkbox" id="trEinzel" checked> Zwischenschritte</label>
-          <label><input type="checkbox" id="trTermAn" checked> Term</label>
+          <label><input type="checkbox" id="trTermAn" checked> Terme</label>
+          <label><input type="checkbox" id="trWortAn" checked> Wortbeschreibung</label>
           <label><input type="checkbox" id="trReihe"> Reihenfolge</label>
           <button type="button" id="trFit" class="trSeg" title="Standardfenster wiederherstellen (x von −8 bis 8)">Ansicht</button>
           <button type="button" id="trReset" class="trSeg" title="a, b, c, d zurücksetzen">↺</button>
@@ -357,9 +378,11 @@
           <button type="button" id="trRy" class="trSeg">außen: a und d vertauscht</button>
         </div>
         <div id="trSl"></div>
-        <div id="trOut"></div>
       </div>
-      <div id="trPlotWrap"><canvas id="plotR"></canvas></div>
+      <div id="trMain">
+        <div id="trPlotWrap"><canvas id="plotR"></canvas></div>
+        <aside id="trSide"><div id="trOut"></div></aside>
+      </div>
     </div>
   </div>
 </div>
@@ -775,7 +798,7 @@ const TR_BSP=[['x^2','Parabel x²'],['x^3','kubisch x³'],['sqrt(x)','Wurzel √
   ['0.05*x^4-0.1*x^3-0.8*x^2+0.6*x+2','Grad 4, unsymmetrisch']];
 const TRC={f:'#94a3b8', alt:'#b45309'};        /* Ausgangsfunktion grau, vertauschte Reihenfolge braun */
 const TRSTD={a:'#16a34a', b:'#2563eb', c:'#dc2626', d:'#7c3aed'};   /* a grün, b blau, c rot, d violett */
-let tr={term:'x^2',a:1,b:1,c:0,d:0,einzel:true,zTerm:true,reihe:false,rSeite:'x',col:Object.assign({},TRSTD)};
+let tr={term:'x^2',a:1,b:1,c:0,d:0,einzel:true,zTerm:true,zWort:true,zGraph:true,reihe:false,rSeite:'x',col:Object.assign({},TRSTD)};
 let trToks=tokenize(tr.term);
 let trView={ox:0,oy:0,unit:40}, trW=0, trH=0;
 const trCol=k=>(tr.col&&tr.col[k])||TRSTD[k];
@@ -817,7 +840,9 @@ function trKurve(c2,fn,col,w,dash){ c2.save(); c2.strokeStyle=col; c2.lineWidth=
     if(prev===null||Math.abs(py-prev)>trH*3) c2.moveTo(px,py); else c2.lineTo(px,py);
     prev=py; }
   c2.stroke(); c2.restore(); }
-function trDraw(){ if(tab!=='r'||!trW) return;
+function trDraw(){ if(tab!=='r') return;
+  if(!tr.zGraph){ trText(); return; }                 /* Graph ausgeblendet: nur die Spalte neu schreiben */
+  if(!trW) return;
   const c2=$('plotR').getContext('2d'); c2.setTransform(dpr,0,0,dpr,0,0);
   c2.clearRect(0,0,trW,trH); c2.fillStyle='#fff'; c2.fillRect(0,0,trW,trH);
   const u=trView.unit, ox=trView.ox, oy=trView.oy;
@@ -863,23 +888,26 @@ function trTermG(h){ if(!trToks.length) return '';
   if(tr.a!==1){ s=trPar('a',(tr.a===-1?'−':nfk(tr.a)+'·'),h)+(klammer?('('+s+')'):s); }
   if(tr.d!==0) s+=' '+trPar('d',(tr.d>0?'+ ':'− ')+nfk(Math.abs(tr.d)),h);
   return s; }
+/* Rechte Spalte: Terme (beide Formen, per Häkchen) und die Wortbeschreibung als Liste. */
 function trText(){ const out=$('trOut'); const L=[];
-  const chip=(col,txt)=>'<span style="color:'+col+'"><b>■</b> '+txt+'</span>';
   const gk='<span style="color:'+trGCol()+'">g</span>(<i>x</i>) = ';
-  let kurz=gk+trPar('a',(tr.a===1?'':(tr.a===-1?'−':nfk(tr.a)+'·')),true)+'f('+trInnen(true)+')';
-  if(tr.d!==0) kurz+=' '+trPar('d',(tr.d>0?'+ ':'− ')+nfk(Math.abs(tr.d)),true);
-  const kasten=['<div class="trT">'+kurz+'</div>'];
-  if(tr.zTerm&&trToks.length) kasten.push('<div class="trT trT2">'+gk+trTermG(true)+'</div>');
-  L.push('<div class="trBox">'+kasten.join('')+'</div>');
-  if(tr.einzel){ const t=[];
-    if(tr.a!==1) t.push(chip(trCol('a'),'a = '+nf1(tr.a)+': senkrecht '+(Math.abs(tr.a)>1?'gestreckt':'gestaucht')+' (Faktor '+nfk(Math.abs(tr.a))+')'+(tr.a<0?', an der x-Achse gespiegelt':'')));
-    if(tr.b!==1) t.push(chip(trCol('b'),'b = '+nf1(tr.b)+': waagrecht '+(Math.abs(tr.b)>1?'gestaucht':'gestreckt')+' (Faktor '+nfk(Math.round(1000/Math.abs(tr.b))/1000)+')'+(tr.b<0?', an der y-Achse gespiegelt':'')));
-    if(tr.c!==0) t.push(chip(trCol('c'),'c = '+nf1(tr.c)+': um '+nfk(Math.abs(tr.c))+' nach '+(tr.c>0?'links':'rechts')));
-    if(tr.d!==0) t.push(chip(trCol('d'),'d = '+nf1(tr.d)+': um '+nfk(Math.abs(tr.d))+' nach '+(tr.d>0?'oben':'unten')));
-    L.push(t.length?('<span class="zf">Zwischenschritte: </span>'+t.join('<span class="zf"> → </span>')
-      +'<span class="zf"> (erst strecken, dann verschieben)</span>')
-      :'<span class="zf">Noch keine Veränderung: a = 1, b = 1, c = 0, d = 0.</span>'); }
+  if(tr.zTerm){
+    let kurz=gk+trPar('a',(tr.a===1?'':(tr.a===-1?'−':nfk(tr.a)+'·')),true)+'f('+trInnen(true)+')';
+    if(tr.d!==0) kurz+=' '+trPar('d',(tr.d>0?'+ ':'− ')+nfk(Math.abs(tr.d)),true);
+    const kasten=['<div class="trT">'+kurz+'</div>'];
+    if(trToks.length) kasten.push('<div class="trT trT2">'+gk+trTermG(true)+'</div>');
+    L.push('<div class="wTitel">Term</div><div class="trBox">'+kasten.join('')+'</div>'); }
+  if(tr.zWort){ const t=[];
+    const zeile=(k,txt)=>'<li style="border-left-color:'+trCol(k)+'"><span class="p" style="color:'+trCol(k)+'">'+k+' = '+nf1(tr[k])+'</span>: '+txt+'</li>';
+    if(tr.a!==1) t.push(zeile('a','senkrecht '+(Math.abs(tr.a)>1?'gestreckt':'gestaucht')+' (Faktor '+nfk(Math.abs(tr.a))+')'+(tr.a<0?', an der x-Achse gespiegelt':'')));
+    if(tr.b!==1) t.push(zeile('b','waagrecht '+(Math.abs(tr.b)>1?'gestaucht':'gestreckt')+' (Faktor '+nfk(Math.round(1000/Math.abs(tr.b))/1000)+')'+(tr.b<0?', an der y-Achse gespiegelt':'')));
+    if(tr.c!==0) t.push(zeile('c','um '+nfk(Math.abs(tr.c))+' nach '+(tr.c>0?'links':'rechts')+' verschoben'));
+    if(tr.d!==0) t.push(zeile('d','um '+nfk(Math.abs(tr.d))+' nach '+(tr.d>0?'oben':'unten')+' verschoben'));
+    L.push('<div class="wTitel">Wortbeschreibung</div>'+(t.length
+      ?('<ul class="wList">'+t.join('')+'</ul><div class="wNote">der Reihe nach: erst strecken, dann verschieben</div>')
+      :'<div class="wLeer">Noch keine Veränderung: a = 1, b = 1, c = 0, d = 0.</div>')); }
   if(tr.reihe){
+    L.push('<div class="wTitel">Reihenfolge</div>');
     if(tr.rSeite==='y'){
       const alt='g(x) = '+(tr.a===1?'':(tr.a===-1?'−':nfk(tr.a)+'·'))+'( f('+trInnen(false)+')'+(tr.d>0?' + ':' − ')+nfk(Math.abs(tr.d))+' )';
       L.push('<span class="zv"><b>■</b> Erst verschieben, dann strecken: '+alt+'</span>');
@@ -889,7 +917,14 @@ function trText(){ const out=$('trOut'); const L=[];
       L.push('<span class="zv"><b>■</b> Erst strecken, dann verschieben: '+alt+'</span>');
       L.push('<span class="zf">Wegen f(b·x + c) = f(b·(x + '+(tr.b?nfk(Math.round(tr.c/tr.b*1000)/1000):'—')+')) wird nur um '+(tr.b?nfk(Math.round(tr.c/tr.b*1000)/1000):'—')+' verschoben statt um '+nfk(tr.c)+'. Innen wirkt alles <b>umgekehrt</b>.</span>');
     } }
-  out.innerHTML=L.map(z=>'<div>'+z+'</div>').join(''); }
+  if(!L.length) L.push('<div class="wLeer">Nichts eingeblendet – Häkchen oben setzen.</div>');
+  out.innerHTML=L.map(z=>'<div>'+z+'</div>').join('');
+  trLayout(); }
+/* Graph und rechte Spalte lassen sich einzeln ausblenden; ist beides weg, bleibt die Spalte
+   mit dem Hinweis stehen, damit der Reiter nicht leer ist. */
+function trLayout(){ const ohneSpalte=!(tr.zTerm||tr.zWort||tr.reihe)&&tr.zGraph;
+  $('trSide').hidden=ohneSpalte; $('trPlotWrap').hidden=!tr.zGraph;
+  requestAnimationFrame(()=>{ if(tab==='r'&&tr.zGraph) trResize(); }); }
 
 /* ---- Ansicht ---- */
 /* Standardfenster wie im Reiter „Graph": x von −8 bis 8, y um 0 herum.
@@ -927,11 +962,13 @@ function trSetzeFarbe(k,c){ tr.col=Object.assign({},TRSTD,tr.col); tr.col[k]=c;
   trDraw(); sync(); }
 function trUiNeu(){ if(!$('trTerm')) return;
   $('trTerm').value=tr.term; $('trEinzel').checked=tr.einzel; $('trTermAn').checked=tr.zTerm;
+  $('trWortAn').checked=tr.zWort!==false; $('trGraphAn').checked=tr.zGraph!==false;
   $('trReihe').checked=tr.reihe; $('trReiheWahl').hidden=!tr.reihe;
   $('trRx').classList.toggle('on',tr.rSeite!=='y'); $('trRy').classList.toggle('on',tr.rSeite==='y');
   document.querySelectorAll('#trSl .sl').forEach(row=>{ const k=row.dataset.k;
     row.querySelector('input').value=tr[k]; row.querySelector('.v').textContent=nf1(tr[k]);
-    const fb=row.querySelector('.trCol'); if(fb) fb.style.background=trCol(k); }); }
+    const fb=row.querySelector('.trCol'); if(fb) fb.style.background=trCol(k); });
+  trLayout(); }
 (function trBuild(){
   const sel=$('trBsp'); sel.innerHTML='<option value="">Beispiel …</option>'+TR_BSP.map(b=>'<option value="'+b[0]+'">'+b[1]+'</option>').join('');
   sel.onchange=()=>{ if(!sel.value) return; tr.term=sel.value; trToks=tokenize(tr.term); sel.value=''; trUiNeu(); trFit(); sync(); };
@@ -952,6 +989,8 @@ function trUiNeu(){ if(!$('trTerm')) return;
     sl.appendChild(row); });
   $('trEinzel').onchange=()=>{ tr.einzel=$('trEinzel').checked; trDraw(); sync(); };
   $('trTermAn').onchange=()=>{ tr.zTerm=$('trTermAn').checked; trDraw(); sync(); };
+  $('trWortAn').onchange=()=>{ tr.zWort=$('trWortAn').checked; trDraw(); sync(); };
+  $('trGraphAn').onchange=()=>{ tr.zGraph=$('trGraphAn').checked; trDraw(); sync(); };
   $('trReihe').onchange=()=>{ tr.reihe=$('trReihe').checked; $('trReiheWahl').hidden=!tr.reihe; trDraw(); sync(); };
   $('trRx').onclick=()=>{ tr.rSeite='x'; trUiNeu(); trDraw(); sync(); };
   $('trRy').onclick=()=>{ tr.rSeite='y'; trUiNeu(); trDraw(); sync(); };
@@ -1015,7 +1054,8 @@ function plotImage(){ const im=TafelShot.rasterize($('wrap'),{exclude:'#err'}), 
   g.fillStyle='rgba(255,255,255,.93)'; g.strokeStyle='#cbd5e1'; g.lineWidth=1; g.beginPath(); g.rect(8,8,bw,bh); g.fill(); g.stroke();
   lines.forEach((l,i)=>{ const y=8+5+lh*(i+0.5); g.fillStyle=l.col; if(i<lines.length-(ps.length?1:0)){ g.beginPath(); g.arc(20,y,5,0,7); g.fill(); } g.fillText(l.txt,32,y); });
   return im; }
-function tabBild(){ if(tab==='t') return TafelShot.rasterize($('ttab')||$('pT'),{pad:8,exclude:'.fdel,.fhide'});
+function tabBild(){ if(tab==='r') return TafelShot.rasterize($('trMain'),{pad:8});   /* Graph und rechte Spalte, wie sie dastehen */
+  if(tab==='t') return TafelShot.rasterize($('ttab')||$('pT'),{pad:8,exclude:'.fdel,.fhide'});
   if(tab==='m') return TafelShot.rasterize($('mlist')||$('pM'),{pad:8,exclude:'.fdel,.fhide,.mtr,.mch'});
   return plotImage(); }
 /* ---- Formel-Tastatur ---- */
