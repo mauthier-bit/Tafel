@@ -2359,10 +2359,16 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     **physikalisch gleichwertig** – die Fläche liegt **parallel zu den Feldlinien**, es geht keine
     einzige hindurch, Φ = A · cos 90° = 0, und auch beim Bewegen entsteht keine Spannung –, im Bild
     sieht man aber beide Möglichkeiten. Der vierte Knopf **„drehen"** lässt die Spule **ständig
-    rotieren** – der **Generator** zum Selbstausprobieren: Ein Regler **Drehzahl** (0,1 bis 1 Umdrehung
+    rotieren** – der **Generator** zum Selbstausprobieren: Ein Regler **Drehzahl** (bis 1 Umdrehung
     pro Sekunde) bestimmt, wie schnell sie sich dreht, die Zahl der Feldlinien läuft mit **cos φ** auf
     und ab (in der Oberstufe steht φ in der Messwertliste), und am Messgerät entsteht eine
-    **Wechselspannung**, deren Ausschlag mit der Drehzahl wächst.
+    **Wechselspannung**, deren Ausschlag mit der Drehzahl wächst. Ein zweiter Regler **Drehwinkel φ**
+    (0° bis 180°) stellt die Spule **von Hand** in jede Zwischenlage – wer daran dreht, hält die
+    Drehung an („Drehzahl: steht still"); läuft sie, zeigt der Regler den aktuellen Winkel mit.
+  - Geregelt werden außerdem **Stromstärke**, **Querschnittsfläche** und – jetzt in **beiden
+    Niveaus** – die **Windungszahl n** (50 bis 500); mehr Windungen heißt auch in Klasse 10 ein
+    größerer Ausschlag. **Positionsregler gibt es keine mehr:** **Magnet und Spule schiebt man
+    direkt im Bild** mit dem Finger, und ein Hinweis unten im Bild sagt das auch.
   - Feldlinien, die **nicht** durch die Spule gehen, sind **blasser** gezeichnet; die gezählten stechen
     dadurch deutlich hervor.
   - **Im Experiment sitzen die beiden Anzeigen klein oben links im Bild:** die **Zahl der Feldlinien**

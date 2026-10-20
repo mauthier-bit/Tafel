@@ -309,8 +309,6 @@ body.labm .lab .grpLbl{margin-top:7px;font-size:.9rem}
           <button id="fSmall" aria-pressed="true">Kleiner Magnet</button>
           <button id="fBig" aria-pressed="false">Großes Feld</button>
         </div>
-        <div class="row"><label for="sMag">Position Magnet <span id="vMag"></span></label><input type="range" id="sMag" min="-5.5" max="5.5" step="0.01"></div>
-        <div class="row"><label for="sCoil">Position Spule <span id="vCoil"></span></label><input type="range" id="sCoil" min="-5.5" max="5.5" step="0.01"></div>
         <div class="grpLbl">Orientierung der Spule</div>
         <div class="seg segOri" id="segLage" role="group" aria-label="Orientierung der Spule">
           <button id="ori0" aria-pressed="true" title="Spulenfläche waagrecht: Die Feldlinien gehen hindurch.">
@@ -331,7 +329,8 @@ body.labm .lab .grpLbl{margin-top:7px;font-size:.9rem}
               <path d="M8 13.5a6 5 0 1 1 5.5 4.4"/><path d="M15.6 15.6 13 18.1l2.2 2.6"/>
               <path class="sp" d="M9.5 15.5 18.5 9"/></svg><span>drehen</span></button>
         </div>
-        <div class="row" id="rowFd" hidden><label for="sFd">Drehzahl <span id="vFd"></span></label><input type="range" id="sFd" min="0.1" max="1" step="0.05"></div>
+        <div class="row" id="rowFd" hidden><label for="sFd">Drehzahl <span id="vFd"></span></label><input type="range" id="sFd" min="0" max="1" step="0.05"></div>
+        <div class="row" id="rowPhi" hidden><label for="sPhi">Drehwinkel φ <span id="vPhi"></span></label><input type="range" id="sPhi" min="0" max="180" step="1"></div>
         <div class="row"><label for="sI">Stromstärke im Elektromagneten <span id="vI"></span></label><input type="range" id="sI" min="0" max="3" step="0.01"></div>
         <div class="seg" id="segAC" role="group" aria-label="Stromart">
           <button id="acDC" aria-pressed="true">Gleichstrom</button>
@@ -516,7 +515,7 @@ const ICON_PAUSE='<svg viewBox="0 0 24 24"><path fill="currentColor" d="M6 4h4.5
 // ---------- Zustand ----------
 let mode='film', ci=0, t=0, playing=false, speed=1, lastCap=-2, done=new Set();
 let level='q', lastSign=1;
-const lab={mx:-1.75,cx:0,I:2,a:2.5,big:false,n:200,ac:false,f:0.5,ori:0,fd:0.5,zN:true,zU:true};
+const lab={mx:-1.75,cx:0,I:2,a:2.5,big:false,n:200,ac:false,f:0.5,ori:0,fd:0.5,phi:0,zN:true,zU:true};
 let hist=[], labT=0, labPrevN=null, labRate=0, needle=0;
 /* Spannungsskala im Experiment: Sie wächst mit, sonst werden hohe Frequenzen abgeschnitten.
    Sie springt erst, wenn der Platz wirklich nicht reicht (oder viel zu groß geworden ist).  */
@@ -529,10 +528,11 @@ function stufe(v,min){ v=Math.max(v,min); const p=Math.pow(10,Math.floor(Math.lo
    U^ = N^ * 2*pi*f, und N^ (die Zahl der Feldlinien) haengt nicht von f ab. Doppelte
    Frequenz heisst dann wirklich doppelt so hoher Ausschlag. */
 function labSkalen(){ let mq=0, mv=0;
-  const fMax=(lab.ac?2:0)+(lab.ori===3?1:0);
+  const fMax=(lab.ac?2:0)+(lab.ori===3?1:0), NMAX=500;
   if(fMax>0){ let mN=0; for(const p of hist) mN=Math.max(mN,Math.abs(p[1]));
-    mq=mN*2*Math.PI*fMax; mv=mq*lab.n*0.01; }
-  else for(const p of hist){ const a=Math.abs(p[2]); if(a>mq) mq=a; const b=Math.abs(p[2]*p[3]*0.01); if(b>mv) mv=b; }
+    const r=mN*2*Math.PI*fMax;         /* groesste moegliche Aenderungsrate (hoechste Frequenz) */
+    mq=r*NMAX/200; mv=r*NMAX*0.01; }   /* und dazu die groesste Windungszahl */
+  else for(const p of hist){ const a=Math.abs(p[2]*p[3]/200); if(a>mq) mq=a; const b=Math.abs(p[2]*p[3]*0.01); if(b>mv) mv=b; }
   const nq=stufe(mq*1.15,UMAX), nv=stufe(mv*1.15,50);
   if(nq>labUm||nq<labUm*0.45) labUm=nq;
   if(nv>labUmv||nv<labUmv*0.45) labUmv=nv; }
@@ -552,7 +552,6 @@ function applyLevelText(){ const c=chapters[ci];
   $('merkQ').hidden=!(c.merk&&level==='q'); $('merkO').hidden=!(c.merk&&level==='o');
   const dots=$('dots'); dots.innerHTML=''; c.caps[level].forEach(()=>dots.appendChild(document.createElement('i'))); lastCap=-2; }
 function setLevel(l){ level=l; $('lvQ').setAttribute('aria-selected',l==='q'); $('lvO').setAttribute('aria-selected',l==='o');
-  $('rowN').hidden=l!=='o';
 
   hist=[]; applyLevelText(); syncLab(); }
 $('lvQ').onclick=()=>setLevel('q'); $('lvO').onclick=()=>setLevel('o');
@@ -607,33 +606,40 @@ function setMode(m){ mode=m; $('mFilm').setAttribute('aria-pressed',m==='film');
 $('mFilm').onclick=()=>setMode('film'); $('mLab').onclick=()=>setMode('lab');
 
 // Labor
-const sMag=$('sMag'), sCoil=$('sCoil'), sI=$('sI'), sA=$('sA'), sN=$('sN');
-function syncLab(){ sMag.value=lab.mx; sCoil.value=lab.cx; sI.value=lab.I; sA.value=lab.a; sN.value=lab.n; $('vN').textContent=lab.n;
-  $('vMag').textContent=fmt(lab.mx*2,1)+' cm'; $('vCoil').textContent=fmt(lab.cx*2,1)+' cm';
+const sI=$('sI'), sA=$('sA'), sN=$('sN');
+function syncLab(){ sI.value=lab.I; sA.value=lab.a; sN.value=lab.n; $('vN').textContent=lab.n;
   $('acDC').setAttribute('aria-pressed',!lab.ac); $('acAC').setAttribute('aria-pressed',lab.ac);
   for(let i=0;i<4;i++) $('ori'+i).setAttribute('aria-pressed',(lab.ori|0)===i);
-  $('rowFd').hidden=(lab.ori|0)!==3; $('sFd').value=lab.fd; $('vFd').textContent=fmt(lab.fd,2)+' /s';
+  const dreht=(lab.ori|0)===3;
+  $('rowFd').hidden=!dreht; $('sFd').value=lab.fd;
+  $('vFd').textContent=lab.fd>0?fmt(lab.fd,2)+' /s':'steht still';
+  $('rowPhi').hidden=!dreht; phiRegler();
   $('rowF').hidden=!lab.ac; $('sF').value=lab.f; ovlSync();
   $('vF').textContent=fmt(lab.f,2)+' Hz'+(level==='o'?' · T = '+fmt(1/lab.f,1)+' s':'');
   $('vI').textContent=(lab.ac?'Î = ':'')+fmt(lab.I,2)+' A'+(level==='o'?' · '+(lab.ac?'B̂ = ':'B = ')+fmt(lab.I/3*100,0)+' mT':''); $('vA').textContent=fmt(Math.pow(lab.a*2,2),0)+' cm²';
   $('fSmall').setAttribute('aria-pressed',!lab.big); $('fBig').setAttribute('aria-pressed',lab.big); }
-sMag.oninput=()=>{lab.mx=+sMag.value;syncLab();}; sCoil.oninput=()=>{lab.cx=+sCoil.value;syncLab();};
+/* Der Winkelregler zeigt 0° bis 180°; dreht die Spule weiter, wird der Winkel daran gespiegelt
+   (cos(360° − φ) = cos φ, die Lage sieht gleich aus). */
+function phiEff(){ const w=((lab.phi%360)+360)%360; return w>180?360-w:w; }
+function phiRegler(){ const v=phiEff(); $('sPhi').value=Math.round(v); $('vPhi').textContent=fmt(v,0)+'°'; }
 sI.oninput=()=>{lab.I=+sI.value;syncLab();}; sN.oninput=()=>{lab.n=+sN.value;syncLab();}; sA.oninput=()=>{lab.a=+sA.value;syncLab();};
 $('fSmall').onclick=()=>{lab.big=false;syncLab();}; $('fBig').onclick=()=>{lab.big=true;lab.mx=0;syncLab();};
 $('acDC').onclick=()=>{lab.ac=false;syncLab();}; $('acAC').onclick=()=>{lab.ac=true;syncLab();};
 for(let i=0;i<4;i++) $('ori'+i).onclick=()=>{lab.ori=i;syncLab();};
 $('sFd').oninput=()=>{lab.fd=+$('sFd').value;syncLab();};
+/* Von Hand am Winkel drehen heisst: die Drehung steht. */
+$('sPhi').oninput=()=>{ lab.fd=0; lab.phi=+$('sPhi').value; syncLab(); };
 $('sF').oninput=()=>{lab.f=+$('sF').value;syncLab();};
-$('reset').onclick=()=>{ Object.assign(lab,{mx:-1.75,cx:0,I:2,a:2.5,big:false,n:200,ac:false,f:0.5,ori:0,fd:0.5,zN:true,zU:true}); syncLab(); };
+$('reset').onclick=()=>{ Object.assign(lab,{mx:-1.75,cx:0,I:2,a:2.5,big:false,n:200,ac:false,f:0.5,ori:0,fd:0.5,phi:0,zN:true,zU:true}); syncLab(); };
 function labState(){ const f=lab.big?BIG:SMALL;
   /* Wechselstrom: Die Stromstärke schwingt, das Feld kehrt dabei seine Richtung um. */
   const B=(lab.I/3)*(lab.ac?Math.sin(2*Math.PI*lab.f*labT):1);
   /* Senkrecht gestellt liegt die Spulenflaeche parallel zu den Feldlinien: Es geht keine hindurch.
      Zwei senkrechte Stellungen sind moeglich – physikalisch gleich (cos 90° = 0), im Bild verschieden:
      um die x-Achse gekippt (ori 1) oder um die Hochachse gedreht (ori 2). */
-  const st=base({mx:lab.mx,W:f.W,D:f.D,cx:lab.cx,a:lab.a,b:Math.min(lab.a,lab.big?4.4:3.5),B,el:true});
+  const st=base({mx:lab.mx,W:f.W,D:f.D,cx:lab.cx,a:lab.a,b:Math.min(lab.a,lab.big?4.4:3.5),B,el:true,tip:true});
   st.ori=lab.ori|0;
-  if(st.ori===3){ st.rot=2*Math.PI*lab.fd*labT; st.achse=true; }   /* Generator: ständig drehen */
+  if(st.ori===3){ st.rot=lab.phi*Math.PI/180; st.achse=true; }     /* Generator: Winkel laeuft mit der Drehzahl */
   else if(st.ori) st.rot=Math.PI/2;
   return st; }
 
@@ -743,6 +749,11 @@ function drawScene(st){
   const sp=q(-0.1)[0]; ctx.textAlign='right'; ctx.textBaseline='top'; ctx.fillStyle=C.copper; ctx.font='600 '+Math.round(s*0.24)+'px '+C.font;
   ctx.fillText('Spule',sp[0]-s*0.12,sp[1]+s*0.05);
 
+  /* Hinweis, dass man im Bild schieben darf (nur im Experiment) */
+  if(st.tip){ ctx.font='600 '+Math.round(s*0.22)+'px '+C.font; ctx.fillStyle=C.muted;
+    ctx.textAlign='left'; ctx.textBaseline='bottom'; ctx.globalAlpha=.9;
+    ctx.fillText('↔ Magnet und Spule lassen sich im Bild verschieben',7*dpr,ch-6*dpr); ctx.globalAlpha=1; }
+
   // Trefferflächen fürs Ziehen
   const cp=[...q(0.12),...q(-0.12)]; const bb=pts=>{let a=1e9,b=1e9,c=-1e9,e=-1e9; for(const p of pts){a=Math.min(a,p[0]);b=Math.min(b,p[1]);c=Math.max(c,p[0]);e=Math.max(e,p[1]);} return [a-s*0.3,b-s*0.3,c+s*0.3,e+s*0.3];};
   geo={s,coil:bb(cp),mag:bb([P(x0,-H-PT,z0),P(x1,H+PT,z1),P(x1,-H-PT,z0),P(x0,H+PT,z1)])};
@@ -846,7 +857,10 @@ function drawGraph(o){
   const L=92*dpr, R=14*dpr, T=10*dpr, B=22*dpr, gap=12*dpr, ph=(h-T-B-gap)/2;
   const X=tt=>L+(tt-o.t0)/(o.t1-o.t0)*(w-L-R);
   const um=o.uMax||UMAX, umv=o.uMv||50;
-  const yN=v=>o.signed?T+ph/2-v/o.nMax*ph/2:T+ph-v/o.nMax*ph, uTop=T+ph+gap, un=p=>level==='o'?p[2]*p[3]*0.01/umv:p[2]/um, yU=p=>uTop+ph/2-clamp(un(p),-1,1)*ph/2;
+  /* nRef: Im Experiment zaehlt die Windungszahl auch in Klasse 10 mit (bezogen auf n = 200),
+     damit der Regler dort eine sichtbare Wirkung hat. Im Film bleibt es beim reinen Verlauf. */
+  const yN=v=>o.signed?T+ph/2-v/o.nMax*ph/2:T+ph-v/o.nMax*ph, uTop=T+ph+gap,
+        un=p=>level==='o'?p[2]*p[3]*0.01/umv:(o.nRef?p[2]*p[3]/(o.nRef*um):p[2]/um), yU=p=>uTop+ph/2-clamp(un(p),-1,1)*ph/2;
   ctx.font='600 '+(12*dpr)+'px '+C.font; ctx.textBaseline='middle';
   ctx.strokeStyle=C.rule; ctx.lineWidth=1*dpr;
   ctx.strokeRect(L,T,w-L-R,ph); ctx.strokeRect(L,uTop,w-L-R,ph);
@@ -880,7 +894,7 @@ function showCaption(){ const c=chapters[ci], caps=c.caps[level]; let k=0; caps.
   if(k!==lastCap){ lastCap=k; const p=$('caption'); p.style.opacity=0; setTimeout(()=>{ p.textContent=caps[k][1]; p.style.opacity=1; },lastCap<0?0:140);
     [...$('dots').children].forEach((d,i)=>d.classList.toggle('on',i<=k)); } }
 
-function readout(count,rate,dt,st,n,um,umv){ um=um||UMAX; umv=umv||50;
+function readout(count,rate,dt,st,n,um,umv,nRef){ um=um||UMAX; umv=umv||50;
   $('cnt').textContent=Math.round(count);
   const on=Math.abs(rate)>0.3; const chip=$('chip'); chip.classList.toggle('on',on);
   chip.textContent=on?'Spannung wird induziert':'keine Induktionsspannung';
@@ -889,7 +903,7 @@ function readout(count,rate,dt,st,n,um,umv){ um=um||UMAX; umv=umv||50;
   if(level==='q'){ const tr=$('trend'); const rr=umgepolt?rate*lastSign:rate; const k=rr>0.3?'up':rr<-0.3?'down':'';
     tr.className='trend '+k; tr.innerHTML=k==='up'?'<i>↑</i><span>Die Anzahl nimmt zu.</span>':k==='down'?'<i>↓</i><span>Die Anzahl nimmt ab.</span>':'<i>=</i><span>Die Anzahl bleibt gleich.</span>';
     if(umgepolt&&Math.round(count)>0) tr.querySelector('span').textContent+=lastSign>0?' (von oben)':' (von unten)';
-    target=clamp(-rate/um,-1,1)*58; }
+    target=clamp(-rate*(nRef?n/nRef:1)/um,-1,1)*58; }
   else { const ox=Math.max(0,Math.min(st.mx+st.W/2,st.cx+st.a/2)-Math.max(st.mx-st.W/2,st.cx-st.a/2)), oz=Math.max(0,Math.min(st.D/2,st.b/2)-Math.max(-st.D/2,-st.b/2));
     const A=st.rot!=null?st.a*st.b*4*Math.cos(st.rot):ox*oz*4, B=st.B*100;
     $('oAlbl').textContent=st.rot!=null?'A · cos φ (φ = '+fmt((st.rot*180/Math.PI)%360,0)+'°)':'durchsetzte Fläche A';
@@ -915,15 +929,17 @@ function frame(now){
     drawGraph({t0:0,t1:c.T,nMax:c.nMax,pts,labels:true,signed:!!c.signed,uMax:c.umax});
     readout(count,-U,dt,st,nW,c.umax); showCaption();
   } else {
-    labT+=dt; const st=labState(); const count=drawScene(st); const N=model(st);
+    labT+=dt;
+    if(lab.ori===3&&lab.fd>0){ lab.phi=(lab.phi+360*lab.fd*dt)%360; phiRegler(); }
+    const st=labState(); const count=drawScene(st); const N=model(st);
     const fSig=(lab.ac?lab.f:0)+(lab.ori===3?lab.fd:0);               /* was gerade schwingt oder sich dreht */
     const tau=fSig>0?Math.min(0.12,1/(16*fSig)):0.12;                 /* schnelle Schwingung nicht wegglätten */
     if(labPrevN!==null&&dt>0){ const r=(N-labPrevN)/dt; labRate+=(r-labRate)*Math.min(1,dt/tau); } labPrevN=N;
     if(Math.abs(labRate)<0.02) labRate=0;
     hist.push([labT,N,-labRate,lab.n]); while(hist.length&&hist[0][0]<labT-10) hist.shift();
     labSkalen();
-    drawGraph({t0:labT-10,t1:labT,nMax:60,pts:hist,labels:false,signed:lab.ac||lab.ori===3,uMax:labUm,uMv:labUmv});
-    readout(count,labRate,dt,st,lab.n,labUm,labUmv);
+    drawGraph({t0:labT-10,t1:labT,nMax:60,pts:hist,labels:false,signed:lab.ac||lab.ori===3,uMax:labUm,uMv:labUmv,nRef:200});
+    readout(count,labRate,dt,st,lab.n,labUm,labUmv,200);
   }
   requestAnimationFrame(frame);
 }
@@ -937,7 +953,8 @@ function zustandSetzen(d){ if(!d||typeof d!=='object') return;
   if(d.level==='q'||d.level==='o') setLevel(d.level);
   if(d.lab&&typeof d.lab==='object'){ Object.assign(lab,d.lab);
     if(d.lab.ori===undefined&&typeof d.lab.senk==='boolean') lab.ori=d.lab.senk?1:0;   /* aeltere Links */
-    delete lab.senk; lab.ori=Math.max(0,Math.min(3,lab.ori|0)); }
+    delete lab.senk; lab.ori=Math.max(0,Math.min(3,lab.ori|0));
+    lab.phi=Math.max(0,Math.min(360,+lab.phi||0)); }
   const i=Math.max(0,Math.min(chapters.length-1,+d.ci||0));
   gotoChapter(i,false);
   setMode(d.mode==='lab'?'lab':'film');
