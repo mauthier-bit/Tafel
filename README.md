@@ -1872,11 +1872,11 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     „der Reihe nach: erst strecken, dann verschieben".
     Ist nichts davon angehakt, verschwindet die Spalte und der Graph bekommt die ganze Breite;
     auf schmalen Geräten rückt sie unter den Graphen.
-  - **„Parameter"** versteckt die **Schieberegler** und alle **Zahlenwerte** in der Wortbeschreibung:
-    Dort steht dann nur noch die Wirkung („a: senkrecht gestreckt, an der x-Achse gespiegelt",
-    „c: nach links verschoben"). So sollen **a, b, c, d aus dem Graphen oder aus der Wortform
-    bestimmt** werden; ein Haken zurück deckt die Werte wieder auf. (Soll auch der Term nichts
-    verraten, nimmt man „Terme" dazu weg.)
+  - **„Parameter"** versteckt die **Schieberegler** und in der Wortbeschreibung die **ausdrückliche
+    Angabe** „c = 2". **Im Satz bleiben die Zahlen stehen** („c: um 2 nach links verschoben",
+    „a: senkrecht gestreckt (Faktor 2)") – genau daraus sollen **a, b, c, d bestimmt** werden
+    (dass „um 2 nach links" eben c = +2 heißt). Ein Haken zurück deckt die Werte wieder auf.
+    (Soll auch der Term nichts verraten, nimmt man „Terme" dazu weg.)
   - Der ausgeschriebene Term: Aus f(x) = x² und a = 2, b = 3, c = 1, d = −4
     wird **g(x) = 2·(3·(x + 1))² − 4** – der eingegebene Term wird dabei wirklich eingesetzt, auch bei
     sin, Wurzel oder einem eigenen Polynom, und nur dort geklammert, wo es nötig ist.
