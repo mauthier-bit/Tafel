@@ -1864,7 +1864,8 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     In dieser Reihenfolge ist **jeder Schritt eine Streckung an einer Achse oder eine Verschiebung**;
     würde man zuerst verschieben und dann strecken, müsste man an der **verschobenen** Achse strecken.
   - **Rechts neben dem Graphen steht eine eigene Spalte** mit allem, was nicht der Graph ist:
-    oben die **vier Schieberegler** für a, b, c, d, darunter die **Wortbeschreibung** und der
+    oben die **vier Schieberegler** für a, b, c, d (immer **untereinander**, egal wie breit das
+    Werkzeug steht), darunter die **Wortbeschreibung** und der
     **Term** (auf dem iPad passt das zusammen genau neben das Graphenfenster). Häkchen oben
     steuern, was davon zu sehen ist:
     **„Graph"** blendet die Zeichenfläche selbst ein und aus (ausgeblendet füllt die Spalte die
