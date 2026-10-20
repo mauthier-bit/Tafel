@@ -2344,7 +2344,7 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   - Im **Experiment** schaltet ein Umschalter den Elektromagneten zwischen **Gleichstrom** und
     **Wechselstrom** um; bei Wechselstrom kommt ein Regler für die **Frequenz** (0,1 bis 2 Hz) dazu, und
     die Stromstärke wird als **Scheitelwert Î** (Oberstufe zusätzlich **B̂** und die Periodendauer T)
-    angezeigt. **Doppelte Frequenz heißt doppelter Ausschlag** (Û = n · A · B̂ · 2πf): Sobald etwas
+    angezeigt. **Doppelte Frequenz heißt doppelter Ausschlag** (Û = N · A · B̂ · 2πf): Sobald etwas
     schwingt oder sich dreht, liegt die **Spannungsachse auf dem größtmöglichen Ausschlag** (höchste
     einstellbare Frequenz) und bleibt beim Drehen am Frequenzregler **stehen** – sonst würde eine
     mitwachsende Achse genau den Effekt verschlucken, den man zeigen will. Abgeschnitten wird dabei
@@ -2366,7 +2366,7 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     links (**„steht still"**), erscheint der Regler **„Drehen von Hand"**: Damit stellt man die Spule
     in jede Zwischenlage von **0° bis 180°** – bei 90° geht keine Feldlinie mehr hindurch.
   - Geregelt werden außerdem **Stromstärke**, **Querschnittsfläche** und – jetzt in **beiden
-    Niveaus** – die **Windungszahl n** (50 bis 500); mehr Windungen heißt auch in Klasse 10 ein
+    Niveaus** – die **Windungszahl N** (50 bis 500); mehr Windungen heißt auch in Klasse 10 ein
     größerer Ausschlag. **Positionsregler gibt es keine mehr:** **Magnet und Spule schiebt man
     direkt im Bild** mit dem Finger – **kleiner wie großer Magnet** –, und ein Hinweis unten im Bild
     sagt das auch.
