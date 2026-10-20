@@ -307,7 +307,7 @@ body.labm .lab .grpLbl{margin-top:7px;font-size:.9rem}
         <div class="lbl">Selbst ausprobieren</div>
         <div class="seg" role="group" aria-label="Feld">
           <button id="fSmall" aria-pressed="true">Kleiner Magnet</button>
-          <button id="fBig" aria-pressed="false">Großes Feld</button>
+          <button id="fBig" aria-pressed="false">Großer Magnet</button>
         </div>
         <div class="grpLbl">Orientierung der Spule</div>
         <div class="seg segOri" id="segLage" role="group" aria-label="Orientierung der Spule">
@@ -330,7 +330,7 @@ body.labm .lab .grpLbl{margin-top:7px;font-size:.9rem}
               <path class="sp" d="M9.5 15.5 18.5 9"/></svg><span>drehen</span></button>
         </div>
         <div class="row" id="rowFd" hidden><label for="sFd">Drehzahl <span id="vFd"></span></label><input type="range" id="sFd" min="0" max="1" step="0.05"></div>
-        <div class="row" id="rowPhi" hidden><label for="sPhi">Drehwinkel φ <span id="vPhi"></span></label><input type="range" id="sPhi" min="0" max="180" step="1"></div>
+        <div class="row" id="rowPhi" hidden><label for="sPhi">Drehen von Hand <span id="vPhi"></span></label><input type="range" id="sPhi" min="0" max="180" step="1"></div>
         <div class="row"><label for="sI">Stromstärke im Elektromagneten <span id="vI"></span></label><input type="range" id="sI" min="0" max="3" step="0.01"></div>
         <div class="seg" id="segAC" role="group" aria-label="Stromart">
           <button id="acDC" aria-pressed="true">Gleichstrom</button>
@@ -613,7 +613,8 @@ function syncLab(){ sI.value=lab.I; sA.value=lab.a; sN.value=lab.n; $('vN').text
   const dreht=(lab.ori|0)===3;
   $('rowFd').hidden=!dreht; $('sFd').value=lab.fd;
   $('vFd').textContent=lab.fd>0?fmt(lab.fd,2)+' /s':'steht still';
-  $('rowPhi').hidden=!dreht; phiRegler();
+  $('rowPhi').hidden=!dreht||lab.fd>0;   /* von Hand drehen geht nur, wenn die Drehung steht */
+  phiRegler();
   $('rowF').hidden=!lab.ac; $('sF').value=lab.f; ovlSync();
   $('vF').textContent=fmt(lab.f,2)+' Hz'+(level==='o'?' · T = '+fmt(1/lab.f,1)+' s':'');
   $('vI').textContent=(lab.ac?'Î = ':'')+fmt(lab.I,2)+' A'+(level==='o'?' · '+(lab.ac?'B̂ = ':'B = ')+fmt(lab.I/3*100,0)+' mT':''); $('vA').textContent=fmt(Math.pow(lab.a*2,2),0)+' cm²';
@@ -647,10 +648,11 @@ function labState(){ const f=lab.big?BIG:SMALL;
 let drag=null, geo=null;
 sc.addEventListener('pointerdown',e=>{ if(mode!=='lab'||!geo) return; const r=sc.getBoundingClientRect(); const x=(e.clientX-r.left)*dpr, y=(e.clientY-r.top)*dpr;
   const inB=(b)=>x>=b[0]&&x<=b[2]&&y>=b[1]&&y<=b[3];
-  if(inB(geo.coil)) drag={k:'cx',x0:x,v0:lab.cx}; else if(inB(geo.mag)&&!lab.big) drag={k:'mx',x0:x,v0:lab.mx}; else return;
+  if(inB(geo.coil)) drag={k:'cx',x0:x,v0:lab.cx}; else if(inB(geo.mag)) drag={k:'mx',x0:x,v0:lab.mx}; else return;
   sc.setPointerCapture(e.pointerId); e.preventDefault(); });
 sc.addEventListener('pointermove',e=>{ if(!drag) return; const r=sc.getBoundingClientRect(); const x=(e.clientX-r.left)*dpr;
-  lab[drag.k]=clamp(drag.v0+(x-drag.x0)/geo.s,-5.5,5.5); syncLab(); });
+  const gr=(drag.k==='mx'&&lab.big)?3.5:5.5;   /* der grosse Magnet soll nicht aus dem Bild wandern */
+  lab[drag.k]=clamp(drag.v0+(x-drag.x0)/geo.s,-gr,gr); syncLab(); });
 const endDrag=()=>{drag=null;}; sc.addEventListener('pointerup',endDrag); sc.addEventListener('pointercancel',endDrag);
 
 // ---------- Zeichnen ----------
