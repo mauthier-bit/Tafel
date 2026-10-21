@@ -389,6 +389,7 @@
           <label><input type="checkbox" id="trEinzel" checked> Zwischenschritte</label>
           <label><input type="checkbox" id="trTermAn" checked> Terme</label>
           <label><input type="checkbox" id="trWortAn" checked> Wortbeschreibung</label>
+          <label><input type="checkbox" id="trMusterAn" title="Ein Gitter, das mit dem Graphen mitgestreckt und mitverschoben wird – das Koordinatensystem bleibt, wo es ist"> Hintergrundmuster</label>
           <label><input type="checkbox" id="trParAn" checked title="Regler und Zahlenwerte verstecken – dann sollen a, b, c, d aus Graph oder Wortbeschreibung bestimmt werden"> Parameter</label>
 
           <button type="button" id="trReihe" class="trSeg" title="Zeigt, wie sich dieselben zwei Schritte in anderer Reihenfolge auswirken">Reihenfolge</button>
@@ -825,7 +826,7 @@ const TR_BSP=[['x^2','Parabel x²'],['x^3','kubisch x³'],['sqrt(x)','Wurzel √
   ['#frei','Freihand – selbst zeichnen']];
 const TRC={f:'#94a3b8', alt:'#b45309'};        /* Ausgangsfunktion grau, vertauschte Reihenfolge braun */
 const TRSTD={a:'#16a34a', b:'#2563eb', c:'#dc2626', d:'#7c3aed'};   /* a grün, b blau, c rot, d violett */
-let tr={term:'x^2',a:1,b:1,c:0,d:0,einzel:true,zTerm:true,zWort:true,zGraph:true,zPar:true,reihe:false,rSeite:'x',p1:1,p2:1,frei:null,col:Object.assign({},TRSTD)};
+let tr={term:'x^2',a:1,b:1,c:0,d:0,einzel:true,zTerm:true,zWort:true,zGraph:true,zPar:true,zMuster:false,reihe:false,rSeite:'x',p1:1,p2:1,frei:null,col:Object.assign({},TRSTD)};
 let trToks=tokenize(tr.term);
 let trView={ox:0,oy:0,unit:40}, trW=0, trH=0;
 const trCol=k=>(tr.col&&tr.col[k])||TRSTD[k];
@@ -903,6 +904,37 @@ function trResize(){ const el=$('plotR'); const r=el.getBoundingClientRect();
   el.width=Math.round(trW*dpr); el.height=Math.round(trH*dpr);
   if(!trView.ox||!trView.oy){ trView.ox=trW/2; trView.oy=trH/2; }
   trDraw(); }
+/* ---- Mitgezogenes Hintergrundmuster ----
+   Der Graph von g entsteht aus dem von f durch die Punktabbildung
+   (u | v) → (u/b − c | a·v + d). Genau diese Abbildung wird hier auf das Einheitsgitter
+   losgelassen: Aus den Linien u = k wird x = k/b − c, aus v = m wird y = a·m + d.
+   Das Koordinatensystem bleibt davon unberührt – man sieht, dass der Graph im
+   mitgezogenen Gitter unverändert aussieht. */
+function trMuster(c2,u,ox,oy,xmin,xmax,ymin,ymax){
+  const b=Math.abs(tr.b)<0.05?0:tr.b, a=Math.abs(tr.a)<0.05?0:tr.a, col=trGCol();
+  const X=x=>ox+x*u, Y=y=>oy-y*u;
+  c2.save(); c2.strokeStyle=col; c2.fillStyle=col;
+  /* Bild des Einheitsquadrats: zeigt Streckung und Spiegelung auf einen Blick */
+  if(b&&a){ const x0=X(0/b-tr.c), x1=X(1/b-tr.c), y0=Y(tr.d), y1=Y(a+tr.d);
+    c2.globalAlpha=0.13; c2.fillRect(Math.min(x0,x1),Math.min(y0,y1),Math.abs(x1-x0),Math.abs(y1-y0)); }
+  const linien=(n0,n1,schritt,pos,senk)=>{
+    for(let k=n0;k<=n1;k+=schritt){ const p=pos(k);
+      c2.globalAlpha=(k===0)?0.8:0.34; c2.lineWidth=(k===0)?2.2:1.2;
+      c2.beginPath();
+      if(senk){ c2.moveTo(p,0); c2.lineTo(p,trH); } else { c2.moveTo(0,p); c2.lineTo(trW,p); }
+      c2.stroke(); } };
+  if(b){ const abst=Math.abs(1/b)*u;                      /* Abstand der senkrechten Linien in Pixeln */
+    if(abst>=5){ const s=Math.max(1,Math.ceil(6/abst));
+      const kA=(xmin+tr.c)*b, kB=(xmax+tr.c)*b;
+      const von=Math.ceil(Math.min(kA,kB)/s)*s, bis=Math.floor(Math.max(kA,kB)/s)*s;
+      if((bis-von)/s<=400) linien(von,bis,s,k=>X(k/b-tr.c),true); } }
+  if(a){ const abst=Math.abs(a)*u;
+    if(abst>=5){ const s=Math.max(1,Math.ceil(6/abst));
+      const mA=(ymin-tr.d)/a, mB=(ymax-tr.d)/a;
+      const von=Math.ceil(Math.min(mA,mB)/s)*s, bis=Math.floor(Math.max(mA,mB)/s)*s;
+      if((bis-von)/s<=400) linien(von,bis,s,m=>Y(a*m+tr.d),false); } }
+  c2.restore(); }
+
 function trKurve(c2,fn,col,w,dash){ c2.save(); c2.strokeStyle=col; c2.lineWidth=w; if(dash) c2.setLineDash(dash);
   c2.beginPath(); let prev=null;
   for(let px=0;px<=trW;px++){ const x=(px-trView.ox)/trView.unit, y=fn(x), py=trView.oy-y*trView.unit;
@@ -932,6 +964,7 @@ function trDraw(){ if(tab!=='r') return;
   c2.textAlign='right'; c2.textBaseline='middle';
   for(let y=Math.ceil(ymin/step)*step;y<=ymax;y+=step){ if(Math.abs(y)<1e-9) continue;
     c2.fillText(fmt(y), Math.min(Math.max(ox-4,fontSize*2),trW-2), oy-y*u); }
+  if(tr.zMuster) trMuster(c2,u,ox,oy,xmin,xmax,ymin,ymax);
   if(trZeichnet){ /* Hinweis und der bisher gezogene Strich */
     if(freiRoh.length>1){ c2.save(); c2.strokeStyle=TRC.f; c2.lineWidth=2.4; c2.lineJoin='round'; c2.beginPath();
       freiRoh.forEach((q,i)=>{ const px=ox+q[0]*u, py=oy-q[1]*u; i?c2.lineTo(px,py):c2.moveTo(px,py); });
@@ -1085,6 +1118,7 @@ function trUiNeu(){ if(!$('trTerm')) return;
   $('trNeu').hidden=!frei; $('plotR').style.cursor=trZeichnet?'crosshair':''; $('trEinzel').checked=tr.einzel; $('trTermAn').checked=tr.zTerm;
   $('trWortAn').checked=tr.zWort!==false; $('trGraphAn').checked=tr.zGraph!==false;
   $('trParAn').checked=tr.zPar!==false; $('trSl').hidden=tr.zPar===false;
+  $('trMusterAn').checked=!!tr.zMuster;
   $('trReihe').classList.toggle('on',!!tr.reihe); $('trReiheWahl').hidden=!tr.reihe;
   $('trRx').classList.toggle('on',tr.rSeite!=='y'); $('trRy').classList.toggle('on',tr.rSeite==='y');
   trSl2Bau(); trUiWerte();
@@ -1117,6 +1151,7 @@ function trUiNeu(){ if(!$('trTerm')) return;
   $('trWortAn').onchange=()=>{ tr.zWort=$('trWortAn').checked; trDraw(); sync(); };
   $('trGraphAn').onchange=()=>{ tr.zGraph=$('trGraphAn').checked; trDraw(); sync(); };
   $('trParAn').onchange=()=>{ tr.zPar=$('trParAn').checked; $('trSl').hidden=!tr.zPar; trDraw(); sync(); };
+  $('trMusterAn').onchange=()=>{ tr.zMuster=$('trMusterAn').checked; trDraw(); sync(); };
   $('trReihe').onclick=()=>{ tr.reihe=!tr.reihe;
     if(tr.reihe){ tr.p1=1; tr.p2=1; }                                 /* beide Abläufe am Ende zeigen */
     trUiNeu(); trDraw(); sync(); };

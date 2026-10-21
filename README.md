@@ -1880,6 +1880,13 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     „der Reihe nach: erst strecken, dann verschieben".
     Ist nichts davon angehakt, verschwindet die Spalte und der Graph bekommt die ganze Breite;
     auf schmalen Geräten rückt sie unter den Graphen.
+  - **„Hintergrundmuster"** legt ein **mitgezogenes Gitter** ins Bild: Es ist das Einheitsgitter
+    der Ausgangsfunktion, auf das **dieselbe Abbildung** angewandt wird wie auf den Graphen
+    ((u | v) → (u : b − c | a·v + d)). Seine Linien stehen also im Abstand **1 : b** bzw. **a**,
+    sein Nullpunkt liegt bei **(−c | d)**, und das **Bild des Einheitsquadrats** ist leicht getönt.
+    Das **Koordinatensystem bleibt, wo es ist** – man sieht nebeneinander, dass der Graph im
+    mitgezogenen Gitter **genauso aussieht wie f** im normalen: gestreckt, gestaucht, gespiegelt
+    oder verschoben wurde nicht die Funktion, sondern das Gitter.
   - **„Parameter"** versteckt die **Schieberegler** und in der Wortbeschreibung die **ausdrückliche
     Angabe** „c = 2". **Im Satz bleiben die Zahlen stehen** („c: um 2 nach links verschoben",
     „a: senkrecht gestreckt (Faktor 2)") – genau daraus sollen **a, b, c, d bestimmt** werden
