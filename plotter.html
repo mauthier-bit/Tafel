@@ -77,8 +77,12 @@
   #trTop{flex:none;padding:6px 8px 4px;display:flex;flex-direction:column;gap:5px;border-bottom:1px solid #eef1f6;}
   .trRow{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
   .trRow[hidden]{display:none;}
-  .trLbl{font-weight:800;font-size:calc(var(--k) * 14px);color:#1f2430;font-style:italic;}
-  .trIn{flex:1 1 140px;min-width:100px;border:1px solid #cfd6e0;border-radius:8px;padding:calc(var(--k) * 6px) 8px;
+  .trLbl{font:800 italic calc(var(--k) * 14px) inherit;color:#53617a;cursor:pointer;
+         border:1px solid transparent;background:transparent;border-radius:8px;
+         padding:calc(var(--k) * 4px) calc(var(--k) * 6px);white-space:nowrap;}
+  .trLbl.on{color:#1d4ed8;background:#eaf1ff;border-color:#bcd2ff;}
+  .trIn.on{border-color:#2563eb;box-shadow:0 0 0 2px #dbeafe;}
+  .trIn{flex:1 1 120px;min-width:90px;border:1px solid #cfd6e0;border-radius:8px;padding:calc(var(--k) * 6px) 8px;
         font:600 calc(var(--k) * 14px) ui-monospace,Menlo,Consolas,monospace;color:#1f2430;background:#fff;}
   #trBsp{border:1px solid #cfd6e0;border-radius:8px;padding:calc(var(--k) * 5px) 6px;font:600 calc(var(--k) * 13px) inherit;background:#f4f6fa;color:#1f2430;}
   .trChk label{display:inline-flex;align-items:center;gap:4px;font-weight:600;font-size:calc(var(--k) * 13px);color:#53617a;white-space:nowrap;}
@@ -383,7 +387,13 @@
     <div class="panel" id="pM"></div>
     <div class="panel" id="pR">
       <div id="trTop">
-        <div class="trRow"><label class="trLbl">f(x) =</label><input id="trTerm" class="trIn" spellcheck="false" autocomplete="off" value="x^2"><select id="trBsp" title="Beispielfunktion"></select></div>
+        <div class="trRow">
+          <button type="button" class="trLbl on" id="trLbl0" title="Diese Funktion bearbeiten">f(x) =</button>
+          <input id="trTerm" class="trIn on" spellcheck="false" autocomplete="off" value="x^2">
+          <button type="button" class="trLbl" id="trLbl1" title="Zweite Funktion bearbeiten">f₂(x) =</button>
+          <input id="trTerm2" class="trIn" spellcheck="false" autocomplete="off" placeholder="zweite Funktion …">
+          <select id="trBsp" title="Beispielfunktion"></select>
+        </div>
         <div class="trRow trChk">
           <label><input type="checkbox" id="trGraphAn" checked> Graph</label>
           <label><input type="checkbox" id="trEinzel" checked> Zwischenschritte</label>
@@ -826,7 +836,7 @@ const TR_BSP=[['x^2','Parabel x²'],['x^3','kubisch x³'],['sqrt(x)','Wurzel √
   ['#frei','Freihand – selbst zeichnen']];
 const TRC={f:'#94a3b8', alt:'#b45309'};        /* Ausgangsfunktion grau, vertauschte Reihenfolge braun */
 const TRSTD={a:'#16a34a', b:'#2563eb', c:'#dc2626', d:'#7c3aed'};   /* a grün, b blau, c rot, d violett */
-let tr={term:'x^2',a:1,b:1,c:0,d:0,einzel:true,zTerm:true,zWort:true,zGraph:true,zPar:true,zMuster:false,reihe:false,rSeite:'x',p1:1,p2:1,frei:null,col:Object.assign({},TRSTD)};
+let tr={term:'x^2',a:1,b:1,c:0,d:0,einzel:true,zTerm:true,zWort:true,zGraph:true,zPar:true,zMuster:false,akt:0,alt:{term:'',a:1,b:1,c:0,d:0,frei:null,col:Object.assign({},TRSTD)},reihe:false,rSeite:'x',p1:1,p2:1,frei:null,col:Object.assign({},TRSTD)};
 let trToks=tokenize(tr.term);
 let trView={ox:0,oy:0,unit:40}, trW=0, trH=0;
 const trCol=k=>(tr.col&&tr.col[k])||TRSTD[k];
@@ -847,12 +857,13 @@ function trNoetig(s){ let tief=0;
    Außerhalb des gezeichneten Bereichs gibt es kein f – dort wird nichts gezeichnet. */
 let trZeichnet=false, freiRoh=[];
 const trFreiDa=()=>!!(tr.frei&&tr.frei.length>1);
-function trFrei(x){ const p=tr.frei;
-  if(x<p[0][0]||x>p[p.length-1][0]) return NaN;
+function freiAt(p,x){
+  if(!p||p.length<2||x<p[0][0]||x>p[p.length-1][0]) return NaN;
   let lo=0, hi=p.length-1;
   while(hi-lo>1){ const m=(lo+hi)>>1; if(p[m][0]<=x) lo=m; else hi=m; }
   const dx=p[hi][0]-p[lo][0];
   return dx>1e-9 ? p[lo][1]+(p[hi][1]-p[lo][1])*(x-p[lo][0])/dx : p[lo][1]; }
+const trFrei=x=>freiAt(tr.frei,x);
 /* Gezogene Punkte zu einer Funktion machen: nach x sortieren, dicht beieinander liegende
    zusammenfassen (sonst wäre die Kurve an einer Stelle mehrdeutig) und ausdünnen. */
 function trFreiFertig(){
@@ -867,6 +878,33 @@ function trFreiFertig(){
   tr.frei=res.length>1?res.map(q=>[Math.round(q[0]*100)/100,Math.round(q[1]*100)/100]):null;
   freiRoh=[]; trZeichnet=false; }
 function trFreiStart(){ tr.frei=null; freiRoh=[]; trZeichnet=true; tr.term=''; trToks=[]; trUiNeu(); trDraw(); }
+
+/* ---- Zwei Funktionen ----
+   Bearbeitet wird immer die **aktive**; ihre Daten stehen direkt in `tr`, die der anderen
+   in `tr.alt`. Beim Umschalten werden die Felder getauscht – so gelten die Regler stets
+   für die angetippte Funktion, und die andere behält ihre Einstellung. */
+const TRFELD=['term','a','b','c','d','col','frei'];
+let altToks=[];                                   /* Tokens der ruhenden Funktion, zwischengespeichert */
+const trDa=o=>!!(o&&((o.term&&o.term.trim())||(o.frei&&o.frei.length>1)));
+const trZwei=()=>trDa(tr.alt);                    /* ist die zweite Funktion in Gebrauch? */
+function trAltToks(){ altToks=tokenize(tr.alt.term||''); }
+function trWechsel(i){ if((tr.akt|0)===i) return;
+  const t={}; for(const k of TRFELD){ t[k]=tr[k]; tr[k]=tr.alt[k]; tr.alt[k]=t[k]; }
+  tr.akt=i; trToks=tokenize(tr.term||''); trAltToks(); trZeichnet=false;
+  trUiNeu(); trDraw(); sync(); }
+/* Ergebniskurve der ruhenden Funktion */
+function trAltG(x){ const o=tr.alt;
+  const v=(o.frei&&o.frei.length>1) ? freiAt(o.frei,o.b*(x+o.c))
+        : (()=>{ const alt=params; params={a:NaN,b:NaN,c:NaN};
+                 try{ return evalAt(o.b*(x+o.c),altToks); } finally{ params=alt; } })();
+  return o.a*v+o.d; }
+function trAltF(x){ const o=tr.alt;
+  if(o.frei&&o.frei.length>1) return freiAt(o.frei,x);
+  const alt=params; params={a:NaN,b:NaN,c:NaN};
+  try{ return evalAt(x,altToks); } finally{ params=alt; } }
+function trGCol2(){ const o=tr.alt, c=k=>(o.col&&o.col[k])||TRSTD[k];
+  if(o.d!==0) return c('d'); if(o.c!==0) return c('c');
+  if(o.b!==1) return c('b'); if(o.a!==1) return c('a'); return c('d'); }
 
 /* Der Grundterm darf nur x enthalten – a, b, c sind hier die Transformationsgrößen. */
 function trF(x){ if(trFreiDa()) return trFrei(x);
@@ -973,6 +1011,10 @@ function trDraw(){ if(tab!=='r') return;
     c2.textAlign='center'; c2.textBaseline='top';
     c2.fillText('Kurve in die Fläche zeichnen', trW/2, 8); c2.restore();
     trText(); return; }
+  if(trZwei()){ c2.save(); c2.globalAlpha=0.75;                 /* die ruhende Funktion blasser daneben */
+    trKurve(c2,trAltF,TRC.f,1.2);
+    trKurve(c2,trAltG,trGCol2(),2.2);
+    c2.restore(); }
   if(!trToks.length&&!trFreiDa()){ trText(); return; }
   trKurve(c2,trF,TRC.f,1.8);                                    /* Ausgangsfunktion */
   if(tr.einzel){
@@ -1003,7 +1045,9 @@ function trTermG(h){ if(!trToks.length) return '';
 /* Rechte Spalte: Terme (beide Formen, per Häkchen) und die Wortbeschreibung als Liste. */
 function trText(){ const out=$('trOut'); const L=[];
   const altBox=out.querySelector('.trBox'); const scrollAlt=altBox?altBox.scrollLeft:0;
-  const gk='<span style="color:'+trGCol()+'">g</span>(<i>x</i>) = ';
+  const zwei=trZwei(), nr=(tr.akt|0)===1?'₂':'';
+  const nm=zwei?' · f'+(nr||'₁'):'';            /* bei zwei Funktionen dazuschreiben, welche gemeint ist */
+  const gk='<span style="color:'+trGCol()+'">g'+(zwei?nr:'')+'</span>(<i>x</i>) = ';
   if(tr.zWort){ const t=[]; const zP=tr.zPar!==false;
     /* Ohne „Parameter" faellt nur die ausdrueckliche Angabe c = 2 weg – im Satz stehen die
        Zahlen weiter („um 2 nach links verschoben"), daraus soll der Wert bestimmt werden. */
@@ -1012,7 +1056,7 @@ function trText(){ const out=$('trOut'); const L=[];
     if(tr.b!==1) t.push(zeile('b','waagrecht '+(Math.abs(tr.b)>1?'gestaucht':'gestreckt')+' (Faktor '+nfk(Math.round(1000/Math.abs(tr.b))/1000)+')'+(tr.b<0?', an der y-Achse gespiegelt':'')));
     if(tr.c!==0) t.push(zeile('c','um '+nfk(Math.abs(tr.c))+' nach '+(tr.c>0?'links':'rechts')+' verschoben'));
     if(tr.d!==0) t.push(zeile('d','um '+nfk(Math.abs(tr.d))+' nach '+(tr.d>0?'oben':'unten')+' verschoben'));
-    L.push('<div class="wTitel">Wortbeschreibung</div>'+(t.length
+    L.push('<div class="wTitel">Wortbeschreibung'+nm+'</div>'+(t.length
       ?('<ul class="wList">'+t.join('')+'</ul><div class="wNote">der Reihe nach: erst strecken, dann verschieben</div>')
       :'<div class="wLeer">Noch keine Veränderung: a = 1, b = 1, c = 0, d = 0.</div>')); }
   if(tr.zTerm){
@@ -1020,21 +1064,21 @@ function trText(){ const out=$('trOut'); const L=[];
     if(tr.d!==0) kurz+=' '+trPar('d',(tr.d>0?'+ ':'− ')+nfk(Math.abs(tr.d)),true);
     const kasten=['<div class="trT">'+kurz+'</div>'];
     if(trToks.length) kasten.push('<div class="trT trT2">'+gk+trTermG(true)+'</div>');
-    L.push('<div class="wTitel">Term</div><div class="trBox">'+kasten.join('')+'</div>'); }
+    L.push('<div class="wTitel">Term'+nm+'</div><div class="trBox">'+kasten.join('')+'</div>'); }
   if(tr.reihe){
     L.push('<div class="wTitel">Reihenfolge</div>');
     const vz=(v)=>(v>=0?' + ':' − ')+nfk(Math.abs(v));
     const vor=(v)=>v===1?'':(v===-1?'−':nfk(v)+'·');
     const e1=tr.rSeite==='y'
-      ? 'g(x) = '+vor(tr.a)+'f(…)'+(tr.d===0?'':vz(tr.d))
-      : 'g(x) = '+vor(tr.a)+'f('+trInnen(false)+')'+(tr.d===0?'':vz(tr.d));
+      ? vor(tr.a)+'f(…)'+(tr.d===0?'':vz(tr.d))
+      : vor(tr.a)+'f('+trInnen(false)+')'+(tr.d===0?'':vz(tr.d));
     const e2=tr.rSeite==='y'
-      ? 'g₂(x) = '+vor(tr.a)+'( f(…)'+vz(tr.d)+' )'
-      : 'g₂(x) = '+vor(tr.a)+'f('+(tr.b===1?'x':(tr.b===-1?'−x':nfk(tr.b)+'·x'))+(tr.c===0?'':vz(tr.c))+')'+(tr.d===0?'':vz(tr.d));
+      ? vor(tr.a)+'( f(…)'+vz(tr.d)+' )'
+      : vor(tr.a)+'f('+(tr.b===1?'x':(tr.b===-1?'−x':nfk(tr.b)+'·x'))+(tr.c===0?'':vz(tr.c))+')'+(tr.d===0?'':vz(tr.d));
     L.push('<div style="color:'+trGCol()+'"><b>erst strecken, dann verschieben:</b> '+e1+'</div>');
     L.push('<div style="color:'+TRC.alt+'"><b>erst verschieben, dann strecken:</b> '+e2+'</div>');
     if(tr.rSeite==='y')
-      L.push('<div class="zf">Ausmultipliziert ist das zweite a·f(…) + a·d: Es verschiebt um <b>'+nfk(Math.round(tr.a*tr.d*1000)/1000)+'</b> statt um '+nfk(tr.d)+'. Darum erst strecken, dann verschieben.</div>');
+      L.push('<div class="zf">Ausmultipliziert ist der untere Weg a·f(…) + a·d: Es verschiebt um <b>'+nfk(Math.round(tr.a*tr.d*1000)/1000)+'</b> statt um '+nfk(tr.d)+'. Darum erst strecken, dann verschieben.</div>');
     else
       L.push('<div class="zf">Innen wirkt alles <b>umgekehrt</b>: f(b·x + c) = f(b·(x + c : b)) verschiebt nur um <b>'+(tr.b?nfk(Math.round(tr.c/tr.b*1000)/1000):'—')+'</b> statt um '+nfk(tr.c)+'.</div>');
     L.push('<div class="zf">Mit den beiden Reglern läuft jeder Weg Schritt für Schritt ab: erst die eine Hälfte, dann die andere.</div>');
@@ -1112,9 +1156,14 @@ function trSl2Bau(){ const box=$('trSl2'); if(!box) return; box.innerHTML='';
   mk('p2','erst verschieben, dann strecken',TRC.alt,false); }
 
 function trUiNeu(){ if(!$('trTerm')) return;
-  const frei=trFreiDa()||trZeichnet;
-  $('trTerm').value=frei?'':tr.term;
-  $('trTerm').placeholder=frei?'Freihand-Skizze – hier tippen für einen Term':'';
+  const akt=tr.akt|0, frei=trFreiDa()||trZeichnet;
+  /* Jede Eingabe zeigt ihre eigene Funktion; die aktive ist hervorgehoben. */
+  for(let i=0;i<2;i++){ const o=(i===akt)?tr:tr.alt, inp=$(i?'trTerm2':'trTerm');
+    const f=(o.frei&&o.frei.length>1)||(i===akt&&trZeichnet);
+    const txt=f?'':(o.term||''); if(inp.value!==txt) inp.value=txt;   /* nicht neu setzen: Cursor bleibt */
+    inp.placeholder=f?'Freihand-Skizze':(i?'zweite Funktion …':'');
+    inp.classList.toggle('on',i===akt);
+    $('trLbl'+i).classList.toggle('on',i===akt); }
   $('trNeu').hidden=!frei; $('plotR').style.cursor=trZeichnet?'crosshair':''; $('trEinzel').checked=tr.einzel; $('trTermAn').checked=tr.zTerm;
   $('trWortAn').checked=tr.zWort!==false; $('trGraphAn').checked=tr.zGraph!==false;
   $('trParAn').checked=tr.zPar!==false; $('trSl').hidden=tr.zPar===false;
@@ -1130,11 +1179,15 @@ function trUiNeu(){ if(!$('trTerm')) return;
   sel.onchange=()=>{ if(!sel.value) return;
     if(sel.value==='#frei'){ sel.value=''; trFreiStart(); sync(); return; }
     tr.frei=null; trZeichnet=false; tr.term=sel.value; trToks=tokenize(tr.term); sel.value=''; trUiNeu(); trFit(); sync(); };
-  const inp=$('trTerm');
-  inp.addEventListener('focus',()=>{ lastInp=inp; });
-  inp.addEventListener('keydown',e=>e.stopPropagation());
-  inp.addEventListener('input',()=>{ tr.frei=null; trZeichnet=false;     /* getippter Term loest die Skizze ab */
-    tr.term=inp.value; trToks=tokenize(inp.value); trUiNeu(); trDraw(); sync(); });
+  for(let i=0;i<2;i++){ const inp=$(i?'trTerm2':'trTerm');
+    $('trLbl'+i).onclick=()=>trWechsel(i);
+    inp.addEventListener('focus',()=>{ lastInp=inp; trWechsel(i); });
+    inp.addEventListener('keydown',e=>e.stopPropagation());
+    inp.addEventListener('input',()=>{
+      const txt=inp.value;        /* erst merken: trWechsel schreibt die Felder neu */
+      trWechsel(i);               /* Tippen macht die Zeile aktiv */
+      tr.frei=null; trZeichnet=false;                                     /* getippter Term loest die Skizze ab */
+      tr.term=txt; trToks=tokenize(txt); trUiNeu(); trDraw(); sync(); }); }
   const sl=$('trSl');
   [['a',-3,3],['b',-3,3],['c',-5,5],['d',-5,5]].forEach(([k,mn,mx])=>{
     const row=document.createElement('div'); row.className='sl'; row.dataset.k=k;
@@ -1208,7 +1261,9 @@ addEventListener('message',e=>{ if(e.source!==window&&(window.parent===window||e
   if(Array.isArray(d.xs)&&d.xs.length){ const neu=d.xs.map(String); if(neu.join('\u0001')!==xs.join('\u0001')){ xs=neu; strukturNeu=true; } }
   if(d.xPt) xPt={on:!!d.xPt.on, v:(typeof d.xPt.v==='number'&&isFinite(d.xPt.v))?d.xPt.v:1};
   if(d.yPt) yPt={on:!!d.yPt.on, v:(typeof d.yPt.v==='number'&&isFinite(d.yPt.v))?d.yPt.v:1};
-  if(d.tr&&typeof d.tr==='object'){ Object.assign(tr,d.tr); trToks=tokenize(tr.term); trUiNeu(); }
+  if(d.tr&&typeof d.tr==='object'){ Object.assign(tr,d.tr);
+    if(!tr.alt) tr.alt={term:'',a:1,b:1,c:0,d:0,frei:null,col:Object.assign({},TRSTD)};
+    trToks=tokenize(tr.term); trAltToks(); trUiNeu(); }
   if(d.fontSize)fontSize=d.fontSize; fontBold=!!d.fontBold; fontItalic=!!d.fontItalic; uiK=null; applyUiFont();
   achsBtns();
   if(strukturNeu){ buildRows(); buildTable(); buildMachines(); }

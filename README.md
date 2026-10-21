@@ -1843,6 +1843,13 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   seine eigene Zeichenfläche, die Funktionen der drei anderen Reiter bleiben unberührt. Das zeigt auch
   die Reiterleiste: **Graph, Tabelle und Maschine** sitzen als **eine Gruppe** in einem gemeinsamen
   Rahmen (sie teilen sich dieselben Funktionen), **Transformationen** steht mit Abstand daneben.
+  In der Eingabezeile stehen **zwei Funktionen nebeneinander**: **f(x) =** und **f₂(x) =**.
+  Ein Tipp auf die Beschriftung (oder in das Feld) macht eine davon **aktiv** – sie ist blau
+  hervorgehoben, und die **vier Regler gehören ab dann ihr**. Die andere behält ihre eigenen Werte,
+  wird aber weiter **mitgezeichnet** (etwas blasser), sodass sich zwei Funktionen **unabhängig
+  voneinander** transformieren und vergleichen lassen. Wortbeschreibung und Term in der Spalte
+  zeigen die aktive Funktion an („Term · f₂", **g₂(x) = …**); solange die zweite Zeile leer ist,
+  bleibt alles wie bei einer Funktion.
   Hier steht eine **Ausgangsfunktion f** – entweder aus der Liste
   (Parabel, kubisch, Wurzel, Hyperbel, Sinus, Kosinus, e-Funktion, 2ˣ, Logarithmus sowie je eine
   unsymmetrische Funktion vom **Grad 3** und vom **Grad 4**), als **eigener Term** oder
