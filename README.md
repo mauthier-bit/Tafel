@@ -1848,7 +1848,8 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   hervorgehoben, und die **vier Regler gehören ab dann ihr**. Die andere behält ihre eigenen Werte,
   wird aber weiter **mitgezeichnet** (etwas blasser), sodass sich zwei Funktionen **unabhängig
   voneinander** transformieren und vergleichen lassen. Wortbeschreibung und Term in der Spalte
-  zeigen die aktive Funktion an („Term · f₂", **g₂(x) = …**); solange die zweite Zeile leer ist,
+  zeigen die aktive Funktion an – über den Reglern steht „Parameter · f" bzw. „Parameter · f₂",
+  darunter ebenso „Wortbeschreibung · f₂" und „Term · f₂" (**g₂(x) = …**); solange die zweite Zeile leer ist,
   bleibt alles wie bei einer Funktion.
   Hier steht eine **Ausgangsfunktion f** – entweder aus der Liste
   (Parabel, kubisch, Wurzel, Hyperbel, Sinus, Kosinus, e-Funktion, 2ˣ, Logarithmus sowie je eine
