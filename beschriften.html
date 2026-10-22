@@ -328,51 +328,68 @@ function zeichnen(){ passe(); const box=$('box'), cv=$('cv'), dpr=window.deviceP
     if(s.p.length===1){ g.lineTo(s.p[0][0]*W+0.1,s.p[0][1]*H); } g.stroke(); });
   marken(); }
 
-/* ---------- Marken, Linien und Beschriftungskästchen ---------- */
+/* ---------- Marken, Linien und Beschriftungskästchen ----------
+   Die Elemente werden **wiederverwendet** und nur nachgeführt. Wer sie bei jedem Neuzeichnen
+   neu baut, reisst dem Finger das gezogene Kästchen weg und wirft den Cursor aus dem Eingabefeld –
+   auf dem iPad schliesst sich dann sofort wieder die Tastatur (das Einblenden löst ja ein resize aus). */
+const mkEl=new Map();                                  /* id → {li,p,lb,inp,bearb} */
+const markeZu=id=>(D.marken||[]).find(q=>q.id===id);
 function marken(){ const box=$('box');
-  [...box.querySelectorAll('.mk,.lb,.lin')].forEach(e=>e.remove());
   const W=box.clientWidth||400, H=box.clientHeight||300, bearb=D.edit!==false;
-  (D.marken||[]).forEach(m=>{
-    const px=m.x*W, py=m.y*H, lx=m.lx*W, ly=m.ly*H;
-    const li=document.createElement('div'); li.className='lin';
-    const dx=lx-px, dy=ly-py, len=Math.hypot(dx,dy);
-    li.style.left=px+'px'; li.style.top=(py-1)+'px'; li.style.width=len+'px';
-    li.style.transform='rotate('+Math.atan2(dy,dx)+'rad)'; box.appendChild(li);
-    const p=document.createElement('div'); p.className='mk'; p.style.left=px+'px'; p.style.top=py+'px'; p.dataset.id=m.id;
-    if(bearb) zieh(p,m,'punkt'); box.appendChild(p);
-    const lb=document.createElement('div'); lb.className='lb'; lb.style.left=lx+'px'; lb.style.top=ly+'px'; lb.dataset.id=m.id;
-    if(bearb){
-      const inp=document.createElement('input'); inp.value=m.text||''; inp.placeholder='Beschriftung';
-      inp.oninput=()=>{ m.text=inp.value; sync(); };
-      inp.onkeydown=e=>{ e.stopPropagation(); if(e.key==='Enter') inp.blur(); };
-      inp.onpointerdown=e=>e.stopPropagation();
-      const x=document.createElement('span'); x.className='x'; x.textContent='×'; x.title='Beschriftung entfernen';
-      x.onpointerdown=e=>e.stopPropagation();
-      x.onclick=()=>{ D.marken=D.marken.filter(q=>q!==m); delete D.zuord[m.id]; zeichnen(); sync(); };
-      lb.append(inp,x); zieh(lb,m,'kasten');
-    } else {
-      const t=D.zuord[m.id];
-      lb.textContent=t||'?';
-      if(!t) lb.classList.add('leer');
-      if(geprueft&&t) lb.classList.add(t===m.text?'ok':'falsch');
-      lb.onclick=()=>{ if(gewaehlt!=null){ setzen(m.id,gewaehlt); return; }
-        if(D.zuord[m.id]){ delete D.zuord[m.id]; geprueft=false; zeichnen(); poolBauen(); sync(); } };
+  const da=new Set();
+  (D.marken||[]).forEach(m=>{ da.add(m.id);
+    let e=mkEl.get(m.id);
+    if(e&&e.bearb!==bearb){ e.li.remove(); e.p.remove(); e.lb.remove(); mkEl.delete(m.id); e=null; }
+    if(!e){
+      const li=document.createElement('div'); li.className='lin';
+      const p=document.createElement('div'); p.className='mk'; p.dataset.id=m.id;
+      const lb=document.createElement('div'); lb.className='lb'; lb.dataset.id=m.id;
+      e={li,p,lb,bearb};
+      if(bearb){
+        const inp=document.createElement('input'); inp.placeholder='Beschriftung'; inp.value=m.text||'';
+        inp.oninput=()=>{ const q=markeZu(m.id); if(q){ q.text=inp.value; sync(); } };
+        inp.onkeydown=ev=>{ ev.stopPropagation(); if(ev.key==='Enter') inp.blur(); };
+        inp.onpointerdown=ev=>ev.stopPropagation();    /* im Feld tippen zieht nicht und gibt den Fokus frei */
+        inp.onclick=ev=>{ ev.stopPropagation(); inp.focus(); };   /* auf dem iPad sicher die Tastatur holen */
+        const x=document.createElement('span'); x.className='x'; x.textContent='×'; x.title='Beschriftung entfernen';
+        x.onpointerdown=ev=>ev.stopPropagation();
+        x.onclick=()=>{ D.marken=(D.marken||[]).filter(q=>q.id!==m.id); delete D.zuord[m.id]; zeichnen(); sync(); };
+        lb.append(inp,x); e.inp=inp;
+        zieh(p,m.id,'punkt'); zieh(lb,m.id,'kasten');  /* Punkt und Kästchen ziehen unabhängig voneinander */
+      } else {
+        lb.onclick=()=>{ if(gewaehlt!=null){ setzen(m.id,gewaehlt); return; }
+          if(D.zuord[m.id]){ delete D.zuord[m.id]; geprueft=false; zeichnen(); poolBauen(); sync(); } };
+      }
+      box.append(li,p,lb); mkEl.set(m.id,e);
     }
-    box.appendChild(lb);
+    const px=m.x*W, py=m.y*H, lx=m.lx*W, ly=m.ly*H;
+    e.p.style.left=px+'px'; e.p.style.top=py+'px';
+    e.lb.style.left=lx+'px'; e.lb.style.top=ly+'px';
+    if(bearb){ if(document.activeElement!==e.inp&&e.inp.value!==(m.text||'')) e.inp.value=m.text||''; }
+    else { const t=D.zuord[m.id];
+      e.lb.textContent=t||'?';
+      e.lb.classList.toggle('leer',!t);
+      e.lb.classList.toggle('ok',!!(geprueft&&t&&t===m.text));
+      e.lb.classList.toggle('falsch',!!(geprueft&&t&&t!==m.text)); }
+    const linie=(ax,ay)=>{ const dx=ax-px, dy=ay-py;
+      e.li.style.left=px+'px'; e.li.style.top=(py-1)+'px';
+      e.li.style.width=Math.hypot(dx,dy)+'px'; e.li.style.transform='rotate('+Math.atan2(dy,dx)+'rad)'; };
+    linie(lx,ly);
     /* Kästchen am Rand hineinschieben, damit nichts abgeschnitten wird */
-    const br=box.getBoundingClientRect(), rr=lb.getBoundingClientRect();
+    const br=box.getBoundingClientRect(), rr=e.lb.getBoundingClientRect();
     let sx=0, sy=0;
     if(rr.left<br.left+2) sx=br.left+2-rr.left; else if(rr.right>br.right-2) sx=br.right-2-rr.right;
     if(rr.top<br.top+2) sy=br.top+2-rr.top; else if(rr.bottom>br.bottom-2) sy=br.bottom-2-rr.bottom;
-    if(sx||sy){ lb.style.left=(lx+sx)+'px'; lb.style.top=(ly+sy)+'px';
-      const dx2=lx+sx-px, dy2=ly+sy-py;                 /* Linie nachführen */
-      li.style.width=Math.hypot(dx2,dy2)+'px'; li.style.transform='rotate('+Math.atan2(dy2,dx2)+'rad)'; }
+    if(sx||sy){ e.lb.style.left=(lx+sx)+'px'; e.lb.style.top=(ly+sy)+'px'; linie(lx+sx,ly+sy); }
   });
+  [...mkEl.keys()].forEach(id=>{ if(!da.has(id)){ const e=mkEl.get(id); e.li.remove(); e.p.remove(); e.lb.remove(); mkEl.delete(id); } });
 }
-/* Punkt oder Kästchen verschieben (nur im Bearbeiten-Modus) */
-function zieh(el,m,was){ el.onpointerdown=e=>{ e.preventDefault(); e.stopPropagation();
+/* Punkt oder Kästchen verschieben (nur im Bearbeiten-Modus) – jedes für sich */
+function zieh(el,id,was){ el.onpointerdown=e=>{ e.preventDefault(); e.stopPropagation();
+  try{ el.setPointerCapture(e.pointerId); }catch(_){}
   const box=$('box'), r=box.getBoundingClientRect();
-  const mv=ev=>{ const x=Math.max(0,Math.min(1,(ev.clientX-r.left)/r.width)), y=Math.max(0,Math.min(1,(ev.clientY-r.top)/r.height));
+  const mv=ev=>{ const m=markeZu(id); if(!m) return;
+    const x=Math.max(0,Math.min(1,(ev.clientX-r.left)/r.width)), y=Math.max(0,Math.min(1,(ev.clientY-r.top)/r.height));
     if(was==='punkt'){ m.x=x; m.y=y; } else { m.lx=x; m.ly=y; } zeichnen(); };
   const up=()=>{ removeEventListener('pointermove',mv,true); removeEventListener('pointerup',up,true); removeEventListener('pointercancel',up,true); sync(); };
   addEventListener('pointermove',mv,true); addEventListener('pointerup',up,true); addEventListener('pointercancel',up,true); }; }
@@ -388,7 +405,16 @@ $('box').addEventListener('pointerdown',e=>{
   const m={id:uid(), x, y, lx:Math.min(0.94,x+0.18), ly:Math.max(0.06,y-0.12), text:''};
   D.marken.push(m); zeichnen(); sync();
   const inp=$('box').querySelector('.lb[data-id="'+m.id+'"] input'); if(inp) inp.focus();
+  neuFokus={id:e.pointerId, mk:m.id, x:e.clientX, y:e.clientY};
 });
+/* Safari auf dem iPad öffnet die Tastatur zuverlässig erst, wenn der Finger wieder hochgeht –
+   deshalb am Ende derselben Geste noch einmal in das frische Feld springen. */
+let neuFokus=null;
+$('box').addEventListener('pointerup',e=>{ const n=neuFokus; neuFokus=null;
+  if(!n||e.pointerId!==n.id) return;
+  if(Math.hypot(e.clientX-n.x,e.clientY-n.y)>12) return;
+  const inp=$('box').querySelector('.lb[data-id="'+n.mk+'"] input');
+  if(inp){ inp.focus(); try{ inp.setSelectionRange(inp.value.length,inp.value.length); }catch(_){} } });
 addEventListener('pointermove',e=>{ if(!strich) return; const r=$('box').getBoundingClientRect();
   strich.p.push([(e.clientX-r.left)/r.width,(e.clientY-r.top)/r.height]); zeichnen(); },true);
 ['pointerup','pointercancel'].forEach(t=>addEventListener(t,()=>{ if(strich){ strich=null; sync(); } },true));

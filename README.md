@@ -2604,7 +2604,9 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   etwas **malen** oder eine **Vorlage** nehmen – und an die richtigen Stellen **Beschriftungen** setzen.
   - Im **Bearbeiten-Modus** legt die Lehrkraft die Stellen fest: auf das Bild tippen setzt einen Punkt
     mit einem Kästchen daneben, in das die Beschriftung getippt wird. **Punkt und Kästchen lassen sich
-    einzeln verschieben**, die Verbindungslinie zieht mit; **×** entfernt eine Beschriftung. Kästchen
+    unabhängig voneinander verschieben**, die Verbindungslinie zieht mit; **×** entfernt eine
+    Beschriftung. Ein Tipp **ins Kästchen** öffnet die Tastatur und lässt den Cursor stehen – auch
+    wenn sich dabei die Fläche ändert (auf dem iPad schiebt die Tastatur das Bild ja zusammen). Kästchen
     am Rand werden automatisch ins Bild hineingeschoben, damit nichts abgeschnitten wird.
   - Im **Benutzen-Modus** sind die Kästchen leer („?"), und unter dem Bild liegen die Beschriftungen
     **gemischt** als Kärtchen. Die Klasse zieht sie **per Drag-and-drop** an die richtige Stelle –
@@ -2630,10 +2632,13 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   - **🎬 Video** wählt die Quelle: eine **Videodatei** vom Gerät (bis **12 MB** wird sie mit dem Projekt
     gespeichert, größere laufen nur bis zum Neuladen), ein **YouTube-Link** (braucht Internet, läuft
     auch im geteilten Link) oder ein **direkter Link** auf eine mp4/webm-Datei, z. B. aus der Schul-Cloud.
-  - Im **Bearbeiten-Modus** das Video an die gewünschte Stelle bringen und **＋ Marke** tippen. Darunter
+  - Im **Bearbeiten-Modus** das Video an die gewünschte Stelle bringen und **＋ Marke** tippen – der
+    Knopf steht zusammen mit **🗑 Marke** in der **Zeile unter dem Video**, neben ▶, ⏮ und
+    ↺ Zurücksetzen. Darunter
     steht der Marken-Editor: **Zeit** (mit „⟲ hierher" auf die aktuelle Stelle), **Art** und die Inhalte.
     Vier Arten: **Hinweis** (Text einblenden), **Multiple Choice** (beliebig viele Antworten, eine oder
-    mehrere richtig), **Wahr oder falsch** und **Kurzantwort** (erwartete Antwort, mehrere Varianten mit
+    mehrere richtig), **Wahr oder falsch** (die beiden Felder heißen beim Abspielen **„wahr"** und
+    **„falsch"** – eigene Texte braucht es dafür nicht) und **Kurzantwort** (erwartete Antwort, mehrere Varianten mit
     `|` getrennt). Die Marken sitzen als Fähnchen auf der **Zeitleiste**; ein Tipp darauf springt hin.
   - Im **Benutzen-Modus** läuft das Video und **hält an jeder Marke an**: Die Frage legt sich über das
     Bild, die Klasse antwortet, richtig wird grün und falsch rot gezeigt, **↺ Noch einmal** erlaubt einen
