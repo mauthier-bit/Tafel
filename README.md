@@ -1283,6 +1283,10 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     sich am selben Objekt erst eine Gleichung lösen und dann eine Formel nach einer anderen Größe
     auflösen, ohne ein zweites Werkzeug auf die Tafel zu holen. **A− / A+** des Gleichungslösers stellen auch
     hier die Schrift, und **„🖼 Rechenweg → Tafel"** legt das Bild wie gewohnt neben das Objekt.
+    Die Bedienung steht in **einer Zeile**: **↺ Neu**, der Name der Vorlage, **⌨ Formeln** (eine
+    Tastenzeile mit ·, /, ^, ( ), √, π, Index, =, x², x³ für die Formel-Eingabe),
+    **🖼 Rechenweg → Tafel** und **📋 Kopieren**. Teilen, Schriftgröße und Drucken gibt es hier
+    nicht mehr – geteilt wird oben neben den Reitern, die Schrift stellt der Gleichungslöser.
   - **⤴ Teilen** sitzt **neben den Reitern** (bei A− / A+ und „⌨ Formeln") und gibt per **QR-Code
     genau die Ansicht weiter, die gerade zu sehen ist**: der gewählte Reiter, die Eingaben, der
     Waage-Verlauf und die eingebettete Formel. Vorher hatte nur der Reiter „Formel umstellen" einen

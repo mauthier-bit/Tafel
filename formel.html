@@ -19,6 +19,8 @@
   .sep{width:1px;align-self:stretch;background:#e2e7ef;margin:0 3px;flex:none;}
   #bar2{display:flex;gap:6px;padding:5px 8px;border-bottom:1px solid #e2e7ef;align-items:center;flex-wrap:nowrap;flex:none;min-height:44px;font-size:.92em;overflow-x:auto;overflow-y:hidden;}
   #bar2>*{flex:0 0 auto;}
+  #kpad{display:flex;gap:6px;flex-wrap:wrap;padding:6px 8px;border-bottom:1px solid #e2e7ef;background:#f7f9fc;flex:none;}
+  #kpad button{min-width:42px;font-size:1.02em;}
   .lbl{color:#64748b;font-weight:600;} .grow{flex:1 1 auto!important;min-width:4px;}
   .btn{border:1px solid #cfd6e0;background:#fff;border-radius:9px;padding:5px 10px;font:inherit;font-weight:600;color:#1f2430;cursor:pointer;white-space:nowrap;}
   .btn.pri{background:#2563eb;border-color:#2563eb;color:#fff;}
@@ -238,13 +240,8 @@
 </script>
 </head><body>
 <div id="wrap">
-  <div id="bar"><div id="barL">
-    <button class="tb" id="bNeu" title="Eingabe leeren"><svg viewBox="0 0 32 20"><path d="M11 2h10l3 3v13H11Z M17 8v7M13.5 11.5h7"/></svg><span>Neu</span></button>
-    <span class="sep"></span>
-    </div><div id="barMid"></div><div id="barR"><span class="sep"></span>
-    <button class="tb" id="bPrint" title="Rechenweg drucken"><svg viewBox="0 0 32 20"><path d="M10 7V2h12v5 M10 15H7V7h18v8h-3 M10 12h12v6H10Z"/></svg><span>Drucken</span></button>
-  </div></div>
   <div id="bar2"></div>
+  <div id="kpad" hidden></div>
   <div id="main">
     <div class="card">
       <h3>1 · Formel</h3>
@@ -662,17 +659,42 @@ function numerischAlle(gl,x,w){
 }
 
 /* ---------- Bedienzeile ---------- */
+/* Alles in einer Zeile. Im Gleichungslöser („?in=glg") entfallen Teilen und Schriftgröße –
+   das steht dort schon oben neben den Reitern. */
+const imGlg=/[?&]in=glg/.test(location.search);
 function renderBar2(){
   const bar=$('bar2'); bar.innerHTML='';
   const el=(tag,cls,txt,fn)=>{ const e=document.createElement(tag); if(cls) e.className=cls; if(txt!=null) e.textContent=txt; if(fn) e.onclick=fn; bar.appendChild(e); return e; };
-  el('span','lbl',D.name?('Vorlage: '+D.name):'Eigene Formel');
+  el('button','btn','↺ Neu',neu).title='Eingabe leeren';
   el('span','sep');
-  el('span','lbl','Schrift'); el('button','btn','A−',()=>schrift(-1)); el('button','btn','A+',()=>schrift(1));
+  el('span','lbl',D.name?('Vorlage: '+D.name):'Eigene Formel');
   el('span','grow');
+  const kb=el('button','btn'+($('kpad').hidden?'':' on'),'⌨ Formeln',()=>{ const k=$('kpad'); kpadBauen(); k.hidden=!k.hidden; renderBar2(); });
+  kb.title='Tasten für Malpunkt, Bruch, Potenz, Wurzel …';
+  if(!imGlg&&window.parent===window){ el('button','btn','A−',()=>schrift(-1)); el('button','btn','A+',()=>schrift(1)); }
   if(window.parent!==window) el('button','btn pri','🖼 Rechenweg → Tafel',()=>{ const im=bild(); if(im) TafelShot.toBoard(im); });
   el('button','btn','📋 Kopieren',()=>{ const im=bild(); if(im) TafelShot.copy(im); });
-  if(window.TafelTeilen&&!TafelTeilen.istGeteilt()) TafelTeilen.knopf(bar,'formel.html',()=>({w:'fml', d:D}),{cls:'btn'});
+  if(!imGlg&&window.TafelTeilen&&!TafelTeilen.istGeteilt()) TafelTeilen.knopf(bar,'formel.html',()=>({w:'fml', d:D}),{cls:'btn'});
 }
+/* ---------- Formel-Tasten ---------- */
+const KPAD=[['·',' · ',0],['/',' / ',0],['^','^',0],['( )','()',1],['√','sqrt()',1],
+            ['π','pi',0],['Index','_',0],['=',' = ',0],['x²','^2',0],['x³','^3',0]];
+let letztesFeld=null;
+document.addEventListener('focusin',e=>{ if(e.target&&e.target.matches&&e.target.matches('input')) letztesFeld=e.target; });
+function kpadBauen(){ const k=$('kpad'); if(k.dataset.fertig) return; k.dataset.fertig='1';
+  KPAD.forEach(([t,ins,zur])=>{ const b=document.createElement('button'); b.className='btn'; b.textContent=t;
+    b.addEventListener('pointerdown',e=>e.preventDefault());        /* Fokus bleibt im Feld */
+    b.onclick=()=>einsetzen(ins,zur); k.appendChild(b); }); }
+function einsetzen(t,zur){
+  const el=(letztesFeld&&document.contains(letztesFeld)&&el2sichtbar(letztesFeld))?letztesFeld:$('fin');
+  el.focus();
+  const a=el.selectionStart==null?el.value.length:el.selectionStart, b=el.selectionEnd==null?a:el.selectionEnd;
+  el.value=el.value.slice(0,a)+t+el.value.slice(b);
+  const p=a+t.length-(zur||0); try{ el.setSelectionRange(p,p); }catch(_){}
+  el.dispatchEvent(new Event('input',{bubbles:true})); }
+const el2sichtbar=el=>!!el.offsetParent;
+function neu(){ D.formel=''; D.ziel=''; D.name=''; D.einh={}; D.werte={}; $('fin').value='';
+  $('cardZiel').hidden=true; $('cardWeg').hidden=true; $('cardWerte').hidden=true; renderBar2(); sync(); }
 function schrift(d){ D.fontSize=Math.max(11,Math.min(30,(D.fontSize||15)+d));
   document.documentElement.style.setProperty('--fs',D.fontSize+'px'); sync(); }
 function bild(){ const el=$('cardWeg');
@@ -681,14 +703,7 @@ function bild(){ const el=$('cardWeg');
 
 $('bGo').onclick=()=>{ D.name=''; D.einh=D.einh||{}; uebernehmen(); sync(); };
 $('fin').addEventListener('keydown',e=>{ if(e.key==='Enter'){ D.name=''; uebernehmen(); sync(); } });
-$('bNeu').onclick=()=>{ D.formel=''; D.ziel=''; D.name=''; D.einh={}; D.werte={}; $('fin').value='';
-  $('cardZiel').hidden=true; $('cardWeg').hidden=true; $('cardWerte').hidden=true; renderBar2(); sync(); };
-$('bPrint').onclick=()=>{ const im=bild(); if(!im) return; const w=window.open('','_blank'); if(!w){ toast('Bitte Pop-ups erlauben'); return; }
-  w.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>Formel umstellen</title>'+
-    '<style>@page{margin:14mm}body{margin:0}img{width:100%}</style></head><body><img src="'+im.canvas.toDataURL('image/png')+'"></body></html>');
-  w.document.close(); w.focus(); setTimeout(()=>w.print(),350); };
-function barFade(){ const bar=$('bar'), m=$('barMid'); bar.classList.remove('compact'); if(m.clientWidth<120) bar.classList.add('compact'); }
-addEventListener('resize',barFade);
+
 
 /* ---------- Tafel-Anbindung ---------- */
 let ready=false, syncT=null;
@@ -700,11 +715,11 @@ addEventListener('message',e=>{ if(window.parent===window||e.source!==window.par
   D=Object.assign(D,e.data.data); ready=true;
   if(!D.einh) D.einh={}; if(!D.werte) D.werte={};
   document.documentElement.style.setProperty('--fs',(D.fontSize||15)+'px');
-  $('fin').value=D.formel||''; uebernehmen(); barFade(); });
+  $('fin').value=D.formel||''; uebernehmen(); });
 
 window.addEventListener('load',()=>{
   document.documentElement.style.setProperty('--fs',(D.fontSize||15)+'px');
-  renderVorlagen(); $('fin').value=D.formel||''; uebernehmen(); renderBar2(); barFade();
+  renderVorlagen(); $('fin').value=D.formel||''; uebernehmen(); renderBar2();
   if(window.parent===window){ ready=true; return; }
   try{ parent.postMessage({type:'embed-ready'},'*'); }catch(e){}
   setTimeout(()=>{ ready=true; },700);
