@@ -25,6 +25,8 @@
   html,body{margin:0;height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
     background:#e9edf2;color:var(--text);touch-action:none;overscroll-behavior:none;-webkit-user-select:none;user-select:none;}
   #board{position:fixed;inset:0;touch-action:none;display:block;background:transparent;z-index:2;}
+  /* Die schwebende Uhr liegt ueber den Leisten; angefasst wird sie ueber eigene Zeigerhandler. */
+  #uhrCv{position:fixed;inset:0;z-index:22;pointer-events:none;display:block;}
   #bgLayer{position:fixed;inset:0;z-index:0;background:#fff;pointer-events:none;}
   :root{--sat:env(safe-area-inset-top,0px);--oben:0px;}
   #embedLayer{position:fixed;inset:0;z-index:1;pointer-events:none;overflow:hidden;}
@@ -226,6 +228,7 @@
 
   /* ---- Popover Stift/Formen (über der Hauptleiste) ---- */
   #penpop{z-index:20;}
+  #clockpop{z-index:23;}        /* über der schwebenden Uhr – sonst verdeckt sie ihr eigenes Fenster */
   .pop{position:fixed;z-index:19;background:var(--bar);border-radius:14px;padding:10px;display:none;flex-direction:column;gap:10px;box-shadow:var(--shadow);}
   .pop.show{display:flex;}
   .pop .toggle{color:var(--text);}
@@ -874,6 +877,7 @@
 <div id="bgLayer"></div>
 <div id="embedLayer"></div>
 <canvas id="board"></canvas>
+<canvas id="uhrCv"></canvas>
 <div id="embedBarLayer"></div>
 <div id="edgeL" class="edgezone"><div class="edgegrip"></div></div>
 <div id="edgeR" class="edgezone"><div class="edgegrip"></div></div>
@@ -1645,7 +1649,10 @@ const uid=()=>Math.random().toString(36).slice(2,9);
 const $=id=>document.getElementById(id);
 
 function resize(){ invalidateSnap(); dpr=Math.max(1,window.devicePixelRatio||1); W=innerWidth; H=innerHeight;
-  cv.width=Math.round(W*dpr); cv.height=Math.round(H*dpr); cv.style.width=W+'px'; cv.style.height=H+'px'; markDirty(); }
+  cv.width=Math.round(W*dpr); cv.height=Math.round(H*dpr); cv.style.width=W+'px'; cv.style.height=H+'px';
+  const uc=document.getElementById('uhrCv');
+  uc.width=cv.width; uc.height=cv.height; uc.style.width=W+'px'; uc.style.height=H+'px';
+  markDirty(); }
 function onViewResize(){ resize(); placePopovers(); positionProps(); positionAnnoToggle(); if(typeof entzUI==='function') entzUI(); }
 addEventListener('resize',onViewResize);
 /* iPad: Nach dem Zurückwechseln aus einer anderen App stimmt die Größe manchmal erst verspätet (halber Bildschirm) –
@@ -2309,7 +2316,7 @@ function redraw(){
   if(marquee) drawMarquee();
   if(rulerVisible) drawRuler();
   if(geoVisible) drawGeo();
-  if(pinClock.on) drawPinClock();
+  drawPinClock();
   syncEmbeds();
   dirty=false;
 }
@@ -2322,17 +2329,36 @@ try{ const p0=JSON.parse(localStorage.getItem('tafel_pinclock')||'null'); if(p0)
 function savePinClock(){ try{ localStorage.setItem('tafel_pinclock',JSON.stringify(pinClock)); }catch(e){} }
 function pinClockPos(){ const r=pinClock.r, m=6;                      // immer ganz im Bild, auch nach dem Drehen des iPads
   return { x:Math.max(r+m,Math.min(pinClock.x||W-r-24, W-r-m)), y:Math.max(r+m,Math.min(pinClock.y||r+24, H-r-m)), r }; }
-function drawPinClock(){ const {x,y,r}=pinClockPos();
-  ctx.setTransform(dpr,0,0,dpr,0,0); ctx.save();
-  ctx.shadowColor='rgba(15,23,42,.28)'; ctx.shadowBlur=14; ctx.shadowOffsetY=3;
-  ctx.beginPath(); ctx.arc(x,y,r,0,7); ctx.fillStyle='#fff'; ctx.fill(); ctx.restore();
-  paintClock(ctx,x,y,r,pinClock);
+const uhrCv=document.getElementById('uhrCv'), uctx=uhrCv.getContext('2d');
+function drawPinClock(){
+  uctx.setTransform(dpr,0,0,dpr,0,0); uctx.clearRect(0,0,W,H);
+  if(!pinClock.on) return;
+  const {x,y,r}=pinClockPos();
+  uctx.save();
+  uctx.shadowColor='rgba(15,23,42,.28)'; uctx.shadowBlur=14; uctx.shadowOffsetY=3;
+  uctx.beginPath(); uctx.arc(x,y,r,0,7); uctx.fillStyle='#fff'; uctx.fill(); uctx.restore();
+  paintClock(uctx,x,y,r,pinClock);
   const g=gearPos(x,y,r);                                        // ⚙ im Zifferblatt, zwischen Mitte und der 12
-  ctx.beginPath(); ctx.arc(g.x,g.y,g.r,0,7); ctx.fillStyle='#fff'; ctx.fill();
-  ctx.strokeStyle='rgba(31,36,48,.55)'; ctx.lineWidth=1; ctx.stroke();
-  ctx.fillStyle='#1f2430'; ctx.font=Math.round(g.r*1.15)+'px -apple-system,sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('⚙',g.x,g.y+1);
-  ctx.setTransform(scale*dpr,0,0,scale*dpr,ox*dpr,oy*dpr); }
+  uctx.beginPath(); uctx.arc(g.x,g.y,g.r,0,7); uctx.fillStyle='#fff'; uctx.fill();
+  uctx.strokeStyle='rgba(31,36,48,.55)'; uctx.lineWidth=1; uctx.stroke();
+  uctx.fillStyle='#1f2430'; uctx.font=Math.round(g.r*1.15)+'px -apple-system,sans-serif'; uctx.textAlign='center'; uctx.textBaseline='middle'; uctx.fillText('⚙',g.x,g.y+1); }
 const onPinClock=(px,py)=>{ if(!pinClock.on) return false; const p=pinClockPos(); return Math.hypot(px-p.x,py-p.y)<=p.r+2; };
+/* Die Uhr liegt über den Leisten – also fängt sie ihre Zeiger selbst ab (Capture-Phase),
+   sonst würde die Leiste darunter reagieren und die Uhr liesse sich dort nicht anfassen. */
+let uhrDrag=null;
+addEventListener('pointerdown',e=>{ if(!pinClock.on) return;
+  if(e.pointerType==='mouse'&&e.button!==0) return;
+  if(onPinClockGear(e.clientX,e.clientY)){ const p0=pinClockPos(); openClockPop(p0.x,p0.y+p0.r+12);
+    if(e.cancelable) e.preventDefault(); e.stopPropagation(); return; }
+  if(onPinClock(e.clientX,e.clientY)){ const p0=pinClockPos();
+    uhrDrag={id:e.pointerId,dx:e.clientX-p0.x,dy:e.clientY-p0.y};
+    if(e.cancelable) e.preventDefault(); e.stopPropagation(); } },true);
+addEventListener('pointermove',e=>{ if(!uhrDrag||e.pointerId!==uhrDrag.id) return;
+  pinClock.x=e.clientX-uhrDrag.dx; pinClock.y=e.clientY-uhrDrag.dy; markDirty();
+  if(e.cancelable) e.preventDefault(); e.stopPropagation(); },true);
+const uhrLos=e=>{ if(!uhrDrag||e.pointerId!==uhrDrag.id) return;
+  const p0=pinClockPos(); pinClock.x=p0.x; pinClock.y=p0.y; savePinClock(); uhrDrag=null; markDirty(); e.stopPropagation(); };
+addEventListener('pointerup',uhrLos,true); addEventListener('pointercancel',uhrLos,true);
 const gearPos=(x,y,r)=>({x, y:y-r*0.6, r:Math.max(8,Math.min(12,r*0.14))});
 const onPinClockGear=(px,py)=>{ if(!pinClock.on) return false; const p=pinClockPos(), g=gearPos(p.x,p.y,p.r);
   return Math.hypot(px-g.x,py-g.y)<Math.max(20,g.r+6); };
@@ -2581,11 +2607,6 @@ cv.addEventListener('pointerdown',e=>{ if(e.pointerType==='mouse'&&e.button!==0)
     }
   }
   pendingRulerSnap=false; pendingSnap=null; pendingGeoRay=false; cancelGeoRay();
-  if(pinClock.on){
-    if(onPinClockGear(e.clientX,e.clientY)){ const p0=pinClockPos(); openClockPop(p0.x,p0.y+p0.r+12); return; }   // unter der Uhr, damit sie sichtbar bleibt
-    if(onPinClock(e.clientX,e.clientY)){ const p0=pinClockPos();
-      rulerDrag={mode:'pinclock',id:e.pointerId,dx:e.clientX-p0.x,dy:e.clientY-p0.y}; return; }
-  }
   if(rulerVisible){
     const L=rulerLocal(e.clientX,e.clientY), inLen=Math.abs(L.x)<=ruler.len/2;
     if(onRulerGear(e.clientX,e.clientY)){ openToolPop('ruler',e.clientX,e.clientY); return; }
@@ -2619,8 +2640,7 @@ cv.addEventListener('pointermove',e=>{ const p=pointers.get(e.pointerId); if(!p)
   if(objGesture){ updateObjGesture(); return; }
   if(tool==='spot'){ updateSpot(); return; }
   if(rulerDrag&&rulerDrag.id===e.pointerId){
-    if(rulerDrag.mode==='pinclock'){ pinClock.x=e.clientX-rulerDrag.dx; pinClock.y=e.clientY-rulerDrag.dy; }
-    else if(rulerDrag.mode==='move'){ruler.cx=e.clientX-rulerDrag.dx;ruler.cy=e.clientY-rulerDrag.dy;}
+    if(rulerDrag.mode==='move'){ruler.cx=e.clientX-rulerDrag.dx;ruler.cy=e.clientY-rulerDrag.dy;}
     else if(rulerDrag.mode==='rot'){ruler.angle=Math.atan2(e.clientY-ruler.cy,e.clientX-ruler.cx);}
     else if(rulerDrag.mode==='len'){ const c=Math.cos(ruler.angle), sn=Math.sin(ruler.angle);
       const d=Math.max(PXCM*3,Math.min(PXCM*80,(e.clientX-rulerDrag.lx)*c+(e.clientY-rulerDrag.ly)*sn));
@@ -2633,7 +2653,7 @@ cv.addEventListener('pointermove',e=>{ const p=pointers.get(e.pointerId); if(!p)
 },{passive:false});
 function endPointer(e){ const p=pointers.get(e.pointerId); lastInputT=performance.now();
   if(objGesture&&objGesture.ids.includes(e.pointerId)){ objGesture=null; scheduleAutosave(); }
-  if(rulerDrag&&rulerDrag.id===e.pointerId){ if(rulerDrag.mode==='len') saveUI(); if(rulerDrag.mode==='pinclock'){ const p0=pinClockPos(); pinClock.x=p0.x; pinClock.y=p0.y; savePinClock(); } rulerDrag=null; }
+  if(rulerDrag&&rulerDrag.id===e.pointerId){ if(rulerDrag.mode==='len') saveUI(); rulerDrag=null; }
   if(e.pointerId===drawId){ endAction(e); drawId=null; }        // auch ohne Eintrag in der Zeigerliste
   if(!p) return;
   pointers.delete(e.pointerId); if(pointers.size<2) spotBase=null;

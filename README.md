@@ -1824,10 +1824,12 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   übrig"), Pausen erscheinen grau. Der Takt ist 1. Std 8:00–8:45, 2. Std 8:45–9:30, Pause bis 9:45,
   3. Std 9:45–10:30, 4. Std 10:30–11:15, Pause bis 11:30, 5. Std 11:30–12:15, 6. Std 12:15–13:00.
   **Digitalanzeige** blendet zusätzlich die Uhrzeit in Ziffern ein.
-  **Immer im Vordergrund** löst die Uhr von der Seite: Sie **schwebt dann über allem** und bleibt beim
+  **Immer im Vordergrund** löst die Uhr von der Seite: Sie **schwebt dann über allem** – auch **über
+  den Werkzeugleisten**, sie verschwindet also nicht mehr dahinter – und bleibt beim
   **Blättern, beim Wechsel der Klasse und nach dem Neuladen** an derselben Stelle stehen (sie gehört
   dann nicht mehr zum Projekt, sondern zum Gerät – wie die Werkzeugleisten). Verschieben: einfach mit
-  dem Finger anfassen. Das kleine **⚙ im Zifferblatt** (zwischen Mitte und 12) öffnet ihr Menü mit
+  dem Finger anfassen – das geht auch dort, wo sie über einer Leiste liegt; der Knopf darunter
+  reagiert dann nicht. Das kleine **⚙ im Zifferblatt** (zwischen Mitte und 12) öffnet ihr Menü mit
   **Größe**, **Schulstunden**, **Digitalanzeige**, **„Wieder als Objekt auf die Seite"** (legt sie mit
   gleicher Größe und Position zurück auf die aktuelle Seite) und **„Uhr ausblenden"**.
 - **Funktionsplotter** (Werkzeug) – **vier Reiter: Graph, Tabelle, Maschine, Transformationen.** Der Funktionsterm lässt
@@ -1859,7 +1861,7 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   nur noch **f** (z. B. **g(x) = −1,5·f(x + 2)**) – es gibt ja keine Formel dazu. **„✎ neu zeichnen"**
   startet eine neue Skizze, ein getippter Term löst sie wieder ab; die Skizze wird mit dem Projekt
   gespeichert und beim Teilen mitgegeben. Vier Schieberegler bauen daraus
-  **g(x) = a · f(b · (x + c)) + d**:
+  **g(x) = a · f(b · (x + c)) + d** (a und b von −4 bis 4, c und d von −5 bis 5):
   - **„Zwischenschritte"** zeigt die Schritte als gestrichelte Graphen in der Reihenfolge
     **a → b → c → d**, also **erst strecken, dann verschieben**: **a** (senkrechtes Strecken/Stauchen,
     **grün**), **b** (waagrechtes Strecken/Stauchen, **blau**), **c** (waagrechte Verschiebung, **rot**),
