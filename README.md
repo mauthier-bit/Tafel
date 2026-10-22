@@ -1287,6 +1287,10 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     Tastenzeile mit ·, /, ^, ( ), √, π, Index, =, x², x³ für die Formel-Eingabe),
     **🖼 Rechenweg → Tafel** und **📋 Kopieren**. Teilen, Schriftgröße und Drucken gibt es hier
     nicht mehr – geteilt wird oben neben den Reitern, die Schrift stellt der Gleichungslöser.
+    Ist das Objekt **breit genug** (ab etwa 820 px), stehen die Karten in **zwei Spalten**: links die
+    Formel mit der Vorlagensammlung, rechts die gesuchte Größe, der **Rechenweg** und das Einsetzen
+    der Werte. Damit ist alles ohne Scrollen zu sehen, und der Platz unter der Formel bleibt nicht
+    mehr leer; schmale Objekte zeigen die Karten wie bisher untereinander.
   - **⤴ Teilen** sitzt **neben den Reitern** (bei A− / A+ und „⌨ Formeln") und gibt per **QR-Code
     genau die Ansicht weiter, die gerade zu sehen ist**: der gewählte Reiter, die Eingaben, der
     Waage-Verlauf und die eingebettete Formel. Vorher hatte nur der Reiter „Formel umstellen" einen
