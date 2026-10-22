@@ -2602,11 +2602,14 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     Aktivitäten etwa 100–400 KB. (Aktivitäten vom Typ „Datei einfügen" brauchen weiterhin die Tafel.)
 - **Bild beschriften** (Diverses, `beschriften.html`): ein **Bild aus einer Datei** einfügen, selbst
   etwas **malen** oder eine **Vorlage** nehmen – und an die richtigen Stellen **Beschriftungen** setzen.
-  - Im **Bearbeiten-Modus** legt die Lehrkraft die Stellen fest: auf das Bild tippen setzt einen Punkt
-    mit einem Kästchen daneben, in das die Beschriftung getippt wird. **Punkt und Kästchen lassen sich
-    unabhängig voneinander verschieben**, die Verbindungslinie zieht mit; **×** entfernt eine
-    Beschriftung. Ein Tipp **ins Kästchen** öffnet die Tastatur und lässt den Cursor stehen – auch
-    wenn sich dabei die Fläche ändert (auf dem iPad schiebt die Tastatur das Bild ja zusammen). Kästchen
+  - Im **Bearbeiten-Modus** legt die Lehrkraft die Stellen fest, und ein Knopf trennt die beiden
+    Arbeitsweisen sauber: Ist **📍 Marken setzen** **an** (Standard), setzt ein Tipp aufs Bild einen
+    Punkt mit einem Kästchen daneben, in das gleich die Beschriftung getippt wird – verschoben wird
+    dabei nichts. Ist der Knopf **aus**, lassen sich **Punkt und Kästchen unabhängig voneinander
+    ziehen** (die Verbindungslinie zieht mit), und ein Tipp ins Bild legt nichts Neues an.
+    Was gerade gilt, steht unter dem Bild. **×** entfernt eine Beschriftung. Ein Tipp **ins Kästchen**
+    öffnet die Tastatur und lässt den Cursor stehen – auch wenn sich dabei die Fläche ändert
+    (auf dem iPad schiebt die Tastatur das Bild ja zusammen). Kästchen
     am Rand werden automatisch ins Bild hineingeschoben, damit nichts abgeschnitten wird.
   - Im **Benutzen-Modus** sind die Kästchen leer („?"), und unter dem Bild liegen die Beschriftungen
     **gemischt** als Kärtchen. Die Klasse zieht sie **per Drag-and-drop** an die richtige Stelle –

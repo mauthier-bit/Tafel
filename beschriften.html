@@ -36,6 +36,8 @@
   #cv{position:absolute;inset:0;width:100%;height:100%;display:block;}
   .mk{position:absolute;width:calc(var(--k)*14px);height:calc(var(--k)*14px);margin:calc(var(--k)*-7px) 0 0 calc(var(--k)*-7px);
     border-radius:50%;background:#2563eb;border:2px solid #fff;box-shadow:0 0 0 1px #2563eb;cursor:grab;}
+  #box.setzen{cursor:crosshair;}
+  #box.setzen .mk,#box.setzen .lb{cursor:default;}
   .lin{position:absolute;height:2px;background:#2563eb;transform-origin:0 50%;pointer-events:none;opacity:.75;}
   .lb{position:absolute;transform:translate(-50%,-50%);background:#fff;border:1.5px solid #2563eb;border-radius:9px;
     padding:calc(var(--k)*3px) calc(var(--k)*7px);font:700 calc(var(--k)*14px) -apple-system,sans-serif;color:#1f2430;
@@ -262,6 +264,7 @@
     <span class="sep"></span>
     <button class="btn" id="bVorl" title="Beispiel aus der Vorlagen-Sammlung">📚<span class="t"> Vorlagen</span></button>
     <button class="btn" id="bBild" title="Bild aus einer Datei einfügen">🖼<span class="t"> Bild</span></button>
+    <button class="btn on" id="bSetzen" title="An: Tippen setzt eine neue Marke. Aus: Marken und Kästchen lassen sich verschieben.">📍<span class="t"> Marken setzen</span></button>
     <button class="btn" id="bMalen" title="Mit dem Stift zeichnen – noch einmal tippen beendet das Malen">✏️<span class="t"> Malen</span></button>
     <button class="btn" id="bUndo" title="Letzten Strich zurücknehmen"><svg viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg></button>
     <button class="btn dang" id="bLeer" title="Bild und Zeichnung entfernen">🗑<span class="t"> Bild</span></button>
@@ -303,7 +306,7 @@ const $=id=>document.getElementById(id);
 const toast=m=>window.TafelShot&&TafelShot.toast(m);
 const uid=()=>'m'+Math.random().toString(36).slice(2,8);
 let D={ v:1, titel:'', vorlage:'', bild:'', ar:4/3, striche:[], marken:[], zuord:{}, fontSize:16, edit:true };
-let ready=false, malen=false, bildEl=null, pool=[], gewaehlt=null, geprueft=false;
+let ready=false, malen=false, markeSetzen=true, bildEl=null, pool=[], gewaehlt=null, geprueft=false;
 
 /* ---------- Grundgerüst ---------- */
 function schrift(){ document.documentElement.style.setProperty('--k',(D.fontSize||16)/16); }
@@ -385,7 +388,8 @@ function marken(){ const box=$('box');
   [...mkEl.keys()].forEach(id=>{ if(!da.has(id)){ const e=mkEl.get(id); e.li.remove(); e.p.remove(); e.lb.remove(); mkEl.delete(id); } });
 }
 /* Punkt oder Kästchen verschieben (nur im Bearbeiten-Modus) – jedes für sich */
-function zieh(el,id,was){ el.onpointerdown=e=>{ e.preventDefault(); e.stopPropagation();
+function zieh(el,id,was){ el.onpointerdown=e=>{ if(markeSetzen||malen) return;   /* verschoben wird nur mit ausgeschaltetem Knopf */
+  e.preventDefault(); e.stopPropagation();
   try{ el.setPointerCapture(e.pointerId); }catch(_){}
   const box=$('box'), r=box.getBoundingClientRect();
   const mv=ev=>{ const m=markeZu(id); if(!m) return;
@@ -402,6 +406,7 @@ $('box').addEventListener('pointerdown',e=>{
   const x=(e.clientX-r.left)/r.width, y=(e.clientY-r.top)/r.height;
   if(malen){ strich={c:'#1f2430',w:3,p:[[x,y]]}; D.striche.push(strich); zeichnen(); return; }
   if(e.target.closest('.mk,.lb')) return;
+  if(!markeSetzen) return;                  /* Knopf aus: nur verschieben, nichts Neues */
   const m={id:uid(), x, y, lx:Math.min(0.94,x+0.18), ly:Math.max(0.06,y-0.12), text:''};
   D.marken.push(m); zeichnen(); sync();
   const inp=$('box').querySelector('.lb[data-id="'+m.id+'"] input'); if(inp) inp.focus();
@@ -422,7 +427,9 @@ addEventListener('pointermove',e=>{ if(!strich) return; const r=$('box').getBoun
 /* ---------- Benutzen-Modus: Beschriftungen zuordnen ---------- */
 function mischen(a){ const b=a.slice(); for(let i=b.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [b[i],b[j]]=[b[j],b[i]]; } return b; }
 function poolBauen(){ const p=$('pool'); p.innerHTML='';
-  if(D.edit!==false){ p.innerHTML='<span class="hint">Auf das Bild tippen setzt eine neue Beschriftung. Punkt und Kästchen lassen sich verschieben.</span>'; return; }
+  if(D.edit!==false){ p.innerHTML='<span class="hint">'+(malen?'Malen ist an – mit dem Stift auf dem Bild zeichnen.'
+    :(markeSetzen?'„Marken setzen" ist an: Auf das Bild tippen legt eine neue Beschriftung an.'
+            :'„Marken setzen" ist aus: Punkt und Kästchen lassen sich einzeln verschieben.'))+'</span>'; return; }
   const texte=(D.marken||[]).map(m=>m.text).filter(t=>t&&t.trim());
   if(!texte.length){ p.innerHTML='<span class="hint">Noch keine Beschriftungen angelegt.</span>'; return; }
   if(!pool.length||pool.length!==texte.length||texte.some(t=>pool.indexOf(t)<0)) pool=mischen(texte);
@@ -470,8 +477,13 @@ $('fBild').onchange=function(){ const f=this.files[0]; if(!f) return;
       bildLaden(()=>{ zeichnen(); sync(); }); toast('Bild eingefügt'); };
     im.src=String(rd.result); };
   rd.readAsDataURL(f); };
-$('bMalen').onclick=()=>{ malen=!malen; $('bMalen').classList.toggle('on',malen);
-  melden(malen?'Malen: mit dem Stift auf dem Bild zeichnen. Noch einmal auf „Malen" tippen beendet es.':''); };
+function modiZeigen(){ $('bSetzen').classList.toggle('on',markeSetzen&&!malen);
+  $('bMalen').classList.toggle('on',malen);
+  $('box').classList.toggle('setzen',markeSetzen&&!malen);
+  melden(malen?'Malen: mit dem Stift auf dem Bild zeichnen. Noch einmal auf „Malen" tippen beendet es.':'');
+  poolBauen(); }     /* der Hinweis unter dem Bild sagt, welcher Modus gerade läuft */
+$('bSetzen').onclick=()=>{ markeSetzen=!markeSetzen; if(markeSetzen) malen=false; modiZeigen(); };
+$('bMalen').onclick=()=>{ malen=!malen; if(malen) markeSetzen=false; modiZeigen(); };
 $('bUndo').onclick=()=>{ if(!(D.striche||[]).length){ toast('Nichts zurückzunehmen'); return; } D.striche.pop(); zeichnen(); sync(); };
 $('bLeer').onclick=()=>{ if(!confirm('Bild und Zeichnung entfernen? Die Beschriftungen bleiben.')) return;
   D.bild=''; D.vorlage=''; D.striche=[]; D.ar=4/3; $('box').style.setProperty('--ar',D.ar); bildEl=null; zeichnen(); sync(); };
@@ -533,7 +545,7 @@ if(window.TafelTeilen&&!TafelTeilen.istGeteilt())
 
 window.addEventListener('load',()=>{
   const geteilt=window.TafelTeilen&&TafelTeilen.istGeteilt();
-  schrift(); modusUI(); zeichnen(); poolBauen();
+  schrift(); modusUI(); zeichnen(); poolBauen(); modiZeigen();
   if(geteilt){ D.edit=false; ready=true; modusUI();
     TafelTeilen.empfangen().then(p=>{ if(p&&p.w==='bes'&&p.d){ p.d.edit=false; uebernehmen(p.d); } })
       .catch(()=>{}).then(()=>TafelTeilen.nurBenutzen('#shotBtns'));
