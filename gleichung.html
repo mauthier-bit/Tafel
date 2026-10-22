@@ -308,10 +308,10 @@
   <div id="umk" hidden>
     <div class="wrow"><b class="lbl3">Aufgabe:</b><input id="uIn" placeholder="z. B. 12 + _ = 20" autocomplete="off" autocapitalize="off" spellcheck="false" value="12 + _ = 20"><button class="wbtn pri" id="uGo">Lösen</button>
       <label class="chk2"><input type="checkbox" id="uBsp" checked> Beispiel mit kleinen Zahlen</label></div>
-    <div><span class="ex" data-u="12+_=20">12+_=20</span><span class="ex" data-u="_+9=17">_+9=17</span><span class="ex" data-u="23-_=15">23−_=15</span><span class="ex" data-u="_-7=15">_−7=15</span><span class="ex" data-u="6*_=42">6·_=42</span><span class="ex" data-u="_*6=42">_·6=42</span><span class="ex" data-u="36:_=9">36:_=9</span><span class="ex" data-u="_:4=9">_:4=9</span></div>
+    <div><span class="ex" data-u="12+_=20">12+_=20</span><span class="ex" data-u="_+9=17">_+9=17</span><span class="ex" data-u="23-_=15">23−_=15</span><span class="ex" data-u="_-7=15">_−7=15</span><span class="ex" data-u="6*_=42">6·_=42</span><span class="ex" data-u="_*6=42">_·6=42</span><span class="ex" data-u="36:_=9">36:_=9</span><span class="ex" data-u="_:4=9">_:4=9</span><span class="ex" data-u="-5+_=3">−5+_=3</span><span class="ex" data-u="3/4+_=1">3/4+_=1</span><span class="ex" data-u="_*2/3=4">_·2/3=4</span></div>
     <div id="uMsg" hidden></div>
     <div id="uOut"></div>
-    <div class="hint" id="hintUmk">Für den Platzhalter geht <b>_</b>, <b>?</b>, <b>□</b> oder <b>x</b>; mal schreibt man <b>·</b> oder <b>*</b>, geteilt <b>:</b> oder <b>/</b>. Steht der Platzhalter <b>vorne</b> und wird plus oder mal gerechnet, hilft zuerst die <b>Tauschaufgabe</b> – danach führt die <b>Umkehraufgabe</b> zur Lösung. Das <b>Beispiel</b> daneben rechnet dieselbe Aufgabenart mit ganz kleinen Zahlen; <span class="z1">gleiche Farbe</span> heißt <span class="z1">gleiche Rolle</span> in der Aufgabe (<span class="z1">bekannte Zahl</span>, <span class="z2">Ergebnis</span>, <span class="ph">gesuchte Zahl</span>).</div>
+    <div class="hint" id="hintUmk">Für den Platzhalter geht <b>_</b>, <b>?</b>, <b>□</b> oder <b>x</b>; mal schreibt man <b>·</b> oder <b>*</b>, geteilt <b>:</b> oder <b>/</b>. Erlaubt sind <b>negative Zahlen</b> (−5), <b>Dezimalbrüche</b> (2,5), <b>Brüche</b> (3/4, auch gemischt wie 1 1/2) – gerechnet wird <b>exakt</b>, das Ergebnis erscheint als Bruch, wenn die Aufgabe Brüche enthält. Steht der Platzhalter <b>vorne</b> und wird plus oder mal gerechnet, hilft zuerst die <b>Tauschaufgabe</b> – danach führt die <b>Umkehraufgabe</b> zur Lösung. Das <b>Beispiel</b> daneben rechnet dieselbe Aufgabenart mit ganz kleinen Zahlen; <span class="z1">gleiche Farbe</span> heißt <span class="z1">gleiche Rolle</span> in der Aufgabe (<span class="z1">bekannte Zahl</span>, <span class="z2">Ergebnis</span>, <span class="ph">gesuchte Zahl</span>).</div>
   </div>
   <div id="fml" hidden><div id="fmlBox"></div></div>
   <div id="sol">–</div>
@@ -1013,11 +1013,37 @@ const U_ART={
   '#/a':{tausch:0, um:(a,e)=>[e,'*',a], rechts:1, satz:'Das Ergebnis mit dem Teiler malnehmen.',    bsp:[2,'/',3]}
   /* bsp = [bekannte Zahl, Rechenzeichen, Ergebnis] – dieselbe Aufgabenart mit ganz kleinen Zahlen */
 };
-const uRechne=(x,op,y)=>op==='+'?x+y:(op==='-'?x-y:(op==='*'?x*y:(y===0?NaN:x/y)));
-function uZahl(t){ const v=parseFloat(String(t).replace(',','.')); return (isFinite(v)&&/^\d+([.,]\d+)?$/.test(t))?v:null; }
+/* ---- Brüche: exakt rechnen, damit 1/3 auch 1/3 bleibt ---- */
+const UG=(a,b)=>b?UG(b,a%b):Math.abs(a);
+function UB(z,n){ n=n||1; if(n<0){ z=-z; n=-n; } const g=UG(Math.round(z),Math.round(n))||1;
+  return {z:Math.round(z)/g, n:Math.round(n)/g}; }
+const uWert=b=>b.z/b.n;
+const uRechne=(x,op,y)=> op==='+'?UB(x.z*y.n+y.z*x.n, x.n*y.n)
+                       : op==='-'?UB(x.z*y.n-y.z*x.n, x.n*y.n)
+                       : op==='*'?UB(x.z*y.z, x.n*y.n)
+                       : (y.z===0?null:UB(x.z*y.n, x.n*y.z));
+let uBruchStil=false;                      /* Eingabe mit Bruchstrich → Ausgabe als Bruch */
+function uTxt(b){ if(!b) return '—';
+  if(b.n===1) return zahl(b.z);
+  const d=b.z/b.n;
+  if(!uBruchStil&&Math.abs(d*10000-Math.round(d*10000))<1e-9) return zahl(d);   /* glatter Dezimalbruch */
+  return (b.z<0?'−':'')+Math.abs(b.z)+'/'+b.n; }
+/* Zahl lesen: 12 · −3 · 2,5 · 3/4 · −3/4 */
+function uZahl(t){ t=String(t);
+  let m=/^(-?)(\d+)\/(\d+)$/.exec(t);
+  if(m){ if(+m[3]===0) return null; uBruchStil=true; return UB((m[1]?-1:1)*(+m[2]), +m[3]); }
+  m=/^-?\d+(?:[.,]\d+)?$/.exec(t); if(!m) return null;
+  const txt=t.replace(',','.'), p=txt.split('.');
+  const n=p[1]?Math.pow(10,p[1].length):1;
+  const v=Math.round(parseFloat(txt)*n);
+  return isFinite(v)?UB(v,n):null; }
 /* „12 + _ = 20" lesen – Platzhalter ist _, ?, □ oder x */
 function uLesen(txt){
-  let s=String(txt||'').replace(/\s+/g,'').replace(/[−–]/g,'-').replace(/[·×*]/g,'*').replace(/[:÷]/g,'/')
+  uBruchStil=false;
+  let s=String(txt||'').replace(/[−–]/g,'-')
+        .replace(/(\d)\s+(\d+\/\d+)/g,(m,g,b)=>{                      /* gemischt: 1 1/2 → 3/2 */
+          const t=b.split('/'); return String(+g*(+t[1])+(+t[0]))+'/'+t[1]; })
+        .replace(/\s+/g,'').replace(/[·×*]/g,'*').replace(/[:÷]/g,'/')
         .replace(/[_?□☐xX]/g,'#');
   const t=s.split('='); if(t.length!==2||!t[0]||!t[1]) return {fehler:'Bitte eine Aufgabe mit genau einem „=" eingeben, z. B. 12 + _ = 20.'};
   let A=t[0], B=t[1], gedreht=false;
@@ -1026,17 +1052,18 @@ function uLesen(txt){
   if(B.includes('#')||(A.match(/#/g)||[]).length>1) return {fehler:'Es darf nur ein einziger Platzhalter in der Aufgabe stehen.'};
   const e=uZahl(B); if(e===null) return {fehler:'Auf der anderen Seite vom „=" muss eine Zahl stehen.'};
   if(A==='#') return {direkt:true, e, gedreht};
-  const m=/^(#|\d+(?:[.,]\d+)?)([+\-*/])(#|\d+(?:[.,]\d+)?)$/.exec(A);
-  if(!m) return {fehler:'So kann ich die Aufgabe nicht lesen. Es geht „Zahl Rechenzeichen Platzhalter = Zahl", z. B. 6 · _ = 42.'};
+  const Z='(?:-?\\d+(?:[.,]\\d+)?(?:/\\d+)?)';
+  const m=new RegExp('^(#|'+Z+')([+\\-*/])(#|'+Z+')$').exec(A);
+  if(!m) return {fehler:'So kann ich die Aufgabe nicht lesen. Es geht „Zahl Rechenzeichen Platzhalter = Zahl", z. B. 6 · _ = 42 oder 3/4 + _ = 1.'};
   const L=m[1], op=m[2], R=m[3];
   const vorn=(L==='#'), a=uZahl(vorn?R:L);
   if(a===null) return {fehler:'Bitte nur Zahlen und einen Platzhalter verwenden.'};
   return {a, op, e, vorn, gedreht, art:(vorn?'#':'a')+op+(vorn?'a':'#')};
 }
 const uSpan=(k,t)=>'<span class="'+k+'">'+t+'</span>';
-const uN=(v,k)=>uSpan(k,zahl(v));
+const uN=(v,k)=>uSpan(k,uTxt(v));
 /* eine Rechnung einfärben: [zahl, op, zahl] mit Rollen */
-function uTerm(l,op,r,kl,kr){ return uSpan(kl,typeof l==='string'?l:zahl(l))+' '+U_OPZ[op]+' '+uSpan(kr,typeof r==='string'?r:zahl(r)); }
+function uTerm(l,op,r,kl,kr){ return uSpan(kl,typeof l==='string'?l:uTxt(l))+' '+U_OPZ[op]+' '+uSpan(kr,typeof r==='string'?r:uTxt(r)); }
 function uKarte(titel,a,op,e,art,klasse){
   const A=U_ART[art], PH='□';
   let h='<div class="ukarte'+(klasse||'')+'"><h4>'+titel+'</h4>';
@@ -1048,10 +1075,12 @@ function uKarte(titel,a,op,e,art,klasse){
   const u=A.um(a,e), kl=A.rechts?'z2':'z1', kr=A.rechts?'z1':'z2';
   zeile('Umkehraufgabe', uSpan('ph',PH)+' = '+uTerm(u[0],u[1],u[2],kl,kr), A.satz);
   const erg=uRechne(u[0],u[1],u[2]);
-  zeile('Lösung', uSpan('ph',PH+' = '+zahl(erg)), '', ' erg');
-  const probe = vorn ? (zahl(erg)+' '+U_OPZ[op]+' '+zahl(a)) : (zahl(a)+' '+U_OPZ[op]+' '+zahl(erg));
-  const stimmt = Math.abs(uRechne(vorn?erg:a, op, vorn?a:erg)-e)<1e-9;
-  zeile('Probe', probe+' = '+zahl(e)+(stimmt?' ✓':' ✗'),'');
+  zeile('Lösung', uSpan('ph',PH+' = '+uTxt(erg)), '', ' erg');
+  if(erg){
+    const probe = vorn ? (uTxt(erg)+' '+U_OPZ[op]+' '+uTxt(a)) : (uTxt(a)+' '+U_OPZ[op]+' '+uTxt(erg));
+    const pr = uRechne(vorn?erg:a, op, vorn?a:erg);
+    const stimmt = !!pr && Math.abs(uWert(pr)-uWert(e))<1e-9;
+    zeile('Probe', probe+' = '+uTxt(e)+(stimmt?' ✓':' ✗'),''); }
   return {html:h+'</div>', erg};
 }
 function uMeld(t){ const m=$('uMsg'); m.hidden=!t; m.textContent=t||''; }
@@ -1059,17 +1088,15 @@ function uLoesen(){ const r=uLesen($('uIn').value); const out=$('uOut'); out.inn
   if(r.fehler){ uMeld(r.fehler); return; }
   uMeld('');
   if(r.direkt){ out.innerHTML='<div class="ukarte"><h4>Deine Aufgabe</h4><div class="ustep erg"><span class="lab">Lösung</span><span class="rech">'+
-    uSpan('ph','□ = '+zahl(r.e))+'</span><span class="warum">Hier steht die Lösung schon da – es ist nichts umzustellen.</span></div></div>'; return; }
+    uSpan('ph','□ = '+uTxt(r.e))+'</span><span class="warum">Hier steht die Lösung schon da – es ist nichts umzustellen.</span></div></div>'; return; }
   const k=uKarte('Deine Aufgabe', r.a, r.op, r.e, r.art, '');
   let h=k.html;
-  if($('uBsp').checked){ const b=U_ART[r.art].bsp;
-    h+=uKarte('Beispiel mit kleinen Zahlen', b[0], b[1], b[2], r.art, ' bsp').html; }
+  if($('uBsp').checked){ const b=U_ART[r.art].bsp, stil=uBruchStil; uBruchStil=false;   /* Beispiel immer glatt */
+    h+=uKarte('Beispiel mit kleinen Zahlen', UB(b[0]), b[1], UB(b[2]), r.art, ' bsp').html; uBruchStil=stil; }
   out.innerHTML=h;
   const hin=[];
   if(r.gedreht) hin.push('Der Platzhalter stand rechts – die Gleichung wurde gedreht, das ändert nichts.');
-  if(!isFinite(k.erg)) hin.push('Durch 0 darf man nicht teilen.');
-  else { if(k.erg<0) hin.push('Das Ergebnis ist negativ – negative Zahlen kommen erst später dran.');
-    if(Math.abs(k.erg-Math.round(k.erg))>1e-9) hin.push('Das Ergebnis ist keine glatte Zahl – prüfe die Aufgabe noch einmal.'); }
+  if(!k.erg) hin.push('Durch 0 darf man nicht teilen.');
   if(hin.length){ const d=document.createElement('div'); d.id='uWarn'; d.textContent=hin.join(' '); out.appendChild(d); }
   sync(); }
 $('uGo').onclick=uLoesen;

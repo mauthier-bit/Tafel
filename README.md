@@ -1275,8 +1275,13 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     dieselbe Aufgabenart, derselbe Aufbau – und **dieselben Farben für dieselben Rollen**, nämlich
     **blau** für die bekannte Zahl, **grün** für das Ergebnis und **orange** für die gesuchte Zahl.
     So sieht man am leichten Beispiel, was im eigenen, größeren zu tun ist.
-    Rückmeldungen gibt es auch, wenn etwas nicht aufgeht: Teilen durch 0, ein negatives Ergebnis
-    („negative Zahlen kommen erst später dran") oder eine krumme Zahl.
+    Gerechnet wird **exakt mit Brüchen**, deshalb geht das Werkzeug auch über die 5. Klasse hinaus:
+    **negative Zahlen** (`−5 + _ = 3`), **Dezimalbrüche** (`2,5 · _ = 10`) und **Brüche in
+    Bruchschreibweise** (`3/4 + _ = 1`, `_ · 2/3 = 4`, auch gemischt wie `1 1/2 + _ = 2`).
+    Enthält die Aufgabe Brüche, steht auch die Lösung als Bruch da (`□ = 1/4`), sonst als
+    Dezimalzahl – und wo ein Dezimalbruch nicht reicht, erscheint ebenfalls ein Bruch
+    (`_ · 3 = 1` → `□ = 1/3`). Das **Beispiel** daneben bleibt bei glatten kleinen Zahlen.
+    Bleibt nur eine Rückmeldung: **Teilen durch 0**.
   - **Formel umstellen** – das **ganze Werkzeug „Formel umstellen"** steckt als Reiter mit drin;
     einen eigenen Knopf in der Gruppe **Mathe & Physik** gibt es dafür nicht mehr, es wohnt jetzt hier.
     (Ältere Projekte mit einem eigenständigen Formel-Objekt öffnen weiterhin ganz normal.) So lässt
