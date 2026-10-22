@@ -2604,9 +2604,12 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   etwas **malen** oder eine **Vorlage** nehmen – und an die richtigen Stellen **Beschriftungen** setzen.
   - Im **Bearbeiten-Modus** legt die Lehrkraft die Stellen fest, und ein Knopf trennt die beiden
     Arbeitsweisen sauber: Ist **📍 Marken setzen** **an** (Standard), setzt ein Tipp aufs Bild einen
-    Punkt mit einem Kästchen daneben, in das gleich die Beschriftung getippt wird – verschoben wird
-    dabei nichts. Ist der Knopf **aus**, lassen sich **Punkt und Kästchen unabhängig voneinander
-    ziehen** (die Verbindungslinie zieht mit), und ein Tipp ins Bild legt nichts Neues an.
+    Punkt mit einem Kästchen daneben, in das gleich die Beschriftung getippt wird. Zum **Verschieben
+    gibt es Griffe**: der **blaue Punkt** selbst und das **∷ links im Kästchen** – beide ziehen
+    **immer** und **unabhängig voneinander** (die Verbindungslinie zieht mit). Das ist vor allem mit
+    dem **Finger** wichtig: Ohne Griff landet man immer im Textfeld, und das Kästchen bliebe stehen.
+    Ist der Knopf **aus**, lässt sich zusätzlich das **ganze Kästchen** anfassen, und ein Tipp ins
+    Bild legt nichts Neues an.
     Was gerade gilt, steht unter dem Bild. **×** entfernt eine Beschriftung. Ein Tipp **ins Kästchen**
     öffnet die Tastatur und lässt den Cursor stehen – auch wenn sich dabei die Fläche ändert
     (auf dem iPad schiebt die Tastatur das Bild ja zusammen). Kästchen

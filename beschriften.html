@@ -34,10 +34,15 @@
   #huelle{flex:1 1 auto;min-height:0;display:flex;align-items:flex-start;justify-content:center;}
   #box{position:relative;background:#fff;border:1px solid #e6eaf0;border-radius:12px;overflow:hidden;touch-action:none;}
   #cv{position:absolute;inset:0;width:100%;height:100%;display:block;}
-  .mk{position:absolute;width:calc(var(--k)*14px);height:calc(var(--k)*14px);margin:calc(var(--k)*-7px) 0 0 calc(var(--k)*-7px);
+  .mk{position:absolute;width:calc(var(--k)*18px);height:calc(var(--k)*18px);margin:calc(var(--k)*-9px) 0 0 calc(var(--k)*-9px);
     border-radius:50%;background:#2563eb;border:2px solid #fff;box-shadow:0 0 0 1px #2563eb;cursor:grab;}
   #box.setzen{cursor:crosshair;}
-  #box.setzen .mk,#box.setzen .lb{cursor:default;}
+  #box.setzen .lb{cursor:default;}
+  /* Griffe: mit dem Finger sicher zu treffen, ohne dass iOS Text markiert oder scrollt */
+  .mk,.lb .gr{touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;}
+  .lb .gr{flex:0 0 auto;color:#64748b;font-weight:900;letter-spacing:1px;cursor:grab;
+          padding:0 calc(var(--k)*5px) 0 calc(var(--k)*3px);margin-left:calc(var(--k)*-3px);
+          font-size:calc(var(--k)*15px);line-height:1;transform:rotate(90deg);}
   .lin{position:absolute;height:2px;background:#2563eb;transform-origin:0 50%;pointer-events:none;opacity:.75;}
   .lb{position:absolute;transform:translate(-50%,-50%);background:#fff;border:1.5px solid #2563eb;border-radius:9px;
     padding:calc(var(--k)*3px) calc(var(--k)*7px);font:700 calc(var(--k)*14px) -apple-system,sans-serif;color:#1f2430;
@@ -354,11 +359,13 @@ function marken(){ const box=$('box');
         inp.onkeydown=ev=>{ ev.stopPropagation(); if(ev.key==='Enter') inp.blur(); };
         inp.onpointerdown=ev=>ev.stopPropagation();    /* im Feld tippen zieht nicht und gibt den Fokus frei */
         inp.onclick=ev=>{ ev.stopPropagation(); inp.focus(); };   /* auf dem iPad sicher die Tastatur holen */
+        const gr=document.createElement('span'); gr.className='gr'; gr.textContent='∷'; gr.title='Hier anfassen und das Kästchen verschieben';
         const x=document.createElement('span'); x.className='x'; x.textContent='×'; x.title='Beschriftung entfernen';
         x.onpointerdown=ev=>ev.stopPropagation();
         x.onclick=()=>{ D.marken=(D.marken||[]).filter(q=>q.id!==m.id); delete D.zuord[m.id]; zeichnen(); sync(); };
-        lb.append(inp,x); e.inp=inp;
-        zieh(p,m.id,'punkt'); zieh(lb,m.id,'kasten');  /* Punkt und Kästchen ziehen unabhängig voneinander */
+        lb.prepend(gr); lb.append(inp,x); e.inp=inp;
+        /* Punkt und Griff ziehen immer, das ganze Kästchen nur mit ausgeschaltetem „Marken setzen" */
+        zieh(p,m.id,'punkt',true); zieh(gr,m.id,'kasten',true); zieh(lb,m.id,'kasten',false);
       } else {
         lb.onclick=()=>{ if(gewaehlt!=null){ setzen(m.id,gewaehlt); return; }
           if(D.zuord[m.id]){ delete D.zuord[m.id]; geprueft=false; zeichnen(); poolBauen(); sync(); } };
@@ -388,7 +395,9 @@ function marken(){ const box=$('box');
   [...mkEl.keys()].forEach(id=>{ if(!da.has(id)){ const e=mkEl.get(id); e.li.remove(); e.p.remove(); e.lb.remove(); mkEl.delete(id); } });
 }
 /* Punkt oder Kästchen verschieben (nur im Bearbeiten-Modus) – jedes für sich */
-function zieh(el,id,was){ el.onpointerdown=e=>{ if(markeSetzen||malen) return;   /* verschoben wird nur mit ausgeschaltetem Knopf */
+function zieh(el,id,was,immer){ el.onpointerdown=e=>{
+  if(malen) return;                              /* beim Malen zieht nichts */
+  if(!immer&&markeSetzen) return;                /* das ganze Kästchen erst mit ausgeschaltetem Knopf */
   e.preventDefault(); e.stopPropagation();
   try{ el.setPointerCapture(e.pointerId); }catch(_){}
   const box=$('box'), r=box.getBoundingClientRect();
