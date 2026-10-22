@@ -1283,6 +1283,10 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     sich am selben Objekt erst eine Gleichung lösen und dann eine Formel nach einer anderen Größe
     auflösen, ohne ein zweites Werkzeug auf die Tafel zu holen. **A− / A+** des Gleichungslösers stellen auch
     hier die Schrift, und **„🖼 Rechenweg → Tafel"** legt das Bild wie gewohnt neben das Objekt.
+  - **⤴ Teilen** sitzt **neben den Reitern** (bei A− / A+ und „⌨ Formeln") und gibt per **QR-Code
+    genau die Ansicht weiter, die gerade zu sehen ist**: der gewählte Reiter, die Eingaben, der
+    Waage-Verlauf und die eingebettete Formel. Vorher hatte nur der Reiter „Formel umstellen" einen
+    eigenen Teilen-Knopf.
   - **Einfache trigonometrische Gleichungen** (sin, cos, tan mit linearem Argument, z. B. `2sin(x)=1`,
     `cos(2x+30)=0,5`, auch quadratisch wie `2sin^2(x)-sin(x)-1=0` per Substitution): allgemeine Lösung
     mit k ∈ ℤ und alle Lösungen in [0°; 360°[. Umschalter **Grad / Bogenmaß** (dann z. B. π/6, 5π/12).
