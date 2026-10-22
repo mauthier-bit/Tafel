@@ -2643,8 +2643,9 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     ↺ Zurücksetzen. Darunter
     steht der Marken-Editor: **Zeit** (mit „⟲ hierher" auf die aktuelle Stelle), **Art** und die Inhalte.
     Vier Arten: **Hinweis** (Text einblenden), **Multiple Choice** (beliebig viele Antworten, eine oder
-    mehrere richtig), **Wahr oder falsch** (die beiden Felder heißen beim Abspielen **„wahr"** und
-    **„falsch"** – eigene Texte braucht es dafür nicht) und **Kurzantwort** (erwartete Antwort, mehrere Varianten mit
+    mehrere richtig), **Wahr oder falsch** (die beiden Felder stehen **schon beim Bearbeiten** fest:
+    oben **wahr**, unten **falsch** – man setzt nur noch den Punkt **„richtig"** in die passende
+    Zeile; beim Abspielen heißen sie genauso) und **Kurzantwort** (erwartete Antwort, mehrere Varianten mit
     `|` getrennt). Die Marken sitzen als Fähnchen auf der **Zeitleiste**; ein Tipp darauf springt hin.
   - Im **Benutzen-Modus** läuft das Video und **hält an jeder Marke an**: Die Frage legt sich über das
     Bild, die Klasse antwortet, richtig wird grün und falsch rot gezeigt, **↺ Noch einmal** erlaubt einen
