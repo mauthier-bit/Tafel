@@ -33,6 +33,14 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   gespeichert; „Palette zurücksetzen" stellt die Standardfarben wieder her.
   Neben den festen Farben gibt es einen **bunten Punkt** – ein Tipp öffnet den vollen Farbwähler
   für beliebige Farben (auch bei der Objektfarbe im Kontextmenü).
+- **Farb- und Dicken-Menü blendet sich von selbst aus:** Nach der Wahl einer **Farbe** oder einer
+  **Dicke/Größe** bleibt das Menü des Stift-/Marker-/Radierer-Knopfes noch kurz stehen und **blendet
+  dann langsam aus** – man muss es also nicht mit einem zweiten Tipp auf das Werkzeug schließen. Tippt
+  man während des Ausblendens hinein, ist es sofort wieder da. Einstellbar unter **Einstellungen →
+  Werkzeugleisten** direkt unter der Farbpalette: der Schalter **„Farb- und Dicken-Menü von selbst
+  ausblenden"** (aus = es bleibt offen wie früher), **„stehen lassen"** (Wartezeit) und
+  **„ausblenden in"** (Dauer des Ausblendens), beide **0 s bis 3 s** in Schritten von 0,1 s,
+  „Standard" stellt 0,5 s / 0,5 s wieder her. Die Einstellung bleibt geräteweit gespeichert.
 - **Formen**, in dieser Reihenfolge: **Linie** und **Pfeil**, dann **Kreis** (aufziehen) und **Ellipse**,
   dann die Dreiecke – **gleichseitig**, **gleichschenklig**, **rechtwinklig** –, dann die Vierecke –
   **Rechteck**, **Quadrat**, **Parallelogramm**, **Trapez**, **Raute**, **Drachenviereck** –, dann

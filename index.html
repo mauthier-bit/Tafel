@@ -231,6 +231,7 @@
   #clockpop{z-index:23;}        /* über der schwebenden Uhr – sonst verdeckt sie ihr eigenes Fenster */
   .pop{position:fixed;z-index:19;background:var(--bar);border-radius:14px;padding:10px;display:none;flex-direction:column;gap:10px;box-shadow:var(--shadow);}
   .pop.show{display:flex;}
+  .pop.weg{opacity:0;transition:opacity var(--popweg,.5s) ease;}   /* blendet nach der Wahl langsam aus; Antippen haelt es offen */
   .pop .toggle{color:var(--text);}
   .swatches{display:grid;grid-template-columns:repeat(9,26px);gap:6px;}
   input.sw{-webkit-appearance:none;appearance:none;padding:0;box-sizing:border-box;}
@@ -1532,6 +1533,19 @@
       <div id="palEdit"></div>
       <button class="btn" id="palReset" style="flex:0 0 auto;white-space:nowrap">Palette zurücksetzen</button>
     </div>
+    <div class="toggle" style="margin-top:12px"><span>Farb- und Dicken-Menü von selbst ausblenden<br><small style="color:#888">(sonst bleibt es offen, bis man wieder auf das Werkzeug tippt)</small></span><div class="sw2 on" id="popZuSw"></div></div>
+    <div id="popZuRows">
+      <div style="display:flex;align-items:center;gap:6px;margin-top:6px;font-size:13px">
+        <span style="flex:1;color:#555">stehen lassen</span>
+        <button class="stepbtn" id="pzWm">−</button><span class="stepv" id="pzWv">0,5 s</span><button class="stepbtn" id="pzWp">+</button>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;margin-top:6px;font-size:13px">
+        <span style="flex:1;color:#555">ausblenden in</span>
+        <button class="stepbtn" id="pzDm">−</button><span class="stepv" id="pzDv">0,5 s</span><button class="stepbtn" id="pzDp">+</button>
+        <button class="stepbtn" id="pzR" title="Standard" style="width:auto;padding:6px 9px;font-size:13px;font-weight:600">Standard</button>
+      </div>
+    </div>
+    <div class="hint" style="margin-top:6px">Nach der Wahl einer Farbe oder Dicke bleibt das Menü noch <b>stehen</b> und blendet dann langsam <b>aus</b> – so muss man es nicht mit einem zweiten Tipp auf das Werkzeug schließen. Beides ist von 0 s bis 3 s einstellbar; ein Tipp ins Menü während des Ausblendens holt es zurück.</div>
     <label class="lbl">Abstand der oberen Leisten</label>
     <div style="display:flex;align-items:center;gap:6px;margin-top:4px;font-size:13px">
       <span style="flex:1;color:#555">zusätzlich nach unten</span>
@@ -1626,6 +1640,9 @@ let eraserWidth=14, eraserPos=null;   // Radierer hat seine eigene Größe (Radi
 const ERAS_F=1.75;                    // Umrechnung Stärkestufe → Radierer-Radius (Stufe 8 ergibt die bisherigen 14)
 let spotForm='ellipse';          /* Scheinwerfer: 'ellipse' (rund) oder 'rect' (Kasten) */
 let laserMs=700;                 /* so lange leuchtet die Laserspur nach */
+let popZu=true;                  /* Farb-/Dickenmenue nach der Wahl von selbst schliessen */
+let popWarteMs=500;              /* so lange bleibt es danach noch stehen */
+let popWegMs=500;                /* so lange dauert das Ausblenden */
 let toolColors={pen:'#111111', line:'#111111', marker:'#eab308', text:'#111111', laser:'#ff2828'};   // Stift, Linien/Formen, Marker, Text und Laserpointer merken sich ihre Farbe getrennt
 const LINE_TOOLS=['shape','arrow','circle','gerade','arc'];
 let arrowBothDef=false;                       // alt: Doppelpfeil (bleibt für ältere Tafelbilder lesbar)
@@ -3168,7 +3185,13 @@ $('t-shape').onclick=()=>{ const sh=$('shapepop');
   if(tool==='shape'&&sh.classList.contains('show')){ sh.classList.remove('show'); return; }
   setTool('shape'); };
 /* Widget-Gruppen-Popovers (wie „Formen") */
-function closeAllPops(){ document.querySelectorAll('.pop.show').forEach(p=>p.classList.remove('show')); }
+function closeAllPops(){ document.querySelectorAll('.pop').forEach(popBleib); document.querySelectorAll('.pop.show').forEach(p=>p.classList.remove('show')); }
+/* Nach der Wahl einer Farbe oder Dicke schliesst sich das Menue von selbst:
+   eine halbe Sekunde stehen lassen, dann in einer halben Sekunde ausblenden. */
+function popSpaeterZu(p){ popBleib(p); if(!popZu)return;
+  p._zuT=setTimeout(()=>{ p.classList.add('weg');
+    p._wegT=setTimeout(()=>{ p.classList.remove('show','weg'); p._zuT=p._wegT=null; },popWegMs+40); },popWarteMs); }
+function popBleib(p){ if(!p)return; clearTimeout(p._zuT); clearTimeout(p._wegT); p._zuT=p._wegT=null; p.classList.remove('weg'); }
 function togglePop(popId,anchorId){ const p=$(popId), show=!p.classList.contains('show'); const a=anch(anchorId); closeAllPops(); if(show){ p.classList.add('show'); place(p,a); } }
 $('w-grp-time').onclick=()=>togglePop('timepop','w-grp-time');
 $('w-grp-class').onclick=()=>togglePop('classpop','w-grp-class');
@@ -3243,7 +3266,8 @@ $('rulClose').onclick=()=>$('rulerpop').classList.remove('show');
 $('geoClose').onclick=()=>$('geopop').classList.remove('show');
 $('t-ruler').onclick=()=>{ rulerVisible=!rulerVisible; if(!rulerVisible)$('rulerpop').classList.remove('show'); if(rulerVisible&&!ruler.init){ruler.cx=W/2;ruler.cy=H/2;ruler.init=true;} $('t-ruler').classList.toggle('active',rulerVisible); markDirty(); };
 $('t-geo').onclick=()=>{ geoVisible=!geoVisible; if(!geoVisible)$('geopop').classList.remove('show'); if(geoVisible&&!geo.init){geo.cx=W/2;geo.cy=H*0.62;geo.size=Math.min(PXCM*15,W*0.9);geo.init=true;} $('t-geo').classList.toggle('active',geoVisible); markDirty(); };
-$('t-color').onclick=()=>{ const p=$('penpop'); const a=anch('t-color'); const show=!p.classList.contains('show'); p.classList.toggle('show',show); if(show){ place(p,a); avoidOverlap(p,$('shapepop')); } };
+$('t-color').onclick=()=>{ const p=$('penpop'); const a=anch('t-color'); const show=!p.classList.contains('show'); popBleib(p); p.classList.toggle('show',show); if(show){ place(p,a); avoidOverlap(p,$('shapepop')); } };
+$('penpop').addEventListener('pointerdown',()=>popBleib($('penpop')),true);   // weiter bedienen haelt das Menue offen
 $('t-undo').onclick=()=>{ if(polyDraft){ polyDraft.pts.pop(); if(!polyDraft.pts.length) polyDraft=null; markDirty(); return; } if(!undoStep()) toast('Nichts zum Rückgängigmachen'); };
 $('t-redo').onclick=()=>{ if(!redoStep()) toast('Nichts zum Wiederherstellen'); };
 $('t-clear').onclick=()=>{if(confirm('Aktuelle Seite leeren?')){const p=page();pushUndo();p.objects=[];p.bg=null;p._img=null;selection=[];refreshProps();refreshEmbedUI();markDirty();scheduleAutosave();}};
@@ -3257,17 +3281,29 @@ function paintSwatches(reg){ const {el,onpick}=reg; const rb=el.querySelector('.
     el.insertBefore(d,rb||null); }); }
 /* Palette geändert → alle Farbreihen neu aufbauen und Markierungen setzen */
 function repaintPalette(){ swatchRegs.forEach(paintSwatches); markSwatch(color); refreshPropActive(); refreshToolPops(); }
-buildSwatches($('swatches'),c=>{ pickColor(c); });
+buildSwatches($('swatches'),c=>{ pickColor(c); popSpaeterZu($('penpop')); });
 function addRainbow(el,apply){ const inp=document.createElement('input'); inp.type='color'; inp.className='sw rainbow'; inp.title='Weitere Farben …'; inp.value='#000000';
   inp.oninput=()=>{ el.querySelectorAll('.sw').forEach(s=>s.classList.remove('active')); inp.classList.add('active'); apply(inp.value); };
   el.appendChild(inp); return inp; }
-addRainbow($('swatches'),c=>{ pickColor(c); });
+addRainbow($('swatches'),c=>{ pickColor(c); }).addEventListener('change',()=>popSpaeterZu($('penpop')));
 function pickColor(c){ color=c; toolColors[colKey()]=c; $('colorDot').style.background=c; if(editing)TE.style.color=c; saveUI(); }
 /* Farbpalette zusammenstellen (Einstellungen → Werkzeugleisten) */
 function buildPalEdit(){ const el=$('palEdit'); el.innerHTML='';
   palette.forEach((c,i)=>{ const inp=document.createElement('input'); inp.type='color'; inp.value=c; inp.title='Farbe '+(i+1);
     inp.oninput=()=>{ palette[i]=inp.value; repaintPalette(); saveUI(); }; el.appendChild(inp); }); }
 $('palReset').onclick=()=>{ palette=PAL_DEF.slice(); buildPalEdit(); repaintPalette(); saveUI(); toast('Farbpalette zurückgesetzt'); };
+/* Ausblenden des Farb-/Dickenmenues: ob, wie lange stehen bleiben, wie lange ausblenden */
+function popZuUI(){ $('popZuSw').classList.toggle('on',popZu); $('popZuRows').style.display=popZu?'':'none';
+  const t=ms=>(ms/1000).toFixed(1).replace('.',',')+' s';
+  $('pzWv').textContent=t(popWarteMs); $('pzDv').textContent=t(popWegMs);
+  document.documentElement.style.setProperty('--popweg',(popWegMs/1000)+'s'); }
+$('popZuSw').onclick=()=>{ popZu=!popZu; if(!popZu) popBleib($('penpop')); popZuUI(); saveUI(); };
+const pzWarte=v=>{ popWarteMs=Math.max(0,Math.min(3000,v)); popZuUI(); saveUI(); };
+const pzWeg=v=>{ popWegMs=Math.max(0,Math.min(3000,v)); popZuUI(); saveUI(); };
+$('pzWm').onclick=()=>pzWarte(popWarteMs-100); $('pzWp').onclick=()=>pzWarte(popWarteMs+100);
+$('pzDm').onclick=()=>pzWeg(popWegMs-100);     $('pzDp').onclick=()=>pzWeg(popWegMs+100);
+$('pzR').onclick=()=>{ popZu=true; popWarteMs=500; popWegMs=500; popZuUI(); saveUI(); };
+popZuUI();
 function markSwatch(c){ const lc=String(c||'').toLowerCase();
   $('swatches').querySelectorAll('.sw').forEach(s=>s.classList.toggle('active',(s.dataset.c||'').toLowerCase()===lc)); }
 function markWidth(){ const w=(tool==='marker')?markerWidth/4:(tool==='eraser'?eraserWidth/ERAS_F:penWidth);
@@ -3281,7 +3317,7 @@ function syncPenPop(){ const rad=(tool==='eraser');
   $('swatches').style.display=rad?'none':'flex'; $('penCap').style.display=rad?'block':'none'; }
 const wEl=$('widths');
 widths.forEach((w,i)=>{const b=document.createElement('button');b.className='wbtn'+(i===2?' active':'');const dot=document.createElement('i');dot.style.width=dot.style.height=punktGroesse(w)+'px';b.appendChild(dot);
-  b.onclick=()=>{if(tool==='marker')markerWidth=w*4;else if(tool==='eraser')eraserWidth=w*ERAS_F;else{penWidth=w;textSize=Math.round(14+w*4);}wEl.querySelectorAll('.wbtn').forEach(x=>x.classList.remove('active'));b.classList.add('active');saveUI();markDirty();};wEl.appendChild(b);});
+  b.onclick=()=>{if(tool==='marker')markerWidth=w*4;else if(tool==='eraser')eraserWidth=w*ERAS_F;else{penWidth=w;textSize=Math.round(14+w*4);}wEl.querySelectorAll('.wbtn').forEach(x=>x.classList.remove('active'));b.classList.add('active');saveUI();markDirty();popSpaeterZu($('penpop'));};wEl.appendChild(b);});
 const shapeDefs=[['line','<path d="M4 20 20 4"/>'],['arrow','<path d="M4 20 20 4M20 4h-6M20 4v6"/>'],['kreis','<circle cx="12" cy="12" r="8"/>'],['ellipse','<ellipse cx="12" cy="12" rx="9" ry="6"/>'],['etriangle','<path d="M12 4.5 20.2 19H3.8Z"/>'],['triangle','<path d="M12 3 17.6 20.5H6.4Z"/>'],['rtriangle','<path d="M5 5v14h14Z"/>'],['rect','<rect x="4" y="7" width="16" height="10"/>'],['square','<rect x="6" y="6" width="12" height="12"/>'],['parallelogram','<path d="M7 6h13l-3 12H4Z"/>'],['trapez','<path d="M8 6h8l3 12H5Z"/>'],['rhombus','<path d="M12 3 20 12 12 21 4 12Z"/>'],['kite','<path d="M12 3 19 10 12 21 5 10Z"/>'],['hexagon','<path d="M7.5 4.2h9L21 12l-4.5 7.8h-9L3 12Z"/>'],['polygon','<path d="M5 18 4 9l7-5 9 5-3 9Z"/><circle cx="5" cy="18" r="1.6" fill="currentColor"/><circle cx="4" cy="9" r="1.6" fill="currentColor"/><circle cx="11" cy="4" r="1.6" fill="currentColor"/><circle cx="20" cy="9" r="1.6" fill="currentColor"/><circle cx="17" cy="18" r="1.6" fill="currentColor"/>'],['cuboid','<path d="M4 9h11v9H4Z"/><path d="M4 9l5-4h11M15 9l5-4v9l-5 4"/>'],['prism','<path d="M3 20h9L7.5 12Z"/><path d="M12 20l7-6-4.5-8L7.5 12"/><path d="M3 20l7-6h9" stroke-dasharray="2 2"/>'],['pyramid','<path d="M12 4 4 18l9 2 7-4Z"/><path d="M12 4 13 20"/>'],['cylinder','<ellipse cx="12" cy="6" rx="7" ry="2.4"/><path d="M5 6v11M19 6v11"/><path d="M5 17a7 2.4 0 0 0 14 0"/>'],['cone','<path d="M12 4 5 17M12 4 19 17"/><path d="M5 17a7 2.4 0 0 0 14 0"/>']];
 const shEl=$('shapeList');
 /* Kennungen sind historisch gewachsen: 'triangle' zeichnet die gleichschenklige, 'gtriangle' die allgemeine Form */
@@ -4634,17 +4670,18 @@ $('pageMenu').addEventListener('pointerdown',e=>e.stopPropagation());
 document.addEventListener('pointerdown',e=>{ if($('pageMenu').classList.contains('show') && !e.target.closest('#pageMenu') && !e.target.closest('.pmBtn') && !e.target.closest('#ppMore')) closePageMenu(); }, true);
 $('setMin').onclick=()=>{ $('settingsbar').classList.toggle('min'); rotateChev('setMin',$('settingsbar').classList.contains('min'),true); saveUI(); positionAnnoToggle(); };
 function rotateChev(id,min){ $(id).querySelector('svg').style.transform=min?'scaleX(-1)':''; }
-function saveUI(){ try{ localStorage.setItem('tafel_ui',JSON.stringify({page:$('pagebar').classList.contains('min'),set:$('settingsbar').classList.contains('min'),side:mainbarSide,theme:barTheme,tint:barTint,favs,pxcm:PXCM,pal:palette,cols:toolColors,rec:shapeRecog,wv:2,pp:propPos,ppH:propHint,ent:camEntz,hell:camHell,ob:obenPx,pw:penWidth,mw:markerWidth,ew:eraserWidth,sz:streckZeigen,sa:shapeAlpha,spf:spotForm,lup:lupeAn,lupz:lupeZoom,lms:laserMs,rul:{len:ruler.len,color:ruler.color,mm:ruler.mm,nums:ruler.nums,pct:ruler.pct,fs:ruler.fs},geo:{size:geo.size,color:geo.color,mm:geo.mm,nums:geo.nums,fs:geo.fs}})); }catch(e){} }
+function saveUI(){ try{ localStorage.setItem('tafel_ui',JSON.stringify({page:$('pagebar').classList.contains('min'),set:$('settingsbar').classList.contains('min'),side:mainbarSide,theme:barTheme,tint:barTint,favs,pxcm:PXCM,pal:palette,cols:toolColors,rec:shapeRecog,wv:2,pp:propPos,ppH:propHint,ent:camEntz,hell:camHell,ob:obenPx,pw:penWidth,mw:markerWidth,ew:eraserWidth,sz:streckZeigen,sa:shapeAlpha,spf:spotForm,lup:lupeAn,lupz:lupeZoom,lms:laserMs,pz:popZu,pzw:popWarteMs,pzd:popWegMs,rul:{len:ruler.len,color:ruler.color,mm:ruler.mm,nums:ruler.nums,pct:ruler.pct,fs:ruler.fs},geo:{size:geo.size,color:geo.color,mm:geo.mm,nums:geo.nums,fs:geo.fs}})); }catch(e){} }
 function restoreUI(){ try{ const u=JSON.parse(localStorage.getItem('tafel_ui')||'{}'); if(u.page){$('pagebar').classList.add('min');pageChev(true);} if(u.set){$('settingsbar').classList.add('min');rotateChev('setMin',true);} if(u.side==='right'||u.side==='bottom')mainbarSide=u.side; if(u.theme==='light'||u.theme==='dark')barTheme=u.theme; if(u.tint&&typeof u.tint==='object')barTint=Object.assign(barTint,u.tint); if(Array.isArray(u.favs))favs=u.favs.filter(f=>f!=='w-export').slice(0,FAV_MAX);   // PDF-Export sitzt jetzt in den Einstellungen
   if(+u.pxcm>0&&Math.abs(+u.pxcm-37.8)>0.2) PXCM=Math.max(28,Math.min(64,+u.pxcm));   // alter Standard 37,8 → neuer, am iPad gemessener Wert
   if(Array.isArray(u.pal)&&u.pal.length===palette.length&&u.pal.every(c=>/^#[0-9a-f]{6}$/i.test(c))) palette=u.pal.slice();
   if(u.rec){ shapeRecog=true; $('shapeRecogSw').classList.add('on'); }
   if(u.cols&&typeof u.cols==='object')Object.assign(toolColors,u.cols); if(u.wv===2){ if(+u.pw>0)penWidth=+u.pw; if(+u.mw>0)markerWidth=+u.mw; } if(+u.ew>0)eraserWidth=+u.ew; if(+u.sa>=0&&+u.sa<=1)shapeAlpha=+u.sa; propHint=!!u.ppH; if(+u.hell>=0&&+u.hell<=100) camHell=+u.hell; if(+u.ob>=0&&+u.ob<=48) obenPx=+u.ob; if(u.ent&&Array.isArray(u.ent.q)&&u.ent.q.length===4) camEntz={an:!!u.ent.an,ar:+u.ent.ar||0,q:u.ent.q.map(p=>({x:+p.x||0,y:+p.y||0}))}; if(u.pp&&isFinite(u.pp.l)&&isFinite(u.pp.t)) propPosSetzen({l:+u.pp.l,t:+u.pp.t}); streckZeigen=!!u.sz;   // ältere Stärken (4 Stufen) verwerfen
   if(u.spf==='rect'||u.spf==='ellipse') spotForm=u.spf; if(+u.lms>=100&&+u.lms<=3000) laserMs=+u.lms;
+  if(typeof u.pz==='boolean') popZu=u.pz; if(+u.pzw>=0&&+u.pzw<=3000) popWarteMs=+u.pzw; if(+u.pzd>=0&&+u.pzd<=3000) popWegMs=+u.pzd;
   lupeAn=!!u.lup; if(+u.lupz>=1&&+u.lupz<=6) lupeZoom=+u.lupz;
   if(u.rul)Object.assign(ruler,{len:+u.rul.len||ruler.len,color:u.rul.color||ruler.color,mm:u.rul.mm!==false,nums:u.rul.nums!==false,pct:!!u.rul.pct,fs:+u.rul.fs||11});
   if(u.geo)Object.assign(geo,{size:+u.geo.size||geo.size,color:u.geo.color||geo.color,mm:u.geo.mm!==false,nums:u.geo.nums!==false,fs:+u.geo.fs||11});
-  applyBarsState(); refreshBarTheme(); renderFavs(); buildFavList(); buildPalEdit(); repaintPalette(); applyToolColor(); refreshCal(); spotSegUI(); lasUI(); obenUI(); }catch(e){} }
+  applyBarsState(); refreshBarTheme(); renderFavs(); buildFavList(); buildPalEdit(); repaintPalette(); applyToolColor(); refreshCal(); spotSegUI(); lasUI(); popZuUI(); obenUI(); }catch(e){} }
 
 /* ---- Leisten per Wischgeste weg/hervor (Präsentationsmodus) ---- */
 /* Reiter im Einstellungsfenster */
