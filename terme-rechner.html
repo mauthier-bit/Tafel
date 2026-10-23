@@ -140,6 +140,7 @@ table.vt td.eq{color:var(--ok);font-weight:700} table.vt td.ne{color:var(--bad);
 .ft{display:inline-block;background:#0f1526;border:1px solid #3a4570;border-radius:8px;padding:1px 8px;cursor:grab;touch-action:none;position:relative}
 .ft.br{background:#161d33}
 .jn{display:inline-block;width:18px;text-align:center;color:var(--muted)}
+.jn.can{position:relative;z-index:5}   /* der leuchtende Punkt liegt vor dem Nachbarn (Klammer) */
 .jn.can button{width:24px;height:24px;border-radius:50%;border:none;background:var(--accent);color:#20160a;font-weight:900;font-size:18px;line-height:22px;cursor:pointer;padding:0;animation:pulse 1.6s infinite}
 .sj{display:inline-block;width:8px}
 .sj.can{width:34px;text-align:center}
@@ -633,12 +634,37 @@ function opDist(items,i){ const r=clone(items); const it=r[i]; const bi=it.f.fin
   const others=it.f.filter((_,j)=>j!==bi); const outer=(it.s<0?MI:'')+bodyHTML(others);
   r.splice(i,1,...b.items.map(x=>({s:it.s*x.s,f:[...clone(others),...clone(x.f)]})));
   return {items:r,why:`Distributivgesetz: ${outer} mal <b>jeden</b> Summanden der Klammer`+(it.s<0?' – das Minus gehört zum Faktor, deshalb drehen sich alle Rechenzeichen um.':'.')} }
-/* ── Kurzform: Zwischen Zahl und Variable darf der Malpunkt wegbleiben (2 · x = 2x) ── */
-const canShort=(a,b)=>!b.kz&&b.k==='v'&&(a.k==='n'||(a.k==='v'&&a.n!==b.n));
-function opShort(items,i,j){ const r=clone(items); r[i].f[j].kz=true;
-  return {items:r,why:`Kurzform: Zwischen ${r[i].f[j-1].k==='n'?'Zahl und Variable':'den Variablen'} darf der Malpunkt wegbleiben – ${bodyHTML(r[i].f.slice(grpStart(r[i].f,j),j+1))}.`} }
+/* ── Einzelnes Produkt vereinfachen: genau das, was der Knopf „Produkte vereinfachen“ tut,
+      aber nur für die beiden Faktoren neben dem angetippten Malpunkt (x · 2 = 2x, b · a = ab) ── */
+const canShort=(a,b)=>!b.kz&&a.k!=='b'&&b.k!=='b';
+function opShort(items,i,j){ const r=clone(items); const it=r[i], f=it.f, a=grpStart(f,j);
+  const grp=f.slice(a,j+1).map((x,k)=>k?x:Object.assign({},x,{kz:false}));
+  const alt=grp.map(x=>factorHTML(x)).join(DOT);
+  const ni=monoToItem(monoOfF(grp));
+  const neu=ni.f.map((x,k)=>Object.assign({},x,{kz:k>0}));
+  f.splice(a,j-a+1,...neu); it.s*=ni.s;
+  const nh=bodyHTML(ni.f);
+  let why=`Produkt vereinfacht: ${alt} = ${nh}`;
+  const zahl=grp.filter(x=>x.k==='n').length, gleich=grp.some((x,k)=>k&&x.k==='v'&&grp.some((y,m)=>m<k&&y.k==='v'&&y.n===x.n));
+  why+=zahl>1?' (Zahlen multipliziert).':gleich?' (gleiche Variablen als Potenz geschrieben).'
+      :' – Zahl nach vorne, Variablen alphabetisch; der Malpunkt darf dann wegbleiben.';
+  if(ni.s<0) why+=' Das Minus wird zum Rechenzeichen des Summanden.';
+  return {items:r,why} }
 /* zusammengeklebte Faktoren gehören beim Verteilen zusammen */
 function grpStart(f,j){ let a=j-1; while(a>0&&f[a].kz) a--; return a }
+/* ── Faktor rechts von der Klammer: auch er darf auf jeden Summanden verteilt werden ── */
+function grpEnd(f,j){ let b=j; while(b+1<f.length&&f[b+1].kz) b++; return b }
+function opDistRight(items,i,j){ const r=clone(items); const it=r[i], bi=j-1, b=it.f[bi], e=grpEnd(it.f,j);
+  const grp=it.f.slice(j,e+1).map((x,k)=>k?x:Object.assign({},x,{kz:false}));
+  const rest=it.f.filter((_,k)=>k<bi||k>e);
+  const gh=bodyHTML(grp);
+  const prods=b.items.map(x=>({s:x.s,f:[...clone(x.f),...clone(grp)].map((f0,fi)=>fi?f0:Object.assign({},f0,{kz:false}))}));
+  const rechnung=b.items.map(x=>(x.s<0?'('+MI+bodyHTML(x.f)+')':bodyHTML(x.f))+' · '+gh).join(' + ');
+  let why=`Distributivgesetz: <b>jeden</b> Summanden der Klammer mal <b>${gh}</b> – ${rechnung}.`;
+  if(!rest.length){ r.splice(i,1,...prods.map(pr=>({s:it.s*pr.s,f:pr.f}))); }
+  else { it.f=[...rest,{k:'b',items:prods,e:1}];
+    why+=' Der übrige Faktor bleibt vor der Klammer stehen.'; }
+  return {items:r,why} }
 /* ── Nur den Faktor links vom angetippten Malpunkt in die Klammer verteilen ── */
 function opDistAt(items,i,j){ const r=clone(items); const it=r[i], b=it.f[j], a=grpStart(it.f,j);
   const grp=it.f.slice(a,j), rest=it.f.filter((_,k)=>k<a||k>j);
@@ -974,8 +1000,16 @@ function render(){
               const ziele=[...klammer.querySelectorAll('.bsum')];
               animiere(grpEl,ziele,()=>apply(opDistAt(U.items,i,j))); };
             jn.addEventListener('pointerdown',e=>e.stopPropagation()) }
+          else if(it.f[j-1].k==='b'&&it.f[j-1].e===1&&x.k!=='b'){ jn.classList.add('can','dist');   /* Faktor hinter der Klammer */
+            jn.innerHTML='<button title="ausmultiplizieren: jeden Summanden der Klammer mit diesem Faktor malnehmen">·</button>';
+            jn.querySelector('button').onclick=()=>{ stop();
+              const fts=sm.querySelectorAll(':scope>.ft');
+              const grpEl=fts[j], klammer=fts[j-1];
+              const ziele=[...klammer.querySelectorAll('.bsum')];
+              animiere(grpEl,ziele,()=>apply(opDistRight(U.items,i,j))); };
+            jn.addEventListener('pointerdown',e=>e.stopPropagation()) }
           else if(canShort(it.f[j-1],x)){ jn.classList.add('can','kurz');
-            jn.innerHTML='<button title="Kurzform ohne Malpunkt schreiben">·</button>';
+            jn.innerHTML='<button title="dieses Produkt vereinfachen (Zahlen mal nehmen, gleiche Variablen als Potenz, Zahl nach vorne)">·</button>';
             jn.querySelector('button').onclick=()=>userApply(opShort(U.items,i,j)); jn.addEventListener('pointerdown',e=>e.stopPropagation()) }
           else jn.textContent='·';
           sm.appendChild(jn) }

@@ -2871,13 +2871,17 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   **selbst umsortieren und zusammenfassen** lassen (Drag & Drop); dazu **Tipp**, **nächsten Schritt
   ausführen**, **alles vorführen** (mit Tempo), **Gleichartiges färben**, Textmarker und ein
   mitwachsender **Rechenweg**.
-  - **Die Malpunkte sind Knöpfe.** Jeder Punkt, an dem etwas geht, **leuchtet**: Ein **gelber** Punkt
-    fasst zusammen (2 · 3 = 6, x · x = x²), ein **blauer** schreibt die **Kurzform** ohne Malpunkt
-    (2 · x → **2x**), und ein **grüner** Punkt vor einer Klammer **multipliziert aus** – dabei fliegt
-    der Faktor sichtbar auf **jeden** Summanden der Klammer, und im Rechenweg steht die Rechnung
-    einzeln da (x · 1 + x · x + x · y). Verteilt wird genau der Faktor **links vom Punkt**: Bei
-    2 · x · (1 + x + y) also erst nur das **x** (die 2 bleibt vor der Klammer stehen) – schreibt man
-    vorher mit dem blauen Punkt **2x**, wird mit **2x** ausmultipliziert.
+  - **Die Malpunkte sind Knöpfe.** Jeder Punkt, an dem etwas geht, **leuchtet** – und liegt dabei
+    immer **vor** seinen Nachbarn, auch vor einer Klammer gleich rechts daneben. Ein **gelber** Punkt
+    fasst zusammen (2 · 3 = 6, x · x = x²), ein **blauer** vereinfacht **dieses eine Produkt** genau
+    so, wie es der Knopf „Produkte vereinfachen" für den ganzen Term tut: Zahl nach vorne, Variablen
+    alphabetisch, Malpunkt weg – **x · 2 → 2x**, **b · a → ab**, **a · 3 → 3a**. Ein **grüner** Punkt
+    an einer Klammer **multipliziert aus** – dabei fliegt der Faktor sichtbar auf **jeden** Summanden
+    der Klammer, und im Rechenweg steht die Rechnung einzeln da (x · 1 + x · x + x · y). Das geht
+    **von beiden Seiten**: Der Punkt **vor** der Klammer verteilt den Faktor links davon
+    (2 · x · (1 + x + y) → erst nur das **x**, die 2 bleibt vor der Klammer stehen), der Punkt
+    **hinter** der Klammer den Faktor rechts davon ((1 + x + y) · x → **1 · x + x · x + y · x**).
+    Man muss den Faktor also nicht mehr erst nach vorne schieben.
   - **Ausklammern durch Antippen:** Man tippt in einem Summanden den Teil an, den man ausklammern
     möchte. Steckt er in **jedem** Summanden, wandert er animiert vor die Klammer – bei
     2x + x² − xy also **x** → **x · (2 + x − y)**; tippt man die **2** in 4x + 6y an, kommt
