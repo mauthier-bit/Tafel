@@ -262,11 +262,13 @@
       <button class="tog" data-o="marks" title="Besondere Winkel am Kreis markieren">Besondere Winkel</button>
       <button class="tog" data-o="rad" title="Winkel am Kreis im Bogenmaß beschriften">Bogenmaß</button>
       <span style="flex:1"></span>
-      <span id="shotBtns" style="display:contents"></span><button class="tog" id="fsM" title="Schrift kleiner">A−</button><button class="tog" id="fsP" title="Schrift größer">A+</button>
+      <span id="teilenBtn" style="display:inline-flex"></span><span id="shotBtns" style="display:contents"></span><button class="tog" id="fsM" title="Schrift kleiner">A−</button><button class="tog" id="fsP" title="Schrift größer">A+</button>
     </div>
   </div>
 </div>
 <script src="shot.js"></script>
+<script src="vendor/qrcode.min.js"></script>
+<script src="teilen.js"></script>
 <script>
 "use strict";
 const $=id=>document.getElementById(id);
@@ -440,11 +442,12 @@ function layout(){ const wide=innerWidth>=innerHeight*1.15; $('wrap').classList.
 let syncT=null;
 function post(){ if(window.parent===window) return; /* allein geöffnet: nicht an sich selbst senden */ try{ parent.postMessage({type:'embed-data',data},'*'); }catch(e){} }
 function sync(now){ if(now){ clearTimeout(syncT); syncT=null; post(); return; } if(!syncT) syncT=setTimeout(()=>{ syncT=null; post(); },200); }
-addEventListener('message',e=>{ if(window.parent===window||e.source!==window.parent) return;   // eigene Nachrichten ignorieren
-  if(e.data&&e.data.type==='embed-data'&&e.data.data){ const d=e.data.data, def=defaults();
+function uebernehmen(d){ const def=defaults();
   data=Object.assign(def,d,{show:Object.assign(def.show,d.show||{})});
   data.a=norm(+data.a||0); if(!isFinite(+data.v))data.v=0.5; if(!['sin','cos','tan'].includes(data.fn))data.fn='sin'; if(data.mode!=='value')data.mode='angle';
-  render(); } });
+  render(); }
+addEventListener('message',e=>{ if(window.parent===window||e.source!==window.parent) return;   // eigene Nachrichten ignorieren
+  if(e.data&&e.data.type==='embed-data'&&e.data.data) uebernehmen(e.data.data); });
 
 /* ---------- Bedienung ---------- */
 document.querySelectorAll('#modeSeg button').forEach(b=>b.onclick=()=>{ data.mode=b.dataset.m; render(); sync(true); });
@@ -483,6 +486,11 @@ cv.addEventListener('touchstart',e=>e.preventDefault(),{passive:false});
 cv.addEventListener('touchmove',e=>e.preventDefault(),{passive:false});
 
 window.addEventListener('resize',()=>{ layout(); resize(); });
+/* Teilen: der QR-Code gibt genau die eingestellte Ansicht weiter */
+if(window.TafelTeilen){
+  if(!TafelTeilen.istGeteilt()) TafelTeilen.knopf($('teilenBtn'),'einheitskreis.html',()=>({w:'ek', d:data}),{cls:'tog'});
+  else window.addEventListener('load',()=>{ TafelTeilen.empfangen()
+    .then(p=>{ if(p&&p.w==='ek'&&p.d) uebernehmen(p.d); }).catch(()=>{}); }); }
 window.addEventListener('load',()=>{ render(); resize();
   if(window.ResizeObserver){ new ResizeObserver(resize).observe(cv); }
   try{ parent.postMessage({type:'embed-ready'},'*'); }catch(e){} });

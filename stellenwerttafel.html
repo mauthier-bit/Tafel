@@ -233,6 +233,8 @@
     <button class="tbtn" id="t-flaeche">Flächen</button>
     <button class="tbtn" id="t-volumen">Volumen</button>
     <button class="tbtn" id="t-masse">Massen</button>
+    <button class="tbtn" id="t-zeit">Zeit</button>
+    <button class="tbtn" id="t-misch" title="Wert zusätzlich in gemischten Einheiten zeigen (z. B. 1 h 30 min)">gemischte Einheiten</button>
     <button class="tbtn" id="t-pct" title="Zweites Komma an der Hundertstel-Stelle → Prozent-Darstellung" style="display:none">%-Komma</button>
     <button class="tbtn" id="t-bruch" title="Zahl als Bruch – Nenner = markierte Stelle (Stelle vorher antippen)" style="display:none">Bruch</button>
     <button class="tbtn" id="bHelp" title="Kurzanleitung ein-/ausblenden" style="border-radius:50%;width:28px;padding:0">?</button>
@@ -252,20 +254,39 @@ const UNITS={
   flaeche:[['km²',2],['ha',2],['a',2],['m²',2],['dm²',2],['cm²',2],['mm²',2]],
   volumen:[['m³',3],['dm³',3],['cm³',3],['mm³',3]],
   masse:[['t',3],['kg',3],['g',3],['mg',3]],
+  zeit:[['d',2],['h',2],['min',2],['s',2]],          /* Zeit rechnet nicht in Zehnern: 1 d = 24 h, 1 h = 60 min, 1 min = 60 s */
   zahl:[['M',1],['HT',1],['ZT',1],['T',1],['H',1],['Z',1],['E',1],['z',1],['h',1],['t',1],['zt',1],['ht',1],['m',1]]
 };
-const DEFIDX={ laenge:3, flaeche:3, volumen:0, masse:1, zahl:6 };   // m / m² / m³ / kg / Einer (Komma fest)
-let data={ type:'laenge', unitIndex:3, rows:[{dig:{}}], fontSize:22, pct:false, mark:null, bruch:false };
+const DEFIDX={ laenge:3, flaeche:3, volumen:0, masse:1, zeit:1, zahl:6 };   // m / m² / m³ / kg / h / Einer (Komma fest)
+const ZEIT_S=[86400,3600,60,1];                    /* Sekunden je Einheit – d, h, min, s */
+let data={ type:'laenge', unitIndex:3, rows:[{dig:{}}], fontSize:22, pct:false, mark:null, bruch:false, misch:false };
 const EIDX=UNITS.zahl.findIndex(u=>u[0]==='E');   // Einer-Stelle
 const PCT_IDX=UNITS.zahl.findIndex(u=>u[0]==='h');   // Hundertstel-Stelle = Prozent-Komma
 function cellW(){ return Math.round((data.fontSize||22)*1.64); }
 function applyFont(){ const r=document.documentElement.style; r.setProperty('--fs',(data.fontSize||22)+'px'); r.setProperty('--fw',data.fontBold?'700':'400'); r.setProperty('--fwh',data.fontBold?'900':'700'); r.setProperty('--fwm',data.fontBold?'800':'600'); r.setProperty('--fi',data.fontItalic?'italic':'normal'); }
-function rowValue(dig,split){ if(split===undefined)split=data.unitIndex; const units=UNITS[data.type]; let intP='',fracP='',col=0;
+/* Zahl einer Einheitengruppe (z. B. die beiden Ziffern bei „min") */
+function gruppenZahl(dig,ui){ const units=UNITS[data.type]; let col=0;
+  for(let i=0;i<ui;i++) col+=units[i][1];
+  let t=''; for(let k=0;k<units[ui][1];k++){ t+=(dig[col+k]||'0'); }
+  return parseInt(t,10)||0; }
+/* Zeit: alles in Sekunden und dann in die gewählte Einheit */
+function zeitWert(dig,split){ if(split===undefined)split=data.unitIndex;
+  let sek=0; UNITS.zeit.forEach((u,ui)=>{ sek+=gruppenZahl(dig,ui)*ZEIT_S[ui]; });
+  const v=sek/ZEIT_S[split];
+  const g=Math.round(v*10000)/10000;
+  return String(g).replace('.',','); }
+/* „1 h 30 min" statt „1,5 h" */
+function mischText(dig){ const units=UNITS[data.type], teile=[];
+  units.forEach((u,ui)=>{ const n=gruppenZahl(dig,ui); if(n) teile.push(n+' '+u[0]); });
+  return teile.length?teile.join(' '):('0 '+units[data.unitIndex][0]); }
+function rowValue(dig,split){ if(data.type==='zeit') return zeitWert(dig,split); if(split===undefined)split=data.unitIndex; const units=UNITS[data.type]; let intP='',fracP='',col=0;
   units.forEach((u,ui)=>{ for(let k=0;k<u[1];k++){ const d=dig[col]||'0'; if(ui<=split)intP+=d; else fracP+=d; col++; } });
   intP=intP.replace(/^0+(?=\d)/,''); if(intP==='')intP='0'; fracP=fracP.replace(/0+$/,'');
   return intP+(fracP?(','+fracP):''); }
 function render(){ applyFont();
-  ['laenge','flaeche','volumen','masse','zahl'].forEach(t=>$('t-'+t).classList.toggle('on',data.type===t));
+  ['laenge','flaeche','volumen','masse','zeit','zahl'].forEach(t=>$('t-'+t).classList.toggle('on',data.type===t));
+  $('t-misch').style.display=(data.type==='zahl')?'none':'';
+  $('t-misch').classList.toggle('on',!!data.misch);
   const isZ=data.type==='zahl'; $('t-pct').style.display=isZ?'':'none'; $('t-pct').classList.toggle('on',isZ&&!!data.pct); const showPct=isZ&&!!data.pct;
   $('t-bruch').style.display=(isZ&&data.mark!==null)?'':'none'; $('t-bruch').classList.toggle('on',isZ&&!!data.bruch); const mk=(isZ&&data.mark!==null)?data.mark:-1;
   const units=UNITS[data.type]; const wrap=$('tafel'); wrap.innerHTML='';
@@ -274,7 +295,7 @@ function render(){ applyFont();
   units.forEach((u,ui)=>{ const g=document.createElement('div'); g.className='ugroup'+(ui===data.unitIndex?' sel':'')+(ui<=mk?' mk':'');
     const h=document.createElement('div'); h.className='uhead'; h.style.width=(u[1]*cellW())+'px'; h.innerHTML=u[0]; h.onclick=()=>{ if(data.type==='zahl'){ data.mark=(data.mark===ui)?null:ui; render(); sync(); return; } data.unitIndex=ui; render(); sync(); };
     g.appendChild(h); head.appendChild(g);
-    if(ui===data.unitIndex){ const cm=document.createElement('div'); cm.className='comma head'; cm.textContent='▾'; head.appendChild(cm); }
+    if(ui===data.unitIndex&&data.type!=='zeit'){ const cm=document.createElement('div'); cm.className='comma head'; cm.textContent='▾'; head.appendChild(cm); }
     if(showPct&&ui===PCT_IDX){ const cm=document.createElement('div'); cm.className='comma head pct'; cm.textContent='%'; cm.title='Prozent-Komma'; head.appendChild(cm); } });
   wrap.appendChild(head);
   // Datenzeilen
@@ -285,7 +306,7 @@ function render(){ applyFont();
         inp.oninput=()=>{ inp.value=inp.value.replace(/[^0-9]/g,'').slice(0,1); if(inp.value)rw.dig[c]=inp.value; else delete rw.dig[c]; updateVals(); sync(); };
         dg.appendChild(inp); col++; }
       g.appendChild(dg); row.appendChild(g);
-      if(ui===data.unitIndex){ const cm=document.createElement('div'); cm.className='comma'; cm.textContent=','; row.appendChild(cm); }
+      if(ui===data.unitIndex&&data.type!=='zeit'){ const cm=document.createElement('div'); cm.className='comma'; cm.textContent=','; row.appendChild(cm); }
       if(showPct&&ui===PCT_IDX){ const cm=document.createElement('div'); cm.className='comma pct'; cm.textContent=','; row.appendChild(cm); } });
     const end=document.createElement('div'); end.className='rowend';
     const val=document.createElement('div'); val.className='rval'; val.dataset.ri=ri; end.appendChild(val);
@@ -296,17 +317,19 @@ function render(){ applyFont();
 function fracOf(dig){ const m=data.mark; if(m===null||m===undefined)return null; const units=UNITS.zahl; let num='',col=0;
   for(let ui=0;ui<=m;ui++){ for(let k=0;k<units[ui][1];k++){ num+=(dig[col]||'0'); col++; } }
   num=num.replace(/^0+(?=\d)/,''); if(num==='')num='0'; const den=m>EIDX?('1'+'0'.repeat(m-EIDX)):'1'; return {num,den}; }
-function updateVals(){ const units=UNITS[data.type]; document.querySelectorAll('.rval').forEach(el=>{ const rw=data.rows[+el.dataset.ri]; if(rw){ let h='= '+rowValue(rw.dig)+(data.type==='zahl'?'':' <b>'+units[data.unitIndex][0]+'</b>'); if(data.type==='zahl'&&data.pct) h+=' = <span style="color:#2563eb">'+rowValue(rw.dig,PCT_IDX)+' %</span>'; if(data.type==='zahl'&&data.bruch){ const f=fracOf(rw.dig); if(f) h+=' = <span class="frac"><span>'+f.num+'</span><span>'+f.den+'</span></span>'; } el.innerHTML=h; } }); }
-['laenge','flaeche','volumen','masse','zahl'].forEach(t=>$('t-'+t).onclick=()=>{ data.type=t; data.unitIndex=DEFIDX[t]; data.rows=data.rows.map(()=>({dig:{}})); data.mark=null; data.bruch=false; render(); sync(); });
+function updateVals(){ const units=UNITS[data.type]; document.querySelectorAll('.rval').forEach(el=>{ const rw=data.rows[+el.dataset.ri]; if(rw){ let h='= '+rowValue(rw.dig)+(data.type==='zahl'?'':' <b>'+units[data.unitIndex][0]+'</b>');
+    if(data.misch&&data.type!=='zahl') h+=' = <span style="color:#2563eb">'+mischText(rw.dig)+'</span>'; if(data.type==='zahl'&&data.pct) h+=' = <span style="color:#2563eb">'+rowValue(rw.dig,PCT_IDX)+' %</span>'; if(data.type==='zahl'&&data.bruch){ const f=fracOf(rw.dig); if(f) h+=' = <span class="frac"><span>'+f.num+'</span><span>'+f.den+'</span></span>'; } el.innerHTML=h; } }); }
+['laenge','flaeche','volumen','masse','zeit','zahl'].forEach(t=>$('t-'+t).onclick=()=>{ data.type=t; data.unitIndex=DEFIDX[t]; data.rows=data.rows.map(()=>({dig:{}})); data.mark=null; data.bruch=false; render(); sync(); });
 $('add').onclick=()=>{ data.rows.push({dig:{}}); render(); sync(); };
 for(const [id,d] of [['fsM',-2],['fsP',2]]) $(id).onclick=()=>{ data.fontSize=Math.max(10,Math.min(60,(data.fontSize||22)+d)); render(); sync(); };
 if(window.TafelShot) TafelShot.buttons($('shotBtns'),()=>TafelShot.rasterize($('tafel'),{exclude:'.del',pad:8}),'fb');
 $('t-pct').onclick=()=>{ data.pct=!data.pct; render(); sync(); };
+$('t-misch').onclick=()=>{ data.misch=!data.misch; render(); sync(); };
 $('t-bruch').onclick=()=>{ data.bruch=!data.bruch; render(); sync(); };
 function sync(){ if(window.parent===window) return; /* allein geöffnet: nicht an sich selbst senden */ try{ parent.postMessage({type:'embed-data',data},'*'); }catch(e){} }
 addEventListener('message',e=>{ if(e.source!==window&&(window.parent===window||e.source!==window.parent)) return;   // eigene Nachrichten ignorieren
   if(e.data&&e.data.type==='embed-data'&&e.data.data){ const d=e.data.data;
-  data={ type:UNITS[d.type]?d.type:'laenge', unitIndex:(d.unitIndex|0), rows:(Array.isArray(d.rows)&&d.rows.length?d.rows.map(r=>({dig:(r&&r.dig)||{}})):[{dig:{}}]), fontSize:d.fontSize||22, fontBold:!!d.fontBold, fontItalic:!!d.fontItalic, pct:!!d.pct, mark:(typeof d.mark==='number'&&d.mark>=0)?d.mark:null, bruch:!!d.bruch };
+  data={ type:UNITS[d.type]?d.type:'laenge', unitIndex:(d.unitIndex|0), rows:(Array.isArray(d.rows)&&d.rows.length?d.rows.map(r=>({dig:(r&&r.dig)||{}})):[{dig:{}}]), fontSize:d.fontSize||22, fontBold:!!d.fontBold, fontItalic:!!d.fontItalic, pct:!!d.pct, mark:(typeof d.mark==='number'&&d.mark>=0)?d.mark:null, bruch:!!d.bruch, misch:!!d.misch };
   if(data.unitIndex>=UNITS[data.type].length||data.unitIndex<0) data.unitIndex=DEFIDX[data.type]; render(); } });
 window.addEventListener('load',()=>{
   const geteilt=window.TafelTeilen&&TafelTeilen.istGeteilt();
