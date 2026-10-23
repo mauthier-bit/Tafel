@@ -1533,7 +1533,7 @@
       <div id="palEdit"></div>
       <button class="btn" id="palReset" style="flex:0 0 auto;white-space:nowrap">Palette zurücksetzen</button>
     </div>
-    <div class="toggle" style="margin-top:12px"><span>Farb- und Dicken-Menü von selbst ausblenden<br><small style="color:#888">(sonst bleibt es offen, bis man wieder auf das Werkzeug tippt)</small></span><div class="sw2 on" id="popZuSw"></div></div>
+    <div class="toggle" style="margin-top:12px"><span>Werkzeug-Menüs von selbst ausblenden<br><small style="color:#888">(Farbe, Dicke/Größe und Formen – sonst bleiben sie offen, bis man wieder auf das Werkzeug tippt)</small></span><div class="sw2 on" id="popZuSw"></div></div>
     <div id="popZuRows">
       <div style="display:flex;align-items:center;gap:6px;margin-top:6px;font-size:13px">
         <span style="flex:1;color:#555">stehen lassen</span>
@@ -1545,7 +1545,7 @@
         <button class="stepbtn" id="pzR" title="Standard" style="width:auto;padding:6px 9px;font-size:13px;font-weight:600">Standard</button>
       </div>
     </div>
-    <div class="hint" style="margin-top:6px">Nach der Wahl einer Farbe oder Dicke bleibt das Menü noch <b>stehen</b> und blendet dann langsam <b>aus</b> – so muss man es nicht mit einem zweiten Tipp auf das Werkzeug schließen. Beides ist von 0 s bis 3 s einstellbar; ein Tipp ins Menü während des Ausblendens holt es zurück.</div>
+    <div class="hint" style="margin-top:6px">Nach der Wahl einer Farbe, einer Dicke oder einer Form bleibt das Menü noch <b>stehen</b> und blendet dann langsam <b>aus</b> – so muss man es nicht mit einem zweiten Tipp auf das Werkzeug schließen. Beides ist von 0 s bis 3 s einstellbar; ein Tipp ins Menü während des Ausblendens holt es zurück.</div>
     <label class="lbl">Abstand der oberen Leisten</label>
     <div style="display:flex;align-items:center;gap:6px;margin-top:4px;font-size:13px">
       <span style="flex:1;color:#555">zusätzlich nach unten</span>
@@ -1640,9 +1640,9 @@ let eraserWidth=14, eraserPos=null;   // Radierer hat seine eigene Größe (Radi
 const ERAS_F=1.75;                    // Umrechnung Stärkestufe → Radierer-Radius (Stufe 8 ergibt die bisherigen 14)
 let spotForm='ellipse';          /* Scheinwerfer: 'ellipse' (rund) oder 'rect' (Kasten) */
 let laserMs=700;                 /* so lange leuchtet die Laserspur nach */
-let popZu=true;                  /* Farb-/Dickenmenue nach der Wahl von selbst schliessen */
-let popWarteMs=500;              /* so lange bleibt es danach noch stehen */
-let popWegMs=500;                /* so lange dauert das Ausblenden */
+let popZu=true;                  /* Werkzeugmenues nach der Wahl von selbst schliessen */
+let popWarteMs=200;              /* so lange bleibt es danach noch stehen */
+let popWegMs=800;                /* so lange dauert das Ausblenden */
 let toolColors={pen:'#111111', line:'#111111', marker:'#eab308', text:'#111111', laser:'#ff2828'};   // Stift, Linien/Formen, Marker, Text und Laserpointer merken sich ihre Farbe getrennt
 const LINE_TOOLS=['shape','arrow','circle','gerade','arc'];
 let arrowBothDef=false;                       // alt: Doppelpfeil (bleibt für ältere Tafelbilder lesbar)
@@ -3112,7 +3112,7 @@ function setMode(m){ const write=(m==='write'); closeAllPops();
   const mt=$('mode-toggle'); mt.classList.toggle('sel',!write); mt.title=write?'Schreibwerkzeuge – antippen für Auswählen & Werkzeuge':'Auswählen & Werkzeuge – antippen für Schreibwerkzeuge';
   $('writeTools').classList.toggle('on',write); $('widgetTools').classList.toggle('on',!write);
   if(write){ setTool('pen'); }   // beim Wechsel auf Schreibwerkzeuge immer den Stift aktivieren
-  else { $('penpop').classList.remove('show'); $('shapepop').classList.remove('show'); setTool('select'); }
+  else { popBleib($('penpop')); popBleib($('shapepop')); $('penpop').classList.remove('show'); $('shapepop').classList.remove('show'); setTool('select'); }
   placePopovers(); syncFavState(); }
 const curMode=()=>$('writeTools').classList.contains('on')?'write':'select';
 /* Laserpointer/Scheinwerfer ausschalten: zurück zum Werkzeug der aktiven Leiste */
@@ -3171,7 +3171,7 @@ function setTool(t){ if(streck) streckAbbrechen();   // anderes Werkzeug gewähl
   $('t-shape').classList.toggle('active',['shape','circle','gerade','arc'].includes(t));   // Formen-Gruppen-Werkzeug aktiv
   if(t!=='select'&&t!=='laser'&&t!=='spot'&&t!=='lasso') lastWriteTool=t;   /* Lasso gehört jetzt zu den Auswahlwerkzeugen */
   // Farbpalette NICHT automatisch öffnen; Formen-Auswahl bleibt (zum Wählen der Form)
-  const sh=$('shapepop'); const showSh=(t==='shape'); const shA=anch('t-shape'); sh.classList.toggle('show',showSh); if(showSh){ place(sh,shA); avoidOverlap(sh,$('penpop')); } else if(t!=='marker'&&t!=='text'&&t!=='dict'&&t!=='pen'&&t!=='eraser') $('penpop').classList.remove('show');
+  const sh=$('shapepop'); const showSh=(t==='shape'); const shA=anch('t-shape'); popBleib(sh); sh.classList.toggle('show',showSh); if(showSh){ place(sh,shA); avoidOverlap(sh,$('penpop')); } else if(t!=='marker'&&t!=='text'&&t!=='dict'&&t!=='pen'&&t!=='eraser'){ popBleib($('penpop')); $('penpop').classList.remove('show'); }
   $('spot').style.display=(t==='spot')?'block':'none';
   if(typeof lupeAktualisieren==='function') setTimeout(lupeAktualisieren,0);
   if(t==='spot'){ const r=Math.round((spotRX+spotRY)/2); spotRX=spotRY=r; moveSpot(spotMid.x||W/2,spotMid.y||H/2); }   // beim Einschalten wieder rund
@@ -3182,13 +3182,16 @@ function setTool(t){ if(streck) streckAbbrechen();   // anderes Werkzeug gewähl
 ['laser','spot','lasso'].forEach(t=>$('t-'+t).onclick=()=>{ if(tool===t) endPointerTool(); else setTool(t); });   // erneut antippen = ausschalten
 /* Erneutes Tippen auf „Formen" klappt die Auswahl wieder zu (das Werkzeug bleibt aktiv) */
 $('t-shape').onclick=()=>{ const sh=$('shapepop');
-  if(tool==='shape'&&sh.classList.contains('show')){ sh.classList.remove('show'); return; }
+  if(tool==='shape'&&sh.classList.contains('show')){ popBleib(sh); sh.classList.remove('show'); return; }
   setTool('shape'); };
+/* Formen-Menue: nach der Wahl einer Form (oder eines eingefuegten Objekts) ebenfalls ausblenden */
+$('shapepop').addEventListener('pointerdown',()=>popBleib($('shapepop')),true);
+$('shapepop').addEventListener('click',e=>{ if(e.target.closest('.shbtn,#t-numline,#t-coord')) popSpaeterZu($('shapepop')); });
 /* Widget-Gruppen-Popovers (wie „Formen") */
 function closeAllPops(){ document.querySelectorAll('.pop').forEach(popBleib); document.querySelectorAll('.pop.show').forEach(p=>p.classList.remove('show')); }
-/* Nach der Wahl einer Farbe oder Dicke schliesst sich das Menue von selbst:
-   eine halbe Sekunde stehen lassen, dann in einer halben Sekunde ausblenden. */
-function popSpaeterZu(p){ popBleib(p); if(!popZu)return;
+/* Nach der Wahl (Farbe, Dicke, Form) schliesst sich das Menue von selbst:
+   kurz stehen lassen, dann ausblenden - beide Zeiten in den Einstellungen. */
+function popSpaeterZu(p){ popBleib(p); if(!popZu||!p.classList.contains('show'))return;   /* schon zu? nichts zu tun */
   p._zuT=setTimeout(()=>{ p.classList.add('weg');
     p._wegT=setTimeout(()=>{ p.classList.remove('show','weg'); p._zuT=p._wegT=null; },popWegMs+40); },popWarteMs); }
 function popBleib(p){ if(!p)return; clearTimeout(p._zuT); clearTimeout(p._wegT); p._zuT=p._wegT=null; p.classList.remove('weg'); }
@@ -3302,7 +3305,7 @@ const pzWarte=v=>{ popWarteMs=Math.max(0,Math.min(3000,v)); popZuUI(); saveUI();
 const pzWeg=v=>{ popWegMs=Math.max(0,Math.min(3000,v)); popZuUI(); saveUI(); };
 $('pzWm').onclick=()=>pzWarte(popWarteMs-100); $('pzWp').onclick=()=>pzWarte(popWarteMs+100);
 $('pzDm').onclick=()=>pzWeg(popWegMs-100);     $('pzDp').onclick=()=>pzWeg(popWegMs+100);
-$('pzR').onclick=()=>{ popZu=true; popWarteMs=500; popWegMs=500; popZuUI(); saveUI(); };
+$('pzR').onclick=()=>{ popZu=true; popWarteMs=200; popWegMs=800; popZuUI(); saveUI(); };
 popZuUI();
 function markSwatch(c){ const lc=String(c||'').toLowerCase();
   $('swatches').querySelectorAll('.sw').forEach(s=>s.classList.toggle('active',(s.dataset.c||'').toLowerCase()===lc)); }
@@ -4670,14 +4673,15 @@ $('pageMenu').addEventListener('pointerdown',e=>e.stopPropagation());
 document.addEventListener('pointerdown',e=>{ if($('pageMenu').classList.contains('show') && !e.target.closest('#pageMenu') && !e.target.closest('.pmBtn') && !e.target.closest('#ppMore')) closePageMenu(); }, true);
 $('setMin').onclick=()=>{ $('settingsbar').classList.toggle('min'); rotateChev('setMin',$('settingsbar').classList.contains('min'),true); saveUI(); positionAnnoToggle(); };
 function rotateChev(id,min){ $(id).querySelector('svg').style.transform=min?'scaleX(-1)':''; }
-function saveUI(){ try{ localStorage.setItem('tafel_ui',JSON.stringify({page:$('pagebar').classList.contains('min'),set:$('settingsbar').classList.contains('min'),side:mainbarSide,theme:barTheme,tint:barTint,favs,pxcm:PXCM,pal:palette,cols:toolColors,rec:shapeRecog,wv:2,pp:propPos,ppH:propHint,ent:camEntz,hell:camHell,ob:obenPx,pw:penWidth,mw:markerWidth,ew:eraserWidth,sz:streckZeigen,sa:shapeAlpha,spf:spotForm,lup:lupeAn,lupz:lupeZoom,lms:laserMs,pz:popZu,pzw:popWarteMs,pzd:popWegMs,rul:{len:ruler.len,color:ruler.color,mm:ruler.mm,nums:ruler.nums,pct:ruler.pct,fs:ruler.fs},geo:{size:geo.size,color:geo.color,mm:geo.mm,nums:geo.nums,fs:geo.fs}})); }catch(e){} }
+function saveUI(){ try{ localStorage.setItem('tafel_ui',JSON.stringify({page:$('pagebar').classList.contains('min'),set:$('settingsbar').classList.contains('min'),side:mainbarSide,theme:barTheme,tint:barTint,favs,pxcm:PXCM,pal:palette,cols:toolColors,rec:shapeRecog,wv:2,pp:propPos,ppH:propHint,ent:camEntz,hell:camHell,ob:obenPx,pw:penWidth,mw:markerWidth,ew:eraserWidth,sz:streckZeigen,sa:shapeAlpha,spf:spotForm,lup:lupeAn,lupz:lupeZoom,lms:laserMs,pz:popZu,pzw:popWarteMs,pzd:popWegMs,pzv:2,rul:{len:ruler.len,color:ruler.color,mm:ruler.mm,nums:ruler.nums,pct:ruler.pct,fs:ruler.fs},geo:{size:geo.size,color:geo.color,mm:geo.mm,nums:geo.nums,fs:geo.fs}})); }catch(e){} }
 function restoreUI(){ try{ const u=JSON.parse(localStorage.getItem('tafel_ui')||'{}'); if(u.page){$('pagebar').classList.add('min');pageChev(true);} if(u.set){$('settingsbar').classList.add('min');rotateChev('setMin',true);} if(u.side==='right'||u.side==='bottom')mainbarSide=u.side; if(u.theme==='light'||u.theme==='dark')barTheme=u.theme; if(u.tint&&typeof u.tint==='object')barTint=Object.assign(barTint,u.tint); if(Array.isArray(u.favs))favs=u.favs.filter(f=>f!=='w-export').slice(0,FAV_MAX);   // PDF-Export sitzt jetzt in den Einstellungen
   if(+u.pxcm>0&&Math.abs(+u.pxcm-37.8)>0.2) PXCM=Math.max(28,Math.min(64,+u.pxcm));   // alter Standard 37,8 → neuer, am iPad gemessener Wert
   if(Array.isArray(u.pal)&&u.pal.length===palette.length&&u.pal.every(c=>/^#[0-9a-f]{6}$/i.test(c))) palette=u.pal.slice();
   if(u.rec){ shapeRecog=true; $('shapeRecogSw').classList.add('on'); }
   if(u.cols&&typeof u.cols==='object')Object.assign(toolColors,u.cols); if(u.wv===2){ if(+u.pw>0)penWidth=+u.pw; if(+u.mw>0)markerWidth=+u.mw; } if(+u.ew>0)eraserWidth=+u.ew; if(+u.sa>=0&&+u.sa<=1)shapeAlpha=+u.sa; propHint=!!u.ppH; if(+u.hell>=0&&+u.hell<=100) camHell=+u.hell; if(+u.ob>=0&&+u.ob<=48) obenPx=+u.ob; if(u.ent&&Array.isArray(u.ent.q)&&u.ent.q.length===4) camEntz={an:!!u.ent.an,ar:+u.ent.ar||0,q:u.ent.q.map(p=>({x:+p.x||0,y:+p.y||0}))}; if(u.pp&&isFinite(u.pp.l)&&isFinite(u.pp.t)) propPosSetzen({l:+u.pp.l,t:+u.pp.t}); streckZeigen=!!u.sz;   // ältere Stärken (4 Stufen) verwerfen
   if(u.spf==='rect'||u.spf==='ellipse') spotForm=u.spf; if(+u.lms>=100&&+u.lms<=3000) laserMs=+u.lms;
-  if(typeof u.pz==='boolean') popZu=u.pz; if(+u.pzw>=0&&+u.pzw<=3000) popWarteMs=+u.pzw; if(+u.pzd>=0&&+u.pzd<=3000) popWegMs=+u.pzd;
+  if(typeof u.pz==='boolean') popZu=u.pz;
+  if(u.pzv>=2){ if(+u.pzw>=0&&+u.pzw<=3000) popWarteMs=+u.pzw; if(+u.pzd>=0&&+u.pzd<=3000) popWegMs=+u.pzd; }   /* aeltere Staende: neue Standardzeiten 0,2 s / 0,8 s */
   lupeAn=!!u.lup; if(+u.lupz>=1&&+u.lupz<=6) lupeZoom=+u.lupz;
   if(u.rul)Object.assign(ruler,{len:+u.rul.len||ruler.len,color:u.rul.color||ruler.color,mm:u.rul.mm!==false,nums:u.rul.nums!==false,pct:!!u.rul.pct,fs:+u.rul.fs||11});
   if(u.geo)Object.assign(geo,{size:+u.geo.size||geo.size,color:u.geo.color||geo.color,mm:u.geo.mm!==false,nums:u.geo.nums!==false,fs:+u.geo.fs||11});
