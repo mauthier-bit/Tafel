@@ -22,6 +22,7 @@
   .ugroup{display:flex;flex-direction:column;flex:none;}
   .uhead{text-align:center;font-size:calc(var(--fs,22px)*0.64);padding:5px 4px;cursor:pointer;white-space:nowrap;color:#334155;font-weight:var(--fwh,700);border-radius:8px 8px 0 0;}
   .ugroup.sel .uhead{color:#fff;background:#dc2626;}
+  .uhead .kl{font-size:.72em;}                      /* „1/10 s" passt so in eine schmale Spalte */
   .udigits{display:flex;}
   .dc{width:calc(var(--fs,22px)*1.64);height:calc(var(--fs,22px)*2.2);text-align:center;font-size:var(--fs,22px);font-weight:var(--fw,400);font-style:var(--fi,normal);border:1px solid #cbd3df;border-left:none;border-top:none;font-family:inherit;background:#fff;color:#1f2430;padding:0;}
   .ugroup .udigits .dc:first-child{border-left:1px solid #cbd3df;}
@@ -254,11 +255,12 @@ const UNITS={
   flaeche:[['km²',2],['ha',2],['a',2],['m²',2],['dm²',2],['cm²',2],['mm²',2]],
   volumen:[['m³',3],['dm³',3],['cm³',3],['mm³',3]],
   masse:[['t',3],['kg',3],['g',3],['mg',3]],
-  zeit:[['d',2],['h',2],['min',2],['s',2]],          /* Zeit rechnet nicht in Zehnern: 1 d = 24 h, 1 h = 60 min, 1 min = 60 s */
+  zeit:[['d',2],['h',2],['min',2],['s',2],['<span class="kl">1/10</span> s',1],['<span class="kl">1/100</span> s',1]],
+  /* Zeit rechnet nicht in Zehnern: 1 d = 24 h, 1 h = 60 min, 1 min = 60 s, dann Zehntel und Hundertstel */
   zahl:[['M',1],['HT',1],['ZT',1],['T',1],['H',1],['Z',1],['E',1],['z',1],['h',1],['t',1],['zt',1],['ht',1],['m',1]]
 };
 const DEFIDX={ laenge:3, flaeche:3, volumen:0, masse:1, zeit:1, zahl:6 };   // m / m² / m³ / kg / h / Einer (Komma fest)
-const ZEIT_S=[86400,3600,60,1];                    /* Sekunden je Einheit – d, h, min, s */
+const ZEIT_H=[8640000,360000,6000,100,10,1];        /* Hundertstelsekunden je Einheit – ganzzahlig rechnen */
 let data={ type:'laenge', unitIndex:3, rows:[{dig:{}}], fontSize:22, pct:false, mark:null, bruch:false, misch:false };
 const EIDX=UNITS.zahl.findIndex(u=>u[0]==='E');   // Einer-Stelle
 const PCT_IDX=UNITS.zahl.findIndex(u=>u[0]==='h');   // Hundertstel-Stelle = Prozent-Komma
@@ -271,12 +273,17 @@ function gruppenZahl(dig,ui){ const units=UNITS[data.type]; let col=0;
   return parseInt(t,10)||0; }
 /* Zeit: alles in Sekunden und dann in die gewählte Einheit */
 function zeitWert(dig,split){ if(split===undefined)split=data.unitIndex;
-  let sek=0; UNITS.zeit.forEach((u,ui)=>{ sek+=gruppenZahl(dig,ui)*ZEIT_S[ui]; });
-  const v=sek/ZEIT_S[split];
-  const g=Math.round(v*10000)/10000;
+  let hs=0; UNITS.zeit.forEach((u,ui)=>{ hs+=gruppenZahl(dig,ui)*ZEIT_H[ui]; });
+  const g=Math.round(hs/ZEIT_H[split]*100000)/100000;
   return String(g).replace('.',','); }
 /* „1 h 30 min" statt „1,5 h" */
 function mischText(dig){ const units=UNITS[data.type], teile=[];
+  if(data.type==='zeit'){                                   /* Zehntel und Hundertstel gehören an die Sekunden */
+    ['d','h','min'].forEach((lab,ui)=>{ const n=gruppenZahl(dig,ui); if(n) teile.push(n+' '+lab); });
+    const sek=gruppenZahl(dig,3), z=gruppenZahl(dig,4), hu=gruppenZahl(dig,5);
+    let st=String(sek); if(z||hu) st+=','+String(z)+(hu?String(hu):'');
+    if(sek||z||hu) teile.push(st+' s');
+    return teile.length?teile.join(' '):'0 s'; }
   units.forEach((u,ui)=>{ const n=gruppenZahl(dig,ui); if(n) teile.push(n+' '+u[0]); });
   return teile.length?teile.join(' '):('0 '+units[data.unitIndex][0]); }
 function rowValue(dig,split){ if(data.type==='zeit') return zeitWert(dig,split); if(split===undefined)split=data.unitIndex; const units=UNITS[data.type]; let intP='',fracP='',col=0;

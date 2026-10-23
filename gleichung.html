@@ -278,8 +278,10 @@
 <body>
 <div id="wrap">
   <div class="toprow"><div class="seg" id="modeSeg"><button data-m="single">Gleichung</button><button data-m="sys">Gleichungssystem</button><button data-m="waage">Waage</button><button data-m="umk">Umkehr &amp; Tausch</button><button data-m="fml">Formel umstellen</button></div>
-    <div class="seg" id="nSeg" hidden><button data-n="2">2 Unbekannte (x, y)</button><button data-n="3">3 Unbekannte (x, y, z)</button></div>
     <span id="fsGrp"><button id="fsM" title="Schrift kleiner">A−</button><button id="fsP" title="Schrift größer">A+</button></span><button id="btnKeys" title="Formel-Tastatur ein-/ausblenden">⌨ Formeln</button><span id="teilenBtn" style="display:inline-flex"></span></div>
+  <div class="toprow" id="nRow" hidden style="margin-top:6px">
+    <div class="seg" id="nSeg"><button data-n="2">2 Unbekannte (x, y)</button><button data-n="3">3 Unbekannte (x, y, z)</button></div>
+  </div>
   <div id="single">
   <div class="frow"><b>Gleichung:</b><input id="eq" placeholder="z. B. 3/(x-2) = 2/(x+1)" value="" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
   <div style="margin-top:10px"><span class="ex" data-e="2x+3=7">2x+3=7</span><span class="ex" data-e="x^2-5x+6=0">x²−5x+6=0</span><span class="ex" data-e="3/(x-2)=2/(x+1)">3/(x−2)=2/(x+1)</span><span class="ex" data-e="x/(x-2)=2/(x-2)">x/(x−2)=2/(x−2)</span><span class="ex" data-e="1/x+1/(x+1)=5/6">1/x+1/(x+1)=5/6</span><span class="ex" data-e="2sin(x)=1">2sin(x)=1</span><span class="ex" data-e="cos(2x+30)=0,5">cos(2x+30°)=0,5</span><span class="ex" data-e="3*2^x=48">3·2ˣ=48</span><span class="ex" data-e="e^(2x)-3e^x+2=0">e²ˣ−3eˣ+2=0</span><span class="ex" data-e="ln(2x-1)=3">ln(2x−1)=3</span></div>
@@ -1119,13 +1121,15 @@ function run(){ if(mode==='sys') solveSys(); else if(mode==='single') solve(); }
 function applyUI(){ document.querySelectorAll('#modeSeg button').forEach(b=>b.classList.toggle('on',b.dataset.m===mode));
   document.querySelectorAll('#nSeg button').forEach(b=>b.classList.toggle('on',+b.dataset.n===sysN));
   const rechner=(mode==='single'||mode==='sys');
-  $('nSeg').hidden=mode!=='sys'; $('single').hidden=mode!=='single'; $('sys').hidden=mode!=='sys'; $('row3').hidden=sysN<3;
+  $('nRow').hidden=mode!=='sys'; $('single').hidden=mode!=='single'; $('sys').hidden=mode!=='sys'; $('row3').hidden=sysN<3;
   $('waage').hidden=mode!=='waage'; $('umk').hidden=mode!=='umk'; $('fml').hidden=mode!=='fml';
-  $('sol').hidden=!rechner; $('steps').hidden=!rechner; $('btnKeys').hidden=(mode==='fml');
+  $('sol').hidden=!rechner; $('steps').hidden=!rechner;
   $('hintSingle').hidden=mode!=='single'; $('hintSys').hidden=mode!=='sys'; $('hintWaage').hidden=mode!=='waage'; $('hintUmk').hidden=mode!=='umk';
   if(mode==='waage') wZeichnen();
   if(mode==='umk'&&!$('uOut').innerHTML) uLoesen();
   if(mode==='fml') fmlOeffnen();
+  $('btnKeys').classList.toggle('on',mode==='fml'?fmlKeys:keysOn);
+  if(mode==='fml') fmlKeysSenden();
   const ph=sysN===3?['x + y + z = 6','2x − y + z = 3','x + 2y − z = 2']:['2x + y = 7','x − y = 2',''];
   document.querySelectorAll('.se').forEach((i,k)=>i.placeholder='z. B. '+ph[k]); if(keysOn) buildKeypad(); applyTrig(); run(); }
 $('eq').addEventListener('input',()=>{ solve(); sync(); });
@@ -1189,11 +1193,17 @@ function setKeypad(on){ keysOn=!!on; buildKeypad(); $('keypad').classList.toggle
   document.querySelectorAll('#eq,.se,#wEq,#uIn').forEach(i=>i.inputMode=keysOn?'none':'text');
   if(keysOn) kpTarget(); }
 $('btnKeys').addEventListener('pointerdown',e=>e.preventDefault());
-$('btnKeys').onclick=()=>setKeypad(!keysOn);
+$('btnKeys').onclick=()=>{
+  if(mode==='fml'){ fmlKeys=!fmlKeys; $('btnKeys').classList.toggle('on',fmlKeys); fmlKeysSenden(); return; }
+  setKeypad(!keysOn); };
+/* Im Reiter „Formel umstellen" bedient derselbe Knopf die Tastenzeile im eingebetteten Werkzeug. */
+let fmlKeys=false;
+function fmlKeysSenden(){ if(!fmlFrame||!fmlReady) return;
+  try{ fmlFrame.contentWindow.postMessage({type:'fml-keys',an:fmlKeys},'*'); }catch(e){} }
 addEventListener('message',e=>{
   if(fmlFrame&&e.source===fmlFrame.contentWindow){            /* Nachrichten des eingebetteten Formel-Werkzeugs */
     const m=e.data||{};
-    if(m.type==='embed-ready'){ fmlReady=true; fmlSenden(); return; }
+    if(m.type==='embed-ready'){ fmlReady=true; fmlSenden(); fmlKeysSenden(); return; }
     if(m.type==='embed-data'&&m.data){ fmlData=m.data; sync(); return; }
     if(m.type==='embed-image'||m.type==='open-url'){ try{ if(window.parent!==window) parent.postMessage(m,'*'); }catch(_){} return; }
     return; }

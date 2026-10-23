@@ -1237,7 +1237,12 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     (Netz als Bild), **Neu**, **Speichern/Laden** als `.json` und der Umschalter
     **Benutzen/Bearbeiten**. Das Netz wird **mit dem Tafel-Projekt gespeichert**; im kleinen
     Objektfenster verkleinert es sich so weit, dass immer das ganze Netz zu sehen ist.
-- **Gleichungslöser** (Mathe & Physik): bewegliches Objekt mit großem Eingabefeld und fünf Reitern:
+- **Gleichungslöser** (Mathe & Physik): bewegliches Objekt mit großem Eingabefeld und fünf Reitern.
+  In der **ersten Zeile** stehen die Reiter und rechts davon **A− / A+**, **⌨ Formeln** und
+  **⤴ Teilen** – in jedem Reiter an derselben Stelle; der Umschalter **2 / 3 Unbekannte** sitzt
+  darunter in einer **eigenen Zeile** und erscheint nur beim Gleichungssystem. Der Knopf
+  **⌨ Formeln** bedient auch im Reiter „Formel umstellen" die Tastenzeile (dort unten im Werkzeug).
+  Die fünf Reiter:
   - **Gleichung** (Variable x): tippt man z. B. `2x+3=7`, `x^2-5x+6=0` oder `3/(x-2)=2/(x+1)`.
     **Lineare, quadratische und Bruchgleichungen** werden mit Lösungsweg gelöst – bei Bruchgleichungen
     mit **Definitionsmenge 𝔻**, **Hauptnenner** (in Linearfaktoren), der Gleichung nach dem
@@ -1288,9 +1293,10 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     sich am selben Objekt erst eine Gleichung lösen und dann eine Formel nach einer anderen Größe
     auflösen, ohne ein zweites Werkzeug auf die Tafel zu holen. **A− / A+** des Gleichungslösers stellen auch
     hier die Schrift, und **„🖼 Rechenweg → Tafel"** legt das Bild wie gewohnt neben das Objekt.
-    Die Bedienung steht in **einer Zeile**: **↺ Neu**, der Name der Vorlage, **⌨ Formeln** (eine
-    Tastenzeile mit ·, /, ^, ( ), √, π, Index, =, x², x³ für die Formel-Eingabe),
-    **🖼 Rechenweg → Tafel** und **📋 Kopieren**. Teilen, Schriftgröße und Drucken gibt es hier
+    Die Bedienung steht in **einer Zeile**: **↺ Neu**, der Name der Vorlage,
+    **🖼 Rechenweg → Tafel** und **📋 Kopieren**. Die **Tastenzeile** (·, /, ^, ( ), √, π,
+    Index, =, x², x³ für die Formel-Eingabe) schaltet der Knopf **⌨ Formeln** oben neben den
+    Reitern – wie in den anderen Reitern auch. Teilen, Schriftgröße und Drucken gibt es hier
     nicht mehr – geteilt wird oben neben den Reitern, die Schrift stellt der Gleichungslöser.
     Ist das Objekt **breit genug** (ab etwa 820 px), stehen die Karten in **zwei Spalten**: links die
     Formel mit der Vorlagensammlung, rechts die gesuchte Größe, der **Rechenweg** und das Einsetzen
@@ -2314,11 +2320,13 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   üblichen Einheiten. Ziffern eintippen; ein Tipp auf eine Einheit **verschiebt das Komma** (Umrechnung) –
   **Komma und die zugehörige Einheit werden rot hervorgehoben**. Unten rechts: **A−/A+** für die Schriftgröße (auch im Kontextmenü) sowie **🖼 Tafel / 📋 Kopieren** – die Tafel (ohne Löschknöpfe) als Bild neben das Werkzeug legen bzw. in die Zwischenablage kopieren. Mit **„＋ Zeile"** lassen sich
   weitere Zahlen-Zeilen hinzufügen; jede Zeile zeigt ihren Wert in der gewählten Einheit. Die Schriftgröße im Kontextmenü vergrößert jetzt auch **Zellenbreite und -höhe**. Neue Kategorie **„Zahl"**: Stellen vor dem Komma **E, Z, H, T, ZT, HT, M** (Einer bis Millionen), nach dem Komma **z, h, t, zt** (Zehntel bis Zehntausendstel); das Komma sitzt fest hinter den Einern. „Zahl" steht als erste Kategorie ganz links. Im Zahl-Modus schaltet der Button **„%-Komma"** ein zweites (blaues) Komma an der Hundertstel-Stelle ein – dann erscheinen nach dem = beide Darstellungen, z. B. **1,025 = 102,5 %**. Bei „Zahl" reichen die Nachkommastellen jetzt bis **ht** und **m**. Tippt man auf eine Stelle (z. B. h), werden **die Zellen dieser und aller Stellen links davon grün unterstrichen** (die Kopfzeile bleibt unverändert); erst dann erscheint der Button **„Bruch"**, der die Zahl als Bruch mit der markierten Stelle als Nenner zeigt (h → Nenner 100, t → 1000 …; der Bruchstrich ist so lang wie die längere der beiden Zahlen). Erneutes Tippen hebt die Markierung auf.
-  - **Zeit** (Spalten **d · h · min · s**, je zwei Ziffern) rechnet nicht in Zehnern, sondern mit
-    24 und 60 – deshalb gibt es hier **kein Komma** in der Tafel: Ein Tipp auf eine Einheit sagt,
-    **in welcher Einheit** der Wert herauskommen soll (2 h 15 min 30 s = **2,2583 h** = **135,5 min**).
+  - **Zeit** (Spalten **d · h · min · s** mit je zwei Ziffern, dazu **1/10 s** und **1/100 s**)
+    rechnet nicht in Zehnern, sondern mit 24 und 60 – deshalb gibt es hier **kein Komma** in der
+    Tafel: Ein Tipp auf eine Einheit sagt, **in welcher Einheit** der Wert herauskommen soll
+    (2 h 15 min 30,5 s = **2,25847 h** = **8130,5 s**).
   - **„gemischte Einheiten"** zeigt den Wert zusätzlich **blau** in den eingetippten Einheiten:
-    **1,25 m = 1 m 2 dm 5 cm**, **1,5 kg = 1 kg 500 g**, **135,5 min = 2 h 15 min 30 s**.
+    **1,25 m = 1 m 2 dm 5 cm**, **1,5 kg = 1 kg 500 g**, **8130,5 s = 2 h 15 min 30,5 s**
+    (Zehntel und Hundertstel hängen dabei als Nachkommastellen an den Sekunden).
     (Bei der Kategorie „Zahl" entfällt der Knopf.)
 - **Einheitskreis** (Mathe & Physik): interaktiver Einheitskreis, Schriftgröße mit **A−/A+** direkt im
   Werkzeug (rechts unten) oder im **Kontextmenü** (＋/−, fett, kursiv). **🖼 Tafel / 📋 Kopieren**: Kreis samt
