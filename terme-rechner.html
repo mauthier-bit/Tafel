@@ -145,6 +145,17 @@ table.vt td.eq{color:var(--ok);font-weight:700} table.vt td.ne{color:var(--bad);
 .sj.can{width:34px;text-align:center}
 .sj.can button{width:28px;height:28px;border-radius:50%;border:none;background:var(--ok);color:#0b2016;font-weight:900;font-size:18px;cursor:pointer;padding:0;animation:pulse 1.6s infinite}
 @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(255,209,102,.5)}50%{box-shadow:0 0 0 6px rgba(255,209,102,0)}}
+.jn.kurz button{background:#8ab4ff;color:#0b1430}
+.jn.dist button{background:var(--accent2,#7ee0c0);color:#06231b}
+.bsum{display:inline-block;border-radius:6px;padding:0 2px;transition:background .2s}
+.bsum.hit{background:rgba(126,224,192,.35)}
+.ft.ab{background:rgba(255,209,102,.25);border-color:var(--accent)}
+.pt{border-radius:5px;padding:0 1px;cursor:pointer}
+.pt.ab{background:rgba(255,209,102,.3)}
+.wstage{position:relative}
+.flyLayer{position:absolute;inset:0;pointer-events:none;z-index:70}
+.flyer{position:absolute;white-space:nowrap;font-weight:800;color:var(--accent);
+  transition:transform .55s cubic-bezier(.4,.1,.3,1),opacity .55s;will-change:transform}
 .dropmark{position:absolute;width:4px;background:var(--accent);border-radius:3px;z-index:60;pointer-events:none;box-shadow:0 0 8px var(--accent)}
 /* automatische Farben */
 .c0{border-color:#ffd166!important;background:rgba(255,209,102,.16)!important}
@@ -577,8 +588,9 @@ const zeroItem=()=>({s:1,f:[{k:'n',q:q(0)}]});
 function itemKey(it){ const m=monoOfItem(it); return m?vkeyOf(m.v):null }
 function itemPoly(it){ let r=pMono(q(it.s),{}); it.f.forEach(x=>{ r=pMul(r, x.k==='n'?pMono(x.q,{}): x.k==='v'?pMono(q(1),{[x.n]:x.e}) : pPow(itemsPoly(x.items),x.e)) }); return r }
 function itemsPoly(items){ return items.reduce((acc,it)=>pAdd(acc,itemPoly(it)),new Map()) }
-function compactH(f){ return f.map(x=>x.k==='n'?qAbsHTML(x.q,x.raw):vH(x.n,x.e)).join('') }
-function factorHTML(x){ if(x.k==='n'){const h=qAbsHTML(x.q,x.raw); return x.q.n<0?`(${MI}${h})`:h} if(x.k==='v') return vH(x.n,x.e); return '('+itemsHTML(x.items)+')'+sup(x.e) }
+function compactH(f,wrap){ return f.map((x,j)=>{ const h=x.k==='n'?qAbsHTML(x.q,x.raw):vH(x.n,x.e);
+  return wrap?'<span class="pt" data-j="'+j+'">'+h+'</span>':h; }).join('') }
+function factorHTML(x,wrap){ if(x.k==='n'){const h=qAbsHTML(x.q,x.raw); return x.q.n<0?`(${MI}${h})`:h} if(x.k==='v') return vH(x.n,x.e); return '('+itemsHTML(x.items,wrap)+')'+sup(x.e) }
 const DOT='<span class="dot">·</span>';
 function bodyHTML(f){
   if(!f.length) return '1';
@@ -588,7 +600,8 @@ function bodyHTML(f){
   if(bAtEnd&&(nb.length===0||(isCanon(nb)&&!(nb.length===1&&nb[0].k==='n'&&qone(nb[0].q))))) return compactH(nb)+bs.map(factorHTML).join('');
   return f.map(factorHTML).join(DOT);
 }
-function itemsHTML(items){ return items.map((it,i)=>(i===0?(it.s<0?MI:''):(it.s<0?' '+MI+' ':' + '))+bodyHTML(it.f)).join('') }
+function itemsHTML(items,wrap){ return items.map((it,i)=>{ const vor=(i===0?(it.s<0?MI:''):(it.s<0?' '+MI+' ':' + ')), kern=bodyHTML(it.f);
+  return vor+(wrap?'<span class="bsum">'+kern+'</span>':kern); }).join('') }
 const canMergeF=(a,b)=>(a.k==='n'&&b.k==='n')||(a.k==='v'&&b.k==='v'&&a.n===b.n);
 function canMergeS(A,B){ if(!isSimpleF(A.f)||!isSimpleF(B.f)) return false; return itemKey(A)===itemKey(B) }
 function isSolved(items){ if(items.some(it=>!isCanon(it.f))) return false; const ks=items.map(itemKey);
@@ -620,6 +633,42 @@ function opDist(items,i){ const r=clone(items); const it=r[i]; const bi=it.f.fin
   const others=it.f.filter((_,j)=>j!==bi); const outer=(it.s<0?MI:'')+bodyHTML(others);
   r.splice(i,1,...b.items.map(x=>({s:it.s*x.s,f:[...clone(others),...clone(x.f)]})));
   return {items:r,why:`Distributivgesetz: ${outer} mal <b>jeden</b> Summanden der Klammer`+(it.s<0?' – das Minus gehört zum Faktor, deshalb drehen sich alle Rechenzeichen um.':'.')} }
+/* ── Kurzform: Zwischen Zahl und Variable darf der Malpunkt wegbleiben (2 · x = 2x) ── */
+const canShort=(a,b)=>!b.kz&&b.k==='v'&&(a.k==='n'||(a.k==='v'&&a.n!==b.n));
+function opShort(items,i,j){ const r=clone(items); r[i].f[j].kz=true;
+  return {items:r,why:`Kurzform: Zwischen ${r[i].f[j-1].k==='n'?'Zahl und Variable':'den Variablen'} darf der Malpunkt wegbleiben – ${bodyHTML(r[i].f.slice(grpStart(r[i].f,j),j+1))}.`} }
+/* zusammengeklebte Faktoren gehören beim Verteilen zusammen */
+function grpStart(f,j){ let a=j-1; while(a>0&&f[a].kz) a--; return a }
+/* ── Nur den Faktor links vom angetippten Malpunkt in die Klammer verteilen ── */
+function opDistAt(items,i,j){ const r=clone(items); const it=r[i], b=it.f[j], a=grpStart(it.f,j);
+  const grp=it.f.slice(a,j), rest=it.f.filter((_,k)=>k<a||k>j);
+  const gh=bodyHTML(grp.map((g,gi)=>gi?g:Object.assign({},g,{kz:false})));
+  const prods=b.items.map(x=>({s:x.s,f:[...clone(grp),...clone(x.f)].map((f0,fi)=>fi?f0:Object.assign({},f0,{kz:false}))}));
+  const rechnung=b.items.map(x=>gh+' · '+(x.s<0?'('+MI+bodyHTML(x.f)+')':bodyHTML(x.f))).join(' + ');
+  let why=`Distributivgesetz: <b>${gh}</b> mal <b>jeden</b> Summanden der Klammer – ${rechnung}.`;
+  if(!rest.length){ r.splice(i,1,...prods.map(pr=>({s:it.s*pr.s,f:pr.f}))); }
+  else { it.f=[...rest,{k:'b',items:prods,e:1}];
+    why+=' Der übrige Faktor bleibt vor der Klammer stehen.'; }
+  return {items:r,why} }
+/* ── Ausklammern von Hand: angetippter Faktor, wenn er in jedem Summanden steckt ── */
+function gemFaktor(items,x){ if(items.length<2||!isSolved(items)) return null;
+  const ms=items.map(monoOfItem); if(ms.some(m=>!m)) return null;
+  if(x.k==='v'){ let e=Infinity; ms.forEach(m=>{ e=Math.min(e,m.v[x.n]||0) }); if(!(e>=1)) return null;
+    return {c:q(1),v:{[x.n]:e}} }
+  if(x.k==='n'){ const r=factorOut(itemsPoly(items)); if(!r) return null; const c=qabs(r.G.c);
+    if(qone(c)) return null; return {c:items[0].s<0?qneg(c):c,v:{}} }
+  return null }
+function opFactorG(items,G){
+  const inner=items.map(it=>{ const m=monoOfItem(it); const v={};
+    Object.keys(m.v).forEach(k=>{ const e=m.v[k]-(G.v[k]||0); if(e>0) v[k]=e });
+    return monoToItem({c:qmul(m.c,q(G.c.d,G.c.n)),v}) });
+  const gi=monoToItem(G); const item={s:gi.s,f:[...gi.f.filter(x=>!(x.k==='n'&&qone(x.q)&&gi.f.length>1)),{k:'b',items:inner,e:1}]};
+  if(item.f.length===2&&item.f[0].k==='n'&&qone(item.f[0].q)) item.f.shift();
+  const gh=monoHTML(G);
+  const det=items.map((it,i)=>{ const m=monoOfItem(it);
+    return `${monoHTML(m)} = ${gh.startsWith(MI)?'('+gh+')':gh} · ${inner[i].s<0?'('+itemsHTML([inner[i]])+')':itemsHTML([inner[i]])}` }).join(', &nbsp;');
+  return {items:[item],factored:true,why:`Ausklammern (Distributivgesetz rückwärts): <b>${gh}</b> steckt in jedem Summanden – denn ${det}.`} }
+
 function bIdx(it,e1){ return it.f.map((x,j)=>x.k==='b'&&(!e1||x.e===1)?j:-1).filter(j=>j>=0) }
 function opKlKl(items,i){ const r=clone(items); const it=r[i]; const [j1,j2]=bIdx(it,true); const A=it.f[j1], B=it.f[j2];
   const prods=[]; A.items.forEach(a=>B.items.forEach(b=>prods.push({s:a.s*b.s,f:[...clone(a.f),...clone(b.f)]})));
@@ -856,16 +905,45 @@ function hint(){ stop();
   if(U.plan&&U.plan.sel!=null) U.sel=U.plan.sel;
   render() }
 function doStep(){ stop(); const p=U.plan||planStep(U.items,U.fine,U.goal,U.factored); if(p) apply(p.res) }
+/* ── Kleine Flugshow: Kopien des Faktors wandern zu den Summanden (oder zurück) ── */
+function animiere(src,ziele,fertig,zurueck){
+  if(!src||!ziele.length||U.playing){ fertig(); return }
+  const box=stage.getBoundingClientRect();
+  const ov=document.createElement('div'); ov.className='flyLayer'; stage.appendChild(ov);
+  const s=src.getBoundingClientRect();
+  ziele.forEach((z,k)=>{ const t=z.getBoundingClientRect();
+    const von=zurueck?t:s, nach=zurueck?s:t;
+    const el=document.createElement('span'); el.className='flyer'; el.innerHTML=src.innerHTML;
+    el.style.left=(von.left-box.left)+'px'; el.style.top=(von.top-box.top)+'px';
+    ov.appendChild(el);
+    z.classList.add('hit');
+    requestAnimationFrame(()=>{ el.style.transitionDelay=(k*110)+'ms';
+      el.style.transform='translate('+(nach.left-von.left)+'px,'+(nach.top-von.top)+'px) scale(1.15)';
+      el.style.opacity='.2'; }); });
+  src.classList.add('ab');
+  setTimeout(()=>{ ov.remove(); fertig(); }, 620+110*ziele.length);
+}
 function tapItem(i){ if(U.pen!=null){ const it=U.items[i]; if(U.pen==='x') delete it.mk; else it.mk=+U.pen; render(); return }
   if(!hasB(U.items[i].f)) return; U.sel=U.sel===i?-1:i; render() }
-function tapFactor(i,j){ if(U.pen!=null){ const x=U.items[i].f[j]; if(U.pen==='x') delete x.mk; else x.mk=+U.pen; render(); return } tapItem(i) }
+function tapFactor(i,j,el){ if(U.pen!=null){ const x=U.items[i].f[j]; if(U.pen==='x') delete x.mk; else x.mk=+U.pen; render(); return }
+  const items=U.items, x=items[i].f[j];
+  if(!U.factored&&items.length>1&&(x.k==='v'||x.k==='n')&&isSolved(items)){
+    const G=gemFaktor(items,x);
+    if(!G){ if(el){ el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake') }
+      meld(x.k==='v'?`<i>${x.n}</i> steckt nicht in jedem Summanden – Ausklammern geht damit nicht.`
+                    :'Diese Zahl ist kein gemeinsamer Faktor aller Summanden.'); return }
+    stop();
+    const ziele=[...stage.querySelectorAll(':scope>.sm')];
+    animiere(el,ziele,()=>apply(opFactorG(U.items,G)),true); return }
+  tapItem(i) }
+function meld(html){ const ctx=$('.wctx'); ctx.innerHTML='<span style="color:var(--warnc)">'+html+'</span>';
+  clearTimeout(meld._t); meld._t=setTimeout(()=>{ if(!U.pen&&U.sel<0) render() },2600) }
 function actionsFor(i){ const items=U.items, it=items[i], acts=[]; const bs=bIdx(it,false), b1=bIdx(it,true);
   bs.forEach(j=>{ const b=it.f[j]; if(isPowProd(b)){ acts.push(['Potenz auflösen: jeden Faktor potenzieren',()=>opPowEach(U.items,i,j)]); acts.push(['Potenz als Produkt schreiben',()=>opPowProd(U.items,i,j)]) }
     else if(b.e>=2){ if(binomParts(b)) acts.push(['Binomische Formel anwenden',()=>opBinom(U.items,i,j)]); acts.push(['Potenz als Produkt schreiben',()=>opPowToProd(U.items,i,j)]) } });
   if(bs.length===1&&b1.length===1){ if(it.f.length===1) acts.push([it.s<0?'Minusklammer auflösen':'Plusklammer auflösen',()=>opDissolve(U.items,i)]); else acts.push(['Ausmultiplizieren (Distributivgesetz)',()=>opDist(U.items,i)]) }
   if(b1.length>=2){ if(binom3Parts(it)) acts.push(['3. binomische Formel anwenden',()=>opBinom3(U.items,i)]); acts.push(['Klammer mal Klammer („jeder mit jedem")',()=>opKlKl(U.items,i)]) }
   return acts }
-function probeVals(p){ const vs=pVars(p); const pool=[2,-1,3,-2,4,-3]; const v={}; vs.forEach((x,i)=>v[x]=pool[i%pool.length]); return v }
 function render(){
   const items=U.items, fm=U.fine; stage.innerHTML='';
   const keys=items.map(itemKey); const cmap={}; let ci=0;
@@ -880,23 +958,36 @@ function render(){
     if(keys[i]!==null&&keys[i] in cmap) sm.classList.add('c'+cmap[keys[i]]);
     if(it.mk!=null) sm.classList.add('mk'+it.mk);
     const sg=document.createElement('span'); sg.className='sg'+(i===0&&it.s>0?' ghost':''); sg.textContent=it.s<0?MI:'+'; sm.appendChild(sg);
-    if(!fm&&isCanon(it.f)){ const b=document.createElement('span'); b.className='bd'; b.innerHTML=bodyHTML(it.f); sm.appendChild(b) }
+    if(!fm&&isCanon(it.f)){ const b=document.createElement('span'); b.className='bd'; b.innerHTML=compactH(it.f,true); sm.appendChild(b);
+      b.addEventListener('pointerdown',e=>{ U.hit=e.target.closest('.pt'); },true); }
     else {
       const fc={}; if(U.color){ const cnt={}; it.f.forEach(x=>{const k=x.k==='n'?'#':x.k==='v'?x.n:null; if(k)cnt[k]=(cnt[k]||0)+1}); let c=0; it.f.forEach(x=>{const k=x.k==='n'?'#':x.k==='v'?x.n:null; if(k&&cnt[k]>1&&!(k in fc)) fc[k]=c++%6}) }
       it.f.forEach((x,j)=>{
-        if(j>0){ const jn=document.createElement('span'); jn.className='jn';
+        if(j>0&&!x.kz){ const jn=document.createElement('span'); jn.className='jn';
           if(canMergeF(it.f[j-1],x)){ jn.classList.add('can'); jn.innerHTML='<button title="zusammenfassen">·</button>';
             jn.querySelector('button').onclick=()=>userApply(opMergeF(U.items,i,j-1)); jn.addEventListener('pointerdown',e=>e.stopPropagation()) }
+          else if(x.k==='b'&&x.e===1){ jn.classList.add('can','dist');     /* in die Klammer verteilen */
+            jn.innerHTML='<button title="ausmultiplizieren: den Faktor auf jeden Summanden der Klammer verteilen">·</button>';
+            jn.querySelector('button').onclick=()=>{ stop();
+              const grpEl=sm.querySelectorAll(':scope>.ft')[grpStart(it.f,j)];
+              const klammer=sm.querySelectorAll(':scope>.ft')[j];
+              const ziele=[...klammer.querySelectorAll('.bsum')];
+              animiere(grpEl,ziele,()=>apply(opDistAt(U.items,i,j))); };
+            jn.addEventListener('pointerdown',e=>e.stopPropagation()) }
+          else if(canShort(it.f[j-1],x)){ jn.classList.add('can','kurz');
+            jn.innerHTML='<button title="Kurzform ohne Malpunkt schreiben">·</button>';
+            jn.querySelector('button').onclick=()=>userApply(opShort(U.items,i,j)); jn.addEventListener('pointerdown',e=>e.stopPropagation()) }
           else jn.textContent='·';
           sm.appendChild(jn) }
-        const ft=document.createElement('span'); ft.className='ft'+(x.k==='b'?' br':'')+(tf.some(([a,b])=>a===i&&b===j)?' tgt':''); ft.innerHTML=factorHTML(x);
+        const ft=document.createElement('span'); ft.className='ft'+(x.k==='b'?' br':'')+(x.kz?' kz':'')+(tf.some(([a,b])=>a===i&&b===j)?' tgt':''); ft.innerHTML=factorHTML(x,x.k==='b');
         const k=x.k==='n'?'#':x.k==='v'?x.n:null; if(k&&k in fc) ft.classList.add('c'+fc[k]);
         if(x.mk!=null) ft.classList.add('mk'+x.mk);
         sm.appendChild(ft);
-        if(it.f.length>1) attachSortDrag(ft,()=>[...sm.querySelectorAll(':scope>.ft')],(a,b)=>userApply(opMoveF(U.items,i,a,b)),()=>tapFactor(i,j));
+        if(it.f.length>1) attachSortDrag(ft,()=>[...sm.querySelectorAll(':scope>.ft')],(a,b)=>userApply(opMoveF(U.items,i,a,b)),()=>tapFactor(i,j,ft));
       });
     }
-    attachSortDrag(sm,()=>[...stage.querySelectorAll(':scope>.sm')],(a,b)=>userApply(opMoveS(U.items,a,b)),()=>tapItem(i));
+    attachSortDrag(sm,()=>[...stage.querySelectorAll(':scope>.sm')],(a,b)=>userApply(opMoveS(U.items,a,b)),
+      ()=>{ const pt=U.hit; U.hit=null; if(pt&&pt.isConnected) tapFactor(i,+pt.dataset.j,pt); else tapItem(i); });
     stage.appendChild(sm);
   });
   // Tipp-Box
@@ -928,10 +1019,8 @@ function render(){
     actionsFor(U.sel).forEach(([l,fn])=>{ const b=document.createElement('button'); b.className='btn sm'; b.textContent=l; b.onclick=()=>userApply(fn()); ctx.appendChild(b) }) }
   // Ergebnis + Probe
   const rb=$('#resbox'); const done=U.factored||(solved&&!(U.goal==='fakt'&&hasCommonFactor(items)));
-  if(done&&U.log.length>1){ const vals=probeVals(U.p0); const vs=Object.keys(vals); const a=pEval(U.p0,vals), b=pEval(itemsPoly(items),vals);
-    rb.classList.add('show');
-    rb.innerHTML=`<div><b>Ergebnis:</b> &nbsp;<span class="m">${U.src} = ${itemsHTML(items)}</span></div>`+
-      (vs.length?`<div class="small" style="margin-top:4px;color:var(--muted)">Probe durch Einsetzen (${vs.map(v=>`<i>${v}</i> = ${nf(vals[v])}`).join(', ')}): Ausgangsterm = ${nf(a)}, Ergebnis = ${nf(b)} ${Math.abs(a-b)<1e-9?'<span class="ok">✓</span>':'<span class="bad">✗</span>'}</div>`:'');
+  if(done&&U.log.length>1){ rb.classList.add('show');
+    rb.innerHTML=`<div><b>Ergebnis:</b> &nbsp;<span class="m">${U.src} = ${itemsHTML(items)}</span></div>`;
   } else rb.classList.remove('show');
   // Buttons
   const next=planStep(items,U.fine,U.goal,U.factored);

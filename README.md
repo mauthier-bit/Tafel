@@ -2846,7 +2846,20 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   (Mathematik 7). Term eintippen – der Umformer zerlegt ihn in **Summanden und Faktoren**, die sich
   **selbst umsortieren und zusammenfassen** lassen (Drag & Drop); dazu **Tipp**, **nächsten Schritt
   ausführen**, **alles vorführen** (mit Tempo), **Gleichartiges färben**, Textmarker und ein
-  mitwachsender **Rechenweg**. Der lässt sich als Text kopieren, drucken oder als **Bild auf die Tafel
+  mitwachsender **Rechenweg**.
+  - **Die Malpunkte sind Knöpfe.** Jeder Punkt, an dem etwas geht, **leuchtet**: Ein **gelber** Punkt
+    fasst zusammen (2 · 3 = 6, x · x = x²), ein **blauer** schreibt die **Kurzform** ohne Malpunkt
+    (2 · x → **2x**), und ein **grüner** Punkt vor einer Klammer **multipliziert aus** – dabei fliegt
+    der Faktor sichtbar auf **jeden** Summanden der Klammer, und im Rechenweg steht die Rechnung
+    einzeln da (x · 1 + x · x + x · y). Verteilt wird genau der Faktor **links vom Punkt**: Bei
+    2 · x · (1 + x + y) also erst nur das **x** (die 2 bleibt vor der Klammer stehen) – schreibt man
+    vorher mit dem blauen Punkt **2x**, wird mit **2x** ausmultipliziert.
+  - **Ausklammern durch Antippen:** Man tippt in einem Summanden den Teil an, den man ausklammern
+    möchte. Steckt er in **jedem** Summanden, wandert er animiert vor die Klammer – bei
+    2x + x² − xy also **x** → **x · (2 + x − y)**; tippt man die **2** in 4x + 6y an, kommt
+    **2 · (2x + 3y)**. Passt es nicht (etwa das **y** in 2x + x² − xy), wackelt der Teil kurz und
+    das Werkzeug sagt, woran es liegt.
+  - Die frühere **Probe durch Einsetzen von Zahlen** entfällt; am Ende steht nur noch das Ergebnis. Der lässt sich als Text kopieren, drucken oder als **Bild auf die Tafel
   legen** bzw. **als Bild kopieren**. In der Eingabekarte steht zuerst das **Eingabefeld mit den
   Eingabetasten**, darunter **Ziel** (*Vereinfachen* / *danach ausklammern*) und **Schrittweite** –
   beide einzeilig neben ihrer Beschriftung – und erst danach der Knopf **Umformen ▸**.
