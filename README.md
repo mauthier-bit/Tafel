@@ -2776,7 +2776,9 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   `(x+1)(x-1)` und Dezimalkomma werden verstanden), Freihand-Zeichnen, Graphen ein-/ausblenden mit C-Reglern,
   Analyse-Knöpfe VZ/M/K, Tangente, Fläche/Integral, Intervalle, Symbolleiste, Ableitungsrelation,
   Krümmungs-Smileys, Linienstil, Anleitung (?). Der eingestellte Zustand (Funktion, Parameter, sichtbare
-  Graphen, Analyse-Knöpfe, Zoom, Farben, Freihand-Kurve) wird **mit dem Tafel-Projekt gespeichert**.
+  Graphen, Analyse-Knöpfe, Zoom, Farben, Freihand-Kurve) wird **mit dem Tafel-Projekt gespeichert**
+  – und lässt sich mit dem **⤴-Knopf** oben in der Seitenleiste (nur das Sinnbild, neben dem
+  Anleitungs-„?") als **QR-Code teilen**: Wer ihn scannt, sieht genau dieselbe Einstellung.
 - **Formel umstellen** (im **Gleichungslöser** der fünfte Reiter): Formel eintippen (`F = m · a`) oder aus der **Formelsammlung**
   wählen – Mechanik, Elektrizität, Wärme, Geometrie und Mathematik, jeweils mit Einheiten. Dann die
   **gesuchte Größe antippen**; das Werkzeug stellt **Schritt für Schritt** um und schreibt an jede Zeile

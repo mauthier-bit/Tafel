@@ -42,6 +42,14 @@
     transition:all .15s;margin-top:1px;
   }
   .help-btn:hover{background:rgba(74,144,196,.4);border-color:#7ec8f0;}
+  .by-row{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+  /* nur das Sinnbild – wie der Hilfe-Knopf daneben */
+  #teilenBtn button{flex-shrink:0;width:26px;height:26px;border-radius:50%;padding:0;
+    background:rgba(74,144,196,.2);border:1.5px solid rgba(74,144,196,.5);color:#7ec8f0;
+    cursor:pointer;display:inline-flex;align-items:center;justify-content:center;}
+  #teilenBtn button:hover{background:rgba(74,144,196,.4);border-color:#7ec8f0;}
+  #teilenBtn button span{display:none;}
+  #teilenBtn svg{width:15px;height:10px;}
 
   /* ── Modal ── */
   #help-overlay{
@@ -501,6 +509,9 @@
   addEventListener('orientationchange',spaeter);
 })();
 </script>
+<script src="shot.js"></script>
+<script src="vendor/qrcode.min.js"></script>
+<script src="teilen.js"></script>
 </head>
 <body>
 <div id="app">
@@ -512,7 +523,7 @@
       <h1>Zusammenhänge von F · f · f′ · f″</h1>
       <button class="help-btn" onclick="openHelp()" title="Anleitung">?</button>
     </div>
-    <div class="by">by Michael Authier</div>
+    <div class="by-row"><div class="by">by Michael Authier</div><span id="teilenBtn" style="display:inline-flex"></span></div>
   </div>
 
   <!-- ══════ HILFE-MODAL ══════ -->
@@ -2974,7 +2985,6 @@ init();
 <script>
 /* ═══ Einbettung in die Digitale Tafel: Zustand im Tafel-Projekt speichern und wiederherstellen ═══ */
 (function(){
-  if(window.parent===window) return;                       // eigenständig geöffnet → nichts zu tun
   let applying=false, timer=null;
   function snapshot(){
     return { basis:state.basis, preset:state.preset, params:{...state.params},
@@ -2987,6 +2997,9 @@ init();
       lineStyle:JSON.parse(JSON.stringify(LINE_STYLE)),
       colors:{F:COL.F.line,f:COL.f.line,fp:COL.fp.line,fpp:COL.fpp.line} };
   }
+  window.abZustand=snapshot;                               /* fürs Teilen, auch eigenständig */
+  window.abEinspielen=d=>apply(d);
+  if(window.parent===window) return;                       // ab hier nur die Einbettung in die Tafel
   function post(){ timer=null; try{ parent.postMessage({type:'embed-data',data:snapshot()},'*'); }catch(e){} }
   const origDrawAll=drawAll;
   drawAll=function(){ origDrawAll.apply(this,arguments); if(!applying&&!timer) timer=setTimeout(post,400); };
@@ -3029,6 +3042,14 @@ init();
   addEventListener('message',e=>{ if(e.data&&e.data.type==='embed-data') apply(e.data.data); });
   try{ parent.postMessage({type:'embed-ready'},'*'); }catch(e){}
 })();
+
+/* ═══ Teilen: der QR-Code gibt genau die eingestellte Ansicht weiter ═══ */
+if(window.TafelTeilen){
+  if(!TafelTeilen.istGeteilt()) TafelTeilen.knopf(document.getElementById('teilenBtn'),'ableitungen.html',
+    ()=>({w:'abl', d:window.abZustand()}));
+  else window.addEventListener('load',()=>{ TafelTeilen.empfangen()
+    .then(p=>{ if(p&&p.w==='abl'&&p.d) window.abEinspielen(p.d); }).catch(()=>{}); });
+}
 </script>
 </body>
 </html>
