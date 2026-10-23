@@ -11,7 +11,12 @@
   :root{--fs:15px;--fw:400;--fwb:700;--fi:normal;}
   html,body{margin:0;height:100%;font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#1f2430;overflow:hidden;
     font-size:var(--fs);font-weight:var(--fw);font-style:var(--fi);}
-  #wrap{height:100%;display:flex;}
+  body{display:flex;flex-direction:column;}
+  /* Kopfzeile ueber die ganze Breite - so muss die Knopfreihe nicht gescrollt werden */
+  #top{flex:none;display:flex;flex-wrap:wrap;align-items:center;gap:5px;padding:6px 10px;background:#fff;border-bottom:1px solid #e6eaf1;}
+  #top #teilenBtn{margin-left:auto;}   /* rechte Gruppe nach rechts, auch wenn die Zeile umbricht */
+  #top>*{flex:0 0 auto;}
+  #wrap{flex:1;min-height:0;display:flex;}
   #wrap.col{flex-direction:column;}
   #cvbox{flex:1;min-width:0;min-height:0;position:relative;}
   #cv{position:absolute;inset:0;width:100%;height:100%;touch-action:none;}
@@ -33,11 +38,9 @@
   .chip.sin{color:#dc2626;} .chip.cos{color:#2563eb;} .chip.tan{color:#16a34a;}
   .chip.sin.on{background:#fef2f2;} .chip.cos.on{background:#eff6ff;} .chip.tan.on{background:#f0fdf4;}
   .lab{font-weight:800;min-width:2.2em;}
+  .ck{flex:none;width:1.15em;height:1.15em;margin:0;accent-color:currentColor;cursor:pointer;}
   .a1{color:#ea580c;} .a2{color:#9333ea;}
   .hint{color:#64748b;font-size:.85em;line-height:1.3;}
-  .opts{display:flex;flex-wrap:nowrap;gap:5px;margin-top:auto;padding-top:4px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:thin;}
-  .opts>*{flex:0 0 auto;}
-  .opts::-webkit-scrollbar{height:4px;} .opts::-webkit-scrollbar-thumb{background:#cfd6e0;border-radius:2px;}
   .tog{border:1px solid #cfd6e0;background:#fff;border-radius:999px;padding:4px 10px;font-size:.82em;font-weight:600;color:#475569;}
   .tog.on{background:#2563eb;border-color:#2563eb;color:#fff;}
   .fr{display:inline-flex;flex-direction:column;vertical-align:middle;text-align:center;font-size:.8em;line-height:1.05;}
@@ -228,6 +231,12 @@
 </script>
 </head>
 <body>
+<div id="top">
+  <button class="tog" data-o="snap" title="Besondere Winkel und Werte rasten beim Ziehen ein">Einrasten</button>
+  <button class="tog" data-o="marks" title="Besondere Winkel am Kreis markieren">Besondere Winkel</button>
+  <button class="tog" data-o="rad" title="Winkel am Kreis im Bogenmaß beschriften">Bogenmaß</button>
+  <span id="teilenBtn" style="display:inline-flex"></span><span id="shotBtns" style="display:contents"></span><button class="tog" id="fsM" title="Schrift kleiner">A−</button><button class="tog" id="fsP" title="Schrift größer">A+</button>
+</div>
 <div id="wrap">
   <div id="cvbox"><canvas id="cv"></canvas></div>
   <div id="panel">
@@ -251,18 +260,10 @@
       <div class="sub" id="vSub"></div>
       <input type="range" id="vSl" min="-1" max="1" step="0.01">
       <div style="display:flex;flex-direction:column;gap:5px;margin-top:4px">
-        <div class="res"><span class="lab a1">α₁</span><span class="v" id="r1"></span></div>
-        <div class="res" id="r2row"><span class="lab a2">α₂</span><span class="v" id="r2"></span></div>
+        <div class="res"><input type="checkbox" class="ck a1" id="ck1" title="α₁ im Einheitskreis zeigen"><span class="lab a1">α₁</span><span class="v" id="r1"></span></div>
+        <div class="res" id="r2row"><input type="checkbox" class="ck a2" id="ck2" title="α₂ im Einheitskreis zeigen"><span class="lab a2">α₂</span><span class="v" id="r2"></span></div>
       </div>
       <div class="hint" id="vHint" style="margin-top:6px"></div>
-    </div>
-
-    <div class="opts">
-      <button class="tog" data-o="snap" title="Besondere Winkel und Werte rasten beim Ziehen ein">Einrasten</button>
-      <button class="tog" data-o="marks" title="Besondere Winkel am Kreis markieren">Besondere Winkel</button>
-      <button class="tog" data-o="rad" title="Winkel am Kreis im Bogenmaß beschriften">Bogenmaß</button>
-      <span style="flex:1"></span>
-      <span id="teilenBtn" style="display:inline-flex"></span><span id="shotBtns" style="display:contents"></span><button class="tog" id="fsM" title="Schrift kleiner">A−</button><button class="tog" id="fsP" title="Schrift größer">A+</button>
     </div>
   </div>
 </div>
@@ -276,7 +277,7 @@ const cv=$('cv'), ctx=cv.getContext('2d');
 const DEG=Math.PI/180, EPS=1e-9;
 const COL={sin:'#dc2626',cos:'#2563eb',tan:'#16a34a',a1:'#ea580c',a2:'#9333ea',ink:'#1f2430',grey:'#94a3b8'};
 const SPECIAL=[0,30,45,60,90,120,135,150,180,210,225,240,270,300,315,330];
-const defaults=()=>({mode:'angle',a:30,fn:'sin',v:0.5,show:{sin:true,cos:true,tan:false},snap:true,marks:true,rad:false,fontSize:15,fontBold:false,fontItalic:false});
+const defaults=()=>({mode:'angle',a:30,fn:'sin',v:0.5,show:{sin:true,cos:true,tan:false},snap:true,marks:true,rad:false,sol1:false,sol2:false,fontSize:15,fontBold:false,fontItalic:false});
 let data=defaults();
 
 /* ---------- Zahlen & exakte Werte ---------- */
@@ -378,17 +379,18 @@ function draw(){
     label('P',X(cc-ss*pu-cc*pi),Y(ss+cc*pu-ss*pi),COL.ink,'center','middle',15,true);
   } else {
     const fn=data.fn, v=data.v, sol=solutions(fn,v), lim=(H/2-6*K)/R, limX=(W/2-6*K)/R;
+    const vis=[!!data.sol1,!!data.sol2];                 // nur angehakte Loesungswinkel zeichnen
     if(fn==='sin'){ const vv=Math.max(-lim,Math.min(lim,v)); line(4*K,Y(vv),W-4*K,Y(vv),COL.sin,1.6*K,[7*K,5*K]); }
     else if(fn==='cos'){ const vv=Math.max(-limX,Math.min(limX,v)); line(X(vv),4*K,X(vv),H-4*K,COL.cos,1.6*K,[7*K,5*K]); }
-    sol.forEach((a,i)=>sector(a,(0.18+0.1*i)*R,i?COL.a2:COL.a1,0.13));
+    sol.forEach((a,i)=>{ if(vis[i]) sector(a,(0.18+0.1*i)*R,i?COL.a2:COL.a1,0.13); });
     if(fn==='tan') tanSegment(v);
-    sol.forEach(a=>{ const c=Math.cos(a*DEG), s=Math.sin(a*DEG);
+    sol.forEach((a,i)=>{ if(!vis[i])return; const c=Math.cos(a*DEG), s=Math.sin(a*DEG);
       if(fn==='sin') line(X(c),cy,X(c),Y(s),COL.sin,5*K);
       if(fn==='cos') line(cx,cy,X(c),cy,COL.cos,5*K); });
-    if(fn==='tan'&&sol.length){ const c=Math.cos(sol[0]*DEG), s=Math.sin(sol[0]*DEG); line(X(-c*1.25),Y(-s*1.25),X(c*1.25),Y(s*1.25),COL.tan,1.6*K,[6*K,5*K]); }
-    sol.forEach((a,i)=>{ const c=Math.cos(a*DEG), s=Math.sin(a*DEG); line(cx,cy,X(c),Y(s),COL.ink,2.4*K); });
-    sol.forEach((a,i)=>angleLabel(a,(0.18+0.1*i)*R,sol.length>1?(i?'α₂':'α₁'):'α₁',i?COL.a2:COL.a1));
-    sol.forEach((a,i)=>{ const c=Math.cos(a*DEG), s=Math.sin(a*DEG); dot(X(c),Y(s),i?COL.a2:COL.a1,8*K);
+    if(fn==='tan'&&sol.length&&(vis[0]||vis[1])){ const c=Math.cos(sol[0]*DEG), s=Math.sin(sol[0]*DEG); line(X(-c*1.25),Y(-s*1.25),X(c*1.25),Y(s*1.25),COL.tan,1.6*K,[6*K,5*K]); }
+    sol.forEach((a,i)=>{ if(!vis[i])return; const c=Math.cos(a*DEG), s=Math.sin(a*DEG); line(cx,cy,X(c),Y(s),COL.ink,2.4*K); });
+    sol.forEach((a,i)=>{ if(vis[i]) angleLabel(a,(0.18+0.1*i)*R,sol.length>1?(i?'α₂':'α₁'):'α₁',i?COL.a2:COL.a1); });
+    sol.forEach((a,i)=>{ if(!vis[i])return; const c=Math.cos(a*DEG), s=Math.sin(a*DEG); dot(X(c),Y(s),i?COL.a2:COL.a1,8*K);
       const pu=20*K/R, pi=16*K/R; label(i?'P₂':'P₁',X(c-s*pu-c*pi),Y(s+c*pu-s*pi),i?COL.a2:COL.a1,'center','middle',14,true); });
     /* Anfasser */
     let hx,hy,hc;
@@ -429,6 +431,7 @@ function render(){
     const sl=$('vSl'); if(fn==='tan'){ sl.min=-4; sl.max=4; } else { sl.min=-1.2; sl.max=1.2; } sl.step=0.01; sl.value=v;
     $('vSub').textContent=exactOf(v)&&/√/.test(exactOf(v))?'≈ '+fmt(v,3):(exactOf(v)?'':(Math.abs(v*1000-Math.round(v*1000))<1e-6?'':'≈ '+fmt(v,3)));
     const fmtA=a=>{ a=cleanAngle(a); return degStr(a)+(radParts(a)?'  =  ':'  ')+radHTML(a); };
+    $('ck1').checked=!!data.sol1; $('ck2').checked=!!data.sol2;
     if(!sol.length){ $('r1').textContent='keine Lösung'; $('r2row').hidden=true;
       $('vHint').textContent='Für jeden Winkel gilt −1 ≤ '+fn+' α ≤ 1.'; }
     else { $('r1').innerHTML=fmtA(sol[0]); $('r2row').hidden=sol.length<2; if(sol.length>1) $('r2').innerHTML=fmtA(sol[1]);
@@ -455,7 +458,9 @@ document.querySelectorAll('#fnSeg button').forEach(b=>b.onclick=()=>{ if(data.fn
   if(b.dataset.fn!=='tan'&&Math.abs(data.v)>1) data.v=0.5; render(); sync(true); });
 document.querySelectorAll('.chip').forEach(b=>b.onclick=()=>{ data.show[b.dataset.f]=!data.show[b.dataset.f]; render(); sync(true); });
 document.querySelectorAll('.tog[data-o]').forEach(b=>b.onclick=()=>{ data[b.dataset.o]=!data[b.dataset.o]; render(); sync(true); });
-if(window.TafelShot) TafelShot.buttons($('shotBtns'),()=>TafelShot.rasterize($('wrap'),{exclude:'#modeSeg,#fnSeg,.opts,input[type=range]',pad:6}),'tog');
+$('ck1').onchange=()=>{ data.sol1=$('ck1').checked; render(); sync(true); };
+$('ck2').onchange=()=>{ data.sol2=$('ck2').checked; render(); sync(true); };
+if(window.TafelShot) TafelShot.buttons($('shotBtns'),()=>TafelShot.rasterize($('wrap'),{exclude:'#modeSeg,#fnSeg,input[type=range]',pad:6}),'tog');
 for(const [id,d] of [['fsM',-1],['fsP',1]]) $(id).onclick=()=>{ data.fontSize=Math.max(9,Math.min(36,(data.fontSize||15)+d)); render(); sync(true); };
 $('aSl').oninput=()=>{ data.a=norm(+$('aSl').value); render(); sync(); };
 $('aSl').onchange=()=>sync(true);

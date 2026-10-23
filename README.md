@@ -2336,7 +2336,10 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   Werkzeug (rechts unten) oder im **Kontextmenü** (＋/−, fett, kursiv). **🖼 Tafel / 📋 Kopieren**: Kreis samt
   Werten (ohne Bedienknöpfe) als Bild neben das Werkzeug legen bzw. in die Zwischenablage kopieren.
   **⤴ Teilen** gibt die eingestellte Ansicht (Modus, Winkel bzw. Wert, sichtbare Größen, Einrasten,
-  Bogenmaß) als **QR-Code** an die Klasse. Bedienen über „Objekt bedienen". Zwei Modi:
+  Bogenmaß, angehakte Lösungswinkel) als **QR-Code** an die Klasse. Bedienen über „Objekt bedienen".
+  Alle diese Knöpfe (Einrasten · Besondere Winkel · Bogenmaß · Teilen · 🖼 Tafel · 📋 Kopieren · A−/A+)
+  stehen in einer **Kopfzeile über die ganze Breite des Werkzeugs**; wird das Werkzeugfenster schmal,
+  bricht sie in eine zweite Zeile um, statt seitlich gescrollt werden zu müssen. Zwei Modi:
   - **Winkel → Werte:** Punkt P auf dem Kreis ziehen (oder irgendwo in die Kreisfläche tippen), Winkel
     eintippen (auch im Bogenmaß, z. B. `2π/3`) oder per Schieberegler. Angezeigt werden **sin α (rot)**,
     **cos α (blau)** und **tan α (grün, Abschnitt auf der Tangente x = 1)** – jeweils mit den Knöpfen
@@ -2346,6 +2349,12 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     farbigen Anfasser auf der Achse bzw. Tangente ziehen → beide Winkel **α₁, α₂ im Bereich
     0° ≤ α < 360°** in Grad und Bogenmaß, mit Punkten P₁, P₂ im Kreis und Symmetrie-Hinweis; bei
     |sin α| > 1 bzw. |cos α| > 1 „keine Lösung".
+    Vor **α₁** und **α₂** steht je ein **Häkchen** (in der Farbe des Winkels): Erst damit erscheint der
+    Winkel im Kreis – mit Schenkel, Winkelbogen, Beschriftung, Punkt P₁ bzw. P₂ und der farbigen
+    Strecke für sin bzw. cos. **Beide Häkchen sind zunächst leer**, der Wert selbst (gestrichelte Linie
+    bzw. Abschnitt auf der Tangente) ist aber sofort zu sehen – so lässt sich erst fragen „Welche Winkel
+    passen?" und dann Lösung für Lösung aufdecken. Die berechneten Winkel stehen unabhängig davon im
+    Fenster rechts.
   - **Einrasten:** besondere Winkel (Vielfache von 30° und 45°) und die zugehörigen Werte
     (0, ±½, ±½√2, ±½√3, ±1; bei tan 0, ±⅓√3, ±1, ±√3) rasten beim Ziehen ein; ohne Einrasten ganze Grad
     bzw. Hundertstel. **Besondere Winkel** markiert diese am Kreis, **Bogenmaß** beschriftet sie mit π.
