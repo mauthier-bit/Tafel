@@ -2324,6 +2324,10 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     rechnet nicht in Zehnern, sondern mit 24 und 60 – deshalb gibt es hier **kein Komma** in der
     Tafel: Ein Tipp auf eine Einheit sagt, **in welcher Einheit** der Wert herauskommen soll
     (2 h 15 min 30,5 s = **2,25847 h** = **8130,5 s**).
+    In **Minuten** und **Sekunden** sind nur Werte von **0 bis 59** möglich: Eine zu große Ziffer
+    wird nicht übernommen, das Feld leuchtet kurz **rot** und es erscheint der Hinweis
+    „Minuten: nur Werte von 0 bis 59 – 60 Minuten sind 1 Stunde" (entsprechend bei den Sekunden).
+    Stunden bleiben frei eintippbar, damit auch **70 h** (ohne Tage-Spalte) möglich sind.
   - **„gemischte Einheiten"** zeigt den Wert zusätzlich **blau** in den eingetippten Einheiten:
     **1,25 m = 1 m 2 dm 5 cm**, **1,5 kg = 1 kg 500 g**, **8130,5 s = 2 h 15 min 30,5 s**
     (Zehntel und Hundertstel hängen dabei als Nachkommastellen an den Sekunden).

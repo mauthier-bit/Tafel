@@ -16,6 +16,7 @@
   .tbtn{padding:7px 12px;border:1px solid #cfd6e0;border-radius:9px;background:#fff;font-size:14px;font-family:inherit;cursor:pointer;font-weight:600;}
   .tbtn.on{background:#3b82f6;color:#fff;border-color:#3b82f6;}
   .hint{font-size:12px;color:#8a93a2;} #swHelp[hidden]{display:none;}
+  .dc.bad{background:#fee2e2;box-shadow:inset 0 0 0 2px #dc2626;}
   #tafelWrap{flex:1;min-height:0;overflow:auto;}
   #tafel{display:inline-flex;flex-direction:column;min-width:100%;}
   .row{display:flex;align-items:stretch;}
@@ -290,6 +291,10 @@ function rowValue(dig,split){ if(data.type==='zeit') return zeitWert(dig,split);
   units.forEach((u,ui)=>{ for(let k=0;k<u[1];k++){ const d=dig[col]||'0'; if(ui<=split)intP+=d; else fracP+=d; col++; } });
   intP=intP.replace(/^0+(?=\d)/,''); if(intP==='')intP='0'; fracP=fracP.replace(/0+$/,'');
   return intP+(fracP?(','+fracP):''); }
+/* Einheiten mit festem Wertebereich (Zeit: Minuten und Sekunden nur 0…59) */
+const MAXG={ zeit:{ 2:{max:59,name:'Minuten',hin:'60 Minuten sind 1 Stunde'}, 3:{max:59,name:'Sekunden',hin:'60 Sekunden sind 1 Minute'} } };
+function grenze(ui){ const m=MAXG[data.type]; return (m&&m[ui])?m[ui]:null; }
+function warnBad(inp,txt){ inp.classList.add('bad'); if(window.TafelShot)TafelShot.toast(txt); setTimeout(()=>inp.classList.remove('bad'),1400); }
 function render(){ applyFont();
   ['laenge','flaeche','volumen','masse','zeit','zahl'].forEach(t=>$('t-'+t).classList.toggle('on',data.type===t));
   $('t-misch').style.display=(data.type==='zahl')?'none':'';
@@ -310,7 +315,12 @@ function render(){ applyFont();
     units.forEach((u,ui)=>{ const g=document.createElement('div'); g.className='ugroup'+(ui===data.unitIndex?' sel':'')+(ui<=mk?' mk':'');
       const dg=document.createElement('div'); dg.className='udigits';
       for(let k=0;k<u[1];k++){ const c=col; const inp=document.createElement('input'); inp.className='dc'; inp.type='text'; inp.inputMode='numeric'; inp.maxLength=1; inp.value=rw.dig[c]||'';
-        inp.oninput=()=>{ inp.value=inp.value.replace(/[^0-9]/g,'').slice(0,1); if(inp.value)rw.dig[c]=inp.value; else delete rw.dig[c]; updateVals(); sync(); };
+        inp.oninput=()=>{ inp.value=inp.value.replace(/[^0-9]/g,'').slice(0,1); const alt=rw.dig[c];
+          if(inp.value)rw.dig[c]=inp.value; else delete rw.dig[c];
+          const gr=grenze(ui);
+          if(gr&&gruppenZahl(rw.dig,ui)>gr.max){ if(alt!==undefined)rw.dig[c]=alt; else delete rw.dig[c]; inp.value=alt||'';
+            warnBad(inp,gr.name+': nur Werte von 0 bis '+gr.max+' – '+gr.hin); return; }
+          updateVals(); sync(); };
         dg.appendChild(inp); col++; }
       g.appendChild(dg); row.appendChild(g);
       if(ui===data.unitIndex&&data.type!=='zeit'){ const cm=document.createElement('div'); cm.className='comma'; cm.textContent=','; row.appendChild(cm); }
