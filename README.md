@@ -1543,8 +1543,10 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   **undurchsichtig**: Liegen zwei übereinander, scheint das hintere nicht durch das vordere.
 - **Fensterrahmen im Bedienmodus:** Sobald **„Objekt bedienen"** an ist, bekommt jedes eingebettete
   Objekt (Werkzeug, eingebettete HTML-Seite, Video, Livebild …) eine **schmale Kopfleiste mit Griff
-  (⠿ und Name)** über dem oberen Rand und **vier Eckgriffe** – dünn umrandet, **ohne Füllung** und
-  ein paar Pixel über die Ecken hinausstehend, damit sie möglichst wenig vom Werkzeug verdecken. Damit lässt es sich **verschieben
+  (⠿ und Name)** über dem oberen Rand und **zwei Griffe an den unteren Ecken**. Sie sind als
+  **Ecken** gezeichnet – zwei leicht abgerundete, kräftige und durchscheinende Striche, die ein paar
+  Pixel über die Ecke hinausstehen; so verdecken sie fast nichts vom Werkzeug. Oben braucht es keine
+  Griffe, dort liegt die Kopfleiste. Damit lässt es sich **verschieben
   und in der Größe ändern, ohne das Bedienen zu beenden** – wie bei einem Fenster. Der Rest des
   Rahmens nimmt keine Berührungen an: Man bedient das Werkzeug weiter ganz normal. Die Griffe bleiben
   beim Zoomen **immer gleich groß** (auf dem Bildschirm), drehen sich mit einem gedrehten Objekt mit,
@@ -1563,7 +1565,9 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   - Rahmen und Leiste liegen **in derselben Ebene wie ihr Werkzeug**: Liegt ein Fenster hinter einem
     anderen, verschwindet auch seine Kopfleiste dahinter.
   - Die **Eckgriffe lassen sich abschalten** (Einstellungen → Bedienung → „Eckgriffe am eingebetteten
-    Objekt", voreingestellt **an**); die Kopfleiste bleibt in jedem Fall.
+    Objekt", voreingestellt **an**); die Kopfleiste bleibt in jedem Fall. Zum Verkleinern von oben
+    her zieht man das Fenster einfach an der Kopfleiste an eine andere Stelle und dann von unten
+    auf die gewünschte Größe.
 - Der Knopf **„Objekt bedienen" / „Bedienen beenden"** oben in der Mitte sitzt **bündig mit der
   Unterkante der oberen Leisten** – auf dem iPad genau wie am Rechner. Die Leisten stehen selbst
   schon unterhalb der Statusleiste; ein zusätzlicher Sicherheitsabstand hätte den Knopf auf dem
