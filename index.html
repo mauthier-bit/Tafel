@@ -3623,9 +3623,14 @@ function refreshProps(){ const has=selection.length>0 && tool==='select';
     $('modeBtn').title=edit?'Bearbeiten beenden – nur noch benutzen':'Bedienelemente einblenden (bearbeiten)'; }
   const show=has&&propsOpen; $('props').classList.toggle('show',show);
   if(show){ refreshPropActive(); refreshRotLabel(); $('streckZ').classList.toggle('on',streckZeigen);
-    const usesPen=o=>o.type==='stroke'||o.type==='shape'||o.type==='text'||o.type==='numline'||(o.type==='embed'&&o.etype==='plotter');
-    const pen=selection.some(usesPen);                       // Farbe & Dicke nur zeigen, wenn sie hier etwas bewirken
-    $('colorRow').style.display=pen?'flex':'none'; $('widthRow').style.display=pen?'flex':'none'; $('propFillRow').style.display=selection.some(darfFuellen)?'flex':'none';
+    /* Farbe und Dicke nur zeigen, wenn sie hier wirklich etwas bewirken.
+       Beim Plotter haengt das am Reiter: im Reiter „Transformationen" zeichnet er mit eigenen
+       Farben, und eine Linienstaerke gibt es nur im Reiter „Graph". */
+    const plotTab=o=>(o.data&&o.data.tab)||'g';
+    const malt=o=>o.type==='stroke'||o.type==='shape'||o.type==='text'||o.type==='numline';
+    const kannFarbe=o=>malt(o)||(o.type==='embed'&&o.etype==='plotter'&&plotTab(o)!=='r');
+    const kannDicke=o=>malt(o)||(o.type==='embed'&&o.etype==='plotter'&&plotTab(o)==='g');
+    $('colorRow').style.display=selection.some(kannFarbe)?'flex':'none'; $('widthRow').style.display=selection.some(kannDicke)?'flex':'none'; $('propFillRow').style.display=selection.some(darfFuellen)?'flex':'none';
     $('propDashRow').style.display=selection.some(darfStrich)?'flex':'none';
     $('propPtRow').style.display=selection.some(darfPunkte)?'flex':'none';
     const txo=(selection.length>0 && selection.every(o=>o.type==='text'))?selection[0]:null; $('textRow').style.display=txo?'flex':'none';
@@ -3677,7 +3682,9 @@ function refreshProps(){ const has=selection.length>0 && tool==='select';
     const to=(selection.length===1&&selection[0].type==='embed'&&selection[0].etype==='tabelle')?selection[0]:null; $('tableRow').style.display=to?'flex':'none';
     if(to){ const d=to.data||{}; $('tblRowsV').textContent=d.rows||3; $('tblColsV').textContent=d.cols||3; $('tblLineV').textContent=d.lineWidth||1; }
     const fo=(selection.length===1&&selection[0].type==='embed'&&FONT_DEF[selection[0].etype]!==undefined)?selection[0]:null; $('fontRow').style.display=fo?'flex':'none';
-    if(fo){ $('embFsV').textContent=(fo.data&&fo.data.fontSize)||FONT_DEF[fo.etype]; $('embBold').classList.toggle('on',!!(fo.data&&fo.data.fontBold)); $('embItalic').classList.toggle('on',!!(fo.data&&fo.data.fontItalic)); }
+    if(fo){ $('embFsV').textContent=(fo.data&&fo.data.fontSize)||FONT_DEF[fo.etype]; $('embBold').classList.toggle('on',!!(fo.data&&fo.data.fontBold)); $('embItalic').classList.toggle('on',!!(fo.data&&fo.data.fontItalic));
+      const fk=!OHNE_FK.has(fo.etype);                       /* F und K nur, wo das Werkzeug sie kennt */
+      $('embBold').style.display=fk?'':'none'; $('embItalic').style.display=fk?'':'none'; }
     const po=(selection.length===1&&selection[0].type==='embed'&&['verteilung','mess','ggbapp','ableitung','stromkreis','mindmap','netz','galgen','pinnwand','terme','figuren','diagramm','formel','htmlfile'].includes(selection[0].etype))?selection[0]:null; $('pageRow').style.display=po?'flex':'none';
     $('shareRow').style.display=(selection.length===1&&teilenZiel(selection[0]))?'flex':'none';
     const fsSel=selection.length===1?selection[0]:null;
@@ -3979,6 +3986,8 @@ $('coordFsM').onclick=()=>coordFsStep(-2); $('coordFsP').onclick=()=>coordFsStep
 function coordStyleToggle(key,btn){ const co=selection[0]; if(!co||co.type!=='coord')return; co[key]=!co[key]; $(btn).classList.toggle('on',!!co[key]); markDirty(); scheduleAutosave(); }
 $('coordBold').onclick=()=>coordStyleToggle('labelBold','coordBold'); $('coordItalic').onclick=()=>coordStyleToggle('labelItalic','coordItalic');
 /* Schriftgröße für Einbett-Apps (Standardwerte je Typ) */
+/* Werkzeuge, die zwar die Schriftgroesse koennen, aber kein Fett und Kursiv */
+const OHNE_FK=new Set(['umrechner','induktion','beschriften','ivideo']);
 const FONT_DEF={umrechner:16,bruch:16,pinnwand:15,mindmap:16,gleichung:15,stromkreis:14,raum:14,einheitskreis:15,tabelle:15,plotter:13,vierfelder:16,baum:13,verteilung:13,stellenwert:22,sheet:14,kreuzwort:15,wortgitter:16,wortwolke:18,zeitleiste:15,pse:13,atom:13,optik:14,nuklid:13,induktion:14,welle:14,glossar:15,zuordnen:15,luecke:17,beschriften:16,ivideo:16,lernkarte:15};
 function embFsStep(d){ const o=selection[0]; if(!o||o.type!=='embed'||FONT_DEF[o.etype]===undefined)return; o.data=o.data||{}; const cur=o.data.fontSize||FONT_DEF[o.etype]; o.data.fontSize=Math.max(8,Math.min(48,cur+d)); $('embFsV').textContent=o.data.fontSize; postToEmbed(o,o.data); markDirty(); scheduleAutosave(); }
 $('embFsM').onclick=()=>embFsStep(-1); $('embFsP').onclick=()=>embFsStep(1);

@@ -310,6 +310,13 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   relative Bezüge an. Die Tabelle wird im Projekt gespeichert. Neu: Formel **`=zufallszahl(1;6)`** (ganze Zufallszahl im Bereich; ohne Klammern 0–1), ein **✓-Button** neben der Eingabezeile übernimmt die Eingabe (wie Enter), und im Kontextmenü lassen sich **Schriftgröße, Fett und Kursiv** für Zellen und Spalten-/Zeilenköpfe einstellen.
 - **Schriftgröße vieler Werkzeuge im Kontextmenü einstellbar** (＋/−): Tabelle, Funktionsplotter,
   Vierfeldertafel, Baumdiagramm, Wahrscheinlichkeitsrechner und Stellenwerttafel. Neben ＋/− gibt es dort jeweils einen Button für **Fett (F)** und **Kursiv (K)** – auch beim Koordinatensystem und der Tabellenkalkulation. „Fett" wirkt auch auf Teile, die ohnehin schon halbfett sind (Tabellen-/Spaltenköpfe, Ereignisnamen, Summenzeile, Ergebniszeile): sie werden dann noch kräftiger gesetzt.
+- **Im Kontextmenü steht nur, was auch etwas bewirkt:** **Fett (F)** und **Kursiv (K)** erscheinen
+  nur bei Werkzeugen, die beides kennen – beim **Einheitenumrechner**, beim **Induktions-Werkzeug**,
+  bei **Bild beschriften** und beim **interaktiven Video** gibt es deshalb nur noch ＋/− für die
+  Schriftgröße. Beim **Funktionsplotter** hängen **Farbe** und **Dicke/Größe** am Reiter: Im Reiter
+  **Graph** stehen beide (sie gelten für die gerade gewählte Funktion), in **Tabelle** und
+  **Maschine** nur die Farbe, und im Reiter **Transformationen** keines von beiden – dort zeichnet
+  der Plotter mit seinen eigenen Farben.
 - Beim Wechsel auf die **Schreibwerkzeuge** ist immer der **Stift** aktiv.
 - **Diagramme aus der Tabelle:** einen **Zellbereich markieren** (mit gedrücktem Finger/Maus über
   die Zellen ziehen) und auf **„📊 Diagramm"** tippen – die markierten Zahlen werden wahlweise als
