@@ -444,6 +444,11 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   aktiv war. Werkzeuge der rechten Leiste entscheiden weiterhin selbst, in welchem Zustand sie
   enden; Laserpointer, Scheinwerfer, Lineal und Geodreieck gehören zu keiner der beiden Seiten und
   lassen den Umschalter unverändert.
+- **Nach dem Einfügen stimmt der Umschalter:** Legt man ein **Werkzeug, Bild, eine Uhr, einen
+  Zahlenstrahl oder ein Koordinatensystem** auf die Tafel, ist das neue Objekt **ausgewählt** – der
+  Umschalter steht jetzt auch auf **„Auswählen & Werkzeuge"** und nicht mehr auf „Schreiben".
+  Vorher sprang die Leiste auf die Schreibwerkzeuge, obwohl in Wirklichkeit das Auswählen aktiv war;
+  man sah also eine Leiste, zu der das aktive Werkzeug gar nicht passte.
 - **Favoriten:** Oben in der senkrechten Leiste – gleich unter Umschalter, Laserpointer und Scheinwerfer – lassen sich bis zu
   **8 Lieblingswerkzeuge** ablegen; sie sind in jedem Modus sichtbar. Einen beliebigen Knopf (aus jeder
   Leiste, auch aus den Untermenüs) **eine Sekunde gedrückt halten** → „★ Zu den Favoriten". Auf einem
@@ -1538,8 +1543,8 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   **undurchsichtig**: Liegen zwei übereinander, scheint das hintere nicht durch das vordere.
 - **Fensterrahmen im Bedienmodus:** Sobald **„Objekt bedienen"** an ist, bekommt jedes eingebettete
   Objekt (Werkzeug, eingebettete HTML-Seite, Video, Livebild …) eine **schmale Kopfleiste mit Griff
-  (⠿ und Name)** über dem oberen Rand und **vier Eckgriffe** (schmal umrandet, ein Stück **innerhalb**
-  der Ecken). Damit lässt es sich **verschieben
+  (⠿ und Name)** über dem oberen Rand und **vier Eckgriffe** – dünn umrandet, **ohne Füllung** und
+  ein paar Pixel über die Ecken hinausstehend, damit sie möglichst wenig vom Werkzeug verdecken. Damit lässt es sich **verschieben
   und in der Größe ändern, ohne das Bedienen zu beenden** – wie bei einem Fenster. Der Rest des
   Rahmens nimmt keine Berührungen an: Man bedient das Werkzeug weiter ganz normal. Die Griffe bleiben
   beim Zoomen **immer gleich groß** (auf dem Bildschirm), drehen sich mit einem gedrehten Objekt mit,
@@ -1552,7 +1557,8 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     mit dem **eigenen Symbol des Werkzeugs**, genau wie es in der Werkzeugleiste aussieht
     (eingebettete Websites, Videos, Tonaufnahmen und das Livebild bekommen ein passendes Zeichen); auf der
     Tafel ist es dann ganz weg (auch beim Zeichnen, Auswählen und im Bild-/PDF-Export). Ein Tipp auf
-    das Symbol holt es in alter Größe und Lage zurück. Die Leiste bleibt auch sichtbar, wenn „Objekt
+    das Symbol holt es in alter Größe und Lage zurück – und stellt es dabei **nach vorne**, also
+    vor alle anderen Objekte. Die Leiste bleibt auch sichtbar, wenn „Objekt
     bedienen" wieder aus ist, und der minimierte Zustand wird mit dem Projekt gespeichert.
   - Rahmen und Leiste liegen **in derselben Ebene wie ihr Werkzeug**: Liegt ein Fenster hinter einem
     anderen, verschwindet auch seine Kopfleiste dahinter.
