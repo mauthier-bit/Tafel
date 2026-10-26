@@ -77,6 +77,24 @@
   .embedCard .ec-hint{font-size:12px;color:#8a93a2;max-width:90%;}
   .embedPill{position:absolute;left:0;top:0;transform-origin:0 0;pointer-events:auto;background:rgba(31,36,48,.85);color:#fff;border:none;border-radius:0 0 10px 0;font-size:13px;padding:6px 11px;cursor:pointer;box-shadow:0 1px 5px rgba(0,0,0,.3);white-space:nowrap;font-family:inherit;}
   .embedPill.on{background:#2563eb;}
+  /* Rahmen um ein eingebettetes Objekt – nur im Bedienmodus: Kopfleiste zum Verschieben,
+     vier Eckgriffe fuer die Groesse. Liegt ueber dem Werkzeug, laesst es aber durchklicken. */
+  .ebFrame{position:absolute;left:0;top:0;transform-origin:0 0;pointer-events:none;}
+  .ebBar{position:absolute;left:0;width:100%;height:var(--bh);top:calc(0px - var(--bh));
+    display:flex;align-items:center;justify-content:center;gap:.5em;
+    background:rgba(31,36,48,.82);color:#fff;border-radius:calc(var(--bh)*.36) calc(var(--bh)*.36) 0 0;
+    font-size:var(--bf);line-height:1;white-space:nowrap;overflow:hidden;
+    pointer-events:auto;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;}
+  .ebFrame.innen .ebBar{top:0;border-radius:0;}
+  .ebBar:active{cursor:grabbing;background:rgba(37,99,235,.92);}
+  .ebBar .ebGriff{opacity:.75;letter-spacing:.1em;}
+  .ebBar .ebName{overflow:hidden;text-overflow:ellipsis;max-width:60%;}
+  .ebH{position:absolute;width:var(--gh);height:var(--gh);background:#fff;border:calc(var(--gh)*.17) solid #2563eb;
+    border-radius:calc(var(--gh)*.26);pointer-events:auto;touch-action:none;box-shadow:0 1px 4px rgba(0,0,0,.35);}
+  .ebH.nw{left:calc(var(--gh)/-2);top:calc(var(--gh)/-2);cursor:nwse-resize;}
+  .ebH.ne{right:calc(var(--gh)/-2);top:calc(var(--gh)/-2);cursor:nesw-resize;}
+  .ebH.sw{left:calc(var(--gh)/-2);bottom:calc(var(--gh)/-2);cursor:nesw-resize;}
+  .ebH.se{right:calc(var(--gh)/-2);bottom:calc(var(--gh)/-2);cursor:nwse-resize;}
 
   .tbtn{width:44px;height:44px;flex:none;border:none;border-radius:12px;background:var(--bar2);color:var(--text);
     font-size:19px;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;}
@@ -4197,6 +4215,53 @@ function clipPille(o,fr){ if(embedPills.has(o.id)) return;
     if(o.loop&&fr.paused) fr.play().catch(()=>{});
     toast(o.loop?'Das Video läuft jetzt in Endlosschleife':'Wiederholung aus'); scheduleAutosave(); };
   zeig(); embedBarLayer.appendChild(b); embedPills.set(o.id,b); }
+/* ---- Rahmen am eingebetteten Objekt: Groesse aendern und verschieben, ohne „Bedienen" zu beenden ---- */
+const embedRahmen=new Map();
+function rahmenZieh(el,id,role){
+  el.addEventListener('pointerdown',e=>{
+    if(e.button>0) return;
+    e.preventDefault(); e.stopPropagation();
+    const o=page().objects.find(x=>x.id===id); if(!o) return;
+    try{ el.setPointerCapture(e.pointerId); }catch(_){}
+    pushUndo();
+    let letzt=toWorld(e.clientX,e.clientY);
+    if(role!=='move'){ const b=geomBounds(o);
+      xform={o,role,C:{x:b.x+b.w/2,y:b.y+b.h/2},snap:JSON.parse(JSON.stringify(stripObj(o))),startAngle:0}; }
+    const bewegen=ev=>{ if(ev.pointerId!==e.pointerId) return;
+      const w=toWorld(ev.clientX,ev.clientY);
+      if(role==='move'){ translateObj(o,w.x-letzt.x,w.y-letzt.y); letzt=w; }
+      else if(xform){ xform.ev=ev; applyXform(w); }
+      positionProps(); markDirty(); };
+    const ende=ev=>{ if(ev.pointerId!==e.pointerId) return;
+      el.removeEventListener('pointermove',bewegen); el.removeEventListener('pointerup',ende); el.removeEventListener('pointercancel',ende);
+      xform=null; scheduleAutosave(); };
+    el.addEventListener('pointermove',bewegen); el.addEventListener('pointerup',ende); el.addEventListener('pointercancel',ende);
+  });
+}
+function rahmenBauen(o){
+  const fr=document.createElement('div'); fr.className='ebFrame';
+  const bar=document.createElement('div'); bar.className='ebBar';
+  bar.title='Ziehen: Fenster verschieben';
+  bar.innerHTML='<span class="ebGriff">\u283f</span><span class="ebName"></span>';
+  fr.appendChild(bar); rahmenZieh(bar,o.id,'move');
+  ['nw','ne','sw','se'].forEach(r=>{ const h=document.createElement('div'); h.className='ebH '+r;
+    h.title='Ziehen: Fenster vergroessern oder verkleinern'; fr.appendChild(h); rahmenZieh(h,o.id,r); });
+  embedBarLayer.appendChild(fr); embedRahmen.set(o.id,fr); return fr;
+}
+function rahmenSetzen(o,tf){
+  let fr=embedRahmen.get(o.id); if(!fr) fr=rahmenBauen(o);
+  if(fsId||docNote===o){ fr.style.display='none'; return; }    /* Vollbild und Beschriften haben eigene Leisten */
+  fr.style.display='';
+  const k=1/Math.max(.05,scale);                               /* Griffe bleiben auf dem Bildschirm gleich gross */
+  fr.style.width=o.w+'px'; fr.style.height=o.h+'px'; fr.style.transform=tf;
+  fr.style.setProperty('--gh',(20*k)+'px');
+  fr.style.setProperty('--bh',(26*k)+'px');
+  fr.style.setProperty('--bf',(13*k)+'px');
+  const oben=toScreen(o.x,o.y).y;                              /* oben am Bildschirmrand: Leiste nach innen */
+  fr.classList.toggle('innen',!o.rot&&oben<34);
+  const nm=fr.querySelector('.ebName'), t=o.label||'';
+  if(nm.textContent!==t) nm.textContent=t;
+}
 /* Durchsichtige Zeichenfläche über einem Video: trägt die Notizen, nimmt keine Berührungen an.
    Sie liegt in derselben Ebene wie das Video und bekommt dieselbe Lage – damit wandert,
    dreht und skaliert die Beschriftung mit dem Video mit. */
@@ -4317,6 +4382,7 @@ function syncEmbeds(){ const p=page(), wanted=new Set();
       noteZeitReglerSetzen(o); }
     const card=embedCards.get(o.id); if(card){ card.style.width=o.w+'px'; card.style.height=o.h+'px'; card.style.transform=tf; }
     const pill=embedPills.get(o.id); if(pill){ const c=toScreen(o.x,o.y); pill.style.transform='translate('+c.x+'px,'+c.y+'px)'; }
+    rahmenSetzen(o,tf);
     if(fsId){                                                 /* Vollbild: ein Objekt füllt die Breite, der Rest ist ausgeblendet */
       const andere=[card,pill].filter(Boolean);
       if(o.id===fsId){
@@ -4345,7 +4411,8 @@ function syncEmbeds(){ const p=page(), wanted=new Set();
   if(fsId&&!wanted.has(fsId)) vollbildAus();                   /* Objekt ist weg – Vollbild beenden */
   for(const id of [...notizFlaechen.keys()]) if(!wanted.has(id)) notizFlaecheWeg(id);
   for(const[id,fr] of embedEls){ if(!wanted.has(id)){ fr.remove(); embedEls.delete(id);
-    const c=embedCards.get(id); if(c){c.remove();embedCards.delete(id);} const pl=embedPills.get(id); if(pl){pl.remove();embedPills.delete(id);} } }
+    const c=embedCards.get(id); if(c){c.remove();embedCards.delete(id);} const pl=embedPills.get(id); if(pl){pl.remove();embedPills.delete(id);}
+    const ra=embedRahmen.get(id); if(ra){ra.remove();embedRahmen.delete(id);} } }
 }
 /* Sync mit eingebetteten Apps (Tabelle/Plotter/Vierfeldertafel/Baum) – Objekt über iframe-Quelle finden */
 addEventListener('message',e=>{ if(!e.data)return;

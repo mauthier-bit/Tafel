@@ -1536,6 +1536,15 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   wie seine Oberfläche aussieht – aber ebenso, dass man es gerade nur **verschieben, skalieren und
   drehen** kann. Mit „Objekt bedienen" verschwindet der Schleier. Die Objekte bleiben dabei
   **undurchsichtig**: Liegen zwei übereinander, scheint das hintere nicht durch das vordere.
+- **Fensterrahmen im Bedienmodus:** Sobald **„Objekt bedienen"** an ist, bekommt jedes eingebettete
+  Objekt (Werkzeug, eingebettete HTML-Seite, Video, Livebild …) eine **schmale Kopfleiste mit Griff
+  (⠿ und Name)** über dem oberen Rand und **vier weiße Eckgriffe**. Damit lässt es sich **verschieben
+  und in der Größe ändern, ohne das Bedienen zu beenden** – wie bei einem Fenster. Der Rest des
+  Rahmens nimmt keine Berührungen an: Man bedient das Werkzeug weiter ganz normal. Die Griffe bleiben
+  beim Zoomen **immer gleich groß** (auf dem Bildschirm), drehen sich mit einem gedrehten Objekt mit,
+  und **„Rückgängig"** stellt die vorherige Größe und Lage wieder her. Im **Vollbild** und beim
+  **Beschriften eines Videos** erscheinen sie nicht – dort gibt es eigene Leisten. Ist „Objekt
+  bedienen" aus, ist alles wie zuvor (Auswahl-Werkzeug mit Rahmen und Griffen auf der Tafel).
 - Der Knopf **„Objekt bedienen" / „Bedienen beenden"** oben in der Mitte sitzt **bündig mit der
   Unterkante der oberen Leisten** – auf dem iPad genau wie am Rechner. Die Leisten stehen selbst
   schon unterhalb der Statusleiste; ein zusätzlicher Sicherheitsabstand hätte den Knopf auf dem
