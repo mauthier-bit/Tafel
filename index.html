@@ -84,17 +84,34 @@
     display:flex;align-items:center;justify-content:center;gap:.5em;
     background:rgba(31,36,48,.82);color:#fff;border-radius:calc(var(--bh)*.36) calc(var(--bh)*.36) 0 0;
     font-size:var(--bf);line-height:1;white-space:nowrap;overflow:hidden;
+    padding:0 calc(var(--bh)*.2);
     pointer-events:auto;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;}
   .ebFrame.innen .ebBar{top:0;border-radius:0;}
   .ebBar:active{cursor:grabbing;background:rgba(37,99,235,.92);}
   .ebBar .ebGriff{opacity:.75;letter-spacing:.1em;}
-  .ebBar .ebName{overflow:hidden;text-overflow:ellipsis;max-width:60%;}
+  .ebBar .ebName{flex:1 1 auto;text-align:center;overflow:hidden;text-overflow:ellipsis;}
+  .ebBar .ebBtn{flex:none;width:calc(var(--bh)*.78);height:calc(var(--bh)*.78);display:flex;align-items:center;justify-content:center;
+    border:none;border-radius:calc(var(--bh)*.22);background:rgba(255,255,255,.14);color:#fff;
+    font:inherit;font-size:calc(var(--bf)*1.1);line-height:1;cursor:pointer;padding:0;}
+  .ebBar .ebBtn:hover{background:rgba(255,255,255,.3);}
+  .ebBar .ebBtn.ebX:hover{background:#dc2626;}
+  /* Eckgriffe: eigene Klassennamen (nw/ne/sw/se kaemen den Farbfeldern .sw in die Quere) */
   .ebH{position:absolute;width:var(--gh);height:var(--gh);background:#fff;border:calc(var(--gh)*.17) solid #2563eb;
-    border-radius:calc(var(--gh)*.26);pointer-events:auto;touch-action:none;box-shadow:0 1px 4px rgba(0,0,0,.35);}
-  .ebH.nw{left:calc(var(--gh)/-2);top:calc(var(--gh)/-2);cursor:nwse-resize;}
-  .ebH.ne{right:calc(var(--gh)/-2);top:calc(var(--gh)/-2);cursor:nesw-resize;}
-  .ebH.sw{left:calc(var(--gh)/-2);bottom:calc(var(--gh)/-2);cursor:nesw-resize;}
-  .ebH.se{right:calc(var(--gh)/-2);bottom:calc(var(--gh)/-2);cursor:nwse-resize;}
+    border-radius:calc(var(--gh)*.26);pointer-events:auto;touch-action:none;box-shadow:0 1px 4px rgba(0,0,0,.35);box-sizing:border-box;}
+  .ebH.e-nw{left:calc(var(--gh)/-2);top:calc(var(--gh)/-2);cursor:nwse-resize;}
+  .ebH.e-ne{right:calc(var(--gh)/-2);top:calc(var(--gh)/-2);cursor:nesw-resize;}
+  .ebH.e-sw{left:calc(var(--gh)/-2);bottom:calc(var(--gh)/-2);cursor:nesw-resize;}
+  .ebH.e-se{right:calc(var(--gh)/-2);bottom:calc(var(--gh)/-2);cursor:nwse-resize;}
+  .ebFrame.ohneGriffe .ebH{display:none;}
+  /* Minimierte Werkzeuge liegen als Symbole am unteren Rand */
+  #minBar{position:fixed;left:50%;bottom:10px;transform:translateX(-50%);z-index:20;display:none;gap:8px;
+    max-width:calc(100vw - 24px);overflow-x:auto;padding:6px;background:var(--bar);border-radius:14px;box-shadow:var(--shadow);}
+  #minBar.show{display:flex;}
+  body.mainbar-bottom #minBar{bottom:88px;}
+  body.fs-mode #minBar{display:none!important;}
+  #minBar button{flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;border:none;border-radius:10px;padding:7px 11px;
+    background:var(--bar2);color:var(--text);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;max-width:46vw;}
+  #minBar button span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 
   .tbtn{width:44px;height:44px;flex:none;border:none;border-radius:12px;background:var(--bar2);color:var(--text);
     font-size:19px;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;}
@@ -898,6 +915,7 @@
 <canvas id="board"></canvas>
 <canvas id="uhrCv"></canvas>
 <div id="embedBarLayer"></div>
+<div id="minBar"></div>
 <div id="edgeL" class="edgezone"><div class="edgegrip"></div></div>
 <div id="edgeR" class="edgezone"><div class="edgegrip"></div></div>
 <div id="edgeB" class="edgezone"><div class="edgegrip"></div></div>
@@ -1581,6 +1599,7 @@
     <div class="toggle"><span>Nur mit Stift schreiben<br><small style="color:#888">(Finger schiebt & zoomt)</small></span><div class="sw2 on" id="penOnly"></div></div>
     <div class="toggle"><span>Finger wählt aus (Auswahl-Modus)<br><small style="color:#888">(1 Finger verschiebt Objekte, 2 Finger zoomen & drehen)</small></span><div class="sw2" id="fingerSelect"></div></div>
     <div class="toggle"><span>Druckstärke des Pencils</span><div class="sw2 on" id="usePressure"></div></div>
+    <div class="toggle"><span>Eckgriffe am eingebetteten Objekt<br><small style="color:#888">(im Bedienmodus die Größe ändern – die Kopfleiste bleibt immer)</small></span><div class="sw2 on" id="ebGriffeSw"></div></div>
     <label class="lbl">Scheinwerfer</label>
     <div class="seg" id="spotSeg"><button data-spot="ellipse" class="active">Kreis / Ellipse</button><button data-spot="rect">Rechteck</button></div>
     <div class="hint" style="margin-top:6px">Der Lichtfleck wird mit <b>zwei Fingern</b> aufgezogen: waagrecht nur breiter, senkrecht nur höher, diagonal insgesamt größer. Das Rechteck rahmt einen Textabschnitt oder eine Aufgabe genauer ein.</div>
@@ -1658,6 +1677,7 @@ let eraserWidth=14, eraserPos=null;   // Radierer hat seine eigene Größe (Radi
 const ERAS_F=1.75;                    // Umrechnung Stärkestufe → Radierer-Radius (Stufe 8 ergibt die bisherigen 14)
 let spotForm='ellipse';          /* Scheinwerfer: 'ellipse' (rund) oder 'rect' (Kasten) */
 let laserMs=700;                 /* so lange leuchtet die Laserspur nach */
+let ebGriffe=true;               /* Eckgriffe am eingebetteten Objekt zeigen */
 let popZu=true;                  /* Werkzeugmenues nach der Wahl von selbst schliessen */
 let popWarteMs=200;              /* so lange bleibt es danach noch stehen */
 let popWegMs=800;                /* so lange dauert das Ausblenden */
@@ -2152,7 +2172,12 @@ function drawObjectRaw(o,c){
     const wT=c.measureText(t).width, pad=fs*0.45;
     c.fillStyle='rgba(255,255,255,.88)'; c.fillRect(o.x+o.w-wT-pad*3,o.y+o.h-fs*2.1,wT+pad*2.4,fs*1.7);
     c.fillStyle='#475569'; c.fillText(t,o.x+o.w-pad*1.6,o.y+o.h-pad*1.1); c.restore(); }
-  else if(o.type==='embed'){ if(c===ctx) c.clearRect(o.x,o.y,o.w,o.h); else { c.fillStyle='#fff'; c.fillRect(o.x,o.y,o.w,o.h); } c.strokeStyle='rgba(120,130,150,.6)'; c.lineWidth=1/scale; c.strokeRect(o.x,o.y,o.w,o.h); }
+  else if(o.type==='embed'){
+    /* Im Bedienmodus liegt ueber dem oberen Rand die Kopfleiste des Fensters - dort muss die
+       Zeichenflaeche ebenfalls frei sein, sonst laegen Karomuster und Striche darueber. */
+    const kopf=(c===ctx&&embedInteract&&!fsId&&!o.min&&docNote!==o)?28/scale:0;
+    if(c===ctx) c.clearRect(o.x,o.y-kopf,o.w,o.h+kopf); else { c.fillStyle='#fff'; c.fillRect(o.x,o.y,o.w,o.h); }
+    c.strokeStyle='rgba(120,130,150,.6)'; c.lineWidth=1/scale; c.strokeRect(o.x,o.y,o.w,o.h); }
   else if(o.type==='clock') paintClock(c,o.x+o.w/2,o.y+o.h/2,Math.min(o.w,o.h)/2,o);
   else if(o.type==='numline'){ const from=(o.from??0), to=(o.to??10); let st=+o.step; if(!(st>0))st=1;
     const nfc=v=>String(Math.round(v*1e6)/1e6).replace('.',',');
@@ -2211,7 +2236,7 @@ function drawObjectRaw(o,c){
     for(let v=Math.ceil(yMin/sy)*sy; v<=yMax+1e-9; v+=sy){ if(Math.abs(v)<1e-9)continue;
       if(yMax-v<sy*0.75 || PY(v)-o.y<20) continue; c.fillText(nf(v), ayC-4, PY(v)); } } }
 }
-function drawObject(o,c){ c=c||ctx; if(o._hidden)return;
+function drawObject(o,c){ c=c||ctx; if(o._hidden||o.min)return;   /* minimiert: liegt als Symbol unten */
   if(o.rot){ const b=geomBounds(o),cx=b.x+b.w/2,cy=b.y+b.h/2; c.save(); c.translate(cx,cy); c.rotate(o.rot); c.translate(-cx,-cy); drawObjectRaw(o,c); c.restore(); }
   else drawObjectRaw(o,c); }
 /* Prisma / Pyramide mit n-eckiger Grundfläche im Schrägbild; verdeckte Kanten gestrichelt (konvexer Körper: Kante sichtbar, wenn eine angrenzende Fläche zum Betrachter zeigt) */
@@ -2614,7 +2639,7 @@ function drawMarquee(){ ctx.setTransform(dpr,0,0,dpr,0,0); ctx.strokeStyle='#3b8
   ctx.fillRect(x,y,w,h); ctx.strokeRect(x,y,w,h); ctx.setTransform(scale*dpr,0,0,scale*dpr,ox*dpr,oy*dpr); }
 function hitTest(o,wx,wy){ let x=wx,y=wy; if(o.rot){const b=geomBounds(o),cx=b.x+b.w/2,cy=b.y+b.h/2,l=worldToLocal(wx,wy,cx,cy,o.rot);x=l.x;y=l.y;}
   const b=geomBounds(o),tol=8/scale; return x>=b.x-tol&&x<=b.x+b.w+tol&&y>=b.y-tol&&y<=b.y+b.h+tol; }
-function hitObject(wx,wy){ const o=page().objects; for(let i=o.length-1;i>=0;i--) if(hitTest(o[i],wx,wy)) return o[i]; return null; }
+function hitObject(wx,wy){ const o=page().objects; for(let i=o.length-1;i>=0;i--) if(!o[i].min&&hitTest(o[i],wx,wy)) return o[i]; return null; }
 function selectObject(o,add){ if(!o){ if(!add)selection=[]; refreshProps(); return; }
   const grp=o.groupId?page().objects.filter(x=>x.groupId===o.groupId):[o];
   if(add){ for(const g of grp) if(!selection.includes(g)) selection.push(g); } else selection=grp.slice();
@@ -3319,6 +3344,9 @@ function popZuUI(){ $('popZuSw').classList.toggle('on',popZu); $('popZuRows').st
   $('pzWv').textContent=t(popWarteMs); $('pzDv').textContent=t(popWegMs);
   document.documentElement.style.setProperty('--popweg',(popWegMs/1000)+'s'); }
 $('popZuSw').onclick=()=>{ popZu=!popZu; if(!popZu) popBleib($('penpop')); popZuUI(); saveUI(); };
+function ebGriffeUI(){ $('ebGriffeSw').classList.toggle('on',ebGriffe); }
+$('ebGriffeSw').onclick=()=>{ ebGriffe=!ebGriffe; ebGriffeUI(); saveUI(); markDirty(); };
+ebGriffeUI();
 const pzWarte=v=>{ popWarteMs=Math.max(0,Math.min(3000,v)); popZuUI(); saveUI(); };
 const pzWeg=v=>{ popWegMs=Math.max(0,Math.min(3000,v)); popZuUI(); saveUI(); };
 $('pzWm').onclick=()=>pzWarte(popWarteMs-100); $('pzWp').onclick=()=>pzWarte(popWarteMs+100);
@@ -3393,7 +3421,8 @@ $('propAlpha').onchange=()=>{ saveUI(); scheduleAutosave(); };
 /* ---- Ebene (Stapelreihenfolge) ---- */
 function layerReorderEmbeds(){ for(const o of page().objects){ const card=embedCards.get(o.id); if(card)embedLayer.appendChild(card);
     const el=embedEls.get(o.id); if(el)embedLayer.appendChild(el);
-    const nf=notizFlaechen.get(o.id); if(nf)embedLayer.appendChild(nf); } }   /* Notizen direkt über ihr Video */
+    const nf=notizFlaechen.get(o.id); if(nf)embedLayer.appendChild(nf);
+    const ra=embedRahmen.get(o.id); if(ra)embedLayer.appendChild(ra); } }   /* Notizen und Rahmen direkt über ihrem Objekt */
 function layerMove(mode){ const p=page(), objs=p.objects, isSel=o=>selection.includes(o);
   if(!selection.length)return;
   pushUndo();
@@ -3529,7 +3558,7 @@ function rasterizeSelection(objs){
   const pad=8, w=Math.min(4000,Math.max(1,Math.ceil(c2-a)+pad*2)), h=Math.min(4000,Math.max(1,Math.ceil(d-b)+pad*2));
   const cn=document.createElement('canvas'); cn.width=w; cn.height=h;
   const cx=cn.getContext('2d'); cx.fillStyle='#fff'; cx.fillRect(0,0,w,h); cx.translate(pad-a,pad-b);
-  objs.forEach(o=>{ try{ if(o.type==='embed'){ const g=geomBounds(o); cx.fillStyle='#eef1f6'; cx.fillRect(g.x,g.y,g.w,g.h); cx.strokeStyle='#b8c0cc'; cx.strokeRect(g.x,g.y,g.w,g.h); cx.fillStyle='#8a93a2'; cx.font='16px -apple-system,sans-serif'; cx.fillText(o.label||'Einbettung',g.x+10,g.y+10); } else drawObject(o,cx); }catch(e){} });
+  objs.forEach(o=>{ try{ if(o.min) return; if(o.type==='embed'){ const g=geomBounds(o); cx.fillStyle='#eef1f6'; cx.fillRect(g.x,g.y,g.w,g.h); cx.strokeStyle='#b8c0cc'; cx.strokeRect(g.x,g.y,g.w,g.h); cx.fillStyle='#8a93a2'; cx.font='16px -apple-system,sans-serif'; cx.fillText(o.label||'Einbettung',g.x+10,g.y+10); } else drawObject(o,cx); }catch(e){} });
   return cn;
 }
 async function copySelection(cut){
@@ -4158,6 +4187,7 @@ function applyEmbedMode(){ cv.style.pointerEvents=embedInteract?'none':'auto'; $
   $('annoToggle').textContent=embedInteract?'Bedienen beenden':'Objekt bedienen';
   $('embedBarLayer').style.display=embedInteract?'block':'none';
   for(const[,fr] of embedEls) fr.style.pointerEvents=embedInteract?'auto':'none';
+  markDirty();   /* Fensterrahmen und das freie Feld fuer die Kopfleiste sofort mitziehen */
   positionAnnoToggle(); if(typeof refreshProps==='function'&&selection.length) refreshProps(); }
 /* Oben mittig, wenn Leisten minimiert; rutscht in die Lücke, wenn sie ausgeklappt sind; passt es nicht, knapp unter die Leisten. Immer ganz sichtbar. */
 /* „Objekt bedienen" und „Aufnahme stoppen" oben mittig; sind beide da, steht der Stopp-Knopf darunter */
@@ -4244,14 +4274,44 @@ function rahmenBauen(o){
   bar.title='Ziehen: Fenster verschieben';
   bar.innerHTML='<span class="ebGriff">\u283f</span><span class="ebName"></span>';
   fr.appendChild(bar); rahmenZieh(bar,o.id,'move');
-  ['nw','ne','sw','se'].forEach(r=>{ const h=document.createElement('div'); h.className='ebH '+r;
-    h.title='Ziehen: Fenster vergroessern oder verkleinern'; fr.appendChild(h); rahmenZieh(h,o.id,r); });
-  embedBarLayer.appendChild(fr); embedRahmen.set(o.id,fr); return fr;
+  const knopf=(cls,txt,titel,fn)=>{ const b=document.createElement('button'); b.type='button'; b.className='ebBtn '+cls;
+    b.textContent=txt; b.title=titel;
+    b.addEventListener('pointerdown',e=>e.stopPropagation());          /* nicht als Ziehen werten */
+    b.onclick=e=>{ e.stopPropagation(); const ob=page().objects.find(x=>x.id===o.id); if(ob) fn(ob); };
+    bar.appendChild(b); };
+  knopf('ebM','–','Minimieren – als Symbol an den unteren Rand legen',ob=>minimieren(ob));
+  knopf('ebF','⤢','Vollbild',ob=>vollbildAn(ob));
+  knopf('ebX','×','Schließen – mit „Rückgängig“ zurückholen',ob=>werkzeugSchliessen(ob));
+  ['nw','ne','sw','se'].forEach(r=>{ const h=document.createElement('div'); h.className='ebH e-'+r;
+    h.title='Ziehen: Fenster vergrößern oder verkleinern'; fr.appendChild(h); rahmenZieh(h,o.id,r); });
+  const nach=notizFlaechen.get(o.id)||embedEls.get(o.id);              /* direkt ueber das eigene Werkzeug legen */
+  if(nach&&nach.parentNode===embedLayer) embedLayer.insertBefore(fr,nach.nextSibling); else embedLayer.appendChild(fr);
+  embedRahmen.set(o.id,fr); return fr;
 }
+/* Fenster schliessen, minimieren, wieder gross machen */
+function werkzeugSchliessen(o){ pushUndo();
+  page().objects=page().objects.filter(x=>x!==o); selection=selection.filter(x=>x!==o);
+  refreshProps(); refreshEmbedUI(); markDirty(); scheduleAutosave();
+  toast('„'+(o.label||'Werkzeug')+'“ geschlossen – mit „Rückgängig“ zurückholen'); }
+function minimieren(o){ o.min=true; selection=selection.filter(x=>x!==o);
+  refreshProps(); markDirty(); scheduleAutosave(); }
+function minZurueck(o){ delete o.min; markDirty(); scheduleAutosave(); }
+const MIN_ICO={html:'🌐',htmlfile:'📄',clip:'🎬',video:'🎬',audio:'🎙',live:'📷'};
+function minLeiste(){ const bar=$('minBar');
+  const klein=page().objects.filter(o=>o.type==='embed'&&o.min);
+  const kennung=klein.map(o=>o.id+':'+(o.label||'')).join('|');
+  if(bar._kennung!==kennung){ bar._kennung=kennung; bar.innerHTML='';
+    klein.forEach(o=>{ const b=document.createElement('button'); b.type='button';
+      b.title='„'+(o.label||'Werkzeug')+'“ wieder groß anzeigen';
+      const ic=document.createElement('b'); ic.textContent=MIN_ICO[o.etype]||'🧩';
+      const tx=document.createElement('span'); tx.textContent=o.label||'Werkzeug';
+      b.append(ic,tx); b.onclick=()=>minZurueck(o); bar.appendChild(b); }); }
+  bar.classList.toggle('show',klein.length>0); }
 function rahmenSetzen(o,tf){
   let fr=embedRahmen.get(o.id); if(!fr) fr=rahmenBauen(o);
-  if(fsId||docNote===o){ fr.style.display='none'; return; }    /* Vollbild und Beschriften haben eigene Leisten */
+  if(!embedInteract||fsId||docNote===o||o.min){ fr.style.display='none'; return; }   /* Vollbild und Beschriften haben eigene Leisten */
   fr.style.display='';
+  fr.classList.toggle('ohneGriffe',!ebGriffe);
   const k=1/Math.max(.05,scale);                               /* Griffe bleiben auf dem Bildschirm gleich gross */
   fr.style.width=o.w+'px'; fr.style.height=o.h+'px'; fr.style.transform=tf;
   fr.style.setProperty('--gh',(20*k)+'px');
@@ -4317,7 +4377,18 @@ function notizZeitLauf(o,cv,v){
   cv._takt=true; }
 function notizFlaecheWeg(id){ const cv=notizFlaechen.get(id); if(cv){ cv.remove(); notizFlaechen.delete(id); } }
 function syncEmbeds(){ const p=page(), wanted=new Set();
+  minLeiste();
   for(const o of p.objects){ if(o.type!=='embed')continue; wanted.add(o.id);
+    if(o.min){ const el=embedEls.get(o.id); if(el)el.style.display='none';
+      const ca=embedCards.get(o.id); if(ca)ca.style.display='none';
+      const pi=embedPills.get(o.id); if(pi)pi.style.display='none';
+      const nz=notizFlaechen.get(o.id); if(nz)nz.style.display='none';
+      const ra=embedRahmen.get(o.id); if(ra)ra.style.display='none';
+      continue; }
+    { const el=embedEls.get(o.id); if(el&&el.style.display==='none'&&!fsId)el.style.display='';
+      const ca=embedCards.get(o.id); if(ca&&ca.style.display==='none')ca.style.display='';
+      const pi=embedPills.get(o.id); if(pi&&pi.style.display==='none')pi.style.display='';
+      const nz=notizFlaechen.get(o.id); if(nz&&nz.style.display==='none')nz.style.display=''; }
     let fr=embedEls.get(o.id);
     if(!fr){
       if(o.etype==='audio'){                                   // Tonaufnahme
@@ -4740,19 +4811,20 @@ $('pageMenu').addEventListener('pointerdown',e=>e.stopPropagation());
 document.addEventListener('pointerdown',e=>{ if($('pageMenu').classList.contains('show') && !e.target.closest('#pageMenu') && !e.target.closest('.pmBtn') && !e.target.closest('#ppMore')) closePageMenu(); }, true);
 $('setMin').onclick=()=>{ $('settingsbar').classList.toggle('min'); rotateChev('setMin',$('settingsbar').classList.contains('min'),true); saveUI(); positionAnnoToggle(); };
 function rotateChev(id,min){ $(id).querySelector('svg').style.transform=min?'scaleX(-1)':''; }
-function saveUI(){ try{ localStorage.setItem('tafel_ui',JSON.stringify({page:$('pagebar').classList.contains('min'),set:$('settingsbar').classList.contains('min'),side:mainbarSide,theme:barTheme,tint:barTint,favs,pxcm:PXCM,pal:palette,cols:toolColors,rec:shapeRecog,wv:2,pp:propPos,ppH:propHint,ent:camEntz,hell:camHell,ob:obenPx,pw:penWidth,mw:markerWidth,ew:eraserWidth,sz:streckZeigen,sa:shapeAlpha,spf:spotForm,lup:lupeAn,lupz:lupeZoom,lms:laserMs,pz:popZu,pzw:popWarteMs,pzd:popWegMs,pzv:2,rul:{len:ruler.len,color:ruler.color,mm:ruler.mm,nums:ruler.nums,pct:ruler.pct,fs:ruler.fs},geo:{size:geo.size,color:geo.color,mm:geo.mm,nums:geo.nums,fs:geo.fs}})); }catch(e){} }
+function saveUI(){ try{ localStorage.setItem('tafel_ui',JSON.stringify({page:$('pagebar').classList.contains('min'),set:$('settingsbar').classList.contains('min'),side:mainbarSide,theme:barTheme,tint:barTint,favs,pxcm:PXCM,pal:palette,cols:toolColors,rec:shapeRecog,wv:2,pp:propPos,ppH:propHint,ent:camEntz,hell:camHell,ob:obenPx,pw:penWidth,mw:markerWidth,ew:eraserWidth,sz:streckZeigen,sa:shapeAlpha,spf:spotForm,lup:lupeAn,lupz:lupeZoom,lms:laserMs,pz:popZu,pzw:popWarteMs,pzd:popWegMs,pzv:2,ebg:ebGriffe,rul:{len:ruler.len,color:ruler.color,mm:ruler.mm,nums:ruler.nums,pct:ruler.pct,fs:ruler.fs},geo:{size:geo.size,color:geo.color,mm:geo.mm,nums:geo.nums,fs:geo.fs}})); }catch(e){} }
 function restoreUI(){ try{ const u=JSON.parse(localStorage.getItem('tafel_ui')||'{}'); if(u.page){$('pagebar').classList.add('min');pageChev(true);} if(u.set){$('settingsbar').classList.add('min');rotateChev('setMin',true);} if(u.side==='right'||u.side==='bottom')mainbarSide=u.side; if(u.theme==='light'||u.theme==='dark')barTheme=u.theme; if(u.tint&&typeof u.tint==='object')barTint=Object.assign(barTint,u.tint); if(Array.isArray(u.favs))favs=u.favs.filter(f=>f!=='w-export').slice(0,FAV_MAX);   // PDF-Export sitzt jetzt in den Einstellungen
   if(+u.pxcm>0&&Math.abs(+u.pxcm-37.8)>0.2) PXCM=Math.max(28,Math.min(64,+u.pxcm));   // alter Standard 37,8 → neuer, am iPad gemessener Wert
   if(Array.isArray(u.pal)&&u.pal.length===palette.length&&u.pal.every(c=>/^#[0-9a-f]{6}$/i.test(c))) palette=u.pal.slice();
   if(u.rec){ shapeRecog=true; $('shapeRecogSw').classList.add('on'); }
   if(u.cols&&typeof u.cols==='object')Object.assign(toolColors,u.cols); if(u.wv===2){ if(+u.pw>0)penWidth=+u.pw; if(+u.mw>0)markerWidth=+u.mw; } if(+u.ew>0)eraserWidth=+u.ew; if(+u.sa>=0&&+u.sa<=1)shapeAlpha=+u.sa; propHint=!!u.ppH; if(+u.hell>=0&&+u.hell<=100) camHell=+u.hell; if(+u.ob>=0&&+u.ob<=48) obenPx=+u.ob; if(u.ent&&Array.isArray(u.ent.q)&&u.ent.q.length===4) camEntz={an:!!u.ent.an,ar:+u.ent.ar||0,q:u.ent.q.map(p=>({x:+p.x||0,y:+p.y||0}))}; if(u.pp&&isFinite(u.pp.l)&&isFinite(u.pp.t)) propPosSetzen({l:+u.pp.l,t:+u.pp.t}); streckZeigen=!!u.sz;   // ältere Stärken (4 Stufen) verwerfen
   if(u.spf==='rect'||u.spf==='ellipse') spotForm=u.spf; if(+u.lms>=100&&+u.lms<=3000) laserMs=+u.lms;
+  if(typeof u.ebg==='boolean') ebGriffe=u.ebg;
   if(typeof u.pz==='boolean') popZu=u.pz;
   if(u.pzv>=2){ if(+u.pzw>=0&&+u.pzw<=3000) popWarteMs=+u.pzw; if(+u.pzd>=0&&+u.pzd<=3000) popWegMs=+u.pzd; }   /* aeltere Staende: neue Standardzeiten 0,2 s / 0,8 s */
   lupeAn=!!u.lup; if(+u.lupz>=1&&+u.lupz<=6) lupeZoom=+u.lupz;
   if(u.rul)Object.assign(ruler,{len:+u.rul.len||ruler.len,color:u.rul.color||ruler.color,mm:u.rul.mm!==false,nums:u.rul.nums!==false,pct:!!u.rul.pct,fs:+u.rul.fs||11});
   if(u.geo)Object.assign(geo,{size:+u.geo.size||geo.size,color:u.geo.color||geo.color,mm:u.geo.mm!==false,nums:u.geo.nums!==false,fs:+u.geo.fs||11});
-  applyBarsState(); refreshBarTheme(); renderFavs(); buildFavList(); buildPalEdit(); repaintPalette(); applyToolColor(); refreshCal(); spotSegUI(); lasUI(); popZuUI(); obenUI(); }catch(e){} }
+  applyBarsState(); refreshBarTheme(); renderFavs(); buildFavList(); buildPalEdit(); repaintPalette(); applyToolColor(); refreshCal(); spotSegUI(); lasUI(); popZuUI(); ebGriffeUI(); obenUI(); }catch(e){} }
 
 /* ---- Leisten per Wischgeste weg/hervor (Präsentationsmodus) ---- */
 /* Reiter im Einstellungsfenster */

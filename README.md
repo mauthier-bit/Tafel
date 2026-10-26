@@ -1538,13 +1538,23 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   **undurchsichtig**: Liegen zwei übereinander, scheint das hintere nicht durch das vordere.
 - **Fensterrahmen im Bedienmodus:** Sobald **„Objekt bedienen"** an ist, bekommt jedes eingebettete
   Objekt (Werkzeug, eingebettete HTML-Seite, Video, Livebild …) eine **schmale Kopfleiste mit Griff
-  (⠿ und Name)** über dem oberen Rand und **vier weiße Eckgriffe**. Damit lässt es sich **verschieben
+  (⠿ und Name)** über dem oberen Rand und **vier Eckgriffe**. Damit lässt es sich **verschieben
   und in der Größe ändern, ohne das Bedienen zu beenden** – wie bei einem Fenster. Der Rest des
   Rahmens nimmt keine Berührungen an: Man bedient das Werkzeug weiter ganz normal. Die Griffe bleiben
   beim Zoomen **immer gleich groß** (auf dem Bildschirm), drehen sich mit einem gedrehten Objekt mit,
   und **„Rückgängig"** stellt die vorherige Größe und Lage wieder her. Im **Vollbild** und beim
   **Beschriften eines Videos** erscheinen sie nicht – dort gibt es eigene Leisten. Ist „Objekt
   bedienen" aus, ist alles wie zuvor (Auswahl-Werkzeug mit Rahmen und Griffen auf der Tafel).
+  - **Rechts in der Kopfleiste** stehen drei Knöpfe: **– Minimieren**, **⤢ Vollbild** und
+    **× Schließen** (Schließen lässt sich mit „Rückgängig" zurückholen).
+  - **Minimieren** legt das Fenster als **Symbol mit Namen an den unteren Bildschirmrand**; auf der
+    Tafel ist es dann ganz weg (auch beim Zeichnen, Auswählen und im Bild-/PDF-Export). Ein Tipp auf
+    das Symbol holt es in alter Größe und Lage zurück. Die Leiste bleibt auch sichtbar, wenn „Objekt
+    bedienen" wieder aus ist, und der minimierte Zustand wird mit dem Projekt gespeichert.
+  - Rahmen und Leiste liegen **in derselben Ebene wie ihr Werkzeug**: Liegt ein Fenster hinter einem
+    anderen, verschwindet auch seine Kopfleiste dahinter.
+  - Die **Eckgriffe lassen sich abschalten** (Einstellungen → Bedienung → „Eckgriffe am eingebetteten
+    Objekt", voreingestellt **an**); die Kopfleiste bleibt in jedem Fall.
 - Der Knopf **„Objekt bedienen" / „Bedienen beenden"** oben in der Mitte sitzt **bündig mit der
   Unterkante der oberen Leisten** – auf dem iPad genau wie am Rechner. Die Leisten stehen selbst
   schon unterhalb der Statusleiste; ein zusätzlicher Sicherheitsabstand hätte den Knopf auf dem
