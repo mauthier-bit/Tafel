@@ -2917,7 +2917,7 @@ function pointInPoly(x,y,poly){ let inside=false; for(let i=0,j=poly.length-1;i<
   if(((yi>y)!==(yj>y)) && (x < (xj-xi)*(y-yi)/((yj-yi)||1e-9)+xi)) inside=!inside; } return inside; }
 function finishLasso(){ const pts=lassoPts; lassoPts=null;
   if(!pts||pts.length<3){ markDirty(); return; }                       // zu klein → verwerfen (schließt automatisch per Polygon)
-  const sel=[]; for(const o of page().objects){ const b=geomBounds(o); if(pointInPoly(b.x+b.w/2,b.y+b.h/2,pts)) sel.push(o); }
+  const sel=[]; for(const o of page().objects){ if(o.min) continue; const b=geomBounds(o); if(pointInPoly(b.x+b.w/2,b.y+b.h/2,pts)) sel.push(o); }
   const gids=new Set(sel.filter(o=>o.groupId).map(o=>o.groupId));       // ganze Gruppen mitnehmen
   for(const o of page().objects) if(o.groupId&&gids.has(o.groupId)&&!sel.includes(o)) sel.push(o);
   if(!sel.length){ toast('Nichts eingerahmt'); markDirty(); return; }
@@ -2997,7 +2997,7 @@ function endSelect(e){
     if(o&&o.type==='numline'&&(o.cm||o.snap)) nlNachZiehen(o);
     scheduleAutosave(); return; }
   if(marquee){ const a=toWorld(Math.min(marquee.x0,marquee.x1),Math.min(marquee.y0,marquee.y1)),b=toWorld(Math.max(marquee.x0,marquee.x1),Math.max(marquee.y0,marquee.y1)); selection=[];
-    for(const o of page().objects){ const bb=geomBounds(o); if(bb.x>=a.x&&bb.y>=a.y&&bb.x+bb.w<=b.x&&bb.y+bb.h<=b.y) selection.push(o); }
+    for(const o of page().objects){ if(o.min) continue; const bb=geomBounds(o); if(bb.x>=a.x&&bb.y>=a.y&&bb.x+bb.w<=b.x&&bb.y+bb.h<=b.y) selection.push(o); }
     const gids=new Set(selection.filter(o=>o.groupId).map(o=>o.groupId));
     for(const o of page().objects) if(o.groupId&&gids.has(o.groupId)&&!selection.includes(o)) selection.push(o);
     marquee=null; refreshProps(); return; }
@@ -4354,7 +4354,18 @@ function minLeiste(){ const bar=$('minBar');
       b.append(ic,tx); b.onclick=fn; bar.appendChild(b); };
     klein.forEach(o=>pille(minSymbol(o),minName(o),()=>minZurueck(o)));
     wins.forEach(id=>pille(knopfSymbol(MIN_WIN[id]),winTitel(id),()=>winZurueck(id))); }
-  bar.classList.toggle('show',klein.length+wins.length>0); }
+  bar.classList.toggle('show',klein.length+wins.length>0);
+  minBarPlatz(); }
+/* Die Leiste bleibt im freien Streifen neben der Werkzeugleiste - sie darf nie Knoepfe verdecken */
+function minBarPlatz(){ const bar=$('minBar'); if(!bar.classList.contains('show')) return;
+  let links=8, rechts=innerWidth-8;
+  const mb=$('mainbar').getBoundingClientRect();
+  if(mb.width>0&&mb.bottom>innerHeight-130){            /* nur wenn die Leiste bis nach unten reicht */
+    if(mainbarSide==='left') links=Math.max(links, mb.right+8);
+    else if(mainbarSide==='right') rechts=Math.min(rechts, mb.left-8); }
+  if(rechts-links<140){ links=8; rechts=innerWidth-8; }  /* zu eng: lieber mittig und scrollbar */
+  bar.style.left=Math.round((links+rechts)/2)+'px';
+  bar.style.maxWidth=Math.round(rechts-links)+'px'; }
 function rahmenSetzen(o,tf){
   let fr=embedRahmen.get(o.id); if(!fr) fr=rahmenBauen(o);
   if(!embedInteract||fsId||docNote===o||o.min){ fr.style.display='none'; return; }   /* Vollbild und Beschriften haben eigene Leisten */
@@ -7740,6 +7751,7 @@ $('qrMake').onclick=()=>{ const text=$('qrText').value.trim(); if(!text){toast('
 const fileImport=$('fileImport');
 $('ins-pdf').onclick=()=>fileImport.click(); fileImport.onclick=e=>{e.target.value='';};
 fileImport.onchange=async e=>{const f=e.target.files[0];if(!f)return; const nm=(f.name||'').toLowerCase();
+  $('win-insert').classList.remove('show');            /* Datei gewaehlt: das Fenster wird nicht mehr gebraucht */
   if(nm.endsWith('.h5p')) await importH5P(f);
   else if(f.type==='application/pdf'||nm.endsWith('.pdf'))await importPDF(f);
   else if(nm.endsWith('.pptx')||f.type.includes('presentationml'))await importPPTX(f);
@@ -7848,7 +7860,7 @@ function ggbDateiLaden(f){
   r.readAsDataURL(f); }
 $('ins-ggb-datei').onclick=()=>{
   const i=document.createElement('input'); i.type='file'; i.accept='.ggb';
-  i.onchange=()=>ggbDateiLaden(i.files&&i.files[0]);
+  i.onchange=()=>{ if(i.files&&i.files[0]) $('win-insert').classList.remove('show'); ggbDateiLaden(i.files&&i.files[0]); };
   i.click(); };
 $('ins-sheet').onclick=()=>{ addEmbedObject('sheet','sheet.html','Tabelle',{}); $('win-insert').classList.remove('show'); toast('Tabellenkalkulation eingefügt'); };
 async function importPDF(f){ showBusy(true,'PDF wird eingelesen…'); try{ const buf=await f.arrayBuffer(); const pdf=await pdfjsLib.getDocument({data:buf}).promise;

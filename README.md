@@ -1576,6 +1576,10 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     **⤢ Vollbild** und **– Minimieren** nebeneinander (je halbe Breite). Das gilt für **Werkzeuge,
     Dokumente und Bilder**; bei Videoclips und Tonaufnahmen, die kein Vollbild haben, steht
     „Minimieren" allein über die ganze Breite.
+  - Die Leiste der minimierten Objekte bleibt **im freien Streifen neben der Werkzeugleiste** –
+    sie schiebt sich nie über deren Knöpfe (auch nicht, wenn Favoriten die Leiste lang machen).
+    Passen nicht alle Symbole nebeneinander, lässt sich die Leiste seitlich schieben. Minimierte
+    Objekte lassen sich auch nicht mehr versehentlich mit **Rahmen- oder Lasso-Auswahl** erwischen.
   - **Auch die Werkzeugfenster** (Lärmampel, Stoppuhr, Timer, Umfrage, QR-Code, Punktestand,
     Gruppen, Taschenrechner, Klasse, Lehrer-Stundenplan) haben in ihrer Titelzeile jetzt ein
     **„–"** neben dem **„×"**: Sie legen sich genauso als Symbol an den unteren Rand und kommen mit
@@ -1735,7 +1739,9 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   **„PDF / Bild / ppt / ggb / H5P / HTML / Audio / Video"**; die ausführlichen Erläuterungen dazu
   stecken darunter hinter der Zeile **„ℹ️ Was kommt wie auf die Tafel?"** und klappen erst auf Tippen
   auf. Die Zeile ist bewusst **kein Knopf**, sondern nur Text mit einem kleinen Pfeil rechts – sie
-  gehört zum Hinweis, nicht zur Bedienung.
+  gehört zum Hinweis, nicht zur Bedienung. **Sobald eine Datei gewählt ist, schließt sich das
+  Einfügen-Fenster von selbst** – man will ja gleich mit dem eingefügten Objekt weiterarbeiten
+  (dasselbe gilt für „ggb-Datei vom Gerät wählen"; die übrigen Knöpfe im Fenster machten das schon).
 - **PDF einfügen:** über **Einfügen → Datei** („PDF / Bild / ppt / ggb / H5P / HTML / Audio / Video"). Jede PDF-Seite wird
   gerendert; zwei Schalter bestimmen die Form:
   **„Als eigene Seite einfügen"** (aus) macht aus jeder PDF-Seite eine eigene Tafelseite.
