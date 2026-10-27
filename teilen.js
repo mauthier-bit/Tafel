@@ -249,11 +249,12 @@ async function zeigen(datei,bauen){
 
 /* ---------- Knopf in der Werkzeugleiste ---------- */
 /* Das Symbol bringt Größe und Strichfarbe selbst mit – sonst sieht es in Werkzeugen,
-   die keine eigene Regel für Knopf-Grafiken haben, riesig und falsch gefüllt aus. */
+   die keine eigene Regel für Knopf-Grafiken haben, riesig und falsch gefüllt aus.
+   Der Kasten ist oben ganz offen (nur Seiten und Boden), der Pfeil steigt daraus heraus. */
 const SYMBOL='<svg viewBox="0 0 32 20" width="17" height="11" fill="none" stroke="currentColor" '+
   'stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;display:block">'+
-  '<path d="M11.5 7.5H6.5v10h19v-10h-5"/>'+
-  '<path d="M16 13.5V2.6"/><path d="M12.3 6.3 16 2.6l3.7 3.7"/></svg>';
+  '<path d="M6.5 8.5v10h19v-10"/>'+
+  '<path d="M16 14.5V1.3"/><path d="M12.3 5 16 1.3l3.7 3.7"/></svg>';
 function knopf(host,datei,bauen,opt){
   if(!host) return null;
   opt=opt||{};

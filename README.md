@@ -937,11 +937,12 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     macht das auch **„💡 Hinweis"**, der dann **„Hinweis verbergen"** heißt). So raten die Kinder erst
     selbst, und die Hilfe kommt, wenn sie gebraucht wird.
   - **Aufteilung der beiden Leisten:** Oben stehen links die Knöpfe zum Vorbereiten
-    (**✎ Begriffe**, **📚 Lehrplan**, **↻ Neues Spiel**) und rechts die Knöpfe fürs Bild und die
-    Darstellung (**A−/A+**, **🖼 Tafel**, **📋 Kopieren**, **Teilen** – alle im selben Knopfstil).
-    In der zweiten Leiste liegen die Einstellungen zum Spiel selbst: Fehlerzahl, **💡 Tipp**,
-    **💡 Hinweis**, **Umlaute** und **2 Teams**. Ist das Werkzeug allein geöffnet, hält die obere
-    Leiste rechts Platz für den schwebenden Umschalter **Benutzen/Bearbeiten** frei.
+    (**✎ Begriffe**, **📚 Lehrplan**) und rechts die Knöpfe fürs Bild und die Darstellung
+    (**A−/A+**, **🖼 Tafel**, **📋 Kopieren**, **Teilen** – alle im selben Knopfstil).
+    In der zweiten Leiste liegt alles zum laufenden Spiel, ganz links **↻ Neues Spiel**, dann
+    Fehlerzahl, **💡 Tipp**, **💡 Hinweis**, **Umlaute** und **2 Teams**. Ist das Werkzeug allein
+    geöffnet, hält die obere Leiste rechts Platz für den schwebenden Umschalter
+    **Benutzen/Bearbeiten** frei.
   Dazu der Umschalter **Benutzen/Bearbeiten**; der
   Spielstand wird mit dem Tafel-Projekt gespeichert.
   - **Zwei Teams:** Der Schalter **„2 Teams"** blendet über dem Spielfeld zwei Punktekonten ein
