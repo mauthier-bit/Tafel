@@ -740,7 +740,7 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   Linie vom Inhalt darunter abgesetzt). Daran lässt sich das
   Menü an eine beliebige Stelle schieben – praktisch, wenn es gerade die Form verdeckt, die man bearbeitet.
   Einmal verschoben, bleibt es dort stehen (auch bei einem anderen Objekt und nach dem Neuladen); der kleine runde
-  Knopf **↺** oben rechts stellt es wieder neben das ausgewählte Objekt. Die ☰- und ✎-Knöpfe wandern mit.
+  Knopf **↺** oben rechts stellt es wieder neben das ausgewählte Objekt. Der ☰-Knopf wandert mit.
 - **Ebene ändern:** Im Kontextmenü eines ausgewählten Objekts gibt es **▲ Vor / ▼ Zurück** (eine Ebene)
   und **⤒ Ganz vorn / ⤓ Ganz hinten**. Funktioniert auch mit einer Mehrfachauswahl und mit
   eingebetteten Werkzeugen (Tabelle, Glücksrad …) gegenüber Gezeichnetem.
@@ -1571,6 +1571,10 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   - **Rechts in der Kopfleiste** stehen drei Knöpfe: **– Minimieren**, **⤢ Vollbild** und
     **× Schließen** (Schließen lässt sich mit „Rückgängig" zurückholen). Sie sind **breit genug zum
     Treffen mit dem Finger** (knapp 40 px).
+  - **Ganz links in der Kopfleiste** sitzt bei den Werkzeugen mit zwei Modi der Umschalter
+    **✎ Bearbeiten / ▶ Benutzen** (siehe unten). Er ist blau, solange bearbeitet wird. Ist das
+    Fenster schmaler als etwa 300 px, bleibt davon nur das Zeichen ✎ bzw. ▶ stehen, damit die
+    Knöpfe rechts nicht herausfallen.
   - **Minimieren** legt das Fenster als **Symbol mit Namen an den unteren Bildschirmrand** – und zwar
     mit dem **eigenen Symbol des Werkzeugs**, genau wie es in der Werkzeugleiste aussieht
     (eingebettete Websites, Videos, Tonaufnahmen und das Livebild bekommen ein passendes Zeichen); auf der
@@ -2705,13 +2709,15 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     Speichern/Laden als Datei sowie A−/A+, 🖼 Tafel und 📋 Kopieren. Eine fertige Karte lässt sich so
     auch **außerhalb der Tafel bauen, speichern und später in ein Tafel-Objekt laden**.
   - **Benutzen oder Bearbeiten:** Bedient werden Einbettungen wie gewohnt über **„Objekt bedienen"**.
-    Bei Lernlandkarte, Tabelle, Lückentext, Zuordnen und Glossar
-    erscheint, **solange „Objekt bedienen" aktiv ist** und das Objekt ausgewählt ist, zusätzlich
-    **direkt unter dem Kontextmenü-Knopf** (also außerhalb des Objekts, damit nichts verdeckt wird)
-    ein **Umschalter**. Er zeigt – wie der Umschalter für Schreiben/Auswählen – den **gerade aktiven**
-    Zustand: **✎** bedeutet, dass gerade bearbeitet wird (alle Bedienleisten sind eingeblendet: Orte und
-    Wege anlegen, Tabelle gestalten, Text und Lücken festlegen, Begriffe eintragen …), **▶** bedeutet,
-    dass gerade nur benutzt wird. Ein Tipp schaltet jeweils um. Im Benutzen-Modus bleiben nur die Knöpfe zum Arbeiten stehen – beim Lückentext etwa *Prüfen*,
+    Bei Lernlandkarte, Tabelle, Lückentext, Zuordnen, Glossar, Baumdiagramm, Stromkreis,
+    Optiklabor, Wellenwanne, Diagramm, Bild beschriften und Interaktivem Video sitzt dann
+    **ganz links in der Kopfleiste des Fensters** ein **Umschalter**. Es genügt, dass
+    **„Objekt bedienen" aktiv ist** – das Objekt muss dafür **nicht ausgewählt** sein, und bei
+    mehreren offenen Werkzeugen tippt man ihn gleich am richtigen Fenster an. Er zeigt – wie der
+    Umschalter für Schreiben/Auswählen – den **gerade aktiven**
+    Zustand: **✎ Bearbeiten** bedeutet, dass gerade bearbeitet wird (alle Bedienleisten sind eingeblendet: Orte und
+    Wege anlegen, Tabelle gestalten, Text und Lücken festlegen, Begriffe eintragen …), **▶ Benutzen**
+    bedeutet, dass gerade nur benutzt wird. Ein Tipp schaltet jeweils um. Im Benutzen-Modus bleiben nur die Knöpfe zum Arbeiten stehen – beim Lückentext etwa *Prüfen*,
     *Lösung ▶*, *alle Lösungen* und *zurücksetzen*, beim Zuordnen *Prüfen*, *Lösung* und *Mischen*
     (die zweite Zeile verschwindet dort ganz), beim Glossar Suchfeld, Auf-/Zuklappen, Abschnitte,
     Sortierung und *Abfragen*. Kreuzworträtsel und Buchstabengitter haben keinen Umschalter – dort

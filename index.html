@@ -67,7 +67,7 @@
   #fsThumb{position:absolute;left:4px;width:10px;border-radius:999px;background:rgba(31,36,48,.38);}
   body.fs-mode #embedLayer{z-index:5;}       /* über dem Tafelblatt – sonst liegt das Karo über dem Objekt */
   body.fs-mode .edgezone{display:none!important;}
-  body.fs-mode #annoToggle,body.fs-mode #propsBtn,body.fs-mode #modeBtn{display:none!important;}
+  body.fs-mode #annoToggle,body.fs-mode #propsBtn{display:none!important;}
   #embedLayer video{background:#000;object-fit:contain;}
   #embedBarLayer{position:fixed;inset:0;z-index:14;pointer-events:none;overflow:hidden;display:none;}
   .embedCard{position:absolute;left:0;top:0;transform-origin:0 0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:#f4f6fa;color:#5b6472;text-align:center;padding:14px;overflow:hidden;}
@@ -94,6 +94,11 @@
     border:none;border-radius:calc(var(--bh)*.22);background:rgba(255,255,255,.14);color:#fff;
     font:inherit;font-size:calc(var(--bf)*1.1);line-height:1;cursor:pointer;padding:0;}
   .ebBar .ebBtn:hover{background:rgba(255,255,255,.3);}
+  /* Umschalter „Benutzen / Bearbeiten“ ganz links – er zeigt den Modus, der gerade gilt */
+  .ebBar .ebMode{width:auto;padding:0 calc(var(--bh)*.3);gap:.35em;font-size:var(--bf);font-weight:700;}
+  .ebBar.schmal .ebMw{display:none;}                 /* enges Fenster: nur noch das Zeichen */
+  .ebBar .ebMode.an{background:#2563eb;}
+  .ebBar .ebMode.an:hover{background:#1d4ed8;}
   .ebBar .ebBtn.ebX:hover{background:#dc2626;}
   /* Eckgriffe: eigene Klassennamen (nw/ne/sw/se kaemen den Farbfeldern .sw in die Quere) */
   /* Griffe als „Ecken": zwei Striche, leicht abgerundet, kraeftig aber durchscheinend */
@@ -345,8 +350,6 @@
   #win-settings .stab>div[style*="margin-top:7px"]{margin-top:12px!important;}
   #win-settings .stab>#calBar{margin-top:6px;}
   #propsBtn.show{display:flex;}
-  #modeBtn{position:fixed;z-index:31;display:none;align-items:center;justify-content:center;width:38px;height:38px;border:none;border-radius:50%;background:#fff;color:#2563eb;font-size:17px;box-shadow:var(--shadow);cursor:pointer;}
-  #modeBtn.show{display:flex;} #modeBtn.on{background:#2563eb;color:#fff;}
   #props.show{display:flex;}
   #props .swatches{display:flex;flex:1;gap:6px;}
   #props .swatches .sw{flex:1 1 0;min-width:0;width:auto;height:26px;border-radius:999px;}
@@ -1109,7 +1112,6 @@
 
 <!-- Kontext-Panel (ein-/ausklappbar über den kleinen Button) -->
 <button id="propsBtn" title="Kontextmenü ein-/ausklappen">☰</button>
-<button id="modeBtn" title="Zwischen Benutzen und Bearbeiten umschalten">✎</button>
 <button id="noteChip" title="Beschriften beenden – danach lässt sich das Dokument wieder verschieben">✎ Beschriften beenden</button>
 <button id="noteZeitChip" title="Nur für Videos: Wie lange eine neu gezeichnete Notiz zu sehen ist. Antippen wechselt die Dauer.">🕒 Zeit: immer</button>
 <div id="noteBar"><span id="noteZeitWrap"><input type="range" id="noteZeit" min="0" max="1" step="0.02" value="0" title="Stelle im Video wählen – auch während des Beschriftens"><b id="noteZeitAnz">0:00,0</b></span></div>
@@ -3627,12 +3629,6 @@ const MODE_EMBED=['tabelle','lernkarte','luecke','zuordnen','glossar','baum','st
 function refreshProps(){ const has=selection.length>0 && tool==='select';
   const sid=has?selection.map(o=>o.id).join(','):''; if(sid!==propsSelId){ propsSelId=sid; propsOpen=false; }   // neue Auswahl → eingeklappt
   $('propsBtn').classList.toggle('show',has); $('propsBtn').textContent=propsOpen?'✕':'☰';
-  const mo=(selection.length===1&&selection[0].type==='embed'&&MODE_EMBED.includes(selection[0].etype))?selection[0]:null;
-  $('modeBtn').classList.toggle('show',!!mo&&tool==='select'&&embedInteract);   // nur sinnvoll, wenn „Objekt bedienen“ aktiv ist
-  if(mo){ const edit=!(mo.data&&mo.data.edit===false);
-    $('modeBtn').textContent=edit?'✎':'▶';                       // zeigt den aktiven Modus, wie der Werkzeug-Umschalter
-    $('modeBtn').classList.toggle('on',edit);
-    $('modeBtn').title=edit?'Bearbeiten beenden – nur noch benutzen':'Bedienelemente einblenden (bearbeiten)'; }
   const show=has&&propsOpen; $('props').classList.toggle('show',show);
   if(show){ refreshPropActive(); refreshRotLabel(); $('streckZ').classList.toggle('on',streckZeigen);
     /* Farbe und Dicke nur zeigen, wenn sie hier wirklich etwas bewirken.
@@ -3732,10 +3728,12 @@ function refreshProps(){ const has=selection.length>0 && tool==='select';
   markDirty(); }
 $('propsBtn').onclick=()=>{ propsOpen=!propsOpen; refreshProps();
   requestAnimationFrame(()=>requestAnimationFrame(positionProps)); };
-$('modeBtn').onclick=()=>{ const o=selection[0]; if(!o||o.type!=='embed') return;
+/* Umschalter „Benutzen / Bearbeiten“ – er sitzt in der Kopfleiste des Fensters und ist
+   damit erreichbar, sobald „Objekt bedienen“ läuft; ein Auswählen ist dafür nicht nötig. */
+function embedModus(o){ if(!o||o.type!=='embed') return;
   o.data=o.data||{}; o.data.edit=(o.data.edit===false);
   postToEmbed(o,o.data); markDirty(); scheduleAutosave(); refreshProps();
-  toast(o.data.edit?'Bearbeiten – die Bedienelemente sind sichtbar':'Benutzen – nur noch mit dem Inhalt arbeiten'); };
+  toast(o.data.edit?'Bearbeiten – die Bedienelemente sind sichtbar':'Benutzen – nur noch mit dem Inhalt arbeiten'); }
 setInterval(()=>{ if(selection.length&&tool==='select') positionProps(); },120);   // Knöpfe bleiben an der Ecke
 /* Text-Formatierung im Kontextmenü (nur Text-Objekte) */
 function txtApply(fn){ let any=false; selection.forEach(o=>{ if(o.type==='text'){ fn(o); any=true; } }); if(any){ scheduleAutosave(); positionProps(); markDirty(); } }
@@ -4017,7 +4015,7 @@ function obenFrei(){ const st=getComputedStyle(document.documentElement);
   const sa=parseFloat(st.getPropertyValue('--sat'))||0, ob=parseFloat(st.getPropertyValue('--oben'))||0;
   return Math.round(Math.max(8,sa)+16+ob); }
 function positionProps(){ if(!selection.length)return; const b=selCenterBounds();
-  const btn=$('propsBtn'), mb=$('modeBtn'), el=$('props'), offen=el.classList.contains('show');
+  const btn=$('propsBtn'), el=$('props'), offen=el.classList.contains('show');
   /* 1) zuerst das Panel setzen, damit die Knöpfe sich danach richten können */
   if(offen){
     const oM=obenFrei();
@@ -4042,9 +4040,7 @@ function positionProps(){ if(!selection.length)return; const b=selCenterBounds()
   const oMin=obenFrei();
   bl=Math.max(8,Math.min(bl,innerWidth-btn.offsetWidth-8));
   bt=Math.max(oMin,Math.min(bt,innerHeight-btn.offsetHeight-8));
-  btn.style.left=bl+'px'; btn.style.top=bt+'px';
-  if(mb.classList.contains('show')){ mb.style.left=bl+'px';                            // direkt darunter
-    mb.style.top=Math.max(oMin,Math.min(bt+46,innerHeight-mb.offsetHeight-8))+'px'; } }
+  btn.style.left=bl+'px'; btn.style.top=bt+'px'; }
 
 /* ---- Kontextmenü am Griff verschieben: sonst deckt es genau die Form zu, die man gerade bearbeitet ---- */
 let propPos=null, propDrag=null, propHint=false;
@@ -4308,6 +4304,9 @@ function rahmenBauen(o){
     b.addEventListener('pointerdown',e=>e.stopPropagation());          /* nicht als Ziehen werten */
     b.onclick=e=>{ e.stopPropagation(); const ob=page().objects.find(x=>x.id===o.id); if(ob) fn(ob); };
     bar.appendChild(b); };
+  if(MODE_EMBED.includes(o.etype)){                                   /* nur Werkzeuge mit zwei Modi */
+    knopf('ebMode','','Zwischen Benutzen und Bearbeiten umschalten',ob=>embedModus(ob));
+    bar.insertBefore(bar.lastChild,bar.firstChild); }                 /* ganz nach links */
   knopf('ebM','–','Minimieren – als Symbol an den unteren Rand legen',ob=>minimieren(ob));
   knopf('ebF','⤢','Vollbild',ob=>vollbildAn(ob));
   knopf('ebX','×','Schließen – mit „Rückgängig“ zurückholen',ob=>werkzeugSchliessen(ob));
@@ -4392,6 +4391,14 @@ function rahmenSetzen(o,tf){
   fr.classList.toggle('innen',!o.rot&&oben<34);
   const nm=fr.querySelector('.ebName'), t=o.label||'';
   if(nm.textContent!==t) nm.textContent=t;
+  const mo=fr.querySelector('.ebMode');
+  if(mo){ const edit=!(o.data&&o.data.edit===false);
+    mo.classList.toggle('an',edit);
+    const mz=edit?'✎':'▶';
+    if(mo._mz!==mz){ mo._mz=mz;
+      mo.innerHTML='<span class="ebMz">'+mz+'</span><span class="ebMw">'+(edit?'Bearbeiten':'Benutzen')+'</span>'; }
+    mo.title=edit?'Bearbeiten beenden – nur noch benutzen':'Bedienelemente einblenden (bearbeiten)';
+    fr.querySelector('.ebBar').classList.toggle('schmal',o.w*scale<300); }   /* sonst faellt das × heraus */
 }
 /* Durchsichtige Zeichenfläche über einem Video: trägt die Notizen, nimmt keine Berührungen an.
    Sie liegt in derselben Ebene wie das Video und bekommt dieselbe Lage – damit wandert,
