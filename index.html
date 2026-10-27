@@ -1607,6 +1607,7 @@
     <div class="toggle"><span>Finger wählt aus (Auswahl-Modus)<br><small style="color:#888">(1 Finger verschiebt Objekte, 2 Finger zoomen & drehen)</small></span><div class="sw2" id="fingerSelect"></div></div>
     <div class="toggle"><span>Druckstärke des Pencils</span><div class="sw2 on" id="usePressure"></div></div>
     <div class="toggle"><span>Eckgriffe am eingebetteten Objekt<br><small style="color:#888">(im Bedienmodus die Größe ändern – die Kopfleiste bleibt immer)</small></span><div class="sw2 on" id="ebGriffeSw"></div></div>
+    <div class="toggle"><span>Freihand erkennen<br><small style="color:#888">(Stift-Kritzel werden zu Linie, Rechteck, Ellipse oder Dreieck – steht auch im Formen-Menü)</small></span><div class="sw2" id="recogSw2"></div></div>
     <label class="lbl">Scheinwerfer</label>
     <div class="seg" id="spotSeg"><button data-spot="ellipse" class="active">Kreis / Ellipse</button><button data-spot="rect">Rechteck</button></div>
     <div class="hint" style="margin-top:6px">Der Lichtfleck wird mit <b>zwei Fingern</b> aufgezogen: waagrecht nur breiter, senkrecht nur höher, diagonal insgesamt größer. Das Rechteck rahmt einen Textabschnitt oder eine Aufgabe genauer ein.</div>
@@ -2894,8 +2895,11 @@ function recogShape(o){
   return null; }
 const SHAPE_DE={line:'Linie',rect:'Rechteck',ellipse:'Ellipse',triangle:'Dreieck',polygon:'Vieleck'};
 const ECKNAME={3:'Dreieck',4:'Viereck',5:'Fünfeck',6:'Sechseck',7:'Siebeneck',8:'Achteck'};
-$('shapeRecogSw').onclick=function(){ this.classList.toggle('on'); shapeRecog=this.classList.contains('on'); saveUI();
-  toast(shapeRecog?'Freihand wird in Formen umgewandelt':'Freihand-Erkennung aus'); };
+function recogSetzen(an,melden){ shapeRecog=!!an;
+  $('shapeRecogSw').classList.toggle('on',shapeRecog); $('recogSw2').classList.toggle('on',shapeRecog); saveUI();
+  if(melden) toast(shapeRecog?'Freihand wird in Formen umgewandelt':'Freihand-Erkennung aus'); }
+$('shapeRecogSw').onclick=()=>recogSetzen(!shapeRecog,true);
+$('recogSw2').onclick=()=>recogSetzen(!shapeRecog,true);
 function polyTap(e,w){
   if(!polyDraft){ polyDraft={pts:[{x:w.x,y:w.y}],color,width:penWidth/scale,fill:shapeFill,fillA:shapeAlpha}; markDirty(); return; }
   const P=polyDraft.pts, f=P[0], last=P[P.length-1], near=(q,px)=>Math.hypot((w.x-q.x)*scale,(w.y-q.y)*scale)<px;
@@ -3189,13 +3193,19 @@ function fitPopCols(el,frei){
   if(passt>=soll) g.style.gridTemplateColumns='';
   else g.style.gridTemplateColumns='repeat('+passt+','+bw+'px)';
 }
+/* Wie weit darf ein Menue nach unten reichen? Ueber den minimierten Objekten ist Schluss. */
+function untenFrei(){ const b=$('minBar');
+  if(!b||!b.classList.contains('show')) return innerHeight-8;
+  const r=b.getBoundingClientRect();
+  return Math.max(innerHeight*0.45, r.top-8); }
 function place(el,anchor){ const r=anchor.getBoundingClientRect();   // Popover neben der Hauptleiste
+  const unten=untenFrei();
   if(mainbarSide==='bottom'){                                        // Leiste unten → Menü darüber
     fitPopCols(el, innerWidth-16);
-    el.style.maxHeight=(innerHeight-16)+'px'; el.style.overflowY='auto';
+    el.style.maxHeight=(unten-16)+'px'; el.style.overflowY='auto';
     let left=Math.max(8,Math.min(r.left+r.width/2-el.offsetWidth/2, innerWidth-el.offsetWidth-8));
-    let top=r.top-el.offsetHeight-8; if(top<8) top=Math.min(r.bottom+8, innerHeight-el.offsetHeight-8);
-    el.style.left=left+'px'; el.style.top=Math.max(8,top)+'px'; return; }
+    let top=r.top-el.offsetHeight-8; if(top<8) top=Math.min(r.bottom+8, unten-el.offsetHeight);
+    el.style.left=left+'px'; el.style.top=Math.max(8,Math.min(top, unten-el.offsetHeight))+'px'; return; }
   const bar=$('mainbar').getBoundingClientRect();                    // nie unter der Leiste liegen
   const minLeft = (mainbarSide==='right') ? 8 : Math.max(8, bar.right+8);
   const rechts  = (mainbarSide==='right') ? Math.max(8, bar.left-8) : innerWidth-8;
@@ -3207,8 +3217,8 @@ function place(el,anchor){ const r=anchor.getBoundingClientRect();   // Popover 
   /* senkrecht: nicht unter die obere Leiste rutschen, bei wenig Platz lieber scrollen */
   const sb=$('settingsbar').getBoundingClientRect();
   const oben=Math.max(8, sb.bottom>0&&sb.bottom<innerHeight*0.5 ? sb.bottom+6 : 8);
-  el.style.maxHeight=(innerHeight-oben-8)+'px'; el.style.overflowY='auto';
-  el.style.top=Math.max(oben, Math.min(r.top, innerHeight-el.offsetHeight-8))+'px'; }
+  el.style.maxHeight=(unten-oben)+'px'; el.style.overflowY='auto';
+  el.style.top=Math.max(oben, Math.min(r.top, unten-el.offsetHeight))+'px'; }
 let favAnchor=null; const popAnchors={};
 function anch(id){ const el=(favAnchor&&favAnchor.dataset.fav===id)?favAnchor:$(id); popAnchors[id]=el; return el; }   // Menü öffnet am angetippten Knopf (auch am Favoriten)
 const anchLast=id=>popAnchors[id]||$(id);
@@ -3268,7 +3278,7 @@ $('t-numline').onclick=addNumlineObject;
 const cmTxt=px=>Math.round(px/PXCM)+' cm';
 function placeAt(el,x,y){ const w=el.offsetWidth,h=el.offsetHeight;
   el.style.left=Math.max(8,Math.min(x+14,innerWidth-w-8))+'px';
-  el.style.top=Math.max(8,Math.min(y-h/2,innerHeight-h-8))+'px'; }
+  el.style.top=Math.max(8,Math.min(y-h/2,untenFrei()-h))+'px'; }
 function refreshToolPops(){ $('rulLenV').textContent=cmTxt(ruler.len); $('rulMm').classList.toggle('on',!!ruler.mm); $('rulNums').classList.toggle('on',!!ruler.nums);
   $('rulPct').classList.toggle('on',!!ruler.pct);
   $('rulFsV').textContent=ruler.fs||11; $('geoFsV').textContent=geo.fs||11;
@@ -4354,8 +4364,10 @@ function minLeiste(){ const bar=$('minBar');
       b.append(ic,tx); b.onclick=fn; bar.appendChild(b); };
     klein.forEach(o=>pille(minSymbol(o),minName(o),()=>minZurueck(o)));
     wins.forEach(id=>pille(knopfSymbol(MIN_WIN[id]),winTitel(id),()=>winZurueck(id))); }
-  bar.classList.toggle('show',klein.length+wins.length>0);
-  minBarPlatz(); }
+  const an=klein.length+wins.length>0, vorher=bar.classList.contains('show');
+  bar.classList.toggle('show',an);
+  minBarPlatz();
+  if(an!==vorher) placePopovers(); }
 /* Die Leiste bleibt im freien Streifen neben der Werkzeugleiste - sie darf nie Knoepfe verdecken */
 function minBarPlatz(){ const bar=$('minBar'); if(!bar.classList.contains('show')) return;
   let links=8, rechts=innerWidth-8;
@@ -4874,7 +4886,7 @@ function saveUI(){ try{ localStorage.setItem('tafel_ui',JSON.stringify({page:$('
 function restoreUI(){ try{ const u=JSON.parse(localStorage.getItem('tafel_ui')||'{}'); if(u.page){$('pagebar').classList.add('min');pageChev(true);} if(u.set){$('settingsbar').classList.add('min');rotateChev('setMin',true);} if(u.side==='right'||u.side==='bottom')mainbarSide=u.side; if(u.theme==='light'||u.theme==='dark')barTheme=u.theme; if(u.tint&&typeof u.tint==='object')barTint=Object.assign(barTint,u.tint); if(Array.isArray(u.favs))favs=u.favs.filter(f=>f!=='w-export').slice(0,FAV_MAX);   // PDF-Export sitzt jetzt in den Einstellungen
   if(+u.pxcm>0&&Math.abs(+u.pxcm-37.8)>0.2) PXCM=Math.max(28,Math.min(64,+u.pxcm));   // alter Standard 37,8 → neuer, am iPad gemessener Wert
   if(Array.isArray(u.pal)&&u.pal.length===palette.length&&u.pal.every(c=>/^#[0-9a-f]{6}$/i.test(c))) palette=u.pal.slice();
-  if(u.rec){ shapeRecog=true; $('shapeRecogSw').classList.add('on'); }
+  if(u.rec){ shapeRecog=true; $('shapeRecogSw').classList.add('on'); $('recogSw2').classList.add('on'); }
   if(u.cols&&typeof u.cols==='object')Object.assign(toolColors,u.cols); if(u.wv===2){ if(+u.pw>0)penWidth=+u.pw; if(+u.mw>0)markerWidth=+u.mw; } if(+u.ew>0)eraserWidth=+u.ew; if(+u.sa>=0&&+u.sa<=1)shapeAlpha=+u.sa; propHint=!!u.ppH; if(+u.hell>=0&&+u.hell<=100) camHell=+u.hell; if(+u.ob>=0&&+u.ob<=48) obenPx=+u.ob; if(u.ent&&Array.isArray(u.ent.q)&&u.ent.q.length===4) camEntz={an:!!u.ent.an,ar:+u.ent.ar||0,q:u.ent.q.map(p=>({x:+p.x||0,y:+p.y||0}))}; if(u.pp&&isFinite(u.pp.l)&&isFinite(u.pp.t)) propPosSetzen({l:+u.pp.l,t:+u.pp.t}); streckZeigen=!!u.sz;   // ältere Stärken (4 Stufen) verwerfen
   if(u.spf==='rect'||u.spf==='ellipse') spotForm=u.spf; if(+u.lms>=100&&+u.lms<=3000) laserMs=+u.lms;
   if(typeof u.ebg==='boolean') ebGriffe=u.ebg;

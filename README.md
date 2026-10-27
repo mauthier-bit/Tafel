@@ -181,7 +181,8 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   je Messpunkt ein kurzes Kurvenstück statt gerader Verbindungen. Schnell geschriebene Bögen zeigen
   dadurch keine Polygon-Ecken mehr, ohne zusätzliche Punkte (gleicher Speicherbedarf) und sogar
   etwas schneller als vorher.
-- **Freihand → Form** (Schalter „Freihand erkennen" im **Formen**-Menü): Ist er an, werden mit dem
+- **Freihand → Form** (Schalter „Freihand erkennen" – im **Formen**-Menü **und** in
+  **Einstellungen → Bedienung**; beide Schalter zeigen immer denselben Stand): Ist er an, werden mit dem
   **Stift** gezeichnete Kritzel beim Loslassen automatisch zu einer sauberen Form, wenn die Zeichnung
   eindeutig genug ist – sonst bleibt der Strich als Freihand stehen.
   - Die Erkennung zählt zuerst die **Ecken**: Sie vereinfacht den Zug, fasst dicht beieinander
@@ -1578,6 +1579,10 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     „Minimieren" allein über die ganze Breite.
   - Die Leiste der minimierten Objekte bleibt **im freien Streifen neben der Werkzeugleiste** –
     sie schiebt sich nie über deren Knöpfe (auch nicht, wenn Favoriten die Leiste lang machen).
+    Auch die **aufklappenden Menüs** enden jetzt immer **oberhalb** dieser Leiste: Formen (samt der
+    untersten Zeile „Freihand erkennen"), Farbe und Dicke, die Werkzeuggruppen (Mathe, Physik,
+    Zeit, Klasse, Diverses) sowie die Einstellungen von Lineal, Geodreieck und Uhr. Reicht der Platz
+    nicht, wird das Menü scrollbar statt verdeckt.
     Passen nicht alle Symbole nebeneinander, lässt sich die Leiste seitlich schieben. Minimierte
     Objekte lassen sich auch nicht mehr versehentlich mit **Rahmen- oder Lasso-Auswahl** erwischen.
   - **Auch die Werkzeugfenster** (Lärmampel, Stoppuhr, Timer, Umfrage, QR-Code, Punktestand,
