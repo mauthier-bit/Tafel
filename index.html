@@ -90,7 +90,7 @@
   .ebBar:active{cursor:grabbing;background:rgba(37,99,235,.92);}
   .ebBar .ebGriff{opacity:.75;letter-spacing:.1em;}
   .ebBar .ebName{flex:1 1 auto;text-align:center;overflow:hidden;text-overflow:ellipsis;}
-  .ebBar .ebBtn{flex:none;width:calc(var(--bh)*.78);height:calc(var(--bh)*.78);display:flex;align-items:center;justify-content:center;
+  .ebBar .ebBtn{flex:none;width:calc(var(--bh)*1.45);height:calc(var(--bh)*.86);display:flex;align-items:center;justify-content:center;
     border:none;border-radius:calc(var(--bh)*.22);background:rgba(255,255,255,.14);color:#fff;
     font:inherit;font-size:calc(var(--bf)*1.1);line-height:1;cursor:pointer;padding:0;}
   .ebBar .ebBtn:hover{background:rgba(255,255,255,.3);}
@@ -422,6 +422,8 @@
   .win.show{display:block;}
   .win h3{margin:0;padding:10px 14px;background:#f1f3f7;font-size:15px;display:flex;justify-content:space-between;align-items:center;cursor:grab;touch-action:none;}
   .win h3 .x{cursor:pointer;font-size:18px;line-height:1;padding:2px 6px;color:#666;}
+  .win h3 .xmin{cursor:pointer;font-size:18px;line-height:1;padding:2px 9px;color:#666;font-weight:700;}
+  .win h3 .wbtns{display:flex;align-items:center;gap:2px;flex:none;}
   .win .body{padding:14px;max-height:72vh;overflow:auto;}
   /* Kamera/Scan: Breite so begrenzen, dass Bild UND Bedienknöpfe auf den Schirm passen */
   #win-cam .body,#win-scan .body{max-height:86vh;}
@@ -1175,7 +1177,7 @@
   </div>
   <div class="prow" id="pageRow" style="display:none"><button class="p" id="pr-topage" style="width:100%">📄 Als eigene Seite anzeigen</button></div>
   <div class="prow" id="shareRow" style="display:none"><button class="p" id="pr-share" style="width:100%" title="Diesen Inhalt per QR-Code an die Klasse geben">⇪ Teilen (QR-Code)</button></div>
-  <div class="prow" id="fsRow" style="display:none"><button class="p" id="pr-full" style="width:100%">⤢ Vollbild</button></div>
+  <div class="prow" id="fsRow" style="display:none;gap:6px"><button class="p" id="pr-full" style="flex:1 1 0">⤢ Vollbild</button><button class="p" id="pr-min" style="flex:1 1 0">– Minimieren</button></div>
   <div class="prow" id="clipRow" style="display:none;gap:5px"><button class="p" id="pr-clipsave">🎬 Video speichern</button><button class="p" id="pr-trim">✂ Trimmen</button></div>
   <div class="prow" id="imgRow" style="display:none"><button class="p" id="pr-crop" style="width:100%" title="Bildausschnitt wählen">✂ Zuschneiden</button></div>
   <hr class="psep" id="docSepO" style="display:none">
@@ -3689,7 +3691,9 @@ function refreshProps(){ const has=selection.length>0 && tool==='select';
     $('shareRow').style.display=(selection.length===1&&teilenZiel(selection[0]))?'flex':'none';
     const fsSel=selection.length===1?selection[0]:null;
     const fs=(fsSel&&((fsSel.type==='embed'&&!['audio','clip'].includes(fsSel.etype))||fsSel.type==='doc'||fsSel.type==='image'))?fsSel:null;
-    $('fsRow').style.display=fs?'flex':'none';
+    const minS=(fsSel&&['embed','doc','image'].includes(fsSel.type))?fsSel:null;     /* auch ohne Bedienmodus minimierbar */
+    $('fsRow').style.display=(fs||minS)?'flex':'none';
+    $('pr-full').style.display=fs?'':'none'; $('pr-min').style.display=minS?'':'none';
     const cl=(selection.length===1&&selection[0].type==='embed'&&(selection[0].etype==='clip'||selection[0].etype==='audio'))?selection[0]:null; $('clipRow').style.display=cl?'flex':'none';
     if(cl){ $('pr-clipsave').textContent=(cl.etype==='audio')?'🎙 Ton speichern':'🎬 Speichern';
       $('pr-trim').style.display=(cl.etype==='clip'&&cl.src)?'':'none'; }
@@ -3752,6 +3756,7 @@ $('pr-clipsave').onclick=()=>{ const o=singleSel(); if(!o||(o.etype!=='clip'&&o.
   a.download=o.name||((o.etype==='audio'?'tafel-ton-':'tafel-clip-')+new Date().toISOString().slice(0,16).replace(/[:T]/g,'-')+'.'+(o.ext||'webm')); a.click();
   toast(o.etype==='audio'?'Ton gespeichert':((o.t0||o.t1)?'Video gespeichert – die Datei enthält die ganze Aufnahme':'Video gespeichert')); };
 $('pr-full').onclick=()=>{ const o=singleSel(); if(o) vollbildAn(o); };
+$('pr-min').onclick=()=>{ const o=singleSel(); if(o) minimieren(o); };
 /* Eingebetteten Inhalt an die Klasse geben: Der QR-Code zeigt auf die Seite, von der
    er stammt – wer ihn scannt, bekommt denselben Inhalt auf dem eigenen Gerät.
    Das geht nur bei Inhalten aus dem Netz, nicht bei Dateien, die im Projekt liegen. */
@@ -4308,6 +4313,7 @@ function werkzeugSchliessen(o){ pushUndo();
   refreshProps(); refreshEmbedUI(); markDirty(); scheduleAutosave();
   toast('„'+(o.label||'Werkzeug')+'“ geschlossen – mit „Rückgängig“ zurückholen'); }
 function minimieren(o){ o.min=true; selection=selection.filter(x=>x!==o);
+  if(embedInteract){ embedInteract=false; applyEmbedMode(); }   /* danach will man etwas anderes tun */
   refreshProps(); markDirty(); scheduleAutosave(); }
 function minZurueck(o){ pushUndo(); delete o.min;
   const p=page(), i=p.objects.indexOf(o);                 /* beim Zurueckholen nach vorne stellen */
@@ -4316,19 +4322,37 @@ function minZurueck(o){ pushUndo(); delete o.min;
 const MIN_ICO={html:'🌐',htmlfile:'📄',clip:'🎬',video:'🎬',audio:'🎙',live:'📷'};
 /* Werkzeugsymbole: zu jedem eingebetteten Werkzeug der Knopf, mit dem man es einfuegt */
 const WICON={ableitung:'w-abl',aphysik:'w-aphysik',atom:'w-atom',baum:'w-baum',beschriften:'w-besch',bruch:'w-bruch',clock:'w-clock',codap:'w-codap',diagramm:'w-diag',einheitskreis:'w-ekreis',figuren:'w-figuren',galgen:'w-galgen',geogebra:'w-insert',gesch:'w-gesch',ggbapp:'w-ggbapp',gleichung:'t-gleichung',glossar:'w-glossar',h5p:'w-insert',induktion:'w-induktion',ivideo:'w-ivid',kreuzwort:'w-kreuz',lernkarte:'w-lernkarte',luecke:'w-luecke',mess:'w-mess',mindmap:'t-mindmap',motion:'w-motion',netz:'w-netz',optik:'w-optik',pinnwand:'w-pin',plotter:'w-plot',protokoll:'w-protokoll',raum:'w-raum',reihen:'w-reihen',sheet:'w-sheet',stellenwert:'w-swt',strahl:'w-strahl',stromkreis:'w-strom',tabelle:'d-table',terme:'w-terme',umrechner:'w-umr',verteilung:'w-vert',vierfelder:'w-vier',vphysik:'w-vphysik',welle:'w-welle',wortgitter:'w-gitter',wortwolke:'w-wolke',zeitleiste:'w-zeit',zufall:'w-zufall',zuordnen:'w-zuord'};
-function minSymbol(o){ const b=$(WICON[o.etype]||''), svg=b&&b.querySelector('svg');
+const TYP_KNOPF={clock:'w-clock',coord:'t-coord',numline:'t-numline'};
+const TYP_ICO={doc:'📄',image:'🖼'};
+const TYP_NAME={doc:'Dokument',image:'Bild',clock:'Uhr',coord:'Koordinatensystem',numline:'Zahlenstrahl'};
+function knopfSymbol(id,ersatz){ const b=$(id||''), svg=b&&b.querySelector('svg');
   if(svg) return svg.cloneNode(true);
-  const em=document.createElement('b'); em.textContent=MIN_ICO[o.etype]||'🧩'; return em; }
+  const em=document.createElement('b'); em.textContent=ersatz||'🧩'; return em; }
+function minSymbol(o){ return knopfSymbol(o.type==='embed'?WICON[o.etype]:TYP_KNOPF[o.type],
+  o.type==='embed'?MIN_ICO[o.etype]:TYP_ICO[o.type]); }
+function minName(o){ return o.label||TYP_NAME[o.type]||'Werkzeug'; }
+/* Werkzeugfenster (Taschenrechner, Timer …) lassen sich ebenso an den unteren Rand legen */
+const MIN_WIN={'win-noise':'w-noise','win-stop':'w-stop','win-timer':'w-timer','win-poll':'w-poll',
+  'win-qr':'d-qr','win-score':'w-score','win-groups':'w-groups','win-calc':'w-calc',
+  'win-class':'w-class','win-lehrerplan':'w-lehrerplan'};
+const minWins=new Set();
+function winTitel(id){ const h=$(id).querySelector('h3');
+  const t=[...h.childNodes].find(n=>n.nodeType===3&&n.nodeValue.trim());
+  return (t?t.nodeValue:h.textContent.replace(/[\u00d7\u2013]/g,'')).trim()||'Fenster'; }
+function winMinimieren(id){ $(id).classList.remove('show'); minWins.add(id); minLeiste(); }
+function winZurueck(id){ minWins.delete(id); $(id).classList.add('show'); minLeiste(); }
 function minLeiste(){ const bar=$('minBar');
-  const klein=page().objects.filter(o=>o.type==='embed'&&o.min);
-  const kennung=klein.map(o=>o.id+':'+(o.label||'')).join('|');
+  const klein=page().objects.filter(o=>o.min);
+  const wins=[...minWins].filter(id=>$(id));
+  const kennung=klein.map(o=>o.id+':'+minName(o)).join('|')+'#'+wins.join('|');
   if(bar._kennung!==kennung){ bar._kennung=kennung; bar.innerHTML='';
-    klein.forEach(o=>{ const b=document.createElement('button'); b.type='button';
-      b.title='„'+(o.label||'Werkzeug')+'“ wieder groß anzeigen';
-      const ic=minSymbol(o);
-      const tx=document.createElement('span'); tx.textContent=o.label||'Werkzeug';
-      b.append(ic,tx); b.onclick=()=>minZurueck(o); bar.appendChild(b); }); }
-  bar.classList.toggle('show',klein.length>0); }
+    const pille=(ic,name,fn)=>{ const b=document.createElement('button'); b.type='button';
+      b.title='„'+name+'“ wieder groß anzeigen';
+      const tx=document.createElement('span'); tx.textContent=name;
+      b.append(ic,tx); b.onclick=fn; bar.appendChild(b); };
+    klein.forEach(o=>pille(minSymbol(o),minName(o),()=>minZurueck(o)));
+    wins.forEach(id=>pille(knopfSymbol(MIN_WIN[id]),winTitel(id),()=>winZurueck(id))); }
+  bar.classList.toggle('show',klein.length+wins.length>0); }
 function rahmenSetzen(o,tf){
   let fr=embedRahmen.get(o.id); if(!fr) fr=rahmenBauen(o);
   if(!embedInteract||fsId||docNote===o||o.min){ fr.style.display='none'; return; }   /* Vollbild und Beschriften haben eigene Leisten */
@@ -4897,6 +4921,14 @@ $('fs').onclick=()=>{ const d=document.documentElement; if(!document.fullscreenE
 
 /* ============ Fenster ============ */
 document.querySelectorAll('.x[data-close]').forEach(x=>x.onclick=()=>$(x.dataset.close).classList.remove('show'));
+/* Werkzeugfenster bekommen neben dem × einen Knopf zum Minimieren */
+Object.keys(MIN_WIN).forEach(id=>{ const w=$(id); if(!w) return;
+  const x=w.querySelector('h3 .x[data-close]'); if(!x) return;
+  const m=document.createElement('span'); m.className='x xmin'; m.textContent='–';
+  m.title='Minimieren – als Symbol an den unteren Rand legen';
+  m.onclick=()=>winMinimieren(id);
+  const grp=document.createElement('span'); grp.className='wbtns';
+  x.parentNode.insertBefore(grp,x); grp.append(m,x); });
 const toggleWin=id=>{ const an=$(id).classList.toggle('show');
   if(!an&&(id==='win-cam'||id==='win-scan')&&typeof camPruefen==='function') camPruefen();   // Kamera nicht unnötig weiterlaufen lassen
   return an; };

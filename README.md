@@ -1561,13 +1561,23 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   **Beschriften eines Videos** erscheinen sie nicht – dort gibt es eigene Leisten. Ist „Objekt
   bedienen" aus, ist alles wie zuvor (Auswahl-Werkzeug mit Rahmen und Griffen auf der Tafel).
   - **Rechts in der Kopfleiste** stehen drei Knöpfe: **– Minimieren**, **⤢ Vollbild** und
-    **× Schließen** (Schließen lässt sich mit „Rückgängig" zurückholen).
+    **× Schließen** (Schließen lässt sich mit „Rückgängig" zurückholen). Sie sind **breit genug zum
+    Treffen mit dem Finger** (knapp 40 px).
   - **Minimieren** legt das Fenster als **Symbol mit Namen an den unteren Bildschirmrand** – und zwar
     mit dem **eigenen Symbol des Werkzeugs**, genau wie es in der Werkzeugleiste aussieht
     (eingebettete Websites, Videos, Tonaufnahmen und das Livebild bekommen ein passendes Zeichen); auf der
     Tafel ist es dann ganz weg (auch beim Zeichnen, Auswählen und im Bild-/PDF-Export). Ein Tipp auf
     das Symbol holt es in alter Größe und Lage zurück – und stellt es dabei **nach vorne**, also
-    vor alle anderen Objekte. Die Leiste bleibt auch sichtbar, wenn „Objekt
+    vor alle anderen Objekte. Mit dem Minimieren **endet der Bedienmodus** – man will danach ja
+    meist etwas anderes tun.
+  - **Minimieren geht auch ohne Bedienmodus:** Im **Kontextmenü** eines ausgewählten Objekts stehen
+    **⤢ Vollbild** und **– Minimieren** nebeneinander (je halbe Breite). Das gilt für **Werkzeuge,
+    Dokumente und Bilder**; bei Videoclips und Tonaufnahmen, die kein Vollbild haben, steht
+    „Minimieren" allein über die ganze Breite.
+  - **Auch die Werkzeugfenster** (Lärmampel, Stoppuhr, Timer, Umfrage, QR-Code, Punktestand,
+    Gruppen, Taschenrechner, Klasse, Lehrer-Stundenplan) haben in ihrer Titelzeile jetzt ein
+    **„–"** neben dem **„×"**: Sie legen sich genauso als Symbol an den unteren Rand und kommen mit
+    einem Tipp zurück. Die Leiste bleibt auch sichtbar, wenn „Objekt
     bedienen" wieder aus ist, und der minimierte Zustand wird mit dem Projekt gespeichert.
   - Rahmen und Leiste liegen **in derselben Ebene wie ihr Werkzeug**: Liegt ein Fenster hinter einem
     anderen, verschwindet auch seine Kopfleiste dahinter.
