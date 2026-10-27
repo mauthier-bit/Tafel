@@ -1569,7 +1569,9 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     Tafel ist es dann ganz weg (auch beim Zeichnen, Auswählen und im Bild-/PDF-Export). Ein Tipp auf
     das Symbol holt es in alter Größe und Lage zurück – und stellt es dabei **nach vorne**, also
     vor alle anderen Objekte. Mit dem Minimieren **endet der Bedienmodus** – man will danach ja
-    meist etwas anderes tun.
+    meist etwas anderes tun. Sind **alle** Werkzeuge einer Seite minimiert, verschwindet auch der
+    Knopf **„Objekt bedienen"**: Es ist ja nichts da, was man bedienen könnte. Holt man ein Werkzeug
+    zurück, **schaltet sich das Bedienen von selbst wieder ein** – genau dafür holt man es ja.
   - **Minimieren geht auch ohne Bedienmodus:** Im **Kontextmenü** eines ausgewählten Objekts stehen
     **⤢ Vollbild** und **– Minimieren** nebeneinander (je halbe Breite). Das gilt für **Werkzeuge,
     Dokumente und Bilder**; bei Videoclips und Tonaufnahmen, die kein Vollbild haben, steht
