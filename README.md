@@ -1603,6 +1603,14 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     bedienen" wieder aus ist, und der minimierte Zustand wird mit dem Projekt gespeichert.
   - Rahmen und Leiste liegen **in derselben Ebene wie ihr Werkzeug**: Liegt ein Fenster hinter einem
     anderen, verschwindet auch seine Kopfleiste dahinter.
+  - **An der Kopfleiste gepackt kommt das Fenster nach vorne.** Wer ein hinten liegendes Fenster an
+    seiner Leiste anfasst, will ja damit arbeiten – es stellt sich deshalb beim Zupacken vor alle
+    anderen Objekte. **„Rückgängig"** nimmt auch das zurück.
+  - **Beim Bedienen gibt es keine Auswahl.** Schaltet man „Objekt bedienen" ein, verschwinden der
+    blau gestrichelte Auswahlrahmen und der ☰-Knopf: Bedient wird im Werkzeug selbst, verschoben,
+    vergrößert, minimiert und geschlossen wird über die Kopfleiste. Das Kontextmenü (Ebene, Seite,
+    Farbe …) erreicht man wie gewohnt, sobald „Bedienen beenden" gedrückt und das Objekt
+    ausgewählt ist.
   - Die **Eckgriffe lassen sich abschalten** (Einstellungen → Bedienung → „Eckgriffe am eingebetteten
     Objekt", voreingestellt **an**); die Kopfleiste bleibt in jedem Fall. Zum Verkleinern von oben
     her zieht man das Fenster einfach an der Kopfleiste an eine andere Stelle und dann von unten

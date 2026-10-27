@@ -4207,13 +4207,18 @@ const OPEN_TOOLS=new Set(['gleichung.html','plotter.html','ableitungen.html','ei
   'mindmap.html','begriffsnetz.html','galgen.html','pinnwand.html']);            // Werkzeuge, die ein Objekt selbst öffnen darf
 const pageHasEmbeds=()=>page().objects.some(o=>o.type==='embed'&&!o.min);   /* minimierte zaehlen nicht: es gibt nichts zu bedienen */
 function refreshEmbedUI(){ const has=pageHasEmbeds(); $('annoToggle').classList.toggle('show',has); if(!has) embedInteract=false; applyEmbedMode(); }
-function applyEmbedMode(){ cv.style.pointerEvents=embedInteract?'none':'auto'; $('annoToggle').classList.toggle('on',embedInteract);
+function applyEmbedMode(){
+  /* Beim Bedienen gibt es keine Auswahl: der gestrichelte Rahmen und der Kontextmenue-Knopf
+     wuerden nur stoeren, bedient wird ueber das Werkzeug selbst und seine Kopfleiste. */
+  let auswahlWeg=false;
+  if(embedInteract&&selection.length){ selection=[]; propsOpen=false; auswahlWeg=true; }
+  cv.style.pointerEvents=embedInteract?'none':'auto'; $('annoToggle').classList.toggle('on',embedInteract);
   document.body.classList.toggle('embedAn',embedInteract);        /* steuert den Grauschleier */
   $('annoToggle').textContent=embedInteract?'Bedienen beenden':'Objekt bedienen';
   $('embedBarLayer').style.display=embedInteract?'block':'none';
   for(const[,fr] of embedEls) fr.style.pointerEvents=embedInteract?'auto':'none';
   markDirty();   /* Fensterrahmen und das freie Feld fuer die Kopfleiste sofort mitziehen */
-  positionAnnoToggle(); if(typeof refreshProps==='function'&&selection.length) refreshProps(); }
+  positionAnnoToggle(); if(typeof refreshProps==='function'&&(auswahlWeg||selection.length)) refreshProps(); }
 /* Oben mittig, wenn Leisten minimiert; rutscht in die Lücke, wenn sie ausgeklappt sind; passt es nicht, knapp unter die Leisten. Immer ganz sichtbar. */
 /* „Objekt bedienen" und „Aufnahme stoppen" oben mittig; sind beide da, steht der Stopp-Knopf darunter */
 function positionAnnoToggle(){ const at=$('annoToggle'), rs=$('recStop');
@@ -4277,8 +4282,11 @@ function rahmenZieh(el,id,role){
     if(e.button>0) return;
     e.preventDefault(); e.stopPropagation();
     const o=page().objects.find(x=>x.id===id); if(!o) return;
-    try{ el.setPointerCapture(e.pointerId); }catch(_){}
     pushUndo();
+    if(role==='move'){                                  /* an der Kopfleiste gepackt: nach vorne holen */
+      const p=page(), i=p.objects.indexOf(o);
+      if(i>=0&&i<p.objects.length-1){ p.objects.splice(i,1); p.objects.push(o); layerReorderEmbeds(); markDirty(); } }
+    try{ el.setPointerCapture(e.pointerId); }catch(_){}   /* erst danach: das Umhaengen loest den Griff sonst */
     let letzt=toWorld(e.clientX,e.clientY);
     if(role!=='move'){ const b=geomBounds(o);
       xform={o,role,C:{x:b.x+b.w/2,y:b.y+b.h/2},snap:JSON.parse(JSON.stringify(stripObj(o))),startAngle:0}; }
