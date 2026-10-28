@@ -2753,9 +2753,14 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     **Teilen-Knopf**. Beim Galgenmännchen bleibt die ganze zweite Leiste mit dem Spiel stehen,
     bei der Wortwolke bleibt **✎ Wörter** stehen – dort entsteht die Wolke ja im Unterricht.
   - **Bei den Mathe- und Physik-Werkzeugen** verschwinden die Knöpfe, die mit dem Inhalt nichts
-    zu tun haben: **Schrift A−/A+**, **🖼 Tafel** und **📋 Kopieren** (beim Diagramm
-    außerdem Neu, Speichern, Laden und die Lösch-Kreuze der Tabelle, beim Strahlensatz die
-    ganze Bauleiste). Alles Fachliche – Reiter, Schieber, Eingabefelder, Ansichten – bleibt
+    zu tun haben: **Schrift A−/A+**, **🖼 Bild → Tafel** und **📋 Kopieren**, dazu
+    **🖨 Drucken**, wo es das gibt (beim Diagramm außerdem Neu, Speichern, Laden und die
+    Lösch-Kreuze der Tabelle, beim Strahlensatz die ganze Bauleiste). Das gilt auch für
+    **Stromkreis**, **Optiklabor**, **Wellenwanne** und **Induktion**. Bei der **Atomphysik**
+    reicht der Umschalter bis in die beiden Karten hinein: **Periodensystem** und
+    **Nuklidkarte** stecken in eigenen Rahmen und bringen eigene Knöpfe mit – auch dort fallen
+    Schrift, Bild, Kopieren und Drucken weg, während Suche, Zoom, Nebengruppen und Zerfallsweg
+    bleiben. Alles Fachliche – Reiter, Schieber, Eingabefelder, Ansichten – bleibt
     stehen, ebenso der Teilen-Knopf. Diese Werkzeuge zeigen den Umschalter **nur in der Tafel**;
     allein geöffnet würde die schwebende Pille ihre eigenen Leisten verdecken.
   - **Fertige Seite zum Weitergeben:** **Speichern** bietet zwei Formate – die **Kartendatei (.json)**

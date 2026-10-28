@@ -315,7 +315,7 @@ function rahmen(t){ return t==='pse'?$('fPse'):t==='nuklid'?$('fNuk'):null; }
 function rahmenLaden(t){ const fr=rahmen(t); if(!fr||fr.dataset.auf) return; fr.dataset.auf='1';
   fr.src=(t==='pse')?'pse.html':'nuklid.html'; }
 function fuettern(t){ const fr=rahmen(t); if(!fr||!fr.contentWindow) return;
-  const d=Object.assign({},(t==='pse'?D.pse:D.nuklid)||{},{fontSize:D.fontSize,fontBold:D.fontBold,fontItalic:D.fontItalic});
+  const d=Object.assign({},(t==='pse'?D.pse:D.nuklid)||{},{fontSize:D.fontSize,fontBold:D.fontBold,fontItalic:D.fontItalic,edit:apModus});
   try{ fr.contentWindow.postMessage({type:'embed-data',data:d},'*'); }catch(e){} }
 function setTab(t,still){ D.tab=t;
   document.querySelectorAll('#tabs button[data-t]').forEach(b=>b.classList.toggle('on',b.dataset.t===t));
@@ -696,8 +696,10 @@ addEventListener('resize',resize);
 if(window.TafelShot) TafelShot.buttons($('shotBtns'),()=>{
   const v=document.querySelector('.view.on'); return TafelShot.rasterize(v,{exclude:'.bar',pad:6}); },'tafelEdit');
 /* Umschalter „Benutzen / Bearbeiten“ – beim Benutzen bleiben nur die Knöpfe zum Arbeiten */
-if(window.TafelModus) TafelModus.anTafel({ button:false,   /* der Umschalter sitzt in der Kopfleiste der Tafel */
-  after:()=>{ try{ dispatchEvent(new Event('resize')); }catch(e){} } });
+/* Der Modus gilt auch für Periodensystem und Nuklidkarte – die stecken in eigenen Rahmen
+   und bringen ihre Knöpfe selbst mit, darum wird er an sie weitergereicht. */
+let apModus=true;
+if(window.TafelModus) TafelModus.init({ button:false, get:()=>apModus, set:v=>{ apModus=!!v; } });
 /* Teilen: Der QR-Code gibt den ganzen Stand weiter – Reiter, Element, Elektronen,
    Protonen und Neutronen und auch die Einstellungen der beiden Karten. */
 if(window.TafelTeilen){
@@ -708,7 +710,8 @@ if(window.TafelTeilen){
 function sync(){ if(window.parent===window) return;
   try{ parent.postMessage({type:'embed-data',data:D},'*'); }catch(e){} }
 function uebernehmen(d){
-  D=Object.assign(D,d);
+  if('edit' in d){ apModus=d.edit!==false; if(window.TafelModus) TafelModus.refresh(); }
+  D=Object.assign(D,d); delete D.edit;          /* der Modus gehört der Tafel, nicht dem Stand */
   if(!(D.hz>=1)) D.hz=11; if(!(D.kz>=0)) D.kz=6; if(!(D.kn>=0)) D.kn=6;
   setTab(D.tab||'pse',true); setzeHuelle(); setzeTopf(); resize();
   if($('fPse').dataset.auf) fuettern('pse');
