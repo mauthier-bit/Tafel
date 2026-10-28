@@ -1623,6 +1623,10 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   „Aufnahme stoppen").
 - **Werkzeuggruppe „Diverses"** (Zeigewerkzeuge, Symbol: **Werkzeugkoffer**): darin liegen **Mindmap**, **Begriffsnetz**, **Galgenmännchen**, **Pinnwand**,
   **Kreuzworträtsel**, **Zeitleiste**, **Wortwolke** und **Buchstabengitter**.
+  - **Alle acht haben den Umschalter „Benutzen / Bearbeiten"** in der Kopfleiste ihres Fensters:
+    Beim Benutzen verschwinden die Knöpfe zum Vorbereiten (Schrift, Tafel, Kopieren, Neu,
+    Speichern, Laden, Drucken, Begriffe eingeben, Neu anordnen) und es bleibt nur, was man mit
+    der Klasse wirklich braucht – Einzelheiten weiter unten bei „Benutzen oder Bearbeiten".
   - **Kreuzworträtsel:** Über **„✎ Begriffe"** eine Liste eintragen – je Zeile `Begriff = Hinweis` (der Hinweis darf
     fehlen). Die Tafel legt daraus ein **verschränktes Kreuzworträtsel** (40 Versuche, das kompakteste gewinnt),
     nummeriert die Startfelder und schreibt die Hinweise als **Waagerecht/Senkrecht** darunter oder daneben
@@ -2718,7 +2722,9 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     auch **außerhalb der Tafel bauen, speichern und später in ein Tafel-Objekt laden**.
   - **Benutzen oder Bearbeiten:** Bedient werden Einbettungen wie gewohnt über **„Objekt bedienen"**.
     Bei Lernlandkarte, Tabelle, Lückentext, Zuordnen, Glossar, Baumdiagramm, Stromkreis,
-    Optiklabor, Wellenwanne, Diagramm, Bild beschriften und Interaktivem Video sitzt dann
+    Optiklabor, Wellenwanne, Diagramm, Bild beschriften, Interaktivem Video sowie bei allen
+    Werkzeugen der Gruppe **„Diverses"** (Mindmap, Begriffsnetz, Galgenmännchen, Pinnwand,
+    Kreuzworträtsel, Zeitleiste, Wortwolke, Buchstabengitter) sitzt dann
     **ganz links in der Kopfleiste des Fensters** ein **Umschalter**. Es genügt, dass
     **„Objekt bedienen" aktiv ist** – das Objekt muss dafür **nicht ausgewählt** sein, und bei
     mehreren offenen Werkzeugen tippt man ihn gleich am richtigen Fenster an. Er zeigt – wie der
@@ -2728,10 +2734,20 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     bedeutet, dass gerade nur benutzt wird. Ein Tipp schaltet jeweils um. Im Benutzen-Modus bleiben nur die Knöpfe zum Arbeiten stehen – beim Lückentext etwa *Prüfen*,
     *Lösung ▶*, *alle Lösungen* und *zurücksetzen*, beim Zuordnen *Prüfen*, *Lösung* und *Mischen*
     (die zweite Zeile verschwindet dort ganz), beim Glossar Suchfeld, Auf-/Zuklappen, Abschnitte,
-    Sortierung und *Abfragen*. Kreuzworträtsel und Buchstabengitter haben keinen Umschalter – dort
-    gehören alle Knöpfe zum Arbeiten. Der Zustand wird im Projekt gespeichert: Ein für die Klasse vorbereitetes Objekt
+    Sortierung und *Abfragen*. Der Zustand wird im Projekt gespeichert: Ein für die Klasse vorbereitetes Objekt
     bleibt also im Benutzen-Modus. (Ruft man ein Werkzeug **außerhalb der Tafel** auf, sitzt der
     Umschalter oben rechts im Werkzeug selbst.)
+  - **Was in der Gruppe „Diverses" verschwindet:** überall die Knöpfe zum Vorbereiten und
+    Weitergeben – **Schrift A−/A+**, **🖼 Tafel**, **📋 Kopieren**, **Neu**, **Speichern**,
+    **Laden**, **🖨 Drucken**, die Eingabe der Inhalte (**✎ Begriffe / Wörter / Einträge**,
+    **📚 Begriffe**) und **🎲 Neu anordnen / Neu mischen**. Bei Kreuzworträtsel, Zeitleiste,
+    Wortwolke und Buchstabengitter fällt zusätzlich die **ganze zweite Leiste** mit den
+    Darstellungs-Einstellungen weg. Stehen bleibt, was zum Arbeiten gehört: der Haken **Lösung**
+    (Kreuzworträtsel, Buchstabengitter), die Schritte **◀ ▶ alle** der Zeitleiste, bei der
+    Pinnwand die ganze Moderation (**+ Karte**, **Verdecken**, **⇅ 👍**, **🔀**, **▦**,
+    Hintergrund, Rückgängig), bei Mindmap und Begriffsnetz die Ansichtsknöpfe (**⟳ Ordnen**
+    bzw. **✨ Entwirren**, Größe = Verbindungen, Linien beschriften) – und immer der
+    **Teilen-Knopf**. Beim Galgenmännchen bleibt die ganze zweite Leiste mit dem Spiel stehen.
   - **Fertige Seite zum Weitergeben:** **Speichern** bietet zwei Formate – die **Kartendatei (.json)**
     zum Weiterarbeiten und eine **fertige Seite (.html)**, in der die Karte schon steckt. Diese Datei
     läuft **allein im Browser** (ohne Tafel, ohne Internet), zeigt nur die Karte mit den Aufgaben und

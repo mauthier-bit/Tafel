@@ -265,8 +265,8 @@
     <button type="button" id="bAdd" class="pri" title="Neue Karte anheften">+ Karte</button>
     <button type="button" id="bFree" title="Karten frei anordnen">✥ Frei</button>
     <button type="button" id="bCols" title="Karten in Spalten sortieren">▥ Spalten</button>
-    <button type="button" id="bImp" title="Begriffe aus einem Glossar oder dem Lehrplan als Karten anheften">📚 Begriffe</button>
-    <button type="button" id="bCol" title="Neue Spalte">+ Spalte</button>
+    <button type="button" id="bImp" class="tafelEdit" title="Begriffe aus einem Glossar oder dem Lehrplan als Karten anheften">📚 Begriffe</button>
+    <button type="button" id="bCol" class="tafelEdit" title="Neue Spalte">+ Spalte</button>
     <span class="sep"></span>
     <button type="button" id="bCover" title="Alle Karten verdecken – einzeln antippen zum Aufdecken">🙈 Verdecken</button>
     <button type="button" id="bSort" title="Nach Anzahl der 👍 sortieren">⇅ 👍</button>
@@ -274,7 +274,7 @@
     <button type="button" id="bTidy" title="Karten ordentlich im Raster anordnen">▦</button>
     <select id="bBg" title="Hintergrund"><option value="kork">Kork</option><option value="weiss">Hell</option><option value="tafel">Tafelgrün</option></select>
     <button type="button" id="bUndo" title="Rückgängig"><svg viewBox="0 0 24 24" class="uico"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg></button>
-    <span id="shotBtns"><button type="button" id="fsM" title="Schrift kleiner">A−</button><button type="button" id="fsP" title="Schrift größer">A+</button></span>
+    <span id="shotBtns"><button type="button" id="fsM" class="tafelEdit" title="Schrift kleiner">A−</button><button type="button" id="fsP" class="tafelEdit" title="Schrift größer">A+</button></span>
   </div>
   <div id="board" class="bg-kork"><div id="free"></div><div id="cols" hidden></div><div id="empty">„+ Karte“ antippen, um etwas anzuheften</div>
     <div id="dlg"><div id="dlgBox">
@@ -294,6 +294,7 @@
 <script src="shot.js"></script>
 <script src="vendor/qrcode.min.js"></script>
 <script src="teilen.js"></script>
+<script src="modus.js"></script>
 <script src="lehrplan-glossar.js"></script>
 <script src="lehrplan.js"></script>
 <script src="speech.js"></script>
@@ -475,12 +476,16 @@ btn('bTidy',()=>{ snap(); tidy(); render(); sync(); });
 $('bBg').onchange=()=>{ snap(); S.bg=$('bBg').value; render(); sync(); };
 btn('bUndo',()=>{ const s=undoStack.pop(); if(!s) return; S=JSON.parse(s); render(); sync(); });
 for(const [id,d] of [['fsM',-1],['fsP',1]]) btn(id,()=>{ S.fontSize=Math.max(10,Math.min(32,S.fontSize+d)); render(); sync(); });
-if(window.TafelShot) TafelShot.buttons($('shotBtns'),()=>TafelShot.rasterize(board,{exclude:'#dlg,#empty,.cf .ed'}));
+if(window.TafelShot) TafelShot.buttons($('shotBtns'),()=>TafelShot.rasterize(board,{exclude:'#dlg,#empty,.cf .ed'}),'tafelEdit');
 addEventListener('resize',()=>{ if(S.mode==='free') fitFree(); });
 addEventListener('keydown',e=>{ if(e.key==='Escape'&&edit) closeEditor(false); });
 addEventListener('message',e=>{ if(!(e.data&&e.data.type==='embed-data'&&e.data.data)) return; const d=e.data.data;
   if(Array.isArray(d.cards)){ S=Object.assign(S,d); if(!Array.isArray(S.cols)||!S.cols.length) S.cols=[{id:'k1',t:'Ideen'}]; }
-  if(d.fontSize) S.fontSize=d.fontSize; S.fontBold=!!d.fontBold; S.fontItalic=!!d.fontItalic; render(); });
+  if(d.fontSize) S.fontSize=d.fontSize; S.fontBold=!!d.fontBold; S.fontItalic=!!d.fontItalic;
+  if('edit' in d) S.edit=d.edit!==false;
+  render(); if(window.TafelModus) TafelModus.refresh(); });
+/* Umschalter „Benutzen / Bearbeiten“: beim Benutzen bleiben die Knoepfe zum Arbeiten stehen */
+if(window.TafelModus) TafelModus.init({ get:()=>S.edit!==false, set:v=>{ S.edit=v; sync(); }, after:()=>render() });
 window.addEventListener('load',()=>{ render(); try{ if(window.parent!==window) parent.postMessage({type:'embed-ready'},'*'); }catch(e){} });
 
 /* Begriffe aus Glossar/Lehrplan als Karten anheften */

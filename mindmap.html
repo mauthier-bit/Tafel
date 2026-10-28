@@ -217,24 +217,25 @@
 <body>
 <div id="app">
   <div id="bar">
-    <button type="button" id="bAdd" class="pri" title="Unterpunkt am ausgewählten Knoten anhängen">+ Unterpunkt</button>
-    <button type="button" id="bSib" title="Weiteren Punkt auf derselben Ebene anhängen">+ Nachbar</button>
-    <button type="button" id="bEdit" title="Text bearbeiten">✎</button>
-    <button type="button" id="bMic" title="Text diktieren">🎙</button>
-    <button type="button" id="bDel" title="Knoten mit allen Unterpunkten löschen">🗑</button>
-    <span class="sep"></span>
-    <button type="button" id="bCol" title="Farbe des Astes">🎨</button><span id="cols" hidden></span>
-    <span class="sep"></span>
-    <button type="button" id="bUndo" title="Rückgängig"><svg viewBox="0 0 24 24" class="uico"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg></button>
-    <button type="button" id="bImp" title="Begriffe aus einem Glossar oder dem Lehrplan als Unterpunkte anhängen">📚 Begriffe</button>
+    <button type="button" id="bAdd" class="tafelEdit" class="pri" title="Unterpunkt am ausgewählten Knoten anhängen">+ Unterpunkt</button>
+    <button type="button" id="bSib" class="tafelEdit" title="Weiteren Punkt auf derselben Ebene anhängen">+ Nachbar</button>
+    <button type="button" id="bEdit" class="tafelEdit" title="Text bearbeiten">✎</button>
+    <button type="button" id="bMic" class="tafelEdit" title="Text diktieren">🎙</button>
+    <button type="button" id="bDel" class="tafelEdit" title="Knoten mit allen Unterpunkten löschen">🗑</button>
+    <span class="sep tafelEdit"></span>
+    <button type="button" id="bCol" class="tafelEdit" title="Farbe des Astes">🎨</button><span id="cols" hidden></span>
+    <span class="sep tafelEdit"></span>
+    <button type="button" id="bUndo" class="tafelEdit" title="Rückgängig"><svg viewBox="0 0 24 24" class="uico"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg></button>
+    <button type="button" id="bImp" class="tafelEdit" title="Begriffe aus einem Glossar oder dem Lehrplan als Unterpunkte anhängen">📚 Begriffe</button>
     <button type="button" id="bLay" title="Alles kreisförmig um das Thema anordnen">⟳ Ordnen</button>
-    <span id="shotBtns"><button type="button" id="fsM" title="Schrift kleiner">A−</button><button type="button" id="fsP" title="Schrift größer">A+</button></span>
+    <span id="shotBtns"><button type="button" id="fsM" class="tafelEdit" title="Schrift kleiner">A−</button><button type="button" id="fsP" class="tafelEdit" title="Schrift größer">A+</button></span>
   </div>
-  <div id="area"><canvas id="cv"></canvas><div id="hint">Knoten antippen = auswählen · nochmal antippen = Text ändern · ziehen = verschieben</div></div>
+  <div id="area"><canvas id="cv"></canvas><div id="hint" class="tafelEdit">Knoten antippen = auswählen · nochmal antippen = Text ändern · ziehen = verschieben</div></div>
 </div>
 <script src="shot.js"></script>
 <script src="vendor/qrcode.min.js"></script>
 <script src="teilen.js"></script>
+<script src="modus.js"></script>
 <script src="lehrplan-glossar.js"></script>
 <script src="lehrplan.js"></script>
 <script src="speech.js"></script>
@@ -254,7 +255,8 @@ function colorOf(n){ if(!n) return PAL[0]; if(n.c) return n.c; if(!n.p) return '
   const par=byId(n.p); if(par&&!par.p){ const i=kids(par.id).indexOf(n); return PAL[i%PAL.length]; } return colorOf(par); }
 function subtree(id){ const out=[id]; for(let i=0;i<out.length;i++) kids(out[i]).forEach(k=>out.push(k.id)); return out; }
 function snap(){ undoStack.push(JSON.stringify(nodes)); if(undoStack.length>60) undoStack.shift(); }
-function sync(){ if(window.parent===window) return; try{ parent.postMessage({type:'embed-data',data:{v:1,nodes:nodes.map(({id,p,t,x,y,c})=>c?{id,p,t,x,y,c}:{id,p,t,x,y}),fontSize,fontBold,fontItalic}},'*'); }catch(e){} }
+let mmEdit=true;   /* Benutzen / Bearbeiten – wird mit der Tafel gespeichert */
+function sync(){ if(window.parent===window) return; try{ parent.postMessage({type:'embed-data',data:{v:1,nodes:nodes.map(({id,p,t,x,y,c})=>c?{id,p,t,x,y,c}:{id,p,t,x,y}),fontSize,fontBold,fontItalic,edit:mmEdit}},'*'); }catch(e){} }
 
 /* ---------- Zeichnen ---------- */
 const els=new Map();
@@ -391,7 +393,7 @@ btn('bUndo',()=>{ finishEdit(true); const s=undoStack.pop(); if(!s) return; node
 btn('bLay',()=>{ finishEdit(true); snap(); layout(); render(true); sync(); });
 for(const [id,d] of [['fsM',-1],['fsP',1]]) btn(id,()=>{ fontSize=Math.max(9,Math.min(40,fontSize+d)); render(true); sync(); });
 if(window.TafelShot) TafelShot.buttons($('shotBtns'),()=>{ const s=sel; sel=null; render(false); $('hint').style.display='none';
-  try{ return TafelShot.rasterize(area,{pad:4}); } finally{ sel=s; $('hint').style.display=''; render(false); } });
+  try{ return TafelShot.rasterize(area,{pad:4}); } finally{ sel=s; $('hint').style.display=''; render(false); }  },'tafelEdit');
 addEventListener('keydown',e=>{ if(editing) return;
   if(e.key==='Tab'){ e.preventDefault(); addNode(e.shiftKey?'sib':'child'); }
   else if(e.key==='Enter'&&sel){ e.preventDefault(); startEdit(sel,false); }
@@ -400,7 +402,12 @@ addEventListener('resize',()=>render(true));
 addEventListener('message',e=>{ if(!(e.data&&e.data.type==='embed-data'&&e.data.data)) return; const d=e.data.data;
   if(Array.isArray(d.nodes)&&d.nodes.length&&d.nodes.some(n=>!n.p)) nodes=d.nodes.map(n=>({id:String(n.id),p:n.p==null?null:String(n.p),t:String(n.t||''),x:+n.x||0,y:+n.y||0,...(n.c?{c:n.c}:{})}));
   if(d.fontSize) fontSize=d.fontSize; fontBold=!!d.fontBold; fontItalic=!!d.fontItalic;
-  if(!byId(sel)) sel=null; finishEdit(true); render(true); });
+  if('edit' in d) mmEdit=d.edit!==false;
+  if(!byId(sel)) sel=null; finishEdit(true); render(true);
+  if(window.TafelModus) TafelModus.refresh(); });
+/* Umschalter „Benutzen / Bearbeiten“: beim Benutzen bleibt nur die Karte stehen */
+if(window.TafelModus) TafelModus.init({ get:()=>mmEdit, set:v=>{ mmEdit=v; finishEdit(true); sel=null; render(true); sync(); },
+  after:()=>render(true) });
 window.addEventListener('load',()=>{ render(true); try{ if(window.parent!==window) parent.postMessage({type:'embed-ready'},'*'); }catch(e){} });
 
 /* Teilen: Der QR-Code gibt die ganze Mindmap weiter – wer ihn scannt, bekommt sie

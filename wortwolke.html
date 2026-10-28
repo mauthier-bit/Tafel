@@ -211,14 +211,14 @@
   <div id="bar">
     <div id="row1">
       <div id="scroll1">
-        <button type="button" id="bEdit">✎ Wörter</button>
-        <button type="button" id="bNew" title="Anordnung neu berechnen">🎲 Neu anordnen</button>
-        <button type="button" id="bPrint" title="Wolke drucken">🖨 Drucken</button>
+        <button type="button" id="bEdit" class="tafelEdit">✎ Wörter</button>
+        <button type="button" id="bNew" class="tafelEdit" title="Anordnung neu berechnen">🎲 Neu anordnen</button>
+        <button type="button" id="bPrint" class="tafelEdit" title="Wolke drucken">🖨 Drucken</button>
         <span id="msg"></span>
       </div>
-      <span id="shotBtns"><button type="button" id="fsM" title="Schrift kleiner">A−</button><button type="button" id="fsP" title="Schrift größer">A+</button></span>
+      <span id="shotBtns"><button type="button" id="fsM" class="tafelEdit" title="Schrift kleiner">A−</button><button type="button" id="fsP" class="tafelEdit" title="Schrift größer">A+</button></span>
     </div>
-    <div id="row2"><div id="scroll2">
+    <div id="row2" class="tafelEdit"><div id="scroll2">
       <select id="pal" title="Farben">
         <option value="bunt">🎨 bunt</option><option value="blau">🔵 blau</option>
         <option value="warm">🔥 warm</option><option value="grau">⚫️ grau</option>
@@ -239,6 +239,7 @@
 <script src="shot.js"></script>
 <script src="vendor/qrcode.min.js"></script>
 <script src="teilen.js"></script>
+<script src="modus.js"></script>
 <script>
 "use strict";
 const $=id=>document.getElementById(id), cv=$('cv'), ctx=cv.getContext('2d');
@@ -350,7 +351,7 @@ $('rot').onchange=()=>{ D.rot=$('rot').value; refresh(); };
 $('cCount').onchange=()=>{ D.count=$('cCount').checked; refresh(); };
 for(const [id,d] of [['fsM',-2],['fsP',2]]){ $(id).addEventListener('pointerdown',e=>e.preventDefault());
   $(id).onclick=()=>{ D.fontSize=Math.max(10,Math.min(60,(D.fontSize||18)+d)); refresh(); }; }
-if(window.TafelShot) TafelShot.buttons($('shotBtns'),()=>TafelShot.rasterize($('app'),{exclude:'#bar,#words',pad:6}));
+if(window.TafelShot) TafelShot.buttons($('shotBtns'),()=>TafelShot.rasterize($('app'),{exclude:'#bar,#words',pad:6}),'tafelEdit');
 /* ---------- Tafel-Anbindung ---------- */
 function sync(){ if(window.parent===window) return; /* allein geöffnet: nicht an sich selbst senden */
   try{ parent.postMessage({type:'embed-data',data:D},'*'); }catch(e){} }
@@ -358,7 +359,10 @@ addEventListener('message',e=>{ if(window.parent===window||e.source!==window.par
   if(!(e.data&&e.data.type==='embed-data'&&e.data.data)) return;
   D=Object.assign(D,e.data.data);
   $('wIn').value=D.words||''; $('pal').value=D.pal||'bunt'; $('rot').value=D.rot||'mix'; $('cCount').checked=!!D.count;
-  resize(); });
+  resize(); 
+  if(window.TafelModus) TafelModus.refresh(); });
+/* Umschalter „Benutzen / Bearbeiten“: beim Benutzen bleibt nur das Blatt stehen */
+if(window.TafelModus) TafelModus.init({ get:()=>D.edit!==false, set:v=>{ D.edit=v; sync(); }, after:()=>resize() });
 addEventListener('resize',resize);
 window.addEventListener('load',()=>{ resize();
   if(window.ResizeObserver) new ResizeObserver(resize).observe(cv);
