@@ -856,7 +856,11 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     der Website-Daten) wieder ein. Gleichnamige Aufgaben werden ersetzt und unbrauchbare Einträge
     übersprungen – dieselbe Datei zweimal einzulesen verdoppelt also nichts.
   - Dazu **A−/A+**, **🖨 Drucken** (Arbeitsblatt mit Ankreuzkästchen je Karte), **🖼 Tafel / 📋 Kopieren**
-    und der Umschalter **Benutzen/Bearbeiten**. Reihenfolge und Stand werden **mit dem Tafel-Projekt
+    und der Umschalter **Benutzen/Bearbeiten** – in der Tafel **ganz links in der Kopfleiste des
+    Fensters**, außerhalb der Tafel oben rechts im Werkzeug selbst. Beim Benutzen bleiben nur
+    **🔀 Mischen**, **✓ Prüfen**, **🕘 Lösung**, **⇧ Teilen** und die Anzeige der Schrittzahl stehen;
+    **📊 Aufgaben**, **✎ Schritte**, **Schrift A−/A+**, **🖨 Drucken**, **🖼 Tafel**, **📋 Kopieren**,
+    **📂 Eigene** und **Leeren** verschwinden. Reihenfolge und Stand werden **mit dem Tafel-Projekt
     gespeichert**.
 - **Lehrer-Stundenplan** (Diverses, `lehrerplan.html`): der **eigene** Wochenplan der Lehrkraft,
   unabhängig von der Klasse – Zeiten links, **Mo–Fr** (auf Wunsch **Mo–Sa**) als Spalten.
@@ -2732,7 +2736,7 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     Bei Lernlandkarte, Tabelle, Lückentext, Zuordnen, Glossar, Baumdiagramm, Stromkreis,
     Optiklabor, Wellenwanne, Diagramm, Bild beschriften, Interaktivem Video, bei allen
     Werkzeugen der Gruppe **„Diverses"** (Mindmap, Begriffsnetz, Galgenmännchen, Pinnwand,
-    Kreuzworträtsel, Zeitleiste, Wortwolke, Buchstabengitter) und bei den Mathe- und
+    Kreuzworträtsel, Zeitleiste, Wortwolke, Buchstabengitter, Reihenfolge) und bei den Mathe- und
     Physik-Werkzeugen **Stellenwerttafel, Bruch, Gleichungslöser, Funktionsplotter,
     Einheitskreis, Strahlensatz, Raum, Vierfeldertafel, Wahrscheinlichkeitsrechner,
     Atomphysik und Induktion** sitzt dann
