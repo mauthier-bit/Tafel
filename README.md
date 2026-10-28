@@ -2722,9 +2722,12 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     auch **außerhalb der Tafel bauen, speichern und später in ein Tafel-Objekt laden**.
   - **Benutzen oder Bearbeiten:** Bedient werden Einbettungen wie gewohnt über **„Objekt bedienen"**.
     Bei Lernlandkarte, Tabelle, Lückentext, Zuordnen, Glossar, Baumdiagramm, Stromkreis,
-    Optiklabor, Wellenwanne, Diagramm, Bild beschriften, Interaktivem Video sowie bei allen
+    Optiklabor, Wellenwanne, Diagramm, Bild beschriften, Interaktivem Video, bei allen
     Werkzeugen der Gruppe **„Diverses"** (Mindmap, Begriffsnetz, Galgenmännchen, Pinnwand,
-    Kreuzworträtsel, Zeitleiste, Wortwolke, Buchstabengitter) sitzt dann
+    Kreuzworträtsel, Zeitleiste, Wortwolke, Buchstabengitter) und bei den Mathe- und
+    Physik-Werkzeugen **Stellenwerttafel, Bruch, Gleichungslöser, Funktionsplotter,
+    Einheitskreis, Strahlensatz, Raum, Vierfeldertafel, Wahrscheinlichkeitsrechner,
+    Atomphysik und Induktion** sitzt dann
     **ganz links in der Kopfleiste des Fensters** ein **Umschalter**. Es genügt, dass
     **„Objekt bedienen" aktiv ist** – das Objekt muss dafür **nicht ausgewählt** sein, und bei
     mehreren offenen Werkzeugen tippt man ihn gleich am richtigen Fenster an. Er zeigt – wie der
@@ -2747,7 +2750,14 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     Pinnwand die ganze Moderation (**+ Karte**, **Verdecken**, **⇅ 👍**, **🔀**, **▦**,
     Hintergrund, Rückgängig), bei Mindmap und Begriffsnetz die Ansichtsknöpfe (**⟳ Ordnen**
     bzw. **✨ Entwirren**, Größe = Verbindungen, Linien beschriften) – und immer der
-    **Teilen-Knopf**. Beim Galgenmännchen bleibt die ganze zweite Leiste mit dem Spiel stehen.
+    **Teilen-Knopf**. Beim Galgenmännchen bleibt die ganze zweite Leiste mit dem Spiel stehen,
+    bei der Wortwolke bleibt **✎ Wörter** stehen – dort entsteht die Wolke ja im Unterricht.
+  - **Bei den Mathe- und Physik-Werkzeugen** verschwinden die Knöpfe, die mit dem Inhalt nichts
+    zu tun haben: **Schrift A−/A+**, **🖼 Tafel** und **📋 Kopieren** (beim Diagramm
+    außerdem Neu, Speichern, Laden und die Lösch-Kreuze der Tabelle, beim Strahlensatz die
+    ganze Bauleiste). Alles Fachliche – Reiter, Schieber, Eingabefelder, Ansichten – bleibt
+    stehen, ebenso der Teilen-Knopf. Diese Werkzeuge zeigen den Umschalter **nur in der Tafel**;
+    allein geöffnet würde die schwebende Pille ihre eigenen Leisten verdecken.
   - **Fertige Seite zum Weitergeben:** **Speichern** bietet zwei Formate – die **Kartendatei (.json)**
     zum Weiterarbeiten und eine **fertige Seite (.html)**, in der die Karte schon steckt. Diese Datei
     läuft **allein im Browser** (ohne Tafel, ohne Internet), zeigt nur die Karte mit den Aufgaben und

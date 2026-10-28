@@ -49,7 +49,23 @@ function init(opt){
   }
   paint();
 }
-window.TafelModus={ init, set:setMode, refresh:paint,
+/* Werkzeuge, die den Modus nicht selbst speichern: Die Tafel schickt ihn als „edit“
+   im embed-data mit und merkt ihn sich auch. Hier wird er nur entgegengenommen –
+   allein geöffnet hält ihn die Variable darunter. */
+function anTafel(opt){
+  opt=opt||{};
+  let an=true;
+  init(Object.assign({},opt,{ get:()=>an, set:v=>{ an=!!v; } }));
+  addEventListener('message',e=>{
+    const m=e.data;
+    if(!(m&&m.type==='embed-data'&&m.data&&typeof m.data==='object'&&'edit' in m.data)) return;
+    const neu=m.data.edit!==false;
+    if(neu===an) return;
+    an=neu; paint();
+    if(opt.after) try{ opt.after(); }catch(err){}
+  });
+}
+window.TafelModus={ init, anTafel, set:setMode, refresh:paint,
   verstecke(){ if(btn) btn.style.display='none'; },
   zeige(){ if(btn) btn.style.display=''; } };
 })();
