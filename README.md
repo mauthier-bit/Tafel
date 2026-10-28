@@ -2459,10 +2459,15 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   sich seinen Stand, auch über das Speichern des Projekts hinweg. Die vier Reiter sind als
   **Reiterleiste** gestaltet (der gewählte ist unterstrichen), nicht als Knopfreihe.
   - **Periodensystem** und **Nuklidkarte** sind unverändert die bisherigen Werkzeuge (siehe unten) –
-    sie laufen im Reiter mit allen Knöpfen weiter wie zuvor.
-  - Rechts in der Reiterleiste stehen **🖼 Tafel**, **📋 Kopieren** (für die beiden eigenen Reiter) und
-    **⇪ Teilen**: Der QR-Code gibt den **ganzen Stand** weiter – Reiter, Element, gesetzte Elektronen,
-    Protonen und Neutronen und auch die Einstellungen der beiden Karten.
+    sie laufen im Reiter weiter wie zuvor.
+  - **Eine Knopfgruppe für alle vier Reiter:** Rechts in der Reiterleiste stehen **A−/A+**,
+    **🖼 Tafel**, **📋 Kopieren**, bei den beiden Karten dazu **🖨 Drucken**, und ganz rechts
+    **⇪ Teilen**. Früher brachten Periodensystem und Nuklidkarte diese Knöpfe selbst mit, sodass sie
+    je nach Reiter woanders saßen; jetzt blenden die beiden Karten ihre eigenen aus, und die
+    Atomphysik gibt den Auftrag an die Karte weiter (das Bild einer Karte reicht sie an die Tafel
+    durch). **A−/A+** gilt für alle vier Reiter. Der **Teilen**-QR-Code gibt den **ganzen Stand**
+    weiter – Reiter, Element, gesetzte Elektronen, Protonen und Neutronen und auch die
+    Einstellungen der beiden Karten.
   - **Hülle: Schalen und Energien** zeigt links die **Energiestufen** (1s, 2s, 2p, 3s …) als Kästchen
     mit Elektronenpfeilen und rechts das **Schalenbild** (K, L, M … mit der Zahl der Elektronen) zum
     ausgewählten Element. Jede **Hauptschale hat ihre eigene Farbe** (K blau, L grün, M orange, N
@@ -2570,6 +2575,9 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   und Reiterzeile brauchen dadurch nur noch **je eine Zeile** – bei schmalem Objekt entfällt der
   Untertitel und der Schalter heißt kurz **„Experiment"**.
 - **Periodensystem** (im Reiter „Periodensystem" der Atomphysik): alle **118 Elemente** mit Symbol, Name, Ordnungszahl und Atommasse.
+  Seine eigenen Bedienelemente stehen in **einer einzigen Zeile** (Suchfeld, Nebengruppen, La/Ac,
+  Einfärbung, Atommasse, Name, ↺ Ansicht) – die Knöpfe für Schrift, Bild und Drucken sitzen in der
+  Atomphysik eine Zeile höher, allein geöffnet rechts in derselben Zeile.
   Ein Tipp auf ein Element öffnet eine **Infokarte** (Atommasse, Kategorie, Zustand bei 20 °C, Schmelz- und
   Siedepunkt, Dichte, Elektronenkonfiguration); das **Suchfeld** findet Symbol, Name oder Ordnungszahl.
   **„Nebengruppen"** klappt die Gruppen 3–12 weg (Kurzform mit den Hauptgruppen), **„La/Ac"** blendet die

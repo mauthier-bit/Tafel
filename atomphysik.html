@@ -316,11 +316,12 @@ function rahmenLaden(t){ const fr=rahmen(t); if(!fr||fr.dataset.auf) return; fr.
   fr.src=(t==='pse')?'pse.html':'nuklid.html'; }
 function fuettern(t){ const fr=rahmen(t); if(!fr||!fr.contentWindow) return;
   const d=Object.assign({},(t==='pse'?D.pse:D.nuklid)||{},{fontSize:D.fontSize,fontBold:D.fontBold,fontItalic:D.fontItalic,edit:apModus});
-  try{ fr.contentWindow.postMessage({type:'embed-data',data:d},'*'); }catch(e){} }
+  try{ fr.contentWindow.postMessage({type:'embed-data',data:d},'*');
+       fr.contentWindow.postMessage({type:'karte-knoepfe',an:false},'*'); }catch(e){} }   /* die Knoepfe stehen oben in der Atomphysik */
 function setTab(t,still){ D.tab=t;
   document.querySelectorAll('#tabs button[data-t]').forEach(b=>b.classList.toggle('on',b.dataset.t===t));
   document.querySelectorAll('.view').forEach(v=>v.classList.toggle('on',v.dataset.v===t));
-  $('shotBtns').hidden=(t==='pse'||t==='nuklid');     /* die beiden Karten bringen ihre eigenen Knöpfe mit */
+  if(druckBtn) druckBtn.style.display=(t==='pse'||t==='nuklid')?'':'none';   /* Drucken gibt es nur bei den Karten */
   if(t==='pse'||t==='nuklid') rahmenLaden(t); else resize();
   if(!still) sync(); }
 document.querySelectorAll('#tabs button[data-t]').forEach(b=>b.onclick=()=>setTab(b.dataset.t));
@@ -693,8 +694,29 @@ function resize(){ const dpr=window.devicePixelRatio||1;
     cv.getContext('2d').setTransform(dpr,0,0,dpr,0,0); fn(); }); }
 addEventListener('resize',resize);
 
-if(window.TafelShot) TafelShot.buttons($('shotBtns'),()=>{
-  const v=document.querySelector('.view.on'); return TafelShot.rasterize(v,{exclude:'.bar',pad:6}); },'tafelEdit');
+/* Eine Knopfgruppe für alle vier Reiter – bei den beiden Karten führt sie die Karte aus,
+   denn deren Inhalt steckt in einem eigenen Rahmen. */
+let druckBtn=null;
+function schrift(d){ D.fontSize=Math.max(9,Math.min(30,(D.fontSize||13)+d));
+  setzeHuelle(); setzeTopf(); resize(); sync();
+  if($('fPse').dataset.auf) fuettern('pse');
+  if($('fNuk').dataset.auf) fuettern('nuklid'); }
+(function(){ const host=$('shotBtns');
+  const mk=(txt,titel,fn)=>{ const b=document.createElement('button'); b.type='button'; b.className='tafelEdit';
+    b.textContent=txt; b.title=titel; b.addEventListener('pointerdown',e=>e.preventDefault());
+    b.onclick=fn; host.appendChild(b); return b; };
+  const karte=()=>D.tab==='pse'||D.tab==='nuklid';
+  const anKarte=was=>{ const fr=rahmen(D.tab); if(fr&&fr.contentWindow) try{ fr.contentWindow.postMessage({type:'karte-aktion',was},'*'); }catch(e){} };
+  const eigenes=()=>{ const v=document.querySelector('.view.on'); return TafelShot.rasterize(v,{exclude:'.bar',pad:6}); };
+  mk('A−','Schrift kleiner',()=>schrift(-1)); mk('A+','Schrift größer',()=>schrift(1));
+  const bT=mk('🖼 Tafel','Als Bild neben das Werkzeug auf die Tafel legen',
+    ()=>{ if(karte()) anKarte('board'); else TafelShot.toBoard(eigenes()); });
+  if(window.parent===window) bT.style.display='none';          /* allein geöffnet gibt es keine Tafel */
+  mk('📋 Kopieren','Als Bild in die Zwischenablage kopieren',
+    ()=>{ if(karte()) anKarte('copy'); else TafelShot.copy(eigenes()); });
+  druckBtn=mk('🖨 Drucken','Die Karte als Arbeitsblatt drucken',()=>anKarte('print'));
+  druckBtn.style.display='none';
+})();
 /* Umschalter „Benutzen / Bearbeiten“ – beim Benutzen bleiben nur die Knöpfe zum Arbeiten */
 /* Der Modus gilt auch für Periodensystem und Nuklidkarte – die stecken in eigenen Rahmen
    und bringen ihre Knöpfe selbst mit, darum wird er an sie weitergereicht. */
@@ -720,6 +742,9 @@ addEventListener('message',e=>{
   const m=e.data; if(!m||typeof m!=='object') return;
   const wPse=$('fPse').contentWindow, wNuk=$('fNuk').contentWindow;
   if(m.type==='embed-ready'){ if(e.source===wPse) fuettern('pse'); else if(e.source===wNuk) fuettern('nuklid'); return; }
+  if(m.type==='embed-image'&&(e.source===wPse||e.source===wNuk)){        /* Bild der Karte an die Tafel weiterreichen */
+    if(window.parent!==window) try{ parent.postMessage(m,'*'); }catch(err){}
+    return; }
   if(m.type!=='embed-data'||!m.data) return;
   if(e.source===wPse){ D.pse=m.data; sync(); return; }     /* Stand der Unterwerkzeuge merken */
   if(e.source===wNuk){ D.nuklid=m.data; sync(); return; }

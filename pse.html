@@ -212,13 +212,7 @@
         <input type="search" id="q" placeholder="🔍 Element…" autocomplete="off" autocorrect="off" spellcheck="false">
         <button type="button" id="bNeben" class="on" title="Nebengruppen (3–12) ein- und ausklappen">Nebengruppen</button>
         <button type="button" id="bLan" class="on" title="Lanthanoide und Actinoide ein- und ausklappen">La/Ac</button>
-        <button type="button" id="bPrint" class="tafelEdit" title="Periodensystem drucken">🖨 Drucken</button>
-        <span id="msg"></span>
-      </div>
-      <span id="shotBtns"><button type="button" id="fsM" class="tafelEdit" title="Schrift kleiner">A−</button><button type="button" id="fsP" class="tafelEdit" title="Schrift größer">A+</button></span>
-    </div>
-    <div id="row2"><div id="scroll2">
-      <select id="color" title="Einfärbung">
+        <select id="color" title="Einfärbung">
         <option value="cat">Kategorien</option>
         <option value="state">Zustand bei 20 °C</option>
         <option value="metal">Metall / Nichtmetall</option>
@@ -228,11 +222,14 @@
         <option value="boil">Siedepunkt</option>
         <option value="dens">Dichte</option>
         <option value="none">ohne Farbe</option>
-      </select>
-      <label><input type="checkbox" id="cMass" checked> Atommasse</label>
-      <label><input type="checkbox" id="cName" checked> Name</label>
-      <button type="button" id="bReset" title="Auswahl und Zoom zurücksetzen">↺ Ansicht</button>
-    </div></div>
+        </select>
+        <label><input type="checkbox" id="cMass" checked> Atommasse</label>
+        <label><input type="checkbox" id="cName" checked> Name</label>
+        <button type="button" id="bReset" title="Auswahl und Zoom zurücksetzen">↺ Ansicht</button>
+        <span id="msg"></span>
+      </div>
+      <span id="shotBtns"><button type="button" id="fsM" class="tafelEdit" title="Schrift kleiner">A−</button><button type="button" id="fsP" class="tafelEdit" title="Schrift größer">A+</button><button type="button" id="bPrint" class="tafelEdit" title="Periodensystem drucken">🖨 Drucken</button></span>
+    </div>
   </div>
   <div id="area"><canvas id="cv"></canvas></div>
 </div>
@@ -424,10 +421,20 @@ function printSheet(){
   win.document.close(); win.focus(); setTimeout(()=>{ try{ win.print(); }catch(e){} },350);
 }
 $('bPrint').onclick=printSheet;
-if(window.TafelShot) TafelShot.buttons($('shotBtns'),()=>TafelShot.rasterize($('app'),{exclude:'#bar',pad:6}),'tafelEdit');
+if(window.TafelShot) TafelShot.buttons($('shotBtns'),kartenBild,'tafelEdit');
 /* Umschalter „Benutzen / Bearbeiten“ – kommt von der Atomphysik bzw. der Tafel */
-if(window.TafelModus) TafelModus.anTafel({ button:false,
+if(window.TafelModus&&TafelModus.anTafel) TafelModus.anTafel({ button:false,
   after:()=>{ try{ dispatchEvent(new Event('resize')); }catch(e){} } });
+/* In der Atomphysik steht die Knopfgruppe oben in deren eigener Leiste: Die Karte blendet
+   ihre eigenen Knöpfe aus und führt die Aktionen auf Zuruf aus. */
+function kartenBild(){ return TafelShot.rasterize($('app'),{exclude:'#bar',pad:6}); }
+addEventListener('message',e=>{ const m=e.data; if(!m||typeof m!=='object') return;
+  if(m.type==='karte-knoepfe'){ const g=$('shotBtns'), p=$('bPrint');
+    if(g) g.style.display=m.an?'':'none'; if(p) p.style.display=m.an?'':'none'; return; }
+  if(m.type!=='karte-aktion') return;
+  if(m.was==='board') TafelShot.toBoard(kartenBild());
+  else if(m.was==='copy') TafelShot.copy(kartenBild());
+  else if(m.was==='print') printSheet(); });
 /* ---------- Tafel-Anbindung ---------- */
 function sync(){ if(window.parent===window) return; /* allein geöffnet: nicht an sich selbst senden */
   try{ parent.postMessage({type:'embed-data',data:D},'*'); }catch(e){} }
