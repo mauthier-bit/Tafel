@@ -2131,6 +2131,15 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   (=, ≤, <, ≥, >, zwischen) mit Histogramm bzw. Glockenkurve und markiertem Bereich; bei Binomial
   zusätzlich eine **scrollbare Wertetabelle** (k, P(X=k), P(X≤k)). Rechts neben dem Ergebnis: **A−/A+** für die Schriftgröße (auch im Kontextmenü), **📊 Daten** sowie **🖼 Tafel / 📋 Kopieren** und **Teilen** –
   Eingaben, Ergebnis, Diagramm und sichtbarer Teil der Tabelle als Bild.
+  - **Grenzen am Diagramm ziehen:** Jede Grenze sitzt zugleich als **blauer Punkt auf der x-Achse**,
+    mit einer gestrichelten Linie nach oben – bei „zwischen" sind es zwei. Mit Finger oder Stift
+    verschoben, wandert die Grenze mit: Beim **Binomial** rastet sie auf **ganze k** ein, bei
+    **Normal** auf eine runde Schrittweite (rund 120 Stufen über die Breite). Eingabefeld,
+    markierter Bereich, Wahrscheinlichkeit und die Hervorhebung in der Wertetabelle ziehen
+    **sofort** nach, und während des Ziehens steht der Wert oben über dem Punkt. Die beiden
+    Grenzen von „zwischen" **überholen sich nicht**, und am Rand der Achse ist Schluss
+    (Binomial: 0 bis n). Angefasst wird ungefähr – wer im Umkreis von drei Millimetern neben
+    einem Punkt aufsetzt, hat ihn; ein Tipp weiter weg verändert nichts.
   - **📊 Daten – eigener Datensatz mit Anpassung:** Im Fenster lassen sich **Messwerte eingeben oder
     einfügen** (getrennt durch Leerzeichen, Komma, Semikolon oder Zeilenumbruch, Dezimalkomma erlaubt;
     je Zeile geht auch `Wert = Anzahl` für eine Häufigkeitstabelle) oder als **Textdatei einlesen**
