@@ -2272,6 +2272,9 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     bzw. verkleinert **alles**: die Beschriftung der Figur **und** rechts die Überschriften,
     Streckennamen, Eingabefelder, berechneten Werte und die Verhältnisgleichung – die rechte Spalte
     wird dabei etwas breiter, damit die Felder nicht gequetscht werden.
+  - **Beim Benutzen** bleibt die **ganze Bedienzeile** stehen (gleiche Seite, 3. Strahl,
+    3. Parallele, V F X Z, Berechnen, Leeren) – nur **A−/A+**, **🖼 Tafel** und **📋 Kopieren**
+    verschwinden. Der **Teilen-Knopf** bleibt ebenfalls.
 - **Zufall** (Mathe & Physik, Würfel-Symbol mit fünf Augen): ein Werkzeug mit **fünf Reitern**.
   Die früheren Einzelwerkzeuge „Würfel" und „Glücksrad" stecken darin; **alte Tafelseiten werden beim
   Laden automatisch umgestellt** und öffnen gleich im passenden Reiter.
@@ -2767,7 +2770,10 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   - **Bei den Mathe- und Physik-Werkzeugen** verschwinden die Knöpfe, die mit dem Inhalt nichts
     zu tun haben: **Schrift A−/A+**, **🖼 Bild → Tafel** und **📋 Kopieren**, dazu
     **🖨 Drucken**, wo es das gibt (beim Diagramm außerdem Neu, Speichern, Laden und die
-    Lösch-Kreuze der Tabelle, beim Strahlensatz die ganze Bauleiste). Das gilt auch für
+    Lösch-Kreuze der Tabelle). Beim **Strahlensatz** bleibt die ganze Bedienzeile stehen –
+    **gleiche Seite / verschiedene Seiten**, **3. Strahl**, **3. Parallele**, **V F X Z**,
+    **Berechnen** und **Leeren** sind das, womit man im Unterricht arbeitet; weg fallen nur
+    **A−/A+**, **🖼 Tafel** und **📋 Kopieren**. Das gilt auch für
     **Stromkreis**, **Optiklabor**, **Wellenwanne** und **Induktion**. Bei der **Atomphysik**
     reicht der Umschalter bis in die beiden Karten hinein: **Periodensystem** und
     **Nuklidkarte** stecken in eigenen Rahmen und bringen eigene Knöpfe mit – auch dort fallen
