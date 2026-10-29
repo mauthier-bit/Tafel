@@ -347,14 +347,16 @@
     <input type="text" id="titel" placeholder="Name (erscheint über dem Plan)">
     </div><div id="barR"><span class="sep"></span>
     <button class="tb" id="bRaum" title="Räume ein- oder ausblenden"><svg viewBox="0 0 32 20"><path d="M8 17V4h11v13"/><path d="M6 17h15"/><circle cx="16" cy="11" r="1.1" fill="currentColor" stroke="none"/></svg><span>Räume</span></button>
-    <button class="tb tafelEdit" id="bPrint" title="Stundenplan drucken"><svg viewBox="0 0 32 20"><path d="M10 7V2h12v5 M10 15H7V7h18v8h-3 M10 12h12v6H10Z"/></svg><span>Drucken</span></button>
-    <span id="shotBtns" style="display:inline-flex;gap:4px"></span>
+    <span class="lbl">Schrift</span>
+    <button class="btn" id="fsM" title="Schrift kleiner">A−</button><span id="fsV" style="min-width:26px;text-align:center;font-weight:700">15</span><button class="btn" id="fsP" title="Schrift größer">A+</button>
+    <span class="sep tafelEdit"></span>
+    <button class="tb tafelEdit" id="bImport" title="Stundenplan einlesen – aus einem WebUntis-PDF oder aus einem gespeicherten Plan"><svg viewBox="0 0 32 20"><path d="M16 2v9M12.5 7.5 16 11l3.5-3.5"/><path d="M8 13v5h16v-5"/></svg><span>Import</span></button>
+    <button class="tb tafelEdit" id="bSave" title="Plan als Datei sichern"><svg viewBox="0 0 32 20"><path d="M10 2h10l3 3v13H10Z M13 2v5h7V2 M13 18v-6h7v6"/></svg><span>Speichern</span></button>
+    <input type="file" id="fFile" accept=".json,.pdf,application/json,application/pdf" hidden>
   </div></div>
   <div id="bar2" class="tafelEdit">
     <span class="lbl">Tage</span>
     <select id="tage" title="Wochentage im Plan"><option value="5">Mo–Fr</option><option value="6">Mo–Sa</option></select>
-    <span class="lbl">Schrift</span>
-    <button class="btn" id="fsM" title="kleiner">A−</button><span id="fsV" style="min-width:26px;text-align:center;font-weight:700">15</span><button class="btn" id="fsP" title="größer">A+</button>
     <span class="grow"></span>
     <button class="btn red" id="bClear" title="Alle Einträge löschen – die Zeiten bleiben">Einträge leeren</button>
   </div>
@@ -573,40 +575,132 @@ $('titel').oninput=()=>{ D.titel=$('titel').value; sync(); };
 for(const [el,dd] of [['fsM',-1],['fsP',1]]) $(el).onclick=()=>{
   D.fontSize=Math.max(10,Math.min(30,(D.fontSize||15)+dd)); sync(); render(); };
 
-/* ---------- Drucken ---------- */
-$('bPrint').onclick=()=>{
-  const esc=t=>String(t).replace(/[&<>"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));
-  const n=Math.max(5,Math.min(6,+D.tage||5));
-  let h='<h1>Stundenplan'+(D.titel?(' – '+esc(D.titel)):'')+'</h1>';
-  h+='<table><thead><tr><th>Zeit</th>'+Array.from({length:n},(_,d)=>'<th>'+KURZ[d]+'</th>').join('')+'</tr></thead><tbody>';
-  D.slots.forEach(s=>{
-    const z='<b>'+esc(s.n)+'</b><br><small>'+hhmm(s.a)+'–'+hhmm(s.b)+'</small>';
-    if(s.p){ let leer=true; for(let d=0;d<n;d++) if(hol(s,d,'a')||hol(s,d,'o')) leer=false;
-      if(leer){ h+='<tr><td class="z">'+z+'</td><td colspan="'+n+'" class="pause">'+esc(s.n)+'</td></tr>'; return; }
-      h+='<tr><td class="z">'+z+'</td>';
-      for(let d=0;d<n;d++){ const w=esc(hol(s,d,'a')), o=esc(hol(s,d,'o'));
-        h+='<td class="pause">'+(w?('<b>'+w+'</b>'):'')+(D.raum&&o?('<br><small>'+o+'</small>'):'')+'</td>'; }
-      h+='</tr>'; return; }
-    h+='<tr><td class="z">'+z+'</td>';
-    for(let d=0;d<n;d++){ const k=esc(hol(s,d,'k')), f=esc(hol(s,d,'f')), r=esc(hol(s,d,'r'));
-      h+='<td>'+(k?('<b>'+k+'</b>'):'')+(f?('<br>'+f):'')+(D.raum&&r?('<br><small>'+r+'</small>'):'')+'</td>'; }
-    h+='</tr>';
-  });
-  h+='</tbody></table><div class="meta">Stand: '+new Date().toLocaleDateString('de-DE')+'</div>';
-  const win=window.open('','_blank');
-  if(!win){ toast('Bitte Pop-ups erlauben – dann klappt das Drucken'); return; }
-  win.document.write('<!DOCTYPE html><meta charset="utf-8"><title>Stundenplan</title><style>'+
-    '@page{size:landscape;margin:12mm}body{font:13px -apple-system,Arial,sans-serif;color:#111;margin:0}'+
-    'h1{font-size:19px;margin:0 0 6px}table{border-collapse:collapse;width:100%}'+
-    'th,td{border:1px solid #999;padding:5px 6px;text-align:center;vertical-align:middle}'+
-    'th{background:#eef1f6;font-size:12px}td.z{text-align:left;width:22mm;background:#fafbfd}'+
-    'td.pause{background:#f2f4f8;color:#666;font-size:11px}small{color:#555}'+
-    '.meta{margin-top:5mm;font-size:11px;color:#666}</style>'+h);
-  win.document.close(); win.focus();
-  setTimeout(()=>{ try{ win.print(); }catch(e){} },350);
-};
+/* ---------- Speichern ---------- */
+$('bSave').onclick=()=>{
+  const vor=(D.titel||'').trim().replace(/\s+/g,'-');
+  const name=(prompt('Dateiname:','stundenplan'+(vor?'-'+vor:''))||'').trim(); if(!name) return;
+  const fn=name.replace(/[\\/:*?"<>|]+/g,'_').replace(/\.json$/i,'')+'.json';
+  const blob=new Blob([JSON.stringify({app:'tafel-lehrerplan',v:1,d:D})],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=fn; document.body.appendChild(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },2000); toast('Gespeichert: '+fn); };
 
-if(window.TafelShot) TafelShot.buttons($('shotBtns'),()=>TafelShot.rasterize($('wrap'),{exclude:'#bar,#bar2,#hinweis',pad:8}));
+/* ---------- Import: gespeicherter Plan (.json) oder Wochenplan aus WebUntis (.pdf) ---------- */
+$('bImport').onclick=()=>{ $('fFile').value=''; $('fFile').click(); };
+$('fFile').onchange=()=>{ const f=$('fFile').files[0]; if(!f) return;
+  if(/\.pdf$/i.test(f.name)||f.type==='application/pdf') ausPDF(f); else ausJSON(f); };
+
+function ausJSON(f){ const rd=new FileReader();
+  rd.onload=()=>{ let o=null; try{ o=JSON.parse(rd.result); }catch(e){}
+    const n=o&&(o.d||o);
+    if(!n||!Array.isArray(n.slots)||!n.slots.length){ toast('Das ist keine gespeicherte Stundenplan-Datei'); return; }
+    if(Object.keys(D.z||{}).length && !confirm('Der Plan wird durch \u201e'+f.name+'\u201c ersetzt. Fortfahren?')) return;
+    D=Object.assign(D,n); render(); sync(); toast('Geladen: '+f.name); };
+  rd.readAsText(f); }
+
+/* pdf.js wird erst beim ersten Import geholt \u2013 sonst l\u00e4dt die Seite 300 kB mit, die fast nie gebraucht werden */
+let pdfLib=null;
+function pdfBereit(){ if(window.pdfjsLib) return Promise.resolve();
+  if(!pdfLib) pdfLib=new Promise((ok,schief)=>{ const sc=document.createElement('script'); sc.src='vendor/pdf.min.js';
+    sc.onload=()=>{ try{ pdfjsLib.GlobalWorkerOptions.workerSrc='vendor/pdf.worker.min.js'; }catch(e){} ok(); };
+    sc.onerror=()=>{ pdfLib=null; schief(new Error('vendor/pdf.min.js fehlt')); };
+    document.head.appendChild(sc); });
+  return pdfLib; }
+
+async function ausPDF(f){
+  toast('PDF wird gelesen \u2026');
+  let plan=null;
+  try{ await pdfBereit(); plan=await pdfLesen(f); }
+  catch(err){ toast('PDF: '+((err&&err.message)||'nicht lesbar')); return; }
+  const n=Object.keys(plan.z).length;
+  if(!n){ toast('In dieser PDF war kein Wochenplan zu finden'); return; }
+  if(!confirm('Gelesen: '+plan.slots.filter(x=>!x.p).length+' Stunden und '+n+' Eintr\u00e4ge.\n\nDer bisherige Plan wird dadurch ersetzt.')) return;
+  D.slots=plan.slots; D.z=plan.z; D.tage=plan.tage;
+  if(!((D.titel||'').trim()) && plan.titel) D.titel=plan.titel;
+  render(); sync(); toast(n+' Eintr\u00e4ge \u00fcbernommen'); }
+
+/* Senkrechte Farbstreifen im gezeichneten Blatt suchen: Jede Karte im WebUntis-Plan hat links
+   einen farbigen Balken. Seine H\u00f6he sagt, \u00fcber wie viele Zeilen die Karte reicht \u2013 nur so ist
+   eine Doppelstunde von zwei einzelnen zu unterscheiden. Text ist grau, Linien sind hellgrau,
+   beide fallen durch den Farbtest heraus. */
+function streifen(cv){
+  const W=cv.width, H=cv.height, d=cv.getContext('2d').getImageData(0,0,W,H).data;
+  const bunt=i=>{ const r=d[i],g=d[i+1],b=d[i+2], mx=Math.max(r,g,b), mn=Math.min(r,g,b);
+    return mx-mn>45 && mx>70; };
+  const minH=Math.max(6,Math.round(H*0.008)), maxB=Math.max(4,Math.round(W*0.02));
+  const bs=[];
+  for(let x=0;x<W;x++){ let y0=-1;
+    for(let y=0;y<=H;y++){ const an=(y<H)&&bunt((y*W+x)*4);
+      if(an){ if(y0<0) y0=y; continue; }
+      if(y0<0) continue;
+      const y1=y-1;
+      if(y1-y0>=minH){
+        const v=bs.find(o=>x<=o.x1+1 && Math.abs(o.y0-y0)<=2 && Math.abs(o.y1-y1)<=2);
+        if(v){ v.x1=Math.max(v.x1,x); v.n++; } else bs.push({x,x1:x,y0,y1,n:1}); }
+      y0=-1; } }
+  return bs.filter(o=>o.n>=2 && o.x1-o.x<=maxB); }
+
+/* Wochenplan aus einer WebUntis-PDF lesen: Spalten = Wochentage, Zeitmarken am linken Rand,
+   Karten = farbiger Balken + Text (Klasse, Fach, Raum; in Pausen Aufsicht und Ort). */
+async function pdfLesen(f){
+  const S=2;
+  const pdf=await pdfjsLib.getDocument({data:await f.arrayBuffer()}).promise;
+  const pg=await pdf.getPage(1), vp=pg.getViewport({scale:S});
+  const T=[];                                           /* aller Text mit Bildkoordinaten (y z\u00e4hlt nach unten) */
+  for(const it of (await pg.getTextContent()).items){ const t=(it.str||'').replace(/\s+/g,' ').trim(); if(!t) continue;
+    const m=pdfjsLib.Util.transform(vp.transform,it.transform); T.push({t,x:m[4],y:m[5]}); }
+  const tagRe=/^(Mo|Di|Mi|Do|Fr|Sa)\b/, zeitRe=/^(\d{1,2}):(\d{2})$/;
+  let kopf=T.filter(o=>tagRe.test(o.t));
+  if(kopf.length<2) throw new Error('keine Wochentage gefunden');
+  const ky=Math.min.apply(null,kopf.map(o=>o.y));
+  kopf=kopf.filter(o=>o.y<ky+6).sort((a,b)=>a.x-b.x);
+  const tag=o=>KURZ.indexOf(o.t.slice(0,2));
+  const tage=Math.max(5,Math.min(6,tag(kopf[kopf.length-1])+1));
+  const breite=kopf.length>1?(kopf[1].x-kopf[0].x):(vp.width/6);
+  const grenze=[]; for(let i=1;i<kopf.length;i++) grenze.push((kopf[i-1].x+kopf[i].x)/2);
+  const spalte=x=>{ let i=0; while(i<grenze.length&&x>=grenze[i]) i++; return tag(kopf[i]); };
+  /* Zeiten am linken Rand: je Zeile eine Anfangs- und eine Endzeit, von oben nach unten */
+  const mi=t=>{ const m=zeitRe.exec(t); return (+m[1])*60+(+m[2]); };
+  const marken=T.filter(o=>zeitRe.test(o.t)&&o.x<kopf[0].x).sort((a,b)=>a.y-b.y);
+  if(marken.length<4||marken.length%2) throw new Error('die Zeiten am Rand passen nicht');
+  const slots=[]; let nr=0;
+  const anlegen=(n,a,b,p,oben,unten)=>{ const s={id:id6(),n,a,b,p:p?1:0,oben,unten}; slots.push(s); return s; };
+  for(let i=0;i<marken.length;i+=2){ const a=mi(marken[i].t), b=mi(marken[i+1].t);
+    if(b<=a) throw new Error('die Zeiten am Rand passen nicht');
+    anlegen((++nr)+'. Stunde',a,b,0,marken[i].y,marken[i+1].y);
+    if(i+2<marken.length){ const na=mi(marken[i+2].t);
+      if(na-b>=5) anlegen('Pause',b,na,1,marken[i+1].y,marken[i+2].y); } }
+  let vorStd=null;                                        /* Aufsicht vor der ersten Stunde */
+  const vor=()=>{ if(!vorStd){ const e=slots[0];
+      vorStd={id:id6(),n:'Vor dem Unterricht',a:Math.max(0,e.a-15),b:e.a,p:1,oben:e.oben-(e.unten-e.oben),unten:e.oben};
+      slots.unshift(vorStd); } return vorStd; };
+  /* Karten: farbiger Balken + der Text daneben */
+  const cv=document.createElement('canvas'); cv.width=Math.ceil(vp.width); cv.height=Math.ceil(vp.height);
+  await pg.render({canvasContext:cv.getContext('2d'),viewport:vp,background:'#ffffff'}).promise;
+  const z={}, weg=new Set();
+  const verteilen=(zeilen,n)=> zeilen.length<=n ? zeilen : zeilen.slice(0,n-1).concat(zeilen.slice(n-1).join(' '));
+  const eintragen=(s,d,zeilen)=>{ if(d<0||d>=tage) return; const feld=s.p?['a','o']:['k','f','r'];
+    const o=z[s.id+'|'+d]||(z[s.id+'|'+d]={});
+    verteilen(zeilen,feld.length).forEach((v,i)=>{ if(v&&!o[feld[i]]) o[feld[i]]=v; }); };
+  for(const b of streifen(cv)){
+    const dr=T.filter(o=>!weg.has(o)&&o.x>=b.x-4&&o.x<b.x+breite*0.95&&o.y>b.y0-4&&o.y<b.y1+6)
+               .sort((p,q)=>(p.y-q.y)||(p.x-q.x));
+    if(!dr.length) continue;
+    const zeilen=[]; let yv=null;
+    for(const o of dr){ weg.add(o);
+      if(yv!==null && o.y-yv<4) zeilen[zeilen.length-1]+=' '+o.t; else zeilen.push(o.t); yv=o.y; }
+    const d=spalte(b.x);
+    const treffer=slots.filter(s=>Math.min(b.y1,s.unten)-Math.max(b.y0,s.oben) > 0.5*(s.unten-s.oben));
+    if(treffer.length) treffer.forEach(s=>eintragen(s,d,zeilen));
+    else if(b.y1<slots[0].unten) eintragen(vor(),d,zeilen); }
+  /* Text ohne Karte (z. B. ein eingetragener Termin) nach Spalte und Zeile einsortieren */
+  for(const o of T){ if(weg.has(o)||zeitRe.test(o.t)||o.y<kopf[0].y+8||o.x<kopf[0].x-breite*0.45) continue;
+    const s=slots.find(x=>o.y>=x.oben-2&&o.y<=x.unten+6); if(s) eintragen(s,spalte(o.x),[o.t]); }
+  const leer=s=>{ for(let d=0;d<6;d++) if(z[s.id+'|'+d]) return false; return true; };
+  while(slots.length&&leer(slots[slots.length-1])) slots.pop();          /* leere Zeilen am Ende weglassen */
+  slots.forEach(s=>{ delete s.oben; delete s.unten; });
+  const titel=T.filter(o=>o.y<kopf[0].y-6&&o.x<vp.width/2).sort((a,b)=>a.x-b.x).map(o=>o.t).join(' ');
+  const mT=/(?:Lehrkraft|Lehrer(?:in)?|Klasse)\s*:\s*(.+?)\s*$/.exec(titel);
+  return {slots, z, tage, titel:mT?mT[1]:''}; }
 
 /* ---------- Reiter: Stundenplan und Vertretungsplan ---------- */
 let vEingebettet=false;                 /* die Seite wird nur auf ausdrücklichen Wunsch im Rahmen geladen */

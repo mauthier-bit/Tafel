@@ -869,8 +869,7 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   unabhängig von der Klasse – Zeiten links, **Mo–Fr** (auf Wunsch **Mo–Sa**) als Spalten.
   Er ist **kein Tafelobjekt, sondern ein eigenes Fenster**: Der Knopf öffnet ihn, das × schließt ihn,
   und alles Eingetragene bleibt erhalten – der Plan gehört zur Lehrkraft, nicht zu einer Seite oder
-  Klasse, und wird **geräteweit gespeichert** (also in jedem Projekt derselbe). **🖼 Tafel** legt ihn
-  trotzdem jederzeit als Bild auf die aktuelle Seite.
+  Klasse, und wird **geräteweit gespeichert** (also in jedem Projekt derselbe).
   - **Rote Linie für die aktuelle Uhrzeit:** wie beim Klassen-Stundenplan – eine dünne rote Linie quer
     durch den Plan, anteilig innerhalb der laufenden Einheit, alle 30 Sekunden nachgeführt.
   - **Zweiter Reiter „🔁 Vertretungsplan":** Dort steht eine Karte mit der hinterlegten Adresse
@@ -924,10 +923,23 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     **＋ Pause** (15 min), **×** löscht, **Standard** setzt 8:00–13:00 zurück (Einträge bleiben).
     Wird eine **Endzeit** geändert, rücken die folgenden Einheiten mit; die Zeilen ordnen sich
     **nach der Anfangszeit**, eine früh gelegte Aufsicht rutscht also nach oben.
-  - Oben steht ein Feld für den **Namen**, der über dem Plan und im Ausdruck erscheint. **🚪 Räume**
-    blendet Räume und Aufsichtsorte aus, **A−/A+** ändert die Schriftgröße, **🖨 Drucken** gibt den
-    Plan quer aus, **🖼 Tafel / 📋 Kopieren** legt ihn als Bild auf die Tafel. Der **heutige Tag** ist
+  - Oben steht ein Feld für den **Namen**, der über dem Plan erscheint. **🚪 Räume** blendet Räume
+    und Aufsichtsorte aus, **A−/A+** ändert die Schriftgröße; beide stehen in der **ersten Leiste**
+    und bleiben auch im **Benutzen-Modus** stehen. Der **heutige Tag** ist
     hervorgehoben, die **laufende Stunde** liegt auf gelbem Grund (aktualisiert sich jede Minute).
+  - **💾 Speichern:** legt den ganzen Plan – Zeiten, Einträge und Name – als **`.json`-Datei** ab.
+    Das ist die Sicherung und zugleich der Weg auf ein zweites Gerät.
+  - **📥 Import:** liest eine solche Datei wieder ein – **und versteht außerdem den Wochenplan
+    aus WebUntis als PDF** (in WebUntis beim eigenen Stundenplan auf **Drucken/PDF** und die Datei
+    sichern). Daraus entstehen die **Zeilen samt Zeiten** (Stunden und die Pausen dazwischen, leere
+    Zeilen am Ende werden weggelassen) und je Tag die **Einträge**: **Klasse, Fach und Raum**, in
+    einer Pause oder vor dem Unterricht **Aufsicht und Ort**. Eine **Doppelstunde** wird als solche
+    erkannt und steht in **beiden** Zeilen – dafür sucht der Import den farbigen Balken, den jede
+    Karte in WebUntis links trägt. Steht im Kopf der PDF eine **Lehrkraft**, wird ihr Kürzel als
+    Name übernommen, falls noch keiner eingetragen ist. Vorher fragt eine Rückfrage mit der Anzahl
+    der gefundenen Stunden und Einträge, denn der **bisherige Plan wird ersetzt**. Was von Hand
+    **in die PDF hineingeschrieben** wurde (Notizen, Kommentare), gehört nicht zum Plan und wird
+    nicht gelesen.
   - Der Plan wird **geräteweit gespeichert** (unabhängig vom Projekt) und steht beim nächsten Öffnen
     des Fensters wieder genauso da.
 - **Galgenmännchen** (Diverses): Ratespiel für Fachbegriffe. Im **Bearbeiten-Modus** trägt die
