@@ -1405,8 +1405,11 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
 - **„Als eigene Seite anzeigen":** Bei einem als Objekt eingefügten **Wahrscheinlichkeitsrechner**,
   **Messwert-Analyse**- oder **GeoGebra-App**-Objekt erscheint im Kontext-Panel eine Schaltfläche,
   die das Objekt nachträglich groß auf eine **neue eigene Seite** verschiebt (Inhalt bleibt erhalten).
-  Ein seitenfüllend eingefügtes Werkzeug hält nach **oben denselben Abstand wie zur senkrechten
-  Werkzeugleiste** (zehn Punkte), klebt also nicht an den oberen Leisten.
+  Ein seitenfüllend eingefügtes Werkzeug hält zur senkrechten **Werkzeugleiste** zehn Punkte
+  Abstand und nach **oben rund 5 mm mehr** – so liegt die **Kopfleiste des Fensters**, die über dem
+  Objekt sitzt, vollständig unter den oberen Leisten und lässt sich zum Verschieben packen.
+  Dasselbe gilt für ein **hohes Werkzeug**, das als Objekt eingefügt wird: Es rutscht so weit
+  nach unten, dass seine Kopfleiste frei bleibt.
 - **„⇪ Teilen (QR-Code)":** Bei allen Objekten, die einen Inhalt **aus dem Netz** zeigen, steht im
   Kontextmenü ein Teilen-Knopf: **GeoGebra-Material** (Material-ID oder Link), **Video** (YouTube
   oder Videoadresse) und **Webseite/H5P**. Er öffnet das **QR-Fenster** mit der Adresse, von der der
@@ -2971,8 +2974,10 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   **✕** löscht Zeilen bzw. Reihen, die **Kopfzeile** lässt sich ausblenden.
   - **Diagrammarten:** Säulen, Balken, Linien, Fläche, Kreis und Ring; bei mehreren Datenreihen
     wahlweise **nebeneinander oder gestapelt** (Säulen, Balken, Fläche).
-  - **Bedienung kompakt:** In der Zeile über der Tabelle stehen nur noch **Titel**, **Werte**,
-    **Legende**, **Gitter**, **gestapelt**, der Knopf **⚙ Achsen**, **A−/A+** und die Bildknöpfe –
+  - **Bedienung kompakt:** In der **ersten Zeile** stehen links **Neu**, **Speichern**, **Laden**
+    und **Ehrlich**, in der Mitte die **Diagrammarten** und rechts die Knopfgruppe **Schrift A−/A+**,
+    **🖼 Tafel**, **📋 Kopieren**, **🖨 Drucken** und **⇧ Teilen**. In der **zweiten Zeile** stehen
+    **Titel**, **Werte**, **Legende**, **Gitter**, **gestapelt** und **⚙ Achsen** –
     sie passt damit ohne Scrollen auf den iPad-Bildschirm. Alles Weitere öffnet **⚙ Achsen** in einem
     eigenen Fenster („Achsen & Darstellung", oben links angedockt, sodass das Diagramm sichtbar
     bleibt) mit den Gruppen **Achsenbeschriftung**, **Rubrikenachse (x)**, **Werteachse (y)** und
@@ -2995,8 +3000,10 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     unterdrückt · Rubriken eng …"); **Ehrlich** nimmt alle Verzerrungen auf einmal zurück.
   - Dazu Titel, **Werte**, **Legende** und **Gitter** ein-/ausblendbar, **A−/A+** für die Schrift,
     **🖼 Bild → Tafel** und **📋 Kopieren** sowie **Drucken**, **Speichern/Laden** als `.json`.
-    Der **Umschalter Benutzen/Bearbeiten** blendet die Tabelle aus – zum Vorführen bleibt nur das
-    Diagramm mit den Einstellreglern stehen. Tabelle, Diagrammart und alle Einstellungen werden
+    Der **Umschalter Benutzen/Bearbeiten** blendet die Tabelle aus, dazu **Neu/Speichern/Laden**
+    und die rechte Knopfgruppe (**A−/A+**, **🖼 Tafel**, **📋 Kopieren**, **🖨 Drucken**) – nur
+    **⇧ Teilen** bleibt. Zum Vorführen stehen damit **Ehrlich**, die **Diagrammarten** und die
+    ganze zweite Zeile zur Verfügung. Tabelle, Diagrammart und alle Einstellungen werden
     **mit dem Tafel-Projekt gespeichert**.
 - **Term-Umformer** (Mathe & Physik): Lernwerkzeug zum **Aufstellen und Umformen von Termen**
   (Mathematik 7). Term eintippen – der Umformer zerlegt ihn in **Summanden und Faktoren**, die sich
