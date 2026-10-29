@@ -2411,7 +2411,7 @@ function drawPinClock(){
   const g=gearPos(x,y,r);                                        // ⚙ im Zifferblatt, zwischen Mitte und der 12
   uctx.beginPath(); uctx.arc(g.x,g.y,g.r,0,7); uctx.fillStyle='#fff'; uctx.fill();
   uctx.strokeStyle='rgba(31,36,48,.55)'; uctx.lineWidth=1; uctx.stroke();
-  uctx.fillStyle='#1f2430'; uctx.font=Math.round(g.r*1.15)+'px -apple-system,sans-serif'; uctx.textAlign='center'; uctx.textBaseline='middle'; uctx.fillText('⚙',g.x,g.y+1); }
+  zahnrad(uctx,g.x,g.y,Math.round(g.r*1.15),'#1f2430'); }
 const onPinClock=(px,py)=>{ if(!pinClock.on) return false; const p=pinClockPos(); return Math.hypot(px-p.x,py-p.y)<=p.r+2; };
 /* Die Uhr liegt über den Leisten – also fängt sie ihre Zeiger selbst ab (Capture-Phase),
    sonst würde die Leiste darunter reagieren und die Uhr liesse sich dort nicht anfassen. */
@@ -2447,6 +2447,16 @@ function pinToClock(){ const p=pinClockPos(), w=p.r*2/scale, c=toWorld(p.x,p.y);
 const RULCOL='#286edc';
 function rgba(hex,a){ const h=(hex||RULCOL).replace('#',''); const n=parseInt(h.length===3?h.replace(/./g,c=>c+c):h,16);
   return 'rgba('+((n>>16)&255)+','+((n>>8)&255)+','+(n&255)+','+a+')'; }
+/* ⚙ genau in die Mitte eines runden Knopfes setzen: Das Zeichen hat ungleiche Seitenränder,
+   mit textAlign/textBaseline allein sitzt das Zahnrädchen daher sichtbar schief. Darum messen wir,
+   wie weit seine Striche wirklich reichen, und verschieben es um die Hälfte des Fehlers. */
+function zahnrad(c,x,y,gr,col){
+  c.save(); c.fillStyle=col||'#fff'; c.font=gr+'px sans-serif'; c.textAlign='left'; c.textBaseline='alphabetic';
+  const m=c.measureText('⚙'), li=m.actualBoundingBoxLeft, re=m.actualBoundingBoxRight,
+        ob=m.actualBoundingBoxAscent, un=m.actualBoundingBoxDescent;
+  if([li,re,ob,un].every(v=>typeof v==='number'&&isFinite(v))) c.fillText('⚙', x-(re-li)/2, y+(ob-un)/2);
+  else { c.textAlign='center'; c.textBaseline='middle'; c.fillText('⚙',x,y); }   // ältere Browser: wie bisher
+  c.restore(); }
 let ruler={cx:0,cy:0,angle:0,len:728,color:RULCOL,mm:true,nums:true,pct:false,fs:11,init:false}, rulerVisible=false, pendingRulerSnap=false, pendingSnap=null, activeSnap=null;
 /* Zifferblatt – von den Uhr-Objekten und von der schwebenden Uhr gemeinsam genutzt */
 function paintClock(c,cx,cy,r,o){
@@ -2509,7 +2519,7 @@ function drawRuler(){ ctx.setTransform(dpr,0,0,dpr,0,0); const{cx,cy,angle,len}=
   }
   ctx.beginPath(); ctx.arc(rulerRotX(),w/2,12,0,7); ctx.fillStyle=rgba(col,.9); ctx.fill();              // Dreh-Griff
   ctx.beginPath(); ctx.arc(-len/2+18,w/2,12,0,7); ctx.fillStyle=rgba(col,.9); ctx.fill();                // Einstellungen
-  ctx.fillStyle='#fff'; ctx.font='13px sans-serif'; ctx.textBaseline='middle'; ctx.save(); ctx.translate(-len/2+18,w/2); ctx.rotate(-angle); ctx.fillText('⚙',0,1); ctx.restore();
+  ctx.save(); ctx.translate(-len/2+18,w/2); ctx.rotate(-angle); zahnrad(ctx,0,0,13); ctx.restore();
   ctx.restore(); ctx.setTransform(scale*dpr,0,0,scale*dpr,ox*dpr,oy*dpr); }
 const rulerRotX=()=>ruler.len/2-(ruler.pct?46:16);        // im %-Modus rückt der Dreh-Griff nach innen
 const rulerLenX=()=>ruler.len/2-16;                        // ganz außen: Länge stauchen/strecken
@@ -2551,12 +2561,16 @@ function drawGeo(){ ctx.setTransform(dpr,0,0,dpr,0,0); const{cx,cy,angle,size:L}
     const inner=(deg%30===0)?pr-13:pr-7; ctx.beginPath(); ctx.moveTo(inner*ca,-inner*sa); ctx.lineTo(pr*ca,-pr*sa); ctx.stroke();
     if(deg%30===0 && deg!==0 && deg!==180){ ctx.save(); ctx.translate((pr+11)*ca,-(pr+11)*sa); ctx.rotate(-angle); ctx.fillText(deg+'°',0,3); ctx.restore(); } }
   ctx.strokeStyle=rgba(col,.5); ctx.setLineDash([4,4]); ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0,-hgt); ctx.stroke(); ctx.setLineDash([]);  // Höhe/Lot
-  ctx.beginPath(); ctx.arc(0,-hgt,12,0,7); ctx.fillStyle=rgba(col,.9); ctx.fill();  // Dreh-Griff am Apex
+  ctx.beginPath(); ctx.arc(0,geoRotY(),12,0,7); ctx.fillStyle=rgba(col,.9); ctx.fill();  // Dreh-Griff, 1 cm unter der Spitze
   ctx.beginPath(); ctx.arc(0,-hgt*0.30,12,0,7); ctx.fillStyle=rgba(col,.9); ctx.fill();      // Einstellungen
-  ctx.fillStyle='#fff'; ctx.font='13px sans-serif'; ctx.textBaseline='middle'; ctx.save(); ctx.translate(0,-hgt*0.30); ctx.rotate(-angle); ctx.fillText('⚙',0,1); ctx.restore();
+  ctx.save(); ctx.translate(0,-hgt*0.30); ctx.rotate(-angle); zahnrad(ctx,0,0,13); ctx.restore();
   ctx.restore(); ctx.setTransform(scale*dpr,0,0,scale*dpr,ox*dpr,oy*dpr); }
+/* Der Dreh-Griff sitzt nicht in der Spitze, sondern rund 1 cm darunter im Dreieck – dort lässt
+   er sich sicher fassen, ohne dass man neben das Werkzeug greift (bei kleinen Größen weniger,
+   damit er dem ⚙ nicht zu nahe kommt). */
+const geoRotY=()=>{ const h=geo.size/2; return -Math.max(h*0.5, h-PXCM); };
 const geoLocal=(x,y)=>localTo(geo.cx,geo.cy,geo.angle,x,y);
-function onGeoHandle(x,y){ const l=geoLocal(x,y),hgt=geo.size/2; return Math.hypot(l.x,l.y+hgt)<20; }
+function onGeoHandle(x,y){ const l=geoLocal(x,y); return Math.hypot(l.x,l.y-geoRotY())<20; }
 function onGeoGear(x,y){ const l=geoLocal(x,y),hgt=geo.size/2; return Math.hypot(l.x,l.y+hgt*0.30)<20; }
 const onGeoCenter=(x,y)=>{ const l=geoLocal(x,y); return Math.hypot(l.x,l.y)<26; };   // Mitte der langen Seite (Winkelscheitel)
 /* Winkel zeichnen: mind. 1 s in der Kantenmitte ruhig halten, dann eine Gerade über die Skala ziehen */
@@ -2570,10 +2584,27 @@ function geoRayPoint(sx,sy){ const l=geoLocal(sx,sy), r=Math.hypot(l.x,l.y);
   const deg=Math.round(Math.atan2(-l.y,l.x)*180/Math.PI), a=deg*Math.PI/180;      // auf ganze Grad einrasten
   const lx=r*Math.cos(a), ly=-r*Math.sin(a), c=Math.cos(geo.angle), s=Math.sin(geo.angle);
   return {deg:Math.abs(deg), x:geo.cx+lx*c-ly*s, y:geo.cy+lx*s+ly*c}; }
+/* Alle drei Kanten führen den Stift: unten die lange, dazu die beiden kurzen (je 45°). Neben
+   jeder Kante liegt ein Fangstreifen – 6 px ins Dreieck hinein und 44 px nach außen, wo der
+   Stift beim Ziehen aufliegt. Rechnung im Werkzeug-System: die Spitze liegt bei (0,-size/2). */
+const GEO_IN=6, GEO_AUS=44;
+function geoKante(l){ const hw=geo.size/2;
+  if(Math.abs(l.x)<=hw && l.y>=-GEO_IN && l.y<=GEO_AUS) return 0;                  // lange Kante (Zeichenkante)
+  const lang=hw*Math.SQRT2;                                                        // Länge einer kurzen Kante
+  for(const sg of [-1,1]){                                                         // -1 = links, +1 = rechts
+    const aus=(sg*l.x-l.y)/Math.SQRT2-hw/Math.SQRT2,                               // Abstand von der Kante, nach außen positiv
+          laengs=(hw-sg*l.x-l.y)/Math.SQRT2;                                       // 0 an der unteren Ecke, lang an der Spitze
+    if(aus>=-GEO_IN && aus<=GEO_AUS && laengs>=0 && laengs<=lang) return sg; }
+  return null; }
 function geoZone(x,y){ const l=geoLocal(x,y),hgt=geo.size/2,halfw=geo.size/2+l.y;
-  if(Math.abs(l.x)<=geo.size/2 && l.y>=-6 && l.y<=44) return 'draw';
+  if(geoKante(l)!==null) return 'draw';
   if(l.y<=-8 && l.y>=-hgt && Math.abs(l.x)<=halfw) return 'move';
   return null; }
+/* Gerade, an der der Stift entlanggeführt wird – je nach angefasster Kante */
+function geoSnap(x,y){ const k=geoKante(geoLocal(x,y)); if(k===null) return null;
+  if(k===0) return {cx:geo.cx,cy:geo.cy,angle:geo.angle};
+  const lx=k*geo.size/2, c=Math.cos(geo.angle), s=Math.sin(geo.angle);             // untere Ecke der kurzen Kante
+  return {cx:geo.cx+lx*c, cy:geo.cy+lx*s, angle:geo.angle+k*Math.PI/4}; }
 
 /* ---- Laser ---- */
 let laser=[];
@@ -2691,7 +2722,7 @@ cv.addEventListener('pointerdown',e=>{ if(e.pointerType==='mouse'&&e.button!==0)
     if(onGeoHandle(e.clientX,e.clientY)){ rulerDrag={mode:'grot',id:e.pointerId}; return; }
     const z=geoZone(e.clientX,e.clientY);
     if(z==='move'){ rulerDrag={mode:'gmove',id:e.pointerId,dx:e.clientX-geo.cx,dy:e.clientY-geo.cy}; return; }
-    if(z==='draw' && isDraw(e)){ pendingRulerSnap=true; pendingSnap={cx:geo.cx,cy:geo.cy,angle:geo.angle};
+    if(z==='draw' && isDraw(e)){ pendingSnap=geoSnap(e.clientX,e.clientY); pendingRulerSnap=!!pendingSnap;
       if(onGeoCenter(e.clientX,e.clientY)) pendingGeoRay=true; }
   }
   if(e.pointerType==='pen'||e.pointerType==='mouse'){

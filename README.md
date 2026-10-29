@@ -255,8 +255,11 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   lässt sich der **Maßstab** in den Einstellungen → Tafelblatt kalibrieren (siehe unten);
   voreingestellt sind **Lineal 19 cm** und **Geodreieck 15 cm**, jeweils **mit Millimeter-Skala**;
   die Einstellungen bleiben geräteweit gespeichert. Sie **bleiben aktiv**, während der
-  Stift zeichnet. Mit dem Finger am **unteren** Teil verschieben / am Griff (Ecke bzw. Spitze)
-  drehen; mit dem Stift **an der Kante** eine saubere gerade Linie ziehen.
+  Stift zeichnet. Mit dem Finger am **unteren** Teil verschieben / am **Dreh-Griff** drehen – beim
+  Lineal sitzt er in der Ecke, beim Geodreieck **rund 1 cm unterhalb der Spitze**, also im Dreieck
+  drin, wo er sich auch dann noch fassen lässt, wenn die Spitze an den Rand stößt. Mit dem Stift
+  **an einer Kante** entlang entsteht eine saubere gerade Linie – beim Geodreieck **an allen drei
+  Kanten**, also auch an den beiden kurzen (45°-)Kanten.
   **Prozentlineal:** Der Schalter **„Prozent 0–100 %"** im ⚙-Menü ersetzt die Zentimeter durch eine
   **Prozentskala**, die immer **von 0 % am linken bis 100 % am rechten Ende** läuft (Zehnerschritte
   beschriftet – erst bei einem sehr kurzen Lineal nur jede 20. oder 50. Marke, damit die Zahlen nicht
