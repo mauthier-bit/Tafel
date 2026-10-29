@@ -2501,7 +2501,10 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     Atomphysik gibt den Auftrag an die Karte weiter (das Bild einer Karte reicht sie an die Tafel
     durch). **A−/A+** gilt für alle vier Reiter. Der **Teilen**-QR-Code gibt den **ganzen Stand**
     weiter – Reiter, Element, gesetzte Elektronen, Protonen und Neutronen und auch die
-    Einstellungen der beiden Karten.
+    Einstellungen der beiden Karten. Ist das Fenster zu schmal für die ganze Zeile, bleiben die
+    **vier Reiter stehen** und nur die **Knopfgruppe lässt sich quer schieben**; senkrecht bewegt
+    sich nichts. Erst wenn selbst die vier Reiter nicht mehr nebeneinander passen, lässt sich
+    auch ihre Reihe schieben – so bleibt alles erreichbar.
   - **Hülle: Schalen und Energien** zeigt links die **Energiestufen** (1s, 2s, 2p, 3s …) als Kästchen
     mit Elektronenpfeilen und rechts das **Schalenbild** (K, L, M … mit der Zahl der Elektronen) zum
     ausgewählten Element. Jede **Hauptschale hat ihre eigene Farbe** (K blau, L grün, M orange, N
