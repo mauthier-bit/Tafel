@@ -1,0 +1,1272 @@
+<!DOCTYPE html><html lang="de"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<title>Bewegungsdiagramme</title>
+<style>
+/* Layout: Werkzeugleiste oben; 1D = Messstreifen über voller Breite + Diagramme darunter; 2D = Messfeld links, Diagramme rechts (Hochformat: untereinander). */
+:root {
+  --bg: #eef1f4;
+  --surface: #ffffff;
+  --ink: #18212c;
+  --muted: #5b6878;
+  --line: #cfd6de;
+  --grid: #e7ebef;
+  --qx: #2a5bd7;   /* Ort */
+  --qv: #0f8458;   /* Geschwindigkeit */
+  --qa: #cc5a14;   /* Beschleunigung */
+  --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --font-data: ui-monospace, Menlo, Consolas, monospace;
+}
+/* Ohne diese Zeile bleiben Elemente mit „hidden" sichtbar, weil Regeln wie .seg{display:inline-flex} staerker sind. */
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px;
+  padding-left: max(10px, env(safe-area-inset-left, 0px));
+  padding-right: max(10px, env(safe-area-inset-right, 0px));
+  box-sizing: border-box; overflow: hidden;
+  -webkit-text-size-adjust: 100%;
+}
+.app { height: 100%; display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 8px; padding-block: 8px; box-sizing: border-box; }
+
+/* Werkzeugleiste */
+.bar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+.brand { display: flex; align-items: baseline; gap: 10px; margin-right: auto; min-width: 0; }
+h1 { font-size: 1.1rem; margin: 0; letter-spacing: -0.01em; text-wrap: balance; }
+/* Die Knoepfe der Tafel (Bild, Teilen) sehen aus wie die uebrigen Knoepfe des Werkzeugs. */
+#shotBtns button, #teilenBtn button { font-size: 0.87rem; }
+#teilenBtn button { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+.status { color: var(--muted); font-size: 0.85rem; font-family: var(--font-data); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.status.sample { color: var(--qa); }
+.group { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.group-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+button, select, input { font: inherit; color: inherit; }
+button, select {
+  touch-action: manipulation; background: var(--surface); border: 1px solid var(--line); border-radius: 8px;
+  padding: 5px 9px; min-height: 32px; cursor: pointer; font-size: 0.87rem;
+}
+/* Im Rahmen der Tafel steht der Name schon in der Fensterleiste – die Zeile wird hier gebraucht. */
+body.imRahmen h1 { display: none; }
+button:hover { border-color: var(--muted); }
+button:focus-visible, select:focus-visible, input:focus-visible, summary:focus-visible { outline: 2px solid var(--qx); outline-offset: 2px; }
+button:disabled { opacity: 0.45; cursor: default; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--surface); }
+.seg button { border: 0; border-radius: 0; border-right: 1px solid var(--line); }
+.seg button:last-child { border-right: 0; }
+.seg button[aria-pressed="true"], .chip[aria-pressed="true"] { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+.chip { display: inline-flex; align-items: center; gap: 6px; }
+.chip .sw { width: 10px; height: 10px; border-radius: 50%; background: currentColor; opacity: 0.35; }
+.chip[aria-pressed="true"] .sw { opacity: 1; }
+.primary { background: var(--qx); color: #fff; border-color: var(--qx); }
+.slider { display: flex; align-items: center; gap: 8px; font-size: 0.92rem; }
+.slider input { width: 108px; accent-color: var(--qx); }
+.slider output { font-family: var(--font-data); font-size: 0.85rem; min-width: 4.5em; font-variant-numeric: tabular-nums; }
+details.settings { position: relative; }
+details.settings summary { list-style: none; cursor: pointer; border: 1px solid var(--line); border-radius: 8px; padding: 5px 9px; min-height: 32px; box-sizing: border-box; display: flex; align-items: center; background: var(--surface); font-size: 0.87rem; }
+details.settings summary::-webkit-details-marker { display: none; }
+.settings .panel {
+  position: absolute; right: 0; top: calc(100% + 6px); z-index: 20; width: min(320px, 86vw);
+  background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px;
+  display: grid; gap: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.18);
+}
+.settings label { display: grid; gap: 4px; font-size: 0.9rem; }
+.settings input[type=number] { border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; background: var(--bg); font-family: var(--font-data); }
+.settings p { margin: 0; font-size: 0.8rem; color: var(--muted); line-height: 1.4; }
+
+/* Bühne */
+.stage { display: grid; gap: 10px; min-height: 0; }
+.mode-1d .stage { grid-template-rows: minmax(150px, 26%) minmax(0, 1fr); }
+.mode-1d.lane .stage { grid-template-rows: minmax(260px, 50%) minmax(0, 1fr); }
+.mode-2d .stage { grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); }
+@media (orientation: portrait) {
+  .mode-2d .stage { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(220px, 40%) minmax(0, 1fr); }
+}
+.padWrap { position: relative; min-height: 0; min-width: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+#pad { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.hint { position: absolute; left: 14px; top: 10px; right: 14px; margin: 0; font-size: 0.85rem; color: var(--muted); pointer-events: none; line-height: 1.35; }
+.plotWrap { display: grid; grid-template-rows: minmax(0, 1fr) auto; gap: 8px; min-height: 0; min-width: 0; }
+.plotBox { position: relative; min-height: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+#plots { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; user-select: none; -webkit-user-select: none; }
+.readout { overflow-x: auto; max-height: 30vh; overflow-y: auto; }
+.readout table { border-collapse: collapse; font-family: var(--font-data); font-size: 0.82rem; font-variant-numeric: tabular-nums; width: 100%; }
+.readout th, .readout td { padding: 4px 8px; text-align: right; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.readout th { font-family: var(--font-body); font-weight: 700; color: var(--muted); font-size: 0.78rem; }
+.readout th:first-child, .readout td:first-child { text-align: left; }
+.readout td.del { width: 1%; }
+.readout td.del button { min-height: 28px; padding: 2px 8px; }
+.readout .iv td { color: var(--ink); }
+.readout .note { color: var(--muted); font-family: var(--font-body); font-size: 0.8rem; padding: 6px 2px; }
+.cx { color: var(--qx); } .cv { color: var(--qv); } .ca { color: var(--qa); }
+.badge { display: inline-block; min-width: 1.4em; text-align: center; border-radius: 4px; background: var(--ink); color: var(--surface); padding: 0 4px; }
+
+@media (max-width: 640px) {
+  body { overflow: auto; }
+  .app { height: auto; min-height: 100%; }
+  .mode-1d .stage, .mode-2d .stage { grid-template-columns: minmax(0, 1fr); grid-template-rows: 200px 560px; }
+  .mode-2d .stage { grid-template-rows: 300px 560px; }
+  .slider input { width: 100px; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+<script>
+/* Scharfe Kante unter der iPadOS-Statusleiste (iPadOS 26/27).
+   WebKit legt in Web-Apps vom Homebildschirm am oberen Rand sonst einen
+   weichen Verlauf ueber den Inhalt. Er entfaellt, wenn dort eine deckende
+   Leiste liegt - ein bildschirmfuellender Kasten genuegt nicht (am
+   13.10.2026 auf iPadOS 27 geprueft). Das Skript legt deshalb einen 16 px
+   hohen, deckenden Streifen an den oberen Rand und rueckt alles, was in
+   diese 16 px hineinragt, um 16 px nach unten. Laeuft nur in der App vom
+   Homebildschirm, nicht in Safari und nicht in einem Rahmen; mit #kante in
+   der Adresse laesst es sich zum Pruefen erzwingen. */
+(function(){
+  if(window.top!==window) return;
+  var pruef=/kante/i.test(location.hash||'');
+  var alsApp=(navigator.standalone===true) ||
+             (window.matchMedia && matchMedia('(display-mode: standalone)').matches);
+  if(!alsApp && !pruef) return;
+
+  var HOCH=16;
+  function leer(f){ return !f || f==='transparent' || f.replace(/\s/g,'')==='rgba(0,0,0,0)'; }
+  function seite(){
+    var s=getComputedStyle(document.body), f=s.backgroundColor, b=s.backgroundImage;
+    if(leer(f) && (!b || b==='none')){
+      s=getComputedStyle(document.documentElement); f=s.backgroundColor; b=s.backgroundImage;
+    }
+    return { farbe: leer(f) ? '#ffffff' : f, bild: (b && b!=='none') ? b : '' };
+  }
+  /* Faerbt dieses Element am oberen Rand etwas sichtbar ein? */
+  function tinte(n){
+    var r=n.getBoundingClientRect();
+    if(r.top>=HOCH || r.bottom<=0 || r.width<=0) return false;
+    var s=getComputedStyle(n);
+    if(s.display==='none' || s.visibility==='hidden' || s.opacity==='0') return false;
+    if(n.id==='randKante') return false;
+    var t=n.tagName.toLowerCase();
+    if(t==='img'||t==='svg'||t==='canvas'||t==='video') return true;
+    if(!leer(s.backgroundColor) || s.backgroundImage!=='none') return true;
+    if(parseFloat(s.borderTopWidth)>0) return true;
+    var kn=n.childNodes;
+    for(var j=0;j<kn.length;j++)
+      if(kn[j].nodeType===3 && kn[j].nodeValue.replace(/\s/g,'')) return true;
+    for(var i=0;i<n.children.length;i++) if(tinte(n.children[i])) return true;
+    return false;
+  }
+  function ragtRein(z){
+    for(var i=0;i<z.children.length;i++) if(tinte(z.children[i])) return true;
+    return false;
+  }
+  function luft(z){
+    if(z.dataset.kanteLuft) return;
+    if(!ragtRein(z) && !tinte(z)) return;    /* noch nichts oben - spaeter nochmal */
+    z.dataset.kanteLuft='1';
+    var p=parseFloat(getComputedStyle(z).paddingTop)||0;
+    if(p>=HOCH) return;
+    z.style.paddingTop=(p+HOCH)+'px';
+  }
+  function sichtbar(n,s){
+    return s.display!=='none' && s.visibility!=='hidden' && n.id!=='randKante';
+  }
+  /* bildschirmfuellende fixierte Kaesten */
+  function kaesten(){
+    var alle=document.querySelectorAll('body > *, body > * > *'), raus=[];
+    for(var i=0;i<alle.length;i++){
+      var n=alle[i], s=getComputedStyle(n);
+      if(s.position!=='fixed' || !sichtbar(n,s)) continue;
+      var r=n.getBoundingClientRect();
+      if(r.top<=4 && r.width>=innerWidth*0.9 && r.height>=innerHeight*0.9) raus.push(n);
+    }
+    return raus;
+  }
+  /* Leisten am oberen Rand (fixiert oder klebend, aber kein Vollbildkasten) */
+  function leisten(){
+    var alle=document.querySelectorAll('body > *, body > * > *'), raus=[];
+    for(var i=0;i<alle.length;i++){
+      var n=alle[i], s=getComputedStyle(n);
+      if((s.position!=='fixed' && s.position!=='sticky') || !sichtbar(n,s)) continue;
+      var r=n.getBoundingClientRect();
+      if(r.top<=4 && r.width>=innerWidth*0.8 && r.height>=6 && r.height<=innerHeight*0.6) raus.push(n);
+    }
+    return raus;
+  }
+  /* Liegt oben schon eine deckende Leiste, ist nichts zu tun. */
+  function schonGut(){
+    var st=document.elementsFromPoint ? document.elementsFromPoint(Math.round(innerWidth/2),2) : [];
+    for(var i=0;i<st.length;i++){
+      var n=st[i];
+      if(n.id==='randKante') continue;
+      if(n===document.body || n===document.documentElement) return false;
+      var s=getComputedStyle(n), r=n.getBoundingClientRect();
+      return (s.position==='fixed'||s.position==='sticky') && r.top<=4 &&
+             r.width>=innerWidth*0.8 && r.height>=6 && r.height<=innerHeight*0.6 &&
+             !leer(s.backgroundColor);
+    }
+    return false;
+  }
+  var band=null;
+  function streifen(farbe){
+    if(!band){
+      band=document.createElement('div');
+      band.id='randKante'; band.setAttribute('aria-hidden','true');
+      band.style.cssText='position:fixed;left:0;top:0;width:100%;height:'+HOCH+'px;'+
+        'z-index:2147483646;pointer-events:none';
+      document.body.appendChild(band);
+    }
+    band.style.display='block';
+    if(farbe){
+      band.style.backgroundColor=farbe;
+      band.style.backgroundImage='none';
+      return;
+    }
+    var s=getComputedStyle(document.body), h=seite();
+    band.style.backgroundColor=h.farbe;
+    band.style.backgroundImage=h.bild||'none';
+    band.style.backgroundAttachment='fixed';
+    if(h.bild && s.backgroundAttachment!=='fixed')
+      band.style.backgroundSize='100% '+Math.max(innerHeight,document.body.scrollHeight)+'px';
+  }
+  var schild=null;
+  function zeigen(txt){
+    if(!pruef) return;
+    if(!schild){
+      schild=document.createElement('div');
+      schild.style.cssText='position:fixed;left:6px;bottom:52px;z-index:2147483647;max-width:92%;'+
+        'padding:6px 9px;border-radius:8px;background:#ffe600;color:#000;'+
+        'font:600 12px/1.35 -apple-system,sans-serif;white-space:pre-wrap;pointer-events:none';
+      document.body.appendChild(schild);
+    }
+    schild.textContent='Kante K6 · '+innerWidth+'x'+innerHeight+'\n'+txt;
+  }
+  function name(n){
+    if(n.id) return '#'+n.id;
+    var c=(typeof n.className==='string'&&n.className.trim())?'.'+n.className.trim().split(/\s+/)[0]:'';
+    return n.tagName.toLowerCase()+c;
+  }
+  function malen(){
+    var b=document.body; if(!b) return;
+    if(schonGut()){
+      if(band) band.style.display='none';
+      zeigen('oben liegt schon eine deckende Leiste');
+      return;
+    }
+    var k=kaesten(), l=leisten(), h=null, farbe=null, text=[];
+    for(var i=0;i<k.length;i++){
+      var z=k[i], s=getComputedStyle(z);
+      if(!z.dataset.kante){
+        if(leer(s.backgroundColor)){
+          if(!h) h=seite();
+          z.style.backgroundColor=h.farbe;
+          if(s.backgroundImage==='none' && h.bild) z.style.backgroundImage=h.bild;
+        }
+        z.dataset.kante='1';
+        s=getComputedStyle(z);
+      }
+      luft(z);
+      text.push(name(z)+' bg='+s.backgroundColor+(s.backgroundImage!=='none'?'+Verlauf':''));
+    }
+    for(var j=0;j<l.length;j++){
+      var le=l[j], sl=getComputedStyle(le);
+      if(!tinte(le) && !ragtRein(le)) continue;
+      if(!farbe && !leer(sl.backgroundColor)) farbe=sl.backgroundColor;
+      luft(le);
+      text.push('Leiste '+name(le)+' bg='+sl.backgroundColor);
+    }
+    if(!k.length && !l.length){ luft(b); text.push('kein Kasten, nur Streifen'); }
+    streifen(farbe);
+    zeigen(text.join('\n'));
+  }
+  var warte=null;
+  function spaeter(){
+    if(warte) return;
+    warte=setTimeout(function(){ warte=null; malen(); },200);
+  }
+  try{
+    new MutationObserver(spaeter).observe(document.documentElement,
+      {childList:true, subtree:true, attributes:true, attributeFilter:['class','style','hidden']});
+  }catch(e){}
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',malen);
+  else malen();
+  addEventListener('load',spaeter);
+  addEventListener('resize',spaeter);
+  addEventListener('orientationchange',spaeter);
+})();
+</script>
+</head><body>
+<div class="app mode-1d" id="app">
+  <header class="bar">
+    <div class="brand">
+      <h1>Bewegungsdiagramme</h1>
+      <span class="status sample" id="status">Beispielaufnahme</span>
+    </div>
+
+    <div class="group">
+      <div class="seg" role="group" aria-label="Bewegungsart">
+        <button id="m1d" aria-pressed="true">1D</button>
+        <button id="m2d" aria-pressed="false">2D</button>
+      </div>
+      <div class="seg" role="group" aria-label="Komponente" id="compSeg" hidden>
+        <button data-comp="x" aria-pressed="false">x</button>
+        <button data-comp="y" aria-pressed="false">y</button>
+        <button data-comp="xy" aria-pressed="true">x + y</button>
+      </div>
+    </div>
+
+    <label class="slider" for="smooth">Glättung
+      <input type="range" id="smooth" min="0" max="200" step="5" value="60">
+      <output id="smoothOut" for="smooth">60 ms</output>
+    </label>
+
+    <div class="group" role="group" aria-label="Einblenden">
+      <button class="chip" id="tStellen" aria-pressed="true"><span class="sw"></span>Stellen</button>
+      <button class="chip" id="tTang" aria-pressed="true"><span class="sw cv"></span>Tangenten</button>
+      <button class="chip" id="tFlaeche" aria-pressed="false"><span class="sw cx"></span>Flächen</button>
+      <button class="chip" id="tVec" aria-pressed="false" title="An jedem Messpunkt die Pfeile für v und a"><span class="sw ca"></span>Vektoren</button>
+    </div>
+
+    <div class="group">
+      <div class="seg" role="group" aria-label="Werkzeug im Diagramm" title="Antippen im Diagramm setzt eine Stelle oder ein Intervall">
+        <button id="toolStelle" aria-pressed="true">Stelle</button>
+        <button id="toolIv" aria-pressed="false">Intervall</button>
+      </div>
+      <button id="pin">Stelle merken</button>
+    </div>
+
+    <div class="group">
+      <button id="play" class="primary" title="Die Bewegung noch einmal ablaufen lassen">▶ Abspielen</button>
+      <select id="speed" aria-label="Abspielgeschwindigkeit">
+        <option value="1">1×</option>
+        <option value="0.5">0,5×</option>
+        <option value="0.25">0,25×</option>
+      </select>
+      <button id="undo" disabled>Vorherige</button>
+      <details class="settings tafelEdit">
+        <summary>Einstellungen</summary>
+        <div class="panel">
+          <label for="ppc">Maßstab: Pixel pro Zentimeter
+            <input type="number" id="ppc" min="10" max="200" step="0.1" value="52">
+          </label>
+          <p>iPad: ca. 52 px/cm (iPad mini ca. 64). Prüfe mit einem Lineal, ob die Skala im Aufnahmefeld echte Zentimeter zeigt, und passe den Wert an.</p>
+          <label for="strobe">Zeitabstand der Messpunkte im Aufnahmefeld
+            <select id="strobe">
+              <option value="0.02">0,02 s</option>
+              <option value="0.05">0,05 s</option>
+              <option value="0.1" selected>0,1 s</option>
+              <option value="0.2">0,2 s</option>
+              <option value="0.25">0,25 s</option>
+              <option value="0.5">0,5 s</option>
+              <option value="1">1 s</option>
+            </select>
+          </label>
+          <label for="vecSel">Vektoren an den Messpunkten
+            <select id="vecSel">
+              <option value="va">v und a</option>
+              <option value="v">nur v</option>
+              <option value="a">nur a</option>
+            </select>
+          </label>
+          <label for="vecScale">Pfeillänge
+            <select id="vecScale">
+              <option value="0.5">0,5×</option>
+              <option value="1" selected>1×</option>
+              <option value="2">2×</option>
+              <option value="4">4×</option>
+            </select>
+          </label>
+          <p>„Alle Vektoren“ zeichnet an jedem Messpunkt die Pfeile für v und a. In 1D werden die Punkte dafür nach unten zeitlich versetzt, damit sich die Pfeile nicht überdecken.</p>
+          <button id="copyCsv">Messwerte als CSV kopieren</button>
+          <p id="copyMsg">Spalten: t; x; y; vx; vy; ax; ay (Semikolon, Dezimalkomma – passt für Excel).</p>
+          <textarea id="csvFallback" rows="4" hidden aria-label="CSV-Daten" style="width:100%;box-sizing:border-box;font-family:var(--font-data);font-size:11px;background:var(--bg);border:1px solid var(--line);border-radius:6px"></textarea>
+        </div>
+      </details>
+      <span id="shotBtns" class="tafelEdit" style="display:inline-flex;gap:6px"></span>
+      <span id="teilenBtn" style="display:inline-flex"></span>
+    </div>
+  </header>
+
+  <main class="stage">
+    <section class="padWrap" aria-label="Aufnahmefeld">
+      <canvas id="pad"></canvas>
+      <p class="hint" id="hint">Finger auflegen und bewegen. Aufgezeichnet wird, solange der Finger aufliegt (nur die waagerechte Bewegung zählt).</p>
+    </section>
+    <section class="plotWrap">
+      <div class="plotBox"><canvas id="plots" aria-label="Diagramme: Ort, Geschwindigkeit und Beschleunigung über der Zeit"></canvas></div>
+      <div class="readout" id="readout"></div>
+    </section>
+  </main>
+</div>
+
+<script src="shot.js"></script>
+<script src="modus.js"></script>
+<script src="vendor/qrcode.min.js"></script>
+<script src="teilen.js"></script>
+<script>
+(() => {
+"use strict";
+const $ = id => document.getElementById(id);
+const pad = $("pad"), plots = $("plots"), app = $("app");
+const DT = 0.01;            // Abtastraster nach dem Resampling (s)
+const PAD_M = 24;           // Rand im Aufnahmefeld (px)
+
+if (window.parent !== window) document.body.classList.add("imRahmen");
+const isIPad = /iPad/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+let savedPpc = null;
+try { savedPpc = parseFloat(localStorage.getItem("bwd-ppc")); } catch (e) {}
+
+const state = {
+  mode: "1d", comp: "xy", sigma: 60,
+  show: { stellen: true, tangenten: true, flaechen: false },
+  tool: "stelle",
+  raw: [],              // {t (s), x (px, rechts +), y (px, oben +)} relativ zum Ursprung
+  sample: true, prev: null,
+  cursor: null, pins: [], interval: null,
+  ppc: savedPpc && savedPpc > 5 ? savedPpc : (isIPad ? 52 : 37.8),
+  recording: false, recId: null, t0: 0,
+  playing: false, speed: 1,
+  strobe: 0.1, allVec: false, vecSel: "va", vecScale: 1,
+};
+$("ppc").value = state.ppc;
+let D = null;
+
+// ---------- Hilfen ----------
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const fmt = (v, d = 1) => (Math.abs(v) < 0.5 * Math.pow(10, -d) ? 0 : v).toLocaleString("de-DE", { minimumFractionDigits: d, maximumFractionDigits: d });
+function css(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+function alpha(hex, a) {
+  const h = hex.replace("#", "");
+  const n = parseInt(h.length === 3 ? h.split("").map(c => c + c).join("") : h, 16);
+  return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
+}
+function colors() {
+  return { bg: css("--bg"), surface: css("--surface"), ink: css("--ink"), muted: css("--muted"), line: css("--line"),
+    grid: css("--grid"), qx: css("--qx"), qv: css("--qv"), qa: css("--qa") };
+}
+function setup(cv) {
+  const r = cv.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  const W = Math.max(1, Math.round(r.width * dpr)), H = Math.max(1, Math.round(r.height * dpr));
+  if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
+  const ctx = cv.getContext("2d");
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, r.width, r.height);
+  return { ctx, w: r.width, h: r.height };
+}
+function niceStep(range, n) {
+  const raw = range / Math.max(1, n);
+  const p = Math.pow(10, Math.floor(Math.log10(raw)));
+  const f = raw / p;
+  return (f < 1.5 ? 1 : f < 3 ? 2 : f < 7 ? 5 : 10) * p;
+}
+const decFor = step => Math.max(0, -Math.floor(Math.log10(step) + 1e-9));
+
+// ---------- Auswertung ----------
+function smooth(arr, s) {
+  const N = arr.length, out = new Float64Array(N);
+  if (s < 0.5) { out.set(arr); return out; }
+  const R = Math.ceil(3 * s), w = new Float64Array(2 * R + 1);
+  let ws = 0;
+  for (let k = -R; k <= R; k++) { w[k + R] = Math.exp(-(k * k) / (2 * s * s)); ws += w[k + R]; }
+  const at = i => {
+    // ungerade Spiegelung an den Rändern: erhält lineare Trends
+    if (i < 0) { const j = Math.min(N - 1, -i); return 2 * arr[0] - arr[j]; }
+    if (i >= N) { const j = Math.max(0, 2 * (N - 1) - i); return 2 * arr[N - 1] - arr[j]; }
+    return arr[i];
+  };
+  for (let i = 0; i < N; i++) {
+    let s2 = 0;
+    for (let k = -R; k <= R; k++) s2 += w[k + R] * at(i + k);
+    out[i] = s2 / ws;
+  }
+  return out;
+}
+function deriv(a) {
+  const N = a.length, out = new Float64Array(N);
+  if (N < 2) return out;
+  for (let i = 1; i < N - 1; i++) out[i] = (a[i + 1] - a[i - 1]) / (2 * DT);
+  out[0] = (a[1] - a[0]) / DT;
+  out[N - 1] = (a[N - 1] - a[N - 2]) / DT;
+  return out;
+}
+function range(arr, robust) {
+  if (!robust) { let lo = Infinity, hi = -Infinity; for (const v of arr) { if (v < lo) lo = v; if (v > hi) hi = v; } return [lo, hi]; }
+  const s = Array.from(arr).sort((a, b) => a - b);
+  const q = p => s[clamp(Math.round(p * (s.length - 1)), 0, s.length - 1)];
+  return [q(0.005), q(0.995)];
+}
+function process() {
+  const raw = state.raw;
+  if (raw.length < 2) { D = null; return; }
+  const T = raw[raw.length - 1].t;
+  const N = Math.max(3, Math.floor(T / DT) + 1);
+  const t = new Float64Array(N), xr = new Float64Array(N), yr = new Float64Array(N);
+  let j = 0;
+  for (let i = 0; i < N; i++) {
+    const ti = i * DT; t[i] = ti;
+    while (j < raw.length - 2 && raw[j + 1].t < ti) j++;
+    const a = raw[j], b = raw[j + 1];
+    const f = b.t > a.t ? clamp((ti - a.t) / (b.t - a.t), 0, 1) : 0;
+    xr[i] = (a.x + f * (b.x - a.x)) / state.ppc;
+    yr[i] = (a.y + f * (b.y - a.y)) / state.ppc;
+  }
+  const s = state.sigma / 1000 / DT;
+  const x = smooth(xr, s), y = smooth(yr, s);
+  const vx = deriv(x), vy = deriv(y), ax = deriv(vx), ay = deriv(vy);
+  D = { N, T: (N - 1) * DT, t, x, y, vx, vy, ax, ay, rng: {} };
+  for (const k of ["x", "y"]) D.rng[k] = range(D[k], false);
+  for (const k of ["vx", "vy", "ax", "ay"]) D.rng[k] = range(D[k], true);
+}
+function val(arr, t) {
+  const f = clamp(t / DT, 0, arr.length - 1);
+  const i = Math.min(arr.length - 2, Math.floor(f)), r = f - i;
+  return arr[i] * (1 - r) + arr[i + 1] * r;
+}
+function integral(arr, t1, t2) {
+  if (t2 < t1) return -integral(arr, t2, t1);
+  const n = Math.max(1, Math.ceil((t2 - t1) / DT * 2));
+  const h = (t2 - t1) / n;
+  let s = 0;
+  for (let i = 0; i < n; i++) s += (val(arr, t1 + i * h) + val(arr, t1 + (i + 1) * h)) * h / 2;
+  return s;
+}
+
+// ---------- Beispieldaten ----------
+function makeSample() {
+  const r = pad.getBoundingClientRect();
+  const wpx = Math.max(200, r.width - 2 * PAD_M), hpx = Math.max(140, r.height - 2 * PAD_M);
+  const raw = [];
+  let seed = 7; const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647 - 0.5);
+  const noise = 0.6;
+  if (state.mode === "1d") {
+    const A = 0.68 * wpx, x0 = 0.1 * wpx, B = 0.4 * A;
+    const T1 = 2.4, P = 0.5, T2 = 1.6, T = T1 + P + T2;
+    for (let t = 0; t <= T + 1e-9; t += 1 / 60) {
+      let x;
+      if (t <= T1) { const u = t / T1; x = x0 + A * (u - Math.sin(2 * Math.PI * u) / (2 * Math.PI)); }
+      else if (t <= T1 + P) x = x0 + A;
+      else { const u = (t - T1 - P) / T2; x = x0 + A - B * (u - Math.sin(2 * Math.PI * u) / (2 * Math.PI)); }
+      raw.push({ t: t + rnd() * 0.002, x: x + rnd() * noise, y: 0 });
+    }
+  } else {
+    const cx = wpx * 0.5, cy = hpx * 0.5, rx = 0.38 * wpx, ry = 0.36 * hpx, T = 4.5;
+    for (let t = 0; t <= T + 1e-9; t += 1 / 60) {
+      const u = t / T, phi = 2 * Math.PI * (u - 0.13 * Math.sin(2 * Math.PI * u)) - Math.PI / 2;
+      raw.push({ t: t + rnd() * 0.002, x: cx + rx * Math.cos(phi) + rnd() * noise, y: cy + ry * Math.sin(phi) + rnd() * noise });
+    }
+  }
+  raw.sort((a, b) => a.t - b.t);
+  raw[0].t = 0;
+  state.raw = raw; state.sample = true;
+  process();
+  defaults();
+}
+function defaults() {
+  if (!D) return;
+  state.cursor = +(D.T * 0.3).toFixed(2);
+  state.pins = [];
+  state.interval = [+(D.T * 0.15).toFixed(2), +(D.T * 0.5).toFixed(2)];
+}
+
+// ---------- Aufnahme ----------
+function padOrigin(w, h) {
+  return state.mode === "1d" ? { x: PAD_M, y: state.allVec ? Math.max(h * 0.62, h - 78) : h * 0.62 } : { x: PAD_M + 6, y: h - PAD_M - 6 };
+}
+function addSample(ev) {
+  const r = pad.getBoundingClientRect();
+  const o = padOrigin(r.width, r.height);
+  const t = (ev.timeStamp - state.t0) / 1000;
+  const p = { t, x: ev.clientX - r.left - o.x, y: o.y - (ev.clientY - r.top) };
+  if (state.mode === "1d") p.y = 0;
+  const last = state.raw[state.raw.length - 1];
+  if (last && t < last.t) return;
+  if (last && t - last.t < 0.0005) { last.x = p.x; last.y = p.y; return; }
+  state.raw.push(p);
+}
+pad.addEventListener("pointerdown", e => {
+  if (state.recording) return;
+  e.preventDefault();
+  stopPlay();
+  try { pad.setPointerCapture(e.pointerId); } catch (err) {}
+  state.prev = { raw: state.raw, sample: state.sample, cursor: state.cursor, pins: state.pins, interval: state.interval, mode: state.mode };
+  state.raw = []; state.recording = true; state.recId = e.pointerId; state.t0 = e.timeStamp;
+  state.cursor = null; state.pins = [];
+  addSample(e);
+  $("hint").hidden = true;
+  updateStatus(); requestDraw();
+});
+pad.addEventListener("pointermove", e => {
+  if (!state.recording || e.pointerId !== state.recId) return;
+  e.preventDefault();
+  const evs = e.getCoalescedEvents ? e.getCoalescedEvents() : [];
+  (evs.length ? evs : [e]).forEach(addSample);
+  process(); updateStatus(); requestDraw();
+});
+function endRec(e) {
+  if (!state.recording || e.pointerId !== state.recId) return;
+  addSample(e);
+  state.recording = false;
+  const T = state.raw.length ? state.raw[state.raw.length - 1].t : 0;
+  if (T < 0.2 || state.raw.length < 4) {
+    // nur angetippt: alte Aufnahme behalten
+    const p = state.prev; state.prev = null;
+    state.raw = p.raw; state.sample = p.sample; state.cursor = p.cursor; state.pins = p.pins; state.interval = p.interval;
+  } else {
+    state.sample = false;
+  }
+  process();
+  if (!state.sample && T >= 0.2) defaults();
+  $("hint").hidden = false;
+  updateUI(); requestDraw();
+}
+pad.addEventListener("pointerup", endRec);
+pad.addEventListener("pointercancel", endRec);
+document.addEventListener("gesturestart", e => e.preventDefault());
+
+// ---------- Zeichnen: Aufnahmefeld ----------
+function arrow(ctx, x1, y1, x2, y2, color, width = 2.5, head = 8) {
+  const dx = x2 - x1, dy = y2 - y1, len = Math.hypot(dx, dy);
+  if (len < 2) return;
+  const ux = dx / len, uy = dy / len, hh = Math.min(head, len * 0.6);
+  ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = width;
+  ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2 - ux * hh * 0.7, y2 - uy * hh * 0.7); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x2, y2);
+  ctx.lineTo(x2 - ux * hh - uy * hh * 0.5, y2 - uy * hh + ux * hh * 0.5);
+  ctx.lineTo(x2 - ux * hh + uy * hh * 0.5, y2 - uy * hh - ux * hh * 0.5);
+  ctx.closePath(); ctx.fill();
+}
+function drawPad() {
+  const { ctx, w, h } = setup(pad);
+  const C = colors(), ppc = state.ppc, o = padOrigin(w, h);
+  const X = cm => o.x + cm * ppc, Y = cm => o.y - cm * ppc;
+  ctx.font = `11px ${css("--font-data")}`;
+  ctx.textBaseline = "top";
+  if (state.mode === "1d") {
+    // Lineal
+    const xmax = w - PAD_M;
+    ctx.strokeStyle = C.muted; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(o.x, o.y); ctx.lineTo(xmax, o.y); ctx.stroke();
+    ctx.fillStyle = C.muted; ctx.textAlign = "center";
+    const mm = ppc >= 30;
+    let lastLabel = 0;
+    for (let k = 0; X(k / (mm ? 10 : 1)) <= xmax + 0.1; k++) {
+      const cm = mm ? k / 10 : k, px = X(cm);
+      const isCm = mm ? k % 10 === 0 : true, is5 = isCm && Math.round(cm) % 5 === 0;
+      const len = is5 ? 14 : isCm ? 9 : 4;
+      ctx.lineWidth = is5 ? 1.5 : 1;
+      ctx.beginPath(); ctx.moveTo(px, o.y); ctx.lineTo(px, o.y + len); ctx.stroke();
+      if (is5) { ctx.fillText(String(Math.round(cm)), px, o.y + 17); lastLabel = px; }
+    }
+    ctx.textAlign = "left"; ctx.fillText("cm", Math.min(lastLabel + 12, w - 22), o.y + 17);
+  } else {
+    // Karopapier
+    for (let k = 0; X(k) <= w; k++) {
+      ctx.strokeStyle = k % 5 === 0 ? C.line : C.grid; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(X(k), 0); ctx.lineTo(X(k), h); ctx.stroke();
+    }
+    for (let k = 0; Y(k) >= 0; k++) {
+      ctx.strokeStyle = k % 5 === 0 ? C.line : C.grid;
+      ctx.beginPath(); ctx.moveTo(0, Y(k)); ctx.lineTo(w, Y(k)); ctx.stroke();
+    }
+    ctx.strokeStyle = C.muted; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(o.x, 0); ctx.lineTo(o.x, o.y); ctx.lineTo(w, o.y); ctx.stroke();
+    ctx.fillStyle = C.muted; ctx.textAlign = "center";
+    for (let k = 5; X(k) < w - 20; k += 5) ctx.fillText(String(k), X(k), o.y + 4);
+    ctx.textAlign = "right"; ctx.textBaseline = "middle";
+    for (let k = 5; Y(k) > 40; k += 5) ctx.fillText(String(k), o.x - 4, Y(k));
+    ctx.textAlign = "left"; ctx.textBaseline = "top";
+    ctx.fillText("x in cm", w - 60, o.y + 4);
+    ctx.fillText("y in cm", o.x + 6, Math.max(44, Y(Math.floor((o.y - 40) / ppc / 5) * 5) - 6));
+  }
+  if (!D) return;
+
+  if (state.recording) {
+    // Rohspur live
+    const r = state.raw;
+    ctx.strokeStyle = C.qx; ctx.lineWidth = 2;
+    if (state.mode === "2d") {
+      ctx.beginPath(); r.forEach((p, i) => { const px = o.x + p.x, py = o.y - p.y; i ? ctx.lineTo(px, py) : ctx.moveTo(px, py); }); ctx.stroke();
+    }
+    const p = r[r.length - 1];
+    if (p) {
+      ctx.strokeStyle = alpha(C.qx, 0.5); ctx.lineWidth = 1;
+      if (state.mode === "1d") { ctx.beginPath(); ctx.moveTo(o.x + p.x, 0); ctx.lineTo(o.x + p.x, h); ctx.stroke(); }
+      ctx.fillStyle = C.qx; ctx.beginPath(); ctx.arc(o.x + p.x, state.mode === "1d" ? o.y : o.y - p.y, 7, 0, 7); ctx.fill();
+      ctx.font = `600 15px ${css("--font-data")}`; ctx.textAlign = "right"; ctx.fillStyle = C.ink;
+      ctx.fillText(`t = ${fmt(p.t, 2)} s`, w - 14, 12);
+    }
+    return;
+  }
+
+  // Messpunkte im eingestellten Zeitabstand
+  const step = Math.max(1, Math.round(state.strobe / DT));
+  const one = state.mode === "1d";
+  const lane = one && state.allVec;              // 1D: Punkte zeitlich versetzt untereinander
+  const laneTop = 44, laneBot = o.y - 26;
+  const yOf = i => one ? (lane ? laneTop + (D.t[i] / Math.max(D.T, 0.01)) * (laneBot - laneTop) : o.y - 20) : Y(D.y[i]);
+  const vs = 0.25 * ppc * state.vecScale, as = 0.04 * ppc * state.vecScale; // Pfeil: v · 0,25 s bzw. a · 0,04 s²
+  const capF = (dx, dy) => { const l = Math.hypot(dx, dy), m = Math.max(w, h); return l > m ? m / l : 1; };
+  const showV = state.vecSel !== "a", showA = state.vecSel !== "v";
+  if (!one) {
+    ctx.strokeStyle = alpha(C.qx, 0.55); ctx.lineWidth = 2;
+    ctx.beginPath(); for (let i = 0; i < D.N; i++) { const px = X(D.x[i]), py = Y(D.y[i]); i ? ctx.lineTo(px, py) : ctx.moveTo(px, py); } ctx.stroke();
+  }
+  if (state.allVec) {
+    const thin = step * DT * ppc < 14 ? 1.3 : 1.8, head = thin < 1.5 ? 5 : 7;
+    for (let i = 0; i < D.N; i += step) {
+      const px = X(D.x[i]), py = yOf(i);
+      const vx = D.vx[i], vy = one ? 0 : D.vy[i], ax = D.ax[i], ay = one ? 0 : D.ay[i];
+      const pa = lane && showV ? py + 3 : py;   // in 1D a-Pfeil leicht unter den v-Pfeil
+      if (showA) { const f = capF(ax * as, ay * as); arrow(ctx, px, pa, px + ax * as * f, pa - ay * as * f, alpha(C.qa, 0.9), thin, head); }
+      if (showV) { const f = capF(vx * vs, vy * vs); arrow(ctx, px, py, px + vx * vs * f, py - vy * vs * f, alpha(C.qv, 0.9), thin, head); }
+    }
+  }
+  ctx.fillStyle = alpha(C.qx, one && !lane ? 0.45 : 0.85);
+  for (let i = 0; i < D.N; i += step) { ctx.beginPath(); ctx.arc(X(D.x[i]), yOf(i), step * DT * ppc < 10 ? 2.4 : 3.2, 0, 7); ctx.fill(); }
+  ctx.font = `11px ${css("--font-body")}`; ctx.fillStyle = C.muted; ctx.textAlign = "right"; ctx.textBaseline = "bottom";
+  ctx.fillText(`Punkte im Abstand von ${fmt(state.strobe, state.strobe < 0.1 ? 2 : state.strobe < 1 ? (state.strobe * 10 % 1 ? 2 : 1) : 0)} s` + (lane ? ", Zeit läuft nach unten" : ""), w - 12, h - 8);
+
+  // Körper zum Zeitpunkt des Cursors
+  if (state.cursor != null) {
+    const t = state.cursor;
+    const px = X(val(D.x, t)), py = one ? o.y : Y(val(D.y, t));
+    const vx = val(D.vx, t), vy = one ? 0 : val(D.vy, t);
+    const ax = val(D.ax, t), ay = one ? 0 : val(D.ay, t);
+    const fv = capF(vx * vs, vy * vs), fa = capF(ax * as, ay * as);
+    if (lane) {
+      // Cursor auf der versetzten Spur markieren
+      const ly = laneTop + (t / Math.max(D.T, 0.01)) * (laneBot - laneTop);
+      ctx.strokeStyle = alpha(C.ink, 0.35); ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+      ctx.beginPath(); ctx.moveTo(px, ly); ctx.lineTo(px, py); ctx.stroke(); ctx.setLineDash([]);
+      ctx.strokeStyle = C.ink; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(px, ly, 6, 0, 7); ctx.stroke();
+    } else {
+      const yv = one ? py - 40 : py, ya = one ? py - 58 : py;
+      if (one) {
+        ctx.strokeStyle = alpha(C.ink, 0.35); ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+        ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px, ya - 6); ctx.stroke(); ctx.setLineDash([]);
+      }
+      arrow(ctx, px, yv, px + vx * vs * fv, yv - vy * vs * fv, C.qv, 3, 10);
+      arrow(ctx, px, ya, px + ax * as * fa, ya - ay * as * fa, C.qa, 3, 10);
+    }
+    ctx.fillStyle = C.ink; ctx.strokeStyle = C.surface; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(px, py, 8, 0, 7); ctx.fill(); ctx.stroke();
+  }
+  // Legende mit Pfeilmaßstab
+  ctx.textBaseline = "bottom"; ctx.textAlign = "left";
+  ctx.font = `700 12px ${css("--font-body")}`; ctx.fillStyle = C.qv; ctx.fillText("v", 14, h - 8);
+  ctx.font = `11px ${css("--font-data")}`; ctx.fillStyle = C.muted;
+  let lx = 24; const vTxt = `1 cm ≙ ${fmt(4 / state.vecScale, state.vecScale > 1 ? 1 : 0)} cm/s`;
+  ctx.fillText(vTxt, lx, h - 8); lx += ctx.measureText(vTxt).width + 14;
+  ctx.font = `700 12px ${css("--font-body")}`; ctx.fillStyle = C.qa; ctx.fillText("a", lx, h - 8);
+  ctx.font = `11px ${css("--font-data")}`; ctx.fillStyle = C.muted;
+  ctx.fillText(`1 cm ≙ ${fmt(25 / state.vecScale, state.vecScale > 2 ? 2 : state.vecScale > 1 ? 1 : 0)} cm/s²`, lx + 10, h - 8);
+}
+
+// ---------- Zeichnen: Diagramme ----------
+const SUB = { x: "ₓ", y: "ᵧ" };
+let layout = null;
+function pill(ctx, text, x, y, color, C, align = "left") {
+  ctx.font = `500 11.5px ${css("--font-data")}`;
+  const tw = ctx.measureText(text).width, pw = tw + 10, ph = 18;
+  let bx = align === "right" ? x - pw : align === "center" ? x - pw / 2 : x;
+  bx = clamp(bx, layout.L + 2, layout.w - layout.R - pw - 2);
+  ctx.fillStyle = alpha(C.surface.startsWith("#") ? C.surface : "#ffffff", 0.92);
+  ctx.strokeStyle = alpha(color.startsWith("#") ? color : "#000000", 0.6); ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.roundRect ? ctx.roundRect(bx, y - ph / 2, pw, ph, 4) : ctx.rect(bx, y - ph / 2, pw, ph); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = color; ctx.textAlign = "left"; ctx.textBaseline = "middle";
+  ctx.fillText(text, bx + 5, y + 0.5);
+}
+function drawPlots() {
+  const { ctx, w, h } = setup(plots);
+  const C = colors();
+  const L = 60, R = 14, TOP = 8, BOT = 30, GAP = 16;
+  layout = { L, R, TOP, BOT, w, h };
+  if (!D) {
+    ctx.fillStyle = C.muted; ctx.font = `14px ${css("--font-body")}`; ctx.textAlign = "center";
+    ctx.fillText("Noch keine Aufnahme", w / 2, h / 2); return;
+  }
+  const T = Math.max(D.T, 0.05);
+  const ph = (h - TOP - BOT - 2 * GAP) / 3, pw = w - L - R;
+  const tx = t => L + (t / T) * pw;
+  layout.tx = tx; layout.T = T;
+  const comps = state.mode === "1d" ? ["x"] : state.comp === "xy" ? ["x", "y"] : [state.comp];
+  const Q = [
+    { name: "Ort", sym: c => state.mode === "1d" ? "x" : c, unit: "cm", key: c => c, color: C.qx },
+    { name: "Geschwindigkeit", sym: c => state.mode === "1d" ? "v" : "v" + SUB[c], unit: "cm/s", key: c => "v" + c, color: C.qv },
+    { name: "Beschleunigung", sym: c => state.mode === "1d" ? "a" : "a" + SUB[c], unit: "cm/s²", key: c => "a" + c, color: C.qa },
+  ];
+  const P = Q.map((q, i) => {
+    let lo = Infinity, hi = -Infinity;
+    comps.forEach(c => { const r = D.rng[q.key(c)]; lo = Math.min(lo, r[0]); hi = Math.max(hi, r[1]); });
+    if (i > 0) { lo = Math.min(lo, 0); hi = Math.max(hi, 0); }
+    if (hi - lo < 1e-6) { lo -= 1; hi += 1; }
+    const padv = (hi - lo) * 0.08; lo -= padv; hi += padv;
+    const top = TOP + i * (ph + GAP);
+    return { ...q, lo, hi, top, y: v => top + ph - (v - lo) / (hi - lo) * ph };
+  });
+  layout.P = P; layout.ph = ph;
+
+  // Zeitachse
+  const tStep = niceStep(T, Math.max(2, pw / 70)), tDec = decFor(tStep);
+
+  P.forEach((p, i) => {
+    ctx.fillStyle = alpha(C.bg, 0.45); ctx.fillRect(L, p.top, pw, ph);
+    // Gitter
+    ctx.lineWidth = 1; ctx.strokeStyle = C.grid;
+    for (let t = 0; t <= T + 1e-9; t += tStep) { ctx.beginPath(); ctx.moveTo(tx(t), p.top); ctx.lineTo(tx(t), p.top + ph); ctx.stroke(); }
+    const vStep = niceStep(p.hi - p.lo, Math.max(2, ph / 34)), vDec = decFor(vStep);
+    ctx.font = `11px ${css("--font-data")}`; ctx.fillStyle = C.muted; ctx.textAlign = "right"; ctx.textBaseline = "middle";
+    for (let v = Math.ceil(p.lo / vStep) * vStep; v <= p.hi + 1e-9; v += vStep) {
+      const y = p.y(v);
+      ctx.strokeStyle = Math.abs(v) < vStep * 1e-6 ? C.muted : C.grid;
+      ctx.lineWidth = Math.abs(v) < vStep * 1e-6 ? 1.2 : 1;
+      ctx.beginPath(); ctx.moveTo(L, y); ctx.lineTo(L + pw, y); ctx.stroke();
+      ctx.fillText(fmt(v, vDec), L - 6, y);
+    }
+    ctx.strokeStyle = C.line; ctx.lineWidth = 1; ctx.strokeRect(L + 0.5, p.top + 0.5, pw - 1, ph - 1);
+    // Titel
+    ctx.textAlign = "left"; ctx.textBaseline = "top";
+    ctx.font = `700 12.5px ${css("--font-body")}`; ctx.fillStyle = p.color;
+    const title = `${p.name}  ${comps.map(c => p.sym(c)).join(", ")} in ${p.unit}`;
+    ctx.fillText(title, L + 8, p.top + 6);
+    if (state.mode === "2d" && comps.length === 2 && i === 0) {
+      const tw = ctx.measureText(title).width;
+      ctx.font = `11px ${css("--font-body")}`; ctx.fillStyle = C.muted;
+      ctx.fillText("x-Komp. durchgezogen, y-Komp. gestrichelt", L + 16 + tw, p.top + 7);
+    }
+  });
+  // t-Beschriftung
+  ctx.font = `11px ${css("--font-data")}`; ctx.fillStyle = C.muted; ctx.textAlign = "center"; ctx.textBaseline = "top";
+  const yb = P[2].top + ph + 5;
+  for (let t = 0; t <= T + 1e-9; t += tStep) if (tx(t) < L + pw - 30) ctx.fillText(fmt(t, tDec), tx(t), yb);
+  ctx.textAlign = "right"; ctx.font = `700 11.5px ${css("--font-body")}`; ctx.fillText("t in s", L + pw, yb);
+
+  const clip = (p, fn) => { ctx.save(); ctx.beginPath(); ctx.rect(L, p.top, pw, ph); ctx.clip(); fn(); ctx.restore(); };
+
+  // Flächen (unter den Kurven)
+  let iv = null;
+  if (state.show.flaechen && state.interval) {
+    const a = clamp(Math.min(...state.interval), 0, T), b = clamp(Math.max(...state.interval), 0, T);
+    iv = [a, b];
+    [1, 2].forEach(pi => {
+      const p = P[pi], fillC = P[pi - 1].color;
+      clip(p, () => {
+        comps.forEach(c => {
+          const arr = D[p.key(c)];
+          ctx.beginPath(); ctx.moveTo(tx(a), p.y(0));
+          const n = Math.max(2, Math.ceil((b - a) / DT));
+          for (let k = 0; k <= n; k++) { const t = a + (b - a) * k / n; ctx.lineTo(tx(t), p.y(val(arr, t))); }
+          ctx.lineTo(tx(b), p.y(0)); ctx.closePath();
+          ctx.fillStyle = alpha(fillC, c === "y" ? 0.14 : 0.24); ctx.fill();
+        });
+      });
+    });
+    // Intervallgrenzen
+    ctx.strokeStyle = alpha(C.ink, 0.45); ctx.lineWidth = 1; ctx.setLineDash([2, 4]);
+    [a, b].forEach(t => { ctx.beginPath(); ctx.moveTo(tx(t), TOP); ctx.lineTo(tx(t), P[2].top + ph); ctx.stroke(); });
+    ctx.setLineDash([]);
+    ctx.font = `700 11px ${css("--font-body")}`; ctx.fillStyle = C.ink; ctx.textAlign = "center"; ctx.textBaseline = "top";
+    ctx.fillText("t₁", tx(a), P[2].top + ph + 16); ctx.fillText("t₂", tx(b), P[2].top + ph + 16);
+  }
+
+  // Kurven
+  P.forEach(p => clip(p, () => {
+    comps.forEach(c => {
+      const arr = D[p.key(c)];
+      ctx.strokeStyle = p.color; ctx.lineWidth = 2.2; ctx.setLineDash(c === "y" && comps.length === 2 ? [7, 5] : []);
+      ctx.beginPath();
+      for (let i = 0; i < D.N; i++) { const X = tx(D.t[i]), Y = p.y(arr[i]); i ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y); }
+      ctx.stroke(); ctx.setLineDash([]);
+    });
+  }));
+
+  // Flächen-Beschriftung und Δ-Pfeile
+  if (iv) {
+    const [a, b] = iv;
+    [0, 1].forEach(pi => {
+      const p = P[pi], under = P[pi + 1];
+      comps.forEach((c, ci) => {
+        const arr = D[p.key(c)], y1 = val(arr, a), y2 = val(arr, b);
+        clip(p, () => {
+          ctx.strokeStyle = alpha(p.color, 0.8); ctx.lineWidth = 1.2; ctx.setLineDash([4, 3]);
+          ctx.beginPath(); ctx.moveTo(tx(a), p.y(y1)); ctx.lineTo(tx(b) + 4, p.y(y1)); ctx.stroke(); ctx.setLineDash([]);
+          arrow(ctx, tx(b) + 4, p.y(y1), tx(b) + 4, p.y(y2), p.color, 2.2, 8);
+        });
+        const d = y2 - y1, sym = p.sym(c);
+        pill(ctx, `Δ${sym} = ${fmt(d, 1)} ${p.unit}`, tx(b) + 10, clamp(p.y((y1 + y2) / 2), p.top + 30, p.top + ph - 12) + ci * 20, p.color, C);
+        const A = integral(D[under.key(c)], a, b);
+        const lx = (tx(a) + tx(b)) / 2;
+        pill(ctx, `Fläche = ${fmt(A, 1)} ${p.unit}  (= Δ${sym})`, lx, under.top + 34 + ci * 21, p.color, C, "center");
+      });
+    });
+  }
+
+  // Stellen und Tangenten
+  const pts = [];
+  if (state.cursor != null) pts.push({ t: clamp(state.cursor, 0, T), label: "P", main: true });
+  if (state.show.stellen) state.pins.forEach((t, i) => pts.push({ t: clamp(t, 0, T), label: String(i + 1), main: false }));
+
+  if (state.show.tangenten) {
+    pts.forEach(s => {
+      [0, 1].forEach(pi => {
+        const p = P[pi], slopeQ = P[pi + 1];
+        comps.forEach((c, ci) => {
+          const y0 = val(D[p.key(c)], s.t), m = val(D[slopeQ.key(c)], s.t);
+          const span = T * 0.14;
+          clip(p, () => {
+            ctx.strokeStyle = slopeQ.color; ctx.lineWidth = s.main ? 2.4 : 1.6;
+            ctx.setLineDash(c === "y" && comps.length === 2 ? [7, 5] : []);
+            ctx.beginPath(); ctx.moveTo(tx(s.t - span), p.y(y0 - m * span)); ctx.lineTo(tx(s.t + span), p.y(y0 + m * span)); ctx.stroke();
+            ctx.setLineDash([]);
+            if (s.main) {
+              // Steigungsdreieck
+              const dt = span * 0.75;
+              ctx.strokeStyle = alpha(slopeQ.color, 0.75); ctx.lineWidth = 1.2;
+              ctx.beginPath(); ctx.moveTo(tx(s.t), p.y(y0)); ctx.lineTo(tx(s.t + dt), p.y(y0)); ctx.lineTo(tx(s.t + dt), p.y(y0 + m * dt)); ctx.stroke();
+            }
+          });
+          if (s.main) {
+            const ex = tx(s.t + span), ey = clamp(p.y(y0 + m * span), p.top + 30, p.top + ph - 12);
+            const right = ex + 150 < L + pw;
+            pill(ctx, `Steigung: ${slopeQ.sym(c)} = ${fmt(m, 1)} ${slopeQ.unit}`, right ? ex + 6 : tx(s.t - span) - 6, ey + ci * 20, slopeQ.color, C, right ? "left" : "right");
+          }
+        });
+      });
+      // Wert der Steigung im Diagramm darunter hervorheben
+      [1, 2].forEach(pi => {
+        const p = P[pi];
+        comps.forEach(c => {
+          const v = val(D[p.key(c)], s.t);
+          clip(p, () => {
+            ctx.strokeStyle = alpha(p.color, 0.6); ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+            ctx.beginPath(); ctx.moveTo(L, p.y(v)); ctx.lineTo(tx(s.t), p.y(v)); ctx.stroke(); ctx.setLineDash([]);
+          });
+        });
+      });
+    });
+  }
+
+  if (state.show.stellen || pts.some(s => s.main)) {
+    pts.forEach(s => {
+      const X = tx(s.t);
+      ctx.strokeStyle = alpha(C.ink, s.main ? 0.75 : 0.5); ctx.lineWidth = s.main ? 1.5 : 1.2;
+      ctx.setLineDash(s.main ? [] : [5, 4]);
+      ctx.beginPath(); ctx.moveTo(X, TOP); ctx.lineTo(X, P[2].top + ph); ctx.stroke(); ctx.setLineDash([]);
+      P.forEach(p => comps.forEach(c => {
+        const v = val(D[p.key(c)], s.t), Y = p.y(v);
+        if (Y < p.top || Y > p.top + ph) return;
+        ctx.fillStyle = p.color; ctx.strokeStyle = C.surface; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(X, Y, s.main ? 5 : 4, 0, 7); ctx.fill(); ctx.stroke();
+      }));
+      // Marke oben
+      ctx.font = `700 11px ${css("--font-body")}`;
+      const tw = Math.max(16, ctx.measureText(s.label).width + 8);
+      ctx.fillStyle = C.ink; ctx.beginPath();
+      ctx.roundRect ? ctx.roundRect(X - tw / 2, TOP, tw, 16, 4) : ctx.rect(X - tw / 2, TOP, tw, 16); ctx.fill();
+      ctx.fillStyle = C.surface; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(s.label, X, TOP + 8.5);
+    });
+  }
+}
+
+// ---------- Ablesetabelle ----------
+function renderReadout() {
+  const el = $("readout");
+  if (!D) { el.innerHTML = ""; return; }
+  const T = D.T;
+  const two = state.mode === "2d";
+  const cols = two
+    ? [["x", "x", "cm", "cx"], ["y", "y", "cm", "cx"], ["vₓ", "vx", "cm/s", "cv"], ["vᵧ", "vy", "cm/s", "cv"], ["aₓ", "ax", "cm/s²", "ca"], ["aᵧ", "ay", "cm/s²", "ca"]]
+    : [["x", "x", "cm", "cx"], ["v", "vx", "cm/s", "cv"], ["a", "ax", "cm/s²", "ca"]];
+  const rows = [];
+  if (state.cursor != null) rows.push({ label: "P", t: state.cursor, idx: -1 });
+  if (state.show.stellen) state.pins.forEach((t, i) => rows.push({ label: String(i + 1), t, idx: i }));
+  let html = "<table><thead><tr><th>Stelle</th><th>t in s</th>" + cols.map(c => `<th class="${c[3]}">${c[0]} in ${c[2]}</th>`).join("") + "<th></th></tr></thead><tbody>";
+  rows.forEach(r => {
+    const t = clamp(r.t, 0, T);
+    html += `<tr><td><span class="badge">${r.label}</span></td><td>${fmt(t, 2)}</td>` +
+      cols.map(c => `<td class="${c[3]}">${fmt(val(D[c[1]], t), 1)}</td>`).join("") +
+      `<td class="del">${r.idx >= 0 ? `<button data-del="${r.idx}" aria-label="Stelle ${r.label} entfernen">×</button>` : ""}</td></tr>`;
+  });
+  if (state.show.flaechen && state.interval) {
+    const a = clamp(Math.min(...state.interval), 0, T), b = clamp(Math.max(...state.interval), 0, T);
+    const comps = two ? ["x", "y"] : ["x"];
+    const sx = c => two ? SUB[c] : "";
+    const cell = comps.map(c => {
+      const pos = c, dx = val(D[pos], b) - val(D[pos], a), Av = integral(D["v" + c], a, b);
+      const dv = val(D["v" + c], b) - val(D["v" + c], a), Aa = integral(D["a" + c], a, b);
+      const ps = two ? c : "x";
+      return `<span class="cx">Δ${ps} = ${fmt(dx, 1)} cm</span> · Fläche unter v${sx(c)} = ${fmt(Av, 1)} cm &nbsp;|&nbsp; <span class="cv">Δv${sx(c)} = ${fmt(dv, 1)} cm/s</span> · Fläche unter a${sx(c)} = ${fmt(Aa, 1)} cm/s`;
+    }).join("<br>");
+    html += `<tr class="iv"><td><span class="badge">t₁–t₂</span></td><td>${fmt(a, 2)} – ${fmt(b, 2)}</td><td colspan="${cols.length + 1}" style="text-align:left;white-space:normal">${cell}</td></tr>`;
+  }
+  html += "</tbody></table>";
+  if (!rows.length && !(state.show.flaechen && state.interval)) html = `<div class="note">Tippe in ein Diagramm, um eine Stelle zu setzen.</div>`;
+  el.innerHTML = html;
+}
+$("readout").addEventListener("click", e => {
+  const b = e.target.closest("button[data-del]");
+  if (!b) return;
+  state.pins.splice(+b.dataset.del, 1);
+  updateUI(); requestDraw();
+});
+
+// ---------- Interaktion in den Diagrammen ----------
+let drag = null;
+function tAt(e) {
+  const r = plots.getBoundingClientRect();
+  const px = e.clientX - r.left;
+  return clamp((px - layout.L) / (layout.w - layout.L - layout.R) * layout.T, 0, layout.T);
+}
+plots.addEventListener("pointerdown", e => {
+  if (!D || !layout || !layout.tx || state.recording) return;
+  e.preventDefault();
+  try { plots.setPointerCapture(e.pointerId); } catch (err) {}
+  stopPlay();
+  const t = tAt(e), r = plots.getBoundingClientRect(), px = e.clientX - r.left;
+  if (state.tool === "intervall") {
+    state.show.flaechen = true;
+    state.interval = [t, t];
+    drag = { kind: "iv" };
+  } else {
+    let hit = -1;
+    if (state.show.stellen) state.pins.forEach((p, i) => { if (Math.abs(layout.tx(p) - px) < 14) hit = i; });
+    if (hit >= 0) drag = { kind: "pin", i: hit };
+    else { state.cursor = t; drag = { kind: "cursor" }; }
+  }
+  updateUI(); requestDraw();
+});
+plots.addEventListener("pointermove", e => {
+  if (!drag) return;
+  e.preventDefault();
+  const t = tAt(e);
+  if (drag.kind === "iv") state.interval[1] = t;
+  else if (drag.kind === "pin") state.pins[drag.i] = t;
+  else state.cursor = t;
+  renderReadout(); requestDraw();
+});
+const endDrag = () => {
+  if (drag && drag.kind === "iv" && Math.abs(state.interval[1] - state.interval[0]) < 0.02) {
+    // nur angetippt: Intervall um die Stelle herum
+    const t = state.interval[0], half = Math.min(0.3, layout.T * 0.1);
+    state.interval = [clamp(t - half, 0, layout.T), clamp(t + half, 0, layout.T)];
+    updateUI(); requestDraw();
+  }
+  drag = null;
+};
+plots.addEventListener("pointerup", endDrag);
+plots.addEventListener("pointercancel", endDrag);
+
+// ---------- Abspielen ----------
+let playStart = 0, playFrom = 0, rafPlay = 0;
+function stopPlay() {
+  if (!state.playing) return;
+  state.playing = false; cancelAnimationFrame(rafPlay);
+  $("play").textContent = "▶ Abspielen";
+}
+function playLoop(now) {
+  if (!state.playing || !D) return;
+  const t = playFrom + (now - playStart) / 1000 * state.speed;
+  state.cursor = Math.min(t, D.T);
+  renderReadout(); draw();
+  if (t >= D.T) { stopPlay(); updateUI(); return; }
+  rafPlay = requestAnimationFrame(playLoop);
+}
+$("play").addEventListener("click", () => {
+  if (!D) return;
+  if (state.playing) { stopPlay(); updateUI(); return; }
+  state.playing = true; playFrom = 0; playStart = performance.now();
+  $("play").textContent = "■ Stopp";
+  rafPlay = requestAnimationFrame(playLoop);
+});
+$("speed").addEventListener("change", e => { state.speed = parseFloat(e.target.value); });
+
+// ---------- Bedienelemente ----------
+function setPressed(id, on) { $(id).setAttribute("aria-pressed", on ? "true" : "false"); }
+function updateStatus() {
+  const s = $("status");
+  s.classList.toggle("sample", state.sample && !state.recording);
+  if (state.recording) s.textContent = "Aufnahme läuft …";
+  else if (state.sample) s.textContent = "Beispielaufnahme · lege einen Finger aufs Feld";
+  else if (D) s.textContent = `Aufnahme ${fmt(D.T, 2)} s · ${state.raw.length} Messpunkte`;
+  else s.textContent = "";
+}
+function updateUI() {
+  setPressed("m1d", state.mode === "1d"); setPressed("m2d", state.mode === "2d");
+  app.classList.toggle("mode-1d", state.mode === "1d"); app.classList.toggle("mode-2d", state.mode === "2d");
+  app.classList.toggle("lane", state.mode === "1d" && state.allVec);
+  $("compSeg").hidden = state.mode !== "2d";
+  document.querySelectorAll("#compSeg button").forEach(b => b.setAttribute("aria-pressed", b.dataset.comp === state.comp ? "true" : "false"));
+  setPressed("tStellen", state.show.stellen); setPressed("tTang", state.show.tangenten); setPressed("tFlaeche", state.show.flaechen);
+  setPressed("tVec", state.allVec);
+  setPressed("toolStelle", state.tool === "stelle"); setPressed("toolIv", state.tool === "intervall");
+  $("pin").disabled = state.cursor == null || !D || state.pins.length >= 8;
+  $("undo").disabled = !state.prev;
+  $("hint").textContent = state.mode === "1d"
+    ? "Finger auflegen und bewegen. Aufgezeichnet wird, solange der Finger aufliegt (nur die waagerechte Bewegung zählt)."
+    : "Finger auflegen und bewegen. Aufgezeichnet wird, solange der Finger aufliegt.";
+  updateStatus(); renderReadout();
+}
+
+function setMode(m) {
+  if (state.mode === m) return;
+  stopPlay();
+  state.mode = m;
+  updateUI();
+  requestAnimationFrame(() => {
+    if (state.sample) makeSample(); else { process(); }
+    updateUI(); draw();
+  });
+}
+$("m1d").addEventListener("click", () => setMode("1d"));
+$("m2d").addEventListener("click", () => setMode("2d"));
+document.querySelectorAll("#compSeg button").forEach(b => b.addEventListener("click", () => { state.comp = b.dataset.comp; updateUI(); requestDraw(); }));
+$("smooth").addEventListener("input", e => {
+  state.sigma = +e.target.value;
+  $("smoothOut").textContent = state.sigma === 0 ? "aus" : `${state.sigma} ms`;
+  process(); renderReadout(); requestDraw();
+});
+$("tStellen").addEventListener("click", () => { state.show.stellen = !state.show.stellen; updateUI(); requestDraw(); });
+$("tTang").addEventListener("click", () => { state.show.tangenten = !state.show.tangenten; updateUI(); requestDraw(); });
+$("tFlaeche").addEventListener("click", () => {
+  state.show.flaechen = !state.show.flaechen;
+  if (state.show.flaechen && !state.interval && D) state.interval = [D.T * 0.15, D.T * 0.5];
+  updateUI(); requestDraw();
+});
+$("tVec").addEventListener("click", () => { state.allVec = !state.allVec; updateUI(); requestDraw(); });
+$("strobe").addEventListener("change", e => { state.strobe = parseFloat(e.target.value); requestDraw(); });
+$("vecSel").addEventListener("change", e => { state.vecSel = e.target.value; if (!state.allVec) state.allVec = true; updateUI(); requestDraw(); });
+$("vecScale").addEventListener("change", e => { state.vecScale = parseFloat(e.target.value); requestDraw(); });
+$("toolStelle").addEventListener("click", () => { state.tool = "stelle"; updateUI(); });
+$("toolIv").addEventListener("click", () => { state.tool = "intervall"; if (!state.show.flaechen) { state.show.flaechen = true; if (!state.interval && D) state.interval = [D.T * 0.15, D.T * 0.5]; } updateUI(); requestDraw(); });
+$("pin").addEventListener("click", () => {
+  if (state.cursor == null) return;
+  state.pins.push(state.cursor); state.show.stellen = true;
+  updateUI(); requestDraw();
+});
+$("undo").addEventListener("click", () => {
+  if (!state.prev) return;
+  stopPlay();
+  const cur = { raw: state.raw, sample: state.sample, cursor: state.cursor, pins: state.pins, interval: state.interval, mode: state.mode };
+  const p = state.prev;
+  state.raw = p.raw; state.sample = p.sample; state.cursor = p.cursor; state.pins = p.pins; state.interval = p.interval;
+  state.prev = cur;
+  process(); updateUI(); requestDraw();
+});
+$("ppc").addEventListener("change", e => {
+  const v = parseFloat(String(e.target.value).replace(",", "."));
+  if (!(v > 5 && v < 400)) { e.target.value = state.ppc; return; }
+  state.ppc = v;
+  try { localStorage.setItem("bwd-ppc", String(v)); } catch (err) {}
+  if (state.sample) makeSample(); else process();
+  updateUI(); requestDraw();
+});
+$("copyCsv").addEventListener("click", () => {
+  if (!D) return;
+  const f = v => v.toFixed(4).replace(".", ",");
+  let csv = "t in s;x in cm;y in cm;vx in cm/s;vy in cm/s;ax in cm/s²;ay in cm/s²\n";
+  for (let i = 0; i < D.N; i++) csv += [D.t[i], D.x[i], D.y[i], D.vx[i], D.vy[i], D.ax[i], D.ay[i]].map(f).join(";") + "\n";
+  const msg = $("copyMsg"), ta = $("csvFallback");
+  const fallback = () => { ta.hidden = false; ta.value = csv; ta.focus(); ta.select(); msg.textContent = "Kopieren war nicht möglich. Die Daten sind unten markiert – kopiere sie mit „Kopieren“."; };
+  try {
+    navigator.clipboard.writeText(csv).then(() => { msg.textContent = `${D.N} Zeilen kopiert (Raster 0,01 s, geglättet).`; ta.hidden = true; }, fallback);
+  } catch (err) { fallback(); }
+});
+
+// ---------- Neuzeichnen ----------
+let rafDraw = 0;
+function draw() { rafDraw = 0; drawPad(); drawPlots(); }
+function requestDraw() { if (!rafDraw) rafDraw = requestAnimationFrame(draw); }
+new ResizeObserver(() => requestDraw()).observe(pad);
+new ResizeObserver(() => requestDraw()).observe(plots);
+window.matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change", requestDraw);
+new MutationObserver(requestDraw).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(requestDraw);
+
+// ---------- Anbindung an die Tafel ----------
+/* Der ganze Zustand - auch die Rohpunkte der Aufnahme - geht als "embed-data" an die Tafel.
+   So bleibt eine aufgenommene Bewegung im Projekt gespeichert und laesst sich teilen. */
+function zustand() {
+  const r3 = v => Math.round(v * 1000) / 1000;
+  return {
+    mode: state.mode, comp: state.comp, sigma: state.sigma,
+    show: { stellen: state.show.stellen, tangenten: state.show.tangenten, flaechen: state.show.flaechen },
+    tool: state.tool, sample: state.sample,
+    raw: state.raw.map(p => ({ t: r3(p.t), x: r3(p.x), y: r3(p.y) })),
+    cursor: state.cursor, pins: state.pins.slice(),
+    interval: state.interval ? state.interval.slice() : null,
+    ppc: state.ppc, strobe: state.strobe, allVec: state.allVec,
+    vecSel: state.vecSel, vecScale: state.vecScale,
+  };
+}
+let syncT = 0, letzter = "";
+function post() {
+  syncT = 0;
+  if (window.parent === window) return;
+  const z = zustand(); letzter = JSON.stringify(z);
+  try { parent.postMessage({ type: "embed-data", data: z }, "*"); } catch (e) {}
+}
+/* gesammelt schicken: waehrend einer Aufnahme aendert sich der Zustand sonst 60-mal je Sekunde */
+function sync() { if (!syncT) syncT = setTimeout(post, 250); }
+["click", "change", "input", "pointerup", "pointercancel"].forEach(ev =>
+  document.addEventListener(ev, sync, true));
+
+function uebernimm(d) {
+  if (!d || typeof d !== "object") return;
+  if (d.mode === "1d" || d.mode === "2d") state.mode = d.mode;
+  if (d.comp) state.comp = d.comp;
+  if (typeof d.sigma === "number") state.sigma = clamp(d.sigma, 0, 200);
+  if (d.show) state.show = { stellen: d.show.stellen !== false, tangenten: d.show.tangenten !== false, flaechen: !!d.show.flaechen };
+  if (d.tool) state.tool = d.tool;
+  if (typeof d.ppc === "number" && d.ppc > 5 && d.ppc < 400) state.ppc = d.ppc;
+  if (typeof d.strobe === "number") state.strobe = d.strobe;
+  if (d.vecSel) state.vecSel = d.vecSel;
+  if (typeof d.vecScale === "number") state.vecScale = d.vecScale;
+  state.allVec = !!d.allVec;
+  if (Array.isArray(d.raw) && d.raw.length > 1) {
+    state.raw = d.raw.map(p => ({ t: +p.t || 0, x: +p.x || 0, y: +p.y || 0 }));
+    state.sample = !!d.sample;
+    state.cursor = (typeof d.cursor === "number") ? d.cursor : null;
+    state.pins = Array.isArray(d.pins) ? d.pins.filter(v => typeof v === "number") : [];
+    state.interval = (Array.isArray(d.interval) && d.interval.length === 2) ? d.interval.slice() : null;
+    state.prev = null;
+    process();
+  }
+  // die Bedienelemente nachziehen, die ihren Wert selbst halten
+  $("smooth").value = state.sigma;
+  $("smoothOut").textContent = state.sigma === 0 ? "aus" : state.sigma + " ms";
+  $("ppc").value = state.ppc;
+  $("strobe").value = String(state.strobe);
+  $("vecSel").value = state.vecSel;
+  $("vecScale").value = String(state.vecScale);
+  $("speed").value = String(state.speed);
+  updateUI(); requestDraw();
+}
+addEventListener("message", e => {
+  if (e.source !== window && (window.parent === window || e.source !== window.parent)) return;
+  const m = e.data;
+  if (!(m && m.type === "embed-data" && m.data)) return;
+  if (JSON.stringify(m.data) === letzter) return;      /* unser eigener Stand kommt zurueck */
+  letzter = JSON.stringify(m.data);
+  uebernimm(m.data);
+  if (window.TafelModus) TafelModus.refresh();
+});
+
+const bild = () => TafelShot.rasterize(document.querySelector(".stage"), { pad: 8, bg: css("--bg") || "#eef1f4" });
+if (window.TafelShot) TafelShot.buttons($("shotBtns"), bild, "");
+if (window.TafelTeilen && !TafelTeilen.istGeteilt())
+  TafelTeilen.knopf($("teilenBtn"), "bewegung.html", () => ({ w: "bwd", d: zustand() }), { cls: "" });
+/* Umschalter "Benutzen / Bearbeiten": die Tafel schickt den Modus mit, allein geoeffnet
+   steht der Knopf oben rechts. Im Benutzen-Modus bleiben die Einstellungen weg. */
+if (window.TafelModus && TafelModus.anTafel && !(window.TafelTeilen && TafelTeilen.istGeteilt()))
+  TafelModus.anTafel({ button: window.parent === window, after: () => requestDraw() });
+
+// Start mit Beispielaufnahme
+requestAnimationFrame(() => {
+  makeSample(); updateUI(); draw();
+  if (window.TafelTeilen && TafelTeilen.istGeteilt()) {
+    TafelTeilen.nurBenutzen();
+    TafelTeilen.empfangen().then(p => { if (p && p.w === "bwd" && p.d) TafelTeilen.einspielen(p.d); }).catch(() => {});
+    return;
+  }
+  try { parent.postMessage({ type: "embed-ready" }, "*"); } catch (e) {}
+});
+})();
+</script>
+</body></html>

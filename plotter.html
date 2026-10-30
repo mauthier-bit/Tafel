@@ -84,7 +84,7 @@
   .trIn.on{border-color:#2563eb;box-shadow:0 0 0 2px #dbeafe;}
   .trIn{flex:1 1 120px;min-width:90px;border:1px solid #cfd6e0;border-radius:8px;padding:calc(var(--k) * 6px) 8px;
         font:600 calc(var(--k) * 14px) ui-monospace,Menlo,Consolas,monospace;color:#1f2430;background:#fff;}
-  #trBsp,#mdBsp{border:1px solid #cfd6e0;border-radius:8px;padding:calc(var(--k) * 5px) 6px;font:600 calc(var(--k) * 13px) inherit;background:#f4f6fa;color:#1f2430;}
+  #trBsp,#mdBsp,#mdGrad{border:1px solid #cfd6e0;border-radius:8px;padding:calc(var(--k) * 5px) 6px;font:600 calc(var(--k) * 13px) inherit;background:#f4f6fa;color:#1f2430;}
   .trChk label{display:inline-flex;align-items:center;gap:4px;font-weight:600;font-size:calc(var(--k) * 13px);color:#53617a;white-space:nowrap;}
   .trChk input{width:17px;height:17px;}
   .trSeg{border:1px solid #cfd6e0;background:#f4f6fa;border-radius:8px;padding:calc(var(--k) * 5px) 9px;
@@ -155,7 +155,7 @@
   #pD{display:none;flex-direction:column;overflow:hidden;}
   #pD.on{display:flex;}
   #mdTop{flex:none;padding:6px 8px 4px;display:flex;flex-direction:column;gap:5px;border-bottom:1px solid #eef1f6;}
-  #mdTop [hidden]{display:none;}
+  #mdTop [hidden]{display:none!important;}   /* schlaegt auch ein style="display:…" am Element */
   #mdMain{flex:1;display:flex;gap:calc(var(--k) * 8px);min-height:0;padding:0 8px 8px;}
   #mdPlotWrap{flex:1;position:relative;min-height:0;min-width:0;border:1px solid #e6ebf3;border-radius:12px;overflow:hidden;}
   #plotD{touch-action:none;}
@@ -185,6 +185,7 @@
   #mdOut .mdT{font-size:calc(var(--k) * 16px);font-weight:800;line-height:1.4;color:#be123c;
               overflow-wrap:anywhere;}
   #mdOut .mdT i{font-style:italic;}
+  #mdOut .mdT sup{font-size:.72em;font-weight:700;}
   #mdOut .mdG{margin-top:calc(var(--k) * 4px);font-size:calc(var(--k) * 12.5px);color:#64748b;line-height:1.4;}
   #mdOut .mdG b{color:#b45309;}
   canvas{position:absolute;inset:0;width:100%;height:100%;background:#fff;}
@@ -465,6 +466,13 @@
           <button type="button" id="mdTp" class="trSeg on" title="Der Graph geht genau durch alle Punkte">ganzrational</button>
           <button type="button" id="mdTe" class="trSeg" title="y = a · bˣ, an die Daten angenähert">exponentiell</button>
           <button type="button" id="mdTt" class="trSeg" title="y = a · sin(b · (x − c)) + d, an die Daten angenähert">trigonometrisch</button>
+          <button type="button" id="mdTn" class="trSeg" title="Normalverteilung (Glockenkurve), an die Daten angenähert">Normalverteilung</button>
+          <span id="mdGenBox" class="trWahl" style="display:inline-flex;gap:4px;align-items:center" hidden>
+            <button type="button" id="mdEx" class="trSeg on" title="Der Graph geht genau durch alle Punkte – der Grad ergibt sich aus der Zahl der Bedingungen">exakt</button>
+            <button type="button" id="mdNae" class="trSeg" title="Ausgleichskurve mit festem Grad, wie bei den anderen Typen">genähert</button>
+            <label id="mdGradBox" class="trChk" hidden style="display:inline-flex;align-items:center;gap:4px" title="Grad der Ausgleichsfunktion">Grad
+              <select id="mdGrad"><option>1</option><option selected>2</option><option>3</option><option>4</option><option>5</option><option>6</option></select></label>
+          </span>
           <button type="button" id="mdAbl" class="trSeg" title="Zusätzlich Steigungen vorgeben: dritte Spalte in der Tabelle und Steigungsgriffe an den Punkten">Ableitung</button>
           <span class="trChk" id="mdOffBox" hidden><label><input type="checkbox" id="mdOff"> mit <i>+&nbsp;c</i></label></span>
           <select id="mdBsp" title="Beispieldaten laden"></select>
@@ -476,6 +484,14 @@
           <button type="button" id="mdSetz" class="trSeg on" title="Tippen setzt einen neuen Punkt. Aus: Tippen und Ziehen verschiebt die Ansicht">＋ Punkte setzen</button>
           <button type="button" id="mdFit" class="trSeg" title="Ansicht auf die Daten einstellen">Ansicht</button>
           <button type="button" id="mdClr" class="trSeg" title="Alle Punkte entfernen">Daten leeren</button>
+          <button type="button" id="mdBild" class="trSeg" title="Ein Foto hinterlegen und das Koordinatensystem daraufsetzen">🖼 Bild</button>
+          <span id="mdBildBox" style="display:inline-flex;gap:4px;align-items:center" hidden>
+            <button type="button" id="mdBildAn" class="trSeg" title="Bild schieben und an seiner Ecke größer oder kleiner ziehen">Bild anpassen</button>
+            <label class="trChk" style="display:inline-flex;align-items:center;gap:4px" title="Wie kräftig das Bild zu sehen ist">
+              <input type="range" id="mdDeck" min="20" max="100" step="5" style="width:70px"></label>
+            <button type="button" id="mdBildWeg" class="trSeg" title="Bild wieder entfernen">Bild weg</button>
+          </span>
+          <input type="file" id="mdFile" accept="image/*" hidden>
         </div>
       </div>
       <div id="mdMain">
@@ -1329,24 +1345,28 @@ function trUiNeu(){ if(!$('trTerm')) return;
    ganzrational: der Graph geht genau durch alle Punkte (Grad = Zahl der Bedingungen − 1),
    auf Wunsch auch mit vorgegebenen Steigungen (Hermite, wie bei Steckbriefaufgaben).
    exponentiell und trigonometrisch: Naeherung nach der Methode der kleinsten Quadrate. */
-const MD_TYP={p:'ganzrational', e:'exponentiell', t:'trigonometrisch'};
+const MD_TYP={p:'ganzrational', e:'exponentiell', t:'trigonometrisch', n:'normalverteilt'};
 const MD_BSP=[
   {n:'Gerade durch 2 Punkte', typ:'p', p:[[0,1],[4,3]]},
   {n:'Wurf: Flugbahn', typ:'p', p:[[0,1],[2,4],[5,3.5]]},
   {n:'Trassierung (mit Steigung)', typ:'p', abl:true, p:[[0,0,1],[4,2,0]]},
   {n:'Bakterien', typ:'e', p:[[0,20],[1,31],[2,48],[3,76],[4,118],[5,180],[6,290]]},
   {n:'Abkühlung', typ:'e', offC:true, p:[[0,85],[5,66],[10,52],[15,43],[20,36],[25,31],[30,28]]},
+  {n:'Messwerte (Glocke)', typ:'n', p:[[1,2],[2,5],[3,12],[4,22],[5,27],[6,21],[7,11],[8,4],[9,1]]},
   {n:'Tageslänge', typ:'t', p:[[1,8.5],[2,10.2],[3,12.1],[4,14.1],[5,15.7],[6,16.5],[7,16.1],[8,14.6],[9,12.7],[10,10.7],[11,9],[12,8.2]]}
 ];
 const MDCOL={pkt:'#1d4ed8', kurve:'#e11d48', abw:'#94a3b8', tang:'#0891b2'};
 /* ux und uy getrennt: Messdaten haben auf beiden Achsen oft sehr verschiedene Groessen */
-let md={typ:'p', abl:false, offC:false, zGraph:true, zAbw:false, zWert:false, setz:true,
-        p:[['','','']], view:{ox:0,oy:0,ux:40,uy:40}};
-let mdW=0, mdH=0, mdErg=null, mdZieh=-1, mdZiehS=-1;
+let md={typ:'p', genau:true, grad:2, abl:false, offC:false, zGraph:true, zAbw:false, zWert:false, setz:true,
+        bild:null, bildAn:false, p:[['','','']], view:{ox:0,oy:0,ux:40,uy:40}};
+let mdW=0, mdH=0, mdErg=null, mdZieh=-1, mdZiehS=-1, mdZiehB=null;
+let mdImg=null, mdImgSrc='';
 const MD_GRIFF=46;                                  /* Abstand des Steigungsgriffs in Pixeln */
 
 const mdF=v=>{ const r=Math.round(v*1000)/1000; return String(r).replace('.',',').replace('-','−'); };
-const mdSlope=()=>md.typ==='p'&&md.abl;             /* dritte Spalte und Steigungsgriffe nur dann */
+/* dritte Spalte und Steigungsgriffe nur bei der exakten ganzrationalen Funktion:
+   eine Ausgleichskurve geht ohnehin nicht durch die Punkte, da waere eine Steigung sinnlos */
+const mdSlope=()=>md.typ==='p'&&md.genau&&md.abl;
 /* Alle brauchbaren Zeilen mit ihrem Platz in der Tabelle; s = vorgegebene Steigung oder null */
 function mdDaten(){ const a=[];
   md.p.forEach((r,i)=>{ const x=pz(r[0]), y=pz(r[1]), s=pz(r[2]);
@@ -1408,10 +1428,33 @@ function mdHermite(D){ const rows=[];
     for(let p=g;p>=0;p--) row.push(r[2]?(p>0?p*Math.pow(r[0],p-1):0):Math.pow(r[0],p));
     return row; });
   return mdGauss(A,rows.map(r=>r[1])); }
+/* Normalverteilung y = a·e^(−(x−μ)²/(2σ²)) (+ c): μ und σ stecken nicht linear im Ansatz.
+   Fuer festes Paar (μ, σ) bleiben a und c ein lineares Ausgleichsproblem – deshalb wird das
+   Paar erst grob abgesucht und dann mit halbierten Schritten nachgezogen. */
+function mdNormal(P,mitC){
+  const xw=P.map(q=>q[0]), x0=Math.min.apply(null,xw), x1=Math.max.apply(null,xw);
+  const span=Math.max(1e-6,x1-x0);
+  const bewerte=(m,sg)=>{ if(!(sg>1e-9)) return null;
+    const g=x=>Math.exp(-((x-m)*(x-m))/(2*sg*sg));
+    const c=mdLin(mitC?[g,()=>1]:[g],P); if(!c) return null;
+    const f=x=>c[0]*g(x)+(mitC?c[1]:0), q=mdSSE(P,f);
+    return isFinite(q)?{m,sg,c,f,q}:null; };
+  let best=null;
+  for(let i=0;i<=24;i++) for(let j=0;j<=16;j++){
+    const r=bewerte(x0-0.2*span+1.4*span*i/24, span*0.03*Math.pow(1.3,j));
+    if(r&&(!best||r.q<best.q)) best=r; }
+  if(!best) return null;
+  let hm=span/24, hs=best.sg/3;
+  for(let k=0;k<80;k++){ let bess=false;
+    for(const d of [[hm,0],[-hm,0],[0,hs],[0,-hs],[hm,hs],[-hm,-hs],[hm,-hs],[-hm,hs]]){
+      const r=bewerte(best.m+d[0],best.sg+d[1]); if(r&&r.q<best.q){ best=r; bess=true; } }
+    if(!bess){ hm/=2; hs/=2; if(hm<span*1e-7) break; } }
+  return best; }
 function mdModell(){ const D=mdDaten(), art=md.typ;
-  const nMin=art==='p'?1:(art==='e'?(md.offC?3:2):4);
+  const gradN=Math.max(1,Math.min(6,md.grad|0));
+  const nMin=art==='p'?(md.genau?1:gradN+1):(art==='e'?(md.offC?3:2):(art==='n'?(md.offC?4:3):4));
   if(D.length<nMin) return {fehlt:nMin};
-  if(art==='p'){
+  if(art==='p'&&md.genau){
     for(let i=1;i<D.length;i++) if(Math.abs(D[i].x-D[i-1].x)<1e-12) return {kein:true,gleich:true};
     const nS=D.filter(q=>q.s!=null).length;
     const c=nS?mdHermite(D):mdInterp(D);
@@ -1419,6 +1462,11 @@ function mdModell(){ const D=mdDaten(), art=md.typ;
     const gr=Math.max.apply(null,c.map(Math.abs));             /* passt die Loesung in einen kleineren */
     while(c.length>1&&Math.abs(c[0])<1e-10*Math.max(1,gr)) c.shift();   /* Grad, dann den angeben */
     return {art:'p', c, g:c.length-1, nS, n:D.length,
+            fn:x=>{ let v=0; for(let i=0;i<c.length;i++) v=v*x+c[i]; return v; }}; }
+  if(art==='p'){                                               /* Ausgleichspolynom mit festem Grad */
+    const basis=[]; for(let i=gradN;i>=0;i--) basis.push(x=>Math.pow(x,i));
+    const c=mdLin(basis,mdDaten().map(q=>[q.x,q.y])); if(!c) return {kein:true};
+    return {art:'p', c, g:gradN, nS:0, n:D.length, nae:true,
             fn:x=>{ let v=0; for(let i=0;i<c.length;i++) v=v*x+c[i]; return v; }}; }
   const P=D.map(q=>[q.x,q.y]);
   const xw=P.map(q=>q[0]), span=Math.max(1e-6, Math.max.apply(null,xw)-Math.min.apply(null,xw));
@@ -1428,6 +1476,9 @@ function mdModell(){ const D=mdDaten(), art=md.typ;
               fn:c=>(x=>c[0]*Math.exp(k*x)+(mitC?c[1]:0))}; });
     if(!best) return {kein:true};
     return {art:'e', fn:best.f, a:best.c[0], b:Math.exp(best.k), c:mitC?best.c[1]:0, mitC}; }
+  if(art==='n'){ const mitC=!!md.offC;
+    const best=mdNormal(P,mitC); if(!best) return {kein:true};
+    return {art:'n', fn:best.f, a:best.c[0], mu:best.m, sg:best.sg, c:mitC?best.c[1]:0, mitC}; }
   /* y = a · sin(b · (x − c)) + d; fuer festes b stecken a, c und d linear im Ansatz */
   const b0=2*Math.PI/(3*span), b1=2*Math.PI*Math.max(2,P.length/2)/span;
   const best=mdSuche(P,Math.log(b0),Math.log(b1),700,lg=>{ const b=Math.exp(lg);
@@ -1457,6 +1508,11 @@ function mdTerm(m){
   if(m.art==='e'){ let s=mdR(m.a)+'·'+mdR(m.b)+'<i>ˣ</i>';
     if(m.mitC&&Math.abs(m.c)>1e-9) s+=(m.c>0?' + ':' − ')+mdR(Math.abs(m.c));
     return s; }
+  if(m.art==='n'){ const mu=m.mu, vz=mu<0?' + ':' − ';
+    let s='<i>e</i><sup>−(<i>x</i>'+(Math.abs(mu)<1e-9?'':vz+mdR(Math.abs(mu)))+')²/(2·'+mdR(m.sg)+'²)</sup>';
+    s=mdR(m.a)+'·'+s;
+    if(m.mitC&&Math.abs(m.c)>1e-9) s+=(m.c>0?' + ':' − ')+mdR(Math.abs(m.c));
+    return s; }
   let s=mdR(m.a)+'·sin('+mdR(m.b)+'·(<i>x</i>'
         +(Math.abs(m.c)<1e-9?'':(m.c>0?' − ':' + ')+mdR(Math.abs(m.c)))+'))';
   if(Math.abs(m.d)>1e-9) s+=(m.d>0?' + ':' − ')+mdR(Math.abs(m.d));
@@ -1471,13 +1527,17 @@ function mdText(){ const out=$('mdOut'); if(!out) return;
       ?'Zwei Punkte mit gleichem <i>x</i> – dadurch kann kein Graph gehen.'
       :'Zu diesen Daten passt kein '+MD_TYP[md.typ]+'es Modell.')+'</div>'; return; }
   let hin;
-  if(m.art==='p'){ hin='Grad <b>'+m.g+'</b> – der Graph geht genau durch '
+  const abw=()=>{ let q=0; D.forEach(o=>{ const v=m.fn(o.x); if(isFinite(v)) q+=Math.abs(v-o.y); });
+    return 'mittlere Abweichung <b>'+nfk(Math.round(q/D.length*1000)/1000)+'</b>'; };
+  if(m.art==='p'&&!m.nae){ hin='Grad <b>'+m.g+'</b> – der Graph geht genau durch '
       +(m.n===1?'den Punkt':'alle '+m.n+' Punkte');
     hin+=m.nS?(m.nS===m.n?(m.n===1?' und hat dort die vorgegebene Steigung.'
                                   :' und hat dort die vorgegebenen Steigungen.')
                          :' und hat an '+(m.nS===1?'einem Punkt':m.nS+' Punkten')+' die vorgegebene Steigung.'):'.'; }
-  else { let q=0; D.forEach(o=>{ const v=m.fn(o.x); if(isFinite(v)) q+=Math.abs(v-o.y); });
-    hin='Näherung – mittlere Abweichung <b>'+nfk(Math.round(q/D.length*1000)/1000)+'</b>.'; }
+  else if(m.art==='p') hin='Grad <b>'+m.g+'</b> · Näherung – '+abw()+'.';
+  else if(m.art==='n') hin='Näherung · <i>μ</i> = <b>'+nfk(Math.round(m.mu*1000)/1000)
+      +'</b> · <i>σ</i> = <b>'+nfk(Math.round(m.sg*1000)/1000)+'</b> – '+abw()+'.';
+  else hin='Näherung – '+abw()+'.';
   out.innerHTML='<div class="mdBox"><div class="mdT"><i>y</i> = '+mdTerm(m)+'</div></div>'
                +'<div class="mdG">'+hin+'</div>'; }
 function mdRechne(){ mdErg=mdModell(); mdDraw(); mdText(); }
@@ -1502,6 +1562,41 @@ function mdAnsicht(){ if(!mdW) return; const D=mdDaten();
         uy=Math.max(0.01,Math.min(4000,(mdH-34)/(y1-y0)));
   md.view={ux, uy, ox:mdW/2-(x0+x1)/2*ux, oy:mdH/2+(y0+y1)/2*uy};
   mdDraw(); }
+/* ---- Hintergrundbild ----
+   Das Bild liegt im Koordinatensystem: gespeichert werden die linke obere Ecke (x|y) in
+   Koordinaten und die Breite w in x-Einheiten. Die Hoehe ergibt sich aus dem Seitenverhaeltnis
+   des Fotos, damit es nie verzerrt aussieht – auch wenn x- und y-Achse verschieden eng stehen. */
+function mdBildRect(){ const b=md.bild; if(!b||!b.iw) return null;
+  const v=md.view, w=b.w*v.ux;
+  return {x:v.ox+b.x*v.ux, y:v.oy-b.y*v.uy, w, h:w*b.ih/b.iw}; }
+function mdBildLaden(f){ if(!f) return;
+  const fr=new FileReader();
+  fr.onload=()=>{ const im=new Image();
+    im.onload=()=>{
+      const MAX=1400, k=Math.min(1,MAX/Math.max(im.width,im.height));   /* grosse Fotos kleiner rechnen */
+      const c=document.createElement('canvas');
+      c.width=Math.max(1,Math.round(im.width*k)); c.height=Math.max(1,Math.round(im.height*k));
+      const g=c.getContext('2d'); g.fillStyle='#fff'; g.fillRect(0,0,c.width,c.height);
+      g.drawImage(im,0,0,c.width,c.height);
+      let src; try{ src=c.toDataURL('image/jpeg',0.82); }catch(e){ src=''; }
+      if(!src) return;
+      const v=md.view;
+      md.bild={src, iw:c.width, ih:c.height, deck:0.8,
+               x:(mdW*0.08-v.ox)/v.ux, y:(v.oy-mdH*0.08)/v.uy, w:(mdW*0.84)/v.ux};
+      md.bildAn=true; mdUi(); mdDraw(); sync(); };
+    im.src=fr.result; };
+  fr.readAsDataURL(f); }
+function mdBildMalen(c2){ const b=md.bild; if(!b||!b.src) return;
+  if(mdImgSrc!==b.src){ mdImgSrc=b.src; mdImg=new Image(); mdImg.onload=()=>mdDraw(); mdImg.src=b.src; return; }
+  if(!mdImg||!mdImg.complete||!mdImg.naturalWidth) return;
+  const r=mdBildRect(); if(!r) return;
+  c2.save(); c2.globalAlpha=Math.max(.1,Math.min(1,b.deck||0.8));
+  try{ c2.drawImage(mdImg,r.x,r.y,r.w,r.h); }catch(e){}
+  c2.restore();
+  if(md.bildAn){ c2.save(); c2.strokeStyle='#2563eb'; c2.lineWidth=1.6; c2.setLineDash([6,4]);
+    c2.strokeRect(r.x,r.y,r.w,r.h); c2.setLineDash([]);
+    c2.beginPath(); c2.arc(r.x+r.w,r.y+r.h,9,0,7); c2.fillStyle='#fff'; c2.fill();
+    c2.lineWidth=2.6; c2.stroke(); c2.restore(); } }
 function mdLabel(c2,t,x,y,col){ c2.save();
   c2.font='700 '+Math.max(11,fontSize)+'px -apple-system,BlinkMacSystemFont,sans-serif';
   c2.textAlign='left'; c2.textBaseline='middle'; c2.lineJoin='round';
@@ -1515,21 +1610,25 @@ function mdGriffOrt(q){ const v=md.view, px=v.ox+q.x*v.ux, py=v.oy-q.y*v.uy;
 function mdDraw(){ if(tab!=='d'||!mdW) return;
   const c2=$('plotD').getContext('2d'); c2.setTransform(dpr,0,0,dpr,0,0);
   c2.clearRect(0,0,mdW,mdH); c2.fillStyle='#fff'; c2.fillRect(0,0,mdW,mdH);
+  mdBildMalen(c2);
   const ux=md.view.ux, uy=md.view.uy, ox=md.view.ox, oy=md.view.oy, sx=mdStepX(), sy=mdStepY();
   const xmin=(0-ox)/ux, xmax=(mdW-ox)/ux, ymin=(oy-mdH)/uy, ymax=oy/uy;
-  c2.strokeStyle='#eef1f6'; c2.lineWidth=1; c2.beginPath();
+  const foto=!!(md.bild&&md.bild.src);          /* auf einem Foto braucht das Gitter mehr Kontrast */
+  c2.strokeStyle=foto?'rgba(51,65,85,.30)':'#eef1f6'; c2.lineWidth=1; c2.beginPath();
   for(let x=Math.ceil(xmin/sx)*sx;x<=xmax;x+=sx){ const px=ox+x*ux; c2.moveTo(px,0); c2.lineTo(px,mdH); }
   for(let y=Math.ceil(ymin/sy)*sy;y<=ymax;y+=sy){ const py=oy-y*uy; c2.moveTo(0,py); c2.lineTo(mdW,py); }
   c2.stroke();
-  c2.strokeStyle='#98a2b3'; c2.lineWidth=1.6; c2.beginPath();
+  c2.strokeStyle=foto?'#334155':'#98a2b3'; c2.lineWidth=foto?2:1.6; c2.beginPath();
   c2.moveTo(0,oy); c2.lineTo(mdW,oy); c2.moveTo(ox,0); c2.lineTo(ox,mdH); c2.stroke();
-  c2.fillStyle='#667085'; c2.font=(fontItalic?'italic ':'')+(fontBold?'bold ':'')+fontSize+'px sans-serif';
+  c2.fillStyle=foto?'#1f2430':'#667085'; c2.font=(fontItalic?'italic ':'')+(fontBold?'bold ':'')+fontSize+'px sans-serif';
+  c2.lineJoin='round'; c2.lineWidth=3.2; c2.strokeStyle='rgba(255,255,255,.9)';
+  const zahlMal=(t,x,y)=>{ if(foto) c2.strokeText(t,x,y); c2.fillText(t,x,y); };
   c2.textAlign='center'; c2.textBaseline='top';
   for(let x=Math.ceil(xmin/sx)*sx;x<=xmax;x+=sx){ if(Math.abs(x)<sx/1e6) continue;
-    c2.fillText(fmt(x), ox+x*ux, Math.min(Math.max(oy+3,2),mdH-fontSize-3)); }
+    zahlMal(fmt(x), ox+x*ux, Math.min(Math.max(oy+3,2),mdH-fontSize-3)); }
   c2.textAlign='right'; c2.textBaseline='middle';
   for(let y=Math.ceil(ymin/sy)*sy;y<=ymax;y+=sy){ if(Math.abs(y)<sy/1e6) continue;
-    c2.fillText(fmt(y), Math.min(Math.max(ox-4,fontSize*2.6),mdW-2), oy-y*uy); }
+    zahlMal(fmt(y), Math.min(Math.max(ox-4,fontSize*2.6),mdW-2), oy-y*uy); }
   const m=mdErg, D=mdDaten();
   if(md.zGraph&&m&&m.fn){ c2.save(); c2.strokeStyle=MDCOL.kurve; c2.lineWidth=2.6; c2.beginPath();
     let prev=null;
@@ -1538,7 +1637,7 @@ function mdDraw(){ if(tab!=='d'||!mdW) return;
       if(prev===null||Math.abs(py-prev)>mdH*3) c2.moveTo(px,py); else c2.lineTo(px,py);
       prev=py; }
     c2.stroke(); c2.restore(); }
-  if(md.zAbw&&md.typ!=='p'&&m&&m.fn){ c2.save(); c2.strokeStyle=MDCOL.abw; c2.lineWidth=1.6;
+  if(md.zAbw&&!(md.typ==='p'&&md.genau)&&m&&m.fn){ c2.save(); c2.strokeStyle=MDCOL.abw; c2.lineWidth=1.6;
     c2.setLineDash([4,4]); c2.beginPath();
     D.forEach(q=>{ const v=m.fn(q.x); if(!isFinite(v)) return;
       c2.moveTo(ox+q.x*ux,oy-q.y*uy); c2.lineTo(ox+q.x*ux,oy-v*uy); });
@@ -1557,9 +1656,17 @@ function mdDraw(){ if(tab!=='d'||!mdW) return;
     c2.save(); c2.beginPath(); c2.arc(px,py,gr,0,7); c2.fillStyle=MDCOL.pkt; c2.fill();
     c2.lineWidth=2; c2.strokeStyle='#fff'; c2.stroke(); c2.restore();
     if(md.zWert||i===mdZieh) mdLabel(c2,'('+mdF(x)+' | '+mdF(y)+')',px+11,py-13); });
-  if(!D.length){ c2.save(); c2.fillStyle='#64748b';
+  if(md.bildAn&&md.bild){ c2.save(); c2.fillStyle='#1d4ed8';
+    c2.font='700 '+Math.max(13,fontSize)+'px sans-serif'; c2.textAlign='center'; c2.textBaseline='top';
+    c2.lineJoin='round'; c2.lineWidth=3.5; c2.strokeStyle='rgba(255,255,255,.9)';
+    const t='Bild schieben · an der Ecke ziehen · Achsen passend legen';
+    c2.strokeText(t,mdW/2,8); c2.fillText(t,mdW/2,8); c2.restore(); }
+  else if(!D.length){ c2.save(); c2.fillStyle='#64748b';
     c2.font='600 '+Math.max(13,fontSize)+'px sans-serif'; c2.textAlign='center'; c2.textBaseline='top';
-    c2.fillText('Punkte in die Fläche tippen oder in der Tabelle eintragen', mdW/2, 8); c2.restore(); } }
+    c2.lineJoin='round'; c2.lineWidth=3.5; c2.strokeStyle='rgba(255,255,255,.9)';
+    const t='Punkte in die Fläche tippen oder in der Tabelle eintragen';
+    if(foto) c2.strokeText(t,mdW/2,8);
+    c2.fillText(t, mdW/2, 8); c2.restore(); } }
 
 /* ---- Tabelle und Punkte ---- */
 function mdZeile(i){ const tr2=$('mdBody').children[i]; if(!tr2) return;
@@ -1605,21 +1712,30 @@ function mdSetS(i,mx,my){ const v=md.view, x=pz(md.p[i][0]), y=pz(md.p[i][1]);
 function mdNeuPkt(mx,my){ let i=md.p.findIndex(r=>!isFinite(pz(r[0]))&&!isFinite(pz(r[1])));
   if(i<0){ md.p.push(['','','']); i=md.p.length-1; mdBaue(); }
   mdSetP(i,mx,my); return i; }
-function mdUi(){ ['p','e','t'].forEach(k=>$('mdT'+k).classList.toggle('on',md.typ===k));
-  $('mdOffBox').hidden=md.typ!=='e';  $('mdOff').checked=!!md.offC;
-  $('mdAbl').hidden=md.typ!=='p';     $('mdAbl').classList.toggle('on',!!md.abl);
-  $('mdAbwBox').hidden=md.typ==='p';                /* bei ganzrational sind die Abweichungen 0 */
+function mdUi(){ ['p','e','t','n'].forEach(k=>$('mdT'+k).classList.toggle('on',md.typ===k));
+  $('mdOffBox').hidden=!(md.typ==='e'||md.typ==='n');  $('mdOff').checked=!!md.offC;
+  $('mdGenBox').hidden=md.typ!=='p';
+  $('mdEx').classList.toggle('on',!!md.genau); $('mdNae').classList.toggle('on',!md.genau);
+  $('mdGradBox').hidden=!(md.typ==='p'&&!md.genau); $('mdGrad').value=String(Math.max(1,Math.min(6,md.grad|0)));
+  $('mdAbl').hidden=!(md.typ==='p'&&md.genau);     $('mdAbl').classList.toggle('on',!!md.abl);
+  $('mdAbwBox').hidden=md.typ==='p'&&md.genau;      /* beim exakten Graphen sind die Abweichungen 0 */
   $('mdGraphAn').checked=!!md.zGraph; $('mdAbwAn').checked=!!md.zAbw; $('mdWertAn').checked=!!md.zWert;
-  $('mdSetz').classList.toggle('on',!!md.setz); }
+  $('mdSetz').classList.toggle('on',!!md.setz);
+  $('mdBildBox').hidden=!md.bild;
+  $('mdBildAn').classList.toggle('on',!!md.bildAn);
+  $('mdDeck').value=String(Math.round((md.bild&&md.bild.deck!=null?md.bild.deck:0.8)*100)); }
 
 (function mdBuild(){
   const sel=$('mdBsp');
   sel.innerHTML='<option value="">Beispiel …</option>'+MD_BSP.map((b,i)=>'<option value="'+i+'">'+b.n+'</option>').join('');
   sel.onchange=()=>{ const b=MD_BSP[+sel.value]; sel.value=''; if(!b) return;
-    md.typ=b.typ; md.offC=!!b.offC; md.abl=!!b.abl;
+    md.typ=b.typ; md.offC=!!b.offC; md.abl=!!b.abl; md.genau=b.genau!==false; if(b.grad) md.grad=b.grad;
     md.p=b.p.map(q=>[mdF(q[0]),mdF(q[1]),q.length>2?mdF(q[2]):'']);
     mdUi(); mdBaue(); mdErg=mdModell(); mdAnsicht(); mdText(); sync(); };
-  ['p','e','t'].forEach(k=>{ $('mdT'+k).onclick=()=>{ md.typ=k; mdUi(); mdBaue(); mdRechne(); sync(); }; });
+  ['p','e','t','n'].forEach(k=>{ $('mdT'+k).onclick=()=>{ md.typ=k; mdUi(); mdBaue(); mdRechne(); sync(); }; });
+  $('mdEx').onclick=()=>{ md.genau=true; mdUi(); mdBaue(); mdRechne(); sync(); };
+  $('mdNae').onclick=()=>{ md.genau=false; mdUi(); mdBaue(); mdRechne(); sync(); };
+  $('mdGrad').onchange=()=>{ md.grad=Math.max(1,Math.min(6,+$('mdGrad').value||2)); mdRechne(); sync(); };
   $('mdAbl').onclick=()=>{ md.abl=!md.abl; mdUi(); mdBaue(); mdRechne(); sync(); };
   $('mdOff').onchange=()=>{ md.offC=$('mdOff').checked; mdRechne(); sync(); };
   $('mdGraphAn').onchange=()=>{ md.zGraph=$('mdGraphAn').checked; mdDraw(); sync(); };
@@ -1627,6 +1743,12 @@ function mdUi(){ ['p','e','t'].forEach(k=>$('mdT'+k).classList.toggle('on',md.ty
   $('mdWertAn').onchange=()=>{ md.zWert=$('mdWertAn').checked; mdDraw(); sync(); };
   $('mdSetz').onclick=()=>{ md.setz=!md.setz; mdUi(); sync(); };
   $('mdFit').onclick=()=>{ mdAnsicht(); sync(); };
+  $('mdBild').onclick=()=>{ $('mdFile').value=''; $('mdFile').click(); };
+  $('mdFile').onchange=()=>{ mdBildLaden($('mdFile').files[0]); };
+  $('mdBildAn').onclick=()=>{ md.bildAn=!md.bildAn; mdUi(); mdDraw(); sync(); };
+  $('mdDeck').oninput=()=>{ if(md.bild){ md.bild.deck=Math.max(.1,Math.min(1,(+$('mdDeck').value||80)/100)); mdDraw(); } };
+  $('mdDeck').onchange=()=>sync();
+  $('mdBildWeg').onclick=()=>{ md.bild=null; md.bildAn=false; mdImg=null; mdImgSrc=''; mdUi(); mdDraw(); sync(); };
   $('mdClr').onclick=()=>{ md.p=[['','','']]; mdBaue(); mdRechne(); sync(); };
   $('mdAdd').onclick=()=>{ md.p.push(['','','']); mdBaue();
     const e=$('mdBody').lastElementChild, el=e&&e.querySelector('input');
@@ -1639,9 +1761,15 @@ function mdUi(){ ['p','e','t'].forEach(k=>$('mdT'+k).classList.toggle('on',md.ty
     try{ el.setPointerCapture(e.pointerId); }catch(err){}
     zs.set(e.pointerId,{x:e.clientX,y:e.clientY});
     if(zs.size===2){ const v=[...zs.values()]; dist0=Math.hypot(v[0].x-v[1].x,v[0].y-v[1].y);
-      ux0=md.view.ux; uy0=md.view.uy; mdZieh=-1; mdZiehS=-1; last=null; mdDraw(); return; }
+      ux0=md.view.ux; uy0=md.view.uy; mdZieh=-1; mdZiehS=-1; mdZiehB=null; last=null; mdDraw(); return; }
     if(zs.size>2) return;
-    const p=lok(e), t=Date.now(), pk=mdNah(p[0],p[1]), gf=mdNahS(p[0],p[1]);
+    const p=lok(e);
+    if(md.bild&&md.bildAn){                      /* beim Anpassen gehoert die Flaeche dem Bild */
+      const r=mdBildRect();
+      if(r&&Math.hypot(p[0]-(r.x+r.w),p[1]-(r.y+r.h))<=26) mdZiehB={art:'gr'};
+      else mdZiehB={art:'mv', x:p[0], y:p[1]};
+      return; }
+    const t=Date.now(), pk=mdNah(p[0],p[1]), gf=mdNahS(p[0],p[1]);
     if(gf.i>=0&&(pk.i<0||gf.d<=pk.d)){             /* der naehere von Punkt und Steigungsgriff gewinnt */
       const gs=gf.i;
       if(tapI==='s'+gs&&t-tapT<420){ md.p[gs][2]=''; mdZeile(gs); tapI=-1; mdZiehS=-1;
@@ -1663,12 +1791,18 @@ function mdUi(){ ['p','e','t'].forEach(k=>$('mdT'+k).classList.toggle('on',md.ty
         md.view.ux=Math.max(0.01,Math.min(4000,ux0*f)); md.view.uy=Math.max(0.01,Math.min(4000,uy0*f)); }
       mdDraw(); return; }
     const p=lok(e);
+    if(mdZiehB&&md.bild){ const v=md.view;
+      if(mdZiehB.art==='gr'){ const r=mdBildRect();
+        md.bild.w=Math.max(1e-6,(p[0]-r.x)/v.ux); }
+      else { md.bild.x+=(p[0]-mdZiehB.x)/v.ux; md.bild.y-=(p[1]-mdZiehB.y)/v.uy;
+        mdZiehB.x=p[0]; mdZiehB.y=p[1]; }
+      mdDraw(); return; }
     if(mdZiehS>=0){ mdSetS(mdZiehS,p[0],p[1]); mdRechne(); return; }
     if(mdZieh>=0){ mdSetP(mdZieh,p[0],p[1]); mdRechne(); return; }
     if(last){ md.view.ox+=e.clientX-last.x; md.view.oy+=e.clientY-last.y;
       last={x:e.clientX,y:e.clientY}; mdDraw(); } });
   const auf=e=>{ zs.delete(e.pointerId); if(zs.size<2) dist0=0;
-    if(!zs.size){ mdZieh=-1; mdZiehS=-1; last=null; mdDraw(); sync(); } };
+    if(!zs.size){ mdZieh=-1; mdZiehS=-1; mdZiehB=null; last=null; mdDraw(); sync(); } };
   el.addEventListener('pointerup',auf); el.addEventListener('pointercancel',auf);
   el.addEventListener('wheel',e=>{ e.preventDefault(); const f=Math.exp(-e.deltaY*0.0015), p=lok(e);
     const nx=(p[0]-md.view.ox)/md.view.ux, ny=(md.view.oy-p[1])/md.view.uy;
@@ -1679,8 +1813,9 @@ function mdUi(){ ['p','e','t'].forEach(k=>$('mdT'+k).classList.toggle('on',md.ty
 })();
 
 function zustand(){ return {funcs:funcs.map(f=>({term:f.term,color:f.color,width:f.width,mx:f.mx,hide:!!f.hide})), params, view, fontSize, fontBold, fontItalic, activeIdx, tab, xs:xs.slice(), xPt:{on:xPt.on,v:xPt.v}, yPt:{on:yPt.on,v:yPt.v}, tr:Object.assign({},tr),
-  md:{typ:md.typ, abl:!!md.abl, offC:!!md.offC, zGraph:!!md.zGraph, zAbw:!!md.zAbw, zWert:!!md.zWert,
-      setz:!!md.setz, p:md.p.map(r=>[r[0],r[1],r[2]||'']), view:Object.assign({},md.view)}}; }
+  md:{typ:md.typ, genau:!!md.genau, grad:md.grad, abl:!!md.abl, offC:!!md.offC, zGraph:!!md.zGraph, zAbw:!!md.zAbw, zWert:!!md.zWert,
+      setz:!!md.setz, bild:md.bild?Object.assign({},md.bild):null, bildAn:!!md.bildAn,
+      p:md.p.map(r=>[r[0],r[1],r[2]||'']), view:Object.assign({},md.view)}}; }
 function sync(){ if(window.parent===window) return; /* allein geöffnet: nicht an sich selbst senden */ try{ parent.postMessage({type:'embed-data',data:zustand()},'*'); }catch(e){} }
 addEventListener('message',e=>{ if(e.source!==window&&(window.parent===window||e.source!==window.parent)) return;   // eigene Nachrichten ignorieren
   if(!(e.data&&e.data.type==='embed-data'&&e.data.data))return; const d=e.data.data;
@@ -1704,8 +1839,11 @@ addEventListener('message',e=>{ if(e.source!==window&&(window.parent===window||e
     trToks=tokenize(tr.term); trAltToks(); trUiNeu(); }
   if(d.md&&typeof d.md==='object'){ const o=d.md, warS=mdSlope();
     if(o.typ&&MD_TYP[o.typ]) md.typ=o.typ;
+    md.genau=o.genau!==false; if(o.grad) md.grad=Math.max(1,Math.min(6,o.grad|0));
     md.abl=!!o.abl; md.offC=!!o.offC; md.zGraph=o.zGraph!==false; md.zAbw=!!o.zAbw;
     md.zWert=!!o.zWert; md.setz=o.setz!==false;
+    md.bild=(o.bild&&o.bild.src&&o.bild.iw)?Object.assign({},o.bild):null;
+    md.bildAn=!!md.bild&&!!o.bildAn;
     let anders=warS!==mdSlope();
     if(Array.isArray(o.p)){ const st=v=>String(v==null?'':v);
       const neu=(o.p.length?o.p:[['','','']]).map(r=>[st(r&&r[0]),st(r&&r[1]),st(r&&r[2])]);
@@ -1780,7 +1918,10 @@ if(window.TafelModus&&TafelModus.anTafel) TafelModus.anTafel({ button:false,   /
   after:()=>{ try{ dispatchEvent(new Event('resize')); }catch(e){} } });
 if(window.TafelShot) TafelShot.buttons($('shotBtns'),tabBild,'tafelEdit','border:none;border-radius:8px;background:#e7ebf1;padding:7px 10px;font-size:13px;cursor:pointer;white-space:nowrap;font-weight:600;color:#1f2430;');
 if(window.TafelTeilen&&!TafelTeilen.istGeteilt())
-  TafelTeilen.knopf($('teilenBtn'),'plotter.html',()=>({w:'plot1', d:zustand()}),{cls:'fsb'});
+  TafelTeilen.knopf($('teilenBtn'),'plotter.html',()=>{ const d=zustand();
+    if(d.md&&d.md.bild){ d.md.bild=null; d.md.bildAn=false;     /* ein Foto sprengt den QR-Code */
+      if(window.TafelShot) TafelShot.toast('Das Hintergrundbild wird nicht mitgeteilt'); }
+    return {w:'plot1', d}; },{cls:'fsb'});
 window.addEventListener('load',()=>{ document.body.classList.add('t-g');
   resize(); buildRows(); buildTable(); buildMachines(); updateSliders(); achsBtns(); mdBaue(); mdText();
   if(window.TafelTeilen&&TafelTeilen.istGeteilt()){

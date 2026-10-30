@@ -2070,17 +2070,22 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   beides immer). **Jeder Punkt bleibt beweglich:** Man zieht ihn mit dem Finger, die Werte rasten
   auf einem Zehntel des Achsenschritts ein, stehen sofort in der Tabelle, und das Modell rechnet
   sich **beim Ziehen** neu mit. Ein **zweiter Tipp** auf einen Punkt nimmt ihn weg.
-  **Drei Funktionstypen** stehen zur Wahl:
-  - **ganzrational:** Der Graph geht **genau durch alle Punkte** – der **Grad richtet sich nach der
-    Zahl der Bedingungen** (zwei Punkte → Grad 1, drei Punkte → Grad 2 …). Lässt sich die Aufgabe
-    mit einem kleineren Grad lösen, wird der kleinere angegeben.
+  **Vier Funktionstypen** stehen zur Wahl:
+  - **ganzrational** – hier gibt es den Umschalter **exakt / genähert**:
+    **exakt** legt den Graphen **genau durch alle Punkte**, der **Grad richtet sich nach der Zahl der
+    Bedingungen** (zwei Punkte → Grad 1, drei Punkte → Grad 2 …; lässt sich die Aufgabe mit einem
+    kleineren Grad lösen, wird der kleinere angegeben). **genähert** rechnet wie bei den anderen
+    Typen eine **Ausgleichskurve** – dann wird der **Grad (1 bis 6) selbst gewählt**, und der Graph
+    geht nicht mehr durch die Punkte, sondern möglichst nah an ihnen vorbei.
   - **exponentiell:** **y = a · bˣ**, auf Wunsch (**„mit + c"**) mit Verschiebung **y = a · bˣ + c**
     (für Abkühlungs- und Sättigungsvorgänge).
   - **trigonometrisch:** **y = a · sin(b · (x − c)) + d**.
-  Bei den beiden letzten wird **angenähert** (Methode der kleinsten Quadrate, die Periode bzw. die
-  Wachstumsrate wird dabei mit abgesucht); unter dem Term steht die **mittlere Abweichung**, und
+  - **Normalverteilung:** die Glockenkurve **y = a · e^(−(x − μ)² / (2 · σ²))**, ebenfalls mit
+    **„mit + c"**; unter dem Term stehen **μ** und **σ** als Zahlen.
+  Außer bei **exakt** wird **angenähert** (Methode der kleinsten Quadrate; Periode, Wachstumsrate
+  bzw. μ und σ werden dabei mit abgesucht); unter dem Term steht die **mittlere Abweichung**, und
   das Häkchen **„Abweichungen"** zeichnet zu jedem Punkt den senkrechten Abstand zur Kurve.
-  **„Ableitung" (nur bei ganzrational):** Dann kommt eine **dritte Spalte *y*′** in die Tabelle, und
+  **„Ableitung" (nur bei ganzrational und exakt):** Dann kommt eine **dritte Spalte *y*′** in die Tabelle, und
   an jedem Punkt im Koordinatensystem sitzt ein **Steigungsregler** – ein kurzes Tangentenstück mit
   Griff, das sich **drehen** lässt. Eine gezogene (oder eingetippte) Steigung ist eine **zusätzliche
   Bedingung**, der Grad steigt entsprechend: zwei Punkte mit je einer Steigung → **Grad 3**. So
@@ -2094,8 +2099,18 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   erst **vorhersagen** soll), **„Ansicht"** stellt das Fenster auf die Daten ein – **x- und
   y-Richtung getrennt**, sodass auch Messreihen mit großen y-Werten (Bakterien, Temperaturen)
   vernünftig dastehen. Über **„Beispiel …"** liegen fertige Datensätze bereit (Gerade durch zwei
-  Punkte, Wurfbahn, Trassierung mit Steigungen, Bakterien, Abkühlung, Tageslänge). Daten, Typ und
-  Schalter werden mit dem Projekt gespeichert und beim **Teilen** mitgegeben.
+  Punkte, Wurfbahn, Trassierung mit Steigungen, Bakterien, Abkühlung, Messwerte als Glocke,
+  Tageslänge). Daten, Typ und Schalter werden mit dem Projekt gespeichert und beim **Teilen**
+  mitgegeben.
+  **🖼 Bild – Funktionen in Fotos:** Ein **Foto hinterlegen** (Brücke, Springbrunnen, Wurf …) und das
+  **Koordinatensystem daraufsetzen**. Nach dem Laden ist **„Bild anpassen"** an: Das Bild lässt sich
+  **schieben** und an seiner **Ecke größer oder kleiner ziehen**, bis Ursprung und Achsen dort liegen,
+  wo sie hingehören (die Zeichenfläche selbst verschiebt und zoomt man weiter mit **zwei Fingern**).
+  Ein Regler daneben stellt ein, **wie kräftig** das Bild zu sehen ist; über einem Foto werden Gitter
+  und Achsen dunkler gezeichnet und die Zahlen hell hinterlegt, damit sie lesbar bleiben.
+  Ist **„Bild anpassen"** wieder aus, tippt man die **Punkte auf das Bild** und modelliert wie sonst.
+  **„Bild weg"** entfernt es. Das Bild wird **ins Projekt mitgespeichert** (verkleinert auf höchstens
+  1400 Pixel); beim **Teilen** per QR-Code bleibt es weg – der Code wäre sonst nicht mehr lesbar.
   **Term verdecken (👁 neben der Eingabe):** Der Term bleibt erhalten und wirkt weiter, ist aber **nirgends mehr
   zu sehen** – statt seiner steht „? ? ?“ (auch in der Maschine und in Bildern für die Tafel). So wird aus jeder
   Funktion eine Aufgabe: *Welche Funktion steckt dahinter?* Ein zweiter Tipp zeigt ihn wieder.
@@ -2298,7 +2313,7 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
    Figuren & Körper · 3D-Koordinatensystem — **3.** GeoGebra-App · CODAP · Diagramm · Zufall ·
    Vierfeldertafel — **4.** Baumdiagramm · Wahrscheinlichkeitsrechner · **Tabellenkalkulation** ·
    Motion-Tracker · **Mathe und Physik Geschichte** — **5.** Stromkreis · Optiklabor · Wellenwanne ·
-   **Atomphysik** · **Induktion** — **6.** **Video-Physik** · **Audio-Physik** · Messwert-Analyse ·
+   **Bewegungsdiagramme** · **Atomphysik** · **Induktion** — **6.** **Video-Physik** · **Audio-Physik** · Messwert-Analyse ·
    **Versuchsprotokoll** · Einheitenumrechner.
    Die Aufklappmenüs legen sich **nie über die Werkzeugleiste**: Sie öffnen neben ihr, bleiben unter
    der oberen Leiste und nehmen bei schmalem Fenster **weniger Spalten** (bei wenig Höhe lassen sie
@@ -2736,6 +2751,23 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     Mond rechts, beim **abnehmenden** links. Weil Erde und Mond im flachen Modell in einer Ebene
     laufen, gerät der Vollmond dort in jedem Umlauf in den Erdschatten – in Wirklichkeit ist die
     Mondbahn geneigt; die Vorlage weist beim Laden darauf hin.
+- **Bewegungsdiagramme** (Mathe & Physik): Eine Bewegung **mit dem Finger aufnehmen** und sofort als
+  **t-x-, t-v- und t-a-Diagramm** sehen. Im Aufnahmefeld liegt ein **Lineal in echten Zentimetern**
+  (Maßstab in den Einstellungen, iPad ca. 52 px/cm); solange der Finger aufliegt, wird aufgezeichnet,
+  beim Abheben ist die Aufnahme fertig. **1D** nimmt nur die waagerechte Bewegung (Messstreifen),
+  **2D** die ganze Bahn in der Ebene – dann lassen sich **x**, **y** oder **x + y** zeigen.
+  - **Glättung** (0 bis 200 ms) bestimmt, wie stark gemittelt wird, bevor abgeleitet wird – ohne sie
+    rauschen v und a; die Ableitungen entstehen aus den geglätteten Messwerten auf einem 0,01-s-Raster.
+  - **Stellen, Tangenten, Flächen, Vektoren:** Ein Tipp ins Diagramm setzt eine **Stelle** (alle drei
+    Diagramme zeigen den Wert, dazu die **Tangentensteigung**: im t-x-Diagramm ist sie v, im
+    t-v-Diagramm a) oder ein **Intervall** – dann wird die **Fläche** unter v (= zurückgelegter Weg)
+    bzw. unter a (= Geschwindigkeitsänderung) eingefärbt und beziffert. **Stelle merken** hält bis zu
+    acht Stellen fest, **Vektoren** zeichnet an jedem Messpunkt die Pfeile für v und a.
+  - **Abspielen** lässt die Bewegung noch einmal ablaufen (1×, 0,5×, 0,25×), **Vorherige** holt die
+    letzte Aufnahme zurück, **Messwerte als CSV kopieren** gibt die Tabelle an Excel weiter.
+  - Aufnahme, Einstellungen und gemerkte Stellen werden **im Projekt gespeichert**; **🖼 Tafel**,
+    **📋 Kopieren** und **⤴ Teilen** arbeiten wie bei den anderen Werkzeugen. Der Umschalter
+    **Benutzen/Bearbeiten** blendet beim Arbeiten nur die Einstellungen und die Bild-Knöpfe aus.
 - **Wellenwanne** (Mathe & Physik): eine echte Wellensimulation (Wellengleichung auf einem Gitter,
   rund 50 000 Zellen, flüssig in Echtzeit). Bedienung wie beim Stromkreis: links **Neu, Speichern, Laden,
   Start/Pause, Neustart, Löschen**, in der Mitte die seitlich scrollenden Bauteile und dahinter –
@@ -3292,6 +3324,7 @@ motiontracker.html    ← Motion-Tracker (Bewegung und Abstand per Kamera-KI; br
 stromkreis.html       ← Stromkreis-Editor mit Simulation (U, I, R, C, L, Ladungsfluss, Bild-Export)
 optik.html            ← Optiklabor (Strahlenoptik, Schatten, Mondphasen und Finsternisse)
 wellen.html           ← Wellenwanne (Reflexion, Brechung, Beugung, Interferenz, Huygens)
+bewegung.html         ← Bewegungsdiagramme (Bewegung mit dem Finger aufnehmen, t-x-, t-v-, t-a-Diagramm)
 glossar.html          ← Glossar (Begriffe mit Erklärungen, Abfragemodus)
 zuordnen.html         ← Zuordnen (Begriffe und Bilder in Gruppen oder paarweise)
 luecken.html          ← Lückentext (Lücken wählen oder zufällig, tippen oder ziehen)
