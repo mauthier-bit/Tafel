@@ -2810,10 +2810,20 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     bzw. unter a (= Geschwindigkeitsänderung) eingefärbt und beziffert. **Stelle merken** hält bis zu
     acht Stellen fest, **Vektoren** zeichnet an jedem Messpunkt die Pfeile für v und a.
   - **Abspielen** lässt die Bewegung noch einmal ablaufen (1×, 0,5×, 0,25×), **Vorherige** holt die
-    letzte Aufnahme zurück, **Messwerte als CSV kopieren** gibt die Tabelle an Excel weiter.
-  - Aufnahme, Einstellungen und gemerkte Stellen werden **im Projekt gespeichert**; **🖼 Tafel**,
-    **📋 Kopieren** und **⤴ Teilen** arbeiten wie bei den anderen Werkzeugen. Der Umschalter
-    **Benutzen/Bearbeiten** blendet beim Arbeiten nur die Einstellungen und die Bild-Knöpfe aus.
+    letzte Aufnahme zurück, **Messwerte als CSV kopieren** (in den Einstellungen) gibt die Tabelle an
+    Excel weiter.
+  - **Export** sichert dieselben Werte als **CSV-Datei** (Semikolon, Dezimalkomma; Dateiname
+    `bewegung-JJJJ-MM-TT-hh-mm.csv`) – damit lassen sie sich auch im Plotter unter **Modellieren**
+    über **Import** wieder einlesen und modellieren.
+  - **A− / A+** stellt die **Schriftgröße in den Diagrammen** ein (0,8× bis 2×): Achsenzahlen,
+    Beschriftungen, Steigungs- und Flächenangaben und die Ablesetabelle wachsen mit, die Ränder der
+    Diagramme ebenfalls – so ist das Bild auch aus der letzten Reihe zu lesen.
+  - In der Werkzeugleiste steht **kein Text** mehr (Name und Statuszeile sind weg), damit die Knöpfe
+    die ganze Breite bekommen und nicht umbrechen.
+  - Aufnahme, Einstellungen, Schriftgröße und gemerkte Stellen werden **im Projekt gespeichert**;
+    **🖼 Tafel**, **📋 Kopieren** und **⤴ Teilen** arbeiten wie bei den anderen Werkzeugen. Der
+    Umschalter **Benutzen/Bearbeiten** blendet beim Arbeiten die Einstellungen, **Export**,
+    **A− / A+** und die Bild-Knöpfe aus.
 - **Wellenwanne** (Mathe & Physik): eine echte Wellensimulation (Wellengleichung auf einem Gitter,
   rund 50 000 Zellen, flüssig in Echtzeit). Bedienung wie beim Stromkreis: links **Neu, Speichern, Laden,
   Start/Pause, Neustart, Löschen**, in der Mitte die seitlich scrollenden Bauteile und dahinter –

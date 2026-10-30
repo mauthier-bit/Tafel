@@ -46,8 +46,11 @@ button, select {
   touch-action: manipulation; background: var(--surface); border: 1px solid var(--line); border-radius: 8px;
   padding: 5px 9px; min-height: 32px; cursor: pointer; font-size: 0.87rem;
 }
-/* Im Rahmen der Tafel steht der Name schon in der Fensterleiste – die Zeile wird hier gebraucht. */
-body.imRahmen h1 { display: none; }
+/* Die Leiste gehoert den Knoepfen: Der Name steht schon in der Fensterleiste der Tafel, und die
+   Statuszeile drueckte die Knoepfe in eine zweite Zeile – beides steht nicht mehr in der Leiste.
+   #status bleibt als unsichtbarer Text erhalten (Vorlesefunktion, Aufnahmestand). */
+body.imRahmen .brand { display: none; }
+.status { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 button:hover { border-color: var(--muted); }
 button:focus-visible, select:focus-visible, input:focus-visible, summary:focus-visible { outline: 2px solid var(--qx); outline-offset: 2px; }
 button:disabled { opacity: 0.45; cursor: default; }
@@ -89,14 +92,14 @@ details.settings summary::-webkit-details-marker { display: none; }
 .plotBox { position: relative; min-height: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
 #plots { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; user-select: none; -webkit-user-select: none; }
 .readout { overflow-x: auto; max-height: 30vh; overflow-y: auto; }
-.readout table { border-collapse: collapse; font-family: var(--font-data); font-size: 0.82rem; font-variant-numeric: tabular-nums; width: 100%; }
+.readout table { border-collapse: collapse; font-family: var(--font-data); font-size: calc(0.82rem * var(--fs, 1)); font-variant-numeric: tabular-nums; width: 100%; }
 .readout th, .readout td { padding: 4px 8px; text-align: right; border-bottom: 1px solid var(--line); white-space: nowrap; }
-.readout th { font-family: var(--font-body); font-weight: 700; color: var(--muted); font-size: 0.78rem; }
+.readout th { font-family: var(--font-body); font-weight: 700; color: var(--muted); font-size: calc(0.78rem * var(--fs, 1)); }
 .readout th:first-child, .readout td:first-child { text-align: left; }
 .readout td.del { width: 1%; }
 .readout td.del button { min-height: 28px; padding: 2px 8px; }
 .readout .iv td { color: var(--ink); }
-.readout .note { color: var(--muted); font-family: var(--font-body); font-size: 0.8rem; padding: 6px 2px; }
+.readout .note { color: var(--muted); font-family: var(--font-body); font-size: calc(0.8rem * var(--fs, 1)); padding: 6px 2px; }
 .cx { color: var(--qx); } .cv { color: var(--qv); } .ca { color: var(--qa); }
 .badge { display: inline-block; min-width: 1.4em; text-align: center; border-radius: 4px; background: var(--ink); color: var(--surface); padding: 0 4px; }
 
@@ -385,6 +388,11 @@ details.settings summary::-webkit-details-marker { display: none; }
           <textarea id="csvFallback" rows="4" hidden aria-label="CSV-Daten" style="width:100%;box-sizing:border-box;font-family:var(--font-data);font-size:11px;background:var(--bg);border:1px solid var(--line);border-radius:6px"></textarea>
         </div>
       </details>
+      <button id="expCsv" class="tafelEdit" title="Die Messwerte als CSV-Datei sichern">Export</button>
+      <div class="seg tafelEdit" role="group" aria-label="Schriftgröße">
+        <button id="fsM" title="Schrift in den Diagrammen kleiner">A−</button>
+        <button id="fsP" title="Schrift in den Diagrammen größer">A+</button>
+      </div>
       <span id="shotBtns" class="tafelEdit" style="display:inline-flex;gap:6px"></span>
       <span id="teilenBtn" style="display:inline-flex"></span>
     </div>
@@ -431,12 +439,16 @@ const state = {
   recording: false, recId: null, t0: 0,
   playing: false, speed: 1,
   strobe: 0.1, allVec: false, vecSel: "va", vecScale: 1,
+  fs: 1,                // Schriftgröße in den Diagrammen (A− / A+)
 };
 $("ppc").value = state.ppc;
 let D = null;
 
 // ---------- Hilfen ----------
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+/* Alle Schriftgrößen in den Diagrammen laufen über fs(): so zieht A− / A+ überall mit.
+   Die Ränder der Diagramme (Platz für die Achsenbeschriftung) wachsen mit. */
+const fs = v => Math.round(v * state.fs * 10) / 10;
 const fmt = (v, d = 1) => (Math.abs(v) < 0.5 * Math.pow(10, -d) ? 0 : v).toLocaleString("de-DE", { minimumFractionDigits: d, maximumFractionDigits: d });
 function css(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
 function alpha(hex, a) {
@@ -644,7 +656,7 @@ function drawPad() {
   const { ctx, w, h } = setup(pad);
   const C = colors(), ppc = state.ppc, o = padOrigin(w, h);
   const X = cm => o.x + cm * ppc, Y = cm => o.y - cm * ppc;
-  ctx.font = `11px ${css("--font-data")}`;
+  ctx.font = `${fs(11)}px ${css("--font-data")}`;
   ctx.textBaseline = "top";
   if (state.mode === "1d") {
     // Lineal
@@ -697,7 +709,7 @@ function drawPad() {
       ctx.strokeStyle = alpha(C.qx, 0.5); ctx.lineWidth = 1;
       if (state.mode === "1d") { ctx.beginPath(); ctx.moveTo(o.x + p.x, 0); ctx.lineTo(o.x + p.x, h); ctx.stroke(); }
       ctx.fillStyle = C.qx; ctx.beginPath(); ctx.arc(o.x + p.x, state.mode === "1d" ? o.y : o.y - p.y, 7, 0, 7); ctx.fill();
-      ctx.font = `600 15px ${css("--font-data")}`; ctx.textAlign = "right"; ctx.fillStyle = C.ink;
+      ctx.font = `600 ${fs(15)}px ${css("--font-data")}`; ctx.textAlign = "right"; ctx.fillStyle = C.ink;
       ctx.fillText(`t = ${fmt(p.t, 2)} s`, w - 14, 12);
     }
     return;
@@ -728,7 +740,7 @@ function drawPad() {
   }
   ctx.fillStyle = alpha(C.qx, one && !lane ? 0.45 : 0.85);
   for (let i = 0; i < D.N; i += step) { ctx.beginPath(); ctx.arc(X(D.x[i]), yOf(i), step * DT * ppc < 10 ? 2.4 : 3.2, 0, 7); ctx.fill(); }
-  ctx.font = `11px ${css("--font-body")}`; ctx.fillStyle = C.muted; ctx.textAlign = "right"; ctx.textBaseline = "bottom";
+  ctx.font = `${fs(11)}px ${css("--font-body")}`; ctx.fillStyle = C.muted; ctx.textAlign = "right"; ctx.textBaseline = "bottom";
   ctx.fillText(`Punkte im Abstand von ${fmt(state.strobe, state.strobe < 0.1 ? 2 : state.strobe < 1 ? (state.strobe * 10 % 1 ? 2 : 1) : 0)} s` + (lane ? ", Zeit läuft nach unten" : ""), w - 12, h - 8);
 
   // Körper zum Zeitpunkt des Cursors
@@ -758,12 +770,12 @@ function drawPad() {
   }
   // Legende mit Pfeilmaßstab
   ctx.textBaseline = "bottom"; ctx.textAlign = "left";
-  ctx.font = `700 12px ${css("--font-body")}`; ctx.fillStyle = C.qv; ctx.fillText("v", 14, h - 8);
-  ctx.font = `11px ${css("--font-data")}`; ctx.fillStyle = C.muted;
+  ctx.font = `700 ${fs(12)}px ${css("--font-body")}`; ctx.fillStyle = C.qv; ctx.fillText("v", 14, h - 8);
+  ctx.font = `${fs(11)}px ${css("--font-data")}`; ctx.fillStyle = C.muted;
   let lx = 24; const vTxt = `1 cm ≙ ${fmt(4 / state.vecScale, state.vecScale > 1 ? 1 : 0)} cm/s`;
   ctx.fillText(vTxt, lx, h - 8); lx += ctx.measureText(vTxt).width + 14;
-  ctx.font = `700 12px ${css("--font-body")}`; ctx.fillStyle = C.qa; ctx.fillText("a", lx, h - 8);
-  ctx.font = `11px ${css("--font-data")}`; ctx.fillStyle = C.muted;
+  ctx.font = `700 ${fs(12)}px ${css("--font-body")}`; ctx.fillStyle = C.qa; ctx.fillText("a", lx, h - 8);
+  ctx.font = `${fs(11)}px ${css("--font-data")}`; ctx.fillStyle = C.muted;
   ctx.fillText(`1 cm ≙ ${fmt(25 / state.vecScale, state.vecScale > 2 ? 2 : state.vecScale > 1 ? 1 : 0)} cm/s²`, lx + 10, h - 8);
 }
 
@@ -771,8 +783,8 @@ function drawPad() {
 const SUB = { x: "ₓ", y: "ᵧ" };
 let layout = null;
 function pill(ctx, text, x, y, color, C, align = "left") {
-  ctx.font = `500 11.5px ${css("--font-data")}`;
-  const tw = ctx.measureText(text).width, pw = tw + 10, ph = 18;
+  ctx.font = `500 ${fs(11.5)}px ${css("--font-data")}`;
+  const tw = ctx.measureText(text).width, pw = tw + 10, ph = fs(18);
   let bx = align === "right" ? x - pw : align === "center" ? x - pw / 2 : x;
   bx = clamp(bx, layout.L + 2, layout.w - layout.R - pw - 2);
   ctx.fillStyle = alpha(C.surface.startsWith("#") ? C.surface : "#ffffff", 0.92);
@@ -784,10 +796,10 @@ function pill(ctx, text, x, y, color, C, align = "left") {
 function drawPlots() {
   const { ctx, w, h } = setup(plots);
   const C = colors();
-  const L = 60, R = 14, TOP = 8, BOT = 30, GAP = 16;
+  const L = Math.round(fs(60)), R = 14, TOP = 8, BOT = Math.round(fs(30)), GAP = 16;
   layout = { L, R, TOP, BOT, w, h };
   if (!D) {
-    ctx.fillStyle = C.muted; ctx.font = `14px ${css("--font-body")}`; ctx.textAlign = "center";
+    ctx.fillStyle = C.muted; ctx.font = `${fs(14)}px ${css("--font-body")}`; ctx.textAlign = "center";
     ctx.fillText("Noch keine Aufnahme", w / 2, h / 2); return;
   }
   const T = Math.max(D.T, 0.05);
@@ -795,7 +807,7 @@ function drawPlots() {
   const an = [state.dia.x, state.dia.v, state.dia.a];
   const nAn = an.filter(Boolean).length;
   if (!nAn) {
-    ctx.fillStyle = C.muted; ctx.font = `14px ${css("--font-body")}`; ctx.textAlign = "center";
+    ctx.fillStyle = C.muted; ctx.font = `${fs(14)}px ${css("--font-body")}`; ctx.textAlign = "center";
     ctx.fillText("Alle Diagramme ausgeblendet", w / 2, h / 2); return;
   }
   const ph = (h - TOP - BOT - (nAn - 1) * GAP) / nAn, pw = w - L - R;
@@ -830,7 +842,7 @@ function drawPlots() {
     ctx.lineWidth = 1; ctx.strokeStyle = C.grid;
     for (let t = 0; t <= T + 1e-9; t += tStep) { ctx.beginPath(); ctx.moveTo(tx(t), p.top); ctx.lineTo(tx(t), p.top + ph); ctx.stroke(); }
     const vStep = niceStep(p.hi - p.lo, Math.max(2, ph / 34)), vDec = decFor(vStep);
-    ctx.font = `11px ${css("--font-data")}`; ctx.fillStyle = C.muted; ctx.textAlign = "right"; ctx.textBaseline = "middle";
+    ctx.font = `${fs(11)}px ${css("--font-data")}`; ctx.fillStyle = C.muted; ctx.textAlign = "right"; ctx.textBaseline = "middle";
     for (let v = Math.ceil(p.lo / vStep) * vStep; v <= p.hi + 1e-9; v += vStep) {
       const y = p.y(v);
       ctx.strokeStyle = Math.abs(v) < vStep * 1e-6 ? C.muted : C.grid;
@@ -841,20 +853,20 @@ function drawPlots() {
     ctx.strokeStyle = C.line; ctx.lineWidth = 1; ctx.strokeRect(L + 0.5, p.top + 0.5, pw - 1, ph - 1);
     // Titel
     ctx.textAlign = "left"; ctx.textBaseline = "top";
-    ctx.font = `700 12.5px ${css("--font-body")}`; ctx.fillStyle = p.color;
+    ctx.font = `700 ${fs(12.5)}px ${css("--font-body")}`; ctx.fillStyle = p.color;
     const title = `${p.name}  ${comps.map(c => p.sym(c)).join(", ")} in ${p.unit}`;
     ctx.fillText(title, L + 8, p.top + 6);
     if (state.mode === "2d" && comps.length === 2 && i === 0) {
       const tw = ctx.measureText(title).width;
-      ctx.font = `11px ${css("--font-body")}`; ctx.fillStyle = C.muted;
+      ctx.font = `${fs(11)}px ${css("--font-body")}`; ctx.fillStyle = C.muted;
       ctx.fillText("x-Komp. durchgezogen, y-Komp. gestrichelt", L + 16 + tw, p.top + 7);
     }
   });
   // t-Beschriftung
-  ctx.font = `11px ${css("--font-data")}`; ctx.fillStyle = C.muted; ctx.textAlign = "center"; ctx.textBaseline = "top";
+  ctx.font = `${fs(11)}px ${css("--font-data")}`; ctx.fillStyle = C.muted; ctx.textAlign = "center"; ctx.textBaseline = "top";
   const yb = letzte.top + ph + 5;
   for (let t = 0; t <= T + 1e-9; t += tStep) if (tx(t) < L + pw - 30) ctx.fillText(fmt(t, tDec), tx(t), yb);
-  ctx.textAlign = "right"; ctx.font = `700 11.5px ${css("--font-body")}`; ctx.fillText("t in s", L + pw, yb);
+  ctx.textAlign = "right"; ctx.font = `700 ${fs(11.5)}px ${css("--font-body")}`; ctx.fillText("t in s", L + pw, yb);
 
   const clip = (p, fn) => { ctx.save(); ctx.beginPath(); ctx.rect(L, p.top, pw, ph); ctx.clip(); fn(); ctx.restore(); };
 
@@ -881,7 +893,7 @@ function drawPlots() {
     ctx.strokeStyle = alpha(C.ink, 0.45); ctx.lineWidth = 1; ctx.setLineDash([2, 4]);
     [a, b].forEach(t => { ctx.beginPath(); ctx.moveTo(tx(t), TOP); ctx.lineTo(tx(t), letzte.top + ph); ctx.stroke(); });
     ctx.setLineDash([]);
-    ctx.font = `700 11px ${css("--font-body")}`; ctx.fillStyle = C.ink; ctx.textAlign = "center"; ctx.textBaseline = "top";
+    ctx.font = `700 ${fs(11)}px ${css("--font-body")}`; ctx.fillStyle = C.ink; ctx.textAlign = "center"; ctx.textBaseline = "top";
     ctx.fillText("t₁", tx(a), letzte.top + ph + 16); ctx.fillText("t₂", tx(b), letzte.top + ph + 16);
   }
 
@@ -980,11 +992,11 @@ function drawPlots() {
         ctx.beginPath(); ctx.arc(X, Y, s.main ? 5 : 4, 0, 7); ctx.fill(); ctx.stroke();
       }));
       // Marke oben
-      ctx.font = `700 11px ${css("--font-body")}`;
-      const tw = Math.max(16, ctx.measureText(s.label).width + 8);
+      ctx.font = `700 ${fs(11)}px ${css("--font-body")}`;
+      const tw = Math.max(fs(16), ctx.measureText(s.label).width + 8), th = fs(16);
       ctx.fillStyle = C.ink; ctx.beginPath();
-      ctx.roundRect ? ctx.roundRect(X - tw / 2, TOP, tw, 16, 4) : ctx.rect(X - tw / 2, TOP, tw, 16); ctx.fill();
-      ctx.fillStyle = C.surface; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(s.label, X, TOP + 8.5);
+      ctx.roundRect ? ctx.roundRect(X - tw / 2, TOP, tw, th, 4) : ctx.rect(X - tw / 2, TOP, tw, th); ctx.fill();
+      ctx.fillStyle = C.surface; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(s.label, X, TOP + th / 2 + 0.5);
     });
   }
 }
@@ -1188,11 +1200,34 @@ $("ppc").addEventListener("change", e => {
   if (state.sample) makeSample(); else process();
   updateUI(); requestDraw();
 });
-$("copyCsv").addEventListener("click", () => {
-  if (!D) return;
+function csvText() {
+  if (!D) return "";
   const f = v => v.toFixed(4).replace(".", ",");
   let csv = "t in s;x in cm;y in cm;vx in cm/s;vy in cm/s;ax in cm/s²;ay in cm/s²\n";
   for (let i = 0; i < D.N; i++) csv += [D.t[i], D.x[i], D.y[i], D.vx[i], D.vy[i], D.ax[i], D.ay[i]].map(f).join(";") + "\n";
+  return csv;
+}
+/* Export: dieselben Spalten als Datei. Das BOM davor, damit Excel die Umlaute
+   und das Dezimalkomma richtig liest. */
+$("expCsv").addEventListener("click", () => {
+  if (!D) { if (window.TafelShot) TafelShot.toast("Noch keine Aufnahme"); return; }
+  const name = "bewegung-" + new Date().toISOString().slice(0, 16).replace(/[:T]/g, "-") + ".csv";
+  const blob = new Blob(["\ufeff" + csvText()], { type: "text/csv;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
+  if (window.TafelShot) TafelShot.toast(D.N + " Zeilen gesichert: " + name);
+});
+function setzeFs(v) {
+  state.fs = Math.round(clamp(v, 0.8, 2) * 10) / 10;
+  document.documentElement.style.setProperty("--fs", String(state.fs));   /* die Ablesetabelle waechst mit */
+  requestDraw(); renderReadout();
+}
+for (const [id, d] of [["fsM", -0.1], ["fsP", 0.1]])
+  $(id).addEventListener("click", () => { setzeFs(state.fs + d); sync(); });
+$("copyCsv").addEventListener("click", () => {
+  if (!D) return;
+  const csv = csvText();
   const msg = $("copyMsg"), ta = $("csvFallback");
   const fallback = () => { ta.hidden = false; ta.value = csv; ta.focus(); ta.select(); msg.textContent = "Kopieren war nicht möglich. Die Daten sind unten markiert – kopiere sie mit „Kopieren“."; };
   try {
@@ -1224,7 +1259,7 @@ function zustand() {
     cursor: state.cursor, pins: state.pins.slice(),
     interval: state.interval ? state.interval.slice() : null,
     ppc: state.ppc, strobe: state.strobe, allVec: state.allVec,
-    vecSel: state.vecSel, vecScale: state.vecScale,
+    vecSel: state.vecSel, vecScale: state.vecScale, fs: state.fs,
   };
 }
 let syncT = 0, letzter = "";
@@ -1252,6 +1287,7 @@ function uebernimm(d) {
   if (typeof d.strobe === "number") state.strobe = d.strobe;
   if (d.vecSel) state.vecSel = d.vecSel;
   if (typeof d.vecScale === "number") state.vecScale = d.vecScale;
+  if (typeof d.fs === "number") setzeFs(d.fs);
   state.allVec = !!d.allVec;
   if (Array.isArray(d.raw) && d.raw.length > 1) {
     state.raw = d.raw.map(p => ({ t: +p.t || 0, x: +p.x || 0, y: +p.y || 0 }));
