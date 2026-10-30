@@ -2110,15 +2110,20 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   und Achsen dunkler gezeichnet und die Zahlen hell hinterlegt, damit sie lesbar bleiben.
   **📏 Maßstab – echte Längen aus dem Foto:** Zwei Punkte verbinden, deren **wirklicher Abstand
   bekannt** ist (Pfeilerabstand, Türhöhe, ein Zollstock im Bild), oben die **Länge in Einheiten**
-  eintragen und **„übernehmen"** – das Werkzeug rechnet aus, wie groß das Bild im Koordinatensystem
-  sein muss, und setzt den Maßstab passend. Die beiden Griffe liegen **im Bild**, wandern beim
-  Schieben und Zoomen also mit; an der Strecke steht laufend, wie lang sie **gerade** ist. Dabei
-  bekommen **x- und y-Achse denselben Maßstab** (bei einem Foto gehört das so), die obere Bildkante
-  bleibt liegen. Danach kann man Punkte abgreifen und **in echten Metern** modellieren.
+  eintragen und **„übernehmen"**. Dabei **verschiebt sich nichts**: Bild, Achsenkreuz und bereits
+  gesetzte Punkte bleiben genau dort stehen, wo sie sind – es ändert sich nur die **Einteilung der
+  Achsen**, und alle Zahlen werden mit umgerechnet (aus 3,2 werden dann z. B. 9,6 m). **x- und
+  y-Achse bekommen denselben Maßstab**, bei einem Foto gehört das so. Die beiden Griffe liegen **im
+  Bild**, wandern beim Schieben und Zoomen also mit; an der Strecke steht laufend, wie lang sie
+  **gerade** ist. Danach greift man Punkte ab und modelliert **in echten Metern**.
   **✂ Zuschneiden:** Rahmen über den interessanten Teil ziehen (Ecken anfassen, in der Mitte
   verschieben), **„zuschneiden"** behält nur diesen Ausschnitt – alles andere verschwindet, und der
   Rest bleibt **genau dort liegen**, wo er im Koordinatensystem war (der Maßstab ändert sich also
   nicht). **„abbrechen"** lässt das Bild, wie es war.
+  Solange **„Bild anpassen"** an ist, **nimmt das Bild die Punkte mit**: Schiebt oder streckt man es,
+  bleibt jeder Punkt auf derselben Stelle des Fotos stehen und bekommt die passenden neuen Werte –
+  er wurde ja am Bild abgelesen. So lässt sich das Koordinatensystem auch nachträglich noch
+  zurechtrücken, ohne die Messpunkte neu setzen zu müssen.
   Ist **„Bild anpassen"** wieder aus, tippt man die **Punkte auf das Bild** und modelliert wie sonst.
   **„Bild weg"** entfernt es. Das Bild wird **ins Projekt mitgespeichert** (verkleinert auf höchstens
   1400 Pixel); beim **Teilen** per QR-Code bleibt es weg – der Code wäre sonst nicht mehr lesbar.

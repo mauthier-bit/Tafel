@@ -1643,16 +1643,41 @@ function mdMassPkt(){ const b=md.bild; if(!b) return null;
   return [b.ma,b.mb]; }
 function mdMassLaenge(){ const b=md.bild; if(!b||!b.ma||!b.mb) return 0;
   return Math.hypot(b.ma[0]-b.mb[0], b.ma[1]-b.mb[1])*b.w/b.iw; }
+/* Der Maßstab ändert nur die Einteilung der Achsen: Bild, Achsenkreuz und alle Punkte
+   bleiben genau dort stehen, wo sie auf dem Bildschirm sind – es ändern sich die Zahlen.
+   Dazu wird aus dem Abstand der beiden Maßpunkte in Bildschirmpixeln die neue Einheit
+   berechnet (Pixel je Einheit) und alles, was in Koordinaten gespeichert ist, umgerechnet. */
 function mdMassSetzen(){ const b=md.bild; if(!b||!b.ma||!b.mb) return;
   const L=pz($('mdMassV').value);
   if(!(L>0)){ if(window.TafelShot) TafelShot.toast('Bitte eine Länge größer als 0 angeben'); return; }
-  const d=Math.hypot(b.ma[0]-b.mb[0], b.ma[1]-b.mb[1]);
-  if(!(d>1e-6)){ if(window.TafelShot) TafelShot.toast('Die beiden Punkte liegen aufeinander'); return; }
-  const v=md.view, r0=mdBildRect();
-  v.uy=v.ux;                                  /* ein Foto braucht auf beiden Achsen denselben Maßstab */
-  b.y=(v.oy-r0.y)/v.uy;                       /* die obere Bildkante bleibt, wo sie ist */
-  b.w=b.iw*L/d;
-  mdRechne(); sync(); }
+  const a=mdImgZu(b.ma), e=mdImgZu(b.mb), dpx=Math.hypot(a[0]-e[0], a[1]-e[1]);
+  if(!(dpx>2)){ if(window.TafelShot) TafelShot.toast('Die Strecke ist zu kurz'); return; }
+  const v=md.view, neu=dpx/L;                 /* so viele Pixel ist eine Einheit künftig lang */
+  if(!(neu>0.001&&neu<1e6)){ if(window.TafelShot) TafelShot.toast('Dieser Maßstab ist zu groß oder zu klein'); return; }
+  const fx=v.ux/neu, fy=v.uy/neu;             /* alte Werte mal diesem Faktor = neue Werte */
+  md.p.forEach((r,i)=>{ const x=pz(r[0]), y=pz(r[1]), sl=pz(r[2]);
+    if(isFinite(x)) md.p[i][0]=mdF(x*fx);
+    if(isFinite(y)) md.p[i][1]=mdF(y*fy);
+    if(isFinite(sl)) md.p[i][2]=mdF(sl*fy/fx);
+    mdZeile(i); });
+  b.x*=fx; b.y*=fy; b.w*=fx;                  /* das Bild steht danach unverändert da */
+  v.ux=neu; v.uy=neu;                         /* ein Foto braucht auf beiden Achsen denselben Maßstab */
+  mdRechne(); sync();
+  if(window.TafelShot) TafelShot.toast('Maßstab gesetzt: eine Einheit sind jetzt '+nfk(Math.round(neu*10)/10)+' Pixel'); }
+/* Solange man das Bild anpasst, haengen die Punkte daran: sie sind ja am Bild abgelesen
+   worden. Darum wird ihre Lage in Bildpixeln gemerkt und nach dem Schieben oder Strecken
+   wieder dorthin gesetzt – der Punkt bleibt auf derselben Stelle des Fotos. */
+function mdBildFest(){ const b=md.bild; if(!b) return null;
+  const v=md.view, kx=b.w/b.iw, ky=kx*v.ux/v.uy;
+  return md.p.map(r=>{ const x=pz(r[0]), y=pz(r[1]), sl=pz(r[2]);
+    if(!isFinite(x)||!isFinite(y)) return null;
+    return {ix:(x-b.x)/kx, iy:(b.y-y)/ky, s:isFinite(sl)?sl*kx/ky:null}; }); }
+function mdBildLos(alt){ const b=md.bild; if(!b||!alt) return;
+  const v=md.view, kx=b.w/b.iw, ky=kx*v.ux/v.uy;
+  alt.forEach((q,i)=>{ if(!q||!md.p[i]) return;
+    md.p[i][0]=mdF(b.x+q.ix*kx); md.p[i][1]=mdF(b.y-q.iy*ky);
+    if(q.s!=null) md.p[i][2]=mdF(q.s*ky/kx);
+    mdZeile(i); }); }
 /* ---- Zuschneiden ---- */
 function mdCropStd(){ const b=md.bild;
   if(!Array.isArray(b.crop)||b.crop.length!==4)
@@ -1780,8 +1805,10 @@ function mdNahS(mx,my){ if(!mdSlope()) return {i:-1,d:1e9}; let bi=-1, bd=1e9;
   mdDaten().forEach(q=>{ const g=mdGriffOrt(q), d=Math.hypot(mx-g.hx,my-g.hy);
     if(d<bd){ bd=d; bi=q.i; } });
   return {i:(bd<=24?bi:-1), d:bd}; }
-/* beim Ziehen auf ein feines Raster einschnappen – dann stehen lesbare Werte in der Tabelle */
-function mdSetP(i,mx,my){ const stx=mdStepX()/10, sty=mdStepY()/10;
+/* beim Ziehen auf ein feines Raster einschnappen – dann stehen lesbare Werte in der Tabelle.
+   Liegt ein Foto darunter, wird feiner gerastert: dort zaehlt der abgelesene Wert, nicht die
+   runde Zahl. */
+function mdSetP(i,mx,my){ const fein=md.bild?50:10, stx=mdStepX()/fein, sty=mdStepY()/fein;
   const x=Math.round(((mx-md.view.ox)/md.view.ux)/stx)*stx,
         y=Math.round(((md.view.oy-my)/md.view.uy)/sty)*sty;
   md.p[i][0]=mdF(x); md.p[i][1]=mdF(y); mdZeile(i); }
@@ -1876,8 +1903,8 @@ function mdUi(){ ['p','e','t','n'].forEach(k=>$('mdT'+k).classList.toggle('on',m
       if(md.bmod==='mass'){ const pk=mdMassPkt(), a=mdImgZu(pk[0]), e=mdImgZu(pk[1]);
         if(nah(a[0],a[1])){ mdZiehB={art:'ma'}; return; }
         if(nah(e[0],e[1])){ mdZiehB={art:'mb'}; return; } }
-      if(r&&nah(r.x+r.w,r.y+r.h)) mdZiehB={art:'gr'};
-      else mdZiehB={art:'mv', x:p[0], y:p[1]};
+      if(r&&nah(r.x+r.w,r.y+r.h)) mdZiehB={art:'gr', pkt:mdBildFest()};
+      else mdZiehB={art:'mv', x:p[0], y:p[1], pkt:mdBildFest()};
       return; }
     const t=Date.now(), pk=mdNah(p[0],p[1]), gf=mdNahS(p[0],p[1]);
     if(gf.i>=0&&(pk.i<0||gf.d<=pk.d)){             /* der naehere von Punkt und Steigungsgriff gewinnt */
@@ -1902,7 +1929,7 @@ function mdUi(){ ['p','e','t','n'].forEach(k=>$('mdT'+k).classList.toggle('on',m
       mdDraw(); return; }
     const p=lok(e);
     if(mdZiehB&&md.bild){ const v=md.view, b=md.bild, art=mdZiehB.art;
-      if(art==='gr'){ const r=mdBildRect(); b.w=Math.max(1e-6,(p[0]-r.x)/v.ux); }
+      if(art==='gr'){ const r=mdBildRect(); b.w=Math.max(1e-6,(p[0]-r.x)/v.ux); mdBildLos(mdZiehB.pkt); }
       else if(art==='ma'||art==='mb'){ b[art]=mdImgVon(p[0],p[1]);
         if($('mdMassV')&&!$('mdMassV').value) $('mdMassV').value=nfk(Math.round(mdMassLaenge()*100)/100); }
       else if(art==='c0'||art==='c1'){ const q=mdImgVon(p[0],p[1]), c=mdCropStd();
@@ -1914,7 +1941,8 @@ function mdUi(){ ['p','e','t','n'].forEach(k=>$('mdT'+k).classList.toggle('on',m
         c[0]+=dx; c[2]+=dx; c[1]+=dy; c[3]+=dy;
         mdZiehB.x=p[0]; mdZiehB.y=p[1]; }
       else { b.x+=(p[0]-mdZiehB.x)/v.ux; b.y-=(p[1]-mdZiehB.y)/v.uy;
-        mdZiehB.x=p[0]; mdZiehB.y=p[1]; }
+        mdZiehB.x=p[0]; mdZiehB.y=p[1]; mdBildLos(mdZiehB.pkt); }
+      if(mdZiehB.pkt) mdErg=mdModell();
       mdDraw(); return; }
     if(mdZiehS>=0){ mdSetS(mdZiehS,p[0],p[1]); mdRechne(); return; }
     if(mdZieh>=0){ mdSetP(mdZieh,p[0],p[1]); mdRechne(); return; }
@@ -1978,8 +2006,19 @@ addEventListener('message',e=>{ if(e.source!==window&&(window.parent===window||e
   updateSliders();
   if(d.tab&&d.tab!==tab) setTab(d.tab); else { draw(); refreshTable(); refreshMachines(); trDraw(); mdDraw(); } });
 addEventListener('resize',()=>{ resize(); if(tab==='d') mdResize(); });
-if(window.ResizeObserver) new ResizeObserver(()=>{ if(tab==='g'&&(cv.clientWidth!==W||cv.clientHeight!==H)) resize();
-  else if(tab==='d'&&$('plotD').clientWidth&&$('plotD').clientWidth!==mdW) mdResize(); }).observe($('wrap'));   // Eingabezeilen wachsen mit → Zeichenfläche anpassen
+/* Wachsen die Bedienzeilen (z. B. weil die Bild-Knöpfe dazukommen), wird die Zeichenfläche
+   niedriger. Dann MUSS das Canvas neu vermessen werden - sonst zeichnet es in alter Groesse
+   weiter, der Browser zieht das Bild auf die neue Hoehe, und jeder Fingertipp landet
+   gegenueber dem Gezeichneten verschoben. Die Bedienzeilen der Reiter „Modell" und
+   „Transformationen" stecken SELBST in #wrap – dort aendert sich also nichts, was ein
+   Beobachter an #wrap merken wuerde. Darum wird jede Zeichenflaeche einzeln beobachtet. */
+if(window.ResizeObserver){
+  new ResizeObserver(()=>{ if(tab==='g'&&(cv.clientWidth!==W||cv.clientHeight!==H)) resize(); }).observe($('wrap'));
+  new ResizeObserver(()=>{ const el=$('plotD');
+    if(tab==='d'&&el.clientWidth&&(el.clientWidth!==mdW||el.clientHeight!==mdH)) mdResize(); }).observe($('plotD'));
+  new ResizeObserver(()=>{ const el=$('plotR');
+    if(tab==='r'&&el.clientWidth&&(el.clientWidth!==trW||el.clientHeight!==trH)) trResize(); }).observe($('plotR'));
+}
 retok();
 function plotImage(){ const im=TafelShot.rasterize($('wrap'),{exclude:'#err'}), S=2, g=im.canvas.getContext('2d');
   const lines=[]; document.querySelectorAll('#funcs .func').forEach((r,i)=>{ const t=r.querySelector('.fterm').value.trim(); if(t&&funcs[i])
