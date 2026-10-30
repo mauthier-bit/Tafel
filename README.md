@@ -319,8 +319,9 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   bei **Bild beschriften** und beim **interaktiven Video** gibt es deshalb nur noch ＋/− für die
   Schriftgröße. Beim **Funktionsplotter** hängen **Farbe** und **Dicke/Größe** am Reiter: Im Reiter
   **Graph** stehen beide (sie gelten für die gerade gewählte Funktion), in **Tabelle** und
-  **Maschine** nur die Farbe, und in den Reitern **Transformationen** und **Modell** keines von
-  beiden – dort zeichnet der Plotter mit seinen eigenen Farben.
+  **Maschine** nur die Farbe, und in den Reitern **Transformationen** und **Modellieren** keines von
+  beiden – dort zeichnet der Plotter mit seinen eigenen Farben (im Reiter **Modellieren** wählt man die
+  Farbe des Modellgraphen über den **Farbkreis vor dem Term**).
 - Beim Wechsel auf die **Schreibwerkzeuge** ist immer der **Stift** aktiv.
 - **Diagramme aus der Tabelle:** einen **Zellbereich markieren** (mit gedrücktem Finger/Maus über
   die Zellen ziehen) und auf **„📊 Diagramm"** tippen – die markierten Zahlen werden wahlweise als
@@ -1972,7 +1973,7 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   reagiert dann nicht. Das kleine **⚙ im Zifferblatt** (zwischen Mitte und 12) öffnet ihr Menü mit
   **Größe**, **Schulstunden**, **Digitalanzeige**, **„Wieder als Objekt auf die Seite"** (legt sie mit
   gleicher Größe und Position zurück auf die aktuelle Seite) und **„Uhr ausblenden"**.
-- **Funktionsplotter** (Werkzeug) – **fünf Reiter: Graph, Tabelle, Maschine, Transformationen, Modell.** Der Funktionsterm lässt
+- **Funktionsplotter** (Werkzeug) – **fünf Reiter: Graph, Tabelle, Maschine, Transformationen, Modellieren.** Der Funktionsterm lässt
   sich **in den ersten drei Reitern** eingeben und gilt sofort in allen dreien; „＋“ legt überall eine weitere Funktion an
   (im Graph eine Eingabezeile, in der Tabelle eine Zeile, bei der Maschine eine weitere Maschine).
   **Tabelle:** in der Kopfzeile stehen die **x-Werte zum Eintippen** („＋ x-Wert“ hängt eine Spalte an und
@@ -2061,7 +2062,7 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   Die Zeichenfläche lässt sich **ziehen und zoomen** (zwei Finger oder Mausrad), **„Ansicht"** stellt das
   Standardfenster wieder her, **„↺"** setzt a, b, c, d auf 1, 1, 0, 0 zurück. Der ganze Stand – Term,
   Regler und Schalter – wird mit dem Projekt gespeichert und vom **Teilen**-Knopf mitgegeben.
-  **Modell:** Auch dieser Reiter steht **für sich** – eigene Daten, eigene Zeichenfläche, die
+  **Modellieren:** Auch dieser Reiter steht **für sich** – eigene Daten, eigene Zeichenfläche, die
   Funktionen der anderen Reiter bleiben unberührt. Hier werden **Messdaten modelliert**: Die
   Punkte lassen sich **wahlweise in die Tabelle tippen** (Spalten *x* und *y*, „＋ Punkt" hängt eine
   Zeile an, „×" nimmt eine weg) **oder direkt ins Koordinatensystem setzen** – solange
@@ -2094,7 +2095,11 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   Tipp** auf den Griff gibt sie wieder frei (die Zelle wird leer).
   **Ausgabe sind Term und Graph:** Rechts (auf schmalen Geräten unter der Zeichenfläche neben der
   Tabelle) steht der **fertige Funktionsterm** groß in einem Kasten, darunter eine Zeile dazu
-  („Grad 2 – der Graph geht genau durch alle 3 Punkte"). **„Werte an den Punkten"** schreibt die
+  („Grad 2 – der Graph geht genau durch alle 3 Punkte"). Ein **Farbkreis vor dem Term** wählt die
+  **Farbe des Modellgraphen** (dieselbe Auswahl wie bei den Funktionsfarben, „↺" zurück zu Rot);
+  Term und Kurve haben immer dieselbe Farbe. Das Häkchen **„Term"** **blendet den Term aus** – dann
+  steht im Kasten „? ? ?“, während der Graph weiter zu sehen ist: *Welcher Term gehört zu dieser
+  Kurve?* Die Zeile darunter (Grad, Näherung, mittlere Abweichung) bleibt stehen. **„Werte an den Punkten"** schreibt die
   Koordinaten an die Punkte, **„Graph"** blendet die Kurve weg (gut, wenn die Klasse den Verlauf
   erst **vorhersagen** soll), **„Ansicht"** stellt das Fenster auf die Daten ein – **x- und
   y-Richtung getrennt**, sodass auch Messreihen mit großen y-Werten (Bakterien, Temperaturen)
@@ -2102,9 +2107,18 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   Punkte, Wurfbahn, Trassierung mit Steigungen, Bakterien, Abkühlung, Messwerte als Glocke,
   Tageslänge). Daten, Typ und Schalter werden mit dem Projekt gespeichert und beim **Teilen**
   mitgegeben.
-  **🖼 Bild modellieren – Funktionen in Fotos:** Der Knopf steht **unter der Wertetabelle**; er legt
+  **Import – Messwerte von woanders:** Über der Wertetabelle stehen zwei Knöpfe: **„Import"** und
+  **„Bild modellieren"**. **„Import"** klappt ein Feld auf, in das man Werte **einfügen** kann
+  (aus der Tabelle, aus einem Messprogramm, aus einer Mail) – **je Zeile ein Punkt**, getrennt durch
+  **Tabulator, Semikolon oder Leerzeichen**, Zahlen deutsch (Komma) oder englisch (Punkt); eine
+  **dritte Spalte** wird als Steigung *y*′ gelesen. **„Datei …"** liest stattdessen eine **CSV- oder
+  Textdatei** ein. Eine **Kopfzeile** („t  s“) fällt von selbst weg, weil sich aus ihr keine Zahlen
+  lesen lassen. **„übernehmen"** setzt die Werte als Daten ein und stellt die Ansicht darauf ein;
+  mit dem Häkchen **„anfügen"** kommen sie **zu den vorhandenen Punkten dazu**.
+  **Bild modellieren – Funktionen in Fotos:** Der Knopf daneben legt
   ein **Foto** unter das Koordinatensystem (Brücke, Springbrunnen, Wurf …). Alles, was danach mit dem
-  Bild zu tun hat, steht in einer eigenen Leiste **direkt unter der Zeichenfläche**.
+  Bild zu tun hat, steht in einer eigenen Leiste **unter Zeichenfläche und Datenspalte** – sie ist so
+  breit wie das ganze Fenster, damit alle Knöpfe in **eine Zeile** passen.
   Nach dem Laden ist **„Bild anpassen"** an: Das Bild lässt sich
   **schieben** und an seiner **Ecke größer oder kleiner ziehen**, bis Ursprung und Achsen dort liegen,
   wo sie hingehören (die Zeichenfläche selbst verschiebt und zoomt man weiter mit **zwei Fingern**).
