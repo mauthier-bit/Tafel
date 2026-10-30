@@ -1806,7 +1806,43 @@ function mdCropFertig(){ const b=md.bild;
   const inBild=q=>[Math.max(0,Math.min(c.width,q[0]-x0)), Math.max(0,Math.min(c.height,q[1]-y0))];
   if(Array.isArray(b.ma)) b.ma=inBild(b.ma);               /* Maßpunkte bleiben im Bild */
   if(Array.isArray(b.mb)) b.mb=inBild(b.mb);
-  mdImg=null; mdImgSrc=''; md.bmod=''; mdUi(); mdDraw(); sync(); }
+  mdImg=null; mdImgSrc=''; mdHell=null; mdHellPSrc=''; md.bmod=''; mdUi(); mdDraw(); sync(); }
+/* ---- Wie hell ist das Foto? ----------------------------------------------------
+   Gitter und Achsen sollen auf jedem Bild zu sehen sein: auf hellem Untergrund dunkel,
+   auf dunklem hell. Dafuer wird das Foto EINMAL grob in Felder zerlegt (drawImage auf ein
+   winziges Canvas mittelt die Pixel von selbst) und je Feld die Helligkeit gemessen.
+   Die Deckkraft zaehlt mit: je durchsichtiger das Bild, desto mehr weisse Seite scheint
+   durch, desto heller wirkt es. So entscheidet jedes Feld fuer sich – heller Himmel oben
+   und dunkles Wasser unten bekommen verschiedene Farben. */
+let mdHell=null, mdHellPfad=null, mdHellDeck=-1, mdHellPSrc='';
+const MD_SCHWELLE=0.55;                      /* darunter gilt ein Feld als dunkel */
+function mdDeckJetzt(){ const b=md.bild; return Math.max(.1,Math.min(1,(b&&b.deck!=null)?b.deck:0.8)); }
+function mdHellKarte(){ const b=md.bild;
+  if(!b||!b.src||mdImgSrc!==b.src||!mdImg||!mdImg.complete||!mdImg.naturalWidth) return null;
+  if(mdHell&&mdHell.src===b.src) return mdHell;
+  const cols=Math.max(1,Math.min(32,Math.round(mdImg.naturalWidth/24))),
+        rows=Math.max(1,Math.min(32,Math.round(mdImg.naturalHeight/24)));
+  const c=document.createElement('canvas'); c.width=cols; c.height=rows;
+  const g=c.getContext('2d',{willReadFrequently:true}); let d;
+  try{ g.drawImage(mdImg,0,0,cols,rows); d=g.getImageData(0,0,cols,rows).data; }catch(e){ return null; }
+  const L=new Float32Array(cols*rows);
+  for(let i=0;i<L.length;i++) L[i]=(0.299*d[i*4]+0.587*d[i*4+1]+0.114*d[i*4+2])/255;
+  mdHell={src:b.src, cols, rows, L, bw:mdImg.naturalWidth, bh:mdImg.naturalHeight};
+  mdHellDeck=-1; return mdHell; }
+/* Helligkeit an einer Stelle des Bildschirms (null = dort liegt kein Foto) */
+function mdHellBei(px,py){ const k=mdHellKarte(), r=k&&mdBildRect(); if(!r||r.w<=0||r.h<=0) return null;
+  const i=Math.floor((px-r.x)/r.w*k.cols), j=Math.floor((py-r.y)/r.h*k.rows);
+  if(i<0||j<0||i>=k.cols||j>=k.rows) return null;
+  const deck=mdDeckJetzt(); return deck*k.L[j*k.cols+i]+(1-deck); }
+/* Alle dunklen Felder als ein Pfad in Bildpixeln – damit laesst sich das helle Gitter
+   genau auf die dunklen Stellen begrenzen. Wird nur neu gebaut, wenn noetig. */
+function mdDunkelPfad(){ const k=mdHellKarte(); if(!k) return null;
+  const deck=mdDeckJetzt();
+  if(mdHellPSrc===k.src&&mdHellDeck===deck) return mdHellPfad;
+  const cw=k.bw/k.cols, ch=k.bh/k.rows, pf=new Path2D(); let n=0;
+  for(let j=0;j<k.rows;j++) for(let i=0;i<k.cols;i++){
+    if(deck*k.L[j*k.cols+i]+(1-deck)<MD_SCHWELLE){ pf.rect(i*cw-0.5,j*ch-0.5,cw+1,ch+1); n++; } }
+  mdHellPfad=n?pf:null; mdHellDeck=deck; mdHellPSrc=k.src; return mdHellPfad; }
 function mdLabel(c2,t,x,y,col,al){ c2.save();
   c2.font='700 '+Math.max(11,fontSize)+'px -apple-system,BlinkMacSystemFont,sans-serif';
   c2.textAlign=al||'left'; c2.textBaseline='middle'; c2.lineJoin='round';
@@ -1824,15 +1860,30 @@ function mdDraw(){ if(tab!=='d'||!mdW) return;
   const ux=md.view.ux, uy=md.view.uy, ox=md.view.ox, oy=md.view.oy, sx=mdStepX(), sy=mdStepY();
   const xmin=(0-ox)/ux, xmax=(mdW-ox)/ux, ymin=(oy-mdH)/uy, ymax=oy/uy;
   const foto=!!(md.bild&&md.bild.src);          /* auf einem Foto braucht das Gitter mehr Kontrast */
-  c2.strokeStyle=foto?'rgba(51,65,85,.30)':'#eef1f6'; c2.lineWidth=1; c2.beginPath();
-  for(let x=Math.ceil(xmin/sx)*sx;x<=xmax;x+=sx){ const px=ox+x*ux; c2.moveTo(px,0); c2.lineTo(px,mdH); }
-  for(let y=Math.ceil(ymin/sy)*sy;y<=ymax;y+=sy){ const py=oy-y*uy; c2.moveTo(0,py); c2.lineTo(mdW,py); }
-  c2.stroke();
-  c2.strokeStyle=foto?'#334155':'#98a2b3'; c2.lineWidth=foto?2:1.6; c2.beginPath();
-  c2.moveTo(0,oy); c2.lineTo(mdW,oy); c2.moveTo(ox,0); c2.lineTo(ox,mdH); c2.stroke();
+  /* Gitter und Achsen in einem Zug – einmal dunkel ueber die ganze Flaeche, danach
+     noch einmal hell, aber nur dort, wo das Foto dunkel ist (etwas dicker, damit die
+     dunklen Linien darunter sauber verschwinden). */
+  const gitter=(gc,ac,dick)=>{ c2.strokeStyle=gc; c2.lineWidth=dick?1.6:1; c2.beginPath();
+    for(let x=Math.ceil(xmin/sx)*sx;x<=xmax;x+=sx){ const px=ox+x*ux; c2.moveTo(px,0); c2.lineTo(px,mdH); }
+    for(let y=Math.ceil(ymin/sy)*sy;y<=ymax;y+=sy){ const py=oy-y*uy; c2.moveTo(0,py); c2.lineTo(mdW,py); }
+    c2.stroke();
+    c2.strokeStyle=ac; c2.lineWidth=foto?(dick?2.8:2):1.6; c2.beginPath();
+    c2.moveTo(0,oy); c2.lineTo(mdW,oy); c2.moveTo(ox,0); c2.lineTo(ox,mdH); c2.stroke(); };
+  gitter(foto?'rgba(51,65,85,.30)':'#eef1f6', foto?'#334155':'#98a2b3', false);
+  const dunkel=foto?mdDunkelPfad():null, bRect=dunkel?mdBildRect():null;
+  if(dunkel&&bRect&&bRect.w>0&&bRect.h>0){ const k=mdHell;
+    c2.save();
+    c2.translate(bRect.x,bRect.y); c2.scale(bRect.w/k.bw, bRect.h/k.bh);
+    c2.clip(dunkel); c2.setTransform(dpr,0,0,dpr,0,0);     /* der Schnitt bleibt, gezeichnet wird wieder in Bildschirmpixeln */
+    gitter('rgba(255,255,255,.52)','#ffffff',true);
+    c2.restore(); }
   c2.fillStyle=foto?'#1f2430':'#667085'; c2.font=(fontItalic?'italic ':'')+(fontBold?'bold ':'')+fontSize+'px sans-serif';
   c2.lineJoin='round'; c2.lineWidth=3.2; c2.strokeStyle='rgba(255,255,255,.9)';
-  const zahlMal=(t,x,y)=>{ if(foto) c2.strokeText(t,x,y); c2.fillText(t,x,y); };
+  /* Die Achsenzahlen entscheiden einzeln: auf dunklem Grund weiss mit dunklem Rand */
+  const zahlMal=(t,x,y)=>{ if(foto){ const h=mdHellBei(x,y), dkl=(h!=null&&h<MD_SCHWELLE);
+      c2.strokeStyle=dkl?'rgba(15,23,42,.85)':'rgba(255,255,255,.9)';
+      c2.fillStyle=dkl?'#ffffff':'#1f2430'; c2.strokeText(t,x,y); }
+    c2.fillText(t,x,y); };
   c2.textAlign='center'; c2.textBaseline='top';
   for(let x=Math.ceil(xmin/sx)*sx;x<=xmax;x+=sx){ if(Math.abs(x)<sx/1e6) continue;
     zahlMal(fmt(x), ox+x*ux, Math.min(Math.max(oy+3,2),mdH-fontSize-3)); }
@@ -1980,7 +2031,8 @@ function mdUi(){ ['p','e','t','n'].forEach(k=>$('mdT'+k).classList.toggle('on',m
   $('mdBildAn').onclick=()=>{ md.bildAn=!md.bildAn; mdUi(); mdDraw(); sync(); };
   $('mdDeck').oninput=()=>{ if(md.bild){ md.bild.deck=Math.max(.1,Math.min(1,(+$('mdDeck').value||80)/100)); mdDraw(); } };
   $('mdDeck').onchange=()=>sync();
-  $('mdBildWeg').onclick=()=>{ md.bild=null; md.bildAn=false; md.bmod=''; mdImg=null; mdImgSrc=''; mdUi(); mdDraw(); sync(); };
+  $('mdBildWeg').onclick=()=>{ md.bild=null; md.bildAn=false; md.bmod=''; mdImg=null; mdImgSrc='';
+    mdHell=null; mdHellPfad=null; mdHellPSrc=''; mdUi(); mdDraw(); sync(); };
   $('mdMass').onclick=()=>{ if(!md.bild) return;
     md.bild.crop=null;                       /* ein angefangener Ausschnitt gilt dann nicht mehr */
     md.bmod=(md.bmod==='mass')?'':'mass'; if(md.bmod){ md.bildAn=true; mdMassPkt();

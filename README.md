@@ -2122,8 +2122,14 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   Nach dem Laden ist **„Bild anpassen"** an: Das Bild lässt sich
   **schieben** und an seiner **Ecke größer oder kleiner ziehen**, bis Ursprung und Achsen dort liegen,
   wo sie hingehören (die Zeichenfläche selbst verschiebt und zoomt man weiter mit **zwei Fingern**).
-  Ein Regler daneben stellt ein, **wie kräftig** das Bild zu sehen ist; über einem Foto werden Gitter
-  und Achsen dunkler gezeichnet und die Zahlen hell hinterlegt, damit sie lesbar bleiben.
+  Ein Regler daneben stellt ein, **wie kräftig** das Bild zu sehen ist.
+  **Gitter und Achsen stellen sich von selbst auf das Bild ein:** Die Tafel misst beim Laden die
+  **Helligkeit des Fotos** – und zwar **feldweise**, nicht nur im Ganzen. Über hellen Stellen werden
+  Gitter, Achsen und Achsenzahlen **dunkel** gezeichnet, über dunklen **weiß**; bei einem Foto mit
+  hellem Himmel und dunklem Wasser wechselt die Farbe also **mitten im Bild** genau dort, wo der
+  Untergrund wechselt. Der **Deckkraft-Regler zählt mit**: Je durchsichtiger das Bild gestellt ist,
+  desto mehr weiße Seite scheint durch, desto heller wirkt es – ein dunkles Foto auf 30 % bekommt
+  deshalb wieder dunkle Achsen. Außerhalb des Fotos bleibt alles wie gewohnt.
   **📏 Maßstab – echte Längen aus dem Foto:** Zwei Punkte verbinden, deren **wirklicher Abstand
   bekannt** ist (Pfeilerabstand, Türhöhe, ein Zollstock im Bild), oben die **Länge in Einheiten**
   eintragen und **„übernehmen"**. Dabei **verschiebt sich nichts**: Bild, Achsenkreuz und bereits
