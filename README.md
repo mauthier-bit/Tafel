@@ -2102,8 +2102,10 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   Punkte, Wurfbahn, Trassierung mit Steigungen, Bakterien, Abkühlung, Messwerte als Glocke,
   Tageslänge). Daten, Typ und Schalter werden mit dem Projekt gespeichert und beim **Teilen**
   mitgegeben.
-  **🖼 Bild – Funktionen in Fotos:** Ein **Foto hinterlegen** (Brücke, Springbrunnen, Wurf …) und das
-  **Koordinatensystem daraufsetzen**. Nach dem Laden ist **„Bild anpassen"** an: Das Bild lässt sich
+  **🖼 Bild modellieren – Funktionen in Fotos:** Der Knopf steht **unter der Wertetabelle**; er legt
+  ein **Foto** unter das Koordinatensystem (Brücke, Springbrunnen, Wurf …). Alles, was danach mit dem
+  Bild zu tun hat, steht in einer eigenen Leiste **direkt unter der Zeichenfläche**.
+  Nach dem Laden ist **„Bild anpassen"** an: Das Bild lässt sich
   **schieben** und an seiner **Ecke größer oder kleiner ziehen**, bis Ursprung und Achsen dort liegen,
   wo sie hingehören (die Zeichenfläche selbst verschiebt und zoomt man weiter mit **zwei Fingern**).
   Ein Regler daneben stellt ein, **wie kräftig** das Bild zu sehen ist; über einem Foto werden Gitter
@@ -2116,6 +2118,10 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   y-Achse bekommen denselben Maßstab**, bei einem Foto gehört das so. Die beiden Griffe liegen **im
   Bild**, wandern beim Schieben und Zoomen also mit; an der Strecke steht laufend, wie lang sie
   **gerade** ist. Danach greift man Punkte ab und modelliert **in echten Metern**.
+  **⌖ Ursprung:** In die Fläche tippen (oder ziehen) – dorthin wandert der **Ursprung des
+  Koordinatensystems**. Auch hier bleibt alles stehen, wo es ist: Bild und Punkte behalten ihren
+  Platz, nur die Achsen ziehen um, und alle Werte werden umgerechnet. Zusammen mit **📏 Maßstab**
+  ist das Bild damit in zwei Schritten eingemessen: erst den Nullpunkt setzen, dann die Längen.
   **✂ Zuschneiden:** Rahmen über den interessanten Teil ziehen (Ecken anfassen, in der Mitte
   verschieben), **„zuschneiden"** behält nur diesen Ausschnitt – alles andere verschwindet, und der
   Rest bleibt **genau dort liegen**, wo er im Koordinatensystem war (der Maßstab ändert sich also
@@ -2328,8 +2334,8 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
    **Formel umstellen**) · Funktionsplotter — **2.** Ableitungen · Einheitskreis · Strahlensätze ·
    Figuren & Körper · 3D-Koordinatensystem — **3.** GeoGebra-App · CODAP · Diagramm · Zufall ·
    Vierfeldertafel — **4.** Baumdiagramm · Wahrscheinlichkeitsrechner · **Tabellenkalkulation** ·
-   Motion-Tracker · **Mathe und Physik Geschichte** — **5.** Stromkreis · Optiklabor · Wellenwanne ·
-   **Bewegungsdiagramme** · **Atomphysik** · **Induktion** — **6.** **Video-Physik** · **Audio-Physik** · Messwert-Analyse ·
+   Motion-Tracker · **Bewegungsdiagramme** · **Mathe und Physik Geschichte** — **5.** Stromkreis ·
+   Optiklabor · Wellenwanne · **Atomphysik** · **Induktion** — **6.** **Video-Physik** · **Audio-Physik** · Messwert-Analyse ·
    **Versuchsprotokoll** · Einheitenumrechner.
    Die Aufklappmenüs legen sich **nie über die Werkzeugleiste**: Sie öffnen neben ihr, bleiben unter
    der oberen Leiste und nehmen bei schmalem Fenster **weniger Spalten** (bei wenig Höhe lassen sie
@@ -2774,6 +2780,10 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   **2D** die ganze Bahn in der Ebene – dann lassen sich **x**, **y** oder **x + y** zeigen.
   - **Glättung** (0 bis 200 ms) bestimmt, wie stark gemittelt wird, bevor abgeleitet wird – ohne sie
     rauschen v und a; die Ableitungen entstehen aus den geglätteten Messwerten auf einem 0,01-s-Raster.
+  - **Diagramme einzeln ein- und ausblenden:** Die drei Schalter **x(t)**, **v(t)** und **a(t)**
+    entscheiden, welche Diagramme gezeichnet werden; die übrigen teilen sich dann die ganze Höhe.
+    So lässt sich erst nur der Ort zeigen (*Wie sieht wohl v aus?*), dann v dazunehmen. Das letzte
+    eingeblendete Diagramm bleibt stehen. In der Tabelle darunter stehen weiterhin alle Werte.
   - **Stellen, Tangenten, Flächen, Vektoren:** Ein Tipp ins Diagramm setzt eine **Stelle** (alle drei
     Diagramme zeigen den Wert, dazu die **Tangentensteigung**: im t-x-Diagramm ist sie v, im
     t-v-Diagramm a) oder ein **Intervall** – dann wird die **Fläche** unter v (= zurückgelegter Weg)

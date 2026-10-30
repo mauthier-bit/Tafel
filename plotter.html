@@ -155,11 +155,15 @@
   #pD{display:none;flex-direction:column;overflow:hidden;}
   #pD.on{display:flex;}
   #mdTop{flex:none;padding:6px 8px 4px;display:flex;flex-direction:column;gap:5px;border-bottom:1px solid #eef1f6;}
-  #mdTop [hidden]{display:none!important;}
+  #mdTop [hidden],#mdMain [hidden]{display:none!important;}   /* schlaegt auch ein style="display:…" am Element */
   /* die Knopfgruppen der Bildbearbeitung duerfen bei schmalem Fenster umbrechen */
-  #mdGenBox,#mdBildBox,#mdMassBox,#mdCropBox{flex-wrap:wrap;}   /* schlaegt auch ein style="display:…" am Element */
+  #mdGenBox,#mdMassBox,#mdCropBox{flex-wrap:wrap;}
   #mdMain{flex:1;display:flex;gap:calc(var(--k) * 8px);min-height:0;padding:0 8px 8px;}
+  #mdLinks{flex:1;min-width:0;min-height:0;display:flex;flex-direction:column;gap:calc(var(--k) * 5px);}
   #mdPlotWrap{flex:1;position:relative;min-height:0;min-width:0;border:1px solid #e6ebf3;border-radius:12px;overflow:hidden;}
+  /* Die Bildleiste sitzt unter der Zeichenfläche und darf umbrechen */
+  #mdBildBox{flex:none;display:flex;flex-wrap:wrap;gap:4px;align-items:center;}
+  #mdBildStart{margin-top:calc(var(--k) * 6px);}
   #plotD{touch-action:none;}
   #mdSide{flex:0 0 clamp(195px, 29%, 320px);min-height:0;overflow:auto;background:#fff;
           border:1px solid #e6ebf3;border-radius:12px;padding:calc(var(--k) * 7px) calc(var(--k) * 9px);}
@@ -486,13 +490,20 @@
           <button type="button" id="mdSetz" class="trSeg on" title="Tippen setzt einen neuen Punkt. Aus: Tippen und Ziehen verschiebt die Ansicht">＋ Punkte setzen</button>
           <button type="button" id="mdFit" class="trSeg" title="Ansicht auf die Daten einstellen">Ansicht</button>
           <button type="button" id="mdClr" class="trSeg" title="Alle Punkte entfernen">Daten leeren</button>
-          <button type="button" id="mdBild" class="trSeg" title="Ein Foto hinterlegen und das Koordinatensystem daraufsetzen">🖼 Bild</button>
-          <span id="mdBildBox" style="display:inline-flex;gap:4px;align-items:center" hidden>
+          <input type="file" id="mdFile" accept="image/*" hidden>
+        </div>
+      </div>
+      <div id="mdMain">
+        <div id="mdLinks">
+          <div id="mdPlotWrap"><canvas id="plotD"></canvas></div>
+          <!-- Alles, was das Bild betrifft, steht direkt unter der Zeichenfläche -->
+          <div id="mdBildBox" hidden>
             <button type="button" id="mdBildAn" class="trSeg" title="Bild schieben und an seiner Ecke größer oder kleiner ziehen">Bild anpassen</button>
-            <label class="trChk" style="display:inline-flex;align-items:center;gap:4px" title="Wie kräftig das Bild zu sehen ist">
-              <input type="range" id="mdDeck" min="20" max="100" step="5" style="width:70px"></label>
             <button type="button" id="mdMass" class="trSeg" title="Maßstab aus dem Bild: zwei bekannte Punkte verbinden und ihren Abstand angeben">📏 Maßstab</button>
+            <button type="button" id="mdUrs" class="trSeg" title="Den Ursprung des Koordinatensystems neu setzen: in die Fläche tippen">⌖ Ursprung</button>
             <button type="button" id="mdCrop" class="trSeg" title="Bild zuschneiden">✂ Zuschneiden</button>
+            <label class="trChk" style="display:inline-flex;align-items:center;gap:4px" title="Wie kräftig das Bild zu sehen ist">
+              <input type="range" id="mdDeck" min="20" max="100" step="5" style="width:calc(var(--k) * 78px)"></label>
             <button type="button" id="mdBildWeg" class="trSeg" title="Bild wieder entfernen">Bild weg</button>
             <span id="mdMassBox" class="trChk" style="display:inline-flex;gap:4px;align-items:center" hidden>
               Abstand <input type="text" id="mdMassV" class="mdin" inputmode="decimal" spellcheck="false" style="width:calc(var(--k) * 62px)"> Einheiten
@@ -502,17 +513,14 @@
               <button type="button" id="mdCropOk" class="trSeg" title="Nur den Ausschnitt behalten">zuschneiden</button>
               <button type="button" id="mdCropAb" class="trSeg" title="Zuschneiden abbrechen">abbrechen</button>
             </span>
-          </span>
-          <input type="file" id="mdFile" accept="image/*" hidden>
+          </div>
         </div>
-      </div>
-      <div id="mdMain">
-        <div id="mdPlotWrap"><canvas id="plotD"></canvas></div>
         <aside id="mdSide">
           <div id="mdDatBox">
             <div class="wTitel" id="mdTitel">Daten</div>
             <table id="mdTab"><thead><tr><th><i>x</i></th><th><i>y</i></th><th id="mdThS" hidden><i>y</i>′</th><th></th></tr></thead><tbody id="mdBody"></tbody></table>
             <div id="mdBtns" class="trRow"><button type="button" id="mdAdd" class="plus">＋ Punkt</button></div>
+            <div id="mdBildStart" class="trRow"><button type="button" id="mdBild" class="plus" title="Ein Foto hinterlegen und darin das Koordinatensystem setzen">🖼 Bild modellieren</button></div>
           </div>
           <div id="mdErgBox">
             <div class="wTitel">Modell</div>
@@ -1620,6 +1628,11 @@ function mdBildMalen(c2){ const b=md.bild; if(!b||!b.src) return;
   c2.strokeRect(r.x,r.y,r.w,r.h); c2.setLineDash([]);
   c2.beginPath(); c2.arc(r.x+r.w,r.y+r.h,9,0,7); c2.fillStyle='#fff'; c2.fill();
   c2.lineWidth=2.6; c2.stroke(); c2.restore();
+  if(md.bmod==='urs'){ c2.save(); c2.strokeStyle='#0f766e'; c2.lineWidth=2; c2.setLineDash([5,4]);
+    c2.beginPath(); c2.moveTo(0,md.view.oy); c2.lineTo(mdW,md.view.oy);
+    c2.moveTo(md.view.ox,0); c2.lineTo(md.view.ox,mdH); c2.stroke(); c2.setLineDash([]);
+    c2.beginPath(); c2.arc(md.view.ox,md.view.oy,10,0,7); c2.fillStyle='#fff'; c2.fill();
+    c2.lineWidth=2.6; c2.stroke(); c2.restore(); return; }
   if(md.bmod==='mass'){ const pk=mdMassPkt(); if(!pk) return;
     const a=mdImgZu(pk[0]), e=mdImgZu(pk[1]);
     c2.save(); c2.strokeStyle='#b45309'; c2.lineWidth=2.4;
@@ -1678,6 +1691,19 @@ function mdBildLos(alt){ const b=md.bild; if(!b||!alt) return;
     md.p[i][0]=mdF(b.x+q.ix*kx); md.p[i][1]=mdF(b.y-q.iy*ky);
     if(q.s!=null) md.p[i][2]=mdF(q.s*ky/kx);
     mdZeile(i); }); }
+/* ---- Ursprung des Koordinatensystems neu setzen ----
+   Alles bleibt auf dem Bildschirm stehen: Bild und Punkte behalten ihren Platz, nur die
+   Achsen wandern an die getippte Stelle – und damit ändern sich alle Zahlen. */
+function mdUrsprung(px,py,still){ const v=md.view, b=md.bild;
+  const dx=(v.ox-px)/v.ux, dy=(py-v.oy)/v.uy;
+  md.p.forEach((r,i)=>{ const x=pz(r[0]), y=pz(r[1]);
+    if(isFinite(x)) md.p[i][0]=mdF(x+dx);
+    if(isFinite(y)) md.p[i][1]=mdF(y+dy);
+    mdZeile(i); });
+  if(b){ b.x+=dx; b.y+=dy; }
+  v.ox=px; v.oy=py;
+  mdErg=mdModell(); mdDraw(); mdText();
+  if(!still) sync(); }
 /* ---- Zuschneiden ---- */
 function mdCropStd(){ const b=md.bild;
   if(!Array.isArray(b.crop)||b.crop.length!==4)
@@ -1761,11 +1787,12 @@ function mdDraw(){ if(tab!=='d'||!mdW) return;
     c2.save(); c2.beginPath(); c2.arc(px,py,gr,0,7); c2.fillStyle=MDCOL.pkt; c2.fill();
     c2.lineWidth=2; c2.strokeStyle='#fff'; c2.stroke(); c2.restore();
     if(md.zWert||i===mdZieh) mdLabel(c2,'('+mdF(x)+' | '+mdF(y)+')',px+11,py-13); });
-  if(md.bildAn&&md.bild){ c2.save(); c2.fillStyle='#1d4ed8';
+  if(md.bild&&(md.bildAn||md.bmod)){ c2.save(); c2.fillStyle='#1d4ed8';
     c2.font='700 '+Math.max(13,fontSize)+'px sans-serif'; c2.textAlign='center'; c2.textBaseline='top';
     c2.lineJoin='round'; c2.lineWidth=3.5; c2.strokeStyle='rgba(255,255,255,.9)';
     const t=md.bmod==='crop' ? 'Rahmen ziehen – „zuschneiden" behält nur diesen Ausschnitt'
           : md.bmod==='mass' ? 'Die beiden Punkte auf eine bekannte Strecke legen, Länge eintragen'
+          : md.bmod==='urs' ? 'In die Fläche tippen – dorthin kommt der Ursprung'
           : 'Bild schieben · an der Ecke ziehen · Achsen passend legen';
     c2.strokeText(t,mdW/2,8); c2.fillText(t,mdW/2,8); c2.restore(); }
   else if(!D.length){ c2.save(); c2.fillStyle='#64748b';
@@ -1833,9 +1860,10 @@ function mdUi(){ ['p','e','t','n'].forEach(k=>$('mdT'+k).classList.toggle('on',m
   $('mdBildBox').hidden=!md.bild;
   $('mdBildAn').classList.toggle('on',!!md.bildAn);
   $('mdDeck').value=String(Math.round((md.bild&&md.bild.deck!=null?md.bild.deck:0.8)*100));
-  if(!md.bild||!md.bildAn) md.bmod='';
+  if(!md.bild) md.bmod='';
   $('mdMass').classList.toggle('on',md.bmod==='mass');
   $('mdCrop').classList.toggle('on',md.bmod==='crop');
+  $('mdUrs').classList.toggle('on',md.bmod==='urs');
   $('mdMassBox').hidden=md.bmod!=='mass';
   $('mdCropBox').hidden=md.bmod!=='crop'; }
 
@@ -1875,6 +1903,10 @@ function mdUi(){ ['p','e','t','n'].forEach(k=>$('mdT'+k).classList.toggle('on',m
     if(md.bmod==='crop'){ md.bild.crop=null; md.bmod=''; }
     else { md.bmod='crop'; md.bildAn=true; mdCropStd(); }
     mdUi(); mdDraw(); sync(); };
+  $('mdUrs').onclick=()=>{ if(!md.bild) return;
+    md.bild.crop=null;
+    md.bmod=(md.bmod==='urs')?'':'urs'; if(md.bmod) md.bildAn=true;
+    mdUi(); mdDraw(); sync(); };
   $('mdCropOk').onclick=()=>mdCropFertig();
   $('mdCropAb').onclick=()=>{ if(md.bild) md.bild.crop=null; md.bmod=''; mdUi(); mdDraw(); sync(); };
   $('mdClr').onclick=()=>{ md.p=[['','','']]; mdBaue(); mdRechne(); sync(); };
@@ -1892,6 +1924,7 @@ function mdUi(){ ['p','e','t','n'].forEach(k=>$('mdT'+k).classList.toggle('on',m
       ux0=md.view.ux; uy0=md.view.uy; mdZieh=-1; mdZiehS=-1; mdZiehB=null; last=null; mdDraw(); return; }
     if(zs.size>2) return;
     const p=lok(e);
+    if(md.bild&&md.bmod==='urs'){ mdUrsprung(p[0],p[1],true); mdZiehB={art:'urs'}; return; }
     if(md.bild&&md.bildAn){                      /* beim Anpassen gehoert die Flaeche dem Bild */
       const r=mdBildRect(), nah=(a,b2)=>Math.hypot(p[0]-a,p[1]-b2)<=26;
       if(md.bmod==='crop'&&md.bild.crop){ const q=mdCropRect();
@@ -1928,6 +1961,7 @@ function mdUi(){ ['p','e','t','n'].forEach(k=>$('mdT'+k).classList.toggle('on',m
         md.view.ux=Math.max(0.01,Math.min(4000,ux0*f)); md.view.uy=Math.max(0.01,Math.min(4000,uy0*f)); }
       mdDraw(); return; }
     const p=lok(e);
+    if(mdZiehB&&mdZiehB.art==='urs'){ mdUrsprung(p[0],p[1],true); return; }
     if(mdZiehB&&md.bild){ const v=md.view, b=md.bild, art=mdZiehB.art;
       if(art==='gr'){ const r=mdBildRect(); b.w=Math.max(1e-6,(p[0]-r.x)/v.ux); mdBildLos(mdZiehB.pkt); }
       else if(art==='ma'||art==='mb'){ b[art]=mdImgVon(p[0],p[1]);
@@ -1991,7 +2025,7 @@ addEventListener('message',e=>{ if(e.source!==window&&(window.parent===window||e
     md.zWert=!!o.zWert; md.setz=o.setz!==false;
     md.bild=(o.bild&&o.bild.src&&o.bild.iw)?Object.assign({},o.bild):null;
     md.bildAn=!!md.bild&&!!o.bildAn;
-    md.bmod=(md.bildAn&&(o.bmod==='mass'||o.bmod==='crop'))?o.bmod:'';
+    md.bmod=(md.bild&&(o.bmod==='mass'||o.bmod==='crop'||o.bmod==='urs'))?o.bmod:'';
     let anders=warS!==mdSlope();
     if(Array.isArray(o.p)){ const st=v=>String(v==null?'':v);
       const neu=(o.p.length?o.p:[['','','']]).map(r=>[st(r&&r[0]),st(r&&r[1]),st(r&&r[2])]);
@@ -2030,7 +2064,7 @@ function plotImage(){ const im=TafelShot.rasterize($('wrap'),{exclude:'#err'}), 
   g.fillStyle='rgba(255,255,255,.93)'; g.strokeStyle='#cbd5e1'; g.lineWidth=1; g.beginPath(); g.rect(8,8,bw,bh); g.fill(); g.stroke();
   lines.forEach((l,i)=>{ const y=8+5+lh*(i+0.5); g.fillStyle=l.col; if(i<lines.length-(ps.length?1:0)){ g.beginPath(); g.arc(20,y,5,0,7); g.fill(); } g.fillText(l.txt,32,y); });
   return im; }
-function tabBild(){ if(tab==='d') return TafelShot.rasterize($('mdMain'),{pad:8,exclude:'.mddel,#mdBtns'});
+function tabBild(){ if(tab==='d') return TafelShot.rasterize($('mdMain'),{pad:8,exclude:'.mddel,#mdBtns,#mdBildStart,#mdBildBox'});
   if(tab==='r') return TafelShot.rasterize($('trMain'),{pad:8});   /* Graph und rechte Spalte, wie sie dastehen */
   if(tab==='t') return TafelShot.rasterize($('ttab')||$('pT'),{pad:8,exclude:'.fdel,.fhide'});
   if(tab==='m') return TafelShot.rasterize($('mlist')||$('pM'),{pad:8,exclude:'.fdel,.fhide,.mtr,.mch'});
