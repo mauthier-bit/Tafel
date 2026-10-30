@@ -319,8 +319,8 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   bei **Bild beschriften** und beim **interaktiven Video** gibt es deshalb nur noch ＋/− für die
   Schriftgröße. Beim **Funktionsplotter** hängen **Farbe** und **Dicke/Größe** am Reiter: Im Reiter
   **Graph** stehen beide (sie gelten für die gerade gewählte Funktion), in **Tabelle** und
-  **Maschine** nur die Farbe, und im Reiter **Transformationen** keines von beiden – dort zeichnet
-  der Plotter mit seinen eigenen Farben.
+  **Maschine** nur die Farbe, und in den Reitern **Transformationen** und **Modell** keines von
+  beiden – dort zeichnet der Plotter mit seinen eigenen Farben.
 - Beim Wechsel auf die **Schreibwerkzeuge** ist immer der **Stift** aktiv.
 - **Diagramme aus der Tabelle:** einen **Zellbereich markieren** (mit gedrücktem Finger/Maus über
   die Zellen ziehen) und auf **„📊 Diagramm"** tippen – die markierten Zahlen werden wahlweise als
@@ -1972,7 +1972,7 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   reagiert dann nicht. Das kleine **⚙ im Zifferblatt** (zwischen Mitte und 12) öffnet ihr Menü mit
   **Größe**, **Schulstunden**, **Digitalanzeige**, **„Wieder als Objekt auf die Seite"** (legt sie mit
   gleicher Größe und Position zurück auf die aktuelle Seite) und **„Uhr ausblenden"**.
-- **Funktionsplotter** (Werkzeug) – **vier Reiter: Graph, Tabelle, Maschine, Transformationen.** Der Funktionsterm lässt
+- **Funktionsplotter** (Werkzeug) – **fünf Reiter: Graph, Tabelle, Maschine, Transformationen, Modell.** Der Funktionsterm lässt
   sich **in den ersten drei Reitern** eingeben und gilt sofort in allen dreien; „＋“ legt überall eine weitere Funktion an
   (im Graph eine Eingabezeile, in der Tabelle eine Zeile, bei der Maschine eine weitere Maschine).
   **Tabelle:** in der Kopfzeile stehen die **x-Werte zum Eintippen** („＋ x-Wert“ hängt eine Spalte an und
@@ -2061,6 +2061,41 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   Die Zeichenfläche lässt sich **ziehen und zoomen** (zwei Finger oder Mausrad), **„Ansicht"** stellt das
   Standardfenster wieder her, **„↺"** setzt a, b, c, d auf 1, 1, 0, 0 zurück. Der ganze Stand – Term,
   Regler und Schalter – wird mit dem Projekt gespeichert und vom **Teilen**-Knopf mitgegeben.
+  **Modell:** Auch dieser Reiter steht **für sich** – eigene Daten, eigene Zeichenfläche, die
+  Funktionen der anderen Reiter bleiben unberührt. Hier werden **Messdaten modelliert**: Die
+  Punkte lassen sich **wahlweise in die Tabelle tippen** (Spalten *x* und *y*, „＋ Punkt" hängt eine
+  Zeile an, „×" nimmt eine weg) **oder direkt ins Koordinatensystem setzen** – solange
+  **„＋ Punkte setzen"** eingeschaltet ist, legt ein Tipp in die Fläche einen neuen Punkt an
+  (ist der Knopf aus, verschiebt dasselbe Tippen und Ziehen die Ansicht; mit zwei Fingern geht
+  beides immer). **Jeder Punkt bleibt beweglich:** Man zieht ihn mit dem Finger, die Werte rasten
+  auf einem Zehntel des Achsenschritts ein, stehen sofort in der Tabelle, und das Modell rechnet
+  sich **beim Ziehen** neu mit. Ein **zweiter Tipp** auf einen Punkt nimmt ihn weg.
+  **Drei Funktionstypen** stehen zur Wahl:
+  - **ganzrational:** Der Graph geht **genau durch alle Punkte** – der **Grad richtet sich nach der
+    Zahl der Bedingungen** (zwei Punkte → Grad 1, drei Punkte → Grad 2 …). Lässt sich die Aufgabe
+    mit einem kleineren Grad lösen, wird der kleinere angegeben.
+  - **exponentiell:** **y = a · bˣ**, auf Wunsch (**„mit + c"**) mit Verschiebung **y = a · bˣ + c**
+    (für Abkühlungs- und Sättigungsvorgänge).
+  - **trigonometrisch:** **y = a · sin(b · (x − c)) + d**.
+  Bei den beiden letzten wird **angenähert** (Methode der kleinsten Quadrate, die Periode bzw. die
+  Wachstumsrate wird dabei mit abgesucht); unter dem Term steht die **mittlere Abweichung**, und
+  das Häkchen **„Abweichungen"** zeichnet zu jedem Punkt den senkrechten Abstand zur Kurve.
+  **„Ableitung" (nur bei ganzrational):** Dann kommt eine **dritte Spalte *y*′** in die Tabelle, und
+  an jedem Punkt im Koordinatensystem sitzt ein **Steigungsregler** – ein kurzes Tangentenstück mit
+  Griff, das sich **drehen** lässt. Eine gezogene (oder eingetippte) Steigung ist eine **zusätzliche
+  Bedingung**, der Grad steigt entsprechend: zwei Punkte mit je einer Steigung → **Grad 3**. So
+  lassen sich **Steckbrief- und Trassierungsaufgaben** aufbauen und gleich nachziehen. Solange eine
+  Steigung offen ist, zeigt der Griff gestrichelt die Steigung des aktuellen Modells; ein **zweiter
+  Tipp** auf den Griff gibt sie wieder frei (die Zelle wird leer).
+  **Ausgabe sind Term und Graph:** Rechts (auf schmalen Geräten unter der Zeichenfläche neben der
+  Tabelle) steht der **fertige Funktionsterm** groß in einem Kasten, darunter eine Zeile dazu
+  („Grad 2 – der Graph geht genau durch alle 3 Punkte"). **„Werte an den Punkten"** schreibt die
+  Koordinaten an die Punkte, **„Graph"** blendet die Kurve weg (gut, wenn die Klasse den Verlauf
+  erst **vorhersagen** soll), **„Ansicht"** stellt das Fenster auf die Daten ein – **x- und
+  y-Richtung getrennt**, sodass auch Messreihen mit großen y-Werten (Bakterien, Temperaturen)
+  vernünftig dastehen. Über **„Beispiel …"** liegen fertige Datensätze bereit (Gerade durch zwei
+  Punkte, Wurfbahn, Trassierung mit Steigungen, Bakterien, Abkühlung, Tageslänge). Daten, Typ und
+  Schalter werden mit dem Projekt gespeichert und beim **Teilen** mitgegeben.
   **Term verdecken (👁 neben der Eingabe):** Der Term bleibt erhalten und wirkt weiter, ist aber **nirgends mehr
   zu sehen** – statt seiner steht „? ? ?“ (auch in der Maschine und in Bildern für die Tafel). So wird aus jeder
   Funktion eine Aufgabe: *Welche Funktion steckt dahinter?* Ein zweiter Tipp zeigt ihn wieder.
