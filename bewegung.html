@@ -82,6 +82,9 @@ details.settings summary::-webkit-details-marker { display: none; }
 .mode-1d .stage { grid-template-rows: minmax(150px, 26%) minmax(0, 1fr); }
 .mode-1d.lane .stage { grid-template-rows: minmax(260px, 50%) minmax(0, 1fr); }
 .mode-2d .stage { grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); }
+/* y-Aufnahme: Das Aufnahmefeld steht senkrecht links neben den Diagrammen. */
+.mode-1d.senk .stage { grid-template-columns: minmax(150px, 26%) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }
+.mode-1d.senk.lane .stage { grid-template-columns: minmax(190px, 34%) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }
 @media (orientation: portrait) {
   .mode-2d .stage { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(220px, 40%) minmax(0, 1fr); }
 }
@@ -127,6 +130,7 @@ details.settings summary::-webkit-details-marker { display: none; }
   body { overflow: auto; }
   .app { height: auto; min-height: 100%; }
   .mode-1d .stage, .mode-2d .stage { grid-template-columns: minmax(0, 1fr); grid-template-rows: 200px 560px; }
+  .mode-1d.senk .stage, .mode-1d.senk.lane .stage { grid-template-columns: minmax(110px, 34%) minmax(0, 1fr); grid-template-rows: 560px; }
   .mode-2d .stage { grid-template-rows: 300px 560px; }
   .slider input { width: 100px; }
 }
@@ -327,6 +331,10 @@ details.settings summary::-webkit-details-marker { display: none; }
         <button id="m1d" aria-pressed="true">1D</button>
         <button id="m2d" aria-pressed="false">2D</button>
       </div>
+      <div class="seg" role="group" aria-label="Richtung der Aufnahme" id="achsSeg">
+        <button data-ach="x" aria-pressed="true" title="Waagerechte Bewegung: das Lineal liegt über den Diagrammen">x →</button>
+        <button data-ach="y" aria-pressed="false" title="Senkrechte Bewegung: das Lineal steht links neben den Diagrammen">y ↑</button>
+      </div>
       <div class="seg" role="group" aria-label="Komponente" id="compSeg" hidden>
         <button data-comp="x" aria-pressed="false">x</button>
         <button data-comp="y" aria-pressed="false">y</button>
@@ -453,6 +461,7 @@ const $ = id => document.getElementById(id);
 const pad = $("pad"), plots = $("plots"), app = $("app");
 const DT = 0.01;            // Abtastraster nach dem Resampling (s)
 const PAD_M = 24;           // Rand im Aufnahmefeld (px)
+const SENK_OBEN = 60, SENK_UNTEN = 58;   // Raender des senkrechten Lineals
 
 if (window.parent !== window) document.body.classList.add("imRahmen");
 const isIPad = /iPad/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
@@ -461,6 +470,7 @@ try { savedPpc = parseFloat(localStorage.getItem("bwd-ppc")); } catch (e) {}
 
 const state = {
   mode: "1d", comp: "xy", sigma: 60,
+  achse: "x",           // 1D: waagerechte (x) oder senkrechte (y) Aufnahme
   /* fuer jedes Diagramm einzeln: Tangente in x(t) bzw. v(t), Flaeche unter v(t) bzw. a(t) */
   show: { stellen: true, tang: { x: true, v: false }, fl: { v: false, a: false } },
   dia: { x: true, v: true, a: true },      // welche der drei Diagramme gezeichnet werden
@@ -482,6 +492,11 @@ const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 /* Alle Schriftgrößen in den Diagrammen laufen über fs(): so zieht A− / A+ überall mit.
    Die Ränder der Diagramme (Platz für die Achsenbeschriftung) wachsen mit. */
 const fs = v => Math.round(v * state.fs * 10) / 10;
+/* 1D laeuft entweder waagerecht (x, Lineal ueber den Diagrammen) oder senkrecht
+   (y, Lineal links daneben). Aufgezeichnet wird in beiden Faellen in state.raw[].x -
+   nur die Beschriftung und die Lage im Aufnahmefeld aendern sich. */
+const istSenk = () => state.mode === "1d" && state.achse === "y";
+const sym1d = () => state.achse === "y" ? "y" : "x";
 const fmt = (v, d = 1) => (Math.abs(v) < 0.5 * Math.pow(10, -d) ? 0 : v).toLocaleString("de-DE", { minimumFractionDigits: d, maximumFractionDigits: d });
 function css(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
 function alpha(hex, a) {
@@ -589,7 +604,8 @@ function makeSample() {
   let seed = 7; const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647 - 0.5);
   const noise = 0.6;
   if (state.mode === "1d") {
-    const A = 0.68 * wpx, x0 = 0.1 * wpx, B = 0.4 * A;
+    const span = istSenk() ? Math.max(140, r.height - SENK_OBEN - SENK_UNTEN) : wpx;
+    const A = 0.68 * span, x0 = 0.1 * span, B = 0.4 * A;
     const T1 = 2.4, P = 0.5, T2 = 1.6, T = T1 + P + T2;
     for (let t = 0; t <= T + 1e-9; t += 1 / 60) {
       let x;
@@ -620,13 +636,19 @@ function defaults() {
 
 // ---------- Aufnahme ----------
 function padOrigin(w, h) {
-  return state.mode === "1d" ? { x: PAD_M, y: state.allVec ? Math.max(h * 0.62, h - 78) : h * 0.62 } : { x: PAD_M + 6, y: h - PAD_M - 6 };
+  if (state.mode !== "1d") return { x: PAD_M + 6, y: h - PAD_M - 6 };
+  /* senkrecht: Lineal links, die Null unten - oben bleibt Platz fuer den Hinweis,
+     unten fuer Legende und Zeile "Punkte im Abstand" (SENK_OBEN / SENK_UNTEN). */
+  if (istSenk()) return { x: 40, y: h - SENK_UNTEN };
+  return { x: PAD_M, y: state.allVec ? Math.max(h * 0.62, h - 78) : h * 0.62 };
 }
 function addSample(ev) {
   const r = pad.getBoundingClientRect();
   const o = padOrigin(r.width, r.height);
   const t = (ev.timeStamp - state.t0) / 1000;
-  const p = { t, x: ev.clientX - r.left - o.x, y: o.y - (ev.clientY - r.top) };
+  const p = istSenk()
+    ? { t, x: o.y - (ev.clientY - r.top), y: 0 }     // senkrecht: die Hoehe ist die Groesse
+    : { t, x: ev.clientX - r.left - o.x, y: o.y - (ev.clientY - r.top) };
   if (state.mode === "1d") p.y = 0;
   const last = state.raw[state.raw.length - 1];
   if (last && t < last.t) return;
@@ -691,13 +713,29 @@ function drawPad() {
   const X = cm => o.x + cm * ppc, Y = cm => o.y - cm * ppc;
   ctx.font = `${fs(11)}px ${css("--font-data")}`;
   ctx.textBaseline = "top";
+  const senk = istSenk();
   if (state.mode === "1d") {
-    // Lineal
-    const xmax = w - PAD_M;
-    ctx.strokeStyle = C.muted; ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.moveTo(o.x, o.y); ctx.lineTo(xmax, o.y); ctx.stroke();
-    ctx.fillStyle = C.muted; ctx.textAlign = "center";
+    // Lineal: waagerecht unter der Spur oder senkrecht am linken Rand
     const mm = ppc >= 30;
+    ctx.strokeStyle = C.muted; ctx.lineWidth = 1.5; ctx.fillStyle = C.muted;
+    if (senk) {
+      const ymin = SENK_OBEN;
+      ctx.beginPath(); ctx.moveTo(o.x, o.y); ctx.lineTo(o.x, ymin); ctx.stroke();
+      ctx.textAlign = "right"; ctx.textBaseline = "middle";
+      let lastLabel = o.y;
+      for (let k = 0; Y(k / (mm ? 10 : 1)) >= ymin - 0.1; k++) {
+        const cm = mm ? k / 10 : k, py = Y(cm);
+        const isCm = mm ? k % 10 === 0 : true, is5 = isCm && Math.round(cm) % 5 === 0;
+        const len = is5 ? 14 : isCm ? 9 : 4;
+        ctx.lineWidth = is5 ? 1.5 : 1;
+        ctx.beginPath(); ctx.moveTo(o.x, py); ctx.lineTo(o.x - len, py); ctx.stroke();
+        if (is5) { ctx.fillText(String(Math.round(cm)), o.x - 17, py); lastLabel = py; }
+      }
+      ctx.textBaseline = "bottom"; ctx.fillText("cm", o.x - 4, Math.max(lastLabel - 12, 14));
+      ctx.textBaseline = "top";
+    } else {
+    const xmax = w - PAD_M;
+    ctx.textAlign = "center";
     let lastLabel = 0;
     for (let k = 0; X(k / (mm ? 10 : 1)) <= xmax + 0.1; k++) {
       const cm = mm ? k / 10 : k, px = X(cm);
@@ -707,7 +745,9 @@ function drawPad() {
       ctx.beginPath(); ctx.moveTo(px, o.y); ctx.lineTo(px, o.y + len); ctx.stroke();
       if (is5) { ctx.fillText(String(Math.round(cm)), px, o.y + 17); lastLabel = px; }
     }
+    ctx.beginPath(); ctx.moveTo(o.x, o.y); ctx.lineTo(xmax, o.y); ctx.lineWidth = 1.5; ctx.stroke();
     ctx.textAlign = "left"; ctx.fillText("cm", Math.min(lastLabel + 12, w - 22), o.y + 17);
+    }
   } else {
     // Karopapier
     for (let k = 0; X(k) <= w; k++) {
@@ -740,8 +780,14 @@ function drawPad() {
     const p = r[r.length - 1];
     if (p) {
       ctx.strokeStyle = alpha(C.qx, 0.5); ctx.lineWidth = 1;
-      if (state.mode === "1d") { ctx.beginPath(); ctx.moveTo(o.x + p.x, 0); ctx.lineTo(o.x + p.x, h); ctx.stroke(); }
-      ctx.fillStyle = C.qx; ctx.beginPath(); ctx.arc(o.x + p.x, state.mode === "1d" ? o.y : o.y - p.y, 7, 0, 7); ctx.fill();
+      if (state.mode === "1d") {
+        ctx.beginPath();
+        if (senk) { ctx.moveTo(0, o.y - p.x); ctx.lineTo(w, o.y - p.x); }
+        else { ctx.moveTo(o.x + p.x, 0); ctx.lineTo(o.x + p.x, h); }
+        ctx.stroke();
+      }
+      const cx = senk ? o.x : o.x + p.x, cy = senk ? o.y - p.x : (state.mode === "1d" ? o.y : o.y - p.y);
+      ctx.fillStyle = C.qx; ctx.beginPath(); ctx.arc(cx, cy, 7, 0, 7); ctx.fill();
       ctx.font = `600 ${fs(15)}px ${css("--font-data")}`; ctx.textAlign = "right"; ctx.fillStyle = C.ink;
       ctx.fillText(`t = ${fmt(p.t, 2)} s`, w - 14, 12);
     }
@@ -751,12 +797,23 @@ function drawPad() {
   // Messpunkte im eingestellten Zeitabstand
   const step = Math.max(1, Math.round(state.strobe / DT));
   const one = state.mode === "1d";
-  const lane = one && state.allVec;              // 1D: Punkte zeitlich versetzt untereinander
-  const laneTop = 44, laneBot = o.y - 26;
-  const yOf = i => one ? (lane ? laneTop + (D.t[i] / Math.max(D.T, 0.01)) * (laneBot - laneTop) : o.y - 20) : Y(D.y[i]);
+  const lane = one && state.allVec;              // 1D: Punkte zeitlich versetzt nebeneinander
+  /* In 1D liegt die Bewegung auf dem Lineal; quer dazu stehen die Punkte und Pfeile -
+     bei der waagerechten Aufnahme oberhalb, bei der senkrechten rechts davon. d ist
+     dieser Abstand vom Lineal, so gilt derselbe Code fuer beide Richtungen. */
+  const Pp = (cm, d) => senk ? [o.x + d, o.y - cm * ppc] : [o.x + cm * ppc, o.y - d];
+  const dFern = senk ? w - o.x - 26 : o.y - 44;  // Ende der Zeitspur, am weitesten vom Lineal weg
+  const dOf = t => !lane ? 20
+    : senk ? 30 + (t / Math.max(D.T, 0.01)) * (dFern - 30)
+           : dFern + (t / Math.max(D.T, 0.01)) * (26 - dFern);
+  const ptOf = i => one ? Pp(D.x[i], dOf(D.t[i])) : [X(D.x[i]), Y(D.y[i])];
   const vs = 0.25 * ppc * state.vecScale, as = 0.04 * ppc * state.vecScale; // Pfeil: v · 0,25 s bzw. a · 0,04 s²
   const capF = (dx, dy) => { const l = Math.hypot(dx, dy), m = Math.max(w, h); return l > m ? m / l : 1; };
   const showV = state.vecSel !== "a", showA = state.vecSel !== "v";
+  // ein Pfeil laengs der Bewegungsrichtung (in 2D mit beiden Komponenten)
+  const pfeil = (px, py, gx, gy, f, col, br, kopf) => senk
+    ? arrow(ctx, px, py, px, py - gx * f, col, br, kopf)
+    : arrow(ctx, px, py, px + gx * f, py - gy * f, col, br, kopf);
   if (!one) {
     ctx.strokeStyle = alpha(C.qx, 0.55); ctx.lineWidth = 2;
     ctx.beginPath(); for (let i = 0; i < D.N; i++) { const px = X(D.x[i]), py = Y(D.y[i]); i ? ctx.lineTo(px, py) : ctx.moveTo(px, py); } ctx.stroke();
@@ -764,52 +821,61 @@ function drawPad() {
   if (state.allVec) {
     const thin = step * DT * ppc < 14 ? 1.3 : 1.8, head = thin < 1.5 ? 5 : 7;
     for (let i = 0; i < D.N; i += step) {
-      const px = X(D.x[i]), py = yOf(i);
+      const [px, py] = ptOf(i);
       const vx = D.vx[i], vy = one ? 0 : D.vy[i], ax = D.ax[i], ay = one ? 0 : D.ay[i];
-      const pa = lane && showV ? py + 3 : py;   // in 1D a-Pfeil leicht unter den v-Pfeil
-      if (showA) { const f = capF(ax * as, ay * as); arrow(ctx, px, pa, px + ax * as * f, pa - ay * as * f, alpha(C.qa, 0.9), thin, head); }
-      if (showV) { const f = capF(vx * vs, vy * vs); arrow(ctx, px, py, px + vx * vs * f, py - vy * vs * f, alpha(C.qv, 0.9), thin, head); }
+      // in 1D sitzt der a-Pfeil leicht neben dem v-Pfeil
+      const nx = lane && showV && senk ? 3 : 0, ny = lane && showV && !senk ? 3 : 0;
+      if (showA) pfeil(px + nx, py + ny, ax * as, ay * as, capF(ax * as, ay * as), alpha(C.qa, 0.9), thin, head);
+      if (showV) pfeil(px, py, vx * vs, vy * vs, capF(vx * vs, vy * vs), alpha(C.qv, 0.9), thin, head);
     }
   }
   ctx.fillStyle = alpha(C.qx, one && !lane ? 0.45 : 0.85);
-  for (let i = 0; i < D.N; i += step) { ctx.beginPath(); ctx.arc(X(D.x[i]), yOf(i), step * DT * ppc < 10 ? 2.4 : 3.2, 0, 7); ctx.fill(); }
+  for (let i = 0; i < D.N; i += step) { const [px, py] = ptOf(i); ctx.beginPath(); ctx.arc(px, py, step * DT * ppc < 10 ? 2.4 : 3.2, 0, 7); ctx.fill(); }
   ctx.font = `${fs(11)}px ${css("--font-body")}`; ctx.fillStyle = C.muted; ctx.textAlign = "right"; ctx.textBaseline = "bottom";
-  ctx.fillText(`Punkte im Abstand von ${fmt(state.strobe, state.strobe < 0.1 ? 2 : state.strobe < 1 ? (state.strobe * 10 % 1 ? 2 : 1) : 0)} s` + (lane ? ", Zeit läuft nach unten" : ""), w - 12, h - 8);
+  /* im schmalen, senkrechten Feld muss die Zeile kurz bleiben */
+  const dt = fmt(state.strobe, state.strobe < 0.1 ? 2 : state.strobe < 1 ? (state.strobe * 10 % 1 ? 2 : 1) : 0);
+  ctx.fillText(senk ? `${dt} s je Punkt` + (lane ? ", Zeit nach rechts" : "")
+                    : `Punkte im Abstand von ${dt} s` + (lane ? ", Zeit läuft nach unten" : ""),
+    w - 12, senk ? h - 44 : h - 8);
 
   // Körper zum Zeitpunkt des Cursors
   if (state.cursor != null) {
-    const t = state.cursor;
-    const px = X(val(D.x, t)), py = one ? o.y : Y(val(D.y, t));
+    const t = state.cursor, xt = val(D.x, t);
+    const [px, py] = one ? Pp(xt, 0) : [X(xt), Y(val(D.y, t))];
     const vx = val(D.vx, t), vy = one ? 0 : val(D.vy, t);
     const ax = val(D.ax, t), ay = one ? 0 : val(D.ay, t);
     const fv = capF(vx * vs, vy * vs), fa = capF(ax * as, ay * as);
     if (lane) {
       // Cursor auf der versetzten Spur markieren
-      const ly = laneTop + (t / Math.max(D.T, 0.01)) * (laneBot - laneTop);
+      const [sx, sy] = Pp(xt, dOf(t));
       ctx.strokeStyle = alpha(C.ink, 0.35); ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
-      ctx.beginPath(); ctx.moveTo(px, ly); ctx.lineTo(px, py); ctx.stroke(); ctx.setLineDash([]);
-      ctx.strokeStyle = C.ink; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(px, ly, 6, 0, 7); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(px, py); ctx.stroke(); ctx.setLineDash([]);
+      ctx.strokeStyle = C.ink; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(sx, sy, 6, 0, 7); ctx.stroke();
     } else {
-      const yv = one ? py - 40 : py, ya = one ? py - 58 : py;
+      // die beiden Pfeile stehen neben dem Koerper, in 2D in ihm
+      const [vpx, vpy] = one ? Pp(xt, 40) : [px, py], [apx, apy] = one ? Pp(xt, 58) : [px, py];
       if (one) {
+        const [ex, ey] = Pp(xt, 64);
         ctx.strokeStyle = alpha(C.ink, 0.35); ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
-        ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px, ya - 6); ctx.stroke(); ctx.setLineDash([]);
+        ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(ex, ey); ctx.stroke(); ctx.setLineDash([]);
       }
-      arrow(ctx, px, yv, px + vx * vs * fv, yv - vy * vs * fv, C.qv, 3, 10);
-      arrow(ctx, px, ya, px + ax * as * fa, ya - ay * as * fa, C.qa, 3, 10);
+      pfeil(vpx, vpy, vx * vs, vy * vs, fv, C.qv, 3, 10);
+      pfeil(apx, apy, ax * as, ay * as, fa, C.qa, 3, 10);
     }
     ctx.fillStyle = C.ink; ctx.strokeStyle = C.surface; ctx.lineWidth = 3;
     ctx.beginPath(); ctx.arc(px, py, 8, 0, 7); ctx.fill(); ctx.stroke();
   }
-  // Legende mit Pfeilmaßstab
+  // Legende mit Pfeilmaßstab - im schmalen, senkrechten Feld untereinander
   ctx.textBaseline = "bottom"; ctx.textAlign = "left";
-  ctx.font = `700 ${fs(12)}px ${css("--font-body")}`; ctx.fillStyle = C.qv; ctx.fillText("v", 14, h - 8);
+  const lyV = senk ? h - 26 : h - 8, lyA = h - 8;
+  ctx.font = `700 ${fs(12)}px ${css("--font-body")}`; ctx.fillStyle = C.qv; ctx.fillText("v", 14, lyV);
   ctx.font = `${fs(11)}px ${css("--font-data")}`; ctx.fillStyle = C.muted;
-  let lx = 24; const vTxt = `1 cm ≙ ${fmt(4 / state.vecScale, state.vecScale > 1 ? 1 : 0)} cm/s`;
-  ctx.fillText(vTxt, lx, h - 8); lx += ctx.measureText(vTxt).width + 14;
-  ctx.font = `700 ${fs(12)}px ${css("--font-body")}`; ctx.fillStyle = C.qa; ctx.fillText("a", lx, h - 8);
+  const vTxt = `1 cm ≙ ${fmt(4 / state.vecScale, state.vecScale > 1 ? 1 : 0)} cm/s`;
+  ctx.fillText(vTxt, 24, lyV);
+  const lx = senk ? 14 : 24 + ctx.measureText(vTxt).width + 14;
+  ctx.font = `700 ${fs(12)}px ${css("--font-body")}`; ctx.fillStyle = C.qa; ctx.fillText("a", lx, lyA);
   ctx.font = `${fs(11)}px ${css("--font-data")}`; ctx.fillStyle = C.muted;
-  ctx.fillText(`1 cm ≙ ${fmt(25 / state.vecScale, state.vecScale > 2 ? 2 : state.vecScale > 1 ? 1 : 0)} cm/s²`, lx + 10, h - 8);
+  ctx.fillText(`1 cm ≙ ${fmt(25 / state.vecScale, state.vecScale > 2 ? 2 : state.vecScale > 1 ? 1 : 0)} cm/s²`, lx + 10, lyA);
 }
 
 // ---------- Zeichnen: Diagramme ----------
@@ -851,7 +917,7 @@ function drawPlots() {
   layout.tx = tx; layout.T = T;
   const comps = state.mode === "1d" ? ["x"] : state.comp === "xy" ? ["x", "y"] : [state.comp];
   const Q = [
-    { id: "x", name: "Ort", sym: c => state.mode === "1d" ? "x" : c, unit: "cm", key: c => c, color: C.qx },
+    { id: "x", name: "Ort", sym: c => state.mode === "1d" ? sym1d() : c, unit: "cm", key: c => c, color: C.qx },
     { id: "v", name: "Geschwindigkeit", sym: c => state.mode === "1d" ? "v" : "v" + SUB[c], unit: "cm/s", key: c => "v" + c, color: C.qv },
     { id: "a", name: "Beschleunigung", sym: c => state.mode === "1d" ? "a" : "a" + SUB[c], unit: "cm/s²", key: c => "a" + c, color: C.qa },
   ];
@@ -1088,7 +1154,7 @@ function renderReadout() {
   const two = state.mode === "2d";
   const cols = two
     ? [["x", "x", "cm", "cx"], ["y", "y", "cm", "cx"], ["vₓ", "vx", "cm/s", "cv"], ["vᵧ", "vy", "cm/s", "cv"], ["aₓ", "ax", "cm/s²", "ca"], ["aᵧ", "ay", "cm/s²", "ca"]]
-    : [["x", "x", "cm", "cx"], ["v", "vx", "cm/s", "cv"], ["a", "ax", "cm/s²", "ca"]];
+    : [[sym1d(), "x", "cm", "cx"], ["v", "vx", "cm/s", "cv"], ["a", "ax", "cm/s²", "ca"]];
   const rows = [];
   if (state.cursor != null) rows.push({ label: "P", t: state.cursor, idx: -1 });
   if (state.show.stellen) state.pins.forEach((t, i) => rows.push({ label: String(i + 1), t, idx: i }));
@@ -1106,7 +1172,7 @@ function renderReadout() {
     const cell = comps.map(c => {
       const pos = c, dx = val(D[pos], b) - val(D[pos], a), Av = integral(D["v" + c], a, b);
       const dv = val(D["v" + c], b) - val(D["v" + c], a), Aa = integral(D["a" + c], a, b);
-      const ps = two ? c : "x";
+      const ps = two ? c : sym1d();
       const teile = [];
       if (state.show.fl.v) teile.push(`<span class="cx">Δ${ps} = ${fmt(dx, 1)} cm</span> · Fläche unter v${sx(c)} = ${fmt(Av, 1)} cm`);
       if (state.show.fl.a) teile.push(`<span class="cv">Δv${sx(c)} = ${fmt(dv, 1)} cm/s</span> · Fläche unter a${sx(c)} = ${fmt(Aa, 1)} cm/s`);
@@ -1220,6 +1286,9 @@ function updateUI() {
   setPressed("m1d", state.mode === "1d"); setPressed("m2d", state.mode === "2d");
   app.classList.toggle("mode-1d", state.mode === "1d"); app.classList.toggle("mode-2d", state.mode === "2d");
   app.classList.toggle("lane", state.mode === "1d" && state.allVec);
+  app.classList.toggle("senk", istSenk());
+  $("achsSeg").hidden = state.mode !== "1d";
+  document.querySelectorAll("#achsSeg button").forEach(b => b.setAttribute("aria-pressed", b.dataset.ach === state.achse ? "true" : "false"));
   $("compSeg").hidden = state.mode !== "2d";
   document.querySelectorAll("#compSeg button").forEach(b => b.setAttribute("aria-pressed", b.dataset.comp === state.comp ? "true" : "false"));
   setPressed("tStellen", state.show.stellen);
@@ -1228,9 +1297,11 @@ function updateUI() {
   setPressed("toolStelle", state.tool === "stelle"); setPressed("toolIv", state.tool === "intervall");
   $("pin").disabled = state.cursor == null || !D || state.pins.length >= 8;
   $("undo").disabled = !state.prev;
-  $("hint").textContent = state.mode === "1d"
-    ? "Finger auflegen und bewegen. Aufgezeichnet wird, solange der Finger aufliegt (nur die waagerechte Bewegung zählt)."
-    : "Finger auflegen und bewegen. Aufgezeichnet wird, solange der Finger aufliegt.";
+  $("hint").textContent = istSenk()
+    ? "Finger auflegen und senkrecht bewegen."
+    : state.mode === "1d"
+      ? "Finger auflegen und bewegen. Aufgezeichnet wird, solange der Finger aufliegt (nur die waagerechte Bewegung zählt)."
+      : "Finger auflegen und bewegen. Aufgezeichnet wird, solange der Finger aufliegt.";
   updateStatus(); renderReadout();
 }
 
@@ -1244,6 +1315,19 @@ function setMode(m) {
     updateUI(); draw();
   });
 }
+/* Richtung der 1D-Aufnahme: Die Werte bleiben stehen, nur Feld und Beschriftung drehen sich;
+   die Beispielaufnahme wird neu gebaut, weil sie sich nach der Laenge des Feldes richtet. */
+function setAchse(a) {
+  if (state.achse === a || state.mode !== "1d") return;
+  stopPlay();
+  state.achse = a;
+  updateUI();
+  requestAnimationFrame(() => {
+    if (state.sample) makeSample(); else process();
+    updateUI(); draw();
+  });
+}
+document.querySelectorAll("#achsSeg button").forEach(b => b.addEventListener("click", () => setAchse(b.dataset.ach)));
 $("m1d").addEventListener("click", () => setMode("1d"));
 $("m2d").addEventListener("click", () => setMode("2d"));
 document.querySelectorAll("#compSeg button").forEach(b => b.addEventListener("click", () => { state.comp = b.dataset.comp; updateUI(); requestDraw(); }));
@@ -1294,6 +1378,13 @@ $("ppc").addEventListener("change", e => {
 function csvText() {
   if (!D) return "";
   const f = v => v.toFixed(4).replace(".", ",");
+  /* In 1D steht nur die aufgenommene Richtung in der Datei - x oder y, je nach Umschalter. */
+  if (state.mode === "1d") {
+    const q = sym1d();
+    let csv = `t in s;${q} in cm;v${q} in cm/s;a${q} in cm/s²\n`;
+    for (let i = 0; i < D.N; i++) csv += [D.t[i], D.x[i], D.vx[i], D.ax[i]].map(f).join(";") + "\n";
+    return csv;
+  }
   let csv = "t in s;x in cm;y in cm;vx in cm/s;vy in cm/s;ax in cm/s²;ay in cm/s²\n";
   for (let i = 0; i < D.N; i++) csv += [D.t[i], D.x[i], D.y[i], D.vx[i], D.vy[i], D.ax[i], D.ay[i]].map(f).join(";") + "\n";
   return csv;
@@ -1342,7 +1433,7 @@ if (document.fonts && document.fonts.ready) document.fonts.ready.then(requestDra
 function zustand() {
   const r3 = v => Math.round(v * 1000) / 1000;
   return {
-    mode: state.mode, comp: state.comp, sigma: state.sigma,
+    mode: state.mode, comp: state.comp, achse: state.achse, sigma: state.sigma,
     show: { stellen: state.show.stellen, tang: { x: state.show.tang.x, v: state.show.tang.v }, fl: { v: state.show.fl.v, a: state.show.fl.a } },
     dia: { x: state.dia.x, v: state.dia.v, a: state.dia.a },
     tool: state.tool, sample: state.sample,
@@ -1369,6 +1460,7 @@ function uebernimm(d) {
   if (!d || typeof d !== "object") return;
   if (d.mode === "1d" || d.mode === "2d") state.mode = d.mode;
   if (d.comp) state.comp = d.comp;
+  if (d.achse === "x" || d.achse === "y") state.achse = d.achse;
   if (typeof d.sigma === "number") state.sigma = clamp(d.sigma, 0, 200);
   if (d.show) {
     const s = d.show;        /* aeltere Staende kannten nur einen Schalter fuer alle Diagramme */

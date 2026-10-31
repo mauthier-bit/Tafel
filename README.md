@@ -2798,6 +2798,14 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   (Maßstab in den Einstellungen, iPad ca. 52 px/cm); solange der Finger aufliegt, wird aufgezeichnet,
   beim Abheben ist die Aufnahme fertig. **1D** nimmt nur die waagerechte Bewegung (Messstreifen),
   **2D** die ganze Bahn in der Ebene – dann lassen sich **x**, **y** oder **x + y** zeigen.
+  - **Waagerecht oder senkrecht (1D):** Der Umschalter **x →** / **y ↑** neben **1D / 2D** legt die
+    Richtung der Aufnahme fest. Bei **x →** liegt das Aufnahmefeld wie bisher **über** den
+    Diagrammen und das Lineal waagerecht darin; bei **y ↑** steht es **links senkrecht neben** den
+    Diagrammen, das Lineal läuft von unten nach oben, und der Finger bewegt sich senkrecht – gut
+    für **Fall- und Steigbewegungen**. Die Diagramme heißen dann **y(t), v(t), a(t)**, ebenso die
+    Tabelle und die Export-Datei. Mit **Vektoren** läuft die Zeitspur im senkrechten Feld **nach
+    rechts** (waagerecht: nach unten). Eine schon aufgenommene Bewegung bleibt beim Umschalten
+    stehen, nur die Beschriftung wechselt.
   - **Glättung** (0 bis 200 ms) bestimmt, wie stark gemittelt wird, bevor abgeleitet wird – ohne sie
     rauschen v und a; die Ableitungen entstehen aus den geglätteten Messwerten auf einem 0,01-s-Raster.
   - **Diagramme einzeln ein- und ausblenden:** Die drei Schalter **x(t)**, **v(t)** und **a(t)**
@@ -2826,8 +2834,9 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   - **Abspielen** lässt die Bewegung noch einmal ablaufen (1×, 0,5×, 0,25×), **Vorherige** holt die
     letzte Aufnahme zurück, **Messwerte als CSV kopieren** (in den Einstellungen) gibt die Tabelle an
     Excel weiter.
-  - **Export** sichert dieselben Werte als **CSV-Datei** (Semikolon, Dezimalkomma; Dateiname
-    `bewegung-JJJJ-MM-TT-hh-mm.csv`) – damit lassen sie sich auch im Plotter unter **Modellieren**
+  - **Export** sichert die Werte als **CSV-Datei** (Semikolon, Dezimalkomma; Dateiname
+    `bewegung-JJJJ-MM-TT-hh-mm.csv`; in 1D nur die aufgenommene Richtung: `t; x; vx; ax`
+    bzw. `t; y; vy; ay`, in 2D beide) – damit lassen sie sich auch im Plotter unter **Modellieren**
     über **Import** wieder einlesen und modellieren.
   - **A− / A+** stellt die **Schriftgröße in den Diagrammen** ein (0,8× bis 2×): Achsenzahlen,
     Beschriftungen, Steigungs- und Flächenangaben und die Ablesetabelle wachsen mit, die Ränder der
