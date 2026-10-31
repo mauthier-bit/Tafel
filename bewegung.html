@@ -91,6 +91,22 @@ details.settings summary::-webkit-details-marker { display: none; }
 .plotWrap { display: grid; grid-template-rows: minmax(0, 1fr) auto; gap: 8px; min-height: 0; min-width: 0; }
 .plotBox { position: relative; min-height: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
 #plots { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; user-select: none; -webkit-user-select: none; }
+/* Rechts an jedem Diagramm steht, was dort zu sehen sein soll - sonst gilt ein Schalter
+   oben fuer alle drei Diagramme und das Bild wird unuebersichtlich. Jeder Knopf traegt die
+   Farbe der Groesse, die er sichtbar macht (Tangente in x(t) -> v, Flaeche unter v(t) -> x). */
+.diaCtl { position: absolute; inset: 0; pointer-events: none; }
+.diaCtl[hidden] { display: none; }
+.diaCtl .grp { position: absolute; display: flex; flex-direction: column; gap: 4px; pointer-events: auto; }
+.diaCtl .grp[hidden] { display: none; }
+.diaCtl button {
+  width: 100%; box-sizing: border-box; min-height: 0; height: calc(26px * var(--fs, 1)); padding: 0 3px;
+  border-radius: 7px; background: var(--surface); color: var(--muted);
+  font-family: var(--font-body); font-weight: 700; font-size: calc(0.68rem * var(--fs, 1)); line-height: 1.1;
+}
+.diaCtl button[aria-pressed="true"] { color: #fff; }
+.diaCtl .bgX[aria-pressed="true"] { background: var(--qx); border-color: var(--qx); }
+.diaCtl .bgV[aria-pressed="true"] { background: var(--qv); border-color: var(--qv); }
+.diaCtl .bgA[aria-pressed="true"] { background: var(--qa); border-color: var(--qa); }
 .readout { overflow-x: auto; max-height: 30vh; overflow-y: auto; }
 .readout table { border-collapse: collapse; font-family: var(--font-data); font-size: calc(0.82rem * var(--fs, 1)); font-variant-numeric: tabular-nums; width: 100%; }
 .readout th, .readout td { padding: 4px 8px; text-align: right; border-bottom: 1px solid var(--line); white-space: nowrap; }
@@ -328,8 +344,6 @@ details.settings summary::-webkit-details-marker { display: none; }
 
     <div class="group" role="group" aria-label="Einblenden">
       <button class="chip" id="tStellen" aria-pressed="true"><span class="sw"></span>Stellen</button>
-      <button class="chip" id="tTang" aria-pressed="true"><span class="sw cv"></span>Tangenten</button>
-      <button class="chip" id="tFlaeche" aria-pressed="false"><span class="sw cx"></span>Flächen</button>
       <button class="chip" id="tVec" aria-pressed="false" title="An jedem Messpunkt die Pfeile für v und a"><span class="sw ca"></span>Vektoren</button>
     </div>
 
@@ -404,7 +418,21 @@ details.settings summary::-webkit-details-marker { display: none; }
       <p class="hint" id="hint">Finger auflegen und bewegen. Aufgezeichnet wird, solange der Finger aufliegt (nur die waagerechte Bewegung zählt).</p>
     </section>
     <section class="plotWrap">
-      <div class="plotBox"><canvas id="plots" aria-label="Diagramme: Ort, Geschwindigkeit und Beschleunigung über der Zeit"></canvas></div>
+      <div class="plotBox">
+        <canvas id="plots" aria-label="Diagramme: Ort, Geschwindigkeit und Beschleunigung über der Zeit"></canvas>
+        <div class="diaCtl" id="diaCtl" role="group" aria-label="Was in den Diagrammen zu sehen ist" hidden>
+          <div class="grp" data-d="x" hidden>
+            <button class="bgV" data-s="tang" data-d="x" aria-pressed="true" title="Tangente in x(t): Ihre Steigung ist die Geschwindigkeit v">Tangente</button>
+          </div>
+          <div class="grp" data-d="v" hidden>
+            <button class="bgA" data-s="tang" data-d="v" aria-pressed="false" title="Tangente in v(t): Ihre Steigung ist die Beschleunigung a">Tangente</button>
+            <button class="bgX" data-s="fl" data-d="v" aria-pressed="false" title="Fläche unter v(t) von t₁ bis t₂: Sie ist die Ortsänderung Δx">Fläche</button>
+          </div>
+          <div class="grp" data-d="a" hidden>
+            <button class="bgV" data-s="fl" data-d="a" aria-pressed="false" title="Fläche unter a(t) von t₁ bis t₂: Sie ist die Geschwindigkeitsänderung Δv">Fläche</button>
+          </div>
+        </div>
+      </div>
       <div class="readout" id="readout"></div>
     </section>
   </main>
@@ -429,7 +457,8 @@ try { savedPpc = parseFloat(localStorage.getItem("bwd-ppc")); } catch (e) {}
 
 const state = {
   mode: "1d", comp: "xy", sigma: 60,
-  show: { stellen: true, tangenten: true, flaechen: false },
+  /* fuer jedes Diagramm einzeln: Tangente in x(t) bzw. v(t), Flaeche unter v(t) bzw. a(t) */
+  show: { stellen: true, tang: { x: true, v: false }, fl: { v: false, a: false } },
   dia: { x: true, v: true, a: true },      // welche der drei Diagramme gezeichnet werden
   tool: "stelle",
   raw: [],              // {t (s), x (px, rechts +), y (px, oben +)} relativ zum Ursprung
@@ -796,9 +825,11 @@ function pill(ctx, text, x, y, color, C, align = "left") {
 function drawPlots() {
   const { ctx, w, h } = setup(plots);
   const C = colors();
-  const L = Math.round(fs(60)), R = 14, TOP = 8, BOT = Math.round(fs(30)), GAP = 16;
+  const L = Math.round(fs(60)), TOP = 8, BOT = Math.round(fs(30)), GAP = 16;
+  const R = D ? Math.round(fs(76)) : 14;        // rechts bleibt Platz fuer die Leiste je Diagramm
   layout = { L, R, TOP, BOT, w, h };
   if (!D) {
+    diaCtlStand(null, R, 0);
     ctx.fillStyle = C.muted; ctx.font = `${fs(14)}px ${css("--font-body")}`; ctx.textAlign = "center";
     ctx.fillText("Noch keine Aufnahme", w / 2, h / 2); return;
   }
@@ -807,6 +838,7 @@ function drawPlots() {
   const an = [state.dia.x, state.dia.v, state.dia.a];
   const nAn = an.filter(Boolean).length;
   if (!nAn) {
+    diaCtlStand(null, R, 0);
     ctx.fillStyle = C.muted; ctx.font = `${fs(14)}px ${css("--font-body")}`; ctx.textAlign = "center";
     ctx.fillText("Alle Diagramme ausgeblendet", w / 2, h / 2); return;
   }
@@ -815,9 +847,9 @@ function drawPlots() {
   layout.tx = tx; layout.T = T;
   const comps = state.mode === "1d" ? ["x"] : state.comp === "xy" ? ["x", "y"] : [state.comp];
   const Q = [
-    { name: "Ort", sym: c => state.mode === "1d" ? "x" : c, unit: "cm", key: c => c, color: C.qx },
-    { name: "Geschwindigkeit", sym: c => state.mode === "1d" ? "v" : "v" + SUB[c], unit: "cm/s", key: c => "v" + c, color: C.qv },
-    { name: "Beschleunigung", sym: c => state.mode === "1d" ? "a" : "a" + SUB[c], unit: "cm/s²", key: c => "a" + c, color: C.qa },
+    { id: "x", name: "Ort", sym: c => state.mode === "1d" ? "x" : c, unit: "cm", key: c => c, color: C.qx },
+    { id: "v", name: "Geschwindigkeit", sym: c => state.mode === "1d" ? "v" : "v" + SUB[c], unit: "cm/s", key: c => "v" + c, color: C.qv },
+    { id: "a", name: "Beschleunigung", sym: c => state.mode === "1d" ? "a" : "a" + SUB[c], unit: "cm/s²", key: c => "a" + c, color: C.qa },
   ];
   const P = Q.map((q, i) => {
     let lo = Infinity, hi = -Infinity;
@@ -831,6 +863,9 @@ function drawPlots() {
   });
   const sicht = P.filter(p => p.an), letzte = sicht[sicht.length - 1];
   layout.P = P; layout.ph = ph;
+  diaCtlStand(P, R, ph);
+  const tangAn = p => !!state.show.tang[p.id];      // Tangente in diesem Diagramm?
+  const flAn = p => !!state.show.fl[p.id];          // Flaeche unter dieser Kurve?
 
   // Zeitachse
   const tStep = niceStep(T, Math.max(2, pw / 70)), tDec = decFor(tStep);
@@ -872,12 +907,12 @@ function drawPlots() {
 
   // Flächen (unter den Kurven)
   let iv = null;
-  if (state.show.flaechen && state.interval) {
+  if (state.interval && P.some(p => p.an && flAn(p))) {
     const a = clamp(Math.min(...state.interval), 0, T), b = clamp(Math.max(...state.interval), 0, T);
     iv = [a, b];
     [1, 2].forEach(pi => {
       const p = P[pi], fillC = P[pi - 1].color;
-      if (!p.an) return;
+      if (!p.an || !flAn(p)) return;
       clip(p, () => {
         comps.forEach(c => {
           const arr = D[p.key(c)];
@@ -913,6 +948,7 @@ function drawPlots() {
     const [a, b] = iv;
     [0, 1].forEach(pi => {
       const p = P[pi], under = P[pi + 1];
+      if (!flAn(under)) return;                 // Pfeil und Beschriftung gehoeren zur Flaeche darunter
       if (!p.an && !under.an) return;
       comps.forEach((c, ci) => {
         const arr = D[p.key(c)], y1 = val(arr, a), y2 = val(arr, b);
@@ -937,11 +973,11 @@ function drawPlots() {
   if (state.cursor != null) pts.push({ t: clamp(state.cursor, 0, T), label: "P", main: true });
   if (state.show.stellen) state.pins.forEach((t, i) => pts.push({ t: clamp(t, 0, T), label: String(i + 1), main: false }));
 
-  if (state.show.tangenten) {
+  if (state.show.tang.x || state.show.tang.v) {
     pts.forEach(s => {
       [0, 1].forEach(pi => {
         const p = P[pi], slopeQ = P[pi + 1];
-        if (!p.an) return;
+        if (!p.an || !tangAn(p)) return;
         comps.forEach((c, ci) => {
           const y0 = val(D[p.key(c)], s.t), m = val(D[slopeQ.key(c)], s.t);
           const span = T * 0.14;
@@ -967,7 +1003,7 @@ function drawPlots() {
       // Wert der Steigung im Diagramm darunter hervorheben
       [1, 2].forEach(pi => {
         const p = P[pi];
-        if (!p.an) return;
+        if (!p.an || !tangAn(P[pi - 1])) return;
         comps.forEach(c => {
           const v = val(D[p.key(c)], s.t);
           clip(p, () => {
@@ -1001,6 +1037,45 @@ function drawPlots() {
   }
 }
 
+/* Die Leiste rechts an den Diagrammen: Die Knoepfe stehen fest im Markup, hier wandern sie
+   nur an den oberen Rand ihres Diagramms und zeigen, was gerade eingeschaltet ist. */
+function diaCtlStand(P, R, ph) {
+  const box = $("diaCtl");
+  box.hidden = !(D && P);
+  if (box.hidden) return;
+  P.forEach(p => {
+    const g = box.querySelector(`.grp[data-d="${p.id}"]`);
+    if (!g) return;
+    g.hidden = !p.an;
+    if (!p.an) return;
+    g.style.top = Math.round(p.top + 5) + "px";
+    g.style.right = "5px";
+    g.style.width = Math.max(44, R - 10) + "px";
+    /* Die Knoepfe bleiben in ihrem Diagramm: bei flachen Diagrammen (drei Stueck, grosse
+       Schrift) werden sie niedriger und die Beschriftung zieht mit. */
+    const kn = [...g.children], frei = Math.max(16, ph - 10 - 4 * (kn.length - 1));
+    const hoch = clamp(frei / kn.length, 15, 28 * state.fs);
+    kn.forEach(b => { b.style.height = Math.round(hoch) + "px";
+      b.style.fontSize = Math.max(8, Math.min(10.9 * state.fs, hoch * 0.6)).toFixed(1) + "px"; });
+  });
+  box.querySelectorAll("button[data-s]").forEach(b =>
+    b.setAttribute("aria-pressed", state.show[b.dataset.s][b.dataset.d] ? "true" : "false"));
+}
+$("diaCtl").addEventListener("click", e => {
+  const b = e.target.closest("button[data-s]");
+  if (!b) return;
+  const s = b.dataset.s, d = b.dataset.d;
+  state.show[s][d] = !state.show[s][d];
+  if (s === "fl" && state.show.fl[d] && !state.interval && D) state.interval = [D.T * 0.15, D.T * 0.5];
+  updateUI(); requestDraw();
+});
+/* Mit dem Intervall-Werkzeug soll gleich eine Flaeche zu sehen sein - eingeschaltet wird sie
+   in dem Diagramm, das sichtbar ist. */
+function flAnSchalten() {
+  if (state.show.fl.v || state.show.fl.a) return;
+  if (state.dia.v) state.show.fl.v = true; else state.show.fl.a = true;
+}
+
 // ---------- Ablesetabelle ----------
 function renderReadout() {
   const el = $("readout");
@@ -1020,7 +1095,7 @@ function renderReadout() {
       cols.map(c => `<td class="${c[3]}">${fmt(val(D[c[1]], t), 1)}</td>`).join("") +
       `<td class="del">${r.idx >= 0 ? `<button data-del="${r.idx}" aria-label="Stelle ${r.label} entfernen">×</button>` : ""}</td></tr>`;
   });
-  if (state.show.flaechen && state.interval) {
+  if (state.interval && (state.show.fl.v || state.show.fl.a)) {
     const a = clamp(Math.min(...state.interval), 0, T), b = clamp(Math.max(...state.interval), 0, T);
     const comps = two ? ["x", "y"] : ["x"];
     const sx = c => two ? SUB[c] : "";
@@ -1028,12 +1103,15 @@ function renderReadout() {
       const pos = c, dx = val(D[pos], b) - val(D[pos], a), Av = integral(D["v" + c], a, b);
       const dv = val(D["v" + c], b) - val(D["v" + c], a), Aa = integral(D["a" + c], a, b);
       const ps = two ? c : "x";
-      return `<span class="cx">Δ${ps} = ${fmt(dx, 1)} cm</span> · Fläche unter v${sx(c)} = ${fmt(Av, 1)} cm &nbsp;|&nbsp; <span class="cv">Δv${sx(c)} = ${fmt(dv, 1)} cm/s</span> · Fläche unter a${sx(c)} = ${fmt(Aa, 1)} cm/s`;
+      const teile = [];
+      if (state.show.fl.v) teile.push(`<span class="cx">Δ${ps} = ${fmt(dx, 1)} cm</span> · Fläche unter v${sx(c)} = ${fmt(Av, 1)} cm`);
+      if (state.show.fl.a) teile.push(`<span class="cv">Δv${sx(c)} = ${fmt(dv, 1)} cm/s</span> · Fläche unter a${sx(c)} = ${fmt(Aa, 1)} cm/s`);
+      return teile.join(" &nbsp;|&nbsp; ");
     }).join("<br>");
     html += `<tr class="iv"><td><span class="badge">t₁–t₂</span></td><td>${fmt(a, 2)} – ${fmt(b, 2)}</td><td colspan="${cols.length + 1}" style="text-align:left;white-space:normal">${cell}</td></tr>`;
   }
   html += "</tbody></table>";
-  if (!rows.length && !(state.show.flaechen && state.interval)) html = `<div class="note">Tippe in ein Diagramm, um eine Stelle zu setzen.</div>`;
+  if (!rows.length && !(state.interval && (state.show.fl.v || state.show.fl.a))) html = `<div class="note">Tippe in ein Diagramm, um eine Stelle zu setzen.</div>`;
   el.innerHTML = html;
 }
 $("readout").addEventListener("click", e => {
@@ -1052,12 +1130,14 @@ function tAt(e) {
 }
 plots.addEventListener("pointerdown", e => {
   if (!D || !layout || !layout.tx || state.recording) return;
+  /* der Streifen rechts gehoert der Leiste - ein Tipp daneben soll keine Stelle setzen */
+  if (e.clientX - plots.getBoundingClientRect().left > layout.w - layout.R + 2) return;
   e.preventDefault();
   try { plots.setPointerCapture(e.pointerId); } catch (err) {}
   stopPlay();
   const t = tAt(e), r = plots.getBoundingClientRect(), px = e.clientX - r.left;
   if (state.tool === "intervall") {
-    state.show.flaechen = true;
+    flAnSchalten();
     state.interval = [t, t];
     drag = { kind: "iv" };
   } else {
@@ -1129,7 +1209,7 @@ function updateUI() {
   app.classList.toggle("lane", state.mode === "1d" && state.allVec);
   $("compSeg").hidden = state.mode !== "2d";
   document.querySelectorAll("#compSeg button").forEach(b => b.setAttribute("aria-pressed", b.dataset.comp === state.comp ? "true" : "false"));
-  setPressed("tStellen", state.show.stellen); setPressed("tTang", state.show.tangenten); setPressed("tFlaeche", state.show.flaechen);
+  setPressed("tStellen", state.show.stellen);
   setPressed("dX", state.dia.x); setPressed("dV", state.dia.v); setPressed("dA", state.dia.a);
   setPressed("tVec", state.allVec);
   setPressed("toolStelle", state.tool === "stelle"); setPressed("toolIv", state.tool === "intervall");
@@ -1166,18 +1246,16 @@ $("smooth").addEventListener("input", e => {
   updateUI(); requestDraw();
 }));
 $("tStellen").addEventListener("click", () => { state.show.stellen = !state.show.stellen; updateUI(); requestDraw(); });
-$("tTang").addEventListener("click", () => { state.show.tangenten = !state.show.tangenten; updateUI(); requestDraw(); });
-$("tFlaeche").addEventListener("click", () => {
-  state.show.flaechen = !state.show.flaechen;
-  if (state.show.flaechen && !state.interval && D) state.interval = [D.T * 0.15, D.T * 0.5];
-  updateUI(); requestDraw();
-});
 $("tVec").addEventListener("click", () => { state.allVec = !state.allVec; updateUI(); requestDraw(); });
 $("strobe").addEventListener("change", e => { state.strobe = parseFloat(e.target.value); requestDraw(); });
 $("vecSel").addEventListener("change", e => { state.vecSel = e.target.value; if (!state.allVec) state.allVec = true; updateUI(); requestDraw(); });
 $("vecScale").addEventListener("change", e => { state.vecScale = parseFloat(e.target.value); requestDraw(); });
 $("toolStelle").addEventListener("click", () => { state.tool = "stelle"; updateUI(); });
-$("toolIv").addEventListener("click", () => { state.tool = "intervall"; if (!state.show.flaechen) { state.show.flaechen = true; if (!state.interval && D) state.interval = [D.T * 0.15, D.T * 0.5]; } updateUI(); requestDraw(); });
+$("toolIv").addEventListener("click", () => {
+  state.tool = "intervall"; flAnSchalten();
+  if (!state.interval && D) state.interval = [D.T * 0.15, D.T * 0.5];
+  updateUI(); requestDraw();
+});
 $("pin").addEventListener("click", () => {
   if (state.cursor == null) return;
   state.pins.push(state.cursor); state.show.stellen = true;
@@ -1252,7 +1330,7 @@ function zustand() {
   const r3 = v => Math.round(v * 1000) / 1000;
   return {
     mode: state.mode, comp: state.comp, sigma: state.sigma,
-    show: { stellen: state.show.stellen, tangenten: state.show.tangenten, flaechen: state.show.flaechen },
+    show: { stellen: state.show.stellen, tang: { x: state.show.tang.x, v: state.show.tang.v }, fl: { v: state.show.fl.v, a: state.show.fl.a } },
     dia: { x: state.dia.x, v: state.dia.v, a: state.dia.a },
     tool: state.tool, sample: state.sample,
     raw: state.raw.map(p => ({ t: r3(p.t), x: r3(p.x), y: r3(p.y) })),
@@ -1279,7 +1357,14 @@ function uebernimm(d) {
   if (d.mode === "1d" || d.mode === "2d") state.mode = d.mode;
   if (d.comp) state.comp = d.comp;
   if (typeof d.sigma === "number") state.sigma = clamp(d.sigma, 0, 200);
-  if (d.show) state.show = { stellen: d.show.stellen !== false, tangenten: d.show.tangenten !== false, flaechen: !!d.show.flaechen };
+  if (d.show) {
+    const s = d.show;        /* aeltere Staende kannten nur einen Schalter fuer alle Diagramme */
+    state.show = {
+      stellen: s.stellen !== false,
+      tang: s.tang ? { x: !!s.tang.x, v: !!s.tang.v } : { x: s.tangenten !== false, v: s.tangenten !== false },
+      fl: s.fl ? { v: !!s.fl.v, a: !!s.fl.a } : { v: !!s.flaechen, a: !!s.flaechen },
+    };
+  }
   if (d.dia) { state.dia = { x: d.dia.x !== false, v: d.dia.v !== false, a: d.dia.a !== false };
     if (!state.dia.x && !state.dia.v && !state.dia.a) state.dia.x = true; }
   if (d.tool) state.tool = d.tool;
@@ -1318,7 +1403,7 @@ addEventListener("message", e => {
   if (window.TafelModus) TafelModus.refresh();
 });
 
-const bild = () => TafelShot.rasterize(document.querySelector(".stage"), { pad: 8, bg: css("--bg") || "#eef1f4" });
+const bild = () => TafelShot.rasterize(document.querySelector(".stage"), { pad: 8, bg: css("--bg") || "#eef1f4", exclude: "#diaCtl" });
 if (window.TafelShot) TafelShot.buttons($("shotBtns"), bild, "");
 if (window.TafelTeilen && !TafelTeilen.istGeteilt())
   TafelTeilen.knopf($("teilenBtn"), "bewegung.html", () => ({ w: "bwd", d: zustand() }), { cls: "" });

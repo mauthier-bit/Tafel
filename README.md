@@ -2804,11 +2804,22 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     entscheiden, welche Diagramme gezeichnet werden; die übrigen teilen sich dann die ganze Höhe.
     So lässt sich erst nur der Ort zeigen (*Wie sieht wohl v aus?*), dann v dazunehmen. Das letzte
     eingeblendete Diagramm bleibt stehen. In der Tabelle darunter stehen weiterhin alle Werte.
-  - **Stellen, Tangenten, Flächen, Vektoren:** Ein Tipp ins Diagramm setzt eine **Stelle** (alle drei
-    Diagramme zeigen den Wert, dazu die **Tangentensteigung**: im t-x-Diagramm ist sie v, im
-    t-v-Diagramm a) oder ein **Intervall** – dann wird die **Fläche** unter v (= zurückgelegter Weg)
-    bzw. unter a (= Geschwindigkeitsänderung) eingefärbt und beziffert. **Stelle merken** hält bis zu
-    acht Stellen fest, **Vektoren** zeichnet an jedem Messpunkt die Pfeile für v und a.
+  - **Stellen und Vektoren:** Ein Tipp ins Diagramm setzt eine **Stelle** – alle drei Diagramme
+    zeigen dann den Wert – oder mit dem Werkzeug **Intervall** einen Abschnitt von **t₁ bis t₂**.
+    **Stelle merken** hält bis zu acht Stellen fest, **Vektoren** zeichnet an jedem Messpunkt die
+    Pfeile für v und a.
+  - **Tangenten und Flächen je Diagramm:** Was zu sehen ist, steht **rechts an jedem Diagramm** –
+    vorher galt ein Schalter oben für alle drei, und das Bild wurde schnell unübersichtlich.
+    - **x(t) · Tangente** – ihre Steigung ist **v** (mit Steigungsdreieck und Wert).
+    - **v(t) · Tangente** – ihre Steigung ist **a**. **v(t) · Fläche** – die Fläche unter v(t) von
+      t₁ bis t₂ ist die **Ortsänderung Δx**, die im t-x-Diagramm als Pfeil daneben steht.
+    - **a(t) · Fläche** – sie ist die **Geschwindigkeitsänderung Δv**, als Pfeil im t-v-Diagramm.
+
+    Jeder Knopf trägt die **Farbe der Größe, die er sichtbar macht**. Zu Beginn ist nur die Tangente
+    im t-x-Diagramm an; das Werkzeug **Intervall** schaltet die Fläche unter v(t) dazu. Die Zeile
+    **t₁–t₂** der Tabelle zeigt genau das, was auch im Bild steht. Wird ein Diagramm ausgeblendet,
+    verschwinden seine Knöpfe mit; für das **Tafelbild** bleibt die Leiste weg, und ein Tipp auf den
+    Streifen rechts setzt keine Stelle.
   - **Abspielen** lässt die Bewegung noch einmal ablaufen (1×, 0,5×, 0,25×), **Vorherige** holt die
     letzte Aufnahme zurück, **Messwerte als CSV kopieren** (in den Einstellungen) gibt die Tabelle an
     Excel weiter.
