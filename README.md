@@ -2071,7 +2071,7 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   beides immer). **Jeder Punkt bleibt beweglich:** Man zieht ihn mit dem Finger, die Werte rasten
   auf einem Zehntel des Achsenschritts ein, stehen sofort in der Tabelle, und das Modell rechnet
   sich **beim Ziehen** neu mit. Ein **zweiter Tipp** auf einen Punkt nimmt ihn weg.
-  **Vier Funktionstypen** stehen zur Wahl:
+  **Fünf Funktionstypen** stehen zur Wahl:
   - **ganzrational** – hier gibt es den Umschalter **exakt / genähert**:
     **exakt** legt den Graphen **genau durch alle Punkte**, der **Grad richtet sich nach der Zahl der
     Bedingungen** (zwei Punkte → Grad 1, drei Punkte → Grad 2 …; lässt sich die Aufgabe mit einem
@@ -2083,6 +2083,14 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   - **trigonometrisch:** **y = a · sin(b · (x − c)) + d**.
   - **Normalverteilung:** die Glockenkurve **y = a · e^(−(x − μ)² / (2 · σ²))**, ebenfalls mit
     **„mit + c"**; unter dem Term stehen **μ** und **σ** als Zahlen.
+  - **weitere:** Hier stehen in einer Auswahl **a · x · e^(−b · x)** und **a · x² · e^(−b · x)**
+    (Anstieg mit Abklingen – Einschwingvorgänge, Medikamentenspiegel, Niederschlag nach einem
+    Regenguss) sowie **„eigener Term"**: Dann erscheint ein Eingabefeld für einen **beliebigen Term
+    mit x sowie a und b**, etwa `a*x^3*e^(-b*x)`, `a*e^(-b*x^2)`, `a*x/(1+b*x)` oder `sin(a*x)+b`.
+    **a und b werden an die Daten angepasst** (kleinste Quadrate), unter dem Term stehen beide
+    Zahlen. Steht **a** nur als Faktor davor, ergibt es sich unmittelbar und nur **b** wird
+    abgesucht; sonst werden **a und b gemeinsam** gesucht – von mehreren Startwerten aus, damit
+    etwa bei `sin(a*x)` nicht die erstbeste Nebenlösung gewonnen wird.
   Außer bei **exakt** wird **angenähert** (Methode der kleinsten Quadrate; Periode, Wachstumsrate
   bzw. μ und σ werden dabei mit abgesucht); unter dem Term steht die **mittlere Abweichung**, und
   das Häkchen **„Abweichungen"** zeichnet zu jedem Punkt den senkrechten Abstand zur Kurve.
@@ -2804,10 +2812,27 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     Diagrammen, das Lineal läuft von unten nach oben, und der Finger bewegt sich senkrecht – gut
     für **Fall- und Steigbewegungen**. Die Diagramme heißen dann **y(t), v(t), a(t)**, ebenso die
     Tabelle und die Export-Datei. Mit **Vektoren** läuft die Zeitspur im senkrechten Feld **nach
-    rechts** (waagerecht: nach unten). Das senkrechte Feld ist bewusst **schmal**, damit den
+    rechts** (waagerecht: nach unten). Im **Battle** wird immer senkrecht aufgenommen.
+    Das senkrechte Feld ist bewusst **schmal**, damit den
     Diagrammen daneben möglichst viel Breite bleibt; Legende und Fußzeile schrumpfen darin
     so weit, dass sie hineinpassen. Eine schon aufgenommene Bewegung bleibt beim Umschalten
     stehen, nur die Beschriftung wechselt.
+  - **Ziel (1D):** Der Umschalter **Aufnahme / Ziel / Battle** neben **1D / 2D** startet zwei Spiele
+    zum Lesen von Diagrammen. Bei **Ziel** wählt man zuerst, **welches Diagramm vorgegeben** wird
+    (**x(t)**, **v(t)** oder **a(t)**) und wie lange es dauert (**3 bis 10 s**); mit **„✎ zeichnen"**
+    zieht man die **Zielkurve freihand** mit dem Finger in dieses Diagramm. Danach versucht man, sie
+    im Aufnahmefeld **nachzufahren**: Um die gestrichelte Zielkurve liegt ein **Trefferband**, und
+    unter den Diagrammen steht, **wie viel Prozent der Zeit** man darin lag und wie groß die
+    **mittlere Abweichung** war. Ist **v(t)** oder **a(t)** vorgegeben, wird es zur eigentlichen
+    Denkaufgabe – man muss sich überlegen, **wie man sich bewegen muss**, damit die abgeleitete
+    Größe stimmt. **„Ziel weg"** löscht die Kurve, ein Wechsel des Diagrammtyps oder der Dauer
+    ebenso.
+  - **Battle (1D):** dasselbe Ziel, aber mit **zwei Aufnahmefeldern** – je eines am **linken und am
+    rechten Fensterrand**, senkrecht, damit sich zwei Finger nicht in die Quere kommen. **„▶ Countdown"**
+    zählt **3 – 2 – 1** herunter und startet dann **beide Aufnahmen gleichzeitig**; die Felder zeigen
+    die Restzeit, und ist der **Ort** vorgegeben, läuft ein **Ring** am Lineal mit, der zeigt, wo man
+    gerade sein müsste. Am Ende stehen **beide Kurven** in den Diagrammen (links violett, rechts
+    orange), **beide Trefferquoten** in den Feldern und der **Sieger** unter den Diagrammen.
   - **Glättung** (0 bis 200 ms) bestimmt, wie stark gemittelt wird, bevor abgeleitet wird – ohne sie
     rauschen v und a; die Ableitungen entstehen aus den geglätteten Messwerten auf einem 0,01-s-Raster.
   - **Diagramme einzeln ein- und ausblenden:** Die drei Schalter **x(t)**, **v(t)** und **a(t)**
