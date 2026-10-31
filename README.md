@@ -1976,6 +1976,13 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
 - **Funktionsplotter** (Werkzeug) – **fünf Reiter: Graph, Tabelle, Maschine, Transformationen, Modellieren.** Der Funktionsterm lässt
   sich **in den ersten drei Reitern** eingeben und gilt sofort in allen dreien; „＋“ legt überall eine weitere Funktion an
   (im Graph eine Eingabezeile, in der Tabelle eine Zeile, bei der Maschine eine weitere Maschine).
+  **Zoomen je Achse (Graph und Modellieren):** Zwei Finger zoomen – und zwar **so, wie sie stehen**:
+  liegen sie **waagrecht** nebeneinander, ändert sich nur die **x-Achse**, stehen sie **senkrecht**
+  übereinander, nur die **y-Achse**, **schräg** zoomt wie bisher **beides gleichermaßen**. Entschieden
+  wird beim Aufsetzen, die Achse bleibt also während der ganzen Geste dieselbe. So lässt sich ein
+  flacher Verlauf in y strecken, ohne dass er in x auseinandergezogen wird. Am Rechner macht das
+  Mausrad beides; mit **Umschalt** nur x, mit **Alt** nur y. **„Ansicht"** stellt wieder gleiche
+  Maßstäbe her.
   **Tabelle:** in der Kopfzeile stehen die **x-Werte zum Eintippen** („＋ x-Wert“ hängt eine Spalte an und
   setzt den bisherigen Schritt fort, „− x-Wert“ nimmt die letzte weg); darunter für **jede Funktion eine
   Zeile** mit den berechneten y-Werten in der Farbe der Funktion.
@@ -2117,15 +2124,22 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   **Retardkapsel** („Medikament (Tablette)" und „Medikament (Retard)") – die beiden Datensätze zu **a · x · e^(−b · x)** und **a · x² · e^(−b · x)**:
   x in Stunden nach der Einnahme, y in Milligramm je Liter Blut). Daten, Typ und Schalter werden mit dem Projekt gespeichert und beim **Teilen**
   mitgegeben.
-  **Import – Messwerte von woanders:** Über der Wertetabelle stehen zwei Knöpfe: **„Import"** und
-  **„Bild modellieren"**. **„Import"** klappt ein Feld auf, in das man Werte **einfügen** kann
+  **Import – Messwerte von woanders:** Über der Wertetabelle stehen drei Knöpfe: **„Import"**,
+  **„Linie"** und **„Bild"**. **„Import"** klappt ein Feld auf, in das man Werte **einfügen** kann
   (aus der Tabelle, aus einem Messprogramm, aus einer Mail) – **je Zeile ein Punkt**, getrennt durch
   **Tabulator, Semikolon oder Leerzeichen**, Zahlen deutsch (Komma) oder englisch (Punkt); eine
   **dritte Spalte** wird als Steigung *y*′ gelesen. **„Datei …"** liest stattdessen eine **CSV- oder
   Textdatei** ein. Eine **Kopfzeile** („t  s“) fällt von selbst weg, weil sich aus ihr keine Zahlen
   lesen lassen. **„übernehmen"** setzt die Werte als Daten ein und stellt die Ansicht darauf ein;
   mit dem Häkchen **„anfügen"** kommen sie **zu den vorhandenen Punkten dazu**.
-  **Bild modellieren – Funktionen in Fotos:** Der Knopf daneben legt
+  **Linie – eine Kurve zeichnen und modellieren lassen:** Ist **„Linie"** eingeschaltet, zieht man
+  mit dem Finger eine **Freihandlinie** in die Zeichenfläche (auch **über einem Foto**). Beim
+  Loslassen werden daraus **24 gleichmäßig verteilte Punkte**, die wie getippte Punkte in der
+  Tabelle stehen, beweglich bleiben und sofort modelliert werden. Beim Typ **ganzrational** wird
+  dabei auf **„genähert"** umgestellt – ein Graph *exakt* durch zwei Dutzend Punkte würde nur noch
+  wild schwingen. Eine neue Linie ersetzt die alten Punkte; **„Linie"** und **„＋ Punkte setzen"**
+  schließen einander aus.
+  **Bild – Funktionen in Fotos:** Der Knopf daneben legt
   ein **Foto** unter das Koordinatensystem (Brücke, Springbrunnen, Wurf …). Alles, was danach mit dem
   Bild zu tun hat, steht in einer eigenen Leiste **unter Zeichenfläche und Datenspalte** – sie ist so
   breit wie das ganze Fenster, damit alle Knöpfe in **eine Zeile** passen.

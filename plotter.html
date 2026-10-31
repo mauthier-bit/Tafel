@@ -529,7 +529,8 @@
             <div id="mdDatBox">
               <div id="mdDatTop" class="trRow">
                 <button type="button" id="mdImp" class="plus" title="Werte einfügen oder aus einer Datei lesen">Import</button>
-                <button type="button" id="mdBild" class="plus" title="Ein Foto hinterlegen und darin das Koordinatensystem setzen">Bild modellieren</button>
+                <button type="button" id="mdLin" class="plus" title="Eine Freihandlinie ziehen – daraus werden die Datenpunkte">Linie</button>
+                <button type="button" id="mdBild" class="plus" title="Ein Foto hinterlegen und darin das Koordinatensystem setzen">Bild</button>
               </div>
               <div id="mdImpBox" hidden>
                 <textarea id="mdImpTxt" spellcheck="false" placeholder="Je Zeile ein Punkt:&#10;1  2,5&#10;2  4,1&#10;Trennzeichen: Tabulator, Semikolon oder Leerzeichen"></textarea>
@@ -583,7 +584,7 @@
 const $=id=>document.getElementById(id);
 const cv=$('plot'), ctx=cv.getContext('2d');
 let dpr=Math.max(1,window.devicePixelRatio||1), W=0, H=0;
-let view={ox:0,oy:0,unit:40};
+let view={ox:0,oy:0,ux:40,uy:40};
 let params={a:1,b:0,c:0};
 let fontSize=13, fontBold=false, fontItalic=false;
 const GCOL=['#2563eb','#e11d48','#16a34a','#f59e0b','#7c3aed','#db2777','#0891b2','#ea580c'];
@@ -878,26 +879,37 @@ $('tabD').onclick=()=>{ setTab('d'); sync(); };
 
 /* ---- Zeichnen ---- */
 function fmt(n){ const r=Math.round(n*1000)/1000; return String(r); }
-function gridStep(){ const raw=44/view.unit, p=Math.pow(10,Math.floor(Math.log10(raw))); for(const m of [1,2,5,10]){ if(p*m>=raw) return p*m; } return p*10; }
+function gridStep(u){ const raw=44/(u||view.ux), p=Math.pow(10,Math.floor(Math.log10(raw))); for(const m of [1,2,5,10]){ if(p*m>=raw) return p*m; } return p*10; }
+/* Zwei Finger: Wie sie zueinander stehen, so wird gezoomt - liegen sie waagerecht, aendert
+   sich nur die x-Achse, stehen sie senkrecht, nur die y-Achse, schraeg beides gleich.
+   Entschieden wird nach dem Winkel beim Aufsetzen, damit die Achse waehrend der Geste bleibt. */
+function zoomF(a0,a1,b0,b1){
+  const dx0=Math.abs(a0.x-a1.x), dy0=Math.abs(a0.y-a1.y);
+  const dx1=Math.abs(b0.x-b1.x), dy1=Math.abs(b0.y-b1.y);
+  const d0=Math.hypot(dx0,dy0)||1, d1=Math.hypot(dx1,dy1)||1, beide=d1/d0;
+  const grad=Math.atan2(dy0,dx0)*180/Math.PI;
+  if(grad<28) return [dx0>8?dx1/dx0:beide, 1];
+  if(grad>62) return [1, dy0>8?dy1/dy0:beide];
+  return [beide,beide]; }
 function draw(){ if(!W||!H) return;
   ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,W,H); ctx.fillStyle='#fff'; ctx.fillRect(0,0,W,H);
-  const u=view.unit, ox=view.ox, oy=view.oy, step=gridStep();
-  const xmin=(0-ox)/u, xmax=(W-ox)/u, ymin=(oy-H)/u, ymax=(oy-0)/u;
+  const ux=view.ux, uy=view.uy, ox=view.ox, oy=view.oy, sx=gridStep(ux), sy=gridStep(uy);
+  const xmin=(0-ox)/ux, xmax=(W-ox)/ux, ymin=(oy-H)/uy, ymax=(oy-0)/uy;
   ctx.strokeStyle='#eef1f6'; ctx.lineWidth=1; ctx.beginPath();
-  for(let x=Math.ceil(xmin/step)*step; x<=xmax; x+=step){ const px=ox+x*u; ctx.moveTo(px,0); ctx.lineTo(px,H); }
-  for(let y=Math.ceil(ymin/step)*step; y<=ymax; y+=step){ const py=oy-y*u; ctx.moveTo(0,py); ctx.lineTo(W,py); }
+  for(let x=Math.ceil(xmin/sx)*sx; x<=xmax; x+=sx){ const px=ox+x*ux; ctx.moveTo(px,0); ctx.lineTo(px,H); }
+  for(let y=Math.ceil(ymin/sy)*sy; y<=ymax; y+=sy){ const py=oy-y*uy; ctx.moveTo(0,py); ctx.lineTo(W,py); }
   ctx.stroke();
   ctx.strokeStyle='#98a2b3'; ctx.lineWidth=1.6; ctx.beginPath(); ctx.moveTo(0,oy); ctx.lineTo(W,oy); ctx.moveTo(ox,0); ctx.lineTo(ox,H); ctx.stroke();
   ctx.fillStyle='#667085'; ctx.font=(fontItalic?'italic ':'')+(fontBold?'bold ':'')+fontSize+'px sans-serif';
   ctx.textAlign='center'; ctx.textBaseline='top';
-  for(let x=Math.ceil(xmin/step)*step; x<=xmax; x+=step){ if(Math.abs(x)<1e-9)continue; ctx.fillText(fmt(x), ox+x*u, Math.min(Math.max(oy+3,2),H-fontSize-3)); }
+  for(let x=Math.ceil(xmin/sx)*sx; x<=xmax; x+=sx){ if(Math.abs(x)<1e-9)continue; ctx.fillText(fmt(x), ox+x*ux, Math.min(Math.max(oy+3,2),H-fontSize-3)); }
   ctx.textAlign='right'; ctx.textBaseline='middle';
-  for(let y=Math.ceil(ymin/step)*step; y<=ymax; y+=step){ if(Math.abs(y)<1e-9)continue; ctx.fillText(fmt(y), Math.min(Math.max(ox-4,fontSize*2),W-2), oy-y*u); }
+  for(let y=Math.ceil(ymin/sy)*sy; y<=ymax; y+=sy){ if(Math.abs(y)<1e-9)continue; ctx.fillText(fmt(y), Math.min(Math.max(ox-4,fontSize*2),W-2), oy-y*uy); }
   // Graphen
   let anyOk=false, anyTerm=false;
   funcs.forEach(f=>{ if(!f.toks.length)return; anyTerm=true;
     ctx.strokeStyle=f.color; ctx.lineWidth=f.width||DEFW; ctx.beginPath(); let prev=null;
-    for(let px=0;px<=W;px++){ const x=(px-ox)/u; const y=evalAt(x,f.toks); const py=oy-y*u;
+    for(let px=0;px<=W;px++){ const x=(px-ox)/ux; const y=evalAt(x,f.toks); const py=oy-y*uy;
       if(!isFinite(py)){ prev=null; continue; } anyOk=true;
       if(prev!==null && Math.abs(py-prev)>H*3){ ctx.moveTo(px,py); } else if(prev===null){ ctx.moveTo(px,py); } else { ctx.lineTo(px,py); } prev=py; }
     ctx.stroke(); });
@@ -913,8 +925,8 @@ function griff(px,py,col){ ctx.save(); ctx.beginPath(); ctx.arc(px,py,9,0,7); ct
   ctx.lineWidth=2.6; ctx.strokeStyle=col; ctx.stroke();
   ctx.beginPath(); ctx.arc(px,py,3.2,0,7); ctx.fillStyle=col; ctx.fill(); ctx.restore(); }
 /* x-Werte mit f(x) = yv im sichtbaren Bereich suchen */
-function loesungen(T,yv){ const u=view.unit, x0=(0-view.ox)/u, x1=(W-view.ox)/u, N=720;
-  const g=x=>evalAt(x,T)-yv, tol=0.8/u, V=[], res=[];
+function loesungen(T,yv){ const u=view.ux, x0=(0-view.ox)/u, x1=(W-view.ox)/u, N=720;
+  const g=x=>evalAt(x,T)-yv, tol=0.8/view.uy, V=[], res=[];
   for(let i=0;i<=N;i++){ const x=x0+(x1-x0)*i/N; V.push({x,v:g(x)}); }
   for(let i=1;i<V.length&&res.length<16;i++){ const A=V[i-1], B=V[i];     /* Vorzeichenwechsel: genau einschachteln */
     if(!isFinite(A.v)||!isFinite(B.v)) continue;
@@ -932,15 +944,15 @@ function loesungen(T,yv){ const u=view.unit, x0=(0-view.ox)/u, x1=(W-view.ox)/u,
     res.push(xv); }
   const aus=[]; res.forEach(x=>{ if(!aus.some(y=>Math.abs(y-x)<1.5/u)) aus.push(x); });
   return aus.sort((p,q)=>p-q); }
-function achsenPunkte(){ const u=view.unit, ox=view.ox, oy=view.oy, zk=v=>zahl(Math.round(v*1000)/1000);
+function achsenPunkte(){ const u=view.ux, uy=view.uy, ox=view.ox, oy=view.oy, zk=v=>zahl(Math.round(v*1000)/1000);
   if(xPt.on){ const px=ox+xPt.v*u; let n=0;
-    funcs.forEach(f=>{ if(!f.toks.length) return; const y=evalAt(xPt.v,f.toks); if(!isFinite(y)) return; const py=oy-y*u;
+    funcs.forEach(f=>{ if(!f.toks.length) return; const y=evalAt(xPt.v,f.toks); if(!isFinite(y)) return; const py=oy-y*uy;
       ctx.save(); ctx.strokeStyle=f.color; ctx.lineWidth=1.6; ctx.setLineDash([5,4]);
       ctx.beginPath(); ctx.moveTo(px,oy); ctx.lineTo(px,py); ctx.lineTo(ox,py); ctx.stroke(); ctx.restore();
       ctx.save(); ctx.fillStyle=f.color; ctx.beginPath(); ctx.arc(px,py,5,0,7); ctx.fill(); ctx.restore();
       beschrift('y = '+zk(y), ox+11, py-12-(n++%2)*15, f.color,'left'); });
     griff(px,oy,'#1f2430'); beschrift('x = '+zk(xPt.v), px+12, oy+16, '#1f2430','left'); }
-  if(yPt.on){ const py=oy-yPt.v*u;
+  if(yPt.on){ const py=oy-yPt.v*uy;
     ctx.save(); ctx.strokeStyle='#94a3b8'; ctx.lineWidth=1.4; ctx.setLineDash([5,4]);
     ctx.beginPath(); ctx.moveTo(0,py); ctx.lineTo(W,py); ctx.stroke(); ctx.restore();
     let n=0;
@@ -958,30 +970,39 @@ $('btnY').onclick=()=>{ yPt.on=!yPt.on; if(yPt.on&&!isFinite(yPt.v)) yPt.v=1; ac
 /* ---- Gesten (Pinch/Pan) + Punkte ziehen ---- */
 const pts=new Map(); let base=null, dragM=null;
 function local(a){ const r=cv.getBoundingClientRect(); return {x:(a.reduce((s,p)=>s+p.x,0)/a.length)-r.left, y:(a.reduce((s,p)=>s+p.y,0)/a.length)-r.top}; }
-function setBase(){ const a=[...pts.values()]; const mid=local(a); let dist=1; if(a.length>=2)dist=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y)||1;
-  base={dist,unit:view.unit, wx:(mid.x-view.ox)/view.unit, wy:(view.oy-mid.y)/view.unit}; }
-function zieheM(mx,my){ const st=gridStep()/10;
-  if(dragM==='x') xPt.v=Math.round(((mx-view.ox)/view.unit)/st)*st;
-  else yPt.v=Math.round(((view.oy-my)/view.unit)/st)*st;
+function setBase(){ const a=[...pts.values()]; const mid=local(a);
+  /* die Startlage beider Finger als Kopie - die Eintraege der Map werden ja fortgeschrieben */
+  base={a0:a[0]?{x:a[0].x,y:a[0].y}:null, a1:a[1]?{x:a[1].x,y:a[1].y}:null,
+        ux:view.ux, uy:view.uy, wx:(mid.x-view.ox)/view.ux, wy:(view.oy-mid.y)/view.uy}; }
+function zieheM(mx,my){
+  if(dragM==='x'){ const st=gridStep(view.ux)/10; xPt.v=Math.round(((mx-view.ox)/view.ux)/st)*st; }
+  else { const st=gridStep(view.uy)/10; yPt.v=Math.round(((view.oy-my)/view.uy)/st)*st; }
   draw(); }
 cv.addEventListener('pointerdown',e=>{ const r=cv.getBoundingClientRect(), mx=e.clientX-r.left, my=e.clientY-r.top;
   if(pts.size===0){                                       /* liegt der Finger auf einem Achsenpunkt? Dann ziehen statt verschieben */
-    if(xPt.on&&Math.hypot(mx-(view.ox+xPt.v*view.unit),my-view.oy)<26){ dragM='x'; cv.setPointerCapture(e.pointerId); zieheM(mx,my); return; }
-    if(yPt.on&&Math.hypot(mx-view.ox,my-(view.oy-yPt.v*view.unit))<26){ dragM='y'; cv.setPointerCapture(e.pointerId); zieheM(mx,my); return; } }
-  cv.setPointerCapture(e.pointerId); pts.set(e.pointerId,{x:e.clientX,y:e.clientY}); setBase(); });
+    if(xPt.on&&Math.hypot(mx-(view.ox+xPt.v*view.ux),my-view.oy)<26){ dragM='x'; cv.setPointerCapture(e.pointerId); zieheM(mx,my); return; }
+    if(yPt.on&&Math.hypot(mx-view.ox,my-(view.oy-yPt.v*view.uy))<26){ dragM='y'; cv.setPointerCapture(e.pointerId); zieheM(mx,my); return; } }
+  try{ cv.setPointerCapture(e.pointerId); }catch(err){}
+  pts.set(e.pointerId,{x:e.clientX,y:e.clientY}); setBase(); });
 cv.addEventListener('pointermove',e=>{ if(dragM){ const r=cv.getBoundingClientRect(); zieheM(e.clientX-r.left,e.clientY-r.top); return; }
   if(!pts.has(e.pointerId))return; const p=pts.get(e.pointerId); p.x=e.clientX; p.y=e.clientY;
-  if(!base)return; const a=[...pts.values()]; const mid=local(a); let unit=base.unit; if(a.length>=2){ const d=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y)||1; unit=base.unit*(d/base.dist); }
-  view.unit=Math.max(4,Math.min(5000,unit)); view.ox=mid.x-base.wx*view.unit; view.oy=mid.y+base.wy*view.unit; draw(); });
+  if(!base)return; const a=[...pts.values()]; const mid=local(a);
+  let ux=base.ux, uy=base.uy;
+  if(a.length>=2&&base.a0&&base.a1){ const f=zoomF(base.a0,base.a1,a[0],a[1]); ux=base.ux*f[0]; uy=base.uy*f[1]; }
+  view.ux=Math.max(4,Math.min(5000,ux)); view.uy=Math.max(4,Math.min(5000,uy));
+  view.ox=mid.x-base.wx*view.ux; view.oy=mid.y+base.wy*view.uy; draw(); });
 function endP(e){ if(dragM){ dragM=null; sync(); return; }
   pts.delete(e.pointerId); if(pts.size>0) setBase(); else { base=null; sync(); } }
 cv.addEventListener('pointerup',endP); cv.addEventListener('pointercancel',endP);
 cv.addEventListener('wheel',e=>{ e.preventDefault(); const r=cv.getBoundingClientRect(), mx=e.clientX-r.left, my=e.clientY-r.top;
-  const wx=(mx-view.ox)/view.unit, wy=(view.oy-my)/view.unit, f=Math.exp(-e.deltaY*0.0015);
-  view.unit=Math.max(4,Math.min(5000,view.unit*f)); view.ox=mx-wx*view.unit; view.oy=my+wy*view.unit; draw(); sync(); },{passive:false});
+  const wx=(mx-view.ox)/view.ux, wy=(view.oy-my)/view.uy, f=Math.exp(-e.deltaY*0.0015);
+  /* Mausrad: mit Umschalttaste nur x, mit Alt nur y, sonst beides */
+  if(!e.altKey) view.ux=Math.max(4,Math.min(5000,view.ux*f));
+  if(!e.shiftKey) view.uy=Math.max(4,Math.min(5000,view.uy*f));
+  view.ox=mx-wx*view.ux; view.oy=my+wy*view.uy; draw(); sync(); },{passive:false});
 
 /* ---- Eingabe & Sync ---- */
-$('fit').onclick=()=>{ view={ox:W/2,oy:H/2,unit:40}; draw(); sync(); };
+$('fit').onclick=()=>{ view={ox:W/2,oy:H/2,ux:40,uy:40}; draw(); sync(); };
 let uiK=null; function applyUiFont(){ const k=(fontSize||13)/13; if(k===uiK&&document.body.classList.contains('fb')===fontBold&&document.body.classList.contains('fi')===fontItalic) return; uiK=k; document.documentElement.style.setProperty('--k',k); document.body.classList.toggle('fb',fontBold); document.body.classList.toggle('fi',fontItalic); }
 
 /* ================= Reiter „Transformationen" =========================================
@@ -1431,10 +1452,12 @@ const MD_BSP=[
 const MDCOL={pkt:'#1d4ed8', kurve:'#e11d48', abw:'#94a3b8', tang:'#0891b2'};
 /* ux und uy getrennt: Messdaten haben auf beiden Achsen oft sehr verschiedene Groessen */
 let md={typ:'p', genau:true, grad:2, abl:false, offC:false, zGraph:true, zTerm:true, zAbw:false, zWert:false,
-  wf:'xe', wterm:'a*x*e^(-b*x)',
+  wf:'xe', wterm:'a*x*e^(-b*x)', linie:false,
         setz:true, col:MDCOL.kurve, bild:null, bildAn:false, bmod:'', p:[['','','']],
         view:{ox:0,oy:0,ux:40,uy:40}};
 let mdW=0, mdH=0, mdErg=null, mdZieh=-1, mdZiehS=-1, mdZiehB=null;
+let mdLinZug=null;                 /* Punkte der gerade gezogenen Freihandlinie (Pixel) */
+const MD_LIN_N=24;                 /* so viele Datenpunkte entstehen aus einer Linie */
 let mdImg=null, mdImgSrc='';
 const MD_GRIFF=46;                                  /* Abstand des Steigungsgriffs in Pixeln */
 
@@ -2009,9 +2032,42 @@ function mdDraw(){ if(tab!=='d'||!mdW) return;
   else if(!D.length){ c2.save(); c2.fillStyle='#64748b';
     c2.font='600 '+Math.max(13,fontSize)+'px sans-serif'; c2.textAlign='center'; c2.textBaseline='top';
     c2.lineJoin='round'; c2.lineWidth=3.5; c2.strokeStyle='rgba(255,255,255,.9)';
-    const t='Punkte in die Fläche tippen oder in der Tabelle eintragen';
+    const t=md.linie?'Mit dem Finger eine Linie ziehen – daraus werden die Datenpunkte'
+                    :'Punkte in die Fläche tippen oder in der Tabelle eintragen';
     if(foto) c2.strokeText(t,mdW/2,8);
-    c2.fillText(t, mdW/2, 8); c2.restore(); } }
+    c2.fillText(t, mdW/2, 8); c2.restore(); }
+  mdLinMalen(c2); }
+
+/* ---- Freihandlinie: gezogen wird mit dem Finger, daraus werden die Datenpunkte ---- */
+function mdLinMalen(c2){ if(!mdLinZug||mdLinZug.length<2) return;
+  c2.save(); c2.strokeStyle='#94a3b8'; c2.lineWidth=2.4; c2.lineJoin='round'; c2.lineCap='round';
+  c2.beginPath(); mdLinZug.forEach((q,i)=>i?c2.lineTo(q[0],q[1]):c2.moveTo(q[0],q[1]));
+  c2.stroke(); c2.restore(); }
+/* Aus dem Zug werden gleichmaessig verteilte Punkte: nach x sortiert, dazwischen linear
+   abgelesen und auf das Zehntel des Achsenschritts gerundet - wie beim Setzen von Hand. */
+function mdLinieFertig(){
+  const zug=mdLinZug; mdLinZug=null;
+  if(!zug||zug.length<4){ mdDraw(); return; }
+  const v=md.view;
+  const W2=zug.map(q=>[(q[0]-v.ox)/v.ux, (v.oy-q[1])/v.uy]).sort((a,b)=>a[0]-b[0]);
+  const x0=W2[0][0], x1=W2[W2.length-1][0];
+  if(!(x1-x0>1e-9)){ mdDraw(); return; }
+  const stx=mdStepX()/10, sty=mdStepY()/10, neu=[];
+  let j=0;
+  for(let i=0;i<MD_LIN_N;i++){
+    const x=x0+(x1-x0)*i/(MD_LIN_N-1);
+    while(j<W2.length-2&&W2[j+1][0]<x) j++;
+    const a=W2[j], b=W2[j+1];
+    const f=b[0]>a[0]?Math.max(0,Math.min(1,(x-a[0])/(b[0]-a[0]))):0;
+    const xr=Math.round(x/stx)*stx, yr=Math.round((a[1]+f*(b[1]-a[1]))/sty)*sty;
+    if(neu.length&&Math.abs(neu[neu.length-1][0]-xr)<stx/2) continue;   /* zweimal dasselbe x */
+    neu.push([xr,yr]); }
+  if(neu.length<2){ mdDraw(); return; }
+  md.p=neu.map(q=>[mdF(q[0]),mdF(q[1]),'']);
+  /* Ein Graph exakt durch zwei Dutzend Punkte schwingt nur noch wild - bei einer
+     gezeichneten Linie ist die Ausgleichskurve gemeint. */
+  if(md.typ==='p'&&md.genau){ md.genau=false; md.abl=false; mdUi(); }
+  mdBaue(); mdRechne(); sync(); }
 
 /* ---- Tabelle und Punkte ---- */
 function mdZeile(i){ const tr2=$('mdBody').children[i]; if(!tr2) return;
@@ -2073,6 +2129,7 @@ function mdUi(){ ['p','e','t','n','w'].forEach(k=>$('mdT'+k).classList.toggle('o
   $('mdGraphAn').checked=!!md.zGraph; $('mdTermAn').checked=!!md.zTerm;
   $('mdAbwAn').checked=!!md.zAbw; $('mdWertAn').checked=!!md.zWert;
   $('mdSetz').classList.toggle('on',!!md.setz);
+  $('mdLin').classList.toggle('on',!!md.linie);
   $('mdBildBox').hidden=!md.bild;
   $('mdBildAn').classList.toggle('on',!!md.bildAn);
   $('mdDeck').value=String(Math.round((md.bild&&md.bild.deck!=null?md.bild.deck:0.8)*100));
@@ -2105,7 +2162,9 @@ function mdUi(){ ['p','e','t','n','w'].forEach(k=>$('mdT'+k).classList.toggle('o
   $('mdTermAn').onchange=()=>{ md.zTerm=$('mdTermAn').checked; mdText(); sync(); };
   $('mdAbwAn').onchange=()=>{ md.zAbw=$('mdAbwAn').checked; mdDraw(); sync(); };
   $('mdWertAn').onchange=()=>{ md.zWert=$('mdWertAn').checked; mdDraw(); sync(); };
-  $('mdSetz').onclick=()=>{ md.setz=!md.setz; mdUi(); sync(); };
+  $('mdSetz').onclick=()=>{ md.setz=!md.setz; if(md.setz) md.linie=false; mdUi(); mdDraw(); sync(); };
+  /* Linie und Punktesetzen schliessen einander aus - sonst weiss die Flaeche nicht, was gemeint ist */
+  $('mdLin').onclick=()=>{ md.linie=!md.linie; if(md.linie) md.setz=false; mdLinZug=null; mdUi(); mdDraw(); sync(); };
   $('mdFit').onclick=()=>{ mdAnsicht(); sync(); };
   $('mdBild').onclick=()=>{ $('mdFile').value=''; $('mdFile').click(); };
   $('mdFile').onchange=()=>{ mdBildLaden($('mdFile').files[0]); };
@@ -2147,15 +2206,18 @@ function mdUi(){ ['p','e','t','n','w'].forEach(k=>$('mdT'+k).classList.toggle('o
     if(el){ lastInp=el; try{ el.focus(); }catch(_){} } };
   /* Punkte setzen, ziehen und (zweites Tippen) entfernen, Steigungsgriffe ziehen;
      dazu Verschieben und Zoomen mit zwei Fingern */
-  const el=$('plotD'), zs=new Map(); let last=null, dist0=0, ux0=0, uy0=0, tapT=0, tapI=-1;
+  const el=$('plotD'), zs=new Map(); let last=null, zoom0=null, ux0=0, uy0=0, tapT=0, tapI=-1;
   const lok=e=>{ const r=el.getBoundingClientRect(); return [e.clientX-r.left, e.clientY-r.top]; };
   el.addEventListener('pointerdown',e=>{
     try{ el.setPointerCapture(e.pointerId); }catch(err){}
     zs.set(e.pointerId,{x:e.clientX,y:e.clientY});
-    if(zs.size===2){ const v=[...zs.values()]; dist0=Math.hypot(v[0].x-v[1].x,v[0].y-v[1].y);
-      ux0=md.view.ux; uy0=md.view.uy; mdZieh=-1; mdZiehS=-1; mdZiehB=null; last=null; mdDraw(); return; }
+    if(zs.size===2){ const v=[...zs.values()];
+      zoom0=[{x:v[0].x,y:v[0].y},{x:v[1].x,y:v[1].y}];
+      ux0=md.view.ux; uy0=md.view.uy;
+      mdZieh=-1; mdZiehS=-1; mdZiehB=null; mdLinZug=null; last=null; mdDraw(); return; }
     if(zs.size>2) return;
     const p=lok(e);
+    if(md.linie){ mdLinZug=[[p[0],p[1]]]; mdDraw(); return; }   /* Freihandlinie geht vor */
     if(md.bild&&md.bmod==='urs'){ mdUrsprung(p[0],p[1],true); mdZiehB={art:'urs'}; return; }
     if(md.bild&&md.bildAn){                      /* beim Anpassen gehoert die Flaeche dem Bild */
       const r=mdBildRect(), nah=(a,b2)=>Math.hypot(p[0]-a,p[1]-b2)<=26;
@@ -2188,11 +2250,13 @@ function mdUi(){ ['p','e','t','n','w'].forEach(k=>$('mdT'+k).classList.toggle('o
     last={x:e.clientX,y:e.clientY}; });
   el.addEventListener('pointermove',e=>{
     if(!zs.has(e.pointerId)) return; zs.set(e.pointerId,{x:e.clientX,y:e.clientY});
-    if(zs.size>=2){ const v=[...zs.values()], dd=Math.hypot(v[0].x-v[1].x,v[0].y-v[1].y);
-      if(dist0>0){ const f=dd/dist0;
-        md.view.ux=Math.max(0.01,Math.min(4000,ux0*f)); md.view.uy=Math.max(0.01,Math.min(4000,uy0*f)); }
+    if(zs.size>=2){ const v=[...zs.values()];
+      if(zoom0&&v.length>=2){ const f=zoomF(zoom0[0],zoom0[1],v[0],v[1]);
+        md.view.ux=Math.max(0.01,Math.min(4000,ux0*f[0]));
+        md.view.uy=Math.max(0.01,Math.min(4000,uy0*f[1])); }
       mdDraw(); return; }
     const p=lok(e);
+    if(mdLinZug){ mdLinZug.push([p[0],p[1]]); mdDraw(); return; }
     if(mdZiehB&&mdZiehB.art==='urs'){ mdUrsprung(p[0],p[1],true); return; }
     if(mdZiehB&&md.bild){ const v=md.view, b=md.bild, art=mdZiehB.art;
       if(art==='gr'){ const r=mdBildRect(); b.w=Math.max(1e-6,(p[0]-r.x)/v.ux); mdBildLos(mdZiehB.pkt); }
@@ -2214,13 +2278,15 @@ function mdUi(){ ['p','e','t','n','w'].forEach(k=>$('mdT'+k).classList.toggle('o
     if(mdZieh>=0){ mdSetP(mdZieh,p[0],p[1]); mdRechne(); return; }
     if(last){ md.view.ox+=e.clientX-last.x; md.view.oy+=e.clientY-last.y;
       last={x:e.clientX,y:e.clientY}; mdDraw(); } });
-  const auf=e=>{ zs.delete(e.pointerId); if(zs.size<2) dist0=0;
+  const auf=e=>{ zs.delete(e.pointerId); if(zs.size<2) zoom0=null;
+    if(mdLinZug&&!zs.size){ mdLinieFertig(); return; }
     if(!zs.size){ mdZieh=-1; mdZiehS=-1; mdZiehB=null; last=null; mdDraw(); sync(); } };
   el.addEventListener('pointerup',auf); el.addEventListener('pointercancel',auf);
   el.addEventListener('wheel',e=>{ e.preventDefault(); const f=Math.exp(-e.deltaY*0.0015), p=lok(e);
     const nx=(p[0]-md.view.ox)/md.view.ux, ny=(md.view.oy-p[1])/md.view.uy;
-    md.view.ux=Math.max(0.01,Math.min(4000,md.view.ux*f));
-    md.view.uy=Math.max(0.01,Math.min(4000,md.view.uy*f));
+    /* Mausrad: mit Umschalttaste nur x, mit Alt nur y, sonst beides */
+    if(!e.altKey) md.view.ux=Math.max(0.01,Math.min(4000,md.view.ux*f));
+    if(!e.shiftKey) md.view.uy=Math.max(0.01,Math.min(4000,md.view.uy*f));
     md.view.ox=p[0]-nx*md.view.ux; md.view.oy=p[1]+ny*md.view.uy; mdDraw(); },{passive:false});
   mdUi();
 })();
@@ -2229,7 +2295,7 @@ function zustand(){ return {funcs:funcs.map(f=>({term:f.term,color:f.color,width
   md:{typ:md.typ, genau:!!md.genau, grad:md.grad, abl:!!md.abl, offC:!!md.offC, zGraph:!!md.zGraph,
       wf:md.wf||'xe', wterm:md.wterm||'',
       zTerm:!!md.zTerm, col:mdKurve(), zAbw:!!md.zAbw, zWert:!!md.zWert,
-      setz:!!md.setz, bild:md.bild?Object.assign({},md.bild):null, bildAn:!!md.bildAn, bmod:md.bmod||'',
+      setz:!!md.setz, linie:!!md.linie, bild:md.bild?Object.assign({},md.bild):null, bildAn:!!md.bildAn, bmod:md.bmod||'',
       p:md.p.map(r=>[r[0],r[1],r[2]||'']), view:Object.assign({},md.view)}}; }
 function sync(){ if(window.parent===window) return; /* allein geöffnet: nicht an sich selbst senden */ try{ parent.postMessage({type:'embed-data',data:zustand()},'*'); }catch(e){} }
 addEventListener('message',e=>{ if(e.source!==window&&(window.parent===window||e.source!==window.parent)) return;   // eigene Nachrichten ignorieren
@@ -2245,7 +2311,9 @@ addEventListener('message',e=>{ if(e.source!==window&&(window.parent===window||e
   }
   if(d.activeIdx!=null && d.activeIdx<funcs.length){ activeIdx=d.activeIdx; markActive(); }
   if(d.params) params=Object.assign({a:1,b:0,c:0},d.params);
-  if(d.view) view=Object.assign({ox:W/2,oy:H/2,unit:40},d.view);
+  if(d.view){ view=Object.assign({ox:W/2,oy:H/2,ux:40,uy:40},d.view);
+    if(d.view.unit&&!d.view.ux){ view.ux=view.uy=d.view.unit; }   /* aelterer Stand: eine Einheit fuer beide Achsen */
+    delete view.unit; }
   if(Array.isArray(d.xs)&&d.xs.length){ const neu=d.xs.map(String); if(neu.join('\u0001')!==xs.join('\u0001')){ xs=neu; strukturNeu=true; } }
   if(d.xPt) xPt={on:!!d.xPt.on, v:(typeof d.xPt.v==='number'&&isFinite(d.xPt.v))?d.xPt.v:1};
   if(d.yPt) yPt={on:!!d.yPt.on, v:(typeof d.yPt.v==='number'&&isFinite(d.yPt.v))?d.yPt.v:1};
@@ -2260,7 +2328,7 @@ addEventListener('message',e=>{ if(e.source!==window&&(window.parent===window||e
     md.abl=!!o.abl; md.offC=!!o.offC; md.zGraph=o.zGraph!==false; md.zTerm=o.zTerm!==false;
     md.col=(typeof o.col==='string'&&/^#[0-9a-f]{3,8}$/i.test(o.col))?o.col:MDCOL.kurve;
     md.zAbw=!!o.zAbw;
-    md.zWert=!!o.zWert; md.setz=o.setz!==false;
+    md.zWert=!!o.zWert; md.setz=o.setz!==false; md.linie=!!o.linie;
     md.bild=(o.bild&&o.bild.src&&o.bild.iw)?Object.assign({},o.bild):null;
     md.bildAn=!!md.bild&&!!o.bildAn;
     md.bmod=(md.bild&&(o.bmod==='mass'||o.bmod==='crop'||o.bmod==='urs'))?o.bmod:'';
