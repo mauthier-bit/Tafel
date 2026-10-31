@@ -2113,7 +2113,9 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   y-Richtung getrennt**, sodass auch Messreihen mit großen y-Werten (Bakterien, Temperaturen)
   vernünftig dastehen. Über **„Beispiel …"** liegen fertige Datensätze bereit (Gerade durch zwei
   Punkte, Wurfbahn, Trassierung mit Steigungen, Bakterien, Abkühlung, Messwerte als Glocke,
-  Tageslänge). Daten, Typ und Schalter werden mit dem Projekt gespeichert und beim **Teilen**
+  Tageslänge, Medikamentenspiegel im Blut nach einer **Tablette** bzw. nach einer
+  **Retardkapsel** – die beiden Datensätze zu **a · x · e^(−b · x)** und **a · x² · e^(−b · x)**:
+  x in Stunden nach der Einnahme, y in Milligramm je Liter Blut). Daten, Typ und Schalter werden mit dem Projekt gespeichert und beim **Teilen**
   mitgegeben.
   **Import – Messwerte von woanders:** Über der Wertetabelle stehen zwei Knöpfe: **„Import"** und
   **„Bild modellieren"**. **„Import"** klappt ein Feld auf, in das man Werte **einfügen** kann

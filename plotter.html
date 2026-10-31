@@ -1416,7 +1416,14 @@ const MD_BSP=[
   {n:'Bakterien', typ:'e', p:[[0,20],[1,31],[2,48],[3,76],[4,118],[5,180],[6,290]]},
   {n:'Abkühlung', typ:'e', offC:true, p:[[0,85],[5,66],[10,52],[15,43],[20,36],[25,31],[30,28]]},
   {n:'Messwerte (Glocke)', typ:'n', p:[[1,2],[2,5],[3,12],[4,22],[5,27],[6,21],[7,11],[8,4],[9,1]]},
-  {n:'Tageslänge', typ:'t', p:[[1,8.5],[2,10.2],[3,12.1],[4,14.1],[5,15.7],[6,16.5],[7,16.1],[8,14.6],[9,12.7],[10,10.7],[11,9],[12,8.2]]}
+  {n:'Tageslänge', typ:'t', p:[[1,8.5],[2,10.2],[3,12.1],[4,14.1],[5,15.7],[6,16.5],[7,16.1],[8,14.6],[9,12.7],[10,10.7],[11,9],[12,8.2]]},
+  /* Medikamentenspiegel: x in Stunden nach der Einnahme, y in mg je Liter Blut.
+     Tablette: schnell aufgenommen, Gipfel nach etwa 1,5 h (a·x·e^(−b·x)).
+     Retardkapsel: der Wirkstoff kommt verzoegert frei, Gipfel erst nach etwa 4 h (a·x²·e^(−b·x)). */
+  {n:'Medikament im Blut (Tablette)', typ:'w', wf:'xe',
+   p:[[0,0],[0.5,19.4],[1,27.5],[1.5,29.9],[2,28.3],[3,22.1],[4,15],[5,9.7],[6,5.8],[8,2.1]]},
+  {n:'Medikament im Blut (Retardkapsel)', typ:'w', wf:'x2e',
+   p:[[0,0],[1,5.1],[2,12],[3,16.9],[4,18.1],[5,16.8],[6,15],[8,9.6],[10,5.7],[12,2.9]]}
 ];
 const MDCOL={pkt:'#1d4ed8', kurve:'#e11d48', abw:'#94a3b8', tang:'#0891b2'};
 /* ux und uy getrennt: Messdaten haben auf beiden Achsen oft sehr verschiedene Groessen */
@@ -1622,7 +1629,8 @@ function mdTerm(m){
     if(m.mitC&&Math.abs(m.c)>1e-9) s+=(m.c>0?' + ':' − ')+mdR(Math.abs(m.c));
     return s; }
   if(m.art==='w'){
-    const ex='<i>e</i><sup>'+(m.b<0?'':'−')+mdR(Math.abs(m.b))+'<i>x</i></sup>';
+    /* der Exponent ist kurz - er darf in der schmalen Spalte nicht umbrechen */
+    const ex='<span style="white-space:nowrap"><i>e</i><sup>'+(m.b<0?'':'−')+mdR(Math.abs(m.b))+'<i>x</i></sup></span>';
     if(m.wf!=='frei') return mdR(m.a)+'·<i>x</i>'+(m.wf==='x2e'?'²':'')+'·'+ex;
     /* eigener Term: a und b eingesetzt, sonst so geschrieben wie eingegeben */
     return String(md.wterm||'').replace(/\ba\b/g,mdR(m.a)).replace(/\bb\b/g,mdR(m.b))
@@ -2077,6 +2085,7 @@ function mdUi(){ ['p','e','t','n','w'].forEach(k=>$('mdT'+k).classList.toggle('o
   sel.innerHTML='<option value="">Beispiel …</option>'+MD_BSP.map((b,i)=>'<option value="'+i+'">'+b.n+'</option>').join('');
   sel.onchange=()=>{ const b=MD_BSP[+sel.value]; sel.value=''; if(!b) return;
     md.typ=b.typ; md.offC=!!b.offC; md.abl=!!b.abl; md.genau=b.genau!==false; if(b.grad) md.grad=b.grad;
+    if(b.wf) md.wf=b.wf;
     md.p=b.p.map(q=>[mdF(q[0]),mdF(q[1]),q.length>2?mdF(q[2]):'']);
     mdUi(); mdBaue(); mdErg=mdModell(); mdAnsicht(); mdText(); sync(); };
   ['p','e','t','n','w'].forEach(k=>{ $('mdT'+k).onclick=()=>{ md.typ=k; mdUi(); mdBaue(); mdRechne(); sync(); }; });
