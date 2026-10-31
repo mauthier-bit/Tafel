@@ -398,7 +398,6 @@ details.settings summary::-webkit-details-marker { display: none; }
       <button class="chip" id="dX" aria-pressed="true" title="Ort über der Zeit"><span class="sw cx"></span>x(t)</button>
       <button class="chip" id="dV" aria-pressed="true" title="Geschwindigkeit über der Zeit"><span class="sw cv"></span>v(t)</button>
       <button class="chip" id="dA" aria-pressed="true" title="Beschleunigung über der Zeit"><span class="sw ca"></span>a(t)</button>
-      <button class="chip" id="diaWeg" aria-pressed="false" title="Alle Diagramme verdecken – erst die Bewegung aufnehmen und vorhersagen lassen, dann aufdecken">👁 Verdecken</button>
     </div>
 
     <div class="group nurAufnahme" role="group" aria-label="Einblenden">
@@ -523,7 +522,6 @@ const state = {
   /* fuer jedes Diagramm einzeln: Tangente in x(t) bzw. v(t), Flaeche unter v(t) bzw. a(t) */
   show: { stellen: true, tang: { x: true, v: false }, fl: { v: false, a: false } },
   dia: { x: true, v: true, a: true },      // welche der drei Diagramme gezeichnet werden
-  diaVor: null,         // was vor dem Verdecken an war (Knopf "Verdecken")
   tool: "stelle",
   raw: [],              // {t (s), x (px, rechts +), y (px, oben +)} relativ zum Ursprung
   sample: true, prev: null,
@@ -1213,7 +1211,7 @@ function drawPlots() {
   if (!nAn) {
     diaCtlStand(null, R, 0);
     ctx.fillStyle = C.muted; ctx.font = `${fs(14)}px ${css("--font-body")}`; ctx.textAlign = "center";
-    const t1 = "Diagramme verdeckt", t2 = "Erst vorhersagen – dann mit x(t), v(t) oder a(t) aufdecken";
+    const t1 = "Diagramme ausgeblendet", t2 = "Erst vorhersagen – dann mit x(t), v(t) oder a(t) einblenden";
     ctx.fillText(t1, w / 2, h / 2 - fs(12));
     ctx.font = `${fs(12.5)}px ${css("--font-body")}`;
     ctx.fillText(t2, w / 2, h / 2 + fs(10)); return;
@@ -1720,8 +1718,6 @@ function updateUI() {
   document.querySelectorAll("#compSeg button").forEach(b => b.setAttribute("aria-pressed", b.dataset.comp === state.comp ? "true" : "false"));
   setPressed("tStellen", state.show.stellen);
   setPressed("dX", state.dia.x); setPressed("dV", state.dia.v); setPressed("dA", state.dia.a);
-  setPressed("diaWeg", diaAus());
-  $("diaWeg").textContent = diaAus() ? "👁 Aufdecken" : "👁 Verdecken";
   setPressed("tVec", state.allVec);
   setPressed("toolStelle", state.tool === "stelle"); setPressed("toolIv", state.tool === "intervall");
   $("pin").disabled = state.cursor == null || !D || state.pins.length >= 8;
@@ -1797,16 +1793,6 @@ $("smooth").addEventListener("input", e => {
   state.dia[k] = !state.dia[k];
   updateUI(); requestDraw();
 }));
-$("diaWeg").addEventListener("click", () => {
-  if (diaAus()) {
-    const v = state.diaVor;
-    state.dia = v && (v.x || v.v || v.a) ? { x: !!v.x, v: !!v.v, a: !!v.a } : { x: true, v: true, a: true };
-  } else {
-    state.diaVor = { x: state.dia.x, v: state.dia.v, a: state.dia.a };
-    state.dia = { x: false, v: false, a: false };
-  }
-  updateUI(); requestDraw();
-});
 $("tStellen").addEventListener("click", () => { state.show.stellen = !state.show.stellen; updateUI(); requestDraw(); });
 $("tVec").addEventListener("click", () => { state.allVec = !state.allVec; updateUI(); requestDraw(); });
 $("strobe").addEventListener("change", e => { state.strobe = parseFloat(e.target.value); requestDraw(); });
@@ -1903,7 +1889,6 @@ function zustand() {
     mode: state.mode, comp: state.comp, achse: state.achse, sigma: state.sigma,
     show: { stellen: state.show.stellen, tang: { x: state.show.tang.x, v: state.show.tang.v }, fl: { v: state.show.fl.v, a: state.show.fl.a } },
     dia: { x: state.dia.x, v: state.dia.v, a: state.dia.a },
-    diaVor: state.diaVor ? { x: state.diaVor.x, v: state.diaVor.v, a: state.diaVor.a } : null,
     tool: state.tool, sample: state.sample,
     raw: state.raw.map(p => ({ t: r3(p.t), x: r3(p.x), y: r3(p.y) })),
     cursor: state.cursor, pins: state.pins.slice(),
@@ -1944,7 +1929,6 @@ function uebernimm(d) {
     };
   }
   if (d.dia) state.dia = { x: !!d.dia.x, v: !!d.dia.v, a: !!d.dia.a };   /* auch alle aus ist erlaubt */
-  if (d.diaVor) state.diaVor = { x: !!d.diaVor.x, v: !!d.diaVor.v, a: !!d.diaVor.a };
   if (d.tool) state.tool = d.tool;
   if (d.spiel === "aus" || d.spiel === "ziel" || d.spiel === "battle") state.spiel = d.spiel;
   if (d.zielTyp === "x" || d.zielTyp === "v" || d.zielTyp === "a") state.zielTyp = d.zielTyp;

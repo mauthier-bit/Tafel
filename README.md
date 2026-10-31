@@ -2856,14 +2856,11 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     entscheiden, welche Diagramme gezeichnet werden; die übrigen teilen sich dann die ganze Höhe.
     So lässt sich erst nur der Ort zeigen (*Wie sieht wohl v aus?*), dann v dazunehmen. In der
     Tabelle darunter stehen weiterhin alle Werte.
-  - **👁 Verdecken – erst vorhersagen, dann aufdecken (1D und 2D):** Der Knopf neben den drei
-    Schaltern nimmt **alle Diagramme auf einmal weg**; zu sehen ist dann nur noch die Bewegung im
-    Aufnahmefeld. So nimmt man eine Bewegung auf und lässt **erst zeichnen oder beschreiben, wie
-    das Diagramm aussehen muss** – aufgedeckt wird danach mit **👁 Aufdecken** (es kommen genau die
-    Diagramme zurück, die vorher an waren) oder gezielt mit **x(t)**, **v(t)** bzw. **a(t)**, wenn
-    nur eines gezeigt werden soll. Solange verdeckt ist, bleibt auch die **Wertetabelle leer** –
-    sonst stünde die Antwort schon in den Zahlen. Die einzelnen Schalter lassen sich ebenso alle
-    ausschalten.
+  - **Erst vorhersagen, dann einblenden (1D und 2D):** Die drei Schalter lassen sich auch **alle
+    ausschalten**. Dann ist nur noch die Bewegung im Aufnahmefeld zu sehen: Man nimmt eine Bewegung
+    auf und lässt **erst zeichnen oder beschreiben, wie das Diagramm aussehen muss**, und blendet es
+    danach mit **x(t)**, **v(t)** bzw. **a(t)** ein. Solange keines eingeblendet ist, bleibt auch
+    die **Wertetabelle leer** – sonst stünde die Antwort schon in den Zahlen.
   - **Stellen und Vektoren:** Ein Tipp ins Diagramm setzt eine **Stelle** – alle drei Diagramme
     zeigen dann den Wert – oder mit dem Werkzeug **Intervall** einen Abschnitt von **t₁ bis t₂**.
     **Stelle merken** hält bis zu acht Stellen fest, **Vektoren** zeichnet an jedem Messpunkt die
