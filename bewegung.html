@@ -32,6 +32,8 @@ body {
 
 /* Werkzeugleiste */
 .bar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+/* Allein geoeffnet liegt oben rechts der Knopf „Bearbeiten“ der Tafel - dort bleibt Platz. */
+body:not(.imRahmen) .bar { padding-right: 128px; }
 .brand { display: flex; align-items: baseline; gap: 10px; margin-right: auto; min-width: 0; }
 h1 { font-size: 1.1rem; margin: 0; letter-spacing: -0.01em; text-wrap: balance; }
 /* Die Knoepfe der Tafel (Bild, Teilen) sehen aus wie die uebrigen Knoepfe des Werkzeugs. */
@@ -85,6 +87,14 @@ details.settings summary::-webkit-details-marker { display: none; }
 /* y-Aufnahme: Das Aufnahmefeld steht senkrecht links neben den Diagrammen. */
 .mode-1d.senk .stage { grid-template-columns: minmax(104px, 15%) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }
 .mode-1d.senk.lane .stage { grid-template-columns: minmax(146px, 22%) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }
+/* Battle: je ein Aufnahmefeld am linken und am rechten Fensterrand, Diagramme dazwischen */
+.mode-1d.battle .stage { grid-template-columns: minmax(104px, 14%) minmax(0, 1fr) minmax(104px, 14%); grid-template-rows: minmax(0, 1fr); }
+.mode-1d.battle .padWrap { display: none; }
+.btPad { position: relative; min-height: 0; min-width: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.btPad[hidden] { display: none; }
+.btPad canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+/* im Spielmodus (Ziel/Battle) gehoeren Stellen, Intervall und Vektoren nicht zur Aufgabe */
+.app.spiel .nurAufnahme { display: none; }
 @media (orientation: portrait) {
   .mode-2d .stage { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(220px, 40%) minmax(0, 1fr); }
 }
@@ -125,6 +135,13 @@ details.settings summary::-webkit-details-marker { display: none; }
 .readout td.del button { min-height: 28px; padding: 2px 8px; }
 .readout .iv td { color: var(--ink); }
 .readout .note { color: var(--muted); font-family: var(--font-body); font-size: calc(0.8rem * var(--fs, 1)); padding: 6px 2px; }
+/* Ergebniszeile von Ziel und Battle - sie steht dort, wo sonst die Ablesetabelle steht */
+.erg { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 18px; padding: 6px 2px;
+  font-family: var(--font-body); font-size: calc(0.9rem * var(--fs, 1)); color: var(--muted); }
+.erg b { font-size: calc(1.2rem * var(--fs, 1)); }
+.erg .sp { display: inline-flex; align-items: baseline; gap: 6px; color: var(--ink); }
+.erg .pt { width: 11px; height: 11px; border-radius: 3px; align-self: center; }
+.erg .sieg { font-weight: 700; color: var(--ink); }
 .cx { color: var(--qx); } .cv { color: var(--qv); } .ca { color: var(--qa); }
 .badge { display: inline-block; min-width: 1.4em; text-align: center; border-radius: 4px; background: var(--ink); color: var(--surface); padding: 0 4px; }
 
@@ -133,6 +150,7 @@ details.settings summary::-webkit-details-marker { display: none; }
   .app { height: auto; min-height: 100%; }
   .mode-1d .stage, .mode-2d .stage { grid-template-columns: minmax(0, 1fr); grid-template-rows: 200px 560px; }
   .mode-1d.senk .stage { grid-template-columns: minmax(96px, 24%) minmax(0, 1fr); grid-template-rows: 560px; }
+  .mode-1d.battle .stage { grid-template-columns: minmax(84px, 1fr) minmax(0, 1.8fr) minmax(84px, 1fr); grid-template-rows: 560px; }
   .mode-1d.senk.lane .stage { grid-template-columns: minmax(130px, 32%) minmax(0, 1fr); grid-template-rows: 560px; }
   .mode-2d .stage { grid-template-rows: 300px 560px; }
   .slider input { width: 100px; }
@@ -338,11 +356,34 @@ details.settings summary::-webkit-details-marker { display: none; }
         <button data-ach="x" aria-pressed="true" title="Waagerechte Bewegung: das Lineal liegt über den Diagrammen">x →</button>
         <button data-ach="y" aria-pressed="false" title="Senkrechte Bewegung: das Lineal steht links neben den Diagrammen">y ↑</button>
       </div>
+      <div class="seg" role="group" aria-label="Spielart" id="spielSeg">
+        <button data-sp="aus" aria-pressed="true" title="Bewegung aufnehmen und auswerten">Aufnahme</button>
+        <button data-sp="ziel" aria-pressed="false" title="Eine Zielkurve vorgeben und mit dem Finger nachfahren">Ziel</button>
+        <button data-sp="battle" aria-pressed="false" title="Zwei Felder, ein Ziel: nach dem Countdown fahren beide gleichzeitig nach">Battle</button>
+      </div>
       <div class="seg" role="group" aria-label="Komponente" id="compSeg" hidden>
         <button data-comp="x" aria-pressed="false">x</button>
         <button data-comp="y" aria-pressed="false">y</button>
         <button data-comp="xy" aria-pressed="true">x + y</button>
       </div>
+    </div>
+
+    <div class="group" id="zielBox" hidden>
+      <span class="group-label">Ziel</span>
+      <div class="seg" role="group" aria-label="Welches Diagramm vorgegeben wird" id="zielTypSeg">
+        <button data-zt="x" aria-pressed="true">x(t)</button>
+        <button data-zt="v" aria-pressed="false">v(t)</button>
+        <button data-zt="a" aria-pressed="false">a(t)</button>
+      </div>
+      <select id="zielT" aria-label="Dauer der Zielkurve" title="Wie lange die Zielkurve dauert">
+        <option value="3">3 s</option>
+        <option value="5" selected>5 s</option>
+        <option value="8">8 s</option>
+        <option value="10">10 s</option>
+      </select>
+      <button id="zielMal" aria-pressed="false" title="Die Zielkurve mit dem Finger in das Diagramm ziehen">✎ zeichnen</button>
+      <button id="zielWeg" title="Die Zielkurve entfernen">Ziel weg</button>
+      <button id="btStart" class="primary" hidden title="Countdown – danach nehmen beide Felder gleichzeitig auf">▶ Countdown</button>
     </div>
 
     <label class="slider" for="smooth">Glättung
@@ -357,12 +398,12 @@ details.settings summary::-webkit-details-marker { display: none; }
       <button class="chip" id="dA" aria-pressed="true" title="Beschleunigung über der Zeit"><span class="sw ca"></span>a(t)</button>
     </div>
 
-    <div class="group" role="group" aria-label="Einblenden">
+    <div class="group nurAufnahme" role="group" aria-label="Einblenden">
       <button class="chip" id="tStellen" aria-pressed="true"><span class="sw"></span>Stellen</button>
       <button class="chip" id="tVec" aria-pressed="false" title="An jedem Messpunkt die Pfeile für v und a"><span class="sw ca"></span>Vektoren</button>
     </div>
 
-    <div class="group">
+    <div class="group nurAufnahme">
       <div class="seg" role="group" aria-label="Werkzeug im Diagramm" title="Antippen im Diagramm setzt eine Stelle oder ein Intervall">
         <button id="toolStelle" aria-pressed="true">Stelle</button>
         <button id="toolIv" aria-pressed="false">Intervall</button>
@@ -432,6 +473,7 @@ details.settings summary::-webkit-details-marker { display: none; }
       <canvas id="pad"></canvas>
       <p class="hint" id="hint">Finger auflegen und bewegen. Aufgezeichnet wird, solange der Finger aufliegt (nur die waagerechte Bewegung zählt).</p>
     </section>
+    <section class="btPad" id="btPadL" aria-label="Aufnahmefeld links" hidden><canvas id="padL"></canvas></section>
     <section class="plotWrap">
       <div class="plotBox">
         <canvas id="plots" aria-label="Diagramme: Ort, Geschwindigkeit und Beschleunigung über der Zeit"></canvas>
@@ -450,6 +492,7 @@ details.settings summary::-webkit-details-marker { display: none; }
       </div>
       <div class="readout" id="readout"></div>
     </section>
+    <section class="btPad" id="btPadR" aria-label="Aufnahmefeld rechts" hidden><canvas id="padR"></canvas></section>
   </main>
 </div>
 
@@ -485,6 +528,9 @@ const state = {
   recording: false, recId: null, t0: 0,
   playing: false, speed: 1,
   strobe: 0.1, allVec: false, vecSel: "va", vecScale: 1,
+  /* Spiele (nur 1D): "aus" = normale Aufnahme, "ziel" = Zielkurve nachfahren,
+     "battle" = zwei Felder an den Fensterraendern, Start per Countdown */
+  spiel: "aus", zielTyp: "x", zielT: 5, ziel: null, zeichnen: false,
   fs: 1,                // Schriftgröße in den Diagrammen (A− / A+)
 };
 $("ppc").value = state.ppc;
@@ -570,9 +616,11 @@ function range(arr, robust) {
   const q = p => s[clamp(Math.round(p * (s.length - 1)), 0, s.length - 1)];
   return [q(0.005), q(0.995)];
 }
-function process() {
-  const raw = state.raw;
-  if (raw.length < 2) { D = null; return; }
+function process() { D = baue(state.raw); }
+/* Aus Rohpunkten {t, x, y} (Pixel) die ausgewerteten Reihen machen. Jede Aufnahme laeuft
+   hierdurch - auch die beiden Spieler im Battle, die ihre eigenen Reihen bekommen. */
+function baue(raw) {
+  if (!raw || raw.length < 2) return null;
   const T = raw[raw.length - 1].t;
   const N = Math.max(3, Math.floor(T / DT) + 1);
   const t = new Float64Array(N), xr = new Float64Array(N), yr = new Float64Array(N);
@@ -588,9 +636,10 @@ function process() {
   const s = state.sigma / 1000 / DT;
   const x = smooth(xr, s), y = smooth(yr, s);
   const vx = deriv(x), vy = deriv(y), ax = deriv(vx), ay = deriv(vy);
-  D = { N, T: (N - 1) * DT, t, x, y, vx, vy, ax, ay, rng: {} };
-  for (const k of ["x", "y"]) D.rng[k] = range(D[k], false);
-  for (const k of ["vx", "vy", "ax", "ay"]) D.rng[k] = range(D[k], true);
+  const d = { N, T: (N - 1) * DT, t, x, y, vx, vy, ax, ay, rng: {} };
+  for (const k of ["x", "y"]) d.rng[k] = range(d[k], false);
+  for (const k of ["vx", "vy", "ax", "ay"]) d.rng[k] = range(d[k], true);
+  return d;
 }
 function val(arr, t) {
   const f = clamp(t / DT, 0, arr.length - 1);
@@ -894,6 +943,218 @@ function drawPad() {
   ctx.fillText(aTxt, senk ? lix : lx + 10, lyA);
 }
 
+
+/* ---------- Ziel und Battle (nur 1D) ----------
+   Ziel: Eine Kurve wird mit dem Finger in eines der drei Diagramme gezeichnet; danach
+   versucht man, sie im Aufnahmefeld nachzufahren. Gewertet wird, wie viel Prozent der
+   Zeit die eigene Kurve im Band um das Ziel liegt.
+   Battle: dasselbe Ziel, aber zwei Felder an den Fensterraendern (senkrecht, damit sich
+   zwei Finger nicht in die Quere kommen). Nach einem Countdown nehmen beide gleichzeitig
+   auf, am Ende stehen beide Kurven und beide Trefferquoten nebeneinander. */
+const SPIEL_F = { L: "#7c3aed", R: "#ea580c" };     // Farbe der beiden Spieler
+const BT_OBEN = 52, BT_UNTEN = 34;                  // Raender des Lineals im Battle-Feld
+const ZIEL_KLEIN = { x: 0.4, v: 1.5, a: 5 };        // kleinstes Trefferband je Groesse
+const EINH = { x: "cm", v: "cm/s", a: "cm/s²" };
+const spielAn = () => state.mode === "1d" && state.spiel !== "aus";
+const battleAn = () => state.mode === "1d" && state.spiel === "battle";
+const zielKey = typ => typ === "x" ? "x" : typ === "v" ? "vx" : "ax";
+const zielName = typ => (typ === "x" ? sym1d() : typ) + "(t)";
+const BT = { phase: "aus", zahl: 3, t0: 0, raf: 0, timer: 0,
+             pos: { L: null, R: null }, id: { L: null, R: null },
+             raw: { L: [], R: [] }, D: { L: null, R: null }, erg: null };
+
+/* Wie viele Zentimeter das Aufnahmefeld hoch (bzw. breit) ist - danach richtet sich der
+   Wertebereich des x(t)-Diagramms, solange noch nichts aufgenommen wurde. */
+function padSpanne() {
+  const cv = battleAn() ? $("padL") : pad, r = cv.getBoundingClientRect();
+  const px = (battleAn() || istSenk()) ? r.height - BT_OBEN - BT_UNTEN : r.width - 2 * PAD_M;
+  return Math.max(4, px / state.ppc);
+}
+const VORGABE = { x: () => [0, Math.max(6, Math.round(padSpanne()))], v: () => [-20, 20], a: () => [-60, 60] };
+
+/* Aus den gezogenen Punkten {t, v} eine Kurve auf dem DT-Raster machen. Vor dem ersten
+   und nach dem letzten Punkt laeuft sie waagerecht weiter, damit das Ziel die ganze
+   Dauer abdeckt. */
+function zielAus(pts) {
+  const T = state.zielT, N = Math.round(T / DT) + 1;
+  const q = pts.filter(o => isFinite(o.t) && isFinite(o.v)).sort((a, b) => a.t - b.t);
+  if (q.length < 2) return null;
+  const v = new Float64Array(N);
+  let j = 0, lo = Infinity, hi = -Infinity;
+  for (let i = 0; i < N; i++) {
+    const t = i * DT;
+    if (t <= q[0].t) v[i] = q[0].v;
+    else if (t >= q[q.length - 1].t) v[i] = q[q.length - 1].v;
+    else {
+      while (j < q.length - 2 && q[j + 1].t < t) j++;
+      const a = q[j], b = q[j + 1];
+      const f = b.t > a.t ? clamp((t - a.t) / (b.t - a.t), 0, 1) : 0;
+      v[i] = a.v + f * (b.v - a.v);
+    }
+    if (v[i] < lo) lo = v[i];
+    if (v[i] > hi) hi = v[i];
+  }
+  const tol = Math.max((hi - lo) * 0.09, ZIEL_KLEIN[state.zielTyp]);
+  return { typ: state.zielTyp, T, v, tol, rng: [lo - tol, hi + tol] };
+}
+/* Trefferquote: Anteil der Zeit im Band. Zeit ohne Aufnahme zaehlt als weit daneben. */
+function bewerten(dd) {
+  const z = state.ziel;
+  if (!z || !dd) return null;
+  const arr = dd[zielKey(z.typ)], N = z.v.length, weit = z.tol * 5;
+  let innen = 0, summe = 0;
+  for (let i = 0; i < N; i++) {
+    const t = i * DT;
+    const d = t <= dd.T ? Math.abs(val(arr, t) - z.v[i]) : weit;
+    if (d <= z.tol) innen++;
+    summe += Math.min(d, weit);
+  }
+  return { quote: Math.round(innen / N * 100), abw: summe / N };
+}
+function spielSetzen(sp) {
+  if (state.spiel === sp || state.mode !== "1d") return;
+  stopPlay(); btStopp();
+  state.spiel = sp;
+  state.cursor = null; state.pins = []; state.interval = null;
+  if (sp === "aus") { state.zeichnen = false; makeSample(); }
+  else { state.raw = []; state.sample = false; D = null; state.zeichnen = !state.ziel; }
+  updateUI(); requestDraw();
+}
+
+// ---------- Battle: zwei Felder, Countdown, gleichzeitige Aufnahme ----------
+function btStopp() {
+  BT.phase = "aus"; clearTimeout(BT.timer); cancelAnimationFrame(BT.raf);
+  BT.pos = { L: null, R: null }; BT.id = { L: null, R: null };
+}
+function btStart() {
+  if (!state.ziel) { if (window.TafelShot) TafelShot.toast("Erst eine Zielkurve zeichnen"); return; }
+  btStopp();
+  BT.raw = { L: [], R: [] }; BT.D = { L: null, R: null }; BT.erg = null;
+  D = null; state.raw = []; state.sample = false;
+  BT.phase = "count"; BT.zahl = 3;
+  updateUI(); requestDraw();
+  const tick = () => {
+    if (BT.phase !== "count") return;
+    BT.zahl--;
+    if (BT.zahl > 0) { requestDraw(); BT.timer = setTimeout(tick, 900); return; }
+    BT.phase = "lauf"; BT.t0 = performance.now();
+    updateUI();
+    BT.raf = requestAnimationFrame(btLauf);
+  };
+  BT.timer = setTimeout(tick, 900);
+}
+function btLauf() {
+  if (BT.phase !== "lauf") return;
+  const t = (performance.now() - BT.t0) / 1000;
+  ["L", "R"].forEach(k => { if (BT.pos[k] != null) BT.raw[k].push({ t, x: BT.pos[k], y: 0 }); });
+  if (t >= state.zielT) { btEnde(); return; }
+  btPads();
+  BT.raf = requestAnimationFrame(btLauf);
+}
+function btEnde() {
+  BT.phase = "fertig"; cancelAnimationFrame(BT.raf);
+  ["L", "R"].forEach(k => { BT.D[k] = baue(BT.raw[k]); });
+  D = BT.D.L || BT.D.R;            // Ablesetabelle und Export nehmen die linke Aufnahme
+  BT.erg = { L: bewerten(BT.D.L), R: bewerten(BT.D.R) };
+  updateUI(); draw();
+}
+const btPads = () => { drawBtPad("L"); drawBtPad("R"); };
+function drawBtPad(seite) {
+  const cv = $(seite === "L" ? "padL" : "padR");
+  if (!cv || !cv.getClientRects().length) return;          // Feld gerade nicht sichtbar
+  const { ctx, w, h } = setup(cv);
+  const C = colors(), ppc = state.ppc, col = SPIEL_F[seite];
+  const rx = seite === "L" ? 40 : w - 40;                  // das Lineal steht am Fensterrand
+  const y0 = h - BT_UNTEN, vz = seite === "L" ? -1 : 1, rein = -vz;
+  const Y = cm => y0 - cm * ppc, mm = ppc >= 30;
+  const mitte = seite === "L" ? (rx + w) / 2 : rx / 2;     // Mitte der freien Flaeche neben dem Lineal
+  // Lineal mit Zahlen nach aussen
+  ctx.font = `${fs(11)}px ${css("--font-data")}`;
+  ctx.strokeStyle = C.muted; ctx.fillStyle = C.muted; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(rx, y0); ctx.lineTo(rx, BT_OBEN); ctx.stroke();
+  ctx.textAlign = seite === "L" ? "right" : "left"; ctx.textBaseline = "middle";
+  for (let k = 0; Y(k / (mm ? 10 : 1)) >= BT_OBEN - 0.1; k++) {
+    const cm = mm ? k / 10 : k, py = Y(cm);
+    const isCm = mm ? k % 10 === 0 : true, is5 = isCm && Math.round(cm) % 5 === 0;
+    ctx.lineWidth = is5 ? 1.5 : 1;
+    ctx.beginPath(); ctx.moveTo(rx, py); ctx.lineTo(rx + vz * (is5 ? 14 : isCm ? 9 : 4), py); ctx.stroke();
+    if (is5) ctx.fillText(String(Math.round(cm)), rx + vz * 17, py);
+  }
+  ctx.textAlign = "center"; ctx.textBaseline = "top";
+  ctx.font = `700 ${fs(13)}px ${css("--font-body")}`; ctx.fillStyle = col;
+  ctx.fillText(seite === "L" ? "Links" : "Rechts", mitte, 8);
+  // Spur der Aufnahme - die Zeit laeuft ins Feld hinein
+  const dMax = Math.max(40, (seite === "L" ? w - rx : rx) - 18);
+  const spur = BT.raw[seite];
+  if (spur.length > 1) {
+    ctx.strokeStyle = alpha(col, 0.85); ctx.lineWidth = 2;
+    ctx.beginPath();
+    spur.forEach((o, i) => {
+      const d = 26 + (o.t / Math.max(state.zielT, 0.01)) * (dMax - 26);
+      const px = rx + rein * d, py = y0 - o.x;
+      i ? ctx.lineTo(px, py) : ctx.moveTo(px, py);
+    });
+    ctx.stroke();
+  }
+  // wo der Finger gerade liegt
+  const pos = BT.pos[seite];
+  if (pos != null) {
+    const py = y0 - pos;
+    ctx.strokeStyle = alpha(col, 0.35); ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(0, py); ctx.lineTo(w, py); ctx.stroke();
+    ctx.fillStyle = col; ctx.beginPath(); ctx.arc(rx, py, 8, 0, 7); ctx.fill();
+  }
+  /* Ist der Ort vorgegeben, zeigt ein Ring, wo man gerade sein muesste - bei v(t) und
+     a(t) bleibt das die eigentliche Denkaufgabe. */
+  if (BT.phase === "lauf" && state.ziel && state.ziel.typ === "x") {
+    const i = clamp(Math.round((performance.now() - BT.t0) / 1000 / DT), 0, state.ziel.v.length - 1);
+    ctx.strokeStyle = C.ink; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.arc(rx, Y(state.ziel.v[i]), 11, 0, 7); ctx.stroke();
+  }
+  ctx.textAlign = "center";
+  if (BT.phase === "count") {
+    ctx.fillStyle = C.ink; ctx.textBaseline = "middle";
+    ctx.font = `700 ${Math.round(Math.min(Math.abs(mitte - rx) * 1.6, h, 260) * 0.5)}px ${css("--font-body")}`;
+    ctx.fillText(String(BT.zahl), mitte, h / 2);
+  } else if (BT.phase === "lauf") {
+    const rest = Math.max(0, state.zielT - (performance.now() - BT.t0) / 1000);
+    ctx.fillStyle = alpha(C.ink, 0.55); ctx.textBaseline = "bottom";
+    ctx.font = `700 ${fs(15)}px ${css("--font-data")}`;
+    ctx.fillText(fmt(rest, 1) + " s", mitte, h - 6);
+  } else if (BT.phase === "fertig" && BT.erg && BT.erg[seite]) {
+    ctx.fillStyle = col; ctx.textBaseline = "bottom";
+    ctx.font = `700 ${fs(26)}px ${css("--font-body")}`;
+    ctx.fillText(BT.erg[seite].quote + " %", mitte, h - 8);
+  } else {
+    ctx.fillStyle = C.muted; ctx.textBaseline = "middle";
+    ctx.font = `${passend(ctx, "Finger auflegen", Math.abs(mitte - rx) * 2 - 8, fs(12), css("--font-body"))}px ${css("--font-body")}`;
+    ctx.fillText("Finger auflegen", mitte, h / 2);
+  }
+}
+["L", "R"].forEach(seite => {
+  const cv = $(seite === "L" ? "padL" : "padR");
+  const setz = e => {
+    const r = cv.getBoundingClientRect();
+    BT.pos[seite] = (r.height - BT_UNTEN) - (e.clientY - r.top);
+  };
+  cv.addEventListener("pointerdown", e => {
+    e.preventDefault();
+    try { cv.setPointerCapture(e.pointerId); } catch (err) {}
+    BT.id[seite] = e.pointerId; setz(e); btPads();
+  });
+  cv.addEventListener("pointermove", e => {
+    if (BT.id[seite] !== e.pointerId) return;
+    e.preventDefault(); setz(e);
+    if (BT.phase !== "lauf") btPads();
+  });
+  const ende = e => {
+    if (BT.id[seite] !== e.pointerId) return;
+    BT.id[seite] = null; BT.pos[seite] = null; btPads();
+  };
+  cv.addEventListener("pointerup", ende);
+  cv.addEventListener("pointercancel", ende);
+});
+
 // ---------- Zeichnen: Diagramme ----------
 const SUB = { x: "ₓ", y: "ᵧ" };
 let layout = null;
@@ -912,14 +1173,15 @@ function drawPlots() {
   const { ctx, w, h } = setup(plots);
   const C = colors();
   const L = Math.round(fs(60)), TOP = 8, BOT = Math.round(fs(30)), GAP = 16;
-  const R = D ? Math.round(fs(76)) : 14;        // rechts bleibt Platz fuer die Leiste je Diagramm
+  const R = (D && !spielAn()) ? Math.round(fs(76)) : 14;   // rechts Platz fuer die Leiste je Diagramm
   layout = { L, R, TOP, BOT, w, h };
-  if (!D) {
+  if (!D && !spielAn()) {
     diaCtlStand(null, R, 0);
     ctx.fillStyle = C.muted; ctx.font = `${fs(14)}px ${css("--font-body")}`; ctx.textAlign = "center";
     ctx.fillText("Noch keine Aufnahme", w / 2, h / 2); return;
   }
-  const T = Math.max(D.T, 0.05);
+  /* Im Spiel gibt die Zielkurve die Zeitachse vor - so passt der Versuch darauf. */
+  const T = spielAn() ? state.zielT : Math.max(D.T, 0.05);
   // Nur die eingeblendeten Diagramme teilen sich die Höhe.
   const an = [state.dia.x, state.dia.v, state.dia.a];
   const nAn = an.filter(Boolean).length;
@@ -938,8 +1200,7 @@ function drawPlots() {
     { id: "a", name: "Beschleunigung", sym: c => state.mode === "1d" ? "a" : "a" + SUB[c], unit: "cm/s²", key: c => "a" + c, color: C.qa },
   ];
   const P = Q.map((q, i) => {
-    let lo = Infinity, hi = -Infinity;
-    comps.forEach(c => { const r = D.rng[q.key(c)]; lo = Math.min(lo, r[0]); hi = Math.max(hi, r[1]); });
+    let [lo, hi] = spanneVon(q, comps);
     if (i > 0) { lo = Math.min(lo, 0); hi = Math.max(hi, 0); }
     if (hi - lo < 1e-6) { lo -= 1; hi += 1; }
     const padv = (hi - lo) * 0.08; lo -= padv; hi += padv;
@@ -991,9 +1252,12 @@ function drawPlots() {
 
   const clip = (p, fn) => { ctx.save(); ctx.beginPath(); ctx.rect(L, p.top, pw, ph); ctx.clip(); fn(); ctx.restore(); };
 
+  // Zielkurve mit Trefferband, darunter die Versuche der Spieler
+  if (spielAn()) zielMalen(ctx, P, clip, tx, C);
+
   // Flächen (unter den Kurven)
   let iv = null;
-  if (state.interval && P.some(p => p.an && flAn(p))) {
+  if (!spielAn() && state.interval && P.some(p => p.an && flAn(p))) {
     const a = clamp(Math.min(...state.interval), 0, T), b = clamp(Math.max(...state.interval), 0, T);
     iv = [a, b];
     [1, 2].forEach(pi => {
@@ -1018,8 +1282,19 @@ function drawPlots() {
     ctx.fillText("t₁", tx(a), letzte.top + ph + 16); ctx.fillText("t₂", tx(b), letzte.top + ph + 16);
   }
 
-  // Kurven
-  P.forEach(p => p.an && clip(p, () => {
+  // Kurven - im Battle stattdessen die beiden Spieler in ihren Farben
+  if (battleAn()) ["L", "R"].forEach(k => {
+    const dd = BT.D[k];
+    if (!dd) return;
+    P.forEach(p => p.an && clip(p, () => {
+      const arr = dd[p.key("x")];
+      ctx.strokeStyle = SPIEL_F[k]; ctx.lineWidth = 2.4;
+      ctx.beginPath();
+      for (let i = 0; i < dd.N; i++) { const X = tx(dd.t[i]), Y = p.y(arr[i]); i ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y); }
+      ctx.stroke();
+    }));
+  });
+  else if (D) P.forEach(p => p.an && clip(p, () => {
     comps.forEach(c => {
       const arr = D[p.key(c)];
       ctx.strokeStyle = p.color; ctx.lineWidth = 2.2; ctx.setLineDash(c === "y" && comps.length === 2 ? [7, 5] : []);
@@ -1056,8 +1331,10 @@ function drawPlots() {
 
   // Stellen und Tangenten
   const pts = [];
-  if (state.cursor != null) pts.push({ t: clamp(state.cursor, 0, T), label: "P", main: true });
-  if (state.show.stellen) state.pins.forEach((t, i) => pts.push({ t: clamp(t, 0, T), label: String(i + 1), main: false }));
+  if (!spielAn() && D) {
+    if (state.cursor != null) pts.push({ t: clamp(state.cursor, 0, T), label: "P", main: true });
+    if (state.show.stellen) state.pins.forEach((t, i) => pts.push({ t: clamp(t, 0, T), label: String(i + 1), main: false }));
+  }
 
   if (state.show.tang.x || state.show.tang.v) {
     pts.forEach(s => {
@@ -1123,11 +1400,54 @@ function drawPlots() {
   }
 }
 
+/* Wertebereich eines Diagramms: Aufnahme, Zielkurve und - im Battle - beide Spieler.
+   Ohne jede Kurve steht eine Vorgabe, sonst koennte man kein Ziel hineinzeichnen. */
+function spanneVon(q, comps) {
+  let lo = Infinity, hi = -Infinity;
+  const nimm = r => { if (r && isFinite(r[0])) { lo = Math.min(lo, r[0]); hi = Math.max(hi, r[1]); } };
+  if (D) comps.forEach(c => nimm(D.rng[q.key(c)]));
+  if (battleAn()) ["L", "R"].forEach(k => BT.D[k] && nimm(BT.D[k].rng[q.key("x")]));
+  if (spielAn() && state.ziel && state.ziel.typ === q.id) nimm(state.ziel.rng);
+  if (!isFinite(lo)) { const v = VORGABE[q.id](); lo = v[0]; hi = v[1]; }
+  return [lo, hi];
+}
+/* Die Zielkurve: gestrichelt, mit dem Trefferband darum. Waehrend des Zeichnens haengt
+   die Linie direkt am Finger. */
+function zielMalen(ctx, P, clip, tx, C) {
+  const p = P.find(q => q.id === state.zielTyp);
+  if (!p || !p.an) return;
+  if (drag && drag.kind === "ziel") {
+    if (drag.pts.length < 2) return;
+    clip(p, () => {
+      ctx.strokeStyle = C.ink; ctx.lineWidth = 2.6; ctx.setLineDash([8, 5]);
+      ctx.beginPath();
+      drag.pts.forEach((o, i) => { const X = tx(o.t), Y = p.y(o.v); i ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y); });
+      ctx.stroke(); ctx.setLineDash([]);
+    });
+    return;
+  }
+  const z = state.ziel;
+  if (!z || z.typ !== p.id) return;
+  const N = z.v.length;
+  clip(p, () => {
+    ctx.fillStyle = alpha(C.ink, 0.09);
+    ctx.beginPath();
+    for (let i = 0; i < N; i++) { const X = tx(i * DT), Y = p.y(z.v[i] + z.tol); i ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y); }
+    for (let i = N - 1; i >= 0; i--) ctx.lineTo(tx(i * DT), p.y(z.v[i] - z.tol));
+    ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = C.ink; ctx.lineWidth = 2.6; ctx.setLineDash([8, 5]);
+    ctx.beginPath();
+    for (let i = 0; i < N; i++) { const X = tx(i * DT), Y = p.y(z.v[i]); i ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y); }
+    ctx.stroke(); ctx.setLineDash([]);
+  });
+  pill(ctx, "Ziel", tx(z.T) - 6, clamp(p.y(z.v[N - 1]), p.top + 14, p.top + layout.ph - 14), C.ink, C, "right");
+}
+
 /* Die Leiste rechts an den Diagrammen: Die Knoepfe stehen fest im Markup, hier wandern sie
    nur an den oberen Rand ihres Diagramms und zeigen, was gerade eingeschaltet ist. */
 function diaCtlStand(P, R, ph) {
   const box = $("diaCtl");
-  box.hidden = !(D && P);
+  box.hidden = !(D && P) || spielAn();
   if (box.hidden) return;
   P.forEach(p => {
     const g = box.querySelector(`.grp[data-d="${p.id}"]`);
@@ -1163,8 +1483,28 @@ function flAnSchalten() {
 }
 
 // ---------- Ablesetabelle ----------
+/* Im Spiel steht dort, wo sonst die Ablesetabelle steht, das Ergebnis. */
+function ergebnisText() {
+  const z = state.ziel;
+  if (!z) return `<div class="note">Auf „✎ zeichnen“ tippen und mit dem Finger eine Kurve in das Diagramm `
+    + `${zielName(state.zielTyp)} ziehen – die soll danach nachgefahren werden.</div>`;
+  const e = (name, col, erg) => `<span class="sp"><span class="pt" style="background:${col}"></span>${name}: `
+    + (erg ? `<b>${erg.quote} %</b> im Band · mittlere Abweichung ${fmt(erg.abw, 2)} ${EINH[z.typ]}`
+           : "noch keine Aufnahme") + "</span>";
+  let s = `<div class="erg">`;
+  if (battleAn()) {
+    const L = BT.erg && BT.erg.L, R = BT.erg && BT.erg.R;
+    s += e("Links", SPIEL_F.L, L) + e("Rechts", SPIEL_F.R, R);
+    if (L && R) s += `<span class="sieg">`
+      + (L.quote === R.quote ? "Unentschieden" : (L.quote > R.quote ? "Links" : "Rechts") + " gewinnt") + "</span>";
+  } else {
+    s += e("Dein Versuch", colors()[z.typ === "x" ? "qx" : z.typ === "v" ? "qv" : "qa"], bewerten(D));
+  }
+  return s + `<span>Ziel ${zielName(z.typ)} · Band ± ${fmt(z.tol, 1)} ${EINH[z.typ]} · ${fmt(z.T, 0)} s</span></div>`;
+}
 function renderReadout() {
   const el = $("readout");
+  if (spielAn()) { el.style.maxHeight = ""; el.innerHTML = ergebnisText(); return; }
   if (!D) { el.innerHTML = ""; return; }
   const T = D.T;
   const two = state.mode === "2d";
@@ -1223,7 +1563,24 @@ function tAt(e) {
   const px = e.clientX - r.left;
   return clamp((px - layout.L) / (layout.w - layout.L - layout.R) * layout.T, 0, layout.T);
 }
+/* Das Ziel wird mit dem Finger direkt in sein Diagramm gezogen. */
+function zielZug(e) {
+  const p = (layout.P || []).find(q => q.id === state.zielTyp);
+  if (!p) return;
+  const r = plots.getBoundingClientRect();
+  const w = p.lo + (p.top + layout.ph - (e.clientY - r.top)) / layout.ph * (p.hi - p.lo);
+  drag.pts.push({ t: tAt(e), v: clamp(w, p.lo, p.hi) });
+}
 plots.addEventListener("pointerdown", e => {
+  if (spielAn() && state.zeichnen && layout && layout.tx) {
+    e.preventDefault();
+    try { plots.setPointerCapture(e.pointerId); } catch (err) {}
+    stopPlay();
+    drag = { kind: "ziel", pts: [] };
+    zielZug(e); requestDraw();
+    return;
+  }
+  if (spielAn()) return;                 // im Spiel setzt ein Tipp keine Stelle
   if (!D || !layout || !layout.tx || state.recording) return;
   /* der Streifen rechts gehoert der Leiste - ein Tipp daneben soll keine Stelle setzen */
   if (e.clientX - plots.getBoundingClientRect().left > layout.w - layout.R + 2) return;
@@ -1246,6 +1603,7 @@ plots.addEventListener("pointerdown", e => {
 plots.addEventListener("pointermove", e => {
   if (!drag) return;
   e.preventDefault();
+  if (drag.kind === "ziel") { zielZug(e); requestDraw(); return; }
   const t = tAt(e);
   if (drag.kind === "iv") state.interval[1] = t;
   else if (drag.kind === "pin") state.pins[drag.i] = t;
@@ -1253,6 +1611,13 @@ plots.addEventListener("pointermove", e => {
   renderReadout(); requestDraw();
 });
 const endDrag = () => {
+  if (drag && drag.kind === "ziel") {
+    const z = zielAus(drag.pts);
+    drag = null;
+    if (z) { state.ziel = z; state.zeichnen = false; }
+    updateUI(); requestDraw();
+    return;
+  }
   if (drag && drag.kind === "iv" && Math.abs(state.interval[1] - state.interval[0]) < 0.02) {
     // nur angetippt: Intervall um die Stelle herum
     const t = state.interval[0], half = Math.min(0.3, layout.T * 0.1);
@@ -1302,8 +1667,24 @@ function updateUI() {
   setPressed("m1d", state.mode === "1d"); setPressed("m2d", state.mode === "2d");
   app.classList.toggle("mode-1d", state.mode === "1d"); app.classList.toggle("mode-2d", state.mode === "2d");
   app.classList.toggle("lane", state.mode === "1d" && state.allVec);
-  app.classList.toggle("senk", istSenk());
-  $("achsSeg").hidden = state.mode !== "1d";
+  app.classList.toggle("senk", istSenk() && !battleAn());
+  app.classList.toggle("battle", battleAn());
+  app.classList.toggle("spiel", spielAn());
+  $("achsSeg").hidden = state.mode !== "1d" || battleAn();
+  $("spielSeg").hidden = state.mode !== "1d";
+  document.querySelectorAll("#spielSeg button").forEach(b =>
+    b.setAttribute("aria-pressed", b.dataset.sp === state.spiel ? "true" : "false"));
+  $("zielBox").hidden = !spielAn();
+  $("btPadL").hidden = $("btPadR").hidden = !battleAn();
+  $("btStart").hidden = !battleAn();
+  $("btStart").textContent = (BT.phase === "count" || BT.phase === "lauf") ? "■ Abbrechen" : "▶ Countdown";
+  $("zielMal").setAttribute("aria-pressed", state.zeichnen ? "true" : "false");
+  $("zielWeg").disabled = !state.ziel;
+  $("zielT").value = String(state.zielT);
+  document.querySelectorAll("#zielTypSeg button").forEach(b => {
+    b.setAttribute("aria-pressed", b.dataset.zt === state.zielTyp ? "true" : "false");
+    b.textContent = (b.dataset.zt === "x" ? sym1d() : b.dataset.zt) + "(t)";
+  });
   document.querySelectorAll("#achsSeg button").forEach(b => b.setAttribute("aria-pressed", b.dataset.ach === state.achse ? "true" : "false"));
   $("compSeg").hidden = state.mode !== "2d";
   document.querySelectorAll("#compSeg button").forEach(b => b.setAttribute("aria-pressed", b.dataset.comp === state.comp ? "true" : "false"));
@@ -1313,7 +1694,9 @@ function updateUI() {
   setPressed("toolStelle", state.tool === "stelle"); setPressed("toolIv", state.tool === "intervall");
   $("pin").disabled = state.cursor == null || !D || state.pins.length >= 8;
   $("undo").disabled = !state.prev;
-  $("hint").textContent = istSenk()
+  $("hint").textContent = spielAn()
+    ? (state.ziel ? "Die gestrichelte Kurve nachfahren." : "Erst eine Zielkurve zeichnen.")
+    : istSenk()
     ? "Finger senkrecht bewegen."
     : state.mode === "1d"
       ? "Finger auflegen und bewegen. Aufgezeichnet wird, solange der Finger aufliegt (nur die waagerechte Bewegung zählt)."
@@ -1344,6 +1727,32 @@ function setAchse(a) {
   });
 }
 document.querySelectorAll("#achsSeg button").forEach(b => b.addEventListener("click", () => setAchse(b.dataset.ach)));
+document.querySelectorAll("#spielSeg button").forEach(b => b.addEventListener("click", () => spielSetzen(b.dataset.sp)));
+document.querySelectorAll("#zielTypSeg button").forEach(b => b.addEventListener("click", () => {
+  if (state.zielTyp === b.dataset.zt) return;
+  state.zielTyp = b.dataset.zt;
+  state.ziel = null; state.zeichnen = true;        // ein Ziel gilt immer fuer ein Diagramm
+  if (!state.dia[state.zielTyp]) state.dia[state.zielTyp] = true;
+  updateUI(); requestDraw();
+}));
+$("zielT").addEventListener("change", e => {
+  state.zielT = parseFloat(e.target.value);
+  state.ziel = null; state.zeichnen = true;        // die Kurve haengt an der Dauer
+  updateUI(); requestDraw();
+});
+$("zielMal").addEventListener("click", () => {
+  state.zeichnen = !state.zeichnen;
+  if (state.zeichnen) { state.ziel = null; btStopp(); }
+  updateUI(); requestDraw();
+});
+$("zielWeg").addEventListener("click", () => {
+  state.ziel = null; state.zeichnen = true; BT.erg = null;
+  updateUI(); requestDraw();
+});
+$("btStart").addEventListener("click", () => {
+  if (BT.phase === "count" || BT.phase === "lauf") { btStopp(); updateUI(); requestDraw(); return; }
+  btStart();
+});
 $("m1d").addEventListener("click", () => setMode("1d"));
 $("m2d").addEventListener("click", () => setMode("2d"));
 document.querySelectorAll("#compSeg button").forEach(b => b.addEventListener("click", () => { state.comp = b.dataset.comp; updateUI(); requestDraw(); }));
@@ -1435,10 +1844,12 @@ $("copyCsv").addEventListener("click", () => {
 
 // ---------- Neuzeichnen ----------
 let rafDraw = 0;
-function draw() { rafDraw = 0; drawPad(); drawPlots(); }
+function draw() { rafDraw = 0; if (battleAn()) btPads(); else drawPad(); drawPlots(); }
 function requestDraw() { if (!rafDraw) rafDraw = requestAnimationFrame(draw); }
 new ResizeObserver(() => requestDraw()).observe(pad);
 new ResizeObserver(() => requestDraw()).observe(plots);
+new ResizeObserver(() => requestDraw()).observe($("btPadL"));
+new ResizeObserver(() => requestDraw()).observe($("btPadR"));
 window.matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change", requestDraw);
 new MutationObserver(requestDraw).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(requestDraw);
@@ -1458,6 +1869,9 @@ function zustand() {
     interval: state.interval ? state.interval.slice() : null,
     ppc: state.ppc, strobe: state.strobe, allVec: state.allVec,
     vecSel: state.vecSel, vecScale: state.vecScale, fs: state.fs,
+    spiel: state.spiel, zielTyp: state.zielTyp, zielT: state.zielT,
+    ziel: state.ziel ? { typ: state.ziel.typ, T: state.ziel.T, tol: r3(state.ziel.tol),
+                         v: Array.from(state.ziel.v).map(v => Math.round(v * 100) / 100) } : null,
   };
 }
 let syncT = 0, letzter = "";
@@ -1489,6 +1903,18 @@ function uebernimm(d) {
   if (d.dia) { state.dia = { x: d.dia.x !== false, v: d.dia.v !== false, a: d.dia.a !== false };
     if (!state.dia.x && !state.dia.v && !state.dia.a) state.dia.x = true; }
   if (d.tool) state.tool = d.tool;
+  if (d.spiel === "aus" || d.spiel === "ziel" || d.spiel === "battle") state.spiel = d.spiel;
+  if (d.zielTyp === "x" || d.zielTyp === "v" || d.zielTyp === "a") state.zielTyp = d.zielTyp;
+  if (typeof d.zielT === "number" && d.zielT > 0) state.zielT = d.zielT;
+  if (d.ziel && Array.isArray(d.ziel.v) && d.ziel.v.length > 2) {
+    const v = Float64Array.from(d.ziel.v.map(Number));
+    let lo = Infinity, hi = -Infinity;
+    for (const q of v) { if (q < lo) lo = q; if (q > hi) hi = q; }
+    const typ = d.ziel.typ || "x";
+    const tol = +d.ziel.tol || Math.max((hi - lo) * 0.09, ZIEL_KLEIN[typ] || 0.4);
+    state.ziel = { typ, T: +d.ziel.T || state.zielT, v, tol, rng: [lo - tol, hi + tol] };
+    state.zeichnen = false;
+  }
   if (typeof d.ppc === "number" && d.ppc > 5 && d.ppc < 400) state.ppc = d.ppc;
   if (typeof d.strobe === "number") state.strobe = d.strobe;
   if (d.vecSel) state.vecSel = d.vecSel;
