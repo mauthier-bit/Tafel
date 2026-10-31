@@ -2114,7 +2114,7 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   vernünftig dastehen. Über **„Beispiel …"** liegen fertige Datensätze bereit (Gerade durch zwei
   Punkte, Wurfbahn, Trassierung mit Steigungen, Bakterien, Abkühlung, Messwerte als Glocke,
   Tageslänge, Medikamentenspiegel im Blut nach einer **Tablette** bzw. nach einer
-  **Retardkapsel** – die beiden Datensätze zu **a · x · e^(−b · x)** und **a · x² · e^(−b · x)**:
+  **Retardkapsel** („Medikament (Tablette)" und „Medikament (Retard)") – die beiden Datensätze zu **a · x · e^(−b · x)** und **a · x² · e^(−b · x)**:
   x in Stunden nach der Einnahme, y in Milligramm je Liter Blut). Daten, Typ und Schalter werden mit dem Projekt gespeichert und beim **Teilen**
   mitgegeben.
   **Import – Messwerte von woanders:** Über der Wertetabelle stehen zwei Knöpfe: **„Import"** und
