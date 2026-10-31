@@ -2820,6 +2820,9 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     **t₁–t₂** der Tabelle zeigt genau das, was auch im Bild steht. Wird ein Diagramm ausgeblendet,
     verschwinden seine Knöpfe mit; für das **Tafelbild** bleibt die Leiste weg, und ein Tipp auf den
     Streifen rechts setzt keine Stelle.
+  - **Die Tabelle unter den Diagrammen** zeigt **höchstens vier Zeilen**; sind mehr Stellen
+    gemerkt, lässt sie sich **scrollen**, und die Kopfzeile bleibt dabei stehen. So bleibt den
+    Diagrammen die Höhe, auch wenn acht Stellen und das Intervall eingetragen sind.
   - **Abspielen** lässt die Bewegung noch einmal ablaufen (1×, 0,5×, 0,25×), **Vorherige** holt die
     letzte Aufnahme zurück, **Messwerte als CSV kopieren** (in den Einstellungen) gibt die Tabelle an
     Excel weiter.

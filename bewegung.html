@@ -107,7 +107,11 @@ details.settings summary::-webkit-details-marker { display: none; }
 .diaCtl .bgX[aria-pressed="true"] { background: var(--qx); border-color: var(--qx); }
 .diaCtl .bgV[aria-pressed="true"] { background: var(--qv); border-color: var(--qv); }
 .diaCtl .bgA[aria-pressed="true"] { background: var(--qa); border-color: var(--qa); }
-.readout { overflow-x: auto; max-height: 30vh; overflow-y: auto; }
+/* Die Tabelle nimmt hoechstens vier Zeilen ein, alles weitere wird gescrollt - sonst
+   schrumpfen die Diagramme, sobald mehrere Stellen gemerkt sind. Die Hoehe rechnet
+   readoutHoehe() aus, weil die Zeilen mit A- / A+ wachsen. */
+.readout { overflow-x: auto; max-height: 30vh; overflow-y: auto; overscroll-behavior: contain; }
+.readout thead th { position: sticky; top: 0; z-index: 1; background: var(--bg); }
 .readout table { border-collapse: collapse; font-family: var(--font-data); font-size: calc(0.82rem * var(--fs, 1)); font-variant-numeric: tabular-nums; width: 100%; }
 .readout th, .readout td { padding: 4px 8px; text-align: right; border-bottom: 1px solid var(--line); white-space: nowrap; }
 .readout th { font-family: var(--font-body); font-weight: 700; color: var(--muted); font-size: calc(0.78rem * var(--fs, 1)); }
@@ -1113,6 +1117,15 @@ function renderReadout() {
   html += "</tbody></table>";
   if (!rows.length && !(state.interval && (state.show.fl.v || state.show.fl.a))) html = `<div class="note">Tippe in ein Diagramm, um eine Stelle zu setzen.</div>`;
   el.innerHTML = html;
+  readoutHoehe();
+}
+function readoutHoehe() {
+  const el = $("readout"), tb = el.querySelector("tbody");
+  el.style.maxHeight = "";
+  if (!tb || tb.rows.length <= 4) return;
+  let h = (el.querySelector("thead") || { offsetHeight: 0 }).offsetHeight;
+  for (let i = 0; i < 4; i++) h += tb.rows[i].offsetHeight;
+  el.style.maxHeight = Math.ceil(h) + "px";
 }
 $("readout").addEventListener("click", e => {
   const b = e.target.closest("button[data-del]");
