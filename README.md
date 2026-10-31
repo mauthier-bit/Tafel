@@ -2854,8 +2854,16 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     rauschen v und a; die Ableitungen entstehen aus den geglätteten Messwerten auf einem 0,01-s-Raster.
   - **Diagramme einzeln ein- und ausblenden:** Die drei Schalter **x(t)**, **v(t)** und **a(t)**
     entscheiden, welche Diagramme gezeichnet werden; die übrigen teilen sich dann die ganze Höhe.
-    So lässt sich erst nur der Ort zeigen (*Wie sieht wohl v aus?*), dann v dazunehmen. Das letzte
-    eingeblendete Diagramm bleibt stehen. In der Tabelle darunter stehen weiterhin alle Werte.
+    So lässt sich erst nur der Ort zeigen (*Wie sieht wohl v aus?*), dann v dazunehmen. In der
+    Tabelle darunter stehen weiterhin alle Werte.
+  - **👁 Verdecken – erst vorhersagen, dann aufdecken (1D und 2D):** Der Knopf neben den drei
+    Schaltern nimmt **alle Diagramme auf einmal weg**; zu sehen ist dann nur noch die Bewegung im
+    Aufnahmefeld. So nimmt man eine Bewegung auf und lässt **erst zeichnen oder beschreiben, wie
+    das Diagramm aussehen muss** – aufgedeckt wird danach mit **👁 Aufdecken** (es kommen genau die
+    Diagramme zurück, die vorher an waren) oder gezielt mit **x(t)**, **v(t)** bzw. **a(t)**, wenn
+    nur eines gezeigt werden soll. Solange verdeckt ist, bleibt auch die **Wertetabelle leer** –
+    sonst stünde die Antwort schon in den Zahlen. Die einzelnen Schalter lassen sich ebenso alle
+    ausschalten.
   - **Stellen und Vektoren:** Ein Tipp ins Diagramm setzt eine **Stelle** – alle drei Diagramme
     zeigen dann den Wert – oder mit dem Werkzeug **Intervall** einen Abschnitt von **t₁ bis t₂**.
     **Stelle merken** hält bis zu acht Stellen fest, **Vektoren** zeichnet an jedem Messpunkt die
