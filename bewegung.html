@@ -376,10 +376,12 @@ details.settings summary::-webkit-details-marker { display: none; }
         <button data-zt="a" aria-pressed="false">a(t)</button>
       </div>
       <select id="zielT" aria-label="Dauer der Zielkurve" title="Wie lange die Zielkurve dauert">
-        <option value="3">3 s</option>
         <option value="5" selected>5 s</option>
         <option value="8">8 s</option>
         <option value="10">10 s</option>
+        <option value="15">15 s</option>
+        <option value="20">20 s</option>
+        <option value="30">30 s</option>
       </select>
       <button id="zielMal" aria-pressed="false" title="Die Zielkurve mit dem Finger in das Diagramm ziehen">✎ zeichnen</button>
       <button id="zielWeg" title="Die Zielkurve entfernen">Ziel weg</button>
@@ -996,6 +998,24 @@ function zielAus(pts) {
   }
   const tol = Math.max((hi - lo) * 0.09, ZIEL_KLEIN[state.zielTyp]);
   return { typ: state.zielTyp, T, v, tol, rng: [lo - tol, hi + tol] };
+}
+/* Zum Teilen reicht die Zielkurve in Zehntelsekunden; beim Einlesen wird wieder auf das
+   Rechenraster aufgefuellt (ein alter Stand ohne dt steht schon darauf). */
+function zielGrob(v) {
+  const k = Math.max(1, Math.round(0.1 / DT)), aus = [];
+  for (let i = 0; i < v.length; i += k) aus.push(Math.round(v[i] * 100) / 100);
+  if ((v.length - 1) % k) aus.push(Math.round(v[v.length - 1] * 100) / 100);
+  return aus;
+}
+function zielFein(roh, dt, T) {
+  const N = Math.round(T / DT) + 1, v = new Float64Array(N);
+  if (!roh.length) return v;
+  for (let i = 0; i < N; i++) {
+    const f = clamp(i * DT / dt, 0, roh.length - 1);
+    const j = Math.min(roh.length - 2, Math.floor(f)), r = f - j;
+    v[i] = roh.length < 2 ? roh[0] : roh[j] * (1 - r) + roh[j + 1] * r;
+  }
+  return v;
 }
 /* Trefferquote: Anteil der Zeit im Band. Zeit ohne Aufnahme zaehlt als weit daneben. */
 function bewerten(dd) {
@@ -1870,8 +1890,10 @@ function zustand() {
     ppc: state.ppc, strobe: state.strobe, allVec: state.allVec,
     vecSel: state.vecSel, vecScale: state.vecScale, fs: state.fs,
     spiel: state.spiel, zielTyp: state.zielTyp, zielT: state.zielT,
-    ziel: state.ziel ? { typ: state.ziel.typ, T: state.ziel.T, tol: r3(state.ziel.tol),
-                         v: Array.from(state.ziel.v).map(v => Math.round(v * 100) / 100) } : null,
+    /* die Zielkurve nur in Zehntelsekunden: auf dem Rechenraster waeren es bei 30 s
+       dreitausend Zahlen - zu viel fuer den QR-Code beim Teilen */
+    ziel: state.ziel ? { typ: state.ziel.typ, T: state.ziel.T, tol: r3(state.ziel.tol), dt: 0.1,
+                         v: zielGrob(state.ziel.v) } : null,
   };
 }
 let syncT = 0, letzter = "";
@@ -1907,12 +1929,12 @@ function uebernimm(d) {
   if (d.zielTyp === "x" || d.zielTyp === "v" || d.zielTyp === "a") state.zielTyp = d.zielTyp;
   if (typeof d.zielT === "number" && d.zielT > 0) state.zielT = d.zielT;
   if (d.ziel && Array.isArray(d.ziel.v) && d.ziel.v.length > 2) {
-    const v = Float64Array.from(d.ziel.v.map(Number));
+    const typ = d.ziel.typ || "x", T = +d.ziel.T || state.zielT;
+    const v = zielFein(d.ziel.v.map(Number), +d.ziel.dt || DT, T);
     let lo = Infinity, hi = -Infinity;
     for (const q of v) { if (q < lo) lo = q; if (q > hi) hi = q; }
-    const typ = d.ziel.typ || "x";
     const tol = +d.ziel.tol || Math.max((hi - lo) * 0.09, ZIEL_KLEIN[typ] || 0.4);
-    state.ziel = { typ, T: +d.ziel.T || state.zielT, v, tol, rng: [lo - tol, hi + tol] };
+    state.ziel = { typ, T, v, tol, rng: [lo - tol, hi + tol] };
     state.zeichnen = false;
   }
   if (typeof d.ppc === "number" && d.ppc > 5 && d.ppc < 400) state.ppc = d.ppc;

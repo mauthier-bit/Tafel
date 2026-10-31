@@ -2835,7 +2835,7 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     stehen, nur die Beschriftung wechselt.
   - **Ziel (1D):** Der Umschalter **Aufnahme / Ziel / Battle** neben **1D / 2D** startet zwei Spiele
     zum Lesen von Diagrammen. Bei **Ziel** wählt man zuerst, **welches Diagramm vorgegeben** wird
-    (**x(t)**, **v(t)** oder **a(t)**) und wie lange es dauert (**3 bis 10 s**); mit **„✎ zeichnen"**
+    (**x(t)**, **v(t)** oder **a(t)**) und wie lange es dauert (**5, 8, 10, 15, 20 oder 30 s**); mit **„✎ zeichnen"**
     zieht man die **Zielkurve freihand** mit dem Finger in dieses Diagramm. Danach versucht man, sie
     im Aufnahmefeld **nachzufahren**: Um die gestrichelte Zielkurve liegt ein **Trefferband**, und
     unter den Diagrammen steht, **wie viel Prozent der Zeit** man darin lag und wie groß die
