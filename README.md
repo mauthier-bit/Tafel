@@ -2804,7 +2804,9 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     Diagrammen, das Lineal läuft von unten nach oben, und der Finger bewegt sich senkrecht – gut
     für **Fall- und Steigbewegungen**. Die Diagramme heißen dann **y(t), v(t), a(t)**, ebenso die
     Tabelle und die Export-Datei. Mit **Vektoren** läuft die Zeitspur im senkrechten Feld **nach
-    rechts** (waagerecht: nach unten). Eine schon aufgenommene Bewegung bleibt beim Umschalten
+    rechts** (waagerecht: nach unten). Das senkrechte Feld ist bewusst **schmal**, damit den
+    Diagrammen daneben möglichst viel Breite bleibt; Legende und Fußzeile schrumpfen darin
+    so weit, dass sie hineinpassen. Eine schon aufgenommene Bewegung bleibt beim Umschalten
     stehen, nur die Beschriftung wechselt.
   - **Glättung** (0 bis 200 ms) bestimmt, wie stark gemittelt wird, bevor abgeleitet wird – ohne sie
     rauschen v und a; die Ableitungen entstehen aus den geglätteten Messwerten auf einem 0,01-s-Raster.

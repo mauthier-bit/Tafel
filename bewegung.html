@@ -83,14 +83,16 @@ details.settings summary::-webkit-details-marker { display: none; }
 .mode-1d.lane .stage { grid-template-rows: minmax(260px, 50%) minmax(0, 1fr); }
 .mode-2d .stage { grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); }
 /* y-Aufnahme: Das Aufnahmefeld steht senkrecht links neben den Diagrammen. */
-.mode-1d.senk .stage { grid-template-columns: minmax(150px, 26%) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }
-.mode-1d.senk.lane .stage { grid-template-columns: minmax(190px, 34%) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }
+.mode-1d.senk .stage { grid-template-columns: minmax(104px, 15%) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }
+.mode-1d.senk.lane .stage { grid-template-columns: minmax(146px, 22%) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }
 @media (orientation: portrait) {
   .mode-2d .stage { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(220px, 40%) minmax(0, 1fr); }
 }
 .padWrap { position: relative; min-height: 0; min-width: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
 #pad { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
 .hint { position: absolute; left: 14px; top: 10px; right: 14px; margin: 0; font-size: 0.85rem; color: var(--muted); pointer-events: none; line-height: 1.35; }
+/* in der schmalen, senkrechten Spalte bleibt fuer den Hinweis nur wenig Platz */
+.mode-1d.senk .hint { left: 8px; right: 8px; font-size: 0.76rem; line-height: 1.25; }
 .plotWrap { display: grid; grid-template-rows: minmax(0, 1fr) auto; gap: 8px; min-height: 0; min-width: 0; }
 .plotBox { position: relative; min-height: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
 #plots { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; user-select: none; -webkit-user-select: none; }
@@ -130,7 +132,8 @@ details.settings summary::-webkit-details-marker { display: none; }
   body { overflow: auto; }
   .app { height: auto; min-height: 100%; }
   .mode-1d .stage, .mode-2d .stage { grid-template-columns: minmax(0, 1fr); grid-template-rows: 200px 560px; }
-  .mode-1d.senk .stage, .mode-1d.senk.lane .stage { grid-template-columns: minmax(110px, 34%) minmax(0, 1fr); grid-template-rows: 560px; }
+  .mode-1d.senk .stage { grid-template-columns: minmax(96px, 24%) minmax(0, 1fr); grid-template-rows: 560px; }
+  .mode-1d.senk.lane .stage { grid-template-columns: minmax(130px, 32%) minmax(0, 1fr); grid-template-rows: 560px; }
   .mode-2d .stage { grid-template-rows: 300px 560px; }
   .slider input { width: 100px; }
 }
@@ -492,6 +495,13 @@ const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 /* Alle Schriftgrößen in den Diagrammen laufen über fs(): so zieht A− / A+ überall mit.
    Die Ränder der Diagramme (Platz für die Achsenbeschriftung) wachsen mit. */
 const fs = v => Math.round(v * state.fs * 10) / 10;
+/* verkleinert die Schrift so weit, dass der Text in die Breite passt - im schmalen,
+   senkrechten Aufnahmefeld wuerden Legende und Fusszeile sonst abgeschnitten. */
+function passend(ctx, txt, breite, gross, schrift) {
+  ctx.font = `${gross}px ${schrift}`;
+  const b = ctx.measureText(txt).width;
+  return b <= breite ? gross : Math.max(7, Math.round(gross * breite / b * 10) / 10);
+}
 /* 1D laeuft entweder waagerecht (x, Lineal ueber den Diagrammen) oder senkrecht
    (y, Lineal links daneben). Aufgezeichnet wird in beiden Faellen in state.raw[].x -
    nur die Beschriftung und die Lage im Aufnahmefeld aendern sich. */
@@ -834,9 +844,10 @@ function drawPad() {
   ctx.font = `${fs(11)}px ${css("--font-body")}`; ctx.fillStyle = C.muted; ctx.textAlign = "right"; ctx.textBaseline = "bottom";
   /* im schmalen, senkrechten Feld muss die Zeile kurz bleiben */
   const dt = fmt(state.strobe, state.strobe < 0.1 ? 2 : state.strobe < 1 ? (state.strobe * 10 % 1 ? 2 : 1) : 0);
-  ctx.fillText(senk ? `${dt} s je Punkt` + (lane ? ", Zeit nach rechts" : "")
-                    : `Punkte im Abstand von ${dt} s` + (lane ? ", Zeit läuft nach unten" : ""),
-    w - 12, senk ? h - 44 : h - 8);
+  const fuss = senk ? `${dt} s je Punkt` + (lane ? ", Zeit nach rechts" : "")
+                    : `Punkte im Abstand von ${dt} s` + (lane ? ", Zeit läuft nach unten" : "");
+  if (senk) ctx.font = `${passend(ctx, fuss, w - 18, fs(11), css("--font-body"))}px ${css("--font-body")}`;
+  ctx.fillText(fuss, w - 12, senk ? h - 44 : h - 8);
 
   // Körper zum Zeitpunkt des Cursors
   if (state.cursor != null) {
@@ -868,14 +879,19 @@ function drawPad() {
   // Legende mit Pfeilmaßstab - im schmalen, senkrechten Feld untereinander
   ctx.textBaseline = "bottom"; ctx.textAlign = "left";
   const lyV = senk ? h - 26 : h - 8, lyA = h - 8;
-  ctx.font = `700 ${fs(12)}px ${css("--font-body")}`; ctx.fillStyle = C.qv; ctx.fillText("v", 14, lyV);
-  ctx.font = `${fs(11)}px ${css("--font-data")}`; ctx.fillStyle = C.muted;
   const vTxt = `1 cm ≙ ${fmt(4 / state.vecScale, state.vecScale > 1 ? 1 : 0)} cm/s`;
-  ctx.fillText(vTxt, 24, lyV);
-  const lx = senk ? 14 : 24 + ctx.measureText(vTxt).width + 14;
-  ctx.font = `700 ${fs(12)}px ${css("--font-body")}`; ctx.fillStyle = C.qa; ctx.fillText("a", lx, lyA);
-  ctx.font = `${fs(11)}px ${css("--font-data")}`; ctx.fillStyle = C.muted;
-  ctx.fillText(`1 cm ≙ ${fmt(25 / state.vecScale, state.vecScale > 2 ? 2 : state.vecScale > 1 ? 1 : 0)} cm/s²`, lx + 10, lyA);
+  const aTxt = `1 cm ≙ ${fmt(25 / state.vecScale, state.vecScale > 2 ? 2 : state.vecScale > 1 ? 1 : 0)} cm/s²`;
+  // im schmalen Feld richtet sich die Schriftgroesse nach der laengeren der beiden Zeilen
+  const lg = senk ? Math.min(passend(ctx, vTxt, w - 32, fs(11), css("--font-data")),
+                             passend(ctx, aTxt, w - 32, fs(11), css("--font-data"))) : fs(11);
+  const lix = senk ? Math.round(lg) + 4 : 24;
+  ctx.font = `700 ${lg + 1}px ${css("--font-body")}`; ctx.fillStyle = C.qv; ctx.fillText("v", senk ? 6 : 14, lyV);
+  ctx.font = `${lg}px ${css("--font-data")}`; ctx.fillStyle = C.muted;
+  ctx.fillText(vTxt, lix, lyV);
+  const lx = senk ? 6 : 24 + ctx.measureText(vTxt).width + 14;
+  ctx.font = `700 ${lg + 1}px ${css("--font-body")}`; ctx.fillStyle = C.qa; ctx.fillText("a", lx, lyA);
+  ctx.font = `${lg}px ${css("--font-data")}`; ctx.fillStyle = C.muted;
+  ctx.fillText(aTxt, senk ? lix : lx + 10, lyA);
 }
 
 // ---------- Zeichnen: Diagramme ----------
@@ -1298,7 +1314,7 @@ function updateUI() {
   $("pin").disabled = state.cursor == null || !D || state.pins.length >= 8;
   $("undo").disabled = !state.prev;
   $("hint").textContent = istSenk()
-    ? "Finger auflegen und senkrecht bewegen."
+    ? "Finger senkrecht bewegen."
     : state.mode === "1d"
       ? "Finger auflegen und bewegen. Aufgezeichnet wird, solange der Finger aufliegt (nur die waagerechte Bewegung zählt)."
       : "Finger auflegen und bewegen. Aufgezeichnet wird, solange der Finger aufliegt.";
