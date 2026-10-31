@@ -2132,7 +2132,8 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   Textdatei** ein. Eine **Kopfzeile** („t  s“) fällt von selbst weg, weil sich aus ihr keine Zahlen
   lesen lassen. **„übernehmen"** setzt die Werte als Daten ein und stellt die Ansicht darauf ein;
   mit dem Häkchen **„anfügen"** kommen sie **zu den vorhandenen Punkten dazu**.
-  **Linie – eine Kurve zeichnen und modellieren lassen:** Ist **„Linie"** eingeschaltet, zieht man
+  **Linie – eine Kurve zeichnen und modellieren lassen:** Ist **„Linie"** eingeschaltet (der Knopf
+  ist dann **blau hinterlegt und blau umrandet**), zieht man
   mit dem Finger eine **Freihandlinie** in die Zeichenfläche (auch **über einem Foto**). Beim
   Loslassen werden daraus **24 gleichmäßig verteilte Punkte**, die wie getippte Punkte in der
   Tabelle stehen, beweglich bleiben und sofort modelliert werden. Beim Typ **ganzrational** wird
