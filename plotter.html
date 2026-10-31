@@ -2153,6 +2153,9 @@ function mdUi(){ ['p','e','t','n','w'].forEach(k=>$('mdT'+k).classList.toggle('o
     mdUi(); mdBaue(); mdErg=mdModell(); mdAnsicht(); mdText(); sync(); };
   ['p','e','t','n','w'].forEach(k=>{ $('mdT'+k).onclick=()=>{ md.typ=k; mdUi(); mdBaue(); mdRechne(); sync(); }; });
   $('mdWf').onchange=e=>{ md.wf=e.target.value; mdUi(); mdRechne(); sync(); };
+  /* Das Feld merkt sich als zuletzt benutzte Eingabe - sonst setzt die Formel-Tastatur
+     ihre Zeichen in die Wertetabelle statt in den Term. */
+  ['focus','pointerdown'].forEach(ev=>$('mdWt').addEventListener(ev,()=>{ lastInp=$('mdWt'); }));
   let wtTimer=0;
   $('mdWt').oninput=e=>{ md.wterm=e.target.value;
     clearTimeout(wtTimer); wtTimer=setTimeout(()=>{ mdRechne(); sync(); }, 250); };
@@ -2385,7 +2388,13 @@ const KP_ROWS=[[['7','7'],['8','8'],['9','9'],['(','(',1],[')',')',1],['⌫',nul
   [['4','4'],['5','5'],['6','6'],['×','*',1],['÷','/',1],['^','^',1]],
   [['1','1'],['2','2'],['3','3'],['+','+',1],['−','-',1],['x','x',1]],
   [['0','0'],['.','.'],['◀',null,0,'left'],['▶',null,0,'right'],['ABC',null,0,'abc'],['✓ Fertig',null,0,'enter','act']]];
-function kpTarget(){ if(lastInp&&document.contains(lastInp)&&lastInp.offsetParent){
+function kpTarget(){
+  /* Wo der Nutzer gerade steht, gewinnt - sonst schreibt die Formel-Tastatur in das Feld,
+     das zuletzt benutzt wurde (z. B. in die Wertetabelle statt in den eigenen Term). */
+  const ae=document.activeElement;
+  if(ae&&ae!==lastInp&&ae.offsetParent&&
+     (ae.tagName==='TEXTAREA'||(ae.tagName==='INPUT'&&(ae.type==='text'||ae.type==='')))) lastInp=ae;
+  if(lastInp&&document.contains(lastInp)&&lastInp.offsetParent){
     if(document.activeElement!==lastInp){ try{ lastInp.focus({preventScroll:true}); const n=lastInp.value.length; lastInp.setSelectionRange(n,n); }catch(_){} }
     return lastInp; }
   const sel=tab==='g'?'#funcs .fterm':(tab==='t'?'#pT .fterm':(tab==='d'?'#mdBody .mdin':'#pM .fterm'));
@@ -2409,7 +2418,7 @@ function buildKeypad(){ const kp=$('keypad'); if(kp.dataset.built) return; kp.da
     else if(a==='enter'){ el.blur(); setKeypad(false); } }); }
 function setKeypad(on){ keysOn=!!on; buildKeypad(); const kp=$('keypad'); kp.classList.toggle('show',keysOn); $('btnKeys').classList.toggle('on',keysOn);
   document.body.classList.toggle('kp-open',keysOn); if(keysOn) document.documentElement.style.setProperty('--kph',kp.offsetHeight+'px');
-  document.querySelectorAll('.fterm').forEach(i=>i.inputMode=keysOn?'none':'text');
+  document.querySelectorAll('.fterm,#mdWt').forEach(i=>i.inputMode=keysOn?'none':'text');
   document.querySelectorAll('.xin,.mxin,.mdin').forEach(i=>i.inputMode=keysOn?'none':'decimal');
   if(keysOn) kpTarget(); }
 $('btnKeys').addEventListener('pointerdown',e=>e.preventDefault());
