@@ -84,7 +84,7 @@
   .trIn.on{border-color:#2563eb;box-shadow:0 0 0 2px #dbeafe;}
   .trIn{flex:1 1 120px;min-width:90px;border:1px solid #cfd6e0;border-radius:8px;padding:calc(var(--k) * 6px) 8px;
         font:600 calc(var(--k) * 14px) ui-monospace,Menlo,Consolas,monospace;color:#1f2430;background:#fff;}
-  #trBsp,#mdBsp,#mdGrad{border:1px solid #cfd6e0;border-radius:8px;padding:calc(var(--k) * 5px) 6px;font:600 calc(var(--k) * 13px) inherit;background:#f4f6fa;color:#1f2430;}
+  #trBsp,#mdBsp,#mdGrad,#mdWf,#mdWt{border:1px solid #cfd6e0;border-radius:8px;padding:calc(var(--k) * 5px) 6px;font:600 calc(var(--k) * 13px) inherit;background:#f4f6fa;color:#1f2430;}
   .trChk label{display:inline-flex;align-items:center;gap:4px;font-weight:600;font-size:calc(var(--k) * 13px);color:#53617a;white-space:nowrap;}
   .trChk input{width:17px;height:17px;}
   .trSeg{border:1px solid #cfd6e0;background:#f4f6fa;border-radius:8px;padding:calc(var(--k) * 5px) 9px;
@@ -487,6 +487,16 @@
           <button type="button" id="mdTe" class="trSeg" title="y = a · bˣ, an die Daten angenähert">exponentiell</button>
           <button type="button" id="mdTt" class="trSeg" title="y = a · sin(b · (x − c)) + d, an die Daten angenähert">trigonometrisch</button>
           <button type="button" id="mdTn" class="trSeg" title="Normalverteilung (Glockenkurve), an die Daten angenähert">Normalverteilung</button>
+          <button type="button" id="mdTw" class="trSeg" title="a·x·e^(−b·x), a·x²·e^(−b·x) oder ein eigener Term – a und b werden angepasst">weitere</button>
+          <span id="mdWBox" class="trWahl" style="display:inline-flex;gap:4px;align-items:center" hidden>
+            <select id="mdWf" title="Welcher Ansatz an die Daten angepasst wird">
+              <option value="xe">a·x·e^(−b·x)</option>
+              <option value="x2e">a·x²·e^(−b·x)</option>
+              <option value="frei">eigener Term</option>
+            </select>
+            <input type="text" id="mdWt" hidden size="16" spellcheck="false" autocapitalize="off"
+                   placeholder="a*x^3*e^(-b*x)" title="Term mit x sowie a und b – a und b werden an die Daten angepasst">
+          </span>
           <span id="mdGenBox" class="trWahl" style="display:inline-flex;gap:4px;align-items:center" hidden>
             <button type="button" id="mdEx" class="trSeg on" title="Der Graph geht genau durch alle Punkte – der Grad ergibt sich aus der Zahl der Bedingungen">exakt</button>
             <button type="button" id="mdNae" class="trSeg" title="Ausgleichskurve mit festem Grad, wie bei den anderen Typen">genähert</button>
@@ -618,7 +628,11 @@ function tokenize(s){ s=String(s).replace(/\|([^|]*)\|/g,'abs($1)');   /* |x| = 
   return out; }
 const PFUNCS=['asin','acos','atan','sin','cos','tan','sqrt','abs','ln','log','exp'];
 const PNAMES=[...PFUNCS,'pi','x','a','b','c','e'];
-function evalAt(x, T){ let p=0; const sc={x,a:params.a,b:params.b,c:params.c,pi:Math.PI,e:Math.E};
+/* w: eigene Werte fuer a und b (das Anpassen im Reiter Modellieren rechnet damit,
+   ohne die Schieberegler des Reiters Graph anzufassen) */
+function evalAt(x, T, w){ const sc={x,a:params.a,b:params.b,c:params.c,pi:Math.PI,e:Math.E};
+  if(w){ if(w.a!==undefined) sc.a=w.a; if(w.b!==undefined) sc.b=w.b; }
+  let p=0;
   const peek=()=>T[p], next=()=>T[p++];
   function E(){ let v=Tm(); while(peek()&&(peek().k==='+'||peek().k==='-')){ const o=next().k, r=Tm(); v=o==='+'?v+r:v-r; } return v; }
   function Tm(){ let v=Un(); while(peek()&&(peek().k==='*'||peek().k==='/')){ const o=next().k, r=Un(); v=o==='*'?v*r:v/r; } return v; }
@@ -1394,7 +1408,7 @@ function trUiNeu(){ if(!$('trTerm')) return;
    ganzrational: der Graph geht genau durch alle Punkte (Grad = Zahl der Bedingungen − 1),
    auf Wunsch auch mit vorgegebenen Steigungen (Hermite, wie bei Steckbriefaufgaben).
    exponentiell und trigonometrisch: Naeherung nach der Methode der kleinsten Quadrate. */
-const MD_TYP={p:'ganzrational', e:'exponentiell', t:'trigonometrisch', n:'normalverteilt'};
+const MD_TYP={p:'ganzrational', e:'exponentiell', t:'trigonometrisch', n:'normalverteilt', w:'solch'};
 const MD_BSP=[
   {n:'Gerade durch 2 Punkte', typ:'p', p:[[0,1],[4,3]]},
   {n:'Wurf: Flugbahn', typ:'p', p:[[0,1],[2,4],[5,3.5]]},
@@ -1407,6 +1421,7 @@ const MD_BSP=[
 const MDCOL={pkt:'#1d4ed8', kurve:'#e11d48', abw:'#94a3b8', tang:'#0891b2'};
 /* ux und uy getrennt: Messdaten haben auf beiden Achsen oft sehr verschiedene Groessen */
 let md={typ:'p', genau:true, grad:2, abl:false, offC:false, zGraph:true, zTerm:true, zAbw:false, zWert:false,
+  wf:'xe', wterm:'a*x*e^(-b*x)',
         setz:true, col:MDCOL.kurve, bild:null, bildAn:false, bmod:'', p:[['','','']],
         view:{ox:0,oy:0,ux:40,uy:40}};
 let mdW=0, mdH=0, mdErg=null, mdZieh=-1, mdZiehS=-1, mdZiehB=null;
@@ -1501,9 +1516,54 @@ function mdNormal(P,mitC){
       const r=bewerte(best.m+d[0],best.sg+d[1]); if(r&&r.q<best.q){ best=r; bess=true; } }
     if(!bess){ hm/=2; hs/=2; if(hm<span*1e-7) break; } }
   return best; }
+/* ---- Weitere Funktionen: a und b an die Daten anpassen ----
+   Bei a·x·e^(−b·x) und a·x²·e^(−b·x) steckt a linear im Ansatz: b wird abgesucht, a ergibt
+   sich dann als Ausgleichsrechnung. Beim eigenen Term wird erst geprueft, ob a dort nur als
+   Faktor steht (dann derselbe Weg); sonst werden a und b gemeinsam gesucht - grobes Raster,
+   danach Musterabstieg mit immer kleineren Schritten. */
+function mdWeit(P){
+  const art=md.wf||'xe';
+  const xw=P.map(q=>q[0]);
+  const span=Math.max(1e-6, Math.max.apply(null,xw)-Math.min.apply(null,xw));
+  const bMax=Math.log(1e6)/span;
+  const ueber=(g)=>mdSuche(P,-bMax,bMax,600,b=>{ const h=x=>g(x,b);
+    return {basis:[h], fn:c=>(x=>c[0]*h(x))}; });
+  if(art==='xe'||art==='x2e'){
+    const pot=art==='xe'?1:2;
+    const best=ueber((x,b)=>Math.pow(x,pot)*Math.exp(-b*x));
+    return best?{a:best.c[0], b:best.k, f:best.f, q:best.s}:null; }
+  const T=tokenize(md.wterm||'');
+  if(!T.length) return null;
+  const g=(x,a,b)=>evalAt(x,T,{a,b});
+  /* Steht a nur als Faktor? Probe an einigen Stellen: f(x,2,b) = 2·f(x,1,b) */
+  const probe=xw.slice(0,Math.min(6,xw.length));
+  let linear=probe.length>0;
+  for(const x of probe){ const u=g(x,1,0.5), v=g(x,2,0.5);
+    if(!isFinite(u)||!isFinite(v)||Math.abs(v-2*u)>1e-9*Math.max(1,Math.abs(v))){ linear=false; break; } }
+  if(linear){ const best=ueber((x,b)=>g(x,1,b));
+    if(best) return {a:best.c[0], b:best.k, f:best.f, q:best.s}; }
+  /* a und b zusammen: erst ein grobes Raster ueber beide Vorzeichen, dann wird von den
+     acht besten Rasterpunkten aus abgestiegen - ein einzelner Start landet bei Termen wie
+     sin(a·x) sonst leicht in einem Nebenminimum. */
+  const bew=(a,b)=>{ const f=x=>g(x,a,b), q=mdSSE(P,f); return isFinite(q)?{a,b,f,q}:null; };
+  const stufen=[0.1,0.2,0.35,0.5,0.75,1,1.5,2,3,5,8,15,30,80];
+  const werte=stufen.concat(stufen.map(v=>-v));
+  let raster=[];
+  for(const a of werte) for(const b of werte.concat([0])){ const r=bew(a,b); if(r) raster.push(r); }
+  if(!raster.length) return null;
+  raster.sort((u,v)=>u.q-v.q);
+  let best=raster[0];
+  for(const start of raster.slice(0,8)){
+    let akt=start, ha=Math.max(Math.abs(akt.a),1)/2, hb=Math.max(Math.abs(akt.b),1)/2;
+    for(let k=0;k<300;k++){ let bess=false;
+      for(const d of [[ha,0],[-ha,0],[0,hb],[0,-hb],[ha,hb],[-ha,-hb],[ha,-hb],[-ha,hb]]){
+        const r=bew(akt.a+d[0],akt.b+d[1]); if(r&&r.q<akt.q){ akt=r; bess=true; } }
+      if(!bess){ ha/=2; hb/=2; if(ha<1e-10&&hb<1e-10) break; } }
+    if(akt.q<best.q) best=akt; }
+  return {a:best.a, b:best.b, f:best.f, q:best.q}; }
 function mdModell(){ const D=mdDaten(), art=md.typ;
   const gradN=Math.max(1,Math.min(6,md.grad|0));
-  const nMin=art==='p'?(md.genau?1:gradN+1):(art==='e'?(md.offC?3:2):(art==='n'?(md.offC?4:3):4));
+  const nMin=art==='p'?(md.genau?1:gradN+1):(art==='e'?(md.offC?3:2):(art==='n'?(md.offC?4:3):(art==='w'?3:4)));
   if(D.length<nMin) return {fehlt:nMin};
   if(art==='p'&&md.genau){
     for(let i=1;i<D.length;i++) if(Math.abs(D[i].x-D[i-1].x)<1e-12) return {kein:true,gleich:true};
@@ -1530,6 +1590,8 @@ function mdModell(){ const D=mdDaten(), art=md.typ;
   if(art==='n'){ const mitC=!!md.offC;
     const best=mdNormal(P,mitC); if(!best) return {kein:true};
     return {art:'n', fn:best.f, a:best.c[0], mu:best.m, sg:best.sg, c:mitC?best.c[1]:0, mitC}; }
+  if(art==='w'){ const best=mdWeit(P); if(!best) return {kein:true};
+    return {art:'w', wf:md.wf||'xe', fn:best.f, a:best.a, b:best.b}; }
   /* y = a · sin(b · (x − c)) + d; fuer festes b stecken a, c und d linear im Ansatz */
   const b0=2*Math.PI/(3*span), b1=2*Math.PI*Math.max(2,P.length/2)/span;
   const best=mdSuche(P,Math.log(b0),Math.log(b1),700,lg=>{ const b=Math.exp(lg);
@@ -1559,6 +1621,12 @@ function mdTerm(m){
   if(m.art==='e'){ let s=mdR(m.a)+'·'+mdR(m.b)+'<i>ˣ</i>';
     if(m.mitC&&Math.abs(m.c)>1e-9) s+=(m.c>0?' + ':' − ')+mdR(Math.abs(m.c));
     return s; }
+  if(m.art==='w'){
+    const ex='<i>e</i><sup>'+(m.b<0?'':'−')+mdR(Math.abs(m.b))+'<i>x</i></sup>';
+    if(m.wf!=='frei') return mdR(m.a)+'·<i>x</i>'+(m.wf==='x2e'?'²':'')+'·'+ex;
+    /* eigener Term: a und b eingesetzt, sonst so geschrieben wie eingegeben */
+    return String(md.wterm||'').replace(/\ba\b/g,mdR(m.a)).replace(/\bb\b/g,mdR(m.b))
+      .replace(/\*/g,'·').replace(/\bx\b/g,'<i>x</i>').replace(/\be\b/g,'<i>e</i>'); }
   if(m.art==='n'){ const mu=m.mu, vz=mu<0?' + ':' − ';
     let s='<i>e</i><sup>−(<i>x</i>'+(Math.abs(mu)<1e-9?'':vz+mdR(Math.abs(mu)))+')²/(2·'+mdR(m.sg)+'²)</sup>';
     s=mdR(m.a)+'·'+s;
@@ -1586,6 +1654,8 @@ function mdText(){ const out=$('mdOut'); if(!out) return;
                                   :' und hat dort die vorgegebenen Steigungen.')
                          :' und hat an '+(m.nS===1?'einem Punkt':m.nS+' Punkten')+' die vorgegebene Steigung.'):'.'; }
   else if(m.art==='p') hin='Grad <b>'+m.g+'</b> · Näherung – '+abw()+'.';
+  else if(m.art==='w') hin='Näherung · <i>a</i> = <b>'+nfk(Math.round(m.a*1e4)/1e4)
+      +'</b> · <i>b</i> = <b>'+nfk(Math.round(m.b*1e4)/1e4)+'</b> – '+abw()+'.';
   else if(m.art==='n') hin='Näherung · <i>μ</i> = <b>'+nfk(Math.round(m.mu*1000)/1000)
       +'</b> · <i>σ</i> = <b>'+nfk(Math.round(m.sg*1000)/1000)+'</b> – '+abw()+'.';
   else hin='Näherung – '+abw()+'.';
@@ -1978,7 +2048,11 @@ function mdSetS(i,mx,my){ const v=md.view, x=pz(md.p[i][0]), y=pz(md.p[i][1]);
 function mdNeuPkt(mx,my){ let i=md.p.findIndex(r=>!isFinite(pz(r[0]))&&!isFinite(pz(r[1])));
   if(i<0){ md.p.push(['','','']); i=md.p.length-1; mdBaue(); }
   mdSetP(i,mx,my); return i; }
-function mdUi(){ ['p','e','t','n'].forEach(k=>$('mdT'+k).classList.toggle('on',md.typ===k));
+function mdUi(){ ['p','e','t','n','w'].forEach(k=>$('mdT'+k).classList.toggle('on',md.typ===k));
+  $('mdWBox').hidden=md.typ!=='w';
+  $('mdWf').value=md.wf||'xe';
+  $('mdWt').hidden=!(md.typ==='w'&&(md.wf||'xe')==='frei');
+  if($('mdWt').value!==(md.wterm||'')) $('mdWt').value=md.wterm||'';
   $('mdOffBox').hidden=!(md.typ==='e'||md.typ==='n');  $('mdOff').checked=!!md.offC;
   $('mdGenBox').hidden=md.typ!=='p';
   $('mdEx').classList.toggle('on',!!md.genau); $('mdNae').classList.toggle('on',!md.genau);
@@ -2005,7 +2079,11 @@ function mdUi(){ ['p','e','t','n'].forEach(k=>$('mdT'+k).classList.toggle('on',m
     md.typ=b.typ; md.offC=!!b.offC; md.abl=!!b.abl; md.genau=b.genau!==false; if(b.grad) md.grad=b.grad;
     md.p=b.p.map(q=>[mdF(q[0]),mdF(q[1]),q.length>2?mdF(q[2]):'']);
     mdUi(); mdBaue(); mdErg=mdModell(); mdAnsicht(); mdText(); sync(); };
-  ['p','e','t','n'].forEach(k=>{ $('mdT'+k).onclick=()=>{ md.typ=k; mdUi(); mdBaue(); mdRechne(); sync(); }; });
+  ['p','e','t','n','w'].forEach(k=>{ $('mdT'+k).onclick=()=>{ md.typ=k; mdUi(); mdBaue(); mdRechne(); sync(); }; });
+  $('mdWf').onchange=e=>{ md.wf=e.target.value; mdUi(); mdRechne(); sync(); };
+  let wtTimer=0;
+  $('mdWt').oninput=e=>{ md.wterm=e.target.value;
+    clearTimeout(wtTimer); wtTimer=setTimeout(()=>{ mdRechne(); sync(); }, 250); };
   $('mdEx').onclick=()=>{ md.genau=true; mdUi(); mdBaue(); mdRechne(); sync(); };
   $('mdNae').onclick=()=>{ md.genau=false; mdUi(); mdBaue(); mdRechne(); sync(); };
   $('mdGrad').onchange=()=>{ md.grad=Math.max(1,Math.min(6,+$('mdGrad').value||2)); mdRechne(); sync(); };
@@ -2137,6 +2215,7 @@ function mdUi(){ ['p','e','t','n'].forEach(k=>$('mdT'+k).classList.toggle('on',m
 
 function zustand(){ return {funcs:funcs.map(f=>({term:f.term,color:f.color,width:f.width,mx:f.mx,hide:!!f.hide})), params, view, fontSize, fontBold, fontItalic, activeIdx, tab, xs:xs.slice(), xPt:{on:xPt.on,v:xPt.v}, yPt:{on:yPt.on,v:yPt.v}, tr:Object.assign({},tr),
   md:{typ:md.typ, genau:!!md.genau, grad:md.grad, abl:!!md.abl, offC:!!md.offC, zGraph:!!md.zGraph,
+      wf:md.wf||'xe', wterm:md.wterm||'',
       zTerm:!!md.zTerm, col:mdKurve(), zAbw:!!md.zAbw, zWert:!!md.zWert,
       setz:!!md.setz, bild:md.bild?Object.assign({},md.bild):null, bildAn:!!md.bildAn, bmod:md.bmod||'',
       p:md.p.map(r=>[r[0],r[1],r[2]||'']), view:Object.assign({},md.view)}}; }
@@ -2164,6 +2243,8 @@ addEventListener('message',e=>{ if(e.source!==window&&(window.parent===window||e
   if(d.md&&typeof d.md==='object'){ const o=d.md, warS=mdSlope();
     if(o.typ&&MD_TYP[o.typ]) md.typ=o.typ;
     md.genau=o.genau!==false; if(o.grad) md.grad=Math.max(1,Math.min(6,o.grad|0));
+    if(o.wf==='xe'||o.wf==='x2e'||o.wf==='frei') md.wf=o.wf;
+    if(typeof o.wterm==='string') md.wterm=o.wterm;
     md.abl=!!o.abl; md.offC=!!o.offC; md.zGraph=o.zGraph!==false; md.zTerm=o.zTerm!==false;
     md.col=(typeof o.col==='string'&&/^#[0-9a-f]{3,8}$/i.test(o.col))?o.col:MDCOL.kurve;
     md.zAbw=!!o.zAbw;
