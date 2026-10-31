@@ -2124,8 +2124,8 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   **Retardkapsel** („Medikament (Tablette)" und „Medikament (Retard)") – die beiden Datensätze zu **a · x · e^(−b · x)** und **a · x² · e^(−b · x)**:
   x in Stunden nach der Einnahme, y in Milligramm je Liter Blut). Daten, Typ und Schalter werden mit dem Projekt gespeichert und beim **Teilen**
   mitgegeben.
-  **Import – Messwerte von woanders:** Über der Wertetabelle stehen drei Knöpfe: **„Import"**,
-  **„Linie"** und **„Bild"**. **„Import"** klappt ein Feld auf, in das man Werte **einfügen** kann
+  **Import – Messwerte von woanders:** Über der Wertetabelle stehen drei gleich breite Knöpfe
+  nebeneinander, die die Zeile ganz ausfüllen: **„Import"**, **„Linie"** und **„Bild"**. **„Import"** klappt ein Feld auf, in das man Werte **einfügen** kann
   (aus der Tabelle, aus einem Messprogramm, aus einer Mail) – **je Zeile ein Punkt**, getrennt durch
   **Tabulator, Semikolon oder Leerzeichen**, Zahlen deutsch (Komma) oder englisch (Punkt); eine
   **dritte Spalte** wird als Steigung *y*′ gelesen. **„Datei …"** liest stattdessen eine **CSV- oder
