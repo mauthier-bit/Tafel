@@ -2823,6 +2823,11 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   (Maßstab in den Einstellungen, iPad ca. 52 px/cm); solange der Finger aufliegt, wird aufgezeichnet,
   beim Abheben ist die Aufnahme fertig. **1D** nimmt nur die waagerechte Bewegung (Messstreifen),
   **2D** die ganze Bahn in der Ebene – dann lassen sich **x**, **y** oder **x + y** zeigen.
+  - **Aufteilung im 2D-Modus:** Zwischen Zeichenfläche und Diagrammen liegt ein **Balken mit Griff**,
+    den man mit dem Finger **ziehen** kann – nach links und rechts, wenn beide nebeneinander liegen,
+    nach oben und unten im Hochformat. So bekommt mal die Aufnahme, mal die Auswertung mehr Platz.
+    Ein **Doppeltipp** stellt die Standardaufteilung wieder her; die Einstellung wird mit dem Projekt
+    gespeichert.
   - **Waagerecht oder senkrecht (1D):** Der Umschalter **x →** / **y ↑** neben **1D / 2D** legt die
     Richtung der Aufnahme fest. Bei **x →** liegt das Aufnahmefeld wie bisher **über** den
     Diagrammen und das Lineal waagerecht darin; bei **y ↑** steht es **links senkrecht neben** den

@@ -84,7 +84,14 @@ details.settings summary::-webkit-details-marker { display: none; }
 .stage { display: grid; gap: 10px; min-height: 0; }
 .mode-1d .stage { grid-template-rows: minmax(150px, 26%) minmax(0, 1fr); }
 .mode-1d.lane .stage { grid-template-rows: minmax(260px, 50%) minmax(0, 1fr); }
-.mode-2d .stage { grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); }
+/* 2D: Zwischen Zeichenflaeche und Diagrammen liegt ein Balken, den man ziehen kann;
+   --split sagt, wie viel Platz die Zeichenflaeche bekommt. */
+.mode-2d .stage { grid-template-columns: minmax(90px, var(--split, 44%)) 12px minmax(90px, 1fr); }
+.split { display: none; }
+.mode-2d .split { display: block; position: relative; cursor: col-resize; touch-action: none; }
+.mode-2d .split::before { content: ""; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  width: 4px; height: 54px; border-radius: 3px; background: var(--line); }
+.mode-2d .split:hover::before, .mode-2d .split.zieht::before { background: var(--muted); }
 /* y-Aufnahme: Das Aufnahmefeld steht senkrecht links neben den Diagrammen. */
 .mode-1d.senk .stage { grid-template-columns: minmax(104px, 15%) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }
 .mode-1d.senk.lane .stage { grid-template-columns: minmax(146px, 22%) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }
@@ -97,7 +104,9 @@ details.settings summary::-webkit-details-marker { display: none; }
 /* im Spielmodus (Ziel/Battle) gehoeren Stellen, Intervall und Vektoren nicht zur Aufgabe */
 .app.spiel .nurAufnahme { display: none; }
 @media (orientation: portrait) {
-  .mode-2d .stage { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(220px, 40%) minmax(0, 1fr); }
+  .mode-2d .stage { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(120px, var(--split, 40%)) 12px minmax(0, 1fr); }
+  .mode-2d .split { cursor: row-resize; }
+  .mode-2d .split::before { width: 54px; height: 4px; }
 }
 .padWrap { position: relative; min-height: 0; min-width: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
 #pad { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
@@ -153,7 +162,9 @@ details.settings summary::-webkit-details-marker { display: none; }
   .mode-1d.senk .stage { grid-template-columns: minmax(96px, 24%) minmax(0, 1fr); grid-template-rows: 560px; }
   .mode-1d.battle .stage { grid-template-columns: minmax(84px, 1fr) minmax(0, 1.8fr) minmax(84px, 1fr); grid-template-rows: 560px; }
   .mode-1d.senk.lane .stage { grid-template-columns: minmax(130px, 32%) minmax(0, 1fr); grid-template-rows: 560px; }
+  /* schmales Fenster: alles untereinander mit fester Hoehe - da gibt es nichts zu teilen */
   .mode-2d .stage { grid-template-rows: 300px 560px; }
+  .mode-2d .split { display: none; }
   .slider input { width: 100px; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
@@ -423,6 +434,7 @@ details.settings summary::-webkit-details-marker { display: none; }
         <option value="1">1×</option>
         <option value="0.5">0,5×</option>
         <option value="0.25">0,25×</option>
+        <option value="0.1">0,1×</option>
       </select>
       <button id="undo" disabled>Vorherige</button>
       <button id="reset" title="Aufnahme und Zielkurve verwerfen">Zurücksetzen</button>
@@ -481,6 +493,7 @@ details.settings summary::-webkit-details-marker { display: none; }
       <p class="hint" id="hint">Finger auflegen und bewegen. Aufgezeichnet wird, solange der Finger aufliegt (nur die waagerechte Bewegung zählt).</p>
     </section>
     <section class="btPad" id="btPadL" aria-label="Aufnahmefeld links" hidden><canvas id="padL"></canvas></section>
+    <div class="split" id="split" role="separator" aria-label="Aufteilung zwischen Zeichenfläche und Diagrammen – ziehen"></div>
     <section class="plotWrap">
       <div class="plotBox">
         <canvas id="plots" aria-label="Diagramme: Ort, Geschwindigkeit und Beschleunigung über der Zeit"></canvas>
@@ -538,6 +551,7 @@ const state = {
   /* Spiele (nur 1D): "aus" = normale Aufnahme, "ziel" = Zielkurve nachfahren,
      "battle" = zwei Felder an den Fensterraendern, Start per Countdown */
   spiel: "aus", zielTyp: "x", zielT: 5, zielFrei: false, ziel: null, zeichnen: false, zielNote: "",
+  split: 44,            // 2D: wie viel Prozent der Buehne die Zeichenflaeche bekommt
   fs: 1,                // Schriftgröße in den Diagrammen (A− / A+)
 };
 $("ppc").value = state.ppc;
@@ -953,6 +967,39 @@ function drawPad() {
   ctx.fillText(aTxt, senk ? lix : lx + 10, lyA);
 }
 
+
+/* ---------- Teiler im 2D-Modus: Zeichenflaeche und Diagramme teilen sich den Platz ---------- */
+function splitSetzen(v) {
+  state.split = clamp(Math.round(v * 10) / 10, 15, 85);
+  document.documentElement.style.setProperty("--split", state.split + "%");
+}
+(() => {
+  const el = $("split"), stage = document.querySelector(".stage");
+  let zieh = null;
+  el.addEventListener("pointerdown", e => {
+    e.preventDefault();
+    try { el.setPointerCapture(e.pointerId); } catch (err) {}
+    /* liegen Zeichenflaeche und Diagramme nebeneinander oder uebereinander? */
+    const waag = plots.getBoundingClientRect().left > pad.getBoundingClientRect().left + 5;
+    zieh = { id: e.pointerId, r: stage.getBoundingClientRect(), waag };
+    el.classList.add("zieht");
+  });
+  el.addEventListener("pointermove", e => {
+    if (!zieh || zieh.id !== e.pointerId) return;
+    e.preventDefault();
+    const r = zieh.r;
+    splitSetzen(zieh.waag ? (e.clientX - r.left) / r.width * 100 : (e.clientY - r.top) / r.height * 100);
+    requestDraw();
+  });
+  const los = e => {
+    if (!zieh || zieh.id !== e.pointerId) return;
+    zieh = null; el.classList.remove("zieht");
+    sync(); requestDraw();
+  };
+  el.addEventListener("pointerup", los);
+  el.addEventListener("pointercancel", los);
+  el.addEventListener("dblclick", () => { splitSetzen(44); sync(); requestDraw(); });
+})();
 
 /* ---------- Ziel und Battle (nur 1D) ----------
    Ziel: Eine Kurve wird mit dem Finger in eines der drei Diagramme gezeichnet; danach
@@ -1757,6 +1804,7 @@ function updateUI() {
   setPressed("m1d", state.mode === "1d"); setPressed("m2d", state.mode === "2d");
   app.classList.toggle("mode-1d", state.mode === "1d"); app.classList.toggle("mode-2d", state.mode === "2d");
   app.classList.toggle("lane", state.mode === "1d" && state.allVec);
+  document.documentElement.style.setProperty("--split", state.split + "%");
   app.classList.toggle("senk", istSenk() && !battleAn());
   app.classList.toggle("battle", battleAn());
   app.classList.toggle("spiel", spielAn());
@@ -1985,6 +2033,7 @@ function zustand() {
     ppc: state.ppc, strobe: state.strobe, allVec: state.allVec,
     vecSel: state.vecSel, vecScale: state.vecScale, fs: state.fs,
     spiel: state.spiel, zielTyp: state.zielTyp, zielT: state.zielT, zielFrei: !!state.zielFrei,
+    split: state.split,
     /* die Zielkurve nur in Zehntelsekunden: auf dem Rechenraster waeren es bei 30 s
        dreitausend Zahlen - zu viel fuer den QR-Code beim Teilen */
     ziel: state.ziel ? { typ: state.ziel.typ, T: state.ziel.T, tol: r3(state.ziel.tol), dt: 0.1,
@@ -2023,6 +2072,7 @@ function uebernimm(d) {
   if (d.zielTyp === "x" || d.zielTyp === "v" || d.zielTyp === "a") state.zielTyp = d.zielTyp;
   if (typeof d.zielT === "number" && d.zielT > 0) state.zielT = d.zielT;
   state.zielFrei = !!d.zielFrei;
+  if (typeof d.split === "number" && d.split >= 15 && d.split <= 85) state.split = d.split;
   if (d.ziel && Array.isArray(d.ziel.v) && d.ziel.v.length > 2) {
     const typ = d.ziel.typ || "x", T = +d.ziel.T || state.zielT;
     const v = zielFein(d.ziel.v.map(Number), +d.ziel.dt || DT, T);
