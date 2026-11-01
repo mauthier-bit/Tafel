@@ -2836,7 +2836,9 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     stehen, nur die Beschriftung wechselt.
   - **Ziel (1D):** Der Umschalter **Aufnahme / Ziel / Battle** neben **1D / 2D** startet zwei Spiele
     zum Lesen von Diagrammen. Bei **Ziel** wählt man zuerst, **welches Diagramm vorgegeben** wird
-    (**x(t)**, **v(t)** oder **a(t)**) und wie lange es dauert (**5, 8, 10, 15, 20 oder 30 s**); mit **„✎ zeichnen"**
+    (**x(t)**, **v(t)** oder **a(t)**) und wie lange es dauert (**5, 8, 10, 15, 20, 30 s** oder
+    **„frei …"** mit eigener Sekundenzahl bis 300); mit **„✎ zeichnen"** (der Knopf ist dann dunkel
+    hervorgehoben)
     zieht man die **Zielkurve freihand** mit dem Finger in dieses Diagramm. Danach versucht man, sie
     im Aufnahmefeld **nachzufahren**: Um die gestrichelte Zielkurve liegt ein **Trefferband**, und
     unter den Diagrammen steht, **wie viel Prozent der Zeit** man darin lag und wie groß die
@@ -2844,12 +2846,24 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     Denkaufgabe – man muss sich überlegen, **wie man sich bewegen muss**, damit die abgeleitete
     Größe stimmt. **„Ziel weg"** löscht die Kurve, ein Wechsel des Diagrammtyps oder der Dauer
     ebenso.
+  - **Unerreichbare Ziele werden abgefangen:** Zu einer Geschwindigkeits- oder
+    Beschleunigungskurve gehört ein **Weg** – bei v(t) die Fläche darunter, bei a(t) zusätzlich die
+    frei wählbare Anfangsgeschwindigkeit. Passt dieser Weg nicht in das Aufnahmefeld, ließe sich das
+    Ziel gar nicht nachfahren. Das Werkzeug rechnet das beim Zeichnen nach und **verkleinert die
+    Kurve so weit, dass sie machbar ist** (bei x(t) schiebt es sie notfalls ins Feld); unter den
+    Diagrammen steht dann, wie viel Weg nötig gewesen wäre und auf wie viel Prozent verkleinert
+    wurde. Beim Wechsel ins **Battle** wird erneut geprüft, weil die beiden Felder dort anders lang
+    sind. Das **Trefferband** passt sich mit an, damit es nach dem Verkleinern nicht breiter ist als
+    die Kurve selbst.
   - **Battle (1D):** dasselbe Ziel, aber mit **zwei Aufnahmefeldern** – je eines am **linken und am
     rechten Fensterrand**, senkrecht, damit sich zwei Finger nicht in die Quere kommen. **„▶ Countdown"**
     zählt **3 – 2 – 1** herunter und startet dann **beide Aufnahmen gleichzeitig**; die Felder zeigen
     die Restzeit, und ist der **Ort** vorgegeben, läuft ein **Ring** am Lineal mit, der zeigt, wo man
     gerade sein müsste. Am Ende stehen **beide Kurven** in den Diagrammen (links violett, rechts
     orange), **beide Trefferquoten** in den Feldern und der **Sieger** unter den Diagrammen.
+  - **Zurücksetzen:** Der Knopf neben **„Vorherige"** verwirft **Aufnahme und Zielkurve** (in allen
+    drei Betriebsarten, im Battle auch beide Spieler-Aufnahmen) – für einen sauberen Anfang in der
+    nächsten Stunde. Ein versehentlicher Tipp lässt sich mit **„Vorherige"** rückgängig machen.
   - **Glättung** (0 bis 200 ms) bestimmt, wie stark gemittelt wird, bevor abgeleitet wird – ohne sie
     rauschen v und a; die Ableitungen entstehen aus den geglätteten Messwerten auf einem 0,01-s-Raster.
   - **Diagramme einzeln ein- und ausblenden:** Die drei Schalter **x(t)**, **v(t)** und **a(t)**

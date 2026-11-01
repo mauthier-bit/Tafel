@@ -59,7 +59,8 @@ button:disabled { opacity: 0.45; cursor: default; }
 .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--surface); }
 .seg button { border: 0; border-radius: 0; border-right: 1px solid var(--line); }
 .seg button:last-child { border-right: 0; }
-.seg button[aria-pressed="true"], .chip[aria-pressed="true"] { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+.seg button[aria-pressed="true"], .chip[aria-pressed="true"],
+#zielMal[aria-pressed="true"] { background: var(--ink); color: var(--surface); border-color: var(--ink); }
 .chip { display: inline-flex; align-items: center; gap: 6px; }
 .chip .sw { width: 10px; height: 10px; border-radius: 50%; background: currentColor; opacity: 0.35; }
 .chip[aria-pressed="true"] .sw { opacity: 1; }
@@ -382,7 +383,10 @@ details.settings summary::-webkit-details-marker { display: none; }
         <option value="15">15 s</option>
         <option value="20">20 s</option>
         <option value="30">30 s</option>
+        <option value="frei">frei …</option>
       </select>
+      <input type="number" id="zielTFrei" min="1" max="300" step="1" value="5" hidden
+             style="width: 5em" aria-label="Dauer in Sekunden" title="Dauer der Zielkurve in Sekunden">
       <button id="zielMal" aria-pressed="false" title="Die Zielkurve mit dem Finger in das Diagramm ziehen">✎ zeichnen</button>
       <button id="zielWeg" title="Die Zielkurve entfernen">Ziel weg</button>
       <button id="btStart" class="primary" hidden title="Countdown – danach nehmen beide Felder gleichzeitig auf">▶ Countdown</button>
@@ -421,6 +425,7 @@ details.settings summary::-webkit-details-marker { display: none; }
         <option value="0.25">0,25×</option>
       </select>
       <button id="undo" disabled>Vorherige</button>
+      <button id="reset" title="Aufnahme und Zielkurve verwerfen">Zurücksetzen</button>
       <details class="settings tafelEdit">
         <summary>Einstellungen</summary>
         <div class="panel">
@@ -532,7 +537,7 @@ const state = {
   strobe: 0.1, allVec: false, vecSel: "va", vecScale: 1,
   /* Spiele (nur 1D): "aus" = normale Aufnahme, "ziel" = Zielkurve nachfahren,
      "battle" = zwei Felder an den Fensterraendern, Start per Countdown */
-  spiel: "aus", zielTyp: "x", zielT: 5, ziel: null, zeichnen: false,
+  spiel: "aus", zielTyp: "x", zielT: 5, zielFrei: false, ziel: null, zeichnen: false, zielNote: "",
   fs: 1,                // Schriftgröße in den Diagrammen (A− / A+)
 };
 $("ppc").value = state.ppc;
@@ -985,7 +990,7 @@ function zielAus(pts) {
   const q = pts.filter(o => isFinite(o.t) && isFinite(o.v)).sort((a, b) => a.t - b.t);
   if (q.length < 2) return null;
   const v = new Float64Array(N);
-  let j = 0, lo = Infinity, hi = -Infinity;
+  let j = 0;
   for (let i = 0; i < N; i++) {
     const t = i * DT;
     if (t <= q[0].t) v[i] = q[0].v;
@@ -996,11 +1001,8 @@ function zielAus(pts) {
       const f = b.t > a.t ? clamp((t - a.t) / (b.t - a.t), 0, 1) : 0;
       v[i] = a.v + f * (b.v - a.v);
     }
-    if (v[i] < lo) lo = v[i];
-    if (v[i] > hi) hi = v[i];
   }
-  const tol = Math.max((hi - lo) * 0.09, ZIEL_KLEIN[state.zielTyp]);
-  return { typ: state.zielTyp, T, v, tol, rng: [lo - tol, hi + tol] };
+  return zielMasse({ typ: state.zielTyp, T, v });
 }
 /* Zum Teilen reicht die Zielkurve in Zehntelsekunden; beim Einlesen wird wieder auf das
    Rechenraster aufgefuellt (ein alter Stand ohne dt steht schon darauf). */
@@ -1034,6 +1036,61 @@ function bewerten(dd) {
   }
   return { quote: Math.round(innen / N * 100), abw: summe / N };
 }
+/* Welche Strecke braucht man fuer dieses Ziel? Bei v(t) ist es die Flaeche unter der
+   Kurve, bei a(t) kommt die frei waehlbare Anfangsgeschwindigkeit dazu - die darf man
+   sich so aussuchen, dass man mit moeglichst wenig Weg auskommt. */
+function zielWeg(z) {
+  const N = z.v.length;
+  if (z.typ === "x") { let lo = Infinity, hi = -Infinity;
+    for (const q of z.v) { if (q < lo) lo = q; if (q > hi) hi = q; }
+    return hi - lo; }
+  if (z.typ === "v") { let s = 0, lo = 0, hi = 0;
+    for (let i = 1; i < N; i++) { s += (z.v[i - 1] + z.v[i]) / 2 * DT; if (s < lo) lo = s; if (s > hi) hi = s; }
+    return hi - lo; }
+  const w = new Float64Array(N);
+  let v = 0;
+  for (let i = 1; i < N; i++) { v += (z.v[i - 1] + z.v[i]) / 2 * DT; w[i] = w[i - 1] + v * DT; }
+  let best = Infinity;
+  for (let j = -80; j <= 80; j++) {            // Anfangsgeschwindigkeit in Schritten von 0,5 cm/s
+    const v0 = j * 0.5;
+    let lo = Infinity, hi = -Infinity;
+    for (let i = 0; i < N; i += 5) { const q = w[i] + v0 * i * DT; if (q < lo) lo = q; if (q > hi) hi = q; }
+    if (hi - lo < best) best = hi - lo;
+  }
+  return best;
+}
+/* Trefferband und Wertebereich nach jeder Aenderung der Kurve neu bestimmen. Das kleinste
+   Band (ZIEL_KLEIN) faengt fast waagerechte Kurven ab, darf aber nie breiter werden als die
+   halbe Kurve - sonst laege man nach einem starken Verkleinern immer darin. */
+function zielMasse(z) {
+  let lo = Infinity, hi = -Infinity;
+  for (const q of z.v) { if (q < lo) lo = q; if (q > hi) hi = q; }
+  const spanne = hi - lo, mass = Math.max(spanne, Math.abs((lo + hi) / 2));
+  z.tol = Math.max(spanne * 0.09, Math.min(ZIEL_KLEIN[z.typ], mass * 0.5), ZIEL_KLEIN[z.typ] * 0.1);
+  z.rng = [lo - z.tol, hi + z.tol];
+  return z;
+}
+/* Passt das Ziel ins Aufnahmefeld? Sonst wird es so weit verkleinert (bei x(t) notfalls
+   auch verschoben), dass es sich ueberhaupt nachfahren laesst - mit Ansage. */
+function zielPruefen(z) {
+  const S = padSpanne(), nutz = S * 0.95, weg = zielWeg(z);
+  let k = 1, dy = 0;
+  if (weg > nutz && weg > 1e-6) k = nutz / weg;
+  if (z.typ === "x") {
+    let lo = Infinity, hi = -Infinity;
+    for (const q of z.v) { if (q < lo) lo = q; if (q > hi) hi = q; }
+    const lo2 = lo * k, hi2 = hi * k;
+    if (lo2 < 0) dy = -lo2; else if (hi2 > S) dy = S - hi2;
+  }
+  if (k === 1 && !dy) { state.zielNote = ""; return z; }
+  for (let i = 0; i < z.v.length; i++) z.v[i] = z.v[i] * k + dy;
+  zielMasse(z);
+  state.zielNote = k < 1
+    ? `Nicht erreichbar: dafür wären ${fmt(weg, 1)} cm Weg nötig, das Feld hat ${fmt(S, 1)} cm – die Kurve wurde auf ${Math.round(k * 100)} % verkleinert.`
+    : "Die Kurve lag außerhalb des Feldes und wurde hineingeschoben.";
+  if (window.TafelShot) TafelShot.toast(state.zielNote);
+  return z;
+}
 function spielSetzen(sp) {
   if (state.spiel === sp || state.mode !== "1d") return;
   stopPlay(); btStopp();
@@ -1041,7 +1098,10 @@ function spielSetzen(sp) {
   state.cursor = null; state.pins = []; state.interval = null;
   if (sp === "aus") { state.zeichnen = false; makeSample(); }
   else { state.raw = []; state.sample = false; D = null; state.zeichnen = !state.ziel; }
-  updateUI(); requestDraw();
+  updateUI();
+  /* die Felder sind in Battle anders lang als in Ziel - also noch einmal nachsehen */
+  if (sp !== "aus" && state.ziel) requestAnimationFrame(() => { zielPruefen(state.ziel); updateUI(); draw(); });
+  requestDraw();
 }
 
 // ---------- Battle: zwei Felder, Countdown, gleichzeitige Aufnahme ----------
@@ -1526,7 +1586,9 @@ function ergebnisText() {
   } else {
     s += e("Dein Versuch", colors()[z.typ === "x" ? "qx" : z.typ === "v" ? "qv" : "qa"], bewerten(D));
   }
-  return s + `<span>Ziel ${zielName(z.typ)} · Band ± ${fmt(z.tol, 1)} ${EINH[z.typ]} · ${fmt(z.T, 0)} s</span></div>`;
+  s += `<span>Ziel ${zielName(z.typ)} · Band ± ${fmt(z.tol, 1)} ${EINH[z.typ]} · ${fmt(z.T, z.T % 1 ? 1 : 0)} s</span>`;
+  if (state.zielNote) s += `<span style="color:var(--qa)">${state.zielNote}</span>`;
+  return s + "</div>";
 }
 function renderReadout() {
   const el = $("readout");
@@ -1642,7 +1704,7 @@ const endDrag = () => {
   if (drag && drag.kind === "ziel") {
     const z = zielAus(drag.pts);
     drag = null;
-    if (z) { state.ziel = z; state.zeichnen = false; }
+    if (z) { state.ziel = zielPruefen(z); state.zeichnen = false; }
     updateUI(); requestDraw();
     return;
   }
@@ -1708,7 +1770,10 @@ function updateUI() {
   $("btStart").textContent = (BT.phase === "count" || BT.phase === "lauf") ? "■ Abbrechen" : "▶ Countdown";
   $("zielMal").setAttribute("aria-pressed", state.zeichnen ? "true" : "false");
   $("zielWeg").disabled = !state.ziel;
-  $("zielT").value = String(state.zielT);
+  const frei = state.zielFrei || ZIELZEITEN.indexOf(state.zielT) < 0;
+  $("zielT").value = frei ? "frei" : String(state.zielT);
+  $("zielTFrei").hidden = !frei;
+  if (document.activeElement !== $("zielTFrei")) $("zielTFrei").value = String(state.zielT);
   document.querySelectorAll("#zielTypSeg button").forEach(b => {
     b.setAttribute("aria-pressed", b.dataset.zt === state.zielTyp ? "true" : "false");
     b.textContent = (b.dataset.zt === "x" ? sym1d() : b.dataset.zt) + "(t)";
@@ -1759,22 +1824,46 @@ document.querySelectorAll("#spielSeg button").forEach(b => b.addEventListener("c
 document.querySelectorAll("#zielTypSeg button").forEach(b => b.addEventListener("click", () => {
   if (state.zielTyp === b.dataset.zt) return;
   state.zielTyp = b.dataset.zt;
-  state.ziel = null; state.zeichnen = true;        // ein Ziel gilt immer fuer ein Diagramm
+  state.ziel = null; state.zielNote = ""; state.zeichnen = true;   // ein Ziel gilt fuer ein Diagramm
   if (!state.dia[state.zielTyp]) state.dia[state.zielTyp] = true;
   updateUI(); requestDraw();
 }));
-$("zielT").addEventListener("change", e => {
-  state.zielT = parseFloat(e.target.value);
-  state.ziel = null; state.zeichnen = true;        // die Kurve haengt an der Dauer
+const ZIELZEITEN = [5, 8, 10, 15, 20, 30];
+/* Die Zielkurve haengt an der Dauer - wird sie geaendert, faengt man neu an. */
+function zielDauer(v) {
+  state.zielT = clamp(Math.round(v * 10) / 10, 1, 300);
+  state.ziel = null; state.zielNote = ""; state.zeichnen = true;
   updateUI(); requestDraw();
+}
+$("zielT").addEventListener("change", e => {
+  if (e.target.value === "frei") { state.zielFrei = true; zielDauer(state.zielT); return; }
+  state.zielFrei = false; zielDauer(parseFloat(e.target.value));
+});
+$("zielTFrei").addEventListener("change", e => {
+  const v = parseFloat(String(e.target.value).replace(",", "."));
+  if (!(v >= 1 && v <= 300)) { e.target.value = String(state.zielT); return; }
+  state.zielFrei = true; zielDauer(v);
 });
 $("zielMal").addEventListener("click", () => {
   state.zeichnen = !state.zeichnen;
-  if (state.zeichnen) { state.ziel = null; btStopp(); }
+  if (state.zeichnen) { state.ziel = null; state.zielNote = ""; btStopp(); }
   updateUI(); requestDraw();
 });
 $("zielWeg").addEventListener("click", () => {
-  state.ziel = null; state.zeichnen = true; BT.erg = null;
+  state.ziel = null; state.zielNote = ""; state.zeichnen = true; BT.erg = null;
+  updateUI(); requestDraw();
+});
+/* Alles leeren: Aufnahme und Zielkurve. Die vorherige Aufnahme bleibt unter
+   "Vorherige" erreichbar, falls der Knopf aus Versehen getroffen wurde. */
+$("reset").addEventListener("click", () => {
+  stopPlay(); btStopp();
+  state.prev = { raw: state.raw, sample: state.sample, cursor: state.cursor,
+                 pins: state.pins, interval: state.interval, mode: state.mode };
+  state.raw = []; state.sample = false; D = null;
+  state.cursor = null; state.pins = []; state.interval = null;
+  state.ziel = null; state.zielNote = ""; state.zeichnen = spielAn();
+  BT.raw = { L: [], R: [] }; BT.D = { L: null, R: null }; BT.erg = null;
+  $("hint").hidden = false;
   updateUI(); requestDraw();
 });
 $("btStart").addEventListener("click", () => {
@@ -1895,7 +1984,7 @@ function zustand() {
     interval: state.interval ? state.interval.slice() : null,
     ppc: state.ppc, strobe: state.strobe, allVec: state.allVec,
     vecSel: state.vecSel, vecScale: state.vecScale, fs: state.fs,
-    spiel: state.spiel, zielTyp: state.zielTyp, zielT: state.zielT,
+    spiel: state.spiel, zielTyp: state.zielTyp, zielT: state.zielT, zielFrei: !!state.zielFrei,
     /* die Zielkurve nur in Zehntelsekunden: auf dem Rechenraster waeren es bei 30 s
        dreitausend Zahlen - zu viel fuer den QR-Code beim Teilen */
     ziel: state.ziel ? { typ: state.ziel.typ, T: state.ziel.T, tol: r3(state.ziel.tol), dt: 0.1,
@@ -1933,6 +2022,7 @@ function uebernimm(d) {
   if (d.spiel === "aus" || d.spiel === "ziel" || d.spiel === "battle") state.spiel = d.spiel;
   if (d.zielTyp === "x" || d.zielTyp === "v" || d.zielTyp === "a") state.zielTyp = d.zielTyp;
   if (typeof d.zielT === "number" && d.zielT > 0) state.zielT = d.zielT;
+  state.zielFrei = !!d.zielFrei;
   if (d.ziel && Array.isArray(d.ziel.v) && d.ziel.v.length > 2) {
     const typ = d.ziel.typ || "x", T = +d.ziel.T || state.zielT;
     const v = zielFein(d.ziel.v.map(Number), +d.ziel.dt || DT, T);
