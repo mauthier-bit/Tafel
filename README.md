@@ -2891,6 +2891,33 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
       t₁ bis t₂ ist die **Ortsänderung Δx**, die im t-x-Diagramm als Pfeil daneben steht.
     - **a(t) · Fläche** – sie ist die **Geschwindigkeitsänderung Δv**, als Pfeil im t-v-Diagramm.
 
+    Dazu kommen in derselben Leiste die **Intervalle**, die man an einem Diagramm abliest:
+
+    - **x(t) · Monotonie** – wo x **steigt** (↗) und wo es **fällt** (↘); an den Grenzen liegen
+      **Hoch- und Tiefpunkte**. Entschieden wird das vom **Vorzeichen von v**, darum ist der
+      Streifen grün.
+    - **x(t) · Krümmung** – wo x **linksgekrümmt** (∪) und wo es **rechtsgekrümmt** (∩) ist; an den
+      Grenzen liegen **Wendepunkte**. Das entscheidet das **Vorzeichen von a**, der Streifen ist
+      orange.
+    - **v(t) · Vorzeichen** – wo die Bewegung **vorwärts** (+) und wo sie **rückwärts** (−) läuft.
+      Genau dort steigt bzw. fällt x(t): dieselbe Aussage wie **x(t) · Monotonie**, eine Zeile
+      tiefer gelesen.
+    - **v(t) · Monotonie** – wo v steigt und wo es fällt, also **schneller oder langsamer**;
+      entschieden vom Vorzeichen von a.
+    - **a(t) · Vorzeichen** – wo a positiv und wo es negativ ist; genau dort steigt bzw. fällt v(t).
+
+    Die Intervalle stehen als **Streifen am unteren Rand** des Diagramms, mit Pfeil bzw. Zeichen und
+    – wenn der Platz reicht – dem Wort dazu. **Gestrichelte Senkrechte** führen von jeder Grenze zur
+    Kurve hinauf, und auf der Kurve sitzt dort ein **Ring**, der den Hoch-, Tief- oder Wendepunkt
+    zeigt. In der Tabelle darunter stehen dieselben Intervalle **als Text zum Abschreiben**
+    (`Monotonie: ↗ 0,00 – 2,82 s · ↘ 2,82 – 4,50 s`). Kleine Zappler werden dabei **nicht** zu
+    eigenen Intervallen: Werte dicht an null zählen noch zum laufenden Abschnitt, und Abschnitte
+    unter 0,1 s gehören zum Nachbarn – die Grenze selbst liegt aber genau auf der **Nullstelle**.
+    In 2D bekommen **x- und y-Komponente** je einen halbhohen Streifen; der gestrichelte gehört zur
+    y-Komponente, passend zur gestrichelten Kurve. Weil nur die **Quellgröße** gebraucht wird, darf
+    ihr Diagramm **ausgeblendet** bleiben: Man kann die Monotonie- und Krümmungsintervalle von x(t)
+    zeigen, ohne v(t) und a(t) zu verraten.
+
     Jeder Knopf trägt die **Farbe der Größe, die er sichtbar macht**. Zu Beginn ist nur die Tangente
     im t-x-Diagramm an; das Werkzeug **Intervall** schaltet die Fläche unter v(t) dazu. Die Zeile
     **t₁–t₂** der Tabelle zeigt genau das, was auch im Bild steht. Wird ein Diagramm ausgeblendet,

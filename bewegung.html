@@ -503,13 +503,18 @@ details.settings summary::-webkit-details-marker { display: none; }
         <div class="diaCtl" id="diaCtl" role="group" aria-label="Was in den Diagrammen zu sehen ist" hidden>
           <div class="grp" data-d="x" hidden>
             <button class="bgV" data-s="tang" data-d="x" aria-pressed="true" title="Tangente in x(t): Ihre Steigung ist die Geschwindigkeit v">Tangente</button>
+            <button class="bgV" data-s="mon" data-d="x" aria-pressed="false" title="Monotonieintervalle von x(t): x steigt, wo v &gt; 0 ist, und fällt, wo v &lt; 0 ist. An den Grenzen liegen Hoch- und Tiefpunkte.">Monotonie</button>
+            <button class="bgA" data-s="kru" data-d="x" aria-pressed="false" title="Krümmungsintervalle von x(t): x ist linksgekrümmt (∪), wo a &gt; 0 ist, und rechtsgekrümmt (∩), wo a &lt; 0 ist. An den Grenzen liegen Wendepunkte.">Krümmung</button>
           </div>
           <div class="grp" data-d="v" hidden>
             <button class="bgA" data-s="tang" data-d="v" aria-pressed="false" title="Tangente in v(t): Ihre Steigung ist die Beschleunigung a">Tangente</button>
             <button class="bgX" data-s="fl" data-d="v" aria-pressed="false" title="Fläche unter v(t) von t₁ bis t₂: Sie ist die Ortsänderung Δx">Fläche</button>
+            <button class="bgV" data-s="vz" data-d="v" aria-pressed="false" title="Vorzeichenintervalle von v(t): Wo v &gt; 0 ist, läuft die Bewegung vorwärts – genau dort steigt x(t).">Vorzeichen</button>
+            <button class="bgA" data-s="mon" data-d="v" aria-pressed="false" title="Monotonieintervalle von v(t): v steigt, wo a &gt; 0 ist, und fällt, wo a &lt; 0 ist.">Monotonie</button>
           </div>
           <div class="grp" data-d="a" hidden>
             <button class="bgV" data-s="fl" data-d="a" aria-pressed="false" title="Fläche unter a(t) von t₁ bis t₂: Sie ist die Geschwindigkeitsänderung Δv">Fläche</button>
+            <button class="bgA" data-s="vz" data-d="a" aria-pressed="false" title="Vorzeichenintervalle von a(t): Wo a &gt; 0 ist, wird die Bewegung schneller in +Richtung – genau dort steigt v(t).">Vorzeichen</button>
           </div>
         </div>
       </div>
@@ -540,8 +545,10 @@ try { savedPpc = parseFloat(localStorage.getItem("bwd-ppc")); } catch (e) {}
 const state = {
   mode: "1d", comp: "xy", sigma: 60,
   achse: "x",           // 1D: waagerechte (x) oder senkrechte (y) Aufnahme
-  /* fuer jedes Diagramm einzeln: Tangente in x(t) bzw. v(t), Flaeche unter v(t) bzw. a(t) */
-  show: { stellen: true, tang: { x: true, v: false }, fl: { v: false, a: false } },
+  /* fuer jedes Diagramm einzeln: Tangente in x(t) bzw. v(t), Flaeche unter v(t) bzw. a(t),
+     dazu die abgelesenen Intervalle - Monotonie (mon), Kruemmung (kru), Vorzeichen (vz) */
+  show: { stellen: true, tang: { x: true, v: false }, fl: { v: false, a: false },
+          mon: { x: false, v: false }, kru: { x: false }, vz: { v: false, a: false } },
   dia: { x: true, v: true, a: true },      // welche der drei Diagramme gezeichnet werden
   tool: "stelle",
   raw: [],              // {t (s), x (px, rechts +), y (px, oben +)} relativ zum Ursprung
@@ -1302,11 +1309,140 @@ function pill(ctx, text, x, y, color, C, align = "left") {
   ctx.fillStyle = color; ctx.textAlign = "left"; ctx.textBaseline = "middle";
   ctx.fillText(text, bx + 5, y + 0.5);
 }
+/* ---------- Monotonie, Kruemmung, Vorzeichen ----------
+   Alle drei Fragen laufen auf dieselbe Rechnung hinaus: Wo hat eine Groesse welches
+   Vorzeichen? x(t) steigt, wo v > 0 ist; x(t) ist linksgekruemmt, wo a > 0 ist;
+   v(t) steigt, wo a > 0 ist. Es wird also immer das Vorzeichen einer Kurve gesucht,
+   die null, ein oder zwei Diagramme tiefer liegt - und der Streifen traegt die Farbe
+   dieser Kurve, genau wie der Knopf, der ihn einschaltet. */
+const IV_ART = {
+  vz:  { tiefer: 0, name: "Vorzeichen",
+         z: { "1": "+", "-1": "−", "0": "0" },
+         wort: { "1": "positiv", "-1": "negativ", "0": "≈ 0" } },
+  mon: { tiefer: 1, name: "Monotonie",
+         z: { "1": "↗", "-1": "↘", "0": "→" },
+         wort: { "1": "steigt", "-1": "fällt", "0": "konstant" } },
+  kru: { tiefer: 2, name: "Krümmung",
+         z: { "1": "∪", "-1": "∩", "0": "–" },
+         wort: { "1": "links", "-1": "rechts", "0": "gerade" } },
+};
+/* Totband: Werte dicht an null zaehlen noch zum laufenden Abschnitt - sonst zerfaellt
+   eine mit dem Finger aufgenommene Kurve in lauter Schnipsel. */
+function ivEps(arr) {
+  let m = 0;
+  for (const v of arr) { const b = Math.abs(v); if (b > m) m = b; }
+  return m * 0.04;
+}
+/* Die Abschnitte gleichen Vorzeichens einer Kurve. Die Grenze liegt dort, wo die Kurve
+   wirklich durch null geht (Hoch-, Tief- oder Wendepunkt), nicht dort, wo sie das
+   Totband verlaesst. Abschnitte unter "kurz" Sekunden gehoeren zum Nachbarn. */
+function vzStuecke(arr, tArr, eps, kurz) {
+  const n = arr.length;
+  if (n < 2) return [];
+  const sg = new Int8Array(n);
+  let cur = 0;
+  for (let i = 0; i < n; i++) { if (arr[i] > eps) cur = 1; else if (arr[i] < -eps) cur = -1; sg[i] = cur; }
+  let k = 0; while (k < n && !sg[k]) k++;
+  if (k === n) return [{ a: tArr[0], b: tArr[n - 1], s: 0 }];
+  for (let i = 0; i < k; i++) sg[i] = sg[k];
+  const nulls = i => {                       // Nullstelle zwischen Messpunkt i und i+1
+    const u = arr[i], v = arr[i + 1], r = u === v ? 0.5 : u / (u - v);
+    return tArr[i] + (tArr[i + 1] - tArr[i]) * r;
+  };
+  const grenze = e => {                      // Vorzeichenwechsel bei e: Nullstelle daneben suchen
+    for (let d = 0; d < n; d++) for (const i of [e - 1 - d, e - 1 + d]) {
+      if (i < 0 || i + 1 >= n) continue;
+      if ((arr[i] <= 0 && arr[i + 1] >= 0) || (arr[i] >= 0 && arr[i + 1] <= 0)) return nulls(i);
+    }
+    return tArr[e];
+  };
+  const out = [{ s: sg[0], a: tArr[0], b: tArr[n - 1] }];
+  for (let i = 1; i < n; i++) {
+    if (sg[i] === sg[i - 1]) continue;
+    const t = grenze(i);
+    out[out.length - 1].b = t;
+    out.push({ s: sg[i], a: t, b: tArr[n - 1] });
+  }
+  for (let j = out.length - 1; j >= 0 && out.length > 1; j--) {
+    if (out[j].b - out[j].a >= kurz) continue;
+    if (j) { out[j - 1].b = out[j].b; out.splice(j, 1); }
+    else { out[1].a = out[0].a; out.splice(0, 1); }
+  }
+  for (let j = out.length - 1; j > 0; j--)
+    if (out[j].s === out[j - 1].s) { out[j - 1].b = out[j].b; out.splice(j, 1); }
+  return out;
+}
+/* Was gerade abzulesen ist: je Diagramm und Komponente ein Streifen. "reihe" sagt,
+   der wievielte Streifen von unten es in diesem Diagramm ist. */
+function ivSammeln(P, comps) {
+  const out = [];
+  if (!D) return out;
+  const kurz = Math.max(0.1, D.T * 0.03);
+  P.forEach((p, i) => {
+    if (!p.an) return;
+    let reihe = 0;
+    ["vz", "mon", "kru"].forEach(art => {
+      const A = IV_ART[art], q = P[i + A.tiefer];
+      if (!q || !state.show[art] || !state.show[art][p.id]) return;
+      comps.forEach((c, ci) => {
+        const arr = D[q.key(c)];
+        out.push({ p, q, art, c, ci, anz: comps.length, reihe, st: vzStuecke(arr, D.t, ivEps(arr), kurz) });
+      });
+      reihe++;
+    });
+  });
+  return out;
+}
+/* "band" zeichnet die Streifen unter die Kurve (davor, damit die Kurve obenauf liegt),
+   "punkte" setzt danach die Ringe auf die Grenzen - Hoch-, Tief- und Wendepunkte. */
+function ivMalen(ctx, liste, tx, C, clip, teil) {
+  if (!liste.length) return;
+  const sh = fs(13);
+  liste.forEach(o => {
+    const p = o.p, A = IV_ART[o.art], col = o.q.color, zwei = o.anz === 2;
+    const hoch = zwei ? sh / 2 : sh;
+    const y0 = p.top + layout.ph - 4 - (o.reihe + 1) * sh + (zwei ? o.ci * hoch : 0);
+    if (teil === "punkte") {
+      const arr = D[p.key(o.c)];
+      clip(p, () => o.st.forEach((r, j) => {
+        if (!j) return;
+        ctx.fillStyle = C.surface; ctx.strokeStyle = col; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(tx(r.a), p.y(val(arr, r.a)), 4.5, 0, 7); ctx.fill(); ctx.stroke();
+      }));
+      return;
+    }
+    clip(p, () => {
+      ctx.setLineDash([3, 4]); ctx.lineWidth = 1; ctx.strokeStyle = alpha(col, 0.5);
+      o.st.forEach((r, j) => {
+        if (!j) return;
+        ctx.beginPath(); ctx.moveTo(tx(r.a), p.top + 2); ctx.lineTo(tx(r.a), y0); ctx.stroke();
+      });
+      ctx.setLineDash([]);
+      ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.font = `700 ${Math.min(fs(11), hoch - 3)}px ${css("--font-body")}`;
+      o.st.forEach(r => {
+        const x0 = tx(r.a), bw = Math.max(1.5, tx(r.b) - x0), k = String(r.s);
+        ctx.fillStyle = alpha(col, r.s > 0 ? 0.26 : r.s < 0 ? 0.11 : 0.07);
+        ctx.strokeStyle = alpha(col, 0.7); ctx.lineWidth = 1;
+        ctx.setLineDash(zwei && o.c === "y" ? [5, 4] : []);   /* wie die y-Kurve: gestrichelt */
+        ctx.beginPath();
+        ctx.roundRect ? ctx.roundRect(x0 + 0.5, y0 + 0.5, bw - 1, hoch - 1, 3)
+                      : ctx.rect(x0 + 0.5, y0 + 0.5, bw - 1, hoch - 1);
+        ctx.fill(); ctx.stroke(); ctx.setLineDash([]);
+        const lang = A.z[k] + " " + A.wort[k];
+        const txt = bw > ctx.measureText(lang).width + 10 ? lang
+                  : bw > ctx.measureText(A.z[k]).width + 4 ? A.z[k] : "";
+        if (txt) { ctx.fillStyle = col; ctx.fillText(txt, x0 + bw / 2, y0 + hoch / 2 + 0.5); }
+      });
+    });
+  });
+}
+
 function drawPlots() {
   const { ctx, w, h } = setup(plots);
   const C = colors();
   const L = Math.round(fs(60)), TOP = 8, BOT = Math.round(fs(30)), GAP = 16;
-  const R = (D && !spielAn()) ? Math.round(fs(76)) : 14;   // rechts Platz fuer die Leiste je Diagramm
+  const R = (D && !spielAn()) ? Math.round(fs(84)) : 14;   // rechts Platz fuer die Leiste je Diagramm
   layout = { L, R, TOP, BOT, w, h };
   if (!D && !spielAn()) {
     diaCtlStand(null, R, 0);
@@ -1418,6 +1554,10 @@ function drawPlots() {
     ctx.fillText("t₁", tx(a), letzte.top + ph + 16); ctx.fillText("t₂", tx(b), letzte.top + ph + 16);
   }
 
+  // Monotonie-, Kruemmungs- und Vorzeichenintervalle: Streifen am unteren Rand
+  const ivL = (!spielAn() && D) ? ivSammeln(P, comps) : [];
+  ivMalen(ctx, ivL, tx, C, clip, "band");
+
   // Kurven - im Battle stattdessen die beiden Spieler in ihren Farben
   if (battleAn()) ["L", "R"].forEach(k => {
     const dd = BT.D[k];
@@ -1439,6 +1579,8 @@ function drawPlots() {
       ctx.stroke(); ctx.setLineDash([]);
     });
   }));
+
+  ivMalen(ctx, ivL, tx, C, clip, "punkte");
 
   // Flächen-Beschriftung und Δ-Pfeile
   if (iv) {
@@ -1676,8 +1818,17 @@ function renderReadout() {
     }).join("<br>");
     html += `<tr class="iv"><td><span class="badge">t₁–t₂</span></td><td>${fmt(a, 2)} – ${fmt(b, 2)}</td><td colspan="${cols.length + 1}" style="text-align:left;white-space:normal">${cell}</td></tr>`;
   }
+  /* Die abgelesenen Intervalle auch als Text - so lassen sie sich ins Heft uebernehmen. */
+  const ivL = (layout && layout.P) ? ivSammeln(layout.P, two ? (state.comp === "xy" ? ["x", "y"] : [state.comp]) : ["x"]) : [];
+  ivL.forEach(o => {
+    const A = IV_ART[o.art], kl = o.q.id === "x" ? "cx" : o.q.id === "v" ? "cv" : "ca";
+    const txt = o.st.map(r => `${A.z[String(r.s)]} ${fmt(r.a, 2)} – ${fmt(r.b, 2)} s`).join(" &nbsp;·&nbsp; ");
+    html += `<tr class="iv"><td><span class="badge">${A.z["1"]}${A.z["-1"]}</span></td>`
+      + `<td>${o.p.sym(o.c)}(t)</td>`
+      + `<td class="${kl}" colspan="${cols.length + 1}" style="text-align:left;white-space:normal">${A.name}: ${txt}</td></tr>`;
+  });
   html += "</tbody></table>";
-  if (!rows.length && !(state.interval && (state.show.fl.v || state.show.fl.a))) html = `<div class="note">Tippe in ein Diagramm, um eine Stelle zu setzen.</div>`;
+  if (!rows.length && !ivL.length && !(state.interval && (state.show.fl.v || state.show.fl.a))) html = `<div class="note">Tippe in ein Diagramm, um eine Stelle zu setzen.</div>`;
   el.innerHTML = html;
   readoutHoehe();
 }
@@ -2027,7 +2178,8 @@ function zustand() {
   const r3 = v => Math.round(v * 1000) / 1000;
   return {
     mode: state.mode, comp: state.comp, achse: state.achse, sigma: state.sigma,
-    show: { stellen: state.show.stellen, tang: { x: state.show.tang.x, v: state.show.tang.v }, fl: { v: state.show.fl.v, a: state.show.fl.a } },
+    show: { stellen: state.show.stellen, tang: { x: state.show.tang.x, v: state.show.tang.v }, fl: { v: state.show.fl.v, a: state.show.fl.a },
+            mon: { x: state.show.mon.x, v: state.show.mon.v }, kru: { x: state.show.kru.x }, vz: { v: state.show.vz.v, a: state.show.vz.a } },
     dia: { x: state.dia.x, v: state.dia.v, a: state.dia.a },
     tool: state.tool, sample: state.sample,
     raw: state.raw.map(p => ({ t: r3(p.t), x: r3(p.x), y: r3(p.y) })),
@@ -2067,6 +2219,9 @@ function uebernimm(d) {
       stellen: s.stellen !== false,
       tang: s.tang ? { x: !!s.tang.x, v: !!s.tang.v } : { x: s.tangenten !== false, v: s.tangenten !== false },
       fl: s.fl ? { v: !!s.fl.v, a: !!s.fl.a } : { v: !!s.flaechen, a: !!s.flaechen },
+      mon: { x: !!(s.mon && s.mon.x), v: !!(s.mon && s.mon.v) },
+      kru: { x: !!(s.kru && s.kru.x) },
+      vz: { v: !!(s.vz && s.vz.v), a: !!(s.vz && s.vz.a) },
     };
   }
   if (d.dia) state.dia = { x: !!d.dia.x, v: !!d.dia.v, a: !!d.dia.a };   /* auch alle aus ist erlaubt */
