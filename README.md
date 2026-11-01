@@ -2894,11 +2894,9 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     Dazu kommen in derselben Leiste die **Intervalle**, die man an einem Diagramm abliest:
 
     - **x(t) · Monotonie** – wo x **steigt** (↗) und wo es **fällt** (↘); an den Grenzen liegen
-      **Hoch- und Tiefpunkte**. Entschieden wird das vom **Vorzeichen von v**, darum ist der
-      Streifen grün.
+      **Hoch- und Tiefpunkte**. Entschieden wird das vom **Vorzeichen von v**.
     - **x(t) · Krümmung** – wo x **linksgekrümmt** (∪) und wo es **rechtsgekrümmt** (∩) ist; an den
-      Grenzen liegen **Wendepunkte**. Das entscheidet das **Vorzeichen von a**, der Streifen ist
-      orange.
+      Grenzen liegen **Wendepunkte**. Das entscheidet das **Vorzeichen von a**.
     - **v(t) · Vorzeichen** – wo die Bewegung **vorwärts** (+) und wo sie **rückwärts** (−) läuft.
       Genau dort steigt bzw. fällt x(t): dieselbe Aussage wie **x(t) · Monotonie**, eine Zeile
       tiefer gelesen.
@@ -2906,19 +2904,31 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
       entschieden vom Vorzeichen von a.
     - **a(t) · Vorzeichen** – wo a positiv und wo es negativ ist; genau dort steigt bzw. fällt v(t).
 
-    Die Intervalle stehen als **Streifen am unteren Rand** des Diagramms, mit Pfeil bzw. Zeichen und
-    – wenn der Platz reicht – dem Wort dazu. **Gestrichelte Senkrechte** führen von jeder Grenze zur
-    Kurve hinauf, und auf der Kurve sitzt dort ein **Ring**, der den Hoch-, Tief- oder Wendepunkt
-    zeigt. In der Tabelle darunter stehen dieselben Intervalle **als Text zum Abschreiben**
+    Bei den Intervallen steht die **Farbe für das Vorzeichen**, nicht für die Größe – anders als bei
+    Tangente und Fläche, deren Knöpfe weiter die Farbe ihrer Größe tragen. Was am **Vorzeichen von v**
+    abgelesen wird (Monotonie von x(t), Vorzeichen von v(t)), ist **blau**, wo es vorwärts geht bzw.
+    steigt, und **orange**, wo es rückwärts geht bzw. fällt. Was am **Vorzeichen von a** hängt
+    (Krümmung von x(t), Monotonie von v(t), Vorzeichen von a(t)), ist **grün** und **rot**. Die
+    zugehörigen Knöpfe sind halb in der einen, halb in der anderen Farbe.
+
+    Gefärbt wird dabei dreifach: die **ganze Zeichenfläche** des Diagramms liegt im Intervall in der
+    blassen Farbe, die **Kurve selbst** wechselt an der Grenze die Farbe, und unten steht der
+    **Streifen** mit Pfeil bzw. Zeichen und – wenn der Platz reicht – dem Wort dazu. Sind in einem
+    Diagramm beide Fragen an (bei x(t) Monotonie *und* Krümmung), färben Fläche und Kurve nach der
+    **oberen** von beiden; die zweite bleibt ihr Streifen. **Gestrichelte Senkrechte** führen von jeder
+    Grenze zur Kurve hinauf, und auf der Kurve sitzt dort ein **Ring**, der den Hoch-, Tief- oder
+    Wendepunkt zeigt. In der Tabelle darunter stehen dieselben Intervalle **als Text zum Abschreiben**
     (`Monotonie: ↗ 0,00 – 2,82 s · ↘ 2,82 – 4,50 s`). Kleine Zappler werden dabei **nicht** zu
     eigenen Intervallen: Werte dicht an null zählen noch zum laufenden Abschnitt, und Abschnitte
     unter 0,1 s gehören zum Nachbarn – die Grenze selbst liegt aber genau auf der **Nullstelle**.
     In 2D bekommen **x- und y-Komponente** je einen halbhohen Streifen; der gestrichelte gehört zur
-    y-Komponente, passend zur gestrichelten Kurve. Weil nur die **Quellgröße** gebraucht wird, darf
+    y-Komponente, passend zur gestrichelten Kurve. Beide Kurven sind dann einzeln gefärbt, die
+    Zeichenfläche bleibt frei – sonst lägen zwei verschiedene Einteilungen übereinander. Weil nur die **Quellgröße** gebraucht wird, darf
     ihr Diagramm **ausgeblendet** bleiben: Man kann die Monotonie- und Krümmungsintervalle von x(t)
     zeigen, ohne v(t) und a(t) zu verraten.
 
-    Jeder Knopf trägt die **Farbe der Größe, die er sichtbar macht**. Zu Beginn ist nur die Tangente
+    Die Knöpfe für **Tangente und Fläche** tragen die **Farbe der Größe, die sie sichtbar machen**
+    (Tangente in x(t) → v, Fläche unter v(t) → x). Zu Beginn ist nur die Tangente
     im t-x-Diagramm an; das Werkzeug **Intervall** schaltet die Fläche unter v(t) dazu. Die Zeile
     **t₁–t₂** der Tabelle zeigt genau das, was auch im Bild steht. Wird ein Diagramm ausgeblendet,
     verschwinden seine Knöpfe mit; für das **Tafelbild** bleibt die Leiste weg, und ein Tipp auf den

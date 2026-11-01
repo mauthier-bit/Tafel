@@ -15,6 +15,12 @@
   --qx: #2a5bd7;   /* Ort */
   --qv: #0f8458;   /* Geschwindigkeit */
   --qa: #cc5a14;   /* Beschleunigung */
+  /* Intervallstreifen: Hier zaehlt nicht, welche Groesse abgelesen wird, sondern welches
+     Vorzeichen sie hat. Aus v abgelesen (Monotonie von x, Vorzeichen von v): blau vorwaerts
+     bzw. steigend, orange rueckwaerts bzw. fallend. Aus a abgelesen (Kruemmung von x,
+     Monotonie von v, Vorzeichen von a): gruen und rot. */
+  --iv1plus: #1f55d0;  --iv1minus: #d2690a;
+  --iv2plus: #0c8a4e;  --iv2minus: #c7182e;
   --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
   --font-data: ui-monospace, Menlo, Consolas, monospace;
 }
@@ -120,8 +126,10 @@ details.settings summary::-webkit-details-marker { display: none; }
 .plotBox { position: relative; min-height: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
 #plots { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; user-select: none; -webkit-user-select: none; }
 /* Rechts an jedem Diagramm steht, was dort zu sehen sein soll - sonst gilt ein Schalter
-   oben fuer alle drei Diagramme und das Bild wird unuebersichtlich. Jeder Knopf traegt die
-   Farbe der Groesse, die er sichtbar macht (Tangente in x(t) -> v, Flaeche unter v(t) -> x). */
+   oben fuer alle drei Diagramme und das Bild wird unuebersichtlich. Die Knoepfe fuer Tangente
+   und Flaeche tragen die Farbe der Groesse, die sie sichtbar machen (Tangente in x(t) -> v,
+   Flaeche unter v(t) -> x). Die Knoepfe fuer die Intervalle tragen beide Farben ihres
+   Streifens, denn dort steht die Farbe fuer das Vorzeichen, nicht fuer die Groesse. */
 .diaCtl { position: absolute; inset: 0; pointer-events: none; }
 .diaCtl[hidden] { display: none; }
 .diaCtl .grp { position: absolute; display: flex; flex-direction: column; gap: 4px; pointer-events: auto; }
@@ -135,6 +143,8 @@ details.settings summary::-webkit-details-marker { display: none; }
 .diaCtl .bgX[aria-pressed="true"] { background: var(--qx); border-color: var(--qx); }
 .diaCtl .bgV[aria-pressed="true"] { background: var(--qv); border-color: var(--qv); }
 .diaCtl .bgA[aria-pressed="true"] { background: var(--qa); border-color: var(--qa); }
+.diaCtl .bgD1[aria-pressed="true"] { background: linear-gradient(90deg, var(--iv1plus) 50%, var(--iv1minus) 50%); border-color: var(--iv1minus); }
+.diaCtl .bgD2[aria-pressed="true"] { background: linear-gradient(90deg, var(--iv2plus) 50%, var(--iv2minus) 50%); border-color: var(--iv2minus); }
 /* Die Tabelle nimmt hoechstens vier Zeilen ein, alles weitere wird gescrollt - sonst
    schrumpfen die Diagramme, sobald mehrere Stellen gemerkt sind. Die Hoehe rechnet
    readoutHoehe() aus, weil die Zeilen mit A- / A+ wachsen. */
@@ -157,6 +167,8 @@ details.settings summary::-webkit-details-marker { display: none; }
 .erg .sieg { font-weight: 700; color: var(--ink); }
 .cx { color: var(--qx); } .cv { color: var(--qv); } .ca { color: var(--qa); }
 .badge { display: inline-block; min-width: 1.4em; text-align: center; border-radius: 4px; background: var(--ink); color: var(--surface); padding: 0 4px; }
+/* Das Zeichen der Intervallzeile traegt selbst die beiden Farben - kein dunkler Grund. */
+.badge.iv2 { background: none; padding: 0; font-weight: 700; letter-spacing: 1px; }
 
 @media (max-width: 640px) {
   body { overflow: auto; }
@@ -503,18 +515,18 @@ details.settings summary::-webkit-details-marker { display: none; }
         <div class="diaCtl" id="diaCtl" role="group" aria-label="Was in den Diagrammen zu sehen ist" hidden>
           <div class="grp" data-d="x" hidden>
             <button class="bgV" data-s="tang" data-d="x" aria-pressed="true" title="Tangente in x(t): Ihre Steigung ist die Geschwindigkeit v">Tangente</button>
-            <button class="bgV" data-s="mon" data-d="x" aria-pressed="false" title="Monotonieintervalle von x(t): x steigt, wo v &gt; 0 ist, und fällt, wo v &lt; 0 ist. An den Grenzen liegen Hoch- und Tiefpunkte.">Monotonie</button>
-            <button class="bgA" data-s="kru" data-d="x" aria-pressed="false" title="Krümmungsintervalle von x(t): x ist linksgekrümmt (∪), wo a &gt; 0 ist, und rechtsgekrümmt (∩), wo a &lt; 0 ist. An den Grenzen liegen Wendepunkte.">Krümmung</button>
+            <button class="bgD1" data-s="mon" data-d="x" aria-pressed="false" title="Monotonieintervalle von x(t): x steigt, wo v &gt; 0 ist, und fällt, wo v &lt; 0 ist. An den Grenzen liegen Hoch- und Tiefpunkte.">Monotonie</button>
+            <button class="bgD2" data-s="kru" data-d="x" aria-pressed="false" title="Krümmungsintervalle von x(t): x ist linksgekrümmt (∪), wo a &gt; 0 ist, und rechtsgekrümmt (∩), wo a &lt; 0 ist. An den Grenzen liegen Wendepunkte.">Krümmung</button>
           </div>
           <div class="grp" data-d="v" hidden>
             <button class="bgA" data-s="tang" data-d="v" aria-pressed="false" title="Tangente in v(t): Ihre Steigung ist die Beschleunigung a">Tangente</button>
             <button class="bgX" data-s="fl" data-d="v" aria-pressed="false" title="Fläche unter v(t) von t₁ bis t₂: Sie ist die Ortsänderung Δx">Fläche</button>
-            <button class="bgV" data-s="vz" data-d="v" aria-pressed="false" title="Vorzeichenintervalle von v(t): Wo v &gt; 0 ist, läuft die Bewegung vorwärts – genau dort steigt x(t).">Vorzeichen</button>
-            <button class="bgA" data-s="mon" data-d="v" aria-pressed="false" title="Monotonieintervalle von v(t): v steigt, wo a &gt; 0 ist, und fällt, wo a &lt; 0 ist.">Monotonie</button>
+            <button class="bgD1" data-s="vz" data-d="v" aria-pressed="false" title="Vorzeichenintervalle von v(t): Wo v &gt; 0 ist, läuft die Bewegung vorwärts – genau dort steigt x(t).">Vorzeichen</button>
+            <button class="bgD2" data-s="mon" data-d="v" aria-pressed="false" title="Monotonieintervalle von v(t): v steigt, wo a &gt; 0 ist, und fällt, wo a &lt; 0 ist.">Monotonie</button>
           </div>
           <div class="grp" data-d="a" hidden>
             <button class="bgV" data-s="fl" data-d="a" aria-pressed="false" title="Fläche unter a(t) von t₁ bis t₂: Sie ist die Geschwindigkeitsänderung Δv">Fläche</button>
-            <button class="bgA" data-s="vz" data-d="a" aria-pressed="false" title="Vorzeichenintervalle von a(t): Wo a &gt; 0 ist, wird die Bewegung schneller in +Richtung – genau dort steigt v(t).">Vorzeichen</button>
+            <button class="bgD2" data-s="vz" data-d="a" aria-pressed="false" title="Vorzeichenintervalle von a(t): Wo a &gt; 0 ist, wird die Bewegung schneller in +Richtung – genau dort steigt v(t).">Vorzeichen</button>
           </div>
         </div>
       </div>
@@ -596,7 +608,8 @@ function alpha(hex, a) {
 }
 function colors() {
   return { bg: css("--bg"), surface: css("--surface"), ink: css("--ink"), muted: css("--muted"), line: css("--line"),
-    grid: css("--grid"), qx: css("--qx"), qv: css("--qv"), qa: css("--qa") };
+    grid: css("--grid"), qx: css("--qx"), qv: css("--qv"), qa: css("--qa"),
+    iv1p: css("--iv1plus"), iv1m: css("--iv1minus"), iv2p: css("--iv2plus"), iv2m: css("--iv2minus") };
 }
 function setup(cv) {
   const r = cv.getBoundingClientRect();
@@ -1313,8 +1326,10 @@ function pill(ctx, text, x, y, color, C, align = "left") {
    Alle drei Fragen laufen auf dieselbe Rechnung hinaus: Wo hat eine Groesse welches
    Vorzeichen? x(t) steigt, wo v > 0 ist; x(t) ist linksgekruemmt, wo a > 0 ist;
    v(t) steigt, wo a > 0 ist. Es wird also immer das Vorzeichen einer Kurve gesucht,
-   die null, ein oder zwei Diagramme tiefer liegt - und der Streifen traegt die Farbe
-   dieser Kurve, genau wie der Knopf, der ihn einschaltet. */
+   die null, ein oder zwei Diagramme tiefer liegt. Die Farbe steht hier fuer das Vorzeichen
+   und nicht fuer die Groesse: aus v abgelesen blau/orange, aus a abgelesen gruen/rot. So
+   springt der Unterschied ins Auge - im Streifen, im Hintergrund des Diagramms und in der
+   Kurve selbst, die abschnittsweise in diesen Farben gezeichnet wird. */
 const IV_ART = {
   vz:  { tiefer: 0, name: "Vorzeichen",
          z: { "1": "+", "-1": "−", "0": "0" },
@@ -1326,6 +1341,10 @@ const IV_ART = {
          z: { "1": "∪", "-1": "∩", "0": "–" },
          wort: { "1": "links", "-1": "rechts", "0": "gerade" } },
 };
+function ivFarbe(o, s, C) {
+  const zw = o.q.id === "a";                 // aus der zweiten Ableitung abgelesen?
+  return s > 0 ? (zw ? C.iv2p : C.iv1p) : s < 0 ? (zw ? C.iv2m : C.iv1m) : C.muted;
+}
 /* Totband: Werte dicht an null zaehlen noch zum laufenden Abschnitt - sonst zerfaellt
    eine mit dem Finger aufgenommene Kurve in lauter Schnipsel. */
 function ivEps(arr) {
@@ -1373,46 +1392,62 @@ function vzStuecke(arr, tArr, eps, kurz) {
   return out;
 }
 /* Was gerade abzulesen ist: je Diagramm und Komponente ein Streifen. "reihe" sagt,
-   der wievielte Streifen von unten es in diesem Diagramm ist. */
+   der wievielte Streifen von unten es in diesem Diagramm ist. Sind in einem Diagramm zwei
+   Fragen angeschaltet (bei x(t) Monotonie und Kruemmung), faerbt nur die erste - "haupt" -
+   Hintergrund und Kurve; die zweite bleibt ihr Streifen. */
 function ivSammeln(P, comps) {
   const out = [];
   if (!D) return out;
   const kurz = Math.max(0.1, D.T * 0.03);
   P.forEach((p, i) => {
     if (!p.an) return;
-    let reihe = 0;
+    let reihe = 0; const hat = {};
     ["vz", "mon", "kru"].forEach(art => {
       const A = IV_ART[art], q = P[i + A.tiefer];
       if (!q || !state.show[art] || !state.show[art][p.id]) return;
       comps.forEach((c, ci) => {
-        const arr = D[q.key(c)];
-        out.push({ p, q, art, c, ci, anz: comps.length, reihe, st: vzStuecke(arr, D.t, ivEps(arr), kurz) });
+        const arr = D[q.key(c)], haupt = !hat[c];
+        hat[c] = true;
+        out.push({ p, q, art, c, ci, anz: comps.length, reihe, haupt, st: vzStuecke(arr, D.t, ivEps(arr), kurz) });
       });
       reihe++;
     });
   });
   return out;
 }
-/* "band" zeichnet die Streifen unter die Kurve (davor, damit die Kurve obenauf liegt),
-   "punkte" setzt danach die Ringe auf die Grenzen - Hoch-, Tief- und Wendepunkte. */
+/* "flaeche" legt die ganze Zeichenflaeche des Diagramms abschnittsweise in die Farbe des
+   Vorzeichens (noch unter das Gitter), "band" zeichnet die Streifen mit den Symbolen vor
+   die Kurve, "punkte" setzt danach die Ringe auf die Grenzen - Hoch-, Tief- und
+   Wendepunkte. Die Kurve selbst faerbt drawPlots, siehe ivFarbe. */
 function ivMalen(ctx, liste, tx, C, clip, teil) {
   if (!liste.length) return;
   const sh = fs(13);
   liste.forEach(o => {
-    const p = o.p, A = IV_ART[o.art], col = o.q.color, zwei = o.anz === 2;
+    const p = o.p, A = IV_ART[o.art], zwei = o.anz === 2;
     const hoch = zwei ? sh / 2 : sh;
     const y0 = p.top + layout.ph - 4 - (o.reihe + 1) * sh + (zwei ? o.ci * hoch : 0);
+    if (teil === "flaeche") {
+      /* Nur der Hauptstreifen faerbt, und nur wenn eine Komponente gezeigt wird - sonst
+         lagen zwei verschiedene Einteilungen uebereinander. */
+      if (!o.haupt || zwei) return;
+      o.st.forEach(r => {
+        if (!r.s) return;
+        ctx.fillStyle = alpha(ivFarbe(o, r.s, C), 0.13);
+        ctx.fillRect(tx(r.a), p.top, Math.max(1, tx(r.b) - tx(r.a)), layout.ph);
+      });
+      return;
+    }
     if (teil === "punkte") {
       const arr = D[p.key(o.c)];
       clip(p, () => o.st.forEach((r, j) => {
         if (!j) return;
-        ctx.fillStyle = C.surface; ctx.strokeStyle = col; ctx.lineWidth = 2;
+        ctx.fillStyle = C.surface; ctx.strokeStyle = ivFarbe(o, r.s, C); ctx.lineWidth = 2;
         ctx.beginPath(); ctx.arc(tx(r.a), p.y(val(arr, r.a)), 4.5, 0, 7); ctx.fill(); ctx.stroke();
       }));
       return;
     }
     clip(p, () => {
-      ctx.setLineDash([3, 4]); ctx.lineWidth = 1; ctx.strokeStyle = alpha(col, 0.5);
+      ctx.setLineDash([3, 4]); ctx.lineWidth = 1; ctx.strokeStyle = alpha(C.ink, 0.3);
       o.st.forEach((r, j) => {
         if (!j) return;
         ctx.beginPath(); ctx.moveTo(tx(r.a), p.top + 2); ctx.lineTo(tx(r.a), y0); ctx.stroke();
@@ -1421,9 +1456,9 @@ function ivMalen(ctx, liste, tx, C, clip, teil) {
       ctx.textAlign = "center"; ctx.textBaseline = "middle";
       ctx.font = `700 ${Math.min(fs(11), hoch - 3)}px ${css("--font-body")}`;
       o.st.forEach(r => {
-        const x0 = tx(r.a), bw = Math.max(1.5, tx(r.b) - x0), k = String(r.s);
-        ctx.fillStyle = alpha(col, r.s > 0 ? 0.26 : r.s < 0 ? 0.11 : 0.07);
-        ctx.strokeStyle = alpha(col, 0.7); ctx.lineWidth = 1;
+        const x0 = tx(r.a), bw = Math.max(1.5, tx(r.b) - x0), k = String(r.s), col = ivFarbe(o, r.s, C);
+        ctx.fillStyle = alpha(col, r.s ? 0.3 : 0.08);
+        ctx.strokeStyle = alpha(col, 0.8); ctx.lineWidth = 1;
         ctx.setLineDash(zwei && o.c === "y" ? [5, 4] : []);   /* wie die y-Kurve: gestrichelt */
         ctx.beginPath();
         ctx.roundRect ? ctx.roundRect(x0 + 0.5, y0 + 0.5, bw - 1, hoch - 1, 3)
@@ -1485,6 +1520,12 @@ function drawPlots() {
   diaCtlStand(P, R, ph);
   const tangAn = p => !!state.show.tang[p.id];      // Tangente in diesem Diagramm?
   const flAn = p => !!state.show.fl[p.id];          // Flaeche unter dieser Kurve?
+  const clip = (p, fn) => { ctx.save(); ctx.beginPath(); ctx.rect(L, p.top, pw, ph); ctx.clip(); fn(); ctx.restore(); };
+  /* Monotonie-, Kruemmungs- und Vorzeichenintervalle. Sie liegen zuunterst, weil die
+     gefaerbte Zeichenflaeche unter das Gitter gehoert. */
+  const ivL = (!spielAn() && D) ? ivSammeln(P, comps) : [];
+  const ivH = {};                                   // je Diagramm und Komponente der faerbende Streifen
+  ivL.forEach(o => { if (o.haupt) ivH[o.p.id + o.c] = o; });
 
   // Zeitachse
   const tStep = niceStep(T, Math.max(2, pw / 70)), tDec = decFor(tStep);
@@ -1492,6 +1533,7 @@ function drawPlots() {
   P.forEach((p, i) => {
     if (!p.an) return;
     ctx.fillStyle = alpha(C.bg, 0.45); ctx.fillRect(L, p.top, pw, ph);
+    ivMalen(ctx, ivL.filter(o => o.p === p), tx, C, clip, "flaeche");
     // Gitter
     ctx.lineWidth = 1; ctx.strokeStyle = C.grid;
     for (let t = 0; t <= T + 1e-9; t += tStep) { ctx.beginPath(); ctx.moveTo(tx(t), p.top); ctx.lineTo(tx(t), p.top + ph); ctx.stroke(); }
@@ -1521,8 +1563,6 @@ function drawPlots() {
   const yb = letzte.top + ph + 5;
   for (let t = 0; t <= T + 1e-9; t += tStep) if (tx(t) < L + pw - 30) ctx.fillText(fmt(t, tDec), tx(t), yb);
   ctx.textAlign = "right"; ctx.font = `700 ${fs(11.5)}px ${css("--font-body")}`; ctx.fillText("t in s", L + pw, yb);
-
-  const clip = (p, fn) => { ctx.save(); ctx.beginPath(); ctx.rect(L, p.top, pw, ph); ctx.clip(); fn(); ctx.restore(); };
 
   // Zielkurve mit Trefferband, darunter die Versuche der Spieler
   if (spielAn()) zielMalen(ctx, P, clip, tx, C);
@@ -1554,8 +1594,7 @@ function drawPlots() {
     ctx.fillText("t₁", tx(a), letzte.top + ph + 16); ctx.fillText("t₂", tx(b), letzte.top + ph + 16);
   }
 
-  // Monotonie-, Kruemmungs- und Vorzeichenintervalle: Streifen am unteren Rand
-  const ivL = (!spielAn() && D) ? ivSammeln(P, comps) : [];
+  // Streifen mit den Symbolen - vor die Kurve, damit sie obenauf liegt
   ivMalen(ctx, ivL, tx, C, clip, "band");
 
   // Kurven - im Battle stattdessen die beiden Spieler in ihren Farben
@@ -1573,10 +1612,23 @@ function drawPlots() {
   else if (D) P.forEach(p => p.an && clip(p, () => {
     comps.forEach(c => {
       const arr = D[p.key(c)];
-      ctx.strokeStyle = p.color; ctx.lineWidth = 2.2; ctx.setLineDash(c === "y" && comps.length === 2 ? [7, 5] : []);
-      ctx.beginPath();
-      for (let i = 0; i < D.N; i++) { const X = tx(D.t[i]), Y = p.y(arr[i]); i ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y); }
-      ctx.stroke(); ctx.setLineDash([]);
+      ctx.lineWidth = 2.2; ctx.setLineDash(c === "y" && comps.length === 2 ? [7, 5] : []);
+      const bahn = () => {
+        ctx.beginPath();
+        for (let i = 0; i < D.N; i++) { const X = tx(D.t[i]), Y = p.y(arr[i]); i ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y); }
+        ctx.stroke();
+      };
+      const h = ivH[p.id + c];
+      /* Ist ein Intervallstreifen an, traegt die Kurve selbst dessen Farben: Abschnitt fuer
+         Abschnitt wird sie beschnitten gezeichnet, die Grenzen stossen luecklos aneinander. */
+      if (h) h.st.forEach(r => {
+        ctx.save();
+        ctx.beginPath(); ctx.rect(tx(r.a) - 0.6, p.top, tx(r.b) - tx(r.a) + 1.2, ph); ctx.clip();
+        ctx.strokeStyle = ivFarbe(h, r.s, C); bahn();
+        ctx.restore();
+      });
+      else { ctx.strokeStyle = p.color; bahn(); }
+      ctx.setLineDash([]);
     });
   }));
 
@@ -1820,12 +1872,14 @@ function renderReadout() {
   }
   /* Die abgelesenen Intervalle auch als Text - so lassen sie sich ins Heft uebernehmen. */
   const ivL = (layout && layout.P) ? ivSammeln(layout.P, two ? (state.comp === "xy" ? ["x", "y"] : [state.comp]) : ["x"]) : [];
+  const CF = colors();
   ivL.forEach(o => {
-    const A = IV_ART[o.art], kl = o.q.id === "x" ? "cx" : o.q.id === "v" ? "cv" : "ca";
-    const txt = o.st.map(r => `${A.z[String(r.s)]} ${fmt(r.a, 2)} – ${fmt(r.b, 2)} s`).join(" &nbsp;·&nbsp; ");
-    html += `<tr class="iv"><td><span class="badge">${A.z["1"]}${A.z["-1"]}</span></td>`
+    const A = IV_ART[o.art];
+    const f = (si, t) => `<span style="color:${ivFarbe(o, si, CF)}">${t}</span>`;   // Farbe wie im Diagramm
+    const txt = o.st.map(r => f(r.s, `${A.z[String(r.s)]} ${fmt(r.a, 2)} – ${fmt(r.b, 2)} s`)).join(" &nbsp;·&nbsp; ");
+    html += `<tr class="iv"><td><span class="badge iv2">${f(1, A.z["1"])}${f(-1, A.z["-1"])}</span></td>`
       + `<td>${o.p.sym(o.c)}(t)</td>`
-      + `<td class="${kl}" colspan="${cols.length + 1}" style="text-align:left;white-space:normal">${A.name}: ${txt}</td></tr>`;
+      + `<td colspan="${cols.length + 1}" style="text-align:left;white-space:normal">${A.name}: ${txt}</td></tr>`;
   });
   html += "</tbody></table>";
   if (!rows.length && !ivL.length && !(state.interval && (state.show.fl.v || state.show.fl.a))) html = `<div class="note">Tippe in ein Diagramm, um eine Stelle zu setzen.</div>`;
