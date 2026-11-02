@@ -2574,6 +2574,12 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     wird nicht übernommen, das Feld leuchtet kurz **rot** und es erscheint der Hinweis
     „Minuten: nur Werte von 0 bis 59 – 60 Minuten sind 1 Stunde" (entsprechend bei den Sekunden).
     Stunden bleiben frei eintippbar, damit auch **70 h** (ohne Tage-Spalte) möglich sind.
+  - **Ergebnis verdecken (👁):** Links vor jeder Zeile steht ein **Auge** – ein Tipp **verdeckt den
+    Wert** dieser Zeile, an seiner Stelle steht ein **„?" im gestrichelten Kästchen**. So lassen sich
+    die eingetippten Ziffern als **Aufgabe** stellen und die Ergebnisse erst später einblenden; das
+    Auge in der **Kopfzeile** verdeckt bzw. zeigt **alle Zeilen auf einmal**. Verdeckt leuchtet das
+    Auge **blau**, sichtbar ist es grau – dieselbe Bedienung wie beim **Funktionsplotter**. Im Bild
+    (**🖼 Tafel / 📋 Kopieren**) bleiben die Augen weg, das „?" einer verdeckten Zeile aber stehen.
   - **„Nullen ergänzen"** schreibt in **jede leere Stelle eine Null** – und unterscheidet dabei
     zwei Sorten: **Nötige Nullen stehen schwarz** wie die eingetippten Ziffern, **überflüssige
     grau**. Nötig ist eine Null, die eine **Stelle besetzt** – zwischen der ersten Ziffer und dem

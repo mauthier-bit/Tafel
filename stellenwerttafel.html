@@ -46,6 +46,11 @@
   .rval{font-size:calc(var(--fs,22px)*0.73);font-weight:800;white-space:nowrap;}
   .rval b{color:#dc2626;}
   .del{border:none;background:#f1f3f7;border-radius:8px;width:30px;height:30px;font-size:16px;cursor:pointer;color:#64748b;}
+  /* Ergebnis verdecken - dieselbe Bedienung wie beim Funktionsplotter: blaues Auge = verdeckt */
+  .rowlead{width:34px;flex:none;display:flex;align-items:center;justify-content:center;}
+  .fhide{border:none;background:#eef1f5;width:30px;height:30px;border-radius:8px;font-size:15px;line-height:1;cursor:pointer;flex:none;filter:grayscale(1);opacity:.6;font-family:inherit;}
+  .fhide.on{background:#dbeafe;filter:none;opacity:1;}
+  .verdeckt{display:inline-block;padding:2px 10px;border:1px dashed #cfd6e0;border-radius:8px;background:#f8fafc;color:#94a3b8;letter-spacing:4px;}
   #foot{display:flex;gap:10px;align-items:center;}
   .fb{padding:7px 11px;border:1px solid #cfd6e0;border-radius:9px;background:#fff;font-size:14px;font-family:inherit;cursor:pointer;font-weight:700;color:#1f2430;}
   #add{padding:8px 14px;border:none;border-radius:10px;background:#3b82f6;color:#fff;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;}
@@ -368,6 +373,14 @@ function render(){ applyFont();
   const units=UNITS[data.type]; const wrap=$('tafel'); wrap.innerHTML='';
   // Kopfzeile
   const head=document.createElement('div'); head.className='row';
+  /* Das Auge in der Kopfzeile verdeckt alle Ergebnisse auf einmal - der Platz haelt zugleich
+     die Spalten der Kopfzeile ueber denen der Datenzeilen. */
+  const lead0=document.createElement('div'); lead0.className='rowlead';
+  const alleZu=data.rows.every(r=>r.zu), augA=document.createElement('button');
+  augA.type='button'; augA.className='fhide'+(alleZu?' on':''); augA.textContent='👁';
+  augA.title=alleZu?'Alle Ergebnisse wieder zeigen':'Alle Ergebnisse verdecken';
+  augA.onclick=()=>{ const zu=!alleZu; data.rows.forEach(r=>r.zu=zu); render(); sync(); };
+  lead0.appendChild(augA); head.appendChild(lead0);
   units.forEach((u,ui)=>{ const g=document.createElement('div'); g.className='ugroup'+(ui===data.unitIndex?' sel':'')+(ui<=mk?' mk':'');
     const h=document.createElement('div'); h.className='uhead'; h.style.width=(u[1]*cellW())+'px'; h.innerHTML=u[0]; h.onclick=()=>{ if(data.type==='zahl'){ data.mark=(data.mark===ui)?null:ui; render(); sync(); return; } data.unitIndex=ui; render(); sync(); };
     g.appendChild(h); head.appendChild(g);
@@ -376,6 +389,11 @@ function render(){ applyFont();
   wrap.appendChild(head);
   // Datenzeilen
   data.rows.forEach((rw,ri)=>{ let col=0; const row=document.createElement('div'); row.className='row';
+    const lead=document.createElement('div'); lead.className='rowlead';
+    const aug=document.createElement('button'); aug.type='button'; aug.className='fhide'+(rw.zu?' on':''); aug.textContent='👁';
+    aug.title=rw.zu?'Ergebnis dieser Zeile wieder zeigen':'Ergebnis dieser Zeile verdecken – so bleibt die Zeile eine Aufgabe';
+    aug.onclick=()=>{ rw.zu=!rw.zu; render(); sync(); };
+    lead.appendChild(aug); row.appendChild(lead);
     units.forEach((u,ui)=>{ const g=document.createElement('div'); g.className='ugroup'+(ui===data.unitIndex?' sel':'')+(ui<=mk?' mk':'');
       const dg=document.createElement('div'); dg.className='udigits';
       for(let k=0;k<u[1];k++){ const c=col; const inp=document.createElement('input'); inp.className='dc'; inp.type='text'; inp.inputMode='numeric'; inp.maxLength=1; inp.value=rw.dig[c]||'';
@@ -406,14 +424,15 @@ function fracOf(dig){ const m=data.mark; if(m===null||m===undefined)return null;
   for(let ui=0;ui<=m;ui++){ for(let k=0;k<units[ui][1];k++){ num+=(dig[col]||'0'); col++; } }
   num=num.replace(/^0+(?=\d)/,''); if(num==='')num='0'; const den=m>EIDX?('1'+'0'.repeat(m-EIDX)):'1'; return {num,den}; }
 function updateVals(){ zellenMalen(); const units=UNITS[data.type]; document.querySelectorAll('.rval').forEach(el=>{ const rw=data.rows[+el.dataset.ri]; if(rw){
+    if(rw.zu){ el.innerHTML='<span class="verdeckt">?</span>'; return; }      /* verdeckt: die Zeile ist eine Aufgabe */
     /* Gerundet steht statt des Dezimalbruchs der gerundete Wert - mit gewelltem Gleichheitszeichen. */
     if(rundAn()){ el.innerHTML='<i>≈</i> '+rundWert(rw.dig)+(data.type==='zahl'?'':' <b>'+units[data.unitIndex][0]+'</b>'); return; }
     let h='= '+rowValue(rw.dig)+(data.type==='zahl'?'':' <b>'+units[data.unitIndex][0]+'</b>');
     if(data.misch&&data.type!=='zahl') h+=' = <span style="color:#2563eb">'+mischText(rw.dig)+'</span>'; if(data.type==='zahl'&&data.pct) h+=' = <span style="color:#2563eb">'+rowValue(rw.dig,PCT_IDX)+' %</span>'; if(data.type==='zahl'&&data.bruch){ const f=fracOf(rw.dig); if(f) h+=' = <span class="frac"><span>'+f.num+'</span><span>'+f.den+'</span></span>'; } el.innerHTML=h; } }); }
-['laenge','flaeche','volumen','masse','zeit','zahl'].forEach(t=>$('t-'+t).onclick=()=>{ data.type=t; data.unitIndex=DEFIDX[t]; data.rows=data.rows.map(()=>({dig:{}})); data.mark=null; data.bruch=false; render(); sync(); });
+['laenge','flaeche','volumen','masse','zeit','zahl'].forEach(t=>$('t-'+t).onclick=()=>{ data.type=t; data.unitIndex=DEFIDX[t]; data.rows=data.rows.map(r=>({dig:{},zu:!!r.zu})); data.mark=null; data.bruch=false; render(); sync(); });
 $('add').onclick=()=>{ data.rows.push({dig:{}}); render(); sync(); };
 for(const [id,d] of [['fsM',-2],['fsP',2]]) $(id).onclick=()=>{ data.fontSize=Math.max(10,Math.min(60,(data.fontSize||22)+d)); render(); sync(); };
-if(window.TafelShot) TafelShot.buttons($('shotBtns'),()=>TafelShot.rasterize($('tafel'),{exclude:'.del',pad:8}),'fb tafelEdit');
+if(window.TafelShot) TafelShot.buttons($('shotBtns'),()=>TafelShot.rasterize($('tafel'),{exclude:'.del,.rowlead',pad:8}),'fb tafelEdit');
 /* Umschalter „Benutzen / Bearbeiten“ – beim Benutzen bleiben nur die Knöpfe zum Arbeiten */
 if(window.TafelModus&&TafelModus.anTafel) TafelModus.anTafel({ button:false,   /* der Umschalter sitzt in der Kopfleiste der Tafel */
   after:()=>{ try{ dispatchEvent(new Event('resize')); }catch(e){} } });
@@ -427,7 +446,7 @@ $('t-rund').onclick=()=>{ data.runden=!data.runden; if(!data.runden) data.rund=n
 function sync(){ if(window.parent===window) return; /* allein geöffnet: nicht an sich selbst senden */ try{ parent.postMessage({type:'embed-data',data},'*'); }catch(e){} }
 addEventListener('message',e=>{ if(e.source!==window&&(window.parent===window||e.source!==window.parent)) return;   // eigene Nachrichten ignorieren
   if(e.data&&e.data.type==='embed-data'&&e.data.data){ const d=e.data.data;
-  data={ type:UNITS[d.type]?d.type:'laenge', unitIndex:(d.unitIndex|0), rows:(Array.isArray(d.rows)&&d.rows.length?d.rows.map(r=>({dig:(r&&r.dig)||{}})):[{dig:{}}]), fontSize:d.fontSize||22, fontBold:!!d.fontBold, fontItalic:!!d.fontItalic, pct:!!d.pct, mark:(typeof d.mark==='number'&&d.mark>=0)?d.mark:null, bruch:!!d.bruch, misch:!!d.misch, nullen:!!d.nullen, runden:!!d.runden, rund:(typeof d.rund==='number'&&d.rund>=0)?d.rund:null };
+  data={ type:UNITS[d.type]?d.type:'laenge', unitIndex:(d.unitIndex|0), rows:(Array.isArray(d.rows)&&d.rows.length?d.rows.map(r=>({dig:(r&&r.dig)||{},zu:!!(r&&r.zu)})):[{dig:{}}]), fontSize:d.fontSize||22, fontBold:!!d.fontBold, fontItalic:!!d.fontItalic, pct:!!d.pct, mark:(typeof d.mark==='number'&&d.mark>=0)?d.mark:null, bruch:!!d.bruch, misch:!!d.misch, nullen:!!d.nullen, runden:!!d.runden, rund:(typeof d.rund==='number'&&d.rund>=0)?d.rund:null };
   if(data.unitIndex>=UNITS[data.type].length||data.unitIndex<0) data.unitIndex=DEFIDX[data.type]; render(); } });
 window.addEventListener('load',()=>{
   const geteilt=window.TafelTeilen&&TafelTeilen.istGeteilt();
