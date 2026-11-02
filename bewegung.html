@@ -77,11 +77,20 @@ button:disabled { opacity: 0.45; cursor: default; }
 details.settings { position: relative; }
 details.settings summary { list-style: none; cursor: pointer; border: 1px solid var(--line); border-radius: 8px; padding: 5px 9px; min-height: 32px; box-sizing: border-box; display: flex; align-items: center; background: var(--surface); font-size: 0.87rem; }
 details.settings summary::-webkit-details-marker { display: none; }
+/* Das Einstellungsfeld haengt nicht mehr starr am Zahnrad: Es steht fest im Fenster und
+   wird beim Oeffnen eingepasst (siehe panelSetzen) - sonst ragte es nach links hinaus, weil
+   das Zahnrad weit am linken Rand sitzt. Die Werte hier gelten, bis es geoeffnet wird. */
 .settings .panel {
-  position: absolute; right: 0; top: calc(100% + 6px); z-index: 20; width: min(320px, 86vw);
-  background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px;
-  display: grid; gap: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.18);
+  position: fixed; left: 10px; top: 96px; z-index: 20; width: min(320px, calc(100vw - 20px));
+  max-height: calc(100vh - 110px); box-sizing: border-box;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+  display: grid; grid-template-rows: auto minmax(0, 1fr); box-shadow: 0 10px 30px rgba(0,0,0,0.18);
 }
+/* Kopfleiste mit Schliessen-Kreuz bleibt stehen, der Inhalt darunter scrollt. */
+.settings .panelKopf { display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 8px 8px 8px 14px; border-bottom: 1px solid var(--line); font-weight: 700; font-size: 0.95rem;
+  user-select: none; -webkit-user-select: none; }
+.settings .panelBody { padding: 14px; display: grid; gap: 10px; overflow-y: auto; overscroll-behavior: contain; }
 .settings label { display: grid; gap: 4px; font-size: 0.9rem; }
 .settings input[type=number] { border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; background: var(--bg); font-family: var(--font-data); }
 .settings p { margin: 0; font-size: 0.8rem; color: var(--muted); line-height: 1.4; }
@@ -484,6 +493,10 @@ details.settings summary.ic { font-size: 1.2rem; }
       <details class="settings tafelEdit">
         <summary class="ic" title="Einstellungen" aria-label="Einstellungen">⚙</summary>
         <div class="panel">
+          <div class="panelKopf">Einstellungen
+            <button type="button" class="ic" id="setZu" title="Einstellungen schließen" aria-label="Einstellungen schließen">✕</button>
+          </div>
+          <div class="panelBody">
           <label for="ppc">Maßstab: Pixel pro Zentimeter
             <input type="number" id="ppc" min="10" max="200" step="0.1" value="52">
           </label>
@@ -526,6 +539,7 @@ details.settings summary.ic { font-size: 1.2rem; }
           <button id="copyCsv">Messwerte als CSV kopieren</button>
           <p id="copyMsg">Spalten: t; x; y; vx; vy; ax; ay (Semikolon, Dezimalkomma – passt für Excel).</p>
           <textarea id="csvFallback" rows="4" hidden aria-label="CSV-Daten" style="width:100%;box-sizing:border-box;font-family:var(--font-data);font-size:11px;background:var(--bg);border:1px solid var(--line);border-radius:6px"></textarea>
+          </div>
         </div>
       </details>
       <button id="expCsv" class="tafelEdit" title="Die Messwerte als CSV-Datei sichern">Export</button>
@@ -2299,6 +2313,24 @@ $("undo").addEventListener("click", () => {
   state.prev = cur;
   process(); updateUI(); requestDraw();
 });
+/* Das Einstellungsfeld unter das Zahnrad legen - aber nie ueber den Fensterrand hinaus,
+   und nur so hoch, wie darunter Platz ist; der Rest wird gescrollt. */
+(() => {
+  const det = document.querySelector("details.settings"), panel = det.querySelector(".panel"), M = 8;
+  function panelSetzen() {
+    if (!det.open) return;
+    const r = det.getBoundingClientRect();
+    const w = Math.min(320, innerWidth - 2 * M);
+    panel.style.width = w + "px";
+    panel.style.left = Math.round(clamp(r.left, M, Math.max(M, innerWidth - w - M))) + "px";
+    panel.style.top = Math.round(r.bottom + 6) + "px";
+    panel.style.maxHeight = Math.max(120, Math.round(innerHeight - r.bottom - 6 - M)) + "px";
+  }
+  det.addEventListener("toggle", panelSetzen);
+  addEventListener("resize", panelSetzen);
+  $("setZu").addEventListener("click", () => { det.open = false; });
+})();
+
 /* Das Feld wechselt die Seite: Die Buehne muss erst umbrechen, danach misst die
    Beispielaufnahme neu - sie richtet sich nach der Laenge des Feldes. */
 $("padPos").addEventListener("change", e => {

@@ -2979,7 +2979,10 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   - **Knöpfe mit Zeichen statt Text:** **▶** spielt die Bewegung noch einmal ab (1×, 0,5×, 0,25×,
     0,1×) und wird dabei zur **Pause ⏸** – ein weiterer Tipp läuft **dort weiter, wo angehalten
     wurde**, erst am Ende (oder nach einem Tipp auf eine andere Stelle) wieder von vorn. **↺** holt
-    die letzte Aufnahme zurück, **🗑** verwirft sie, **⚙** öffnet die Einstellungen. Was ein Zeichen
+    die letzte Aufnahme zurück, **🗑** verwirft sie, **⚙** öffnet die Einstellungen – sie stehen in
+    einem Feld, das **immer ganz ins Fenster passt** (es rückt vom Rand weg und wird nach unten
+    **gescrollt**, wenn der Platz nicht reicht); oben steht **Einstellungen** mit einem
+    **Schließen-Kreuz ✕**, das beim Scrollen stehen bleibt. Was ein Zeichen
     tut, steht in seinem **Titel** (langes Berühren) und für die Vorlesefunktion im aria-label.
     **Messwerte als CSV kopieren** (in den Einstellungen) gibt die Tabelle an Excel weiter.
   - **Export** sichert die Werte als **CSV-Datei** (Semikolon, Dezimalkomma; Dateiname
