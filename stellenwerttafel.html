@@ -15,6 +15,9 @@
   #types::-webkit-scrollbar{height:4px;} #types::-webkit-scrollbar-thumb{background:#cfd6e0;border-radius:2px;}
   .tbtn{padding:7px 12px;border:1px solid #cfd6e0;border-radius:9px;background:#fff;font-size:14px;font-family:inherit;cursor:pointer;font-weight:600;}
   .tbtn.on{background:#3b82f6;color:#fff;border-color:#3b82f6;}
+  /* Die fuenf Groessen stecken in einer Liste, damit die Zeile oben kurz bleibt. */
+  .tsel{padding:7px 10px;border:1px solid #cfd6e0;border-radius:9px;background:#fff;font-size:14px;font-family:inherit;font-weight:600;color:#1f2430;cursor:pointer;}
+  .tsel.on{background:#3b82f6;color:#fff;border-color:#3b82f6;}
   .hint{font-size:12px;color:#8a93a2;} #swHelp[hidden]{display:none;}
   .dc.bad{background:#fee2e2;box-shadow:inset 0 0 0 2px #dc2626;}
   /* ergaenzte Nullen: noetige stehen wie getippte Ziffern da, ueberfluessige bleiben blass */
@@ -46,7 +49,8 @@
   .comma.pct{color:#2563eb;}
   .comma.head.pct{color:#2563eb;font-weight:800;}
   .rowend{display:flex;align-items:center;gap:8px;padding-left:12px;flex:none;}
-  .rval{font-size:calc(var(--fs,22px)*0.73);font-weight:800;white-space:nowrap;}
+  /* Das Ergebnis steht so gross da wie die Ziffern in der Tafel. */
+  .rval{font-size:var(--fs,22px);font-weight:800;white-space:nowrap;}
   .rval b{color:#dc2626;}
   .del{border:none;background:#f1f3f7;border-radius:8px;width:30px;height:30px;font-size:16px;cursor:pointer;color:#64748b;}
   /* Ergebnis verdecken - dieselbe Bedienung wie beim Funktionsplotter: blaues Auge = verdeckt */
@@ -245,11 +249,14 @@
 <div id="wrap">
   <div id="types">
     <button class="tbtn" id="t-zahl">Zahl</button>
-    <button class="tbtn" id="t-laenge">Längen</button>
-    <button class="tbtn" id="t-flaeche">Flächen</button>
-    <button class="tbtn" id="t-volumen">Volumen</button>
-    <button class="tbtn" id="t-masse">Massen</button>
-    <button class="tbtn" id="t-zeit">Zeit</button>
+    <select class="tsel" id="gsel" aria-label="Größe" title="Größen: Längen, Flächen, Volumen, Massen oder Zeit">
+      <option value="" hidden>Größen …</option>
+      <option value="laenge">Längen</option>
+      <option value="flaeche">Flächen</option>
+      <option value="volumen">Volumen</option>
+      <option value="masse">Massen</option>
+      <option value="zeit">Zeit</option>
+    </select>
     <button class="tbtn" id="t-misch" title="Wert zusätzlich in gemischten Einheiten zeigen (z. B. 1 h 30 min)">gemischte Einheiten</button>
     <button class="tbtn" id="t-pct" title="Zweites Komma an der Hundertstel-Stelle → Prozent-Darstellung" style="display:none">%-Komma</button>
     <button class="tbtn" id="t-rund" title="Runden: Die Ziffern bleiben stehen; tippe die Stelle an, auf die gerundet werden soll – sie wird lila und rechts steht der gerundete Wert mit ≈">Runden</button>
@@ -381,7 +388,9 @@ const MAXG={ zeit:{ 2:{max:59,name:'Minuten',hin:'60 Minuten sind 1 Stunde'}, 3:
 function grenze(ui){ const m=MAXG[data.type]; return (m&&m[ui])?m[ui]:null; }
 function warnBad(inp,txt){ inp.classList.add('bad'); if(window.TafelShot)TafelShot.toast(txt); setTimeout(()=>inp.classList.remove('bad'),1400); }
 function render(){ applyFont();
-  ['laenge','flaeche','volumen','masse','zeit','zahl'].forEach(t=>$('t-'+t).classList.toggle('on',data.type===t));
+  const istZahl=data.type==='zahl';
+  $('t-zahl').classList.toggle('on',istZahl);
+  $('gsel').value=istZahl?'':data.type; $('gsel').classList.toggle('on',!istZahl);
   $('t-misch').style.display=(data.type==='zahl')?'none':'';
   $('t-misch').classList.toggle('on',!!data.misch);
   const isZ=data.type==='zahl'; $('t-pct').style.display=isZ?'':'none'; $('t-pct').classList.toggle('on',isZ&&!!data.pct); const showPct=isZ&&!!data.pct;
@@ -456,7 +465,16 @@ function updateVals(){ zellenMalen(); const units=UNITS[data.type]; document.que
     if(zehnerAn()){ el.innerHTML='= '+zehnerText(rw.dig)+(data.type==='zahl'?'':' <b>'+units[data.unitIndex][0]+'</b>'); return; }
     let h='= '+rowValue(rw.dig)+(data.type==='zahl'?'':' <b>'+units[data.unitIndex][0]+'</b>');
     if(data.misch&&data.type!=='zahl') h+=' = <span style="color:#2563eb">'+mischText(rw.dig)+'</span>'; if(data.type==='zahl'&&data.pct) h+=' = <span style="color:#2563eb">'+rowValue(rw.dig,PCT_IDX)+' %</span>'; if(data.type==='zahl'&&data.bruch){ const f=fracOf(rw.dig); if(f) h+=' = <span class="frac"><span>'+f.num+'</span><span>'+f.den+'</span></span>'; } el.innerHTML=h; } }); }
-['laenge','flaeche','volumen','masse','zeit','zahl'].forEach(t=>$('t-'+t).onclick=()=>{ data.type=t; data.unitIndex=DEFIDX[t]; data.rows=data.rows.map(r=>({dig:{},zu:!!r.zu})); data.mark=null; data.bruch=false; render(); sync(); });
+/* Andere Groesse: Die Tafel hat dann andere Spalten - die Zeilen fangen leer an (ihre
+   verdeckten Ergebnisse bleiben verdeckt), und die markierten Stellen passen nicht mehr. */
+function setzeTyp(t){ if(!UNITS[t]) return;
+  data.type=t; data.unitIndex=DEFIDX[t]; data.rows=data.rows.map(r=>({dig:{},zu:!!r.zu}));
+  data.mark=null; data.bruch=false; data.rund=null; data.zp=null;
+  if(t==='zeit') data.zehner=false;
+  render(); sync(); }
+$('t-zahl').onclick=()=>setzeTyp('zahl');
+/* Der Platzhalter "Groessen …" ist keine Groesse - dann bleibt alles, wie es ist. */
+$('gsel').onchange=e=>{ if(!UNITS[e.target.value]){ render(); return; } setzeTyp(e.target.value); };
 $('add').onclick=()=>{ data.rows.push({dig:{}}); render(); sync(); };
 for(const [id,d] of [['fsM',-2],['fsP',2]]) $(id).onclick=()=>{ data.fontSize=Math.max(10,Math.min(60,(data.fontSize||22)+d)); render(); sync(); };
 if(window.TafelShot) TafelShot.buttons($('shotBtns'),()=>TafelShot.rasterize($('tafel'),{exclude:'.del,.rowlead',pad:8}),'fb tafelEdit');
