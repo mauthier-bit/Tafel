@@ -88,7 +88,9 @@ details.settings summary::-webkit-details-marker { display: none; }
 
 /* Bühne */
 .stage { display: grid; gap: 10px; min-height: 0; }
-.mode-1d .stage { grid-template-rows: minmax(150px, 26%) minmax(0, 1fr); }
+/* Unter dem waagerechten Lineal steht nur noch die Beschriftung, darum darf das
+   Aufnahmefeld niedriger sein - der gewonnene Platz gehoert den Diagrammen. */
+.mode-1d .stage { grid-template-rows: minmax(126px, 20%) minmax(0, 1fr); }
 .mode-1d.lane .stage { grid-template-rows: minmax(260px, 50%) minmax(0, 1fr); }
 /* 2D: Zwischen Zeichenflaeche und Diagrammen liegt ein Balken, den man ziehen kann;
    --split sagt, wie viel Platz die Zeichenflaeche bekommt. */
@@ -145,6 +147,10 @@ details.settings summary::-webkit-details-marker { display: none; }
 .diaCtl .bgA[aria-pressed="true"] { background: var(--qa); border-color: var(--qa); }
 .diaCtl .bgD1[aria-pressed="true"] { background: linear-gradient(90deg, var(--iv1plus) 50%, var(--iv1minus) 50%); border-color: var(--iv1minus); }
 .diaCtl .bgD2[aria-pressed="true"] { background: linear-gradient(90deg, var(--iv2plus) 50%, var(--iv2minus) 50%); border-color: var(--iv2minus); }
+/* Knoepfe, die nur ihr Zeichen tragen: Was sie tun, steht im Titel und im aria-label. */
+button.ic, details.settings summary.ic { min-width: 38px; padding: 0 8px; text-align: center; justify-content: center; font-size: 1.02rem; line-height: 1; }
+/* das Zahnrad ist in der Schrift ein kleines Zeichen und braucht etwas mehr */
+details.settings summary.ic { font-size: 1.2rem; }
 /* Die Tabelle nimmt hoechstens vier Zeilen ein, alles weitere wird gescrollt - sonst
    schrumpfen die Diagramme, sobald mehrere Stellen gemerkt sind. Die Hoehe rechnet
    readoutHoehe() aus, weil die Zeilen mit A- / A+ wachsen. */
@@ -433,6 +439,7 @@ details.settings summary::-webkit-details-marker { display: none; }
     <div class="group nurAufnahme" role="group" aria-label="Einblenden">
       <button class="chip" id="tStellen" aria-pressed="true"><span class="sw"></span>Stellen</button>
       <button class="chip" id="tVec" aria-pressed="false" title="An jedem Messpunkt die Pfeile für v und a"><span class="sw ca"></span>Vektoren</button>
+      <button class="chip" id="tTab" aria-pressed="false" title="Die Ablesetabelle unter den Diagrammen zeigen"><span class="sw"></span>Tabelle</button>
     </div>
 
     <div class="group nurAufnahme">
@@ -444,17 +451,17 @@ details.settings summary::-webkit-details-marker { display: none; }
     </div>
 
     <div class="group">
-      <button id="play" class="primary" title="Die Bewegung noch einmal ablaufen lassen">▶ Abspielen</button>
+      <button id="play" class="primary ic" title="Abspielen: die Bewegung noch einmal ablaufen lassen" aria-label="Abspielen">▶</button>
       <select id="speed" aria-label="Abspielgeschwindigkeit">
         <option value="1">1×</option>
         <option value="0.5">0,5×</option>
         <option value="0.25">0,25×</option>
         <option value="0.1">0,1×</option>
       </select>
-      <button id="undo" disabled>Vorherige</button>
-      <button id="reset" title="Aufnahme und Zielkurve verwerfen">Zurücksetzen</button>
+      <button id="undo" class="ic" disabled title="Vorherige Aufnahme zurückholen" aria-label="Vorherige Aufnahme">↺</button>
+      <button id="reset" class="ic" title="Zurücksetzen: Aufnahme und Zielkurve verwerfen" aria-label="Zurücksetzen">🗑</button>
       <details class="settings tafelEdit">
-        <summary>Einstellungen</summary>
+        <summary class="ic" title="Einstellungen" aria-label="Einstellungen">⚙</summary>
         <div class="panel">
           <label for="ppc">Maßstab: Pixel pro Zentimeter
             <input type="number" id="ppc" min="10" max="200" step="0.1" value="52">
@@ -570,6 +577,7 @@ const state = {
   recording: false, recId: null, t0: 0,
   playing: false, speed: 1,
   strobe: 0.1, allVec: false, vecSel: "va", vecScale: 1,
+  tab: false,                 // Ablesetabelle unter den Diagrammen - sie kostet Platz und ist selten noetig
   /* Spiele (nur 1D): "aus" = normale Aufnahme, "ziel" = Zielkurve nachfahren,
      "battle" = zwei Felder an den Fensterraendern, Start per Countdown */
   spiel: "aus", zielTyp: "x", zielT: 5, zielFrei: false, ziel: null, zeichnen: false, zielNote: "",
@@ -746,7 +754,10 @@ function padOrigin(w, h) {
   /* senkrecht: Lineal links, die Null unten - oben bleibt Platz fuer den Hinweis,
      unten fuer Legende und Zeile "Punkte im Abstand" (SENK_OBEN / SENK_UNTEN). */
   if (istSenk()) return { x: 40, y: h - SENK_UNTEN };
-  return { x: PAD_M, y: state.allVec ? Math.max(h * 0.62, h - 78) : h * 0.62 };
+  /* waagerecht: Das Lineal rutscht fast an den unteren Rand - darunter stehen nur noch
+     die Zentimeter. Mit Pfeilen an allen Messpunkten (Spur) bleibt unten Platz fuer den
+     Massstab. Alles Uebrige - Punkte, Pfeile, Koerper - liegt ohnehin ueber dem Lineal. */
+  return { x: PAD_M, y: state.allVec ? Math.max(h * 0.62, h - 78) : h - 34 };
 }
 function addSample(ev) {
   const r = pad.getBoundingClientRect();
@@ -937,6 +948,10 @@ function drawPad() {
   }
   ctx.fillStyle = alpha(C.qx, one && !lane ? 0.45 : 0.85);
   for (let i = 0; i < D.N; i += step) { const [px, py] = ptOf(i); ctx.beginPath(); ctx.arc(px, py, step * DT * ppc < 10 ? 2.4 : 3.2, 0, 7); ctx.fill(); }
+  /* Unter dem waagerechten Lineal in 1D steht nichts mehr: Der Zeitabstand steht in den
+     Einstellungen, der Pfeilmassstab wird nur mit der Spur gebraucht. */
+  const fussAn = !one || senk || lane;
+  if (fussAn) {
   ctx.font = `${fs(11)}px ${css("--font-body")}`; ctx.fillStyle = C.muted; ctx.textAlign = "right"; ctx.textBaseline = "bottom";
   /* im schmalen, senkrechten Feld muss die Zeile kurz bleiben */
   const dt = fmt(state.strobe, state.strobe < 0.1 ? 2 : state.strobe < 1 ? (state.strobe * 10 % 1 ? 2 : 1) : 0);
@@ -944,6 +959,7 @@ function drawPad() {
                     : `Punkte im Abstand von ${dt} s` + (lane ? ", Zeit läuft nach unten" : "");
   if (senk) ctx.font = `${passend(ctx, fuss, w - 18, fs(11), css("--font-body"))}px ${css("--font-body")}`;
   ctx.fillText(fuss, w - 12, senk ? h - 44 : h - 8);
+  }
 
   // Körper zum Zeitpunkt des Cursors
   if (state.cursor != null) {
@@ -973,6 +989,7 @@ function drawPad() {
     ctx.beginPath(); ctx.arc(px, py, 8, 0, 7); ctx.fill(); ctx.stroke();
   }
   // Legende mit Pfeilmaßstab - im schmalen, senkrechten Feld untereinander
+  if (!fussAn) return;
   ctx.textBaseline = "bottom"; ctx.textAlign = "left";
   const lyV = senk ? h - 26 : h - 8, lyA = h - 8;
   const vTxt = `1 cm ≙ ${fmt(4 / state.vecScale, state.vecScale > 1 ? 1 : 0)} cm/s`;
@@ -1889,6 +1906,7 @@ function renderReadout() {
 function readoutHoehe() {
   const el = $("readout"), tb = el.querySelector("tbody");
   el.style.maxHeight = "";
+  if (el.hidden) return;                 // ausgeblendet misst offsetHeight nur Nullen
   if (!tb || tb.rows.length <= 4) return;
   let h = (el.querySelector("thead") || { offsetHeight: 0 }).offsetHeight;
   for (let i = 0; i < 4; i++) h += tb.rows[i].offsetHeight;
@@ -1975,11 +1993,19 @@ plots.addEventListener("pointerup", endDrag);
 plots.addEventListener("pointercancel", endDrag);
 
 // ---------- Abspielen ----------
-let playStart = 0, playFrom = 0, rafPlay = 0;
+/* Der Knopf traegt nur sein Zeichen und wird zur Pause, solange es laeuft. */
+function playKnopf(laeuft) {
+  const b = $("play");
+  b.textContent = laeuft ? "⏸" : "▶";
+  b.title = laeuft ? "Pause" : "Abspielen: die Bewegung noch einmal ablaufen lassen";
+  b.setAttribute("aria-label", laeuft ? "Pause" : "Abspielen");
+}
+let playStart = 0, playFrom = 0, rafPlay = 0, playHalt = null;   // playHalt: wo die Pause stehenblieb
 function stopPlay() {
   if (!state.playing) return;
   state.playing = false; cancelAnimationFrame(rafPlay);
-  $("play").textContent = "▶ Abspielen";
+  playHalt = state.cursor;
+  playKnopf(false);
 }
 function playLoop(now) {
   if (!state.playing || !D) return;
@@ -1991,9 +2017,13 @@ function playLoop(now) {
 }
 $("play").addEventListener("click", () => {
   if (!D) return;
-  if (state.playing) { stopPlay(); updateUI(); return; }
-  state.playing = true; playFrom = 0; playStart = performance.now();
-  $("play").textContent = "■ Stopp";
+  if (state.playing) { stopPlay(); updateUI(); return; }      // Pause
+  /* Weiter, wo die Pause stehenblieb. Wurde inzwischen eine Stelle angetippt oder war das
+     Ende erreicht, laeuft es wieder von vorn. */
+  const weiter = playHalt != null && state.cursor === playHalt && playHalt < D.T - 1e-6;
+  playFrom = weiter ? playHalt : 0;
+  state.playing = true; playStart = performance.now();
+  playKnopf(true);
   rafPlay = requestAnimationFrame(playLoop);
 });
 $("speed").addEventListener("change", e => { state.speed = parseFloat(e.target.value); });
@@ -2040,6 +2070,9 @@ function updateUI() {
   setPressed("tStellen", state.show.stellen);
   setPressed("dX", state.dia.x); setPressed("dV", state.dia.v); setPressed("dA", state.dia.a);
   setPressed("tVec", state.allVec);
+  setPressed("tTab", state.tab);
+  /* Im Ziel- und Battle-Modus steht an derselben Stelle das Ergebnis - das bleibt immer da. */
+  $("readout").hidden = !state.tab && !spielAn();
   setPressed("toolStelle", state.tool === "stelle"); setPressed("toolIv", state.tool === "intervall");
   $("pin").disabled = state.cursor == null || !D || state.pins.length >= 8;
   $("undo").disabled = !state.prev;
@@ -2140,6 +2173,7 @@ $("smooth").addEventListener("input", e => {
 }));
 $("tStellen").addEventListener("click", () => { state.show.stellen = !state.show.stellen; updateUI(); requestDraw(); });
 $("tVec").addEventListener("click", () => { state.allVec = !state.allVec; updateUI(); requestDraw(); });
+$("tTab").addEventListener("click", () => { state.tab = !state.tab; updateUI(); requestDraw(); });
 $("strobe").addEventListener("change", e => { state.strobe = parseFloat(e.target.value); requestDraw(); });
 $("vecSel").addEventListener("change", e => { state.vecSel = e.target.value; if (!state.allVec) state.allVec = true; updateUI(); requestDraw(); });
 $("vecScale").addEventListener("change", e => { state.vecScale = parseFloat(e.target.value); requestDraw(); });
@@ -2239,7 +2273,7 @@ function zustand() {
     raw: state.raw.map(p => ({ t: r3(p.t), x: r3(p.x), y: r3(p.y) })),
     cursor: state.cursor, pins: state.pins.slice(),
     interval: state.interval ? state.interval.slice() : null,
-    ppc: state.ppc, strobe: state.strobe, allVec: state.allVec,
+    ppc: state.ppc, strobe: state.strobe, allVec: state.allVec, tab: state.tab,
     vecSel: state.vecSel, vecScale: state.vecScale, fs: state.fs,
     spiel: state.spiel, zielTyp: state.zielTyp, zielT: state.zielT, zielFrei: !!state.zielFrei,
     split: state.split,
@@ -2300,6 +2334,7 @@ function uebernimm(d) {
   if (typeof d.vecScale === "number") state.vecScale = d.vecScale;
   if (typeof d.fs === "number") setzeFs(d.fs);
   state.allVec = !!d.allVec;
+  state.tab = !!d.tab;
   if (Array.isArray(d.raw) && d.raw.length > 1) {
     state.raw = d.raw.map(p => ({ t: +p.t || 0, x: +p.x || 0, y: +p.y || 0 }));
     state.sample = !!d.sample;

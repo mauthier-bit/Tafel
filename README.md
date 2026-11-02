@@ -2823,6 +2823,13 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   (Maßstab in den Einstellungen, iPad ca. 52 px/cm); solange der Finger aufliegt, wird aufgezeichnet,
   beim Abheben ist die Aufnahme fertig. **1D** nimmt nur die waagerechte Bewegung (Messstreifen),
   **2D** die ganze Bahn in der Ebene – dann lassen sich **x**, **y** oder **x + y** zeigen.
+  - **Flaches Aufnahmefeld (1D, waagerecht):** Unter dem Lineal stehen nur noch die **Zentimeter**
+    – die Zeile „Punkte im Abstand von …" und der **Pfeilmaßstab** sind dort weg (der Zeitabstand
+    steht in den Einstellungen). Punkte, Pfeile und Körper liegen ohnehin **über** dem Lineal, darum
+    rutscht das Lineal fast an den unteren Rand und das Feld ist **merklich flacher**; der gewonnene
+    Platz gehört den Diagrammen. Nur mit **Vektoren** wird das Feld wieder höher – dort läuft die
+    Zeitspur quer zum Lineal, und der Maßstab der Pfeile steht wieder darunter. Im **senkrechten**
+    Feld und in **2D** bleibt alles wie bisher.
   - **Aufteilung im 2D-Modus:** Zwischen Zeichenfläche und Diagrammen liegt ein **Balken mit Griff**,
     den man mit dem Finger **ziehen** kann – nach links und rechts, wenn beide nebeneinander liegen,
     nach oben und unten im Hochformat. So bekommt mal die Aufnahme, mal die Auswertung mehr Platz.
@@ -2866,9 +2873,9 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     die Restzeit, und ist der **Ort** vorgegeben, läuft ein **Ring** am Lineal mit, der zeigt, wo man
     gerade sein müsste. Am Ende stehen **beide Kurven** in den Diagrammen (links violett, rechts
     orange), **beide Trefferquoten** in den Feldern und der **Sieger** unter den Diagrammen.
-  - **Zurücksetzen:** Der Knopf neben **„Vorherige"** verwirft **Aufnahme und Zielkurve** (in allen
+  - **Zurücksetzen (🗑):** Der Knopf verwirft **Aufnahme und Zielkurve** (in allen
     drei Betriebsarten, im Battle auch beide Spieler-Aufnahmen) – für einen sauberen Anfang in der
-    nächsten Stunde. Ein versehentlicher Tipp lässt sich mit **„Vorherige"** rückgängig machen.
+    nächsten Stunde. Ein versehentlicher Tipp lässt sich mit **↺ (Vorherige)** rückgängig machen.
   - **Glättung** (0 bis 200 ms) bestimmt, wie stark gemittelt wird, bevor abgeleitet wird – ohne sie
     rauschen v und a; die Ableitungen entstehen aus den geglätteten Messwerten auf einem 0,01-s-Raster.
   - **Diagramme einzeln ein- und ausblenden:** Die drei Schalter **x(t)**, **v(t)** und **a(t)**
@@ -2933,12 +2940,18 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     **t₁–t₂** der Tabelle zeigt genau das, was auch im Bild steht. Wird ein Diagramm ausgeblendet,
     verschwinden seine Knöpfe mit; für das **Tafelbild** bleibt die Leiste weg, und ein Tipp auf den
     Streifen rechts setzt keine Stelle.
-  - **Die Tabelle unter den Diagrammen** zeigt **höchstens vier Zeilen**; sind mehr Stellen
-    gemerkt, lässt sie sich **scrollen**, und die Kopfzeile bleibt dabei stehen. So bleibt den
-    Diagrammen die Höhe, auch wenn acht Stellen und das Intervall eingetragen sind.
-  - **Abspielen** lässt die Bewegung noch einmal ablaufen (1×, 0,5×, 0,25×), **Vorherige** holt die
-    letzte Aufnahme zurück, **Messwerte als CSV kopieren** (in den Einstellungen) gibt die Tabelle an
-    Excel weiter.
+  - **Die Tabelle unter den Diagrammen** ist **abschaltbar** und **von Haus aus aus**: Der Schalter
+    **Tabelle** neben **Stellen** und **Vektoren** blendet sie ein, wenn man die Zahlen wirklich
+    braucht – sonst gehört ihr Platz den Diagrammen. Eingeblendet zeigt sie **höchstens vier
+    Zeilen**; sind mehr Stellen gemerkt, lässt sie sich **scrollen**, und die Kopfzeile bleibt dabei
+    stehen. In **Ziel** und **Battle** steht an derselben Stelle das **Ergebnis** – das bleibt immer
+    sichtbar.
+  - **Knöpfe mit Zeichen statt Text:** **▶** spielt die Bewegung noch einmal ab (1×, 0,5×, 0,25×,
+    0,1×) und wird dabei zur **Pause ⏸** – ein weiterer Tipp läuft **dort weiter, wo angehalten
+    wurde**, erst am Ende (oder nach einem Tipp auf eine andere Stelle) wieder von vorn. **↺** holt
+    die letzte Aufnahme zurück, **🗑** verwirft sie, **⚙** öffnet die Einstellungen. Was ein Zeichen
+    tut, steht in seinem **Titel** (langes Berühren) und für die Vorlesefunktion im aria-label.
+    **Messwerte als CSV kopieren** (in den Einstellungen) gibt die Tabelle an Excel weiter.
   - **Export** sichert die Werte als **CSV-Datei** (Semikolon, Dezimalkomma; Dateiname
     `bewegung-JJJJ-MM-TT-hh-mm.csv`; in 1D nur die aufgenommene Richtung: `t; x; vx; ax`
     bzw. `t; y; vy; ay`, in 2D beide) – damit lassen sie sich auch im Plotter unter **Modellieren**
