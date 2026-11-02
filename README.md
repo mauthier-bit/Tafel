@@ -2823,13 +2823,15 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   (Maßstab in den Einstellungen, iPad ca. 52 px/cm); solange der Finger aufliegt, wird aufgezeichnet,
   beim Abheben ist die Aufnahme fertig. **1D** nimmt nur die waagerechte Bewegung (Messstreifen),
   **2D** die ganze Bahn in der Ebene – dann lassen sich **x**, **y** oder **x + y** zeigen.
-  - **Flaches Aufnahmefeld (1D, waagerecht):** Unter dem Lineal stehen nur noch die **Zentimeter**
-    – die Zeile „Punkte im Abstand von …" und der **Pfeilmaßstab** sind dort weg (der Zeitabstand
-    steht in den Einstellungen). Punkte, Pfeile und Körper liegen ohnehin **über** dem Lineal, darum
-    rutscht das Lineal fast an den unteren Rand und das Feld ist **merklich flacher**; der gewonnene
-    Platz gehört den Diagrammen. Nur mit **Vektoren** wird das Feld wieder höher – dort läuft die
-    Zeitspur quer zum Lineal, und der Maßstab der Pfeile steht wieder darunter. Im **senkrechten**
-    Feld und in **2D** bleibt alles wie bisher.
+  - **Das Lineal liegt oben (1D, waagerecht):** Es klebt am **oberen Rand** des Aufnahmefeldes, mit
+    den **Zahlen darüber** und der Messkante nach unten – so **verdeckt der streichende Finger es
+    nicht**, und man sieht während der Aufnahme, wo der Körper gerade steht. Messpunkte, Pfeile und
+    Körper hängen **unter** dem Lineal, der **Hinweis** steht am unteren Rand. Unter dem Lineal
+    stehen keine Anzeigen mehr – die Zeile „Punkte im Abstand von …" und der **Pfeilmaßstab** sind
+    dort weg (der Zeitabstand steht in den Einstellungen). Dadurch ist das Feld **flach**; der
+    gewonnene Platz gehört den Diagrammen. Nur mit **Vektoren** wird es wieder höher: Dann läuft die
+    **Zeitspur vom Lineal aus nach unten** – wie ein Streifen aus dem Zeitschreiber –, und der
+    Maßstab der Pfeile steht wieder darunter. In **2D** bleibt alles wie bisher.
   - **Aufteilung im 2D-Modus:** Zwischen Zeichenfläche und Diagrammen liegt ein **Balken mit Griff**,
     den man mit dem Finger **ziehen** kann – nach links und rechts, wenn beide nebeneinander liegen,
     nach oben und unten im Hochformat. So bekommt mal die Aufnahme, mal die Auswertung mehr Platz.
@@ -2843,8 +2845,10 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     Tabelle und die Export-Datei. Mit **Vektoren** läuft die Zeitspur im senkrechten Feld **nach
     rechts** (waagerecht: nach unten). Im **Battle** wird immer senkrecht aufgenommen.
     Das senkrechte Feld ist bewusst **schmal**, damit den
-    Diagrammen daneben möglichst viel Breite bleibt; Legende und Fußzeile schrumpfen darin
-    so weit, dass sie hineinpassen. Eine schon aufgenommene Bewegung bleibt beim Umschalten
+    Diagrammen daneben möglichst viel Breite bleibt. Unter dem senkrechten Lineal steht nur noch
+    die **Null**, darum beginnt es **ganz unten am Rand** und die Skala wird entsprechend länger;
+    nur mit **Vektoren** stehen Legende und Fußzeile wieder darunter, dann fängt es höher an
+    (beide schrumpfen dort so weit, dass sie in die schmale Spalte passen). Eine schon aufgenommene Bewegung bleibt beim Umschalten
     stehen, nur die Beschriftung wechselt.
   - **Ziel (1D):** Der Umschalter **Aufnahme / Ziel / Battle** neben **1D / 2D** startet zwei Spiele
     zum Lesen von Diagrammen. Bei **Ziel** wählt man zuerst, **welches Diagramm vorgegeben** wird

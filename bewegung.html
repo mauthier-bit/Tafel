@@ -88,9 +88,9 @@ details.settings summary::-webkit-details-marker { display: none; }
 
 /* Bühne */
 .stage { display: grid; gap: 10px; min-height: 0; }
-/* Unter dem waagerechten Lineal steht nur noch die Beschriftung, darum darf das
-   Aufnahmefeld niedriger sein - der gewonnene Platz gehoert den Diagrammen. */
-.mode-1d .stage { grid-template-rows: minmax(126px, 20%) minmax(0, 1fr); }
+/* Das waagerechte Lineal liegt oben am Rand und unter ihm steht nichts mehr, darum darf
+   das Aufnahmefeld flach sein - der gewonnene Platz gehoert den Diagrammen. */
+.mode-1d .stage { grid-template-rows: minmax(120px, 18%) minmax(0, 1fr); }
 .mode-1d.lane .stage { grid-template-rows: minmax(260px, 50%) minmax(0, 1fr); }
 /* 2D: Zwischen Zeichenflaeche und Diagrammen liegt ein Balken, den man ziehen kann;
    --split sagt, wie viel Platz die Zeichenflaeche bekommt. */
@@ -124,6 +124,8 @@ details.settings summary::-webkit-details-marker { display: none; }
 .hint { position: absolute; left: 14px; top: 10px; right: 14px; margin: 0; font-size: 0.85rem; color: var(--muted); pointer-events: none; line-height: 1.35; }
 /* in der schmalen, senkrechten Spalte bleibt fuer den Hinweis nur wenig Platz */
 .mode-1d.senk .hint { left: 8px; right: 8px; font-size: 0.76rem; line-height: 1.25; }
+/* 1D waagerecht: Das Lineal liegt oben - der Hinweis rutscht an den unteren Rand. */
+.mode-1d:not(.senk) .hint { top: auto; bottom: 7px; }
 .plotWrap { display: grid; grid-template-rows: minmax(0, 1fr) auto; gap: 8px; min-height: 0; min-width: 0; }
 .plotBox { position: relative; min-height: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
 #plots { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; user-select: none; -webkit-user-select: none; }
@@ -512,7 +514,7 @@ details.settings summary.ic { font-size: 1.2rem; }
   <main class="stage">
     <section class="padWrap" aria-label="Aufnahmefeld">
       <canvas id="pad"></canvas>
-      <p class="hint" id="hint">Finger auflegen und bewegen. Aufgezeichnet wird, solange der Finger aufliegt (nur die waagerechte Bewegung zählt).</p>
+      <p class="hint" id="hint">Finger auflegen und waagerecht bewegen – aufgezeichnet wird, solange er aufliegt.</p>
     </section>
     <section class="btPad" id="btPadL" aria-label="Aufnahmefeld links" hidden><canvas id="padL"></canvas></section>
     <div class="split" id="split" role="separator" aria-label="Aufteilung zwischen Zeichenfläche und Diagrammen – ziehen"></div>
@@ -554,7 +556,10 @@ const $ = id => document.getElementById(id);
 const pad = $("pad"), plots = $("plots"), app = $("app");
 const DT = 0.01;            // Abtastraster nach dem Resampling (s)
 const PAD_M = 24;           // Rand im Aufnahmefeld (px)
-const SENK_OBEN = 60, SENK_UNTEN = 58;   // Raender des senkrechten Lineals
+const SENK_OBEN = 60;       // oberer Rand des senkrechten Lineals (Platz fuer den Hinweis)
+/* Unter dem senkrechten Lineal steht nur noch die Null. Legende und Fusszeile gibt es dort
+   nur mit den Vektoren - dann faengt das Lineal entsprechend hoeher an. */
+const senkUnten = () => state.allVec ? 58 : 18;
 
 if (window.parent !== window) document.body.classList.add("imRahmen");
 const isIPad = /iPad/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
@@ -718,7 +723,7 @@ function makeSample() {
   let seed = 7; const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647 - 0.5);
   const noise = 0.6;
   if (state.mode === "1d") {
-    const span = istSenk() ? Math.max(140, r.height - SENK_OBEN - SENK_UNTEN) : wpx;
+    const span = istSenk() ? Math.max(140, r.height - SENK_OBEN - senkUnten()) : wpx;
     const A = 0.68 * span, x0 = 0.1 * span, B = 0.4 * A;
     const T1 = 2.4, P = 0.5, T2 = 1.6, T = T1 + P + T2;
     for (let t = 0; t <= T + 1e-9; t += 1 / 60) {
@@ -752,12 +757,12 @@ function defaults() {
 function padOrigin(w, h) {
   if (state.mode !== "1d") return { x: PAD_M + 6, y: h - PAD_M - 6 };
   /* senkrecht: Lineal links, die Null unten - oben bleibt Platz fuer den Hinweis,
-     unten fuer Legende und Zeile "Punkte im Abstand" (SENK_OBEN / SENK_UNTEN). */
-  if (istSenk()) return { x: 40, y: h - SENK_UNTEN };
-  /* waagerecht: Das Lineal rutscht fast an den unteren Rand - darunter stehen nur noch
-     die Zentimeter. Mit Pfeilen an allen Messpunkten (Spur) bleibt unten Platz fuer den
-     Massstab. Alles Uebrige - Punkte, Pfeile, Koerper - liegt ohnehin ueber dem Lineal. */
-  return { x: PAD_M, y: state.allVec ? Math.max(h * 0.62, h - 78) : h - 34 };
+     unten nur fuer die Null, mit Vektoren auch fuer die Legende (SENK_OBEN / senkUnten). */
+  if (istSenk()) return { x: 40, y: h - senkUnten() };
+  /* waagerecht: Das Lineal liegt oben am Rand. So verdeckt der streichende Finger es nicht,
+     und es bleibt waehrend der Aufnahme zu sehen. Punkte, Pfeile und Koerper haengen
+     darunter, der Hinweis steht am unteren Rand. */
+  return { x: PAD_M, y: Math.round(fs(34)) };
 }
 function addSample(ev) {
   const r = pad.getBoundingClientRect();
@@ -851,19 +856,21 @@ function drawPad() {
       ctx.textBaseline = "bottom"; ctx.fillText("cm", o.x - 4, Math.max(lastLabel - 12, 14));
       ctx.textBaseline = "top";
     } else {
+    /* Striche und Zahlen zeigen nach oben, die Messkante nach unten ins Feld. */
     const xmax = w - PAD_M;
-    ctx.textAlign = "center";
+    ctx.textAlign = "center"; ctx.textBaseline = "bottom";
     let lastLabel = 0;
     for (let k = 0; X(k / (mm ? 10 : 1)) <= xmax + 0.1; k++) {
       const cm = mm ? k / 10 : k, px = X(cm);
       const isCm = mm ? k % 10 === 0 : true, is5 = isCm && Math.round(cm) % 5 === 0;
       const len = is5 ? 14 : isCm ? 9 : 4;
       ctx.lineWidth = is5 ? 1.5 : 1;
-      ctx.beginPath(); ctx.moveTo(px, o.y); ctx.lineTo(px, o.y + len); ctx.stroke();
-      if (is5) { ctx.fillText(String(Math.round(cm)), px, o.y + 17); lastLabel = px; }
+      ctx.beginPath(); ctx.moveTo(px, o.y); ctx.lineTo(px, o.y - len); ctx.stroke();
+      if (is5) { ctx.fillText(String(Math.round(cm)), px, o.y - 16); lastLabel = px; }
     }
     ctx.beginPath(); ctx.moveTo(o.x, o.y); ctx.lineTo(xmax, o.y); ctx.lineWidth = 1.5; ctx.stroke();
-    ctx.textAlign = "left"; ctx.fillText("cm", Math.min(lastLabel + 12, w - 22), o.y + 17);
+    ctx.textAlign = "left"; ctx.fillText("cm", Math.min(lastLabel + 12, w - 22), o.y - 16);
+    ctx.textBaseline = "top";
     }
   } else {
     // Karopapier
@@ -915,14 +922,16 @@ function drawPad() {
   const step = Math.max(1, Math.round(state.strobe / DT));
   const one = state.mode === "1d";
   const lane = one && state.allVec;              // 1D: Punkte zeitlich versetzt nebeneinander
+  /* 1D waagerecht: Unten steht der Hinweis, Legende und Fusszeile rutschen eine Zeile hoch. */
+  const hoch1d = one && !senk;
   /* In 1D liegt die Bewegung auf dem Lineal; quer dazu stehen die Punkte und Pfeile -
-     bei der waagerechten Aufnahme oberhalb, bei der senkrechten rechts davon. d ist
-     dieser Abstand vom Lineal, so gilt derselbe Code fuer beide Richtungen. */
-  const Pp = (cm, d) => senk ? [o.x + d, o.y - cm * ppc] : [o.x + cm * ppc, o.y - d];
-  const dFern = senk ? w - o.x - 26 : o.y - 44;  // Ende der Zeitspur, am weitesten vom Lineal weg
-  const dOf = t => !lane ? 20
-    : senk ? 30 + (t / Math.max(D.T, 0.01)) * (dFern - 30)
-           : dFern + (t / Math.max(D.T, 0.01)) * (26 - dFern);
+     bei der waagerechten Aufnahme darunter, bei der senkrechten rechts davon. d ist
+     dieser Abstand vom Lineal, so gilt derselbe Code fuer beide Richtungen. In 2D zaehlt
+     d nach oben, dort ist es die y-Koordinate. */
+  const Pp = (cm, d) => senk ? [o.x + d, o.y - cm * ppc] : [o.x + cm * ppc, one ? o.y + d : o.y - d];
+  const dNah = senk ? 30 : 26;                   // Anfang der Zeitspur, dicht am Lineal
+  const dFern = senk ? w - o.x - 26 : h - o.y - 56;   // ihr Ende, am weitesten weg
+  const dOf = t => !lane ? 20 : dNah + (t / Math.max(D.T, 0.01)) * (dFern - dNah);
   const ptOf = i => one ? Pp(D.x[i], dOf(D.t[i])) : [X(D.x[i]), Y(D.y[i])];
   const vs = 0.25 * ppc * state.vecScale, as = 0.04 * ppc * state.vecScale; // Pfeil: v · 0,25 s bzw. a · 0,04 s²
   const capF = (dx, dy) => { const l = Math.hypot(dx, dy), m = Math.max(w, h); return l > m ? m / l : 1; };
@@ -950,7 +959,7 @@ function drawPad() {
   for (let i = 0; i < D.N; i += step) { const [px, py] = ptOf(i); ctx.beginPath(); ctx.arc(px, py, step * DT * ppc < 10 ? 2.4 : 3.2, 0, 7); ctx.fill(); }
   /* Unter dem waagerechten Lineal in 1D steht nichts mehr: Der Zeitabstand steht in den
      Einstellungen, der Pfeilmassstab wird nur mit der Spur gebraucht. */
-  const fussAn = !one || senk || lane;
+  const fussAn = !one || lane;
   if (fussAn) {
   ctx.font = `${fs(11)}px ${css("--font-body")}`; ctx.fillStyle = C.muted; ctx.textAlign = "right"; ctx.textBaseline = "bottom";
   /* im schmalen, senkrechten Feld muss die Zeile kurz bleiben */
@@ -958,7 +967,7 @@ function drawPad() {
   const fuss = senk ? `${dt} s je Punkt` + (lane ? ", Zeit nach rechts" : "")
                     : `Punkte im Abstand von ${dt} s` + (lane ? ", Zeit läuft nach unten" : "");
   if (senk) ctx.font = `${passend(ctx, fuss, w - 18, fs(11), css("--font-body"))}px ${css("--font-body")}`;
-  ctx.fillText(fuss, w - 12, senk ? h - 44 : h - 8);
+  ctx.fillText(fuss, w - 12, senk ? h - 44 : hoch1d ? h - 26 : h - 8);
   }
 
   // Körper zum Zeitpunkt des Cursors
@@ -991,7 +1000,7 @@ function drawPad() {
   // Legende mit Pfeilmaßstab - im schmalen, senkrechten Feld untereinander
   if (!fussAn) return;
   ctx.textBaseline = "bottom"; ctx.textAlign = "left";
-  const lyV = senk ? h - 26 : h - 8, lyA = h - 8;
+  const lyV = (senk || hoch1d) ? h - 26 : h - 8, lyA = hoch1d ? h - 26 : h - 8;
   const vTxt = `1 cm ≙ ${fmt(4 / state.vecScale, state.vecScale > 1 ? 1 : 0)} cm/s`;
   const aTxt = `1 cm ≙ ${fmt(25 / state.vecScale, state.vecScale > 2 ? 2 : state.vecScale > 1 ? 1 : 0)} cm/s²`;
   // im schmalen Feld richtet sich die Schriftgroesse nach der laengeren der beiden Zeilen
@@ -2081,7 +2090,7 @@ function updateUI() {
     : istSenk()
     ? "Finger senkrecht bewegen."
     : state.mode === "1d"
-      ? "Finger auflegen und bewegen. Aufgezeichnet wird, solange der Finger aufliegt (nur die waagerechte Bewegung zählt)."
+      ? "Finger auflegen und waagerecht bewegen – aufgezeichnet wird, solange er aufliegt."
       : "Finger auflegen und bewegen. Aufgezeichnet wird, solange der Finger aufliegt.";
   updateStatus(); renderReadout();
 }
