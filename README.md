@@ -2840,11 +2840,12 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     Maßstab der Pfeile steht wieder darunter. In **2D** bleibt alles wie bisher.
   - **Aufteilung im 2D-Modus:** Zwischen Zeichenfläche und Diagrammen liegt ein **Balken mit Griff**,
     den man mit dem Finger **ziehen** kann – nach links und rechts, wenn beide nebeneinander liegen,
-    nach oben und unten im Hochformat. So bekommt mal die Aufnahme, mal die Auswertung mehr Platz.
+    nach oben und unten im Hochformat. Liegt die Zeichenfläche **hinten** (siehe Einstellung oben),
+    zieht man sie vom anderen Rand her auf. So bekommt mal die Aufnahme, mal die Auswertung mehr Platz.
     Ein **Doppeltipp** stellt die Standardaufteilung wieder her; die Einstellung wird mit dem Projekt
     gespeichert.
   - **Waagerecht oder senkrecht (1D):** Der Umschalter **x →** / **y ↑** neben **1D / 2D** legt die
-    Richtung der Aufnahme fest. Bei **x →** liegt das Aufnahmefeld wie bisher **über** den
+    Richtung der Aufnahme fest. Bei **x →** liegt das Aufnahmefeld von Haus aus **über** den
     Diagrammen und das Lineal waagerecht darin; bei **y ↑** steht es **links senkrecht neben** den
     Diagrammen, das Lineal läuft von unten nach oben, und der Finger bewegt sich senkrecht – gut
     für **Fall- und Steigbewegungen**. Die Diagramme heißen dann **y(t), v(t), a(t)**, ebenso die
@@ -2856,15 +2857,23 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     nur mit **Vektoren** stehen Legende und Fußzeile wieder darunter, dann fängt es höher an
     (beide schrumpfen dort so weit, dass sie in die schmale Spalte passen). Eine schon aufgenommene Bewegung bleibt beim Umschalten
     stehen, nur die Beschriftung wechselt.
+  - **Wo das Aufnahmefeld liegt, ist einstellbar** (⚙ **Einstellungen**): **oben bzw. links**,
+    **unten bzw. rechts** oder **automatisch**. Bei **x →** liegt das Feld über oder unter den
+    Diagrammen, bei **y ↑** und in **2D** links oder rechts daneben (im Hochformat darüber oder
+    darunter – dort wandert der Ziehbalken mit). **Automatisch** ist die Voreinstellung: bei
+    **Aufnahme** liegt das Feld davor, im **Ziel**-Modus dahinter, weil dort sonst die Hand auf
+    der Zielkurve liegt. Im **Battle** stehen die beiden Felder immer an den Fensterrändern. Die
+    Wahl merkt sich der Browser (wie der Maßstab) und wird mit dem Projekt gespeichert.
   - **Ziel (1D):** Der Umschalter **Aufnahme / Ziel / Battle** neben **1D / 2D** startet zwei Spiele
     zum Lesen von Diagrammen. Bei **Ziel** wählt man zuerst, **welches Diagramm vorgegeben** wird
     (**x(t)**, **v(t)** oder **a(t)**) und wie lange es dauert (**5, 8, 10, 15, 20, 30 s** oder
     **„frei …"** mit eigener Sekundenzahl bis 300); mit **„✎ zeichnen"** (der Knopf ist dann dunkel
     hervorgehoben)
     zieht man die **Zielkurve freihand** mit dem Finger in dieses Diagramm. Danach versucht man, sie
-    im Aufnahmefeld **nachzufahren**. Dafür rückt das **Aufnahmefeld hinter die Diagramme**: bei
-    **x →** **unter** sie, bei **y ↑** **rechts** daneben – so liegt die **Hand nicht auf der
-    Zielkurve**, die man gerade nachfährt. Um die gestrichelte Zielkurve liegt ein **Trefferband**, und
+    im Aufnahmefeld **nachzufahren**. Dafür rückt das **Aufnahmefeld hinter die Diagramme** – bei
+    **x →** **unter** sie, bei **y ↑** **rechts** daneben –, so liegt die **Hand nicht auf der
+    Zielkurve**, die man gerade nachfährt (in den Einstellungen lässt sich das festlegen).
+    Um die gestrichelte Zielkurve liegt ein **Trefferband**, und
     unter den Diagrammen steht, **wie viel Prozent der Zeit** man darin lag und wie groß die
     **mittlere Abweichung** war. Ist **v(t)** oder **a(t)** vorgegeben, wird es zur eigentlichen
     Denkaufgabe – man muss sich überlegen, **wie man sich bewegen muss**, damit die abgeleitete

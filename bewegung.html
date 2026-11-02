@@ -105,12 +105,19 @@ details.settings summary::-webkit-details-marker { display: none; }
 /* y-Aufnahme: Das Aufnahmefeld steht senkrecht links neben den Diagrammen. */
 .mode-1d.senk .stage { grid-template-columns: minmax(104px, 15%) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }
 .mode-1d.senk.lane .stage { grid-template-columns: minmax(146px, 22%) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }
-/* Ziel: Die Hand soll nicht auf der Zielkurve liegen, die gerade nachgefahren wird -
-   also kommt das Aufnahmefeld hinter die Diagramme: waagerecht darunter, senkrecht
-   rechts daneben. */
-.mode-1d.spiel:not(.battle) .plotWrap { order: -1; }
-.mode-1d.spiel:not(.battle):not(.senk) .stage { grid-template-rows: minmax(0, 1fr) minmax(120px, 18%); }
-.mode-1d.spiel.senk:not(.battle) .stage { grid-template-columns: minmax(0, 1fr) minmax(104px, 15%); }
+/* Wo das Aufnahmefeld liegt, sagt die Einstellung (state.padPos): "hinter den Diagrammen"
+   heisst unten (waagerechte Aufnahme) bzw. rechts (senkrechte Aufnahme und 2D). Von Haus aus
+   liegt es davor; im Ziel-Modus rueckt es automatisch dahinter, damit die Hand nicht auf der
+   Zielkurve liegt, die gerade nachgefahren wird. Im Battle gilt das nicht - dort stehen
+   ohnehin beide Felder an den Fensterraendern. */
+/* Die Reihenfolge muss vollstaendig sein: In 2D liegt zwischen beiden noch der Teiler,
+   sonst rutschte er in die Spur des Aufnahmefeldes. */
+.padHinten .plotWrap { order: 1; } .padHinten .split { order: 2; } .padHinten .padWrap { order: 3; }
+.mode-1d.padHinten:not(.senk) .stage { grid-template-rows: minmax(0, 1fr) minmax(120px, 18%); }
+.mode-1d.padHinten.lane:not(.senk) .stage { grid-template-rows: minmax(0, 1fr) minmax(260px, 50%); }
+.mode-1d.padHinten.senk .stage { grid-template-columns: minmax(0, 1fr) minmax(104px, 15%); }
+.mode-1d.padHinten.senk.lane .stage { grid-template-columns: minmax(0, 1fr) minmax(146px, 22%); }
+.mode-2d.padHinten .stage { grid-template-columns: minmax(90px, 1fr) 6px minmax(90px, var(--split, 44%)); }
 /* Battle: je ein Aufnahmefeld am linken und am rechten Fensterrand, Diagramme dazwischen */
 .mode-1d.battle .stage { grid-template-columns: minmax(104px, 14%) minmax(0, 1fr) minmax(104px, 14%); grid-template-rows: minmax(0, 1fr); }
 .mode-1d.battle .padWrap { display: none; }
@@ -121,6 +128,8 @@ details.settings summary::-webkit-details-marker { display: none; }
 .app.spiel .nurAufnahme { display: none; }
 @media (orientation: portrait) {
   .mode-2d .stage { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(120px, var(--split, 40%)) 6px minmax(0, 1fr); gap: 4px 10px; }
+  /* im Hochformat liegen sie uebereinander - "hinter den Diagrammen" heisst dann unten */
+  .mode-2d.padHinten .stage { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) 6px minmax(120px, var(--split, 40%)); }
   .mode-2d .split { cursor: row-resize; }
   .mode-2d .split::before { width: 44px; height: 3px; }
   .mode-2d .split::after { inset: -9px 0; }
@@ -191,10 +200,12 @@ details.settings summary.ic { font-size: 1.2rem; }
   .mode-1d.senk .stage { grid-template-columns: minmax(96px, 24%) minmax(0, 1fr); grid-template-rows: 560px; }
   .mode-1d.battle .stage { grid-template-columns: minmax(84px, 1fr) minmax(0, 1.8fr) minmax(84px, 1fr); grid-template-rows: 560px; }
   .mode-1d.senk.lane .stage { grid-template-columns: minmax(130px, 32%) minmax(0, 1fr); grid-template-rows: 560px; }
-  .mode-1d.spiel:not(.battle):not(.senk) .stage { grid-template-rows: 560px 200px; }
-  .mode-1d.spiel.senk:not(.battle) .stage { grid-template-columns: minmax(0, 1fr) minmax(96px, 24%); }
+  .mode-1d.padHinten:not(.senk) .stage { grid-template-columns: minmax(0, 1fr); grid-template-rows: 560px 200px; }
+  .mode-1d.padHinten.senk .stage { grid-template-columns: minmax(0, 1fr) minmax(96px, 24%); }
+  .mode-1d.padHinten.senk.lane .stage { grid-template-columns: minmax(0, 1fr) minmax(130px, 32%); }
   /* schmales Fenster: alles untereinander mit fester Hoehe - da gibt es nichts zu teilen */
   .mode-2d .stage { grid-template-rows: 300px 560px; }
+  .mode-2d.padHinten .stage { grid-template-columns: minmax(0, 1fr); grid-template-rows: 560px 300px; }
   .mode-2d .split { display: none; }
   .slider input { width: 100px; }
 }
@@ -477,6 +488,14 @@ details.settings summary.ic { font-size: 1.2rem; }
             <input type="number" id="ppc" min="10" max="200" step="0.1" value="52">
           </label>
           <p>iPad: ca. 52 px/cm (iPad mini ca. 64). Prüfe mit einem Lineal, ob die Skala im Aufnahmefeld echte Zentimeter zeigt, und passe den Wert an.</p>
+          <label for="padPos">Wo das Aufnahmefeld liegt
+            <select id="padPos">
+              <option value="auto">automatisch</option>
+              <option value="vor">oben bzw. links</option>
+              <option value="hinter">unten bzw. rechts</option>
+            </select>
+          </label>
+          <p>Bei <b>x →</b> liegt das Feld über oder unter den Diagrammen, bei <b>y ↑</b> und in <b>2D</b> links oder rechts daneben (im Hochformat darüber oder darunter). <b>Automatisch</b> heißt: bei <b>Aufnahme</b> davor, im <b>Ziel</b>-Modus dahinter – dort liegt die Hand sonst auf der Zielkurve. Im <b>Battle</b> stehen die beiden Felder immer an den Fensterrändern.</p>
           <label for="strobe">Zeitabstand der Messpunkte im Aufnahmefeld
             <select id="strobe">
               <option value="0.02">0,02 s</option>
@@ -571,9 +590,13 @@ const senkUnten = () => state.allVec ? 58 : 18;
 
 if (window.parent !== window) document.body.classList.add("imRahmen");
 const isIPad = /iPad/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-let savedPpc = null;
+let savedPpc = null, savedPadPos = null;
 try { savedPpc = parseFloat(localStorage.getItem("bwd-ppc")); } catch (e) {}
+/* Wo das Aufnahmefeld liegt, ist Geschmack und haengt am Geraet - darum merkt es sich der
+   Browser, wie den Massstab. */
+try { savedPadPos = localStorage.getItem("bwd-padpos"); } catch (e) {}
 
+const PADPOS = ["auto", "vor", "hinter"];
 const state = {
   mode: "1d", comp: "xy", sigma: 60,
   achse: "x",           // 1D: waagerechte (x) oder senkrechte (y) Aufnahme
@@ -595,9 +618,13 @@ const state = {
      "battle" = zwei Felder an den Fensterraendern, Start per Countdown */
   spiel: "aus", zielTyp: "x", zielT: 5, zielFrei: false, ziel: null, zeichnen: false, zielNote: "",
   split: 44,            // 2D: wie viel Prozent der Buehne die Zeichenflaeche bekommt
+  /* Platz des Aufnahmefeldes: "vor" den Diagrammen (oben bzw. links), "hinter" ihnen
+     (unten bzw. rechts) oder "auto" - dann rueckt es im Ziel-Modus von selbst dahinter. */
+  padPos: PADPOS.indexOf(savedPadPos) >= 0 ? savedPadPos : "auto",
   fs: 1,                // Schriftgröße in den Diagrammen (A− / A+)
 };
 $("ppc").value = state.ppc;
+$("padPos").value = state.padPos;
 let D = null;
 
 // ---------- Hilfen ----------
@@ -1063,16 +1090,22 @@ function splitSetzen(v) {
   el.addEventListener("pointerdown", e => {
     e.preventDefault();
     try { el.setPointerCapture(e.pointerId); } catch (err) {}
-    /* liegen Zeichenflaeche und Diagramme nebeneinander oder uebereinander? */
-    const waag = plots.getBoundingClientRect().left > pad.getBoundingClientRect().left + 5;
-    zieh = { id: e.pointerId, r: stage.getBoundingClientRect(), waag };
+    /* Liegen Zeichenflaeche und Diagramme nebeneinander oder uebereinander? Der Balken
+       selbst sagt es: nebeneinander ist er hoch und schmal. Und liegt die Zeichenflaeche
+       hinten, zaehlt der Abstand vom anderen Rand. */
+    const b = el.getBoundingClientRect();
+    zieh = { id: e.pointerId, r: stage.getBoundingClientRect(), waag: b.height > b.width,
+             hinten: app.classList.contains("padHinten") };
     el.classList.add("zieht");
   });
   el.addEventListener("pointermove", e => {
     if (!zieh || zieh.id !== e.pointerId) return;
     e.preventDefault();
     const r = zieh.r;
-    splitSetzen(zieh.waag ? (e.clientX - r.left) / r.width * 100 : (e.clientY - r.top) / r.height * 100);
+    const anteil = zieh.waag
+      ? (zieh.hinten ? r.right - e.clientX : e.clientX - r.left) / r.width
+      : (zieh.hinten ? r.bottom - e.clientY : e.clientY - r.top) / r.height;
+    splitSetzen(anteil * 100);
     requestDraw();
   });
   const los = e => {
@@ -1097,6 +1130,9 @@ const BT_OBEN = 52, BT_UNTEN = 34;                  // Raender des Lineals im Ba
 const ZIEL_KLEIN = { x: 0.4, v: 1.5, a: 5 };        // kleinstes Trefferband je Groesse
 const EINH = { x: "cm", v: "cm/s", a: "cm/s²" };
 const spielAn = () => state.mode === "1d" && state.spiel !== "aus";
+/* Liegt das Aufnahmefeld hinter den Diagrammen? Im Ziel-Modus von Haus aus ja. */
+const padHinten = () => state.padPos === "hinter"
+  || (state.padPos === "auto" && state.mode === "1d" && state.spiel === "ziel");
 const battleAn = () => state.mode === "1d" && state.spiel === "battle";
 const zielKey = typ => typ === "x" ? "x" : typ === "v" ? "vx" : "ax";
 const zielName = typ => (typ === "x" ? sym1d() : typ) + "(t)";
@@ -2111,6 +2147,7 @@ function updateUI() {
   app.classList.toggle("senk", istSenk() && !battleAn());
   app.classList.toggle("battle", battleAn());
   app.classList.toggle("spiel", spielAn());
+  app.classList.toggle("padHinten", padHinten() && !battleAn());
   $("achsSeg").hidden = state.mode !== "1d" || battleAn();
   $("spielSeg").hidden = state.mode !== "1d";
   document.querySelectorAll("#spielSeg button").forEach(b =>
@@ -2262,6 +2299,19 @@ $("undo").addEventListener("click", () => {
   state.prev = cur;
   process(); updateUI(); requestDraw();
 });
+/* Das Feld wechselt die Seite: Die Buehne muss erst umbrechen, danach misst die
+   Beispielaufnahme neu - sie richtet sich nach der Laenge des Feldes. */
+$("padPos").addEventListener("change", e => {
+  const v = e.target.value;
+  if (PADPOS.indexOf(v) < 0) { e.target.value = state.padPos; return; }
+  state.padPos = v;
+  try { localStorage.setItem("bwd-padpos", v); } catch (err) {}
+  updateUI();
+  requestAnimationFrame(() => {
+    if (state.sample) makeSample(); else process();
+    updateUI(); draw();
+  });
+});
 $("ppc").addEventListener("change", e => {
   const v = parseFloat(String(e.target.value).replace(",", "."));
   if (!(v > 5 && v < 400)) { e.target.value = state.ppc; return; }
@@ -2341,7 +2391,7 @@ function zustand() {
     ppc: state.ppc, strobe: state.strobe, allVec: state.allVec, tab: state.tab,
     vecSel: state.vecSel, vecScale: state.vecScale, fs: state.fs,
     spiel: state.spiel, zielTyp: state.zielTyp, zielT: state.zielT, zielFrei: !!state.zielFrei,
-    split: state.split,
+    split: state.split, padPos: state.padPos,
     /* die Zielkurve nur in Zehntelsekunden: auf dem Rechenraster waeren es bei 30 s
        dreitausend Zahlen - zu viel fuer den QR-Code beim Teilen */
     ziel: state.ziel ? { typ: state.ziel.typ, T: state.ziel.T, tol: r3(state.ziel.tol), dt: 0.1,
@@ -2384,6 +2434,7 @@ function uebernimm(d) {
   if (typeof d.zielT === "number" && d.zielT > 0) state.zielT = d.zielT;
   state.zielFrei = !!d.zielFrei;
   if (typeof d.split === "number" && d.split >= 15 && d.split <= 85) state.split = d.split;
+  if (PADPOS.indexOf(d.padPos) >= 0) state.padPos = d.padPos;
   if (d.ziel && Array.isArray(d.ziel.v) && d.ziel.v.length > 2) {
     const typ = d.ziel.typ || "x", T = +d.ziel.T || state.zielT;
     const v = zielFein(d.ziel.v.map(Number), +d.ziel.dt || DT, T);
@@ -2413,6 +2464,7 @@ function uebernimm(d) {
   $("smooth").value = state.sigma;
   $("smoothOut").textContent = state.sigma === 0 ? "aus" : state.sigma + " ms";
   $("ppc").value = state.ppc;
+  $("padPos").value = state.padPos;
   $("strobe").value = String(state.strobe);
   $("vecSel").value = state.vecSel;
   $("vecScale").value = String(state.vecScale);
