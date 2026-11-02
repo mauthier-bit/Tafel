@@ -2823,6 +2823,12 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   (Maßstab in den Einstellungen, iPad ca. 52 px/cm); solange der Finger aufliegt, wird aufgezeichnet,
   beim Abheben ist die Aufnahme fertig. **1D** nimmt nur die waagerechte Bewegung (Messstreifen),
   **2D** die ganze Bahn in der Ebene – dann lassen sich **x**, **y** oder **x + y** zeigen.
+  - **Ein ruhender Finger wird mit aufgezeichnet:** Bleibt der Finger liegen, ohne sich zu bewegen,
+    **läuft die Zeit weiter** – und mit ihr das Diagramm: x(t) wächst als **waagerechte Linie**,
+    v(t) liegt auf der **t-Achse**. Vorher blieb die Aufnahme in so einer Pause einfach stehen, weil
+    nur Bewegungen gemeldet werden; jetzt misst das Werkzeug in der Pause selbst nach. Das zählt
+    besonders bei **Ziel und Battle**: Wer an der richtigen Stelle **wartet**, bekommt die Zeit
+    jetzt als **Treffer** gutgeschrieben statt als Lücke.
   - **Das Lineal liegt oben (1D, waagerecht):** Es klebt am **oberen Rand** des Aufnahmefeldes, mit
     den **Zahlen darüber** und der Messkante nach unten – so **verdeckt der streichende Finger es
     nicht**, und man sieht während der Aufnahme, wo der Körper gerade steht. Messpunkte, Pfeile und
@@ -2856,7 +2862,9 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     **„frei …"** mit eigener Sekundenzahl bis 300); mit **„✎ zeichnen"** (der Knopf ist dann dunkel
     hervorgehoben)
     zieht man die **Zielkurve freihand** mit dem Finger in dieses Diagramm. Danach versucht man, sie
-    im Aufnahmefeld **nachzufahren**: Um die gestrichelte Zielkurve liegt ein **Trefferband**, und
+    im Aufnahmefeld **nachzufahren**. Dafür rückt das **Aufnahmefeld hinter die Diagramme**: bei
+    **x →** **unter** sie, bei **y ↑** **rechts** daneben – so liegt die **Hand nicht auf der
+    Zielkurve**, die man gerade nachfährt. Um die gestrichelte Zielkurve liegt ein **Trefferband**, und
     unter den Diagrammen steht, **wie viel Prozent der Zeit** man darin lag und wie groß die
     **mittlere Abweichung** war. Ist **v(t)** oder **a(t)** vorgegeben, wird es zur eigentlichen
     Denkaufgabe – man muss sich überlegen, **wie man sich bewegen muss**, damit die abgeleitete
@@ -2921,6 +2929,15 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     steigt, und **orange**, wo es rückwärts geht bzw. fällt. Was am **Vorzeichen von a** hängt
     (Krümmung von x(t), Monotonie von v(t), Vorzeichen von a(t)), ist **grün** und **rot**. Die
     zugehörigen Knöpfe sind halb in der einen, halb in der anderen Farbe.
+
+    **Grau heißt null.** Liegt die abgelesene Kurve ein Stück weit **auf der t-Achse**, wird dieser
+    Abschnitt **grau** – Kurve und Zeichenfläche. Das ist der Fall, wenn **v = 0** ist (x bleibt
+    konstant, der Körper steht) oder **a = 0** (v bleibt konstant, x(t) ist dort eine **Gerade**).
+    Im Streifen steht dann **→ konstant**, **0 ≈ 0** bzw. **– gerade**. Gemessen wird am Bild: Was
+    im Diagramm **nicht sichtbar von der Achse abhebt** (etwa ein Zwanzigstel der Höhe) und
+    mindestens **0,3 s** so bleibt, gilt als null; ein kurzer **Nulldurchgang** bleibt dagegen ein
+    Durchgang. Zappelt a(t) über das ganze Diagramm, wird nichts grau – dann hilft mehr
+    **Glättung**.
 
     Gefärbt wird dabei dreifach: die **ganze Zeichenfläche** des Diagramms liegt im Intervall in der
     blassen Farbe, die **Kurve selbst** wechselt an der Grenze die Farbe, und unten steht der

@@ -105,6 +105,12 @@ details.settings summary::-webkit-details-marker { display: none; }
 /* y-Aufnahme: Das Aufnahmefeld steht senkrecht links neben den Diagrammen. */
 .mode-1d.senk .stage { grid-template-columns: minmax(104px, 15%) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }
 .mode-1d.senk.lane .stage { grid-template-columns: minmax(146px, 22%) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }
+/* Ziel: Die Hand soll nicht auf der Zielkurve liegen, die gerade nachgefahren wird -
+   also kommt das Aufnahmefeld hinter die Diagramme: waagerecht darunter, senkrecht
+   rechts daneben. */
+.mode-1d.spiel:not(.battle) .plotWrap { order: -1; }
+.mode-1d.spiel:not(.battle):not(.senk) .stage { grid-template-rows: minmax(0, 1fr) minmax(120px, 18%); }
+.mode-1d.spiel.senk:not(.battle) .stage { grid-template-columns: minmax(0, 1fr) minmax(104px, 15%); }
 /* Battle: je ein Aufnahmefeld am linken und am rechten Fensterrand, Diagramme dazwischen */
 .mode-1d.battle .stage { grid-template-columns: minmax(104px, 14%) minmax(0, 1fr) minmax(104px, 14%); grid-template-rows: minmax(0, 1fr); }
 .mode-1d.battle .padWrap { display: none; }
@@ -185,6 +191,8 @@ details.settings summary.ic { font-size: 1.2rem; }
   .mode-1d.senk .stage { grid-template-columns: minmax(96px, 24%) minmax(0, 1fr); grid-template-rows: 560px; }
   .mode-1d.battle .stage { grid-template-columns: minmax(84px, 1fr) minmax(0, 1.8fr) minmax(84px, 1fr); grid-template-rows: 560px; }
   .mode-1d.senk.lane .stage { grid-template-columns: minmax(130px, 32%) minmax(0, 1fr); grid-template-rows: 560px; }
+  .mode-1d.spiel:not(.battle):not(.senk) .stage { grid-template-rows: 560px 200px; }
+  .mode-1d.spiel.senk:not(.battle) .stage { grid-template-columns: minmax(0, 1fr) minmax(96px, 24%); }
   /* schmales Fenster: alles untereinander mit fester Hoehe - da gibt es nichts zu teilen */
   .mode-2d .stage { grid-template-rows: 300px 560px; }
   .mode-2d .split { display: none; }
@@ -579,7 +587,7 @@ const state = {
   sample: true, prev: null,
   cursor: null, pins: [], interval: null,
   ppc: savedPpc && savedPpc > 5 ? savedPpc : (isIPad ? 52 : 37.8),
-  recording: false, recId: null, t0: 0,
+  recording: false, recId: null, t0: 0, tOff: 0,
   playing: false, speed: 1,
   strobe: 0.1, allVec: false, vecSel: "va", vecScale: 1,
   tab: false,                 // Ablesetabelle unter den Diagrammen - sie kostet Platz und ist selten noetig
@@ -772,11 +780,34 @@ function addSample(ev) {
     ? { t, x: o.y - (ev.clientY - r.top), y: 0 }     // senkrecht: die Hoehe ist die Groesse
     : { t, x: ev.clientX - r.left - o.x, y: o.y - (ev.clientY - r.top) };
   if (state.mode === "1d") p.y = 0;
+  /* Punkte, die die Ruheschleife an der letzten Stelle angehaengt hat, weichen einer
+     echten Messung - sonst verwirft die Zeitpruefung darunter die erste Bewegung danach. */
+  while (state.raw.length > 1 && state.raw[state.raw.length - 1].ruht
+         && state.raw[state.raw.length - 1].t > t) state.raw.pop();
   const last = state.raw[state.raw.length - 1];
   if (last && t < last.t) return;
-  if (last && t - last.t < 0.0005) { last.x = p.x; last.y = p.y; return; }
+  if (last && t - last.t < 0.0005) { last.x = p.x; last.y = p.y; last.ruht = false; return; }
   state.raw.push(p);
 }
+/* Der Finger darf ruhen - dann kommt kein pointermove mehr, die Zeit laeuft aber weiter.
+   Diese Schleife haengt deshalb waehrend der Aufnahme selbst Punkte an der letzten Stelle
+   an: x(t) laeuft waagerecht weiter, v(t) liegt auf der Achse. Zieht der Finger wieder,
+   uebernehmen die echten Messungen (siehe addSample). */
+const RUHE = 0.05;                 // nach dieser Pause ohne Bewegung selbst messen (s)
+let rafRuhe = 0;
+function ruheLoop() {
+  rafRuhe = 0;
+  if (!state.recording) return;
+  rafRuhe = requestAnimationFrame(ruheLoop);
+  const last = state.raw[state.raw.length - 1];
+  if (!last) return;
+  const t = (performance.now() - state.tOff - state.t0) / 1000;
+  if (t - last.t < RUHE) return;
+  state.raw.push({ t, x: last.x, y: last.y, ruht: true });
+  process(); updateStatus(); requestDraw();
+}
+const ruheStart = () => { if (!rafRuhe) rafRuhe = requestAnimationFrame(ruheLoop); };
+const ruheStopp = () => { cancelAnimationFrame(rafRuhe); rafRuhe = 0; };
 pad.addEventListener("pointerdown", e => {
   if (state.recording) return;
   e.preventDefault();
@@ -784,8 +815,12 @@ pad.addEventListener("pointerdown", e => {
   try { pad.setPointerCapture(e.pointerId); } catch (err) {}
   state.prev = { raw: state.raw, sample: state.sample, cursor: state.cursor, pins: state.pins, interval: state.interval, mode: state.mode };
   state.raw = []; state.recording = true; state.recId = e.pointerId; state.t0 = e.timeStamp;
+  /* Die Ruheschleife misst die Zeit mit performance.now(); zaehlt e.timeStamp im Browser
+     von einem anderen Nullpunkt, steht der Abstand hier. */
+  state.tOff = performance.now() - e.timeStamp;
   state.cursor = null; state.pins = [];
   addSample(e);
+  ruheStart();
   $("hint").hidden = true;
   updateStatus(); requestDraw();
 });
@@ -799,7 +834,7 @@ pad.addEventListener("pointermove", e => {
 function endRec(e) {
   if (!state.recording || e.pointerId !== state.recId) return;
   addSample(e);
-  state.recording = false;
+  state.recording = false; ruheStopp();
   const T = state.raw.length ? state.raw[state.raw.length - 1].t : 0;
   if (T < 0.2 || state.raw.length < 4) {
     // nur angetippt: alte Aufnahme behalten
@@ -1378,10 +1413,17 @@ function ivEps(arr) {
   for (const v of arr) { const b = Math.abs(v); if (b > m) m = b; }
   return m * 0.04;
 }
+/* Nullband: Hier geht es nicht um das Zittern dicht an einem Vorzeichenwechsel, sondern
+   um Abschnitte, in denen die Kurve wirklich auf der t-Achse liegt - v = 0 (x konstant)
+   oder a = 0 (v konstant, x eine Gerade). Gemessen wird am gezeichneten Diagramm: Was im
+   Bild nicht von der Achse abhebt - etwa ein Zwanzigstel der Hoehe -, gilt als null.
+   Eine verwackelte Aufnahme, deren a(t) das ganze Diagramm ausfuellt, wird dadurch nicht
+   grau; dort hilft nur mehr Glaettung. */
+const ivNull = q => (q.hi - q.lo) * 0.05;
 /* Die Abschnitte gleichen Vorzeichens einer Kurve. Die Grenze liegt dort, wo die Kurve
    wirklich durch null geht (Hoch-, Tief- oder Wendepunkt), nicht dort, wo sie das
    Totband verlaesst. Abschnitte unter "kurz" Sekunden gehoeren zum Nachbarn. */
-function vzStuecke(arr, tArr, eps, kurz) {
+function vzStuecke(arr, tArr, eps, kurz, eps0, nullMin) {
   const n = arr.length;
   if (n < 2) return [];
   const sg = new Int8Array(n);
@@ -1390,6 +1432,18 @@ function vzStuecke(arr, tArr, eps, kurz) {
   let k = 0; while (k < n && !sg[k]) k++;
   if (k === n) return [{ a: tArr[0], b: tArr[n - 1], s: 0 }];
   for (let i = 0; i < k; i++) sg[i] = sg[k];
+  /* Bleibt die Kurve lange genug im Nullband, liegt sie dort auf der t-Achse: ein eigener
+     Abschnitt mit Vorzeichen 0, grau gefaerbt. Kurze Durchgaenge bleiben Durchgaenge. */
+  if (eps0 > 0) {
+    const ruhe = new Uint8Array(n);
+    for (let i = 0; i < n; i++) {
+      if (Math.abs(arr[i]) >= eps0) continue;
+      let j = i; while (j + 1 < n && Math.abs(arr[j + 1]) < eps0) j++;
+      if (tArr[j] - tArr[i] >= nullMin) for (let m = i; m <= j; m++) ruhe[m] = 1;
+      i = j;
+    }
+    for (let i = 0; i < n; i++) if (ruhe[i]) sg[i] = 0;
+  }
   const nulls = i => {                       // Nullstelle zwischen Messpunkt i und i+1
     const u = arr[i], v = arr[i + 1], r = u === v ? 0.5 : u / (u - v);
     return tArr[i] + (tArr[i + 1] - tArr[i]) * r;
@@ -1404,7 +1458,9 @@ function vzStuecke(arr, tArr, eps, kurz) {
   const out = [{ s: sg[0], a: tArr[0], b: tArr[n - 1] }];
   for (let i = 1; i < n; i++) {
     if (sg[i] === sg[i - 1]) continue;
-    const t = grenze(i);
+    /* An eine Ruhe grenzt kein Nulldurchgang: dort liegt die Grenze, wo die Kurve das
+       Nullband verlaesst bzw. betritt. */
+    const t = (!sg[i] || !sg[i - 1]) ? (tArr[i - 1] + tArr[i]) / 2 : grenze(i);
     out[out.length - 1].b = t;
     out.push({ s: sg[i], a: t, b: tArr[n - 1] });
   }
@@ -1424,7 +1480,7 @@ function vzStuecke(arr, tArr, eps, kurz) {
 function ivSammeln(P, comps) {
   const out = [];
   if (!D) return out;
-  const kurz = Math.max(0.1, D.T * 0.03);
+  const kurz = Math.max(0.1, D.T * 0.03), nullMin = Math.max(kurz, 0.3);
   P.forEach((p, i) => {
     if (!p.an) return;
     let reihe = 0; const hat = {};
@@ -1434,7 +1490,8 @@ function ivSammeln(P, comps) {
       comps.forEach((c, ci) => {
         const arr = D[q.key(c)], haupt = !hat[c];
         hat[c] = true;
-        out.push({ p, q, art, c, ci, anz: comps.length, reihe, haupt, st: vzStuecke(arr, D.t, ivEps(arr), kurz) });
+        out.push({ p, q, art, c, ci, anz: comps.length, reihe, haupt,
+                   st: vzStuecke(arr, D.t, ivEps(arr), kurz, ivNull(q), nullMin) });
       });
       reihe++;
     });
@@ -1457,8 +1514,7 @@ function ivMalen(ctx, liste, tx, C, clip, teil) {
          lagen zwei verschiedene Einteilungen uebereinander. */
       if (!o.haupt || zwei) return;
       o.st.forEach(r => {
-        if (!r.s) return;
-        ctx.fillStyle = alpha(ivFarbe(o, r.s, C), 0.13);
+        ctx.fillStyle = alpha(ivFarbe(o, r.s, C), r.s ? 0.13 : 0.16);
         ctx.fillRect(tx(r.a), p.top, Math.max(1, tx(r.b) - tx(r.a)), layout.ph);
       });
       return;
