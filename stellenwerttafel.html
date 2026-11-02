@@ -23,6 +23,9 @@
   .dc.fest{cursor:pointer;}
   .dc.rundS{background:#ebdcff;box-shadow:inset 0 0 0 2px #7c3aed;color:#5b21b6;font-weight:700;}
   .rval i{font-style:normal;color:#7c3aed;}
+  /* Zehnerpotenz: Die angetippte Stelle wird zur Einerstelle - gelb statt lila */
+  .dc.zpS{background:#fff3bf;box-shadow:inset 0 0 0 2px #eab308;color:#854d0e;font-weight:700;}
+  .rval u{text-decoration:none;color:#a16207;font-weight:800;}
   #tafelWrap{flex:1;min-height:0;overflow:auto;}
   #tafel{display:inline-flex;flex-direction:column;min-width:100%;}
   .row{display:flex;align-items:stretch;}
@@ -250,6 +253,7 @@
     <button class="tbtn" id="t-misch" title="Wert zusätzlich in gemischten Einheiten zeigen (z. B. 1 h 30 min)">gemischte Einheiten</button>
     <button class="tbtn" id="t-pct" title="Zweites Komma an der Hundertstel-Stelle → Prozent-Darstellung" style="display:none">%-Komma</button>
     <button class="tbtn" id="t-rund" title="Runden: Die Ziffern bleiben stehen; tippe die Stelle an, auf die gerundet werden soll – sie wird lila und rechts steht der gerundete Wert mit ≈">Runden</button>
+    <button class="tbtn" id="t-zp" title="Zehnerpotenz: Tippe die Stelle an, die als Einerstelle gelten soll – sie wird gelb und der Wert steht als Zahl mal Zehnerpotenz">Zehnerpotenz</button>
     <button class="tbtn" id="t-null" title="In jede leere Stelle eine Null schreiben – nötige Nullen (Platzhalter) schwarz, überflüssige (vorn und hinten) grau">Nullen ergänzen</button>
     <button class="tbtn" id="t-bruch" title="Zahl als Bruch – Nenner = markierte Stelle (Stelle vorher antippen)" style="display:none">Bruch</button>
     <button class="tbtn" id="bHelp" title="Kurzanleitung ein-/ausblenden" style="border-radius:50%;width:28px;padding:0">?</button>
@@ -276,7 +280,7 @@ const UNITS={
 };
 const DEFIDX={ laenge:3, flaeche:3, volumen:0, masse:1, zeit:1, zahl:6 };   // m / m² / m³ / kg / h / Einer (Komma fest)
 const ZEIT_H=[8640000,360000,6000,100,10,1];        /* Hundertstelsekunden je Einheit – ganzzahlig rechnen */
-let data={ type:'laenge', unitIndex:3, rows:[{dig:{}}], fontSize:22, pct:false, mark:null, bruch:false, misch:false, nullen:false, runden:false, rund:null };
+let data={ type:'laenge', unitIndex:3, rows:[{dig:{}}], fontSize:22, pct:false, mark:null, bruch:false, misch:false, nullen:false, runden:false, rund:null, zehner:false, zp:null };
 const EIDX=UNITS.zahl.findIndex(u=>u[0]==='E');   // Einer-Stelle
 const HILFE0=$('swHelp').textContent;              // der Hinweis, solange nicht gerundet wird
 const PCT_IDX=UNITS.zahl.findIndex(u=>u[0]==='h');   // Hundertstel-Stelle = Prozent-Komma
@@ -327,9 +331,10 @@ function zellenMalen(){ document.querySelectorAll('.dc').forEach(inp=>{ const rw
   const c=+inp.dataset.c, eigen=rw.dig[c];
   inp.classList.toggle('null0',!eigen&&!!data.nullen);
   inp.classList.toggle('unnoetig',!eigen&&!!data.nullen&&!nullNoetig(rw.dig,c));
-  inp.classList.toggle('fest',!!data.runden);
+  inp.classList.toggle('fest',fest());
   inp.classList.toggle('rundS',!!data.runden&&data.rund===c);
-  inp.readOnly=!!data.runden;
+  inp.classList.toggle('zpS',!!data.zehner&&data.zp===c);
+  inp.readOnly=fest();
   if(!eigen) inp.value=data.nullen?'0':''; }); }
 /* Runden auf die angetippte Stelle. Die Ziffern selbst bleiben stehen - gerundet wird nur
    der Wert rechts. Ab der Stelle dahinter wird abgeschnitten, bei 5 und mehr aufgerundet;
@@ -355,6 +360,22 @@ function rundWert(dig){ if(data.type==='zeit'){ let hs=0; UNITS.zeit.forEach((u,
     return String(Math.round(g/ZEIT_H[data.unitIndex]*100000)/100000).replace('.',','); }
   const r=rundZiffern(dig); return wertAusZiffern(r.arr,r.ueber,data.unitIndex); }
 const rundAn=()=>!!data.runden&&data.rund!==null;
+/* Zehnerpotenz: Die angetippte Stelle ist die Einerstelle der Zahl vor dem Mal-Punkt; der
+   Hochzahl sagt, um wie viele Stellen sie von der Einerstelle der gewaehlten Einheit weg
+   liegt (1,76 m mit dm als Einerstelle: 17,6 · 10⁻¹ m). Die Zeit rechnet nicht in Zehnern -
+   dort gibt es den Knopf nicht. */
+const HZ={'-':'⁻','0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹'};
+const hochZahl=k=>String(k).split('').map(z=>HZ[z]||z).join('');
+function kommaSpalte(){ const units=UNITS[data.type]; let k=0; for(let ui=0;ui<=data.unitIndex;ui++) k+=units[ui][1]; return k; }
+function wertAbSpalte(dig,c){ const n=spalten(); let intP='',fracP='';
+  for(let i=0;i<n;i++){ const d=dig[i]||'0'; if(i<=c) intP+=d; else fracP+=d; }
+  intP=intP.replace(/^0+(?=\d)/,''); if(intP==='')intP='0'; fracP=fracP.replace(/0+$/,'');
+  return intP+(fracP?(','+fracP):''); }
+function zehnerText(dig){ const k=(kommaSpalte()-1)-data.zp;
+  return wertAbSpalte(dig,data.zp)+' <u>· 10'+hochZahl(k)+'</u>'; }
+const zehnerAn=()=>!!data.zehner&&data.zp!==null&&data.type!=='zeit';
+/* Beim Runden und bei der Zehnerpotenz bleiben die Ziffern, wie sie sind. */
+const fest=()=>!!data.runden||!!data.zehner;
 /* Einheiten mit festem Wertebereich (Zeit: Minuten und Sekunden nur 0…59) */
 const MAXG={ zeit:{ 2:{max:59,name:'Minuten',hin:'60 Minuten sind 1 Stunde'}, 3:{max:59,name:'Sekunden',hin:'60 Sekunden sind 1 Minute'} } };
 function grenze(ui){ const m=MAXG[data.type]; return (m&&m[ui])?m[ui]:null; }
@@ -366,8 +387,12 @@ function render(){ applyFont();
   const isZ=data.type==='zahl'; $('t-pct').style.display=isZ?'':'none'; $('t-pct').classList.toggle('on',isZ&&!!data.pct); const showPct=isZ&&!!data.pct;
   $('t-null').classList.toggle('on',!!data.nullen);
   $('t-rund').classList.toggle('on',!!data.runden);
+  $('t-zp').style.display=(data.type==='zeit')?'none':'';
+  $('t-zp').classList.toggle('on',!!data.zehner);
   $('swHelp').textContent=data.runden
     ? 'Runden: Tippe die Stelle an, auf die gerundet werden soll – sie wird lila, rechts steht der gerundete Wert. Eintippen geht erst wieder, wenn Runden aus ist.'
+    : data.zehner
+    ? 'Zehnerpotenz: Tippe die Stelle an, die als Einerstelle gelten soll – sie wird gelb, rechts steht die Zahl mal Zehnerpotenz. Eintippen geht erst wieder, wenn Zehnerpotenz aus ist.'
     : HILFE0;
   $('t-bruch').style.display=(isZ&&data.mark!==null)?'':'none'; $('t-bruch').classList.toggle('on',isZ&&!!data.bruch); const mk=(isZ&&data.mark!==null)?data.mark:-1;
   const units=UNITS[data.type]; const wrap=$('tafel'); wrap.innerHTML='';
@@ -400,10 +425,11 @@ function render(){ applyFont();
         inp.dataset.ri=ri; inp.dataset.c=c;
         /* In das Feld passt nur eine Ziffer - ohne Auswahl liesse sich eine schon dastehende
            (auch eine ergaenzte Null) nicht ueberschreiben, sondern nur loeschen. */
-        inp.onfocus=()=>{ if(data.runden){ inp.blur(); return; } inp.select(); setTimeout(()=>{ if(document.activeElement===inp) inp.select(); },0); };
+        inp.onfocus=()=>{ if(fest()){ inp.blur(); return; } inp.select(); setTimeout(()=>{ if(document.activeElement===inp) inp.select(); },0); };
         /* Beim Runden setzt ein Tipp die Stelle, auf die gerundet wird - noch einmal tippen hebt sie auf. */
-        inp.onclick=()=>{ if(!data.runden) return; data.rund=(data.rund===c)?null:c; render(); sync(); };
-        inp.oninput=()=>{ if(data.runden){ inp.value=rw.dig[c]||(data.nullen?'0':''); return; }   /* beim Runden bleiben die Ziffern, wie sie sind */
+        inp.onclick=()=>{ if(data.runden){ data.rund=(data.rund===c)?null:c; render(); sync(); return; }
+          if(data.zehner){ data.zp=(data.zp===c)?null:c; render(); sync(); } };
+        inp.oninput=()=>{ if(fest()){ inp.value=rw.dig[c]||(data.nullen?'0':''); return; }
           inp.value=inp.value.replace(/[^0-9]/g,'').slice(0,1); const alt=rw.dig[c];
           if(inp.value)rw.dig[c]=inp.value; else delete rw.dig[c];
           const gr=grenze(ui);
@@ -427,6 +453,7 @@ function updateVals(){ zellenMalen(); const units=UNITS[data.type]; document.que
     if(rw.zu){ el.innerHTML='<span class="verdeckt">?</span>'; return; }      /* verdeckt: die Zeile ist eine Aufgabe */
     /* Gerundet steht statt des Dezimalbruchs der gerundete Wert - mit gewelltem Gleichheitszeichen. */
     if(rundAn()){ el.innerHTML='<i>≈</i> '+rundWert(rw.dig)+(data.type==='zahl'?'':' <b>'+units[data.unitIndex][0]+'</b>'); return; }
+    if(zehnerAn()){ el.innerHTML='= '+zehnerText(rw.dig)+(data.type==='zahl'?'':' <b>'+units[data.unitIndex][0]+'</b>'); return; }
     let h='= '+rowValue(rw.dig)+(data.type==='zahl'?'':' <b>'+units[data.unitIndex][0]+'</b>');
     if(data.misch&&data.type!=='zahl') h+=' = <span style="color:#2563eb">'+mischText(rw.dig)+'</span>'; if(data.type==='zahl'&&data.pct) h+=' = <span style="color:#2563eb">'+rowValue(rw.dig,PCT_IDX)+' %</span>'; if(data.type==='zahl'&&data.bruch){ const f=fracOf(rw.dig); if(f) h+=' = <span class="frac"><span>'+f.num+'</span><span>'+f.den+'</span></span>'; } el.innerHTML=h; } }); }
 ['laenge','flaeche','volumen','masse','zeit','zahl'].forEach(t=>$('t-'+t).onclick=()=>{ data.type=t; data.unitIndex=DEFIDX[t]; data.rows=data.rows.map(r=>({dig:{},zu:!!r.zu})); data.mark=null; data.bruch=false; render(); sync(); });
@@ -440,13 +467,18 @@ $('t-pct').onclick=()=>{ data.pct=!data.pct; render(); sync(); };
 $('t-misch').onclick=()=>{ data.misch=!data.misch; render(); sync(); };
 $('t-bruch').onclick=()=>{ data.bruch=!data.bruch; render(); sync(); };
 $('t-null').onclick=()=>{ data.nullen=!data.nullen; render(); sync(); };
-$('t-rund').onclick=()=>{ data.runden=!data.runden; if(!data.runden) data.rund=null;
+/* Runden und Zehnerpotenz markieren beide eine Stelle - immer nur eines von beiden. */
+$('t-rund').onclick=()=>{ data.runden=!data.runden; if(!data.runden) data.rund=null; else { data.zehner=false; data.zp=null; }
   if(data.runden&&window.TafelShot) TafelShot.toast('Stelle antippen, auf die gerundet werden soll');
+  render(); sync(); };
+$('t-zp').onclick=()=>{ data.zehner=!data.zehner; if(!data.zehner) data.zp=null; else { data.runden=false; data.rund=null; }
+  if(data.zehner&&window.TafelShot) TafelShot.toast('Stelle antippen, die als Einerstelle gelten soll');
   render(); sync(); };
 function sync(){ if(window.parent===window) return; /* allein geöffnet: nicht an sich selbst senden */ try{ parent.postMessage({type:'embed-data',data},'*'); }catch(e){} }
 addEventListener('message',e=>{ if(e.source!==window&&(window.parent===window||e.source!==window.parent)) return;   // eigene Nachrichten ignorieren
   if(e.data&&e.data.type==='embed-data'&&e.data.data){ const d=e.data.data;
-  data={ type:UNITS[d.type]?d.type:'laenge', unitIndex:(d.unitIndex|0), rows:(Array.isArray(d.rows)&&d.rows.length?d.rows.map(r=>({dig:(r&&r.dig)||{},zu:!!(r&&r.zu)})):[{dig:{}}]), fontSize:d.fontSize||22, fontBold:!!d.fontBold, fontItalic:!!d.fontItalic, pct:!!d.pct, mark:(typeof d.mark==='number'&&d.mark>=0)?d.mark:null, bruch:!!d.bruch, misch:!!d.misch, nullen:!!d.nullen, runden:!!d.runden, rund:(typeof d.rund==='number'&&d.rund>=0)?d.rund:null };
+  data={ type:UNITS[d.type]?d.type:'laenge', unitIndex:(d.unitIndex|0), rows:(Array.isArray(d.rows)&&d.rows.length?d.rows.map(r=>({dig:(r&&r.dig)||{},zu:!!(r&&r.zu)})):[{dig:{}}]), fontSize:d.fontSize||22, fontBold:!!d.fontBold, fontItalic:!!d.fontItalic, pct:!!d.pct, mark:(typeof d.mark==='number'&&d.mark>=0)?d.mark:null, bruch:!!d.bruch, misch:!!d.misch, nullen:!!d.nullen, runden:!!d.runden, rund:(typeof d.rund==='number'&&d.rund>=0)?d.rund:null,
+         zehner:!!d.zehner, zp:(typeof d.zp==='number'&&d.zp>=0)?d.zp:null };
   if(data.unitIndex>=UNITS[data.type].length||data.unitIndex<0) data.unitIndex=DEFIDX[data.type]; render(); } });
 window.addEventListener('load',()=>{
   const geteilt=window.TafelTeilen&&TafelTeilen.istGeteilt();

@@ -2597,6 +2597,14 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     Bei **Zeit** wird in der Stelle selbst gerundet, nicht in Zehnern (1 h 30 min 40 s → auf
     Minuten **≈ 1,51667 h** = 1 h 31 min, auf Zehnerminuten **≈ 1,5 h**). Ein zweiter Tipp auf die
     Stelle nimmt die Markierung zurück, ein Tipp auf **„Runden"** gibt die Tafel wieder frei.
+  - **„Zehnerpotenz"** arbeitet wie „Runden": Das Eintippen ist gesperrt, und ein Tipp sagt,
+    welche Stelle als **Einerstelle** gelten soll – sie wird **gelb** hervorgehoben. Rechts steht
+    der Wert dann als **Zahl mal Zehnerpotenz**: `1,76 m` mit **dm** als Einerstelle ist
+    **17,6 · 10⁻¹ m**, mit **m** **1,76 · 10⁰ m**, mit **cm** **176 · 10⁻² m**, mit **km**
+    **0,00176 · 10³ m**; bei „Zahl" (347 mit H als Einerstelle) **3,47 · 10²**. Die Hochzahl sagt
+    also, **um wie viele Stellen** die angetippte Stelle von der Einerstelle der gewählten Einheit
+    weg liegt. „Runden" und „Zehnerpotenz" markieren beide eine Stelle – es ist immer nur **eines
+    von beiden** an. Bei **Zeit** gibt es den Knopf nicht, dort wird nicht in Zehnern gerechnet.
   - **„gemischte Einheiten"** zeigt den Wert zusätzlich **blau** in den eingetippten Einheiten:
     **1,25 m = 1 m 2 dm 5 cm**, **1,5 kg = 1 kg 500 g**, **8130,5 s = 2 h 15 min 30,5 s**
     (Zehntel und Hundertstel hängen dabei als Nachkommastellen an den Sekunden).
