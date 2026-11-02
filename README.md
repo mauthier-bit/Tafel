@@ -2574,6 +2574,23 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     wird nicht übernommen, das Feld leuchtet kurz **rot** und es erscheint der Hinweis
     „Minuten: nur Werte von 0 bis 59 – 60 Minuten sind 1 Stunde" (entsprechend bei den Sekunden).
     Stunden bleiben frei eintippbar, damit auch **70 h** (ohne Tage-Spalte) möglich sind.
+  - **„Nullen ergänzen"** schreibt in **jede leere Stelle eine Null** – und unterscheidet dabei
+    zwei Sorten: **Nötige Nullen stehen schwarz** wie die eingetippten Ziffern, **überflüssige
+    grau**. Nötig ist eine Null, die eine **Stelle besetzt** – zwischen der ersten Ziffer und dem
+    Komma (**500**) und zwischen dem Komma und der letzten Ziffer (**0,05**), dazu die **Null vor
+    dem Komma**, damit die Zahl nicht mit dem Komma anfängt. Überflüssig sind die **führenden**
+    Nullen vor der ersten und die **angehängten** hinter der letzten Ziffer (`0 0 0 5 0 0` bei
+    5 cm). Die Nullen stehen nur im Bild – am Wert ändert sich nichts, eine leere Stelle zählt
+    ohnehin als null –, und welche Null nötig ist, rechnet das Werkzeug nach jeder Eingabe neu.
+    Bei **Zeit** gibt es kein Komma; dort hält eine Null nur **zwischen zwei Ziffern** eine Stelle.
+  - **„Runden"** sperrt das Eintippen: Die Ziffern bleiben stehen, und ein Tipp auf eine Stelle
+    sagt, **auf welche Stelle gerundet** werden soll – sie wird **lila** hervorgehoben. Rechts steht
+    dann statt des Dezimalbruchs der **gerundete Wert mit gewelltem Gleichheitszeichen**
+    (`1,76 m` → auf dm: **≈ 1,8 m**, auf m: **≈ 2 m**; `9,8 m` → **≈ 10 m**, der Übertrag läuft also
+    notfalls über die Tafel hinaus). Gerundet wird nach der Schulregel: ab **5** wird aufgerundet.
+    Bei **Zeit** wird in der Stelle selbst gerundet, nicht in Zehnern (1 h 30 min 40 s → auf
+    Minuten **≈ 1,51667 h** = 1 h 31 min, auf Zehnerminuten **≈ 1,5 h**). Ein zweiter Tipp auf die
+    Stelle nimmt die Markierung zurück, ein Tipp auf **„Runden"** gibt die Tafel wieder frei.
   - **„gemischte Einheiten"** zeigt den Wert zusätzlich **blau** in den eingetippten Einheiten:
     **1,25 m = 1 m 2 dm 5 cm**, **1,5 kg = 1 kg 500 g**, **8130,5 s = 2 h 15 min 30,5 s**
     (Zehntel und Hundertstel hängen dabei als Nachkommastellen an den Sekunden).

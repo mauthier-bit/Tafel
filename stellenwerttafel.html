@@ -17,6 +17,12 @@
   .tbtn.on{background:#3b82f6;color:#fff;border-color:#3b82f6;}
   .hint{font-size:12px;color:#8a93a2;} #swHelp[hidden]{display:none;}
   .dc.bad{background:#fee2e2;box-shadow:inset 0 0 0 2px #dc2626;}
+  /* ergaenzte Nullen: noetige stehen wie getippte Ziffern da, ueberfluessige bleiben blass */
+  .dc.null0{color:#1f2430;} .dc.null0.unnoetig{color:#9aa4b2;}
+  /* Runden: nichts mehr eintippen, dafuer die Stelle antippen, auf die gerundet wird */
+  .dc.fest{cursor:pointer;}
+  .dc.rundS{background:#ebdcff;box-shadow:inset 0 0 0 2px #7c3aed;color:#5b21b6;font-weight:700;}
+  .rval i{font-style:normal;color:#7c3aed;}
   #tafelWrap{flex:1;min-height:0;overflow:auto;}
   #tafel{display:inline-flex;flex-direction:column;min-width:100%;}
   .row{display:flex;align-items:stretch;}
@@ -238,6 +244,8 @@
     <button class="tbtn" id="t-zeit">Zeit</button>
     <button class="tbtn" id="t-misch" title="Wert zusätzlich in gemischten Einheiten zeigen (z. B. 1 h 30 min)">gemischte Einheiten</button>
     <button class="tbtn" id="t-pct" title="Zweites Komma an der Hundertstel-Stelle → Prozent-Darstellung" style="display:none">%-Komma</button>
+    <button class="tbtn" id="t-rund" title="Runden: Die Ziffern bleiben stehen; tippe die Stelle an, auf die gerundet werden soll – sie wird lila und rechts steht der gerundete Wert mit ≈">Runden</button>
+    <button class="tbtn" id="t-null" title="In jede leere Stelle eine Null schreiben – nötige Nullen (Platzhalter) schwarz, überflüssige (vorn und hinten) grau">Nullen ergänzen</button>
     <button class="tbtn" id="t-bruch" title="Zahl als Bruch – Nenner = markierte Stelle (Stelle vorher antippen)" style="display:none">Bruch</button>
     <button class="tbtn" id="bHelp" title="Kurzanleitung ein-/ausblenden" style="border-radius:50%;width:28px;padding:0">?</button>
   </div>
@@ -263,8 +271,9 @@ const UNITS={
 };
 const DEFIDX={ laenge:3, flaeche:3, volumen:0, masse:1, zeit:1, zahl:6 };   // m / m² / m³ / kg / h / Einer (Komma fest)
 const ZEIT_H=[8640000,360000,6000,100,10,1];        /* Hundertstelsekunden je Einheit – ganzzahlig rechnen */
-let data={ type:'laenge', unitIndex:3, rows:[{dig:{}}], fontSize:22, pct:false, mark:null, bruch:false, misch:false };
+let data={ type:'laenge', unitIndex:3, rows:[{dig:{}}], fontSize:22, pct:false, mark:null, bruch:false, misch:false, nullen:false, runden:false, rund:null };
 const EIDX=UNITS.zahl.findIndex(u=>u[0]==='E');   // Einer-Stelle
+const HILFE0=$('swHelp').textContent;              // der Hinweis, solange nicht gerundet wird
 const PCT_IDX=UNITS.zahl.findIndex(u=>u[0]==='h');   // Hundertstel-Stelle = Prozent-Komma
 function cellW(){ return Math.round((data.fontSize||22)*1.64); }
 function applyFont(){ const r=document.documentElement.style; r.setProperty('--fs',(data.fontSize||22)+'px'); r.setProperty('--fw',data.fontBold?'700':'400'); r.setProperty('--fwh',data.fontBold?'900':'700'); r.setProperty('--fwm',data.fontBold?'800':'600'); r.setProperty('--fi',data.fontItalic?'italic':'normal'); }
@@ -292,6 +301,55 @@ function rowValue(dig,split){ if(data.type==='zeit') return zeitWert(dig,split);
   units.forEach((u,ui)=>{ for(let k=0;k<u[1];k++){ const d=dig[col]||'0'; if(ui<=split)intP+=d; else fracP+=d; col++; } });
   intP=intP.replace(/^0+(?=\d)/,''); if(intP==='')intP='0'; fracP=fracP.replace(/0+$/,'');
   return intP+(fracP?(','+fracP):''); }
+/* Welche ergaenzte Null ist noetig? Noetig ist eine Null, die eine Stelle besetzt: zwischen
+   der ersten Ziffer und dem Komma (500) und zwischen dem Komma und der letzten Ziffer (0,05);
+   dazu die Null vor dem Komma, damit die Zahl nicht mit dem Komma anfaengt. Ueberfluessig
+   sind die fuehrenden Nullen vor der ersten und die angehaengten hinter der letzten Ziffer.
+   Die Zeit rechnet nicht in Zehnern - dort haelt eine Null nur zwischen zwei Ziffern eine
+   Stelle, ein Komma gibt es in der Tafel nicht. */
+function nullNoetig(dig,c){ const units=UNITS[data.type];
+  let n=0; units.forEach(u=>n+=u[1]);
+  let erste=-1,letzte=-1;
+  for(let i=0;i<n;i++){ const d=dig[i]; if(d&&d!=='0'){ if(erste<0)erste=i; letzte=i; } }
+  if(data.type==='zeit') return erste>=0&&c>erste&&c<letzte;
+  let komma=0; for(let ui=0;ui<=data.unitIndex;ui++) komma+=units[ui][1];   /* erste Stelle hinter dem Komma */
+  if(c<komma) return (erste>=0&&erste<c)||(c===komma-1&&!(erste>=0&&erste<komma));
+  return letzte>c; }
+/* Die ergaenzten Nullen stehen nur im Bild, nicht in den Daten - eine leere Stelle zaehlt
+   ohnehin als null. Nach jeder Eingabe neu setzen, denn ob eine Null noetig ist, haengt von
+   den anderen Ziffern der Zeile ab. */
+function zellenMalen(){ document.querySelectorAll('.dc').forEach(inp=>{ const rw=data.rows[+inp.dataset.ri]; if(!rw) return;
+  const c=+inp.dataset.c, eigen=rw.dig[c];
+  inp.classList.toggle('null0',!eigen&&!!data.nullen);
+  inp.classList.toggle('unnoetig',!eigen&&!!data.nullen&&!nullNoetig(rw.dig,c));
+  inp.classList.toggle('fest',!!data.runden);
+  inp.classList.toggle('rundS',!!data.runden&&data.rund===c);
+  inp.readOnly=!!data.runden;
+  if(!eigen) inp.value=data.nullen?'0':''; }); }
+/* Runden auf die angetippte Stelle. Die Ziffern selbst bleiben stehen - gerundet wird nur
+   der Wert rechts. Ab der Stelle dahinter wird abgeschnitten, bei 5 und mehr aufgerundet;
+   der Uebertrag kann links ueber die Tafel hinauslaufen (aus 9,8 wird 10). */
+function spalten(){ let n=0; UNITS[data.type].forEach(u=>n+=u[1]); return n; }
+function rundZiffern(dig){ const n=spalten(), arr=[];
+  for(let i=0;i<n;i++) arr.push(+(dig[i]||0));
+  const c=data.rund;
+  let auf=(c+1<n)&&arr[c+1]>=5;
+  for(let i=c+1;i<n;i++) arr[i]=0;
+  for(let i=c;i>=0&&auf;i--){ arr[i]++; if(arr[i]===10) arr[i]=0; else auf=false; }
+  return {arr,ueber:auf}; }
+function wertAusZiffern(arr,ueber,split){ const units=UNITS[data.type]; let intP=ueber?'1':'',fracP='',col=0;
+  units.forEach((u,ui)=>{ for(let k=0;k<u[1];k++){ const d=String(arr[col]); if(ui<=split)intP+=d; else fracP+=d; col++; } });
+  intP=intP.replace(/^0+(?=\d)/,''); if(intP==='')intP='0'; fracP=fracP.replace(/0+$/,'');
+  return intP+(fracP?(','+fracP):''); }
+/* Zeit rechnet nicht in Zehnern: Was ist diese Stelle in Hundertstelsekunden wert? */
+function zeitStufe(c){ const units=UNITS.zeit; let col=0;
+  for(let ui=0;ui<units.length;ui++) for(let k=0;k<units[ui][1];k++){ if(col===c) return ZEIT_H[ui]*Math.pow(10,units[ui][1]-1-k); col++; }
+  return 1; }
+function rundWert(dig){ if(data.type==='zeit'){ let hs=0; UNITS.zeit.forEach((u,ui)=>{ hs+=gruppenZahl(dig,ui)*ZEIT_H[ui]; });
+    const st=zeitStufe(data.rund), g=Math.round(hs/st)*st;
+    return String(Math.round(g/ZEIT_H[data.unitIndex]*100000)/100000).replace('.',','); }
+  const r=rundZiffern(dig); return wertAusZiffern(r.arr,r.ueber,data.unitIndex); }
+const rundAn=()=>!!data.runden&&data.rund!==null;
 /* Einheiten mit festem Wertebereich (Zeit: Minuten und Sekunden nur 0…59) */
 const MAXG={ zeit:{ 2:{max:59,name:'Minuten',hin:'60 Minuten sind 1 Stunde'}, 3:{max:59,name:'Sekunden',hin:'60 Sekunden sind 1 Minute'} } };
 function grenze(ui){ const m=MAXG[data.type]; return (m&&m[ui])?m[ui]:null; }
@@ -301,6 +359,11 @@ function render(){ applyFont();
   $('t-misch').style.display=(data.type==='zahl')?'none':'';
   $('t-misch').classList.toggle('on',!!data.misch);
   const isZ=data.type==='zahl'; $('t-pct').style.display=isZ?'':'none'; $('t-pct').classList.toggle('on',isZ&&!!data.pct); const showPct=isZ&&!!data.pct;
+  $('t-null').classList.toggle('on',!!data.nullen);
+  $('t-rund').classList.toggle('on',!!data.runden);
+  $('swHelp').textContent=data.runden
+    ? 'Runden: Tippe die Stelle an, auf die gerundet werden soll – sie wird lila, rechts steht der gerundete Wert. Eintippen geht erst wieder, wenn Runden aus ist.'
+    : HILFE0;
   $('t-bruch').style.display=(isZ&&data.mark!==null)?'':'none'; $('t-bruch').classList.toggle('on',isZ&&!!data.bruch); const mk=(isZ&&data.mark!==null)?data.mark:-1;
   const units=UNITS[data.type]; const wrap=$('tafel'); wrap.innerHTML='';
   // Kopfzeile
@@ -316,7 +379,14 @@ function render(){ applyFont();
     units.forEach((u,ui)=>{ const g=document.createElement('div'); g.className='ugroup'+(ui===data.unitIndex?' sel':'')+(ui<=mk?' mk':'');
       const dg=document.createElement('div'); dg.className='udigits';
       for(let k=0;k<u[1];k++){ const c=col; const inp=document.createElement('input'); inp.className='dc'; inp.type='text'; inp.inputMode='numeric'; inp.maxLength=1; inp.value=rw.dig[c]||'';
-        inp.oninput=()=>{ inp.value=inp.value.replace(/[^0-9]/g,'').slice(0,1); const alt=rw.dig[c];
+        inp.dataset.ri=ri; inp.dataset.c=c;
+        /* In das Feld passt nur eine Ziffer - ohne Auswahl liesse sich eine schon dastehende
+           (auch eine ergaenzte Null) nicht ueberschreiben, sondern nur loeschen. */
+        inp.onfocus=()=>{ if(data.runden){ inp.blur(); return; } inp.select(); setTimeout(()=>{ if(document.activeElement===inp) inp.select(); },0); };
+        /* Beim Runden setzt ein Tipp die Stelle, auf die gerundet wird - noch einmal tippen hebt sie auf. */
+        inp.onclick=()=>{ if(!data.runden) return; data.rund=(data.rund===c)?null:c; render(); sync(); };
+        inp.oninput=()=>{ if(data.runden){ inp.value=rw.dig[c]||(data.nullen?'0':''); return; }   /* beim Runden bleiben die Ziffern, wie sie sind */
+          inp.value=inp.value.replace(/[^0-9]/g,'').slice(0,1); const alt=rw.dig[c];
           if(inp.value)rw.dig[c]=inp.value; else delete rw.dig[c];
           const gr=grenze(ui);
           if(gr&&gruppenZahl(rw.dig,ui)>gr.max){ if(alt!==undefined)rw.dig[c]=alt; else delete rw.dig[c]; inp.value=alt||'';
@@ -335,7 +405,10 @@ function render(){ applyFont();
 function fracOf(dig){ const m=data.mark; if(m===null||m===undefined)return null; const units=UNITS.zahl; let num='',col=0;
   for(let ui=0;ui<=m;ui++){ for(let k=0;k<units[ui][1];k++){ num+=(dig[col]||'0'); col++; } }
   num=num.replace(/^0+(?=\d)/,''); if(num==='')num='0'; const den=m>EIDX?('1'+'0'.repeat(m-EIDX)):'1'; return {num,den}; }
-function updateVals(){ const units=UNITS[data.type]; document.querySelectorAll('.rval').forEach(el=>{ const rw=data.rows[+el.dataset.ri]; if(rw){ let h='= '+rowValue(rw.dig)+(data.type==='zahl'?'':' <b>'+units[data.unitIndex][0]+'</b>');
+function updateVals(){ zellenMalen(); const units=UNITS[data.type]; document.querySelectorAll('.rval').forEach(el=>{ const rw=data.rows[+el.dataset.ri]; if(rw){
+    /* Gerundet steht statt des Dezimalbruchs der gerundete Wert - mit gewelltem Gleichheitszeichen. */
+    if(rundAn()){ el.innerHTML='<i>≈</i> '+rundWert(rw.dig)+(data.type==='zahl'?'':' <b>'+units[data.unitIndex][0]+'</b>'); return; }
+    let h='= '+rowValue(rw.dig)+(data.type==='zahl'?'':' <b>'+units[data.unitIndex][0]+'</b>');
     if(data.misch&&data.type!=='zahl') h+=' = <span style="color:#2563eb">'+mischText(rw.dig)+'</span>'; if(data.type==='zahl'&&data.pct) h+=' = <span style="color:#2563eb">'+rowValue(rw.dig,PCT_IDX)+' %</span>'; if(data.type==='zahl'&&data.bruch){ const f=fracOf(rw.dig); if(f) h+=' = <span class="frac"><span>'+f.num+'</span><span>'+f.den+'</span></span>'; } el.innerHTML=h; } }); }
 ['laenge','flaeche','volumen','masse','zeit','zahl'].forEach(t=>$('t-'+t).onclick=()=>{ data.type=t; data.unitIndex=DEFIDX[t]; data.rows=data.rows.map(()=>({dig:{}})); data.mark=null; data.bruch=false; render(); sync(); });
 $('add').onclick=()=>{ data.rows.push({dig:{}}); render(); sync(); };
@@ -347,10 +420,14 @@ if(window.TafelModus&&TafelModus.anTafel) TafelModus.anTafel({ button:false,   /
 $('t-pct').onclick=()=>{ data.pct=!data.pct; render(); sync(); };
 $('t-misch').onclick=()=>{ data.misch=!data.misch; render(); sync(); };
 $('t-bruch').onclick=()=>{ data.bruch=!data.bruch; render(); sync(); };
+$('t-null').onclick=()=>{ data.nullen=!data.nullen; render(); sync(); };
+$('t-rund').onclick=()=>{ data.runden=!data.runden; if(!data.runden) data.rund=null;
+  if(data.runden&&window.TafelShot) TafelShot.toast('Stelle antippen, auf die gerundet werden soll');
+  render(); sync(); };
 function sync(){ if(window.parent===window) return; /* allein geöffnet: nicht an sich selbst senden */ try{ parent.postMessage({type:'embed-data',data},'*'); }catch(e){} }
 addEventListener('message',e=>{ if(e.source!==window&&(window.parent===window||e.source!==window.parent)) return;   // eigene Nachrichten ignorieren
   if(e.data&&e.data.type==='embed-data'&&e.data.data){ const d=e.data.data;
-  data={ type:UNITS[d.type]?d.type:'laenge', unitIndex:(d.unitIndex|0), rows:(Array.isArray(d.rows)&&d.rows.length?d.rows.map(r=>({dig:(r&&r.dig)||{}})):[{dig:{}}]), fontSize:d.fontSize||22, fontBold:!!d.fontBold, fontItalic:!!d.fontItalic, pct:!!d.pct, mark:(typeof d.mark==='number'&&d.mark>=0)?d.mark:null, bruch:!!d.bruch, misch:!!d.misch };
+  data={ type:UNITS[d.type]?d.type:'laenge', unitIndex:(d.unitIndex|0), rows:(Array.isArray(d.rows)&&d.rows.length?d.rows.map(r=>({dig:(r&&r.dig)||{}})):[{dig:{}}]), fontSize:d.fontSize||22, fontBold:!!d.fontBold, fontItalic:!!d.fontItalic, pct:!!d.pct, mark:(typeof d.mark==='number'&&d.mark>=0)?d.mark:null, bruch:!!d.bruch, misch:!!d.misch, nullen:!!d.nullen, runden:!!d.runden, rund:(typeof d.rund==='number'&&d.rund>=0)?d.rund:null };
   if(data.unitIndex>=UNITS[data.type].length||data.unitIndex<0) data.unitIndex=DEFIDX[data.type]; render(); } });
 window.addEventListener('load',()=>{
   const geteilt=window.TafelTeilen&&TafelTeilen.istGeteilt();
