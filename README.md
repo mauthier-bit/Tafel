@@ -2568,7 +2568,23 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   bleibt; die gewählte Größe steht blau darin, bei **„Zahl"** zeigt die Liste „Größen …". Ziffern eintippen; ein Tipp auf eine Einheit **verschiebt das Komma** (Umrechnung) –
   **Komma und die zugehörige Einheit werden rot hervorgehoben**. Unten rechts: **A−/A+** für die Schriftgröße (auch im Kontextmenü) sowie **🖼 Tafel / 📋 Kopieren** – die Tafel (ohne Löschknöpfe) als Bild neben das Werkzeug legen bzw. in die Zwischenablage kopieren. Mit **„＋ Zeile"** lassen sich
   weitere Zahlen-Zeilen hinzufügen; jede Zeile zeigt ihren Wert in der gewählten Einheit –
-  **so groß wie die Ziffern in der Tafel**, damit er auch von hinten zu lesen ist. Die Schriftgröße im Kontextmenü vergrößert jetzt auch **Zellenbreite und -höhe**. Neue Kategorie **„Zahl"**: Stellen vor dem Komma **E, Z, H, T, ZT, HT, M** (Einer bis Millionen), nach dem Komma **z, h, t, zt** (Zehntel bis Zehntausendstel); das Komma sitzt fest hinter den Einern. „Zahl" steht als eigener Knopf ganz links, davon rechts die Liste „Größen". Im Zahl-Modus schaltet der Button **„%-Komma"** ein zweites (blaues) Komma an der Hundertstel-Stelle ein – dann erscheinen nach dem = beide Darstellungen, z. B. **1,025 = 102,5 %**. Bei „Zahl" reichen die Nachkommastellen jetzt bis **ht** und **m**. Tippt man auf eine Stelle (z. B. h), werden **die Zellen dieser und aller Stellen links davon grün unterstrichen** (die Kopfzeile bleibt unverändert); erst dann erscheint der Button **„Bruch"**, der die Zahl als Bruch mit der markierten Stelle als Nenner zeigt (h → Nenner 100, t → 1000 …; der Bruchstrich ist so lang wie die längere der beiden Zahlen). Erneutes Tippen hebt die Markierung auf.
+  **so groß wie die Ziffern in der Tafel**, damit er auch von hinten zu lesen ist. Die Schriftgröße im Kontextmenü vergrößert jetzt auch **Zellenbreite und -höhe**. Neue Kategorie **„Zahl"**: Stellen vor dem Komma **E, Z, H, T, ZT, HT, M** (Einer bis Millionen), nach dem Komma **z, h, t, zt** (Zehntel bis Zehntausendstel); das Komma sitzt fest hinter den Einern. „Zahl" steht als eigener Knopf ganz links, davon rechts die Liste „Größen".
+  - **Welche Stellen die Tafel zeigt (⚙ Einstellungen):** Neben dem **„?"** sitzt ein **Zahnrad**.
+    Dort steht für **jede Größe und für „Zahl"** eine Zeile **„von … bis …"** – damit lässt sich die
+    Tafel auf das kürzen, was in der Stunde gebraucht wird, oder weit nach oben und unten
+    erweitern. Zur Auswahl stehen:
+    **Zahl** von **Brd** (Billiarde) über **HB · ZB · B · HMrd · ZMrd · Mrd · HM · ZM · M** bis zum
+    **Millionstel**, **Längen** von **km** bis **nm** (mm → **µm** → **nm**, je drei Ziffern),
+    **Volumen** von **km³** über hm³ und **dam³** bis mm³, **Massen** von **Mt** über **kt** und t
+    bis **µg**, **Zeit** ab **Jahren** (1 a = 365 d; dann bekommt die Tage-Spalte drei Ziffern und
+    nimmt Werte bis 364) bis zur Hundertstelsekunde. Bei den **Längen** sagt ein drittes Feld,
+    **wie viele Ziffern die größte Einheit** bekommt – mit **4 Stellen** reicht die Tafel
+    **bis 9999 km**. **Standard ist
+    der gewohnte Bereich**; „Standard wiederherstellen" holt ihn zurück. Die Wahl merkt sich der
+    Browser und wird mit dem Projekt gespeichert. Ändert man den Bereich der Größe, die gerade in
+    der Tafel steht, **fangen ihre Zeilen leer an** – die Ziffern würden sonst plötzlich etwas
+    anderes bedeuten. Ist eine Einheit die **größte** der Tafel, bleibt sie frei eintippbar (ohne
+    Stunden-Spalte sind auch **70 min** möglich). Im Zahl-Modus schaltet der Button **„%-Komma"** ein zweites (blaues) Komma an der Hundertstel-Stelle ein – dann erscheinen nach dem = beide Darstellungen, z. B. **1,025 = 102,5 %**. Bei „Zahl" reichen die Nachkommastellen jetzt bis **ht** und **m**. Tippt man auf eine Stelle (z. B. h), werden **die Zellen dieser und aller Stellen links davon grün unterstrichen** (die Kopfzeile bleibt unverändert); erst dann erscheint der Button **„Bruch"**, der die Zahl als Bruch mit der markierten Stelle als Nenner zeigt (h → Nenner 100, t → 1000 …; der Bruchstrich ist so lang wie die längere der beiden Zahlen). Erneutes Tippen hebt die Markierung auf.
   - **Zeit** (Spalten **d · h · min · s** mit je zwei Ziffern, dazu **1/10 s** und **1/100 s**)
     rechnet nicht in Zehnern, sondern mit 24 und 60 – deshalb gibt es hier **kein Komma** in der
     Tafel: Ein Tipp auf eine Einheit sagt, **in welcher Einheit** der Wert herauskommen soll
@@ -2600,14 +2616,23 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     Bei **Zeit** wird in der Stelle selbst gerundet, nicht in Zehnern (1 h 30 min 40 s → auf
     Minuten **≈ 1,51667 h** = 1 h 31 min, auf Zehnerminuten **≈ 1,5 h**). Ein zweiter Tipp auf die
     Stelle nimmt die Markierung zurück, ein Tipp auf **„Runden"** gibt die Tafel wieder frei.
+    In den **⚙ Einstellungen** lässt sich dazuschalten, dass auch die **entscheidende Ziffer**
+    hervorgehoben wird – die Stelle rechts neben der Rundungsstelle – und dass hinter dem Wert
+    **„aufrunden"** bzw. **„abrunden"** steht. Bei **Zeit** entscheidet nicht eine einzelne Ziffer,
+    sondern der Rest (1 h 30 min → **aufrunden**); dort steht nur das Wort.
   - **„Zehnerpotenz"** arbeitet wie „Runden": Das Eintippen ist gesperrt, und ein Tipp sagt,
     welche Stelle als **Einerstelle** gelten soll – sie wird **gelb** hervorgehoben. Rechts steht
     der Wert dann als **Zahl mal Zehnerpotenz**: `1,76 m` mit **dm** als Einerstelle ist
     **17,6 · 10⁻¹ m**, mit **m** **1,76 · 10⁰ m**, mit **cm** **176 · 10⁻² m**, mit **km**
     **0,00176 · 10³ m**; bei „Zahl" (347 mit H als Einerstelle) **3,47 · 10²**. Die Hochzahl sagt
     also, **um wie viele Stellen** die angetippte Stelle von der Einerstelle der gewählten Einheit
-    weg liegt. „Runden" und „Zehnerpotenz" markieren beide eine Stelle – es ist immer nur **eines
-    von beiden** an. Bei **Zeit** gibt es den Knopf nicht, dort wird nicht in Zehnern gerechnet.
+    weg liegt. „Runden" und „Zehnerpotenz" lassen sich **zusammen** einschalten: Dann steht der
+    **gerundete** Wert als Zehnerpotenz (1,76 m, auf m gerundet, mit dm als Einerstelle:
+    **≈ 20 · 10⁻¹ m**). Weil beide eine Stelle markieren, sagt der **Ring um den Knopf**, welche
+    Stelle der nächste Tipp setzt; ein Tipp auf den anderen Knopf schaltet um, ein Tipp auf den
+    Knopf, der schon dran ist, schaltet ihn aus. Die Knöpfe tragen dabei die **Farbe ihrer
+    Markierung** (Runden lila, Zehnerpotenz gelb). Bei **Zeit** gibt es die Zehnerpotenz nicht,
+    dort wird nicht in Zehnern gerechnet.
   - **„gemischte Einheiten"** zeigt den Wert zusätzlich **blau** in den eingetippten Einheiten:
     **1,25 m = 1 m 2 dm 5 cm**, **1,5 kg = 1 kg 500 g**, **8130,5 s = 2 h 15 min 30,5 s**
     (Zehntel und Hundertstel hängen dabei als Nachkommastellen an den Sekunden).
