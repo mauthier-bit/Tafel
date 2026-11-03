@@ -392,6 +392,10 @@
       <button class="tog" id="tEbene" title="Bahnebenen von Erde und Mond einblenden">Ebenen</button>
       <button class="tog on" id="tSchatten" title="Schattenkegel von Erde und Mond einblenden">Schatten</button>
       <button class="tog on" id="tSterne" title="Sternhimmel einblenden">Sterne</button>
+      <button class="tog" id="tKuppel" title="Horizontkuppel über dem gewählten Ort einblenden – von außen sieht man, was dort über und was unter dem Horizont steht">Horizont</button>
+      <label class="fld" id="kuppelFeld" hidden title="Radius der Horizontkuppel in Erdradien – bei 60 reicht sie bis zum Mond">Kuppel
+        <input type="range" id="rKuppel" min="-20" max="200" step="1" value="78" aria-label="Radius der Horizontkuppel">
+        <span class="val" id="vKuppel">–</span></label>
   </div></div>
   <div id="cvbox" class="dunkel"><canvas id="cv"></canvas><div id="hint"></div>
     <select id="selPipZiel" aria-label="Blickziel im zweiten Fenster" hidden></select></div>
@@ -667,7 +671,7 @@ function suchen(art,t0){
 const standard=()=>({ v:1, tab:'system', fontSize:14, fontBold:false, fontItalic:false,
   sys:{ t:0, lauf:false, tempo:30, echt:false, stufe:'ansch', sf:SF_STD, bahnen:true, ebenen:false, schatten:true,
         sterne:true, namen:true, von:'aussen', ziel:'erde', bezug:'sonne', pip:'aus', pipZiel:'auto',
-        lupe:false, tempoAlt:30, letztes:null, ort:0,
+        lupe:false, tempoAlt:30, letztes:null, ort:0, kuppelAn:false, kuppel:78,
         az:35, el:26, dist:4.2, fov:30, panAz:0, panEl:0, ansichtMit:true },
   erat:{ a:31, b:23.5, fehler:0, strahlen:true, flach:false },
   mond:{ eps:8985, mass:false, hilf:true },
@@ -1070,6 +1074,36 @@ function malBoden(){
     +(lang&&mo.hoch>0&&mondGross()?' · Mond vergrößert gezeichnet':''),
     VX+VW-10,VY+(lang?30:12)*K,'#94a3b8',{al:'right',sz:lang?12:11,fett:true,rand:'rgba(13,17,23,.9)'});
 }
+/* Die Horizontkuppel über dem gewählten Ort: der Himmel, den man von dort aus sieht.
+   Von außen betrachtet zeigt sie, was über und was unter dem Horizont steht. Der Radius
+   zählt in gezeichneten Erdradien - maßstabsgetreu reicht sie bei 60 bis zum Mond. */
+const kuppelRadius=()=>Math.pow(10,clamp(D.sys.kuppel===undefined?78:D.sys.kuppel,-20,200)/100);
+function malKuppel(){
+  const S=D.sys;
+  if(!S.kuppelAn||AKT_VON==='ort') return;                 /* am Ort steht man mitten darin */
+  const t=S.t, R=ortRahmen(t);
+  const p=rahmen(add(ortZ('erde',t),mul(R.zen,radZ('erde'))));
+  const r=kuppelRadius()*radZ('erde');
+  const kreis=kreisPunkte(p,r,R.zen,96);
+  const pk=kreis.map(q=>p2(q)).filter(Boolean);
+  if(pk.length>8){                                          /* Horizontebene andeuten */
+    ctx.beginPath(); pk.forEach((q,i)=>i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1])); ctx.closePath();
+    ctx.fillStyle='rgba(244,63,94,.09)'; ctx.fill();
+  }
+  linie3(kreis,'rgba(244,63,94,.85)',1.5);
+  [[0,'N'],[90,'O'],[180,'S'],[270,'W']].forEach(([az,nm])=>{
+    const bogen=[];
+    for(let h=0;h<=90;h+=5) bogen.push(add(p,mul(himmelRichtung(R,az*RAD,h*RAD),r)));
+    linie3(bogen,'rgba(244,63,94,.5)',1.1);
+    const q=p2(add(p,mul(himmelRichtung(R,az*RAD,0),r*1.06)));
+    if(q) text(nm,q[0],q[1],'#fda4af',{al:'center',sz:11.5,fett:true,rand:'rgba(7,11,24,.85)'});
+  });
+  [30,60].forEach(h=>{ const kr=[];
+    for(let a=0;a<=360;a+=6) kr.push(add(p,mul(himmelRichtung(R,a*RAD,h*RAD),r)));
+    linie3(kr,'rgba(244,63,94,.28)',1); });
+  const z=p2(add(p,mul(R.zen,r)));
+  if(z) text('Zenit über '+R.o.n,z[0],z[1]-10*K,'#fda4af',{al:'center',sz:11.5,fett:true,rand:'rgba(7,11,24,.85)'});
+}
 /* ---------- Schattenkegel ---------- */
 function malKegel(p3,Rae,richtung,laenge,rEnde,alpha,rand){
   const basis=kreisPunkte(p3,Rae,richtung,24), ende=kreisPunkte(add(p3,mul(richtung,laenge)),rEnde,richtung,24);
@@ -1155,6 +1189,7 @@ function szeneMalen(){
   liste.sort((a,b)=>betrag(sub(b.p,KAM.pos))-betrag(sub(a.p,KAM.pos)));
   liste.forEach(o=>malKoerper(o.id,o.p));
   if(schattenAn()) malSchatten();
+  malKuppel();
   if(amOrt) malBoden();
 }
 const WOHER={aussen:'von außen',sonne:'von der Sonne',erde:'von der Erde',mond:'vom Mond',ort:'vom Ort'};
@@ -1778,6 +1813,12 @@ function oberflaeche(){
     : 'ein Fünfundzwanzigstel des eingestellten Tempos: ')+zahl(lupeTempo()*24,2)+' Stunden je Sekunde';
   document.querySelectorAll('[data-von]').forEach(b=>b.classList.toggle('on',b.dataset.von===S.von));
   $('selOrt').hidden=(S.von!=='ort'); $('selOrt').value=String(S.ort||0);
+  $('tKuppel').classList.toggle('on',!!S.kuppelAn);
+  $('kuppelFeld').hidden=!S.kuppelAn;
+  $('rKuppel').value=String(S.kuppel===undefined?78:S.kuppel);
+  $('vKuppel').textContent=zahl(kuppelRadius(),kuppelRadius()<10?1:0)+' R⊕';
+  $('kuppelFeld').title='Radius der Horizontkuppel: '+zahl(kuppelRadius(),2)+' Erdradien'
+    +(stufeUI()==='echt'?' ≈ '+zahl(kuppelRadius()*6371,0)+' km':'')+' – bei 60 reicht sie bis zum Mond';
   $('selZiel').value=S.ziel; $('selBezug').value=S.bezug; $('selPip').value=S.pip||'aus';
   $('selStufe').value=stufeUI();
   $('selStufe').disabled=S.von!=='aussen';
@@ -1883,6 +1924,12 @@ const HILFE={
     'Sonne im Sommer hoch und im Winter flach steht. Die Tierkreiszeichen sind die zwölf 30°-Abschnitte ab dem '+
     '<b>Frühlingspunkt</b>; weil der wandert, liegen sie heute nicht mehr über den gleichnamigen Sternbildern. '+
     'Der gewählte Ort ist auch <b>auf der Erdkugel markiert</b>, wenn man von außen auf sie schaut.</p>'+
+    '<p>Der Schalter <b>Horizont</b> blendet die <b>Horizontkuppel</b> über diesem Ort ein – die Halbkugel '+
+    'des Himmels, den man von dort aus sieht, mit Himmelsrichtungen am Rand, Höhenkreisen bei 30° und 60° und '+
+    'dem Zenit obenauf. Von außen betrachtet sieht man damit auf einen Blick, was über und was unter dem '+
+    'Horizont steht. Der <b>Radius</b> lässt sich daneben einstellen (in Erdradien): Bei <b>60</b> reicht die '+
+    'Kuppel bis zur Mondbahn – steht der Mond dann innerhalb, ist er in Amberg gerade am Himmel. Maßstabsgetreu '+
+    'stimmen die Größen; im anschaulichen Modell wächst die Kuppel mit der aufgeblasenen Erde mit.</p>'+
     '<h4>heliozentrisch oder geozentrisch</h4><p>Das Umschalten ändert nur, <b>wer stillsteht</b>. Geozentrisch läuft '+
     'die Sonne um die Erde und die Bahnen von Venus und Mars bekommen Schleifen – dieselbe Bewegung, anderer Bezugspunkt. '+
     'Genau diese Schleifen beschrieb Ptolemäus mit Epizykeln.</p>'+
@@ -1993,6 +2040,8 @@ an('tSchatten',()=>{
   else D.sys.schatten=!D.sys.schatten;
   oberflaeche(); zeichne(); sync(); });
 an('tSterne',()=>{ D.sys.sterne=!D.sys.sterne; oberflaeche(); zeichne(); sync(); });
+an('tKuppel',()=>{ D.sys.kuppelAn=!D.sys.kuppelAn; oberflaeche(); zeichne(); sync(); });
+$('rKuppel').oninput=e=>{ D.sys.kuppel=+e.target.value; oberflaeche(); zeichne(); sync(); };
 $('eratBsp').onchange=e=>{ const b=ERAT_BSP[+e.target.value]; if(!b) return;
   D.erat.a=b.a; D.erat.b=b.b; oberflaeche(); zeichne(); sync(true); };
 $('rEA').oninput=e=>{ D.erat.a=+e.target.value; oberflaeche(); zeichne(); sync(); };

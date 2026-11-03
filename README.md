@@ -2724,6 +2724,11 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     bleibt er ohnehin maßstabsgetreu. Der gewählte Ort ist auch **auf der Erdkugel
     markiert**, wenn man von außen auf sie schaut – und im zweiten Fenster lässt sich beides
     nebeneinanderlegen.
+  - **Horizontkuppel:** Der Schalter **Horizont** legt die Halbkugel des von dort sichtbaren Himmels
+    über den Ort – mit Himmelsrichtungen am Rand, Höhenkreisen bei 30° und 60° und dem Zenit obenauf.
+    Von außen sieht man damit auf einen Blick, was über und was unter dem Horizont steht. Der **Radius**
+    ist daneben einstellbar (in Erdradien, 0,6 bis 100): Bei **60** reicht die Kuppel bis zur Mondbahn –
+    liegt der Mond dann innerhalb, steht er am Ort gerade über dem Horizont.
   - **heliozentrisch oder geozentrisch:** Das Umschalten ändert nur, **wer stillsteht**. Geozentrisch
     läuft die Sonne um die Erde, und die Bahnen von Venus und Mars bekommen **Schleifen** – dieselbe
     Bewegung, anderer Bezugspunkt. Genau diese Schleifen beschrieb Ptolemäus mit Epizykeln.
