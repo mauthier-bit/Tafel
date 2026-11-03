@@ -451,7 +451,7 @@ const KOERPER={
 const PLANETEN=['venus','erde','mars'];
 const SCHIEF=23.4393;                                  /* Schiefe der Erdachse */
 /* Beobachtungsorte für den Blick in den Himmel (Breite, östliche Länge) */
-const ORTE=[{n:'Amberg',b:49.44,l:11.86},{n:'München',b:48.14,l:11.58},{n:'Hamburg',b:53.55,l:9.99},
+const ORTE=[{n:'Amberg',b:49.44,l:11.86},{n:'Burghausen',b:48.17,l:12.83},{n:'München',b:48.14,l:11.58},{n:'Hamburg',b:53.55,l:9.99},
   {n:'Rom',b:41.90,l:12.50},{n:'Nordkap',b:71.17,l:25.78},{n:'Kairo',b:30.04,l:31.24},
   {n:'Quito (am Äquator)',b:-0.18,l:-78.47},{n:'Sydney',b:-33.87,l:151.21},
   {n:'Nordpol',b:90,l:0},{n:'Südpol',b:-90,l:0}];
@@ -913,10 +913,16 @@ function imSchatten(id,t){
   if(L.r<L.halb+R) return 0.25;
   return 0;
 }
+/* Am Himmel misst der Mond nur ein halbes Grad - im weiten Blick sind das wenige
+   Bildpunkte, da ist von der Phase nichts zu sehen. Darum wird er größer gezeichnet,
+   solange er nicht dicht bei der Sonne steht (dort käme sonst eine falsche Finsternis
+   heraus). Beim Hineinzoomen gilt wieder das wahre Maß. */
+const mondGross=()=>AKT_VON==='ort'&&sep('erde','mond','sonne',D.sys.t)>5;
 /* ---------- ein Körper mit Lichtgrenze ---------- */
 function malKoerper(id,p3){
   const q=p2(p3); if(!q) return;
-  const rho=F*radZ(id)/q[2];
+  let rho=F*radZ(id)/q[2];
+  if(id==='mond'&&mondGross()) rho=Math.max(rho,VH*0.012);
   const farbe=KOERPER[id].farbe;
   if(id==='sonne'){
     const g=ctx.createRadialGradient(q[0],q[1],0,q[0],q[1],Math.max(rho*4,22));
@@ -1057,9 +1063,12 @@ function malBoden(){
   const so=azHoch(R,sub(ortW('sonne',D.sys.t),standOrt('ort',D.sys.t)));
   const hoch=zahl(Math.abs(so.hoch*GRD),0)+'°';
   const lang=VW>440;
+  /* Die Ortszeile steht oben rechts - unten liegt die Infozeile, links der Hinweis. */
+  const mo=azHoch(R,sub(ortW('mond',D.sys.t),standOrt('ort',D.sys.t)));
   text(R.o.n+(lang?' · '+zahl(Math.abs(R.o.b),1)+'° '+(R.o.b>=0?'N':'S'):'')
-    +' · Sonne '+(so.hoch>0?hoch+(lang?' über dem Horizont':' hoch'):hoch+' unter dem Horizont'),
-    VX+10,y+(lang?40:26)*K,'#94a3b8',{sz:lang?12:11,fett:true,rand:'rgba(13,17,23,.9)'});
+    +' · Sonne '+(so.hoch>0?hoch+(lang?' über dem Horizont':' hoch'):hoch+' unter dem Horizont')
+    +(lang&&mo.hoch>0&&mondGross()?' · Mond vergrößert gezeichnet':''),
+    VX+VW-10,VY+(lang?30:12)*K,'#94a3b8',{al:'right',sz:lang?12:11,fett:true,rand:'rgba(13,17,23,.9)'});
 }
 /* ---------- Schattenkegel ---------- */
 function malKegel(p3,Rae,richtung,laenge,rEnde,alpha,rand){
@@ -1864,6 +1873,10 @@ const HILFE={
     '<b>Amberg</b>, in der Liste daneben stehen weitere von Nordkap bis Sydney. Dann liegt der <b>Horizont</b> '+
     'waagrecht im Bild, unten stehen die <b>Himmelsrichtungen</b>, und mit dem Finger dreht man sich um die '+
     'eigene Achse. Die Erde dreht sich dabei richtig mit: Sonne, Mond und Sterne gehen auf und unter.</p>'+
+    '<p>Der <b>Mond</b> wird dabei <b>größer gezeichnet</b>, als er am Himmel erscheint – mit seinem halben '+
+    'Grad wäre von der Phase nichts zu erkennen. Seine <b>Lage stimmt</b>: Die helle Seite zeigt genau dorthin, '+
+    'wo die Sonne steht, auch wenn sie schon untergegangen ist. Zoomt man heran, bekommt er wieder sein wahres '+
+    'Maß, und dicht bei der Sonne (Finsternis) bleibt er ohnehin maßstabsgetreu.</p>'+
     '<p>Sind <b>Ebenen</b> eingeblendet, zeigt der Himmel die <b>Ekliptik</b> mit den zwölf '+
     '<b>Tierkreiszeichen</b>; sind <b>Bahnen</b> eingeblendet, zusätzlich den <b>Tagbogen</b> von Sonne und '+
     'Mond – den Weg also, den sie an diesem Tag über den Himmel nehmen. Daran sieht man unmittelbar, warum die '+

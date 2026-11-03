@@ -2711,13 +2711,17 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     **Schleifenbahn** vor den Sternen. Auf der Erde steht man dabei auf dem Punkt der Oberfläche, der
     dem Mondschatten am nächsten liegt – bei einer Finsternis also dort, wo man sie sieht.
   - **Am Ort (Blick in den Himmel):** Der Standort **am Ort** stellt einen auf den Boden eines Ortes –
-    voreingestellt **Amberg**, daneben eine Liste von Nordkap bis Sydney. Dann liegt der **Horizont**
+    voreingestellt **Amberg**, daneben eine Liste von Burghausen über Rom und Nordkap bis Sydney. Dann liegt der **Horizont**
     waagrecht im Bild, unten stehen die **Himmelsrichtungen**, und mit dem Finger dreht man sich um die
     eigene Achse; die Erde dreht sich richtig mit, Sonne, Mond und Sterne gehen auf und unter. Mit
     **Ebenen** erscheinen die **Ekliptik** und die zwölf **Tierkreiszeichen** (die 30°-Abschnitte ab
     dem Frühlingspunkt – sie liegen heute nicht mehr über den gleichnamigen Sternbildern), mit
     **Bahnen** zusätzlich der **Tagbogen** von Sonne und Mond. So wird unmittelbar sichtbar, warum die
-    Sonne im Sommer hoch und im Winter flach steht. Der gewählte Ort ist auch **auf der Erdkugel
+    Sonne im Sommer hoch und im Winter flach steht. Der **Mond** wird dabei größer gezeichnet, als er am
+    Himmel erscheint – mit seinem halben Grad wäre von der Phase nichts zu sehen –, seine **Lage stimmt
+    aber**: Die helle Seite zeigt genau dorthin, wo die Sonne steht, auch wenn sie schon untergegangen
+    ist. Beim Hineinzoomen bekommt er wieder sein wahres Maß, und dicht bei der Sonne (Finsternis)
+    bleibt er ohnehin maßstabsgetreu. Der gewählte Ort ist auch **auf der Erdkugel
     markiert**, wenn man von außen auf sie schaut – und im zweiten Fenster lässt sich beides
     nebeneinanderlegen.
   - **heliozentrisch oder geozentrisch:** Das Umschalten ändert nur, **wer stillsteht**. Geozentrisch
