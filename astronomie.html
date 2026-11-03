@@ -799,7 +799,7 @@ function p2r(dir){                                   /* Richtung (unendlich weit
 /* Linienzug im Raum, an der Kamera abgeschnitten */
 function linie3(pkte,farbe,breite,alpha,strich){
   ctx.beginPath(); let auf=false;
-  for(const p of pkte){ const q=p2(p);
+  for(const p of pkte){ const q=p&&p2(p);              /* null trennt den Zug */
     if(!q){ auf=false; continue; }
     if(auf) ctx.lineTo(q[0],q[1]); else { ctx.moveTo(q[0],q[1]); auf=true; } }
   ctx.strokeStyle=farbe; ctx.lineWidth=breite; ctx.globalAlpha=alpha==null?1:alpha;
@@ -1103,6 +1103,49 @@ function malKuppel(){
     linie3(kr,'rgba(244,63,94,.28)',1); });
   const z=p2(add(p,mul(R.zen,r)));
   if(z) text('Zenit über '+R.o.n,z[0],z[1]-10*K,'#fda4af',{al:'center',sz:11.5,fett:true,rand:'rgba(7,11,24,.85)'});
+  /* Was am Himmel dieses Ortes zu sehen ist, auf die Kuppel gelegt - mit denselben
+     Schaltern wie am Ort selbst: „Bahnen" die Tagbögen, „Ebenen" Ekliptik und Tierkreis. */
+  if(S.bahnen){ kuppelBogen(p,r,R,'sonne','rgba(253,224,71,.95)'); kuppelBogen(p,r,R,'mond','rgba(226,232,240,.85)'); }
+  if(S.ebenen) kuppelEkliptik(p,r,R);
+  kuppelOrte(p,r,R);
+}
+/* Tagbogen auf die Kuppel gelegt; unter dem Horizont bleibt eine Lücke. */
+function kuppelBogen(p,r,R0,id,farbe){
+  const t0=D.sys.t, pk=[];
+  for(let dt=-0.5;dt<=0.5001;dt+=1/144){
+    const t=t0+dt, R=ortRahmen(t);
+    const ah=azHoch(R,sub(ortW(id,t),standOrt('ort',t)));
+    pk.push(ah.hoch<0?null:add(p,mul(himmelRichtung(R0,ah.az,ah.hoch),r)));
+  }
+  linie3(pk,farbe,1.6,0.95,[7,5]);
+}
+/* Ekliptik und Tierkreiszeichen auf der Kuppel */
+function kuppelEkliptik(p,r,R){
+  const pk=[];
+  for(let l=0;l<=360;l+=2){ const d=[Math.cos(l*RAD),Math.sin(l*RAD),0];
+    pk.push(dot(d,R.zen)<=0?null:add(p,mul(d,r))); }
+  linie3(pk,'rgba(250,204,21,.7)',1.6);
+  TIERKREIS.forEach(([sym,nm],i)=>{
+    const l=(i*30+15)*RAD, d=[Math.cos(l),Math.sin(l),0];
+    if(dot(d,R.zen)<=0.02) return;
+    const q=p2(add(p,mul(d,r))); if(!q) return;
+    text(sym,q[0],q[1],'#fcd34d',{al:'center',sz:14,fett:true,rand:'rgba(7,11,24,.85)'});
+    text(nm,q[0],q[1]+13*K,'#d9bb63',{al:'center',sz:10.5,rand:'rgba(7,11,24,.85)'});
+  });
+}
+/* Wo Sonne und Mond gerade an diesem Himmel stehen - mit Sichtlinie zum Körper selbst */
+function kuppelOrte(p,r,R){
+  const t=D.sys.t, stand=standOrt('ort',t);
+  [['sonne','#fde047'],['mond','#e2e8f0']].forEach(([id,farbe])=>{
+    const ziel=rahmen(ortZ(id,t)), dir=norm(sub(ziel,rahmen(stand)));
+    const hoch=dot(dir,R.zen);
+    const pt=add(p,mul(dir,r)), q=p2(pt);
+    if(q&&hoch>0){
+      ctx.fillStyle=farbe; ctx.beginPath(); ctx.arc(q[0],q[1],4,0,7); ctx.fill();
+      ctx.strokeStyle='rgba(7,11,24,.9)'; ctx.lineWidth=1; ctx.stroke();
+    }
+    if(betrag(sub(ziel,p))<4*r) linie3([p,ziel],farbe,1,hoch>0?0.5:0.22,[4,4]);
+  });
 }
 /* ---------- Schattenkegel ---------- */
 function malKegel(p3,Rae,richtung,laenge,rEnde,alpha,rand){
@@ -1930,6 +1973,12 @@ const HILFE={
     'Horizont steht. Der <b>Radius</b> lässt sich daneben einstellen (in Erdradien): Bei <b>60</b> reicht die '+
     'Kuppel bis zur Mondbahn – steht der Mond dann innerhalb, ist er in Amberg gerade am Himmel. Maßstabsgetreu '+
     'stimmen die Größen; im anschaulichen Modell wächst die Kuppel mit der aufgeblasenen Erde mit.</p>'+
+    '<p>In der Kuppel wird dasselbe gezeigt wie am Ort selbst, mit denselben Schaltern: <b>Bahnen</b> legt die '+
+    '<b>Tagbögen</b> von Sonne und Mond auf die Kuppel (unter dem Horizont bleibt eine Lücke), <b>Ebenen</b> die '+
+    '<b>Ekliptik</b> mit den <b>Tierkreiszeichen</b>. Dazu sitzen Sonne und Mond als Punkte dort, wo sie an '+
+    'diesem Himmel gerade stehen, mit einer gestrichelten Sichtlinie zum Körper selbst. So sieht man von außen, '+
+    'was der Beobachter am Boden gerade über sich hat – und warum die Sonne im Winter einen so flachen Bogen '+
+    'zieht.</p>'+
     '<h4>heliozentrisch oder geozentrisch</h4><p>Das Umschalten ändert nur, <b>wer stillsteht</b>. Geozentrisch läuft '+
     'die Sonne um die Erde und die Bahnen von Venus und Mars bekommen Schleifen – dieselbe Bewegung, anderer Bezugspunkt. '+
     'Genau diese Schleifen beschrieb Ptolemäus mit Epizykeln.</p>'+

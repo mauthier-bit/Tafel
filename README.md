@@ -2728,7 +2728,12 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     über den Ort – mit Himmelsrichtungen am Rand, Höhenkreisen bei 30° und 60° und dem Zenit obenauf.
     Von außen sieht man damit auf einen Blick, was über und was unter dem Horizont steht. Der **Radius**
     ist daneben einstellbar (in Erdradien, 0,6 bis 100): Bei **60** reicht die Kuppel bis zur Mondbahn –
-    liegt der Mond dann innerhalb, steht er am Ort gerade über dem Horizont.
+    liegt der Mond dann innerhalb, steht er am Ort gerade über dem Horizont. In der Kuppel wird dasselbe
+    gezeigt wie am Ort selbst, mit denselben Schaltern: **Bahnen** legt die **Tagbögen** von Sonne und
+    Mond auf die Kuppel (unter dem Horizont bleibt eine Lücke), **Ebenen** die **Ekliptik** mit den
+    **Tierkreiszeichen**; dazu sitzen Sonne und Mond als Punkte dort, wo sie an diesem Himmel gerade
+    stehen, mit gestrichelter Sichtlinie zum Körper. So sieht man von außen, was der Beobachter am Boden
+    gerade über sich hat – und warum die Sonne im Winter einen so flachen Bogen zieht.
   - **heliozentrisch oder geozentrisch:** Das Umschalten ändert nur, **wer stillsteht**. Geozentrisch
     läuft die Sonne um die Erde, und die Bahnen von Venus und Mars bekommen **Schleifen** – dieselbe
     Bewegung, anderer Bezugspunkt. Genau diese Schleifen beschrieb Ptolemäus mit Epizykeln.
