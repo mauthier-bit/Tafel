@@ -2682,7 +2682,9 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   die Mars-Opposition** auf wenige Stunden. Die Infozeile unter dem Bild nennt Datum, Jahreszeit,
   Mondphase, Winkelabstände und Entfernungen – groß genug für die letzte Reihe.
   - **Sonnensystem:** Sonne, Venus, Erde, Mond und Mars mit ihren wahren Umlaufzeiten und Neigungen.
-    **▶** startet die Zeit, **Tempo** sagt, wie viel Modellzeit auf eine Sekunde kommt (von Minuten bis
+    Die Bedienung steht in zwei Zeilen: oben die **Zeit** – sie bleibt fest stehen, während der
+    Standort daneben bei Bedarf seitlich wegrollt –, darunter **Bezug, Ereignisliste, zweites
+    Fenster** und die **Anzeige-Schalter**. **▶** startet die Zeit, **Tempo** sagt, wie viel Modellzeit auf eine Sekunde kommt (von Minuten bis
     zu Jahren je Sekunde); **Echtzeit** zeigt, wie langsam der Himmel wirklich ist. **⏪ und ⏩** gehen
     **einen Schritt** zurück oder vor – ein Schritt ist so viel, wie eine Sekunde Lauf bringen würde.
     **Zeitlupe** stellt das Tempo auf das zuletzt gewählte Ereignis ein: bei einer Finsternis rund zehn
