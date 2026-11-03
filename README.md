@@ -2682,7 +2682,12 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   Entfernungen – groß genug für die letzte Reihe.
   - **Sonnensystem:** Sonne, Venus, Erde, Mond und Mars mit ihren wahren Umlaufzeiten und Neigungen.
     **▶** startet die Zeit, **Tempo** sagt, wie viel Modellzeit auf eine Sekunde kommt (von Minuten bis
-    zu Jahren je Sekunde); **Echtzeit** zeigt, wie langsam der Himmel wirklich ist.
+    zu Jahren je Sekunde); **Echtzeit** zeigt, wie langsam der Himmel wirklich ist. **⏪ und ⏩** gehen
+    **einen Schritt** zurück oder vor – ein Schritt ist so viel, wie eine Sekunde Lauf bringen würde.
+    **Zeitlupe** stellt das Tempo auf das zuletzt gewählte Ereignis ein: bei einer Finsternis rund zehn
+    Minuten je Sekunde, bei den Mondphasen ein halber Tag, bei der Marsschleife drei Tage; ohne
+    gewähltes Ereignis ein Fünfundzwanzigstel des eingestellten Tempos. Weil die Einzelschritte am
+    Tempo hängen, werden sie in der Zeitlupe ebenso fein.
   - **Drei Darstellungen** (Auswahlliste): **maßstabsgetreu** zeigt die wahren Größen – die Körper sind
     winzige Punkte, genau das ist die Aussage; ein dünner Ring hilft, sie zu finden. **anschaulich**
     vergrößert Sonne (20-fach), Planeten (600-fach) und die Mondbahn (40-fach), damit im Überblick
@@ -2710,10 +2715,15 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     schneiden – damit wird sichtbar, warum es nicht bei jedem Neumond eine Finsternis gibt. Die
     Erdkugel bekommt ab einer gewissen Größe **Gradnetz, Wendekreise, Polarkreise und Achse**, dazu
     die **Tag-Nacht-Grenze**: So sind die **Jahreszeiten** zu zeigen.
-  - **Ereignis suchen:** Neumond, Vollmond, Sonnenfinsternis, Mondfinsternis, Venustransit,
-    Mars-Opposition, Sommer- und Wintersonnenwende. Die Zeit springt zum nächsten solchen Ereignis und
-    (abschaltbar im ⚙) stellt sich die **Ansicht passend** ein – bei der Mondfinsternis also dicht an
-    den Mond, der dann **kupferrot im Kernschatten** steht.
+  - **Ereignisliste:** Die Liste führt die nächsten Finsternisse, Mondphasen, Sonnenwenden, die
+    Mars-Opposition und den nächsten Venustransit **mit Datum und Art** auf („21.1.2000 · totale
+    Mondfinsternis"); ein Tipp darauf stellt die Zeit dorthin, **↻** füllt sie ab der gerade
+    eingestellten Zeit neu. Dabei stellt sich (abschaltbar im ⚙) die **Ansicht passend** ein – bei der
+    Mondfinsternis also dicht an den Mond, der dann **kupferrot im Kernschatten** steht.
+  - **Zweites Fenster:** Oben rechts lässt sich dasselbe Ereignis **aus einer zweiten Perspektive**
+    einblenden – etwa links die Geometrie von außen und rechts der Blick vom Boden der Erde, oder
+    umgekehrt. Das Blickziel sucht sich das Fenster selbst: bei Sonnenfinsternis und Venustransit von
+    der Erde zur Sonne, sonst zum Mond; vom Mond aus zur Erde.
   - **Erdumfang (Eratosthenes):** zwei Orte auf einem Meridian, parallele Sonnenstrahlen,
     Schattenwinkel, Mittelpunktswinkel α und **U = s · 360°/α**. Beispielpaare in der Liste, dazu ein
     **Messfehler-Regler** (jeder Fehler schlägt bei kleinem α viel stärker durch).

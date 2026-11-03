@@ -276,10 +276,13 @@
     <span class="reihe" data-tab="system" style="display:contents">
       <button class="ic" id="bPlay" title="starten / anhalten">▶</button>
       <button class="ic" id="bZurueck" title="Zeit auf den Anfang zurücksetzen">⏮</button>
+      <button class="ic" id="bSchrittZ" title="einen Schritt zurück (ein Schritt = so viel, wie eine Sekunde Lauf)">⏪</button>
+      <button class="ic" id="bSchrittV" title="einen Schritt vor (ein Schritt = so viel, wie eine Sekunde Lauf)">⏩</button>
       <label class="fld" title="Wie viel Zeit im Modell auf eine Sekunde kommt">Tempo
         <input type="range" id="rTempo" min="-300" max="250" step="1" value="90" aria-label="Tempo">
         <span class="val" id="vTempo">–</span></label>
       <button class="tog" id="tEcht" title="Echtzeit: Das Modell läuft so langsam wie der Himmel selbst">Echtzeit</button>
+      <button class="tog" id="tLupe" title="Zeitlupe: langsam genug, um durch das gewählte Ereignis zu gehen">Zeitlupe</button>
       <span class="sep"></span>
       <span class="lbl">Standort</span>
       <button class="tog on" data-von="aussen" title="Blick von außen auf das System">außen</button>
@@ -299,17 +302,18 @@
         <option value="erde">geozentrisch</option>
       </select>
       <span class="sep"></span>
-      <select id="selEreig" title="Ein Ereignis im Modell aufsuchen" aria-label="Ereignis">
-        <option value="neumond">Neumond</option>
-        <option value="vollmond">Vollmond</option>
-        <option value="sofi">Sonnenfinsternis</option>
-        <option value="mofi">Mondfinsternis</option>
-        <option value="transit">Venustransit</option>
-        <option value="opposition">Mars in Opposition</option>
-        <option value="sommer">Sommersonnenwende</option>
-        <option value="winter">Wintersonnenwende</option>
+      <select id="selListe" title="Ereignis aus der Liste anspringen – die Liste steht ab der eingestellten Zeit" aria-label="Ereignis">
+        <option value="" hidden>Ereignis …</option>
       </select>
-      <button class="btn pri" id="bSpring" title="Die Zeit bis zum nächsten solchen Ereignis vorspulen">suchen ➤</button>
+      <button class="ic" id="bListe" title="Liste ab der jetzt eingestellten Zeit neu füllen">↻</button>
+      <span class="sep"></span>
+      <select id="selPip" title="Zweites Fenster: dasselbe Ereignis von einem anderen Standort aus" aria-label="zweites Fenster">
+        <option value="aus">kein 2. Fenster</option>
+        <option value="aussen">2. Fenster: von außen</option>
+        <option value="sonne">2. Fenster: von der Sonne</option>
+        <option value="erde">2. Fenster: von der Erde</option>
+        <option value="mond">2. Fenster: vom Mond</option>
+      </select>
       <span class="sep"></span>
       <select id="selStufe" title="Wie Größen und Abstände gezeigt werden" aria-label="Darstellung">
         <option value="echt">maßstabsgetreu</option>
@@ -445,7 +449,10 @@ function ortW(id,t){
 }
 /* Überhöht wird nur der Blick von außen: Steht man auf einem Körper, ist der Himmel
    ohnehin richtig groß - Sonne und Mond messen dort ihr halbes Grad. */
-const stufe=()=>D.sys.von==='aussen'?(D.sys.stufe||'ansch'):'echt';
+/* AKT_VON/AKT_ZIEL gehören zur Kamera, die gerade zeichnet - im zweiten Fenster
+   steht man woanders als im großen Bild. */
+let AKT_VON='aussen', AKT_ZIEL='erde', AKT_STUFE=null;
+const stufe=()=>AKT_VON!=='aussen'?'echt':(AKT_STUFE||D.sys.stufe||'ansch');
 const sfaktor=()=>stufe()==='schatten'?clamp(D.sys.sf||SF_STD,2,12):1;
 const uebAn=()=>stufe()==='ansch';
 const neigungUeb=()=>Math.atan(sfaktor()*Math.tan(KOERPER.mond.i*RAD))*GRD;   /* gezeigte Bahnneigung */
@@ -588,7 +595,8 @@ function suchen(art,t0){
    ============================================================ */
 const standard=()=>({ v:1, tab:'system', fontSize:14, fontBold:false, fontItalic:false,
   sys:{ t:0, lauf:false, tempo:30, echt:false, stufe:'ansch', sf:SF_STD, bahnen:true, ebenen:false, schatten:true,
-        sterne:true, namen:true, von:'aussen', ziel:'erde', bezug:'sonne',
+        sterne:true, namen:true, von:'aussen', ziel:'erde', bezug:'sonne', pip:'aus',
+        lupe:false, tempoAlt:30, letztes:null,
         az:35, el:26, dist:4.2, fov:30, panAz:0, panEl:0, ansichtMit:true },
   erat:{ a:31, b:23.5, fehler:0, strahlen:true, flach:false },
   mond:{ eps:8985, mass:false, hilf:true },
@@ -596,14 +604,34 @@ const standard=()=>({ v:1, tab:'system', fontSize:14, fontBold:false, fontItalic
   stern:{ d:424, lupe:1200, spur:true } });
 let D=standard();
 let W=300,H=300,K=1,F=600,KAM=null;
+let VX=0,VY=0,VW=300,VH=300;                        /* Sichtfenster für die Projektion */
 
 /* Bezugssystem: heliozentrisch oder geozentrisch */
 const nullPunkt=t=>D.sys.bezug==='erde'?ortZ('erde',t):[0,0,0];
 const rahmen=p=>sub(p,nullPunkt(D.sys.t));
 const tempoTage=()=>D.sys.echt?1/86400:Math.pow(10,D.sys.tempo/100);
+/* Zeitlupe: So viel Modellzeit je Sekunde passt zu dem Ereignis, das zuletzt angesprungen
+   wurde - eine Finsternis dauert Stunden, die Mondphasen einen Monat, eine Marsschleife
+   Monate. Ohne gewähltes Ereignis wird das eingestellte Tempo auf ein Fünfundzwanzigstel
+   heruntergenommen. */
+const ZEITLUPE={sofi:0.006, mofi:0.008, transit:0.012, neumond:0.4, vollmond:0.4,
+  opposition:3, sommer:6, winter:6};
+function lupeTempo(){
+  const art=D.sys.letztes;
+  if(art&&ZEITLUPE[art]) return ZEITLUPE[art];
+  return Math.max(0.0004,Math.pow(10,(D.sys.tempoAlt!==undefined?D.sys.tempoAlt:D.sys.tempo)/100)/25);
+}
+const tempoWert=d=>clamp(Math.round(100*Math.log10(Math.max(d,1e-6))),-300,250);
+function lupeSetzen(an){
+  const S=D.sys;
+  if(an){
+    if(!S.lupe) S.tempoAlt=S.tempo;
+    S.lupe=true; S.echt=false; S.tempo=tempoWert(lupeTempo());
+  } else if(S.lupe){ S.lupe=false; S.tempo=(S.tempoAlt===undefined?30:S.tempoAlt); }
+}
 /* Schattenkegel sind eine Zeichenhilfe für den Blick von außen: Im Weltraum sieht man
    sie nicht, und vom Körper aus lägen sie als riesige Keile quer im Bild. */
-const schattenAn=()=>D.sys.schatten&&!uebAn()&&D.sys.von==='aussen';
+const schattenAn=()=>D.sys.schatten&&!uebAn()&&AKT_VON==='aussen';
 const schattenStufe=()=>stufe()==='schatten';
 
 /* ---------- Leinwand ---------- */
@@ -649,34 +677,36 @@ function standOrt(id,t){
   if(id==='mond') return add(p,mul(norm(sub(ortW('erde',t),p)),radW('mond')));
   return p;
 }
-function kameraSetzen(){
-  const S=D.sys, zielP=rahmen(ortZ(S.ziel,S.t));
+function kameraSetzen(o){
+  const S=o||D.sys;
+  AKT_VON=S.von||'aussen'; AKT_ZIEL=S.ziel||'erde'; AKT_STUFE=S.stufe||null;
+  const zielP=rahmen(ortZ(AKT_ZIEL,D.sys.t));
   let pos, fov;
-  if(S.von==='aussen'){
-    const az=S.az*RAD, el=S.el*RAD, d=S.dist;
+  if(AKT_VON==='aussen'){
+    const az=(S.az||0)*RAD, el=(S.el||0)*RAD, d=S.dist||4.2;
     pos=add(zielP,[d*Math.cos(el)*Math.cos(az), d*Math.cos(el)*Math.sin(az), d*Math.sin(el)]);
     fov=42;
-  } else { pos=rahmen(standOrt(S.von,S.t)); fov=S.fov; }
+  } else { pos=rahmen(standOrt(AKT_VON,D.sys.t)); fov=S.fov||25; }
   let f=norm(sub(zielP,pos));
   if(betrag(sub(zielP,pos))<1e-12) f=[1,0,0];
-  if(S.von!=='aussen'&&(S.panAz||S.panEl)){
+  if(AKT_VON!=='aussen'&&(S.panAz||S.panEl)){
     f=drehAchse(f,[0,0,1],S.panAz*RAD);
     const rr=norm(kreuz(f,[0,0,1]));
     f=norm(drehAchse(f,rr,-S.panEl*RAD));
   }
   let up=[0,0,1]; if(Math.abs(dot(f,up))>0.9995) up=[0,1,0];
   const r=norm(kreuz(f,up)), u=kreuz(r,f);
-  F=(H/2)/Math.tan(fov/2*RAD);
+  F=(VH/2)/Math.tan(fov/2*RAD);
   KAM={pos,f,r,u,fov};
 }
 function p2(p){                                      /* Punkt → Bildschirm, mit Tiefe */
   const v=sub(p,KAM.pos), d=dot(v,KAM.f);
   if(d<=1e-12) return null;
-  return [W/2+dot(v,KAM.r)*F/d, H/2-dot(v,KAM.u)*F/d, d];
+  return [VX+VW/2+dot(v,KAM.r)*F/d, VY+VH/2-dot(v,KAM.u)*F/d, d];
 }
 function p2r(dir){                                   /* Richtung (unendlich weit) → Bildschirm */
   const d=dot(dir,KAM.f); if(d<=1e-6) return null;
-  return [W/2+dot(dir,KAM.r)*F/d, H/2-dot(dir,KAM.u)*F/d];
+  return [VX+VW/2+dot(dir,KAM.r)*F/d, VY+VH/2-dot(dir,KAM.u)*F/d];
 }
 /* Linienzug im Raum, an der Kamera abgeschnitten */
 function linie3(pkte,farbe,breite,alpha,strich){
@@ -710,7 +740,7 @@ const sterneRichtung=(()=>{                           /* fester Sternhimmel */
 })();
 function malSterne(){
   for(const s of sterneRichtung){ const q=p2r(s.d); if(!q) continue;
-    if(q[0]<-5||q[0]>W+5||q[1]<-5||q[1]>H+5) continue;
+    if(q[0]<VX-5||q[0]>VX+VW+5||q[1]<VY-5||q[1]>VY+VH+5) continue;
     const gr=s.h*1.7;
     ctx.fillStyle='rgba(255,255,255,'+(0.25+s.h*0.75).toFixed(2)+')';
     ctx.beginPath(); ctx.arc(q[0],q[1],gr,0,7); ctx.fill(); }
@@ -734,7 +764,7 @@ function scheibe(mitte,radius,normale,fuell,strich,beschr,farbe){
 }
 function malEbenen(){
   const S=D.sys, t=S.t;
-  const zielP=rahmen(ortZ(S.ziel,S.t));
+  const zielP=rahmen(ortZ(AKT_ZIEL,S.t));
   const weite=betrag(sub(zielP,KAM.pos))*Math.tan(KAM.fov/2*RAD);
   const ep=rahmen(ortZ('erde',t));
   const mRel=tt=>sub(ortZ('mond',tt),ortZ('erde',tt));           /* so, wie gezeichnet wird */
@@ -765,7 +795,7 @@ function bahnDauer(id){
 }
 function malBahnen(){
   const S=D.sys;
-  const zielP=rahmen(ortZ(S.ziel,S.t));
+  const zielP=rahmen(ortZ(AKT_ZIEL,S.t));
   const weite=betrag(sub(zielP,KAM.pos))*Math.tan(KAM.fov/2*RAD);     /* halbe Bildhöhe in AE */
   const passt=r=>r<40*weite;
   for(const id of ['venus','erde','mars']){
@@ -899,7 +929,7 @@ function malSchatten(){
 
 /* ---------- Maßstabsbalken ---------- */
 function malMassstab(unten){
-  const S=D.sys, zielP=rahmen(ortZ(S.ziel,S.t));
+  const S=D.sys, zielP=rahmen(ortZ(AKT_ZIEL,S.t));
   const d0=betrag(sub(zielP,KAM.pos)); if(!(d0>0)) return;
   const jePx=d0/F;                                           /* AE je Bildpunkt beim Blickziel */
   let roh=120*jePx, km=roh*AE, stufe, einh, wert;
@@ -935,22 +965,106 @@ function malInfoSystem(){
   zl.forEach(z=>{ y+=z.h/2; text(z.t,10,y,z.f,{sz:z.sz,fett:z.fett}); y+=z.h/2; });
   return hoch;
 }
-function zeichneSystem(){
+/* Der Inhalt einer Ansicht - einmal für das große Bild, einmal für das zweite Fenster */
+function szeneMalen(){
   const S=D.sys, t=S.t;
-  ctx.fillStyle='#070b18'; ctx.fillRect(0,0,W,H);
-  kameraSetzen();
   if(S.sterne) malSterne();
   if(S.ebenen) malEbenen();
   if(S.bahnen) malBahnen();
-  const liste=['sonne','venus','erde','mars','mond'].filter(id=>id!==S.von)
+  const liste=['sonne','venus','erde','mars','mond'].filter(id=>id!==AKT_VON)
     .map(id=>({id,p:rahmen(ortZ(id,t))}));
   liste.sort((a,b)=>betrag(sub(b.p,KAM.pos))-betrag(sub(a.p,KAM.pos)));
   liste.forEach(o=>malKoerper(o.id,o.p));
   if(schattenAn()) malSchatten();
+}
+const WOHER={aussen:'von außen',sonne:'von der Sonne',erde:'von der Erde',mond:'vom Mond'};
+const WORAUF={sonne:'auf die Sonne',erde:'auf die Erde',mond:'auf den Mond',venus:'auf die Venus',mars:'auf den Mars'};
+/* Das zweite Fenster zeigt dasselbe Ereignis von einem anderen Standort aus.
+   Das Blickziel sucht es sich selbst: Bei einer Sonnenfinsternis oder einem Transit
+   schaut man von der Erde zur Sonne, sonst zum Mond. */
+function pipOpt(){
+  const S=D.sys, t=S.t, von=S.pip;
+  if(!von||von==='aus') return null;
+  /* Das zweite Fenster von außen zeigt die Erde-Mond-Geometrie: „anschaulich" waere dort
+     unbrauchbar (man säße in der aufgeblasenen Erde), darum das Schattenmodell. */
+  if(von==='aussen') return {von:'aussen', ziel:'erde', dist:0.0075, az:sonnenLaenge(t)+90, el:12,
+    stufe:(D.sys.stufe==='ansch'?'schatten':D.sys.stufe)};
+  let ziel='mond';
+  if(von==='erde') ziel=(finsternisse(t).sofi||transit(t))?'sonne':'mond';
+  else if(von==='mond') ziel='erde';
+  else ziel='erde';
+  if(ziel===von) ziel='erde';
+  const d=betrag(sub(ortW(ziel,t),ortW(von,t)));
+  const w=2*Math.asin(clamp(radW(ziel)/Math.max(d,1e-9),-1,1))*GRD;
+  return {von, ziel, fov:w>0.1?clamp(w*8,0.3,40):25, panAz:0, panEl:0};
+}
+function malPip(){
+  const o=pipOpt(); if(!o) return;
+  const bw=Math.min(W*0.33,H*0.44,330), bh=bw*0.74;
+  const bx=W-bw-10, by=34*K;
+  ctx.save();
+  ctx.beginPath(); ctx.rect(bx,by,bw,bh); ctx.clip();
+  ctx.fillStyle='#070b18'; ctx.fillRect(bx,by,bw,bh);
+  VX=bx; VY=by; VW=bw; VH=bh;
+  kameraSetzen(o);
+  szeneMalen();
+  ctx.restore();
+  ctx.strokeStyle='rgba(226,232,240,.55)'; ctx.lineWidth=1.5;
+  ctx.strokeRect(bx+0.75,by+0.75,bw-1.5,bh-1.5);
+  ctx.fillStyle='rgba(7,11,24,.72)'; ctx.fillRect(bx+1,by+bh-20*K,bw-2,19*K);
+  text(WOHER[o.von]+' '+WORAUF[o.ziel],bx+8,by+bh-10*K,'#cbd5e1',{sz:12,fett:true});
+}
+function zeichneSystem(){
+  ctx.fillStyle='#070b18'; ctx.fillRect(0,0,W,H);
+  VX=0; VY=0; VW=W; VH=H;
+  kameraSetzen();
+  szeneMalen();
+  malPip();
+  VX=0; VY=0; VW=W; VH=H; kameraSetzen();          /* für Maßstab und Infozeile zurückstellen */
   malMassstab(malInfoSystem());
   if(schattenStufe())
     text('Schattenmodell – quer überhöht: Mondbahn '+grad(neigungUeb(),0)+' statt 5,1° geneigt, Erde und Mond '
-      +zahl(sfaktor(),0)+'-fach',W/2,30*K,'#94a3b8',{al:'center',sz:12});
+      +zahl(sfaktor(),0)+'-fach',12,30*K,'#94a3b8',{sz:12});
+}
+/* ---------- Liste der nächsten Ereignisse ---------- */
+const EREIG_NAME={neumond:'Neumond',vollmond:'Vollmond',sofi:'Sonnenfinsternis',mofi:'Mondfinsternis',
+  transit:'Venustransit',opposition:'Mars in Opposition',sommer:'Sommersonnenwende',winter:'Wintersonnenwende'};
+let listeStand=null;
+function listeFuellen(){
+  const sel=$('selListe'); if(!sel) return;
+  const t0=D.sys.t, eintraege=[];
+  const nimm=(art,n)=>{ let t=t0;
+    for(let i=0;i<n;i++){ const tt=suchen(art,t); if(tt===null) break; eintraege.push({t:tt,art}); t=tt+1; } };
+  nimm('sofi',3); nimm('mofi',3); nimm('neumond',2); nimm('vollmond',2);
+  nimm('opposition',1); nimm('sommer',1); nimm('winter',1); nimm('transit',1);
+  /* Eine Finsternis ist immer auch Neumond oder Vollmond - dann reicht der eine Eintrag. */
+  const fins=eintraege.filter(e=>e.art==='sofi'||e.art==='mofi');
+  const liste=eintraege.filter(e=>!((e.art==='neumond'||e.art==='vollmond')&&fins.some(f=>Math.abs(f.t-e.t)<0.4)));
+  liste.sort((a,b)=>a.t-b.t);
+  sel.innerHTML='<option value="" hidden>Ereignis …</option>';
+  liste.forEach((e,i)=>{
+    const o=document.createElement('option'); o.value=String(i);
+    o.dataset.t=String(e.t); o.dataset.art=e.art;
+    let nm=EREIG_NAME[e.art];
+    if(e.art==='sofi') nm=finsternisse(e.t).sofi||nm;
+    if(e.art==='mofi') nm=finsternisse(e.t).mofi||nm;
+    o.textContent=datumText(e.t)+' · '+nm;
+    sel.appendChild(o);
+  });
+  sel.value=''; listeStand=t0;
+}
+function listePruefen(){
+  const sel=$('selListe'); if(!sel) return;
+  const erste=sel.options[1];
+  if(!erste||listeStand===null||D.sys.t<listeStand-5||D.sys.t>+erste.dataset.t+1) listeFuellen();
+}
+function springeZu(t,art){
+  D.sys.t=t; D.sys.lauf=false; laufStopp();
+  D.sys.letztes=art||null;
+  if(D.sys.lupe) lupeSetzen(true);                   /* Zeitlupe ans neue Ereignis anpassen */
+  if(D.sys.ansichtMit&&art) ansichtFuer(art);
+  setzeTab(D.tab); listeFuellen(); sync(true);
+  toast((EREIG_NAME[art]||'Ereignis')+': '+datumText(t,true));
 }
 /* ---------- Ansicht zu einem Ereignis passend stellen ---------- */
 function ansichtFuer(art){
@@ -1119,7 +1233,7 @@ function zeichneErat(){
   } else {
     /* Die Sonne liegt im flachen Modell nur wenige tausend Kilometer hoch - damit passt
        das ganze Bild in einen Maßstab: Boden, beide Orte und die Sonne darüber. */
-    const y0=HV*0.86, stab=26;
+    const y0=HV*0.86, stab=32;
     const xmin=Math.min(0,fl.sKm,fl.fussKm), xmax=Math.max(0,fl.sKm,fl.fussKm);
     const spanne=Math.max(xmax-xmin,1)*1.25;
     const jeKm=(isFinite(fl.h)&&fl.h>0)
@@ -1139,12 +1253,12 @@ function zeichneErat(){
       ctx.beginPath(); ctx.moveTo(x,y0); ctx.lineTo(x,y0-stab); ctx.stroke();
       ctx.fillStyle=farbe; ctx.beginPath(); ctx.arc(x,y0,3.5,0,7); ctx.fill();
       text(nm,x,y0+16*K,farbe,{al:'center',sz:14,fett:true});
-      /* Schatten des Stabes am Boden - sein Winkel ist der gemessene */
-      const sch=Math.tan(sw*RAD)*stab;
+      /* Schatten des Stabes am Boden: Er zeigt von der Sonne weg, sein Winkel ist der gemessene. */
+      const sch=-Math.tan(sw*RAD)*stab;
       ctx.lineWidth=2.6; ctx.beginPath(); ctx.moveTo(x,y0); ctx.lineTo(x+sch,y0); ctx.stroke();
-      /* der Strahl durch die Stabspitze - er muss die Sonne treffen */
+      /* der Strahl: von der Sonne über die Stabspitze bis zur Schattenspitze */
       if(sichtbar){ ctx.strokeStyle='rgba(234,179,8,.9)'; ctx.lineWidth=1.6;
-        ctx.beginPath(); ctx.moveTo(x+sch,y0); ctx.lineTo(sx,sy); ctx.stroke(); }
+        ctx.beginPath(); ctx.moveTo(sx,sy); ctx.lineTo(x,y0-stab); ctx.lineTo(x+sch,y0); ctx.stroke(); }
       legF.push({nm,br,sw:Math.abs(sw),farbe});
     });
     legF.forEach((L,i)=>text(L.nm+': '+grad(L.br)+' N  –  '+(L.sw<0.3?'kein Schatten':'Schattenwinkel '+grad(L.sw)),
@@ -1428,6 +1542,7 @@ function setzeTab(t){
   $('hint').textContent=t==='system'
     ? (D.sys.von==='aussen'?'Ziehen = drehen · zwei Finger oder Mausrad = zoomen':'Ziehen = umsehen · zwei Finger oder Mausrad = Ausschnitt')
     : '';
+  if(t==='system') listePruefen();
   laufPruefen(); oberflaeche(); zeichne();
 }
 function oberflaeche(){
@@ -1436,8 +1551,12 @@ function oberflaeche(){
   $('bPlay').title=S.lauf?'anhalten':'starten';
   $('rTempo').value=String(S.tempo); $('vTempo').textContent=tempoText();
   $('tEcht').classList.toggle('on',S.echt);
+  $('tLupe').classList.toggle('on',!!S.lupe);
+  $('tLupe').title='Zeitlupe – '+(S.letztes&&ZEITLUPE[S.letztes]
+    ? 'passend zum Ereignis „'+EREIG_NAME[S.letztes]+'": '
+    : 'ein Fünfundzwanzigstel des eingestellten Tempos: ')+zahl(lupeTempo()*24,2)+' Stunden je Sekunde';
   document.querySelectorAll('[data-von]').forEach(b=>b.classList.toggle('on',b.dataset.von===S.von));
-  $('selZiel').value=S.ziel; $('selBezug').value=S.bezug;
+  $('selZiel').value=S.ziel; $('selBezug').value=S.bezug; $('selPip').value=S.pip||'aus';
   $('selStufe').value=stufe();
   $('selStufe').disabled=S.von!=='aussen';
   $('selStufe').title=S.von==='aussen'
@@ -1507,7 +1626,10 @@ const HILFE={
   system:['Sonnensystem',
     '<p>Sonne, Venus, Erde, Mond und Mars laufen auf Kreisbahnen mit ihren wahren Umlaufzeiten und Neigungen. '+
     'Die <b>Zeit</b> läuft mit ▶; das Tempo sagt, wie viel Modellzeit auf eine Sekunde kommt – <b>Echtzeit</b> zeigt, '+
-    'wie langsam der Himmel wirklich ist.</p>'+
+    'wie langsam der Himmel wirklich ist. Mit <b>⏪ und ⏩</b> geht es einen Schritt zurück oder vor; ein Schritt ist '+
+    'so viel, wie eine Sekunde Lauf bringen würde. <b>Zeitlupe</b> stellt das Tempo auf das zuletzt gewählte Ereignis '+
+    'ein: bei einer Finsternis rund zehn Minuten je Sekunde, bei den Mondphasen ein halber Tag, bei der Marsschleife '+
+    'drei Tage. Ohne gewähltes Ereignis nimmt sie ein Fünfundzwanzigstel des eingestellten Tempos.</p>'+
     '<h4>Drei Darstellungen</h4><p><b>maßstabsgetreu</b> zeigt die wahren Größen: Die Planeten werden zu Punkten – '+
     'genau das ist die Aussage. Ein dünner Ring hilft, sie zu finden. <b>anschaulich</b> bläst die Körper und die '+
     'Mondbahn auf, damit man im Überblick etwas sieht; Schatten gibt es dann keine.</p>'+
@@ -1525,7 +1647,15 @@ const HILFE={
     'Genau diese Schleifen beschrieb Ptolemäus mit Epizykeln.</p>'+
     '<h4>Ebenen und Schatten</h4><p>Die <b>Mondbahn</b> ist um 5,1° gegen die Erdbahnebene geneigt. Nur wenn Neumond '+
     'oder Vollmond nahe der <b>Knotenlinie</b> eintritt, treffen die Schattenkegel – deshalb gibt es nicht jeden Monat '+
-    'eine Finsternis. Mit <b>suchen</b> springt die Zeit zum nächsten Ereignis.</p>'],
+    'eine Finsternis.</p>'+
+    '<h4>Ereignisse</h4><p>Die <b>Liste</b> zeigt die nächsten Finsternisse, Mondphasen, Sonnenwenden, die '+
+    'Mars-Opposition und den nächsten Venustransit <b>mit Datum</b>; ein Tipp darauf stellt die Zeit dorthin. '+
+    'Mit <b>↻</b> wird sie ab der gerade eingestellten Zeit neu gefüllt. Ist im ⚙ „Ansicht passend einstellen" '+
+    'angehakt, stellen sich dabei auch Standort, Ausschnitt und Darstellung passend ein.</p>'+
+    '<h4>Zweites Fenster</h4><p>Das kleine Fenster oben rechts zeigt <b>dasselbe Ereignis von einem anderen '+
+    'Standort aus</b> – etwa die Geometrie von außen und daneben den Blick vom Boden der Erde. Das Blickziel '+
+    'sucht es sich selbst: Bei Sonnenfinsternis und Venustransit schaut es von der Erde zur Sonne, sonst zum '+
+    'Mond; vom Mond aus schaut es zur Erde.</p>'],
   erat:['Erdumfang nach Eratosthenes',
     '<p>Um −240 misst Eratosthenes in Alexandria zur Mittagszeit der Sommersonnenwende den Schattenwinkel eines '+
     'senkrechten Stabes: 7,2°. In Syene wirft ein Stab an diesem Tag keinen Schatten – die Sonne steht im Zenit.</p>'+
@@ -1584,10 +1714,14 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ $('hilfe').hidden
 /* ---------- Knöpfe und Regler ---------- */
 document.querySelectorAll('#tabs .tb').forEach(b=>b.onclick=()=>{ setzeTab(b.dataset.tab); sync(true); });
 const an=(id,fn)=>{ const el=$(id); if(el) el.onclick=fn; };
-an('bPlay',()=>{ D.sys.lauf=!D.sys.lauf; oberflaeche(); laufPruefen(); if(!D.sys.lauf) sync(true); });
-an('bZurueck',()=>{ D.sys.t=0; zeichne(); sync(true); });
-$('rTempo').oninput=e=>{ D.sys.tempo=+e.target.value; D.sys.echt=false; oberflaeche(); sync(); };
-an('tEcht',()=>{ D.sys.echt=!D.sys.echt; oberflaeche(); sync(); });
+an('bPlay',()=>{ D.sys.lauf=!D.sys.lauf; oberflaeche(); laufPruefen();
+  if(!D.sys.lauf){ listePruefen(); sync(true); } });
+an('bZurueck',()=>{ D.sys.t=0; zeichne(); listeFuellen(); sync(true); });
+const schritt=v=>{ D.sys.t+=v*tempoTage(); zeichne(); sync(); };
+an('bSchrittZ',()=>schritt(-1)); an('bSchrittV',()=>schritt(1));
+$('rTempo').oninput=e=>{ D.sys.tempo=+e.target.value; D.sys.echt=false; D.sys.lupe=false; oberflaeche(); sync(); };
+an('tEcht',()=>{ D.sys.echt=!D.sys.echt; if(D.sys.echt) D.sys.lupe=false; oberflaeche(); sync(); });
+an('tLupe',()=>{ lupeSetzen(!D.sys.lupe); oberflaeche(); sync(); });
 document.querySelectorAll('[data-von]').forEach(b=>b.onclick=()=>{
   const v=b.dataset.von; D.sys.von=v; D.sys.panAz=0; D.sys.panEl=0;
   if(v!=='aussen'&&D.sys.ziel===v) D.sys.ziel=(v==='erde')?'mond':'erde';
@@ -1598,15 +1732,13 @@ $('selZiel').onchange=e=>{ D.sys.ziel=e.target.value;
   fovPassend();
   setzeTab(D.tab); sync(true); };
 $('selBezug').onchange=e=>{ D.sys.bezug=e.target.value; zeichne(); sync(true); };
-an('bSpring',()=>{
-  const art=$('selEreig').value, t0=D.sys.t;
-  const t=suchen(art,t0);
-  if(t===null){ toast('In diesem Zeitraum kein '+EREIGNIS[art].text+' gefunden'); return; }
-  D.sys.t=t; D.sys.lauf=false; laufStopp();
-  if(D.sys.ansichtMit) ansichtFuer(art);
-  setzeTab(D.tab); sync(true);
-  toast(EREIGNIS[art].text+': '+datumText(t,true));
-});
+$('selListe').onchange=e=>{
+  const o=e.target.selectedOptions[0];
+  if(!o||!o.dataset.t) return;
+  springeZu(+o.dataset.t,o.dataset.art);
+};
+an('bListe',()=>{ listeFuellen(); toast('Liste ab '+datumText(D.sys.t)+' neu gefüllt'); });
+$('selPip').onchange=e=>{ D.sys.pip=e.target.value; zeichne(); sync(true); };
 $('selStufe').onchange=e=>{ D.sys.stufe=e.target.value; oberflaeche(); zeichne(); sync(true); };
 an('tBahn',()=>{ D.sys.bahnen=!D.sys.bahnen; oberflaeche(); zeichne(); sync(); });
 an('tEbene',()=>{ D.sys.ebenen=!D.sys.ebenen; oberflaeche(); zeichne(); sync(); });
@@ -1688,6 +1820,7 @@ function uebernimm(d){
   if(!HILFE[neu.tab]) neu.tab='system';
   neu.fontSize=clamp(+neu.fontSize||14,10,26);
   D=neu; schriftAnwenden();
+  if(D.sys.lupe) D.sys.tempo=tempoWert(lupeTempo());   /* Zeitlupe und Tempo gehören zusammen */
 }
 let syncT=null;
 function post(){ if(window.parent===window) return;   /* allein geöffnet: nicht an sich selbst senden */
