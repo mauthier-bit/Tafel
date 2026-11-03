@@ -2722,8 +2722,11 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     Mondfinsternis also dicht an den Mond, der dann **kupferrot im Kernschatten** steht.
   - **Zweites Fenster:** Oben rechts lässt sich dasselbe Ereignis **aus einer zweiten Perspektive**
     einblenden – etwa links die Geometrie von außen und rechts der Blick vom Boden der Erde, oder
-    umgekehrt. Das Blickziel sucht sich das Fenster selbst: bei Sonnenfinsternis und Venustransit von
-    der Erde zur Sonne, sonst zum Mond; vom Mond aus zur Erde.
+    umgekehrt. Die Liste in der Leiste sagt, **von wo** geschaut wird, die Liste **unter dem Fenster**,
+    **worauf**: von der Erde auf Mond, Sonne, Venus oder Mars (also auch die Marsschleife vor den
+    Sternen), vom Mond auf die Erde, von außen auf das Erde-Mond-System oder auf das ganze
+    Sonnensystem. Auf **automatisch** sucht sich das Fenster das Ziel selbst: bei Sonnenfinsternis und
+    Venustransit von der Erde zur Sonne, sonst zum Mond.
   - **Erdumfang (Eratosthenes):** zwei Orte auf einem Meridian, parallele Sonnenstrahlen,
     Schattenwinkel, Mittelpunktswinkel α und **U = s · 360°/α**. Beispielpaare in der Liste, dazu ein
     **Messfehler-Regler** (jeder Fehler schlägt bei kleinem α viel stärker durch).

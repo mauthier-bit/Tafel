@@ -44,6 +44,10 @@
   #cvbox.dunkel{background:#070b18;}
   #cv{position:absolute;inset:0;width:100%;height:100%;touch-action:none;}
   #hint{position:absolute;left:10px;top:7px;font-size:.72em;color:#94a3b8;pointer-events:none;}
+  /* Die Ziel-Auswahl sitzt unter dem zweiten Fenster, direkt über der Leinwand. */
+  #selPipZiel{position:absolute;z-index:5;font-size:.82em;font-weight:600;padding:4px 6px;
+    border:1px solid #cfd6e0;border-radius:8px;background:#fff;color:#1f2430;
+    box-shadow:0 2px 8px rgba(0,0,0,.35);}
   #cvbox.dunkel #hint{color:#64748b;}
   /* Hilfe und Einstellungen: feste Felder, beim Öffnen ins Fenster geklemmt */
   details.settings{position:relative;flex:none;}
@@ -369,7 +373,8 @@
       <button class="tog on" id="tSternSpur" title="Die scheinbare Ellipse des Sterns im Lauf des Jahres einblenden">Jahresellipse</button>
     </span>
   </div>
-  <div id="cvbox" class="dunkel"><canvas id="cv"></canvas><div id="hint"></div></div>
+  <div id="cvbox" class="dunkel"><canvas id="cv"></canvas><div id="hint"></div>
+    <select id="selPipZiel" aria-label="Blickziel im zweiten Fenster" hidden></select></div>
 </div>
 <div id="hilfe" class="panel" hidden style="left:10px;right:10px;width:auto;max-width:620px;margin:0 auto;">
   <div class="panelKopf"><span id="hilfeTitel">Hilfe</span><button type="button" class="ic" id="hilfeZu" title="schließen" aria-label="schließen">✕</button></div>
@@ -595,7 +600,7 @@ function suchen(art,t0){
    ============================================================ */
 const standard=()=>({ v:1, tab:'system', fontSize:14, fontBold:false, fontItalic:false,
   sys:{ t:0, lauf:false, tempo:30, echt:false, stufe:'ansch', sf:SF_STD, bahnen:true, ebenen:false, schatten:true,
-        sterne:true, namen:true, von:'aussen', ziel:'erde', bezug:'sonne', pip:'aus',
+        sterne:true, namen:true, von:'aussen', ziel:'erde', bezug:'sonne', pip:'aus', pipZiel:'auto',
         lupe:false, tempoAlt:30, letztes:null,
         az:35, el:26, dist:4.2, fov:30, panAz:0, panEl:0, ansichtMit:true },
   erat:{ a:31, b:23.5, fehler:0, strahlen:true, flach:false },
@@ -982,24 +987,50 @@ const WORAUF={sonne:'auf die Sonne',erde:'auf die Erde',mond:'auf den Mond',venu
 /* Das zweite Fenster zeigt dasselbe Ereignis von einem anderen Standort aus.
    Das Blickziel sucht es sich selbst: Bei einer Sonnenfinsternis oder einem Transit
    schaut man von der Erde zur Sonne, sonst zum Mond. */
+/* Welches Ziel sucht sich das Fenster selbst, wenn nichts gewählt ist? */
+function pipZielAuto(von,t){
+  if(von==='erde') return (finsternisse(t).sofi||transit(t))?'sonne':'mond';
+  if(von==='mond') return 'erde';
+  if(von==='sonne') return 'erde';
+  return 'erde';
+}
+const PIP_ZIELE={ aussen:['erde','mond','sonne','venus','mars'],
+  sonne:['erde','mond','venus','mars'], erde:['mond','sonne','venus','mars'],
+  mond:['erde','sonne','venus','mars'] };
 function pipOpt(){
   const S=D.sys, t=S.t, von=S.pip;
   if(!von||von==='aus') return null;
-  /* Das zweite Fenster von außen zeigt die Erde-Mond-Geometrie: „anschaulich" waere dort
-     unbrauchbar (man säße in der aufgeblasenen Erde), darum das Schattenmodell. */
-  if(von==='aussen') return {von:'aussen', ziel:'erde', dist:0.0075, az:sonnenLaenge(t)+90, el:12,
-    stufe:(D.sys.stufe==='ansch'?'schatten':D.sys.stufe)};
-  let ziel='mond';
-  if(von==='erde') ziel=(finsternisse(t).sofi||transit(t))?'sonne':'mond';
-  else if(von==='mond') ziel='erde';
-  else ziel='erde';
-  if(ziel===von) ziel='erde';
+  let ziel=S.pipZiel||'auto';
+  if(ziel==='auto'||ziel===von||!(PIP_ZIELE[von]||[]).includes(ziel)) ziel=pipZielAuto(von,t);
+  if(von==='aussen'){
+    /* Erde und Mond aus der Nähe, die Planeten als Überblick. „anschaulich" taugt aus der
+       Nähe nicht - man säße in der aufgeblasenen Erde -, darum dort das Schattenmodell. */
+    const nah=(ziel==='erde'||ziel==='mond');
+    return {von:'aussen', ziel, dist:nah?0.0075:4.2, az:sonnenLaenge(t)+90, el:nah?12:24,
+      stufe:nah?(S.stufe==='ansch'?'schatten':S.stufe):'ansch'};
+  }
   const d=betrag(sub(ortW(ziel,t),ortW(von,t)));
   const w=2*Math.asin(clamp(radW(ziel)/Math.max(d,1e-9),-1,1))*GRD;
   return {von, ziel, fov:w>0.1?clamp(w*8,0.3,40):25, panAz:0, panEl:0};
 }
+let pipStand=null;
+function pipZielFeld(von,ziel,bx,by,bw){
+  const sel=$('selPipZiel'); if(!sel) return;
+  if(!von){ sel.hidden=true; pipStand=null; return; }
+  if(pipStand!==von){                                 /* Liste nur bei neuem Standort neu bauen */
+    pipStand=von; sel.innerHTML='';
+    const mk=(v,t)=>{ const o=document.createElement('option'); o.value=v; o.textContent=t; sel.appendChild(o); };
+    mk('auto','Ziel: automatisch');
+    (PIP_ZIELE[von]||[]).forEach(id=>mk(id,WORAUF[id]));
+  }
+  sel.value=(D.sys.pipZiel&&[...sel.options].some(o=>o.value===D.sys.pipZiel))?D.sys.pipZiel:'auto';
+  sel.title='Worauf das zweite Fenster schaut – gerade '+WORAUF[ziel];
+  sel.hidden=false;
+  sel.style.left=Math.round(bx)+'px'; sel.style.top=Math.round(by)+'px'; sel.style.width=Math.round(bw)+'px';
+}
 function malPip(){
-  const o=pipOpt(); if(!o) return;
+  const o=pipOpt();
+  if(!o){ pipZielFeld(null); return; }
   const bw=Math.min(W*0.33,H*0.44,330), bh=bw*0.74;
   const bx=W-bw-10, by=34*K;
   ctx.save();
@@ -1013,6 +1044,7 @@ function malPip(){
   ctx.strokeRect(bx+0.75,by+0.75,bw-1.5,bh-1.5);
   ctx.fillStyle='rgba(7,11,24,.72)'; ctx.fillRect(bx+1,by+bh-20*K,bw-2,19*K);
   text(WOHER[o.von]+' '+WORAUF[o.ziel],bx+8,by+bh-10*K,'#cbd5e1',{sz:12,fett:true});
+  pipZielFeld(o.von,o.ziel,bx,by+bh+6,bw);
 }
 function zeichneSystem(){
   ctx.fillStyle='#070b18'; ctx.fillRect(0,0,W,H);
@@ -1539,6 +1571,7 @@ function setzeTab(t){
   document.querySelectorAll('#tabs .tb').forEach(b=>b.classList.toggle('on',b.dataset.tab===t));
   document.querySelectorAll('#bar2 .reihe').forEach(r=>{ r.hidden=r.dataset.tab!==t; });
   $('cvbox').classList.toggle('dunkel',t==='system');
+  if(t!=='system'){ $('selPipZiel').hidden=true; pipStand=null; }
   $('hint').textContent=t==='system'
     ? (D.sys.von==='aussen'?'Ziehen = drehen · zwei Finger oder Mausrad = zoomen':'Ziehen = umsehen · zwei Finger oder Mausrad = Ausschnitt')
     : '';
@@ -1653,9 +1686,11 @@ const HILFE={
     'Mit <b>↻</b> wird sie ab der gerade eingestellten Zeit neu gefüllt. Ist im ⚙ „Ansicht passend einstellen" '+
     'angehakt, stellen sich dabei auch Standort, Ausschnitt und Darstellung passend ein.</p>'+
     '<h4>Zweites Fenster</h4><p>Das kleine Fenster oben rechts zeigt <b>dasselbe Ereignis von einem anderen '+
-    'Standort aus</b> – etwa die Geometrie von außen und daneben den Blick vom Boden der Erde. Das Blickziel '+
-    'sucht es sich selbst: Bei Sonnenfinsternis und Venustransit schaut es von der Erde zur Sonne, sonst zum '+
-    'Mond; vom Mond aus schaut es zur Erde.</p>'],
+    'Standort aus</b> – etwa die Geometrie von außen und daneben den Blick vom Boden der Erde. Die Liste in der '+
+    'Leiste sagt, <b>von wo</b> geschaut wird; die Liste <b>unter dem Fenster</b> sagt, <b>worauf</b>: von der '+
+    'Erde auf Mond, Sonne, Venus oder Mars, vom Mond auf die Erde, von außen auf das Erde-Mond-System oder auf '+
+    'das ganze Sonnensystem. Steht sie auf <b>automatisch</b>, sucht sich das Fenster das Ziel selbst: bei '+
+    'Sonnenfinsternis und Venustransit von der Erde zur Sonne, sonst zum Mond.</p>'],
   erat:['Erdumfang nach Eratosthenes',
     '<p>Um −240 misst Eratosthenes in Alexandria zur Mittagszeit der Sommersonnenwende den Schattenwinkel eines '+
     'senkrechten Stabes: 7,2°. In Syene wirft ein Stab an diesem Tag keinen Schatten – die Sonne steht im Zenit.</p>'+
@@ -1738,7 +1773,8 @@ $('selListe').onchange=e=>{
   springeZu(+o.dataset.t,o.dataset.art);
 };
 an('bListe',()=>{ listeFuellen(); toast('Liste ab '+datumText(D.sys.t)+' neu gefüllt'); });
-$('selPip').onchange=e=>{ D.sys.pip=e.target.value; zeichne(); sync(true); };
+$('selPip').onchange=e=>{ D.sys.pip=e.target.value; D.sys.pipZiel='auto'; zeichne(); sync(true); };
+$('selPipZiel').onchange=e=>{ D.sys.pipZiel=e.target.value; zeichne(); sync(true); };
 $('selStufe').onchange=e=>{ D.sys.stufe=e.target.value; oberflaeche(); zeichne(); sync(true); };
 an('tBahn',()=>{ D.sys.bahnen=!D.sys.bahnen; oberflaeche(); zeichne(); sync(); });
 an('tEbene',()=>{ D.sys.ebenen=!D.sys.ebenen; oberflaeche(); zeichne(); sync(); });
@@ -1833,7 +1869,7 @@ addEventListener('message',e=>{
   uebernimm(m.data); setzeTab(D.tab); resize(); laufPruefen();
   if(window.TafelModus&&TafelModus.refresh) TafelModus.refresh();
 });
-if(window.TafelShot) TafelShot.buttons($('shotBtns'),()=>TafelShot.rasterize($('cvbox'),{exclude:'#hint',pad:0}),'btn tafelEdit');
+if(window.TafelShot) TafelShot.buttons($('shotBtns'),()=>TafelShot.rasterize($('cvbox'),{exclude:'#hint,#selPipZiel',pad:0}),'btn tafelEdit');
 if(window.TafelModus&&TafelModus.anTafel) TafelModus.anTafel({ button:false, after:()=>resize() });
 window.addEventListener('resize',resize);
 window.addEventListener('load',()=>{
