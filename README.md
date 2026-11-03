@@ -2710,6 +2710,16 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     **Mondphase**, auf die Sonne den **Venustransit** und eine **Sonnenfinsternis**, auf Mars seine
     **Schleifenbahn** vor den Sternen. Auf der Erde steht man dabei auf dem Punkt der Oberfläche, der
     dem Mondschatten am nächsten liegt – bei einer Finsternis also dort, wo man sie sieht.
+  - **Am Ort (Blick in den Himmel):** Der Standort **am Ort** stellt einen auf den Boden eines Ortes –
+    voreingestellt **Amberg**, daneben eine Liste von Nordkap bis Sydney. Dann liegt der **Horizont**
+    waagrecht im Bild, unten stehen die **Himmelsrichtungen**, und mit dem Finger dreht man sich um die
+    eigene Achse; die Erde dreht sich richtig mit, Sonne, Mond und Sterne gehen auf und unter. Mit
+    **Ebenen** erscheinen die **Ekliptik** und die zwölf **Tierkreiszeichen** (die 30°-Abschnitte ab
+    dem Frühlingspunkt – sie liegen heute nicht mehr über den gleichnamigen Sternbildern), mit
+    **Bahnen** zusätzlich der **Tagbogen** von Sonne und Mond. So wird unmittelbar sichtbar, warum die
+    Sonne im Sommer hoch und im Winter flach steht. Der gewählte Ort ist auch **auf der Erdkugel
+    markiert**, wenn man von außen auf sie schaut – und im zweiten Fenster lässt sich beides
+    nebeneinanderlegen.
   - **heliozentrisch oder geozentrisch:** Das Umschalten ändert nur, **wer stillsteht**. Geozentrisch
     läuft die Sonne um die Erde, und die Bahnen von Venus und Mars bekommen **Schleifen** – dieselbe
     Bewegung, anderer Bezugspunkt. Genau diese Schleifen beschrieb Ptolemäus mit Epizykeln.

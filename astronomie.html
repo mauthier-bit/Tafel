@@ -307,6 +307,8 @@
         <button class="tog" data-von="sonne" title="Blick von der Sonne aus">Sonne</button>
         <button class="tog" data-von="erde" title="Blick von der Erde aus – so sieht man den Himmel">Erde</button>
         <button class="tog" data-von="mond" title="Blick vom Mond aus">Mond</button>
+        <button class="tog" data-von="ort" title="Vom Boden eines Ortes in den Himmel schauen – mit Horizont, Himmelsrichtungen und Tagbogen">am Ort</button>
+        <select id="selOrt" title="Beobachtungsort" aria-label="Ort" hidden></select>
         <select id="selZiel" title="Worauf geschaut wird" aria-label="Blick auf">
           <option value="sonne">auf die Sonne</option>
           <option value="erde" selected>auf die Erde</option>
@@ -378,6 +380,7 @@
         <option value="sonne">2. Fenster: von der Sonne</option>
         <option value="erde">2. Fenster: von der Erde</option>
         <option value="mond">2. Fenster: vom Mond</option>
+        <option value="ort">2. Fenster: vom Ort</option>
       </select>
       <span class="sep"></span>
       <select id="selStufe" title="Wie Größen und Abstände gezeigt werden" aria-label="Darstellung">
@@ -447,7 +450,16 @@ const KOERPER={
 };
 const PLANETEN=['venus','erde','mars'];
 const SCHIEF=23.4393;                                  /* Schiefe der Erdachse */
+/* Beobachtungsorte für den Blick in den Himmel (Breite, östliche Länge) */
+const ORTE=[{n:'Amberg',b:49.44,l:11.86},{n:'München',b:48.14,l:11.58},{n:'Hamburg',b:53.55,l:9.99},
+  {n:'Rom',b:41.90,l:12.50},{n:'Nordkap',b:71.17,l:25.78},{n:'Kairo',b:30.04,l:31.24},
+  {n:'Quito (am Äquator)',b:-0.18,l:-78.47},{n:'Sydney',b:-33.87,l:151.21},
+  {n:'Nordpol',b:90,l:0},{n:'Südpol',b:-90,l:0}];
+/* Sternzeit in Greenwich: Sie sagt, wie weit sich die Erde seit der Epoche gedreht hat. */
+const GMST=t=>(280.46061837+360.98564736629*t)%360;
 const ERDACHSE=[0,Math.sin(SCHIEF*RAD),Math.cos(SCHIEF*RAD)];   /* zeigt zum Himmelsnordpol */
+/* Äquatoriales Dreibein: x zum Frühlingspunkt, z zum Himmelsnordpol */
+const AEQ_X=[1,0,0], AEQ_Y=[0,Math.cos(SCHIEF*RAD),-Math.sin(SCHIEF*RAD)];
 /* Überhöhung im Modus „anschaulich" - nur zum Ansehen, nie zum Rechnen */
 const UEBER={sonne:20, venus:600, erde:600, mars:600, mond:1200, mondbahn:40};
 /* Das Schattenmodell überhöht alles QUER zur Richtung zur Sonne mit demselben Faktor f:
@@ -511,6 +523,25 @@ const radZ=id=>{ const st=stufe();
   return KOERPER[id].R/AE; };
 const radW=id=>KOERPER[id].R/AE;                                      /* wahrer Radius in AE */
 
+/* Zenit, Nord und Ost am gewählten Ort - damit steht der Horizont waagrecht im Bild. */
+function ortRahmen(t){
+  const o=ORTE[D.sys.ort]||ORTE[0];
+  const th=(GMST(t)+o.l)*RAD, ph=o.b*RAD;
+  const ri=add(mul(AEQ_X,Math.cos(th)),mul(AEQ_Y,Math.sin(th)));      /* Meridian des Ortes */
+  const zen=norm(add(mul(ri,Math.cos(ph)),mul(ERDACHSE,Math.sin(ph))));
+  let nord=sub(ERDACHSE,mul(zen,dot(ERDACHSE,zen)));
+  if(betrag(nord)<1e-6) nord=sub(ri,mul(zen,dot(ri,zen)));            /* an den Polen */
+  nord=norm(nord);
+  return {zen, nord, ost:kreuz(nord,zen), o};
+}
+/* Richtung aus Azimut (von Nord über Ost) und Höhe */
+const himmelRichtung=(R,az,hoch)=>add(mul(add(mul(R.nord,Math.cos(az)),mul(R.ost,Math.sin(az))),Math.cos(hoch)),
+  mul(R.zen,Math.sin(hoch)));
+/* Azimut und Höhe einer Richtung */
+function azHoch(R,d){
+  const u=norm(d);
+  return {az:Math.atan2(dot(u,R.ost),dot(u,R.nord)), hoch:Math.asin(clamp(dot(u,R.zen),-1,1))};
+}
 /* ---------- Datum ---------- */
 const EPOCHE=Date.UTC(2000,0,1,12,0,0);
 function datumText(t,mitUhr){
@@ -636,7 +667,7 @@ function suchen(art,t0){
 const standard=()=>({ v:1, tab:'system', fontSize:14, fontBold:false, fontItalic:false,
   sys:{ t:0, lauf:false, tempo:30, echt:false, stufe:'ansch', sf:SF_STD, bahnen:true, ebenen:false, schatten:true,
         sterne:true, namen:true, von:'aussen', ziel:'erde', bezug:'sonne', pip:'aus', pipZiel:'auto',
-        lupe:false, tempoAlt:30, letztes:null,
+        lupe:false, tempoAlt:30, letztes:null, ort:0,
         az:35, el:26, dist:4.2, fov:30, panAz:0, panEl:0, ansichtMit:true },
   erat:{ a:31, b:23.5, fehler:0, strahlen:true, flach:false },
   mond:{ eps:8985, mass:false, hilf:true },
@@ -708,6 +739,7 @@ function drehAchse(v,achse,w){                      /* Drehung von v um eine Ach
    auf dem Punkt der Oberfläche, der dem Mondschatten am nächsten liegt - bei einer
    Sonnenfinsternis also mitten im Schatten. Auf dem Mond steht man auf der Erdseite. */
 function standOrt(id,t){
+  if(id==='ort'){ const R=ortRahmen(t); return add(ortW('erde',t),mul(R.zen,radW('erde'))); }
   const p=ortW(id,t);
   if(id==='erde'){
     const M=ortW('mond',t), achse=norm(sub(M,ortW('sonne',t)));
@@ -729,12 +761,24 @@ function kameraSetzen(o){
   } else { pos=rahmen(standOrt(AKT_VON,D.sys.t)); fov=S.fov||25; }
   let f=norm(sub(zielP,pos));
   if(betrag(sub(zielP,pos))<1e-12) f=[1,0,0];
-  if(AKT_VON!=='aussen'&&(S.panAz||S.panEl)){
+  let up=[0,0,1];
+  if(AKT_VON==='ort'){
+    /* Am Ort zählt die örtliche Senkrechte: Der Horizont liegt dann waagrecht im Bild,
+       und geschwenkt wird um den Zenit. Steht das Blickziel unter dem Horizont, schaut
+       man nach Süden (auf der Südhalbkugel nach Norden) und 20° hinauf. */
+    const R=ortRahmen(D.sys.t);
+    up=R.zen;
+    if(dot(f,R.zen)<0.02) f=himmelRichtung(R,(R.o.b>=0?Math.PI:0),20*RAD);
+    f=drehAchse(f,R.zen,(S.panAz||0)*RAD);
+    const rr=norm(kreuz(f,R.zen));
+    f=norm(drehAchse(f,rr,-(S.panEl||0)*RAD));
+    if(dot(f,R.zen)<-0.35) f=norm(add(f,mul(R.zen,0.5)));        /* nicht in den Boden starren */
+  } else if(AKT_VON!=='aussen'&&(S.panAz||S.panEl)){
     f=drehAchse(f,[0,0,1],S.panAz*RAD);
     const rr=norm(kreuz(f,[0,0,1]));
     f=norm(drehAchse(f,rr,-S.panEl*RAD));
   }
-  let up=[0,0,1]; if(Math.abs(dot(f,up))>0.9995) up=[0,1,0];
+  if(Math.abs(dot(f,up))>0.9995) up=(AKT_VON==='ort')?norm(kreuz(kreuz(f,[0,0,1]),f)):[0,1,0];
   const r=norm(kreuz(f,up)), u=kreuz(r,f);
   F=(VH/2)/Math.tan(fov/2*RAD);
   KAM={pos,f,r,u,fov};
@@ -898,6 +942,7 @@ function malKoerper(id,p3){
       ctx.closePath(); ctx.fillStyle=hell; ctx.fill();
     }
     if(id==='erde'&&rho>13) erdNetz(p3,rho,q);
+    if(id==='erde'&&rho>7) ortMarke(p3,radZ('erde'),rho);
     if(rho<2.4){                                              /* zu klein zum Sehen: Fundring */
       ctx.strokeStyle=rgba(farbe,0.55);
       ctx.lineWidth=1; ctx.beginPath(); ctx.arc(q[0],q[1],7.5,0,7); ctx.stroke();
@@ -913,9 +958,11 @@ function malKoerper(id,p3){
 function erdNetz(p3,rho,q){
   const R=radZ('erde'), n=ERDACHSE;
   const zurKam=norm(sub(KAM.pos,p3));
-  const dreh=2*Math.PI*((D.sys.t*0.9972696)%1);               /* ein Sterntag */
-  let e1=norm(kreuz(n,[0,0,1])); if(betrag(kreuz(n,[0,0,1]))<1e-6) e1=norm(kreuz(n,[0,1,0]));
-  e1=norm(drehAchse(e1,n,dreh)); const e2=kreuz(n,e1);
+  /* Länge 0 steht dort, wo die Sternzeit sie hinstellt - so passen Gradnetz und Ortsmarke
+     zum Blick vom Ort aus zusammen. */
+  const th=GMST(D.sys.t)*RAD;
+  const e1=norm(add(mul(AEQ_X,Math.cos(th)),mul(AEQ_Y,Math.sin(th))));
+  const e2=kreuz(n,e1);
   const pkt=(br,la)=>add(p3,mul(add(add(mul(e1,Math.cos(br)*Math.cos(la)),mul(e2,Math.cos(br)*Math.sin(la))),
                                     mul(n,Math.sin(br))),R));
   const sicht=p=>dot(norm(sub(p,p3)),zurKam)>0.02;
@@ -932,6 +979,87 @@ function erdNetz(p3,rho,q){
   const a1=add(p3,mul(n,R*1.5)), a2=add(p3,mul(n,-R*1.5));
   linie3([a1,a2],'rgba(255,255,255,.75)',1.6,1,[6,4]);
   const na=p2(a1); if(na) text('N',na[0],na[1]-8*K,'#e8edf6',{al:'center',sz:11,rand:'rgba(7,11,24,.8)'});
+}
+/* Der gewählte Beobachtungsort als Fähnchen auf der Erdkugel - auch im anschaulichen
+   Modell, damit man sieht, wo man beim Blick in den Himmel steht. */
+function ortMarke(p3,R,rho){
+  const Rh=ortRahmen(D.sys.t), zurKam=norm(sub(KAM.pos,p3));
+  if(dot(Rh.zen,zurKam)<0.03) return;                        /* liegt auf der Rückseite */
+  const q=p2(add(p3,mul(Rh.zen,R))); if(!q) return;
+  ctx.fillStyle='#f43f5e'; ctx.strokeStyle='#fff'; ctx.lineWidth=1.2;
+  ctx.beginPath(); ctx.arc(q[0],q[1],Math.max(2.5,Math.min(5,rho*0.08)),0,7); ctx.fill(); ctx.stroke();
+  if(rho>16) text(Rh.o.n,q[0]+7*K,q[1]-6*K,'#ffe4e6',{sz:11.5,fett:true,rand:'rgba(7,11,24,.85)'});
+}
+/* ============================================================
+   Der Himmel über dem gewählten Ort
+   ============================================================ */
+const VS='\uFE0E';                                        /* zwingt die Schriftform statt des Emojis */
+const TIERKREIS=[['♈','Widder'],['♉','Stier'],['♊','Zwillinge'],['♋','Krebs'],['♌','Löwe'],['♍','Jungfrau'],
+  ['♎','Waage'],['♏','Skorpion'],['♐','Schütze'],['♑','Steinbock'],['♒','Wassermann'],['♓','Fische']]
+  .map(([z,n])=>[z+VS,n]);
+/* Linienzug aus Richtungen (unendlich weit), an der Kamera abgeschnitten */
+function zugRichtung(dirs,farbe,breite,alpha,strich){
+  ctx.beginPath(); let auf=false;
+  for(const d of dirs){ const q=p2r(d);
+    if(!q){ auf=false; continue; }
+    if(auf) ctx.lineTo(q[0],q[1]); else { ctx.moveTo(q[0],q[1]); auf=true; } }
+  ctx.strokeStyle=farbe; ctx.lineWidth=breite; ctx.globalAlpha=alpha==null?1:alpha;
+  ctx.setLineDash(strich||[]); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha=1;
+}
+/* Ekliptik als Linie am Himmel, dazu die zwölf Tierkreiszeichen */
+function malEkliptik(){
+  const bogen=[]; for(let l=0;l<=360;l+=2) bogen.push([Math.cos(l*RAD),Math.sin(l*RAD),0]);
+  zugRichtung(bogen,'rgba(250,204,21,.55)',1.5);
+  for(let k=0;k<12;k++){                                     /* Grenzen der Zeichen */
+    const l=k*30*RAD, d=[Math.cos(l),Math.sin(l),0];
+    const q=p2r(d), q2=p2r(norm(add(d,[0,0,0.035])));
+    if(q&&q2){ ctx.strokeStyle='rgba(250,204,21,.5)'; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(q[0],q[1]); ctx.lineTo(q2[0],q2[1]); ctx.stroke(); }
+  }
+  TIERKREIS.forEach(([sym,nm],i)=>{
+    const l=(i*30+15)*RAD, q=p2r([Math.cos(l),Math.sin(l),0]); if(!q) return;
+    if(q[0]<VX-60||q[0]>VX+VW+60||q[1]<VY-40||q[1]>VY+VH+40) return;
+    text(sym,q[0],q[1]-13*K,'#fcd34d',{al:'center',sz:16,fett:true,rand:'rgba(7,11,24,.85)'});
+    text(nm,q[0],q[1]+2*K,'#d9bb63',{al:'center',sz:11.5,rand:'rgba(7,11,24,.85)'});
+  });
+  const we=p2r([1,0,0]);
+  if(we) text('Frühlingspunkt',we[0],we[1]+16*K,'#fcd34d',{al:'center',sz:11,rand:'rgba(7,11,24,.85)'});
+}
+/* Tagbogen: Wo steht der Körper im Lauf eines Tages über diesem Ort? */
+function malTagbogen(id,farbe){
+  const t0=D.sys.t, R0=ortRahmen(t0), pk=[];
+  for(let dt=-0.5;dt<=0.5001;dt+=1/144){
+    const t=t0+dt, R=ortRahmen(t);
+    const ah=azHoch(R,sub(ortW(id,t),standOrt('ort',t)));
+    pk.push(himmelRichtung(R0,ah.az,ah.hoch));
+  }
+  zugRichtung(pk,farbe,1.4,0.85,[6,5]);
+}
+/* Boden, Horizont und Himmelsrichtungen. Weil die Kamera den Zenit als „oben" hat,
+   liegt der Horizont genau waagrecht im Bild. */
+function malBoden(){
+  const R=ortRahmen(D.sys.t);
+  let yH=null;
+  for(let a=0;a<360&&yH===null;a+=10){ const q=p2r(himmelRichtung(R,a*RAD,0)); if(q) yH=q[1]; }
+  if(yH===null) yH=dot(KAM.f,R.zen)<0?VY:VY+VH;
+  const y=clamp(yH,VY,VY+VH);
+  ctx.fillStyle='#0d1117'; ctx.fillRect(VX,y,VW,VY+VH-y);
+  ctx.strokeStyle='rgba(148,163,184,.85)'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.moveTo(VX,y); ctx.lineTo(VX+VW,y); ctx.stroke();
+  [[0,'N'],[45,'NO'],[90,'O'],[135,'SO'],[180,'S'],[225,'SW'],[270,'W'],[315,'NW']].forEach(([az,nm])=>{
+    const q=p2r(himmelRichtung(R,az*RAD,0)); if(!q) return;
+    if(q[0]<VX-10||q[0]>VX+VW+10) return;
+    const gross=nm.length===1;
+    ctx.strokeStyle='rgba(148,163,184,.85)'; ctx.lineWidth=gross?2:1.2;
+    ctx.beginPath(); ctx.moveTo(q[0],y); ctx.lineTo(q[0],y+(gross?11:6)); ctx.stroke();
+    text(nm,q[0],y+(gross?22:18)*K,'#cbd5e1',{al:'center',sz:gross?13:11,fett:gross,rand:'rgba(13,17,23,.9)'});
+  });
+  const so=azHoch(R,sub(ortW('sonne',D.sys.t),standOrt('ort',D.sys.t)));
+  const hoch=zahl(Math.abs(so.hoch*GRD),0)+'°';
+  const lang=VW>440;
+  text(R.o.n+(lang?' · '+zahl(Math.abs(R.o.b),1)+'° '+(R.o.b>=0?'N':'S'):'')
+    +' · Sonne '+(so.hoch>0?hoch+(lang?' über dem Horizont':' hoch'):hoch+' unter dem Horizont'),
+    VX+10,y+(lang?40:26)*K,'#94a3b8',{sz:lang?12:11,fett:true,rand:'rgba(13,17,23,.9)'});
 }
 /* ---------- Schattenkegel ---------- */
 function malKegel(p3,Rae,richtung,laenge,rEnde,alpha,rand){
@@ -969,6 +1097,7 @@ function malSchatten(){
 
 /* ---------- Maßstabsbalken ---------- */
 function malMassstab(unten){
+  if(D.sys.von==='ort') return;                       /* am Himmel gibt es keine Entfernung zu zeigen */
   const S=D.sys, zielP=rahmen(ortZ(AKT_ZIEL,S.t));
   const d0=betrag(sub(zielP,KAM.pos)); if(!(d0>0)) return;
   const jePx=d0/F;                                           /* AE je Bildpunkt beim Blickziel */
@@ -1007,31 +1136,33 @@ function malInfoSystem(){
 }
 /* Der Inhalt einer Ansicht - einmal für das große Bild, einmal für das zweite Fenster */
 function szeneMalen(){
-  const S=D.sys, t=S.t;
+  const S=D.sys, t=S.t, amOrt=(AKT_VON==='ort');
   if(S.sterne) malSterne();
-  if(S.ebenen) malEbenen();
-  if(S.bahnen) malBahnen();
-  const liste=['sonne','venus','erde','mars','mond'].filter(id=>id!==AKT_VON)
+  if(S.ebenen){ if(amOrt) malEkliptik(); else malEbenen(); }
+  if(S.bahnen){ malBahnen();
+    if(amOrt){ malTagbogen('sonne','rgba(253,224,71,.9)'); malTagbogen('mond','rgba(226,232,240,.75)'); } }
+  const liste=['sonne','venus','erde','mars','mond'].filter(id=>id!==AKT_VON&&!(amOrt&&id==='erde'))
     .map(id=>({id,p:rahmen(ortZ(id,t))}));
   liste.sort((a,b)=>betrag(sub(b.p,KAM.pos))-betrag(sub(a.p,KAM.pos)));
   liste.forEach(o=>malKoerper(o.id,o.p));
   if(schattenAn()) malSchatten();
+  if(amOrt) malBoden();
 }
-const WOHER={aussen:'von außen',sonne:'von der Sonne',erde:'von der Erde',mond:'vom Mond'};
+const WOHER={aussen:'von außen',sonne:'von der Sonne',erde:'von der Erde',mond:'vom Mond',ort:'vom Ort'};
 const WORAUF={sonne:'auf die Sonne',erde:'auf die Erde',mond:'auf den Mond',venus:'auf die Venus',mars:'auf den Mars'};
 /* Das zweite Fenster zeigt dasselbe Ereignis von einem anderen Standort aus.
    Das Blickziel sucht es sich selbst: Bei einer Sonnenfinsternis oder einem Transit
    schaut man von der Erde zur Sonne, sonst zum Mond. */
 /* Welches Ziel sucht sich das Fenster selbst, wenn nichts gewählt ist? */
 function pipZielAuto(von,t){
-  if(von==='erde') return (finsternisse(t).sofi||transit(t))?'sonne':'mond';
+  if(von==='erde'||von==='ort') return (finsternisse(t).sofi||transit(t))?'sonne':'mond';
   if(von==='mond') return 'erde';
   if(von==='sonne') return 'erde';
   return 'erde';
 }
 const PIP_ZIELE={ aussen:['erde','mond','sonne','venus','mars'],
   sonne:['erde','mond','venus','mars'], erde:['mond','sonne','venus','mars'],
-  mond:['erde','sonne','venus','mars'] };
+  mond:['erde','sonne','venus','mars'], ort:['mond','sonne','venus','mars'] };
 function pipOpt(){
   const S=D.sys, t=S.t, von=S.pip;
   if(!von||von==='aus') return null;
@@ -1044,6 +1175,7 @@ function pipOpt(){
     return {von:'aussen', ziel, dist:nah?0.0075:4.2, az:sonnenLaenge(t)+90, el:nah?12:24,
       stufe:nah?(S.stufe==='ansch'?'schatten':S.stufe):'ansch'};
   }
+  if(von==='ort') return {von, ziel, fov:70, panAz:0, panEl:0};    /* der halbe Himmel über dem Ort */
   const d=betrag(sub(ortW(ziel,t),ortW(von,t)));
   const w=2*Math.asin(clamp(radW(ziel)/Math.max(d,1e-9),-1,1))*GRD;
   return {von, ziel, fov:w>0.1?clamp(w*8,0.3,40):25, panAz:0, panEl:0};
@@ -1598,6 +1730,7 @@ function laufPruefen(){ if(D.tab==='system'&&D.sys.lauf) laufStart(); else laufS
    Mars bleibt ein Punkt vor den Sternen. */
 function fovPassend(){
   const S=D.sys; if(S.von==='aussen') return;
+  if(S.von==='ort'){ S.fov=70; return; }                  /* am Boden sieht man den halben Himmel */
   const d=betrag(sub(ortZ(S.ziel,S.t),ortZ(S.von,S.t)));
   const w=2*Math.asin(clamp(radZ(S.ziel)/Math.max(d,1e-9),-1,1))*GRD;
   S.fov=w>0.1?clamp(w*8,0.3,40):25;
@@ -1617,9 +1750,10 @@ function setzeTab(t){
   $('cvbox').classList.toggle('dunkel',t==='system');
   $('bar3').hidden=(t!=='system');                 /* die zweite Zeile gehört zum Sonnensystem */
   if(t!=='system'){ $('selPipZiel').hidden=true; pipStand=null; }
-  $('hint').textContent=t==='system'
-    ? (D.sys.von==='aussen'?'Ziehen = drehen · zwei Finger oder Mausrad = zoomen':'Ziehen = umsehen · zwei Finger oder Mausrad = Ausschnitt')
-    : '';
+  $('hint').textContent=t!=='system' ? ''
+    : (D.sys.von==='aussen'?'Ziehen = drehen · zwei Finger oder Mausrad = zoomen'
+      :(D.sys.von==='ort'?'Ziehen = am Himmel umsehen · zwei Finger oder Mausrad = Ausschnitt'
+        :'Ziehen = umsehen · zwei Finger oder Mausrad = Ausschnitt'));
   if(t==='system') listePruefen();
   laufPruefen(); oberflaeche(); zeichne();
 }
@@ -1634,6 +1768,7 @@ function oberflaeche(){
     ? 'passend zum Ereignis „'+EREIG_NAME[S.letztes]+'": '
     : 'ein Fünfundzwanzigstel des eingestellten Tempos: ')+zahl(lupeTempo()*24,2)+' Stunden je Sekunde';
   document.querySelectorAll('[data-von]').forEach(b=>b.classList.toggle('on',b.dataset.von===S.von));
+  $('selOrt').hidden=(S.von!=='ort'); $('selOrt').value=String(S.ort||0);
   $('selZiel').value=S.ziel; $('selBezug').value=S.bezug; $('selPip').value=S.pip||'aus';
   $('selStufe').value=stufeUI();
   $('selStufe').disabled=S.von!=='aussen';
@@ -1674,6 +1809,8 @@ function oberflaeche(){
 /* ---------- Auswahllisten füllen ---------- */
 ERAT_BSP.forEach((b,i)=>{ const o=document.createElement('option'); o.value=String(i); o.textContent=b.n; $('eratBsp').appendChild(o); });
 STERNE.forEach(s=>{ const o=document.createElement('option'); o.value=String(s.d); o.textContent=s.n; $('sternBsp').appendChild(o); });
+ORTE.forEach((o,i)=>{ const e=document.createElement('option'); e.value=String(i); e.textContent=o.n; $('selOrt').appendChild(e); });
+$('selOrt').onchange=e=>{ D.sys.ort=+e.target.value||0; zeichne(); sync(true); };
 /* ---------- Einstellungen ---------- */
 $('settBody').innerHTML=
   '<label class="chk"><input type="checkbox" id="setNamen"><span>Namen der Himmelskörper anzeigen</span></label>'+
@@ -1723,6 +1860,16 @@ const HILFE={
     '<h4>Standort</h4><p>Von <b>außen</b> dreht man die Szene mit dem Finger. Von <b>Sonne, Erde oder Mond</b> aus '+
     'steht man auf dem Körper und blickt auf den gewählten: Von der Erde auf den Mond sieht man die <b>Mondphase</b>, '+
     'auf die Sonne den <b>Venustransit</b>, auf Mars seine <b>Schleifenbahn</b> vor den Sternen.</p>'+
+    '<h4>Am Ort</h4><p>Der Standort <b>am Ort</b> stellt einen auf den Boden eines Ortes – voreingestellt '+
+    '<b>Amberg</b>, in der Liste daneben stehen weitere von Nordkap bis Sydney. Dann liegt der <b>Horizont</b> '+
+    'waagrecht im Bild, unten stehen die <b>Himmelsrichtungen</b>, und mit dem Finger dreht man sich um die '+
+    'eigene Achse. Die Erde dreht sich dabei richtig mit: Sonne, Mond und Sterne gehen auf und unter.</p>'+
+    '<p>Sind <b>Ebenen</b> eingeblendet, zeigt der Himmel die <b>Ekliptik</b> mit den zwölf '+
+    '<b>Tierkreiszeichen</b>; sind <b>Bahnen</b> eingeblendet, zusätzlich den <b>Tagbogen</b> von Sonne und '+
+    'Mond – den Weg also, den sie an diesem Tag über den Himmel nehmen. Daran sieht man unmittelbar, warum die '+
+    'Sonne im Sommer hoch und im Winter flach steht. Die Tierkreiszeichen sind die zwölf 30°-Abschnitte ab dem '+
+    '<b>Frühlingspunkt</b>; weil der wandert, liegen sie heute nicht mehr über den gleichnamigen Sternbildern. '+
+    'Der gewählte Ort ist auch <b>auf der Erdkugel markiert</b>, wenn man von außen auf sie schaut.</p>'+
     '<h4>heliozentrisch oder geozentrisch</h4><p>Das Umschalten ändert nur, <b>wer stillsteht</b>. Geozentrisch läuft '+
     'die Sonne um die Erde und die Bahnen von Venus und Mars bekommen Schleifen – dieselbe Bewegung, anderer Bezugspunkt. '+
     'Genau diese Schleifen beschrieb Ptolemäus mit Epizykeln.</p>'+
