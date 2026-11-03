@@ -2683,12 +2683,20 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   - **Sonnensystem:** Sonne, Venus, Erde, Mond und Mars mit ihren wahren Umlaufzeiten und Neigungen.
     **▶** startet die Zeit, **Tempo** sagt, wie viel Modellzeit auf eine Sekunde kommt (von Minuten bis
     zu Jahren je Sekunde); **Echtzeit** zeigt, wie langsam der Himmel wirklich ist.
-  - **maßstabsgetreu oder anschaulich:** Maßstabsgetreu sind die Körper winzige Punkte – genau das ist
-    die Aussage; ein dünner Ring hilft, sie zu finden. **Anschaulich** vergrößert Sonne (20-fach),
-    Planeten (600-fach) und die Mondbahn (40-fach), damit etwas zu sehen ist. **Schattenkegel gibt es
-    nur maßstabsgetreu** – mit überhöhten Körpern käme bei jedem Vollmond eine Finsternis heraus;
-    ein Tipp auf „Schatten" schaltet deshalb selbst um. Vom Körper aus wird immer maßstabsgetreu
-    gezeigt: Am Himmel messen Sonne und Mond ohnehin ihr halbes Grad.
+  - **Drei Darstellungen** (Auswahlliste): **maßstabsgetreu** zeigt die wahren Größen – die Körper sind
+    winzige Punkte, genau das ist die Aussage; ein dünner Ring hilft, sie zu finden. **anschaulich**
+    vergrößert Sonne (20-fach), Planeten (600-fach) und die Mondbahn (40-fach), damit im Überblick
+    etwas zu sehen ist; Schatten gibt es dann keine. **Schattenmodell** überhöht alles **quer zur
+    Richtung zur Sonne** mit demselben, im ⚙ einstellbaren Faktor (Standard 6-fach): Erde und Mond
+    werden größer, die **Schattenkegel dicker** und die **Mondbahn stärker geneigt** (28° statt 5,1°).
+    Längs der Achse bleibt alles wahr – deshalb stimmen die Verhältnisse weiter: Der Kernschatten der
+    Erde reicht 3,6 Mondbahnradien weit, der Kernschatten des Mondes endet gerade bei der Erde, und
+    der Mond passt genauso in den Erdschatten wie in Wirklichkeit (2,65 Mondradien breit). Weil auch
+    seine Abweichung von der Erdbahnebene mit überhöht wird, gibt es die **Finsternisse zu denselben
+    Zeiten** – im Bild dauern sie nur länger. So lässt sich der **kegelförmige Schattenraum** wirklich
+    zeigen: Kernschatten und Halbschatten sind beschriftet, und wer selbst im Kernschatten steht,
+    wirft keinen eigenen mehr. Vom Körper aus wird immer maßstabsgetreu gezeigt: Am Himmel messen
+    Sonne und Mond ohnehin ihr halbes Grad.
   - **Standort:** **außen** (ziehen = drehen, zwei Finger = zoomen) oder auf **Sonne, Erde, Mond**;
     dazu die Liste **Blick auf** (Sonne, Erde, Mond, Venus, Mars). Von der Erde auf den Mond zeigt die
     **Mondphase**, auf die Sonne den **Venustransit** und eine **Sonnenfinsternis**, auf Mars seine
@@ -2708,9 +2716,14 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     den Mond, der dann **kupferrot im Kernschatten** steht.
   - **Erdumfang (Eratosthenes):** zwei Orte auf einem Meridian, parallele Sonnenstrahlen,
     Schattenwinkel, Mittelpunktswinkel α und **U = s · 360°/α**. Beispielpaare in der Liste, dazu ein
-    **Messfehler-Regler** (jeder Fehler schlägt bei kleinem α viel stärker durch) und der Vergleich
-    **flache Erde**: Dieselben Messungen führten dort zu einer nahen Sonne, und jedes Ortspaar ergäbe
-    eine andere Höhe – daran scheitert das flache Modell.
+    **Messfehler-Regler** (jeder Fehler schlägt bei kleinem α viel stärker durch).
+  - **Flache Erde:** Derselbe Knopf rechnet die Messungen im flachen Modell durch. Dort müsste die
+    Sonne **nahe** stehen; ihre Höhe folgt aus dem Strahlensatz: **h = s / (tan α_A − tan α_B)**. Das
+    Bild zeigt den Boden, beide Stäbe mit ihren Schatten, die beiden Strahlen und die Sonne, bei der
+    sie sich treffen – mit **bemaßter Höhe**. Heraus kommen ein paar tausend Kilometer statt 149,6
+    Millionen, und vor allem: **Jedes Ortspaar ergibt einen anderen Wert** (die Infozeile rechnet vier
+    Paare gleich mit: 4 664 km bis 6 341 km). Genau daran scheitert das flache Modell, während auf der
+    Kugel ein einziger Erdumfang zu allen Messungen passt.
   - **Erde–Mond:** Bei **genau halbem Mond** ist der Winkel Erde–Mond–Sonne ein rechter, also ist
     **Erde–Mond = Erde–Sonne · cos ε**. Der Regler zeigt, wie brutal empfindlich das ist: Der wahre
     Wert ist ε = 89,85°, schon ein Zehntel Grad verschiebt das Ergebnis um mehr als ein Drittel.

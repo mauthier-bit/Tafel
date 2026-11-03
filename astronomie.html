@@ -311,7 +311,11 @@
       </select>
       <button class="btn pri" id="bSpring" title="Die Zeit bis zum nächsten solchen Ereignis vorspulen">suchen ➤</button>
       <span class="sep"></span>
-      <button class="tog" id="tMass" title="Größen und Abstände: wahr oder anschaulich überhöht">anschaulich</button>
+      <select id="selStufe" title="Wie Größen und Abstände gezeigt werden" aria-label="Darstellung">
+        <option value="echt">maßstabsgetreu</option>
+        <option value="ansch">anschaulich</option>
+        <option value="schatten">Schattenmodell</option>
+      </select>
       <button class="tog on" id="tBahn" title="Bahnkurven einblenden">Bahnen</button>
       <button class="tog" id="tEbene" title="Bahnebenen von Erde und Mond einblenden">Ebenen</button>
       <button class="tog on" id="tSchatten" title="Schattenkegel von Erde und Mond einblenden">Schatten</button>
@@ -416,6 +420,14 @@ const SCHIEF=23.4393;                                  /* Schiefe der Erdachse *
 const ERDACHSE=[0,Math.sin(SCHIEF*RAD),Math.cos(SCHIEF*RAD)];   /* zeigt zum Himmelsnordpol */
 /* Überhöhung im Modus „anschaulich" - nur zum Ansehen, nie zum Rechnen */
 const UEBER={sonne:20, venus:600, erde:600, mars:600, mond:1200, mondbahn:40};
+/* Das Schattenmodell überhöht alles QUER zur Richtung zur Sonne mit demselben Faktor f:
+   Erde und Mond werden f-mal größer, die Schattenkegel f-mal dicker und die Mondbahn
+   f-mal stärker gegen die Erdbahnebene geneigt. Längs der Achse bleibt alles, wie es ist.
+   Dadurch behält der Kernschatten seine wahre Länge (3,6 Mondbahnradien), der Mond passt
+   im selben Verhältnis hinein wie in Wirklichkeit (Kernschatten dort 2,65 Mondradien breit),
+   und weil seine Abweichung von der Erdbahnebene genauso überhöht wird, trifft er den
+   Schatten zu denselben Zeiten. Nur länger dauert es im Bild. */
+const SF_STD=6;
 
 /* Ort in der Bahnebene, gedreht um Neigung und Knoten (heliozentrisch bzw. beim Mond um die Erde) */
 function bahnOrt(b,t){
@@ -433,13 +445,23 @@ function ortW(id,t){
 }
 /* Überhöht wird nur der Blick von außen: Steht man auf einem Körper, ist der Himmel
    ohnehin richtig groß - Sonne und Mond messen dort ihr halbes Grad. */
-const uebAn=()=>D.sys.ansch&&D.sys.von==='aussen';
-/* Orte zum Zeichnen - im Modus „anschaulich" ist die Mondbahn überhöht */
+const stufe=()=>D.sys.von==='aussen'?(D.sys.stufe||'ansch'):'echt';
+const sfaktor=()=>stufe()==='schatten'?clamp(D.sys.sf||SF_STD,2,12):1;
+const uebAn=()=>stufe()==='ansch';
+const neigungUeb=()=>Math.atan(sfaktor()*Math.tan(KOERPER.mond.i*RAD))*GRD;   /* gezeigte Bahnneigung */
+/* Orte zum Zeichnen: „anschaulich" bläst die Mondbahn auf, das Schattenmodell kippt sie */
 function ortZ(id,t){
-  if(id!=='mond'||!uebAn()) return ortW(id,t);
-  return add(ortW('erde',t), mul(bahnOrt(KOERPER.mond,t),UEBER.mondbahn));
+  if(id!=='mond') return ortW(id,t);
+  const st=stufe();
+  if(st==='ansch') return add(ortW('erde',t), mul(bahnOrt(KOERPER.mond,t),UEBER.mondbahn));
+  if(st==='schatten'){ const m=bahnOrt(KOERPER.mond,t);
+    return add(ortW('erde',t),[m[0],m[1],m[2]*sfaktor()]); }   /* nur quer zur Erdbahnebene */
+  return ortW(id,t);
 }
-const radZ=id=>KOERPER[id].R*(uebAn()?(UEBER[id]||1):1)/AE;          /* Radius in AE zum Zeichnen */
+const radZ=id=>{ const st=stufe();
+  if(st==='ansch') return KOERPER[id].R*(UEBER[id]||1)/AE;
+  if(st==='schatten'&&(id==='erde'||id==='mond')) return KOERPER[id].R*sfaktor()/AE;
+  return KOERPER[id].R/AE; };
 const radW=id=>KOERPER[id].R/AE;                                      /* wahrer Radius in AE */
 
 /* ---------- Datum ---------- */
@@ -467,6 +489,17 @@ function schattenLage(quelle,ziel,t){
   const tanK=(rKm('sonne')-rKm(quelle))/dS;                  /* Kernschatten läuft zusammen */
   const tanH=(rKm('sonne')+rKm(quelle))/dS;                  /* Halbschatten läuft auseinander */
   return {s, r, kern:rKm(quelle)-s*tanK, halb:rKm(quelle)+s*tanH, laenge:rKm(quelle)/tanK};
+}
+/* Dieselbe Rechnung mit den GEZEICHNETEN Größen - im Schattenmodell sind Kegel und
+   Bahnneigung überhöht, und das Bild soll zum verdunkelten Mond passen. */
+function schattenLageZ(quelle,ziel,t){
+  const f=sfaktor();
+  const S=ortZ('sonne',t), Q=ortZ(quelle,t), Z=ortZ(ziel,t);
+  const achse=norm(sub(Q,S)), v=sub(Z,Q);
+  const s=dot(v,achse)*AE, r=betrag(sub(v,mul(achse,s/AE)))*AE;
+  const dS=betrag(sub(Q,S))*AE, Rq=radZ(quelle)*AE;
+  const tanK=f*(rKm('sonne')-rKm(quelle))/dS, tanH=f*(rKm('sonne')+rKm(quelle))/dS;
+  return {s, r, kern:Rq-s*tanK, halb:Rq+s*tanH, laenge:Rq/tanK, tanK, tanH};
 }
 function mondphase(t){
   const E=ortW('erde',t), M=ortW('mond',t), S=ortW('sonne',t);
@@ -554,7 +587,7 @@ function suchen(art,t0){
    Zustand
    ============================================================ */
 const standard=()=>({ v:1, tab:'system', fontSize:14, fontBold:false, fontItalic:false,
-  sys:{ t:0, lauf:false, tempo:30, echt:false, ansch:true, bahnen:true, ebenen:false, schatten:true,
+  sys:{ t:0, lauf:false, tempo:30, echt:false, stufe:'ansch', sf:SF_STD, bahnen:true, ebenen:false, schatten:true,
         sterne:true, namen:true, von:'aussen', ziel:'erde', bezug:'sonne',
         az:35, el:26, dist:4.2, fov:30, panAz:0, panEl:0, ansichtMit:true },
   erat:{ a:31, b:23.5, fehler:0, strahlen:true, flach:false },
@@ -571,6 +604,7 @@ const tempoTage=()=>D.sys.echt?1/86400:Math.pow(10,D.sys.tempo/100);
 /* Schattenkegel sind eine Zeichenhilfe für den Blick von außen: Im Weltraum sieht man
    sie nicht, und vom Körper aus lägen sie als riesige Keile quer im Bild. */
 const schattenAn=()=>D.sys.schatten&&!uebAn()&&D.sys.von==='aussen';
+const schattenStufe=()=>stufe()==='schatten';
 
 /* ---------- Leinwand ---------- */
 function resize(){
@@ -703,8 +737,8 @@ function malEbenen(){
   const zielP=rahmen(ortZ(S.ziel,S.t));
   const weite=betrag(sub(zielP,KAM.pos))*Math.tan(KAM.fov/2*RAD);
   const ep=rahmen(ortZ('erde',t));
-  const m1=bahnOrt(KOERPER.mond,t), m2=bahnOrt(KOERPER.mond,t+KOERPER.mond.T/4);
-  const nMond=norm(kreuz(m1,m2));
+  const mRel=tt=>sub(ortZ('mond',tt),ortZ('erde',tt));           /* so, wie gezeichnet wird */
+  const nMond=norm(kreuz(mRel(t),mRel(t+KOERPER.mond.T/4)));
   const rMond=betrag(sub(ortZ('mond',t),ortZ('erde',t)))*1.25;
   /* Von weitem die ganze Ekliptik um die Sonne, aus der Nähe beide Ebenen um die Erde -
      dann sieht man den Winkel von 5,1° zwischen ihnen. */
@@ -758,8 +792,8 @@ function malBahnen(){
 /* Wie tief steckt der Körper im Schatten des anderen? 0 = frei, 1 = ganz im Kernschatten */
 function imSchatten(id,t){
   if(id!=='mond') return 0;
-  const L=schattenLage('erde','mond',t); if(L.s<=0) return 0;
-  const R=rKm('mond'), kern=Math.max(0,L.kern);
+  const L=schattenLageZ('erde','mond',t); if(L.s<=0) return 0;
+  const R=radZ('mond')*AE, kern=Math.max(0,L.kern);
   if(L.r<kern-R) return 1;
   if(L.r<kern+R) return 0.7;
   if(L.r<L.halb+R) return 0.25;
@@ -841,16 +875,25 @@ function malKegel(p3,Rae,richtung,laenge,rEnde,alpha,rand){
   ctx.strokeStyle=rand; ctx.lineWidth=1; ctx.stroke();
 }
 function malSchatten(){
-  const t=D.sys.t, sonneP=rahmen(ortZ('sonne',t));
+  const t=D.sys.t, sonneP=rahmen(ortZ('sonne',t)), f=sfaktor();
   for(const id of ['erde','mond']){
+    if(imSchatten(id,t)>0.5) continue;      /* wer selbst im Kernschatten steckt, wirft keinen */
     const p=rahmen(ortZ(id,t)), R=radZ(id);
     const dir=norm(sub(p,sonneP));
     const dS=betrag(sub(p,sonneP));
-    const tanK=(radW('sonne')-radW(id))/dS, tanH=(radW('sonne')+radW(id))/dS;
+    const tanK=f*(radW('sonne')-radW(id))/dS, tanH=f*(radW('sonne')+radW(id))/dS;
     const L=R/tanK;                                          /* Länge des Kernschattens */
     const LH=L*1.6;
     malKegel(p,R,dir,LH,R+LH*tanH,0.18,'rgba(226,232,240,.14)');   /* Halbschatten */
     malKegel(p,R,dir,L,0,0.6,'rgba(226,232,240,.3)');              /* Kernschatten */
+    /* Beschriftung, sobald der Kegel breit genug ist, um etwas zu erkennen */
+    const qk=p2(add(p,mul(dir,L*0.45)));
+    if(qk&&F*R*0.55/qk[2]>7){
+      text('Kernschatten',qk[0],qk[1],'#cbd5e1',{al:'center',sz:11.5,fett:true,rand:'rgba(7,11,24,.85)'});
+      const qh=p2(add(p,mul(dir,LH*0.85)));
+      if(qh) text('Halbschatten',qh[0],qh[1]+F*(R+LH*0.85*tanH)/qh[2]*0.75,'#94a3b8',
+        {al:'center',sz:11.5,rand:'rgba(7,11,24,.85)'});
+    }
   }
 }
 
@@ -905,20 +948,23 @@ function zeichneSystem(){
   liste.forEach(o=>malKoerper(o.id,o.p));
   if(schattenAn()) malSchatten();
   malMassstab(malInfoSystem());
+  if(schattenStufe())
+    text('Schattenmodell – quer überhöht: Mondbahn '+grad(neigungUeb(),0)+' statt 5,1° geneigt, Erde und Mond '
+      +zahl(sfaktor(),0)+'-fach',W/2,30*K,'#94a3b8',{al:'center',sz:12});
 }
 /* ---------- Ansicht zu einem Ereignis passend stellen ---------- */
 function ansichtFuer(art){
   const S=D.sys;
   const seitlich=()=>{ S.az=sonnenLaenge(S.t)+90; S.el=12; };     /* quer zur Richtung zur Sonne */
-  const erdMond=()=>{ S.von='aussen'; S.bezug='erde'; S.ziel='erde'; S.ansch=false; S.dist=0.0075;
+  const erdMond=()=>{ S.von='aussen'; S.bezug='erde'; S.ziel='erde'; S.stufe='schatten'; S.dist=0.0075;
     S.schatten=true; S.bahnen=true; seitlich(); };
-  if(art==='mofi'){ erdMond(); S.ziel='mond'; S.dist=0.0005; }
-  else if(art==='sommer'||art==='winter'){ S.von='aussen'; S.bezug='erde'; S.ziel='erde'; S.ansch=false;
+  if(art==='mofi'){ erdMond(); S.ziel='mond'; S.dist=0.0012+0.0003*sfaktor(); }
+  else if(art==='sommer'||art==='winter'){ S.von='aussen'; S.bezug='erde'; S.ziel='erde'; S.stufe='echt';
     S.dist=0.0004; S.schatten=true; S.az=sonnenLaenge(S.t)+105; S.el=6; }
   else if(art==='sofi'||art==='neumond'||art==='vollmond') erdMond();
-  else if(art==='transit'){ S.von='erde'; S.ziel='sonne'; S.bezug='erde'; S.ansch=false; S.fov=1.2; S.panAz=0; S.panEl=0; }
-  else if(art==='opposition'){ S.von='aussen'; S.bezug='erde'; S.ziel='erde'; S.ansch=true; S.dist=5.5; S.bahnen=true; }
-  else { S.von='aussen'; S.bezug='erde'; S.ziel='erde'; S.ansch=false; S.dist=0.0009;
+  else if(art==='transit'){ S.von='erde'; S.ziel='sonne'; S.bezug='erde'; S.fov=1.2; S.panAz=0; S.panEl=0; }
+  else if(art==='opposition'){ S.von='aussen'; S.bezug='erde'; S.ziel='erde'; S.stufe='ansch'; S.dist=5.5; S.bahnen=true; }
+  else { S.von='aussen'; S.bezug='erde'; S.ziel='erde'; S.stufe='echt'; S.dist=0.0009;
     S.schatten=true; S.az=sonnenLaenge(S.t)+100; S.el=8; }
 }
 
@@ -978,6 +1024,16 @@ const ERAT_BSP=[
   {n:'Nordkap und Kairo',a:71,b:30},
   {n:'zwei Nachbarorte',a:48,b:47.5}
 ];
+/* Flaches Modell: Dieselben Schattenwinkel verlangen eine nahe Sonne. Ihre Höhe folgt
+   aus dem Strahlensatz - und faellt fuer jedes Ortspaar anders aus. Genau daran
+   scheitert das Modell. */
+function flacheSonne(bA,bB,f){
+  const a1=schattenW(bA)+(f||0), a2=schattenW(bB);
+  const tA=Math.tan(a1*RAD), tB=Math.tan(a2*RAD);
+  const sKm=(bA-bB)*KM_JE_GRAD;                        /* A nördlich von B: positiv */
+  const h=(Math.abs(tA-tB)<1e-9)?Infinity:sKm/(tA-tB);
+  return {h, tA, tB, sKm, fussKm:tA*h};                /* fussKm: Fußpunkt der Sonne, von A aus */
+}
 function erdumfang(bA,bB,f){
   const a1=schattenW(bA)+(f||0), a2=schattenW(bB);
   const alpha=Math.abs(a1-a2), s=Math.abs(bA-bB)*KM_JE_GRAD;
@@ -987,16 +1043,32 @@ function zeichneErat(){
   const E=D.erat, bA=E.a, bB=E.b, f=E.fehler/100;
   ctx.fillStyle='#fff'; ctx.fillRect(0,0,W,H);
   const e=erdumfang(bA,bB,f), abw=(e.U-U_WAHR)/U_WAHR*100;
-  const hoch=infoHell([
-    {t: e.alpha<0.05 ? 'Beide Orte liegen fast gleich – der Winkel verschwindet'
-       : 'Erdumfang U = s · 360°/α = '+zahl(e.U,0)+' km   ('+(abw>=0?'+':'−')+zahl(Math.abs(abw),1)+' % gegenüber 40 075 km)',
-     f:'#1f2430',sz:16,fett:true},
-    {t:'Schattenwinkel A: '+grad(Math.abs(schattenW(bA)+f))+' · B: '+grad(Math.abs(schattenW(bB)))
-      +' · Mittelpunktswinkel α = '+grad(e.alpha)+' · Entfernung s = '+zahl(e.s,0)+' km'},
-    {t: e.alpha<0.05 ? 'Ohne Winkelunterschied lässt sich nichts ausrechnen – deshalb wählte Eratosthenes zwei weit entfernte Orte.'
-       : 'Ein halbes Grad Messfehler verschiebt das Ergebnis um rund '+zahl(e.U*0.5/e.alpha,0)
-         +' km. Je kleiner α, desto stärker schlägt jeder Fehler durch.'}
-  ]);
+  const fl=flacheSonne(bA,bB,f);
+  let zeilen;
+  if(!E.flach){
+    zeilen=[
+      {t: e.alpha<0.05 ? 'Beide Orte liegen fast gleich – der Winkel verschwindet'
+         : 'Erdumfang U = s · 360°/α = '+zahl(e.U,0)+' km   ('+(abw>=0?'+':'−')+zahl(Math.abs(abw),1)+' % gegenüber 40 075 km)',
+       f:'#1f2430',sz:16,fett:true},
+      {t:'Schattenwinkel A: '+grad(Math.abs(schattenW(bA)+f))+' · B: '+grad(Math.abs(schattenW(bB)))
+        +' · Mittelpunktswinkel α = '+grad(e.alpha)+' · Entfernung s = '+zahl(e.s,0)+' km'},
+      {t: e.alpha<0.05 ? 'Ohne Winkelunterschied lässt sich nichts ausrechnen – deshalb wählte Eratosthenes zwei weit entfernte Orte.'
+         : 'Ein halbes Grad Messfehler verschiebt das Ergebnis um rund '+zahl(e.U*0.5/e.alpha,0)
+           +' km. Je kleiner α, desto stärker schlägt jeder Fehler durch.'}
+    ];
+  } else {
+    const andere=ERAT_BSP.slice(0,4).map(b=>b.n.replace(/ \(.*\)/,'')+' '+zahl(flacheSonne(b.a,b.b,0).h,0)+' km').join(' · ');
+    zeilen=[
+      {t: !isFinite(fl.h)||fl.h<=0 ? 'Mit diesen beiden Messungen kommt im flachen Modell gar keine Sonne heraus'
+         : 'Im flachen Modell stünde die Sonne nur h = '+zahl(fl.h,0)+' km hoch – '
+           +zahl(AE/fl.h,0)+'-mal zu niedrig', f:'#1f2430',sz:16,fett:true},
+      {t:'h = s / (tan α_A − tan α_B) = '+zahl(fl.sKm,0)+' km / (tan '+grad(Math.abs(schattenW(bA)+f))
+        +' − tan '+grad(Math.abs(schattenW(bB)))+')   ·   in Wirklichkeit: 149 600 000 km'},
+      {t:'Dieselbe Rechnung mit anderen Ortspaaren: '+andere+' – jedes Paar ergibt etwas anderes. '
+        +'Auf der Kugel passt dagegen ein einziger Wert zu allen Messungen.'}
+    ];
+  }
+  const hoch=infoHell(zeilen);
   const HV=H-hoch;
   const uS=[Math.cos((90-SONNENDEK)*RAD),-Math.sin((90-SONNENDEK)*RAD)];   /* Richtung zur Sonne */
   const lauf=[-uS[0],-uS[1]];
@@ -1045,30 +1117,55 @@ function zeichneErat(){
     [w1,w2].forEach(w=>{ ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(cx+R*Math.cos(w),cy-R*Math.sin(w)); ctx.stroke(); });
     pfeilBogen(cx,cy,R*0.3,-Math.max(w1,w2),-Math.min(w1,w2),'#dc2626','α = '+grad(Math.abs(bA-bB)));
   } else {
-    const y=HV*0.74, cxm=W*0.46;
-    const swA=Math.abs(schattenW(bA)+f), swB=Math.abs(schattenW(bB));
-    const sKm=Math.abs(bA-bB)*KM_JE_GRAD, jeKm=W*0.26/Math.max(sKm,1);
-    const xA=cxm-W*0.13, xB=xA+sKm*jeKm, stab=28;
-    const tA=Math.tan(swA*RAD), tB=Math.tan(swB*RAD);
-    const hPix=(tA-tB)!==0?(xB-xA)/(tA-tB):Infinity;
-    const sX=xA+tA*hPix, sY=y-stab-hPix;
-    ctx.strokeStyle='#92400e'; ctx.lineWidth=2;
-    ctx.beginPath(); ctx.moveTo(W*0.06,y); ctx.lineTo(W*0.9,y); ctx.stroke();
-    text('flache Erde',W*0.06,y+16*K,'#92400e',{sz:12,fett:true});
-    [[xA,swA,'A','#2563eb'],[xB,swB,'B','#16a34a']].forEach(([x,sw,nm,farbe])=>{
+    /* Die Sonne liegt im flachen Modell nur wenige tausend Kilometer hoch - damit passt
+       das ganze Bild in einen Maßstab: Boden, beide Orte und die Sonne darüber. */
+    const y0=HV*0.86, stab=26;
+    const xmin=Math.min(0,fl.sKm,fl.fussKm), xmax=Math.max(0,fl.sKm,fl.fussKm);
+    const spanne=Math.max(xmax-xmin,1)*1.25;
+    const jeKm=(isFinite(fl.h)&&fl.h>0)
+      ? Math.min(W*0.72/spanne, (HV*0.62)/fl.h)
+      : W*0.72/spanne;
+    const X=km=>W*0.5+(km-(xmin+xmax)/2)*jeKm;
+    ctx.strokeStyle='#92400e'; ctx.lineWidth=2.5;
+    ctx.beginPath(); ctx.moveTo(W*0.04,y0); ctx.lineTo(W*0.96,y0); ctx.stroke();
+    ctx.fillStyle='rgba(146,64,14,.08)'; ctx.fillRect(W*0.04,y0,W*0.92,HV-y0);
+    text('flache Erde',W*0.05,y0+15*K,'#92400e',{sz:12.5,fett:true});
+    const sx=X(fl.fussKm), sy=y0-fl.h*jeKm;
+    const sichtbar=isFinite(fl.h)&&fl.h>0&&sy>6;
+    const legF=[];
+    [[0,schattenW(bA)+f,'A',bA,'#2563eb'],[fl.sKm,schattenW(bB),'B',bB,'#16a34a']].forEach(([km,sw,nm,br,farbe])=>{
+      const x=X(km);
       ctx.strokeStyle=farbe; ctx.lineWidth=3;
-      ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x,y-stab); ctx.stroke();
-      text(nm,x,y+14*K,farbe,{al:'center',sz:12,fett:true});
-      ctx.lineWidth=2.4; ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x+Math.tan(sw*RAD)*stab,y); ctx.stroke();
-      if(isFinite(hPix)&&hPix>0){ ctx.strokeStyle='rgba(234,179,8,.9)'; ctx.lineWidth=1.5;
-        ctx.beginPath(); ctx.moveTo(sX,sY); ctx.lineTo(x+Math.tan(sw*RAD)*stab,y); ctx.stroke(); }
+      ctx.beginPath(); ctx.moveTo(x,y0); ctx.lineTo(x,y0-stab); ctx.stroke();
+      ctx.fillStyle=farbe; ctx.beginPath(); ctx.arc(x,y0,3.5,0,7); ctx.fill();
+      text(nm,x,y0+16*K,farbe,{al:'center',sz:14,fett:true});
+      /* Schatten des Stabes am Boden - sein Winkel ist der gemessene */
+      const sch=Math.tan(sw*RAD)*stab;
+      ctx.lineWidth=2.6; ctx.beginPath(); ctx.moveTo(x,y0); ctx.lineTo(x+sch,y0); ctx.stroke();
+      /* der Strahl durch die Stabspitze - er muss die Sonne treffen */
+      if(sichtbar){ ctx.strokeStyle='rgba(234,179,8,.9)'; ctx.lineWidth=1.6;
+        ctx.beginPath(); ctx.moveTo(x+sch,y0); ctx.lineTo(sx,sy); ctx.stroke(); }
+      legF.push({nm,br,sw:Math.abs(sw),farbe});
     });
-    if(isFinite(hPix)&&hPix>0){
-      if(sY>-H*2&&sY<H){ ctx.fillStyle='#eab308'; ctx.beginPath(); ctx.arc(sX,sY,11,0,7); ctx.fill();
-        text('hier müsste die Sonne stehen',sX,sY-20*K,'#a16207',{al:'center',sz:12,fett:true,rand:'#fff'}); }
-      text('Höhe der Sonne aus diesen beiden Messungen: '+zahl(hPix/jeKm,0)+' km',W*0.46,HV*0.12,'#92400e',{al:'center',sz:14,fett:true});
-      text('Jedes andere Ortspaar ergäbe einen anderen Wert – daran scheitert das flache Modell.',W*0.46,HV*0.12+20*K,'#64748b',{al:'center',sz:12.5});
+    legF.forEach((L,i)=>text(L.nm+': '+grad(L.br)+' N  –  '+(L.sw<0.3?'kein Schatten':'Schattenwinkel '+grad(L.sw)),
+      12,16*K+i*20*K,L.farbe,{sz:13,fett:true,rand:'#fff'}));
+    if(sichtbar){
+      /* Höhe der Sonne als bemaßte Strecke */
+      ctx.strokeStyle='#92400e'; ctx.lineWidth=1.3; ctx.setLineDash([6,4]);
+      ctx.beginPath(); ctx.moveTo(sx,sy); ctx.lineTo(sx,y0); ctx.stroke(); ctx.setLineDash([]);
+      ctx.beginPath(); ctx.moveTo(sx-6,sy+9); ctx.lineTo(sx,sy); ctx.lineTo(sx+6,sy+9);
+      ctx.moveTo(sx-6,y0-9); ctx.lineTo(sx,y0); ctx.lineTo(sx+6,y0-9); ctx.stroke();
+      text('h ≈ '+zahl(fl.h,0)+' km',sx+10*K,(sy+y0)/2,'#92400e',{sz:14,fett:true,rand:'#fff'});
+      const g=ctx.createRadialGradient(sx,sy,0,sx,sy,46); g.addColorStop(0,'rgba(250,204,21,.6)'); g.addColorStop(1,'rgba(250,204,21,0)');
+      ctx.fillStyle=g; ctx.beginPath(); ctx.arc(sx,sy,46,0,7); ctx.fill();
+      ctx.fillStyle='#facc15'; ctx.beginPath(); ctx.arc(sx,sy,13,0,7); ctx.fill();
+      text('hier müsste die Sonne stehen',sx,sy-26*K,'#a16207',{al:'center',sz:13,fett:true,rand:'#fff'});
+    } else if(isFinite(fl.h)&&fl.h>0){
+      text('Die Sonne läge außerhalb des Bildes – die Orte liegen zu dicht beieinander.',W/2,HV*0.2,'#92400e',{al:'center',sz:13,fett:true});
+    } else {
+      text('Diese beiden Messungen passen im flachen Modell zu gar keiner Sonne.',W/2,HV*0.2,'#92400e',{al:'center',sz:13,fett:true});
     }
+    text('Zum Vergleich: In Wirklichkeit steht die Sonne 149,6 Mio km hoch.',W/2,HV-10*K,'#94a3b8',{al:'center',sz:12});
   }
 }
 
@@ -1341,12 +1438,13 @@ function oberflaeche(){
   $('tEcht').classList.toggle('on',S.echt);
   document.querySelectorAll('[data-von]').forEach(b=>b.classList.toggle('on',b.dataset.von===S.von));
   $('selZiel').value=S.ziel; $('selBezug').value=S.bezug;
-  $('tMass').textContent=uebAn()?'anschaulich':'maßstabsgetreu';
-  $('tMass').classList.toggle('on',!uebAn());
-  $('tMass').disabled=S.von!=='aussen';
-  $('tMass').title=S.von==='aussen'
-    ? 'Größen und Abstände: wahr oder anschaulich überhöht'
+  $('selStufe').value=stufe();
+  $('selStufe').disabled=S.von!=='aussen';
+  $('selStufe').title=S.von==='aussen'
+    ? 'maßstabsgetreu · anschaulich (Körper aufgeblasen) · Schattenmodell (alles quer zur Sonne überhöht)'
     : 'Von einem Körper aus wird immer maßstabsgetreu gezeigt – der Himmel ist dort ohnehin groß genug';
+  $('setSF').value=String(D.sys.sf||SF_STD);
+  $('setSFv').textContent=zahl(D.sys.sf||SF_STD,0)+'-fach · Mondbahn '+grad(neigungUeb(),0);
   $('tBahn').classList.toggle('on',S.bahnen);
   $('tEbene').classList.toggle('on',S.ebenen);
   $('tSchatten').classList.toggle('on',schattenAn());
@@ -1383,6 +1481,13 @@ STERNE.forEach(s=>{ const o=document.createElement('option'); o.value=String(s.d
 $('settBody').innerHTML=
   '<label class="chk"><input type="checkbox" id="setNamen"><span>Namen der Himmelskörper anzeigen</span></label>'+
   '<label class="chk"><input type="checkbox" id="setAnsicht"><span>Beim Suchen eines Ereignisses die <b>Ansicht passend einstellen</b> (Standort, Ausschnitt, Maßstab)</span></label>'+
+  '<h4>Schattenmodell</h4>'+
+  '<div class="zeile">Überhöhung <input type="range" id="setSF" min="2" max="12" step="1"><span class="val" id="setSFv">–</span></div>'+
+  '<p>Im <b>Schattenmodell</b> wird alles <b>quer zur Richtung zur Sonne</b> mit demselben Faktor überhöht: '+
+  'Erde und Mond werden größer, die Schattenkegel dicker und die <b>Mondbahn stärker geneigt</b>. Längs der '+
+  'Achse bleibt alles wahr – der Kernschatten der Erde reicht weiterhin 3,6 Mondbahnradien weit, und der Mond '+
+  'passt im selben Verhältnis hinein wie in Wirklichkeit. Weil auch seine Abweichung von der Erdbahnebene '+
+  'überhöht wird, trifft er den Schatten <b>zu denselben Zeiten</b>; im Bild dauert die Finsternis nur länger.</p>'+
   '<h4>Zum Modell</h4>'+
   '<p>Alle Bahnen sind <b>Kreise</b> mit den mittleren Bahndaten für den 1.1.2000. Finsternisse, Venustransite und '+
   'Sonnenwenden treffen damit etwa auf den <b>Tag genau</b>; für den Unterricht reicht das, für eine Vorhersage nicht.</p>'+
@@ -1392,6 +1497,7 @@ $('settBody').innerHTML=
   'überhaupt etwas zu sehen ist. Schattenkegel gibt es nur <b>maßstabsgetreu</b> – mit überhöhten Körpern käme bei '+
   'jedem Vollmond eine Finsternis heraus.</p>'+
   '<button class="btn" id="setStd">Standard wiederherstellen</button>';
+$('setSF').oninput=e=>{ D.sys.sf=clamp(+e.target.value||SF_STD,2,12); oberflaeche(); zeichne(); sync(); };
 $('setNamen').onchange=e=>{ D.sys.namen=e.target.checked; zeichne(); sync(); };
 $('setAnsicht').onchange=e=>{ D.sys.ansichtMit=e.target.checked; sync(); };
 $('setStd').onclick=()=>{ const tab=D.tab, fs=D.fontSize; D=standard(); D.tab=tab; D.fontSize=fs; setzeTab(tab); sync(true); };
@@ -1402,9 +1508,15 @@ const HILFE={
     '<p>Sonne, Venus, Erde, Mond und Mars laufen auf Kreisbahnen mit ihren wahren Umlaufzeiten und Neigungen. '+
     'Die <b>Zeit</b> läuft mit ▶; das Tempo sagt, wie viel Modellzeit auf eine Sekunde kommt – <b>Echtzeit</b> zeigt, '+
     'wie langsam der Himmel wirklich ist.</p>'+
-    '<h4>Maßstab</h4><p><b>maßstabsgetreu</b> zeigt die wahren Größen: Die Planeten werden zu Punkten – genau das ist '+
-    'die Aussage. Ein dünner Ring hilft, sie zu finden. <b>anschaulich</b> bläst die Körper und die Mondbahn auf, '+
-    'damit man etwas sieht; dann stimmen die Schatten nicht mehr und sind abgeschaltet.</p>'+
+    '<h4>Drei Darstellungen</h4><p><b>maßstabsgetreu</b> zeigt die wahren Größen: Die Planeten werden zu Punkten – '+
+    'genau das ist die Aussage. Ein dünner Ring hilft, sie zu finden. <b>anschaulich</b> bläst die Körper und die '+
+    'Mondbahn auf, damit man im Überblick etwas sieht; Schatten gibt es dann keine.</p>'+
+    '<p><b>Schattenmodell</b> überhöht alles <b>quer zur Richtung zur Sonne</b> mit demselben Faktor (im ⚙ '+
+    'einstellbar): Erde und Mond werden größer, die Schattenkegel dicker und die <b>Mondbahn stärker geneigt</b>. '+
+    'Längs der Achse bleibt alles wahr, deshalb stimmen die Verhältnisse: Der Kernschatten der Erde reicht weiter '+
+    'als die Mondbahn, der Kernschatten des Mondes endet gerade bei der Erde, und der Mond passt genauso in den '+
+    'Erdschatten wie in Wirklichkeit. Weil auch seine Abweichung von der Erdbahnebene mit überhöht wird, gibt es '+
+    'die Finsternisse <b>zu denselben Zeiten</b> – im Bild dauern sie nur länger.</p>'+
     '<h4>Standort</h4><p>Von <b>außen</b> dreht man die Szene mit dem Finger. Von <b>Sonne, Erde oder Mond</b> aus '+
     'steht man auf dem Körper und blickt auf den gewählten: Von der Erde auf den Mond sieht man die <b>Mondphase</b>, '+
     'auf die Sonne den <b>Venustransit</b>, auf Mars seine <b>Schleifenbahn</b> vor den Sternen.</p>'+
@@ -1421,8 +1533,13 @@ const HILFE={
     '<b>Mittelpunktswinkel</b> α zwischen beiden Orten:</p><p><b>U = s · 360° / α</b></p>'+
     '<h4>Was daran groß ist</h4><p>Nötig sind nur ein Stab, ein Schatten und eine Streckenlänge. Vorausgesetzt wird '+
     'aber zweierlei: dass die Erde eine <b>Kugel</b> ist und dass die Sonne so weit weg steht, dass ihre Strahlen als '+
-    '<b>parallel</b> gelten. Mit <b>flache Erde</b> sieht man, woran das flache Modell scheitert: Jedes Ortspaar '+
-    'ergäbe eine andere Sonnenhöhe.</p>'+
+    '<b>parallel</b> gelten.</p>'+
+    '<h4>Flache Erde</h4><p>Der Knopf rechnet dieselben Schattenwinkel im flachen Modell: Dort müsste die Sonne '+
+    '<b>nahe</b> stehen, und ihre Höhe folgt aus dem Strahlensatz – <b>h = s / (tan α_A − tan α_B)</b>. Das Bild '+
+    'zeigt den Boden, beide Stäbe mit ihren Schatten, die beiden Strahlen und die Sonne, bei der sie sich treffen, '+
+    'mit bemaßter Höhe. Heraus kommen ein paar tausend Kilometer statt 149,6 Millionen – und vor allem: '+
+    '<b>jedes Ortspaar ergibt einen anderen Wert</b>. Genau daran scheitert das flache Modell, während auf der '+
+    'Kugel ein einziger Erdumfang zu allen Messungen passt.</p>'+
     '<h4>Zum Ausprobieren</h4><p>Zwei Orte dicht beieinander machen α winzig – dann schlägt jeder Messfehler riesig '+
     'durch. Deshalb wählte Eratosthenes zwei weit entfernte Orte.</p>'],
   mond:['Entfernung Erde–Mond',
@@ -1490,12 +1607,12 @@ an('bSpring',()=>{
   setzeTab(D.tab); sync(true);
   toast(EREIGNIS[art].text+': '+datumText(t,true));
 });
-an('tMass',()=>{ D.sys.ansch=!D.sys.ansch; oberflaeche(); zeichne(); sync(); });
+$('selStufe').onchange=e=>{ D.sys.stufe=e.target.value; oberflaeche(); zeichne(); sync(true); };
 an('tBahn',()=>{ D.sys.bahnen=!D.sys.bahnen; oberflaeche(); zeichne(); sync(); });
 an('tEbene',()=>{ D.sys.ebenen=!D.sys.ebenen; oberflaeche(); zeichne(); sync(); });
 an('tSchatten',()=>{
-  if(uebAn()){ D.sys.ansch=false; D.sys.schatten=true;
-    toast('Schatten brauchen den wahren Maßstab – umgeschaltet auf maßstabsgetreu'); }
+  if(uebAn()){ D.sys.stufe='schatten'; D.sys.schatten=true;
+    toast('Schattenmodell: Mondbahn stärker geneigt, Erde und Mond größer – so wird der Kegel sichtbar'); }
   else D.sys.schatten=!D.sys.schatten;
   oberflaeche(); zeichne(); sync(); });
 an('tSterne',()=>{ D.sys.sterne=!D.sys.sterne; oberflaeche(); zeichne(); sync(); });
@@ -1562,6 +1679,12 @@ function zustand(){ return JSON.parse(JSON.stringify(D)); }
 function uebernimm(d){
   d=d||{}; const std=standard(), neu=Object.assign({},std,d);
   ['sys','erat','mond','sonne','stern'].forEach(k=>{ neu[k]=Object.assign({},std[k],d[k]||{}); });
+  /* älterer Stand kannte nur „ansch: true/false" */
+  if(d.sys&&typeof d.sys.stufe!=='string'&&typeof d.sys.ansch==='boolean')
+    neu.sys.stufe=d.sys.ansch?'ansch':'echt';
+  if(!['echt','ansch','schatten'].includes(neu.sys.stufe)) neu.sys.stufe='ansch';
+  delete neu.sys.ansch;
+  neu.sys.sf=clamp(+neu.sys.sf||SF_STD,2,12);
   if(!HILFE[neu.tab]) neu.tab='system';
   neu.fontSize=clamp(+neu.fontSize||14,10,26);
   D=neu; schriftAnwenden();
