@@ -15,7 +15,7 @@
   #types::-webkit-scrollbar{height:4px;} #types::-webkit-scrollbar-thumb{background:#cfd6e0;border-radius:2px;}
   .tbtn{padding:7px 12px;border:1px solid #cfd6e0;border-radius:9px;background:#fff;font-size:14px;font-family:inherit;cursor:pointer;font-weight:600;}
   .tbtn.on{background:#3b82f6;color:#fff;border-color:#3b82f6;}
-  /* Die fuenf Groessen stecken in einer Liste, damit die Zeile oben kurz bleibt. */
+  /* Die Groessen stecken in einer Liste, damit die Zeile oben kurz bleibt. */
   .tsel{padding:7px 10px;border:1px solid #cfd6e0;border-radius:9px;background:#fff;font-size:14px;font-family:inherit;font-weight:600;color:#1f2430;cursor:pointer;}
   .tsel.on{background:#3b82f6;color:#fff;border-color:#3b82f6;}
   .hint{font-size:12px;color:#8a93a2;} #swHelp[hidden]{display:none;}
@@ -62,6 +62,8 @@
   .udigits{display:flex;}
   .dc{width:calc(var(--fs,22px)*1.64);height:calc(var(--fs,22px)*2.2);text-align:center;font-size:var(--fs,22px);font-weight:var(--fw,400);font-style:var(--fi,normal);border:1px solid #cbd3df;border-left:none;border-top:none;font-family:inherit;background:#fff;color:#1f2430;padding:0;}
   .ugroup .udigits .dc:first-child{border-left:1px solid #cbd3df;}
+  /* Bei Geld stehen alle Euro-Stellen unter einem Kopf - ein Strich alle drei Stellen zeigt die Tausender. */
+  .dc.tsd{border-left:1px solid #94a3b8;}
   .ugroup.sel .dc{border-color:#dc2626;}
   .comma{width:calc(var(--fs,22px)*0.73);flex:none;display:flex;align-items:flex-end;justify-content:center;font-size:calc(var(--fs,22px)*1.8);font-weight:900;color:#dc2626;line-height:.5;padding-bottom:4px;}
   .comma.head{align-items:flex-end;color:#dc2626;font-size:calc(var(--fs,22px)*0.72);}
@@ -272,13 +274,14 @@
 <div id="wrap">
   <div id="types">
     <button class="tbtn" id="t-zahl">Zahl</button>
-    <select class="tsel" id="gsel" aria-label="Größe" title="Größen: Längen, Flächen, Volumen, Massen oder Zeit">
+    <select class="tsel" id="gsel" aria-label="Größe" title="Größen: Längen, Flächen, Volumen, Massen, Zeit oder Geld">
       <option value="" hidden>Größen …</option>
       <option value="laenge">Längen</option>
       <option value="flaeche">Flächen</option>
       <option value="volumen">Volumen</option>
       <option value="masse">Massen</option>
       <option value="zeit">Zeit</option>
+      <option value="geld">Geld</option>
     </select>
     <button class="tbtn" id="t-misch" title="Wert zusätzlich in gemischten Einheiten zeigen (z. B. 1 h 30 min)">gemischte Einheiten</button>
     <button class="tbtn" id="t-pct" title="Zweites Komma an der Hundertstel-Stelle → Prozent-Darstellung" style="display:none">%-Komma</button>
@@ -316,27 +319,36 @@ const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
    [Beschriftung, Ziffern dieser Spalte, Kuerzel]. Welchen Ausschnitt davon die Tafel zeigt,
    sagt data.ber (Einstellungen) - von Haus aus den Bereich STD, also den gewohnten.
    Zeit rechnet nicht in Zehnern: 1 d = 24 h, 1 h = 60 min, 1 min = 60 s, dann Zehntel und
-   Hundertstel; ZH sagt, wie viele Hundertstelsekunden eine Einheit wert ist. */
+   Hundertstel; ZH sagt, wie viele Hundertstelsekunden eine Einheit wert ist.
+   Geld rechnet in Zehnern (1 € = 100 ct). Die Liste fuehrt dort jede Stelle einzeln auf -
+   so laesst sich der Bereich stellengenau waehlen -, in der Tafel stehen sie dann unter den
+   beiden Einheiten € und ct (siehe baueUnits). */
 const ALLE={
   laenge:[['km',1,'km'],['hm',1,'hm'],['dam',1,'dam'],['m',1,'m'],['dm',1,'dm'],['cm',1,'cm'],['mm',1,'mm'],['µm',3,'mum'],['nm',3,'nm']],
   flaeche:[['km²',2,'km2'],['ha',2,'ha'],['a',2,'a'],['m²',2,'m2'],['dm²',2,'dm2'],['cm²',2,'cm2'],['mm²',2,'mm2']],
   volumen:[['km³',3,'km3'],['hm³',3,'hm3'],['dam³',3,'dam3'],['m³',3,'m3'],['dm³',3,'dm3'],['cm³',3,'cm3'],['mm³',3,'mm3']],
   masse:[['Mt',3,'Mt'],['kt',3,'kt'],['t',3,'t'],['kg',3,'kg'],['g',3,'g'],['mg',3,'mg'],['µg',3,'mug']],
   zeit:[['a',2,'a'],['d',2,'d'],['h',2,'h'],['min',2,'min'],['s',2,'s'],['<span class="kl">1/10</span> s',1,'z10'],['<span class="kl">1/100</span> s',1,'z100']],
+  geld:[['Brd €',1,'eBrd'],['HB €',1,'eHB'],['ZB €',1,'eZB'],['B €',1,'eB'],['HMrd €',1,'eHMrd'],['ZMrd €',1,'eZMrd'],['Mrd €',1,'eMrd'],['HM €',1,'eHM'],['ZM €',1,'eZM'],['M €',1,'eM'],['HT €',1,'eHT'],['ZT €',1,'eZT'],['T €',1,'eT'],['H €',1,'eH'],['Z €',1,'eZ'],['1 €',1,'eE'],['10 ct',1,'ct10'],['1 ct',1,'ct1'],['0,1 ct',1,'ct01']],
   zahl:[['Brd',1,'Brd'],['HB',1,'HB'],['ZB',1,'ZB'],['B',1,'B'],['<span class="kl">HMrd</span>',1,'HMrd'],['<span class="kl">ZMrd</span>',1,'ZMrd'],['Mrd',1,'Mrd'],['HM',1,'HM'],['ZM',1,'ZM'],['M',1,'M'],['HT',1,'HT'],['ZT',1,'ZT'],['T',1,'T'],['H',1,'H'],['Z',1,'Z'],['E',1,'E'],['z',1,'z'],['h',1,'h'],['t',1,'t'],['zt',1,'zt'],['ht',1,'ht'],['m',1,'m']]
 };
 /* [von, bis] als Platz in ALLE, bei den Laengen dazu die Ziffern der groessten Einheit -
-   von Haus aus der gewohnte Ausschnitt: km…mm, m³…mm³, t…mg, d…1/100 s, M…Millionstel */
-const STD={ laenge:[0,6,1], flaeche:[0,6], volumen:[3,6], masse:[2,5], zeit:[1,6], zahl:[9,21] };
-const TYPEN=['zahl','laenge','flaeche','volumen','masse','zeit'];
-const TNAME={ zahl:'Zahl', laenge:'Längen', flaeche:'Flächen', volumen:'Volumen', masse:'Massen', zeit:'Zeit' };
+   von Haus aus der gewohnte Ausschnitt: km…mm, m³…mm³, t…mg, d…1/100 s, M…Millionstel,
+   bei Geld 1 Billion € … 1 ct */
+const STD={ laenge:[0,6,1], flaeche:[0,6], volumen:[3,6], masse:[2,5], zeit:[1,6], zahl:[9,21], geld:[3,17] };
+const TYPEN=['zahl','laenge','flaeche','volumen','masse','zeit','geld'];
+const TNAME={ zahl:'Zahl', laenge:'Längen', flaeche:'Flächen', volumen:'Volumen', masse:'Massen', zeit:'Zeit', geld:'Geld' };
+/* die Plaetze in ALLE.geld, auf die es ankommt */
+const G_EUR=15, G_CT10=16, G_CT1=17, G_CT01=18;
 const ZH={ a:3153600000, d:8640000, h:360000, min:6000, s:100, z10:10, z100:1 };   /* 1 a = 365 d */
-const DEFU={ laenge:'m', flaeche:'m²', volumen:'m³', masse:'kg', zeit:'h', zahl:'E' };   // Standard-Einheit (Komma)
+const DEFU={ laenge:'m', flaeche:'m²', volumen:'m³', masse:'kg', zeit:'h', zahl:'E', geld:'€' };   // Standard-Einheit (Komma)
 const UNITS={};
 function stdBer(){ const o={}; for(const t in STD) o[t]=STD[t].slice(); return o; }
 function pruefBer(b){ const o=stdBer();
   if(b&&typeof b==='object') TYPEN.forEach(t=>{ const q=b[t]; if(!Array.isArray(q)) return;
-    const n=ALLE[t].length, von=clamp(q[0]|0,0,n-1), bis=clamp(q[1]|0,von,n-1);
+    const n=ALLE[t].length, von=clamp(q[0]|0,0,n-1); let bis=clamp(q[1]|0,von,n-1);
+    /* Geld: Cent ohne die Einer-Cent-Spalte waere keine Einheit mehr, auf die man umrechnen kann. */
+    if(t==='geld'&&bis===G_CT10) bis=G_CT1;
     o[t]=(t==='laenge')?[von,bis,clamp((q[2]|0)||1,1,4)]:[von,bis]; });
   return o; }
 let gespBer=null, gespEnt=false;
@@ -344,6 +356,13 @@ let gespBer=null, gespEnt=false;
 try{ gespBer=JSON.parse(localStorage.getItem('swt-ber2')||'null'); gespEnt=localStorage.getItem('swt-ent')==='1'; }catch(e){}
 let data={ type:'laenge', unitIndex:3, rows:[{dig:{}}], fontSize:22, pct:false, mark:null, bruch:false, misch:false, nullen:false, runden:false, rund:null, zehner:false, zp:null, ziel:null, ber:pruefBer(gespBer), zeigEnt:!!gespEnt };
 function baueUnits(){ TYPEN.forEach(t=>{ const b=data.ber[t]||STD[t];
+  /* Geld: Die Euro-Stellen stehen zusammen unter „€", die beiden Cent-Stellen unter „ct";
+     die Zehntelcent bekommen - wie die Zehntelsekunden - einen eigenen Kopf. */
+  if(t==='geld'){ const u=[];
+    const nE=Math.min(b[1],G_EUR)-b[0]+1;                      if(nE>0) u.push(['€',nE,'eur']);
+    const nC=Math.min(b[1],G_CT1)-Math.max(b[0],G_CT10)+1;     if(nC>0) u.push(['ct',nC,'ct']);
+    if(b[0]<=G_CT01&&b[1]>=G_CT01) u.push(['<span class="kl">1/10</span> ct',1,'ct01']);
+    UNITS.geld=u; return; }
   const liste=ALLE[t].slice(b[0],b[1]+1).map(u=>u.slice());
   if(t==='laenge'&&liste.length) liste[0][1]=clamp((b[2]|0)||1,1,4);
   /* Mit Jahren darueber braucht die Tage-Spalte drei Ziffern: ein Jahr hat 365 Tage. */
@@ -378,6 +397,7 @@ function berBauen(){ const box=$('berBox'); if(!box) return; box.innerHTML='';
 function berSetzen(t,welche,wert){ const b=(data.ber[t]||STD[t]).slice(); b[welche]=wert;
   if(welche===0&&b[1]<wert) b[1]=wert;              /* von darf nicht hinter bis liegen */
   if(welche===1&&b[0]>wert) b[0]=wert;
+  if(t==='geld'&&b[1]===G_CT10) b[1]=G_CT1;         /* siehe pruefBer */
   data.ber[t]=b; berSichern(); neuAufbauen(t); }
 /* Nach einer Aenderung: Spalten neu bauen. Steht die Groesse gerade in der Tafel, fangen die
    Zeilen leer an - die Ziffern wuerden sonst auf einmal etwas anderes bedeuten. */
@@ -400,6 +420,12 @@ function zeitWert(dig,split){ if(split===undefined)split=data.unitIndex;
   return String(g).replace('.',','); }
 /* „1 h 30 min" statt „1,5 h" */
 function mischText(dig){ const units=UNITS[data.type], teile=[];
+  if(data.type==='geld'){                                   /* Zehntelcent gehören an die Cent */
+    const n={}; units.forEach((u,ui)=>{ n[u[2]]=gruppenZahl(dig,ui); });
+    if(n.eur) teile.push(n.eur+' €');
+    const ct=n.ct||0, z=n.ct01||0;
+    if(ct||z) teile.push(String(ct)+(z?(','+z):'')+' ct');
+    return teile.length?teile.join(' '):((n.eur!==undefined?'0 €':'0 ct'));}
   if(data.type==='zeit'){                                   /* Zehntel und Hundertstel gehören an die Sekunden */
     const n={}; units.forEach((u,ui)=>{ n[u[2]]=gruppenZahl(dig,ui); });
     ['a','d','h','min'].forEach(id=>{ if(n[id]) teile.push(n[id]+' '+id); });
@@ -539,7 +565,9 @@ function render(){ applyFont();
     lead.appendChild(aug); row.appendChild(lead);
     units.forEach((u,ui)=>{ const g=document.createElement('div'); g.className='ugroup'+(ui===data.unitIndex?' sel':'')+(ui<=mk?' mk':'');
       const dg=document.createElement('div'); dg.className='udigits';
-      for(let k=0;k<u[1];k++){ const c=col; const inp=document.createElement('input'); inp.className='dc'; inp.type='text'; inp.inputMode='numeric'; inp.maxLength=1; inp.value=rw.dig[c]||'';
+      for(let k=0;k<u[1];k++){ const c=col; const inp=document.createElement('input');
+        /* Bei Geld steht die ganze Euro-Zahl unter einem Kopf - alle drei Stellen ein Strich. */
+        const r3=u[1]-1-k; inp.className='dc'+((u[2]==='eur'&&r3%3===2)?' tsd':''); inp.type='text'; inp.inputMode='numeric'; inp.maxLength=1; inp.value=rw.dig[c]||'';
         inp.dataset.ri=ri; inp.dataset.c=c;
         /* In das Feld passt nur eine Ziffer - ohne Auswahl liesse sich eine schon dastehende
            (auch eine ergaenzte Null) nicht ueberschreiben, sondern nur loeschen. */

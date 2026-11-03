@@ -2563,8 +2563,8 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     der Strahl reicht (auch für unechte Brüche wie 7/3); per Haken erscheinen die **gemischte Zahl** (7/3 = 2 1/3)
     und der **Dezimalbruch**. So wird sichtbar: Ein Bruch ist nicht nur ein Anteil, sondern auch eine Zahl.
 - **Stellenwerttafel** (Mathe & Physik): umschaltbar **Zahl** oder – aus der Auswahlliste
-  **„Größen"** – **Längen / Flächen / Volumen / Massen / Zeit** mit den
-  üblichen Einheiten. Die fünf Größen stecken in **einer Liste**, damit die Knopfzeile oben kurz
+  **„Größen"** – **Längen / Flächen / Volumen / Massen / Zeit / Geld** mit den
+  üblichen Einheiten. Die Größen stecken in **einer Liste**, damit die Knopfzeile oben kurz
   bleibt; die gewählte Größe steht blau darin, bei **„Zahl"** zeigt die Liste „Größen …". Ziffern eintippen; ein Tipp auf eine Einheit **verschiebt das Komma** (Umrechnung) –
   **Komma und die zugehörige Einheit werden rot hervorgehoben**. Unten rechts: **A−/A+** für die Schriftgröße (auch im Kontextmenü) sowie **🖼 Tafel / 📋 Kopieren** – die Tafel (ohne Löschknöpfe) als Bild neben das Werkzeug legen bzw. in die Zwischenablage kopieren. Mit **„＋ Zeile"** lassen sich
   weitere Zahlen-Zeilen hinzufügen; jede Zeile zeigt ihren Wert in der gewählten Einheit –
@@ -2577,7 +2577,8 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     **Millionstel**, **Längen** von **km** bis **nm** (mm → **µm** → **nm**, je drei Ziffern),
     **Volumen** von **km³** über hm³ und **dam³** bis mm³, **Massen** von **Mt** über **kt** und t
     bis **µg**, **Zeit** ab **Jahren** (1 a = 365 d; dann bekommt die Tage-Spalte drei Ziffern und
-    nimmt Werte bis 364) bis zur Hundertstelsekunde. Bei den **Längen** sagt ein drittes Feld,
+    nimmt Werte bis 364) bis zur Hundertstelsekunde, **Geld** von **1 Billion €** bis zum
+    **0,1 ct** (Standard: 1 Billion € bis **1 ct**). Bei den **Längen** sagt ein drittes Feld,
     **wie viele Ziffern die größte Einheit** bekommt – mit **4 Stellen** reicht die Tafel
     **bis 9999 km**. **Standard ist
     der gewohnte Bereich**; „Standard wiederherstellen" holt ihn zurück. Die Wahl merkt sich der
@@ -2593,6 +2594,15 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     wird nicht übernommen, das Feld leuchtet kurz **rot** und es erscheint der Hinweis
     „Minuten: nur Werte von 0 bis 59 – 60 Minuten sind 1 Stunde" (entsprechend bei den Sekunden).
     Stunden bleiben frei eintippbar, damit auch **70 h** (ohne Tage-Spalte) möglich sind.
+  - **Geld** (Spalten **€** und **ct**): Alle Euro-Stellen stehen unter dem einen Kopf **„€"**,
+    die beiden Cent-Stellen unter **„ct"** – dazwischen das rote Komma. Damit die lange Euro-Zahl
+    lesbar bleibt, trennt **alle drei Stellen ein feiner Strich** die Tausender
+    (1 234 567). Standard ist der Bereich **1 Billion € bis 1 ct**; in den **⚙ Einstellungen**
+    lässt er sich kürzen (z. B. **1000 € bis 1 ct**) oder um die **Zehntelcent** erweitern – für
+    **Tankpreise** wie **1,739 €** (dann steht rechts der eigene Kopf **1/10 ct**). Ein Tipp auf
+    **„ct"** rechnet um: **12,34 € = 1234 ct**; mit **„gemischte Einheiten"** steht daneben
+    **12 € 34 ct** (mit Zehntelcent: 1 € 73,9 ct). **Runden** und **Zehnerpotenz** gelten hier wie
+    bei den anderen Größen – z. B. auf **Zehnercent** runden: 12,34 € ≈ **12,3 €**.
   - **Ergebnis verdecken (👁):** Links vor jeder Zeile steht ein **Auge** – ein Tipp **verdeckt den
     Wert** dieser Zeile, an seiner Stelle steht ein **„?" im gestrichelten Kästchen**. So lassen sich
     die eingetippten Ziffern als **Aufgabe** stellen und die Ergebnisse erst später einblenden; das
@@ -3586,7 +3596,7 @@ codap.html            ← eingebettetes CODAP v3 (Statistik, codap3.concord.org 
 wuerfel.html          ← Würfel-Zufallsgenerator (Objekt)
 gluecksrad.html       ← Glücksrad (Sektoren im Kontextmenü einstellbar)
 bruch.html            ← Bruch mit Kreis-Sektoren-Darstellung
-stellenwerttafel.html ← Stellenwerttafel (Längen/Flächen/Volumen/Massen, Komma verschieben)
+stellenwerttafel.html ← Stellenwerttafel (Längen/Flächen/Volumen/Massen/Zeit/Geld, Komma verschieben)
 umrechner.html        ← Einheitenumrechner (physikalische Größen)
 einheitskreis.html    ← interaktiver Einheitskreis (sin/cos/tan, Winkel ↔ Werte)
 raum.html             ← 3D-Koordinatensystem (Punkte, Geraden, Ebenen, Lagebeziehungen)
