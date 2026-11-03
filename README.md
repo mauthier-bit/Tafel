@@ -2674,6 +2674,57 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   - **Einrasten:** besondere Winkel (Vielfache von 30° und 45°) und die zugehörigen Werte
     (0, ±½, ±½√2, ±½√3, ±1; bei tan 0, ±⅓√3, ±1, ±√3) rasten beim Ziehen ein; ohne Einrasten ganze Grad
     bzw. Hundertstel. **Besondere Winkel** markiert diese am Kreis, **Bogenmaß** beschriftet sie mit π.
+- **Astronomie** (Mathe & Physik): fünf Reiter – ein **Sonnensystem in 3D** und die vier klassischen
+  **geometrischen Entfernungsbestimmungen**. Alles wird im Browser gerechnet, die Bahnen sind Kreise
+  mit den mittleren Bahndaten für den 1.1.2000; Finsternisse, Venustransite und Sonnenwenden treffen
+  damit etwa auf den Tag genau (bei Mars, dessen Bahn merklich elliptisch ist, können es ein, zwei
+  Wochen sein). Die Infozeile unter dem Bild nennt Datum, Jahreszeit, Mondphase, Winkelabstände und
+  Entfernungen – groß genug für die letzte Reihe.
+  - **Sonnensystem:** Sonne, Venus, Erde, Mond und Mars mit ihren wahren Umlaufzeiten und Neigungen.
+    **▶** startet die Zeit, **Tempo** sagt, wie viel Modellzeit auf eine Sekunde kommt (von Minuten bis
+    zu Jahren je Sekunde); **Echtzeit** zeigt, wie langsam der Himmel wirklich ist.
+  - **maßstabsgetreu oder anschaulich:** Maßstabsgetreu sind die Körper winzige Punkte – genau das ist
+    die Aussage; ein dünner Ring hilft, sie zu finden. **Anschaulich** vergrößert Sonne (20-fach),
+    Planeten (600-fach) und die Mondbahn (40-fach), damit etwas zu sehen ist. **Schattenkegel gibt es
+    nur maßstabsgetreu** – mit überhöhten Körpern käme bei jedem Vollmond eine Finsternis heraus;
+    ein Tipp auf „Schatten" schaltet deshalb selbst um. Vom Körper aus wird immer maßstabsgetreu
+    gezeigt: Am Himmel messen Sonne und Mond ohnehin ihr halbes Grad.
+  - **Standort:** **außen** (ziehen = drehen, zwei Finger = zoomen) oder auf **Sonne, Erde, Mond**;
+    dazu die Liste **Blick auf** (Sonne, Erde, Mond, Venus, Mars). Von der Erde auf den Mond zeigt die
+    **Mondphase**, auf die Sonne den **Venustransit** und eine **Sonnenfinsternis**, auf Mars seine
+    **Schleifenbahn** vor den Sternen. Auf der Erde steht man dabei auf dem Punkt der Oberfläche, der
+    dem Mondschatten am nächsten liegt – bei einer Finsternis also dort, wo man sie sieht.
+  - **heliozentrisch oder geozentrisch:** Das Umschalten ändert nur, **wer stillsteht**. Geozentrisch
+    läuft die Sonne um die Erde, und die Bahnen von Venus und Mars bekommen **Schleifen** – dieselbe
+    Bewegung, anderer Bezugspunkt. Genau diese Schleifen beschrieb Ptolemäus mit Epizykeln.
+  - **Bahnen, Ebenen, Schatten, Sterne** lassen sich einzeln einblenden. Die **Bahnebenen** von Erde
+    und Mond erscheinen aus der Nähe als zwei Scheiben um die Erde, die sich in der **Knotenlinie**
+    schneiden – damit wird sichtbar, warum es nicht bei jedem Neumond eine Finsternis gibt. Die
+    Erdkugel bekommt ab einer gewissen Größe **Gradnetz, Wendekreise, Polarkreise und Achse**, dazu
+    die **Tag-Nacht-Grenze**: So sind die **Jahreszeiten** zu zeigen.
+  - **Ereignis suchen:** Neumond, Vollmond, Sonnenfinsternis, Mondfinsternis, Venustransit,
+    Mars-Opposition, Sommer- und Wintersonnenwende. Die Zeit springt zum nächsten solchen Ereignis und
+    (abschaltbar im ⚙) stellt sich die **Ansicht passend** ein – bei der Mondfinsternis also dicht an
+    den Mond, der dann **kupferrot im Kernschatten** steht.
+  - **Erdumfang (Eratosthenes):** zwei Orte auf einem Meridian, parallele Sonnenstrahlen,
+    Schattenwinkel, Mittelpunktswinkel α und **U = s · 360°/α**. Beispielpaare in der Liste, dazu ein
+    **Messfehler-Regler** (jeder Fehler schlägt bei kleinem α viel stärker durch) und der Vergleich
+    **flache Erde**: Dieselben Messungen führten dort zu einer nahen Sonne, und jedes Ortspaar ergäbe
+    eine andere Höhe – daran scheitert das flache Modell.
+  - **Erde–Mond:** Bei **genau halbem Mond** ist der Winkel Erde–Mond–Sonne ein rechter, also ist
+    **Erde–Mond = Erde–Sonne · cos ε**. Der Regler zeigt, wie brutal empfindlich das ist: Der wahre
+    Wert ist ε = 89,85°, schon ein Zehntel Grad verschiebt das Ergebnis um mehr als ein Drittel.
+    **Aristarch** maß 87° und bekam heraus, die Sonne sei nur 19-mal weiter als der Mond (wahr: 390-mal).
+    **maßstabsgetreu** zeigt, wie flach das Dreieck in Wahrheit ist.
+  - **Erde–Sonne:** die **Parallaxe beim Venustransit**. Zwei Beobachter auf der Erde sehen die Venus
+    vor verschiedenen Bahnen über die Sonnenscheibe ziehen; aus der Verschiebung Δ folgt
+    **1 AE = b · (1/0,2767 − 1)/Δ**. Rechts steht die Sonnenscheibe mit beiden Bahnen im richtigen
+    Größenverhältnis (der winzige Abstand wird gekennzeichnet überhöht gezeichnet). Regler für den
+    Beobachterabstand und den Messfehler.
+  - **Sternparallaxe:** die Erdbahn als Grundlinie, **d = 1 AE / tan p**, mit p in Bogensekunden
+    **d[pc] = 1/p[″]**. Beispielsterne von Proxima Centauri bis Wega, ein **Lupen-Regler** für den
+    Himmelsausschnitt und der Vergleich mit dem Vollmond (1 800″) – so wird klar, warum die erste
+    Sternparallaxe erst 1838 gelang.
 - **Atomphysik** (Mathe & Physik): ein Werkzeug mit **vier Reitern**, die zusammen vom Periodensystem
   bis in den Kern führen. Oben steht die Reiterleiste, darunter der jeweilige Inhalt; jeder Reiter merkt
   sich seinen Stand, auch über das Speichern des Projekts hinweg. Die vier Reiter sind als
@@ -3623,6 +3674,7 @@ motiontracker.html    ← Motion-Tracker (Bewegung und Abstand per Kamera-KI; br
 stromkreis.html       ← Stromkreis-Editor mit Simulation (U, I, R, C, L, Ladungsfluss, Bild-Export)
 optik.html            ← Optiklabor (Strahlenoptik, Schatten, Mondphasen und Finsternisse)
 wellen.html           ← Wellenwanne (Reflexion, Brechung, Beugung, Interferenz, Huygens)
+astronomie.html       ← Astronomie (Sonnensystem in 3D, Erdumfang, Erde–Mond, Erde–Sonne, Sternparallaxe)
 bewegung.html         ← Bewegungsdiagramme (Bewegung mit dem Finger aufnehmen, t-x-, t-v-, t-a-Diagramm)
 glossar.html          ← Glossar (Begriffe mit Erklärungen, Abfragemodus)
 zuordnen.html         ← Zuordnen (Begriffe und Bilder in Gruppen oder paarweise)
