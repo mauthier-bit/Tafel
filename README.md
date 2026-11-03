@@ -2675,11 +2675,12 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     (0, ±½, ±½√2, ±½√3, ±1; bei tan 0, ±⅓√3, ±1, ±√3) rasten beim Ziehen ein; ohne Einrasten ganze Grad
     bzw. Hundertstel. **Besondere Winkel** markiert diese am Kreis, **Bogenmaß** beschriftet sie mit π.
 - **Astronomie** (Mathe & Physik): fünf Reiter – ein **Sonnensystem in 3D** und die vier klassischen
-  **geometrischen Entfernungsbestimmungen**. Alles wird im Browser gerechnet, die Bahnen sind Kreise
-  mit den mittleren Bahndaten für den 1.1.2000; Finsternisse, Venustransite und Sonnenwenden treffen
-  damit etwa auf den Tag genau (bei Mars, dessen Bahn merklich elliptisch ist, können es ein, zwei
-  Wochen sein). Die Infozeile unter dem Bild nennt Datum, Jahreszeit, Mondphase, Winkelabstände und
-  Entfernungen – groß genug für die letzte Reihe.
+  **geometrischen Entfernungsbestimmungen**. Alles wird im Browser gerechnet, mit den **mittleren
+  Bahnelementen für J2000** und der Mittelpunktsgleichung in erster Näherung – also mit Ellipsen,
+  aber ohne die Störungen der Körper untereinander. **Sonnenwenden und Venustransite** treffen damit
+  auf Minuten genau (8.6.2004 und 6.6.2012 jeweils auf die Minute), **Finsternisse, Mondphasen und
+  die Mars-Opposition** auf wenige Stunden. Die Infozeile unter dem Bild nennt Datum, Jahreszeit,
+  Mondphase, Winkelabstände und Entfernungen – groß genug für die letzte Reihe.
   - **Sonnensystem:** Sonne, Venus, Erde, Mond und Mars mit ihren wahren Umlaufzeiten und Neigungen.
     **▶** startet die Zeit, **Tempo** sagt, wie viel Modellzeit auf eine Sekunde kommt (von Minuten bis
     zu Jahren je Sekunde); **Echtzeit** zeigt, wie langsam der Himmel wirklich ist. **⏪ und ⏩** gehen

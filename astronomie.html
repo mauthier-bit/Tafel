@@ -40,6 +40,8 @@
   .fld{display:inline-flex;align-items:center;gap:6px;color:#64748b;font-weight:600;}
   .fld input[type=range]{width:110px;accent-color:#2563eb;}
   .fld .val{min-width:58px;text-align:right;font-weight:700;color:#2563eb;font-variant-numeric:tabular-nums;}
+  /* Zugeklappt steht dort nur „Ereignis …" - die Liste selbst klappt breit genug auf. */
+  #selListe{max-width:150px;}
   #cvbox{position:relative;flex:1;min-height:0;background:#fff;}
   #cvbox.dunkel{background:#070b18;}
   #cv{position:absolute;inset:0;width:100%;height:100%;touch-action:none;}
@@ -409,20 +411,24 @@ const norm=a=>{ const l=betrag(a); return l?mul(a,1/l):[0,0,1]; };
 const winkelZw=(a,b)=>Math.acos(clamp(dot(norm(a),norm(b)),-1,1));
 
 /* ============================================================
-   Die Himmelskörper. Kreisbahnen mit den mittleren Bahnelementen
-   zur Epoche J2000 (1. Januar 2000, 12 Uhr Weltzeit):
-   a = Bahnradius in AE, T = Umlaufzeit in Tagen, i = Neigung gegen
-   die Erdbahnebene, O = Länge des aufsteigenden Knotens, L0 = Länge
-   zur Epoche. Ellipsen sind weggelassen - für Finsternisse, Phasen
-   und Schleifenbahnen reicht das, die Zeitpunkte stimmen auf rund
-   einen Tag.
+   Die Himmelskörper, mit den mittleren Bahnelementen zur Epoche
+   J2000 (1. Januar 2000, 12 Uhr Weltzeit): a = große Halbachse in
+   AE, e = Exzentrizität, T = Umlaufzeit in Tagen, i = Neigung gegen
+   die Erdbahnebene, O = Länge des aufsteigenden Knotens, per = Länge
+   des Perihels, L0 = mittlere Länge zur Epoche. Gerechnet wird mit
+   der Mittelpunktsgleichung in erster Näherung (siehe bahnOrt) -
+   damit treffen Sonnenwenden und Venustransite auf Minuten, Finster-
+   nisse und Mondphasen auf wenige Stunden.
    ============================================================ */
 const KOERPER={
   sonne:{name:'Sonne', R:696342,  farbe:'#ffc43d', kurz:'Sonne'},
-  venus:{name:'Venus', R:6051.8,  a:0.723332, T:224.7008,  i:3.3947, O:76.680,  L0:181.9797, farbe:'#e8c89a'},
-  erde: {name:'Erde',  R:6371.0,  a:1.000000, T:365.2564,  i:0,      O:0,       L0:100.4644, farbe:'#4a90e2'},
-  mars: {name:'Mars',  R:3389.5,  a:1.523679, T:686.9796,  i:1.8497, O:49.558,  L0:355.4533, farbe:'#d9643a'},
-  mond: {name:'Mond',  R:1737.4,  a:384400/AE, T:27.321582, i:5.1454, O:125.0445, dO:-360/6798.383, L0:218.3165, farbe:'#d7dae0'}
+  venus:{name:'Venus', R:6051.8,  a:0.7233357, e:0.0067767, T:224.70080,  i:3.39468, O:76.67984, per:131.60247, L0:181.97910, farbe:'#e8c89a'},
+  erde: {name:'Erde',  R:6371.0,  a:1.0000026, e:0.0167112, T:365.25636,  i:0,       O:0,        per:102.93768, L0:100.46457, farbe:'#4a90e2'},
+  mars: {name:'Mars',  R:3389.5,  a:1.5237103, e:0.0933941, T:686.97991,  i:1.84969, O:49.55954, per:336.05637, L0:355.44657, farbe:'#d9643a'},
+  /* Beim Mond wandern beide Bahnpunkte: der Knoten in 18,6 Jahren rückwärts,
+     das Perigäum in 8,85 Jahren vorwärts. */
+  mond: {name:'Mond',  R:1737.4,  a:384400/AE, e:0.054900, T:27.321582, i:5.1454,
+         O:125.0445, dO:-0.0529539, per:83.3532, dPer:0.11140353, L0:218.3165, farbe:'#d7dae0'}
 };
 const PLANETEN=['venus','erde','mars'];
 const SCHIEF=23.4393;                                  /* Schiefe der Erdachse */
@@ -439,12 +445,20 @@ const UEBER={sonne:20, venus:600, erde:600, mars:600, mond:1200, mondbahn:40};
 const SF_STD=6;
 
 /* Ort in der Bahnebene, gedreht um Neigung und Knoten (heliozentrisch bzw. beim Mond um die Erde) */
+/* Keplerbahn in erster Näherung: Zur mittleren Anomalie kommt die Mittelpunktsgleichung
+   (Reihe in der Exzentrizität), der Abstand schwankt mit. Reine Kreise verfehlten knappe
+   Ereignisse - der Venustransit von 2012 etwa fiel durch, und die Mars-Opposition lag
+   Wochen daneben. u ist das Argument der Breite, also Perihelabstand plus wahre Anomalie. */
 function bahnOrt(b,t){
-  const O=((b.O||0)+(b.dO||0)*t)*RAD, i=(b.i||0)*RAD;
-  const u=(b.L0+360*t/b.T)*RAD-O;
+  const Og=(b.O||0)+(b.dO||0)*t, O=Og*RAD, i=(b.i||0)*RAD, e=b.e||0;
+  const L=b.L0+360*t/b.T, per=(b.per||0)+(b.dPer||0)*t;
+  const M=(L-per)*RAD;
+  const C=(2*e-0.25*e*e*e)*Math.sin(M)+1.25*e*e*Math.sin(2*M)+(13/12)*e*e*e*Math.sin(3*M);
+  const u=(per-Og)*RAD+M+C;
+  const r=b.a*(1-e*e)/(1+e*Math.cos(M+C));
   const x=Math.cos(u), y=Math.sin(u)*Math.cos(i), z=Math.sin(u)*Math.sin(i);
   const c=Math.cos(O), s=Math.sin(O);
-  return [(x*c-y*s)*b.a, (x*s+y*c)*b.a, z*b.a];
+  return [(x*c-y*s)*r, (x*s+y*c)*r, z*r];
 }
 /* wahre Orte (für alle Rechnungen) */
 function ortW(id,t){
@@ -458,6 +472,12 @@ function ortW(id,t){
    steht man woanders als im großen Bild. */
 let AKT_VON='aussen', AKT_ZIEL='erde', AKT_STUFE=null;
 const stufe=()=>AKT_VON!=='aussen'?'echt':(AKT_STUFE||D.sys.stufe||'ansch');
+/* Fuer die Bedienleiste: Was ist eingestellt? (stufe() sagt, was gerade gezeichnet wird -
+   nach dem zweiten Fenster stünde dort noch dessen Wert.) */
+const stufeUI=()=>D.sys.von==='aussen'?(D.sys.stufe||'ansch'):'echt';
+const sfUI=()=>clamp(D.sys.sf||SF_STD,2,12);
+const neigungUI=()=>Math.atan(sfUI()*Math.tan(KOERPER.mond.i*RAD))*GRD;
+const schattenUI=()=>!!D.sys.schatten&&stufeUI()!=='ansch'&&D.sys.von==='aussen';
 const sfaktor=()=>stufe()==='schatten'?clamp(D.sys.sf||SF_STD,2,12):1;
 const uebAn=()=>stufe()==='ansch';
 const neigungUeb=()=>Math.atan(sfaktor()*Math.tan(KOERPER.mond.i*RAD))*GRD;   /* gezeigte Bahnneigung */
@@ -1062,13 +1082,13 @@ function zeichneSystem(){
 const EREIG_NAME={neumond:'Neumond',vollmond:'Vollmond',sofi:'Sonnenfinsternis',mofi:'Mondfinsternis',
   transit:'Venustransit',opposition:'Mars in Opposition',sommer:'Sommersonnenwende',winter:'Wintersonnenwende'};
 let listeStand=null;
-function listeFuellen(){
+function listeFuellen(ab){
   const sel=$('selListe'); if(!sel) return;
-  const t0=D.sys.t, eintraege=[];
+  const t0=(ab===undefined?D.sys.t:ab), eintraege=[];
   const nimm=(art,n)=>{ let t=t0;
     for(let i=0;i<n;i++){ const tt=suchen(art,t); if(tt===null) break; eintraege.push({t:tt,art}); t=tt+1; } };
-  nimm('sofi',3); nimm('mofi',3); nimm('neumond',2); nimm('vollmond',2);
-  nimm('opposition',1); nimm('sommer',1); nimm('winter',1); nimm('transit',1);
+  nimm('sofi',4); nimm('mofi',4); nimm('neumond',2); nimm('vollmond',2);
+  nimm('opposition',2); nimm('sommer',2); nimm('winter',2); nimm('transit',2);
   /* Eine Finsternis ist immer auch Neumond oder Vollmond - dann reicht der eine Eintrag. */
   const fins=eintraege.filter(e=>e.art==='sofi'||e.art==='mofi');
   const liste=eintraege.filter(e=>!((e.art==='neumond'||e.art==='vollmond')&&fins.some(f=>Math.abs(f.t-e.t)<0.4)));
@@ -1083,12 +1103,21 @@ function listeFuellen(){
     o.textContent=datumText(e.t)+' · '+nm;
     sel.appendChild(o);
   });
+  /* Am Ende weiterblättern: Die Liste wird ab dem letzten Eintrag neu gefüllt. */
+  if(liste.length){
+    const letzt=liste[liste.length-1].t;
+    const o=document.createElement('option'); o.value='mehr'; o.dataset.t=String(letzt);
+    o.textContent='▸ weiter ab '+datumText(letzt);
+    sel.appendChild(o);
+  }
   sel.value=''; listeStand=t0;
 }
 function listePruefen(){
   const sel=$('selListe'); if(!sel) return;
   const erste=sel.options[1];
-  if(!erste||listeStand===null||D.sys.t<listeStand-5||D.sys.t>+erste.dataset.t+1) listeFuellen();
+  /* Nur nachfüllen, wenn die Zeit über den ersten Eintrag hinausgelaufen ist - wer
+     vorgeblättert hat, soll seine Liste behalten. */
+  if(!erste||listeStand===null||D.sys.t>+erste.dataset.t+1) listeFuellen();
 }
 function springeZu(t,art){
   D.sys.t=t; D.sys.lauf=false; laufStopp();
@@ -1590,16 +1619,16 @@ function oberflaeche(){
     : 'ein Fünfundzwanzigstel des eingestellten Tempos: ')+zahl(lupeTempo()*24,2)+' Stunden je Sekunde';
   document.querySelectorAll('[data-von]').forEach(b=>b.classList.toggle('on',b.dataset.von===S.von));
   $('selZiel').value=S.ziel; $('selBezug').value=S.bezug; $('selPip').value=S.pip||'aus';
-  $('selStufe').value=stufe();
+  $('selStufe').value=stufeUI();
   $('selStufe').disabled=S.von!=='aussen';
   $('selStufe').title=S.von==='aussen'
     ? 'maßstabsgetreu · anschaulich (Körper aufgeblasen) · Schattenmodell (alles quer zur Sonne überhöht)'
     : 'Von einem Körper aus wird immer maßstabsgetreu gezeigt – der Himmel ist dort ohnehin groß genug';
   $('setSF').value=String(D.sys.sf||SF_STD);
-  $('setSFv').textContent=zahl(D.sys.sf||SF_STD,0)+'-fach · Mondbahn '+grad(neigungUeb(),0);
+  $('setSFv').textContent=zahl(sfUI(),0)+'-fach · Mondbahn '+grad(neigungUI(),0);
   $('tBahn').classList.toggle('on',S.bahnen);
   $('tEbene').classList.toggle('on',S.ebenen);
-  $('tSchatten').classList.toggle('on',schattenAn());
+  $('tSchatten').classList.toggle('on',schattenUI());
   $('tSchatten').disabled=S.von!=='aussen';
   $('tSchatten').title=S.von==='aussen'?'Schattenkegel von Erde und Mond einblenden'
     :'Schattenkegel zeigt nur der Blick von außen – vom Körper aus sieht man den Schatten erst, wenn er trifft';
@@ -1641,8 +1670,11 @@ $('settBody').innerHTML=
   'passt im selben Verhältnis hinein wie in Wirklichkeit. Weil auch seine Abweichung von der Erdbahnebene '+
   'überhöht wird, trifft er den Schatten <b>zu denselben Zeiten</b>; im Bild dauert die Finsternis nur länger.</p>'+
   '<h4>Zum Modell</h4>'+
-  '<p>Alle Bahnen sind <b>Kreise</b> mit den mittleren Bahndaten für den 1.1.2000. Finsternisse, Venustransite und '+
-  'Sonnenwenden treffen damit etwa auf den <b>Tag genau</b>; für den Unterricht reicht das, für eine Vorhersage nicht.</p>'+
+  '<p>Gerechnet wird mit den <b>mittleren Bahnelementen für J2000</b> und der Mittelpunktsgleichung in erster '+
+  'Näherung – also mit Ellipsen, aber ohne die Störungen der Körper untereinander. <b>Sonnenwenden und '+
+  'Venustransite</b> treffen damit auf Minuten, <b>Finsternisse und Mondphasen</b> auf wenige Stunden. Ob eine '+
+  'ganz knappe Finsternis wirklich eintritt, kann im Einzelfall danebenliegen; für eine Vorhersage taugt das '+
+  'Modell nicht, für den Unterricht gut.</p>'+
   '<p>Die Knotenlinie der Mondbahn wandert mit (einmal in 18,6 Jahren) – deshalb gibt es Finsternisse nur in zwei '+
   'Zeiträumen im Jahr und nicht bei jedem Neumond.</p>'+
   '<p><b>Anschaulich</b> vergrößert die Körper (Sonne 20-fach, Planeten 600-fach) und die Mondbahn 40-fach, damit '+
@@ -1657,7 +1689,7 @@ $('setZu').onclick=()=>{ $('setts').open=false; };
 /* ---------- Hilfe ---------- */
 const HILFE={
   system:['Sonnensystem',
-    '<p>Sonne, Venus, Erde, Mond und Mars laufen auf Kreisbahnen mit ihren wahren Umlaufzeiten und Neigungen. '+
+    '<p>Sonne, Venus, Erde, Mond und Mars laufen mit ihren wahren Umlaufzeiten, Neigungen und Bahnformen. '+
     'Die <b>Zeit</b> läuft mit ▶; das Tempo sagt, wie viel Modellzeit auf eine Sekunde kommt – <b>Echtzeit</b> zeigt, '+
     'wie langsam der Himmel wirklich ist. Mit <b>⏪ und ⏩</b> geht es einen Schritt zurück oder vor; ein Schritt ist '+
     'so viel, wie eine Sekunde Lauf bringen würde. <b>Zeitlupe</b> stellt das Tempo auf das zuletzt gewählte Ereignis '+
@@ -1770,6 +1802,7 @@ $('selBezug').onchange=e=>{ D.sys.bezug=e.target.value; zeichne(); sync(true); }
 $('selListe').onchange=e=>{
   const o=e.target.selectedOptions[0];
   if(!o||!o.dataset.t) return;
+  if(o.value==='mehr'){ listeFuellen(+o.dataset.t); toast('Weitere Ereignisse ab '+datumText(+o.dataset.t)); return; }
   springeZu(+o.dataset.t,o.dataset.art);
 };
 an('bListe',()=>{ listeFuellen(); toast('Liste ab '+datumText(D.sys.t)+' neu gefüllt'); });
@@ -1779,7 +1812,7 @@ $('selStufe').onchange=e=>{ D.sys.stufe=e.target.value; oberflaeche(); zeichne()
 an('tBahn',()=>{ D.sys.bahnen=!D.sys.bahnen; oberflaeche(); zeichne(); sync(); });
 an('tEbene',()=>{ D.sys.ebenen=!D.sys.ebenen; oberflaeche(); zeichne(); sync(); });
 an('tSchatten',()=>{
-  if(uebAn()){ D.sys.stufe='schatten'; D.sys.schatten=true;
+  if(stufeUI()==='ansch'){ D.sys.stufe='schatten'; D.sys.schatten=true;
     toast('Schattenmodell: Mondbahn stärker geneigt, Erde und Mond größer – so wird der Kegel sichtbar'); }
   else D.sys.schatten=!D.sys.schatten;
   oberflaeche(); zeichne(); sync(); });
