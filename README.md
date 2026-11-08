@@ -2749,7 +2749,8 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     Datum keine Rolle spielt: **Mondphasen** (ein Monat von Neumond zu Neumond, daneben der Blick von
     der Erde auf den Mond), **Sonnenfinsternis**, **Mondfinsternis**, **Jahreszeiten** (ein Jahr um die
     Sonne mit den **vier Erden** an Sonnenwenden und Tag-und-Nacht-Gleichen, jede mit ihrer Achse – die
-    bei allen vieren in dieselbe Richtung zeigt) und **Tageslängen** (ein Tag, mit dem Breitenkreis des
+    bei allen vieren in dieselbe Richtung zeigt; Erde und Kopien werden dabei groß genug gezeichnet,
+    dass Achse und Tag-Nacht-Grenze aus der letzten Reihe zu erkennen sind) und **Tageslängen** (ein Tag, mit dem Breitenkreis des
     Ortes: heller Teil Tag, blauer Nacht, dazu die Tageslänge in Stunden und Minuten im Bild). Jeder
     Grundfall sucht sich einen passenden Zeitpunkt – bei den Tageslängen den **Ortsmittag** –, stellt
     beide Fenster ein und setzt ein **Tempo**, mit dem ▶ den Ablauf gut zeigt (Finsternis rund zehn
