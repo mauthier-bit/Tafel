@@ -121,6 +121,7 @@ function aufbau(){
    '#tTeilenBild{display:flex;align-items:center;justify-content:center;min-height:60px;flex:0 0 auto;width:100%;}'+
    '#tTeilenBild img,#tTeilenBild canvas{width:auto;height:auto;max-width:min(600px,100%);image-rendering:pixelated;}'+
    '#tTeilenAuftrag{width:100%;display:flex;gap:7px;align-items:flex-start;}'+
+   '#tTeilenAuftrag[hidden]{display:none;}'+      /* sonst sticht display:flex das hidden aus */
    '#tTeilenText{flex:1 1 auto;min-width:0;border:1px solid #cfd6e0;border-radius:10px;padding:7px 9px;'+
      'font:inherit;line-height:1.35;resize:none;overflow:auto;min-height:38px;color:#1f2430;background:#fff;}'+
    '#tTeilenText::placeholder{color:#94a3b8;font-size:13px;}'+
@@ -160,6 +161,16 @@ function aufbau(){
     if(navigator.clipboard) navigator.clipboard.writeText(i.value).then(fertig,()=>{ try{document.execCommand('copy'); fertig();}catch(e){} });
     else { try{ document.execCommand('copy'); fertig(); }catch(e){} }
   };
+}
+const KOPF={titel:'Aufgabe teilen',
+  hinweis:'Mit der Kamera scannen – dann öffnet sich dasselbe Werkzeug mit dieser Aufgabe.'};
+function kopf(titel,hinweis){
+  const inn=document.getElementById('tTeilenIn'); if(!inn) return;
+  inn.querySelector('h3').textContent=titel;
+  inn.querySelector('.hint').textContent=hinweis;
+}
+function auftragFeld(an){
+  const a=document.getElementById('tTeilenAuftrag'); if(a) a.hidden=!an;
 }
 function zu(){ const d=document.getElementById('tTeilen'); if(d) d.classList.remove('an');
   if(raumAngefragt) raum(false); }
@@ -238,8 +249,29 @@ async function zeigen(datei,bauen){
   const inhalt=bauen&&bauen();
   if(!inhalt){ window.TafelShot&&TafelShot.toast('Es ist noch keine Aufgabe geladen'); return; }
   aufbau();
+  kopf(KOPF.titel,KOPF.hinweis); auftragFeld(true);
   letzteQuelle={datei,inhalt};
   const url=await bauenUrl(datei,inhalt);
+  document.getElementById('tTeilenLink').value=url;
+  qr(url);
+  document.getElementById('tTeilen').classList.add('an');
+  raum(true);
+  hoehen();
+}
+
+/* ---------- Ein fester, fremder Link ----------
+   Manche Werkzeuge teilen nicht ihre eigene Aufgabe, sondern eine Seite im Netz
+   (die GeoGebra-App zum Beispiel). Dann gibt es nichts zu packen: Der Link steht
+   fest, ein Arbeitsauftrag laesst sich darin nicht unterbringen.                 */
+function zeigenLink(url,opt){
+  opt=opt||{};
+  if(!url){ window.TafelShot&&TafelShot.toast('Es ist kein Link vorhanden'); return; }
+  aufbau();
+  letzteQuelle=null;                        /* nichts nachzubauen, wenn der Auftrag sich aendert */
+  auftragFeld(false);
+  const wort=v=>(typeof v==='function'?v():v);      /* Titel und Hinweis duerfen vom Stand abhaengen */
+  kopf(wort(opt.titel)||'Link teilen',
+       wort(opt.hinweis)||'Mit der Kamera scannen – dann öffnet sich diese Seite im Browser.');
   document.getElementById('tTeilenLink').value=url;
   qr(url);
   document.getElementById('tTeilen').classList.add('an');
@@ -255,18 +287,28 @@ const SYMBOL='<svg viewBox="0 0 32 20" width="17" height="11" fill="none" stroke
   'stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;display:block">'+
   '<path d="M6.5 8.5v10h19v-10"/>'+
   '<path d="M16 14.5V1.3"/><path d="M12.3 5 16 1.3l3.7 3.7"/></svg>';
-function knopf(host,datei,bauen,opt){
+function baueKnopf(host,opt,titel,tun){
   if(!host) return null;
-  opt=opt||{};
   const b=document.createElement('button');
   b.type='button';
-  b.className=(opt.cls||'tb')+' tafelTeilenKnopf'; b.id='bTeilen';
-  b.title='Diese Aufgabe per QR-Code an die Klasse geben';
+  b.className=(opt.cls===undefined?'tb':opt.cls)+' tafelTeilenKnopf';
+  b.id=opt.id||'bTeilen';
+  b.title=opt.title||titel;
   b.innerHTML=opt.html||(SYMBOL+'<span>Teilen</span>');
   if(!opt.html) b.style.cssText+='display:inline-flex;align-items:center;gap:5px;white-space:nowrap;';
-  b.onclick=()=>zeigen(datei,bauen);
+  b.onclick=tun;
   host.appendChild(b);
   return b;
+}
+function knopf(host,datei,bauen,opt){
+  opt=opt||{};
+  return baueKnopf(host,opt,'Diese Aufgabe per QR-Code an die Klasse geben',()=>zeigen(datei,bauen));
+}
+/* Knopf fuer einen festen Link; url darf eine Funktion sein, die ihn erst beim Tippen liefert */
+function knopfLink(host,url,opt){
+  opt=opt||{};
+  return baueKnopf(host,opt,'Diesen Link per QR-Code an die Klasse geben',
+    ()=>zeigenLink(typeof url==='function'?url():url,opt));
 }
 
 /* Viele Werkzeuge bekommen ihren Zustand ohnehin über „embed-data" von der Tafel.
@@ -276,5 +318,6 @@ function einspielen(daten){
   catch(e){ return false; }
 }
 
-window.TafelTeilen={ knopf, zeigen, empfangen, istGeteilt, nurBenutzen, einspielen, auftragAnzeigen, basis };
+window.TafelTeilen={ knopf, knopfLink, zeigen, zeigenLink, empfangen, istGeteilt, nurBenutzen,
+  einspielen, auftragAnzeigen, basis };
 })();

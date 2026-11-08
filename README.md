@@ -1400,6 +1400,12 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     geöffnet – es muss also **nichts** auf geogebra.org liegen. Am Rechner lässt sich eine Datei auch
     einfach **auf das Fenster ziehen**. Eine Datei bringt die **Classic**-Oberfläche mit (alle
     Werkzeuge, Algebra- und Grafikfenster), die leere App startet wie bisher als Grafikrechner.
+  - **„Teilen" in der Leiste:** Neben dem Dateiknopf steht ein **Teilen**-Knopf. Er zeigt einen
+    QR-Code auf die **GeoGebra-App im Netz** – `geogebra.org/graphing` bei der leeren App,
+    `geogebra.org/classic`, sobald eine ggb-Datei geöffnet ist. Ein Scan, und die Klasse hat
+    dieselbe App auf dem eigenen Gerät. Geteilt wird **nur die App**, nicht die Konstruktion:
+    Die .ggb-Datei liegt auf dem Lehrergerät und hat keine Adresse im Netz. Einen Arbeitsauftrag
+    kann dieser Code deshalb auch nicht mitgeben – das Feld dafür bleibt hier weg.
   - **Wird mit dem Projekt gespeichert:** Die Konstruktion – ob aus einer Datei geladen oder von Hand
     gebaut – wird nach jeder Eingabe in das Tafel-Projekt übernommen (bis etwa 4,5 MB) und ist beim
     nächsten Öffnen wieder da. Früher war der Inhalt nach dem Neuladen verloren.
@@ -3733,7 +3739,8 @@ diagramme-bibliothek.js ← Diagramm-Paare (t-s, t-v, t-a; f, f′, f″)
 memory-bibliothek.js  ← Kartensätze des Memory-Spiels (73 Sätze, Text- und Bildpaare)
 lehrplan-glossar.js   ← Fachbegriffe nach LehrplanPLUS Bayern G9 (Mathematik, Physik)
 lehrplan.js           ← gemeinsames Auswahlfenster für den Lehrplan-Import
-teilen.js             ← Teilen per QR-Code (Aufgabe steckt im Fragment der Adresse)
+teilen.js             ← Teilen per QR-Code (Aufgabe steckt im Fragment der Adresse;
+                         TafelTeilen.knopfLink teilt stattdessen einen festen Link ins Netz)
 formel.html           ← Formel umstellen (nach einer Größe auflösen, Schritt für Schritt, mit Formelsammlung)
 beschriften.html      ← Bild beschriften (Beschriftungen setzen und zuordnen)
 beschriften-vorlagen.js ← Vorlagen dafür (Auge, Ohr, Zahlbereiche, Fadenstrahlrohr)
