@@ -2755,6 +2755,10 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     gerade über sich hat – und warum die Sonne im Winter einen so flachen Bogen zieht. Kuppel und Boden
     sind **durchsichtig** gezeichnet, sonst bliebe verborgen, was in ihnen steckt; wie durchsichtig,
     steht im ⚙ (Standard 80 %).
+  - **Ortsliste statt Knopf:** In der Standortzeile steht die **Ortsliste** an der Stelle des früheren
+    Knopfes „am Ort": Wer dort einen Ort wählt, steht sofort auf ihm, und im Feld steht sein Name. Von
+    einem anderen Standort aus zeigt sie **„Ort wählen … (Amberg)"** – also den Ort, für den Marke,
+    Kuppel und Bahn gerade gelten.
   - **Himmelsäquator:** Die Ebene senkrecht zur Erdachse, an den Himmel verlängert – der Himmel über
     dem Erdäquator. Er steht am Ort im Süden genau **90° minus Breite** hoch (in Amberg 40,6°, am Pol
     0°), geht **im Osten auf und im Westen unter** und schneidet die Ekliptik im **Frühlings- und im
@@ -2765,6 +2769,13 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   - **heliozentrisch oder geozentrisch:** Das Umschalten ändert nur, **wer stillsteht**. Geozentrisch
     läuft die Sonne um die Erde, und die Bahnen von Venus und Mars bekommen **Schleifen** – dieselbe
     Bewegung, anderer Bezugspunkt. Genau diese Schleifen beschrieb Ptolemäus mit Epizykeln.
+  - **Deferent und Epizykel** (im ⚙ einschaltbar, nur geozentrisch): Jeder Planet sitzt am Ende zweier
+    Arme – der erste führt von der Erde zum Mittelpunkt des Epizykels, der auf dem gestrichelten
+    **Deferenten** wandert, der zweite von dort zum Planeten auf dem durchgezogenen **Epizykel**. Bei
+    **Merkur und Venus** trägt der Deferent die Sonne und der Epizykel ist die Planetenbahn, beim
+    **Mars** ist es umgekehrt: Deferent die Marsbahn, Epizykel die **Erdbahn** – deshalb wird er
+    rückläufig, wenn die Erde ihn überholt. Die beiden Arme enden **genau** beim gezeichneten Planeten,
+    denn geozentrischer Ort = (Planet − Sonne) + (Sonne − Erde).
   - **Bahnen, Ebenen, Schatten, Sterne** lassen sich einzeln einblenden. Die **Bahnebenen** von Erde
     und Mond erscheinen aus der Nähe als zwei Scheiben um die Erde, die sich in der **Knotenlinie**
     schneiden – damit wird sichtbar, warum es nicht bei jedem Neumond eine Finsternis gibt. Die
@@ -2782,8 +2793,8 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     bei allen vieren in dieselbe Richtung zeigt; Erde und Kopien werden dabei groß genug gezeichnet,
     dass Achse und Tag-Nacht-Grenze aus der letzten Reihe zu erkennen sind) und **Tageslängen** (ein Tag, mit dem Breitenkreis des
     Ortes: heller Teil Tag, blauer Nacht, dazu die Tageslänge in Stunden und Minuten im Bild; dieselbe
-    Bahn liegt auch im Jahreszeiten-Fall über der Erde, so dass sich Tageslänge und Jahreszeit
-    zusammen zeigen lassen). Jeder
+    Bahn liegt auch auf **allen vier Erden** des Jahreslaufs, so dass der lange Sommer- und der kurze
+    Wintertag nebeneinanderstehen). Jeder
     Grundfall sucht sich einen passenden Zeitpunkt – bei den Tageslängen den **Ortsmittag** –, stellt
     beide Fenster ein und setzt ein **Tempo**, mit dem ▶ den Ablauf gut zeigt (Finsternis rund zehn
     Minuten je Sekunde, Mondphasen ein Tag, Jahreszeiten acht Tage).
