@@ -2684,9 +2684,10 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   - **Sonnensystem:** Sonne, Merkur, Venus, Erde, Mond und Mars mit ihren wahren Umlaufzeiten und
     Neigungen (Merkur ist nur mit Bewegung und Bahn dabei – seine stark elliptische Bahn liegt sichtbar
     außermittig um die Sonne).
-    Die Bedienung steht in zwei Zeilen: oben die **Zeit** – sie bleibt fest stehen, während der
-    Standort daneben bei Bedarf seitlich wegrollt –, darunter **Bezug, Ereignisliste, zweites
-    Fenster** und die **Anzeige-Schalter**. **▶** startet die Zeit, **Tempo** sagt, wie viel Modellzeit auf eine Sekunde kommt (von Minuten bis
+    Die Bedienung steht in zwei Zeilen: oben **Zeit und Ereignis** (die Zeitbedienung bleibt fest
+    stehen), darunter die **Ansicht** – Standort, Blickziel, Darstellung, Bezug, zweites Fenster und
+    der Knopf **Anzeigen**, hinter dem alle Einblendungen als Häkchenliste stehen (die Zahl am Knopf
+    sagt, wie viel gerade eingeblendet ist). **▶** startet die Zeit, **Tempo** sagt, wie viel Modellzeit auf eine Sekunde kommt (von Minuten bis
     zu Jahren je Sekunde); **Echtzeit** zeigt, wie langsam der Himmel wirklich ist. **⏪ und ⏩** gehen
     **einen Schritt** zurück oder vor – ein Schritt ist so viel, wie eine Sekunde Lauf bringen würde.
     **Zeitlupe** stellt das Tempo auf das zuletzt gewählte Ereignis ein: bei einer Finsternis rund zehn
@@ -2744,11 +2745,21 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     schneiden – damit wird sichtbar, warum es nicht bei jedem Neumond eine Finsternis gibt. Die
     Erdkugel bekommt ab einer gewissen Größe **Gradnetz, Wendekreise, Polarkreise und Achse**, dazu
     die **Tag-Nacht-Grenze**: So sind die **Jahreszeiten** zu zeigen.
-  - **Ereignisliste:** Die Liste führt die nächsten Finsternisse, Mondphasen, Sonnenwenden, die
-    Mars-Opposition und den nächsten Venustransit **mit Datum und Art** auf („21.1.2000 · totale
-    Mondfinsternis"); ein Tipp darauf stellt die Zeit dorthin, **↻** füllt sie ab der gerade
-    eingestellten Zeit neu. Dabei stellt sich (abschaltbar im ⚙) die **Ansicht passend** ein – bei der
-    Mondfinsternis also dicht an den Mond, der dann **kupferrot im Kernschatten** steht.
+  - **Grundfälle für den Unterricht:** Ganz oben in der Ereignisliste stehen fünf Fälle, bei denen das
+    Datum keine Rolle spielt: **Mondphasen** (ein Monat von Neumond zu Neumond, daneben der Blick von
+    der Erde auf den Mond), **Sonnenfinsternis**, **Mondfinsternis**, **Jahreszeiten** (ein Jahr um die
+    Sonne mit den **vier Erden** an Sonnenwenden und Tag-und-Nacht-Gleichen, jede mit ihrer Achse – die
+    bei allen vieren in dieselbe Richtung zeigt) und **Tageslängen** (ein Tag, mit dem Breitenkreis des
+    Ortes: heller Teil Tag, blauer Nacht, dazu die Tageslänge in Stunden und Minuten im Bild). Jeder
+    Grundfall sucht sich einen passenden Zeitpunkt – bei den Tageslängen den **Ortsmittag** –, stellt
+    beide Fenster ein und setzt ein **Tempo**, mit dem ▶ den Ablauf gut zeigt (Finsternis rund zehn
+    Minuten je Sekunde, Mondphasen ein Tag, Jahreszeiten acht Tage).
+  - **Ereignisse mit Datum:** Darunter führt die Liste die nächsten Finsternisse, Mondphasen,
+    Sonnenwenden, Tag-und-Nacht-Gleichen, die Mars-Opposition und den nächsten Venustransit **mit Datum
+    und Art** auf („21.1.2000 · totale Mondfinsternis"); ein Tipp stellt die Zeit dorthin, **↻** füllt
+    die Liste ab der eingestellten Zeit neu. Dabei stellt sich (abschaltbar im ⚙) die **Ansicht
+    passend** ein – bei der Mondfinsternis also dicht an den Mond, der dann **kupferrot im
+    Kernschatten** steht.
   - **Zweites Fenster:** Oben rechts lässt sich dasselbe Ereignis **aus einer zweiten Perspektive**
     einblenden – etwa links die Geometrie von außen und rechts der Blick vom Boden der Erde, oder
     umgekehrt. Die Liste in der Leiste sagt, **von wo** geschaut wird, die Liste **unter dem Fenster**,
