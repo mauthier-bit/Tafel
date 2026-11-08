@@ -282,26 +282,44 @@ function datei(f){
   r.readAsDataURL(f);
 }
 document.getElementById('dateiBtn').addEventListener('click',function(){ document.getElementById('dateiEin').click(); });
-/* Teilen: Es geht nur der Link auf die GeoGebra-App im Netz an die Klasse - damit
-   die Schueler dieselbe App auf dem eigenen Geraet aufmachen koennen. Die geoeffnete
-   Konstruktion bleibt hier: Sie steckt in einer Datei auf diesem Geraet und laesst
-   sich nicht in einen QR-Code packen. Der Link folgt der App, die gerade laeuft. */
+/* Teilen: Die Klasse bekommt den Link auf die GeoGebra-App im Netz - oder, wenn im
+   Fenster eine Material-ID steht, den Link auf dieses Material (geogebra.org/m/...).
+   Die hier geoeffnete Konstruktion laesst sich nicht teilen: Sie steckt in einer Datei
+   auf diesem Geraet und hat keine Adresse im Netz. Ohne Material-ID folgt der Link der
+   App, die gerade laeuft. */
 var GGB_SEITE={ graphing:'graphing', calculator:'graphing', classic:'classic', geometry:'geometry',
   '3d':'3d', cas:'cas', scientific:'scientific', probability:'probability', suite:'calculator' };
-function ggbLink(){ return 'https://www.geogebra.org/'+(GGB_SEITE[app]||'classic'); }
-function ggbHinweis(){
+/* Aus "abc123de" oder "https://www.geogebra.org/m/abc123de" die Material-ID holen */
+function ggbMatId(v){
+  v=String(v||'').trim();
+  if(!v) return '';
+  var m=v.match(/geogebra\.org\/(?:m|material\/iframe\/id)\/([\w-]+)/i);
+  if(m) return m[1];
+  if(/^[\w-]+$/.test(v)) return v;           /* nur die ID eingetippt */
+  m=v.match(/\/([\w-]+)\/?(?:[?#].*)?$/);   /* irgendein Link: das letzte Stueck versuchen */
+  return m?m[1]:'';
+}
+function ggbLink(wert){
+  var id=ggbMatId(wert);
+  return id ? 'https://www.geogebra.org/m/'+id
+            : 'https://www.geogebra.org/'+(GGB_SEITE[app]||'classic');
+}
+function ggbTitel(wert){ return ggbMatId(wert)?'GeoGebra-Material teilen':'GeoGebra teilen'; }
+function ggbHinweis(wert){
+  if(ggbMatId(wert))
+    return 'Mit der Kamera scannen – dann öffnet sich dieses GeoGebra-Material im Browser.';
   return 'Mit der Kamera scannen – dann öffnet sich die GeoGebra-App im Browser.'+
     (name ? ' Geteilt wird nur die App: Die Datei „'+name+'“ liegt auf diesem Gerät und reist nicht mit.'
           : ' Geteilt wird nur die App, nicht die Konstruktion.');
 }
 if(window.TafelTeilen){
   var tBtn=TafelTeilen.knopfLink(document.getElementById('bar'),ggbLink,{
-    cls:'', title:'Den Link zur GeoGebra-App per QR-Code an die Klasse geben',
-    titel:'GeoGebra teilen', hinweis:ggbHinweis });
+    cls:'', title:'Den Link zur GeoGebra-App oder zu einem Material per QR-Code an die Klasse geben',
+    titel:ggbTitel, hinweis:ggbHinweis,
+    feld:{ titel:'Material-ID', schluessel:'ggbmat',
+           platzhalter:'freiwillig – z. B. abc123de oder geogebra.org/m/abc123de' } });
   if(tBtn) document.getElementById('bar').insertBefore(tBtn,document.getElementById('dname'));
 }
-document.getElementById('dateiEin').addEventListener('change',function(e){
-  var f=e.target.files&&e.target.files[0]; e.target.value=''; datei(f); });
 /* Ablegen (Drag & Drop) */
 ['dragenter','dragover'].forEach(function(n){ window.addEventListener(n,function(e){
   if(!e.dataTransfer) return; e.preventDefault(); document.getElementById('ablage').classList.add('an'); }); });

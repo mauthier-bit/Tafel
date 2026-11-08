@@ -122,6 +122,12 @@ function aufbau(){
    '#tTeilenBild img,#tTeilenBild canvas{width:auto;height:auto;max-width:min(600px,100%);image-rendering:pixelated;}'+
    '#tTeilenAuftrag{width:100%;display:flex;gap:7px;align-items:flex-start;}'+
    '#tTeilenAuftrag[hidden]{display:none;}'+      /* sonst sticht display:flex das hidden aus */
+   '#tTeilenFeldZeile{width:100%;display:flex;gap:7px;align-items:center;}'+
+   '#tTeilenFeldZeile[hidden]{display:none;}'+
+   '#tTeilenFeldText{flex:none;color:#475569;font-weight:600;}'+
+   '#tTeilenFeld{flex:1 1 auto;min-width:0;border:1px solid #cfd6e0;border-radius:9px;padding:6px 9px;'+
+     'font:inherit;color:#1f2430;background:#fff;}'+
+   '#tTeilenFeld::placeholder{color:#94a3b8;font-size:13px;}'+
    '#tTeilenText{flex:1 1 auto;min-width:0;border:1px solid #cfd6e0;border-radius:10px;padding:7px 9px;'+
      'font:inherit;line-height:1.35;resize:none;overflow:auto;min-height:38px;color:#1f2430;background:#fff;}'+
    '#tTeilenText::placeholder{color:#94a3b8;font-size:13px;}'+
@@ -137,6 +143,8 @@ function aufbau(){
   d.innerHTML='<div id="tTeilenIn"><h3>Aufgabe teilen</h3>'+
     '<div class="hint">Mit der Kamera scannen – dann öffnet sich dasselbe Werkzeug mit dieser Aufgabe.</div>'+
     '<div id="tTeilenBild"></div><div id="tTeilenWarn" class="warn" hidden></div>'+
+    '<div id="tTeilenFeldZeile" hidden><label id="tTeilenFeldText" for="tTeilenFeld"></label>'+
+      '<input id="tTeilenFeld" type="text" spellcheck="false" autocapitalize="off" autocomplete="off"></div>'+
     '<div id="tTeilenAuftrag"><textarea id="tTeilenText" rows="1" spellcheck="false" '+
       'placeholder="Arbeitsauftrag (freiwillig) – erscheint beim Scannen auf dem Schülergerät"></textarea>'+
       '<span class="fs"><button id="tTeilenFsP" title="Schrift größer">A+</button>'+
@@ -151,6 +159,8 @@ function aufbau(){
   ta.value=auftrag;
   ta.style.fontSize=schrift+'px';
   ta.addEventListener('input',()=>{ auftrag=ta.value; merken(); hoehen(); neuerCode(); });
+  document.getElementById('tTeilenFeld').addEventListener('input',()=>{
+    clearTimeout(feldT); feldT=setTimeout(linkNeu,350); });
   document.getElementById('tTeilenFsP').onclick=()=>schriftUm(2);
   document.getElementById('tTeilenFsM').onclick=()=>schriftUm(-2);
   addEventListener('resize',()=>{ if(document.querySelector('#tTeilen.an')) hoehen(); });
@@ -178,7 +188,7 @@ function zu(){ const d=document.getElementById('tTeilen'); if(d) d.classList.rem
 addEventListener('message',e=>{ if(e.data&&e.data.type==='picker-zu') zu(); });
 
 /* ---------- Arbeitsauftrag ---------- */
-let auftrag='', schrift=17, letzteQuelle=null, codeT=null;
+let auftrag='', schrift=17, letzteQuelle=null, codeT=null, letzterLink=null, feldT=null;
 try{ auftrag=sessionStorage.getItem('tafel_teilen_auftrag')||''; }catch(e){}
 try{ schrift=Math.max(13,Math.min(44,+localStorage.getItem('tafel_teilen_fs')||17)); }catch(e){}
 function merken(){ try{ sessionStorage.setItem('tafel_teilen_auftrag',auftrag); }catch(e){} }
@@ -250,6 +260,8 @@ async function zeigen(datei,bauen){
   if(!inhalt){ window.TafelShot&&TafelShot.toast('Es ist noch keine Aufgabe geladen'); return; }
   aufbau();
   kopf(KOPF.titel,KOPF.hinweis); auftragFeld(true);
+  const zeile=document.getElementById('tTeilenFeldZeile'); if(zeile) zeile.hidden=true;
+  letzterLink=null;
   letzteQuelle={datei,inhalt};
   const url=await bauenUrl(datei,inhalt);
   document.getElementById('tTeilenLink').value=url;
@@ -263,17 +275,40 @@ async function zeigen(datei,bauen){
    Manche Werkzeuge teilen nicht ihre eigene Aufgabe, sondern eine Seite im Netz
    (die GeoGebra-App zum Beispiel). Dann gibt es nichts zu packen: Der Link steht
    fest, ein Arbeitsauftrag laesst sich darin nicht unterbringen.                 */
-function zeigenLink(url,opt){
-  opt=opt||{};
-  if(!url){ window.TafelShot&&TafelShot.toast('Es ist kein Link vorhanden'); return; }
-  aufbau();
-  letzteQuelle=null;                        /* nichts nachzubauen, wenn der Auftrag sich aendert */
-  auftragFeld(false);
-  const wort=v=>(typeof v==='function'?v():v);      /* Titel und Hinweis duerfen vom Stand abhaengen */
-  kopf(wort(opt.titel)||'Link teilen',
-       wort(opt.hinweis)||'Mit der Kamera scannen – dann öffnet sich diese Seite im Browser.');
+/* Link, Titel und Hinweis duerfen Funktionen sein. Sie bekommen dann den Text aus dem
+   Eingabefeld (Material-ID, Datenlink …) und koennen damit einen anderen Link liefern. */
+function wort(v,wert){ return typeof v==='function'?v(wert):v; }
+function feldWert(){ const e=document.getElementById('tTeilenFeld');
+  return (e&&!document.getElementById('tTeilenFeldZeile').hidden)?e.value.trim():''; }
+function linkNeu(){                         /* Kopf, Adresse und Code zum jetzigen Stand */
+  if(!letzterLink) return;
+  const wert=feldWert(), f=letzterLink.opt.feld;
+  if(f&&f.schluessel) try{ sessionStorage.setItem('tafel_teilen_'+f.schluessel,wert); }catch(e){}
+  const url=wort(letzterLink.url,wert)||'';
+  kopf(wort(letzterLink.opt.titel,wert)||'Link teilen',
+       wort(letzterLink.opt.hinweis,wert)||'Mit der Kamera scannen – dann öffnet sich diese Seite im Browser.');
   document.getElementById('tTeilenLink').value=url;
   qr(url);
+  hoehen();
+}
+function zeigenLink(url,opt){
+  opt=opt||{};
+  if(!url&&!opt.feld){ window.TafelShot&&TafelShot.toast('Es ist kein Link vorhanden'); return; }
+  aufbau();
+  letzteQuelle=null;                        /* nichts nachzubauen, wenn der Auftrag sich aendert */
+  letzterLink={url,opt};
+  auftragFeld(false);
+  const zeile=document.getElementById('tTeilenFeldZeile'), ein=document.getElementById('tTeilenFeld');
+  zeile.hidden=!opt.feld;
+  if(opt.feld){
+    document.getElementById('tTeilenFeldText').textContent=opt.feld.titel||'';
+    ein.placeholder=opt.feld.platzhalter||'';
+    let vorher='';
+    if(opt.feld.schluessel) try{ vorher=sessionStorage.getItem('tafel_teilen_'+opt.feld.schluessel)||''; }catch(e){}
+    ein.value=vorher;
+  }
+  clearTimeout(feldT);
+  linkNeu();
   document.getElementById('tTeilen').classList.add('an');
   raum(true);
   hoehen();
@@ -304,11 +339,12 @@ function knopf(host,datei,bauen,opt){
   opt=opt||{};
   return baueKnopf(host,opt,'Diese Aufgabe per QR-Code an die Klasse geben',()=>zeigen(datei,bauen));
 }
-/* Knopf fuer einen festen Link; url darf eine Funktion sein, die ihn erst beim Tippen liefert */
+/* Knopf fuer einen Link ins Netz; url darf eine Funktion sein - sie wird erst im
+   Fenster ausgewertet und bekommt dabei den Text aus dem Eingabefeld. */
 function knopfLink(host,url,opt){
   opt=opt||{};
   return baueKnopf(host,opt,'Diesen Link per QR-Code an die Klasse geben',
-    ()=>zeigenLink(typeof url==='function'?url():url,opt));
+    ()=>zeigenLink(url,opt));
 }
 
 /* Viele Werkzeuge bekommen ihren Zustand ohnehin über „embed-data" von der Tafel.

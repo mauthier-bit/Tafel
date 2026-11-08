@@ -1406,6 +1406,10 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     dieselbe App auf dem eigenen Gerät. Geteilt wird **nur die App**, nicht die Konstruktion:
     Die .ggb-Datei liegt auf dem Lehrergerät und hat keine Adresse im Netz. Einen Arbeitsauftrag
     kann dieser Code deshalb auch nicht mitgeben – das Feld dafür bleibt hier weg.
+    Im Fenster gibt es dafür das Feld **Material-ID**: Steht dort eine ID (`abc123de`) oder ein
+    Link auf ein Material (`geogebra.org/m/abc123de`, auch die lange Einbettungsadresse), zeigt
+    der QR-Code auf **dieses Material** statt auf die leere App – so bekommt die Klasse genau
+    das Arbeitsblatt, das auf geogebra.org liegt. Die Eingabe bleibt bis zum Neuladen erhalten.
   - **Wird mit dem Projekt gespeichert:** Die Konstruktion – ob aus einer Datei geladen oder von Hand
     gebaut – wird nach jeder Eingabe in das Tafel-Projekt übernommen (bis etwa 4,5 MB) und ist beim
     nächsten Öffnen wieder da. Früher war der Inhalt nach dem Neuladen verloren.
@@ -1424,6 +1428,12 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   öffnen. Wahlweise als **Objekt** oder **eigene Seite**, Oberfläche auf Deutsch. Braucht Internet.
   Der CODAP-Inhalt wird **nicht** mit dem Tafel-Projekt gespeichert – bei Bedarf in CODAP über
   **Datei → Speichern** als `.codap`-Datei sichern.
+  - **„Teilen" in der Leiste:** Über CODAP liegt – wie beim GeoGebra-Werkzeug – eine schmale
+    Leiste mit einem **Teilen**-Knopf. Der QR-Code zeigt auf **CODAP im Netz**, die Klasse hat
+    das Werkzeug also mit einem Scan auf dem eigenen Gerät. Im Feld **Daten-Link** lässt sich die
+    Adresse einer **CSV-Datei** oder eines **CODAP-Dokuments** eintragen; dann hängt sie als
+    `?url=…` am Link und CODAP öffnet auf dem Schülergerät gleich diese Daten. Die Adresse muss
+    öffentlich erreichbar sein – Tabellen, die nur hier im Fenster stehen, haben keine.
 - **„Als eigene Seite anzeigen":** Bei einem als Objekt eingefügten **Wahrscheinlichkeitsrechner**,
   **Messwert-Analyse**- oder **GeoGebra-App**-Objekt erscheint im Kontext-Panel eine Schaltfläche,
   die das Objekt nachträglich groß auf eine **neue eigene Seite** verschiebt (Inhalt bleibt erhalten).
