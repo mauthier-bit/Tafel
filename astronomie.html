@@ -310,6 +310,15 @@
           <option value="" hidden>wählen …</option>
         </select>
         <button class="ic" id="bListe" title="Liste der datierten Ereignisse ab der jetzt eingestellten Zeit neu füllen">↻</button>
+        <span class="sep"></span>
+        <select id="selPip" title="Zweites Fenster: dasselbe Ereignis von einem anderen Standort aus" aria-label="zweites Fenster">
+          <option value="aus">kein 2. Fenster</option>
+          <option value="aussen">2. Fenster: von außen</option>
+          <option value="sonne">2. Fenster: von der Sonne</option>
+          <option value="erde">2. Fenster: von der Erde</option>
+          <option value="mond">2. Fenster: vom Mond</option>
+          <option value="ort">2. Fenster: vom Ort</option>
+        </select>
       </div>
     </span>
     <!-- ===== Erdumfang ===== -->
@@ -382,15 +391,6 @@
       <select id="selBezug" title="In wessen Ruhesystem die Bahnen gezeichnet werden" aria-label="Bezug">
         <option value="sonne" selected>heliozentrisch</option>
         <option value="erde">geozentrisch</option>
-      </select>
-      <span class="sep"></span>
-      <select id="selPip" title="Zweites Fenster: dasselbe Ereignis von einem anderen Standort aus" aria-label="zweites Fenster">
-        <option value="aus">kein 2. Fenster</option>
-        <option value="aussen">2. Fenster: von außen</option>
-        <option value="sonne">2. Fenster: von der Sonne</option>
-        <option value="erde">2. Fenster: von der Erde</option>
-        <option value="mond">2. Fenster: vom Mond</option>
-        <option value="ort">2. Fenster: vom Ort</option>
       </select>
       <span class="sep"></span>
       <details class="settings" id="anzpop">
@@ -645,6 +645,8 @@ const EREIGNIS={
   neumond:  {gute:t=>mondphase(t).elong,            test:()=>true,            h:0.2, jahre:5,  text:'Neumond'},
   vollmond: {gute:t=>180-mondphase(t).elong,        test:()=>true,            h:0.2, jahre:5,  text:'Vollmond'},
   sofi:     {gute:t=>schattenLage('mond','erde',t).r, test:t=>!!finsternisse(t).sofi, h:0.15, jahre:30, text:'Sonnenfinsternis'},
+  /* Für den Unterricht die totale: Nur dort trifft der Kernschatten die Erde wirklich. */
+  sofiT:    {gute:t=>schattenLage('mond','erde',t).r, test:t=>/totale/.test(finsternisse(t).sofi||''), h:0.15, jahre:30, text:'totale Sonnenfinsternis'},
   mofi:     {gute:t=>schattenLage('erde','mond',t).r, test:t=>!!finsternisse(t).mofi, h:0.15, jahre:30, text:'Mondfinsternis'},
   transit:  {gute:t=>sep('erde','venus','sonne',t), test:t=>transit(t),        h:0.5, jahre:260, text:'Venustransit'},
   opposition:{gute:t=>180-sep('erde','mars','sonne',t), test:()=>true,         h:0.5, jahre:10, text:'Mars in Opposition'},
@@ -678,8 +680,8 @@ function suchen(art,t0){
 const standard=()=>({ v:1, tab:'system', fontSize:14, fontBold:false, fontItalic:false,
   sys:{ t:0, lauf:false, tempo:30, echt:false, stufe:'ansch', sf:SF_STD, bahnen:true, ebenen:false, schatten:true,
         sterne:true, namen:true, von:'aussen', ziel:'erde', bezug:'sonne', pip:'aus', pipZiel:'auto',
-        lupe:false, tempoAlt:30, letztes:null, ort:0, kuppelAn:false, kuppel:78,
-        jahrErden:false, tagbahn:false,
+        lupe:false, tempoAlt:30, letztes:null, wahl:null, ort:0, kuppelAn:false, kuppel:78,
+        jahrErden:false, tagbahn:false, merkur:true, venus:true, mars:true, aequator:false, durch:80,
         az:35, el:26, dist:4.2, fov:30, panAz:0, panEl:0, ansichtMit:true },
   erat:{ a:31, b:23.5, fehler:0, strahlen:true, flach:false },
   mond:{ eps:8985, mass:false, hilf:true },
@@ -755,9 +757,13 @@ function standOrt(id,t){
   if(id==='ort'){ const R=ortRahmen(t); return add(ortW('erde',t),mul(R.zen,radW('erde'))); }
   const p=ortW(id,t);
   if(id==='erde'){
-    const M=ortW('mond',t), achse=norm(sub(M,ortW('sonne',t)));
-    const v=sub(p,M), lot=sub(v,mul(achse,dot(v,achse)));
-    return add(p,mul(norm(mul(lot,-1)),radW('erde')));
+    const M=ortW('mond',t), achse=norm(sub(M,ortW('sonne',t)));   /* Sonne → Mond → Erde */
+    const v=sub(p,M), l=dot(v,achse), lot=sub(v,mul(achse,l));
+    const R=radW('erde'), a=betrag(lot);
+    /* Trifft die Schattenachse die Erde, steht man genau dort, wo sie auftrifft - nur dort
+       ist die Finsternis total. Sonst auf dem Punkt der Oberfläche, der ihr am nächsten liegt. */
+    if(a<R) return add(M,mul(achse,l-Math.sqrt(R*R-a*a)));   /* Punkt auf der Achse selbst */
+    return add(p,mul(norm(mul(lot,-1)),R));
   }
   if(id==='mond') return add(p,mul(norm(sub(ortW('erde',t),p)),radW('mond')));
   return p;
@@ -896,6 +902,7 @@ function malBahnen(){
   const weite=betrag(sub(zielP,KAM.pos))*Math.tan(KAM.fov/2*RAD);     /* halbe Bildhöhe in AE */
   const passt=r=>r<40*weite;
   for(const id of ['merkur','venus','erde','mars']){
+    if(!zeigeKoerper(id)) continue;                 /* ausgeblendet: auch keine Bahn */
     const P=bahnDauer(id); if(!P) continue;
     const pk=[];
     for(let i=0;i<=240;i++){ const tt=S.t+P*i/240; pk.push(sub(ortZ(id,tt),nullPunkt(tt))); }
@@ -926,15 +933,33 @@ function imSchatten(id,t){
   if(L.r<L.halb+R) return 0.25;
   return 0;
 }
-/* Der Mond ist in beiden Ansichten zu klein, um die Phase zu zeigen: am Himmel misst er
-   ein halbes Grad, im Erde-Mond-Bild von außen wenige Bildpunkte. Er wird deshalb größer
-   gezeichnet - am Ort nur, wenn er nicht dicht bei der Sonne steht (sonst käme eine falsche
-   Finsternis heraus), von außen nur, solange keine Schattenkegel gezeigt werden (die müssen
-   zum wahren Maß passen). Beim Hineinzoomen gilt wieder die wahre Größe. */
-function mondGross(){
-  if(AKT_VON==='ort') return sep('erde','mond','sonne',D.sys.t)>5;
-  if(AKT_VON!=='aussen'||schattenAn()) return false;
-  return betrag(sub(KAM.pos,rahmen(ortZ('mond',D.sys.t))))<0.05;   /* im Erde-Mond-Bild */
+/* Merkur, Venus und Mars lassen sich einzeln ausblenden - bei Mondphasen und
+   Finsternissen stören sie im Bild nur. Ausgeblendet ist auch ihre Bahn weg. */
+const zeigeKoerper=id=>(id==='merkur'||id==='venus'||id==='mars')?D.sys[id]!==false:true;
+/* Am Himmel misst der Mond ein halbes Grad - zu wenig, um die Phase zu erkennen. Er wird
+   dort größer gezeichnet, aber nur, wenn er nicht dicht bei der Sonne steht: sonst käme
+   eine Finsternis heraus, die es nicht gibt. */
+function mondGrossOrt(){ return AKT_VON==='ort'&&sep('erde','mond','sonne',D.sys.t)>5; }
+/* Im Erde-Mond-Bild von außen sind beide Kugeln nur wenige Bildpunkte groß. Sie werden
+   deshalb mit DEMSELBEN Faktor vergrößert - das Größenverhältnis 3,7 : 1 und der Abstand
+   bleiben also richtig. Das gilt nur, solange keine Schattenkegel gezeigt werden (die
+   müssen zum wahren Maß passen) und solange die Erde noch klein im Bild steht: Wer dicht
+   über der Erde steht (Tageslängen) oder hineinzoomt, sieht wieder das wahre Maß. */
+const NAH_MOND=0.034;                  /* Zielradius des Mondes, Anteil der Bildhöhe */
+const NAH_ERDE=0.13;                   /* so groß darf die Erde dabei höchstens werden */
+function nahLupe(){
+  if(AKT_VON!=='aussen'||schattenAn()) return 1;
+  const t=D.sys.t;
+  const dM=betrag(sub(KAM.pos,rahmen(ortZ('mond',t))));
+  if(dM>0.05) return 1;                                          /* nicht im Erde-Mond-Bild */
+  const dE=Math.max(betrag(sub(KAM.pos,rahmen(ortZ('erde',t)))),1e-9);
+  /* Erst wenn die Mondbahn ins Bild passt, ist es das Erde-Mond-Bild. Wer näher steht
+     (Tageslängen, Horizontkuppel), sieht die Erde in wahrer Größe; dazwischen wird der
+     Faktor weich hochgefahren, damit beim Zoomen nichts springt. */
+  const rampe=clamp((dE-0.004)/0.002,0,1); if(rampe<=0) return 1;
+  const rM=F*radZ('mond')/Math.max(dM,1e-9), rE=F*radZ('erde')/dE;
+  const voll=clamp(Math.min(VH*NAH_MOND/Math.max(rM,1e-9), VH*NAH_ERDE/Math.max(rE,1e-9)),1,40);
+  return 1+(voll-1)*rampe;
 }
 /* Der beleuchtete Teil einer Kugel: Halbkreis zur Sonne hin plus Halbellipse - die
    Lichtgrenze erscheint im Bild als Ellipse mit der halben Achse r·|cos(Phasenwinkel)|. */
@@ -950,7 +975,8 @@ function lichtPfad(x,y,r,phi,cosA){
 function malKoerper(id,p3){
   const q=p2(p3); if(!q) return;
   let rho=F*radZ(id)/q[2];
-  if(id==='mond'&&mondGross()) rho=Math.max(rho,VH*(AKT_VON==='ort'?0.012:0.018));
+  if(id==='erde'||id==='mond') rho*=nahLupe();                   /* beide mit demselben Faktor */
+  if(id==='mond'&&mondGrossOrt()) rho=Math.max(rho,VH*0.012);
   if(id==='erde'&&D.sys.jahrErden&&AKT_VON==='aussen') rho=Math.max(rho,ERD_MIND*K);
   const farbe=KOERPER[id].farbe;
   if(id==='sonne'){
@@ -1035,6 +1061,30 @@ function zugRichtung(dirs,farbe,breite,alpha,strich){
   ctx.setLineDash(strich||[]); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha=1;
 }
 /* Ekliptik als Linie am Himmel, dazu die zwölf Tierkreiszeichen */
+/* Der Himmelsäquator: die Ebene senkrecht zur Erdachse, an den Himmel verlängert -
+   der Himmel über dem Erdäquator. Er schneidet die Ekliptik im Frühlings- und im
+   Herbstpunkt; der Winkel zwischen beiden ist die Schiefe der Erdachse. */
+function aequatorRichtung(a){ return add(mul(AEQ_X,Math.cos(a)),mul(AEQ_Y,Math.sin(a))); }
+function malAequator(){
+  const dirs=[]; for(let a=0;a<=360;a+=2) dirs.push(aequatorRichtung(a*RAD));
+  zugRichtung(dirs,'rgba(56,189,248,.6)',1.5);
+  /* Beschriftung dort, wo der Äquator am weitesten in der Bildmitte liegt */
+  let beste=null, weit=1e9;
+  for(let a=0;a<360;a+=5){ const q=p2r(aequatorRichtung(a*RAD)); if(!q) continue;
+    const d=Math.hypot(q[0]-(VX+VW/2),q[1]-(VY+VH*0.42));
+    if(d<weit){ weit=d; beste=q; } }
+  if(beste&&weit<VW*0.42)
+    text('Himmelsäquator',beste[0],beste[1]-11*K,'#7dd3fc',{al:'center',sz:11.5,fett:true,rand:'rgba(7,11,24,.85)'});
+}
+function kuppelAequator(p,r,R){
+  const pk=[];
+  for(let a=0;a<=360;a+=2){ const d=aequatorRichtung(a*RAD);
+    pk.push(dot(d,R.zen)<=0?null:add(p,mul(d,r))); }
+  linie3(pk,'rgba(56,189,248,.75)',1.6);
+  /* Der Äquator trifft den Horizont genau im Osten und im Westen - das zeigt die Marke. */
+  for(const az of [90,270]){ const q=p2(add(p,mul(himmelRichtung(R,az*RAD,0),r)));
+    if(q) text('Äquator',q[0],q[1]-12*K,'#7dd3fc',{al:'center',sz:10.5,rand:'rgba(7,11,24,.85)'}); }
+}
 function malEkliptik(){
   const bogen=[]; for(let l=0;l<=360;l+=2) bogen.push([Math.cos(l*RAD),Math.sin(l*RAD),0]);
   zugRichtung(bogen,'rgba(250,204,21,.55)',1.5);
@@ -1065,6 +1115,10 @@ function malTagbogen(id,farbe){
 }
 /* Boden, Horizont und Himmelsrichtungen. Weil die Kamera den Zenit als „oben" hat,
    liegt der Horizont genau waagrecht im Bild. */
+/* Wie dicht sind die Horizontkuppel und ihr Boden? Der Standard lässt 80 % durch -
+   man sieht also hindurch, was in der Kuppel steckt. (Der Boden am Ort selbst bleibt
+   dicht: Sonst schienen Sterne und Sonne durch die Erde hindurch.) */
+const kuppelDeckung=()=>1-clamp(D.sys.durch===undefined?80:D.sys.durch,0,95)/100;
 function malBoden(){
   const R=ortRahmen(D.sys.t);
   let yH=null;
@@ -1089,7 +1143,7 @@ function malBoden(){
   const mo=azHoch(R,sub(ortW('mond',D.sys.t),standOrt('ort',D.sys.t)));
   text(R.o.n+(lang?' · '+zahl(Math.abs(R.o.b),1)+'° '+(R.o.b>=0?'N':'S'):'')
     +' · Sonne '+(so.hoch>0?hoch+(lang?' über dem Horizont':' hoch'):hoch+' unter dem Horizont')
-    +(lang&&mo.hoch>0&&mondGross()?' · Mond vergrößert gezeichnet':''),
+    +(lang&&mo.hoch>0&&mondGrossOrt()?' · Mond vergrößert gezeichnet':''),
     VX+VW-10,VY+(lang?30:12)*K,'#94a3b8',{al:'right',sz:lang?12:11,fett:true,rand:'rgba(13,17,23,.9)'});
 }
 /* Die Horizontkuppel über dem gewählten Ort: der Himmel, den man von dort aus sieht.
@@ -1106,8 +1160,17 @@ function malKuppel(){
   const pk=kreis.map(q=>p2(q)).filter(Boolean);
   if(pk.length>8){                                          /* Horizontebene andeuten */
     ctx.beginPath(); pk.forEach((q,i)=>i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1])); ctx.closePath();
-    ctx.fillStyle='rgba(244,63,94,.09)'; ctx.fill();
+    ctx.fillStyle='rgba(244,63,94,'+(kuppelDeckung()*0.45).toFixed(3)+')'; ctx.fill();
   }
+  /* Die Kuppel selbst: Ihr Umriss ist die konvexe Hülle der Halbkugelpunkte im Bild. */
+  { const haut=[];
+    for(let h=0;h<=90;h+=10) for(let a=0;a<360;a+=8)
+      haut.push(add(p,mul(himmelRichtung(R,a*RAD,h*RAD),r)));
+    const hp=haut.map(q=>p2(q)).filter(Boolean), hu=huelle(hp);
+    if(hu.length>2){
+      ctx.beginPath(); hu.forEach((q,i)=>i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1])); ctx.closePath();
+      ctx.fillStyle='rgba(244,63,94,'+kuppelDeckung().toFixed(3)+')'; ctx.fill();
+    } }
   linie3(kreis,'rgba(244,63,94,.85)',1.5);
   [[0,'N'],[90,'O'],[180,'S'],[270,'W']].forEach(([az,nm])=>{
     const bogen=[];
@@ -1125,6 +1188,7 @@ function malKuppel(){
      Schaltern wie am Ort selbst: „Bahnen" die Tagbögen, „Ebenen" Ekliptik und Tierkreis. */
   if(S.bahnen){ kuppelBogen(p,r,R,'sonne','rgba(253,224,71,.95)'); kuppelBogen(p,r,R,'mond','rgba(226,232,240,.85)'); }
   if(S.ebenen) kuppelEkliptik(p,r,R);
+  if(S.aequator) kuppelAequator(p,r,R);
   kuppelOrte(p,r,R);
 }
 /* Tagbogen auf die Kuppel gelegt; unter dem Horizont bleibt eine Lücke. */
@@ -1277,11 +1341,10 @@ function malSchatten(){
   }
 }
 
-/* Für die Notizzeile: Wurde der Mond im großen Bild vergrößert gezeichnet? */
-function mondGrossHinweis(){
+/* Für die Notizzeile: Um wie viel sind Erde und Mond im großen Bild vergrößert? */
+function nahLupeHinweis(){
   const merk=AKT_VON; AKT_VON=D.sys.von;
-  const ja=mondGross()&&F*radZ('mond')/Math.max(betrag(sub(KAM.pos,rahmen(ortZ('mond',D.sys.t)))),1e-9)<VH*0.025;
-  AKT_VON=merk; return ja;
+  const f=nahLupe(); AKT_VON=merk; return f;
 }
 /* ---------- Maßstabsbalken ---------- */
 function malMassstab(unten){
@@ -1327,10 +1390,12 @@ function szeneMalen(){
   const S=D.sys, t=S.t, amOrt=(AKT_VON==='ort');
   if(S.sterne) malSterne();
   if(S.ebenen){ if(amOrt) malEkliptik(); else malEbenen(); }
+  if(S.aequator&&amOrt) malAequator();
   if(S.bahnen){ malBahnen();
     if(amOrt){ malTagbogen('sonne','rgba(253,224,71,.9)'); malTagbogen('mond','rgba(226,232,240,.75)'); } }
   if(!amOrt) malJahresErden();
-  const liste=['sonne','merkur','venus','erde','mars','mond'].filter(id=>id!==AKT_VON&&!(amOrt&&id==='erde'))
+  const liste=['sonne','merkur','venus','erde','mars','mond']
+    .filter(id=>id!==AKT_VON&&!(amOrt&&id==='erde')&&zeigeKoerper(id))
     .map(id=>({id,p:rahmen(ortZ(id,t))}));
   liste.sort((a,b)=>betrag(sub(b.p,KAM.pos))-betrag(sub(a.p,KAM.pos)));
   liste.forEach(o=>malKoerper(o.id,o.p));
@@ -1369,7 +1434,8 @@ function pipOpt(){
   if(von==='ort') return {von, ziel, fov:70, panAz:0, panEl:0};    /* der halbe Himmel über dem Ort */
   const d=betrag(sub(ortW(ziel,t),ortW(von,t)));
   const w=2*Math.asin(clamp(radW(ziel)/Math.max(d,1e-9),-1,1))*GRD;
-  return {von, ziel, fov:w>0.1?clamp(w*8,0.3,40):25, panAz:0, panEl:0};
+  /* Der Körper soll ein Viertel der Fensterhöhe füllen - bei acht war er kaum zu erkennen. */
+  return {von, ziel, fov:w>0.1?clamp(w*4,0.3,40):25, panAz:0, panEl:0};
 }
 let pipStand=null;
 function pipZielFeld(von,ziel,bx,by,bw){
@@ -1415,8 +1481,10 @@ function zeichneSystem(){
   const notizen=[];
   if(schattenStufe()) notizen.push('Schattenmodell – quer überhöht: Mondbahn '+grad(neigungUeb(),0)
     +' statt 5,1° geneigt, Erde und Mond '+zahl(sfaktor(),0)+'-fach');
-  if(D.sys.von==='aussen'&&!D.sys.schatten&&D.sys.pip!=='x'&&mondGrossHinweis())
-    notizen.push('Der Mond ist vergrößert gezeichnet, damit die Phase zu sehen ist');
+  const lupeF=D.sys.von==='aussen'?nahLupeHinweis():1;
+  if(lupeF>1.3)
+    notizen.push('Erde und Mond sind '+zahl(lupeF,0)+'-fach vergrößert gezeichnet, damit die Phase zu sehen ist'
+      +' – Abstand und Größenverhältnis stimmen');
   if(D.sys.tagbahn&&D.sys.von!=='ort'){ const tl=tagLaenge(D.sys.t), o=ORTE[D.sys.ort]||ORTE[0];
     notizen.push('Tageslänge in '+o.n+': '+(tl.art?tl.art:stundenText(tl.h)+' hell, '+stundenText(24-tl.h)+' dunkel')
       +' · Sonne steht über '+grad(tl.dek*GRD,1)+' Breite'); }
@@ -1428,6 +1496,12 @@ const EREIG_NAME={neumond:'Neumond',vollmond:'Vollmond',sofi:'Sonnenfinsternis',
   fruehling:'Frühlingsanfang',herbst:'Herbstanfang',
   phasen:'Mondphasen',jahr:'Jahreszeiten',tag:'Tageslängen'};
 let listeStand=null;
+function ereignisName(art,t){
+  let nm=EREIG_NAME[art]||'Ereignis';
+  if(art==='sofi') nm=finsternisse(t).sofi||nm;
+  if(art==='mofi') nm=finsternisse(t).mofi||nm;
+  return nm;
+}
 function listeFuellen(ab){
   const sel=$('selListe'); if(!sel) return;
   const t0=(ab===undefined?D.sys.t:ab), eintraege=[];
@@ -1449,10 +1523,7 @@ function listeFuellen(ab){
   liste.forEach((e,i)=>{
     const o=document.createElement('option'); o.value=String(i);
     o.dataset.t=String(e.t); o.dataset.art=e.art;
-    let nm=EREIG_NAME[e.art];
-    if(e.art==='sofi') nm=finsternisse(e.t).sofi||nm;
-    if(e.art==='mofi') nm=finsternisse(e.t).mofi||nm;
-    o.textContent=datumText(e.t)+' · '+nm;
+    o.textContent=datumText(e.t)+' · '+ereignisName(e.art,e.t);
     gd.appendChild(o);
   });
   /* Am Ende weiterblättern: Die Liste wird ab dem letzten Eintrag neu gefüllt. */
@@ -1462,7 +1533,28 @@ function listeFuellen(ab){
     o.textContent='▸ weiter ab '+datumText(letzt);
     gd.appendChild(o);
   }
-  sel.value=''; listeStand=t0;
+  listeStand=t0; wahlZeigen();
+}
+/* Nach dem Neufüllen soll das gewählte Ereignis im Feld stehen bleiben - sonst steht
+   dort wieder „wählen …", obwohl eben etwas gewählt wurde. */
+function wahlZeigen(){
+  const sel=$('selListe'); if(!sel) return;
+  const w=D.sys.wahl;
+  if(w&&w.art==='grund'&&GRUNDFALL[w.key]){ sel.value='g:'+w.key; if(sel.value) return; }
+  if(w&&w.art==='datum'){
+    for(const o of sel.options)
+      if(o.dataset.art===w.ereignis&&Math.abs(+o.dataset.t-w.t)<0.5){ sel.value=o.value; return; }
+    /* Die Liste beginnt beim jetzigen Zeitpunkt - das eben angesprungene Ereignis steht
+       also nicht mehr darin. Es kommt als eigene Zeile dazu, damit im Feld steht,
+       was gewählt ist. */
+    const gd=sel.querySelectorAll('optgroup')[1]||sel;
+    const o=document.createElement('option');
+    o.value='w'; o.dataset.t=String(w.t); o.dataset.art=w.ereignis;
+    o.textContent=datumText(w.t)+' · '+ereignisName(w.ereignis,w.t);
+    gd.insertBefore(o,gd.firstChild);
+    sel.value='w'; return;
+  }
+  sel.value='';
 }
 function listePruefen(){
   const sel=$('selListe'); if(!sel) return;
@@ -1473,6 +1565,7 @@ function listePruefen(){
 }
 function springeZu(t,art){
   D.sys.t=t; D.sys.lauf=false; laufStopp();
+  D.sys.wahl=art?{art:'datum',ereignis:art,t}:null;
   /* Wer die Tageslänge betrachtet, will die Sonnenwende mittags sehen, nicht nachts. */
   if(D.sys.tagbahn&&['sommer','winter','fruehling','herbst'].includes(art)) D.sys.t=naechsterMittag(D.sys.t);
   D.sys.letztes=art||null;
@@ -1488,11 +1581,14 @@ function springeZu(t,art){
    ============================================================ */
 const GRUNDFALL={
   phasen:{name:'Mondphasen', suche:'neumond', tempo:1, hinweis:'Ein Monat von Neumond zu Neumond – rechts der Blick von der Erde',
-    stellen(S){ S.von='aussen'; S.bezug='erde'; S.ziel='erde'; S.stufe='schatten'; S.dist=0.0115;
+    /* maßstabsgetreu: Erde und Mond werden im Bild gemeinsam vergrößert (nahLupe),
+       Abstand und Größenverhältnis bleiben dabei richtig. */
+    stellen(S){ S.von='aussen'; S.bezug='erde'; S.ziel='erde'; S.stufe='echt'; S.dist=0.0115;
       S.az=sonnenLaenge(S.t)+127; S.el=66;        /* so läuft der Mond am zweiten Fenster vorbei */ S.bahnen=true; S.ebenen=false; S.schatten=false; S.sterne=true;
       S.pip='erde'; S.pipZiel='mond'; S.jahrErden=false; S.tagbahn=false; S.kuppelAn=false; } },
-  sofi:{name:'Sonnenfinsternis', suche:'sofi', tempo:0.006, hinweis:'Der Mondschatten trifft die Erde – rechts der Himmel über dem Schatten',
+  sofi:{name:'Sonnenfinsternis', suche:'sofiT', tempo:0.006, hinweis:'Eine totale Sonnenfinsternis: Der Kernschatten des Mondes trifft die Erde – rechts der Himmel im Schatten',
     stellen(S){ ansichtFuer('sofi'); S.pip='erde'; S.pipZiel='sonne';
+      S.sf=12;                                     /* Körper und Schattenkegel doppelt so groß */
       S.jahrErden=false; S.tagbahn=false; S.kuppelAn=false; S.ebenen=false; } },
   mofi:{name:'Mondfinsternis', suche:'mofi', tempo:0.008, hinweis:'Der Mond wandert in den Erdschatten – rechts, wie er dabei aussieht',
     stellen(S){ ansichtFuer('mofi'); S.pip='erde'; S.pipZiel='mond';
@@ -1500,7 +1596,7 @@ const GRUNDFALL={
   jahr:{name:'Jahreszeiten', suche:'fruehling', tempo:8, hinweis:'Ein Jahr um die Sonne – die Achse zeigt immer in dieselbe Richtung',
     stellen(S){ S.von='aussen'; S.bezug='sonne'; S.ziel='sonne'; S.stufe='ansch'; S.dist=3.1;
       S.az=sonnenLaenge(S.t)+190; S.el=55;        /* so bleibt das zweite Fenster frei */ S.bahnen=true; S.ebenen=false; S.schatten=false; S.sterne=true;
-      S.jahrErden=true; S.tagbahn=false; S.kuppelAn=false; S.pip='ort'; S.pipZiel='sonne'; } },
+      S.jahrErden=true; S.tagbahn=true; S.kuppelAn=false; S.pip='ort'; S.pipZiel='sonne'; } },
   tag:{name:'Tageslängen', suche:'sommer', mittag:true, tempo:0.03,
     hinweis:'Ein Tag im Sommer – der helle Teil des Breitenkreises ist der Tag',
     stellen(S){ S.von='aussen'; S.bezug='erde'; S.ziel='erde'; S.stufe='echt'; S.dist=0.00045;
@@ -1513,6 +1609,7 @@ function grundfall(art){
   if(G.suche){ const t=suchen(G.suche,S.t); if(t!==null) S.t=t; }
   if(G.mittag) S.t=naechsterMittag(S.t);          /* mittags steht die Sonne am höchsten */
   G.stellen(S);
+  S.wahl={art:'grund',key:art};
   S.lauf=false; laufStopp();
   S.lupe=false; S.echt=false; S.tempo=tempoWert(G.tempo);
   S.letztes=art; S.panAz=0; S.panEl=0;
@@ -2016,12 +2113,15 @@ function oberflaeche(){
   $('selOrt').hidden=(S.von!=='ort'); $('selOrt').value=String(S.ort||0);
   anzeigenStand();
   $('selZiel').value=S.ziel; $('selBezug').value=S.bezug; $('selPip').value=S.pip||'aus';
+  wahlZeigen();
   $('selStufe').value=stufeUI();
   $('selStufe').disabled=S.von!=='aussen';
   $('selStufe').title=S.von==='aussen'
     ? 'maßstabsgetreu · anschaulich (Körper aufgeblasen) · Schattenmodell (alles quer zur Sonne überhöht)'
     : 'Von einem Körper aus wird immer maßstabsgetreu gezeigt – der Himmel ist dort ohnehin groß genug';
   $('setSF').value=String(D.sys.sf||SF_STD);
+  $('setDurch').value=String(S.durch===undefined?80:S.durch);
+  $('setDurchv').textContent=(S.durch===undefined?80:S.durch)+' % durchsichtig';
   $('setSFv').textContent=zahl(sfUI(),0)+'-fach · Mondbahn '+grad(neigungUI(),0);
   const E=D.erat;
   $('rEA').value=String(E.a); $('vEA').textContent=grad(E.a)+' N';
@@ -2058,6 +2158,10 @@ const ANZEIGEN=[
   ['jahrErden','Die vier Erden im Jahreslauf','Halbdurchsichtig an den Sonnenwenden und Tag-und-Nacht-Gleichen, jede mit ihrer Achse'],
   ['tagbahn','Bahn des Ortes (Tageslänge)','Der Breitenkreis des gewählten Ortes: heller Teil Tag, blauer Teil Nacht'],
   ['kuppelAn','Horizontkuppel über dem Ort','Die Halbkugel des Himmels, den man von dort aus sieht'],
+  ['aequator','Himmelsäquator','Die Ebene senkrecht zur Erdachse am Himmel – am Ort und auf der Horizontkuppel'],
+  ['merkur','Merkur mit Bahn',''],
+  ['venus','Venus mit Bahn',''],
+  ['mars','Mars mit Bahn','Planeten, die gerade stören, lassen sich hier samt Bahn ausblenden'],
   ['sterne','Sternhimmel',''],
   ['namen','Namen der Himmelskörper','']
 ];
@@ -2095,6 +2199,12 @@ $('setts').addEventListener('toggle',()=>{ if($('setts').open) $('anzpop').open=
 $('settBody').innerHTML=
   '<label class="chk"><input type="checkbox" id="setNamen"><span>Namen der Himmelskörper anzeigen</span></label>'+
   '<label class="chk"><input type="checkbox" id="setAnsicht"><span>Beim Suchen eines Ereignisses die <b>Ansicht passend einstellen</b> (Standort, Ausschnitt, Maßstab)</span></label>'+
+  '<h4>Horizontkuppel</h4>'+
+  '<div class="zeile">Transparenz <input type="range" id="setDurch" min="0" max="95" step="5"><span class="val" id="setDurchv">–</span></div>'+
+  '<p>Wie viel Licht durch die <b>Kuppel</b> und ihren <b>Boden</b> fällt – die Halbkugel des '+
+  'Himmels über dem gewählten Ort, von außen betrachtet. Bei 80 % sieht man, was in ihr steckt; '+
+  'bei 0 % ist sie dicht. Der Boden am Ort selbst bleibt immer dicht, sonst schiene der '+
+  'Sternhimmel durch die Erde.</p>'+
   '<h4>Schattenmodell</h4>'+
   '<div class="zeile">Überhöhung <input type="range" id="setSF" min="2" max="12" step="1"><span class="val" id="setSFv">–</span></div>'+
   '<p>Im <b>Schattenmodell</b> wird alles <b>quer zur Richtung zur Sonne</b> mit demselben Faktor überhöht: '+
@@ -2115,6 +2225,7 @@ $('settBody').innerHTML=
   'jedem Vollmond eine Finsternis heraus.</p>'+
   '<button class="btn" id="setStd">Standard wiederherstellen</button>';
 $('setSF').oninput=e=>{ D.sys.sf=clamp(+e.target.value||SF_STD,2,12); oberflaeche(); zeichne(); sync(); };
+$('setDurch').oninput=e=>{ D.sys.durch=clamp(+e.target.value,0,95); oberflaeche(); zeichne(); sync(); };
 $('setNamen').onchange=e=>{ D.sys.namen=e.target.checked; zeichne(); sync(); };
 $('setAnsicht').onchange=e=>{ D.sys.ansichtMit=e.target.checked; sync(); };
 $('setStd').onclick=()=>{ const tab=D.tab, fs=D.fontSize; D=standard(); D.tab=tab; D.fontSize=fs; setzeTab(tab); sync(true); };
@@ -2166,6 +2277,8 @@ const HILFE={
     'diesem Himmel gerade stehen, mit einer gestrichelten Sichtlinie zum Körper selbst. So sieht man von außen, '+
     'was der Beobachter am Boden gerade über sich hat – und warum die Sonne im Winter einen so flachen Bogen '+
     'zieht.</p>'+
+    '<p>Kuppel und Boden sind <b>durchsichtig</b> gezeichnet, sonst läge alles darin im Verborgenen. Wie '+
+    'durchsichtig, steht in den <b>Einstellungen</b> (⚙) – im Standard 80 %.</p>'+
     '<h4>heliozentrisch oder geozentrisch</h4><p>Das Umschalten ändert nur, <b>wer stillsteht</b>. Geozentrisch läuft '+
     'die Sonne um die Erde und die Bahnen von Venus und Mars bekommen Schleifen – dieselbe Bewegung, anderer Bezugspunkt. '+
     'Genau diese Schleifen beschrieb Ptolemäus mit Epizykeln.</p>'+
@@ -2181,14 +2294,24 @@ const HILFE={
     '<p>Darunter stehen die <b>wirklichen Ereignisse mit Datum</b>: die nächsten Finsternisse, Mondphasen, '+
     'Sonnenwenden, Tag-und-Nacht-Gleichen, die Mars-Opposition und der nächste Venustransit. Ein Tipp stellt die '+
     'Zeit dorthin, <b>↻</b> füllt die Liste ab der eingestellten Zeit neu, und „▸ weiter ab …" blättert vor.</p>'+
-    '<p>Auch im Bild von außen wird der <b>Mond größer gezeichnet</b>, solange man dicht am Erde-Mond-System '+
-    'steht und keine Schattenkegel eingeblendet sind – sonst wären von der Phase nur ein paar Bildpunkte zu '+
-    'sehen. Sobald die Schatten dazukommen (Finsternis), gilt wieder das wahre Maß, denn dort muss die Größe '+
-    'zum Kegel passen. Ein Hinweis im Bild sagt, wenn vergrößert gezeichnet wird.</p>'+
+    '<p>Im <b>Erde-Mond-Bild von außen</b> werden <b>Erde und Mond gemeinsam vergrößert</b> – mit demselben '+
+    'Faktor, so dass ihr Größenverhältnis (3,7 : 1) und ihr Abstand richtig bleiben; sonst wären von der Phase '+
+    'nur ein paar Bildpunkte zu sehen. Das gilt nur, solange keine <b>Schattenkegel</b> eingeblendet sind '+
+    '(bei einer Finsternis muss die Größe zum Kegel passen) und solange man nicht näher heranzoomt. Ein '+
+    'Hinweis im Bild sagt, um wie viel vergrößert gezeichnet wird. Bei der <b>Sonnenfinsternis</b> übernimmt '+
+    'das Schattenmodell diese Aufgabe: Es ist dort auf 12-fach gestellt, und gesucht wird eine <b>totale</b> '+
+    'Finsternis – im zweiten Fenster steht man genau dort, wo der Kernschatten auftrifft.</p>'+
     '<h4>Anzeigen</h4><p>Hinter <b>Anzeigen</b> steckt, was im Bild zu sehen ist: Bahnkurven, Bahnebenen mit '+
     'Ekliptik und Tierkreis, Schattenkegel, die <b>vier Erden im Jahreslauf</b>, die <b>Bahn des Ortes</b> '+
     '(heller Teil Tag, blauer Nacht – dazu steht die Tageslänge im Bild), die Horizontkuppel mit ihrem Radius, '+
-    'Sternhimmel und Namen. Die Zahl am Knopf sagt, wie viel gerade eingeblendet ist.</p>'+
+    'der <b>Himmelsäquator</b>, <b>Merkur</b>, <b>Venus</b> und <b>Mars</b> (jeder einzeln samt Bahn – wer bei '+
+    'den Mondphasen stört, kommt weg), Sternhimmel und Namen. Die Zahl am Knopf sagt, wie viel gerade '+
+    'eingeblendet ist.</p>'+
+    '<p>Der <b>Himmelsäquator</b> ist die Ebene senkrecht zur Erdachse, an den Himmel verlängert: der Himmel '+
+    'über dem Erdäquator. Er steht am Ort genau im Süden <b>90° minus Breite</b> hoch (in Amberg 40,6°), geht '+
+    'immer <b>im Osten auf und im Westen unter</b> und schneidet die Ekliptik im <b>Frühlings- und im '+
+    'Herbstpunkt</b>; der Winkel zwischen beiden ist die Schiefe der Erdachse. Er wird am Ort und auf der '+
+    'Horizontkuppel gezeigt.</p>'+
     '<h4>Zweites Fenster</h4><p>Das kleine Fenster oben rechts zeigt <b>dasselbe Ereignis von einem anderen '+
     'Standort aus</b> – etwa die Geometrie von außen und daneben den Blick vom Boden der Erde. Die Liste in der '+
     'Leiste sagt, <b>von wo</b> geschaut wird; die Liste <b>unter dem Fenster</b> sagt, <b>worauf</b>: von der '+
@@ -2273,7 +2396,7 @@ $('selZiel').onchange=e=>{ D.sys.ziel=e.target.value;
 $('selBezug').onchange=e=>{ D.sys.bezug=e.target.value; zeichne(); sync(true); };
 $('selListe').onchange=e=>{
   const o=e.target.selectedOptions[0]; if(!o) return;
-  if(o.value.startsWith('g:')){ grundfall(o.value.slice(2)); e.target.value=''; return; }
+  if(o.value.startsWith('g:')){ grundfall(o.value.slice(2)); return; }
   if(!o.dataset.t) return;
   if(o.value==='mehr'){ listeFuellen(+o.dataset.t); toast('Weitere Ereignisse ab '+datumText(+o.dataset.t)); return; }
   springeZu(+o.dataset.t,o.dataset.art);

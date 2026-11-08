@@ -2752,7 +2752,16 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     Mond auf die Kuppel (unter dem Horizont bleibt eine Lücke), **Ebenen** die **Ekliptik** mit den
     **Tierkreiszeichen**; dazu sitzen Sonne und Mond als Punkte dort, wo sie an diesem Himmel gerade
     stehen, mit gestrichelter Sichtlinie zum Körper. So sieht man von außen, was der Beobachter am Boden
-    gerade über sich hat – und warum die Sonne im Winter einen so flachen Bogen zieht.
+    gerade über sich hat – und warum die Sonne im Winter einen so flachen Bogen zieht. Kuppel und Boden
+    sind **durchsichtig** gezeichnet, sonst bliebe verborgen, was in ihnen steckt; wie durchsichtig,
+    steht im ⚙ (Standard 80 %).
+  - **Himmelsäquator:** Die Ebene senkrecht zur Erdachse, an den Himmel verlängert – der Himmel über
+    dem Erdäquator. Er steht am Ort im Süden genau **90° minus Breite** hoch (in Amberg 40,6°, am Pol
+    0°), geht **im Osten auf und im Westen unter** und schneidet die Ekliptik im **Frühlings- und im
+    Herbstpunkt**; der Winkel zwischen beiden ist die Schiefe der Erdachse. Er lässt sich am Ort und
+    auf der Horizontkuppel einblenden.
+  - **Planeten einzeln ausblenden:** **Merkur**, **Venus** und **Mars** lassen sich unter *Anzeigen*
+    jeder für sich samt Bahn wegschalten – bei Mondphasen und Finsternissen stören sie im Bild nur.
   - **heliozentrisch oder geozentrisch:** Das Umschalten ändert nur, **wer stillsteht**. Geozentrisch
     läuft die Sonne um die Erde, und die Bahnen von Venus und Mars bekommen **Schleifen** – dieselbe
     Bewegung, anderer Bezugspunkt. Genau diese Schleifen beschrieb Ptolemäus mit Epizykeln.
@@ -2763,24 +2772,32 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     die **Tag-Nacht-Grenze**: So sind die **Jahreszeiten** zu zeigen.
   - **Grundfälle für den Unterricht:** Ganz oben in der Ereignisliste stehen fünf Fälle, bei denen das
     Datum keine Rolle spielt: **Mondphasen** (ein Monat von Neumond zu Neumond, daneben der Blick von
-    der Erde auf den Mond; der Mond wird dabei vergrößert gezeichnet, damit die Phase zu erkennen ist –
-    bei eingeblendeten Schattenkegeln bleibt er maßstabsgetreu), **Sonnenfinsternis**, **Mondfinsternis**, **Jahreszeiten** (ein Jahr um die
+    der Erde auf den Mond; **Erde und Mond werden dabei gemeinsam vergrößert** – mit demselben Faktor,
+    so dass Größenverhältnis und Abstand richtig bleiben; bei eingeblendeten Schattenkegeln und beim
+    Hineinzoomen gilt wieder das wahre Maß), **Sonnenfinsternis** (gesucht wird eine **totale**: Das
+    Schattenmodell steht dabei auf 12-fach, und im zweiten Fenster steht man genau dort, wo der
+    **Kernschatten auftrifft** – die Sonne verschwindet also wirklich ganz hinter dem Mond),
+    **Mondfinsternis**, **Jahreszeiten** (ein Jahr um die
     Sonne mit den **vier Erden** an Sonnenwenden und Tag-und-Nacht-Gleichen, jede mit ihrer Achse – die
     bei allen vieren in dieselbe Richtung zeigt; Erde und Kopien werden dabei groß genug gezeichnet,
     dass Achse und Tag-Nacht-Grenze aus der letzten Reihe zu erkennen sind) und **Tageslängen** (ein Tag, mit dem Breitenkreis des
-    Ortes: heller Teil Tag, blauer Nacht, dazu die Tageslänge in Stunden und Minuten im Bild). Jeder
+    Ortes: heller Teil Tag, blauer Nacht, dazu die Tageslänge in Stunden und Minuten im Bild; dieselbe
+    Bahn liegt auch im Jahreszeiten-Fall über der Erde, so dass sich Tageslänge und Jahreszeit
+    zusammen zeigen lassen). Jeder
     Grundfall sucht sich einen passenden Zeitpunkt – bei den Tageslängen den **Ortsmittag** –, stellt
     beide Fenster ein und setzt ein **Tempo**, mit dem ▶ den Ablauf gut zeigt (Finsternis rund zehn
     Minuten je Sekunde, Mondphasen ein Tag, Jahreszeiten acht Tage).
   - **Ereignisse mit Datum:** Darunter führt die Liste die nächsten Finsternisse, Mondphasen,
     Sonnenwenden, Tag-und-Nacht-Gleichen, die Mars-Opposition und den nächsten Venustransit **mit Datum
     und Art** auf („21.1.2000 · totale Mondfinsternis"); ein Tipp stellt die Zeit dorthin, **↻** füllt
-    die Liste ab der eingestellten Zeit neu. Dabei stellt sich (abschaltbar im ⚙) die **Ansicht
+    die Liste ab der eingestellten Zeit neu. Im Feld steht danach, **was gewählt ist** – auch dann,
+    wenn das Ereignis gerade vorbei und damit aus der Liste gelaufen ist. Dabei stellt sich (abschaltbar im ⚙) die **Ansicht
     passend** ein – bei der Mondfinsternis also dicht an den Mond, der dann **kupferrot im
     Kernschatten** steht.
   - **Zweites Fenster:** Oben rechts lässt sich dasselbe Ereignis **aus einer zweiten Perspektive**
     einblenden – etwa links die Geometrie von außen und rechts der Blick vom Boden der Erde, oder
-    umgekehrt. Die Liste in der Leiste sagt, **von wo** geschaut wird, die Liste **unter dem Fenster**,
+    umgekehrt. Die Liste dafür steht in der **Zeitzeile** neben der Ereignisliste und sagt, **von wo**
+    geschaut wird; die Liste **unter dem Fenster** sagt,
     **worauf**: von der Erde auf Mond, Sonne, Venus oder Mars (also auch die Marsschleife vor den
     Sternen), vom Mond auf die Erde, von außen auf das Erde-Mond-System oder auf das ganze
     Sonnensystem. Auf **automatisch** sucht sich das Fenster das Ziel selbst: bei Sonnenfinsternis und
