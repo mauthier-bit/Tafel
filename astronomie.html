@@ -926,11 +926,16 @@ function imSchatten(id,t){
   if(L.r<L.halb+R) return 0.25;
   return 0;
 }
-/* Am Himmel misst der Mond nur ein halbes Grad - im weiten Blick sind das wenige
-   Bildpunkte, da ist von der Phase nichts zu sehen. Darum wird er größer gezeichnet,
-   solange er nicht dicht bei der Sonne steht (dort käme sonst eine falsche Finsternis
-   heraus). Beim Hineinzoomen gilt wieder das wahre Maß. */
-const mondGross=()=>AKT_VON==='ort'&&sep('erde','mond','sonne',D.sys.t)>5;
+/* Der Mond ist in beiden Ansichten zu klein, um die Phase zu zeigen: am Himmel misst er
+   ein halbes Grad, im Erde-Mond-Bild von außen wenige Bildpunkte. Er wird deshalb größer
+   gezeichnet - am Ort nur, wenn er nicht dicht bei der Sonne steht (sonst käme eine falsche
+   Finsternis heraus), von außen nur, solange keine Schattenkegel gezeigt werden (die müssen
+   zum wahren Maß passen). Beim Hineinzoomen gilt wieder die wahre Größe. */
+function mondGross(){
+  if(AKT_VON==='ort') return sep('erde','mond','sonne',D.sys.t)>5;
+  if(AKT_VON!=='aussen'||schattenAn()) return false;
+  return betrag(sub(KAM.pos,rahmen(ortZ('mond',D.sys.t))))<0.05;   /* im Erde-Mond-Bild */
+}
 /* Der beleuchtete Teil einer Kugel: Halbkreis zur Sonne hin plus Halbellipse - die
    Lichtgrenze erscheint im Bild als Ellipse mit der halben Achse r·|cos(Phasenwinkel)|. */
 function lichtPfad(x,y,r,phi,cosA){
@@ -945,7 +950,7 @@ function lichtPfad(x,y,r,phi,cosA){
 function malKoerper(id,p3){
   const q=p2(p3); if(!q) return;
   let rho=F*radZ(id)/q[2];
-  if(id==='mond'&&mondGross()) rho=Math.max(rho,VH*0.012);
+  if(id==='mond'&&mondGross()) rho=Math.max(rho,VH*(AKT_VON==='ort'?0.012:0.018));
   if(id==='erde'&&D.sys.jahrErden&&AKT_VON==='aussen') rho=Math.max(rho,ERD_MIND*K);
   const farbe=KOERPER[id].farbe;
   if(id==='sonne'){
@@ -1272,6 +1277,12 @@ function malSchatten(){
   }
 }
 
+/* Für die Notizzeile: Wurde der Mond im großen Bild vergrößert gezeichnet? */
+function mondGrossHinweis(){
+  const merk=AKT_VON; AKT_VON=D.sys.von;
+  const ja=mondGross()&&F*radZ('mond')/Math.max(betrag(sub(KAM.pos,rahmen(ortZ('mond',D.sys.t)))),1e-9)<VH*0.025;
+  AKT_VON=merk; return ja;
+}
 /* ---------- Maßstabsbalken ---------- */
 function malMassstab(unten){
   if(D.sys.von==='ort') return;                       /* am Himmel gibt es keine Entfernung zu zeigen */
@@ -1404,6 +1415,8 @@ function zeichneSystem(){
   const notizen=[];
   if(schattenStufe()) notizen.push('Schattenmodell – quer überhöht: Mondbahn '+grad(neigungUeb(),0)
     +' statt 5,1° geneigt, Erde und Mond '+zahl(sfaktor(),0)+'-fach');
+  if(D.sys.von==='aussen'&&!D.sys.schatten&&D.sys.pip!=='x'&&mondGrossHinweis())
+    notizen.push('Der Mond ist vergrößert gezeichnet, damit die Phase zu sehen ist');
   if(D.sys.tagbahn&&D.sys.von!=='ort'){ const tl=tagLaenge(D.sys.t), o=ORTE[D.sys.ort]||ORTE[0];
     notizen.push('Tageslänge in '+o.n+': '+(tl.art?tl.art:stundenText(tl.h)+' hell, '+stundenText(24-tl.h)+' dunkel')
       +' · Sonne steht über '+grad(tl.dek*GRD,1)+' Breite'); }
@@ -1475,8 +1488,8 @@ function springeZu(t,art){
    ============================================================ */
 const GRUNDFALL={
   phasen:{name:'Mondphasen', suche:'neumond', tempo:1, hinweis:'Ein Monat von Neumond zu Neumond – rechts der Blick von der Erde',
-    stellen(S){ S.von='aussen'; S.bezug='erde'; S.ziel='erde'; S.stufe='schatten'; S.dist=0.0075;
-      S.az=sonnenLaenge(S.t)+90; S.el=66; S.bahnen=true; S.ebenen=false; S.schatten=false; S.sterne=true;
+    stellen(S){ S.von='aussen'; S.bezug='erde'; S.ziel='erde'; S.stufe='schatten'; S.dist=0.0115;
+      S.az=sonnenLaenge(S.t)+127; S.el=66;        /* so läuft der Mond am zweiten Fenster vorbei */ S.bahnen=true; S.ebenen=false; S.schatten=false; S.sterne=true;
       S.pip='erde'; S.pipZiel='mond'; S.jahrErden=false; S.tagbahn=false; S.kuppelAn=false; } },
   sofi:{name:'Sonnenfinsternis', suche:'sofi', tempo:0.006, hinweis:'Der Mondschatten trifft die Erde – rechts der Himmel über dem Schatten',
     stellen(S){ ansichtFuer('sofi'); S.pip='erde'; S.pipZiel='sonne';
@@ -2168,6 +2181,10 @@ const HILFE={
     '<p>Darunter stehen die <b>wirklichen Ereignisse mit Datum</b>: die nächsten Finsternisse, Mondphasen, '+
     'Sonnenwenden, Tag-und-Nacht-Gleichen, die Mars-Opposition und der nächste Venustransit. Ein Tipp stellt die '+
     'Zeit dorthin, <b>↻</b> füllt die Liste ab der eingestellten Zeit neu, und „▸ weiter ab …" blättert vor.</p>'+
+    '<p>Auch im Bild von außen wird der <b>Mond größer gezeichnet</b>, solange man dicht am Erde-Mond-System '+
+    'steht und keine Schattenkegel eingeblendet sind – sonst wären von der Phase nur ein paar Bildpunkte zu '+
+    'sehen. Sobald die Schatten dazukommen (Finsternis), gilt wieder das wahre Maß, denn dort muss die Größe '+
+    'zum Kegel passen. Ein Hinweis im Bild sagt, wenn vergrößert gezeichnet wird.</p>'+
     '<h4>Anzeigen</h4><p>Hinter <b>Anzeigen</b> steckt, was im Bild zu sehen ist: Bahnkurven, Bahnebenen mit '+
     'Ekliptik und Tierkreis, Schattenkegel, die <b>vier Erden im Jahreslauf</b>, die <b>Bahn des Ortes</b> '+
     '(heller Teil Tag, blauer Nacht – dazu steht die Tageslänge im Bild), die Horizontkuppel mit ihrem Radius, '+

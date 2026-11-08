@@ -2747,7 +2747,8 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     die **Tag-Nacht-Grenze**: So sind die **Jahreszeiten** zu zeigen.
   - **Grundfälle für den Unterricht:** Ganz oben in der Ereignisliste stehen fünf Fälle, bei denen das
     Datum keine Rolle spielt: **Mondphasen** (ein Monat von Neumond zu Neumond, daneben der Blick von
-    der Erde auf den Mond), **Sonnenfinsternis**, **Mondfinsternis**, **Jahreszeiten** (ein Jahr um die
+    der Erde auf den Mond; der Mond wird dabei vergrößert gezeichnet, damit die Phase zu erkennen ist –
+    bei eingeblendeten Schattenkegeln bleibt er maßstabsgetreu), **Sonnenfinsternis**, **Mondfinsternis**, **Jahreszeiten** (ein Jahr um die
     Sonne mit den **vier Erden** an Sonnenwenden und Tag-und-Nacht-Gleichen, jede mit ihrer Achse – die
     bei allen vieren in dieselbe Richtung zeigt; Erde und Kopien werden dabei groß genug gezeichnet,
     dass Achse und Tag-Nacht-Grenze aus der letzten Reihe zu erkennen sind) und **Tageslängen** (ein Tag, mit dem Breitenkreis des
