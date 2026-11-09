@@ -2794,7 +2794,10 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     dass Achse und Tag-Nacht-Grenze aus der letzten Reihe zu erkennen sind) und **Tageslängen** (ein Tag, mit dem Breitenkreis des
     Ortes: heller Teil Tag, blauer Nacht, dazu die Tageslänge in Stunden und Minuten im Bild; dieselbe
     Bahn liegt auch auf **allen vier Erden** des Jahreslaufs, so dass der lange Sommer- und der kurze
-    Wintertag nebeneinanderstehen). Jeder
+    Wintertag nebeneinanderstehen) und die **rückläufige Bewegung des Mars** (Start gut zwei Monate vor
+    der Opposition, geozentrisch mit der Schleifenbahn, daneben der Blick von der Erde auf Mars vor den
+    Sternen; er kehrt dort rund 70 Tage lang um, während die Erde ihn überholt – im Modell gemessen
+    69 Tage, rund um die Opposition). Jeder
     Grundfall sucht sich einen passenden Zeitpunkt – bei den Tageslängen den **Ortsmittag** –, stellt
     beide Fenster ein und setzt ein **Tempo**, mit dem ▶ den Ablauf gut zeigt (Finsternis rund zehn
     Minuten je Sekunde, Mondphasen ein Tag, Jahreszeiten acht Tage).
