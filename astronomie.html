@@ -2208,7 +2208,6 @@ function oberflaeche(){
   $('rLupe').value=String(St.lupe); $('vLupe').textContent=zahl(St.lupe/100,0)+' Px/″';
   $('tSternSpur').classList.toggle('on',St.spur);
   $('setNamen').checked=!!S.namen; $('setAnsicht').checked=!!S.ansichtMit;
-  $('setEpi').checked=!!S.epizykel;
 }
 /* ---------- Auswahllisten füllen ---------- */
 ERAT_BSP.forEach((b,i)=>{ const o=document.createElement('option'); o.value=String(i); o.textContent=b.n; $('eratBsp').appendChild(o); });
@@ -2230,6 +2229,7 @@ const ANZEIGEN=[
   ['tagbahn','Bahn des Ortes (Tageslänge)','Der Breitenkreis des gewählten Ortes: heller Teil Tag, blauer Teil Nacht'],
   ['kuppelAn','Horizontkuppel über dem Ort','Die Halbkugel des Himmels, den man von dort aus sieht'],
   ['aequator','Himmelsäquator','Die Ebene senkrecht zur Erdachse am Himmel – am Ort und auf der Horizontkuppel'],
+  ['epizykel','Deferent und Epizykel','Ptolemäus: Jeder Planet am Ende zweier Arme – nur im geozentrischen Bild von außen'],
   ['merkur','Merkur mit Bahn',''],
   ['venus','Venus mit Bahn',''],
   ['mars','Mars mit Bahn','Planeten, die gerade stören, lassen sich hier samt Bahn ausblenden'],
@@ -2246,7 +2246,8 @@ function anzeigenStand(){
   document.querySelectorAll('[data-anz]').forEach(el=>{ const k=el.dataset.anz;
     const ein=(k==='schatten')?schattenUI():!!S[k];
     el.checked=ein; if(ein) an++;
-    if(k==='schatten'){ el.closest('.chk').style.opacity=(S.von==='aussen')?'1':'.55'; } });
+    if(k==='schatten'){ el.closest('.chk').style.opacity=(S.von==='aussen')?'1':'.55'; }
+    if(k==='epizykel'){ el.closest('.chk').style.opacity=(S.bezug==='erde'&&S.von==='aussen')?'1':'.55'; } });
   $('kuppelZeile').hidden=!S.kuppelAn;
   $('rKuppel').value=String(S.kuppel===undefined?78:S.kuppel);
   $('vKuppel').textContent=zahl(kuppelRadius(),kuppelRadius()<10?1:0)+' R⊕';
@@ -2260,6 +2261,10 @@ $('anzBody').addEventListener('change',e=>{
     D.sys.stufe='schatten';
     toast('Schattenmodell: Mondbahn stärker geneigt, Erde und Mond größer – so wird der Kegel sichtbar');
   }
+  if(k==='epizykel'&&e.target.checked&&D.sys.bezug!=='erde'){
+    D.sys.bezug='erde';
+    toast('Deferent und Epizykel gibt es nur im geozentrischen Bild – dorthin umgeschaltet');
+  }
   D.sys[k]=e.target.checked; oberflaeche(); zeichne(); sync();
 });
 $('rKuppel').oninput=e=>{ D.sys.kuppel=+e.target.value; oberflaeche(); zeichne(); sync(); };
@@ -2270,12 +2275,7 @@ $('setts').addEventListener('toggle',()=>{ if($('setts').open) $('anzpop').open=
 $('settBody').innerHTML=
   '<label class="chk"><input type="checkbox" id="setNamen"><span>Namen der Himmelskörper anzeigen</span></label>'+
   '<label class="chk"><input type="checkbox" id="setAnsicht"><span>Beim Suchen eines Ereignisses die <b>Ansicht passend einstellen</b> (Standort, Ausschnitt, Maßstab)</span></label>'+
-  '<label class="chk"><input type="checkbox" id="setEpi"><span>Im <b>geozentrischen</b> Bild <b>Deferent und Epizykel</b> zeichnen (Ptolemäus)</span></label>'+
-  '<p>Jeder Planet läuft dann auf einem kleinen Kreis (<b>Epizykel</b>), dessen Mittelpunkt auf einem '+
-  'großen Kreis um die Erde wandert (<b>Deferent</b>). Bei <b>Merkur und Venus</b> trägt der Deferent die '+
-  'Sonne, der Epizykel ist die Planetenbahn; beim <b>Mars</b> ist es umgekehrt: Der Deferent ist seine '+
-  'eigene Bahn, der Epizykel die Erdbahn. Beide Arme zusammen zeigen genau dorthin, wo der Planet steht – '+
-  'daraus entstehen die <b>Schleifen</b>.</p>'+
+
   '<h4>Horizontkuppel</h4>'+
   '<div class="zeile">Transparenz <input type="range" id="setDurch" min="0" max="95" step="5"><span class="val" id="setDurchv">–</span></div>'+
   '<p>Wie viel Licht durch die <b>Kuppel</b> und ihren <b>Boden</b> fällt – die Halbkugel des '+
@@ -2304,10 +2304,6 @@ $('settBody').innerHTML=
 $('setSF').oninput=e=>{ D.sys.sf=clamp(+e.target.value||SF_STD,2,12); oberflaeche(); zeichne(); sync(); };
 $('setDurch').oninput=e=>{ D.sys.durch=clamp(+e.target.value,0,95); oberflaeche(); zeichne(); sync(); };
 $('setNamen').onchange=e=>{ D.sys.namen=e.target.checked; zeichne(); sync(); };
-$('setEpi').onchange=e=>{ D.sys.epizykel=e.target.checked;
-  if(e.target.checked&&D.sys.bezug!=='erde'){ D.sys.bezug='erde';
-    toast('Deferent und Epizykel gibt es nur im geozentrischen Bild – dorthin umgeschaltet'); }
-  oberflaeche(); zeichne(); sync(); };
 $('setAnsicht').onchange=e=>{ D.sys.ansichtMit=e.target.checked; sync(); };
 $('setStd').onclick=()=>{ const tab=D.tab, fs=D.fontSize; D=standard(); D.tab=tab; D.fontSize=fs; setzeTab(tab); sync(true); };
 $('setZu').onclick=()=>{ $('setts').open=false; };
@@ -2365,7 +2361,7 @@ const HILFE={
     'durchsichtig, steht in den <b>Einstellungen</b> (⚙) – im Standard 80 %.</p>'+
     '<h4>heliozentrisch oder geozentrisch</h4><p>Das Umschalten ändert nur, <b>wer stillsteht</b>. Geozentrisch läuft '+
     'die Sonne um die Erde und die Bahnen von Venus und Mars bekommen Schleifen – dieselbe Bewegung, anderer Bezugspunkt. '+
-    'Genau diese Schleifen beschrieb Ptolemäus mit Epizykeln. In den <b>Einstellungen</b> (⚙) lassen sich '+
+    'Genau diese Schleifen beschrieb Ptolemäus mit Epizykeln. Unter <b>Anzeigen</b> lassen sich '+
     '<b>Deferent und Epizykel</b> einblenden: Jeder Planet sitzt dann am Ende zweier Arme – der erste führt '+
     'von der Erde zum Mittelpunkt des Epizykels (auf dem gestrichelten <b>Deferenten</b>), der zweite von '+
     'dort zum Planeten (auf dem durchgezogenen <b>Epizykel</b>). Bei <b>Merkur und Venus</b> trägt der '+
@@ -2395,7 +2391,7 @@ const HILFE={
     '<h4>Anzeigen</h4><p>Hinter <b>Anzeigen</b> steckt, was im Bild zu sehen ist: Bahnkurven, Bahnebenen mit '+
     'Ekliptik und Tierkreis, Schattenkegel, die <b>vier Erden im Jahreslauf</b>, die <b>Bahn des Ortes</b> '+
     '(heller Teil Tag, blauer Nacht – dazu steht die Tageslänge im Bild), die Horizontkuppel mit ihrem Radius, '+
-    'der <b>Himmelsäquator</b>, <b>Merkur</b>, <b>Venus</b> und <b>Mars</b> (jeder einzeln samt Bahn – wer bei '+
+    'der <b>Himmelsäquator</b>, <b>Deferent und Epizykel</b>, <b>Merkur</b>, <b>Venus</b> und <b>Mars</b> (jeder einzeln samt Bahn – wer bei '+
     'den Mondphasen stört, kommt weg), Sternhimmel und Namen. Die Zahl am Knopf sagt, wie viel gerade '+
     'eingeblendet ist.</p>'+
     '<p>Der <b>Himmelsäquator</b> ist die Ebene senkrecht zur Erdachse, an den Himmel verlängert: der Himmel '+

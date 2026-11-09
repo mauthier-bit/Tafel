@@ -2769,7 +2769,7 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   - **heliozentrisch oder geozentrisch:** Das Umschalten ändert nur, **wer stillsteht**. Geozentrisch
     läuft die Sonne um die Erde, und die Bahnen von Venus und Mars bekommen **Schleifen** – dieselbe
     Bewegung, anderer Bezugspunkt. Genau diese Schleifen beschrieb Ptolemäus mit Epizykeln.
-  - **Deferent und Epizykel** (im ⚙ einschaltbar, nur geozentrisch): Jeder Planet sitzt am Ende zweier
+  - **Deferent und Epizykel** (unter *Anzeigen* einschaltbar, nur geozentrisch): Jeder Planet sitzt am Ende zweier
     Arme – der erste führt von der Erde zum Mittelpunkt des Epizykels, der auf dem gestrichelten
     **Deferenten** wandert, der zweite von dort zum Planeten auf dem durchgezogenen **Epizykel**. Bei
     **Merkur und Venus** trägt der Deferent die Sonne und der Epizykel ist die Planetenbahn, beim
