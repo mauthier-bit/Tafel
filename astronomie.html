@@ -696,7 +696,8 @@ const standard=()=>({ v:1, tab:'system', fontSize:14, fontBold:false, fontItalic
   sys:{ t:0, lauf:false, tempo:30, echt:false, stufe:'ansch', sf:SF_STD, bahnen:true, ebenen:false, schatten:true,
         sterne:true, namen:true, von:'aussen', ziel:'erde', bezug:'sonne', pip:'aus', pipZiel:'auto',
         lupe:false, tempoAlt:30, letztes:null, wahl:null, ort:0, kuppelAn:false, kuppel:78,
-        jahrErden:false, tagbahn:false, merkur:true, venus:true, mars:true, aequator:false, durch:80,
+        jahrErden:false, tagbahn:false, merkur:true, venus:true, mars:true, mond:true,
+        ortMarke:true, aequator:false, durch:80,
         epizykel:false,
         az:35, el:26, dist:4.2, fov:30, panAz:0, panEl:0, ansichtMit:true },
   erat:{ a:31, b:23.5, fehler:0, strahlen:true, flach:false },
@@ -824,15 +825,19 @@ function kameraSetzen(o){
   let up=[0,0,1];
   if(AKT_VON==='ort'){
     /* Am Ort zählt die örtliche Senkrechte: Der Horizont liegt dann waagrecht im Bild,
-       und geschwenkt wird um den Zenit. Steht das Blickziel unter dem Horizont, schaut
-       man nach Süden (auf der Südhalbkugel nach Norden) und 20° hinauf. */
+       und geschwenkt wird um den Zenit. Sinkt das Blickziel unter den Horizont, bleibt die
+       Blickrichtung erhalten und wird nur am Horizont festgehalten - man schaut also
+       weiter dorthin, wo die Sonne untergegangen ist. (Früher sprang das Bild dort nach
+       Süden: genau im Augenblick des Untergangs ein Satz quer über den Himmel.) */
     const R=ortRahmen(D.sys.t);
     up=R.zen;
-    if(dot(f,R.zen)<0.02) f=himmelRichtung(R,(R.o.b>=0?Math.PI:0),20*RAD);
+    const amBoden=(d,tief)=>{ const ah=azHoch(R,d);
+      return ah.hoch<tief?himmelRichtung(R,ah.az,tief):d; };
+    f=amBoden(f,5*RAD);                                          /* Ziel unter dem Horizont */
     f=drehAchse(f,R.zen,(S.panAz||0)*RAD);
     const rr=norm(kreuz(f,R.zen));
     f=norm(drehAchse(f,rr,-(S.panEl||0)*RAD));
-    if(dot(f,R.zen)<-0.35) f=norm(add(f,mul(R.zen,0.5)));        /* nicht in den Boden starren */
+    f=amBoden(f,-20*RAD);                                        /* nicht in den Boden starren */
   } else if(AKT_VON!=='aussen'&&(S.panAz||S.panEl)){
     f=drehAchse(f,[0,0,1],S.panAz*RAD);
     const rr=norm(kreuz(f,[0,0,1]));
@@ -962,7 +967,7 @@ function malBahnen(){
     linie3(pk,KOERPER[id].farbe,1.5,0.65);
   }
   /* Der Mond läuft um die Erde - seine Bahn gehört an die Erde, nicht um die Sonne gelegt. */
-  { const ep=rahmen(ortZ('erde',S.t)), P=KOERPER.mond.T, pk=[];
+  if(zeigeKoerper('mond')){ const ep=rahmen(ortZ('erde',S.t)), P=KOERPER.mond.T, pk=[];
     for(let i=0;i<=160;i++){ const tt=S.t+P*i/160;
       pk.push(add(ep,sub(ortZ('mond',tt),ortZ('erde',tt)))); }
     let rm=0; pk.forEach(q=>{ rm=Math.max(rm,betrag(sub(q,zielP))); });
@@ -986,7 +991,7 @@ function imSchatten(id,t){
 }
 /* Merkur, Venus und Mars lassen sich einzeln ausblenden - bei Mondphasen und
    Finsternissen stören sie im Bild nur. Ausgeblendet ist auch ihre Bahn weg. */
-const zeigeKoerper=id=>(id==='merkur'||id==='venus'||id==='mars')?D.sys[id]!==false:true;
+const zeigeKoerper=id=>(id==='merkur'||id==='venus'||id==='mars'||id==='mond')?D.sys[id]!==false:true;
 /* Am Himmel misst der Mond ein halbes Grad - zu wenig, um die Phase zu erkennen. Er wird
    dort größer gezeichnet, aber nur, wenn er nicht dicht bei der Sonne steht: sonst käme
    eine Finsternis heraus, die es nicht gibt. */
@@ -1046,6 +1051,7 @@ function bildRadius(id,q){
    Fleck nichts mehr, dann bleibt es bei der alten Faerbung. */
 function fleckeAuf(id,q){
   if(!D.sys.schatten||uebAn()||(id!=='erde'&&id!=='mond')) return false;
+  if(!zeigeKoerper(id)) return false;              /* ausgeblendet: auch kein Fleck */
   return bildRadius(id,q)>7*K;
 }
 function malKoerper(id,p3){
@@ -1117,6 +1123,7 @@ function erdNetz(p3,rho,q,Rz){
 /* Der gewählte Beobachtungsort als Fähnchen auf der Erdkugel - auch im anschaulichen
    Modell, damit man sieht, wo man beim Blick in den Himmel steht. */
 function ortMarke(p3,R,rho){
+  if(D.sys.ortMarke===false) return;                         /* unter Anzeigen abgeschaltet */
   const Rh=ortRahmen(D.sys.t), zurKam=norm(sub(KAM.pos,p3));
   if(dot(Rh.zen,zurKam)<0.03) return;                        /* liegt auf der Rückseite */
   const q=p2(add(p3,mul(Rh.zen,R))); if(!q) return;
@@ -1502,6 +1509,7 @@ function malFleck(E,Rt,Rm,M,dir,radius,fuell,rand,mind){
 function malSchatten(){
   const t=D.sys.t, sonneP=rahmen(ortZ('sonne',t)), f=sfaktor();
   for(const id of ['erde','mond']){
+    if(!zeigeKoerper(id)) continue;         /* ausgeblendet: auch kein Schatten */
     if(imSchatten(id,t)>0.5) continue;      /* wer selbst im Kernschatten steckt, wirft keinen */
     const p=rahmen(ortZ(id,t)), R=radZ(id);
     const dir=norm(sub(p,sonneP));
@@ -1559,6 +1567,7 @@ function malSchatten(){
 function malFlecken(){
   const t=D.sys.t, sonneP=rahmen(ortZ('sonne',t)), f=sfaktor();
   for(const id of ['erde','mond']){          /* id wirft den Schatten, zid fängt ihn auf */
+    if(!zeigeKoerper(id)) continue;          /* ein ausgeblendeter Mond wirft keinen Schatten */
     const zid=(id==='mond')?'erde':'mond';
     if(zid===AKT_VON||(AKT_VON==='ort'&&zid==='erde')) continue;   /* die wird nicht gezeichnet */
     const Z=rahmen(ortZ(zid,t)), qz=p2(Z);
@@ -1635,7 +1644,8 @@ function szeneMalen(){
   if(S.ebenen){ if(amOrt) malEkliptik(); else malEbenen(); }
   if(S.aequator&&amOrt) malAequator();
   if(S.bahnen){ malBahnen();
-    if(amOrt){ malTagbogen('sonne','rgba(253,224,71,.9)'); malTagbogen('mond','rgba(226,232,240,.75)'); } }
+    if(amOrt){ malTagbogen('sonne','rgba(253,224,71,.9)');
+      if(zeigeKoerper('mond')) malTagbogen('mond','rgba(226,232,240,.75)'); } }
   malEpizykel();
   if(!amOrt) malJahresErden();
   const liste=['sonne','merkur','venus','erde','mars','mond']
@@ -1876,23 +1886,24 @@ const GRUNDFALL={
        Abstand und Größenverhältnis bleiben dabei richtig. */
     stellen(S){ S.von='aussen'; S.bezug='erde'; S.ziel='erde'; S.stufe='echt'; S.dist=0.0115;
       S.az=sonnenLaenge(S.t)+127; S.el=66;        /* so läuft der Mond am zweiten Fenster vorbei */ S.bahnen=true; S.ebenen=false; S.schatten=false; S.sterne=true;
-      S.pip='erde'; S.pipZiel='mond'; S.jahrErden=false; S.tagbahn=false; S.kuppelAn=false; } },
+      S.pip='erde'; S.pipZiel='mond'; S.jahrErden=false; S.tagbahn=false; S.kuppelAn=false; S.mond=true; } },
   sofi:{name:'Sonnenfinsternis', suche:'sofiT', tempo:0.006, hinweis:'Eine totale Sonnenfinsternis: Der Kernschatten des Mondes trifft die Erde – rechts zieht der Mond vor die Sonne',
     stellen(S){ ansichtFuer('sofi'); S.pip='erde'; S.pipZiel='sonne';
       S.sf=12;                                     /* Körper und Schattenkegel doppelt so groß */
-      S.jahrErden=false; S.tagbahn=false; S.kuppelAn=false; S.ebenen=false; } },
+      S.jahrErden=false; S.tagbahn=false; S.kuppelAn=false; S.ebenen=false; S.mond=true; } },
   mofi:{name:'Mondfinsternis', suche:'mofi', tempo:0.008, hinweis:'Der Mond wandert in den Erdschatten – rechts, wie er dabei aussieht',
     stellen(S){ ansichtFuer('mofi'); S.pip='erde'; S.pipZiel='mond';
-      S.jahrErden=false; S.tagbahn=false; S.kuppelAn=false; S.ebenen=false; } },
+      S.jahrErden=false; S.tagbahn=false; S.kuppelAn=false; S.ebenen=false; S.mond=true; } },
   jahr:{name:'Jahreszeiten', suche:'fruehling', tempo:8, hinweis:'Ein Jahr um die Sonne – die Achse zeigt immer in dieselbe Richtung',
     stellen(S){ S.von='aussen'; S.bezug='sonne'; S.ziel='sonne'; S.stufe='ansch'; S.dist=3.1;
       S.az=sonnenLaenge(S.t)+190; S.el=55;        /* so bleibt das zweite Fenster frei */ S.bahnen=true; S.ebenen=false; S.schatten=false; S.sterne=true;
-      S.jahrErden=true; S.tagbahn=true; S.kuppelAn=false; S.pip='ort'; S.pipZiel='sonne'; } },
+      S.jahrErden=true; S.tagbahn=true; S.kuppelAn=false; S.pip='ort'; S.pipZiel='sonne';
+      S.mond=false;                               /* im Jahreslauf stört der Mond nur */ } },
   tag:{name:'Tageslängen', suche:'sommer', mittag:true, tempo:0.03,
     hinweis:'Ein Tag im Sommer – der helle Teil des Breitenkreises ist der Tag',
     stellen(S){ S.von='aussen'; S.bezug='erde'; S.ziel='erde'; S.stufe='echt'; S.dist=0.00045;
       S.az=sonnenLaenge(S.t)+115; S.el=16; S.bahnen=false; S.ebenen=false; S.schatten=false; S.sterne=true;
-      S.tagbahn=true; S.jahrErden=false; S.kuppelAn=false; S.pip='ort'; S.pipZiel='sonne'; } },
+      S.tagbahn=true; S.jahrErden=false; S.kuppelAn=false; S.pip='ort'; S.pipZiel='sonne'; S.mond=true; } },
   schleife:{name:'Rückläufige Bewegung des Mars', suche:'opposition', tempo:4,
     hinweis:'Die Erde überholt den Mars – vor den Sternen läuft er dabei eine Schleife',
     /* Gut zwei Monate vor der Opposition anfangen: Dann zeigt ▶ die ganze Schleife. */
@@ -1902,7 +1913,7 @@ const GRUNDFALL={
       S.bahnen=true; S.ebenen=false; S.schatten=false; S.sterne=true;
       S.merkur=false; S.venus=false; S.mars=true;  /* die beiden inneren stören hier nur */
       S.jahrErden=false; S.tagbahn=false; S.kuppelAn=false; S.aequator=false;
-      S.pip='erde'; S.pipZiel='mars'; } }
+      S.mond=true; S.pip='erde'; S.pipZiel='mars'; } }
 };
 function grundfall(art){
   const G=GRUNDFALL[art]; if(!G) return;
@@ -2468,10 +2479,12 @@ const ANZEIGEN=[
   ['ebenen','Bahnebenen · Ekliptik und Tierkreis','Von außen die Scheiben von Erd- und Mondbahn mit der Knotenlinie, vom Ort aus die Ekliptik mit den zwölf Zeichen'],
   ['schatten','Schattenkegel','Kern- und Halbschatten von Erde und Mond – nur von außen und nicht im anschaulichen Modell. Trifft der Mondschatten die Erde, endet sein Kegel dort, und beide Schatten liegen rötlich auf der Kugel; ebenso liegt der Erdschatten auf dem Mond'],
   ['jahrErden','Die vier Erden im Jahreslauf','Halbdurchsichtig an den Sonnenwenden und Tag-und-Nacht-Gleichen, jede mit ihrer Achse'],
+  ['ortMarke','Gewählter Ort','Der rote Punkt mit dem Namen auf der Erdkugel'],
   ['tagbahn','Bahn des Ortes (Tageslänge)','Der Breitenkreis des gewählten Ortes: heller Teil Tag, blauer Teil Nacht'],
   ['kuppelAn','Horizontkuppel über dem Ort','Die Halbkugel des Himmels, den man von dort aus sieht'],
   ['aequator','Himmelsäquator','Die Ebene senkrecht zur Erdachse am Himmel – am Ort und auf der Horizontkuppel'],
   ['epizykel','Deferent und Epizykel','Ptolemäus: Jeder Planet am Ende zweier Arme – nur im geozentrischen Bild von außen'],
+  ['mond','Mond mit Bahn','Bei den Jahreszeiten ist er voreingestellt aus - dort stört er nur'],
   ['merkur','Merkur mit Bahn',''],
   ['venus','Venus mit Bahn',''],
   ['mars','Mars mit Bahn','Planeten, die gerade stören, lassen sich hier samt Bahn ausblenden'],
@@ -2650,10 +2663,12 @@ const HILFE={
     'Finsternis – im zweiten Fenster steht man dort, wo der Kernschatten beim Höhepunkt auftrifft, und sieht '+
     'den Mond über die Sonne ziehen.</p>'+
     '<h4>Anzeigen</h4><p>Hinter <b>Anzeigen</b> steckt, was im Bild zu sehen ist: Bahnkurven, Bahnebenen mit '+
-    'Ekliptik und Tierkreis, Schattenkegel, die <b>vier Erden im Jahreslauf</b>, die <b>Bahn des Ortes</b> '+
+    'Ekliptik und Tierkreis, Schattenkegel, die <b>vier Erden im Jahreslauf</b>, der <b>gewählte Ort</b> '+
+    '(roter Punkt mit Namen) und seine <b>Bahn</b> '+
     '(heller Teil Tag, blauer Nacht – dazu steht die Tageslänge im Bild), die Horizontkuppel mit ihrem Radius, '+
-    'der <b>Himmelsäquator</b>, <b>Deferent und Epizykel</b>, <b>Merkur</b>, <b>Venus</b> und <b>Mars</b> (jeder einzeln samt Bahn – wer bei '+
-    'den Mondphasen stört, kommt weg), Sternhimmel und Namen. Die Zahl am Knopf sagt, wie viel gerade '+
+    'der <b>Himmelsäquator</b>, <b>Deferent und Epizykel</b>, <b>Mond</b>, <b>Merkur</b>, <b>Venus</b> und <b>Mars</b> '+
+    '(jeder einzeln samt Bahn – wer gerade stört, kommt weg; bei den <b>Jahreszeiten</b> ist der Mond '+
+    'voreingestellt aus), Sternhimmel und Namen. Die Zahl am Knopf sagt, wie viel gerade '+
     'eingeblendet ist.</p>'+
     '<p>Der <b>Himmelsäquator</b> ist die Ebene senkrecht zur Erdachse, an den Himmel verlängert: der Himmel '+
     'über dem Erdäquator. Er steht am Ort genau im Süden <b>90° minus Breite</b> hoch (in Amberg 40,6°), geht '+
