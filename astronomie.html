@@ -1354,8 +1354,19 @@ function malOrtsbahn(){
   ortsbahnAuf(E,radBild(erdRho(q),q),t,1);
 }
 /* ---------- Schattenkegel ---------- */
-function malKegel(p3,Rae,richtung,laenge,rEnde,alpha,rand){
-  const basis=kreisPunkte(p3,Rae,richtung,24), ende=kreisPunkte(add(p3,mul(richtung,laenge)),rEnde,richtung,24);
+/* Wo trifft die Strecke A→B zuerst die Kugel? Dort hört der Schattenkegel auf: Der
+   Mondschatten läuft nicht durch die Erde hindurch, er endet auf ihrer Oberfläche. */
+function bisKugel(A,B,M,R){
+  const d=sub(B,A), w=sub(M,A), dd=dot(d,d); if(dd<1e-24) return B;
+  const tc=dot(w,d)/dd, h2=R*R-(dot(w,w)-tc*tc*dd);
+  if(h2<=0) return B;                                        /* verfehlt die Kugel */
+  const t=tc-Math.sqrt(h2/dd);
+  return (t<=0||t>=1)?B:add(A,mul(d,t));
+}
+function malKegel(p3,Rae,richtung,laenge,rEnde,alpha,rand,stopp){
+  const basis=kreisPunkte(p3,Rae,richtung,24);
+  let ende=kreisPunkte(add(p3,mul(richtung,laenge)),rEnde,richtung,24);
+  if(stopp) ende=ende.map((q,i)=>bisKugel(basis[i],q,stopp.M,stopp.R));   /* auf der Kugel aufhören */
   const pk=[];
   for(const p of basis.concat(ende)){ const q=p2(p); if(q) pk.push([q[0],q[1]]); }
   if(pk.length<3) return;
@@ -1363,6 +1374,69 @@ function malKegel(p3,Rae,richtung,laenge,rEnde,alpha,rand){
   ctx.beginPath(); h.forEach((q,i)=>i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1])); ctx.closePath();
   ctx.fillStyle='#000'; ctx.globalAlpha=alpha; ctx.fill(); ctx.globalAlpha=1;
   ctx.strokeStyle=rand; ctx.lineWidth=1; ctx.stroke();
+}
+/* ---------- Schattenflecken auf der Kugel ---------- */
+/* Die Mitte des Flecks: Trifft die Schattenachse die Kugel, ist es ihr Eintrittspunkt,
+   sonst der Punkt der Kugel, der der Achse am nächsten liegt. */
+function fleckMitte(E,R,M,dir){
+  const w=sub(E,M), tc=dot(w,dir), h2=R*R-(dot(w,w)-tc*tc);
+  if(h2>0&&tc>0) return add(M,mul(dir,tc-Math.sqrt(h2)));
+  const v=sub(add(M,mul(dir,tc)),E);
+  return betrag(v)<1e-12?sub(E,mul(dir,R)):add(E,mul(norm(v),R));
+}
+/* Punkte der Kugeloberfläche um eine Mitte herum: Winkelabstand a, Richtung th */
+function kugelUm(E,R,mitte){
+  const n0=norm(sub(mitte,E));
+  let b1=kreuz(n0,[0,0,1]); if(betrag(b1)<1e-6) b1=kreuz(n0,[0,1,0]);
+  b1=norm(b1); const b2=kreuz(n0,b1);
+  return (a,th)=>add(E,mul(add(mul(n0,Math.cos(a)),
+    mul(add(mul(b1,Math.cos(th)),mul(b2,Math.sin(th))),Math.sin(a))),R));
+}
+/* Ein Schattenfleck, direkt auf die gezeichnete Kugel gelegt: Von der Mitte aus wird in
+   72 Richtungen der Rand gesucht. Begrenzt wird der Fleck vom Schatten selbst, von der
+   Lichtgrenze und vom Rand der sichtbaren Halbkugel - so liegt er immer auf der Kugel.
+   radius(s) sagt, wie weit der Schatten im Abstand s von der Quelle reicht. */
+function malFleck(E,R,M,dir,radius,fuell,rand,mind){
+  const sonneP=rahmen(ortZ('sonne',D.sys.t)), zurKam=norm(sub(KAM.pos,E));
+  const drin=X=>{ const n=norm(sub(X,E));
+    if(dot(n,zurKam)<=0.015) return false;                   /* Rückseite der Kugel */
+    if(dot(n,norm(sub(sonneP,X)))<=0) return false;          /* Nachtseite */
+    const v=sub(X,M), s=dot(v,dir); if(s<=0) return false;
+    const rs=radius(s); if(rs<=0) return false;              /* hinter der Kegelspitze */
+    return betrag(sub(v,mul(dir,s)))<rs; };
+  let mitte=fleckMitte(E,R,M,dir);
+  if(!drin(mitte)){                                          /* Mitte weggedreht: Rest suchen */
+    const auf0=kugelUm(E,R,mitte); let neu=null;
+    for(let i=1;i<=9&&!neu;i++) for(let j=0;j<12&&!neu;j++){
+      const X=auf0(i*0.1,j*Math.PI/6); if(drin(X)) neu=X; }
+    if(!neu) return null; mitte=neu; }
+  const auf=kugelUm(E,R,mitte), qm=p2(mitte); if(!qm) return null;
+  const pk=[];
+  for(let j=0;j<72;j++){ const th=2*Math.PI*j/72;
+    let lo=0, hi=1.45;                                       /* weiter als 83° reicht kein Fleck */
+    for(let k=0;k<16;k++){ const mi=(lo+hi)/2; if(drin(auf(mi,th))) lo=mi; else hi=mi; }
+    const q=p2(auf(lo,th)); if(q) pk.push(q); }
+  if(pk.length<20) return null;
+  /* Schräg auf die Kugel gesehen ist der Fleck stark verkürzt. Darum wird auch gemessen,
+     wie weit er nach oben und unten reicht - sonst läge die Beschriftung mitten darauf. */
+  let rpx=0, oben=0, unten=0;
+  pk.forEach(q=>{ rpx=Math.max(rpx,Math.hypot(q[0]-qm[0],q[1]-qm[1]));
+    oben=Math.max(oben,qm[1]-q[1]); unten=Math.max(unten,q[1]-qm[1]); });
+  ctx.beginPath();
+  if(mind&&rpx<mind){ ctx.arc(qm[0],qm[1],mind,0,7); rpx=oben=unten=mind; }  /* winzig: als Punkt */
+  else { pk.forEach((q,i)=>i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1])); ctx.closePath(); }
+  /* Mehrere Füllungen nacheinander: Ein Stern davor heißt „multiplizieren“ - so wird das
+     Blau darunter gedämpft, erst dann kommt das Rot darauf. Ein einfaches rotes Tuch über
+     dem hellen Blau sähe sonst violett aus. */
+  ctx.save();
+  (Array.isArray(fuell)?fuell:[fuell]).forEach(f=>{
+    const m=f.charAt(0)==='*';
+    ctx.globalCompositeOperation=m?'multiply':'source-over';
+    if(m&&ctx.globalCompositeOperation!=='multiply') return;   /* kann dieser Browser nicht */
+    ctx.fillStyle=m?f.slice(1):f; ctx.fill(); });
+  ctx.restore();
+  ctx.strokeStyle=rand; ctx.lineWidth=1.3; ctx.stroke();
+  return {q:qm, r:rpx, oben, unten};
 }
 function malSchatten(){
   const t=D.sys.t, sonneP=rahmen(ortZ('sonne',t)), f=sfaktor();
@@ -1374,18 +1448,41 @@ function malSchatten(){
     const tanK=f*(radW('sonne')-radW(id))/dS, tanH=f*(radW('sonne')+radW(id))/dS;
     const L=R/tanK;                                          /* Länge des Kernschattens */
     const LH=L*1.6;
+    /* Der Mondschatten endet auf der Erdoberfläche. Gerechnet wird mit der Kugel, die
+       wirklich gezeichnet wird - sonst passen Kegel und Fleck nicht zur Erde im Bild. */
+    let ziel=null;
+    if(id==='mond'){ const Z=rahmen(ortZ('erde',t)), qz=p2(Z);
+      if(qz){ const rho=Math.max(bildRadius('erde',qz),0.8), Rz=radBild(rho,qz);
+        ziel={p:Z, R:Rz, q:qz, rho,
+              sicht:dot(norm(sub(fleckMitte(Z,Rz,p,dir),Z)),norm(sub(KAM.pos,Z)))>0}; } }
+    const stopp=ziel?{M:ziel.p,R:ziel.R}:null;
     /* Der Schatten beginnt an der Lichtgrenze und liegt HINTER der Kugel. Darum wird die
        gezeichnete Kugel ausgespart: Sonst legt sich die dunkle Fläche über ihre beleuchtete
        Seite - beim Blick von der Sonne her sogar über die ganze Scheibe. */
     const qm=p2(p), rm=qm?Math.max(bildRadius(id,qm),0.8):0;
-    const frei=q=>!qm||Math.hypot(q[0]-qm[0],q[1]-qm[1])>rm+6*K;
+    const frei=q=>(!qm||Math.hypot(q[0]-qm[0],q[1]-qm[1])>rm+6*K)
+               &&(!ziel||Math.hypot(q[0]-ziel.q[0],q[1]-ziel.q[1])>ziel.rho+6*K);
+    const ausKreis=(c,r)=>{ ctx.beginPath(); ctx.rect(VX,VY,VW,VH);
+      ctx.moveTo(c[0]+r,c[1]); ctx.arc(c[0],c[1],r,0,7);   /* eigener Anfang: sonst zieht arc eine Linie dorthin */
+      ctx.clip('evenodd'); };                              /* mehrere clip() schneiden sich */
     ctx.save();
-    if(qm){ ctx.beginPath(); ctx.rect(VX,VY,VW,VH);
-      ctx.moveTo(qm[0]+rm,qm[1]); ctx.arc(qm[0],qm[1],rm,0,7);   /* eigener Anfang: sonst zieht arc eine Linie dorthin */
-      ctx.clip('evenodd'); }
-    malKegel(p,R,dir,LH,R+LH*tanH,0.18,'rgba(226,232,240,.14)');   /* Halbschatten */
-    malKegel(p,R,dir,L,0,0.6,'rgba(226,232,240,.3)');              /* Kernschatten */
+    if(qm) ausKreis(qm,rm);
+    if(ziel&&!ziel.sicht) ausKreis(ziel.q,ziel.rho);       /* Kegel liegt hinter der Erde */
+    malKegel(p,R,dir,LH,R+LH*tanH,0.18,'rgba(226,232,240,.14)',stopp);   /* Halbschatten */
+    malKegel(p,R,dir,L,0,0.6,'rgba(226,232,240,.3)',stopp);              /* Kernschatten */
     ctx.restore();
+    /* Wo der Mondschatten die Erde trifft, bekommt die Kugel die beiden Flecken aufgelegt -
+       rötlich, damit sie sich vom blauen Tag und von der Nachtseite abheben. */
+    if(ziel&&ziel.sicht&&ziel.rho>7*K){            /* unter 7 Bildpunkten sagen Flecken nichts */
+      const hf=malFleck(ziel.p,ziel.R,p,dir,s=>R+s*tanH,
+        ['*rgb(255,120,100)','rgba(220,60,50,.3)'],'rgba(248,113,113,.7)',0);
+      const kf=malFleck(ziel.p,ziel.R,p,dir,s=>R-s*tanK,
+        'rgba(127,17,17,.92)','rgba(254,202,202,.95)',2.6*K);
+      if(hf&&hf.r>44*K&&kf) text('teilweise',hf.q[0],hf.q[1]-hf.oben-7*K,'#fca5a5',
+        {al:'center',sz:11,rand:'rgba(7,11,24,.85)'});
+      if(kf&&kf.r>4*K) text('total',kf.q[0],kf.q[1]+kf.unten+9*K,'#fecaca',
+        {al:'center',sz:11,fett:true,rand:'rgba(7,11,24,.85)'});
+    }
     /* Beschriftung, sobald der Kegel breit genug ist und nicht auf der Kugel läge */
     const qk=p2(add(p,mul(dir,L*0.45)));
     if(qk&&F*R*0.55/qk[2]>7&&frei(qk)){
@@ -2270,7 +2367,7 @@ $('selOrt').onchange=e=>{
 const ANZEIGEN=[
   ['bahnen','Bahnkurven','Die Bahnen der Körper – geozentrisch werden daraus die Schleifen'],
   ['ebenen','Bahnebenen · Ekliptik und Tierkreis','Von außen die Scheiben von Erd- und Mondbahn mit der Knotenlinie, vom Ort aus die Ekliptik mit den zwölf Zeichen'],
-  ['schatten','Schattenkegel','Kern- und Halbschatten von Erde und Mond – nur von außen und nicht im anschaulichen Modell'],
+  ['schatten','Schattenkegel','Kern- und Halbschatten von Erde und Mond – nur von außen und nicht im anschaulichen Modell. Trifft der Mondschatten die Erde, endet sein Kegel dort, und beide Schatten liegen rötlich auf der Kugel'],
   ['jahrErden','Die vier Erden im Jahreslauf','Halbdurchsichtig an den Sonnenwenden und Tag-und-Nacht-Gleichen, jede mit ihrer Achse'],
   ['tagbahn','Bahn des Ortes (Tageslänge)','Der Breitenkreis des gewählten Ortes: heller Teil Tag, blauer Teil Nacht'],
   ['kuppelAn','Horizontkuppel über dem Ort','Die Halbkugel des Himmels, den man von dort aus sieht'],
@@ -2416,6 +2513,10 @@ const HILFE={
     '<h4>Ebenen und Schatten</h4><p>Die <b>Mondbahn</b> ist um 5,1° gegen die Erdbahnebene geneigt. Nur wenn Neumond '+
     'oder Vollmond nahe der <b>Knotenlinie</b> eintritt, treffen die Schattenkegel – deshalb gibt es nicht jeden Monat '+
     'eine Finsternis.</p>'+
+    '<p>Trifft der Mondschatten die Erde, <b>endet sein Kegel auf der Erdoberfläche</b>, und beide Schatten liegen '+
+    'rötlich auf der Kugel: innen der kleine <b>Kernschatten</b> – dort steht die Sonne ganz hinter dem Mond, die '+
+    'Finsternis ist <b>total</b> –, rundherum der viel größere <b>Halbschatten</b>, in dem die Sonne nur '+
+    '<b>teilweise</b> verdeckt ist. So sieht man, auf welchem schmalen Streifen der Erde die Finsternis total ist.</p>'+
     '<h4>Ereignisse</h4><p>Die Liste hat zwei Teile. Oben stehen die <b>Grundfälle</b>, bei denen das Datum '+
     'keine Rolle spielt: <b>Mondphasen</b> (ein Monat von Neumond zu Neumond, daneben der Blick von der Erde), '+
     '<b>Sonnenfinsternis</b>, <b>Mondfinsternis</b>, <b>Jahreszeiten</b> (ein Jahr um die Sonne, mit den vier '+
