@@ -752,21 +752,45 @@ function drehAchse(v,achse,w){                      /* Drehung von v um eine Ach
   const c=Math.cos(w), s=Math.sin(w);
   return add(add(mul(v,c),mul(kreuz(achse,v),s)),mul(achse,dot(achse,v)*(1-c)));
 }
-/* Wo genau steht man auf einem Körper? Auf der Erde dort, wo man am meisten sieht:
-   auf dem Punkt der Oberfläche, der dem Mondschatten am nächsten liegt - bei einer
-   Sonnenfinsternis also mitten im Schatten. Auf dem Mond steht man auf der Erdseite. */
+/* Der Punkt der Erdoberfläche, der dem Mondschatten am nächsten liegt - bei einer
+   Sonnenfinsternis genau der Fleck, auf den der Kernschatten trifft. */
+function schattenPunkt(t){
+  const p=ortW('erde',t), M=ortW('mond',t), achse=norm(sub(M,ortW('sonne',t)));  /* Sonne → Mond → Erde */
+  const v=sub(p,M), l=dot(v,achse), lot=sub(v,mul(achse,l));
+  const R=radW('erde'), a=betrag(lot);
+  if(a<R) return add(M,mul(achse,l-Math.sqrt(R*R-a*a)));   /* Punkt auf der Achse selbst */
+  return add(p,mul(norm(mul(lot,-1)),R));
+}
+/* Breite und Länge eines Punktes der Erdkugel - und umgekehrt derselbe Ort zur Zeit t.
+   Damit lässt sich ein Ort FESTHALTEN: Er dreht sich dann mit der Erde weiter. */
+function erdLage(X,t){
+  const n=norm(sub(X,ortW('erde',t)));
+  const b=Math.asin(clamp(dot(n,ERDACHSE),-1,1));
+  const ri=sub(n,mul(ERDACHSE,Math.sin(b)));
+  if(betrag(ri)<1e-9) return {b:b*GRD, l:0};                /* genau am Pol */
+  const e=norm(ri);
+  return {b:b*GRD, l:Math.atan2(dot(e,AEQ_Y),dot(e,AEQ_X))*GRD-GMST(t)};
+}
+function erdPunkt(b,l,t){
+  const th=(GMST(t)+l)*RAD, ph=b*RAD;
+  const ri=add(mul(AEQ_X,Math.cos(th)),mul(AEQ_Y,Math.sin(th)));
+  return add(ortW('erde',t),
+    mul(norm(add(mul(ri,Math.cos(ph)),mul(ERDACHSE,Math.sin(ph)))),radW('erde')));
+}
+/* Wo genau steht man auf einem Körper? Auf dem Mond auf der Erdseite; auf der Erde dort,
+   wo der Kernschatten des Mondes auftrifft - aber FESTGEHALTEN zu dem Zeitpunkt, zu dem
+   das gewählte Ereignis eintritt. Würde der Ort dem Schatten nachlaufen, stünde der Mond
+   immerzu genau vor der Sonne; so zieht er über sie hinweg, wie es ein fester Fleck der
+   Erde erlebt. Ohne gewähltes Ereignis bleibt es beim Punkt nächst dem Schatten. */
 function standOrt(id,t){
   if(id==='ort'){ const R=ortRahmen(t); return add(ortW('erde',t),mul(R.zen,radW('erde'))); }
-  const p=ortW(id,t);
   if(id==='erde'){
-    const M=ortW('mond',t), achse=norm(sub(M,ortW('sonne',t)));   /* Sonne → Mond → Erde */
-    const v=sub(p,M), l=dot(v,achse), lot=sub(v,mul(achse,l));
-    const R=radW('erde'), a=betrag(lot);
-    /* Trifft die Schattenachse die Erde, steht man genau dort, wo sie auftrifft - nur dort
-       ist die Finsternis total. Sonst auf dem Punkt der Oberfläche, der ihr am nächsten liegt. */
-    if(a<R) return add(M,mul(achse,l-Math.sqrt(R*R-a*a)));   /* Punkt auf der Achse selbst */
-    return add(p,mul(norm(mul(lot,-1)),R));
+    const w=D.sys.wahl, t0=(w&&typeof w.t==='number')?w.t:t;
+    if(t0===t) return schattenPunkt(t);
+    const g=erdLage(schattenPunkt(t0),t0);
+    return erdPunkt(g.b,g.l,t);
   }
+  const p=ortW(id,t);
   if(id==='mond') return add(p,mul(norm(sub(ortW('erde',t),p)),radW('mond')));
   return p;
 }
@@ -1006,7 +1030,7 @@ function bildRadius(id,q){
    und der fremde Kegel wird um die Kugel herum ausgespart. Unter 7 Bildpunkten sagt ein
    Fleck nichts mehr, dann bleibt es bei der alten Faerbung. */
 function fleckeAuf(id,q){
-  if(!schattenAn()||(id!=='erde'&&id!=='mond')) return false;
+  if(!D.sys.schatten||uebAn()||(id!=='erde'&&id!=='mond')) return false;
   return bildRadius(id,q)>7*K;
 }
 function malKoerper(id,p3){
@@ -1392,21 +1416,23 @@ function fleckMitte(E,R,M,dir){
   const v=sub(add(M,mul(dir,tc)),E);
   return betrag(v)<1e-12?sub(E,mul(dir,R)):add(E,mul(norm(v),R));
 }
-/* Punkte der Kugeloberfläche um eine Mitte herum: Winkelabstand a, Richtung th */
-function kugelUm(E,R,mitte){
-  const n0=norm(sub(mitte,E));
+/* Richtungen um eine Mitte herum: Winkelabstand a, Richtung th. Gerechnet wird mit
+   Einheitsnormalen, nicht mit Punkten - die Kugel kann größer gezeichnet sein, als
+   gerechnet wird (am Ort wird der Mond vergrößert); dann liegt derselbe Fleck nur
+   weiter außen auf der Kugel. */
+function kugelUm(n0){
   let b1=kreuz(n0,[0,0,1]); if(betrag(b1)<1e-6) b1=kreuz(n0,[0,1,0]);
   b1=norm(b1); const b2=kreuz(n0,b1);
-  return (a,th)=>add(E,mul(add(mul(n0,Math.cos(a)),
-    mul(add(mul(b1,Math.cos(th)),mul(b2,Math.sin(th))),Math.sin(a))),R));
+  return (a,th)=>add(mul(n0,Math.cos(a)),
+    mul(add(mul(b1,Math.cos(th)),mul(b2,Math.sin(th))),Math.sin(a)));
 }
 /* Ein Schattenfleck, direkt auf die gezeichnete Kugel gelegt: Von der Mitte aus wird in
    72 Richtungen der Rand gesucht. Begrenzt wird der Fleck vom Schatten selbst, von der
    Lichtgrenze und vom Rand der sichtbaren Halbkugel - so liegt er immer auf der Kugel.
    radius(s) sagt, wie weit der Schatten im Abstand s von der Quelle reicht. */
-function malFleck(E,R,M,dir,radius,fuell,rand,mind){
+function malFleck(E,Rt,Rm,M,dir,radius,fuell,rand,mind){
   const sonneP=rahmen(ortZ('sonne',D.sys.t)), zurKam=norm(sub(KAM.pos,E));
-  const drin=X=>{ const n=norm(sub(X,E));
+  const drin=n=>{ const X=add(E,mul(n,Rt));
     if(dot(n,zurKam)<=0.015) return false;                   /* Rückseite der Kugel */
     if(dot(n,norm(sub(sonneP,X)))<=0) return false;          /* Nachtseite */
     const v=sub(X,M), s=dot(v,dir); if(s<=0) return false;
@@ -1418,15 +1444,16 @@ function malFleck(E,R,M,dir,radius,fuell,rand,mind){
      liegt ein kleiner Fleck wie der Mondschatten auf der Erde), dann die Mitte der Scheibe;
      bleibt alles draußen, wird der sichtbare Tag ringsum abgesucht. */
   const zurSonne=norm(sub(sonneP,E)), summe=add(zurKam,zurSonne);
-  const hellP=add(E,mul(norm(betrag(summe)>1e-6?summe:zurKam),R));
-  const achsP=fleckMitte(E,R,M,dir);
-  let mitte=[hellP,achsP,add(E,mul(zurKam,R))].find(drin)||null;
-  if(!mitte){
-    const auf0=kugelUm(E,R,hellP);
-    for(let i=1;i<=10&&!mitte;i++) for(let j=0;j<16&&!mitte;j++){
-      const X=auf0(i*0.15,j*Math.PI/8); if(drin(X)) mitte=X; }
-    if(!mitte) return null; }
-  const auf=kugelUm(E,R,mitte), qm=p2(mitte); if(!qm) return null;
+  const hellN=norm(betrag(summe)>1e-6?summe:zurKam);
+  const achsN=norm(sub(fleckMitte(E,Rt,M,dir),E));
+  let n0=[hellN,achsN,zurKam].find(drin)||null;
+  if(!n0){
+    const auf0=kugelUm(hellN);
+    for(let i=1;i<=10&&!n0;i++) for(let j=0;j<16&&!n0;j++){
+      const n=auf0(i*0.15,j*Math.PI/8); if(drin(n)) n0=n; }
+    if(!n0) return null; }
+  const auf=kugelUm(n0), mal=n=>p2(add(E,mul(n,Rm)));
+  const qm=mal(n0); if(!qm) return null;
   /* Jede Grenze (Schattenrand, Lichtgrenze, Kugelrand) schneidet einen Strahl von der Mitte
      aus genau einmal - darum findet die Halbierung den Rand sicher, bis zu 180° weit. Der
      Gegenpunkt der Mitte liegt immer hinter der Kugel, ist also draußen. */
@@ -1434,7 +1461,7 @@ function malFleck(E,R,M,dir,radius,fuell,rand,mind){
   for(let j=0;j<72;j++){ const th=2*Math.PI*j/72;
     let lo=0, hi=Math.PI;
     for(let k=0;k<17;k++){ const mi=(lo+hi)/2; if(drin(auf(mi,th))) lo=mi; else hi=mi; }
-    const q=p2(auf(lo,th)); if(q) pk.push(q); }
+    const q=mal(auf(lo,th)); if(q) pk.push(q); }
   if(pk.length<20) return null;
   /* Schräg auf die Kugel gesehen ist der Fleck stark verkürzt. Darum wird auch gemessen,
      wie weit er nach oben und unten reicht - sonst läge die Beschriftung mitten darauf. */
@@ -1498,24 +1525,6 @@ function malSchatten(){
     malKegel(p,R,dir,LH,R+LH*tanH,0.18,'rgba(226,232,240,.14)',stopp);   /* Halbschatten */
     malKegel(p,R,dir,L,0,0.6,'rgba(226,232,240,.3)',stopp);              /* Kernschatten */
     ctx.restore();
-    /* Die beiden Schatten werden der getroffenen Kugel aufgelegt. Auf der Erde rötlich,
-       damit sie sich vom blauen Tag abheben; auf dem Mond kupferrot - genau die Farbe,
-       die der Mond in einer totalen Finsternis annimmt. */
-    if(ziel){                                    /* ob etwas zu sehen ist, merkt malFleck */
-      const aufErde=(ziel.id==='erde');
-      const hf=malFleck(ziel.p,ziel.R,p,dir,s=>R+s*tanH,
-        aufErde?['*rgb(255,120,100)','rgba(220,60,50,.3)']:['*rgb(214,196,190)'],
-        aufErde?'rgba(248,113,113,.7)':'rgba(248,180,160,.35)',0);
-      const kf=malFleck(ziel.p,ziel.R,p,dir,s=>R-s*tanK,
-        aufErde?'rgba(127,17,17,.92)':'*rgb(196,105,58)',   /* ueber dem Halbschatten ergibt das genau #8a4526 */
-        aufErde?'rgba(254,202,202,.95)':'rgba(252,165,165,.7)',aufErde?2.6*K:0);
-      if(aufErde){                                 /* auf dem kleinen Mond wäre das zu viel */
-        if(hf&&hf.r>44*K&&kf) text('teilweise',hf.q[0],hf.q[1]-hf.oben-7*K,'#fca5a5',
-          {al:'center',sz:11,rand:'rgba(7,11,24,.85)'});
-        if(kf&&kf.r>4*K) text('total',kf.q[0],kf.q[1]+kf.unten+9*K,'#fecaca',
-          {al:'center',sz:11,fett:true,rand:'rgba(7,11,24,.85)'});
-      }
-    }
     /* Beschriftung, sobald der Kegel breit genug ist und nicht auf der Kugel läge */
     const qk=p2(add(p,mul(dir,L*0.45)));
     if(qk&&F*R*0.55/qk[2]>7&&frei(qk)){
@@ -1523,6 +1532,39 @@ function malSchatten(){
       const qh=p2(add(p,mul(dir,LH*0.85)));
       if(qh&&frei(qh)) text('Halbschatten',qh[0],qh[1]+F*(R+LH*0.85*tanH)/qh[2]*0.75,'#94a3b8',
         {al:'center',sz:11.5,rand:'rgba(7,11,24,.85)'});
+    }
+  }
+}
+
+/* Die Schattenflecken gehören zur Kugel, nicht zum Kegel - darum werden sie in JEDER
+   Ansicht gezeichnet, auch im zweiten Fenster und vom Ort aus: So sieht man von der Erde
+   aus, wie der Erdschatten über den Mond wandert. Auf der Erde liegen sie rötlich auf
+   dem Blau, auf dem Mond kupferrot - genau die Farbe, die er in einer totalen Finsternis
+   annimmt. */
+function malFlecken(){
+  const t=D.sys.t, sonneP=rahmen(ortZ('sonne',t)), f=sfaktor();
+  for(const id of ['erde','mond']){          /* id wirft den Schatten, zid fängt ihn auf */
+    const zid=(id==='mond')?'erde':'mond';
+    if(zid===AKT_VON||(AKT_VON==='ort'&&zid==='erde')) continue;   /* die wird nicht gezeichnet */
+    const Z=rahmen(ortZ(zid,t)), qz=p2(Z);
+    if(!qz||!fleckeAuf(zid,qz)) continue;
+    const Rt=radZ(zid), Rm=radBild(Math.max(bildRadius(zid,qz),0.8),qz);
+    const p=rahmen(ortZ(id,t)), R=radZ(id), dS=betrag(sub(p,sonneP));
+    if(!(dS>0)) continue;
+    const dir=norm(sub(p,sonneP));
+    const tanK=f*(radW('sonne')-radW(id))/dS, tanH=f*(radW('sonne')+radW(id))/dS;
+    const aufErde=(zid==='erde');
+    const hf=malFleck(Z,Rt,Rm,p,dir,s=>R+s*tanH,
+      aufErde?['*rgb(255,120,100)','rgba(220,60,50,.3)']:['*rgb(214,196,190)'],
+      aufErde?'rgba(248,113,113,.7)':'rgba(248,180,160,.35)',0);
+    const kf=malFleck(Z,Rt,Rm,p,dir,s=>R-s*tanK,
+      aufErde?'rgba(127,17,17,.92)':'*rgb(196,105,58)',   /* über dem Halbschatten genau #8a4526 */
+      aufErde?'rgba(254,202,202,.95)':'rgba(252,165,165,.7)',aufErde?2.6*K:0);
+    if(aufErde){                               /* auf dem kleinen Mond wäre das zu viel */
+      if(hf&&hf.r>44*K&&kf) text('teilweise',hf.q[0],hf.q[1]-hf.oben-7*K,'#fca5a5',
+        {al:'center',sz:11,rand:'rgba(7,11,24,.85)'});
+      if(kf&&kf.r>4*K) text('total',kf.q[0],kf.q[1]+kf.unten+9*K,'#fecaca',
+        {al:'center',sz:11,fett:true,rand:'rgba(7,11,24,.85)'});
     }
   }
 }
@@ -1587,6 +1629,7 @@ function szeneMalen(){
   liste.sort((a,b)=>betrag(sub(b.p,KAM.pos))-betrag(sub(a.p,KAM.pos)));
   liste.forEach(o=>malKoerper(o.id,o.p));
   if(schattenAn()) malSchatten();
+  malFlecken();                        /* liegen auf der Kugel, also über dem Kegel */
   if(!amOrt) malOrtsbahn();
   malKuppel();
   if(amOrt) malBoden();
@@ -1811,7 +1854,7 @@ const GRUNDFALL={
     stellen(S){ S.von='aussen'; S.bezug='erde'; S.ziel='erde'; S.stufe='echt'; S.dist=0.0115;
       S.az=sonnenLaenge(S.t)+127; S.el=66;        /* so läuft der Mond am zweiten Fenster vorbei */ S.bahnen=true; S.ebenen=false; S.schatten=false; S.sterne=true;
       S.pip='erde'; S.pipZiel='mond'; S.jahrErden=false; S.tagbahn=false; S.kuppelAn=false; } },
-  sofi:{name:'Sonnenfinsternis', suche:'sofiT', tempo:0.006, hinweis:'Eine totale Sonnenfinsternis: Der Kernschatten des Mondes trifft die Erde – rechts der Himmel im Schatten',
+  sofi:{name:'Sonnenfinsternis', suche:'sofiT', tempo:0.006, hinweis:'Eine totale Sonnenfinsternis: Der Kernschatten des Mondes trifft die Erde – rechts zieht der Mond vor die Sonne',
     stellen(S){ ansichtFuer('sofi'); S.pip='erde'; S.pipZiel='sonne';
       S.sf=12;                                     /* Körper und Schattenkegel doppelt so groß */
       S.jahrErden=false; S.tagbahn=false; S.kuppelAn=false; S.ebenen=false; } },
@@ -1844,7 +1887,7 @@ function grundfall(art){
   if(G.suche){ const t=suchen(G.suche,S.t); if(t!==null) S.t=t; }
   if(G.mittag) S.t=naechsterMittag(S.t);          /* mittags steht die Sonne am höchsten */
   G.stellen(S);
-  S.wahl={art:'grund',key:art};
+  S.wahl={art:'grund',key:art,t:S.t};        /* Zeitpunkt merken: hält den Ort auf der Erde fest */
   S.lauf=false; laufStopp();
   S.lupe=false; S.echt=false; S.tempo=tempoWert(G.tempo);
   S.letztes=art; S.panAz=0; S.panEl=0;
@@ -2554,6 +2597,10 @@ const HILFE={
     'den Kernschatten <b>eintaucht</b> und sich dabei kupferrot färbt, während der Rest noch hell ist. Weil der '+
     'Kernschatten der Erde dort 2,65 Mondradien breit ist, passt der Mond ganz hinein - deshalb dauert eine '+
     'totale Mondfinsternis so lange.</p>'+
+    '<p>Im <b>zweiten Fenster</b> sieht man beides so, wie man es vom Boden aus erlebt: bei der Mondfinsternis, '+
+    'wie der Erdschatten über den Mond wandert, bei der Sonnenfinsternis, wie der Mond über die Sonne zieht. '+
+    'Man steht dabei auf dem Fleck der Erde, den der Kernschatten beim Höhepunkt trifft, und <b>bleibt dort</b> - '+
+    'liefe man dem Schatten nach, stünde der Mond immerzu genau vor der Sonne.</p>'+
     '<h4>Ereignisse</h4><p>Die Liste hat zwei Teile. Oben stehen die <b>Grundfälle</b>, bei denen das Datum '+
     'keine Rolle spielt: <b>Mondphasen</b> (ein Monat von Neumond zu Neumond, daneben der Blick von der Erde), '+
     '<b>Sonnenfinsternis</b>, <b>Mondfinsternis</b>, <b>Jahreszeiten</b> (ein Jahr um die Sonne, mit den vier '+
@@ -2573,7 +2620,8 @@ const HILFE={
     '(bei einer Finsternis muss die Größe zum Kegel passen) und solange man nicht näher heranzoomt. Ein '+
     'Hinweis im Bild sagt, um wie viel vergrößert gezeichnet wird. Bei der <b>Sonnenfinsternis</b> übernimmt '+
     'das Schattenmodell diese Aufgabe: Es ist dort auf 12-fach gestellt, und gesucht wird eine <b>totale</b> '+
-    'Finsternis – im zweiten Fenster steht man genau dort, wo der Kernschatten auftrifft.</p>'+
+    'Finsternis – im zweiten Fenster steht man dort, wo der Kernschatten beim Höhepunkt auftrifft, und sieht '+
+    'den Mond über die Sonne ziehen.</p>'+
     '<h4>Anzeigen</h4><p>Hinter <b>Anzeigen</b> steckt, was im Bild zu sehen ist: Bahnkurven, Bahnebenen mit '+
     'Ekliptik und Tierkreis, Schattenkegel, die <b>vier Erden im Jahreslauf</b>, die <b>Bahn des Ortes</b> '+
     '(heller Teil Tag, blauer Nacht – dazu steht die Tageslänge im Bild), die Horizontkuppel mit ihrem Radius, '+
