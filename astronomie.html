@@ -822,6 +822,16 @@ function linie3(pkte,farbe,breite,alpha,strich){
   ctx.strokeStyle=farbe; ctx.lineWidth=breite; ctx.globalAlpha=alpha==null?1:alpha;
   ctx.setLineDash(strich||[]); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha=1;
 }
+/* Liegt ein Punkt für die Kamera hinter einer Kugel (oder in ihr)? Damit lässt sich zeigen,
+   dass die Erdachse wirklich DURCH die Kugel geht: Verdecktes wird blass gezeichnet. */
+function hinterKugel(X,M,R){
+  const v=sub(X,KAM.pos), L=betrag(v); if(L<1e-12) return true;
+  const w=sub(M,KAM.pos), tc=dot(w,mul(v,1/L));
+  if(tc<=0) return false;                                  /* Kugel liegt hinter der Kamera */
+  const d2=dot(w,w)-tc*tc, r2=R*R;
+  if(d2>=r2) return false;                                 /* Sehstrahl trifft die Kugel nicht */
+  return L>tc-Math.sqrt(r2-d2);                            /* hinter dem vorderen Schnittpunkt */
+}
 /* ---------- konvexe Hülle (für die Schattenkegel) ---------- */
 function huelle(p){
   const q=p.slice().sort((a,b)=>a[0]-b[0]||a[1]-b[1]); if(q.length<3) return q;
@@ -1046,8 +1056,15 @@ function erdNetz(p3,rho,q,Rz){
     const pk=[]; for(let i=0;i<=72;i++) pk.push(pkt(b*RAD,2*Math.PI*i/72)); zug(pk,f,w); });
   for(let m=0;m<12;m++){ const pk=[];
     for(let i=0;i<=48;i++) pk.push(pkt(-Math.PI/2+Math.PI*i/48,m*Math.PI/6)); zug(pk,'rgba(255,255,255,.25)',0.8); }
-  const a1=add(p3,mul(n,R*1.5)), a2=add(p3,mul(n,-R*1.5));
-  linie3([a1,a2],'rgba(255,255,255,.75)',1.6,1,[6,4]);
+  /* Die Achse steckt in der Kugel. Das verdeckte Stück wird blass gezeichnet, die beiden
+     herausragenden Enden kräftig - so sieht man, dass sie durch die Erde hindurchgeht. */
+  const a1=add(p3,mul(n,R*1.5));
+  const frei=[], durch=[];
+  for(let i=0;i<=200;i++){ const X=add(p3,mul(n,R*1.5*(i/100-1)));
+    const v=hinterKugel(X,p3,R);
+    frei.push(v?null:X); durch.push(v?X:null); }
+  linie3(durch,'rgba(255,255,255,.75)',1.1,0.3,[6,4]);
+  linie3(frei,'rgba(255,255,255,.75)',1.6,1,[6,4]);
   const na=p2(a1); if(na) text('N',na[0],na[1]-8*K,'#e8edf6',{al:'center',sz:11,rand:'rgba(7,11,24,.8)'});
 }
 /* Der gewählte Beobachtungsort als Fähnchen auf der Erdkugel - auch im anschaulichen
@@ -1276,9 +1293,12 @@ function malErdeGeist(t,beschr){
   /* Die Achse im Bild - sie zeigt bei allen vier Erden in dieselbe Richtung. */
   const qa=p2(add(p,mul(ERDACHSE,radZ('erde'))));
   if(qa){ let dx=qa[0]-q[0], dy=qa[1]-q[1]; const l=Math.hypot(dx,dy)||1; dx/=l; dy/=l;
-    ctx.strokeStyle='rgba(255,255,255,.75)'; ctx.lineWidth=1.4; ctx.setLineDash([4,3]);
-    ctx.beginPath(); ctx.moveTo(q[0]-dx*rho*1.7,q[1]-dy*rho*1.7);
-    ctx.lineTo(q[0]+dx*rho*1.7,q[1]+dy*rho*1.7); ctx.stroke(); ctx.setLineDash([]);
+    ctx.strokeStyle='rgba(255,255,255,.75)'; ctx.setLineDash([4,3]);
+    /* innen blass, außen kräftig - wie bei der großen Erde */
+    const achsStueck=(von,bis,br,al)=>{ ctx.globalAlpha=al; ctx.lineWidth=br;
+      ctx.beginPath(); ctx.moveTo(q[0]+dx*von,q[1]+dy*von); ctx.lineTo(q[0]+dx*bis,q[1]+dy*bis); ctx.stroke(); };
+    achsStueck(-rho*1.7,-rho,1.4,1); achsStueck(rho,rho*1.7,1.4,1); achsStueck(-rho,rho,1,0.3);
+    ctx.globalAlpha=1; ctx.setLineDash([]);
     text('N',q[0]+dx*rho*2.1,q[1]+dy*rho*2.1,'#e2e8f0',{al:'center',sz:10,rand:'rgba(7,11,24,.85)'}); }
   /* Die Bahn des Ortes gehört auch auf die Kopien - dann sieht man den langen Sommer-
      und den kurzen Wintertag an denselben vier Erden. */
