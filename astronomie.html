@@ -38,7 +38,7 @@
   .roll>*{flex:0 0 auto;}
   .roll::-webkit-scrollbar{height:4px;} .roll::-webkit-scrollbar-thumb{background:#cfd6e0;border-radius:2px;}
   .fest .fld{min-width:0;}
-  .fest .fld input[type=range]{width:88px;min-width:54px;flex:1 1 88px;}
+  .fest .fld input[type=range]{width:150px;min-width:96px;flex:1 1 150px;}
   @media (max-width:640px){ .fest .fld .txt{display:none;} }
   .sep{width:1px;align-self:stretch;background:#e2e7ef;margin:0 2px;flex:none;}
   .lbl{color:#64748b;font-weight:600;}
@@ -49,7 +49,7 @@
   select{border:1px solid #cfd6e0;background:#fff;border-radius:9px;padding:5px 7px;font-weight:600;cursor:pointer;}
   .fld{display:inline-flex;align-items:center;gap:6px;color:#64748b;font-weight:600;}
   .fld input[type=range]{width:110px;accent-color:#2563eb;}
-  .fld .val{min-width:58px;text-align:right;font-weight:700;color:#2563eb;font-variant-numeric:tabular-nums;}
+  .fld .val{min-width:66px;text-align:right;font-weight:700;color:#2563eb;font-variant-numeric:tabular-nums;}
   /* Zugeklappt steht dort nur „Ereignis …" - die Liste selbst klappt breit genug auf. */
   #selListe{max-width:190px;}
   .panel.anzeigen{right:10px;top:92px;}
@@ -297,8 +297,8 @@
         <button class="ic" id="bZurueck" title="Zeit auf den Anfang zurücksetzen">⏮</button>
         <button class="ic" id="bSchrittZ" title="einen Schritt zurück (ein Schritt = so viel, wie eine Sekunde Lauf)">⏪</button>
         <button class="ic" id="bSchrittV" title="einen Schritt vor (ein Schritt = so viel, wie eine Sekunde Lauf)">⏩</button>
-        <label class="fld" title="Wie viel Zeit im Modell auf eine Sekunde kommt"><span class="txt">Tempo</span>
-          <input type="range" id="rTempo" min="-300" max="250" step="1" value="90" aria-label="Tempo">
+        <label class="fld" title="Wie viel Zeit im Modell auf eine Sekunde kommt – links der Mitte läuft sie rückwärts, in der Mitte steht sie still"><span class="txt">Tempo</span>
+          <input type="range" id="rTempo" min="-575" max="575" step="1" value="415" aria-label="Tempo – links rückwärts, Mitte angehalten">
           <span class="val" id="vTempo">–</span></label>
         <button class="tog" id="tEcht" title="Echtzeit: Das Modell läuft so langsam wie der Himmel selbst">Echtzeit</button>
         <button class="tog" id="tLupe" title="Zeitlupe: langsam genug, um durch das gewählte Ereignis zu gehen">Zeitlupe</button>
@@ -693,9 +693,9 @@ function suchen(art,t0){
    Zustand
    ============================================================ */
 const standard=()=>({ v:1, tab:'system', fontSize:14, fontBold:false, fontItalic:false,
-  sys:{ t:0, lauf:false, tempo:30, echt:false, stufe:'ansch', sf:SF_STD, bahnen:true, ebenen:false, schatten:true,
+  sys:{ t:0, lauf:false, tempo2:355, echt:false, stufe:'ansch', sf:SF_STD, bahnen:true, ebenen:false, schatten:true,
         sterne:true, namen:true, von:'aussen', ziel:'erde', bezug:'sonne', pip:'aus', pipZiel:'auto',
-        lupe:false, tempoAlt:30, letztes:null, wahl:null, ort:0, kuppelAn:false, kuppel:78,
+        lupe:false, tempoAlt2:355, letztes:null, wahl:null, ort:0, kuppelAn:false, kuppel:78,
         jahrErden:false, tagbahn:false, merkur:true, venus:true, mars:true, mond:true,
         ortMarke:true, aequator:false, durch:80,
         epizykel:false,
@@ -711,7 +711,18 @@ let VX=0,VY=0,VW=300,VH=300;                        /* Sichtfenster für die Pro
 /* Bezugssystem: heliozentrisch oder geozentrisch */
 const nullPunkt=t=>D.sys.bezug==='erde'?ortZ('erde',t):[0,0,0];
 const rahmen=p=>sub(p,nullPunkt(D.sys.t));
-const tempoTage=()=>D.sys.echt?1/86400:Math.pow(10,D.sys.tempo/100);
+/* Der Regler trägt Betrag UND Richtung: Rechts läuft die Zeit vorwärts, links rückwärts,
+   und um die Mitte herum liegt eine kleine Totzone, in der sie still steht. Der Betrag
+   wird wie früher logarithmisch abgelesen: |v| − 325 ist der alte Reglerwert. */
+const T_NULL=25;                                    /* halbe Breite der Totzone */
+const T_MAX=575;                                    /* 250 (schnellste Stufe) + 300 + T_NULL */
+const tempoV=()=>{ const v=D.sys.tempo2; return typeof v==='number'?clamp(v,-T_MAX,T_MAX):355; };
+const tempoBetrag=v=>Math.pow(10,(Math.abs(v)-300-T_NULL)/100);   /* Tage je Sekunde */
+function tempoTage(){
+  const v=tempoV(); if(Math.abs(v)<=T_NULL) return 0;             /* angehalten */
+  const d=D.sys.echt?1/86400:tempoBetrag(v);
+  return v<0?-d:d;
+}
 /* Zeitlupe: So viel Modellzeit je Sekunde passt zu dem Ereignis, das zuletzt angesprungen
    wurde - eine Finsternis dauert Stunden, die Mondphasen einen Monat, eine Marsschleife
    Monate. Ohne gewähltes Ereignis wird das eingestellte Tempo auf ein Fünfundzwanzigstel
@@ -722,15 +733,18 @@ const ZEITLUPE={sofi:0.006, mofi:0.008, transit:0.012, neumond:0.4, vollmond:0.4
 function lupeTempo(){
   const art=D.sys.letztes;
   if(art&&ZEITLUPE[art]) return ZEITLUPE[art];
-  return Math.max(0.0004,Math.pow(10,(D.sys.tempoAlt!==undefined?D.sys.tempoAlt:D.sys.tempo)/100)/25);
+  return Math.max(0.0004,tempoBetrag(D.sys.tempoAlt2!==undefined?D.sys.tempoAlt2:tempoV())/25);
 }
-const tempoWert=d=>clamp(Math.round(100*Math.log10(Math.max(d,1e-6))),-300,250);
+/* Tage je Sekunde → Reglerwert, immer als Betrag (die Richtung hängt die aufrufende
+   Stelle an). Nie in die Totzone hinein: Sonst stünde die Zeit nach Zeitlupe still. */
+const tempoWert=d=>clamp(Math.round(100*Math.log10(Math.max(d,1e-6)))+300+T_NULL,T_NULL+1,T_MAX);
+const tempoRicht=()=>tempoV()<0?-1:1;               /* läuft die Zeit gerade rückwärts? */
 function lupeSetzen(an){
   const S=D.sys;
   if(an){
-    if(!S.lupe) S.tempoAlt=S.tempo;
-    S.lupe=true; S.echt=false; S.tempo=tempoWert(lupeTempo());
-  } else if(S.lupe){ S.lupe=false; S.tempo=(S.tempoAlt===undefined?30:S.tempoAlt); }
+    if(!S.lupe) S.tempoAlt2=tempoV();
+    S.lupe=true; S.echt=false; S.tempo2=tempoRicht()*tempoWert(lupeTempo());
+  } else if(S.lupe){ S.lupe=false; S.tempo2=(S.tempoAlt2===undefined?355:S.tempoAlt2); }
 }
 /* Schattenkegel sind eine Zeichenhilfe für den Blick von außen: Im Weltraum sieht man
    sie nicht, und vom Körper aus lägen sie als riesige Keile quer im Bild. */
@@ -1054,6 +1068,16 @@ function fleckeAuf(id,q){
   if(!zeigeKoerper(id)) return false;              /* ausgeblendet: auch kein Fleck */
   return bildRadius(id,q)>7*K;
 }
+/* Der Umriss einer Kugel ist im Bild etwas größer als F·R/d: Die Sehstrahlen berühren sie
+   VOR ihrem Mittelpunkt. Von weitem macht das nichts aus, aus der Nähe viel - ohne diese
+   Umrechnung ragt das Gradnetz über den Rand der gezeichneten Scheibe hinaus. */
+function umriss(rho){
+  const v=rho/F, s=1-v*v;                        /* rho/F ist genau R/d */
+  return s>0.01?rho/Math.sqrt(s):rho*10;         /* Kamera fast in der Kugel: Bild füllen */
+}
+/* Ab welcher Neigung liegt ein Punkt der Kugel hinter dem Rand? Von weitem bei 0, aus der
+   Nähe erst bei R/d - sonst würde über den Rand hinaus gezeichnet. */
+const randGrenze=(R,d,mind)=>Math.max(R/Math.max(d,1e-12),mind);
 function malKoerper(id,p3){
   const q=p2(p3); if(!q) return;
   const rho=bildRadius(id,q);
@@ -1068,7 +1092,7 @@ function malKoerper(id,p3){
     const s=norm(sub(sonneP,p3)), zurKam=norm(sub(KAM.pos,p3));
     const cosA=clamp(dot(s,zurKam),-1,1);
     const phi=Math.atan2(-dot(s,KAM.u),dot(s,KAM.r));
-    const r=Math.max(rho,0.8);
+    const r=Math.max(umriss(rho),0.8);                   /* der wirkliche Umriss der Kugel */
     const vf=fleckeAuf(id,q)?0:imSchatten(id,D.sys.t);   /* sonst zeigt der Fleck die Tiefe */
     const hell=vf>0.5?'#8a4526':(vf>0?dunkler(farbe,1-0.55*vf):farbe);   /* im Kernschatten kupferrot */
     ctx.fillStyle=dunkler(farbe,0.22);                        /* Nachtseite */
@@ -1091,6 +1115,7 @@ function malKoerper(id,p3){
 function erdNetz(p3,rho,q,Rz){
   const R=Rz||radZ('erde'), n=ERDACHSE;
   const zurKam=norm(sub(KAM.pos,p3));
+  const gr=randGrenze(R,betrag(sub(KAM.pos,p3)),0.02);       /* Rand der sichtbaren Halbkugel */
   /* Länge 0 steht dort, wo die Sternzeit sie hinstellt - so passen Gradnetz und Ortsmarke
      zum Blick vom Ort aus zusammen. */
   const th=GMST(D.sys.t)*RAD;
@@ -1098,7 +1123,7 @@ function erdNetz(p3,rho,q,Rz){
   const e2=kreuz(n,e1);
   const pkt=(br,la)=>add(p3,mul(add(add(mul(e1,Math.cos(br)*Math.cos(la)),mul(e2,Math.cos(br)*Math.sin(la))),
                                     mul(n,Math.sin(br))),R));
-  const sicht=p=>dot(norm(sub(p,p3)),zurKam)>0.02;
+  const sicht=p=>dot(norm(sub(p,p3)),zurKam)>gr;
   const zug=(pk,farbe,br)=>{ ctx.beginPath(); let auf=false;
     for(const p of pk){ const s=sicht(p), qq=s?p2(p):null;
       if(!qq){ auf=false; continue; }
@@ -1125,7 +1150,7 @@ function erdNetz(p3,rho,q,Rz){
 function ortMarke(p3,R,rho){
   if(D.sys.ortMarke===false) return;                         /* unter Anzeigen abgeschaltet */
   const Rh=ortRahmen(D.sys.t), zurKam=norm(sub(KAM.pos,p3));
-  if(dot(Rh.zen,zurKam)<0.03) return;                        /* liegt auf der Rückseite */
+  if(dot(Rh.zen,zurKam)<randGrenze(R,betrag(sub(KAM.pos,p3)),0.03)) return;   /* Rückseite */
   const q=p2(add(p3,mul(Rh.zen,R))); if(!q) return;
   ctx.fillStyle='#f43f5e'; ctx.strokeStyle='#fff'; ctx.lineWidth=1.2;
   ctx.beginPath(); ctx.arc(q[0],q[1],Math.max(2.5,Math.min(5,rho*0.08)),0,7); ctx.fill(); ctx.stroke();
@@ -1454,8 +1479,9 @@ function kugelUm(n0){
    radius(s) sagt, wie weit der Schatten im Abstand s von der Quelle reicht. */
 function malFleck(E,Rt,Rm,M,dir,radius,fuell,rand,mind){
   const sonneP=rahmen(ortZ('sonne',D.sys.t)), zurKam=norm(sub(KAM.pos,E));
+  const gr=randGrenze(Rm,betrag(sub(KAM.pos,E)),0.015);      /* Rand der sichtbaren Halbkugel */
   const drin=n=>{ const X=add(E,mul(n,Rt));
-    if(dot(n,zurKam)<=0.015) return false;                   /* Rückseite der Kugel */
+    if(dot(n,zurKam)<=gr) return false;                      /* Rückseite der Kugel */
     if(dot(n,norm(sub(sonneP,X)))<=0) return false;          /* Nachtseite */
     const v=sub(X,M), s=dot(v,dir); if(s<=0) return false;
     const rs=radius(s); if(rs<=0) return false;              /* hinter der Kegelspitze */
@@ -1524,7 +1550,7 @@ function malSchatten(){
     let ziel=null;
     { const Z=rahmen(ortZ(zid,t)), qz=p2(Z);
       if(qz&&fleckeAuf(zid,qz)){ const rho=Math.max(bildRadius(zid,qz),0.8), Rz=radBild(rho,qz);
-        ziel={id:zid, p:Z, R:Rz, q:qz, rho,
+        ziel={id:zid, p:Z, R:Rz, q:qz, rho:umriss(rho),      /* geklammert wird der Umriss */
               sicht:dot(norm(sub(fleckMitte(Z,Rz,p,dir),Z)),norm(sub(KAM.pos,Z)))>0}; } }
     /* Nur der Mondschatten endet auf der Kugel. Der Erdschatten muss über den Mond
        hinausreichen - sonst sähe man nicht, wie tief der Mond darin steckt. */
@@ -1532,7 +1558,7 @@ function malSchatten(){
     /* Der Schatten beginnt an der Lichtgrenze und liegt HINTER der Kugel. Darum wird die
        gezeichnete Kugel ausgespart: Sonst legt sich die dunkle Fläche über ihre beleuchtete
        Seite - beim Blick von der Sonne her sogar über die ganze Scheibe. */
-    const qm=p2(p), rm=qm?Math.max(bildRadius(id,qm),0.8):0;
+    const qm=p2(p), rm=qm?Math.max(umriss(bildRadius(id,qm)),0.8):0;
     const frei=q=>(!qm||Math.hypot(q[0]-qm[0],q[1]-qm[1])>rm+6*K)
                &&(!ziel||Math.hypot(q[0]-ziel.q[0],q[1]-ziel.q[1])>ziel.rho+6*K);
     const ausKreis=(c,r)=>{ ctx.beginPath(); ctx.rect(VX,VY,VW,VH);
@@ -1581,7 +1607,7 @@ function malFlecken(){
     /* Der Fleck liegt auf der Kugel - der Schattenwerfer steht davor, wenn man von der
        Sonne her schaut. Dann wird seine Scheibe ausgespart, sonst läge der Halbschatten
        über dem Mond, der ihn wirft. */
-    const qw=p2(p), rw=qw?Math.max(bildRadius(id,qw),0.8):0;
+    const qw=p2(p), rw=qw?Math.max(umriss(bildRadius(id,qw)),0.8):0;
     ctx.save();
     if(qw&&qw[2]<qz[2]){ ctx.beginPath(); ctx.rect(VX,VY,VW,VH);
       ctx.moveTo(qw[0]+rw,qw[1]); ctx.arc(qw[0],qw[1],rw,0,7);   /* eigener Anfang: sonst zieht arc eine Linie dorthin */
@@ -1932,7 +1958,7 @@ function grundfall(art){
   G.stellen(S);
   S.wahl={art:'grund',key:art,t:S.t};        /* Zeitpunkt merken: hält den Ort auf der Erde fest */
   S.lauf=false; laufStopp();
-  S.lupe=false; S.echt=false; S.tempo=tempoWert(G.tempo);
+  S.lupe=false; S.echt=false; S.tempo2=tempoWert(G.tempo);
   S.letztes=art; S.panAz=0; S.panEl=0;
   setzeTab(D.tab); listeFuellen(); sync(true);
   toast(G.name+': '+G.hinweis);
@@ -2399,12 +2425,14 @@ function fovPassend(){
   S.fov=w>0.1?clamp(w*8,0.3,40):25;
 }
 function tempoText(){
-  if(D.sys.echt) return 'Echtzeit';
-  const d=tempoTage();
-  if(d>=365) return zahl(d/365.25,1)+' a/s';
-  if(d>=1) return zahl(d,d<10?1:0)+' d/s';
-  if(d*24>=1) return zahl(d*24,1)+' h/s';
-  return zahl(d*1440,0)+' min/s';
+  const d0=tempoTage();
+  if(d0===0) return 'angehalten';
+  const vor=(d0<0?'−':''), d=Math.abs(d0);        /* Minuszeichen: die Zeit läuft rückwärts */
+  if(D.sys.echt) return vor+'Echtzeit';
+  if(d>=365) return vor+zahl(d/365.25,1)+' a/s';
+  if(d>=1) return vor+zahl(d,d<10?1:0)+' d/s';
+  if(d*24>=1) return vor+zahl(d*24,1)+' h/s';
+  return vor+zahl(d*1440,0)+' min/s';
 }
 function setzeTab(t){
   D.tab=t;
@@ -2424,7 +2452,7 @@ function oberflaeche(){
   const S=D.sys;
   $('bPlay').textContent=S.lauf?'❚❚':'▶';
   $('bPlay').title=S.lauf?'anhalten':'starten';
-  $('rTempo').value=String(S.tempo); $('vTempo').textContent=tempoText();
+  $('rTempo').value=String(tempoV()); $('vTempo').textContent=tempoText();
   $('tEcht').classList.toggle('on',S.echt);
   $('tLupe').classList.toggle('on',!!S.lupe);
   $('tLupe').title='Zeitlupe – '+(S.letztes&&ZEITLUPE[S.letztes]
@@ -2575,7 +2603,9 @@ $('setZu').onclick=()=>{ $('setts').open=false; };
 const HILFE={
   system:['Sonnensystem',
     '<p>Sonne, Merkur, Venus, Erde, Mond und Mars laufen mit ihren wahren Umlaufzeiten, Neigungen und Bahnformen. '+
-    'Die <b>Zeit</b> läuft mit ▶; das Tempo sagt, wie viel Modellzeit auf eine Sekunde kommt – <b>Echtzeit</b> zeigt, '+
+    'Die <b>Zeit</b> läuft mit ▶; das Tempo sagt, wie viel Modellzeit auf eine Sekunde kommt. Der Regler reicht '+
+    'über die Mitte hinaus nach links: Dort läuft die Zeit <b>rückwärts</b>, in der Mitte steht sie still (der Regler '+
+    'rastet dort ein). <b>Echtzeit</b> zeigt, '+
     'wie langsam der Himmel wirklich ist. Mit <b>⏪ und ⏩</b> geht es einen Schritt zurück oder vor; ein Schritt ist '+
     'so viel, wie eine Sekunde Lauf bringen würde. <b>Zeitlupe</b> stellt das Tempo auf das zuletzt gewählte Ereignis '+
     'ein: bei einer Finsternis rund zehn Minuten je Sekunde, bei den Mondphasen ein halber Tag, bei der Marsschleife '+
@@ -2751,10 +2781,16 @@ const an=(id,fn)=>{ const el=$(id); if(el) el.onclick=fn; };
 an('bPlay',()=>{ D.sys.lauf=!D.sys.lauf; oberflaeche(); laufPruefen();
   if(!D.sys.lauf){ listePruefen(); sync(true); } });
 an('bZurueck',()=>{ D.sys.t=0; zeichne(); listeFuellen(); sync(true); });
-const schritt=v=>{ D.sys.t+=v*tempoTage(); zeichne(); sync(); };
+/* Ein Schritt ist so viel wie eine Sekunde Lauf - steht der Regler auf null, nimmt er
+   die kleinste Stufe, damit die Knopfe nicht wirkungslos sind. */
+const schritt=v=>{ D.sys.t+=v*Math.max(Math.abs(tempoTage()),0.001); zeichne(); sync(); };
 an('bSchrittZ',()=>schritt(-1)); an('bSchrittV',()=>schritt(1));
-$('rTempo').oninput=e=>{ D.sys.tempo=+e.target.value; D.sys.echt=false; D.sys.lupe=false; oberflaeche(); sync(); };
-an('tEcht',()=>{ D.sys.echt=!D.sys.echt; if(D.sys.echt) D.sys.lupe=false; oberflaeche(); sync(); });
+$('rTempo').oninput=e=>{ let v=+e.target.value;
+  if(Math.abs(v)<=T_NULL){ v=0; e.target.value='0'; }        /* kleine Einrastung bei null */
+  D.sys.tempo2=v; D.sys.echt=false; D.sys.lupe=false; oberflaeche(); sync(); };
+an('tEcht',()=>{ const S=D.sys; S.echt=!S.echt;
+  if(S.echt){ S.lupe=false; if(Math.abs(tempoV())<=T_NULL) S.tempo2=T_NULL+1; }  /* sonst stünde sie still */
+  oberflaeche(); sync(); });
 an('tLupe',()=>{ lupeSetzen(!D.sys.lupe); oberflaeche(); sync(); });
 document.querySelectorAll('[data-von]').forEach(b=>b.onclick=()=>{
   const v=b.dataset.von; D.sys.von=v; D.sys.panAz=0; D.sys.panEl=0;
@@ -2846,10 +2882,18 @@ function uebernimm(d){
   if(!['echt','ansch','schatten'].includes(neu.sys.stufe)) neu.sys.stufe='ansch';
   delete neu.sys.ansch;
   neu.sys.sf=clamp(+neu.sys.sf||SF_STD,2,12);
+  /* Früher stand im Regler nur der Betrag (log), die Zeit lief immer vorwärts. Jetzt
+     trägt er auch die Richtung: Reglerwert = alter Wert + 325. */
+  { const alt=d.sys||{};                           /* der Standard liefert tempo2 schon mit */
+    if(typeof alt.tempo2!=='number'&&typeof alt.tempo==='number')
+      neu.sys.tempo2=clamp(alt.tempo+300+T_NULL,-T_MAX,T_MAX);
+    if(typeof alt.tempoAlt2!=='number'&&typeof alt.tempoAlt==='number')
+      neu.sys.tempoAlt2=clamp(alt.tempoAlt+300+T_NULL,-T_MAX,T_MAX); }
+  delete neu.sys.tempo; delete neu.sys.tempoAlt;
   if(!HILFE[neu.tab]) neu.tab='system';
   neu.fontSize=clamp(+neu.fontSize||14,10,26);
   D=neu; schriftAnwenden();
-  if(D.sys.lupe) D.sys.tempo=tempoWert(lupeTempo());   /* Zeitlupe und Tempo gehören zusammen */
+  if(D.sys.lupe) D.sys.tempo2=tempoRicht()*tempoWert(lupeTempo());   /* Zeitlupe und Tempo gehören zusammen */
 }
 let syncT=null;
 function post(){ if(window.parent===window) return;   /* allein geöffnet: nicht an sich selbst senden */
