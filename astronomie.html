@@ -982,12 +982,18 @@ function erdRho(q){
   return rho;
 }
 const radBild=(rho,q)=>rho*q[2]/F;              /* Radius im Raum, der genau rho ergibt */
-function malKoerper(id,p3){
-  const q=p2(p3); if(!q) return;
+/* Wie groß erscheint eine Kugel im Bild? Körper, Schattenkegel und Beschriftung müssen
+   mit demselben Radius rechnen, sonst passt der Kegel nicht zur gezeichneten Kugel. */
+function bildRadius(id,q){
   let rho=F*radZ(id)/q[2];
   if(id==='mond') rho*=nahLupe();
   if(id==='erde') rho=erdRho(q);
   if(id==='mond'&&mondGrossOrt()) rho=Math.max(rho,VH*0.012);
+  return rho;
+}
+function malKoerper(id,p3){
+  const q=p2(p3); if(!q) return;
+  const rho=bildRadius(id,q);
   const farbe=KOERPER[id].farbe;
   if(id==='sonne'){
     const g=ctx.createRadialGradient(q[0],q[1],0,q[0],q[1],Math.max(rho*4,22));
@@ -1348,14 +1354,24 @@ function malSchatten(){
     const tanK=f*(radW('sonne')-radW(id))/dS, tanH=f*(radW('sonne')+radW(id))/dS;
     const L=R/tanK;                                          /* Länge des Kernschattens */
     const LH=L*1.6;
+    /* Der Schatten beginnt an der Lichtgrenze und liegt HINTER der Kugel. Darum wird die
+       gezeichnete Kugel ausgespart: Sonst legt sich die dunkle Fläche über ihre beleuchtete
+       Seite - beim Blick von der Sonne her sogar über die ganze Scheibe. */
+    const qm=p2(p), rm=qm?Math.max(bildRadius(id,qm),0.8):0;
+    const frei=q=>!qm||Math.hypot(q[0]-qm[0],q[1]-qm[1])>rm+6*K;
+    ctx.save();
+    if(qm){ ctx.beginPath(); ctx.rect(VX,VY,VW,VH);
+      ctx.moveTo(qm[0]+rm,qm[1]); ctx.arc(qm[0],qm[1],rm,0,7);   /* eigener Anfang: sonst zieht arc eine Linie dorthin */
+      ctx.clip('evenodd'); }
     malKegel(p,R,dir,LH,R+LH*tanH,0.18,'rgba(226,232,240,.14)');   /* Halbschatten */
     malKegel(p,R,dir,L,0,0.6,'rgba(226,232,240,.3)');              /* Kernschatten */
-    /* Beschriftung, sobald der Kegel breit genug ist, um etwas zu erkennen */
+    ctx.restore();
+    /* Beschriftung, sobald der Kegel breit genug ist und nicht auf der Kugel läge */
     const qk=p2(add(p,mul(dir,L*0.45)));
-    if(qk&&F*R*0.55/qk[2]>7){
+    if(qk&&F*R*0.55/qk[2]>7&&frei(qk)){
       text('Kernschatten',qk[0],qk[1],'#cbd5e1',{al:'center',sz:11.5,fett:true,rand:'rgba(7,11,24,.85)'});
       const qh=p2(add(p,mul(dir,LH*0.85)));
-      if(qh) text('Halbschatten',qh[0],qh[1]+F*(R+LH*0.85*tanH)/qh[2]*0.75,'#94a3b8',
+      if(qh&&frei(qh)) text('Halbschatten',qh[0],qh[1]+F*(R+LH*0.85*tanH)/qh[2]*0.75,'#94a3b8',
         {al:'center',sz:11.5,rand:'rgba(7,11,24,.85)'});
     }
   }
