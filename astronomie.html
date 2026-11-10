@@ -2050,13 +2050,12 @@ function erdumfang(bA,bB,f){
   const alpha=Math.abs(a1-a2), s=Math.abs(bA-bB)*KM_JE_GRAD;
   return {alpha,s,U:alpha<1e-9?Infinity:s*360/alpha};
 }
-function zeichneErat(){
-  const E=D.erat, bA=E.a, bB=E.b, f=E.fehler/100;
-  ctx.fillStyle='#fff'; ctx.fillRect(0,0,W,H);
+/* Die drei Zeilen unter dem Bild - je nach Modell. */
+function eratZeilen(flach,bA,bB,f){
   const e=erdumfang(bA,bB,f), abw=(e.U-U_WAHR)/U_WAHR*100;
   const fl=flacheSonne(bA,bB,f);
   let zeilen;
-  if(!E.flach){
+  if(!flach){
     zeilen=[
       {t: e.alpha<0.05 ? 'Beide Orte liegen fast gleich – der Winkel verschwindet'
          : 'Erdumfang U = s · 360°/α = '+zahl(e.U,0)+' km   ('+(abw>=0?'+':'−')+zahl(Math.abs(abw),1)+' % gegenüber 40 075 km)',
@@ -2079,7 +2078,185 @@ function zeichneErat(){
         +'Auf der Kugel passt dagegen ein einziger Wert zu allen Messungen.'}
     ];
   }
-  const hoch=infoHell(zeilen);
+  return zeilen;
+}
+/* Maßstab und Lage des flachen Bildes. A steht rechts, B links - genau wie auf der
+   Kugel, wo Norden nach rechts zeigt; nur so geht das eine Bild weich ins andere über. */
+function flachLage(fl,HV){
+  const y0=HV*0.86, stab=32;
+  const xmin=Math.min(0,fl.sKm,fl.fussKm), xmax=Math.max(0,fl.sKm,fl.fussKm);
+  const spanne=Math.max(xmax-xmin,1)*1.25;
+  const jeKm=(isFinite(fl.h)&&fl.h>0)?Math.min(W*0.72/spanne,(HV*0.62)/fl.h):W*0.72/spanne;
+  return {y0, stab, jeKm, X:km=>W*0.5-(km-(xmin+xmax)/2)*jeKm};   /* +km geht nach links */
+}
+/* ---------- weicher Übergang Kugel ↔ flache Erde ---------- */
+/* Beim Umschalten wird der Bogen zwischen den beiden Orten gerade gezogen und dabei
+   herangezoomt. Die Sonnenstrahlen laufen dadurch von selbst zusammen: Je flacher die
+   Erde, desto näher muss die Sonne stehen, damit dieselben Schattenwinkel herauskommen.
+   Gerechnet wird mit dem Mittelpunktswinkel g zwischen den beiden Orten - er geht von
+   alpha (Kugel) auf null (flach), der Krümmungsradius also von 6371 km ins Unendliche. */
+const ERAT_DAUER=1.2;                               /* Sekunden für den ganzen Übergang */
+let eratM=0, eratZiel=0, eratId=0, eratLetzte=0;
+const eratWeich=x=>x<0.5?2*x*x:1-Math.pow(1-x,2)*2;  /* sanft anfahren und ausrollen */
+function eratSchritt(jetzt){
+  const dt=Math.min(0.08,(jetzt-eratLetzte)/1000); eratLetzte=jetzt;
+  const v=dt/ERAT_DAUER;
+  eratM=eratZiel>eratM?Math.min(eratZiel,eratM+v):Math.max(eratZiel,eratM-v);
+  /* erst den nächsten Schritt anmelden, dann zeichnen: zeichneErat lässt den Übergang
+     einrasten, solange keiner angemeldet ist. */
+  eratId=(eratM===eratZiel)?0:requestAnimationFrame(eratSchritt);
+  zeichne();
+}
+function eratUebergang(zu){
+  eratZiel=zu?1:0;
+  if(eratId) cancelAnimationFrame(eratId);
+  eratLetzte=performance.now(); eratId=requestAnimationFrame(eratSchritt);
+}
+function zeichneEratUeber(roh){
+  const E=D.erat, bA=E.a, bB=E.b, f=E.fehler/100, m=eratWeich(clamp(roh,0,1));
+  ctx.fillStyle='#fff'; ctx.fillRect(0,0,W,H);
+  const fl=flacheSonne(bA,bB,f);
+  const hoch=infoHell(eratZeilen(E.flach,bA,bB,f));   /* der Text des Ziels steht schon da */
+  const HV=H-hoch;
+  ctx.save(); ctx.beginPath(); ctx.rect(0,0,W,HV); ctx.clip();   /* nichts in die Textzeilen malen */
+  const a1=schattenW(bA)+f, a2=schattenW(bB);        /* gemessene Schattenwinkel */
+  const sKm=Math.abs(bA-bB)*KM_JE_GRAD;              /* Weg auf der Oberfläche */
+  const R_KM=U_WAHR/(2*Math.PI);
+  const g0=Math.max(Math.abs(a1-a2)*RAD,1e-5);       /* Mittelpunktswinkel auf der Kugel */
+  const g=Math.max(g0*(1-m),1e-7), Rk=sKm/g;         /* jetzige Krümmung */
+  /* Maßstab und Mitte wandern vom Kugel- ins flache Bild */
+  const R0=Math.min(W*0.26,HV*0.31), cx0=W*0.42, cy0=HV*0.54, k0=R0/R_KM;
+  const L=flachLage(fl,HV), k1=L.jeKm;
+  const k=k0*Math.pow(k1/k0,m);
+  const wM=(90-(bA+bB)/2)*RAD;
+  const M0=[cx0+R0*Math.cos(wM), cy0-R0*Math.sin(wM)];
+  const M1=[(L.X(0)+L.X(fl.sKm))/2, L.y0];
+  const Mx=M0[0]+(M1[0]-M0[0])*m, My=M0[1]+(M1[1]-M0[1])*m;
+  const psi0=Math.atan2(-Math.sin(wM),Math.cos(wM)), psi=psi0+(-Math.PI/2-psi0)*m;
+  const aus=[Math.cos(psi),Math.sin(psi)], tang=[-aus[1],aus[0]];   /* tang zeigt nach Norden (A) */
+  const P=(u,n)=>[Mx+k*(u*tang[0]+n*aus[0]), My+k*(u*tang[1]+n*aus[1])];
+  const ortP=u=>{ const th=u/Rk; return P(Rk*Math.sin(th),Rk*(Math.cos(th)-1)); };
+  const ortN=u=>{ const th=u/Rk; return [Math.sin(th),Math.cos(th)]; };     /* in (u,n) */
+  const insBild=v=>[v[0]*tang[0]+v[1]*aus[0], v[0]*tang[1]+v[1]*aus[1]];    /* Richtung → Bild */
+  /* ---- Oberfläche ---- */
+  const umax=Math.min(Math.PI*Rk*0.9995,(W+H)/k);
+  const zu=umax>=Math.PI*Rk*0.999;                   /* schließt sich der Bogen zum Kreis? */
+  const mi=(a,b2)=>a+(b2-a)*m;
+  ctx.beginPath();
+  for(let i=0;i<=200;i++){ const q=ortP(-umax+2*umax*i/200); i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1]); }
+  if(zu) ctx.closePath();
+  else { const tief=(W+H)*2;
+    const e1=ortP(umax), e2=ortP(-umax);
+    ctx.lineTo(e1[0]-aus[0]*tief,e1[1]-aus[1]*tief);
+    ctx.lineTo(e2[0]-aus[0]*tief,e2[1]-aus[1]*tief); ctx.closePath(); }
+  ctx.fillStyle='rgba('+Math.round(mi(239,146))+','+Math.round(mi(246,64))+','+Math.round(mi(255,14))+','+mi(1,0.08).toFixed(2)+')';
+  ctx.fill();
+  ctx.strokeStyle='rgb('+Math.round(mi(37,146))+','+Math.round(mi(99,64))+','+Math.round(mi(235,14))+')';
+  ctx.lineWidth=mi(2,2.5); ctx.stroke();
+  /* ---- Sonne: Schnittpunkt der beiden Strahlen (auf der Kugel liegt er unendlich weit) ---- */
+  const uA=sKm/2, uB=-sKm/2;
+  const pkt=u=>{ const th=u/Rk; return [Rk*Math.sin(th),Rk*(Math.cos(th)-1)]; };
+  const strahl=(u,sw)=>{ const th=u/Rk; return [Math.sin(th-sw*RAD),Math.cos(th-sw*RAD)]; };
+  const pA=pkt(uA), pB=pkt(uB), dA=strahl(uA,a1), dB=strahl(uB,a2);
+  const det=dA[0]*(-dB[1])-dA[1]*(-dB[0]);
+  let S=null, tS=0;
+  if(Math.abs(det)>1e-12){
+    const rx=pB[0]-pA[0], ry=pB[1]-pA[1];
+    tS=(rx*(-dB[1])-ry*(-dB[0]))/det;
+    if(tS>0) S=[pA[0]+dA[0]*tS, pA[1]+dA[1]*tS];
+  }
+  /* ---- Strahlen: an jedem Punkt der Oberfläche zur Sonne hin ---- */
+  const weit=Math.min(0.42*Math.PI*Rk,(W*0.8)/k);
+  ctx.save();
+  ctx.globalAlpha=clamp((1-m)/0.2,0,1);            /* am Ende bleiben nur die beiden Messstrahlen */
+  ctx.strokeStyle='rgba(234,179,8,.7)'; ctx.lineWidth=1.4;
+  for(let i=-8;i<=8;i++){
+    const u=i*weit/8, q=pkt(u), n=ortN(u);
+    const zurS=S?[S[0]-q[0],S[1]-q[1]]:dA;
+    const lg=Math.hypot(zurS[0],zurS[1])||1, dir=[zurS[0]/lg,zurS[1]/lg];
+    if(dir[0]*n[0]+dir[1]*n[1]<0.03) continue;       /* Nachtseite: kein Strahl */
+    const reich=S?Math.min(lg,(W+H)/k):(W+H)/k;
+    const q1=P(q[0],q[1]), q2=P(q[0]+dir[0]*reich,q[1]+dir[1]*reich);
+    ctx.beginPath(); ctx.moveTo(q1[0],q1[1]); ctx.lineTo(q2[0],q2[1]); ctx.stroke();
+  }
+  ctx.restore();
+  if(m<0.55){ ctx.save(); ctx.globalAlpha=clamp(1-m/0.55,0,1);
+    text('Sonnenstrahlen (parallel)',Mx+aus[0]*HV*0.42,My+aus[1]*HV*0.42,'#a16207',
+      {al:'center',sz:12,fett:true,rand:'#fff'});
+    ctx.restore(); }
+  /* ---- Mittelpunkt, Radien und Winkel alpha: verschwinden mit der Krümmung ---- */
+  if(m<0.6){
+    ctx.save(); ctx.globalAlpha=1-m/0.6;
+    const Z=P(0,-Rk);
+    ctx.strokeStyle='rgba(37,99,235,.45)'; ctx.lineWidth=1.2;
+    [pA,pB].forEach(q=>{ const qq=P(q[0],q[1]);
+      ctx.beginPath(); ctx.moveTo(Z[0],Z[1]); ctx.lineTo(qq[0],qq[1]); ctx.stroke(); });
+    const wa=Math.atan2(P(pA[0],pA[1])[1]-Z[1],P(pA[0],pA[1])[0]-Z[0]);
+    const wb=Math.atan2(P(pB[0],pB[1])[1]-Z[1],P(pB[0],pB[1])[0]-Z[0]);
+    pfeilBogen(Z[0],Z[1],Math.min(Rk*k*0.3,(W+H)),Math.min(wa,wb),Math.max(wa,wb),'#dc2626','\u03b1 = '+grad(Math.abs(bA-bB)));
+    ctx.restore();
+  }
+  /* ---- die beiden Stäbe mit Schatten ---- */
+  const stabPx=mi(Math.max(16,R0*0.17),L.stab);
+  [[uA,a1,'A',bA,'#2563eb'],[uB,a2,'B',bB,'#16a34a']].forEach(([u,sw,nm,br,farbe])=>{
+    const q=pkt(u), n=ortN(u), qq=P(q[0],q[1]);
+    const nb=insBild(n), tb=insBild([Math.cos(u/Rk),-Math.sin(u/Rk)]);   /* Tangente nach Norden */
+    const sp=[qq[0]+nb[0]*stabPx, qq[1]+nb[1]*stabPx];
+    ctx.strokeStyle=farbe; ctx.lineWidth=3;
+    ctx.beginPath(); ctx.moveTo(qq[0],qq[1]); ctx.lineTo(sp[0],sp[1]); ctx.stroke();
+    ctx.fillStyle=farbe; ctx.beginPath(); ctx.arc(qq[0],qq[1],3.8,0,7); ctx.fill();
+    text(nm,qq[0]+nb[0]*(stabPx+12*K),qq[1]+nb[1]*(stabPx+12*K),farbe,{al:'center',sz:14,fett:true,rand:'#fff'});
+    /* Schatten: so lang, wie der gemessene Winkel es verlangt, von der Sonne weg */
+    const sl=Math.tan(sw*RAD)*stabPx;
+    const sch=[qq[0]+tb[0]*sl, qq[1]+tb[1]*sl];
+    ctx.lineWidth=2.6; ctx.beginPath(); ctx.moveTo(qq[0],qq[1]); ctx.lineTo(sch[0],sch[1]); ctx.stroke();
+    /* der Strahl über die Stabspitze bis zur Schattenspitze */
+    ctx.strokeStyle='rgba(234,179,8,.95)'; ctx.lineWidth=1.7;
+    const sb=insBild(dA);                       /* ohne Schnittpunkt: von weit her, parallel */
+    const her=S?P(S[0],S[1]):[sp[0]+sb[0]*(W+H),sp[1]+sb[1]*(W+H)];
+    ctx.beginPath(); ctx.moveTo(her[0],her[1]); ctx.lineTo(sp[0],sp[1]); ctx.lineTo(sch[0],sch[1]); ctx.stroke();
+  });
+  /* ---- die Sonne, sobald sie ins Bild kommt ---- */
+  if(S){
+    const qs=P(S[0],S[1]);
+    const drin=qs[0]>-W*0.5&&qs[0]<W*1.5&&qs[1]>-H*0.5&&qs[1]<H;
+    if(drin){
+      ctx.save(); ctx.globalAlpha=clamp((m-0.25)/0.35,0,1);
+      const gr=ctx.createRadialGradient(qs[0],qs[1],0,qs[0],qs[1],46);
+      gr.addColorStop(0,'rgba(250,204,21,.6)'); gr.addColorStop(1,'rgba(250,204,21,0)');
+      ctx.fillStyle=gr; ctx.beginPath(); ctx.arc(qs[0],qs[1],46,0,7); ctx.fill();
+      ctx.fillStyle='#facc15'; ctx.beginPath(); ctx.arc(qs[0],qs[1],13,0,7); ctx.fill();
+      text('hier m\u00fcsste die Sonne stehen',qs[0],qs[1]-26*K,'#a16207',{al:'center',sz:13,fett:true,rand:'#fff'});
+      if(m>0.55&&isFinite(fl.h)&&fl.h>0){
+        ctx.globalAlpha=clamp((m-0.55)/0.4,0,1)*0.95;
+        /* Fußpunkt: vom Mittelpunkt aus in Richtung Sonne auf die Oberfläche */
+        const vx=S[0]-0, vy=S[1]+Rk, vl=Math.hypot(vx,vy)||1;
+        const fuss=P(vx/vl*Rk, vy/vl*Rk-Rk);
+        ctx.strokeStyle='#92400e'; ctx.lineWidth=1.3; ctx.setLineDash([6,4]);
+        ctx.beginPath(); ctx.moveTo(qs[0],qs[1]); ctx.lineTo(fuss[0],fuss[1]); ctx.stroke(); ctx.setLineDash([]);
+        text('h \u2248 '+zahl(fl.h,0)+' km',qs[0]+10*K,(qs[1]+fuss[1])/2,'#92400e',{sz:14,fett:true,rand:'#fff'});
+      }
+      ctx.restore();
+    }
+  }
+  /* ---- Beschriftung am Rand (in beiden Bildern gleich) ---- */
+  [[bA,a1,'A','#2563eb'],[bB,a2,'B','#16a34a']].forEach(([br,sw,nm,farbe],i)=>{
+    text(nm+': '+grad(br)+' N  \u2013  '+(Math.abs(sw)<0.3?'kein Schatten':'Schattenwinkel '+grad(Math.abs(sw))),
+      12,16*K+i*20*K,farbe,{sz:13,fett:true,rand:'#fff'});
+  });
+  if(m>0.5) text('flache Erde',W*0.05,My+14*K,'rgba(146,64,14,'+clamp((m-0.5)*2,0,1).toFixed(2)+')',{sz:12.5,fett:true});
+  if(m>0.7){ ctx.save(); ctx.globalAlpha=clamp((m-0.7)/0.3,0,1);
+    text('Zum Vergleich: In Wirklichkeit steht die Sonne 149,6 Mio km hoch.',W/2,HV-10*K,'#94a3b8',{al:'center',sz:12});
+    ctx.restore(); }
+  ctx.restore();
+}
+function zeichneErat(){
+  const E=D.erat, bA=E.a, bB=E.b, f=E.fehler/100;
+  if(!eratId) eratM=E.flach?1:0;                 /* ohne Lauf steht der Übergang fest */
+  if(eratM>0.002&&eratM<0.998){ zeichneEratUeber(eratM); return; }
+  ctx.fillStyle='#fff'; ctx.fillRect(0,0,W,H);
+  const e=erdumfang(bA,bB,f), fl=flacheSonne(bA,bB,f);
+  const hoch=infoHell(eratZeilen(E.flach,bA,bB,f));
   const HV=H-hoch;
   const uS=[Math.cos((90-SONNENDEK)*RAD),-Math.sin((90-SONNENDEK)*RAD)];   /* Richtung zur Sonne */
   const lauf=[-uS[0],-uS[1]];
@@ -2089,7 +2266,9 @@ function zeichneErat(){
     ctx.beginPath(); ctx.arc(cx,cy,R,0,7); ctx.fill(); ctx.stroke();
     ctx.strokeStyle='#bfdbfe'; ctx.lineWidth=1; ctx.setLineDash([5,4]);
     ctx.beginPath(); ctx.moveTo(cx-R,cy); ctx.lineTo(cx+R,cy); ctx.stroke(); ctx.setLineDash([]);
-    text('Äquator',cx+R+6,cy,'#64748b',{sz:12});
+    /* Der Nordpol liegt rechts, der Äquator oben: Die waagrechte Linie durch den
+       Mittelpunkt ist also die Erdachse. */
+    text('Erdachse',cx+R+6,cy,'#64748b',{sz:12});
     if(E.strahlen){
       /* Die Strahlen enden an der Erdoberfläche - sonst liefen sie quer durch die Kugel. */
       ctx.strokeStyle='rgba(234,179,8,.75)'; ctx.lineWidth=1.4;
@@ -2130,13 +2309,7 @@ function zeichneErat(){
   } else {
     /* Die Sonne liegt im flachen Modell nur wenige tausend Kilometer hoch - damit passt
        das ganze Bild in einen Maßstab: Boden, beide Orte und die Sonne darüber. */
-    const y0=HV*0.86, stab=32;
-    const xmin=Math.min(0,fl.sKm,fl.fussKm), xmax=Math.max(0,fl.sKm,fl.fussKm);
-    const spanne=Math.max(xmax-xmin,1)*1.25;
-    const jeKm=(isFinite(fl.h)&&fl.h>0)
-      ? Math.min(W*0.72/spanne, (HV*0.62)/fl.h)
-      : W*0.72/spanne;
-    const X=km=>W*0.5+(km-(xmin+xmax)/2)*jeKm;
+    const L=flachLage(fl,HV), y0=L.y0, stab=L.stab, jeKm=L.jeKm, X=L.X;
     ctx.strokeStyle='#92400e'; ctx.lineWidth=2.5;
     ctx.beginPath(); ctx.moveTo(W*0.04,y0); ctx.lineTo(W*0.96,y0); ctx.stroke();
     ctx.fillStyle='rgba(146,64,14,.08)'; ctx.fillRect(W*0.04,y0,W*0.92,HV-y0);
@@ -2151,7 +2324,7 @@ function zeichneErat(){
       ctx.fillStyle=farbe; ctx.beginPath(); ctx.arc(x,y0,3.5,0,7); ctx.fill();
       text(nm,x,y0+16*K,farbe,{al:'center',sz:14,fett:true});
       /* Schatten des Stabes am Boden: Er zeigt von der Sonne weg, sein Winkel ist der gemessene. */
-      const sch=-Math.tan(sw*RAD)*stab;
+      const sch=Math.tan(sw*RAD)*stab;        /* die Sonne steht links, der Schatten fällt nach rechts */
       ctx.lineWidth=2.6; ctx.beginPath(); ctx.moveTo(x,y0); ctx.lineTo(x+sch,y0); ctx.stroke();
       /* der Strahl: von der Sonne über die Stabspitze bis zur Schattenspitze */
       if(sichtbar){ ctx.strokeStyle='rgba(234,179,8,.9)'; ctx.lineWidth=1.6;
@@ -2734,6 +2907,10 @@ const HILFE={
     'mit bemaßter Höhe. Heraus kommen ein paar tausend Kilometer statt 149,6 Millionen – und vor allem: '+
     '<b>jedes Ortspaar ergibt einen anderen Wert</b>. Genau daran scheitert das flache Modell, während auf der '+
     'Kugel ein einziger Erdumfang zu allen Messungen passt.</p>'+
+    '<p>Beim Umschalten fährt das Bild weich von einem Modell ins andere: Der Ausschnitt mit den beiden Stäben '+
+    'wird herangezoomt und die Krümmung flach gezogen. Dabei sieht man, was das kostet – die vorher '+
+    '<b>parallelen</b> Sonnenstrahlen laufen zusammen, bis sie sich in einem Punkt treffen: dort müsste dann '+
+    'die Sonne stehen. Zurück geht es genauso.</p>'+
     '<h4>Zum Ausprobieren</h4><p>Zwei Orte dicht beieinander machen α winzig – dann schlägt jeder Messfehler riesig '+
     'durch. Deshalb wählte Eratosthenes zwei weit entfernte Orte.</p>'],
   mond:['Entfernung Erde–Mond',
@@ -2819,7 +2996,7 @@ $('rEA').oninput=e=>{ D.erat.a=+e.target.value; oberflaeche(); zeichne(); sync()
 $('rEB').oninput=e=>{ D.erat.b=+e.target.value; oberflaeche(); zeichne(); sync(); };
 $('rEF').oninput=e=>{ D.erat.fehler=+e.target.value; oberflaeche(); zeichne(); sync(); };
 an('tStrahlen',()=>{ D.erat.strahlen=!D.erat.strahlen; oberflaeche(); zeichne(); sync(); });
-an('tFlach',()=>{ D.erat.flach=!D.erat.flach; oberflaeche(); zeichne(); sync(); });
+an('tFlach',()=>{ D.erat.flach=!D.erat.flach; eratUebergang(D.erat.flach); oberflaeche(); sync(); });
 $('rEps').oninput=e=>{ D.mond.eps=+e.target.value; oberflaeche(); zeichne(); sync(); };
 $('mondBsp').onchange=e=>{ D.mond.eps=+e.target.value; oberflaeche(); zeichne(); sync(true); };
 an('tMondMass',()=>{ D.mond.mass=!D.mond.mass; oberflaeche(); zeichne(); sync(); });
