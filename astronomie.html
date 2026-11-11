@@ -698,7 +698,7 @@ const standard=()=>({ v:1, tab:'system', fontSize:14, fontBold:false, fontItalic
         lupe:false, tempoAlt2:355, letztes:null, wahl:null, ort:0, kuppelAn:false, kuppel:78,
         jahrErden:false, tagbahn:false, merkur:true, venus:true, mars:true, mond:true,
         ortMarke:true, aequator:false, durch:80,
-        epizykel:false,
+        epizykel:false, sehstrahl:false,
         az:35, el:26, dist:4.2, fov:30, panAz:0, panEl:0, ansichtMit:true },
   erat:{ a:31, b:23.5, fehler:0, strahlen:true, flach:false },
   mond:{ eps:8985, mass:false, hilf:true },
@@ -935,8 +935,11 @@ function scheibe(mitte,radius,normale,fuell,strich,beschr,farbe){
     const q=p2(add(mitte,mul(norm(e1),radius)));
     if(q) text(beschr,q[0]+6,q[1],farbe,{sz:12,fett:true,rand:'rgba(7,11,24,.8)'}); }
 }
+/* Die zuletzt gezeichneten Bahnebenen - der Teil VOR den Kugeln kommt später dran. */
+let EBENEN=[];
 function malEbenen(){
   const S=D.sys, t=S.t;
+  EBENEN=[];
   const zielP=rahmen(ortZ(AKT_ZIEL,S.t));
   const weite=betrag(sub(zielP,KAM.pos))*Math.tan(KAM.fov/2*RAD);
   const ep=rahmen(ortZ('erde',t));
@@ -945,9 +948,12 @@ function malEbenen(){
   const rMond=betrag(sub(ortZ('mond',t),ortZ('erde',t)))*1.25;
   /* Von weitem die ganze Ekliptik um die Sonne, aus der Nähe beide Ebenen um die Erde -
      dann sieht man den Winkel von 5,1° zwischen ihnen. */
-  if(weite>0.08) scheibe(rahmen(ortZ('sonne',t)),1.6,[0,0,1],'rgba(74,144,226,.10)','rgba(74,144,226,.55)','Erdbahnebene','#9ec5f3');
-  else scheibe(ep,rMond,[0,0,1],'rgba(74,144,226,.12)','rgba(74,144,226,.6)','Erdbahnebene','#9ec5f3');
+  if(weite>0.08){ scheibe(rahmen(ortZ('sonne',t)),1.6,[0,0,1],'rgba(74,144,226,.10)','rgba(74,144,226,.55)','Erdbahnebene','#9ec5f3');
+    EBENEN.push({mitte:rahmen(ortZ('sonne',t)),normale:[0,0,1],fuell:'rgba(74,144,226,.10)',strich:'rgba(74,144,226,.55)'}); }
+  else { scheibe(ep,rMond,[0,0,1],'rgba(74,144,226,.12)','rgba(74,144,226,.6)','Erdbahnebene','#9ec5f3');
+    EBENEN.push({mitte:ep,normale:[0,0,1],fuell:'rgba(74,144,226,.12)',strich:'rgba(74,144,226,.6)'}); }
   scheibe(ep,rMond,nMond,'rgba(226,232,240,.10)','rgba(226,232,240,.6)','Mondbahnebene','#e2e8f0');
+  EBENEN.push({mitte:ep,normale:nMond,fuell:'rgba(226,232,240,.10)',strich:'rgba(226,232,240,.6)'});
   const O=(KOERPER.mond.O+KOERPER.mond.dO*t)*RAD;
   const kn=[Math.cos(O),Math.sin(O),0];
   linie3([add(ep,mul(kn,-rMond*1.15)),add(ep,mul(kn,rMond*1.15))],'#fbbf24',1.6,0.9,[7,5]);
@@ -1427,6 +1433,66 @@ function ortsbahnAuf(E,Rz,t,alpha,dick){
   linie3(dunkel,'#38bdf8',2.2*(dick||1),(alpha==null?1:alpha)*0.95,[6,4]);
   linie3(hell,'#fbbf24',3.4*(dick||1),alpha==null?1:alpha);
 }
+/* Sehstrahl Erde – Mars: Die gestrichelte Linie zeigt, in welcher Richtung Mars von der
+   Erde aus steht. Läuft die Zeit, schwenkt sie mit - und bei der Schleife eine Weile
+   zurück. Sie geht etwas über Mars hinaus, damit man die Richtung am Himmel sieht. */
+function malSehstrahl(){
+  if(!D.sys.sehstrahl||AKT_VON!=='aussen'||!zeigeKoerper('mars')) return;
+  const t=D.sys.t, E=rahmen(ortZ('erde',t)), M=rahmen(ortZ('mars',t));
+  const d=sub(M,E); if(!(betrag(d)>0)) return;
+  const bis=add(E,mul(d,1.3));
+  linie3([E,bis],'rgba(217,100,58,.9)',1.6,1,[7,5]);
+  const q=p2(bis);
+  if(q&&q[0]>-60&&q[0]<W+60&&q[1]>-20&&q[1]<H)
+    text('Sehstrahl zum Mars',q[0]+6*K,q[1],'#d9643a',{sz:12,fett:true,rand:'rgba(7,11,24,.8)'});
+}
+/* Eine Bahnebene geht durch die Kugeln hindurch - gezeichnet wird sie aber vor ihnen,
+   also verschwindet ihr vorderer Teil hinter dem Körper. Dieser Teil wird hier
+   nachgetragen: Sichtbar ist die Sichel zwischen dem Umriss der Kugel und dem vorderen
+   Halbkreis des Schnittkreises (dort schneidet die Ebene die Oberfläche). */
+function ebeneVorKugel(eb,id){
+  const C=rahmen(ortZ(id,D.sys.t)), q=p2(C); if(!q) return;
+  const rho=bildRadius(id,q); if(rho<6) return;                  /* zu klein, um etwas zu sehen */
+  const R=radBild(rho,q), rs=umriss(rho);
+  const ab=dot(sub(C,eb.mitte),eb.normale);                      /* Abstand Kugelmitte – Ebene */
+  if(Math.abs(ab)>=R*0.999) return;                              /* die Ebene trifft nicht */
+  const Cs=sub(C,mul(eb.normale,ab)), r=Math.sqrt(Math.max(R*R-ab*ab,0));
+  const zurKam=norm(sub(KAM.pos,C));
+  const pk=kreisPunkte(Cs,r,eb.normale,96); pk.pop();            /* letzter Punkt ist der erste */
+  const vorn=pk.map(x=>dot(norm(sub(x,C)),zurKam)>0);
+  let anf=-1;
+  for(let i=0;i<pk.length;i++) if(vorn[i]&&!vorn[(i+pk.length-1)%pk.length]){ anf=i; break; }
+  if(anf<0) return;                                              /* ganz vorn oder ganz hinten */
+  const bogen=[];
+  for(let i=0;i<pk.length;i++){ const j=(anf+i)%pk.length; if(!vorn[j]) break;
+    const qq=p2(pk[j]); if(qq) bogen.push(qq); }
+  if(bogen.length<3) return;
+  const A=bogen[0], B=bogen[bogen.length-1], Mb=bogen[bogen.length>>1];
+  const wi=x=>Math.atan2(x[1]-q[1],x[0]-q[0]);
+  const seite=x=>(x[0]-A[0])*(B[1]-A[1])-(x[1]-A[1])*(B[0]-A[0]);
+  const wA=wi(A), wB=wi(B);
+  const auf=(w)=>[q[0]+rs*Math.cos(w),q[1]+rs*Math.sin(w)];
+  const mod=v=>((v%(2*Math.PI))+2*Math.PI)%(2*Math.PI);
+  const mUhr=auf(wB+mod(wA-wB)/2);                               /* Mitte des Bogens im Uhrzeigersinn */
+  const gegen=!(seite(mUhr)*seite(Mb)>0);                        /* derselbe Seite wie die Sichel? */
+  ctx.save();
+  ctx.beginPath();
+  bogen.forEach((x,i)=>i?ctx.lineTo(x[0],x[1]):ctx.moveTo(x[0],x[1]));
+  ctx.arc(q[0],q[1],rs,wB,wA,gegen);
+  ctx.closePath();
+  ctx.fillStyle=eb.fuell; ctx.fill();
+  ctx.restore();
+  /* die Schnittlinie auf der Kugel - dort tritt die Ebene aus der Oberfläche */
+  ctx.strokeStyle=eb.strich; ctx.lineWidth=1.2; ctx.globalAlpha=0.75;
+  ctx.beginPath(); bogen.forEach((x,i)=>i?ctx.lineTo(x[0],x[1]):ctx.moveTo(x[0],x[1])); ctx.stroke();
+  ctx.globalAlpha=1;
+}
+function malEbenenVorn(){
+  for(const eb of EBENEN) for(const id of ['erde','mond']){
+    if(id===AKT_VON||!zeigeKoerper(id)) continue;
+    ebeneVorKugel(eb,id);
+  }
+}
 function malOrtsbahn(){
   if(!D.sys.tagbahn) return;
   const t=D.sys.t, E=rahmen(ortZ('erde',t)), q=p2(E); if(!q) return;
@@ -1675,19 +1741,21 @@ function malInfoSystem(){
 /* Der Inhalt einer Ansicht - einmal für das große Bild, einmal für das zweite Fenster */
 function szeneMalen(){
   const S=D.sys, t=S.t, amOrt=(AKT_VON==='ort');
-  if(S.sterne) malSterne();
+  malSterne();                         /* der Sternhimmel gehört immer dazu */
   if(S.ebenen){ if(amOrt) malEkliptik(); else malEbenen(); }
   if(S.aequator&&amOrt) malAequator();
   if(S.bahnen){ malBahnen();
     if(amOrt){ malTagbogen('sonne','rgba(253,224,71,.9)');
       if(zeigeKoerper('mond')) malTagbogen('mond','rgba(226,232,240,.75)'); } }
   malEpizykel();
+  malSehstrahl();
   if(!amOrt) malJahresErden();
   const liste=['sonne','merkur','venus','erde','mars','mond']
     .filter(id=>id!==AKT_VON&&!(amOrt&&id==='erde')&&zeigeKoerper(id))
     .map(id=>({id,p:rahmen(ortZ(id,t))}));
   liste.sort((a,b)=>betrag(sub(b.p,KAM.pos))-betrag(sub(a.p,KAM.pos)));
   liste.forEach(o=>malKoerper(o.id,o.p));
+  if(S.ebenen&&!amOrt) malEbenenVorn();     /* die Ebenen gehen durch die Kugeln hindurch */
   if(schattenAn()) malSchatten();
   malFlecken();                        /* liegen auf der Kugel, also über dem Kegel */
   if(!amOrt) malOrtsbahn();
@@ -1921,24 +1989,29 @@ const GRUNDFALL={
        Abstand und Größenverhältnis bleiben dabei richtig. */
     stellen(S){ S.von='aussen'; S.bezug='erde'; S.ziel='erde'; S.stufe='echt'; S.dist=0.0115;
       S.az=sonnenLaenge(S.t)+127; S.el=66;        /* so läuft der Mond am zweiten Fenster vorbei */ S.bahnen=true; S.ebenen=false; S.schatten=false; S.sterne=true;
-      S.pip='erde'; S.pipZiel='mond'; S.jahrErden=false; S.tagbahn=false; S.kuppelAn=false; S.mond=true; } },
+      S.pip='erde'; S.pipZiel='mond'; S.jahrErden=false; S.tagbahn=false; S.kuppelAn=false;
+      S.mond=true; S.merkur=true; S.venus=true; S.mars=true; S.sehstrahl=false; } },
   sofi:{name:'Sonnenfinsternis', suche:'sofiT', tempo:0.006, hinweis:'Eine totale Sonnenfinsternis: Der Kernschatten des Mondes trifft die Erde – rechts zieht der Mond vor die Sonne',
     stellen(S){ ansichtFuer('sofi'); S.pip='erde'; S.pipZiel='sonne';
       S.sf=12;                                     /* Körper und Schattenkegel doppelt so groß */
-      S.jahrErden=false; S.tagbahn=false; S.kuppelAn=false; S.ebenen=false; S.mond=true; } },
+      S.jahrErden=false; S.tagbahn=false; S.kuppelAn=false; S.ebenen=false;
+      S.mond=true; S.merkur=true; S.venus=true; S.mars=true; S.sehstrahl=false; } },
   mofi:{name:'Mondfinsternis', suche:'mofi', tempo:0.008, hinweis:'Der Mond wandert in den Erdschatten – rechts, wie er dabei aussieht',
     stellen(S){ ansichtFuer('mofi'); S.pip='erde'; S.pipZiel='mond';
-      S.jahrErden=false; S.tagbahn=false; S.kuppelAn=false; S.ebenen=false; S.mond=true; } },
+      S.jahrErden=false; S.tagbahn=false; S.kuppelAn=false; S.ebenen=false;
+      S.mond=true; S.merkur=true; S.venus=true; S.mars=true; S.sehstrahl=false; } },
   jahr:{name:'Jahreszeiten', suche:'fruehling', tempo:8, hinweis:'Ein Jahr um die Sonne – die Achse zeigt immer in dieselbe Richtung',
     stellen(S){ S.von='aussen'; S.bezug='sonne'; S.ziel='sonne'; S.stufe='ansch'; S.dist=3.1;
       S.az=sonnenLaenge(S.t)+190; S.el=55;        /* so bleibt das zweite Fenster frei */ S.bahnen=true; S.ebenen=false; S.schatten=false; S.sterne=true;
       S.jahrErden=true; S.tagbahn=true; S.kuppelAn=false; S.pip='ort'; S.pipZiel='sonne';
-      S.mond=false;                               /* im Jahreslauf stört der Mond nur */ } },
+      S.mond=false; S.merkur=false; S.venus=false; S.mars=false;   /* im Jahreslauf stören sie nur */
+      S.sehstrahl=false; } },
   tag:{name:'Tageslängen', suche:'sommer', mittag:true, tempo:0.03,
     hinweis:'Ein Tag im Sommer – der helle Teil des Breitenkreises ist der Tag',
     stellen(S){ S.von='aussen'; S.bezug='erde'; S.ziel='erde'; S.stufe='echt'; S.dist=0.00045;
       S.az=sonnenLaenge(S.t)+115; S.el=16; S.bahnen=false; S.ebenen=false; S.schatten=false; S.sterne=true;
-      S.tagbahn=true; S.jahrErden=false; S.kuppelAn=false; S.pip='ort'; S.pipZiel='sonne'; S.mond=true; } },
+      S.tagbahn=true; S.jahrErden=false; S.kuppelAn=false; S.pip='ort'; S.pipZiel='sonne';
+      S.mond=true; S.merkur=true; S.venus=true; S.mars=true; S.sehstrahl=false; } },
   schleife:{name:'Rückläufige Bewegung des Mars', suche:'opposition', tempo:4,
     hinweis:'Die Erde überholt den Mars – vor den Sternen läuft er dabei eine Schleife',
     /* Gut zwei Monate vor der Opposition anfangen: Dann zeigt ▶ die ganze Schleife. */
@@ -1948,7 +2021,8 @@ const GRUNDFALL={
       S.bahnen=true; S.ebenen=false; S.schatten=false; S.sterne=true;
       S.merkur=false; S.venus=false; S.mars=true;  /* die beiden inneren stören hier nur */
       S.jahrErden=false; S.tagbahn=false; S.kuppelAn=false; S.aequator=false;
-      S.mond=true; S.pip='erde'; S.pipZiel='mars'; } }
+      S.mond=true; S.sehstrahl=true;              /* der Blick zum Mars macht die Schleife sichtbar */
+      S.pip='erde'; S.pipZiel='mars'; } }
 };
 function grundfall(art){
   const G=GRUNDFALL[art]; if(!G) return;
@@ -2694,11 +2768,11 @@ const ANZEIGEN=[
   ['kuppelAn','Horizontkuppel über dem Ort','Die Halbkugel des Himmels, den man von dort aus sieht'],
   ['aequator','Himmelsäquator','Die Ebene senkrecht zur Erdachse am Himmel – am Ort und auf der Horizontkuppel'],
   ['epizykel','Deferent und Epizykel','Ptolemäus: Jeder Planet am Ende zweier Arme – nur im geozentrischen Bild von außen'],
+  ['sehstrahl','Sehstrahl Erde–Mars','In welcher Richtung Mars von der Erde aus steht – bei der Schleife läuft sie eine Weile zurück'],
   ['mond','Mond mit Bahn','Bei den Jahreszeiten ist er voreingestellt aus - dort stört er nur'],
   ['merkur','Merkur mit Bahn',''],
   ['venus','Venus mit Bahn',''],
   ['mars','Mars mit Bahn','Planeten, die gerade stören, lassen sich hier samt Bahn ausblenden'],
-  ['sterne','Sternhimmel',''],
   ['namen','Namen der Himmelskörper','']
 ];
 $('anzBody').innerHTML=ANZEIGEN.map(([k,lab,hilf])=>
@@ -2880,7 +2954,7 @@ const HILFE={
     '(heller Teil Tag, blauer Nacht – dazu steht die Tageslänge im Bild), die Horizontkuppel mit ihrem Radius, '+
     'der <b>Himmelsäquator</b>, <b>Deferent und Epizykel</b>, <b>Mond</b>, <b>Merkur</b>, <b>Venus</b> und <b>Mars</b> '+
     '(jeder einzeln samt Bahn – wer gerade stört, kommt weg; bei den <b>Jahreszeiten</b> ist der Mond '+
-    'voreingestellt aus), Sternhimmel und Namen. Die Zahl am Knopf sagt, wie viel gerade '+
+    'voreingestellt aus, mit ihnen auch die drei Planeten) und die Namen der Himmelskörper. Die Zahl am Knopf sagt, wie viel gerade '+
     'eingeblendet ist.</p>'+
     '<p>Der <b>Himmelsäquator</b> ist die Ebene senkrecht zur Erdachse, an den Himmel verlängert: der Himmel '+
     'über dem Erdäquator. Er steht am Ort genau im Süden <b>90° minus Breite</b> hoch (in Amberg 40,6°), geht '+
