@@ -375,13 +375,14 @@
       <select id="selOrt" class="tog" title="Vom Boden eines Ortes in den Himmel schauen – mit Horizont, Himmelsrichtungen und Tagbogen" aria-label="Ort">
         <option value="">Ort wählen …</option>
       </select>
-      <select id="selZiel" title="Worauf geschaut wird" aria-label="Blick auf">
-        <option value="sonne">auf die Sonne</option>
-        <option value="erde" selected>auf die Erde</option>
-        <option value="mond">auf den Mond</option>
-        <option value="merkur">auf den Merkur</option>
-        <option value="venus">auf die Venus</option>
-        <option value="mars">auf den Mars</option>
+      <span class="lbl">Blick auf</span>
+      <select id="selZiel" title="Worauf geschaut wird – oder einen Körper im Bild antippen" aria-label="Blick auf">
+        <option value="sonne">die Sonne</option>
+        <option value="erde" selected>die Erde</option>
+        <option value="mond">den Mond</option>
+        <option value="merkur">den Merkur</option>
+        <option value="venus">die Venus</option>
+        <option value="mars">den Mars</option>
       </select>
       <span class="sep"></span>
       <select id="selStufe" title="Wie Größen und Abstände gezeigt werden" aria-label="Darstellung">
@@ -823,14 +824,26 @@ function standOrt(id,t){
   if(id==='mond') return add(p,mul(norm(sub(ortW('erde',t),p)),radW('mond')));
   return p;
 }
+/* Flug der Kamera zu einem neuen Blickziel - die Werte stehen hier oben, weil
+   kameraSetzen sie beim ersten Zeichnen schon braucht. */
+const FLUG_DAUER=0.7;
+let FLUG=null, flugId=0, flugLetzte=0;
+const flugWeich=x=>x<0.5?2*x*x:1-Math.pow(1-x,2)*2;
 function kameraSetzen(o){
   const S=o||D.sys;
   AKT_VON=S.von||'aussen'; AKT_ZIEL=S.ziel||'erde'; AKT_STUFE=S.stufe||null;
   AKT_UEB=S.himmelUeb||false;           /* nur das zweite Fenster setzt das */
-  const zielP=rahmen(ortZ(AKT_ZIEL,D.sys.t));
+  let zielP=rahmen(ortZ(AKT_ZIEL,D.sys.t));
+  /* Beim Wechsel des Blickziels gleitet die Kamera hinüber: Solange der Flug läuft,
+     liegt ihr Ziel zwischen altem und neuem Körper. Nur im großen Bild (o fehlt). */
+  const fl=(!o&&FLUG&&FLUG.von&&FLUG.von!==AKT_ZIEL)?flugWeich(FLUG.u):null;
+  if(fl!==null){ const vP=rahmen(ortZ(FLUG.von,D.sys.t));
+    zielP=[vP[0]+(zielP[0]-vP[0])*fl, vP[1]+(zielP[1]-vP[1])*fl, vP[2]+(zielP[2]-vP[2])*fl]; }
   let pos, fov;
   if(AKT_VON==='aussen'){
-    const az=(S.az||0)*RAD, el=(S.el||0)*RAD, d=S.dist||4.2;
+    const az=(S.az||0)*RAD, el=(S.el||0)*RAD;
+    let d=S.dist||4.2;
+    if(!o&&FLUG&&FLUG.dist0!==undefined) d=FLUG.dist0+(d-FLUG.dist0)*flugWeich(FLUG.u);
     pos=add(zielP,[d*Math.cos(el)*Math.cos(az), d*Math.cos(el)*Math.sin(az), d*Math.sin(el)]);
     fov=42;
   } else { pos=rahmen(standOrt(AKT_VON,D.sys.t)); fov=S.fov||25; }
@@ -1850,11 +1863,13 @@ function pipZielFeld(von,ziel,bx,by,bw){
   sel.hidden=false;
   sel.style.left=Math.round(bx)+'px'; sel.style.top=Math.round(by)+'px'; sel.style.width=Math.round(bw)+'px';
 }
+let PIP_RECT=null;                 /* Lage des zweiten Fensters - dort tippt man nicht */
 function malPip(){
   const o=pipOpt();
-  if(!o){ pipZielFeld(null); return; }
+  if(!o){ pipZielFeld(null); PIP_RECT=null; return; }
   const bw=Math.min(W*0.33,H*0.44,330), bh=bw*0.74;
   const bx=W-bw-10, by=34*K;
+  PIP_RECT=[bx,by,bw,bh];
   ctx.save();
   ctx.beginPath(); ctx.rect(bx,by,bw,bh); ctx.clip();
   ctx.fillStyle='#070b18'; ctx.fillRect(bx,by,bw,bh);
@@ -2866,6 +2881,11 @@ const HILFE={
     'als die Mondbahn, der Kernschatten des Mondes endet gerade bei der Erde, und der Mond passt genauso in den '+
     'Erdschatten wie in Wirklichkeit. Weil auch seine Abweichung von der Erdbahnebene mit überhöht wird, gibt es '+
     'die Finsternisse <b>zu denselben Zeiten</b> – im Bild dauern sie nur länger.</p>'+
+    '<h4>Blick auf</h4><p>Worauf geschaut wird, steht in der Auswahl <b>Blick auf</b> – schneller geht es mit '+
+    'einem kurzen <b>Tipp auf einen Körper</b> im Bild: Die Kamera gleitet hinüber und geht näher heran, '+
+    'gedreht und gezoomt wird danach um ihn. Ein Tipp auf eine der <b>vier Erden im Jahreslauf</b> springt '+
+    'zugleich zu ihrem Datum – dort steht die Erde dann wirklich. Ein Tipp ins Leere oder ins zweite Fenster '+
+    'ändert nichts.</p>'+
     '<h4>Standort</h4><p>Von <b>außen</b> dreht man die Szene mit dem Finger. Von <b>Sonne, Erde oder Mond</b> aus '+
     'steht man auf dem Körper und blickt auf den gewählten: Von der Erde auf den Mond sieht man die <b>Mondphase</b>, '+
     'auf die Sonne den <b>Venustransit</b>, auf Mars seine <b>Schleifenbahn</b> vor den Sternen.</p>'+
@@ -3086,6 +3106,61 @@ function schriftSetzen(d){ D.fontSize=clamp((D.fontSize||14)+d,10,26); schriftAn
 function schriftAnwenden(){ document.documentElement.style.setProperty('--fs',(D.fontSize||14)+'px'); K=(D.fontSize||14)/14; }
 an('fsM',()=>schriftSetzen(-1)); an('fsP',()=>schriftSetzen(1));
 
+/* ---------- Blick auf einen Körper: Antippen und weicher Flug ---------- */
+/* Ein kurzer Tipp auf einen Körper richtet den Blick auf ihn, die Kamera gleitet hinüber.
+   Ein Tipp auf eine der vier Jahres-Erden springt zugleich zu ihrem Datum - dort steht
+   die Erde dann wirklich. Ein Tipp ins Leere oder ins zweite Fenster tut nichts. */
+function flugSchritt(jetzt){
+  const dt=Math.min(0.08,(jetzt-flugLetzte)/1000); flugLetzte=jetzt;
+  if(FLUG){ FLUG.u+=dt/FLUG_DAUER; if(FLUG.u>=1) FLUG=null; }
+  flugId=FLUG?requestAnimationFrame(flugSchritt):0;
+  zeichne();
+}
+/* Wie weit weg ist gut? So, dass der Körper das Bild füllt - aber je Tipp höchstens
+   viermal näher, damit ein Fehlgriff nicht den Überblick kostet. */
+const zielAbstand=id=>clamp(Math.max(15*radZ(id),D.sys.dist/4),0.00006,40);
+function blickAuf(id,tz){
+  const S=D.sys;
+  if(typeof tz==='number'){ S.t=tz; S.lauf=false; laufStopp(); }
+  if(S.ziel!==id&&S.von!==id){ FLUG={von:S.ziel,u:0,dist0:S.dist}; S.ziel=id; }
+  if(S.von==='aussen') S.dist=zielAbstand(id);
+  else { S.panAz=0; S.panEl=0; fovPassend(); }   /* vom Körper aus rückt das Ziel in die Mitte */
+  if(FLUG&&!flugId){ flugLetzte=performance.now(); flugId=requestAnimationFrame(flugSchritt); }
+  toast('Blick '+(WORAUF[id]||'auf '+id));
+}
+/* Welcher Körper liegt unter dem Finger? Der vorderste, der nah genug dran ist. */
+function getroffen(x,y){
+  const S=D.sys, t=S.t; let best=null;
+  const pruef=(id,p,tz)=>{ const q=p2(p); if(!q) return;
+    const fass=Math.max(umriss(bildRadius(id,q)),20*K);
+    if(Math.hypot(q[0]-x,q[1]-y)>fass) return;
+    if(!best||q[2]<best.tiefe) best={id,tiefe:q[2],t:tz};
+  };
+  for(const id of ['sonne','merkur','venus','erde','mars','mond']){
+    if(id===AKT_VON||!zeigeKoerper(id)) continue;
+    if(AKT_VON==='ort'&&id==='erde') continue;
+    pruef(id,rahmen(ortZ(id,t)));
+  }
+  if(S.jahrErden&&AKT_VON==='aussen') jahresPunkte(t).forEach(e=>{
+    const p=rahmen(ortZ('erde',e.t)), q=p2(p); if(!q) return;
+    const fass=Math.max(F*radZ('erde')/q[2],ERD_MIND*K,20*K);
+    if(Math.hypot(q[0]-x,q[1]-y)>fass) return;
+    if(!best||q[2]<best.tiefe) best={id:'erde',tiefe:q[2],t:e.t};
+  });
+  return best;
+}
+function tippAuf(cx,cy){
+  if(D.tab!=='system') return;
+  const r=cv.getBoundingClientRect(), x=cx-r.left, y=cy-r.top;
+  if(PIP_RECT&&x>=PIP_RECT[0]&&x<=PIP_RECT[0]+PIP_RECT[2]
+     &&y>=PIP_RECT[1]&&y<=PIP_RECT[1]+PIP_RECT[3]) return;   /* zweites Fenster bleibt */
+  VX=0; VY=0; VW=W; VH=H; kameraSetzen();        /* nach dem Zeichnen steht die PiP-Kamera */
+  const tr=getroffen(x,y);
+  if(!tr) return;                                /* ins Leere getippt */
+  blickAuf(tr.id,tr.t);
+  oberflaeche(); zeichne(); sync(true);
+}
+
 /* ---------- Ziehen, Zoomen ---------- */
 function zoomen(f){
   const S=D.sys;
@@ -3093,7 +3168,11 @@ function zoomen(f){
   else S.fov=clamp(S.fov*f,0.08,90);
 }
 const zeiger=new Map();
-cv.addEventListener('pointerdown',e=>{ if(D.tab!=='system') return; zeiger.set(e.pointerId,{x:e.clientX,y:e.clientY}); });
+cv.addEventListener('pointerdown',e=>{ if(D.tab!=='system') return;
+  zeiger.set(e.pointerId,{x:e.clientX,y:e.clientY,x0:e.clientX,y0:e.clientY,
+    zeit:performance.now(),tipp:zeiger.size===0});
+  if(zeiger.size>1) zeiger.forEach(z=>{ z.tipp=false; });     /* zweiter Finger: kein Tipp */
+});
 cv.addEventListener('pointermove',e=>{
   if(D.tab!=='system') return; const p=zeiger.get(e.pointerId); if(!p) return; e.preventDefault();
   const S=D.sys;
@@ -3113,7 +3192,10 @@ cv.addEventListener('pointermove',e=>{
     zeichne();
   }
 },{passive:false});
-const zeigerWeg=e=>{ if(zeiger.delete(e.pointerId)) sync(true); };
+const zeigerWeg=e=>{ const z=zeiger.get(e.pointerId);
+  if(!zeiger.delete(e.pointerId)) return;
+  if(z&&z.tipp&&Math.hypot(e.clientX-z.x0,e.clientY-z.y0)<8&&performance.now()-z.zeit<450) tippAuf(e.clientX,e.clientY);
+  sync(true); };
 cv.addEventListener('pointerup',zeigerWeg); cv.addEventListener('pointercancel',zeigerWeg);
 cv.addEventListener('wheel',e=>{ if(D.tab!=='system') return; e.preventDefault();
   zoomen(e.deltaY<0?1/1.12:1.12); zeichne(); sync(); },{passive:false});
