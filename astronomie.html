@@ -333,6 +333,7 @@
       <label class="fld" title="Wie stark ein Messfehler durchschlägt">Messfehler <input type="range" id="rEF" min="0" max="100" step="1" value="0" aria-label="Messfehler"><span class="val" id="vEF">–</span></label>
       <span class="sep"></span>
       <button class="tog on" id="tStrahlen" title="Sonnenstrahlen einblenden">Strahlen</button>
+      <button class="tog" id="tZWinkel" title="Lupe auf den Z-Winkel: Der Schattenwinkel bei A ist genauso groß wie der Mittelpunktswinkel α">Geometrie</button>
       <button class="tog" id="tFlach" title="Zum Vergleich: dieselben Messungen auf einer flachen Erde">flache Erde</button>
     </div></span>
     <!-- ===== Erde–Mond ===== -->
@@ -710,7 +711,7 @@ const standard=()=>({ v:1, tab:'system', fontSize:14, fontBold:false, fontItalic
         ortMarke:true, aequator:false, durch:80,
         epizykel:false, sehstrahl:false,
         az:35, el:26, dist:4.2, fov:30, panAz:0, panEl:0, ansichtMit:true },
-  erat:{ a:31, b:23.5, fehler:0, strahlen:true, flach:false },
+  erat:{ a:31, b:23.5, fehler:0, strahlen:true, flach:false, geo:false },
   mond:{ par:95, mass:false, dreh:false },
   sonne:{ eps:8985, mass:false, hilf:true },
   stern:{ d:424, lupe:1200, spur:true, lauf:false } });
@@ -2348,6 +2349,59 @@ function zeichneEratUeber(roh){
     ctx.restore(); }
   ctx.restore();
 }
+/* Lupe auf den Z-Winkel: Die Sonnenstrahlen sind parallel, der Erdradius schneidet sie
+   als Gerade. Wechselwinkel an geschnittenen Parallelen sind gleich groß - genau deshalb
+   ist der Schattenwinkel bei A so groß wie der Mittelpunktswinkel α. Ohne diesen Schritt
+   bleibt die Rechnung des Eratosthenes ein Trick statt einer Begründung. */
+function bogenKurz(x,y,r,wa,wb,farbe,txt){
+  let d=wb-wa;
+  while(d>Math.PI) d-=2*Math.PI;
+  while(d<-Math.PI) d+=2*Math.PI;
+  pfeilBogen(x,y,r,Math.min(wa,wa+d),Math.max(wa,wa+d),farbe,txt);
+}
+function zWinkelLupe(bA,bB,f,uS,HV){
+  const bw=Math.min(W*0.38,340), bh=Math.min(bw*0.82,HV*0.56), bx=W-bw-14, by=HV-bh-12;
+  ctx.save();
+  ctx.beginPath(); ctx.rect(bx,by,bw,bh); ctx.clip();
+  ctx.fillStyle='#f8fafc'; ctx.fillRect(bx,by,bw,bh);
+  const w=(90-bA)*RAD, uA=[Math.cos(w),-Math.sin(w)];      /* Richtung Erdmitte → A */
+  /* Der wahre Winkel ist nur ein paar Grad - in der Lupe wird er auf mindestens 24°
+     aufgezogen, sonst liegen die beiden Schenkel aufeinander. Die Zahl bleibt die wahre. */
+  const swV=schattenW(bA)+f, gross=Math.abs(swV)<24;
+  const bZ=(gross?24:Math.abs(swV))*(swV<0?-1:1);
+  const uSz=[Math.cos(w+bZ*RAD),-Math.sin(w+bZ*RAD)];      /* gezeichnete Richtung zur Sonne */
+  const lauf=[-uSz[0],-uSz[1]];                            /* so laufen die Strahlen */
+  const L=Math.min(bw,bh)*0.66;
+  const O=[bx+bw*0.24,by+bh*0.74], A=[O[0]+uA[0]*L,O[1]+uA[1]*L];
+  const gerade=(P,d,v,h,farbe,breite,strich)=>{
+    ctx.strokeStyle=farbe; ctx.lineWidth=breite; ctx.setLineDash(strich||[]);
+    ctx.beginPath(); ctx.moveTo(P[0]-d[0]*v,P[1]-d[1]*v); ctx.lineTo(P[0]+d[0]*h,P[1]+d[1]*h); ctx.stroke();
+    ctx.setLineDash([]);
+  };
+  /* die beiden parallelen Sonnenstrahlen und der Erdradius als Schnittgerade */
+  gerade(O,lauf,L*0.95,L*0.75,'rgba(234,179,8,.95)',2);
+  gerade(A,lauf,L*0.95,L*0.75,'rgba(234,179,8,.95)',2);
+  gerade(O,uA,L*0.45,L*1.5,'#334155',1.8,[7,5]);
+  /* Punkte */
+  ctx.fillStyle='#16a34a'; ctx.beginPath(); ctx.arc(O[0],O[1],5,0,7); ctx.fill();
+  text('Erdmitte',O[0]-14*K,O[1]+13*K,'#16a34a',{al:'right',sz:11.5,fett:true,rand:'#f8fafc'});
+  ctx.fillStyle='#2563eb'; ctx.beginPath(); ctx.arc(A[0],A[1],5,0,7); ctx.fill();
+  text('A',A[0]+10*K,A[1]-8*K,'#2563eb',{al:'left',sz:13,fett:true});
+  /* der Stab bei A steht senkrecht, also in der Richtung des Radius */
+  ctx.strokeStyle='#2563eb'; ctx.lineWidth=3;
+  ctx.beginPath(); ctx.moveTo(A[0],A[1]); ctx.lineTo(A[0]+uA[0]*22,A[1]+uA[1]*22); ctx.stroke();
+  /* die beiden Wechselwinkel */
+  const wOA=Math.atan2(uA[1],uA[0]), wOS=Math.atan2(uSz[1],uSz[0]);
+  const wAO=Math.atan2(-uA[1],-uA[0]), wAL=Math.atan2(lauf[1],lauf[0]);
+  const sw=Math.abs(schattenW(bA)+f);
+  bogenKurz(O[0],O[1],L*0.52,wOA,wOS,'#dc2626','\u03b1 = '+grad(Math.abs(bA-bB)));
+  bogenKurz(A[0],A[1],L*0.42,wAO,wAL,'#dc2626',sw<0.3?'0\u00b0':grad(sw));
+  text('Z-Winkel an parallelen Strahlen',bx+bw/2,by+15*K,'#334155',{al:'center',sz:12.5,fett:true});
+  text('Schattenwinkel bei A = Winkel \u03b1',bx+bw/2,by+bh-(gross?24:11)*K,'#64748b',{al:'center',sz:11.5});
+  if(gross) text('(Winkel vergr\u00f6\u00dfert gezeichnet)',bx+bw/2,by+bh-10*K,'#94a3b8',{al:'center',sz:11});
+  ctx.restore();
+  ctx.strokeStyle='#cbd5e1'; ctx.lineWidth=1.4; ctx.strokeRect(bx+0.75,by+0.75,bw-1.5,bh-1.5);
+}
 function zeichneErat(){
   const E=D.erat, bA=E.a, bB=E.b, f=E.fehler/100;
   if(!eratId) eratM=E.flach?1:0;                 /* ohne Lauf steht der Übergang fest */
@@ -2404,6 +2458,7 @@ function zeichneErat(){
     ctx.strokeStyle='rgba(37,99,235,.45)'; ctx.lineWidth=1.2;
     [w1,w2].forEach(w=>{ ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(cx+R*Math.cos(w),cy-R*Math.sin(w)); ctx.stroke(); });
     pfeilBogen(cx,cy,R*0.3,-Math.max(w1,w2),-Math.min(w1,w2),'#dc2626','α = '+grad(Math.abs(bA-bB)));
+    if(E.geo) zWinkelLupe(bA,bB,f,uS,HV);         /* die Lupe auf den Z-Winkel */
   } else {
     /* Die Sonne liegt im flachen Modell nur wenige tausend Kilometer hoch - damit passt
        das ganze Bild in einen Maßstab: Boden, beide Orte und die Sonne darüber. */
@@ -2514,7 +2569,8 @@ function zeichneMond(){
       ctx.strokeStyle='#94a3b8'; ctx.lineWidth=1.3;
       ctx.beginPath(); ctx.moveTo(P[0]-tg[0]*r,P[1]-tg[1]*r); ctx.lineTo(P[0]+tg[0]*r,P[1]+tg[1]*r); ctx.stroke();
       const w0=Math.atan2(tg[1],tg[0]);
-      ctx.fillStyle='rgba(37,99,235,.07)'; ctx.strokeStyle='rgba(37,99,235,.5)'; ctx.lineWidth=1.2;
+      /* grau statt blau: Die Kuppel gehört zum Beobachter, nicht zur Erdkugel */
+      ctx.fillStyle='rgba(100,116,139,.16)'; ctx.strokeStyle='rgba(71,85,105,.75)'; ctx.lineWidth=1.3;
       ctx.beginPath(); ctx.arc(P[0],P[1],r,w0,w0+Math.PI,true); ctx.closePath(); ctx.fill(); ctx.stroke();
     }
     if(zumMond){ ctx.strokeStyle=farbe; ctx.lineWidth=1.6; ctx.setLineDash([5,4]);
@@ -2860,6 +2916,8 @@ function oberflaeche(){
   $('rEF').value=String(E.fehler); $('vEF').textContent=grad(E.fehler/100,2);
   $('tStrahlen').classList.toggle('on',E.strahlen);
   $('tFlach').classList.toggle('on',E.flach);
+  $('tZWinkel').classList.toggle('on',!!E.geo);
+  $('tZWinkel').closest('button').style.opacity=E.flach?'.5':'1';
   const M=D.mond;
   $('rPar').value=String(M.par); $('vPar').textContent=grad(M.par/100,2);
   $('parBsp').value=String(M.par);
@@ -3212,6 +3270,7 @@ $('rEB').oninput=e=>{ D.erat.b=+e.target.value; oberflaeche(); zeichne(); sync()
 $('rEF').oninput=e=>{ D.erat.fehler=+e.target.value; oberflaeche(); zeichne(); sync(); };
 an('tStrahlen',()=>{ D.erat.strahlen=!D.erat.strahlen; oberflaeche(); zeichne(); sync(); });
 an('tFlach',()=>{ D.erat.flach=!D.erat.flach; eratUebergang(D.erat.flach); oberflaeche(); sync(); });
+an('tZWinkel',()=>{ D.erat.geo=!D.erat.geo; oberflaeche(); zeichne(); sync(); });
 $('rPar').oninput=e=>{ D.mond.par=+e.target.value; oberflaeche(); zeichne(); sync(); };
 $('parBsp').onchange=e=>{ D.mond.par=+e.target.value; oberflaeche(); zeichne(); sync(true); };
 an('tMondMass',()=>{ D.mond.mass=!D.mond.mass; oberflaeche(); zeichne(); sync(); });
