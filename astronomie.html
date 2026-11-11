@@ -274,7 +274,7 @@
   <div id="bar">
     <div id="tabs">
       <button class="tb on" data-tab="system" title="Sonnensystem in 3D: Umläufe, Mondphasen, Finsternisse, Jahreszeiten, Schleifenbahnen">Sonnensystem</button>
-      <button class="tb" data-tab="erat" title="Erdumfang nach Eratosthenes aus zwei Schattenwinkeln">Erdumfang</button>
+      <button class="tb" data-tab="erat" title="Erdradius nach Eratosthenes: aus dem Schattenwinkel über den Erdumfang">Erdradius</button>
       <button class="tb" data-tab="mond" title="Entfernung Erde–Mond: Parallaxe zwischen Mondaufgang und Mond im Zenit">Erde–Mond</button>
       <button class="tb" data-tab="sonne" title="Entfernung Erde–Sonne nach Aristarch: Winkel beim genauen Halbmond">Erde–Sonne</button>
       <button class="tb" data-tab="stern" title="Entfernung naher Sterne: Parallaxe aus der Erdbahn">Sternparallaxe</button>
@@ -327,9 +327,8 @@
     </span>
     <!-- ===== Erdumfang ===== -->
     <span class="reihe" data-tab="erat" style="display:contents" hidden><div class="roll">
-      <select id="eratBsp" title="Beispielpaare" aria-label="Beispiel"></select>
-      <label class="fld">Ort A <input type="range" id="rEA" min="-30" max="75" step="0.5" value="31" aria-label="Breite Ort A"><span class="val" id="vEA">–</span></label>
-      <label class="fld">Ort B <input type="range" id="rEB" min="-30" max="75" step="0.5" value="23.5" aria-label="Breite Ort B"><span class="val" id="vEB">–</span></label>
+      <select id="eratBsp" title="Beispielorte für A" aria-label="Beispiel"></select>
+      <label class="fld" title="Breite des Ortes mit dem Schattenstab – Ort B liegt fest dort, wo die Sonne im Zenit steht">Ort A <input type="range" id="rEA" min="-30" max="75" step="0.5" value="31" aria-label="Breite Ort A"><span class="val" id="vEA">–</span></label>
       <label class="fld" title="Wie stark ein Messfehler durchschlägt">Messfehler <input type="range" id="rEF" min="0" max="100" step="1" value="0" aria-label="Messfehler"><span class="val" id="vEF">–</span></label>
       <span class="sep"></span>
       <button class="tog on" id="tStrahlen" title="Sonnenstrahlen einblenden">Strahlen</button>
@@ -2127,12 +2126,16 @@ function rechterWinkel(px,py,d1,d2,gr,farbe){
    ============================================================ */
 const U_WAHR=40075, KM_JE_GRAD=U_WAHR/360, SONNENDEK=23.4393;
 const schattenW=b=>b-SONNENDEK;
+/* Ort B liegt fest auf dem Wendekreis: Dort steht die Sonne im Zenit und wirft keinen
+   Schatten - genau der Fall, von dem Eratosthenes ausging (Syene). Gemessen wird nur der
+   Schattenwinkel bei A. */
 const ERAT_BSP=[
-  {n:'Alexandria und Syene (Eratosthenes)',a:31,b:23.5},
-  {n:'Hamburg und München',a:53.5,b:48},
-  {n:'Amberg und Rom',a:49.5,b:42},
-  {n:'Nordkap und Kairo',a:71,b:30},
-  {n:'zwei Nachbarorte',a:48,b:47.5}
+  {n:'Alexandria (Eratosthenes)',a:31},
+  {n:'Hamburg',a:53.5},
+  {n:'Amberg',a:49.5},
+  {n:'Nordkap',a:71},
+  {n:'Kairo',a:30},
+  {n:'dicht bei Syene',a:24}
 ];
 /* Flaches Modell: Dieselben Schattenwinkel verlangen eine nahe Sonne. Ihre Höhe folgt
    aus dem Strahlensatz - und faellt fuer jedes Ortspaar anders aus. Genau daran
@@ -2155,18 +2158,19 @@ function eratZeilen(flach,bA,bB,f){
   const fl=flacheSonne(bA,bB,f);
   let zeilen;
   if(!flach){
+    const rE=e.U/(2*Math.PI), abwR=(rE-R_ERDE)/R_ERDE*100;
     zeilen=[
-      {t: e.alpha<0.05 ? 'Beide Orte liegen fast gleich – der Winkel verschwindet'
-         : 'Erdumfang U = s · 360°/α = '+zahl(e.U,0)+' km   ('+(abw>=0?'+':'−')+zahl(Math.abs(abw),1)+' % gegenüber 40 075 km)',
+      {t: e.alpha<0.05 ? 'A liegt fast auf dem Wendekreis – ohne Schattenwinkel geht es nicht'
+         : 'Erdradius r = U / (2π) = '+zahl(rE,0)+' km   ('+(abwR>=0?'+':'−')+zahl(Math.abs(abwR),1)+' % gegenüber 6 378 km)',
        f:'#1f2430',sz:16,fett:true},
-      {t:'Schattenwinkel A: '+grad(Math.abs(schattenW(bA)+f))+' · B: '+grad(Math.abs(schattenW(bB)))
-        +' · Mittelpunktswinkel α = '+grad(e.alpha)+' · Entfernung s = '+zahl(e.s,0)+' km'},
-      {t: e.alpha<0.05 ? 'Ohne Winkelunterschied lässt sich nichts ausrechnen – deshalb wählte Eratosthenes zwei weit entfernte Orte.'
-         : 'Ein halbes Grad Messfehler verschiebt das Ergebnis um rund '+zahl(e.U*0.5/e.alpha,0)
-           +' km. Je kleiner α, desto stärker schlägt jeder Fehler durch.'}
+      {t:'Erdumfang U = s · 360°/α = '+zahl(e.U,0)+' km · α = Schattenwinkel bei A = '+grad(e.alpha)
+        +' · bei B steht die Sonne im Zenit (kein Schatten) · Entfernung s = '+zahl(e.s,0)+' km'},
+      {t: e.alpha<0.05 ? 'Ohne Winkelunterschied lässt sich nichts ausrechnen – deshalb nahm Eratosthenes zwei weit entfernte Orte.'
+         : 'Ein halbes Grad Messfehler verschiebt den Umfang um rund '+zahl(e.U*0.5/e.alpha,0)
+           +' km. Je kleiner α, desto stärker schlägt jeder Fehler durch. Mit r geht es weiter: Die Mondentfernung hängt daran.'}
     ];
   } else {
-    const andere=ERAT_BSP.slice(0,4).map(b=>b.n.replace(/ \(.*\)/,'')+' '+zahl(flacheSonne(b.a,b.b,0).h,0)+' km').join(' · ');
+    const andere=ERAT_BSP.slice(0,4).map(b=>b.n.replace(/ \(.*\)/,'')+' '+zahl(flacheSonne(b.a,SONNENDEK,0).h,0)+' km').join(' · ');
     zeilen=[
       {t: !isFinite(fl.h)||fl.h<=0 ? 'Mit diesen beiden Messungen kommt im flachen Modell gar keine Sonne heraus'
          : 'Im flachen Modell stünde die Sonne nur h = '+zahl(fl.h,0)+' km hoch – '
@@ -2212,7 +2216,7 @@ function eratUebergang(zu){
   eratLetzte=performance.now(); eratId=requestAnimationFrame(eratSchritt);
 }
 function zeichneEratUeber(roh){
-  const E=D.erat, bA=E.a, bB=E.b, f=E.fehler/100, m=eratWeich(clamp(roh,0,1));
+  const E=D.erat, bA=E.a, bB=SONNENDEK, f=E.fehler/100, m=eratWeich(clamp(roh,0,1));
   ctx.fillStyle='#fff'; ctx.fillRect(0,0,W,H);
   const fl=flacheSonne(bA,bB,f);
   const hoch=infoHell(eratZeilen(E.flach,bA,bB,f));   /* der Text des Ziels steht schon da */
@@ -2403,7 +2407,7 @@ function zWinkelLupe(bA,bB,f,uS,HV){
   ctx.strokeStyle='#cbd5e1'; ctx.lineWidth=1.4; ctx.strokeRect(bx+0.75,by+0.75,bw-1.5,bh-1.5);
 }
 function zeichneErat(){
-  const E=D.erat, bA=E.a, bB=E.b, f=E.fehler/100;
+  const E=D.erat, bA=E.a, bB=SONNENDEK, f=E.fehler/100;   /* B: dort steht die Sonne im Zenit */
   if(!eratId) eratM=E.flach?1:0;                 /* ohne Lauf steht der Übergang fest */
   if(eratM>0.002&&eratM<0.998){ zeichneEratUeber(eratM); return; }
   ctx.fillStyle='#fff'; ctx.fillRect(0,0,W,H);
@@ -2763,11 +2767,21 @@ function zeichneStern(){
   text('Sonne',sx,sy+16*K,'#a16207',{al:'center',sz:12,fett:true,rand:'#fff'});
   const e1=[sx-r0,sy], e2=[sx+r0,sy];
   const posten=[[e1,'Januar','#2563eb'],[e2,'Juli','#16a34a']];
-  /* Stern rechts, die Linien mit einer Bruchstelle */
-  const stx=W*0.58, sty=HV*0.3;
+  /* Stern rechts, die Linien mit einer Bruchstelle - und weiter bis zum fernen
+     Hintergrund: Dort zeigt sich die Parallaxe als Abstand der beiden Treffpunkte. */
+  const stx=W*0.53, sty=HV*0.3, xBg=W*0.70;
+  const bgZ=festerZufall(915);
+  ctx.strokeStyle='rgba(148,163,184,.5)'; ctx.lineWidth=1.2; ctx.setLineDash([4,5]);
+  ctx.beginPath(); ctx.moveTo(xBg,HV*0.07); ctx.lineTo(xBg,HV*0.86); ctx.stroke(); ctx.setLineDash([]);
+  for(let i=0;i<26;i++){ const yy=HV*0.07+bgZ()*HV*0.79, xx=xBg+(bgZ()-0.5)*14;
+    ctx.fillStyle='rgba(100,116,139,'+(0.35+bgZ()*0.5).toFixed(2)+')';
+    ctx.beginPath(); ctx.arc(xx,yy,bgZ()*1.5+0.8,0,7); ctx.fill(); }
+  text('ferne Sterne',xBg,HV*0.045,'#64748b',{al:'center',sz:12,fett:true});
+  const bisBg=(e)=>{ const t=(xBg-e[0])/Math.max(stx-e[0],1e-6);
+    return [xBg, e[1]+(sty-e[1])*t]; };
   posten.forEach(([e,nm,farbe])=>{
     ctx.fillStyle=farbe; ctx.beginPath(); ctx.arc(e[0],e[1],6,0,7); ctx.fill();
-    text(nm,e[0],e[1]+(nm==='Januar'?18*K:18*K),farbe,{al:'center',sz:12,fett:true,rand:'#fff'});
+    text(nm,e[0],e[1]+18*K,farbe,{al:'center',sz:12,fett:true,rand:'#fff'});
     ctx.strokeStyle=farbe; ctx.lineWidth=1.5;
     const mx=(e[0]+stx)/2, my=(e[1]+sty)/2, dx=stx-e[0], dy=sty-e[1], l=Math.hypot(dx,dy);
     const nx=-dy/l, ny=dx/l;
@@ -2777,13 +2791,21 @@ function zeichneStern(){
     ctx.lineTo(mx+dx*0.02-nx*6,my+dy*0.02-ny*6);
     ctx.lineTo(mx+dx*0.04,my+dy*0.04);
     ctx.lineTo(stx,sty); ctx.stroke();
+    /* über den Stern hinaus bis zum Hintergrund */
+    const bg=bisBg(e);
+    ctx.setLineDash([5,4]); ctx.lineWidth=1.2;
+    ctx.beginPath(); ctx.moveTo(stx,sty); ctx.lineTo(bg[0],bg[1]); ctx.stroke(); ctx.setLineDash([]);
+    ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(bg[0]-6,bg[1]); ctx.lineTo(bg[0]+6,bg[1]); ctx.stroke();
+    text(nm.slice(0,3),bg[0]+10*K,bg[1],farbe,{al:'left',sz:11.5,fett:true,rand:'#fff'});
   });
   /* die Erde läuft ihre Bahn ab - dann sieht man, woher die Jahresellipse kommt */
   if(St.lauf){
     const w=Math.PI+2*Math.PI*sternU;
     const ep=[sx+r0*Math.cos(w), sy+r0*0.42*Math.sin(w)];
-    ctx.strokeStyle='rgba(220,38,38,.7)'; ctx.lineWidth=1.3; ctx.setLineDash([5,4]);
-    ctx.beginPath(); ctx.moveTo(ep[0],ep[1]); ctx.lineTo(stx,sty); ctx.stroke(); ctx.setLineDash([]);
+    const bgL=bisBg(ep);
+    ctx.strokeStyle='rgba(220,38,38,.8)'; ctx.lineWidth=1.4; ctx.setLineDash([5,4]);
+    ctx.beginPath(); ctx.moveTo(ep[0],ep[1]); ctx.lineTo(bgL[0],bgL[1]); ctx.stroke(); ctx.setLineDash([]);
+    ctx.lineWidth=2.4; ctx.beginPath(); ctx.moveTo(bgL[0]-7,bgL[1]); ctx.lineTo(bgL[0]+7,bgL[1]); ctx.stroke();
     ctx.fillStyle='#dc2626'; ctx.beginPath(); ctx.arc(ep[0],ep[1],6.5,0,7); ctx.fill();
     text(MONATE[Math.floor(sternU*12)%12],ep[0],ep[1]-14*K,'#dc2626',{al:'center',sz:12,fett:true,rand:'#fff'});
   }
@@ -2912,7 +2934,6 @@ function oberflaeche(){
   $('setSFv').textContent=zahl(sfUI(),0)+'-fach · Mondbahn '+grad(neigungUI(),0);
   const E=D.erat;
   $('rEA').value=String(E.a); $('vEA').textContent=grad(E.a)+' N';
-  $('rEB').value=String(E.b); $('vEB').textContent=grad(E.b)+' N';
   $('rEF').value=String(E.fehler); $('vEF').textContent=grad(E.fehler/100,2);
   $('tStrahlen').classList.toggle('on',E.strahlen);
   $('tFlach').classList.toggle('on',E.flach);
@@ -3162,11 +3183,16 @@ const HILFE={
     'Erde auf Mond, Sonne, Venus oder Mars, vom Mond auf die Erde, von außen auf das Erde-Mond-System oder auf '+
     'das ganze Sonnensystem. Steht sie auf <b>automatisch</b>, sucht sich das Fenster das Ziel selbst: bei '+
     'Sonnenfinsternis und Venustransit von der Erde zur Sonne, sonst zum Mond.</p>'],
-  erat:['Erdumfang nach Eratosthenes',
+  erat:['Erdradius nach Eratosthenes',
     '<p>Um −240 misst Eratosthenes in Alexandria zur Mittagszeit der Sommersonnenwende den Schattenwinkel eines '+
     'senkrechten Stabes: 7,2°. In Syene wirft ein Stab an diesem Tag keinen Schatten – die Sonne steht im Zenit.</p>'+
-    '<p>Weil die Sonnenstrahlen praktisch parallel einfallen, ist der Unterschied der Schattenwinkel genau der '+
-    '<b>Mittelpunktswinkel</b> α zwischen beiden Orten:</p><p><b>U = s · 360° / α</b></p>'+
+    '<p>Weil die Sonnenstrahlen praktisch parallel einfallen, ist der Schattenwinkel bei A genau der '+
+    '<b>Mittelpunktswinkel</b> α zwischen beiden Orten – der Knopf <b>Geometrie</b> zeigt das als '+
+    '<b>Z-Winkel</b> an geschnittenen Parallelen. Damit:</p>'+
+    '<p><b>U = s · 360° / α</b>   und daraus   <b>r = U / (2π)</b></p>'+
+    '<p>Auf den Erdradius kommt es an: Die nächste Seite bestimmt damit die Entfernung zum Mond. Ort B liegt hier '+
+    'fest dort, wo die Sonne im Zenit steht (wie Syene) – so braucht es nur eine Messung, nämlich den '+
+    'Schattenwinkel bei A.</p>'+
     '<h4>Was daran groß ist</h4><p>Nötig sind nur ein Stab, ein Schatten und eine Streckenlänge. Vorausgesetzt wird '+
     'aber zweierlei: dass die Erde eine <b>Kugel</b> ist und dass die Sonne so weit weg steht, dass ihre Strahlen als '+
     '<b>parallel</b> gelten.</p>'+
@@ -3174,14 +3200,14 @@ const HILFE={
     '<b>nahe</b> stehen, und ihre Höhe folgt aus dem Strahlensatz – <b>h = s / (tan α_A − tan α_B)</b>. Das Bild '+
     'zeigt den Boden, beide Stäbe mit ihren Schatten, die beiden Strahlen und die Sonne, bei der sie sich treffen, '+
     'mit bemaßter Höhe. Heraus kommen ein paar tausend Kilometer statt 149,6 Millionen – und vor allem: '+
-    '<b>jedes Ortspaar ergibt einen anderen Wert</b>. Genau daran scheitert das flache Modell, während auf der '+
+    '<b>jeder Ort ergibt einen anderen Wert</b>. Genau daran scheitert das flache Modell, während auf der '+
     'Kugel ein einziger Erdumfang zu allen Messungen passt.</p>'+
     '<p>Beim Umschalten fährt das Bild weich von einem Modell ins andere: Der Ausschnitt mit den beiden Stäben '+
     'wird herangezoomt und die Krümmung flach gezogen. Dabei sieht man, was das kostet – die vorher '+
     '<b>parallelen</b> Sonnenstrahlen laufen zusammen, bis sie sich in einem Punkt treffen: dort müsste dann '+
     'die Sonne stehen. Zurück geht es genauso.</p>'+
-    '<h4>Zum Ausprobieren</h4><p>Zwei Orte dicht beieinander machen α winzig – dann schlägt jeder Messfehler riesig '+
-    'durch. Deshalb wählte Eratosthenes zwei weit entfernte Orte.</p>'],
+    '<h4>Zum Ausprobieren</h4><p>Liegt A dicht beim Wendekreis, wird α winzig – dann schlägt jeder Messfehler '+
+    'riesig durch. Deshalb nahm Eratosthenes zwei weit entfernte Orte.</p>'],
   mond:['Entfernung Erde–Mond',
     '<p>Zwischen dem <b>Mondaufgang</b> und dem Augenblick, in dem der Mond genau im <b>Zenit</b> steht, dreht '+
     'sich die Erde fast eine Vierteldrehung weiter – knapp sechs Stunden lang. Der Beobachter schaut dadurch von '+
@@ -3264,9 +3290,8 @@ $('selPip').onchange=e=>{ D.sys.pip=e.target.value; D.sys.pipZiel='auto'; zeichn
 $('selPipZiel').onchange=e=>{ D.sys.pipZiel=e.target.value; zeichne(); sync(true); };
 $('selStufe').onchange=e=>{ D.sys.stufe=e.target.value; oberflaeche(); zeichne(); sync(true); };
 $('eratBsp').onchange=e=>{ const b=ERAT_BSP[+e.target.value]; if(!b) return;
-  D.erat.a=b.a; D.erat.b=b.b; oberflaeche(); zeichne(); sync(true); };
+  D.erat.a=b.a; oberflaeche(); zeichne(); sync(true); };
 $('rEA').oninput=e=>{ D.erat.a=+e.target.value; oberflaeche(); zeichne(); sync(); };
-$('rEB').oninput=e=>{ D.erat.b=+e.target.value; oberflaeche(); zeichne(); sync(); };
 $('rEF').oninput=e=>{ D.erat.fehler=+e.target.value; oberflaeche(); zeichne(); sync(); };
 an('tStrahlen',()=>{ D.erat.strahlen=!D.erat.strahlen; oberflaeche(); zeichne(); sync(); });
 an('tFlach',()=>{ D.erat.flach=!D.erat.flach; eratUebergang(D.erat.flach); oberflaeche(); sync(); });
