@@ -957,8 +957,9 @@ function scheibe(mitte,radius,normale,fuell,strich,beschr,farbe){
     const q=p2(add(mitte,mul(norm(e1),radius)));
     if(q) text(beschr,q[0]+6,q[1],farbe,{sz:12,fett:true,rand:'rgba(7,11,24,.8)'}); }
 }
-/* Die zuletzt gezeichneten Bahnebenen - der Teil VOR den Kugeln kommt später dran. */
-let EBENEN=[];
+/* Die zuletzt gezeichneten Bahnebenen und Bahnkurven - was davon VOR den Kugeln liegt,
+   kommt später dran, wenn die Kugeln stehen. */
+let EBENEN=[], BAHNEN=[];
 function malEbenen(){
   const S=D.sys, t=S.t;
   EBENEN=[];
@@ -1007,18 +1008,21 @@ function malBahnen(){
     let rm=0; pk.forEach(q=>{ rm=Math.max(rm,betrag(sub(q,zielP))); });
     if(!passt(rm)) continue;
     linie3(pk,KOERPER[id].farbe,1.5,0.65);
+    BAHNEN.push({pk,farbe:KOERPER[id].farbe,breite:1.5,alpha:0.65});
   }
   /* Der Mond läuft um die Erde - seine Bahn gehört an die Erde, nicht um die Sonne gelegt. */
   if(zeigeKoerper('mond')){ const ep=rahmen(ortZ('erde',S.t)), P=KOERPER.mond.T, pk=[];
     for(let i=0;i<=160;i++){ const tt=S.t+P*i/160;
       pk.push(add(ep,sub(ortZ('mond',tt),ortZ('erde',tt)))); }
     let rm=0; pk.forEach(q=>{ rm=Math.max(rm,betrag(sub(q,zielP))); });
-    if(passt(rm)) linie3(pk,KOERPER.mond.farbe,1.1,0.5); }
+    if(passt(rm)){ linie3(pk,KOERPER.mond.farbe,1.1,0.5);
+      BAHNEN.push({pk,farbe:KOERPER.mond.farbe,breite:1.1,alpha:0.5}); } }
   if(S.bezug==='erde'){                                       /* die Sonne läuft im geozentrischen Bild mit */
     const P=KOERPER.erde.T, pk=[];
     for(let i=0;i<=240;i++){ const tt=S.t+P*i/240; pk.push(sub(ortZ('sonne',tt),nullPunkt(tt))); }
     let rm=0; pk.forEach(q=>{ rm=Math.max(rm,betrag(sub(q,zielP))); });
-    if(passt(rm)) linie3(pk,KOERPER.sonne.farbe,1.5,0.65);
+    if(passt(rm)){ linie3(pk,KOERPER.sonne.farbe,1.5,0.65);
+      BAHNEN.push({pk,farbe:KOERPER.sonne.farbe,breite:1.5,alpha:0.65}); }
   }
 }
 /* Wie tief steckt der Körper im Schatten des anderen? 0 = frei, 1 = ganz im Kernschatten */
@@ -1464,6 +1468,7 @@ function malSehstrahl(){
   const d=sub(M,E); if(!(betrag(d)>0)) return;
   const bis=add(E,mul(d,1.3));
   linie3([E,bis],'rgba(217,100,58,.9)',1.6,1,[7,5]);
+  BAHNEN.push({pk:[E,bis],farbe:'rgba(217,100,58,.9)',breite:1.6,alpha:1,strich:[7,5]});
   const q=p2(bis);
   if(q&&q[0]>-60&&q[0]<W+60&&q[1]>-20&&q[1]<H)
     text('Sehstrahl zum Mars',q[0]+6*K,q[1],'#d9643a',{sz:12,fett:true,rand:'rgba(7,11,24,.8)'});
@@ -1513,6 +1518,41 @@ function malEbenenVorn(){
   for(const eb of EBENEN) for(const id of ['erde','mond']){
     if(id===AKT_VON||!zeigeKoerper(id)) continue;
     ebeneVorKugel(eb,id);
+  }
+}
+/* Dasselbe für die Linien, die um die Kugeln herumlaufen: Bahnkurven, Deferent und
+   Epizykel samt Armen und der Sehstrahl zum Mars. Die Mondbahn etwa läuft zur Hälfte VOR
+   der Erde vorbei, wird aber vor den Kugeln gezeichnet und verschwindet deshalb hinter
+   ihnen. Hier kommt nachträglich das zurück, was im Umriss einer Kugel liegt und für die
+   Kamera vor ihr steht - bei den Mondphasen also der vordere Bogen der Mondbahn. */
+function malBahnenVorn(){
+  if(!BAHNEN.length) return;
+  const kugeln=[];
+  for(const id of ['sonne','merkur','venus','erde','mars','mond']){
+    if(id===AKT_VON||!zeigeKoerper(id)) continue;
+    const M=rahmen(ortZ(id,D.sys.t)), q=p2(M); if(!q) continue;
+    const rho=bildRadius(id,q); if(rho<3) continue;            /* zu klein, um etwas zu verdecken */
+    kugeln.push({M,R:radBild(rho,q),q,rs:umriss(rho)});
+  }
+  if(!kugeln.length) return;
+  const vorn=X=>{ const q=p2(X); if(!q) return false;
+    for(const k of kugeln){ const dx=q[0]-k.q[0], dy=q[1]-k.q[1];
+      if(dx*dx+dy*dy<=k.rs*k.rs&&!hinterKugel(X,k.M,k.R)) return true; }
+    return false; };
+  /* Der Übergang liegt zwischen zwei Stützpunkten - sonst klafft am Kugelrand eine Lücke. */
+  const grenze=(ja,nein)=>{ let a=ja,b=nein;
+    for(let i=0;i<7;i++){ const m=mul(add(a,b),0.5); if(vorn(m)) a=m; else b=m; }
+    return a; };
+  for(const bahn of BAHNEN){
+    const pk=bahn.pk; let stueck=null;
+    const fertig=()=>{ if(stueck&&stueck.length>1) linie3(stueck,bahn.farbe,bahn.breite,bahn.alpha,bahn.strich); stueck=null; };
+    for(let i=0;i<pk.length;i++){
+      if(vorn(pk[i])){
+        if(!stueck){ stueck=[]; if(i>0) stueck.push(grenze(pk[i],pk[i-1])); }
+        stueck.push(pk[i]);
+      } else if(stueck){ stueck.push(grenze(pk[i-1],pk[i])); fertig(); }
+    }
+    fertig();
   }
 }
 function malOrtsbahn(){
@@ -1764,6 +1804,7 @@ function malInfoSystem(){
 function szeneMalen(){
   const S=D.sys, t=S.t, amOrt=(AKT_VON==='ort');
   malSterne();                         /* der Sternhimmel gehört immer dazu */
+  BAHNEN=[];                           /* sammelt, was später VOR den Kugeln nachzutragen ist */
   if(S.ebenen){ if(amOrt) malEkliptik(); else malEbenen(); }
   if(S.aequator&&amOrt) malAequator();
   if(S.bahnen){ malBahnen();
@@ -1778,6 +1819,7 @@ function szeneMalen(){
   liste.sort((a,b)=>betrag(sub(b.p,KAM.pos))-betrag(sub(a.p,KAM.pos)));
   liste.forEach(o=>malKoerper(o.id,o.p));
   if(S.ebenen&&!amOrt) malEbenenVorn();     /* die Ebenen gehen durch die Kugeln hindurch */
+  if(!amOrt) malBahnenVorn();               /* ebenso die Bahnen - die Mondbahn läuft vor der Erde vorbei */
   if(schattenAn()) malSchatten();
   malFlecken();                        /* liegen auf der Kugel, also über dem Kegel */
   if(!amOrt) malOrtsbahn();
@@ -1804,12 +1846,16 @@ function malEpizykel(){
     const farbe=KOERPER[id].farbe, C0=add(E0,mitte(t0));
     const def=[]; for(let i=0;i<=240;i++) def.push(add(E0,mitte(t0+PD*i/240)));
     linie3(def,farbe,1.3,0.45,[6,5]);
+    BAHNEN.push({pk:def,farbe,breite:1.3,alpha:0.45,strich:[6,5]});
     const epi=[]; let oben=null;
     for(let i=0;i<=160;i++){ const pp=add(C0,arm(t0+PE*i/160)); epi.push(pp);
       const qq=p2(pp); if(qq&&(!oben||qq[1]<oben[1])) oben=qq; }
     linie3(epi,farbe,1.4,0.8);
+    BAHNEN.push({pk:epi,farbe,breite:1.4,alpha:0.8});
     linie3([E0,C0],'rgba(226,232,240,.45)',1.1,1,[3,3]);          /* Deferentenarm */
+    BAHNEN.push({pk:[E0,C0],farbe:'rgba(226,232,240,.45)',breite:1.1,alpha:1,strich:[3,3]});
     linie3([C0,add(C0,arm(t0))],rgba(farbe,0.95),1.6);            /* Epizykelarm */
+    BAHNEN.push({pk:[C0,add(C0,arm(t0))],farbe:rgba(farbe,0.95),breite:1.6,alpha:1});
     const qc=p2(C0); if(!qc) continue;
     ctx.strokeStyle=rgba(farbe,0.95); ctx.lineWidth=1.4;
     ctx.beginPath(); ctx.arc(qc[0],qc[1],3.2,0,7); ctx.stroke();
