@@ -30,7 +30,12 @@ Allgemeine Regeln für alle Projekte stehen in `~/git/CLAUDE.md`.
     `memory-bibliothek.js` (Kopie aus der Spiele-Suite – bei Änderungen dort neu übernehmen), `brueche-bibliothek.js`,
     `funktionen-bibliothek.js`, `diagramme-bibliothek.js`, `pse-data.js`, `nuklid-data.js`, `beschriften-vorlagen.js`.
   - `vendor/` = lokale Fremdbibliotheken (pdf.js, jspdf, qrcode …) – nichts vom CDN laden, sonst nicht offline.
-- Fremde Werkzeuge des Nutzers (motiontracker, videophysik, singmyfunction, versuchsprotokoll, geschichte) liegen
+- **motiontracker.html ist nicht mehr unverändert:** Video-Mitschnitt der Aufnahme, ▶-Knopf und
+  Zeitstrich in den Diagrammen sind hier eingebaut (11/2026). Dieselbe Änderung steckt im eigenen Repo
+  `mauthier-bit/motiontracker` (dessen Datei hat zusätzlich zwei Kopfzeilen für Manifest und Themenfarbe).
+  Eine neue Fassung also **nicht blind drüberkopieren** – Anpassung nachziehen. Die Kopien unter
+  `Documents/Schule` verteilt `~/git/verteile-motiontracker.sh` (die Handy-Fassung bleibt dabei außen vor).
+- Fremde Werkzeuge des Nutzers (videophysik, singmyfunction, versuchsprotokoll, geschichte) liegen
   **unverändert** im Repo, damit eine neue Fassung einfach drüberkopiert werden kann. Werkzeuge, die aus anderen
   Projekten in `/git/` stammen und für die Tafel angepasst wurden (terme-rechner, figuren-koerper), **nicht** blind
   überschreiben – Anpassungen nachziehen.
