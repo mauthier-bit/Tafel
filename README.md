@@ -2713,9 +2713,15 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     stehen), darunter die **Ansicht** – Standort, Blickziel, Darstellung, Bezug, zweites Fenster und
     der Knopf **Anzeigen**, hinter dem alle Einblendungen als Häkchenliste stehen (die Zahl am Knopf
     sagt, wie viel gerade eingeblendet ist). Die Liste ist in **vier Abschnitte** gegliedert –
-    **Bahnen und Ebenen**, **Erde, Ort und Himmel**, **Weltbild des Ptolemäus** und
-    **Himmelskörper** – und das Feld bleibt ganz im Fenster, der letzte Eintrag wird also nicht mehr
-    vom unteren Rand abgeschnitten. **▶** startet die Zeit, **Tempo** sagt, wie viel Modellzeit auf eine Sekunde kommt (von Minuten bis
+    ganz oben die **Himmelskörper**, darunter **Bahnen und Ebenen**, **Erde, Ort und Himmel** und das
+    **Weltbild des Ptolemäus** – und das Feld bleibt ganz im Fenster, der letzte Eintrag wird also
+    nicht mehr vom unteren Rand abgeschnitten. Bei jedem Himmelskörper steht links der Haken für den
+    **Körper** und rechts daneben einer für seine **Bahn**: Mond, Merkur, Venus und Mars lassen sich
+    so einzeln wegschalten – der Körper, seine Bahnkurve oder beides. **alle Bahnkurven** ist der
+    Hauptschalter darüber; ist er aus, verschwinden auch die Bahnen von Erde und Sonne, und die
+    einzelnen Haken stehen blass da, weil sie dann nichts bewirken. Sie zählen nicht in die Zahl am
+    Knopf mit – sie gehören zum Körper darüber. Jeder Grundfall schaltet einzeln abgeschaltete Bahnen
+    wieder ein, damit ein gewähltes Ereignis immer vollständig beginnt. **▶** startet die Zeit, **Tempo** sagt, wie viel Modellzeit auf eine Sekunde kommt (von Minuten bis
     zu Jahren je Sekunde); **Echtzeit** zeigt, wie langsam der Himmel wirklich ist. **⏪ und ⏩** gehen
     **einen Schritt** zurück oder vor – ein Schritt ist so viel, wie eine Sekunde Lauf bringen würde.
     **Zeitlupe** stellt das Tempo auf das zuletzt gewählte Ereignis ein: bei einer Finsternis rund zehn
@@ -2767,10 +2773,11 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     Lücke. **Dreht sich mit der Erde** schaltet die **Tagesdrehung** ab: Dann bleibt die Kuppel so
     stehen, wie der Himmel über dem Ort zu der mit **Richtung** gewählten **Uhrzeit** steht, und der Ort
     wandert im Lauf des Tages auf seiner Bahn darunter hindurch – so sieht man, dass sich nicht der
-    Himmel dreht, sondern die Erde unter ihm. **Ekliptik mit Tierkreis** steht als
-    eigener Schalter oben im Untermenü: Die Bahn der Sonne am Himmel und die zwölf Zeichen lassen sich
-    damit auf die Kuppel legen, **ohne** dass dafür die ganze Sonnenbahnebene im Raum eingeblendet
-    werden muss. Dazu sitzen Sonne und Mond als Punkte dort, wo sie an diesem Himmel gerade
+    Himmel dreht, sondern die Erde unter ihm. Oben im Untermenü stehen zwei Haken für das, was auf die
+    Kuppel gezeichnet wird: **Ekliptik mit Tierkreis** – die Bahn der Sonne am Himmel und die zwölf
+    Zeichen, **ohne** dass dafür die ganze Sonnenbahnebene im Raum eingeblendet werden müsste – und
+    der **Himmelsäquator**. Beide gelten nur für die Kuppel; für den Blick vom Ort gibt es sie
+    weiterhin unter *Anzeigen*. Dazu sitzen Sonne und Mond als Punkte dort, wo sie an diesem Himmel gerade
     stehen, mit gestrichelter Sichtlinie zum Körper. So sieht man von außen, was der Beobachter am Boden
     gerade über sich hat – und warum die Sonne im Winter einen so flachen Bogen zieht. Kuppel und Boden
     sind **durchsichtig** gezeichnet, sonst bliebe verborgen, was in ihnen steckt; wie durchsichtig,
@@ -2779,13 +2786,14 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     Knopfes „am Ort": Wer dort einen Ort wählt, steht sofort auf ihm, und im Feld steht sein Name. Von
     einem anderen Standort aus zeigt sie **„Ort wählen … (Amberg)"** – also den Ort, für den Marke,
     Kuppel und Bahn gerade gelten.
-  - **Himmelsäquator:** Die Ebene senkrecht zur Erdachse, an den Himmel verlängert – der Himmel über
-    dem Erdäquator. Er steht am Ort im Süden genau **90° minus Breite** hoch (in Amberg 40,6°, am Pol
+  - **Himmelsäquator** (zweimal: unter *Anzeigen* für den Blick vom Ort, im Untermenü der
+    Horizontkuppel für die Kuppel): Die Ebene senkrecht zur Erdachse, an den Himmel verlängert – der
+    Himmel über dem Erdäquator. Er steht am Ort im Süden genau **90° minus Breite** hoch (in Amberg 40,6°, am Pol
     0°), geht **im Osten auf und im Westen unter** und schneidet die Ekliptik im **Frühlings- und im
-    Herbstpunkt**; der Winkel zwischen beiden ist die Schiefe der Erdachse. Er lässt sich am Ort und
-    auf der Horizontkuppel einblenden.
+    Herbstpunkt**; der Winkel zwischen beiden ist die Schiefe der Erdachse.
   - **Planeten einzeln ausblenden:** **Merkur**, **Venus** und **Mars** lassen sich unter *Anzeigen*
-    jeder für sich samt Bahn wegschalten – bei Mondphasen und Finsternissen stören sie im Bild nur.
+    jeder für sich wegschalten – der Körper, seine Bahn oder beides; bei Mondphasen und Finsternissen
+    stören sie im Bild nur.
   - **heliozentrisch oder geozentrisch:** Das Umschalten ändert nur, **wer stillsteht**. Geozentrisch
     läuft die Sonne um die Erde, und die Bahnen von Venus und Mars bekommen **Schleifen** – dieselbe
     Bewegung, anderer Bezugspunkt. Genau diese Schleifen beschrieb Ptolemäus mit Epizykeln.
