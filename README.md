@@ -2712,7 +2712,10 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     Die Bedienung steht in zwei Zeilen: oben **Zeit und Ereignis** (die Zeitbedienung bleibt fest
     stehen), darunter die **Ansicht** – Standort, Blickziel, Darstellung, Bezug, zweites Fenster und
     der Knopf **Anzeigen**, hinter dem alle Einblendungen als Häkchenliste stehen (die Zahl am Knopf
-    sagt, wie viel gerade eingeblendet ist). **▶** startet die Zeit, **Tempo** sagt, wie viel Modellzeit auf eine Sekunde kommt (von Minuten bis
+    sagt, wie viel gerade eingeblendet ist). Die Liste ist in **vier Abschnitte** gegliedert –
+    **Bahnen und Ebenen**, **Erde, Ort und Himmel**, **Weltbild des Ptolemäus** und
+    **Himmelskörper** – und das Feld bleibt ganz im Fenster, der letzte Eintrag wird also nicht mehr
+    vom unteren Rand abgeschnitten. **▶** startet die Zeit, **Tempo** sagt, wie viel Modellzeit auf eine Sekunde kommt (von Minuten bis
     zu Jahren je Sekunde); **Echtzeit** zeigt, wie langsam der Himmel wirklich ist. **⏪ und ⏩** gehen
     **einen Schritt** zurück oder vor – ein Schritt ist so viel, wie eine Sekunde Lauf bringen würde.
     **Zeitlupe** stellt das Tempo auf das zuletzt gewählte Ereignis ein: bei einer Finsternis rund zehn
@@ -2785,9 +2788,14 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     **Mars** ist es umgekehrt: Deferent die Marsbahn, Epizykel die **Erdbahn** – deshalb wird er
     rückläufig, wenn die Erde ihn überholt. Die beiden Arme enden **genau** beim gezeichneten Planeten,
     denn geozentrischer Ort = (Planet − Sonne) + (Sonne − Erde).
-  - **Bahnen, Ebenen, Schatten, Sterne** lassen sich einzeln einblenden. Die **Bahnebenen** von Erde
-    und Mond erscheinen aus der Nähe als zwei Scheiben um die Erde, die sich in der **Knotenlinie**
-    schneiden – damit wird sichtbar, warum es nicht bei jedem Neumond eine Finsternis gibt. Die
+  - **Bahnen, Ebenen, Schatten, Sterne** lassen sich einzeln einblenden. Die beiden **Bahnebenen**
+    haben **je einen eigenen Schalter** und **je einen Regler für die Größe** der Scheibe (30 bis
+    300 %), so dass man sie einzeln zeigen und so groß machen kann, wie es zum Bild passt:
+    die **Sonnenbahnebene** (heliozentrisch die Erdbahnebene, am Ort die **Ekliptik** mit dem
+    Tierkreis) und die **Mondbahnebene**. Sind **beide** eingeblendet, erscheint zusätzlich die
+    **Knotenlinie** – sie ist die Schnittgerade der beiden Ebenen und hat allein keinen Sinn. Aus der
+    Nähe liegen beide Scheiben um die Erde, und man sieht die 5,1°
+    – damit wird sichtbar, warum es nicht bei jedem Neumond eine Finsternis gibt. Die
     Erdkugel bekommt ab einer gewissen Größe **Gradnetz, Wendekreise, Polarkreise und Achse**, dazu
     die **Tag-Nacht-Grenze**: So sind die **Jahreszeiten** zu zeigen.
   - **Grundfälle für den Unterricht:** Ganz oben in der Ereignisliste stehen fünf Fälle, bei denen das

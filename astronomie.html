@@ -56,7 +56,7 @@
   .fld .val{min-width:66px;text-align:right;font-weight:700;color:#2563eb;font-variant-numeric:tabular-nums;}
   /* Zugeklappt steht dort nur „Ereignis …" - die Liste selbst klappt breit genug auf. */
   #selListe{max-width:190px;}
-  .panel.anzeigen{right:10px;top:92px;}
+  .panel.anzeigen{right:10px;top:92px;max-height:calc(100vh - 112px);}
   .panelBody .klein{display:block;font-size:.86em;color:#94a3b8;line-height:1.35;}
   #cvbox{position:relative;flex:1;min-height:0;background:#fff;}
   #cvbox.dunkel{background:#070b18;}
@@ -703,7 +703,7 @@ function suchen(art,t0){
    Zustand
    ============================================================ */
 const standard=()=>({ v:1, tab:'system', fontSize:14, fontBold:false, fontItalic:false,
-  sys:{ t:0, lauf:false, tempo2:355, echt:false, stufe:'ansch', sf:SF_STD, bahnen:true, ebenen:false, schatten:true,
+  sys:{ t:0, lauf:false, tempo2:355, echt:false, stufe:'ansch', sf:SF_STD, bahnen:true, ebeneSonne:false, ebeneSonneGr:100, ebeneMond:false, ebeneMondGr:100, schatten:true,
         sterne:true, namen:true, von:'aussen', ziel:'erde', bezug:'sonne', pip:'aus', pipZiel:'auto',
         lupe:false, tempoAlt2:355, letztes:null, wahl:null, ort:0, kuppelAn:false, kuppel:78,
         jahrErden:false, tagbahn:false, merkur:true, venus:true, mars:true, mond:true,
@@ -969,20 +969,36 @@ function malEbenen(){
   const mRel=tt=>sub(ortZ('mond',tt),ortZ('erde',tt));           /* so, wie gezeichnet wird */
   const nMond=norm(kreuz(mRel(t),mRel(t+KOERPER.mond.T/4)));
   const rMond=betrag(sub(ortZ('mond',t),ortZ('erde',t)))*1.25;
-  /* Von weitem die ganze Ekliptik um die Sonne, aus der Nähe beide Ebenen um die Erde -
-     dann sieht man den Winkel von 5,1° zwischen ihnen. */
-  if(weite>0.08){ scheibe(rahmen(ortZ('sonne',t)),1.6,[0,0,1],'rgba(74,144,226,.10)','rgba(74,144,226,.55)','Erdbahnebene','#9ec5f3');
-    EBENEN.push({mitte:rahmen(ortZ('sonne',t)),normale:[0,0,1],fuell:'rgba(74,144,226,.10)',strich:'rgba(74,144,226,.55)'}); }
-  else { scheibe(ep,rMond,[0,0,1],'rgba(74,144,226,.12)','rgba(74,144,226,.6)','Erdbahnebene','#9ec5f3');
-    EBENEN.push({mitte:ep,normale:[0,0,1],fuell:'rgba(74,144,226,.12)',strich:'rgba(74,144,226,.6)'}); }
-  scheibe(ep,rMond,nMond,'rgba(226,232,240,.10)','rgba(226,232,240,.6)','Mondbahnebene','#e2e8f0');
-  EBENEN.push({mitte:ep,normale:nMond,fuell:'rgba(226,232,240,.10)',strich:'rgba(226,232,240,.6)'});
-  const O=(KOERPER.mond.O+KOERPER.mond.dO*t)*RAD;
-  const kn=[Math.cos(O),Math.sin(O),0];
-  linie3([add(ep,mul(kn,-rMond*1.15)),add(ep,mul(kn,rMond*1.15))],'#fbbf24',1.6,0.9,[7,5]);
-  const kq=p2(add(ep,mul(kn,rMond*1.15)));
-  if(kq) text('Knotenlinie',kq[0]+6,kq[1],'#fbbf24',{sz:12});
+  const fS=ebeneGr('ebeneSonneGr'), fM=ebeneGr('ebeneMondGr');
+  /* Heliozentrisch laeuft die Erde in dieser Ebene, geozentrisch die Sonne - dasselbe
+     Blatt, nur anders herum gelesen. */
+  const nameS=(S.bezug==='erde')?'Sonnenbahnebene':'Erdbahnebene';
+  /* Von weitem die ganze Ekliptik um die Sonne, aus der Nähe die Ebenen um die Erde -
+     sind beide eingeblendet, sieht man den Winkel von 5,1° zwischen ihnen. */
+  if(S.ebeneSonne){
+    if(weite>0.08){ const ms=rahmen(ortZ('sonne',t));
+      scheibe(ms,1.6*fS,[0,0,1],'rgba(74,144,226,.10)','rgba(74,144,226,.55)',nameS,'#9ec5f3');
+      EBENEN.push({mitte:ms,normale:[0,0,1],fuell:'rgba(74,144,226,.10)',strich:'rgba(74,144,226,.55)'}); }
+    else { scheibe(ep,rMond*fS,[0,0,1],'rgba(74,144,226,.12)','rgba(74,144,226,.6)',nameS,'#9ec5f3');
+      EBENEN.push({mitte:ep,normale:[0,0,1],fuell:'rgba(74,144,226,.12)',strich:'rgba(74,144,226,.6)'}); }
+  }
+  if(S.ebeneMond){
+    scheibe(ep,rMond*fM,nMond,'rgba(226,232,240,.10)','rgba(226,232,240,.6)','Mondbahnebene','#e2e8f0');
+    EBENEN.push({mitte:ep,normale:nMond,fuell:'rgba(226,232,240,.10)',strich:'rgba(226,232,240,.6)'});
+  }
+  /* Die Knotenlinie ist die Schnittgerade der beiden Ebenen - sie hat nur einen Sinn,
+     wenn auch beide zu sehen sind. */
+  if(S.ebeneSonne&&S.ebeneMond){
+    const O=(KOERPER.mond.O+KOERPER.mond.dO*t)*RAD;
+    const kn=[Math.cos(O),Math.sin(O),0];
+    const rK=rMond*Math.min(fS,fM)*1.15;
+    linie3([add(ep,mul(kn,-rK)),add(ep,mul(kn,rK))],'#fbbf24',1.6,0.9,[7,5]);
+    const kq=p2(add(ep,mul(kn,rK)));
+    if(kq) text('Knotenlinie',kq[0]+6,kq[1],'#fbbf24',{sz:12});
+  }
 }
+/* Groesse einer Bahnebene als Faktor (Regler steht in Prozent) */
+function ebeneGr(k){ const v=D.sys[k]; return clamp((v===undefined?100:+v)/100,0.3,3); }
 function bahnDauer(id){
   const S=D.sys;
   if(S.bezug==='erde'){
@@ -1329,9 +1345,9 @@ function malKuppel(){
   const z=p2(add(p,mul(R.zen,r)));
   if(z) text('Zenit über '+R.o.n,z[0],z[1]-10*K,'#fda4af',{al:'center',sz:11.5,fett:true,rand:'rgba(7,11,24,.85)'});
   /* Was am Himmel dieses Ortes zu sehen ist, auf die Kuppel gelegt - mit denselben
-     Schaltern wie am Ort selbst: „Bahnen" die Tagbögen, „Ebenen" Ekliptik und Tierkreis. */
+     Schaltern wie am Ort selbst: „Bahnen" die Tagbögen, „Sonnenbahnebene" Ekliptik und Tierkreis. */
   if(S.bahnen){ kuppelBogen(p,r,R,'sonne','rgba(253,224,71,.95)'); kuppelBogen(p,r,R,'mond','rgba(226,232,240,.85)'); }
-  if(S.ebenen) kuppelEkliptik(p,r,R);
+  if(S.ebeneSonne) kuppelEkliptik(p,r,R);
   if(S.aequator) kuppelAequator(p,r,R);
   kuppelOrte(p,r,R);
 }
@@ -1805,7 +1821,8 @@ function szeneMalen(){
   const S=D.sys, t=S.t, amOrt=(AKT_VON==='ort');
   malSterne();                         /* der Sternhimmel gehört immer dazu */
   BAHNEN=[];                           /* sammelt, was später VOR den Kugeln nachzutragen ist */
-  if(S.ebenen){ if(amOrt) malEkliptik(); else malEbenen(); }
+  if(amOrt){ if(S.ebeneSonne) malEkliptik(); }
+  else if(S.ebeneSonne||S.ebeneMond) malEbenen();
   if(S.aequator&&amOrt) malAequator();
   if(S.bahnen){ malBahnen();
     if(amOrt){ malTagbogen('sonne','rgba(253,224,71,.9)');
@@ -1818,7 +1835,7 @@ function szeneMalen(){
     .map(id=>({id,p:rahmen(ortZ(id,t))}));
   liste.sort((a,b)=>betrag(sub(b.p,KAM.pos))-betrag(sub(a.p,KAM.pos)));
   liste.forEach(o=>malKoerper(o.id,o.p));
-  if(S.ebenen&&!amOrt) malEbenenVorn();     /* die Ebenen gehen durch die Kugeln hindurch */
+  if((S.ebeneSonne||S.ebeneMond)&&!amOrt) malEbenenVorn();   /* die Ebenen gehen durch die Kugeln hindurch */
   if(!amOrt) malBahnenVorn();               /* ebenso die Bahnen - die Mondbahn läuft vor der Erde vorbei */
   if(schattenAn()) malSchatten();
   malFlecken();                        /* liegen auf der Kugel, also über dem Kegel */
@@ -2058,28 +2075,28 @@ const GRUNDFALL={
     /* maßstabsgetreu: Erde und Mond werden im Bild gemeinsam vergrößert (nahLupe),
        Abstand und Größenverhältnis bleiben dabei richtig. */
     stellen(S){ S.von='aussen'; S.bezug='erde'; S.ziel='erde'; S.stufe='echt'; S.dist=0.0115;
-      S.az=sonnenLaenge(S.t)+127; S.el=66;        /* so läuft der Mond am zweiten Fenster vorbei */ S.bahnen=true; S.ebenen=false; S.schatten=false; S.sterne=true;
+      S.az=sonnenLaenge(S.t)+127; S.el=66;        /* so läuft der Mond am zweiten Fenster vorbei */ S.bahnen=true; S.ebeneSonne=false; S.ebeneMond=false; S.schatten=false; S.sterne=true;
       S.pip='erde'; S.pipZiel='mond'; S.jahrErden=false; S.tagbahn=false; S.kuppelAn=false;
       S.mond=true; S.merkur=true; S.venus=true; S.mars=true; S.sehstrahl=false; } },
   sofi:{name:'Sonnenfinsternis', suche:'sofiT', tempo:0.006, hinweis:'Eine totale Sonnenfinsternis: Der Kernschatten des Mondes trifft die Erde – rechts zieht der Mond vor die Sonne',
     stellen(S){ ansichtFuer('sofi'); S.pip='erde'; S.pipZiel='sonne';
       S.sf=12;                                     /* Körper und Schattenkegel doppelt so groß */
-      S.jahrErden=false; S.tagbahn=false; S.kuppelAn=false; S.ebenen=false;
+      S.jahrErden=false; S.tagbahn=false; S.kuppelAn=false; S.ebeneSonne=false; S.ebeneMond=false;
       S.mond=true; S.merkur=true; S.venus=true; S.mars=true; S.sehstrahl=false; } },
   mofi:{name:'Mondfinsternis', suche:'mofi', tempo:0.008, hinweis:'Der Mond wandert in den Erdschatten – rechts, wie er dabei aussieht',
     stellen(S){ ansichtFuer('mofi'); S.pip='erde'; S.pipZiel='mond';
-      S.jahrErden=false; S.tagbahn=false; S.kuppelAn=false; S.ebenen=false;
+      S.jahrErden=false; S.tagbahn=false; S.kuppelAn=false; S.ebeneSonne=false; S.ebeneMond=false;
       S.mond=true; S.merkur=true; S.venus=true; S.mars=true; S.sehstrahl=false; } },
   jahr:{name:'Jahreszeiten', suche:'fruehling', tempo:8, hinweis:'Ein Jahr um die Sonne – die Achse zeigt immer in dieselbe Richtung',
     stellen(S){ S.von='aussen'; S.bezug='sonne'; S.ziel='sonne'; S.stufe='ansch'; S.dist=3.1;
-      S.az=sonnenLaenge(S.t)+190; S.el=55;        /* so bleibt das zweite Fenster frei */ S.bahnen=true; S.ebenen=false; S.schatten=false; S.sterne=true;
+      S.az=sonnenLaenge(S.t)+190; S.el=55;        /* so bleibt das zweite Fenster frei */ S.bahnen=true; S.ebeneSonne=false; S.ebeneMond=false; S.schatten=false; S.sterne=true;
       S.jahrErden=true; S.tagbahn=true; S.kuppelAn=false; S.pip='ort'; S.pipZiel='sonne';
       S.mond=false; S.merkur=false; S.venus=false; S.mars=false;   /* im Jahreslauf stören sie nur */
       S.sehstrahl=false; } },
   tag:{name:'Tageslängen', suche:'sommer', mittag:true, tempo:0.03,
     hinweis:'Ein Tag im Sommer – der helle Teil des Breitenkreises ist der Tag',
     stellen(S){ S.von='aussen'; S.bezug='erde'; S.ziel='erde'; S.stufe='echt'; S.dist=0.00045;
-      S.az=sonnenLaenge(S.t)+115; S.el=16; S.bahnen=false; S.ebenen=false; S.schatten=false; S.sterne=true;
+      S.az=sonnenLaenge(S.t)+115; S.el=16; S.bahnen=false; S.ebeneSonne=false; S.ebeneMond=false; S.schatten=false; S.sterne=true;
       S.tagbahn=true; S.jahrErden=false; S.kuppelAn=false; S.pip='ort'; S.pipZiel='sonne';
       S.mond=true; S.merkur=true; S.venus=true; S.mars=true; S.sehstrahl=false; } },
   schleife:{name:'Rückläufige Bewegung des Mars', suche:'opposition', tempo:4,
@@ -2088,7 +2105,7 @@ const GRUNDFALL={
     stellen(S){ S.t-=78;
       S.von='aussen'; S.bezug='erde'; S.ziel='erde'; S.stufe='ansch'; S.dist=6.4;
       S.az=sonnenLaenge(S.t)+200; S.el=74;        /* von oben auf die Ekliptik */
-      S.bahnen=true; S.ebenen=false; S.schatten=false; S.sterne=true;
+      S.bahnen=true; S.ebeneSonne=false; S.ebeneMond=false; S.schatten=false; S.sterne=true;
       S.merkur=false; S.venus=false; S.mars=true;  /* die beiden inneren stören hier nur */
       S.jahrErden=false; S.tagbahn=false; S.kuppelAn=false; S.aequator=false;
       S.mond=true; S.sehstrahl=true;              /* der Blick zum Mars macht die Schleife sichtbar */
@@ -3017,34 +3034,56 @@ $('selOrt').onchange=e=>{
 };
 /* ---------- Was im Bild zu sehen ist: ein Feld statt vieler Knöpfe ---------- */
 const ANZEIGEN=[
-  ['bahnen','Bahnkurven','Die Bahnen der Körper – geozentrisch werden daraus die Schleifen'],
-  ['ebenen','Bahnebenen · Ekliptik und Tierkreis','Von außen die Scheiben von Erd- und Mondbahn mit der Knotenlinie, vom Ort aus die Ekliptik mit den zwölf Zeichen'],
-  ['schatten','Schattenkegel','Kern- und Halbschatten von Erde und Mond – nur von außen und nicht im anschaulichen Modell. Trifft der Mondschatten die Erde, endet sein Kegel dort, und beide Schatten liegen rötlich auf der Kugel; ebenso liegt der Erdschatten auf dem Mond'],
-  ['jahrErden','Die vier Erden im Jahreslauf','Halbdurchsichtig an den Sonnenwenden und Tag-und-Nacht-Gleichen, jede mit ihrer Achse'],
-  ['ortMarke','Gewählter Ort','Der rote Punkt mit dem Namen auf der Erdkugel'],
-  ['tagbahn','Bahn des Ortes (Tageslänge)','Der Breitenkreis des gewählten Ortes: heller Teil Tag, blauer Teil Nacht'],
-  ['kuppelAn','Horizontkuppel über dem Ort','Die Halbkugel des Himmels, den man von dort aus sieht'],
-  ['aequator','Himmelsäquator','Die Ebene senkrecht zur Erdachse am Himmel – am Ort und auf der Horizontkuppel'],
-  ['epizykel','Deferent und Epizykel','Ptolemäus: Jeder Planet am Ende zweier Arme – nur im geozentrischen Bild von außen'],
-  ['sehstrahl','Sehstrahl Erde–Mars','In welcher Richtung Mars von der Erde aus steht – bei der Schleife läuft sie eine Weile zurück'],
-  ['mond','Mond mit Bahn','Bei den Jahreszeiten ist er voreingestellt aus - dort stört er nur'],
-  ['merkur','Merkur mit Bahn',''],
-  ['venus','Venus mit Bahn',''],
-  ['mars','Mars mit Bahn','Planeten, die gerade stören, lassen sich hier samt Bahn ausblenden'],
-  ['namen','Namen der Himmelskörper','']
+  {gruppe:'Bahnen und Ebenen'},
+  {k:'bahnen',t:'Bahnkurven',h:'Geozentrisch werden daraus die Schleifen'},
+  {k:'ebeneSonne',t:'Sonnen­bahn­ebene (Ekliptik)',
+   h:'Die Ebene, in der Erde und Sonne umeinander laufen. Vom Ort aus: die Ekliptik mit den zwölf Tierkreiszeichen',
+   gr:'ebeneSonneGr'},
+  {k:'ebeneMond',t:'Mond­bahn­ebene',
+   h:'Um 5,1° gegen die Ekliptik geneigt – nur von außen. Zusammen mit der Sonnenbahnebene erscheint auch die Knotenlinie',
+   gr:'ebeneMondGr'},
+  {k:'schatten',t:'Schattenkegel',
+   h:'Kern- und Halbschatten von Erde und Mond – nur von außen und nicht im anschaulichen Modell'},
+  {gruppe:'Erde, Ort und Himmel'},
+  {k:'jahrErden',t:'Die vier Erden im Jahreslauf',
+   h:'An den Sonnenwenden und Tag-und-Nacht-Gleichen, jede mit ihrer Achse'},
+  {k:'ortMarke',t:'Gewählter Ort',h:'Roter Punkt mit Namen auf der Erdkugel'},
+  {k:'tagbahn',t:'Bahn des Ortes (Tageslänge)',h:'Sein Breitenkreis: heller Teil Tag, blauer Teil Nacht'},
+  {k:'kuppelAn',t:'Horizontkuppel über dem Ort',h:'Die Halbkugel des Himmels, den man von dort aus sieht',
+   roh:'<div class="zeile" id="kuppelZeile">Radius der Kuppel <input type="range" id="rKuppel" min="-20" max="200" step="1">'
+      +'<span class="val" id="vKuppel">–</span></div>'},
+  {k:'aequator',t:'Himmelsäquator',h:'Die Ebene senkrecht zur Erdachse – am Ort und auf der Horizontkuppel'},
+  {gruppe:'Weltbild des Ptolemäus'},
+  {k:'epizykel',t:'Deferent und Epizykel',h:'Jeder Planet am Ende zweier Arme – nur im geozentrischen Bild von außen'},
+  {k:'sehstrahl',t:'Sehstrahl Erde–Mars',h:'Bei der Schleife läuft er eine Weile zurück'},
+  {gruppe:'Himmelskörper'},
+  {k:'mond',t:'Mond mit Bahn',h:'Bei den Jahreszeiten voreingestellt aus – dort stört er nur'},
+  {k:'merkur',t:'Merkur mit Bahn'},
+  {k:'venus',t:'Venus mit Bahn'},
+  {k:'mars',t:'Mars mit Bahn',h:'Was gerade stört, lässt sich hier samt Bahn ausblenden'},
+  {k:'namen',t:'Namen der Himmelskörper'}
 ];
-$('anzBody').innerHTML=ANZEIGEN.map(([k,lab,hilf])=>
-  '<label class="chk"><input type="checkbox" data-anz="'+k+'"><span>'+lab+
-  (hilf?'<span class="klein">'+hilf+'</span>':'')+'</span></label>').join('')+
-  '<div class="zeile" id="kuppelZeile">Radius der Kuppel <input type="range" id="rKuppel" min="-20" max="200" step="1">'+
-  '<span class="val" id="vKuppel">–</span></div>';
+$('anzBody').innerHTML=ANZEIGEN.map(a=>{
+  if(a.gruppe) return '<h4>'+a.gruppe+'</h4>';
+  return '<label class="chk"><input type="checkbox" data-anz="'+a.k+'"><span>'+a.t+
+    (a.h?'<span class="klein">'+a.h+'</span>':'')+'</span></label>'
+    +(a.gr?'<div class="zeile" data-zeile="'+a.k+'">Größe <input type="range" data-gr="'+a.gr+
+      '" min="30" max="300" step="5"><span class="val" data-val="'+a.gr+'">–</span></div>':'')
+    +(a.roh||'');
+}).join('');
 function anzeigenStand(){
   const S=D.sys; let an=0;
   document.querySelectorAll('[data-anz]').forEach(el=>{ const k=el.dataset.anz;
     const ein=(k==='schatten')?schattenUI():!!S[k];
     el.checked=ein; if(ein) an++;
     if(k==='schatten'){ el.closest('.chk').style.opacity=(S.von==='aussen')?'1':'.55'; }
-    if(k==='epizykel'){ el.closest('.chk').style.opacity=(S.bezug==='erde'&&S.von==='aussen')?'1':'.55'; } });
+    if(k==='epizykel'){ el.closest('.chk').style.opacity=(S.bezug==='erde'&&S.von==='aussen')?'1':'.55'; }
+    /* Die Mondbahnebene gibt es nur von außen - am Ort zeigt der Himmel nur die Ekliptik. */
+    if(k==='ebeneMond'){ el.closest('.chk').style.opacity=(S.von==='aussen')?'1':'.55'; } });
+  document.querySelectorAll('[data-zeile]').forEach(z=>{ z.hidden=!S[z.dataset.zeile]; });
+  document.querySelectorAll('[data-gr]').forEach(r=>{ const k=r.dataset.gr;
+    const v=(S[k]===undefined?100:S[k]); r.value=String(v);
+    const a=document.querySelector('[data-val="'+k+'"]'); if(a) a.textContent=zahl(v,0)+' %'; });
   $('kuppelZeile').hidden=!S.kuppelAn;
   $('rKuppel').value=String(S.kuppel===undefined?78:S.kuppel);
   $('vKuppel').textContent=zahl(kuppelRadius(),kuppelRadius()<10?1:0)+' R⊕';
@@ -3065,6 +3104,10 @@ $('anzBody').addEventListener('change',e=>{
   D.sys[k]=e.target.checked; oberflaeche(); zeichne(); sync();
 });
 $('rKuppel').oninput=e=>{ D.sys.kuppel=+e.target.value; oberflaeche(); zeichne(); sync(); };
+$('anzBody').addEventListener('input',e=>{
+  const g=e.target.dataset&&e.target.dataset.gr; if(!g) return;
+  D.sys[g]=+e.target.value; oberflaeche(); zeichne(); sync();
+});
 $('anzZu').onclick=()=>{ $('anzpop').open=false; };
 $('anzpop').addEventListener('toggle',()=>{ if($('anzpop').open) $('setts').open=false; });
 $('setts').addEventListener('toggle',()=>{ if($('setts').open) $('anzpop').open=false; });
@@ -3144,7 +3187,7 @@ const HILFE={
     'Grad wäre von der Phase nichts zu erkennen. Seine <b>Lage stimmt</b>: Die helle Seite zeigt genau dorthin, '+
     'wo die Sonne steht, auch wenn sie schon untergegangen ist. Zoomt man heran, bekommt er wieder sein wahres '+
     'Maß, und dicht bei der Sonne (Finsternis) bleibt er ohnehin maßstabsgetreu.</p>'+
-    '<p>Sind <b>Ebenen</b> eingeblendet, zeigt der Himmel die <b>Ekliptik</b> mit den zwölf '+
+    '<p>Ist die <b>Sonnenbahnebene</b> eingeblendet, zeigt der Himmel die <b>Ekliptik</b> mit den zwölf '+
     '<b>Tierkreiszeichen</b>; sind <b>Bahnen</b> eingeblendet, zusätzlich den <b>Tagbogen</b> von Sonne und '+
     'Mond – den Weg also, den sie an diesem Tag über den Himmel nehmen. Daran sieht man unmittelbar, warum die '+
     'Sonne im Sommer hoch und im Winter flach steht. Die Tierkreiszeichen sind die zwölf 30°-Abschnitte ab dem '+
@@ -3214,8 +3257,12 @@ const HILFE={
     'das Schattenmodell diese Aufgabe: Es ist dort auf 12-fach gestellt, und gesucht wird eine <b>totale</b> '+
     'Finsternis – im zweiten Fenster steht man dort, wo der Kernschatten beim Höhepunkt auftrifft, und sieht '+
     'den Mond über die Sonne ziehen.</p>'+
-    '<h4>Anzeigen</h4><p>Hinter <b>Anzeigen</b> steckt, was im Bild zu sehen ist: Bahnkurven, Bahnebenen mit '+
-    'Ekliptik und Tierkreis, Schattenkegel, die <b>vier Erden im Jahreslauf</b>, der <b>gewählte Ort</b> '+
+    '<h4>Anzeigen</h4><p>Hinter <b>Anzeigen</b> steckt, was im Bild zu sehen ist – in vier Abschnitten: '+
+    '<b>Bahnen und Ebenen</b>, <b>Erde, Ort und Himmel</b>, das <b>Weltbild des Ptolemäus</b> und die '+
+    '<b>Himmelskörper</b>. Im Einzelnen: Bahnkurven, <b>Sonnenbahnebene</b> (vom Ort aus die Ekliptik mit '+
+    'dem Tierkreis) und <b>Mondbahnebene</b> – beide einzeln und je mit einem Regler für die <b>Größe</b> der '+
+    'Scheibe; die <b>Knotenlinie</b> erscheint, sobald beide Ebenen zu sehen sind, denn sie ist deren '+
+    'Schnittgerade. Dazu Schattenkegel, die <b>vier Erden im Jahreslauf</b>, der <b>gewählte Ort</b> '+
     '(roter Punkt mit Namen) und seine <b>Bahn</b> '+
     '(heller Teil Tag, blauer Nacht – dazu steht die Tageslänge im Bild), die Horizontkuppel mit ihrem Radius, '+
     'der <b>Himmelsäquator</b>, <b>Deferent und Epizykel</b>, der <b>Sehstrahl Erde–Mars</b>, <b>Mond</b>, '+
@@ -3494,6 +3541,12 @@ function zustand(){ return JSON.parse(JSON.stringify(D)); }
 function uebernimm(d){
   d=d||{}; const std=standard(), neu=Object.assign({},std,d);
   ['sys','erat','mond','sonne','stern'].forEach(k=>{ neu[k]=Object.assign({},std[k],d[k]||{}); });
+  /* Früher gab es einen Schalter „Ebenen" für beide Bahnebenen zusammen. */
+  if(d.sys&&typeof d.sys.ebenen==='boolean'&&typeof d.sys.ebeneSonne!=='boolean'){
+    neu.sys.ebeneSonne=d.sys.ebenen; neu.sys.ebeneMond=d.sys.ebenen; }
+  delete neu.sys.ebenen;
+  neu.sys.ebeneSonneGr=clamp(+neu.sys.ebeneSonneGr||100,30,300);
+  neu.sys.ebeneMondGr=clamp(+neu.sys.ebeneMondGr||100,30,300);
   /* älterer Stand kannte nur „ansch: true/false" */
   if(d.sys&&typeof d.sys.stufe!=='string'&&typeof d.sys.ansch==='boolean')
     neu.sys.stufe=d.sys.ansch?'ansch':'echt';
