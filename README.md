@@ -2993,6 +2993,11 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     und **genauso hoch** ist wie Bild und Diagramme zusammen: Man sieht beim Schieben der Regler zu,
     was im Bild passiert, statt scrollen zu müssen. **„Zurücksetzen"** sitzt unten am Blockende.
     Im **Film** bleibt alles wie gehabt – dort stehen beide Anzeigen groß in der rechten Spalte.
+  - **Nur eine Kopfzeile.** Überschrift und Unterzeile sind weg (die Überschrift steht nur noch für
+    Vorlesewerkzeuge im Text), ebenso die Untertitel unter „Klasse 10" und „Oberstufe". In der einen
+    verbliebenen Zeile steht links der Umschalter **„Film / Experiment"** (vorher „Selbst
+    ausprobieren"), daneben die beiden Niveau-Reiter und rechts die Tafelknöpfe. Bis hinunter zu
+    760 px bleibt das **eine** Zeile; der gewonnene Platz geht an Bild und Diagramme.
   In der Kopfzeile stehen **A− / A+** für die Schriftgröße und dieselben drei Knöpfe wie in den
   übrigen Werkzeugen: **🖼 Tafel** legt Szene und Diagramme als Bild neben das Werkzeug,
   **📋 Kopieren** nimmt sie in die Zwischenablage, und **⇪ Teilen** gibt den QR-Code an die Klasse –
