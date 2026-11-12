@@ -2911,8 +2911,8 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
 - **Induktion und Feldlinien** (Mathe & Physik, Symbol: eine **Spule**): Wann entsteht eine Spannung?
   Ein **Film** führt in zehn Kapiteln durch Grundidee, bewegten Magneten, bewegte Spule, Homogenität,
   Feldstärke, **Wechselfeld**, Fläche, Drehung, Zusammenfassung und eine Aufgabe; daneben lässt sich
-  alles **selbst ausprobieren**. Zwei Niveaus: **Klasse 10** (qualitativ, LehrplanPlus)
-  und **Oberstufe** (mit Induktionsgesetz). Die Szene zeigt Magnet, **Feldlinien** und Spule, darunter
+  alles **selbst ausprobieren**. Zwei Niveaus, umschaltbar zwischen **Qualitativ** (Klasse 10,
+  LehrplanPlus) und **Quantitativ** (Oberstufe, mit Induktionsgesetz). Die Szene zeigt Magnet, **Feldlinien** und Spule, darunter
   laufen **Zahl der Feldlinien** und **Spannung** als Diagramme über der Zeit mit.
   - **Kapitel „Wechselfeld"** (nach „Feldstärke"): Der Elektromagnet liegt an **Wechselstrom**. Das Feld
     wird nicht nur stärker und schwächer, sondern **kehrt seine Richtung um** – die Feldlinien zeigen
@@ -2994,10 +2994,11 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     was im Bild passiert, statt scrollen zu müssen. **„Zurücksetzen"** sitzt unten am Blockende.
     Im **Film** bleibt alles wie gehabt – dort stehen beide Anzeigen groß in der rechten Spalte.
   - **Nur eine Kopfzeile.** Überschrift und Unterzeile sind weg (die Überschrift steht nur noch für
-    Vorlesewerkzeuge im Text), ebenso die Untertitel unter „Klasse 10" und „Oberstufe". In der einen
-    verbliebenen Zeile steht links der Umschalter **„Film / Experiment"** (vorher „Selbst
-    ausprobieren"), daneben die beiden Niveau-Reiter und rechts die Tafelknöpfe. Bis hinunter zu
-    760 px bleibt das **eine** Zeile; der gewonnene Platz geht an Bild und Diagramme.
+    Vorlesewerkzeuge im Text), ebenso die Untertitel unter den Niveaus. In der einen verbliebenen
+    Zeile stehen links **zwei gleich gestaltete Umschalter** – **„Film / Experiment"** (vorher
+    „Selbst ausprobieren") und **„Qualitativ / Quantitativ"** (vorher die Reiter „Klasse 10" und
+    „Oberstufe") – und rechts die Tafelknöpfe. Bis hinunter zu 760 px bleibt das **eine** Zeile;
+    der gewonnene Platz geht an Bild und Diagramme.
   In der Kopfzeile stehen **A− / A+** für die Schriftgröße und dieselben drei Knöpfe wie in den
   übrigen Werkzeugen: **🖼 Tafel** legt Szene und Diagramme als Bild neben das Werkzeug,
   **📋 Kopieren** nimmt sie in die Zwischenablage, und **⇪ Teilen** gibt den QR-Code an die Klasse –
