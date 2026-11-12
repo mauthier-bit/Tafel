@@ -2972,6 +2972,11 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     **∫U dt = −N · ΔΦ** (Klasse 10: „Fläche ≙ Änderung der Anzahl"). Die Zahlen stimmen überein,
     weil die Spannungskurve als **Steigung ohne Nachlauf** aus dem Verlauf der Feldlinien gerechnet
     wird; das Messgerät darf weiter etwas nachlaufen.
+    Der Regler **„Glättung"** (0 bis 300 ms) ist für **Bewegungen von Hand** da: Schiebt man Magnet
+    oder Spule mit dem Finger, ruckelt die Kurve. Geglättet wird die **obere** Kurve (Mittel über ein
+    Fenster um jeden Punkt), und die **Spannungskurve wird daraus neu als Steigung gerechnet** –
+    deshalb passen Fläche und Flussänderung auch dann noch zusammen. Die aufgenommenen Werte
+    bleiben unverändert, der Regler lässt sich also auch im **eingefrorenen** Bild noch verstellen.
     Rechts zoomen zwei Knopfpaare die **Hochachsen** von **Anzahl bzw. Φ** und von **U** getrennt
     (halb- bis fünfzigfach – bei ganz langsamen Bewegungen ist die Spannung winzig); der Faktor steht an der Achse (**„in mV ×2"**), und die angeschriebenen
     Werte wandern mit. So lässt sich ein kleiner Ausschlag groß zeigen, ohne an den Reglern zu

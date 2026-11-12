@@ -197,6 +197,8 @@ body.labm .lab .grpLbl{margin-top:7px;font-size:.9rem}
 .diagBar #zgN{margin-left:auto}
 .diagBar .zg b{font-size:.82rem;color:var(--muted);font-weight:600;white-space:nowrap}
 .diagBar .zg .btn{min-width:30px;padding:0 7px;font-size:1.05rem;line-height:1}
+.diagBar .zg input[type=range]{width:74px;flex:0 0 auto;margin:0}
+.diagBar #vGl{font-size:.82rem;color:var(--muted);min-width:46px}
 /* Regler mit Knopf davor (Drehzahl: starten und anhalten) */
 .mitKnopf{display:flex;align-items:center;gap:8px}
 .mitKnopf .btn{flex:0 0 auto;min-width:40px;min-height:34px;padding:0}
@@ -245,6 +247,11 @@ body.labm .lab .grpLbl{margin-top:7px;font-size:.9rem}
         <button class="btn" id="bStelle" aria-pressed="false" title="Senkrechte Linie durch beide Diagramme; im Diagramm mit dem Finger verschiebbar">Stelle</button>
         <button class="btn" id="bTang" aria-pressed="false" title="Tangente an die obere Kurve an dieser Stelle; ihre Steigung ist die Spannung">Tangente</button>
         <button class="btn" id="bFlae" aria-pressed="false" title="Fläche unter der Spannungskurve: im unteren Diagramm über den Abschnitt streichen">Fläche</button>
+        <span class="zg" id="zgGl"><b>Glättung</b>
+          <input type="range" id="sGl" min="0" max="300" step="10" value="0"
+            title="Glättung: mittelt die obere Kurve über ein Fenster um jeden Punkt; die Spannungskurve wird daraus neu als Steigung bestimmt"
+            aria-label="Glättung der Kurven">
+          <span id="vGl">aus</span></span>
         <span class="zg" id="zgN"><b id="zNlbl">Anzahl</b>
           <button class="btn" id="zNm" title="obere Kurve kleiner darstellen" aria-label="obere Kurve kleiner darstellen">−</button>
           <button class="btn" id="zNp" title="obere Kurve größer darstellen" aria-label="obere Kurve größer darstellen">+</button></span>
@@ -559,7 +566,7 @@ let zF=1, zU=1, stelle=false, stTang=false, stFlae=false, stP=0.5, gGeo=null;
 /* Eingefroren bleibt das Diagramm stehen: Erst dann lohnen sich Tangente und Flaeche.
    flP ist der mit dem Finger gestrichene Abschnitt, auch als Lage im Bild (0 bis 1);
    FLH ist seine halbe Breite, wenn man nur antippt. */
-let labFrost=false, flP=[0.42,0.58];
+let labFrost=false, flP=[0.42,0.58], glMs=0;
 const FLH=0.08;
 /* Spannungsskala im Experiment: Sie wächst mit, sonst werden hohe Frequenzen abgeschnitten.
    Sie springt erst, wenn der Platz wirklich nicht reicht (oder viel zu groß geworden ist).  */
@@ -585,6 +592,36 @@ function rateNachtragen(dt){ const m=hist.length; if(m<3) return;
   for(let k=Math.max(1,m-12);k<m-GL;k++){
     const a=hist[Math.max(0,k-GL)], b=hist[k+GL];   /* genau symmetrisch - sonst bleibt ein halber Bildschritt Nachlauf */
     hist[k][2]=-(b[1]-a[1])/Math.max(1e-6,b[0]-a[0]); } }
+/* Glättung für das Diagramm (wie bei den Bewegungsdiagrammen): Gemittelt wird die
+   Zahl der Feldlinien über ein Fenster um jeden Punkt - zweimal hintereinander, das
+   gibt eine weiche Kurve ohne Knicke. Die Spannungskurve wird daraus **neu** als
+   Steigung bestimmt (nicht etwa selbst geglättet), damit beide Kurven weiter genau
+   zusammengehören: Die Fläche unter U bleibt die Änderung des Flusses. An den Rändern
+   schrumpft das Fenster symmetrisch, sonst verbiegt es dort die Kurve.
+   Die aufgenommenen Punkte selbst bleiben unverändert - der Regler lässt sich also
+   auch im eingefrorenen Bild noch hin- und herschieben. */
+function kastenMittel(a,W){ const m=a.length, s=new Float64Array(m+1);
+  for(let i=0;i<m;i++) s[i+1]=s[i]+a[i];
+  const o=new Float64Array(m);
+  for(let i=0;i<m;i++){ const k=Math.min(W,i,m-1-i); o[i]=(s[i+k+1]-s[i-k])/(2*k+1); }
+  return o; }
+let glSpeicher=null, glSchluessel='';
+function glattPunkte(){
+  const m=hist.length;
+  if(!glMs||m<4) return hist;
+  const schl=m+'|'+hist[0][0].toFixed(2)+'|'+hist[m-1][0].toFixed(2)+'|'+glMs;
+  if(glSchluessel===schl&&glSpeicher) return glSpeicher;
+  const dtM=(hist[m-1][0]-hist[0][0])/(m-1)||1/60;
+  const W=Math.max(1,Math.round((glMs/1000)/dtM));
+  let a=new Float64Array(m); for(let i=0;i<m;i++) a[i]=hist[i][1];
+  a=kastenMittel(kastenMittel(a,W),W);
+  const GL=Math.max(1,Math.min(6,Math.round(0.035/dtM)));
+  const aus=new Array(m);
+  for(let i=0;i<m;i++){ const k=Math.max(1,Math.min(GL,i,m-1-i));
+    const i0=Math.max(0,i-k), i1=Math.min(m-1,i+k);
+    const r=(a[i1]-a[i0])/Math.max(1e-6,hist[i1][0]-hist[i0][0]);
+    aus[i]=[hist[i][0],a[i],-r,hist[i][3]]; }
+  glSpeicher=aus; glSchluessel=schl; return aus; }
 function labSkalen(){ let mq=0, mv=0;
   const fMax=(lab.ac?2:0)+(lab.ori===3?1:0), NMAX=500;
   if(fMax>0){ let mN=0; for(const p of hist) mN=Math.max(mN,Math.abs(p[1]));
@@ -695,7 +732,7 @@ $('btnDreh').onclick=()=>{ if(lab.fd>0&&lab.lauf){ lab.lauf=false; } else { lab.
 $('sPhi').oninput=()=>{ lab.lauf=false; lab.phi=+$('sPhi').value; labBedient(); };
 $('sF').oninput=()=>{lab.f=+$('sF').value;labBedient();};
 $('reset').onclick=()=>{ Object.assign(lab,{mx:-1.75,cx:0,I:2,a:2.5,big:false,n:200,ac:false,f:0.5,ori:0,fd:0.5,lauf:true,phi:0,zN:true,zU:true});
-  zF=1; zU=1; stelle=false; stTang=false; stFlae=false; stP=0.5; flP=[0.42,0.58]; labFrost=false; syncLab(); diagSync(); };
+  zF=1; zU=1; stelle=false; stTang=false; stFlae=false; stP=0.5; flP=[0.42,0.58]; labFrost=false; glMs=0; syncLab(); diagSync(); };
 /* Wer am Versuch etwas einstellt, will wieder aufnehmen: Das Einfrieren endet. */
 function labBedient(){ if(labFrost){ labFrost=false; diagSync(); } syncLab(); }
 function labState(){ const f=lab.big?BIG:SMALL;
@@ -730,6 +767,7 @@ function diagSync(){
   $('bTang').setAttribute('aria-pressed',stTang); $('bFlae').setAttribute('aria-pressed',stFlae);
   $('zNlbl').textContent=(level==='q'?'Anzahl':'Φ')+(zF!==1?' '+zTxt(zF):'');
   $('zUlbl').textContent='U'+(zU!==1?' '+zTxt(zU):'');
+  $('sGl').value=glMs; $('vGl').textContent=glMs?glMs+' ms':'aus';
   if(mode==='lab') $('tag').textContent='Experiment'+(labFrost?' · eingefroren':'');
   gc.style.touchAction=(mode==='lab'&&(stelle||stFlae))?'none':''; }
 /* Einfrieren: Zeit und Aufnahme bleiben stehen. Ein leeres Diagramm einzufrieren hat keinen Sinn. */
@@ -737,6 +775,7 @@ $('bFrost').onclick=()=>{ labFrost=labFrost?false:hist.length>1; diagSync(); };
 $('bStelle').onclick=()=>{ stelle=!stelle; diagSync(); };
 $('bTang').onclick=()=>{ stTang=!stTang; if(stTang) stelle=true; diagSync(); };
 $('bFlae').onclick=()=>{ stFlae=!stFlae; if(stFlae&&!(flP[1]-flP[0]>0.01)) flP=[clamp(stP-FLH,0,1),clamp(stP+FLH,0,1)]; diagSync(); };
+$('sGl').oninput=()=>{ glMs=+$('sGl').value; diagSync(); };
 $('zNm').onclick=()=>{ zF=zStufe(zF,-1); diagSync(); };
 $('zNp').onclick=()=>{ zF=zStufe(zF,1); diagSync(); };
 $('zUm').onclick=()=>{ zU=zStufe(zU,-1); diagSync(); };
@@ -1154,7 +1193,7 @@ function frame(now){
       hist.push([labT,N,-labRate,lab.n]); while(hist.length&&hist[0][0]<labT-10) hist.shift();
       rateNachtragen(dt);
       labSkalen(); }
-    drawGraph({t0:labT-10,t1:labT,nMax:60,pts:hist,labels:false,signed:lab.ac||lab.ori===3,uMax:labUm,uMv:labUmv,nRef:200,werkz:true});
+    drawGraph({t0:labT-10,t1:labT,nMax:60,pts:glattPunkte(),labels:false,signed:lab.ac||lab.ori===3,uMax:labUm,uMv:labUmv,nRef:200,werkz:true});
     readout(count,labRate,dt,st,lab.n,labUm,labUmv,200);
   }
   requestAnimationFrame(frame);
@@ -1166,7 +1205,7 @@ fit(); gotoChapter(0,false); setLevel('q'); setMode('film');
    die Regler des Experiments. Wer den QR-Code scannt, sieht genau dasselbe Bild.   */
 function zustand(){ return {mode:mode, ci:ci, level:level, t:Math.round(t*100)/100, lab:Object.assign({},lab),
   dg:{zF:zF, zU:zU, st:stelle, tg:stTang, fl:stFlae, p:Math.round(stP*1000)/1000,
-      f1:Math.round(flP[0]*1000)/1000, f2:Math.round(flP[1]*1000)/1000}}; }
+      f1:Math.round(flP[0]*1000)/1000, f2:Math.round(flP[1]*1000)/1000, gl:glMs}}; }
 function zustandSetzen(d){ if(!d||typeof d!=='object') return;
   if(d.level==='q'||d.level==='o') setLevel(d.level);
   if(d.lab&&typeof d.lab==='object'){ Object.assign(lab,d.lab);
@@ -1177,7 +1216,8 @@ function zustandSetzen(d){ if(!d||typeof d!=='object') return;
     zF=ZSTUF.indexOf(+g.zF)>=0?+g.zF:1; zU=ZSTUF.indexOf(+g.zU)>=0?+g.zU:1;
     stelle=!!g.st; stTang=!!g.tg; stFlae=!!g.fl; stP=clamp(+g.p||0,0,1);
     const f1=clamp(+g.f1||0,0,1), f2=clamp(+g.f2||0,0,1);
-    flP=f2-f1>0.01?[f1,f2]:[clamp(stP-FLH,0,1),clamp(stP+FLH,0,1)]; }
+    flP=f2-f1>0.01?[f1,f2]:[clamp(stP-FLH,0,1),clamp(stP+FLH,0,1)];
+    glMs=Math.round(clamp(+g.gl||0,0,300)/10)*10; }
   const i=Math.max(0,Math.min(chapters.length-1,+d.ci||0));
   gotoChapter(i,false);
   setMode(d.mode==='lab'?'lab':'film');
