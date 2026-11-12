@@ -2767,8 +2767,10 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     Lücke. **Dreht sich mit der Erde** schaltet die **Tagesdrehung** ab: Dann bleibt die Kuppel so
     stehen, wie der Himmel über dem Ort zu der mit **Richtung** gewählten **Uhrzeit** steht, und der Ort
     wandert im Lauf des Tages auf seiner Bahn darunter hindurch – so sieht man, dass sich nicht der
-    Himmel dreht, sondern die Erde unter ihm. Die **Ekliptik** mit den
-    **Tierkreiszeichen** kommt mit der **Sonnenbahnebene** dazu; dazu sitzen Sonne und Mond als Punkte dort, wo sie an diesem Himmel gerade
+    Himmel dreht, sondern die Erde unter ihm. **Ekliptik mit Tierkreis** steht als
+    eigener Schalter oben im Untermenü: Die Bahn der Sonne am Himmel und die zwölf Zeichen lassen sich
+    damit auf die Kuppel legen, **ohne** dass dafür die ganze Sonnenbahnebene im Raum eingeblendet
+    werden muss. Dazu sitzen Sonne und Mond als Punkte dort, wo sie an diesem Himmel gerade
     stehen, mit gestrichelter Sichtlinie zum Körper. So sieht man von außen, was der Beobachter am Boden
     gerade über sich hat – und warum die Sonne im Winter einen so flachen Bogen zieht. Kuppel und Boden
     sind **durchsichtig** gezeichnet, sonst bliebe verborgen, was in ihnen steckt; wie durchsichtig,
