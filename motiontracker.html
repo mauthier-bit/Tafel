@@ -79,6 +79,16 @@ header{display:flex;align-items:center;justify-content:space-between;
 #video{width:100%;height:100%;object-fit:cover;transform:scaleX(-1);display:block}
 #poseCanvas{position:absolute;inset:0;width:100%;height:100%;
   transform:scaleX(-1);pointer-events:none}
+/* Abspielen: das aufgenommene Video liegt über dem Livebild, der Skelett-Umriss
+   gehört zum Livebild und wird dabei ausgeblendet. */
+#playVideo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+  background:#000;z-index:6;display:block}
+.playtag{position:absolute;top:6px;left:6px;z-index:7;padding:2px 8px;border-radius:4px;
+  background:rgba(7,8,13,.78);border:1px solid var(--yel);color:var(--yel);
+  font-size:11px;letter-spacing:.08em;pointer-events:none}
+.playrow{display:flex;align-items:center;gap:5px;flex:1;min-width:0}
+.icobtn.playan{border-color:var(--yel);color:var(--yel)}
+#col1 .chart-toolbar > .cttitle{flex:0 0 auto}
 .camswitch{position:absolute;top:6px;right:6px;width:32px;height:32px;
   border-radius:50%;background:rgba(0,0,0,.65);backdrop-filter:blur(6px);
   border:1px solid rgba(255,255,255,.2);color:#fff;font-size:16px;
@@ -527,6 +537,8 @@ input[type=range].sr-slider::-moz-range-thumb{
       <div class="cambox">
         <video id="video" autoplay playsinline muted></video>
         <canvas id="poseCanvas"></canvas>
+        <video id="playVideo" playsinline muted class="hidden"></video>
+        <div class="playtag hidden" id="playTag">Aufnahme</div>
         <button class="camswitch" onclick="switchCamera()" title="Kamera wechseln">⇄</button>
         <!-- Player assignment overlay (battle mode only) -->
         <div id="assignOverlay" style="
@@ -707,6 +719,16 @@ input[type=range].sr-slider::-moz-range-thumb{
       <!-- Toolbar row -->
       <div class="chart-toolbar">
         <span class="cttitle">Aufzeichnung</span>
+        <!-- Video abspielen: Zeitstrich wandert durch die Diagramme -->
+        <div class="playrow">
+          <button class="icobtn" id="playBtn1" onclick="videoAbspielen()" disabled
+            title="Aufgenommenes Video abspielen – ein Strich wandert mit durch die Diagramme">▶</button>
+          <input type="range" id="playRate1" min="0" max="4" step="1" value="3"
+            title="Abspielgeschwindigkeit – ganz links ist Zeitlupe"
+            style="width:72px;accent-color:var(--yel);height:3px;cursor:pointer;flex:0 0 auto"
+            oninput="onTempoChange()">
+          <span class="vlbl" id="playRateLbl1" style="min-width:30px">1×</span>
+        </div>
         <!-- Single / Split -->
         <div class="pill-row">
           <button class="pill active" id="p1Single" onclick="setView(1,'single')">Single</button>
@@ -1605,6 +1627,7 @@ function medianOf(buf) {
 }
 
 async function switchCamera() {
+  videoVerwerfen();
   const btn = document.querySelector('.camswitch');
   btn.style.opacity='0.4'; btn.disabled=true;
   try {
@@ -2257,6 +2280,9 @@ function drawPosChart(data, canvasId, live, tab) {
 
   // ── FLÄCHE: displacement comparison on position chart ──
   drawFlaecheOnPos(ctx, data, tab, P, CW, CH, W, H, tx, ty, tMin, tMax);
+
+  // ── ZEITSTRICH des abgespielten Videos ──
+  abspielStrich(ctx, tab, tx, tMin, tMax, P, W, H);
 }
 
 // Draws horizontal guide lines at the start/end positions of the Fläche
@@ -2664,6 +2690,9 @@ function drawVelChart(vel, canvasId, live, tab, targetPts, sharedTMin, sharedTMa
     // keep badge in sync
     updateVelBadge(tab);
   }
+
+  // ── ZEITSTRICH des abgespielten Videos ──
+  abspielStrich(ctx, tab, tx, tMin, tMax, P, W, H);
 }
 
 /* ════════════════════════════════════════════
@@ -3110,6 +3139,7 @@ function updateSelButtonLabels() {
    RECORDING (Mode 1)
 ════════════════════════════════════════════ */
 function startRec() {
+  videoAufnahmeStart();
   recData=[]; recT0=Date.now(); isRec=true; smoothBuf=[]; smoothBuf._lastOut=undefined;
   zoomFit[1]=false; zoomFitVel[1]=false;
   const zb1=document.querySelector('#col1 .icobtn[title*="Zoom"]'); if(zb1) zb1.style.color='';
@@ -3139,6 +3169,7 @@ function stopRec() {
   if(!isRec) return;
   cancelAutoStop(); stopProgressBar();
   isRec=false;
+  videoAufnahmeStop();
   setStatus('on','Aktiv');
   document.getElementById('recBtn').disabled=false;
   document.getElementById('stopBtn').disabled=true;
@@ -3150,6 +3181,7 @@ function stopRec() {
 }
 
 function clearRec() {
+  videoVerwerfen();
   recData=[];
   document.getElementById('posLock1').classList.add('hidden');
   document.getElementById('velLock1').classList.add('hidden');
@@ -3159,6 +3191,161 @@ function clearRec() {
   document.getElementById('liveTog1').checked=true;
   drawAllCharts(1);
 }
+
+/* ══════════════════════════════════════════
+   VIDEO ZUR AUFZEICHNUNG (Mode 1)
+   Mit der Bewegung wird auch das Kamerabild mitgeschnitten. Danach spielt der
+   ▶-Knopf in der Diagrammleiste den Mitschnitt ab; dabei wandert ein Strich
+   durch beide Diagramme, und der Tempo-Regler macht daraus eine Zeitlupe.
+   Das Video liegt beim Abspielen über dem Livebild; der Strom der Kamera
+   läuft darunter weiter (ein zweites getUserMedia würde ihn beenden).
+══════════════════════════════════════════ */
+const VTEMPO = [0.1, 0.25, 0.5, 1, 2];     // Stufen des Tempo-Reglers
+let vidRec=null, vidTeile=[], vidUrl=null, vidT0=0, vidSpiegel='';
+let vidTempo=1, vidLaeuft=false, vidZeit=null, vidRaf=0;
+
+function vPlay(){ return document.getElementById('playVideo'); }
+/* Der Mitschnitt beginnt ein paar Millisekunden nach den Messpunkten. */
+function vidVersatz(){ return (vidT0 && recT0) ? (vidT0 - recT0) / 1000 : 0; }
+
+/* Safari kann MP4, Chrome webm – ohne Tonspur auch ohne Audio-Codec im Typ. */
+function vidTyp(){
+  if(!window.MediaRecorder) return null;
+  const typen=['video/mp4;codecs=avc1.42E01E','video/mp4','video/webm;codecs=vp9','video/webm'];
+  for(const ty of typen){ try{ if(MediaRecorder.isTypeSupported(ty)) return ty; }catch(_){} }
+  return '';
+}
+
+function videoAufnahmeStart(){
+  videoVerwerfen();
+  if(!currentStream || !window.MediaRecorder) return;
+  try{
+    const ty=vidTyp();
+    vidTeile=[];
+    vidRec = ty ? new MediaRecorder(currentStream,{mimeType:ty}) : new MediaRecorder(currentStream);
+    vidT0 = Date.now();
+    vidSpiegel = document.getElementById('video').style.transform || '';
+    vidRec.ondataavailable = e => { if(e.data && e.data.size) vidTeile.push(e.data); };
+    vidRec.onstart = () => { vidT0 = Date.now(); };
+    vidRec.onstop = () => {
+      if(!vidTeile.length) return;
+      const blob = new Blob(vidTeile, {type: vidTeile[0].type || 'video/mp4'});
+      vidTeile=[];
+      vidUrl = URL.createObjectURL(blob);
+      const pv=vPlay();
+      pv.src=vidUrl; pv.style.transform=vidSpiegel; pv.playbackRate=vidTempo;
+      try{ pv.load(); }catch(_){}
+      const b=document.getElementById('playBtn1'); if(b) b.disabled=false;
+    };
+    vidRec.start();
+  }catch(e){ vidRec=null; }
+}
+
+function videoAufnahmeStop(){
+  if(vidRec && vidRec.state!=='inactive'){ try{ vidRec.stop(); }catch(_){} }
+  vidRec=null;
+}
+
+/* Alles wegwerfen: vor einer neuen Aufnahme und beim Löschen. */
+function videoVerwerfen(){
+  videoZurLive();
+  if(vidRec && vidRec.state!=='inactive'){ try{ vidRec.onstop=null; vidRec.stop(); }catch(_){} }
+  vidRec=null; vidTeile=[];
+  if(vidUrl){ try{ URL.revokeObjectURL(vidUrl); }catch(_){} vidUrl=null; }
+  const pv=vPlay();
+  if(pv){ try{ pv.pause(); }catch(_){} pv.removeAttribute('src'); try{ pv.load(); }catch(_){} }
+  vidZeit=null;
+  const b=document.getElementById('playBtn1'); if(b) b.disabled=true;
+  if(curTab===1) drawAllCharts(1);
+}
+
+/* Zurück zum Livebild (Tab- oder Kamerawechsel, neue Aufnahme). */
+function videoZurLive(){
+  videoPause();
+  const pv=vPlay(); if(pv) pv.classList.add('hidden');
+  const tg=document.getElementById('playTag'); if(tg) tg.classList.add('hidden');
+  const pc=document.getElementById('poseCanvas'); if(pc) pc.style.visibility='';
+}
+
+function vidEnde(){ return recData.length ? recData[recData.length-1].t : 0; }
+
+function videoAbspielen(){
+  if(vidLaeuft){ videoPause(); return; }
+  const pv=vPlay();
+  if(!vidUrl || !pv) return;
+  const ende=vidEnde();
+  if(vidZeit===null || vidZeit >= ende-0.05) vidZeit = recData.length ? recData[0].t : 0;
+  pv.classList.remove('hidden');
+  const tg=document.getElementById('playTag'); if(tg) tg.classList.remove('hidden');
+  const pc=document.getElementById('poseCanvas'); if(pc) pc.style.visibility='hidden';
+  try{ pv.currentTime = Math.max(0, vidZeit - vidVersatz()); }catch(_){}
+  pv.playbackRate = vidTempo;
+  vidLaeuft=true; playKnopfSync();
+  const p=pv.play(); if(p && p.catch) p.catch(()=>{ vidLaeuft=false; playKnopfSync(); });
+  cancelAnimationFrame(vidRaf); vidRaf=requestAnimationFrame(vidSchleife);
+}
+
+function videoPause(){
+  vidLaeuft=false; cancelAnimationFrame(vidRaf);
+  const pv=vPlay(); if(pv){ try{ pv.pause(); }catch(_){} }
+  playKnopfSync();
+}
+
+function vidSchleife(){
+  if(!vidLaeuft) return;
+  const pv=vPlay(); if(!pv){ videoPause(); return; }
+  const ende=vidEnde();
+  vidZeit = Math.min(ende, pv.currentTime + vidVersatz());
+  /* Begrenzt der Browser das Tempo, zeigt die Beschriftung den wirklichen Wert. */
+  if(Math.abs(pv.playbackRate - vidTempo) > 0.01)
+    document.getElementById('playRateLbl1').textContent =
+      String(Math.round(pv.playbackRate*100)/100).replace('.',',') + '\u00d7';
+  if(curTab===1) drawAllCharts(1);
+  if(pv.ended || pv.currentTime + vidVersatz() >= ende){   /* am Ende stehen bleiben */
+    vidZeit=ende; videoPause(); if(curTab===1) drawAllCharts(1); return;
+  }
+  vidRaf=requestAnimationFrame(vidSchleife);
+}
+
+function playKnopfSync(){
+  const b=document.getElementById('playBtn1'); if(!b) return;
+  b.textContent = vidLaeuft ? '‖' : '▶';
+  b.title = vidLaeuft ? 'Abspielen anhalten'
+                      : 'Aufgenommenes Video abspielen – ein Strich wandert mit durch die Diagramme';
+  b.classList.toggle('playan', vidLaeuft);
+}
+
+function onTempoChange(){
+  const el=document.getElementById('playRate1');
+  vidTempo = VTEMPO[parseInt(el.value,10)] || 1;
+  const pv=vPlay(); if(pv) pv.playbackRate=vidTempo;
+  document.getElementById('playRateLbl1').textContent =
+    String(vidTempo).replace('.',',') + '×';
+}
+
+/* Der Zeitstrich in beiden Diagrammen – gelb, damit er nicht mit der weißen
+   Stelle des Zusammenhang-Werkzeugs verwechselt wird. */
+function abspielStrich(ctx, tab, tx, tMin, tMax, P, W, H){
+  if(tab!==1 || vidZeit===null || window._printMode) return;   /* im Ausdruck hat der Strich nichts verloren */
+  const x = tx(Math.max(tMin, Math.min(tMax, vidZeit)));
+  ctx.save();
+  ctx.strokeStyle = vidLaeuft ? 'rgba(240,200,58,.95)' : 'rgba(240,200,58,.6)';
+  ctx.lineWidth=1.6;
+  ctx.beginPath(); ctx.moveTo(x,P.t); ctx.lineTo(x,H-P.b); ctx.stroke();
+  ctx.fillStyle = ctx.strokeStyle;
+  ctx.beginPath(); ctx.moveTo(x-5,P.t); ctx.lineTo(x+5,P.t); ctx.lineTo(x,P.t+8); ctx.closePath(); ctx.fill();
+  const txt = vidZeit.toFixed(1).replace('.',',') + ' s';
+  ctx.font='bold 10px DM Mono'; ctx.textBaseline='middle';
+  const rechts = x < W - P.r - 48;
+  ctx.textAlign = rechts ? 'left' : 'right';
+  const bx = x + (rechts ? 7 : -7), bw = ctx.measureText(txt).width;
+  ctx.fillStyle='rgba(7,8,13,.82)';          /* dunkle Unterlage: bleibt über allem lesbar */
+  ctx.fillRect(rechts ? bx-3 : bx-bw-3, P.t, bw+6, 15);
+  ctx.fillStyle = vidLaeuft ? 'rgba(240,200,58,.95)' : 'rgba(240,200,58,.6)';
+  ctx.fillText(txt, bx, P.t + 7);
+  ctx.restore();
+}
+
 
 /* ════════════════════════════════════════════
    TARGET EDITOR (Mode 2)
@@ -4809,6 +4996,7 @@ function switchTab(n){
     }
   }
 
+  if(n!==1) videoZurLive();
   curTab=n;
   [1,2,3].forEach(i=>{
     document.getElementById(`t${i}`).classList.toggle('active',n===i);

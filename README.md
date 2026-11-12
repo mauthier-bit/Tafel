@@ -2315,6 +2315,15 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   **Braucht Kamera und Mikrofon** (die Tafel gibt dem Objekt dafür eigens die Kamera-Erlaubnis; beim
   ersten Start fragt das iPad nach) **und Internet**, weil das KI-Modell zur Körpererkennung aus dem
   Netz geladen wird. Die Bilder selbst bleiben auf dem Gerät.
+  **Mit der Aufzeichnung läuft auch ein Mitschnitt des Kamerabildes.** Danach steht in der Zeile
+  über dem Diagramm links ein **▶-Knopf**: Er spielt den Mitschnitt über dem Livebild ab, und
+  dabei wandert ein **gelber Zeitstrich** mit der Zeitangabe durch die Diagramme (in der
+  Split-Ansicht durch **beide**) – so sieht man zu jedem Punkt der Kurve die zugehörige Bewegung.
+  Ein kleiner **Regler daneben** stellt das Tempo von **0,1× (Zeitlupe) bis 2×** ein. Nochmal
+  tippen hält an, das Standbild und der Strich bleiben stehen; am Ende bleibt das letzte Bild
+  stehen. Ein **Tab-Wechsel**, eine **neue Aufnahme** oder **Löschen** bringen das Livebild
+  zurück. Der Mitschnitt bleibt **auf dem Gerät** und wird nirgends gespeichert – mit dem
+  Schließen der Seite ist er weg.
 - **Seitenübersicht:** auf die **Seitenzahl** (z. B. „2/5") tippen → Miniaturen aller Seiten,
   eine antippen wechselt direkt dorthin. Jede Miniatur hat oben rechts ein **⋮-Menü** (mit **×** zum
   Schließen) mit **Umbenennen, Duplizieren, Kopieren, Ausschneiden, Einfügen**, **📑 Als PDF**
@@ -2964,7 +2973,7 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     weil die Spannungskurve als **Steigung ohne Nachlauf** aus dem Verlauf der Feldlinien gerechnet
     wird; das Messgerät darf weiter etwas nachlaufen.
     Rechts zoomen zwei Knopfpaare die **Hochachsen** von **Anzahl bzw. Φ** und von **U** getrennt
-    (halb bis achtfach); der Faktor steht an der Achse (**„in mV ×2"**), und die angeschriebenen
+    (halb- bis fünfzigfach – bei ganz langsamen Bewegungen ist die Spannung winzig); der Faktor steht an der Achse (**„in mV ×2"**), und die angeschriebenen
     Werte wandern mit. So lässt sich ein kleiner Ausschlag groß zeigen, ohne an den Reglern zu
     drehen. **Im Film gibt es die Leiste nicht** – dort erzählen die Kapitel die Diagramme selbst.
   - **Im Experiment sitzen die beiden Anzeigen klein oben links im Bild:** die **Zahl der Feldlinien**
