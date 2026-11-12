@@ -2986,8 +2986,12 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     deshalb passen Fläche und Flussänderung auch dann noch zusammen. Die aufgenommenen Werte
     bleiben unverändert, der Regler lässt sich also auch im **eingefrorenen** Bild noch verstellen.
     Rechts zoomen zwei Knopfpaare die **Hochachsen** von **Anzahl bzw. Φ** und von **U** getrennt
-    (halb- bis fünfzigfach – bei ganz langsamen Bewegungen ist die Spannung winzig); der Faktor steht an der Achse (**„in mV ×2"**), und die angeschriebenen
-    Werte wandern mit. So lässt sich ein kleiner Ausschlag groß zeigen, ohne an den Reglern zu
+    (halb- bis fünfzigfach – bei ganz langsamen Bewegungen ist die Spannung winzig); der Faktor steht
+    **nur an der Achse** (**„in mV ×2"**), und die angeschriebenen
+    Werte wandern mit. An den Knöpfen steht er bewusst nicht: Dort würde die Leiste beim Zoomen mal
+    breiter, mal schmaler und dadurch umbrechen. Zwischen 881 und 1100 px Fensterbreite ist die
+    linke Spalte schmal; dort rücken die Knöpfe der Leiste enger zusammen, damit sie auch auf einem
+    iPad mit 1024 px quer **eine** Zeile bleibt. So lässt sich ein kleiner Ausschlag groß zeigen, ohne an den Reglern zu
     drehen. **Im Film gibt es die Leiste nicht** – dort erzählen die Kapitel die Diagramme selbst.
   - **Im Experiment sitzen die beiden Anzeigen klein oben links im Bild:** die **Zahl der Feldlinien**
     und das **Spannungsmessgerät**. Zwei Knöpfe darüber (**„Feldlinien"**, **„Messgerät"**) blenden sie
