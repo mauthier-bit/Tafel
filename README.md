@@ -3875,12 +3875,26 @@ shot.js               ← Werkzeug als Bild: auf die Tafel legen / in die Zwisch
 modus.js              ← Umschalter „Benutzen ↔ Bearbeiten" für die Lernwerkzeuge
 manifest.webmanifest  ← PWA-Manifest
 sw.js                 ← Service Worker (Offline-Cache)
-icon.svg, icon-maskable.svg
+icon.svg              ← App-Symbol, abgerundet (Browser, Favicon)
+icon-maskable.svg     ← randfüllend mit Sicherheitszone (Android)
+icon-apple.svg        ← randfüllende Vorlage, aus der die PNG gerendert sind
+icon-180/192/512.png  ← Homebildschirm (Safari nimmt dort nur PNG)
 vendor/
   pdf.min.js, pdf.worker.min.js   ← PDF-Import (offline)
   jspdf.umd.min.js                ← PDF-Export
   qrcode.min.js                   ← QR-Codes
 ```
+
+## Am Homebildschirm
+
+Über „Teilen → Zum Home-Bildschirm" läuft die Tafel als eigenständige App ohne Browserleisten.
+Das **App-Symbol** zeigt eine weiße Tafel mit blauer Kurve und rotem Punkt, darunter die Ablage
+mit Kreide und Stift, auf dunklem Grund. Es liegt als **PNG** bei (180, 192 und 512 px):
+**Safari nimmt am Homebildschirm nur PNG** – bei einem SVG legt es stattdessen ein Abbild der
+Seite ab, dort war also vorher kein Symbol zu sehen. Die runden Ecken macht iPadOS selbst, die
+PNG sind deshalb randfüllend. Für Browser und Android bleiben die SVG-Fassungen (`icon.svg`
+abgerundet, `icon-maskable.svg` randfüllend mit Sicherheitszone); die PNG sind aus
+`icon-apple.svg` gerendert.
 
 ## Offline
 
