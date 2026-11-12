@@ -2946,13 +2946,23 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     sagt das auch.
   - Feldlinien, die **nicht** durch die Spule gehen, sind **blasser** gezeichnet; die gezählten stechen
     dadurch deutlich hervor.
-  - **Unter den Diagrammen** steht im Experiment eine schmale Leiste mit vier Werkzeugen:
+  - **Unter den Diagrammen** steht im Experiment eine schmale Leiste zum Auswerten:
+    Die **Schneeflocke** friert die **Aufnahme** ein – Versuch und Diagramm bleiben stehen
+    (im Bild steht dann **„Experiment · eingefroren"**), und erst jetzt lohnt sich das Messen in
+    Ruhe. Ein Griff an irgendeinen Regler des Versuchs lässt die Aufnahme weiterlaufen; ein
+    **Wechsel des Niveaus** nicht – man kann also eingefroren erst qualitativ schauen und dann
+    die Zahlen der Oberstufe dazuschalten.
     **„Stelle"** legt eine **senkrechte Linie durch beide Diagramme**, die man **im Diagramm
     verschiebt**; sie bleibt an ihrem Platz im Bild stehen, während die Kurve durch sie
     hindurchläuft, und sagt in der Lücke zwischen den Diagrammen, **wie lange sie zurückliegt**.
     **„Tangente"** legt an dieser Stelle die **Tangente an die obere Kurve** – die Steigung ist genau
-    die Spannung darunter (Oberstufe: **dΦ/dt in µWb/s**). **„Fläche"** färbt die **Fläche unter der
-    Spannungskurve** bis zur Stelle ein; in der Oberstufe steht ihr Wert dabei: **∫U dt = −N · ΔΦ**.
+    die Spannung darunter (Oberstufe: **dΦ/dt in µWb/s**). **„Fläche"**: Mit dem Finger
+    **über das untere Diagramm streichen** markiert einen Abschnitt **t₁ bis t₂** (ein Tipp nimmt ein
+    kurzes Stück um die Stelle). Gefärbt wird die **Fläche unter der Spannungskurve**, und oben zeigt
+    ein Pfeil die **Flussänderung** im selben Abschnitt – beides gehört zusammen:
+    **∫U dt = −N · ΔΦ** (Klasse 10: „Fläche ≙ Änderung der Anzahl"). Die Zahlen stimmen überein,
+    weil die Spannungskurve als **Steigung ohne Nachlauf** aus dem Verlauf der Feldlinien gerechnet
+    wird; das Messgerät darf weiter etwas nachlaufen.
     Rechts zoomen zwei Knopfpaare die **Hochachsen** von **Anzahl bzw. Φ** und von **U** getrennt
     (halb bis achtfach); der Faktor steht an der Achse (**„in mV ×2"**), und die angeschriebenen
     Werte wandern mit. So lässt sich ein kleiner Ausschlag groß zeigen, ohne an den Reglern zu
