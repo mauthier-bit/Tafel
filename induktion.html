@@ -55,7 +55,7 @@ main{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:12px;align-items
 .bigplay{position:absolute;inset:0;margin:auto;width:84px;height:84px;border-radius:50%;border:0;background:var(--accent);color:var(--onAccent);cursor:pointer;display:grid;place-items:center;box-shadow:0 6px 24px rgba(0,0,0,.25)}
 .bigplay svg{width:34px;height:34px;margin-left:5px}
 .graphWrap{position:relative;background:var(--surface);border:1px solid var(--rule);border-radius:14px;overflow:hidden;height:168px}
-body.labm .graphWrap{height:210px}           /* im Experiment ist unter dem Bild Platz dafuer */
+body.labm .graphWrap{height:186px}           /* im Experiment ist unter dem Bild Platz dafuer */
 .graphWrap.tall{height:230px}
 .controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--rule);border-radius:14px;padding:8px 12px}
 .btn{border:1px solid var(--rule);background:var(--surface2);border-radius:9px;min-width:42px;min-height:42px;padding:0 12px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;font-weight:600}
@@ -187,6 +187,21 @@ body.labm .lab .grpLbl{margin-top:7px;font-size:.9rem}
 .seg.segOri svg .fl{opacity:.5}
 .seg.segOri svg .sp{stroke-width:2;stroke:var(--flux)}
 .seg.segOri button[aria-pressed="true"] svg .sp{stroke:currentColor}
+/* Leiste unter den Diagrammen (nur im Experiment): Stelle mit Tangente und Flaeche,
+   Zoom der beiden Hochachsen. Knoepfe schmal, damit die Zeile aufs iPad passt. */
+.diagBar{padding:5px 8px;gap:6px}
+.diagBar .btn{min-height:32px;min-width:32px;padding:0 10px;font-size:.88rem}
+.diagBar .btn[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--onAccent)}
+.diagBar .btn.aus{opacity:.5}
+.diagBar .zg{display:inline-flex;align-items:center;gap:4px}
+.diagBar #zgN{margin-left:auto}
+.diagBar .zg b{font-size:.82rem;color:var(--muted);font-weight:600;white-space:nowrap}
+.diagBar .zg .btn{min-width:30px;padding:0 7px;font-size:1.05rem;line-height:1}
+/* Regler mit Knopf davor (Drehzahl: starten und anhalten) */
+.mitKnopf{display:flex;align-items:center;gap:8px}
+.mitKnopf .btn{flex:0 0 auto;min-width:40px;min-height:34px;padding:0}
+.mitKnopf .btn svg{width:16px;height:16px}
+.mitKnopf input[type=range]{flex:1 1 auto;min-width:0;width:auto}
 @media (max-width:880px){ main{grid-template-columns:minmax(0,1fr)} .count .n{font-size:2.5rem} }
 @media (max-width:520px){ .sceneWrap{aspect-ratio:1.55/1} .graphWrap{height:130px} h1{font-size:1.1rem} }
 @media (prefers-reduced-motion:reduce){ .caption p{transition:none} }
@@ -225,6 +240,17 @@ body.labm .lab .grpLbl{margin-top:7px;font-size:.9rem}
       </div>
       <div class="graphWrap" id="graphWrap"><canvas id="graph" aria-label="Diagramm: Anzahl der Feldlinien und Induktionsspannung über der Zeit"></canvas>
         <div class="diagHidden" id="diagHidden" hidden><p>Diagramm ausgeblendet: Skizziere zuerst deine Vermutung.</p><button class="btn primary" id="diagShow">Diagramm einblenden</button></div></div>
+      <div class="controls diagBar" id="diagBar" hidden>
+        <button class="btn" id="bStelle" aria-pressed="false" title="Senkrechte Linie durch beide Diagramme; im Diagramm verschiebbar">Stelle</button>
+        <button class="btn aus" id="bTang" aria-pressed="false" title="Tangente an die obere Kurve an dieser Stelle">Tangente</button>
+        <button class="btn aus" id="bFlae" aria-pressed="false" title="Fläche unter der Spannungskurve bis zu dieser Stelle">Fläche</button>
+        <span class="zg" id="zgN"><b id="zNlbl">Anzahl</b>
+          <button class="btn" id="zNm" title="obere Kurve kleiner darstellen" aria-label="obere Kurve kleiner darstellen">−</button>
+          <button class="btn" id="zNp" title="obere Kurve größer darstellen" aria-label="obere Kurve größer darstellen">+</button></span>
+        <span class="zg" id="zgU"><b id="zUlbl">U</b>
+          <button class="btn" id="zUm" title="Spannungskurve kleiner darstellen" aria-label="Spannungskurve kleiner darstellen">−</button>
+          <button class="btn" id="zUp" title="Spannungskurve größer darstellen" aria-label="Spannungskurve größer darstellen">+</button></span>
+      </div>
       <div class="controls" id="controls">
         <button class="btn primary" id="play" aria-label="Abspielen"></button>
         <button class="btn" id="restart" aria-label="Von vorn"><svg viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" d="M4 12a8 8 0 1 0 2.4-5.7M4 4v4.5h4.5"/></svg></button>
@@ -329,7 +355,8 @@ body.labm .lab .grpLbl{margin-top:7px;font-size:.9rem}
               <path d="M8 13.5a6 5 0 1 1 5.5 4.4"/><path d="M15.6 15.6 13 18.1l2.2 2.6"/>
               <path class="sp" d="M9.5 15.5 18.5 9"/></svg><span>drehen</span></button>
         </div>
-        <div class="row" id="rowFd" hidden><label for="sFd">Drehzahl <span id="vFd"></span></label><input type="range" id="sFd" min="0" max="1" step="0.05"></div>
+        <div class="row" id="rowFd" hidden><label for="sFd">Drehzahl <span id="vFd"></span></label>
+          <div class="mitKnopf"><button class="btn" id="btnDreh" title="Drehung starten oder anhalten"></button><input type="range" id="sFd" min="0" max="1" step="0.05"></div></div>
         <div class="row" id="rowPhi" hidden><label for="sPhi">Drehen von Hand <span id="vPhi"></span></label><input type="range" id="sPhi" min="0" max="180" step="1"></div>
         <div class="row"><label for="sI">Stromstärke im Elektromagneten <span id="vI"></span></label><input type="range" id="sI" min="0" max="3" step="0.01"></div>
         <div class="seg" id="segAC" role="group" aria-label="Stromart">
@@ -516,8 +543,16 @@ const ICON_PAUSE='<svg viewBox="0 0 24 24"><path fill="currentColor" d="M6 4h4.5
 // ---------- Zustand ----------
 let mode='film', ci=0, t=0, playing=false, speed=1, lastCap=-2, done=new Set();
 let level='q', lastSign=1;
-const lab={mx:-1.75,cx:0,I:2,a:2.5,big:false,n:200,ac:false,f:0.5,ori:0,fd:0.5,phi:0,zN:true,zU:true};
+const lab={mx:-1.75,cx:0,I:2,a:2.5,big:false,n:200,ac:false,f:0.5,ori:0,fd:0.5,lauf:true,phi:0,zN:true,zU:true};
 let hist=[], labT=0, labPrevN=null, labRate=0, needle=0;
+/* Werkzeuge am Diagramm (nur im Experiment): Zoom der Hochachsen und eine Stelle,
+   die als senkrechte Linie durch beide Diagramme geht. stP ist ihre Lage im Bild
+   (0 = linker Rand, 1 = rechter Rand) - so bleibt sie auch im mitlaufenden
+   Diagramm an derselben Stelle stehen, waehrend die Kurve durch sie hindurchlaeuft. */
+const ZSTUF=[0.5,0.75,1,1.5,2,3,5,8];
+const zTxt=v=>'×'+String(v).replace('.',',');
+const zStufe=(v,r)=>{ let i=ZSTUF.indexOf(v); if(i<0) i=ZSTUF.indexOf(1); return ZSTUF[clamp(i+r,0,ZSTUF.length-1)]; };
+let zF=1, zU=1, stelle=false, stTang=false, stFlae=false, stP=0.5, gGeo=null;
 /* Spannungsskala im Experiment: Sie wächst mit, sonst werden hohe Frequenzen abgeschnitten.
    Sie springt erst, wenn der Platz wirklich nicht reicht (oder viel zu groß geworden ist).  */
 let labUm=UMAX, labUmv=50;
@@ -554,7 +589,7 @@ function applyLevelText(){ const c=chapters[ci];
   const dots=$('dots'); dots.innerHTML=''; c.caps[level].forEach(()=>dots.appendChild(document.createElement('i'))); lastCap=-2; }
 function setLevel(l){ level=l; $('lvQ').setAttribute('aria-selected',l==='q'); $('lvO').setAttribute('aria-selected',l==='o');
 
-  hist=[]; applyLevelText(); syncLab(); }
+  hist=[]; applyLevelText(); syncLab(); diagSync(); }
 $('lvQ').onclick=()=>setLevel('q'); $('lvO').onclick=()=>setLevel('o');
 let showDiag=false;
 function isTask(){ return mode==='film'&&!!chapters[ci].task; }
@@ -603,6 +638,7 @@ function setMode(m){ mode=m; $('mFilm').setAttribute('aria-pressed',m==='film');
   syncTaskUI();
   if(m==='lab'){ playing=false; hist=[]; labT=0; labPrevN=null; labRate=0; labUm=UMAX; labUmv=50; $('tag').textContent='Experiment'; sc.style.touchAction='none'; syncLab(); }
   else { $('tag').textContent=chapters[ci].short; sc.style.touchAction='pan-y'; }
+  diagSync();
   syncButtons(); }
 $('mFilm').onclick=()=>setMode('film'); $('mLab').onclick=()=>setMode('lab');
 
@@ -611,10 +647,12 @@ const sI=$('sI'), sA=$('sA'), sN=$('sN');
 function syncLab(){ sI.value=lab.I; sA.value=lab.a; sN.value=lab.n; $('vN').textContent=lab.n;
   $('acDC').setAttribute('aria-pressed',!lab.ac); $('acAC').setAttribute('aria-pressed',lab.ac);
   for(let i=0;i<4;i++) $('ori'+i).setAttribute('aria-pressed',(lab.ori|0)===i);
-  const dreht=(lab.ori|0)===3;
+  const dreht=(lab.ori|0)===3, laeuft=dreht&&lab.fd>0&&lab.lauf;
   $('rowFd').hidden=!dreht; $('sFd').value=lab.fd;
-  $('vFd').textContent=lab.fd>0?fmt(lab.fd,2)+' /s':'steht still';
-  $('rowPhi').hidden=!dreht||lab.fd>0;   /* von Hand drehen geht nur, wenn die Drehung steht */
+  $('vFd').textContent=lab.fd>0?fmt(lab.fd,2)+' /s'+(lab.lauf?'':' · angehalten'):'steht still';
+  $('btnDreh').innerHTML=laeuft?ICON_PAUSE:ICON_PLAY;
+  $('btnDreh').setAttribute('aria-label',laeuft?'Drehung anhalten':'Drehung starten');
+  $('rowPhi').hidden=!dreht||laeuft;   /* von Hand drehen geht nur, wenn die Drehung steht */
   phiRegler();
   $('rowF').hidden=!lab.ac; $('sF').value=lab.f; ovlSync();
   $('vF').textContent=fmt(lab.f,2)+' Hz'+(level==='o'?' · T = '+fmt(1/lab.f,1)+' s':'');
@@ -629,10 +667,14 @@ $('fSmall').onclick=()=>{lab.big=false;syncLab();}; $('fBig').onclick=()=>{lab.b
 $('acDC').onclick=()=>{lab.ac=false;syncLab();}; $('acAC').onclick=()=>{lab.ac=true;syncLab();};
 for(let i=0;i<4;i++) $('ori'+i).onclick=()=>{lab.ori=i;syncLab();};
 $('sFd').oninput=()=>{lab.fd=+$('sFd').value;syncLab();};
-/* Von Hand am Winkel drehen heisst: die Drehung steht. */
-$('sPhi').oninput=()=>{ lab.fd=0; lab.phi=+$('sPhi').value; syncLab(); };
+/* Play/Pause der Drehung: Play bei Drehzahl 0 heisst „fang mit halbem Tempo an". */
+$('btnDreh').onclick=()=>{ if(lab.fd>0&&lab.lauf){ lab.lauf=false; } else { lab.lauf=true; if(lab.fd<=0) lab.fd=0.5; } syncLab(); };
+/* Von Hand am Winkel drehen heisst: die Drehung haelt an (die Drehzahl bleibt aber
+   eingestellt, der Play-Knopf laeuft damit weiter). */
+$('sPhi').oninput=()=>{ lab.lauf=false; lab.phi=+$('sPhi').value; syncLab(); };
 $('sF').oninput=()=>{lab.f=+$('sF').value;syncLab();};
-$('reset').onclick=()=>{ Object.assign(lab,{mx:-1.75,cx:0,I:2,a:2.5,big:false,n:200,ac:false,f:0.5,ori:0,fd:0.5,phi:0,zN:true,zU:true}); syncLab(); };
+$('reset').onclick=()=>{ Object.assign(lab,{mx:-1.75,cx:0,I:2,a:2.5,big:false,n:200,ac:false,f:0.5,ori:0,fd:0.5,lauf:true,phi:0,zN:true,zU:true});
+  zF=1; zU=1; stelle=false; stTang=false; stFlae=false; stP=0.5; syncLab(); diagSync(); };
 function labState(){ const f=lab.big?BIG:SMALL;
   /* Wechselstrom: Die Stromstärke schwingt, das Feld kehrt dabei seine Richtung um. */
   const B=(lab.I/3)*(lab.ac?Math.sin(2*Math.PI*lab.f*labT):1);
@@ -655,6 +697,33 @@ sc.addEventListener('pointermove',e=>{ if(!drag) return; const r=sc.getBoundingC
   const gr=(drag.k==='mx'&&lab.big)?3.5:5.5;   /* der grosse Magnet soll nicht aus dem Bild wandern */
   lab[drag.k]=clamp(drag.v0+(x-drag.x0)/geo.s,-gr,gr); syncLab(); });
 const endDrag=()=>{drag=null;}; sc.addEventListener('pointerup',endDrag); sc.addEventListener('pointercancel',endDrag);
+
+/* ---- Leiste unter den Diagrammen ---- */
+function diagSync(){
+  $('diagBar').hidden=mode!=='lab';
+  $('bStelle').setAttribute('aria-pressed',stelle); $('bStelle').classList.toggle('aus',false);
+  $('bTang').setAttribute('aria-pressed',stTang); $('bFlae').setAttribute('aria-pressed',stFlae);
+  $('bTang').classList.toggle('aus',!stelle); $('bFlae').classList.toggle('aus',!stelle);
+  $('zNlbl').textContent=(level==='q'?'Anzahl':'Φ')+(zF!==1?' '+zTxt(zF):'');
+  $('zUlbl').textContent='U'+(zU!==1?' '+zTxt(zU):'');
+  gc.style.touchAction=(stelle&&mode==='lab')?'none':''; }
+$('bStelle').onclick=()=>{ stelle=!stelle; diagSync(); };
+$('bTang').onclick=()=>{ stTang=!stTang; if(stTang) stelle=true; diagSync(); };
+$('bFlae').onclick=()=>{ stFlae=!stFlae; if(stFlae) stelle=true; diagSync(); };
+$('zNm').onclick=()=>{ zF=zStufe(zF,-1); diagSync(); };
+$('zNp').onclick=()=>{ zF=zStufe(zF,1); diagSync(); };
+$('zUm').onclick=()=>{ zU=zStufe(zU,-1); diagSync(); };
+$('zUp').onclick=()=>{ zU=zStufe(zU,1); diagSync(); };
+/* Die Stelle laesst sich im Diagramm anfassen und verschieben. */
+let stDrag=false;
+function stelleAusX(e){ if(!gGeo) return; const r=gc.getBoundingClientRect(); if(!r.width) return;
+  const x=(e.clientX-r.left)*(gc.width/r.width);
+  stP=clamp((x-gGeo.L)/Math.max(1,gGeo.w-gGeo.L-gGeo.R),0,1); }
+gc.addEventListener('pointerdown',e=>{ if(!stelle||mode!=='lab') return; stDrag=true; stelleAusX(e);
+  try{ gc.setPointerCapture(e.pointerId); }catch(err){} e.preventDefault(); });
+gc.addEventListener('pointermove',e=>{ if(!stDrag) return; stelleAusX(e); e.preventDefault(); });
+const stEnde=()=>{ stDrag=false; };
+gc.addEventListener('pointerup',stEnde); gc.addEventListener('pointercancel',stEnde);
 
 // ---------- Zeichnen ----------
 let C={};
@@ -860,38 +929,103 @@ function drawGraph(o){
   const L=92*dpr, R=14*dpr, T=10*dpr, B=22*dpr, gap=12*dpr, ph=(h-T-B-gap)/2;
   const X=tt=>L+(tt-o.t0)/(o.t1-o.t0)*(w-L-R);
   const um=o.uMax||UMAX, umv=o.uMv||50;
+  /* Zoom der Hochachsen (nur im Experiment): kleinerer Messbereich = groesserer Ausschlag */
+  const zoom=!!o.werkz, nM=o.nMax/(zoom?zF:1), umz=um/(zoom?zU:1), umvz=umv/(zoom?zU:1);
   /* nRef: Im Experiment zaehlt die Windungszahl auch in Klasse 10 mit (bezogen auf n = 200),
      damit der Regler dort eine sichtbare Wirkung hat. Im Film bleibt es beim reinen Verlauf. */
-  const yN=v=>o.signed?T+ph/2-v/o.nMax*ph/2:T+ph-v/o.nMax*ph, uTop=T+ph+gap,
-        un=p=>level==='o'?p[2]*p[3]*0.01/umv:(o.nRef?p[2]*p[3]/(o.nRef*um):p[2]/um), yU=p=>uTop+ph/2-clamp(un(p),-1,1)*ph/2;
+  const yN=v=>o.signed?T+ph/2-v/nM*ph/2:T+ph-v/nM*ph, uTop=T+ph+gap,
+        un=p=>level==='o'?p[2]*p[3]*0.01/umvz:(o.nRef?p[2]*p[3]/(o.nRef*umz):p[2]/umz), yU=p=>uTop+ph/2-clamp(un(p),-1,1)*ph/2;
   ctx.font='600 '+(12*dpr)+'px '+C.font; ctx.textBaseline='middle';
   ctx.strokeStyle=C.rule; ctx.lineWidth=1*dpr;
   ctx.strokeRect(L,T,w-L-R,ph); ctx.strokeRect(L,uTop,w-L-R,ph);
   ctx.beginPath(); ctx.moveTo(L,uTop+ph/2); ctx.lineTo(w-R,uTop+ph/2); if(o.signed){ ctx.moveTo(L,T+ph/2); ctx.lineTo(w-R,T+ph/2); } ctx.stroke();
   ctx.textAlign='right';
   const Q=level==='q';
-  ctx.fillStyle=C.flux; ctx.fillText(Q?'Anzahl der':'Fluss Φ',L-8*dpr,T+ph/2-7*dpr); ctx.fillStyle=C.muted; ctx.font='500 '+(11*dpr)+'px '+C.font; ctx.fillText(Q?'Feldlinien':'in µWb',L-8*dpr,T+ph/2+8*dpr);
-  ctx.font='600 '+(12*dpr)+'px '+C.font; ctx.fillStyle=C.u; ctx.fillText(Q?'Spannung':'U_ind',L-8*dpr,uTop+ph/2-7*dpr); ctx.fillStyle=C.muted; ctx.font='500 '+(11*dpr)+'px '+C.font; ctx.fillText(Q?'U':'in mV',L-8*dpr,uTop+ph/2+8*dpr);
+  const zTop=(zoom&&zF!==1?' '+zTxt(zF):''), zBot=(zoom&&zU!==1?' '+zTxt(zU):'');
+  ctx.fillStyle=C.flux; ctx.fillText(Q?'Anzahl der':'Fluss Φ',L-8*dpr,T+ph/2-7*dpr); ctx.fillStyle=C.muted; ctx.font='500 '+(11*dpr)+'px '+C.font; ctx.fillText((Q?'Feldlinien':'in µWb')+zTop,L-8*dpr,T+ph/2+8*dpr);
+  ctx.font='600 '+(12*dpr)+'px '+C.font; ctx.fillStyle=C.u; ctx.fillText(Q?'Spannung':'U_ind',L-8*dpr,uTop+ph/2-7*dpr); ctx.fillStyle=C.muted; ctx.font='500 '+(11*dpr)+'px '+C.font; ctx.fillText((Q?'U':'in mV')+zBot,L-8*dpr,uTop+ph/2+8*dpr);
   if(Q&&o.signed){ ctx.textAlign='left'; ctx.fillText('+ von oben',L+4*dpr,T+8*dpr); ctx.fillText('− von unten',L+4*dpr,T+ph-8*dpr); }
-  if(!Q){ ctx.textAlign='left'; ctx.fillText(String(o.nMax*10),L+4*dpr,T+8*dpr); if(o.signed) ctx.fillText('−'+o.nMax*10,L+4*dpr,T+ph-8*dpr); ctx.fillText('+'+fmt(umv,0),L+4*dpr,uTop+8*dpr); ctx.fillText('−'+fmt(umv,0),L+4*dpr,uTop+ph-8*dpr); }
+  if(!Q){ ctx.textAlign='left'; ctx.fillText(fmt(nM*10,0),L+4*dpr,T+8*dpr); if(o.signed) ctx.fillText('−'+fmt(nM*10,0),L+4*dpr,T+ph-8*dpr); ctx.fillText('+'+fmt(umvz,0),L+4*dpr,uTop+8*dpr); ctx.fillText('−'+fmt(umvz,0),L+4*dpr,uTop+ph-8*dpr); }
   // Zeitachse
   ctx.textAlign='center'; ctx.textBaseline='top'; ctx.fillStyle=C.muted;
   const step=(o.t1-o.t0)>12?2:1;
   for(let k=Math.ceil(o.t0/step)*step;k<=o.t1+1e-6;k+=step){ const x=X(k); ctx.strokeStyle=C.rule; ctx.beginPath(); ctx.moveTo(x,T+ph); ctx.lineTo(x,T+ph+3*dpr); ctx.moveTo(x,uTop+ph); ctx.lineTo(x,uTop+ph+3*dpr); ctx.stroke();
     if(o.labels&&!Q) ctx.fillText(String(k).replace('.',','),x,uTop+ph+4*dpr); }
   ctx.textAlign='right'; ctx.fillText(Q?'Zeit →':(o.labels?'t in s':'letzte 10 s'),L-8*dpr,uTop+ph+4*dpr);
+  gGeo={L:L,R:R,w:w};
   const pts=o.pts; if(pts.length<2) return;
-  ctx.save(); ctx.beginPath(); ctx.rect(L,0,w-L-R,h); ctx.clip();
-  // U-Fläche
-  const y0=uTop+ph/2; ctx.beginPath(); ctx.moveTo(X(pts[0][0]),y0); for(const p of pts) ctx.lineTo(X(p[0]),yU(p)); ctx.lineTo(X(pts[pts.length-1][0]),y0); ctx.closePath(); ctx.fillStyle=C.uSoft; ctx.fill();
+  /* Jedes Diagramm wird einzeln abgeschnitten, sonst ragt eine hineingezoomte Kurve
+     in das andere Diagramm hinein. */
+  const feld=top=>{ ctx.save(); ctx.beginPath(); ctx.rect(L,top,w-L-R,ph); ctx.clip(); };
+  const y0=uTop+ph/2, e=pts[pts.length-1];
+  const ts=o.t0+stP*(o.t1-o.t0), SW=(zoom&&stelle)?stelleWerte(pts,ts):null;
+  const sp=SW?[ts,SW.N,SW.Ur,SW.nW]:null;
+  // Spannung unten
+  feld(uTop);
+  const markiert=!!(SW&&stFlae);     /* bei markierter Flaeche bleibt der Rest ungefuellt */
+  if(!markiert){ ctx.beginPath(); ctx.moveTo(X(pts[0][0]),y0); for(const p of pts) ctx.lineTo(X(p[0]),yU(p)); ctx.lineTo(X(e[0]),y0); ctx.closePath(); ctx.fillStyle=C.uSoft; ctx.fill(); }
+  if(markiert){ ctx.beginPath(); ctx.moveTo(X(pts[0][0]),y0);
+    for(const p of pts){ if(p[0]>ts) break; ctx.lineTo(X(p[0]),yU(p)); }
+    ctx.lineTo(X(ts),yU(sp)); ctx.lineTo(X(ts),y0); ctx.closePath();
+    ctx.globalAlpha=.34; ctx.fillStyle=C.u; ctx.fill(); ctx.globalAlpha=1; }
   ctx.lineWidth=2.2*dpr; ctx.lineJoin='round';
   ctx.strokeStyle=C.u; ctx.beginPath(); pts.forEach((p,i)=>i?ctx.lineTo(X(p[0]),yU(p)):ctx.moveTo(X(p[0]),yU(p))); ctx.stroke();
-  ctx.strokeStyle=C.flux; ctx.beginPath(); pts.forEach((p,i)=>i?ctx.lineTo(X(p[0]),yN(p[1])):ctx.moveTo(X(p[0]),yN(p[1]))); ctx.stroke();
-  const e=pts[pts.length-1]; ctx.fillStyle=C.flux; ctx.beginPath(); ctx.arc(X(e[0]),yN(e[1]),4*dpr,0,7); ctx.fill();
   ctx.fillStyle=C.u; ctx.beginPath(); ctx.arc(X(e[0]),yU(e),4*dpr,0,7); ctx.fill();
-  ctx.strokeStyle=C.muted; ctx.globalAlpha=.5; ctx.lineWidth=1*dpr; ctx.beginPath(); ctx.moveTo(X(e[0]),T); ctx.lineTo(X(e[0]),uTop+ph); ctx.stroke();
+  if(SW){ ctx.fillStyle=C.u; ctx.beginPath(); ctx.arc(X(ts),yU(sp),4.5*dpr,0,7); ctx.fill(); }
+  if(SW&&stFlae) plakette(ctx,(L+w-R)/2,uTop+3*dpr,level==='o'?'∫U dt = '+fmtS(SW.flaeche,Math.abs(SW.flaeche)>=10?1:2)+' mV·s = −N · ΔΦ':'Fläche ≙ Änderung der Anzahl',C.u);
+  ctx.restore();
+  // Feldlinien bzw. Fluss oben
+  feld(T);
+  ctx.lineWidth=2.2*dpr; ctx.lineJoin='round';
+  ctx.strokeStyle=C.flux; ctx.beginPath(); pts.forEach((p,i)=>i?ctx.lineTo(X(p[0]),yN(p[1])):ctx.moveTo(X(p[0]),yN(p[1]))); ctx.stroke();
+  ctx.fillStyle=C.flux; ctx.beginPath(); ctx.arc(X(e[0]),yN(e[1]),4*dpr,0,7); ctx.fill();
+  if(SW){ ctx.fillStyle=C.flux; ctx.beginPath(); ctx.arc(X(ts),yN(SW.N),4.5*dpr,0,7); ctx.fill();
+    if(stTang){ const sy=(o.signed?ph/2:ph)/nM, sx=(w-L-R)/(o.t1-o.t0), len=(w-L-R)*0.17;
+      const xs=X(ts), ys=yN(SW.N), dy=sy*SW.slope*len/sx;   /* Steigung in Bildpunkten */
+      ctx.strokeStyle=C.ink; ctx.globalAlpha=.8; ctx.lineWidth=1.8*dpr;
+      ctx.beginPath(); ctx.moveTo(xs-len,ys+dy); ctx.lineTo(xs+len,ys-dy); ctx.stroke(); ctx.globalAlpha=1;
+      plakette(ctx,(L+w-R)/2,T+3*dpr,level==='o'?'dΦ/dt = '+fmtS(SW.slope*10,0)+' µWb/s':'Steigung ≙ Spannung',C.ink); } }
+  ctx.restore();
+  // Jetzt-Marke und die Stelle über beide Diagramme
+  ctx.save(); ctx.beginPath(); ctx.rect(L,0,w-L-R,h); ctx.clip();
+  ctx.strokeStyle=C.muted; ctx.globalAlpha=.5; ctx.lineWidth=1*dpr; ctx.beginPath(); ctx.moveTo(X(e[0]),T); ctx.lineTo(X(e[0]),uTop+ph); ctx.stroke(); ctx.globalAlpha=1;
+  if(zoom&&stelle) stelleLinie(ctx,X(ts),T,ph,uTop,gap,o.labels?'t = '+fmt(ts,1)+' s':'vor '+fmt(Math.max(0,o.t1-ts),1)+' s',!SW);
   ctx.restore();
 }
+
+/* Werte der Kurven an der Stelle ts. Die gespeicherten Punkte sind [t, Anzahl, −dN/dt, N].
+   Liegt ts außerhalb der schon gezeichneten Kurve, gibt es nichts zurück. */
+function stelleWerte(pts,ts){
+  const n=pts.length; if(n<2) return null;
+  if(ts<pts[0][0]-1e-9||ts>pts[n-1][0]+1e-9) return null;
+  let i=1; while(i<n-1&&pts[i][0]<ts) i++;
+  const a=pts[i-1], b=pts[i], f=clamp((ts-a[0])/Math.max(1e-9,b[0]-a[0]),0,1);
+  const N=a[1]+(b[1]-a[1])*f, Ur=a[2]+(b[2]-a[2])*f, nW=b[3];
+  const uMv=p=>p[2]*p[3]*0.01;                 /* Spannung in mV */
+  let fl=0;
+  for(let k=1;k<n;k++){ const p0=pts[k-1], p1=pts[k];
+    if(p1[0]<=ts){ fl+=(uMv(p0)+uMv(p1))/2*(p1[0]-p0[0]); }
+    else { if(p0[0]<ts){ const g=(ts-p0[0])/(p1[0]-p0[0]), u1=uMv(p0)+(uMv(p1)-uMv(p0))*g;
+             fl+=(uMv(p0)+u1)/2*(ts-p0[0]); } break; } }
+  return {N:N,Ur:Ur,nW:nW,slope:-Ur,U:Ur*nW*0.01,flaeche:fl};
+}
+/* Senkrechte Linie der Stelle mit Griff oben und Zeitangabe in der Lücke dazwischen */
+function stelleLinie(ctx,x,T,ph,uTop,gap,txt,blass){
+  ctx.save(); ctx.strokeStyle=C.ink; ctx.globalAlpha=blass?.3:.75; ctx.lineWidth=1.6*dpr; ctx.setLineDash([5*dpr,4*dpr]);
+  ctx.beginPath(); ctx.moveTo(x,T); ctx.lineTo(x,uTop+ph); ctx.stroke(); ctx.setLineDash([]);
+  ctx.globalAlpha=blass?.4:1; ctx.fillStyle=C.ink;
+  ctx.beginPath(); ctx.moveTo(x-5.5*dpr,T); ctx.lineTo(x+5.5*dpr,T); ctx.lineTo(x,T+9*dpr); ctx.closePath(); ctx.fill();
+  if(txt){ ctx.font='600 '+Math.round(10*dpr)+'px '+C.font; ctx.textBaseline='middle';
+    const rechts=x<ctx.canvas.width*0.72; ctx.textAlign=rechts?'left':'right';
+    ctx.fillText(txt,x+(rechts?5*dpr:-5*dpr),T+ph+gap/2); }
+  ctx.restore(); }
+/* Beschriftung auf einem hellen Schildchen, damit sie über den Kurven lesbar bleibt */
+function plakette(ctx,x,yTop,txt,col){
+  ctx.save(); ctx.font='600 '+Math.round(11*dpr)+'px '+C.font; ctx.textAlign='center'; ctx.textBaseline='top';
+  const bw=ctx.measureText(txt).width+10*dpr, bh=16*dpr;
+  ctx.globalAlpha=.86; ctx.fillStyle=C.surface; ctx.beginPath();
+  if(ctx.roundRect) ctx.roundRect(x-bw/2,yTop,bw,bh,5*dpr); else ctx.rect(x-bw/2,yTop,bw,bh);
+  ctx.fill(); ctx.globalAlpha=1; ctx.fillStyle=col; ctx.fillText(txt,x,yTop+2.5*dpr); ctx.restore(); }
 
 function showCaption(){ const c=chapters[ci], caps=c.caps[level]; let k=0; caps.forEach((cp,i)=>{ if(t>=cp[0]-1e-6) k=i; });
   if(k!==lastCap){ lastCap=k; const p=$('caption'); p.style.opacity=0; setTimeout(()=>{ p.textContent=caps[k][1]; p.style.opacity=1; },lastCap<0?0:140);
@@ -933,7 +1067,7 @@ function frame(now){
     readout(count,-U,dt,st,nW,c.umax); showCaption();
   } else {
     labT+=dt;
-    if(lab.ori===3&&lab.fd>0){ lab.phi=(lab.phi+360*lab.fd*dt)%360; phiRegler(); }
+    if(lab.ori===3&&lab.fd>0&&lab.lauf){ lab.phi=(lab.phi+360*lab.fd*dt)%360; phiRegler(); }
     const st=labState(); const count=drawScene(st); const N=model(st);
     const fSig=(lab.ac?lab.f:0)+(lab.ori===3?lab.fd:0);               /* was gerade schwingt oder sich dreht */
     const tau=fSig>0?Math.min(0.12,1/(16*fSig)):0.12;                 /* schnelle Schwingung nicht wegglätten */
@@ -941,7 +1075,7 @@ function frame(now){
     if(Math.abs(labRate)<0.02) labRate=0;
     hist.push([labT,N,-labRate,lab.n]); while(hist.length&&hist[0][0]<labT-10) hist.shift();
     labSkalen();
-    drawGraph({t0:labT-10,t1:labT,nMax:60,pts:hist,labels:false,signed:lab.ac||lab.ori===3,uMax:labUm,uMv:labUmv,nRef:200});
+    drawGraph({t0:labT-10,t1:labT,nMax:60,pts:hist,labels:false,signed:lab.ac||lab.ori===3,uMax:labUm,uMv:labUmv,nRef:200,werkz:true});
     readout(count,labRate,dt,st,lab.n,labUm,labUmv,200);
   }
   requestAnimationFrame(frame);
@@ -951,18 +1085,22 @@ fit(); gotoChapter(0,false); setLevel('q'); setMode('film');
 /* ---- Knöpfe der Tafel: Bild auf die Tafel legen, kopieren, Einstellung teilen ----
    Geteilt wird, was gerade eingestellt ist: Modus, Niveau, Kapitel, Zeitpunkt und
    die Regler des Experiments. Wer den QR-Code scannt, sieht genau dasselbe Bild.   */
-function zustand(){ return {mode:mode, ci:ci, level:level, t:Math.round(t*100)/100, lab:Object.assign({},lab)}; }
+function zustand(){ return {mode:mode, ci:ci, level:level, t:Math.round(t*100)/100, lab:Object.assign({},lab),
+  dg:{zF:zF, zU:zU, st:stelle, tg:stTang, fl:stFlae, p:Math.round(stP*1000)/1000}}; }
 function zustandSetzen(d){ if(!d||typeof d!=='object') return;
   if(d.level==='q'||d.level==='o') setLevel(d.level);
   if(d.lab&&typeof d.lab==='object'){ Object.assign(lab,d.lab);
     if(d.lab.ori===undefined&&typeof d.lab.senk==='boolean') lab.ori=d.lab.senk?1:0;   /* aeltere Links */
     delete lab.senk; lab.ori=Math.max(0,Math.min(3,lab.ori|0));
-    lab.phi=Math.max(0,Math.min(360,+lab.phi||0)); }
+    lab.phi=Math.max(0,Math.min(360,+lab.phi||0)); lab.lauf=lab.lauf!==false; }
+  if(d.dg&&typeof d.dg==='object'){ const g=d.dg;
+    zF=ZSTUF.indexOf(+g.zF)>=0?+g.zF:1; zU=ZSTUF.indexOf(+g.zU)>=0?+g.zU:1;
+    stelle=!!g.st; stTang=!!g.tg; stFlae=!!g.fl; stP=clamp(+g.p||0,0,1); }
   const i=Math.max(0,Math.min(chapters.length-1,+d.ci||0));
   gotoChapter(i,false);
   setMode(d.mode==='lab'?'lab':'film');
   if(d.mode!=='lab') t=Math.max(0,Math.min(chapters[i].T,+d.t||0));
-  syncLab(); showCaption(); }
+  syncLab(); diagSync(); showCaption(); }
 /* Schriftgröße: skaliert alles, was in rem bemaßt ist (Kopfzeile, Reiter, Messwerte,
    Bildunterschriften). Die Tafel kann denselben Wert über ihr Kontextmenü schicken. */
 let skala=1;

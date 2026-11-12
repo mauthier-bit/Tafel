@@ -2932,9 +2932,13 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     rotieren** – der **Generator** zum Selbstausprobieren: Ein Regler **Drehzahl** (bis 1 Umdrehung
     pro Sekunde) bestimmt, wie schnell sie sich dreht, die Zahl der Feldlinien läuft mit **cos φ** auf
     und ab (in der Oberstufe steht φ in der Messwertliste), und am Messgerät entsteht eine
-    **Wechselspannung**, deren Ausschlag mit der Drehzahl wächst. Zieht man die Drehzahl ganz nach
-    links (**„steht still"**), erscheint der Regler **„Drehen von Hand"**: Damit stellt man die Spule
-    in jede Zwischenlage von **0° bis 180°** – bei 90° geht keine Feldlinie mehr hindurch.
+    **Wechselspannung**, deren Ausschlag mit der Drehzahl wächst. Vor dem Drehzahlregler sitzt ein
+    **Play-/Pause-Knopf**: Er hält die Drehung an, wo sie gerade steht, und lässt sie mit derselben
+    Drehzahl weiterlaufen (steht die Drehzahl auf null, startet Play mit einer halben Umdrehung pro
+    Sekunde). Sobald die Drehung **steht** – angehalten oder Drehzahl ganz links (**„steht still"**) –,
+    erscheint der Regler **„Drehen von Hand"**: Damit stellt man die Spule in jede Zwischenlage von
+    **0° bis 180°** – bei 90° geht keine Feldlinie mehr hindurch. Von Hand drehen hält die Drehung an,
+    löscht aber die eingestellte Drehzahl nicht.
   - Geregelt werden außerdem **Stromstärke**, **Querschnittsfläche** und – jetzt in **beiden
     Niveaus** – die **Windungszahl N** (50 bis 500); mehr Windungen heißt auch in Klasse 10 ein
     größerer Ausschlag. **Positionsregler gibt es keine mehr:** **Magnet und Spule schiebt man
@@ -2942,6 +2946,17 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     sagt das auch.
   - Feldlinien, die **nicht** durch die Spule gehen, sind **blasser** gezeichnet; die gezählten stechen
     dadurch deutlich hervor.
+  - **Unter den Diagrammen** steht im Experiment eine schmale Leiste mit vier Werkzeugen:
+    **„Stelle"** legt eine **senkrechte Linie durch beide Diagramme**, die man **im Diagramm
+    verschiebt**; sie bleibt an ihrem Platz im Bild stehen, während die Kurve durch sie
+    hindurchläuft, und sagt in der Lücke zwischen den Diagrammen, **wie lange sie zurückliegt**.
+    **„Tangente"** legt an dieser Stelle die **Tangente an die obere Kurve** – die Steigung ist genau
+    die Spannung darunter (Oberstufe: **dΦ/dt in µWb/s**). **„Fläche"** färbt die **Fläche unter der
+    Spannungskurve** bis zur Stelle ein; in der Oberstufe steht ihr Wert dabei: **∫U dt = −N · ΔΦ**.
+    Rechts zoomen zwei Knopfpaare die **Hochachsen** von **Anzahl bzw. Φ** und von **U** getrennt
+    (halb bis achtfach); der Faktor steht an der Achse (**„in mV ×2"**), und die angeschriebenen
+    Werte wandern mit. So lässt sich ein kleiner Ausschlag groß zeigen, ohne an den Reglern zu
+    drehen. **Im Film gibt es die Leiste nicht** – dort erzählen die Kapitel die Diagramme selbst.
   - **Im Experiment sitzen die beiden Anzeigen klein oben links im Bild:** die **Zahl der Feldlinien**
     und das **Spannungsmessgerät**. Zwei Knöpfe darüber (**„Feldlinien"**, **„Messgerät"**) blenden sie
     einzeln ein und aus. Beide Fenster sind bewusst **schmal**: Bei der Zahl steht nur noch
