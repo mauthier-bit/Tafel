@@ -2759,10 +2759,16 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     über den Ort – mit Himmelsrichtungen am Rand, Höhenkreisen bei 30° und 60° und dem Zenit obenauf.
     Von außen sieht man damit auf einen Blick, was über und was unter dem Horizont steht. Der **Radius**
     ist daneben einstellbar (in Erdradien, 0,6 bis 100): Bei **60** reicht die Kuppel bis zur Mondbahn –
-    liegt der Mond dann innerhalb, steht er am Ort gerade über dem Horizont. In der Kuppel wird dasselbe
-    gezeigt wie am Ort selbst, mit denselben Schaltern: **Bahnen** legt die **Tagbögen** von Sonne und
-    Mond auf die Kuppel (unter dem Horizont bleibt eine Lücke), **Ebenen** die **Ekliptik** mit den
-    **Tierkreiszeichen**; dazu sitzen Sonne und Mond als Punkte dort, wo sie an diesem Himmel gerade
+    liegt der Mond dann innerhalb, steht er am Ort gerade über dem Horizont. Ihr **Fuß steht auf der
+    gezeichneten Erdoberfläche am Ort** – auch dort, wo die Erde zum Hinsehen vergrößert gezeichnet wird
+    (maßstabsgetreu und im Schattenmodell lag er vorher im Erdmittelpunkt, die Kuppel steckte dann in der
+    Kugel). **Bahnen auf der Kuppel** haben eigene Schalter – **Sonne**, **Mond**, **Planeten** –,
+    unabhängig voneinander und unabhängig von den Bahnkurven im Raum; unter dem Horizont bleibt eine
+    Lücke. **Dreht sich mit der Erde** schaltet die **Tagesdrehung** ab: Dann bleibt die Kuppel so
+    stehen, wie der Himmel über dem Ort zu der mit **Richtung** gewählten **Uhrzeit** steht, und der Ort
+    wandert im Lauf des Tages auf seiner Bahn darunter hindurch – so sieht man, dass sich nicht der
+    Himmel dreht, sondern die Erde unter ihm. Die **Ekliptik** mit den
+    **Tierkreiszeichen** kommt mit der **Sonnenbahnebene** dazu; dazu sitzen Sonne und Mond als Punkte dort, wo sie an diesem Himmel gerade
     stehen, mit gestrichelter Sichtlinie zum Körper. So sieht man von außen, was der Beobachter am Boden
     gerade über sich hat – und warum die Sonne im Winter einen so flachen Bogen zieht. Kuppel und Boden
     sind **durchsichtig** gezeichnet, sonst bliebe verborgen, was in ihnen steckt; wie durchsichtig,

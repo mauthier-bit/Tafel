@@ -84,6 +84,11 @@
   .chk input{margin-top:2px;flex:none;width:18px;height:18px;}
   .zeile{display:flex;align-items:center;gap:8px;font-size:.92em;color:#475569;}
   .zeile input[type=range]{flex:1;accent-color:#2563eb;}
+  /* Was nur zu einem Häkchen gehört, steht eingerückt darunter */
+  .unter{display:grid;gap:7px;margin:-2px 0 2px 26px;padding-left:10px;border-left:2px solid #e3e8ef;}
+  .unter .mini{display:inline-flex;align-items:center;gap:5px;font-size:.9em;color:#1f2430;}
+  .unter .mini input{width:16px;height:16px;flex:none;}
+  .bahnzeile{display:flex;flex-wrap:wrap;align-items:center;gap:4px 12px;font-size:.92em;color:#475569;}
   [hidden]{display:none!important;}
 </style>
 <script>
@@ -706,6 +711,7 @@ const standard=()=>({ v:1, tab:'system', fontSize:14, fontBold:false, fontItalic
   sys:{ t:0, lauf:false, tempo2:355, echt:false, stufe:'ansch', sf:SF_STD, bahnen:true, ebeneSonne:false, ebeneSonneGr:100, ebeneMond:false, ebeneMondGr:100, schatten:true,
         sterne:true, namen:true, von:'aussen', ziel:'erde', bezug:'sonne', pip:'aus', pipZiel:'auto',
         lupe:false, tempoAlt2:355, letztes:null, wahl:null, ort:0, kuppelAn:false, kuppel:78,
+        kuppelDreht:true, kuppelStd:12, kbSonne:true, kbMond:true, kbPlaneten:false,
         jahrErden:false, tagbahn:false, merkur:true, venus:true, mars:true, mond:true,
         ortMarke:true, aequator:false, durch:80,
         epizykel:false, sehstrahl:false,
@@ -1310,11 +1316,30 @@ function malBoden(){
    Von außen betrachtet zeigt sie, was über und was unter dem Horizont steht. Der Radius
    zählt in gezeichneten Erdradien - maßstabsgetreu reicht sie bei 60 bis zum Mond. */
 const kuppelRadius=()=>Math.pow(10,clamp(D.sys.kuppel===undefined?78:D.sys.kuppel,-20,200)/100);
+/* Wie groß ist die Erde gerade GEZEICHNET? Nah herangezoomt und bei den vier Erden
+   wird sie vergrößert dargestellt; die Kuppel muss denselben Radius nehmen, sonst
+   steckt ihr Fuß mitten in der Kugel und sie sieht aus, als säße sie im Erdmittelpunkt. */
+function erdRadiusGezeichnet(pe){
+  const q=p2(pe); if(!q) return radZ('erde');
+  return radBild(erdRho(q),q);
+}
+/* Dreht sich die Kuppel mit? Wenn nicht, steht sie so, wie der Himmel über dem Ort zur
+   eingestellten Uhrzeit dieses Tages steht - der Ort wandert dann auf seiner Bahn
+   darunter hindurch. Die Uhrzeit (nicht ein fester Zeitpunkt) ist gespeichert: So bleibt
+   die Kuppel auch über Tage hinweg zur Sonne hin dort, wo man sie hingestellt hat. */
+const tagBeginn=t=>{ const ms=EPOCHE+t*86400000; return (Math.floor(ms/86400000)*86400000-EPOCHE)/86400000; };
+const kuppelStunde=()=>clamp(D.sys.kuppelStd===undefined?12:+D.sys.kuppelStd||0,0,24);
+const stundeVon=t=>{ const d=new Date(EPOCHE+t*86400000); return d.getUTCHours()+d.getUTCMinutes()/60; };
+const kuppelZeit=()=>D.sys.kuppelDreht===false?tagBeginn(D.sys.t)+kuppelStunde()/24:D.sys.t;
+const uhrText=std=>{ const h=Math.floor(std+1e-9), m=Math.round((std-h)*60);
+  return (h%24===0&&std>=24?24:h)+':'+(m<10?'0':'')+m+' Uhr'; };
 function malKuppel(){
   const S=D.sys;
   if(!S.kuppelAn||AKT_VON==='ort') return;                 /* am Ort steht man mitten darin */
-  const t=S.t, R=ortRahmen(t);
-  const p=rahmen(add(ortZ('erde',t),mul(R.zen,radZ('erde'))));
+  const t=S.t, tK=kuppelZeit(), fest=(tK!==t), R=ortRahmen(tK);
+  /* Der Fuß gehört auf die GEZEICHNETE Oberfläche - sonst steckt er in der Kugel.
+     Der Radius bleibt dagegen in wahren Erdradien, damit „60" weiter bis zum Mond reicht. */
+  const pe=rahmen(ortZ('erde',t)), p=add(pe,mul(R.zen,erdRadiusGezeichnet(pe)));
   const r=kuppelRadius()*radZ('erde');
   const kreis=kreisPunkte(p,r,R.zen,96);
   const pk=kreis.map(q=>p2(q)).filter(Boolean);
@@ -1343,19 +1368,29 @@ function malKuppel(){
     for(let a=0;a<=360;a+=6) kr.push(add(p,mul(himmelRichtung(R,a*RAD,h*RAD),r)));
     linie3(kr,'rgba(244,63,94,.28)',1); });
   const z=p2(add(p,mul(R.zen,r)));
-  if(z) text('Zenit über '+R.o.n,z[0],z[1]-10*K,'#fda4af',{al:'center',sz:11.5,fett:true,rand:'rgba(7,11,24,.85)'});
-  /* Was am Himmel dieses Ortes zu sehen ist, auf die Kuppel gelegt - mit denselben
-     Schaltern wie am Ort selbst: „Bahnen" die Tagbögen, „Sonnenbahnebene" Ekliptik und Tierkreis. */
-  if(S.bahnen){ kuppelBogen(p,r,R,'sonne','rgba(253,224,71,.95)'); kuppelBogen(p,r,R,'mond','rgba(226,232,240,.85)'); }
+  if(z){ text(fest?'Himmel über '+R.o.n+' um '+datumText(tK,true):'Zenit über '+R.o.n,
+    z[0],z[1]-10*K,'#fda4af',{al:'center',sz:11.5,fett:true,rand:'rgba(7,11,24,.85)'});
+    if(fest) text('Kuppel steht still – der Ort wandert darunter durch',z[0],z[1]+4*K,
+      '#f9a8b4',{al:'center',sz:10.5,rand:'rgba(7,11,24,.85)'}); }
+  /* Was am Himmel dieses Ortes zu sehen ist, auf die Kuppel gelegt. Die Bahnen haben
+     eigene Schalter - unabhängig von den Bahnkurven im Raum. */
+  if(S.kbSonne!==false) kuppelBogen(p,r,R,'sonne','rgba(253,224,71,.95)',fest);
+  if(S.kbMond!==false&&zeigeKoerper('mond')) kuppelBogen(p,r,R,'mond','rgba(226,232,240,.85)',fest);
+  if(S.kbPlaneten) ['merkur','venus','mars'].forEach(id=>{
+    if(zeigeKoerper(id)) kuppelBogen(p,r,R,id,KOERPER[id].farbe,fest); });
   if(S.ebeneSonne) kuppelEkliptik(p,r,R);
   if(S.aequator) kuppelAequator(p,r,R);
   kuppelOrte(p,r,R);
 }
 /* Tagbogen auf die Kuppel gelegt; unter dem Horizont bleibt eine Lücke. */
-function kuppelBogen(p,r,R0,id,farbe){
+function kuppelBogen(p,r,R0,id,farbe,fest){
   const t0=D.sys.t, pk=[];
   for(let dt=-0.5;dt<=0.5001;dt+=1/144){
-    const t=t0+dt, R=ortRahmen(t);
+    const t=t0+dt;
+    /* Dreht sich die Kuppel mit, ist der Bogen der Tagbogen im mitgedrehten Rahmen.
+       Steht sie still, wird dieselbe Richtung im festen Rahmen abgetragen - dann sieht
+       man, dass sich nicht der Himmel bewegt, sondern die Erde unter ihm. */
+    const R=fest?R0:ortRahmen(t);
     const ah=azHoch(R,sub(ortW(id,t),standOrt('ort',t)));
     pk.push(ah.hoch<0?null:add(p,mul(himmelRichtung(R0,ah.az,ah.hoch),r)));
   }
@@ -1377,8 +1412,13 @@ function kuppelEkliptik(p,r,R){
 }
 /* Wo Sonne und Mond gerade an diesem Himmel stehen - mit Sichtlinie zum Körper selbst */
 function kuppelOrte(p,r,R){
-  const t=D.sys.t, stand=standOrt('ort',t);
-  [['sonne','#fde047'],['mond','#e2e8f0']].forEach(([id,farbe])=>{
+  const S=D.sys, t=S.t, stand=standOrt('ort',t);
+  const liste=[];
+  if(S.kbSonne!==false) liste.push(['sonne','#fde047']);
+  if(S.kbMond!==false&&zeigeKoerper('mond')) liste.push(['mond','#e2e8f0']);
+  if(S.kbPlaneten) ['merkur','venus','mars'].forEach(id=>{
+    if(zeigeKoerper(id)) liste.push([id,KOERPER[id].farbe]); });
+  liste.forEach(([id,farbe])=>{
     const ziel=rahmen(ortZ(id,t)), dir=norm(sub(ziel,rahmen(stand)));
     const hoch=dot(dir,R.zen);
     const pt=add(p,mul(dir,r)), q=p2(pt);
@@ -3050,8 +3090,18 @@ const ANZEIGEN=[
   {k:'ortMarke',t:'Gewählter Ort',h:'Roter Punkt mit Namen auf der Erdkugel'},
   {k:'tagbahn',t:'Bahn des Ortes (Tageslänge)',h:'Sein Breitenkreis: heller Teil Tag, blauer Teil Nacht'},
   {k:'kuppelAn',t:'Horizontkuppel über dem Ort',h:'Die Halbkugel des Himmels, den man von dort aus sieht',
-   roh:'<div class="zeile" id="kuppelZeile">Radius der Kuppel <input type="range" id="rKuppel" min="-20" max="200" step="1">'
-      +'<span class="val" id="vKuppel">–</span></div>'},
+   roh:'<div class="unter" id="kuppelZeile">'
+      +'<div class="zeile">Radius <input type="range" id="rKuppel" min="-20" max="200" step="1">'
+      +'<span class="val" id="vKuppel">–</span></div>'
+      +'<div class="bahnzeile">Bahnen auf der Kuppel:'
+      +'<label class="mini"><input type="checkbox" data-kup="kbSonne">Sonne</label>'
+      +'<label class="mini"><input type="checkbox" data-kup="kbMond">Mond</label>'
+      +'<label class="mini"><input type="checkbox" data-kup="kbPlaneten">Planeten</label></div>'
+      +'<label class="chk"><input type="checkbox" data-kup="kuppelDreht"><span>Dreht sich mit der Erde'
+      +'<span class="klein">Aus: Die Kuppel bleibt stehen, der Ort wandert auf seiner Bahn darunter hindurch</span>'
+      +'</span></label>'
+      +'<div class="zeile" id="kuppelUhrZeile">Richtung <input type="range" id="rKuppelUhr" min="0" max="1440" step="15">'
+      +'<span class="val" id="vKuppelUhr">–</span></div></div>'},
   {k:'aequator',t:'Himmelsäquator',h:'Die Ebene senkrecht zur Erdachse – am Ort und auf der Horizontkuppel'},
   {gruppe:'Weltbild des Ptolemäus'},
   {k:'epizykel',t:'Deferent und Epizykel',h:'Jeder Planet am Ende zweier Arme – nur im geozentrischen Bild von außen'},
@@ -3084,7 +3134,13 @@ function anzeigenStand(){
   document.querySelectorAll('[data-gr]').forEach(r=>{ const k=r.dataset.gr;
     const v=(S[k]===undefined?100:S[k]); r.value=String(v);
     const a=document.querySelector('[data-val="'+k+'"]'); if(a) a.textContent=zahl(v,0)+' %'; });
+  document.querySelectorAll('[data-kup]').forEach(el=>{ el.checked=S[el.dataset.kup]!==false; });
   $('kuppelZeile').hidden=!S.kuppelAn;
+  $('kuppelUhrZeile').hidden=S.kuppelDreht!==false;
+  $('rKuppelUhr').value=String(Math.round(kuppelStunde()*60));
+  $('vKuppelUhr').textContent=uhrText(kuppelStunde());
+  $('kuppelUhrZeile').title='So steht der Himmel über dem Ort um '+uhrText(kuppelStunde())
+    +' – der Ort wandert im Lauf des Tages darunter hindurch';
   $('rKuppel').value=String(S.kuppel===undefined?78:S.kuppel);
   $('vKuppel').textContent=zahl(kuppelRadius(),kuppelRadius()<10?1:0)+' R⊕';
   $('kuppelZeile').title='Radius der Horizontkuppel: '+zahl(kuppelRadius(),2)+' Erdradien'
@@ -3092,6 +3148,12 @@ function anzeigenStand(){
   $('anzKnopf').textContent='Anzeigen ('+an+') ▾';
 }
 $('anzBody').addEventListener('change',e=>{
+  const kk=e.target.dataset&&e.target.dataset.kup;
+  if(kk){
+    /* Beim Anhalten bleibt die Kuppel dort stehen, wo der Ort gerade ist - so springt nichts. */
+    if(kk==='kuppelDreht'&&!e.target.checked) D.sys.kuppelStd=stundeVon(D.sys.t);
+    D.sys[kk]=e.target.checked; oberflaeche(); zeichne(); sync(); return;
+  }
   const k=e.target.dataset&&e.target.dataset.anz; if(!k) return;
   if(k==='schatten'&&e.target.checked&&stufeUI()==='ansch'){
     D.sys.stufe='schatten';
@@ -3104,6 +3166,7 @@ $('anzBody').addEventListener('change',e=>{
   D.sys[k]=e.target.checked; oberflaeche(); zeichne(); sync();
 });
 $('rKuppel').oninput=e=>{ D.sys.kuppel=+e.target.value; oberflaeche(); zeichne(); sync(); };
+$('rKuppelUhr').oninput=e=>{ D.sys.kuppelStd=clamp(+e.target.value/60,0,24); oberflaeche(); zeichne(); sync(); };
 $('anzBody').addEventListener('input',e=>{
   const g=e.target.dataset&&e.target.dataset.gr; if(!g) return;
   D.sys[g]=+e.target.value; oberflaeche(); zeichne(); sync();
@@ -3198,10 +3261,16 @@ const HILFE={
     'dem Zenit obenauf. Von außen betrachtet sieht man damit auf einen Blick, was über und was unter dem '+
     'Horizont steht. Der <b>Radius</b> lässt sich daneben einstellen (in Erdradien): Bei <b>60</b> reicht die '+
     'Kuppel bis zur Mondbahn – steht der Mond dann innerhalb, ist er in Amberg gerade am Himmel. Maßstabsgetreu '+
-    'stimmen die Größen; im anschaulichen Modell wächst die Kuppel mit der aufgeblasenen Erde mit.</p>'+
-    '<p>In der Kuppel wird dasselbe gezeigt wie am Ort selbst, mit denselben Schaltern: <b>Bahnen</b> legt die '+
-    '<b>Tagbögen</b> von Sonne und Mond auf die Kuppel (unter dem Horizont bleibt eine Lücke), <b>Ebenen</b> die '+
-    '<b>Ekliptik</b> mit den <b>Tierkreiszeichen</b>. Dazu sitzen Sonne und Mond als Punkte dort, wo sie an '+
+    'stimmen die Größen; im anschaulichen Modell wächst die Kuppel mit der aufgeblasenen Erde mit. Ihr Fuß steht '+
+    'immer auf der <b>gezeichneten</b> Erdoberfläche am Ort – auch dort, wo die Erde zum Hinsehen vergrößert '+
+    'dargestellt wird.</p>'+
+    '<p><b>Bahnen auf der Kuppel</b> haben eigene Schalter – <b>Sonne</b>, <b>Mond</b>, <b>Planeten</b>, '+
+    'unabhängig voneinander und unabhängig von den Bahnkurven im Raum. <b>Dreht sich mit der Erde</b> schaltet '+
+    'die Tagesdrehung ab: Dann bleibt die Kuppel so stehen, wie der Himmel über dem Ort zu der mit '+
+    '<b>Richtung</b> gewählten <b>Uhrzeit</b> steht, und der Ort wandert im Lauf des Tages auf seiner Bahn '+
+    'darunter hindurch. Daran sieht man, dass sich nicht der Himmel dreht, sondern die Erde unter ihm.</p>'+
+    '<p>Die <b>Ekliptik</b> mit den <b>Tierkreiszeichen</b> kommt mit der <b>Sonnenbahnebene</b> dazu. '+
+    'Sonne und Mond sitzen als Punkte dort, wo sie an '+
     'diesem Himmel gerade stehen, mit einer gestrichelten Sichtlinie zum Körper selbst. So sieht man von außen, '+
     'was der Beobachter am Boden gerade über sich hat – und warum die Sonne im Winter einen so flachen Bogen '+
     'zieht.</p>'+
@@ -3545,6 +3614,7 @@ function uebernimm(d){
   if(d.sys&&typeof d.sys.ebenen==='boolean'&&typeof d.sys.ebeneSonne!=='boolean'){
     neu.sys.ebeneSonne=d.sys.ebenen; neu.sys.ebeneMond=d.sys.ebenen; }
   delete neu.sys.ebenen;
+  neu.sys.kuppelStd=clamp(neu.sys.kuppelStd===undefined?12:+neu.sys.kuppelStd||0,0,24);
   neu.sys.ebeneSonneGr=clamp(+neu.sys.ebeneSonneGr||100,30,300);
   neu.sys.ebeneMondGr=clamp(+neu.sys.ebeneMondGr||100,30,300);
   /* älterer Stand kannte nur „ansch: true/false" */
