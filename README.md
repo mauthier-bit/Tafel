@@ -2816,7 +2816,10 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     Die **Äquatorebene der Erde** ist die Scheibe senkrecht zur Erdachse (hellblau wie der
     Himmelsäquator, nur von außen): Zusammen mit der Sonnenbahnebene sieht man die **23,4°** der
     Erdachse unmittelbar, und weil die Scheibe beim Umlauf **immer gleich geneigt** bleibt, auch,
-    warum es Jahreszeiten gibt. Die
+    warum es Jahreszeiten gibt. Sind diese beiden eingeblendet, erscheint ihre Schnittgerade, die
+    grün gestrichelte **Äquinoktienlinie**, mit **Frühlingspunkt** und **Herbstpunkt** an den Enden –
+    steht die Erde auf dieser Linie, scheint die Sonne senkrecht auf den Äquator, und Tag und Nacht
+    sind überall gleich lang. Sie ist das Gegenstück zur Knotenlinie der beiden Bahnebenen. Die
     Erdkugel bekommt ab einer gewissen Größe **Gradnetz, Wendekreise, Polarkreise und Achse**, dazu
     die **Tag-Nacht-Grenze**: So sind die **Jahreszeiten** zu zeigen.
   - **Grundfälle für den Unterricht:** Ganz oben in der Ereignisliste stehen fünf Fälle, bei denen das
