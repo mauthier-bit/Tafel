@@ -2727,8 +2727,14 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     Energie** als **Temperatur** (E = c·m·ΔT), als **Aggregatzustand** (E = q·m) und **chemisch**
     (E = H·m), **elektrische Energie** (E = U·Q), **Strahlungsenergie** (E = P·t) und
     **Kernenergie** (E = Δm·c²).
-  - **Mehrere Reservoire am Anfang:** Der Knopf **Reservoir** stellt bis zu drei nebeneinander; ihre
-    Energien **addieren sich** (im Bild mit **+** und einer eigenen Zeile E_ges = E₁ + E₂).
+  - **Mehrere Reservoire je Stufe:** Der Knopf **Reservoir** stellt bis zu drei übereinander – am
+    Anfang **addieren** sich ihre Energien (im Bild mit **+** und der Zeile E_ges = E₁ + E₂).
+    Dasselbe geht bei **jeder späteren Stufe**, und dort entsteht genau der Fall „auf halber Höhe":
+    Bei den oberen Reservoiren stellt man die charakteristische Größe ein (etwa die **Resthöhe**
+    h = 2 m), sie holen sich dafür ihren Anteil, und das **unterste bekommt den Rest**. Beispiel:
+    Ein Stein mit 2 kg fällt aus 5 m (98,1 J); gibt man der Höhenenergie noch h = 2 m (39,24 J),
+    bleiben 58,86 J Bewegungsenergie – **v = 7,67 m/s**, also genau √(2·g·3 m). Die Gleichungen
+    zeigen das als **E₁ = m·g·h**, **E₂ = E_zu − E₁** und **v = √(2·E/m)**.
   - **Wandler:** **Umwandlung** hängt einen Wandler mit neuem Reservoir an – Fallen, **Pendeln**
     (abwärts und aufwärts), schiefe Ebene (hinunter und hinauf), Flaschenzug, Hebel, Katapult,
     Armbrust, Feder, Trampolin, Gummiseil, Generator, **Windrad**, Motor, Lampe, Solarzelle,

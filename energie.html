@@ -378,7 +378,7 @@ const wdl=k=>WANDLER.find(w=>w.k===k)||WANDLER[WANDLER.length-1];
 /* ---------- Zustand ---------- */
 const neuRes=f=>({f,p:parStd(f),g:FORMEN[f].gr.def});
 const parStd=f=>{ const p={}; FORMEN[f].par.forEach(x=>p[x.k]=x.def); return p; };
-const standard=()=>({v:1, start:[neuRes('hoehe')], schritte:[{w:'fallen',f:'kin',p:parStd('kin'),eta:100}],
+const standard=()=>({v:1, start:[neuRes('hoehe')], schritte:[{w:'fallen',z:[neuRes('kin')],eta:100}],
   verluste:false, gl:0, t:0, fontSize:14, edit:true});
 let D=standard();
 let lauf=false, sel=null, letztT=0;
@@ -402,7 +402,15 @@ function kette(){
   D.schritte.forEach(s=>{
     const eta=D.verluste?Math.max(0,Math.min(100,+s.eta||0))/100:1;
     const Ez=E*eta;
-    K.push({art:'schritt',s,eta,Ein:E,E:Ez,Ev:E-Ez});
+    /* Füllt ein Wandler mehrere Reservoire, bekommen alle bis auf das letzte so viel,
+       wie ihre eingestellte Größe verlangt (etwa die Resthöhe h). Das letzte bekommt
+       den Rest – so ergibt sich die Bewegungsenergie aus dem, was von der Höhenenergie
+       übrig geblieben ist. */
+    const zr=[]; let rest=Ez;
+    s.z.forEach((r,j)=>{ const F=FORMEN[r.f];
+      const Ej=(j<s.z.length-1)?Math.max(0,Math.min(rest,F.E(r.p,r.g)||0)):Math.max(0,rest);
+      rest-=Ej; zr.push({r,E:Ej}); });
+    K.push({art:'schritt',s,eta,Ein:E,E:Ez,Ev:E-Ez,res:zr});
     E=Ez;
   });
   return K;
@@ -446,8 +454,8 @@ function kFaktor(){ return Math.min(1.9,(D.fontSize||14)/14); }
 function layout(){
   const K=kette(), n=K.length-1, kk=kFaktor();
   let zmax=0;
-  if(D.gl){ const m=K[0].res.length;
-    zmax=Math.max(m*(D.gl>1?2:1)+(m>1?(D.gl>1?2:1):0), n?(D.gl>1?4:2):0); }
+  if(D.gl){ const S0=stand(K,D.t);
+    for(let i=0;i<=n;i++) zmax=Math.max(zmax,glZeilen(K,S0,i).length); }
   const glH=D.gl?Math.round((zmax*17+10)*kk):0;
   const vH=D.verluste?110:0;
   const TOP=22*kk;                     /* Platz für den Namen über dem Reservoir */
@@ -495,16 +503,13 @@ function zeichne(){
       txtPass('entwertet',vx+vw/2,vy+vh+11*kk,vw+40,{sz:12*kk,farbe:'#64748b'});
     }
   }
-  /* --- Reservoire --- */
+  /* --- Reservoire: jede Spalte kann mehrere übereinander haben --- */
   for(let i=0;i<=n;i++){
-    const x=X(i);
-    if(i===0){ const m=K[0].res.length, hh=Math.max(64,(TH-(m-1)*14)/m);
-      K[0].res.forEach((rr0,j)=>{ const y=j*(hh+14), F=FORMEN[rr0.r.f];
-        const E=K[0].E>0?S.voll[0]*(rr0.E/K[0].E):0;
-        malReservoir(x,y,TW,hh,F,rr0.r,E,Emax,{art:'res',j},i,kk,m>1&&j<m-1,m>1);
-      });
-    } else { const F=FORMEN[K[i].s.f];
-      malReservoir(x,0,TW,TH,F,K[i].s,S.voll[i],Emax,{art:'ziel',i},i,kk,false); }
+    const x=X(i), m=K[i].res.length, hh=Math.max(64,(TH-(m-1)*14)/m);
+    K[i].res.forEach((rj,j)=>{ const y=j*(hh+14), F=FORMEN[rj.r.f];
+      const E=K[i].E>0?S.voll[i]*(rj.E/K[i].E):0;
+      malReservoir(x,y,TW,hh,F,rj.r,E,Emax,{art:i?'ziel':'res',i,j},i,kk,m>1&&j<m-1,m>1);
+    });
   }
   /* --- Gleichungen --- */
   if(D.gl) malGleichungen(K,S,kk,L);
@@ -523,7 +528,7 @@ function malTank(x,y,w,h,farbe,E,Emax,dick){
   ctx.restore();
 }
 function malReservoir(x,y,w,h,F,r,E,Emax,id,i,kk,plus,kompakt){
-  const aus=(sel&&((id.art==='res'&&sel.art==='res'&&sel.j===id.j)||(id.art==='ziel'&&sel.art==='ziel'&&sel.i===id.i)));
+  const aus=!!(sel&&sel.art===id.art&&sel.j===id.j&&(id.art==='res'||sel.i===id.i));
   malTank(x,y,w,h,F.farbe,E,Emax,aus);
   merke(id,x,y,w,h);
   /* Die charakteristische Größe folgt dem Füllstand: Beim Fallen sinkt h und v wächst.
@@ -543,28 +548,44 @@ function malReservoir(x,y,w,h,F,r,E,Emax,id,i,kk,plus,kompakt){
   if(plus) txt('+',x+w/2,y+h+7,{sz:20*kk,fett:true,farbe:'#64748b'});
 }
 const parText=(q,v)=>q.zeig?q.zeig(v):zahl(v)+' '+q.e;
+/* Die Gleichungen einer Spalte – mit den Werten des aktuellen Standes */
+function glZeilen(K,S,i){
+  const zeilen=[], m=K[i].res.length;
+  const Ea=j=>K[i].E>0?S.voll[i]*(K[i].res[j].E/K[i].E):0;     /* was gerade drin ist */
+  if(i===0){
+    K[0].res.forEach((r0,j)=>{ const F=FORMEN[r0.r.f], Ej=Ea(j);
+      zeilen.push(F.formel);
+      if(D.gl>1) zeilen.push('E'+(m>1?nidx(j):'')+' = '+F.zahlen(r0.r.p,F.aus(r0.r.p,Ej))+' = '+en(Ej)); });
+    if(m>1){ zeilen.push('E_ges = E₁ + E₂'+(m>2?' + …':''));
+      if(D.gl>1) zeilen.push('E_ges = '+en(S.voll[i])); }
+    return zeilen;
+  }
+  const xi=Math.max(0,Math.min(1,D.t-(i-1)));
+  if(D.verluste){ zeilen.push('E_zu = η · E_ab');
+    if(D.gl>1) zeilen.push('E_zu = '+zahl(K[i].eta,2)+' · '+en(K[i].Ein*xi)+' = '+en(K[i].E*xi)); }
+  else { zeilen.push('E_zu = E_ab   (Energieerhaltung)');
+    if(D.gl>1) zeilen.push('E_zu = '+en(K[i].E*xi)); }
+  K[i].res.forEach((rj,j)=>{ const F=FORMEN[rj.r.f], Ej=Ea(j), letzt=(j===m-1);
+    if(m>1&&!letzt){                       /* fest eingestellt: die Energie folgt aus der Größe */
+      zeilen.push('E'+nidx(j)+' = '+F.formel.replace('E = ',''));
+      if(D.gl>1) zeilen.push('E'+nidx(j)+' = '+F.zahlen(rj.r.p,F.aus(rj.r.p,Ej))+' = '+en(Ej));
+    } else if(m>1){                        /* das letzte bekommt den Rest */
+      zeilen.push('E'+nidx(j)+' = E_zu − '+K[i].res.slice(0,m-1).map((_,k)=>'E'+nidx(k)).join(' − '));
+      if(D.gl>1) zeilen.push('E'+nidx(j)+' = '+en(Ej));
+    }
+    /* Beim fest eingestellten Reservoir ist die Größe ja die Vorgabe – die Umkehrung
+       lohnt sich nur dort, wo die Energie die Größe bestimmt. */
+    if(m===1||letzt){ zeilen.push(F.umF);
+      if(D.gl>1) zeilen.push(F.gr.k+' = '+F.umZ(rj.r.p,Ej)+' = '+zahl(F.aus(rj.r.p,Ej))+' '+F.gr.e); }
+  });
+  return zeilen;
+}
+const nidx=j=>'₁₂₃₄₅'[j]||String(j+1);
 function malGleichungen(K,S,kk,L){
   const n=L.n, y0=TH+56*kk+L.vH+4, zh=17*kk;
   for(let i=0;i<=n;i++){
     const xm=i*(TW+GW)+TW/2, bw=TW+GW-16;
-    const zeilen=[];
-    if(i===0){ K[0].res.forEach((r0,j)=>{ const F=FORMEN[r0.r.f];
-        /* mit dem Stand von jetzt: Läuft die Zeit, werden h und E kleiner */
-        const Ej=K[0].E>0?S.voll[0]*(r0.E/K[0].E):0, gj=F.aus(r0.r.p,Ej);
-        zeilen.push(F.formel);
-        if(D.gl>1) zeilen.push('E = '+F.zahlen(r0.r.p,gj)+' = '+en(Ej));
-      });
-      if(K[0].res.length>1){ zeilen.push('E_ges = E₁ + E₂' + (K[0].res.length>2?' + …':''));
-        if(D.gl>1) zeilen.push('E_ges = '+en(S.voll[0])); }
-    } else {
-      const F=FORMEN[K[i].s.f], xi=Math.max(0,Math.min(1,D.t-(i-1)));
-      if(D.verluste){ zeilen.push('E_zu = η · E_ab');
-        if(D.gl>1) zeilen.push('E_zu = '+zahl(K[i].eta,2)+' · '+en(K[i].Ein*xi)+' = '+en(K[i].E*xi)); }
-      else { zeilen.push('E_zu = E_ab   (Energieerhaltung)');
-        if(D.gl>1) zeilen.push('E_zu = '+en(K[i].E*xi)); }
-      zeilen.push(F.umF);
-      if(D.gl>1) zeilen.push(F.gr.k+' = '+F.umZ(K[i].s.p,S.voll[i])+' = '+zahl(F.aus(K[i].s.p,S.voll[i]))+' '+F.gr.e);
-    }
+    const zeilen=glZeilen(K,S,i);
     /* Der Block bleibt im Bild – sonst läuft die erste Zeile links hinaus.
        Gerechnet wird in Bildschirmpunkten, weil die Zeichnung skaliert ist. */
     const halb=bw/2+4/SC, links=(0-OX)/SC+halb, rechts=(W-OX)/SC-halb;
@@ -609,13 +630,25 @@ function renderBar2(){ const b=$('bar2'); b.innerHTML='';
     el('button','btn','✕',()=>{ sel=null; renderBar2(); zeichne(); }); schluss(); return; }
 
   if(sel&&sel.art==='ziel'){ const s=D.schritte[sel.i-1]; if(!s){ sel=null; return renderBar2(); }
-    const F=FORMEN[s.f];
-    el('span','lbl','Reservoir'); formWahl(s.f,k=>{ pushUndo(); s.f=k; s.p=parStd(k); renderBar2(); zeichne(); sync(); });
-    F.par.forEach(q=>stepper(q.name,parText(q,s.p[q.k]),
-      d=>{ pushUndo(); s.p[q.k]=grenz(s.p[q.k]+d*q.s,q.min,q.max); renderBar2(); zeichne(); sync(); },
-      z=>{ pushUndo(); s.p[q.k]=grenz(q.zeig?z*(q.zeig===kjkg?1000:1e6):z,q.min,q.max); renderBar2(); zeichne(); sync(); }));
+    const j=Math.min(sel.j||0,s.z.length-1), r=s.z[j], m=s.z.length, letzt=(j===m-1);
+    const F=FORMEN[r.f];
+    el('span','lbl','Reservoir'+(m>1?' '+(j+1)+' von '+m:''));
+    formWahl(r.f,k=>{ pushUndo(); r.f=k; r.p=parStd(k); r.g=FORMEN[k].gr.def; renderBar2(); zeichne(); sync(); });
+    /* Nur das letzte Reservoir einer Stufe bekommt den Rest – bei den anderen stellt man
+       die charakteristische Größe ein, und sie holen sich dafür ihren Anteil. */
+    if(m>1&&!letzt) stepper(F.gr.name,zahl(r.g)+' '+F.gr.e,
+      d=>{ pushUndo(); r.g=grenz((+r.g||0)+d*F.gr.s,F.gr.min,F.gr.max); renderBar2(); zeichne(); sync(); },
+      z=>{ pushUndo(); r.g=grenz(z,F.gr.min,F.gr.max); renderBar2(); zeichne(); sync(); });
+    F.par.forEach(q=>stepper(q.name,parText(q,r.p[q.k]),
+      d=>{ pushUndo(); r.p[q.k]=grenz(r.p[q.k]+d*q.s,q.min,q.max); renderBar2(); zeichne(); sync(); },
+      z=>{ pushUndo(); r.p[q.k]=grenz(q.zeig?z*(q.zeig===kjkg?1000:1e6):z,q.min,q.max); renderBar2(); zeichne(); sync(); }));
     if(!F.par.length) el('span','lbl','ohne weitere Größen – c ist die Lichtgeschwindigkeit');
-    el('span','lbl',F.gr.name+' ergibt sich aus der Energie');
+    el('span','lbl',letzt?F.gr.name+' ergibt sich aus dem Rest der Energie':'davon bleibt der Rest für das Reservoir darunter');
+    el('button','btn','Reservoir dazu',()=>{ pushUndo();
+      const neu=neuRes(r.f==='hoehe'?'kin':'hoehe'); s.z.splice(j+1,0,neu);
+      sel={art:'ziel',i:sel.i,j:j+1}; renderBar2(); zeichne(); sync();
+      toast('Das untere Reservoir bekommt, was vom Rest übrig bleibt'); });
+    if(m>1) el('button','btn red','Reservoir löschen',()=>{ pushUndo(); s.z.splice(j,1); sel=null; renderBar2(); zeichne(); sync(); });
     el('button','btn','✕',()=>{ sel=null; renderBar2(); zeichne(); }); schluss(); return; }
 
   if(sel&&sel.art==='schritt'){ const s=D.schritte[sel.i-1]; if(!s){ sel=null; return renderBar2(); }
@@ -623,7 +656,7 @@ function renderBar2(){ const b=$('bar2'); b.innerHTML='';
     const w=document.createElement('select'); w.className='sel';
     WANDLER.forEach(x=>{ const o=document.createElement('option'); o.value=x.k; o.textContent=x.name; if(x.k===s.w)o.selected=true; w.appendChild(o); });
     w.onchange=()=>{ pushUndo(); const x=wdl(w.value); s.w=x.k; s.eta=x.eta;
-      if(x.zu){ s.f=x.zu; s.p=parStd(x.zu); }
+      if(x.zu){ const l=s.z[s.z.length-1]; l.f=x.zu; l.p=parStd(x.zu); l.g=FORMEN[x.zu].gr.def; }
       if(x.von&&sel.i===1&&D.start.length===1&&D.start[0].f!==x.von){ D.start[0].f=x.von; D.start[0].p=parStd(x.von); D.start[0].g=FORMEN[x.von].gr.def; }
       renderBar2(); zeichne(); sync(); };
     b.appendChild(w);
@@ -696,14 +729,24 @@ function glBtn(){ const n=['Gleichungen','Formeln','mit Zahlen'][D.gl||0];
 $('bVerl').onclick=()=>{ pushUndo(); D.verluste=!D.verluste; verlBtn(); renderBar2(); zeichne(); sync();
   toast(D.verluste?'Bei jeder Umwandlung wird ein Teil entwertet – der Wirkungsgrad lässt sich am Wandler einstellen':'Ohne Verluste: Die Energie bleibt vollständig erhalten'); };
 $('bGl').onclick=()=>{ D.gl=((D.gl||0)+1)%3; glBtn(); zeichne(); sync(); };
-$('bRes').onclick=()=>{ if(D.start.length>=3){ toast('Mehr als drei Reservoire werden am Anfang zu eng'); return; }
+$('bRes').onclick=()=>{
+  /* Ist gerade ein Reservoir einer späteren Stufe gewählt, kommt das neue dorthin –
+     sonst an den Anfang. */
+  if(sel&&sel.art==='ziel'&&D.schritte[sel.i-1]){ const s=D.schritte[sel.i-1];
+    if(s.z.length>=3){ toast('Mehr als drei Reservoire je Stufe werden zu eng'); return; }
+    pushUndo(); const l=s.z[s.z.length-1];
+    s.z.splice(s.z.length-1,0,{f:l.f,p:Object.assign({},l.p),g:FORMEN[l.f].gr.def});
+    sel={art:'ziel',i:sel.i,j:s.z.length-2}; renderBar2(); zeichne(); sync();
+    toast('Das obere Reservoir wird eingestellt, das untere bekommt den Rest'); return; }
+  if(D.start.length>=3){ toast('Mehr als drei Reservoire werden am Anfang zu eng'); return; }
   pushUndo(); D.start.push(neuRes('kin')); sel={art:'res',j:D.start.length-1}; renderBar2(); zeichne(); sync();
   toast('Die Energien der Reservoire am Anfang addieren sich'); };
 $('bWdl').onclick=()=>{ pushUndo();
-  const letzte=D.schritte.length?D.schritte[D.schritte.length-1].f:D.start[0].f;
+  const lz=D.schritte.length?D.schritte[D.schritte.length-1].z:null;
+  const letzte=lz?lz[lz.length-1].f:D.start[0].f;
   const w=WANDLER.find(x=>x.von===letzte)||wdl('frei');
   const zu=w.zu||letzte;
-  D.schritte.push({w:w.k,f:zu,p:parStd(zu),eta:w.eta});
+  D.schritte.push({w:w.k,z:[neuRes(zu)],eta:w.eta});
   sel={art:'schritt',i:D.schritte.length}; zeitMax(); renderBar2(); zeichne(); sync();
   toast('Umwandlung angehängt – Wandler und Reservoir unten einstellen'); };
 $('bNeu').onclick=()=>{ if((D.schritte.length||D.start.length>1)&&!confirm('Alles löschen und neu anfangen?')) return;
@@ -721,7 +764,8 @@ $('bHilfe').onclick=()=>{ const b=$('bar2'); b.innerHTML='';
 
 /* ---------- Vorlagen ---------- */
 const V=(f,g,p)=>{ const r=neuRes(f); r.g=g; if(p) Object.assign(r.p,p); return r; };
-const S=(w,f,p)=>{ const x=wdl(w); const s={w:x.k,f:f||x.zu,p:parStd(f||x.zu),eta:x.eta}; if(p) Object.assign(s.p,p); return s; };
+const S=(w,f,p)=>{ const x=wdl(w), zf=f||x.zu; const r=neuRes(zf); if(p) Object.assign(r.p,p);
+  return {w:x.k,z:[r],eta:x.eta}; };
 const VORLAGEN={
   'Fallender Stein':()=>({start:[V('hoehe',5,{m:2})], schritte:[S('fallen','kin',{m:2})], verluste:false}),
   'Pendel':()=>({start:[V('hoehe',0.4,{m:0.5})], schritte:[S('pendelAb','kin',{m:0.5}),S('pendel','hoehe',{m:0.5})], verluste:true}),
@@ -756,7 +800,13 @@ function uebernimm(d){ if(!d) return;
   if(!Array.isArray(D.start)||!D.start.length) D.start=[neuRes('hoehe')];
   D.start=D.start.filter(r=>r&&FORMEN[r.f]).map(r=>({f:r.f,p:Object.assign(parStd(r.f),r.p||{}),g:+r.g||0}));
   if(!Array.isArray(D.schritte)) D.schritte=[];
-  D.schritte=D.schritte.filter(s=>s&&FORMEN[s.f]).map(s=>({w:s.w||'frei',f:s.f,p:Object.assign(parStd(s.f),s.p||{}),eta:(s.eta===undefined?90:+s.eta)}));
+  /* Ältere Stände hatten je Umwandlung nur ein Reservoir (s.f / s.p). */
+  D.schritte=D.schritte.map(s=>{ if(!s) return null;
+    const z=(Array.isArray(s.z)?s.z:(FORMEN[s.f]?[{f:s.f,p:s.p,g:undefined}]:[]))
+      .filter(r=>r&&FORMEN[r.f])
+      .map(r=>({f:r.f,p:Object.assign(parStd(r.f),r.p||{}),g:(r.g===undefined?FORMEN[r.f].gr.def:+r.g||0)}));
+    return z.length?{w:s.w||'frei',z,eta:(s.eta===undefined?90:+s.eta)}:null;
+  }).filter(Boolean);
   D.t=Math.max(0,Math.min(D.schritte.length,+D.t||0));
   document.documentElement.style.setProperty('--fs',Math.min(18,D.fontSize||14)+'px');
   sel=null; lauf=false; playBtn(); verlBtn(); glBtn(); zeitZeig(); renderBar2(); zeichne(); }
