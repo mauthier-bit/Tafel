@@ -3195,19 +3195,26 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     Der Knopf **nm / eV** schaltet zwischen **Wellenlänge** und **Photonenenergie** um (E = h·c/λ
     mit h·c = 1239,84 eV·nm); das Band bleibt dabei nach der Wellenlänge geordnet, in eV stehen die
     Zahlen deshalb nicht gleichabständig und laufen von links 3,26 eV nach rechts 1,59 eV.
-    - **Gemessene Linien** (farbig im Band): die starken Linien des neutralen Atoms aus dem
+    - **Gemessene Linien** (farbig im Band): die starken Linien des **neutralen** Atoms aus dem
       **NIST Handbook of Basic Atomic Spectroscopic Data** (Strong Lines, Luftwellenlängen) –
-      übernommen, nicht gerechnet. Hinterlegt sind die üblichen Spektrallampen: **H** (656,3 ·
-      486,1 · 434,0 · 410,2 nm), **He**, **Li**, **Ne**, **Na** (589,0 / 589,6 nm), **K**, **Ca**
-      und **Hg** (579,1 · 577,0 · 546,1 · 435,8 · 404,7 nm). Bei allen anderen Elementen bleibt das
-      Band leer und sagt das auch.
+      übernommen, nicht gerechnet. Hinterlegt sind **24 Elemente**: **H** (656,3 · 486,1 · 434,0 ·
+      410,2 nm), **He**, **Li**, **Ne**, **Na** (589,0 / 589,6 nm), **Mg** (die b-Linien 518,4 ·
+      517,3 · 516,7 nm), **Al**, **Ar**, **K**, **Ca**, **Fe**, **Cu** (das Grün 521,8 · 515,3 ·
+      510,6 nm), **Zn**, **Kr**, **Rb**, **Sr** (460,7 · 496,2 · 548,1 · 640,8 · 650,4 · 707,0 nm),
+      **Ag**, **Cd**, **Xe**, **Cs**, **Ba** (553,5 nm), **Hg** (579,1 · 577,0 · 546,1 · 435,8 ·
+      404,7 nm), **Tl** und **Pb**. Bei allen anderen bleibt das Band leer und sagt das auch.
+      Gezeigt werden nur **Linien des neutralen Atoms** – passend zur Hülle, die daneben steht. In
+      einer Flamme oder Gasentladung leuchten zusätzlich **Ionen** (etwa Sr II 407,8 nm) und
+      **Moleküle** mit, deshalb ist die Flammenfarbe nicht einfach die Summe dieser Linien.
     - **Übergänge:** Beim **Wasserstoff** rechnet das Bohrmodell sie nach – **Lyman** (nach n = 1,
       im UV), **Balmer** (nach n = 2, sichtbar) und **Paschen** (4→3, 1874,6 nm im Infraroten). Die
       gerechneten Balmer-Linien (656,1 · 486,0 · 433,9 nm) treffen die gemessenen auf 0,3 Promille;
       der Rest ist der Unterschied zwischen Vakuum- und Luftwellenlänge und die mitschwingende
       Kernmasse.
-    - Bei schwereren Elementen gilt das Bohrmodell nur noch für die **inneren** Schalen. Dort
-      stehen die **charakteristischen Röntgenlinien nach Moseley** (Abschirmung Z−1 für die
+    - **Röntgen (eigener Knopf, anfangs aus):** Es geht um das **sichtbare** Spektrum – die
+      Röntgenlinien kommen nur dazu, wenn man sie einschaltet.
+      Bei schwereren Elementen gilt das Bohrmodell nur noch für die **inneren** Schalen. Dort
+      stehen dann die **charakteristischen Röntgenlinien nach Moseley** (Abschirmung Z−1 für die
       K-Linien, Z−7,4 für L), und zwar mit den richtigen Unterschalen: **Kα 2p→1s**, **Kβ 3p→1s**,
       **Lα 3d→2p**. Sie werden nur gezeichnet, wenn es die Elektronen dafür **wirklich gibt**:
       Neon hat keine M-Schale, also auch kein Kβ; bei Bor bleibt es bei Kα. Dass dafür erst ein
@@ -3221,9 +3228,11 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
       besetzten Stufen viel höher reichen. Für die Elemente mit gemessenen Linien steht deshalb
       zusätzlich der zugeordnete **Übergang der äußeren Elektronen** im Bild – die Wellenlänge ist
       gemessen, die Zuordnung steht so in den Lehrbüchern: **Na 3p→3s** (589,0 nm, die gelbe
-      D-Linie), **Li 2p→2s** (670,8), **K 4p→4s** (766,5), **Ca 4p→4s** (422,7), **He 3d→2p**
-      (587,6), **Ne 3p→3s** (640,2), **Hg 7s→6p** (546,1). Diese Pfeile sieht man in der Sicht mit
-      **Unterschalen**; ohne sie fallen Anfang und Ende in dieselbe Hauptschale.
+      D-Linie), **Li 2p→2s** (670,8), **Mg 4s→3p** (518,4), **K 4p→4s** (766,5), **Ca 4p→4s**
+      (422,7), **He 3d→2p** (587,6), **Ne 3p→3s** (640,2), **Zn 5s→4p** (481,1), **Sr 5p→5s**
+      (460,7), **Cd 5d→5p** (643,8), **Ba 6p→6s** (553,5), **Hg 7s→6p** (546,1). Diese Pfeile sieht
+      man in der Sicht mit **Unterschalen**; ohne sie fallen Anfang und Ende in dieselbe
+      Hauptschale.
   - **Kern** zeigt den **Potentialtopf mit zwei Hälften**: links die **Protonen**, rechts die
     **Neutronen**, gefüllt nach den Schalen der magischen Zahlen **2, 8, 20, 28, 50, 82, 126**; eine
     abgeschlossene Schale wird grün hervorgehoben. Die **linke Hälfte ist flacher** (gleiche Ladungen
