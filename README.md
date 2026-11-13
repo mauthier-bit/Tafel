@@ -2736,11 +2736,21 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     bleiben 58,86 J Bewegungsenergie – **v = 7,67 m/s**, also genau √(2·g·3 m). Die Gleichungen
     zeigen das als **E₁ = m·g·h**, **E₂ = E_zu − E₁** und **v = √(2·E/m)**.
   - **Wandler:** **Umwandlung** hängt einen Wandler mit neuem Reservoir an – Fallen, **Pendeln**
-    (abwärts und aufwärts), schiefe Ebene (hinunter und hinauf), Flaschenzug, Hebel, Katapult,
-    Armbrust, Feder, Trampolin, Gummiseil, Generator, **Windrad**, Motor, Lampe, Solarzelle,
-    Reibung, Feuer, Heizplatte, Schmelzen/Verdampfen, Batterie, Akku laden, Verbrennungsmotor,
-    Muskel, Kernreaktor oder ein frei wählbarer Wandler. Jeder
-    bringt seine **Energieform am Ausgang** und einen **Wirkungsgrad** als Anhaltswert mit.
+    (abwärts und aufwärts), **Jojo**, schiefe Ebene (hinunter und hinauf), Flaschenzug, Hebel,
+    Katapult, Armbrust, Feder, Trampolin, Gummiseil, Generator, **Windrad**, Motor, **E-Bike**,
+    Lampe, **Glühbirne**, **Fön**, Solarzelle, Reibung, Feuer, Heizplatte, **Kühlschrank**,
+    Schmelzen/Verdampfen, Batterie, Akku laden, Verbrennungsmotor, Muskel, Kernreaktor oder ein
+    frei wählbarer Wandler. Jeder bringt seine **Energieform am Ausgang** und einen
+    **Wirkungsgrad** als Anhaltswert mit.
+  - **Wandler mit zwei Ausgängen:** **Glühbirne** (5 % Strahlungsenergie, der Rest innere Energie)
+    und **Fön** (10 % Bewegungsenergie des Luftstroms, der Rest Wärme) legen gleich **zwei
+    Reservoire** an: Das obere bekommt seinen festen Anteil, das untere den Rest. Beim Wechsel auf
+    einen Wandler mit nur einem Ausgang verschwindet das zusätzliche Reservoir wieder – ein selbst
+    angelegtes bleibt dagegen stehen.
+  - **Kühlschrank:** Er **transportiert** Wärme, statt sie zu erzeugen. Das zeigt die gleichnamige
+    Vorlage: Am Anfang stehen zwei Reservoire – die **elektrische Energie** und die **innere
+    Energie des Kühlguts** –, und beide zusammen landen in der **Küche**. So wird sichtbar, dass
+    hinten mehr Wärme herauskommt, als der Strom liefert.
   - **Zeitregler und „Ablauf":** Der Regler schiebt die Energie durch die Kette. Dabei **leert sich
     das vordere Reservoir, während sich das hintere füllt** – und die charakteristischen Größen
     laufen mit: Beim Fall sinkt **h** von 5 m auf 0, während **v** auf 9,9 m/s steigt. **Ablauf**
@@ -2764,8 +2774,8 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     Zeitregler bewegt, sieht sie mitlaufen; die Umwandlungsgleichung beschreibt dagegen immer den
     **ganzen** Schritt.
   - **Vorlagen:** Fallender Stein, Pendel, Katapult, Wasserkraftwerk, **Windrad**, Auto bremst,
-    Wasserkocher, Eis schmilzt, Taschenlampe, Solarlampe, Kernkraftwerk, Zwei Reservoire,
-    leeres Blatt. Beim **Pendel** sieht man an der Höhe, was die Verluste ausmachen: Aus 0,40 m
+    Wasserkocher, Eis schmilzt, Taschenlampe, Solarlampe, Kernkraftwerk, **Kühlschrank**,
+    **Glühbirne**, Zwei Reservoire, leeres Blatt. Beim **Pendel** sieht man an der Höhe, was die Verluste ausmachen: Aus 0,40 m
     werden nach Hin- und Rückweg 0,37 m (98 % · 95 %).
   - Antippen wählt ein Reservoir oder einen Wandler aus; alles Weitere steht dann in der zweiten
     Zeile (Energieform, Größen mit − / + oder durch Antippen des Wertes eingeben, Löschen).

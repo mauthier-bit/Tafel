@@ -363,12 +363,19 @@ const WANDLER=[
   {k:'katapult',name:'Katapult',               von:'spann',    zu:'kin',      eta:80},
   {k:'armbrust',name:'Armbrust',               von:'spann',    zu:'kin',      eta:80},
   {k:'feder',   name:'Feder entspannen',       von:'spann',    zu:'kin',      eta:90},
+  {k:'jojo',    name:'Jojo',                   von:'kin',      zu:'hoehe',    eta:90},
   {k:'trampo',  name:'Trampolin',              von:'kin',      zu:'spann',    eta:90},
   {k:'gummi',   name:'Gummiseil',              von:'kin',      zu:'spann',    eta:85},
   {k:'generator',name:'Generator',             von:'kin',      zu:'elektro',  eta:90},
   {k:'windrad', name:'Windrad',                von:'kin',      zu:'elektro',  eta:45},
   {k:'motor',   name:'Motor',                  von:'elektro',  zu:'kin',      eta:85},
   {k:'lampe',   name:'Lampe',                  von:'elektro',  zu:'strahlung',eta:10},
+  /* Diese beiden füllen zwei Reservoire auf einmal: „auf" bekommt seinen festen Anteil,
+     das Reservoir unter „zu" bekommt den Rest. */
+  {k:'gluehbirne',name:'Glühbirne',            von:'elektro',  zu:'therm',    eta:100, auf:[{f:'strahlung',anteil:0.05}]},
+  {k:'foen',    name:'Fön',                    von:'elektro',  zu:'therm',    eta:100, auf:[{f:'kin',anteil:0.1,p:{m:50}}]},
+  {k:'ebike',   name:'E-Bike',                 von:'elektro',  zu:'kin',      eta:80},
+  {k:'kuehl',   name:'Kühlschrank',            von:'elektro',  zu:'therm',    eta:100},
   {k:'solar',   name:'Solarzelle',             von:'strahlung',zu:'elektro',  eta:20},
   {k:'reibung', name:'Reibung',                von:'kin',      zu:'therm',    eta:100},
   {k:'feuer',   name:'Feuer',                  von:'chem',     zu:'therm',    eta:90},
@@ -383,6 +390,17 @@ const WANDLER=[
   {k:'frei',    name:'Wandler',                von:null,       zu:null,       eta:90}
 ];
 const wdl=k=>WANDLER.find(w=>w.k===k)||WANDLER[WANDLER.length-1];
+/* Die Reservoire, die ein Wandler füllt. Bei zwei Ausgängen (Fön, Glühbirne) wird der
+   feste Anteil über seine charakteristische Größe eingestellt – so, dass er dem
+   typischen Anteil an der ankommenden Energie entspricht; den Rest bekommt das letzte. */
+function zieleFuer(x,Ezu,alt){
+  const z=(x.auf||[]).map(a=>{ const r=neuRes(a.f), F=FORMEN[a.f];
+    if(a.p) Object.assign(r.p,a.p);
+    if(Ezu>0) r.g=Math.max(F.gr.min,Math.min(F.gr.max,F.aus(r.p,a.anteil*Ezu)));
+    return r; });
+  const l=neuRes(x.zu||(alt&&alt.f)||'therm');
+  z.push(l); return z;
+}
 
 /* ---------- Zustand ---------- */
 const neuRes=f=>({f,p:parStd(f),g:FORMEN[f].gr.def});
@@ -690,8 +708,15 @@ function renderBar2(){ const b=$('bar2'); b.innerHTML='';
     el('span','lbl','Wandler');
     const w=document.createElement('select'); w.className='sel';
     WANDLER.forEach(x=>{ const o=document.createElement('option'); o.value=x.k; o.textContent=x.name; if(x.k===s.w)o.selected=true; w.appendChild(o); });
-    w.onchange=()=>{ pushUndo(); const x=wdl(w.value); s.w=x.k; s.eta=x.eta;
-      if(x.zu){ const l=s.z[s.z.length-1]; l.f=x.zu; l.p=parStd(x.zu); l.g=FORMEN[x.zu].gr.def; }
+    w.onchange=()=>{ pushUndo(); const vorher=wdl(s.w), x=wdl(w.value); s.w=x.k; s.eta=x.eta;
+      /* Kamen die zusätzlichen Reservoire vom alten Wandler (Fön, Glühbirne), gehören sie
+         nicht zum neuen – die Stufe fängt dann wieder mit einem Reservoir an. */
+      if(vorher.auf&&!x.auf&&s.z.length===vorher.auf.length+1) s.z=[s.z[s.z.length-1]];
+      if(x.auf){                                  /* zwei Ausgänge: Reservoire neu setzen */
+        const K=kette(), Ezu=K[sel.i-1].E*(D.verluste?x.eta/100:1);
+        s.z=zieleFuer(x,Ezu,s.z[s.z.length-1]);
+        toast(x.name+': Das obere Reservoir bekommt seinen festen Anteil, das untere den Rest');
+      } else if(x.zu){ const l=s.z[s.z.length-1]; l.f=x.zu; l.p=parStd(x.zu); l.g=FORMEN[x.zu].gr.def; }
       if(x.von&&sel.i===1&&D.start.length===1&&D.start[0].f!==x.von){ D.start[0].f=x.von; D.start[0].p=parStd(x.von); D.start[0].g=FORMEN[x.von].gr.def; }
       renderBar2(); zeichne(); sync(); };
     b.appendChild(w);
@@ -780,8 +805,8 @@ $('bWdl').onclick=()=>{ pushUndo();
   const lz=D.schritte.length?D.schritte[D.schritte.length-1].z:null;
   const letzte=lz?lz[lz.length-1].f:D.start[0].f;
   const w=WANDLER.find(x=>x.von===letzte)||wdl('frei');
-  const zu=w.zu||letzte;
-  D.schritte.push({w:w.k,z:[neuRes(zu)],eta:w.eta});
+  const K=kette(), Ezu=K[K.length-1].E*(D.verluste?w.eta/100:1);
+  D.schritte.push({w:w.k,z:zieleFuer(w,Ezu,{f:letzte}),eta:w.eta});
   sel={art:'schritt',i:D.schritte.length}; zeitMax(); renderBar2(); zeichne(); sync();
   toast('Umwandlung angehängt – Wandler und Reservoir unten einstellen'); };
 $('bNeu').onclick=()=>{ if((D.schritte.length||D.start.length>1)&&!confirm('Alles löschen und neu anfangen?')) return;
@@ -800,7 +825,9 @@ $('bHilfe').onclick=()=>{ const b=$('bar2'); b.innerHTML='';
 /* ---------- Vorlagen ---------- */
 const V=(f,g,p)=>{ const r=neuRes(f); r.g=g; if(p) Object.assign(r.p,p); return r; };
 const S=(w,f,p)=>{ const x=wdl(w), zf=f||x.zu; const r=neuRes(zf); if(p) Object.assign(r.p,p);
-  return {w:x.k,z:[r],eta:x.eta}; };
+  const z=(x.auf||[]).map(a=>{ const q=neuRes(a.f); if(a.p) Object.assign(q.p,a.p); return q; });
+  z.push(r);                                             /* Wandler mit zwei Ausgängen */
+  return {w:x.k,z,eta:x.eta}; };
 const VORLAGEN={
   'Fallender Stein':()=>({start:[V('hoehe',5,{m:2})], schritte:[S('fallen','kin',{m:2})], verluste:false}),
   'Pendel':()=>({start:[V('hoehe',0.4,{m:0.5})], schritte:[S('pendelAb','kin',{m:0.5}),S('pendel','hoehe',{m:0.5})], verluste:true}),
@@ -813,6 +840,9 @@ const VORLAGEN={
   'Taschenlampe':()=>({start:[V('chem',0.002,{H:4.2e7})], schritte:[S('batterie','elektro',{U:3}),S('lampe','strahlung',{P:1})], verluste:true}),
   'Solarlampe':()=>({start:[V('strahlung',600,{P:20})], schritte:[S('solar','elektro',{U:4}),S('lampe','strahlung',{P:2})], verluste:true}),
   'Kernkraftwerk':()=>({start:[V('kern',1,{})], schritte:[S('reaktor','therm',{c:4200,m:200}),S('frei','kin',{m:5000}),S('generator','elektro',{U:20000})], verluste:true}),
+  'Kühlschrank':()=>({start:[V('elektro',500,{U:230}),V('therm',8,{c:3900,m:2})],
+    schritte:[S('kuehl','therm',{c:1005,m:60})], verluste:false}),
+  'Glühbirne':()=>({start:[V('elektro',1000,{U:230})], schritte:[S('gluehbirne','therm',{c:1005,m:5})], verluste:false}),
   'Zwei Reservoire':()=>({start:[V('hoehe',3,{m:1}),V('kin',4,{m:1})], schritte:[S('frei','therm',{c:460,m:0.2})], verluste:false}),
   'Leeres Blatt':()=>({start:[V('hoehe',5,{m:2})], schritte:[], verluste:false})
 };
@@ -821,8 +851,18 @@ $('bTpl').onclick=()=>{ const b=$('bar2'); b.innerHTML='';
   Object.keys(VORLAGEN).forEach(k=>{ const bt=document.createElement('button'); bt.className='btn'+(k==='Leeres Blatt'?' red':'');
     bt.textContent=k; bt.onclick=()=>ladeVorlage(k); b.appendChild(bt); });
   const x=document.createElement('button'); x.className='btn'; x.textContent='✕'; x.onclick=renderBar2; b.appendChild(x); };
+/* Die festen Anteile (Fön: Luftstrom, Glühbirne: Licht) auf die Energie einstellen,
+   die bei dieser Stufe wirklich ankommt. */
+function anteileNachziehen(){
+  D.schritte.forEach((s,i)=>{ const x=wdl(s.w); if(!x.auf) return;
+    const K=kette(), Ezu=K[i].E*(D.verluste?(+s.eta||0)/100:1);
+    x.auf.forEach((a,j)=>{ const r=s.z[j]; if(!r||r.f!==a.f) return; const F=FORMEN[a.f];
+      if(a.p) Object.assign(r.p,a.p);
+      r.g=Math.max(F.gr.min,Math.min(F.gr.max,F.aus(r.p,a.anteil*Ezu))); });
+  });
+}
 function ladeVorlage(k){ const f=VORLAGEN[k]; if(!f) return; pushUndo();
-  const o=f(); D.start=o.start; D.schritte=o.schritte; D.verluste=!!o.verluste;
+  const o=f(); D.start=o.start; D.schritte=o.schritte; D.verluste=!!o.verluste; anteileNachziehen();
   D.t=0; lauf=false; sel=null; playBtn(); verlBtn(); zeitMax(); renderBar2(); zeichne(); sync(); toast(k); }
 
 /* ---------- Tafel-Anbindung ---------- */
