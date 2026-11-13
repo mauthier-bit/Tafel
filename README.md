@@ -2723,11 +2723,16 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     Blei, Speiseöl), **Masse**, **Heizleistung** und **Starttemperatur**; **Start** lässt die Zeit
     laufen, eine Marke wandert über die Kurve und zeigt Temperatur, zugeführte Energie und Dauer.
     Der Knopf **heizen/kühlen** dreht den Vorgang um: Dann kondensiert der Dampf und das Wasser
-    erstarrt – die Haltepunkte sind dieselben.
-  - **Teilchenmodell:** daneben ein Kasten mit rund 56 Teilchen, die zeigen, was gerade passiert –
-    im Gitter schwingend (fest), dicht durcheinander (flüssig) oder frei fliegend (gasförmig). Beim
-    Schmelzen und Sieden wechseln sie **nach und nach** hinüber, so dass man sieht, wofür die
-    Energie während des Haltepunkts gebraucht wird. Die Bewegung wird mit der Temperatur schneller.
+    erstarrt – die Haltepunkte sind dieselben. Der Wechsel **behält die Stelle**, man kann also bis
+    zur Hälfte heizen und von dort wieder abkühlen; nur am jeweiligen Ende springt es ans andere.
+  - **Teilchenmodell:** daneben ein großer Kasten mit **160 Teilchen**, die zeigen, was gerade
+    passiert – im Gitter schwingend (fest), dicht durcheinander (flüssig) oder frei fliegend
+    (gasförmig). Die **Farbe sagt den Aggregatzustand**: dunkel im Gitter, in der Stofffarbe
+    flüssig, hell und durchscheinend als Gas. Beim Schmelzen und Sieden wechseln sie **nach und
+    nach** hinüber, so dass man sieht, wofür die Energie während des Haltepunkts gebraucht wird;
+    die Bewegung wird mit der Temperatur schneller.
+    Unter dem Kasten steht, **womit** gearbeitet wird: beim Heizen eine **Flamme**, beim Kühlen
+    **Schneeflocken**.
   - **Mischungstemperatur:** zwei Behälter mit Stoff, Masse und Temperatur; **Start** schüttet sie
     zusammen – die beiden leeren sich, die Mischung füllt sich und zeigt **T_M**. Beispiel: 0,5 kg
     Eisen mit 300 °C in 2 kg Wasser mit 20 °C ergibt **27,5 °C** – daran sieht man, wie viel mehr
@@ -3007,10 +3012,16 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     Feld der Würfel (blau = noch da, rot = gerade zerfallen, grau = schon zerfallen), rechts
     entsteht Wurf für Wurf die **Zerfallskurve**. **würfeln** macht einen Wurf, **▶ laufen**
     würfelt alle 0,7 s weiter, **↺** fängt von vorn an.
-    - **Zahl der Würfel:** von 10 bis **100 000** in Stufen (10, 20, 50, 100 … 50 000, 100 000) oder
-      durch Antippen der Zahl frei eingebbar. Ein Wurf über alle 100 000 dauert rund **11 ms**, das
-      Zeichnen 5 ms – ab etwa 3000 Würfeln wird das Feld als Punktbild gesetzt, damit es flüssig
-      bleibt.
+    - **Zahl der Würfel:** von 10 bis **1 000 000** in Stufen (10, 20, 50, 100 … 200 000, 500 000,
+      1 000 000) oder durch Antippen der Zahl frei eingebbar. Ein Wurf über alle 100 000 dauert rund
+      **11 ms**, über eine Million **58 ms**, das Zeichnen 9 ms. Ab etwa 3000 Würfeln wird das Feld
+      als Punktbild gesetzt; sind es mehr Würfel als Bildpunkte, steht **ein Punkt für mehrere**
+      Würfel und wird umso blasser, je mehr davon zerfallen sind (es steht darunter, für wie viele).
+    - **Ausschnitt:** Mit **zwei Fingern** lässt sich ins Diagramm hineinzoomen (bis 500-fach), ein
+      Finger verschiebt den Ausschnitt, ein **Doppeltipp** stellt ihn zurück; am Rechner zoomt das
+      Mausrad. Damit sieht man den eigentlichen Punkt: Bei **vielen** Würfeln bleibt die Kurve auch
+      stark vergrößert glatt und liegt auf der erwarteten Kurve, bei **wenigen** wird sie
+      sprunghaft und weicht sichtbar ab – Zufall im Großen und im Kleinen.
     - **Augen:** Bei wenigen Würfeln (bis etwa 100) zeigt jeder Würfel seine **Augenzahl** – und es
       zerfallen genau die Sechser. Dann sind nur Vielfache von einem Sechstel sinnvoll, der
       Schalter stellt die Wahrscheinlichkeit entsprechend: 16,7 % („Sechs zerfällt"), 33,3 %
