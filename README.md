@@ -2421,7 +2421,7 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
    Figuren & Körper · 3D-Koordinatensystem — **3.** GeoGebra-App · CODAP · Diagramm · Zufall ·
    Vierfeldertafel — **4.** Baumdiagramm · Wahrscheinlichkeitsrechner · **Tabellenkalkulation** ·
    Motion-Tracker · **Bewegungsdiagramme** · **Mathe und Physik Geschichte** — **5.** Stromkreis ·
-   Optiklabor · Wellenwanne · **Atomphysik** · **Induktion** — **6.** **Video-Physik** · **Audio-Physik** · Messwert-Analyse ·
+   Optiklabor · Wellenwanne · **Atomphysik** · **Induktion** · **Energieumwandlung** — **6.** **Video-Physik** · **Audio-Physik** · Messwert-Analyse ·
    **Versuchsprotokoll** · Einheitenumrechner.
    Die Aufklappmenüs legen sich **nie über die Werkzeugleiste**: Sie öffnen neben ihr, bleiben unter
    der oberen Leiste und nehmen bei schmalem Fenster **weniger Spalten** (bei wenig Höhe lassen sie
@@ -2715,6 +2715,43 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   - **Einrasten:** besondere Winkel (Vielfache von 30° und 45°) und die zugehörigen Werte
     (0, ±½, ±½√2, ±½√3, ±1; bei tan 0, ±⅓√3, ±1, ±√3) rasten beim Ziehen ein; ohne Einrasten ganze Grad
     bzw. Hundertstel. **Besondere Winkel** markiert diese am Kreis, **Bogenmaß** beschriftet sie mit π.
+- **Energieumwandlung** (Mathe & Physik, Symbol: zwei Behälter mit Pfeil): eine ganze
+  **Umwandlungskette** aus **Reservoiren** und **Wandlern**, mit Animation, Zeitregler, Verlusten und
+  den Gleichungen dazu.
+  - **Reservoire:** Jedes steht für eine Energieform; sein **Füllstand** zeigt die Energie. Die für
+    die Form **charakteristische Größe** bestimmt ihn: Höhe **h**, Geschwindigkeit **v**, Dehnung
+    **s**, Temperaturanstieg **ΔT**, umgewandelte Masse **m**, Ladung **Q**, Dauer **t**,
+    Massendefekt **Δm**. Dazu kommen die festen Größen (Masse, Federhärte, Spannung,
+    Wärmekapazität …), die beim Umwandeln gleich bleiben. Energieformen: **Höhenenergie**
+    (E = m·g·h), **kinetische Energie** (E = ½·m·v²), **Spannenergie** (E = ½·D·s²), **innere
+    Energie** als **Temperatur** (E = c·m·ΔT), als **Aggregatzustand** (E = q·m) und **chemisch**
+    (E = H·m), **elektrische Energie** (E = U·Q), **Strahlungsenergie** (E = P·t) und
+    **Kernenergie** (E = Δm·c²).
+  - **Mehrere Reservoire am Anfang:** Der Knopf **Reservoir** stellt bis zu drei nebeneinander; ihre
+    Energien **addieren sich** (im Bild mit **+** und einer eigenen Zeile E_ges = E₁ + E₂).
+  - **Wandler:** **Umwandlung** hängt einen Wandler mit neuem Reservoir an – Fallen, schiefe Ebene
+    (hinauf und hinunter), Flaschenzug, Hebel, Katapult, Armbrust, Feder, Trampolin, Gummiseil,
+    Generator, Motor, Lampe, Solarzelle, Reibung, Feuer, Heizplatte, Schmelzen/Verdampfen, Batterie,
+    Akku laden, Verbrennungsmotor, Muskel, Pendel, Kernreaktor oder ein frei wählbarer Wandler. Jeder
+    bringt seine **Energieform am Ausgang** und einen **Wirkungsgrad** als Anhaltswert mit.
+  - **Zeitregler und „Ablauf":** Der Regler schiebt die Energie durch die Kette. Dabei **leert sich
+    das vordere Reservoir, während sich das hintere füllt** – und die charakteristischen Größen
+    laufen mit: Beim Fall sinkt **h** von 5 m auf 0, während **v** auf 9,9 m/s steigt. **Ablauf**
+    macht dasselbe von allein (rund 1,8 s je Umwandlung), **Anfang** stellt zurück. Auf dem Pfeil
+    fließen dabei Energiepunkte mit.
+  - **Verluste:** Der Schalter schaltet die **Energieentwertung** ein. Dann zweigt bei jeder
+    Umwandlung ein gestrichelter Pfeil nach unten ab und füllt ein graues Reservoir **„entwertet"**;
+    der **Wirkungsgrad** ist je Wandler einstellbar (Vorgabe aus der Literatur, z. B. Glühlampe 10 %,
+    Generator 90 %).
+  - **Gleichungen:** Der Knopf schaltet in drei Stufen – aus, **Formeln** (nur mit Variablen) und
+    **mit Zahlen**. Unter jeder Stufe stehen dann die Formel der Energieform, die Umwandlung
+    (E_zu = η · E_ab) und die **Umkehrung** zur charakteristischen Größe (v = √(2·E/m)), jeweils mit
+    den Werten des **aktuellen** Standes – wer den Zeitregler bewegt, sieht die Zahlen mitlaufen.
+  - **Vorlagen:** Fallender Stein, Pendel, Katapult, Wasserkraftwerk, Auto bremst, Wasserkocher,
+    Eis schmilzt, Taschenlampe, Solarlampe, Kernkraftwerk, Zwei Reservoire, leeres Blatt.
+  - Antippen wählt ein Reservoir oder einen Wandler aus; alles Weitere steht dann in der zweiten
+    Zeile (Energieform, Größen mit − / + oder durch Antippen des Wertes eingeben, Löschen).
+    Dazu **Zurück/Vor**, **Schrift A−/A+**, **Bild → Tafel**, **Kopieren** und **Teilen (QR-Code)**.
 - **Astronomie** (Mathe & Physik): fünf Reiter – ein **Sonnensystem in 3D** und die vier klassischen
   **geometrischen Entfernungsbestimmungen**. Alles wird im Browser gerechnet, mit den **mittleren
   Bahnelementen für J2000** und der Mittelpunktsgleichung in erster Näherung – also mit Ellipsen,

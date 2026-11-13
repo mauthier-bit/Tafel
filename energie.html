@@ -1,0 +1,789 @@
+<!DOCTYPE html><html lang="de"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<title>Energieumwandlung</title>
+<style>
+  :root{--fs:14px;}
+  *{box-sizing:border-box;} [hidden]{display:none!important;}
+  html,body{margin:0;height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#1f2430;font-size:var(--fs);}
+  #wrap{position:absolute;inset:0;display:flex;flex-direction:column;}
+  #bar{display:flex;gap:4px;padding:6px;border-bottom:1px solid #e2e7ef;align-items:center;flex:none;overflow:hidden;}
+  #barL,#barR{display:flex;gap:4px;align-items:center;flex:none;}
+  #barMid{display:flex;gap:4px;align-items:center;flex:1 1 auto;min-width:0;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:thin;padding:0 2px;}
+  #bar.compact #barL .tb span,#bar.compact #barR .tb span{display:none;}
+  #bar.compact #barL .tb,#bar.compact #barR .tb{min-width:42px;padding:0 3px;}
+  #barMid::-webkit-scrollbar{height:5px;} #barMid::-webkit-scrollbar-thumb{background:#c8d0dc;border-radius:3px;}
+  #barMid.more{-webkit-mask-image:linear-gradient(90deg,#000 0,#000 calc(100% - 22px),transparent);mask-image:linear-gradient(90deg,#000 0,#000 calc(100% - 22px),transparent);}
+  .tb{flex:none;min-width:52px;height:50px;border:1px solid #d6dce5;background:#fff;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;padding:0 5px;color:#1f2430;font:inherit;}
+  .tb svg{width:32px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+  .tb span{font-size:.7em;font-weight:600;white-space:nowrap;}
+  .tb.on{background:#2563eb;border-color:#2563eb;color:#fff;}
+  .tb:disabled{opacity:.35;}
+  .sep{width:1px;align-self:stretch;background:#e2e7ef;margin:0 3px;flex:none;}
+  #bar2,#bar3{display:flex;gap:6px;padding:5px 8px;border-bottom:1px solid #e2e7ef;align-items:center;flex-wrap:nowrap;flex:none;min-height:44px;font-size:.92em;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:thin;}
+  #bar2>*,#bar3>*{flex:0 0 auto;}
+  #bar2::-webkit-scrollbar,#bar3::-webkit-scrollbar{height:4px;} #bar2::-webkit-scrollbar-thumb,#bar3::-webkit-scrollbar-thumb{background:#cfd6e0;border-radius:2px;}
+  .lbl{color:#64748b;font-weight:600;}
+  .grow{flex:1 1 auto!important;min-width:4px;}
+  .btn{border:1px solid #cfd6e0;background:#fff;border-radius:9px;padding:5px 10px;font:inherit;font-weight:600;color:#1f2430;cursor:pointer;white-space:nowrap;}
+  .btn.pri{background:#2563eb;border-color:#2563eb;color:#fff;}
+  .btn.red{color:#dc2626;border-color:#fca5a5;}
+  .btn.on{background:#2563eb;border-color:#2563eb;color:#fff;}
+  select.sel{border:1px solid #cfd6e0;border-radius:9px;padding:5px 8px;font:inherit;font-weight:600;background:#fff;color:#1f2430;max-width:200px;}
+  .stp{display:inline-flex;align-items:center;gap:4px;}
+  .stp button{border:1px solid #cfd6e0;background:#fff;border-radius:8px;width:32px;height:32px;font:inherit;font-weight:700;cursor:pointer;color:#1f2430;}
+  .stp .val{min-width:84px;text-align:center;font-weight:700;}
+  .seg{display:inline-flex;border:1px solid #cfd6e0;border-radius:9px;overflow:hidden;}
+  .seg button{border:0;background:#fff;font:inherit;font-weight:600;padding:5px 10px;cursor:pointer;color:#1f2430;}
+  .seg button.on{background:#2563eb;color:#fff;}
+  #zeitR{flex:1 1 auto;min-width:120px;accent-color:#2563eb;height:30px;}
+  #cvbox{position:relative;flex:1;min-height:0;background:#fff;}
+  #cvbox canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;}
+  #hint{position:absolute;left:10px;bottom:6px;font-size:.78em;color:#94a3b8;pointer-events:none;}
+</style>
+<script>
+/* Scharfe Kante unter der iPadOS-Statusleiste (iPadOS 26/27).
+   WebKit legt in Web-Apps vom Homebildschirm am oberen Rand sonst einen
+   weichen Verlauf ueber den Inhalt. Er entfaellt, wenn dort eine deckende
+   Leiste liegt - ein bildschirmfuellender Kasten genuegt nicht (am
+   13.10.2026 auf iPadOS 27 geprueft). Das Skript legt deshalb einen 16 px
+   hohen, deckenden Streifen an den oberen Rand und rueckt alles, was in
+   diese 16 px hineinragt, um 16 px nach unten. Laeuft nur in der App vom
+   Homebildschirm, nicht in Safari und nicht in einem Rahmen; mit #kante in
+   der Adresse laesst es sich zum Pruefen erzwingen. */
+(function(){
+  if(window.top!==window) return;
+  var pruef=/kante/i.test(location.hash||'');
+  var alsApp=(navigator.standalone===true) ||
+             (window.matchMedia && matchMedia('(display-mode: standalone)').matches);
+  if(!alsApp && !pruef) return;
+
+  var HOCH=16;
+  function leer(f){ return !f || f==='transparent' || f.replace(/\s/g,'')==='rgba(0,0,0,0)'; }
+  function seite(){
+    var s=getComputedStyle(document.body), f=s.backgroundColor, b=s.backgroundImage;
+    if(leer(f) && (!b || b==='none')){
+      s=getComputedStyle(document.documentElement); f=s.backgroundColor; b=s.backgroundImage;
+    }
+    return { farbe: leer(f) ? '#ffffff' : f, bild: (b && b!=='none') ? b : '' };
+  }
+  /* Faerbt dieses Element am oberen Rand etwas sichtbar ein? */
+  function tinte(n){
+    var r=n.getBoundingClientRect();
+    if(r.top>=HOCH || r.bottom<=0 || r.width<=0) return false;
+    var s=getComputedStyle(n);
+    if(s.display==='none' || s.visibility==='hidden' || s.opacity==='0') return false;
+    if(n.id==='randKante') return false;
+    var t=n.tagName.toLowerCase();
+    if(t==='img'||t==='svg'||t==='canvas'||t==='video') return true;
+    if(!leer(s.backgroundColor) || s.backgroundImage!=='none') return true;
+    if(parseFloat(s.borderTopWidth)>0) return true;
+    var kn=n.childNodes;
+    for(var j=0;j<kn.length;j++)
+      if(kn[j].nodeType===3 && kn[j].nodeValue.replace(/\s/g,'')) return true;
+    for(var i=0;i<n.children.length;i++) if(tinte(n.children[i])) return true;
+    return false;
+  }
+  function ragtRein(z){
+    for(var i=0;i<z.children.length;i++) if(tinte(z.children[i])) return true;
+    return false;
+  }
+  function luft(z){
+    if(z.dataset.kanteLuft) return;
+    if(!ragtRein(z) && !tinte(z)) return;    /* noch nichts oben - spaeter nochmal */
+    z.dataset.kanteLuft='1';
+    var p=parseFloat(getComputedStyle(z).paddingTop)||0;
+    if(p>=HOCH) return;
+    z.style.paddingTop=(p+HOCH)+'px';
+  }
+  function sichtbar(n,s){
+    return s.display!=='none' && s.visibility!=='hidden' && n.id!=='randKante';
+  }
+  /* bildschirmfuellende fixierte Kaesten */
+  function kaesten(){
+    var alle=document.querySelectorAll('body > *, body > * > *'), raus=[];
+    for(var i=0;i<alle.length;i++){
+      var n=alle[i], s=getComputedStyle(n);
+      if(s.position!=='fixed' || !sichtbar(n,s)) continue;
+      var r=n.getBoundingClientRect();
+      if(r.top<=4 && r.width>=innerWidth*0.9 && r.height>=innerHeight*0.9) raus.push(n);
+    }
+    return raus;
+  }
+  /* Leisten am oberen Rand (fixiert oder klebend, aber kein Vollbildkasten) */
+  function leisten(){
+    var alle=document.querySelectorAll('body > *, body > * > *'), raus=[];
+    for(var i=0;i<alle.length;i++){
+      var n=alle[i], s=getComputedStyle(n);
+      if((s.position!=='fixed' && s.position!=='sticky') || !sichtbar(n,s)) continue;
+      var r=n.getBoundingClientRect();
+      if(r.top<=4 && r.width>=innerWidth*0.8 && r.height>=6 && r.height<=innerHeight*0.6) raus.push(n);
+    }
+    return raus;
+  }
+  /* Liegt oben schon eine deckende Leiste, ist nichts zu tun. */
+  function schonGut(){
+    var st=document.elementsFromPoint ? document.elementsFromPoint(Math.round(innerWidth/2),2) : [];
+    for(var i=0;i<st.length;i++){
+      var n=st[i];
+      if(n.id==='randKante') continue;
+      if(n===document.body || n===document.documentElement) return false;
+      var s=getComputedStyle(n), r=n.getBoundingClientRect();
+      return (s.position==='fixed'||s.position==='sticky') && r.top<=4 &&
+             r.width>=innerWidth*0.8 && r.height>=6 && r.height<=innerHeight*0.6 &&
+             !leer(s.backgroundColor);
+    }
+    return false;
+  }
+  var band=null;
+  function streifen(farbe){
+    if(!band){
+      band=document.createElement('div');
+      band.id='randKante'; band.setAttribute('aria-hidden','true');
+      band.style.cssText='position:fixed;left:0;top:0;width:100%;height:'+HOCH+'px;'+
+        'z-index:2147483646;pointer-events:none';
+      document.body.appendChild(band);
+    }
+    band.style.display='block';
+    if(farbe){
+      band.style.backgroundColor=farbe;
+      band.style.backgroundImage='none';
+      return;
+    }
+    var s=getComputedStyle(document.body), h=seite();
+    band.style.backgroundColor=h.farbe;
+    band.style.backgroundImage=h.bild||'none';
+    band.style.backgroundAttachment='fixed';
+    if(h.bild && s.backgroundAttachment!=='fixed')
+      band.style.backgroundSize='100% '+Math.max(innerHeight,document.body.scrollHeight)+'px';
+  }
+  var schild=null;
+  function zeigen(txt){
+    if(!pruef) return;
+    if(!schild){
+      schild=document.createElement('div');
+      schild.style.cssText='position:fixed;left:6px;bottom:52px;z-index:2147483647;max-width:92%;'+
+        'padding:6px 9px;border-radius:8px;background:#ffe600;color:#000;'+
+        'font:600 12px/1.35 -apple-system,sans-serif;white-space:pre-wrap;pointer-events:none';
+      document.body.appendChild(schild);
+    }
+    schild.textContent='Kante K6 · '+innerWidth+'x'+innerHeight+'\n'+txt;
+  }
+  function name(n){
+    if(n.id) return '#'+n.id;
+    var c=(typeof n.className==='string'&&n.className.trim())?'.'+n.className.trim().split(/\s+/)[0]:'';
+    return n.tagName.toLowerCase()+c;
+  }
+  function malen(){
+    var b=document.body; if(!b) return;
+    if(schonGut()){
+      if(band) band.style.display='none';
+      zeigen('oben liegt schon eine deckende Leiste');
+      return;
+    }
+    var k=kaesten(), l=leisten(), h=null, farbe=null, text=[];
+    for(var i=0;i<k.length;i++){
+      var z=k[i], s=getComputedStyle(z);
+      if(!z.dataset.kante){
+        if(leer(s.backgroundColor)){
+          if(!h) h=seite();
+          z.style.backgroundColor=h.farbe;
+          if(s.backgroundImage==='none' && h.bild) z.style.backgroundImage=h.bild;
+        }
+        z.dataset.kante='1';
+        s=getComputedStyle(z);
+      }
+      luft(z);
+      text.push(name(z)+' bg='+s.backgroundColor+(s.backgroundImage!=='none'?'+Verlauf':''));
+    }
+    for(var j=0;j<l.length;j++){
+      var le=l[j], sl=getComputedStyle(le);
+      if(!tinte(le) && !ragtRein(le)) continue;
+      if(!farbe && !leer(sl.backgroundColor)) farbe=sl.backgroundColor;
+      luft(le);
+      text.push('Leiste '+name(le)+' bg='+sl.backgroundColor);
+    }
+    if(!k.length && !l.length){ luft(b); text.push('kein Kasten, nur Streifen'); }
+    streifen(farbe);
+    zeigen(text.join('\n'));
+  }
+  var warte=null;
+  function spaeter(){
+    if(warte) return;
+    warte=setTimeout(function(){ warte=null; malen(); },200);
+  }
+  try{
+    new MutationObserver(spaeter).observe(document.documentElement,
+      {childList:true, subtree:true, attributes:true, attributeFilter:['class','style','hidden']});
+  }catch(e){}
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',malen);
+  else malen();
+  addEventListener('load',spaeter);
+  addEventListener('resize',spaeter);
+  addEventListener('orientationchange',spaeter);
+})();
+</script></head><body>
+<div id="wrap">
+  <div id="bar"><div id="barL">
+    <button class="tb tafelEdit" id="bTpl" title="Fertige Umwandlungskette laden"><svg viewBox="0 0 32 20"><rect x="7" y="3" width="18" height="14" rx="2"/><path d="M11 8h10M11 12h6"/></svg><span>Vorlagen</span></button>
+    <button class="tb tafelEdit" id="bNeu" title="Alles löschen und neu anfangen"><svg viewBox="0 0 32 20"><path d="M11 2h8l4 4v12H11Z M19 2v4h4 M17 9v6M14 12h6"/></svg><span>Neu</span></button>
+    </div><div id="barMid">
+    <button class="tb tafelEdit" id="bRes" title="Ein weiteres Reservoir an den Anfang stellen – die Energien addieren sich"><svg viewBox="0 0 32 20"><rect x="6" y="3" width="9" height="14" rx="1.5"/><path d="M6 11h9" /><rect x="19" y="3" width="9" height="14" rx="1.5" stroke-dasharray="2.5 2"/><path d="M23.5 7v6M20.5 10h6"/></svg><span>Reservoir</span></button>
+    <button class="tb tafelEdit" id="bWdl" title="Eine weitere Umwandlung anhängen"><svg viewBox="0 0 32 20"><rect x="2" y="4" width="8" height="12" rx="1.5"/><path d="M12 10h8M17 7l3 3-3 3"/><rect x="22" y="4" width="8" height="12" rx="1.5"/><path d="M26 2v2M26 16v2" stroke-dasharray="0"/></svg><span>Umwandlung</span></button>
+    <span class="sep"></span>
+    <button class="tb" id="bPlay" title="Die Umwandlung ablaufen lassen"><svg viewBox="0 0 32 20"><path d="M12 4l12 6-12 6Z" fill="currentColor" stroke="none"/></svg><span>Ablauf</span></button>
+    <button class="tb" id="bZur" title="Wieder an den Anfang stellen"><svg viewBox="0 0 32 20"><path d="M24 10a8 8 0 1 1-2.5-5.8M24 2v4h-4"/></svg><span>Anfang</span></button>
+    <span class="sep"></span>
+    <button class="tb" id="bVerl" title="Energieentwertung: Ein Teil wird bei jeder Umwandlung an die Umgebung abgegeben"><svg viewBox="0 0 32 20"><path d="M3 6h18M3 6v8h14"/><path d="M23 4v12M20 13l3 3 3-3" stroke-dasharray="2.5 2"/></svg><span>Verluste</span></button>
+    <button class="tb" id="bGl" title="Die Gleichungen zur Umwandlung einblenden"><svg viewBox="0 0 32 20"><path d="M4 7h10M4 13h10M19 10h9M23.5 5.5 28 10l-4.5 4.5"/></svg><span>Gleichungen</span></button>
+    </div><div id="barR"><span class="sep"></span>
+    <button class="tb tafelEdit" id="bUndo" title="Rückgängig"><svg viewBox="0 0 32 20"><path d="M10 5 5 10l5 5M5 10H20a6 6 0 0 1 0 12"/></svg><span>Zurück</span></button>
+    <button class="tb tafelEdit" id="bRedo" title="Wiederholen"><svg viewBox="0 0 32 20"><path d="M22 5l5 5-5 5M27 10H12a6 6 0 0 0 0 12"/></svg><span>Vor</span></button>
+    <button class="tb" id="bHilfe" title="Kurze Anleitung"><svg viewBox="0 0 32 20"><circle cx="16" cy="10" r="8"/><path d="M13.6 7.6a2.5 2.5 0 1 1 3.3 2.6c-.6.3-.9.8-.9 1.4v.4"/><circle cx="16" cy="15" r=".9" fill="currentColor" stroke="none"/></svg><span>?</span></button>
+  </div></div>
+  <div id="bar3">
+    <span class="lbl">Zeit</span>
+    <input type="range" id="zeitR" min="0" max="1000" step="1" value="0" title="Die Energie durch die Kette schieben">
+    <span class="val" id="zeitV" style="min-width:150px;font-weight:700">am Anfang</span>
+  </div>
+  <div id="bar2"></div>
+  <div id="cvbox"><canvas id="cv"></canvas><div id="hint">Reservoir oder Wandler antippen = auswählen und einstellen</div></div>
+</div>
+<script src="shot.js"></script>
+<script src="modus.js"></script>
+<script src="vendor/qrcode.min.js"></script>
+<script src="teilen.js"></script>
+<script>
+"use strict";
+const $=id=>document.getElementById(id), cv=$('cv'), ctx=cv.getContext('2d');
+const toast=m=>window.TafelShot&&TafelShot.toast(m);
+const G_ERD=9.81;
+
+/* ---------- Zahlen in deutscher Schreibweise ---------- */
+function zahl(v,n){ if(v===null||v===undefined||!isFinite(v)) return '–';
+  const a=Math.abs(v);
+  if(n===undefined) n = a>=1000?0 : a>=100?1 : a>=1?2 : a>=0.1?3 : 4;
+  let s=v.toFixed(n);
+  if(s.indexOf('.')>=0) s=s.replace(/0+$/,'').replace(/\.$/,'');
+  return s.replace('.',',');
+}
+/* Energie mit passender Einheit – unter 1 kJ in Joule, darüber kJ bzw. MJ */
+function en(E){ const a=Math.abs(E);
+  if(a>=1e9) return zahl(E/1e9)+' GJ';
+  if(a>=1e6) return zahl(E/1e6)+' MJ';
+  if(a>=1000) return zahl(E/1000)+' kJ';
+  return zahl(E)+' J'; }
+
+/* ---------- Energieformen ----------
+   Jede Form kennt ihre Formel, ihre festen Parameter (Masse, Federhärte, Spannung …)
+   und die charakteristische Größe, die den Füllstand bestimmt: Höhe, Geschwindigkeit,
+   Temperaturanstieg … „aus" rechnet umgekehrt: Wie groß ist diese Größe bei der
+   Energie, die gerade im Reservoir ist? Damit ändert sie sich beim Zeitregler mit. */
+const C_LICHT=299792458;
+const mjkg=v=>zahl(v/1e6)+' MJ/kg', kjkg=v=>zahl(v/1000)+' kJ/kg';
+const FORMEN={
+  hoehe:{name:'Höhenenergie',farbe:'#2563eb',formel:'E = m · g · h',
+    par:[{k:'m',name:'Masse',e:'kg',def:2,min:0.001,max:1e6,s:0.5}],
+    gr:{k:'h',name:'Höhe',e:'m',def:5,min:0,max:1e5,s:0.5},
+    E:(p,g)=>p.m*G_ERD*g, aus:(p,E)=>E/(p.m*G_ERD),
+    zahlen:(p,g)=>zahl(p.m)+' kg · '+zahl(G_ERD)+' m/s² · '+zahl(g)+' m',
+    umF:'h = E / (m · g)', umZ:(p,E)=>en(E)+' / ('+zahl(p.m)+' kg · '+zahl(G_ERD)+' m/s²)'},
+  kin:{name:'kinetische Energie',farbe:'#dc2626',formel:'E = ½ · m · v²',
+    par:[{k:'m',name:'Masse',e:'kg',def:2,min:0.001,max:1e6,s:0.5}],
+    gr:{k:'v',name:'Geschwindigkeit',e:'m/s',def:10,min:0,max:1e4,s:0.5},
+    E:(p,g)=>0.5*p.m*g*g, aus:(p,E)=>Math.sqrt(Math.max(0,2*E/p.m)),
+    zahlen:(p,g)=>'½ · '+zahl(p.m)+' kg · ('+zahl(g)+' m/s)²',
+    umF:'v = √(2 · E / m)', umZ:(p,E)=>'√(2 · '+en(E)+' / '+zahl(p.m)+' kg)'},
+  spann:{name:'Spannenergie',farbe:'#7c3aed',formel:'E = ½ · D · s²',
+    par:[{k:'D',name:'Federhärte',e:'N/m',def:200,min:0.1,max:1e6,s:50}],
+    gr:{k:'s',name:'Dehnung',e:'m',def:0.5,min:0,max:100,s:0.05},
+    E:(p,g)=>0.5*p.D*g*g, aus:(p,E)=>Math.sqrt(Math.max(0,2*E/p.D)),
+    zahlen:(p,g)=>'½ · '+zahl(p.D)+' N/m · ('+zahl(g)+' m)²',
+    umF:'s = √(2 · E / D)', umZ:(p,E)=>'√(2 · '+en(E)+' / '+zahl(p.D)+' N/m)'},
+  therm:{name:'innere Energie (Temperatur)',farbe:'#ea580c',formel:'E = c · m · ΔT',
+    par:[{k:'c',name:'spez. Wärmekapazität',e:'J/(kg·K)',def:4200,min:1,max:1e5,s:100},
+         {k:'m',name:'Masse',e:'kg',def:1,min:0.001,max:1e6,s:0.5}],
+    gr:{k:'ΔT',name:'Temperaturanstieg',e:'K',def:20,min:0,max:1e5,s:1},
+    E:(p,g)=>p.c*p.m*g, aus:(p,E)=>E/(p.c*p.m),
+    zahlen:(p,g)=>zahl(p.c)+' J/(kg·K) · '+zahl(p.m)+' kg · '+zahl(g)+' K',
+    umF:'ΔT = E / (c · m)', umZ:(p,E)=>en(E)+' / ('+zahl(p.c)+' J/(kg·K) · '+zahl(p.m)+' kg)'},
+  aggregat:{name:'innere Energie (Aggregatzustand)',farbe:'#0d9488',formel:'E = q · m',
+    par:[{k:'q',name:'Umwandlungswärme',e:'J/kg',def:334000,min:1000,max:1e7,s:10000,zeig:kjkg,se:'kJ/kg'}],
+    gr:{k:'m',name:'umgewandelte Masse',e:'kg',def:0.1,min:0,max:1e4,s:0.05},
+    E:(p,g)=>p.q*g, aus:(p,E)=>E/p.q,
+    zahlen:(p,g)=>kjkg(p.q)+' · '+zahl(g)+' kg',
+    umF:'m = E / q', umZ:(p,E)=>en(E)+' / '+kjkg(p.q)},
+  chem:{name:'innere Energie (chemisch)',farbe:'#16a34a',formel:'E = H · m',
+    par:[{k:'H',name:'Heizwert',e:'J/kg',def:4.2e7,min:1e5,max:2e8,s:1e6,zeig:mjkg,se:'MJ/kg'}],
+    gr:{k:'m',name:'Masse',e:'kg',def:0.001,min:0,max:1e4,s:0.001},
+    E:(p,g)=>p.H*g, aus:(p,E)=>E/p.H,
+    zahlen:(p,g)=>mjkg(p.H)+' · '+zahl(g,4)+' kg',
+    umF:'m = E / H', umZ:(p,E)=>en(E)+' / '+mjkg(p.H)},
+  elektro:{name:'elektrische Energie',farbe:'#ca8a04',formel:'E = U · Q',
+    par:[{k:'U',name:'Spannung',e:'V',def:12,min:0.01,max:1e6,s:1}],
+    gr:{k:'Q',name:'Ladung',e:'C',def:1000,min:0,max:1e7,s:50},
+    E:(p,g)=>p.U*g, aus:(p,E)=>E/p.U,
+    zahlen:(p,g)=>zahl(p.U)+' V · '+zahl(g)+' C',
+    umF:'Q = E / U', umZ:(p,E)=>en(E)+' / '+zahl(p.U)+' V'},
+  strahlung:{name:'Strahlungsenergie',farbe:'#0891b2',formel:'E = P · t',
+    par:[{k:'P',name:'Strahlungsleistung',e:'W',def:10,min:0.001,max:1e9,s:5}],
+    gr:{k:'t',name:'Dauer',e:'s',def:10,min:0,max:1e6,s:1},
+    E:(p,g)=>p.P*g, aus:(p,E)=>E/p.P,
+    zahlen:(p,g)=>zahl(p.P)+' W · '+zahl(g)+' s',
+    umF:'t = E / P', umZ:(p,E)=>en(E)+' / '+zahl(p.P)+' W'},
+  kern:{name:'Kernenergie',farbe:'#be185d',formel:'E = Δm · c²',
+    par:[],
+    gr:{k:'Δm',name:'Massendefekt',e:'µg',def:1,min:0,max:1e6,s:0.1},
+    E:(p,g)=>g*1e-9*C_LICHT*C_LICHT, aus:(p,E)=>E/(C_LICHT*C_LICHT)/1e-9,
+    zahlen:(p,g)=>zahl(g)+' µg · (3,00 · 10⁸ m/s)²',
+    umF:'Δm = E / c²', umZ:(p,E)=>en(E)+' / (3,00 · 10⁸ m/s)²'}
+};
+const F_LISTE=['hoehe','kin','spann','therm','aggregat','chem','elektro','strahlung','kern'];
+const ENTW={name:'entwertete Energie',farbe:'#94a3b8'};
+
+/* ---------- Wandler ----------
+   Der Wirkungsgrad ist ein Anhaltswert und lässt sich für jede Umwandlung einstellen. */
+const WANDLER=[
+  {k:'fallen',  name:'Fallen',                 von:'hoehe',    zu:'kin',      eta:100},
+  {k:'ebAb',    name:'schiefe Ebene hinunter', von:'hoehe',    zu:'kin',      eta:90},
+  {k:'ebAuf',   name:'schiefe Ebene hinauf',   von:'kin',      zu:'hoehe',    eta:90},
+  {k:'flasche', name:'Flaschenzug',            von:'kin',      zu:'hoehe',    eta:90},
+  {k:'hebel',   name:'Hebel',                  von:'hoehe',    zu:'hoehe',    eta:95},
+  {k:'katapult',name:'Katapult',               von:'spann',    zu:'kin',      eta:80},
+  {k:'armbrust',name:'Armbrust',               von:'spann',    zu:'kin',      eta:80},
+  {k:'feder',   name:'Feder entspannen',       von:'spann',    zu:'kin',      eta:90},
+  {k:'trampo',  name:'Trampolin',              von:'kin',      zu:'spann',    eta:90},
+  {k:'gummi',   name:'Gummiseil',              von:'kin',      zu:'spann',    eta:85},
+  {k:'generator',name:'Generator',             von:'kin',      zu:'elektro',  eta:90},
+  {k:'motor',   name:'Motor',                  von:'elektro',  zu:'kin',      eta:85},
+  {k:'lampe',   name:'Lampe',                  von:'elektro',  zu:'strahlung',eta:10},
+  {k:'solar',   name:'Solarzelle',             von:'strahlung',zu:'elektro',  eta:20},
+  {k:'reibung', name:'Reibung',                von:'kin',      zu:'therm',    eta:100},
+  {k:'feuer',   name:'Feuer',                  von:'chem',     zu:'therm',    eta:90},
+  {k:'heiz',    name:'Heizplatte',             von:'elektro',  zu:'therm',    eta:95},
+  {k:'schmelz', name:'Schmelzen / Verdampfen', von:'therm',    zu:'aggregat', eta:100},
+  {k:'akku',    name:'Akku laden',             von:'elektro',  zu:'chem',     eta:90},
+  {k:'vmotor',  name:'Verbrennungsmotor',      von:'chem',     zu:'kin',      eta:30},
+  {k:'muskel',  name:'Muskel',                 von:'chem',     zu:'kin',      eta:25},
+  {k:'reaktor', name:'Kernreaktor',            von:'kern',     zu:'therm',    eta:100},
+  {k:'batterie',name:'Batterie',               von:'chem',     zu:'elektro',  eta:90},
+  {k:'pendel',  name:'Pendel (aufwärts)',      von:'kin',      zu:'hoehe',    eta:95},
+  {k:'frei',    name:'Wandler',                von:null,       zu:null,       eta:90}
+];
+const wdl=k=>WANDLER.find(w=>w.k===k)||WANDLER[WANDLER.length-1];
+
+/* ---------- Zustand ---------- */
+const neuRes=f=>({f,p:parStd(f),g:FORMEN[f].gr.def});
+const parStd=f=>{ const p={}; FORMEN[f].par.forEach(x=>p[x.k]=x.def); return p; };
+const standard=()=>({v:1, start:[neuRes('hoehe')], schritte:[{w:'fallen',f:'kin',p:parStd('kin'),eta:100}],
+  verluste:false, gl:0, t:0, fontSize:14, edit:true});
+let D=standard();
+let lauf=false, sel=null, letztT=0;
+let undoSt=[], redoSt=[];
+const schnapp=()=>JSON.stringify({start:D.start,schritte:D.schritte,verluste:D.verluste});
+function pushUndo(){ undoSt.push(schnapp()); if(undoSt.length>60) undoSt.shift(); redoSt=[]; updUndo(); }
+function updUndo(){ $('bUndo').disabled=!undoSt.length; $('bRedo').disabled=!redoSt.length; }
+function hole(s){ const o=JSON.parse(s); D.start=o.start; D.schritte=o.schritte; D.verluste=o.verluste;
+  sel=null; renderBar2(); verlBtn(); zeichne(); sync(); }
+$('bUndo').onclick=()=>{ if(!undoSt.length) return; redoSt.push(schnapp()); hole(undoSt.pop()); updUndo(); };
+$('bRedo').onclick=()=>{ if(!redoSt.length) return; undoSt.push(schnapp()); hole(redoSt.pop()); updUndo(); };
+
+/* ---------- Die Kette rechnen ----------
+   Erst die Energie aller Startreservoire addieren, dann Schritt für Schritt umwandeln.
+   Ohne Verluste geht alles weiter, mit Verlusten bleibt (1 − η) als entwertete Energie liegen. */
+function kette(){
+  const K=[];
+  const res=D.start.map(r=>{ const F=FORMEN[r.f]; return {r,E:Math.max(0,F.E(r.p,r.g)||0)}; });
+  K.push({art:'start',res,E:res.reduce((a,x)=>a+x.E,0)});
+  let E=K[0].E;
+  D.schritte.forEach(s=>{
+    const eta=D.verluste?Math.max(0,Math.min(100,+s.eta||0))/100:1;
+    const Ez=E*eta;
+    K.push({art:'schritt',s,eta,Ein:E,E:Ez,Ev:E-Ez});
+    E=Ez;
+  });
+  return K;
+}
+/* Füllstände zum Zeitpunkt t (0 … Zahl der Umwandlungen).
+   Während Schritt i läuft, leert sich das Reservoir davor und das dahinter füllt sich. */
+function stand(K,t){
+  const n=K.length-1, x=i=>Math.max(0,Math.min(1,t-(i-1)));   /* Fortschritt von Schritt i */
+  const voll=[], verl=[];
+  for(let i=0;i<=n;i++){
+    const ab=(i<n)?x(i+1):0;                                   /* was schon weitergeflossen ist */
+    const an=(i>0)?x(i):1;                                     /* was schon angekommen ist */
+    voll[i]=K[i].E*an*(1-ab);
+    if(i>0) verl[i]=K[i].Ev*an;
+  }
+  return {voll,verl,x};
+}
+
+/* ---------- Zeichnen ----------
+   Alles steht in Modellmaßen und wird am Schluss so skaliert, dass die ganze Kette
+   ins Bild passt. Breite Ketten werden dadurch kleiner – dafür ist nichts abgeschnitten. */
+const TW=150, TH=240, GW=190;
+let W=0,H=0,DPR=1,SC=1,OX=0,OY=0,TREFFER=[];
+function resize(){ DPR=Math.min(3,window.devicePixelRatio||1);
+  W=cv.clientWidth||320; H=cv.clientHeight||240;
+  cv.width=Math.round(W*DPR); cv.height=Math.round(H*DPR); zeichne(); }
+function rr(x,y,w,h,r){ r=Math.max(0,Math.min(r,w/2,h/2)); ctx.beginPath();
+  ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+function txt(s,x,y,o){ o=o||{}; ctx.font=(o.fett?'700 ':'')+(o.sz||13)+'px -apple-system,BlinkMacSystemFont,Arial,sans-serif';
+  ctx.textAlign=o.al||'center'; ctx.textBaseline=o.bl||'middle';
+  if(o.rand){ ctx.lineWidth=o.randB||3; ctx.strokeStyle=o.rand; ctx.lineJoin='round'; ctx.strokeText(s,x,y); }
+  ctx.fillStyle=o.farbe||'#1f2430'; ctx.fillText(s,x,y); }
+/* Text, der in eine Breite passen muss – sonst wird er schmaler gesetzt */
+function txtPass(s,x,y,maxB,o){ o=o||{}; let sz=o.sz||13;
+  ctx.font=(o.fett?'700 ':'')+sz+'px -apple-system,BlinkMacSystemFont,Arial,sans-serif';
+  while(sz>7&&ctx.measureText(s).width>maxB){ sz-=0.5; ctx.font=(o.fett?'700 ':'')+sz+'px -apple-system,BlinkMacSystemFont,Arial,sans-serif'; }
+  txt(s,x,y,Object.assign({},o,{sz})); }
+
+function kFaktor(){ return Math.min(1.9,(D.fontSize||14)/14); }
+function layout(){
+  const K=kette(), n=K.length-1, kk=kFaktor();
+  let zmax=0;
+  if(D.gl){ const m=K[0].res.length;
+    zmax=Math.max(m*(D.gl>1?2:1)+(m>1?(D.gl>1?2:1):0), n?(D.gl>1?4:2):0); }
+  const glH=D.gl?Math.round((zmax*17+10)*kk):0;
+  const vH=D.verluste?110:0;
+  const TOP=22*kk;                     /* Platz für den Namen über dem Reservoir */
+  const Wm=(n+1)*TW+n*GW, Hm=TOP+TH+56*kk+vH+glH+10;
+  return {K,n,kk,glH,vH,Wm,Hm,TOP};
+}
+function zeichne(){
+  const L=layout(), K=L.K, n=L.n, kk=L.kk;
+  ctx.setTransform(DPR,0,0,DPR,0,0); ctx.clearRect(0,0,W,H);
+  ctx.fillStyle='#fff'; ctx.fillRect(0,0,W,H);
+  SC=Math.max(0.22,Math.min(2.2,Math.min((W-36)/L.Wm,(H-26)/L.Hm)));
+  OX=(W-L.Wm*SC)/2; OY=(H-L.Hm*SC)/2;
+  ctx.setTransform(DPR*SC,0,0,DPR*SC,DPR*OX,DPR*(OY+L.TOP*SC));
+  OY+=L.TOP*SC;
+  TREFFER=[];
+  const S=stand(K,D.t), Emax=Math.max(1e-9,K[0].E);
+  const X=i=>i*(TW+GW), ym=TH/2;
+  /* --- Pfeile und Wandler zuerst, damit die Reservoire darüber liegen --- */
+  for(let i=1;i<=n;i++){
+    const x0=X(i-1)+TW, x1=X(i), xm=(x0+x1)/2, akt=S.x(i)>0.001&&S.x(i)<0.999;
+    const farbe=K[i-1].art==='start'?farbeVon(K[i-1]):FORMEN[K[i-1].s.f].farbe;
+    ctx.strokeStyle='#64748b'; ctx.lineWidth=3; ctx.beginPath(); ctx.moveTo(x0+6,ym); ctx.lineTo(x1-16,ym); ctx.stroke();
+    ctx.fillStyle='#64748b'; ctx.beginPath(); ctx.moveTo(x1-4,ym); ctx.lineTo(x1-18,ym-8); ctx.lineTo(x1-18,ym+8); ctx.closePath(); ctx.fill();
+    /* fließende Energie */
+    if(akt){ const ph=(performance.now()/650)%1;
+      for(let d=0;d<5;d++){ const u=((ph+d/5)%1), px=x0+10+(x1-26-x0)*u;
+        ctx.fillStyle=farbe; ctx.globalAlpha=0.35+0.65*Math.sin(Math.PI*u);
+        ctx.beginPath(); ctx.arc(px,ym,5.5,0,7); ctx.fill(); }
+      ctx.globalAlpha=1; }
+    /* Wandlerkasten */
+    const w=wdl(K[i].s.w), bw=GW-26, bh=D.verluste?50:36, bx=xm-bw/2, by=ym-bh-16;
+    ctx.fillStyle='#fff'; ctx.strokeStyle=(sel&&sel.art==='schritt'&&sel.i===i)?'#2563eb':'#94a3b8';
+    ctx.lineWidth=(sel&&sel.art==='schritt'&&sel.i===i)?3.5:2; rr(bx,by,bw,bh,10); ctx.fill(); ctx.stroke();
+    txtPass(w.name,xm,by+(D.verluste?16:18),bw-12,{sz:14*kk,fett:true});
+    if(D.verluste) txtPass('η = '+zahl(K[i].eta*100,0)+' %',xm,by+36,bw-12,{sz:13*kk,farbe:'#475569'});
+    merke({art:'schritt',i},bx,by,bw,bh);
+    /* entwertete Energie */
+    if(D.verluste){
+      const vy=TH+56*kk+6, vw=96, vh=70, vx=xm-vw/2;
+      ctx.strokeStyle='#94a3b8'; ctx.lineWidth=2.5; ctx.setLineDash([7,6]);
+      ctx.beginPath(); ctx.moveTo(xm,ym+10); ctx.lineTo(xm,vy-14); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle='#94a3b8'; ctx.beginPath(); ctx.moveTo(xm,vy-2); ctx.lineTo(xm-7,vy-14); ctx.lineTo(xm+7,vy-14); ctx.closePath(); ctx.fill();
+      malTank(vx,vy,vw,vh,ENTW.farbe,S.verl[i]||0,Emax,false);
+      txtPass(en(S.verl[i]||0),vx+vw/2,vy+vh/2,vw-10,{sz:13*kk,fett:true,rand:'#fff'});
+      txtPass('entwertet',vx+vw/2,vy+vh+11*kk,vw+40,{sz:12*kk,farbe:'#64748b'});
+    }
+  }
+  /* --- Reservoire --- */
+  for(let i=0;i<=n;i++){
+    const x=X(i);
+    if(i===0){ const m=K[0].res.length, hh=Math.max(64,(TH-(m-1)*14)/m);
+      K[0].res.forEach((rr0,j)=>{ const y=j*(hh+14), F=FORMEN[rr0.r.f];
+        const E=K[0].E>0?S.voll[0]*(rr0.E/K[0].E):0;
+        malReservoir(x,y,TW,hh,F,rr0.r,E,Emax,{art:'res',j},i,kk,m>1&&j<m-1,m>1);
+      });
+    } else { const F=FORMEN[K[i].s.f];
+      malReservoir(x,0,TW,TH,F,K[i].s,S.voll[i],Emax,{art:'ziel',i},i,kk,false); }
+  }
+  /* --- Gleichungen --- */
+  if(D.gl) malGleichungen(K,S,kk,L);
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+}
+function farbeVon(k){ return k.res&&k.res.length?FORMEN[k.res[0].r.f].farbe:'#64748b'; }
+function merke(o,x,y,w,h){ TREFFER.push(Object.assign({},o,{x:x*SC+OX,y:y*SC+OY,w:w*SC,h:h*SC})); }
+function malTank(x,y,w,h,farbe,E,Emax,dick){
+  ctx.save(); rr(x,y,w,h,12); ctx.fillStyle='#f8fafc'; ctx.fill();
+  ctx.save(); ctx.clip();
+  const f=Math.max(0,Math.min(1,E/Emax)), fh=h*f;
+  if(fh>0){ ctx.fillStyle=farbe; ctx.globalAlpha=.78; ctx.fillRect(x,y+h-fh,w,fh); ctx.globalAlpha=1;
+    ctx.strokeStyle=farbe; ctx.lineWidth=3; ctx.beginPath(); ctx.moveTo(x,y+h-fh); ctx.lineTo(x+w,y+h-fh); ctx.stroke(); }
+  ctx.restore();
+  ctx.strokeStyle=dick?'#2563eb':'#94a3b8'; ctx.lineWidth=dick?4:2.2; rr(x,y,w,h,12); ctx.stroke();
+  ctx.restore();
+}
+function malReservoir(x,y,w,h,F,r,E,Emax,id,i,kk,plus,kompakt){
+  const aus=(sel&&((id.art==='res'&&sel.art==='res'&&sel.j===id.j)||(id.art==='ziel'&&sel.art==='ziel'&&sel.i===id.i)));
+  malTank(x,y,w,h,F.farbe,E,Emax,aus);
+  merke(id,x,y,w,h);
+  /* Die charakteristische Größe folgt dem Füllstand: Beim Fallen sinkt h und v wächst.
+     Steht die Zeit am Anfang, ist sie genau der eingestellte Wert. */
+  const g=F.aus(r.p,E);
+  const ps=F.par.map(q=>q.k+' = '+parText(q,r.p[q.k])).join('   ');
+  if(kompakt){          /* mehrere Reservoire übereinander: alles in den Behälter */
+    txtPass(F.name,x+w/2,y+12*kk,w-10,{sz:13*kk,fett:true,farbe:F.farbe,rand:'#fff',randB:3});
+    txtPass(en(E),x+w/2,y+h/2,w-12,{sz:16*kk,fett:true,rand:'#fff',randB:4});
+    txtPass(F.gr.k+' = '+zahl(g)+' '+F.gr.e+(ps?'   '+ps:''),x+w/2,y+h-11*kk,w-8,{sz:12*kk,rand:'#fff',randB:3});
+  } else {
+    txtPass(F.name,x+w/2,y-13*kk,w+GW*0.5,{sz:15*kk,fett:true,farbe:F.farbe});
+    txtPass(en(E),x+w/2,y+h/2,w-12,{sz:17*kk,fett:true,rand:'#fff',randB:4});
+    txtPass(F.gr.k+' = '+zahl(g)+' '+F.gr.e,x+w/2,TH+16*kk,w+GW*0.45,{sz:15*kk,fett:true});
+    if(ps) txtPass(ps,x+w/2,TH+36*kk,w+GW*0.45,{sz:13*kk,farbe:'#64748b'});
+  }
+  if(plus) txt('+',x+w/2,y+h+7,{sz:20*kk,fett:true,farbe:'#64748b'});
+}
+const parText=(q,v)=>q.zeig?q.zeig(v):zahl(v)+' '+q.e;
+function malGleichungen(K,S,kk,L){
+  const n=L.n, y0=TH+56*kk+L.vH+4, zh=17*kk;
+  for(let i=0;i<=n;i++){
+    const xm=i*(TW+GW)+TW/2, bw=TW+GW-16;
+    const zeilen=[];
+    if(i===0){ K[0].res.forEach((r0,j)=>{ const F=FORMEN[r0.r.f];
+        /* mit dem Stand von jetzt: Läuft die Zeit, werden h und E kleiner */
+        const Ej=K[0].E>0?S.voll[0]*(r0.E/K[0].E):0, gj=F.aus(r0.r.p,Ej);
+        zeilen.push(F.formel);
+        if(D.gl>1) zeilen.push('E = '+F.zahlen(r0.r.p,gj)+' = '+en(Ej));
+      });
+      if(K[0].res.length>1){ zeilen.push('E_ges = E₁ + E₂' + (K[0].res.length>2?' + …':''));
+        if(D.gl>1) zeilen.push('E_ges = '+en(S.voll[0])); }
+    } else {
+      const F=FORMEN[K[i].s.f], xi=Math.max(0,Math.min(1,D.t-(i-1)));
+      if(D.verluste){ zeilen.push('E_zu = η · E_ab');
+        if(D.gl>1) zeilen.push('E_zu = '+zahl(K[i].eta,2)+' · '+en(K[i].Ein*xi)+' = '+en(K[i].E*xi)); }
+      else { zeilen.push('E_zu = E_ab   (Energieerhaltung)');
+        if(D.gl>1) zeilen.push('E_zu = '+en(K[i].E*xi)); }
+      zeilen.push(F.umF);
+      if(D.gl>1) zeilen.push(F.gr.k+' = '+F.umZ(K[i].s.p,S.voll[i])+' = '+zahl(F.aus(K[i].s.p,S.voll[i]))+' '+F.gr.e);
+    }
+    /* Der Block bleibt im Bild – sonst läuft die erste Zeile links hinaus.
+       Gerechnet wird in Bildschirmpunkten, weil die Zeichnung skaliert ist. */
+    const halb=bw/2+4/SC, links=(0-OX)/SC+halb, rechts=(W-OX)/SC-halb;
+    const xk=(links<rechts)?Math.max(links,Math.min(xm,rechts)):xm;
+    zeilen.forEach((z,j)=>txtPass(z,xk,y0+zh*(j+0.6),bw,{sz:13*kk,farbe:(j%2&&D.gl>1)?'#1f2430':'#475569',fett:!(j%2)&&D.gl>1}));
+  }
+}
+
+/* ---------- Auswahl und Einstellungen in der zweiten Leiste ---------- */
+function renderBar2(){ const b=$('bar2'); b.innerHTML='';
+  const el=(t,c,txt0,fn)=>{ const e=document.createElement(t); if(c)c.split(' ').forEach(x=>x&&e.classList.add(x));
+    if(txt0!==undefined) e.textContent=txt0; if(fn) e.onclick=fn; b.appendChild(e); return e; };
+  /* Stepper: − und +, der Wert selbst lässt sich antippen und eingeben */
+  const stepper=(name,anzeige,setz,eingabe)=>{
+    el('span','lbl',name);
+    const g=document.createElement('span'); g.className='stp'; b.appendChild(g);
+    const mk=(t,f)=>{ const x=document.createElement('button'); x.textContent=t; x.onclick=f; g.appendChild(x); return x; };
+    mk('−',()=>setz(-1));
+    const v=document.createElement('span'); v.className='val'; v.textContent=anzeige;
+    if(eingabe){ v.style.cursor='text'; v.title='Antippen und Wert eingeben';
+      v.onclick=()=>{ const s=prompt(name+' eingeben:',anzeige.replace(/[^0-9,.\-]/g,'')); if(s===null) return;
+        const z=parseFloat(String(s).replace(',','.')); if(isFinite(z)) eingabe(z); }; }
+    g.appendChild(v); mk('+',()=>setz(1));
+  };
+  const formWahl=(aktuell,setz)=>{ const s=document.createElement('select'); s.className='sel';
+    F_LISTE.forEach(k=>{ const o=document.createElement('option'); o.value=k; o.textContent=FORMEN[k].name; if(k===aktuell)o.selected=true; s.appendChild(o); });
+    s.onchange=()=>setz(s.value); b.appendChild(s); };
+  const schluss=()=>{ el('span','grow'); el('span','sep tafelEdit');
+    el('span','lbl tafelEdit','Schrift'); el('button','btn tafelEdit','A−',()=>fontBy(-2)); el('button','btn tafelEdit','A+',()=>fontBy(2));
+    el('span','sep tafelEdit'); bildKnoepfe(); };
+
+  if(sel&&sel.art==='res'){ const r=D.start[sel.j]; if(!r){ sel=null; return renderBar2(); }
+    const F=FORMEN[r.f];
+    el('span','lbl','Reservoir'); formWahl(r.f,k=>{ pushUndo(); r.f=k; r.p=parStd(k); r.g=FORMEN[k].gr.def; renderBar2(); zeichne(); sync(); });
+    stepper(F.gr.name,zahl(r.g)+' '+F.gr.e,
+      d=>{ pushUndo(); r.g=grenz(r.g+d*F.gr.s,F.gr.min,F.gr.max); renderBar2(); zeichne(); sync(); },
+      z=>{ pushUndo(); r.g=grenz(z,F.gr.min,F.gr.max); renderBar2(); zeichne(); sync(); });
+    F.par.forEach(q=>stepper(q.name,parText(q,r.p[q.k]),
+      d=>{ pushUndo(); r.p[q.k]=grenz(r.p[q.k]+d*q.s,q.min,q.max); renderBar2(); zeichne(); sync(); },
+      z=>{ pushUndo(); r.p[q.k]=grenz(q.zeig?z*(q.zeig===kjkg?1000:1e6):z,q.min,q.max); renderBar2(); zeichne(); sync(); }));
+    if(D.start.length>1) el('button','btn red','Löschen',()=>{ pushUndo(); D.start.splice(sel.j,1); sel=null; renderBar2(); zeichne(); sync(); });
+    el('button','btn','✕',()=>{ sel=null; renderBar2(); zeichne(); }); schluss(); return; }
+
+  if(sel&&sel.art==='ziel'){ const s=D.schritte[sel.i-1]; if(!s){ sel=null; return renderBar2(); }
+    const F=FORMEN[s.f];
+    el('span','lbl','Reservoir'); formWahl(s.f,k=>{ pushUndo(); s.f=k; s.p=parStd(k); renderBar2(); zeichne(); sync(); });
+    F.par.forEach(q=>stepper(q.name,parText(q,s.p[q.k]),
+      d=>{ pushUndo(); s.p[q.k]=grenz(s.p[q.k]+d*q.s,q.min,q.max); renderBar2(); zeichne(); sync(); },
+      z=>{ pushUndo(); s.p[q.k]=grenz(q.zeig?z*(q.zeig===kjkg?1000:1e6):z,q.min,q.max); renderBar2(); zeichne(); sync(); }));
+    if(!F.par.length) el('span','lbl','ohne weitere Größen – c ist die Lichtgeschwindigkeit');
+    el('span','lbl',F.gr.name+' ergibt sich aus der Energie');
+    el('button','btn','✕',()=>{ sel=null; renderBar2(); zeichne(); }); schluss(); return; }
+
+  if(sel&&sel.art==='schritt'){ const s=D.schritte[sel.i-1]; if(!s){ sel=null; return renderBar2(); }
+    el('span','lbl','Wandler');
+    const w=document.createElement('select'); w.className='sel';
+    WANDLER.forEach(x=>{ const o=document.createElement('option'); o.value=x.k; o.textContent=x.name; if(x.k===s.w)o.selected=true; w.appendChild(o); });
+    w.onchange=()=>{ pushUndo(); const x=wdl(w.value); s.w=x.k; s.eta=x.eta;
+      if(x.zu){ s.f=x.zu; s.p=parStd(x.zu); }
+      if(x.von&&sel.i===1&&D.start.length===1&&D.start[0].f!==x.von){ D.start[0].f=x.von; D.start[0].p=parStd(x.von); D.start[0].g=FORMEN[x.von].gr.def; }
+      renderBar2(); zeichne(); sync(); };
+    b.appendChild(w);
+    if(D.verluste) stepper('Wirkungsgrad',zahl(s.eta,0)+' %',
+      d=>{ pushUndo(); s.eta=grenz((+s.eta||0)+d*5,0,100); renderBar2(); zeichne(); sync(); },
+      z=>{ pushUndo(); s.eta=grenz(z,0,100); renderBar2(); zeichne(); sync(); });
+    else el('span','lbl','ohne Verluste – „Verluste" oben einschalten');
+    el('button','btn red','Umwandlung löschen',()=>{ pushUndo(); D.schritte.splice(sel.i-1,1); sel=null; zeitMax(); renderBar2(); zeichne(); sync(); });
+    el('button','btn','✕',()=>{ sel=null; renderBar2(); zeichne(); }); schluss(); return; }
+
+  el('span','lbl','Reservoir oder Wandler antippen, um es einzustellen'); schluss();
+}
+const grenz=(v,a,b)=>Math.max(a,Math.min(b,Math.round(v*1e6)/1e6));
+function fontBy(d){ D.fontSize=Math.max(9,Math.min(36,(D.fontSize||14)+d));
+  document.documentElement.style.setProperty('--fs',Math.min(18,D.fontSize)+'px'); zeichne(); sync(); toast('Schriftgröße '+D.fontSize); }
+function bildKnoepfe(){ const b=$('bar2');
+  const mk=(t,ti,fn)=>{ const x=document.createElement('button'); x.className='btn tafelEdit'+(t.indexOf('Tafel')>=0?' pri':''); x.textContent=t; x.title=ti; x.onclick=fn; b.appendChild(x); return x; };
+  if(window.parent!==window) mk('🖼 Bild → Tafel','Die Kette als Bild neben das Werkzeug legen',zurTafel);
+  mk('📋 Kopieren','Die Kette als Bild in die Zwischenablage kopieren',kopieren); }
+function bild(){ return window.TafelShot?TafelShot.rasterize($('cvbox'),{scale:2,bg:'#fff'}):null; }
+function zurTafel(){ const im=bild(); if(!im) return; if(window.parent===window){ toast('Nur innerhalb der Tafel möglich'); return; }
+  try{ parent.postMessage({type:'embed-image',url:im.canvas.toDataURL('image/png'),w:im.w,h:im.h},'*'); toast('Als Bild auf die Tafel gelegt'); }catch(e){ toast('Nicht möglich'); } }
+function kopieren(){ const im=bild(); if(!im) return;
+  try{ if(!navigator.clipboard||!window.ClipboardItem) throw new Error('x');
+    const blob=new Promise(r=>im.canvas.toBlob(r,'image/png'));
+    navigator.clipboard.write([new ClipboardItem({'image/png':blob})]).then(()=>toast('Bild kopiert'),()=>toast('Kopieren wurde vom Browser verhindert'));
+  }catch(e){ toast('Kopieren wird hier nicht unterstützt'); } }
+
+/* ---------- Antippen auf der Zeichenfläche ---------- */
+cv.addEventListener('pointerdown',e=>{
+  const x=e.clientX-cv.getBoundingClientRect().left, y=e.clientY-cv.getBoundingClientRect().top;
+  for(let i=TREFFER.length-1;i>=0;i--){ const t=TREFFER[i];
+    if(x>=t.x&&x<=t.x+t.w&&y>=t.y&&y<=t.y+t.h){ sel={art:t.art,i:t.i,j:t.j}; renderBar2(); zeichne(); return; } }
+  sel=null; renderBar2(); zeichne();
+});
+
+/* ---------- Zeit, Ablauf ---------- */
+const nSchritte=()=>D.schritte.length;
+function zeitMax(){ const n=Math.max(1,nSchritte()); D.t=Math.max(0,Math.min(nSchritte(),D.t)); zeitZeig(); }
+function zeitZeig(){ const n=nSchritte(), t=D.t;
+  $('zeitR').value=String(Math.round(n?t/n*1000:0));
+  let s='am Anfang';
+  if(n){ const i=Math.min(n-1,Math.floor(t-1e-9)), x=t-i;
+    if(t<=0.0001) s='am Anfang';
+    else if(t>=n-0.0001) s='am Ende';
+    else if(Math.abs(x-1)<0.0001) s='nach Umwandlung '+(i+1);
+    else s='Umwandlung '+(i+1)+' läuft'; }
+  $('zeitV').textContent=s; }
+$('zeitR').oninput=e=>{ const n=nSchritte(); D.t=n?(+e.target.value/1000)*n:0; lauf=false; playBtn(); zeitZeig(); zeichne(); sync(); };
+function playBtn(){ $('bPlay').classList.toggle('on',lauf);
+  $('bPlay').innerHTML=(lauf?'<svg viewBox="0 0 32 20"><path d="M12 4v12M20 4v12" stroke-width="3"/></svg><span>Pause</span>'
+                            :'<svg viewBox="0 0 32 20"><path d="M12 4l12 6-12 6Z" fill="currentColor" stroke="none"/></svg><span>Ablauf</span>');
+  $('bPlay').title=lauf?'Anhalten':'Die Umwandlung ablaufen lassen'; }
+$('bPlay').onclick=()=>{ if(!nSchritte()){ toast('Erst eine Umwandlung anhängen'); return; }
+  if(!lauf&&D.t>=nSchritte()-1e-6) D.t=0;
+  lauf=!lauf; letztT=performance.now(); playBtn(); zeitZeig(); zeichne(); sync(); };
+$('bZur').onclick=()=>{ D.t=0; lauf=false; playBtn(); zeitZeig(); zeichne(); sync(); };
+function loop(ts){ const dt=Math.min(0.08,(ts-letztT)/1000||0); letztT=ts;
+  if(lauf){ D.t+=dt/1.8; if(D.t>=nSchritte()){ D.t=nSchritte(); lauf=false; playBtn(); sync(); } zeitZeig(); zeichne(); }
+  else { const n=nSchritte(); let fliesst=false;
+    for(let i=1;i<=n;i++){ const x=D.t-(i-1); if(x>0.001&&x<0.999) fliesst=true; }
+    if(fliesst) zeichne(); }
+  requestAnimationFrame(loop); }
+
+/* ---------- Knöpfe ---------- */
+function verlBtn(){ $('bVerl').classList.toggle('on',!!D.verluste); }
+function glBtn(){ const n=['Gleichungen','Formeln','mit Zahlen'][D.gl||0];
+  $('bGl').classList.toggle('on',!!D.gl); $('bGl').querySelector('span').textContent=n;
+  $('bGl').title=['Formeln einblenden','Jetzt mit Zahlenwerten','Gleichungen wieder ausblenden'][D.gl||0]; }
+$('bVerl').onclick=()=>{ pushUndo(); D.verluste=!D.verluste; verlBtn(); renderBar2(); zeichne(); sync();
+  toast(D.verluste?'Bei jeder Umwandlung wird ein Teil entwertet – der Wirkungsgrad lässt sich am Wandler einstellen':'Ohne Verluste: Die Energie bleibt vollständig erhalten'); };
+$('bGl').onclick=()=>{ D.gl=((D.gl||0)+1)%3; glBtn(); zeichne(); sync(); };
+$('bRes').onclick=()=>{ if(D.start.length>=3){ toast('Mehr als drei Reservoire werden am Anfang zu eng'); return; }
+  pushUndo(); D.start.push(neuRes('kin')); sel={art:'res',j:D.start.length-1}; renderBar2(); zeichne(); sync();
+  toast('Die Energien der Reservoire am Anfang addieren sich'); };
+$('bWdl').onclick=()=>{ pushUndo();
+  const letzte=D.schritte.length?D.schritte[D.schritte.length-1].f:D.start[0].f;
+  const w=WANDLER.find(x=>x.von===letzte)||wdl('frei');
+  const zu=w.zu||letzte;
+  D.schritte.push({w:w.k,f:zu,p:parStd(zu),eta:w.eta});
+  sel={art:'schritt',i:D.schritte.length}; zeitMax(); renderBar2(); zeichne(); sync();
+  toast('Umwandlung angehängt – Wandler und Reservoir unten einstellen'); };
+$('bNeu').onclick=()=>{ if((D.schritte.length||D.start.length>1)&&!confirm('Alles löschen und neu anfangen?')) return;
+  pushUndo(); D.start=[neuRes('hoehe')]; D.schritte=[]; D.t=0; lauf=false; sel=null;
+  playBtn(); zeitMax(); renderBar2(); zeichne(); sync(); };
+$('bHilfe').onclick=()=>{ const b=$('bar2'); b.innerHTML='';
+  [['Reservoir','Antippen: Energieform und Größen einstellen. Die charakteristische Größe (h, v, ΔT …) bestimmt den Füllstand.'],
+   ['Umwandlung','„Umwandlung" hängt einen Wandler mit neuem Reservoir an. Der Wandler legt fest, welche Form entsteht.'],
+   ['Zeit','Der Regler schiebt die Energie durch die Kette – dabei sinkt h und wächst v. „Ablauf" macht das von allein.'],
+   ['Verluste','Schaltet die Entwertung ein: Ein Teil geht als innere Energie an die Umgebung, einstellbar über den Wirkungsgrad.'],
+   ['Gleichungen','Zweimal antippen zeigt die Formeln erst mit Variablen, dann mit Zahlenwerten.']
+  ].forEach(([k,v])=>{ const s=document.createElement('span'); s.className='lbl'; s.textContent=k+': ';
+    const x=document.createElement('span'); x.textContent=v; x.style.marginRight='14px'; b.appendChild(s); b.appendChild(x); });
+  const z=document.createElement('button'); z.className='btn'; z.textContent='✕'; z.onclick=renderBar2; b.appendChild(z); };
+
+/* ---------- Vorlagen ---------- */
+const V=(f,g,p)=>{ const r=neuRes(f); r.g=g; if(p) Object.assign(r.p,p); return r; };
+const S=(w,f,p)=>{ const x=wdl(w); const s={w:x.k,f:f||x.zu,p:parStd(f||x.zu),eta:x.eta}; if(p) Object.assign(s.p,p); return s; };
+const VORLAGEN={
+  'Fallender Stein':()=>({start:[V('hoehe',5,{m:2})], schritte:[S('fallen','kin',{m:2})], verluste:false}),
+  'Pendel':()=>({start:[V('hoehe',0.4,{m:0.5})], schritte:[S('fallen','kin',{m:0.5}),S('pendel','hoehe',{m:0.5})], verluste:true}),
+  'Katapult':()=>({start:[V('spann',0.6,{D:800})], schritte:[S('katapult','kin',{m:3}),S('pendel','hoehe',{m:3})], verluste:true}),
+  'Wasserkraftwerk':()=>({start:[V('hoehe',20,{m:1000})], schritte:[S('fallen','kin',{m:1000}),S('generator','elektro',{U:400})], verluste:true}),
+  'Auto bremst':()=>({start:[V('kin',14,{m:1200})], schritte:[S('reibung','therm',{c:460,m:8})], verluste:false}),
+  'Wasserkocher':()=>({start:[V('elektro',2000,{U:230})], schritte:[S('heiz','therm',{c:4200,m:1.5})], verluste:true}),
+  'Eis schmilzt':()=>({start:[V('elektro',1500,{U:230})], schritte:[S('heiz','therm',{c:2100,m:1}),S('schmelz','aggregat',{q:334000})], verluste:true}),
+  'Taschenlampe':()=>({start:[V('chem',0.002,{H:4.2e7})], schritte:[S('batterie','elektro',{U:3}),S('lampe','strahlung',{P:1})], verluste:true}),
+  'Solarlampe':()=>({start:[V('strahlung',600,{P:20})], schritte:[S('solar','elektro',{U:4}),S('lampe','strahlung',{P:2})], verluste:true}),
+  'Kernkraftwerk':()=>({start:[V('kern',1,{})], schritte:[S('reaktor','therm',{c:4200,m:200}),S('frei','kin',{m:5000}),S('generator','elektro',{U:20000})], verluste:true}),
+  'Zwei Reservoire':()=>({start:[V('hoehe',3,{m:1}),V('kin',4,{m:1})], schritte:[S('frei','therm',{c:460,m:0.2})], verluste:false}),
+  'Leeres Blatt':()=>({start:[V('hoehe',5,{m:2})], schritte:[], verluste:false})
+};
+$('bTpl').onclick=()=>{ const b=$('bar2'); b.innerHTML='';
+  const lab=document.createElement('span'); lab.className='lbl'; lab.textContent='Vorlage:'; b.appendChild(lab);
+  Object.keys(VORLAGEN).forEach(k=>{ const bt=document.createElement('button'); bt.className='btn'+(k==='Leeres Blatt'?' red':'');
+    bt.textContent=k; bt.onclick=()=>ladeVorlage(k); b.appendChild(bt); });
+  const x=document.createElement('button'); x.className='btn'; x.textContent='✕'; x.onclick=renderBar2; b.appendChild(x); };
+function ladeVorlage(k){ const f=VORLAGEN[k]; if(!f) return; pushUndo();
+  const o=f(); D.start=o.start; D.schritte=o.schritte; D.verluste=!!o.verluste;
+  D.t=0; lauf=false; sel=null; playBtn(); verlBtn(); zeitMax(); renderBar2(); zeichne(); sync(); toast(k); }
+
+/* ---------- Tafel-Anbindung ---------- */
+let ready=false, syncT=null;
+function post(){ syncT=null; if(window.parent===window||!ready) return;
+  try{ parent.postMessage({type:'embed-data',data:D},'*'); }catch(e){} }
+function sync(){ if(!syncT) syncT=setTimeout(post,250); }
+function uebernimm(d){ if(!d) return;
+  D=Object.assign(standard(),d);
+  if(!Array.isArray(D.start)||!D.start.length) D.start=[neuRes('hoehe')];
+  D.start=D.start.filter(r=>r&&FORMEN[r.f]).map(r=>({f:r.f,p:Object.assign(parStd(r.f),r.p||{}),g:+r.g||0}));
+  if(!Array.isArray(D.schritte)) D.schritte=[];
+  D.schritte=D.schritte.filter(s=>s&&FORMEN[s.f]).map(s=>({w:s.w||'frei',f:s.f,p:Object.assign(parStd(s.f),s.p||{}),eta:(s.eta===undefined?90:+s.eta)}));
+  D.t=Math.max(0,Math.min(D.schritte.length,+D.t||0));
+  document.documentElement.style.setProperty('--fs',Math.min(18,D.fontSize||14)+'px');
+  sel=null; lauf=false; playBtn(); verlBtn(); glBtn(); zeitZeig(); renderBar2(); zeichne(); }
+addEventListener('message',e=>{ if(e.source!==window&&(window.parent===window||e.source!==window.parent)) return;
+  if(!(e.data&&e.data.type==='embed-data'&&e.data.data)) return;
+  uebernimm(e.data.data); ready=true;
+  if(window.TafelModus) TafelModus.refresh(); });
+if(window.TafelTeilen&&!TafelTeilen.istGeteilt())
+  TafelTeilen.knopf($('barR'),'energie.html',()=>({w:'eng', d:D}));
+addEventListener('resize',()=>{ resize(); barFade(); });
+function barFade(){ const bar=$('bar'), m=$('barMid');
+  bar.classList.remove('compact');
+  const more=m.scrollWidth>m.clientWidth+2;
+  if(more&&m.clientWidth<160) bar.classList.add('compact');
+  m.classList.toggle('more',more); }
+$('barMid').addEventListener('scroll',barFade);
+window.addEventListener('load',()=>{
+  const geteilt=window.TafelTeilen&&TafelTeilen.istGeteilt();
+  if(window.TafelModus&&!geteilt)
+    TafelModus.init({get:()=>D.edit!==false, set:v=>{ D.edit=v; renderBar2(); resize(); barFade(); sync(); }});
+  document.documentElement.style.setProperty('--fs',Math.min(18,D.fontSize||14)+'px');
+  playBtn(); verlBtn(); glBtn(); zeitZeig(); renderBar2(); resize(); barFade(); updUndo();
+  requestAnimationFrame(ts=>{ letztT=ts; loop(ts); });
+  if(window.ResizeObserver) new ResizeObserver(()=>{ resize(); barFade(); }).observe($('cvbox'));
+  if(geteilt){ TafelTeilen.nurBenutzen(); D.edit=false; ready=true;
+    TafelTeilen.empfangen().then(p=>{ if(p&&p.w==='eng'&&p.d) TafelTeilen.einspielen(p.d); }).catch(()=>{});
+    return; }
+  if(window.parent===window){ ready=true; ladeVorlage('Fallender Stein'); undoSt=[]; updUndo(); return; }
+  try{ parent.postMessage({type:'embed-ready'},'*'); }catch(e){}
+  setTimeout(()=>{ ready=true; if(!D.schritte.length&&D.start.length===1&&D.start[0].g===FORMEN[D.start[0].f].gr.def){ ladeVorlage('Fallender Stein'); undoSt=[]; updUndo(); } },700);
+});
+</script>
+</body></html>
