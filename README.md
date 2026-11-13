@@ -2720,15 +2720,19 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   - **Erwärmen und Abkühlen:** die **Erwärmungskurve** T(t) bei fester Heizleistung – mit den
     **Haltepunkten** beim Schmelzen und Sieden, an denen die Temperatur stehen bleibt, obwohl
     weiter geheizt wird. Einstellbar sind **Stoff** (Wasser, Ethanol, Eisen, Aluminium, Kupfer,
-    Blei, Speiseöl), **Masse**, **Heizleistung** und **Starttemperatur**; **Start** lässt die Zeit
+    Blei, Speiseöl), **Masse**, **Starttemperatur** und **Heizleistung** (in dieser Reihenfolge,
+    weil man erst sagt, wo man anfängt, und dann, wie stark geheizt wird); **Start** lässt die Zeit
     laufen, eine Marke wandert über die Kurve und zeigt Temperatur, zugeführte Energie und Dauer.
     Der Knopf **heizen/kühlen** dreht den Vorgang um: Dann kondensiert der Dampf und das Wasser
     erstarrt – die Haltepunkte sind dieselben. Der Wechsel **behält die Stelle**, man kann also bis
     zur Hälfte heizen und von dort wieder abkühlen; nur am jeweiligen Ende springt es ans andere.
   - **Teilchenmodell:** daneben ein großer Kasten mit **160 Teilchen**, die zeigen, was gerade
     passiert – im Gitter schwingend (fest), dicht durcheinander (flüssig) oder frei fliegend
-    (gasförmig). Die **Farbe sagt den Aggregatzustand**: dunkel im Gitter, in der Stofffarbe
-    flüssig, hell und durchscheinend als Gas. Beim Schmelzen und Sieden wechseln sie **nach und
+    (gasförmig). Im **festen** Zustand zittert dabei jedes Teilchen **für sich** um seinen
+    Gitterplatz – ein gemeinsames Schwingen sähe aus wie eine Welle und wäre viel zu geordnet –,
+    und je näher der Schmelzpunkt kommt, desto heftiger: gemessen 2,1 ‰ der Kastenbreite bei
+    −19,6 °C, 7,7 ‰ bei −10 °C und 13,8 ‰ kurz vor 0 °C. Die **Farbe sagt den Aggregatzustand**:
+    dunkel im Gitter, in der Stofffarbe flüssig, hell und durchscheinend als Gas. Beim Schmelzen und Sieden wechseln sie **nach und
     nach** hinüber, so dass man sieht, wofür die Energie während des Haltepunkts gebraucht wird;
     die Bewegung wird mit der Temperatur schneller.
     Unter dem Kasten steht, **womit** gearbeitet wird: beim Heizen eine **Flamme**, beim Kühlen
