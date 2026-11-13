@@ -3106,9 +3106,24 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
       Schalter stellt die Wahrscheinlichkeit entsprechend: 16,7 % („Sechs zerfällt"), 33,3 %
       („Fünf und Sechs") bis 83,3 %. Ohne **Augen** lässt sich die **Zerfallswahrscheinlichkeit**
       frei von 1 bis 90 % wählen.
+    - **Radioaktive Stoffe:** Eine Auswahlliste bietet fünfzehn bekannte Nuklide von **Po-214**
+      (163 µs) bis **U-238** (4,47 Ga), nach Halbwertszeit sortiert und mit einem Stichwort dazu
+      (Radon im Keller, Jod in der Schilddrüse, Altersbestimmung …). Die **Halbwertszeiten kommen
+      aus denselben Daten wie die Nuklidkarte**, stehen also nicht zweimal im Programm. Mit einem
+      Stoff bekommt jeder Wurf eine **Zeit**: Bei der Wahrscheinlichkeit p braucht es
+      ln(½)/ln(1−p) Würfe für die Hälfte, ein Wurf bedeutet also so viel von der Halbwertszeit –
+      bei einer Sechs 0,263 davon. Für **Radon-222** (3,82 d) ist **ein Wurf ≙ 1 Tag**, für
+      **C-14** (5730 a) **1,5 ka**. Die Zeit steht an der Achse, bei der Halbwertszeit
+      („≈ 3,8 Würfe ≙ 5,7 ka") und am Ablesepunkt („Wurf 4 · t = 6 ka").
+      Umgekehrt geht es auch: Ein Tippen auf „1 Wurf ≙ …" fragt nach der gewünschten Zeit je Wurf
+      („1000 a", „5 d", „30 min") und stellt die **Wahrscheinlichkeit** passend ein – für C-14 und
+      1000 Jahre je Wurf sind das 11,39 %. Was auf weniger als 1 % oder mehr als 90 % hinausliefe,
+      lehnt es mit einem Hinweis ab.
     - **Ablesen:** Der Knopf setzt einen **Punkt auf die Messkurve**, der sich mit dem Finger
       verschieben lässt – er rastet dabei auf den **nächsten Wurf** ein, denn zwischen den Würfen
-      gibt es nichts abzulesen. Daneben stehen **Wurf, N und ΔN**, und in der Tabelle wird die
+      gibt es nichts abzulesen. **Über dem Diagramm** stehen dann **Wurf, Zeit, N und ΔN** (dort,
+      weil es am Punkt selbst gerade bei der halben Zahl auf der Beschriftung der Halbwertszeit
+      läge), und in der Tabelle wird die
       zugehörige **Zeile hervorgehoben** (sie wird nötigenfalls in den sichtbaren Bereich
       geschoben). Solange der Punkt aktiv ist, **verschiebt und zoomt** eine Fingerbewegung im
       Diagramm **nicht** mehr den Ausschnitt, sondern nur noch den Punkt.

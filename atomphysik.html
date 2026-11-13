@@ -286,6 +286,10 @@
         <button type="button" id="zpP" title="größere Wahrscheinlichkeit">+</button>
         <span class="wert" id="zwV" style="min-width:9em">wie eine Sechs</span>
         <span class="trenn"></span>
+        <b>Stoff</b>
+        <select id="zNuk" title="Ein echter radioaktiver Stoff: Aus seiner Halbwertszeit ergibt sich, wie viel Zeit ein Wurf bedeutet"></select>
+        <span class="wert" id="znV" style="min-width:10em;cursor:pointer" title="Antippen: Zeit je Wurf vorgeben – die Wahrscheinlichkeit richtet sich danach"></span>
+        <span class="trenn"></span>
         <button type="button" id="zWurf" title="Alle übrigen Kerne einmal würfeln lassen">würfeln</button>
         <button type="button" id="zLauf" title="Immer weiter würfeln">▶ laufen</button>
         <button type="button" id="zNeu" title="Von vorn mit allen Kernen">↺</button>
@@ -320,7 +324,7 @@ let D={ v:1, tab:'pse', fontSize:13, fontBold:false, fontItalic:false,
         hz:11, he:null, hs:true,            /* Hülle: Ordnungszahl, gesetzte Elektronen (null = alle), Schalenbild */
         kz:6, kn:6, kmag:true, ksub:false,  /* Kern: Protonen, Neutronen, magische Zahlen, Unterschalen */
         zn:200, zp:16.7, zreihe:null, zhalb:false,  /* Zerfall: Kerne, Wahrscheinlichkeit, Verlauf */
-        zschritt:false, zphase:'weg', zpunkt:false, zpn:0, ztabAb:undefined,
+        zschritt:false, zphase:'weg', zpunkt:false, zpn:0, ztabAb:undefined, znuk:0,
         pse:null, nuklid:null };
 
 const fontStr=(px,bold)=>(D.fontItalic?'italic ':'')+((bold||D.fontBold)?'800 ':'600 ')+px+'px -apple-system,BlinkMacSystemFont,sans-serif';
@@ -389,6 +393,29 @@ function zIndexNeu(){
   const w=zWurfNr(), mit=(D.zschritt&&D.zphase==='wurf'); let m=0;
   for(let i=0;i<ZD.length;i++){ const d=ZD[i]; if(!d||(mit&&d===w)) ZIDX[m++]=i; }
   ZM=m; ZIW=w; ZIP=D.zphase||''; }
+/* Bekannte radioaktive Stoffe. Protonen- und Neutronenzahl zeigen auf dieselben
+   Nukliddaten, aus denen auch die Nuklidkarte ihre Halbwertszeiten nimmt - so steht
+   keine Zahl zweimal im Programm. */
+const Z_NUKLIDE=[[84,130,'extrem kurzlebig'],[43,56,'Spaltprodukt im Reaktor'],[86,136,'Radon im Keller'],
+  [53,78,'Jod in der Schilddrüse'],[27,33,'Bestrahlung in der Medizin'],[38,52,'aus dem Reaktorunfall'],
+  [55,82,'aus dem Reaktorunfall'],[1,2,'Tritium'],[95,146,'im Rauchmelder'],[88,138,'Marie Curies Radium'],
+  [6,8,'Altersbestimmung'],[94,145,'Kernbrennstoff'],[92,143,'spaltbares Uran'],[19,21,'im Gestein und im Körper'],
+  [92,146,'natürliches Uran']];
+function zNukOf(){ if(!D.znuk) return null;
+  const z=Math.floor(D.znuk/1000), n=D.znuk%1000, e=nukOf(z,n);
+  if(!e||!(e[2]>0)) return null;
+  return {z,n,name:elOf(z).sym+'-'+(z+n),T:e[2]}; }
+/* Wie viel Zeit bedeutet ein Wurf? Mit der Wahrscheinlichkeit p braucht es
+   ln(1/2)/ln(1-p) Würfe für die Hälfte - also dauert ein Wurf so viel von der
+   Halbwertszeit. Bei einer Sechs (p = 1/6) sind das 0,263 Halbwertszeiten. */
+function zZeitProWurf(){ const nk=zNukOf(); if(!nk) return 0;
+  return nk.T*Math.log(1-zP())/Math.log(0.5); }
+/* Eine Zeitangabe wie „1000 a" oder „5,5 d" lesen */
+function zZeitLesen(t){ const m=String(t).trim().replace(',','.').match(/^([0-9.]+(?:e-?[0-9]+)?)\s*([a-zµ]*)$/i);
+  if(!m) return 0;
+  const f={'':1,s:1,sek:1,min:60,h:3600,std:3600,d:86400,t:86400,a:JA,j:JA,ka:1e3*JA,ma:1e6*JA,ga:1e9*JA,
+    ms:1e-3,'µs':1e-6,us:1e-6,ns:1e-9}[m[2].toLowerCase()];
+  return f?parseFloat(m[1])*f:0; }
 /* Wie heißen die Augenzahlen, die zerfallen? */
 function zTrefferName(){ if(!zAugen()) return 'Zerfallene';
   return ['','Sechser','Fünfer und Sechser','Vierer bis Sechser','Dreier bis Sechser','Zweier bis Sechser'][zK()]; }
@@ -456,6 +483,11 @@ function setzeZerfall(){ if(!$('zaV')) return;
   $('zTab').classList.toggle('on',!!D.ztab);
   $('zPkt').classList.toggle('on',!!D.zpunkt);
   $('zSchr').classList.toggle('on',!!D.zschritt);
+  const sl=$('zNuk'); if(sl){ sl.value=D.znuk?String(D.znuk):'';
+    const nk=zNukOf();
+    $('znV').textContent=nk?('1 Wurf ≙ '+hlText(zZeitProWurf())):'';
+    $('znV').title=nk?('Halbwertszeit von '+nk.name+': '+hlText(nk.T)+' · antippen, um die Zeit je Wurf vorzugeben')
+                     :'Erst einen Stoff wählen'; }
   const w=$('zWurf'); if(w) w.textContent=(D.zschritt&&D.zphase==='wurf')?'wegnehmen':'würfeln';
   const b=$('zLauf'); if(b){ b.classList.toggle('on',!!zTimer); b.textContent=zTimer?'⏸ anhalten':'▶ laufen'; } }
 
@@ -570,7 +602,8 @@ function zeichneZerfall(){
   c.strokeStyle='#64748b'; c.lineWidth=2;
   c.beginPath(); c.moveTo(L,T); c.lineTo(L,B); c.lineTo(R,B); c.stroke();
   txt('Würfel',L-8*K,T-14*K,13*K,true,'#475569','right');
-  txt('Würfe',(L+R)/2,B+28*K,13*K,true,'#475569');
+  const nkD=zNukOf(), dtD=nkD?zZeitProWurf():0;
+  txt('Würfe'+(nkD?'   ·   1 Wurf ≙ '+hlText(dtD):''),(L+R)/2,B+28*K,13*K,true,'#475569');
   const dW=Math.max(v0.s>1?0.1:1,stufe(nBis-nVon,8));
   for(let n=Math.ceil(nVon/dW)*dW;n<=nBis;n+=dW){ const x=X(n); c.beginPath(); c.moveTo(x,B); c.lineTo(x,B+4*K); c.stroke();
     txt(dW<1?zahlD(n,1):String(Math.round(n)),x,B+14*K,12*K,false,'#64748b'); }
@@ -583,7 +616,10 @@ function zeichneZerfall(){
     if(TH<=nMax){ const x=X(TH), y=Y(N0/2);
       c.strokeStyle='#ea580c'; c.lineWidth=1.8; c.setLineDash([5,4]);
       c.beginPath(); c.moveTo(L,y); c.lineTo(x,y); c.lineTo(x,B); c.stroke(); c.setLineDash([]);
-      txt('Halbwertszeit ≈ '+zahlD(TH,1)+' Würfe',x+6*K,y-12*K,13*K,true,'#ea580c','left'); }
+      /* rechts im Bild nach links schreiben, sonst läuft die Zeile aus dem Diagramm */
+      const li=x>(L+R)*0.55;
+      txt('Halbwertszeit ≈ '+zahlD(TH,1)+' Würfe'+(nkD?' ≙ '+hlText(nkD.T):''),
+        x+(li?-6*K:6*K),y-12*K,13*K,true,'#ea580c',li?'right':'left'); }
   }
   c.strokeStyle='#2563eb'; c.lineWidth=3; c.beginPath();
   r.forEach((v,n)=>{ const x=X(n), y=Y(v); n?c.lineTo(x,y):c.moveTo(x,y); }); c.stroke();
@@ -597,14 +633,11 @@ function zeichneZerfall(){
     c.strokeStyle='#ffffff'; c.lineWidth=2.5; c.stroke(); }
   c.restore();
   if(D.zpunkt){
-    const n=zPktN(), v=r[n], x=X(n), y=Y(v), dN=n>0?r[n-1]-r[n]:0;
-    const re=x<(L+R)/2, tx=x+(re?14*K:-14*K);
-    const ty=(y<(T+B)/2)?Math.min(B-10*K,y+22*K):Math.max(T+10*K,y-20*K);
-    const st='Wurf '+n+'  ·  N = '+zahlT(v)+(n>0?'  ·  ΔN = '+zahlT(dN):'');
-    c.font=fontStr(13.5*K,true); c.textAlign=re?'left':'right'; c.textBaseline='middle';
-    c.lineWidth=4; c.strokeStyle='#ffffff'; c.lineJoin='round';
-    c.strokeText(st,tx,ty); c.fillStyle='#7c3aed'; c.fillText(st,tx,ty); }
-  if(D.zpunkt) txt('Punkt ziehen und ablesen',(L+R)/2,T-14*K,12*K,false,'#7c3aed');
+    /* Die Werte stehen oben in der freien Zeile. Am Punkt selbst steht nichts: Dort
+       liegt sonst gerade bei der halben Zahl die Beschriftung der Halbwertszeit. */
+    const n=zPktN(), v=r[n], dN=n>0?r[n-1]-r[n]:0;
+    txt('Wurf '+n+(nkD?'  ·  t = '+hlText(n*dtD):'')+'  ·  N = '+zahlT(v)
+        +(n>0?'  ·  ΔN = '+zahlT(dN):''),(L+R)/2,T-14*K,13*K,true,'#7c3aed'); }
   else if(v0.s>1.02) txt('Ausschnitt '+zahlD(v0.s,1)+'-fach · Doppeltipp stellt ihn zurück',
     (L+R)/2,T-14*K,12*K,false,'#2563eb');
   else txt('mit zwei Fingern ins Diagramm zoomen',(L+R)/2,T-14*K,12*K,false,'#94a3b8');
@@ -1075,6 +1108,30 @@ $('zPkt').onclick=()=>{ D.zpunkt=!D.zpunkt;
   setzeZerfall(); zeichneZerfall(); sync();
   toast2(D.zpunkt?'Punkt auf der Kurve ziehen – die zugehörige Zeile in der Tabelle wird hervorgehoben'
                  :'Ablesepunkt aus – jetzt lässt sich wieder zoomen und schieben'); };
+/* Die Liste wird aus den Nukliddaten gefüllt - und nach der Halbwertszeit sortiert,
+   damit sie von kurzlebig nach langlebig liest. */
+(function(){ const sl=$('zNuk'); if(!sl) return;
+  const eintraege=Z_NUKLIDE.map(([z,n,txt])=>{ const e=nukOf(z,n);
+    return (e&&e[2]>0)?{k:z*1000+n,nm:elOf(z).sym+'-'+(z+n),txt,T:e[2]}:null; })
+    .filter(Boolean).sort((a,b)=>a.T-b.T);
+  const leer=document.createElement('option'); leer.value=''; leer.textContent='– ohne Stoff –'; sl.appendChild(leer);
+  eintraege.forEach(x=>{ const o=document.createElement('option'); o.value=String(x.k);
+    o.textContent=x.nm+' · '+hlText(x.T)+' · '+x.txt; sl.appendChild(o); });
+  sl.onchange=()=>{ D.znuk=+sl.value||0; setzeZerfall(); zeichneZerfall(); sync();
+    const nk=zNukOf();
+    if(nk) toast2(nk.name+': Halbwertszeit '+hlText(nk.T)+' – ein Wurf bedeutet damit '+hlText(zZeitProWurf())); }; })();
+/* Umgekehrt: Zeit je Wurf vorgeben, dann richtet sich die Wahrscheinlichkeit danach. */
+$('znV').onclick=()=>{ const nk=zNukOf();
+  if(!nk){ toast2('Erst einen Stoff wählen'); return; }
+  const t=prompt('Wie viel Zeit soll ein Wurf bedeuten?\n(z. B. „1000 a", „5 d", „30 min")',
+    hlText(zZeitProWurf()).replace('.',''));
+  if(t===null) return;
+  const dt=zZeitLesen(t);
+  if(!(dt>0)){ toast2('Das konnte ich nicht lesen – zum Beispiel „1000 a" oder „5 d"'); return; }
+  const p=1-Math.pow(0.5,dt/nk.T);
+  if(p<0.01||p>0.9){ toast2('Das ergäbe '+zahlD(p*100,2)+' % je Wurf – möglich sind 1 bis 90 %'); return; }
+  D.zaugen=false; D.zp=Math.round(p*10000)/100; zerfallNeu();
+  toast2('Ein Wurf bedeutet jetzt '+hlText(zZeitProWurf())+' · Zerfallswahrscheinlichkeit '+zahlD(zP()*100,1)+' %'); };
 $('zSchr').onclick=()=>{ D.zschritt=!D.zschritt; if(!D.zschritt) D.zphase='weg';
   zIndexNeu(); setzeZerfall(); zeichneZerfall(); sync();
   toast2(D.zschritt?'„würfeln" macht jetzt zwei Schritte: erst werfen, dann die '+zTrefferName()+' wegnehmen'
