@@ -2999,10 +2999,20 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     **d[pc] = 1/p[″]**. Beispielsterne von Proxima Centauri bis Wega, ein **Lupen-Regler** für den
     Himmelsausschnitt und der Vergleich mit dem Vollmond (1 800″) – so wird klar, warum die erste
     Sternparallaxe erst 1838 gelang.
-- **Atomphysik** (Mathe & Physik): ein Werkzeug mit **vier Reitern**, die zusammen vom Periodensystem
+- **Atomphysik** (Mathe & Physik): ein Werkzeug mit **fünf Reitern**, die zusammen vom Periodensystem
   bis in den Kern führen. Oben steht die Reiterleiste, darunter der jeweilige Inhalt; jeder Reiter merkt
-  sich seinen Stand, auch über das Speichern des Projekts hinweg. Die vier Reiter sind als
+  sich seinen Stand, auch über das Speichern des Projekts hinweg. Die Reiter sind als
   **Reiterleiste** gestaltet (der gewählte ist unterstrichen), nicht als Knopfreihe.
+  - **Zerfall** (fünfter Reiter): das **Würfelmodell** des radioaktiven Zerfalls. Links liegen die
+    **Kerne** als Feld (blau = noch da, rot = gerade zerfallen, grau = schon zerfallen), rechts
+    entsteht Wurf für Wurf die **Zerfallskurve**. Einstellbar sind die **Zahl der Kerne** (4 bis
+    2000) und die **Zerfallswahrscheinlichkeit** (1 bis 90 %, beides auch durch Antippen des Wertes
+    eingebbar); passt sie zu einem Würfel, steht es daneben – 16,7 % sind „wie eine Sechs".
+    **würfeln** macht einen Wurf, **▶ laufen** würfelt alle 0,7 s weiter, **↺** fängt von vorn an.
+    Der Schalter **Halbwertszeit** legt die erwartete Kurve N₀·(1−p)^n und die Halbwertszeit
+    darüber (bei einer Sechs: 3,8 Würfe). Jeder Kern würfelt dabei **für sich** – die Kurve entsteht
+    also wirklich aus dem Zufall und nicht aus einer eingesetzten Formel. Nachgemessen: 12 Versuche
+    mit 1000 Kernen und p = 50 % ergaben im Mittel 502,8 übrige Kerne nach dem ersten Wurf.
   - **Periodensystem** und **Nuklidkarte** sind unverändert die bisherigen Werkzeuge (siehe unten) –
     sie laufen im Reiter weiter wie zuvor.
   - **Eine Knopfgruppe für alle vier Reiter:** Rechts in der Reiterleiste stehen **A−/A+**,
