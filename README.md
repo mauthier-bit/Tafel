@@ -3080,7 +3080,8 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     **Zerfallskurve**. Die Bedienung steht in **zwei Zeilen**: oben alles, was mit den **Würfeln**
     zu tun hat (würfeln, ▶ laufen, ↺, Zahl der Kerne, Wahrscheinlichkeit, Augen, Zwischenschritt),
     unten der **Stoff** und was im **Diagramm** zu sehen ist (Halbwertszeit, Ablesen, Tabelle).
-    **würfeln** macht einen Wurf, **▶ laufen** würfelt von selbst weiter, **↺** fängt von vorn an.
+    **würfeln** macht einen Wurf, **▶** würfelt von selbst weiter (und wird dabei zu **⏸**),
+    **↺** fängt von vorn an.
     Das **Tempo** daneben hat sieben Stufen (−/+): **Stufe 1** ist ein Schritt alle **2 s** – man
     sieht jeden einzelnen lange –, **Stufe 3** die Vorgabe mit 0,7 s, **Stufe 7** alle **0,06 s**,
     dann rauscht es durch (gemessen 20 Schritte in 1,2 s, auch mit 100 000 Würfeln). Wird das
