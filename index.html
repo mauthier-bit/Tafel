@@ -3487,10 +3487,20 @@ $('propAlpha').oninput=function(){ const t=+this.value; const a=Math.max(0,Math.
   $('propFillRow').classList.remove('aus'); markDirty(); };
 $('propAlpha').onchange=()=>{ saveUI(); scheduleAutosave(); };
 /* ---- Ebene (Stapelreihenfolge) ---- */
-function layerReorderEmbeds(){ for(const o of page().objects){ const card=embedCards.get(o.id); if(card)embedLayer.appendChild(card);
-    const el=embedEls.get(o.id); if(el)embedLayer.appendChild(el);
-    const nf=notizFlaechen.get(o.id); if(nf)embedLayer.appendChild(nf);
-    const ra=embedRahmen.get(o.id); if(ra)embedLayer.appendChild(ra); } }   /* Notizen und Rahmen direkt über ihrem Objekt */
+/* Stapelfolge der Einbettungen. Die Knoten bleiben dabei, wo sie sind: WebKit lädt
+   einen iframe NEU, sobald er im DOM verschoben wird (am 13.11.2026 in Safari
+   gemessen) - ein laufendes Video spränge dann an den Anfang zurück und ein Werkzeug
+   verlöre, was gerade nicht gespeichert ist. Die Reihenfolge macht deshalb z-index,
+   vier Plätze je Objekt: Platzhalterkarte, Inhalt, Notizfläche, Griffrahmen.
+   Das Vollbild liegt mit 3000 darüber. */
+function layerReorderEmbeds(){ let z=10;
+  for(const o of page().objects){
+    if(o.id===fsId){ z+=4; continue; }                  /* im Vollbild: liegt ohnehin ganz oben */
+    const card=embedCards.get(o.id); if(card) card.style.zIndex=z;
+    const el=embedEls.get(o.id); if(el) el.style.zIndex=z+1;
+    const nf=notizFlaechen.get(o.id); if(nf) nf.style.zIndex=z+2;
+    const ra=embedRahmen.get(o.id); if(ra) ra.style.zIndex=z+3;
+    z+=4; } }
 function layerMove(mode){ const p=page(), objs=p.objects, isSel=o=>selection.includes(o);
   if(!selection.length)return;
   pushUndo();
@@ -4604,15 +4614,15 @@ function syncEmbeds(){ const p=page(), wanted=new Set();
         fsMax=Math.max(0,hh-H); if(fsScroll>fsMax) fsScroll=fsMax;
         fr.style.display=''; fr.style.width=W+'px'; fr.style.height=hh+'px';
         fr.style.transform='translate(0px,'+(FSTOP-fsScroll)+'px)';
-        fr.style.zIndex='30'; fr.style.pointerEvents='auto'; fr.style.boxShadow='none';
+        fr.style.zIndex='3000'; fr.style.pointerEvents='auto'; fr.style.boxShadow='none';
         andere.forEach(e=>e.style.display='none');
         fsBalken();
         const nf=notizFlaechen.get(o.id);
         if(nf){ nf.style.width=fr.style.width; nf.style.height=fr.style.height;
-          nf.style.transform=fr.style.transform; nf.style.zIndex='31'; nf.style.display=''; }
+          nf.style.transform=fr.style.transform; nf.style.zIndex='3001'; nf.style.display=''; }
       } else { fr.style.display='none'; andere.forEach(e=>e.style.display='none');
         const nf=notizFlaechen.get(o.id); if(nf) nf.style.display='none'; }
-    } else if(fr.dataset.fsAus==='1'||fr.style.zIndex==='30'||fr.style.display==='none'){
+    } else if(fr.dataset.fsAus==='1'||fr.style.zIndex==='3000'||fr.style.display==='none'){
       /* zurück in den Normalzustand – auch die Objekte, die im Vollbild nur ausgeblendet waren */
       fr.style.display=''; fr.style.zIndex=''; fr.style.boxShadow=''; fr.dataset.fsAus='';
       const c2=embedCards.get(o.id), p2=embedPills.get(o.id);
@@ -4624,7 +4634,25 @@ function syncEmbeds(){ const p=page(), wanted=new Set();
   for(const[id,fr] of embedEls){ if(!wanted.has(id)){ fr.remove(); embedEls.delete(id);
     const c=embedCards.get(id); if(c){c.remove();embedCards.delete(id);} const pl=embedPills.get(id); if(pl){pl.remove();embedPills.delete(id);}
     const ra=embedRahmen.get(id); if(ra){ra.remove();embedRahmen.delete(id);} } }
+  layerReorderEmbeds();      /* gleich hier: neu gebaute Elemente brauchen ihren Platz im Stapel */
 }
+/* Auch im Bedienmodus nach vorne: Was im Werkzeug selbst passiert, sieht die Tafel nicht
+   (eigenes Dokument). Tippt man aber hinein, bekommt sein Rahmen den Tastaturfokus - und
+   genau daran erkennt die Tafel, welches Fenster gemeint ist. */
+addEventListener('blur',()=>{ setTimeout(()=>{
+  const el=document.activeElement, kn=el&&el.closest&&el.closest('[data-oid]');
+  if(!kn||kn.parentNode!==embedLayer) return;
+  const o=page().objects.find(x=>x.id===kn.dataset.oid);
+  if(o) embedsNachVorn([o]);
+},0); });
+/* Mehrere eigene Fenster offen (Taschenrechner, Stoppuhr, Stundenplan …): Das angetippte
+   kommt nach vorne. 41 liegt über den anderen Fenstern (40) und unter Menüs, Meldungen und
+   Kontextmenü (ab 44). Die Fenster werden dabei NICHT im DOM umgehängt - im Stundenplan
+   steckt ein iframe, der sonst neu lädt. */
+function fensterNachVorn(w){
+  document.querySelectorAll('.win').forEach(x=>{ if(x!==w&&x.style.zIndex) x.style.zIndex=''; });
+  w.style.zIndex='41'; }
+document.querySelectorAll('.win').forEach(w=>w.addEventListener('pointerdown',()=>fensterNachVorn(w),true));
 /* Sync mit eingebetteten Apps (Tabelle/Plotter/Vierfeldertafel/Baum) – Objekt über iframe-Quelle finden */
 addEventListener('message',e=>{ if(!e.data)return;
   const lpf=$('lehrerplanFrame');                      /* Lehrer-Stundenplan im eigenen Fenster */

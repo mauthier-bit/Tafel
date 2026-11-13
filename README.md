@@ -749,12 +749,21 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   und **⤒ Ganz vorn / ⤓ Ganz hinten**. Funktioniert auch mit einer Mehrfachauswahl und mit
   eingebetteten Werkzeugen (Tabelle, Glücksrad …) gegenüber Gezeichnetem.
 - **Angetipptes Fenster kommt nach vorne:** Liegen zwei eingebettete Werkzeuge oder Videos
-  übereinander, genügt im Auswahlmodus ein Tipp auf das hintere – es rückt sofort vor das andere,
-  „⤒ Ganz vorn" braucht man dafür nicht mehr. Das gilt **nur für eingebettete Objekte**: Ein Bild
-  nach vorn zu holen würde die Striche verdecken, die darauf gezeichnet sind, und das will niemand,
-  der es bloß verschieben wollte – Gezeichnetes behält seine Reihenfolge also, bis man sie von Hand
-  ändert. Dasselbe passiert schon bisher, wenn man ein Werkzeug an seiner Kopfleiste anfasst oder
-  eine Minimier-Pille wieder aufklappt.
+  übereinander, genügt ein Tipp auf das hintere – es rückt sofort vor das andere, „⤒ Ganz vorn"
+  braucht man dafür nicht mehr. Das gilt in **beiden Modi**: beim **Auswählen** (Tipp auf das
+  Objekt) und beim **Bedienen** (Tipp in das Werkzeug selbst – die Tafel erkennt am Tastaturfokus,
+  welches gemeint ist). Dasselbe passierte schon bisher beim Anfassen an der Kopfleiste und beim
+  Aufklappen einer Minimier-Pille.
+  Das gilt **nur für eingebettete Objekte**: Ein Bild nach vorn zu holen würde die Striche
+  verdecken, die darauf gezeichnet sind, und das will niemand, der es bloß verschieben wollte –
+  Gezeichnetes behält seine Reihenfolge also, bis man sie von Hand ändert.
+  **Dabei lädt nichts neu:** Die Reihenfolge der Einbettungen steckt seit Version 688 in der
+  Stapelfolge (z-index) statt in der Reihenfolge im Dokument. Vorher wurden die Rahmen umgehängt,
+  und Safari lud sie dabei neu – ein laufendes Video sprang an den Anfang zurück. Jetzt läuft es
+  weiter, auch wenn man es nach vorne holt.
+- **Eigene Fenster nach vorne:** Auch bei den Fenstern, die kein Tafelobjekt sind (Taschenrechner,
+  Stoppuhr, Timer, Umfrage, Lärmampel, QR-Code, Lehrer-Stundenplan …), kommt das angetippte nach
+  vorne, wenn zwei übereinanderliegen. Menüs, Meldungen und das Kontextmenü bleiben darüber.
 - **Text:** Textfelder anlegen; **Doppeltipp** auf einen Text zum Nachbearbeiten. Bei ausgewähltem
   Text bietet das **Kontextmenü** zusätzlich **Fett, Kursiv, Aufzählung (Liste)** und eine
   **Schriftgrößen-Einstellung** (＋/−). Texte sind immer **linksbündig am Textanker** – auch dann,
