@@ -298,6 +298,14 @@ const sVonP=P=>{ const a=Math.abs(P); if(a<1) return 0;
 const STOFFE={
   wasser:  {name:'Wasser',     cf:2100, cl:4200, cg:2000, Ts:0,    qs:334000, Tv:100,  qv:2256000, Rs:461, farbe:'#2563eb', festName:'Eis', gasName:'Wasserdampf'},
   luft:    {name:'Luft',       cf:1000, cl:1900, cg:1005, Ts:-213, qs:25000,  Tv:-194, qv:199000,  Rs:287, farbe:'#0ea5e9', festName:'feste Luft', gasName:'Luft'},
+  /* Kohlenstoffdioxid wird bei Normaldruck gar nicht flüssig: Trockeneis geht bei
+     −78,5 °C unmittelbar in Gas über (subl). Dafür gibt es einen eigenen Abschnitt. */
+  co2:     {name:'Kohlenstoffdioxid', cf:1200, cl:1200, cg:846, Ts:-78.5, qs:571000, Tv:-78.5, qv:0, Rs:189,
+            subl:true, farbe:'#0d9488', festName:'Trockeneis', gasName:'Kohlenstoffdioxid'},
+  helium:  {name:'Helium',     cf:2500, cl:4480, cg:5193, Ts:-272.2, qs:5000, Tv:-268.9, qv:20900, Rs:2077,
+            farbe:'#a78bfa', festName:'festes Helium', gasName:'Helium'},
+  quecksilber:{name:'Quecksilber', cf:142, cl:140, cg:104, Ts:-38.8, qs:11400, Tv:356.7, qv:295000, Rs:41,
+            farbe:'#78716c', festName:'festes Quecksilber', gasName:'Quecksilberdampf'},
   schwefel:{name:'Schwefel',   cf:710,  cl:1000, cg:700,  Ts:115,  qs:53400,  Tv:445,  qv:1400000, Rs:260, farbe:'#ca8a04', festName:'fester Schwefel'},
   brom:    {name:'Brom',       cf:400,  cl:473,  cg:225,  Ts:-7.2, qs:66000,  Tv:58.8, qv:188000,  Rs:52,  farbe:'#b91c1c', festName:'festes Brom'},
   ethanol: {name:'Ethanol',    cf:2300, cl:2430, cg:1420, Ts:-114, qs:108000, Tv:78,   qv:841000,  Rs:181, farbe:'#7c3aed'},
@@ -331,13 +339,18 @@ function kurve(){
   const dazu=(art,T1,T2,E)=>{ ab.push({art,T1,T2,E,dt:P>0?E/P:0}); };
   /* Es kommen nur die Abschnitte vor, die oberhalb der Starttemperatur liegen:
      bei -20 °C faengt Wasser als Eis an, bei 20 °C als Wasser, Luft gleich als Gas. */
-  if(T0<s.Ts){
-    dazu('fest', T0, s.Ts, s.cf*m*(s.Ts-T0));
-    dazu('schmelzen', s.Ts, s.Ts, s.qs*m); }
-  if(T0<s.Tv){
-    const Tf=Math.max(T0,s.Ts);
-    dazu('fluessig', Tf, s.Tv, s.cl*m*(s.Tv-Tf));
-    dazu('sieden', s.Tv, s.Tv, s.qv*m); }
+  if(s.subl){                              /* fest → unmittelbar gasförmig */
+    if(T0<s.Ts){
+      dazu('fest', T0, s.Ts, s.cf*m*(s.Ts-T0));
+      dazu('sublim', s.Ts, s.Ts, s.qs*m); }
+  } else {
+    if(T0<s.Ts){
+      dazu('fest', T0, s.Ts, s.cf*m*(s.Ts-T0));
+      dazu('schmelzen', s.Ts, s.Ts, s.qs*m); }
+    if(T0<s.Tv){
+      const Tf=Math.max(T0,s.Ts);
+      dazu('fluessig', Tf, s.Tv, s.cl*m*(s.Tv-Tf));
+      dazu('sieden', s.Tv, s.Tv, s.qv*m); } }
   const Tg=Math.max(T0,s.Tv), dT=(T0>=s.Tv)?Math.max(120,dTgas(s)):dTgas(s);
   dazu('gas', Tg, Tg+dT, s.cg*m*dT);
   let t=0, E=0;
@@ -356,9 +369,10 @@ function standKurve(K,E){
   const l=K.ab[K.ab.length-1];
   return {art:l.art, T:l.T2, f:1, E:K.EGes, ab:l};
 }
-const ART_NAME={fest:'erwärmt sich',schmelzen:'schmilzt',fluessig:'erwärmt sich',sieden:'siedet',gas:'erwärmt sich'};
+const istHalt=a=>a==='schmelzen'||a==='sieden'||a==='sublim';
 function artText(K,st){ const s=K.s;
   if(st.art==='fest') return festName(s)+' erwärmt sich';
+  if(st.art==='sublim') return festName(s)+' geht unmittelbar in Gas über – die Temperatur bleibt stehen';
   if(st.art==='schmelzen') return festName(s)+' schmilzt – die Temperatur bleibt stehen';
   if(st.art==='fluessig') return s.name+' erwärmt sich';
   if(st.art==='sieden') return s.name+' siedet – die Temperatur bleibt stehen';
@@ -424,6 +438,7 @@ teilchenNeu();
 /* Welcher Teil der Teilchen ist flüssig bzw. gasförmig? */
 function teilchenZustand(st){
   if(st.art==='fest') return {fl:0,ga:0};
+  if(st.art==='sublim') return {fl:st.f,ga:st.f};        /* fest unmittelbar zu Gas */
   if(st.art==='schmelzen') return {fl:st.f,ga:0};
   if(st.art==='fluessig') return {fl:1,ga:0};
   if(st.art==='sieden') return {fl:1,ga:st.f};
@@ -546,7 +561,7 @@ function malTeilchen(x,y,w,h,Kv,st,tempF){
   ctx.save(); rr(x,y,w,h,12); ctx.fillStyle='#f8fafc'; ctx.fill();
   ctx.strokeStyle='#94a3b8'; ctx.lineWidth=2; ctx.stroke(); ctx.clip();
   if(sy>0){ ctx.fillStyle='#e2e8f0'; ctx.fillRect(x,y,w,yT-y); }   /* Raum über dem Stempel */
-  if(z.fl>0&&z.ga<1){                                  /* angedeuteter Flüssigkeitsspiegel */
+  if(z.fl>z.ga&&z.ga<1){                               /* angedeuteter Flüssigkeitsspiegel */
     const sp=y+h*0.40+h*0.52*z.ga;
     ctx.fillStyle=s.farbe; ctx.globalAlpha=.12; ctx.fillRect(x,sp,w,y+h-sp); ctx.globalAlpha=1;
     ctx.strokeStyle=s.farbe; ctx.globalAlpha=.4; ctx.beginPath(); ctx.moveTo(x,sp); ctx.lineTo(x+w,sp); ctx.stroke(); ctx.globalAlpha=1; }
@@ -563,7 +578,7 @@ function malTeilchen(x,y,w,h,Kv,st,tempF){
     malMano(x+Math.min(34*K,w*0.14)+10*K,y+(D.stempel?h*sy:0)+Math.min(34*K,w*0.14)+12*K,Math.min(34*K,w*0.14),G.p);
   }
   const nm=(st.art==='fest')?'fest':(st.art==='gas')?'gasförmig':(st.art==='fluessig')?'flüssig':
-    (st.art==='schmelzen'?'fest → flüssig':'flüssig → gasförmig');
+    (st.art==='sublim'?'fest → gasförmig':st.art==='schmelzen'?'fest → flüssig':'flüssig → gasförmig');
   txtPass('Teilchenmodell · '+nm,x+w/2,y+h+14*K,w,{sz:13*K,fett:true,farbe:'#475569'});
 }
 /* ---------- Balken für die innere Energie ----------
@@ -621,12 +636,13 @@ function zeichneKurve(){
         :' (Leistung 0 W)'),
     (L+R)/2,B+30*K,{sz:13*K,fett:true,farbe:'#475569'});
   /* Kurve: waagrechte Stücke sind die Übergänge */
-  Kv.ab.forEach(x=>{ const halt=(x.art==='schmelzen'||x.art==='sieden');
+  Kv.ab.forEach(x=>{ const halt=istHalt(x.art);
     const x1=X(x.E1), x2=X(x.E2);
     ctx.strokeStyle=halt?'#ea580c':s.farbe; ctx.lineWidth=halt?4.5:3.2;
     ctx.beginPath(); ctx.moveTo(x1,Y(x.T1)); ctx.lineTo(x2,Y(x.T2)); ctx.stroke();
     if(halt&&x.E>0){ const xm=(x1+x2)/2;
-      txtPass(x.art==='schmelzen'?(Pw()<0?'erstarrt':'schmilzt'):(Pw()<0?'kondensiert':'siedet'),
+      txtPass(x.art==='sublim'?(Pw()<0?'wird fest':'sublimiert')
+             :x.art==='schmelzen'?(Pw()<0?'erstarrt':'schmilzt'):(Pw()<0?'kondensiert':'siedet'),
         xm,Y(x.T1)-14*K,Math.max(50,x2-x1+40*K),{sz:12.5*K,fett:true,farbe:'#ea580c'}); } });
   /* Marke */
   const mx=X(st.E), my=Y(st.T);
@@ -659,19 +675,21 @@ function zeichneKurve(){
   if(D.gl){ let y=H-glH+6*K;
     /* Breite der ersten Spalte aus dem laengsten Eintrag - sonst ueberlappen die Spalten */
     ctx.font='700 '+(13*K)+'px -apple-system,BlinkMacSystemFont,Arial,sans-serif';
-    let sp=0; Kv.ab.forEach(x=>{ const halt=(x.art==='schmelzen'||x.art==='sieden');
+    let sp=0; Kv.ab.forEach(x=>{ const halt=istHalt(x.art);
       const nm=x.art==='fest'?festName(s)+' erwärmen':x.art==='schmelzen'?'schmelzen':
+        x.art==='sublim'?'sublimieren':
         x.art==='fluessig'?s.name+' erwärmen':x.art==='sieden'?'sieden':gasName(s)+' erwärmen';
       sp=Math.max(sp,ctx.measureText(nm+':  '+(halt?'E = q · m':'E = c · m · ΔT')).width); });
     sp+=16*K;
     const zeile=(a,b2,f)=>{ txt(a,L,y,{al:'left',sz:13*K,fett:true,farbe:f||'#1f2430'});
       txt(b2,L+sp,y,{al:'left',sz:13*K,farbe:'#475569'}); y+=17*K; };
-    Kv.ab.forEach(x=>{ const halt=(x.art==='schmelzen'||x.art==='sieden');
+    Kv.ab.forEach(x=>{ const halt=istHalt(x.art);
       const nm=x.art==='fest'?festName(s)+' erwärmen':x.art==='schmelzen'?'schmelzen':
+        x.art==='sublim'?'sublimieren':
         x.art==='fluessig'?s.name+' erwärmen':x.art==='sieden'?'sieden':gasName(s)+' erwärmen';
       const c=x.art==='fest'?s.cf:x.art==='fluessig'?s.cl:s.cg;
       const form=halt?'E = q · m':'E = c · m · ΔT';
-      const zahlen=halt?(zahl((x.art==='schmelzen'?s.qs:s.qv)/1000,0)+' kJ/kg · '+zahl(Kv.m,2)+' kg')
+      const zahlen=halt?(zahl((x.art==='sieden'?s.qv:s.qs)/1000,0)+' kJ/kg · '+zahl(Kv.m,2)+' kg')
         :(zahl(c,0)+' J/(kg·K) · '+zahl(Kv.m,2)+' kg · '+zahl(Math.abs(x.T2-x.T1),0)+' K');
       zeile(nm+':  '+form, zahlen+'  =  '+en(x.E)+(Kv.dauer?'   ('+zeitText(x.dt)+')':''), halt?'#ea580c':'#1f2430'); });
     zeile('zusammen:', en(Kv.EGes)+(Kv.dauer?'   ('+zeitText(Kv.tGes)+')':'')); }
@@ -914,6 +932,8 @@ const VORLAGEN={
   'Eisen glühen':()=>({tab:'kurve',stoff:'eisen',m:0.1,P:1000,T0:20,E:0}),
   'Schwefel schmelzen':()=>({tab:'kurve',stoff:'schwefel',m:0.2,P:300,T0:20,E:0}),
   'Brom verdampft':()=>({tab:'kurve',stoff:'brom',m:0.1,P:100,T0:20,E:0,
+    teilchen:true,ebalken:true,mess:true,stempel:false,sy:0,Wst:0}),
+  'Trockeneis sublimiert':()=>({tab:'kurve',stoff:'co2',m:0.2,P:200,T0:-100,E:0,
     teilchen:true,ebalken:true,mess:true,stempel:false,sy:0,Wst:0}),
   'Luft erhitzen':()=>({tab:'kurve',stoff:'luft',m:0.05,P:50,T0:20,E:0,
     teilchen:true,ebalken:true,stempel:true,mess:true,sy:0,Wst:0}),

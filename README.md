@@ -2722,10 +2722,17 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   - **Erwärmen und Abkühlen:** die **Erwärmungskurve** T(t) bei fester Heizleistung – mit den
     **Haltepunkten** beim Schmelzen und Sieden, an denen die Temperatur stehen bleibt, obwohl
     weiter geheizt wird. Einstellbar sind **Stoff** (Wasser, **Luft**, Ethanol, Eisen, Aluminium,
-    **Schwefel**, **Brom**, Kupfer, Blei, Speiseöl), **Masse**, **Starttemperatur** und **Leistung** (in dieser Reihenfolge,
+    **Kohlenstoffdioxid**, **Helium**, **Schwefel**, **Brom**, **Quecksilber**, Kupfer, Blei,
+    Speiseöl), **Masse**, **Starttemperatur** und **Leistung** (in dieser Reihenfolge,
     weil man erst sagt, wo man anfängt, und dann, wie stark geheizt wird). Die Kurve beginnt in dem
     **Aggregatzustand, der zur Starttemperatur gehört**: Wasser bei −20 °C als Eis, bei 20 °C als
     Wasser, Luft gleich als Gas – es kommen nur die Abschnitte oberhalb der Starttemperatur vor.
+    **Kohlenstoffdioxid** hat einen **eigenen Abschnitt**: Bei Normaldruck wird es gar nicht
+    flüssig, sondern geht bei −78,5 °C unmittelbar vom festen in den gasförmigen Zustand über
+    (**Sublimation**, 571 kJ/kg). Statt zweier Haltepunkte gibt es also nur einen, im
+    Teilchenmodell fehlt die Flüssigkeit, und die Gleichung heißt *sublimieren: E = q · m*.
+    Bei **Helium** ist zu bedenken, dass es bei Normaldruck überhaupt nicht fest wird – der
+    Schmelzpunkt bei −272,2 °C gilt erst unter etwa 25 bar; die Kurve rechnet ihn trotzdem mit.
   - **Der Leistungsregler ist der Start:** Ein **Schieberegler** stellt die Leistung ein – **nach
     rechts heizen** (Flamme), **nach links kühlen** (Schneeflocken), und **in der Mitte rastet er
     bei 0 W ein**: Dann steht alles still, ohne Flamme. Einen Start-Knopf gibt es beim Erwärmen
@@ -2793,6 +2800,8 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     **E = c · m · ΔT** bzw. **E = q · m** mit Werten, Energie und Dauer sowie die Summe; im zweiten
     **abgegebene Wärme = aufgenommene Wärme** und daraus T_M.
   - **Vorlagen:** Eis schmilzt und Wasser siedet, Ein Liter Wasser kochen, Wasserdampf kühlt ab,
+    **Trockeneis sublimiert** (0,2 kg Kohlenstoffdioxid ab −100 °C: 5,2 kJ zum Erwärmen,
+    114,2 kJ zum Sublimieren, zusammen 126 kJ – der Haltepunkt frisst fast alles),
     Blei schmelzen, Eisen glühen, **Schwefel schmelzen** (0,2 kg, Haltepunkte bei 115 °C und
     445 °C, zusammen 386 kJ), **Brom verdampft** (0,1 kg; Brom ist bei Zimmertemperatur flüssig und
     siedet schon bei 58,8 °C – die Kurve beginnt deshalb flüssig, und am Manometer sieht man, wie
