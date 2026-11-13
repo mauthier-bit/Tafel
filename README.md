@@ -2739,8 +2739,8 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     (abwärts und aufwärts), **Jojo**, schiefe Ebene (hinunter und hinauf), Flaschenzug, Hebel,
     Katapult, Armbrust, Feder, Trampolin, Gummiseil, Generator, **Windrad**, Motor, **E-Bike**,
     Lampe, **Glühbirne**, **Fön**, Solarzelle, Reibung, Feuer, Heizplatte, **Kühlschrank**,
-    Schmelzen/Verdampfen, Batterie, Akku laden, Verbrennungsmotor, Muskel, Kernreaktor oder ein
-    frei wählbarer Wandler. Jeder bringt seine **Energieform am Ausgang** und einen
+    **Dampfmaschine**, Schmelzen/Verdampfen, Batterie, Akku laden, Verbrennungsmotor, Muskel,
+    Kernreaktor oder ein frei wählbarer Wandler. Jeder bringt seine **Energieform am Ausgang** und einen
     **Wirkungsgrad** als Anhaltswert mit.
   - **Wandler mit zwei Ausgängen:** **Glühbirne** (5 % Strahlungsenergie, der Rest innere Energie)
     und **Fön** (10 % Bewegungsenergie des Luftstroms, der Rest Wärme) legen gleich **zwei
@@ -2773,9 +2773,12 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     Die Zeilen zu den einzelnen Reservoiren zeigen die Werte des **aktuellen** Standes – wer den
     Zeitregler bewegt, sieht sie mitlaufen; die Umwandlungsgleichung beschreibt dagegen immer den
     **ganzen** Schritt.
-  - **Vorlagen:** Fallender Stein, Pendel, Katapult, Wasserkraftwerk, **Windrad**, Auto bremst,
-    Wasserkocher, Eis schmilzt, Taschenlampe, Solarlampe, Kernkraftwerk, **Kühlschrank**,
-    **Glühbirne**, Zwei Reservoire, leeres Blatt. Beim **Pendel** sieht man an der Höhe, was die Verluste ausmachen: Aus 0,40 m
+  - **Vorlagen:** Fallender Stein, Pendel, Katapult, Wasserkraftwerk, **Windrad**,
+    **Dampfmaschine**, Auto bremst, Wasserkocher, Eis schmilzt, Taschenlampe, Solarlampe,
+    Kernkraftwerk, **Kühlschrank**, **Glühbirne**, Zwei Reservoire, leeres Blatt.
+    Die **Dampfmaschine** zeigt, wie wenig von der Kohle als Bewegung ankommt: 10 g Steinkohle
+    (30 MJ/kg) sind 300 kJ, das Feuer gibt 270 kJ an das Wasser weiter, und von denen werden
+    **27 kJ** Bewegung – der Rest, 243 kJ, steht als entwertete Energie daneben. Beim **Pendel** sieht man an der Höhe, was die Verluste ausmachen: Aus 0,40 m
     werden nach Hin- und Rückweg 0,37 m (98 % · 95 %).
   - Antippen wählt ein Reservoir oder einen Wandler aus; alles Weitere steht dann in der zweiten
     Zeile (Energieform, Größen mit − / + oder durch Antippen des Wertes eingeben, Löschen).
