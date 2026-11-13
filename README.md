@@ -3235,6 +3235,12 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     **Halbwertszeit und Zerfallsart** aus denselben Daten wie in der Nuklidkarte, dazu der Grund
     („Ein Neutron wird zum Proton: der Neutronentopf ist zu voll") und der **Tochterkern**.
     **„Umwandlung ausführen"** springt dorthin – so wird die Nuklidkarte von innen heraus verständlich.
+    Dabei **fliegt die entstehende Strahlung heraus**: beim β⁻-Zerfall ein **Elektron** und ein
+    **Antineutrino**, beim β⁺-Zerfall ein **Positron** und ein **Neutrino**, dazu α-Teilchen,
+    einzelne Neutronen oder Protonen und beim Übergang ein γ-Quant. Die beiden Teilchen des
+    Betazerfalls fliegen in **verschiedene Richtungen**, denn der Impuls bleibt erhalten; das
+    Neutrino ist als **offener, gestrichelter Kreis** gezeichnet, weil es praktisch nicht
+    nachzuweisen ist. Oben steht dazu, was gerade geschieht. Die Animation dauert 1,8 s.
     Am obersten besetzten Protonenniveau ist der **Massenunterschied** als gelber Streifen von
     **0,78 MeV** angetragen: Ein Neutron ist um 1,29 MeV schwerer als ein Proton, davon gehen
     0,51 MeV in das Elektron. Ein Neutron darf deshalb bis zu 0,78 MeV **unter** dem Protonenniveau

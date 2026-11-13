@@ -927,6 +927,41 @@ function wlFarbe(nm){
   return 'rgb('+g(R)+','+g(G)+','+g(B)+')';
 }
 
+/* ============ Strahlung beim Umwandeln ============
+   Beim Betazerfall entstehen zwei Teilchen: das Elektron bzw. Positron und ein
+   (Anti-)Neutrino. Sie fliegen in verschiedene Richtungen davon, denn der Impuls
+   bleibt erhalten. Das Neutrino wird als offener Kreis gezeichnet - es ist
+   praktisch nicht nachzuweisen. */
+const KSTRAHL={
+  'B-':[{t:'e⁻',f:'#2563eb',dx:1,dy:-1},{t:'ν̅ₑ',f:'#94a3b8',dx:-1,dy:-0.75,offen:true}],
+  'B+':[{t:'e⁺',f:'#dc2626',dx:1,dy:-1},{t:'νₑ',f:'#94a3b8',dx:-1,dy:-0.75,offen:true}],
+  'A' :[{t:'α',f:'#f59e0b',dx:1,dy:-0.8}],
+  'N' :[{t:'n',f:'#2563eb',dx:1,dy:-0.9}],
+  'P' :[{t:'p',f:'#ef4444',dx:1,dy:-0.9}],
+  'B-n':[{t:'e⁻',f:'#2563eb',dx:1,dy:-1},{t:'ν̅ₑ',f:'#94a3b8',dx:-1,dy:-0.75,offen:true},
+         {t:'n',f:'#2563eb',dx:0.2,dy:-1.2}],
+  'IT':[{t:'γ',f:'#7c3aed',dx:1,dy:-1}]
+};
+const KDAUER=1800;
+let kAnim=null;
+function kernAnim(art){ const l=KSTRAHL[art]; if(!l) return;
+  kAnim={art,t0:performance.now()};
+  requestAnimationFrame(function lauf(){ if(!kAnim) return;
+    const fertig=performance.now()-kAnim.t0>KDAUER;
+    if(fertig) kAnim=null;
+    zeichneTopf();
+    if(!fertig) requestAnimationFrame(lauf); }); }
+/* Ein Teilchen auf seinem Weg nach außen */
+function malTeilchenK(ctx,x,y,r,t,fs){
+  ctx.globalAlpha=t.a;
+  if(t.offen){ ctx.strokeStyle=t.f; ctx.lineWidth=1.8; ctx.setLineDash([3,3]);
+    ctx.beginPath(); ctx.arc(x,y,r,0,7); ctx.stroke(); ctx.setLineDash([]); }
+  else { ctx.fillStyle=t.f; ctx.beginPath(); ctx.arc(x,y,r,0,7); ctx.fill(); }
+  ctx.font=fontStr(r*0.95,true); ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillStyle=t.offen?t.f:'#ffffff'; ctx.fillText(t.t,x,y+r*0.06);
+  ctx.globalAlpha=1;
+}
+
 /* ============ Hülle: Schalen und Energien ============ */
 /* Aufbaureihenfolge (Madelung): erst kleine Summe n+l, bei gleicher Summe kleines n. */
 const ORB=[['1s',0],['2s',0],['2p',1],['3s',0],['3p',1],['4s',0],['3d',2],['4p',1],['5s',0],['4d',2],['5p',1],
@@ -1303,6 +1338,26 @@ function zeichneTopf(){
       ctx.restore(); }
   }
 
+  /* ---- Strahlung, die gerade herausfliegt ---- */
+  if(kAnim){
+    const t=Math.min(1,(performance.now()-kAnim.t0)/KDAUER);
+    const sx=xM, sy=yNull+tiefe*0.45, weg=Math.min(w,h)*0.62, r=Math.max(9,fs*0.95);
+    (KSTRAHL[kAnim.art]||[]).forEach(q=>{
+      const l=Math.hypot(q.dx,q.dy)||1, s2=weg*Math.pow(t,0.75);
+      const x=sx+q.dx/l*s2, y=sy+q.dy/l*s2;
+      ctx.strokeStyle=q.f; ctx.globalAlpha=0.25*(1-t);   /* Spur */
+      ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(sx,sy); ctx.lineTo(x,y); ctx.stroke(); ctx.globalAlpha=1;
+      malTeilchenK(ctx,x,y,r,{t:q.t,f:q.f,offen:q.offen,a:t<0.75?1:(1-t)/0.25},fs); });
+    ctx.font=fontStr(fs*0.95,true); ctx.textAlign='center'; ctx.textBaseline='top';
+    ctx.fillStyle='#475569';
+    ctx.fillText({'B-':'β⁻: ein Elektron und ein Antineutrino fliegen davon',
+                  'B+':'β⁺: ein Positron und ein Neutrino fliegen davon',
+                  'A':'α: zwei Protonen und zwei Neutronen verlassen den Kern',
+                  'N':'ein Neutron verlässt den Kern','P':'ein Proton verlässt den Kern',
+                  'B-n':'β⁻ mit Neutron','IT':'ein γ-Quant wird abgestrahlt'}[kAnim.art]||'',
+      w/2, 2);
+  }
+
   /* ---- Text unten ---- */
   const A=z+n, sym=el.sym||'?';
   const zeilen=[hoch(A)+sym+'  '+(el.name||'')+' · Z = '+z+' · N = '+n+' · A = '+A];
@@ -1440,8 +1495,9 @@ $('nP').onclick=()=>{ D.kn=Math.min(180,D.kn+1); neu(); };
 $('kMag').onclick=()=>{ D.kmag=!D.kmag; neu(); };
 $('kUnter').onclick=()=>{ D.ksub=!D.ksub; neu(); };
 $('kUm').onclick=()=>{ const e=nukOf(D.kz,D.kn); if(!e||e[2]===0) return;
-  const p=produkt(D.kz,D.kn,e[3]||''); if(!p) return;
-  D.kz=Math.max(0,p[0]); D.kn=Math.max(0,p[1]); neu(); };
+  const art=e[3]||''; const p=produkt(D.kz,D.kn,art); if(!p) return;
+  D.kz=Math.max(0,p[0]); D.kn=Math.max(0,p[1]); neu();
+  kernAnim(art); };
 
 /* ============ Größe und Zeichnen ============ */
 function resize(){ const dpr=window.devicePixelRatio||1;
