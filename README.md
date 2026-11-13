@@ -3003,16 +3003,28 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   bis in den Kern führen. Oben steht die Reiterleiste, darunter der jeweilige Inhalt; jeder Reiter merkt
   sich seinen Stand, auch über das Speichern des Projekts hinweg. Die Reiter sind als
   **Reiterleiste** gestaltet (der gewählte ist unterstrichen), nicht als Knopfreihe.
-  - **Zerfall** (fünfter Reiter): das **Würfelmodell** des radioaktiven Zerfalls. Links liegen die
-    **Kerne** als Feld (blau = noch da, rot = gerade zerfallen, grau = schon zerfallen), rechts
-    entsteht Wurf für Wurf die **Zerfallskurve**. Einstellbar sind die **Zahl der Kerne** (4 bis
-    2000) und die **Zerfallswahrscheinlichkeit** (1 bis 90 %, beides auch durch Antippen des Wertes
-    eingebbar); passt sie zu einem Würfel, steht es daneben – 16,7 % sind „wie eine Sechs".
-    **würfeln** macht einen Wurf, **▶ laufen** würfelt alle 0,7 s weiter, **↺** fängt von vorn an.
-    Der Schalter **Halbwertszeit** legt die erwartete Kurve N₀·(1−p)^n und die Halbwertszeit
-    darüber (bei einer Sechs: 3,8 Würfe). Jeder Kern würfelt dabei **für sich** – die Kurve entsteht
-    also wirklich aus dem Zufall und nicht aus einer eingesetzten Formel. Nachgemessen: 12 Versuche
-    mit 1000 Kernen und p = 50 % ergaben im Mittel 502,8 übrige Kerne nach dem ersten Wurf.
+  - **Zerfall** (fünfter Reiter): das **Würfelmodell** des radioaktiven Zerfalls. Links liegt das
+    Feld der Würfel (blau = noch da, rot = gerade zerfallen, grau = schon zerfallen), rechts
+    entsteht Wurf für Wurf die **Zerfallskurve**. **würfeln** macht einen Wurf, **▶ laufen**
+    würfelt alle 0,7 s weiter, **↺** fängt von vorn an.
+    - **Zahl der Würfel:** von 10 bis **100 000** in Stufen (10, 20, 50, 100 … 50 000, 100 000) oder
+      durch Antippen der Zahl frei eingebbar. Ein Wurf über alle 100 000 dauert rund **11 ms**, das
+      Zeichnen 5 ms – ab etwa 3000 Würfeln wird das Feld als Punktbild gesetzt, damit es flüssig
+      bleibt.
+    - **Augen:** Bei wenigen Würfeln (bis etwa 100) zeigt jeder Würfel seine **Augenzahl** – und es
+      zerfallen genau die Sechser. Dann sind nur Vielfache von einem Sechstel sinnvoll, der
+      Schalter stellt die Wahrscheinlichkeit entsprechend: 16,7 % („Sechs zerfällt"), 33,3 %
+      („Fünf und Sechs") bis 83,3 %. Ohne **Augen** lässt sich die **Zerfallswahrscheinlichkeit**
+      frei von 1 bis 90 % wählen.
+    - **Tabelle:** zeigt zu jedem Wurf **N davor**, die zerfallenen **ΔN** und das Verhältnis
+      **ΔN : N**. Daran sieht man das Entscheidende: ΔN wird immer kleiner, weil N kleiner wird –
+      das Verhältnis bleibt bei der Zerfallswahrscheinlichkeit. Beispiel mit 20 000 Würfeln:
+      3285, 2876, 2370, 1862, 1551 zerfallene Würfel bei 16,4 / 17,2 / 17,1 / 16,2 / 16,1 %.
+    - **Halbwertszeit:** legt die erwartete Kurve N₀·(1−p)^n und die Halbwertszeit darüber (bei
+      einer Sechs: 3,8 Würfe).
+    Jeder Würfel wird dabei **einzeln** geworfen – die Kurve entsteht also wirklich aus dem Zufall
+    und nicht aus einer eingesetzten Formel. Nachgemessen: 12 Versuche mit 1000 Würfeln und
+    p = 50 % ergaben im Mittel 502,8 übrige nach dem ersten Wurf.
   - **Periodensystem** und **Nuklidkarte** sind unverändert die bisherigen Werkzeuge (siehe unten) –
     sie laufen im Reiter weiter wie zuvor.
   - **Eine Knopfgruppe für alle vier Reiter:** Rechts in der Reiterleiste stehen **A−/A+**,
