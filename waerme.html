@@ -582,26 +582,33 @@ function malTeilchen(x,y,w,h,Kv,st,tempF){
   txtPass('Teilchenmodell · '+nm,x+w/2,y+h+14*K,w,{sz:13*K,fett:true,farbe:'#475569'});
 }
 /* ---------- Balken für die innere Energie ----------
-   Er wächst auch dann weiter, wenn die Temperatur beim Schmelzen und Sieden stehen bleibt. */
-function malEBalken(x,y,w,h,Kv,st){
-  const bw=Math.min(w*0.56,30*K), bx=x+(w-bw)/2;
-  txtPass('innere',x+w/2,y-25*K,w+14*K,{sz:12*K,fett:true,farbe:'#475569'});
-  txtPass('Energie',x+w/2,y-12*K,w+14*K,{sz:12*K,fett:true,farbe:'#475569'});
-  rr(bx,y,bw,h,6); ctx.fillStyle='#f1f5f9'; ctx.fill();
-  ctx.strokeStyle='#94a3b8'; ctx.lineWidth=1.6; ctx.stroke();
-  ctx.save(); rr(bx,y,bw,h,6); ctx.clip();
-  const f=Math.max(0,Math.min(1,st.E/Math.max(1,Kv.EGes))), fh=h*f;
-  const g=ctx.createLinearGradient(0,y+h,0,y);
+   Er liegt waagerecht unter der Achse und benutzt dieselbe Skala - die Achse ist ja
+   nichts anderes als die zugeführte Energie. So laufen Marke und Balken zusammen,
+   und man sieht: Beim Schmelzen und Sieden wächst er weiter, obwohl die Temperatur
+   stehen bleibt. */
+function malEBalken(L,R,y,h,Kv,st,X){
+  rr(L,y,R-L,h,5); ctx.fillStyle='#f1f5f9'; ctx.fill();
+  ctx.strokeStyle='#94a3b8'; ctx.lineWidth=1.4; ctx.stroke();
+  const xe=X(Math.max(0,Math.min(Kv.EGes,st.E)));
+  ctx.save(); rr(L,y,R-L,h,5); ctx.clip();
+  const g=ctx.createLinearGradient(L,0,R,0);
   g.addColorStop(0,'#fbbf24'); g.addColorStop(1,'#dc2626');
-  ctx.fillStyle=g; ctx.fillRect(bx,y+h-fh,bw,fh);
+  ctx.fillStyle=g; ctx.fillRect(L,y,xe-L,h);
   ctx.strokeStyle='#cbd5e1'; ctx.lineWidth=1;        /* Grenzen der Abschnitte */
-  Kv.ab.forEach(a=>{ const yy=y+h-h*(a.E2/Math.max(1,Kv.EGes));
-    ctx.beginPath(); ctx.moveTo(bx,yy); ctx.lineTo(bx+bw,yy); ctx.stroke(); });
+  Kv.ab.forEach(a=>{ const xx=X(a.E2);
+    ctx.beginPath(); ctx.moveTo(xx,y); ctx.lineTo(xx,y+h); ctx.stroke(); });
   ctx.restore();
   ctx.strokeStyle='#b91c1c'; ctx.lineWidth=2;
-  ctx.beginPath(); ctx.moveTo(bx-3,y+h-fh); ctx.lineTo(bx+bw+3,y+h-fh); ctx.stroke();
-  txtPass(en(st.E),x+w/2,y+h+14*K,w+20*K,{sz:12.5*K,fett:true,farbe:'#b91c1c'});
-  if(Math.abs(D.Wst||0)>1) txtPass('Arbeit '+en(D.Wst),x+w/2,y+h+29*K,w+26*K,{sz:11.5*K,fett:true,farbe:'#7c3aed'});
+  ctx.beginPath(); ctx.moveTo(xe,y-3); ctx.lineTo(xe,y+h+3); ctx.stroke();
+  /* Die Beschriftung steht im Balken selbst - links daneben ist kein Platz, dort
+     stehen die Zahlen der Temperaturachse. Über der Füllung wird sie weiß. */
+  ctx.font='700 '+(12*K)+'px -apple-system,BlinkMacSystemFont,Arial,sans-serif';
+  const bt='innere Energie', bb=ctx.measureText(bt).width;
+  txt(bt,L+7*K,y+h/2,{al:'left',sz:12*K,fett:true,farbe:(xe>L+bb+10*K)?'#ffffff':'#64748b'});
+  /* Der Wert steht neben dem Ende des Balkens, solange dort Platz ist */
+  const re=(xe<(L+R)/2), tx=xe+(re?8*K:-8*K);
+  txt(en(st.E)+(Math.abs(D.Wst||0)>1?'  (Arbeit '+en(D.Wst)+')':''),tx,y+h/2,
+    {al:re?'left':'right',sz:12.5*K,fett:true,farbe:'#b91c1c',rand:'#fff',randB:3});
 }
 
 /* ---------- Reiter 1: Erwärmungskurve ---------- */
@@ -609,9 +616,10 @@ function zeichneKurve(){
   const Kv=kurve(), st=standKurve(Kv,D.E), s=Kv.s;
   const glH=D.gl?Math.round((Kv.ab.length+2)*17*K+12):0;
   const tw=D.teilchen?Math.min(360*K,W*0.40):0;
-  const ebW=D.ebalken?Math.min(78*K,W*0.12):0;
-  /* unten bleiben 14 px frei, damit die Achsenbeschriftung nicht in die Hinweiszeile läuft */
-  const L=66*K, R=W-tw-ebW-((tw||ebW)?26*K:18*K), T=26*K, B=H-glH-54*K;
+  /* Der Energiebalken liegt unter der Achse und braucht dort eine Zeile.
+     Unten bleiben 14 px frei, damit die Achsenbeschriftung nicht in die Hinweiszeile läuft. */
+  const ebH=D.ebalken?16*K:0;
+  const L=66*K, R=W-tw-(tw?26*K:18*K), T=26*K, B=H-glH-54*K-(D.ebalken?34*K:0);
   /* Achsenbereiche */
   const xMax=Math.max(1e-9,Kv.EGes), Tlo=Kv.Tlo-8, Thi=Kv.Thi+8;
   const X=v=>L+(R-L)*(v/xMax), Y=T0=>B-(B-T)*((T0-Tlo)/(Thi-Tlo));
@@ -634,7 +642,7 @@ function zeichneKurve(){
         ?(Pw()<0?' (gekühlt':' (geheizt')+' wird mit '+zahl(Math.abs(Pw()),0)+' W'
           +(rf>1?' · Zeitraffer '+zahl(rf,0)+' : 1':'')+')'
         :' (Leistung 0 W)'),
-    (L+R)/2,B+30*K,{sz:13*K,fett:true,farbe:'#475569'});
+    (L+R)/2,B+30*K+(D.ebalken?34*K:0),{sz:13*K,fett:true,farbe:'#475569'});
   /* Kurve: waagrechte Stücke sind die Übergänge */
   Kv.ab.forEach(x=>{ const halt=istHalt(x.art);
     const x1=X(x.E1), x2=X(x.E2);
@@ -648,6 +656,8 @@ function zeichneKurve(){
   const mx=X(st.E), my=Y(st.T);
   ctx.strokeStyle='rgba(100,116,139,.5)'; ctx.lineWidth=1.4; ctx.setLineDash([5,4]);
   ctx.beginPath(); ctx.moveTo(L,my); ctx.lineTo(mx,my); ctx.lineTo(mx,B); ctx.stroke(); ctx.setLineDash([]);
+  if(D.ebalken){ ctx.setLineDash([5,4]); ctx.strokeStyle='rgba(185,28,28,.5)'; ctx.lineWidth=1.4;
+    ctx.beginPath(); ctx.moveTo(mx,B); ctx.lineTo(mx,B+24*K); ctx.stroke(); ctx.setLineDash([]); }
   ctx.fillStyle='#1f2430'; ctx.beginPath(); ctx.arc(mx,my,6*K,0,7); ctx.fill();
   ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.stroke();
   { const re=(mx<(L+R)/2);        /* links vom Bild: Text nach rechts, sonst nach links */
@@ -669,8 +679,7 @@ function zeichneKurve(){
       txtPass(G.ga>0.02?'am Griff ziehen: Arbeit am Gas':'Flüssigkeit und Festkörper lassen sich kaum zusammendrücken',
         tx+tw/2,ty-32*K,tw,{sz:12*K,fett:true,farbe:G.ga>0.02?'#7c3aed':'#94a3b8'}); } }
   else STG=null;
-  if(D.ebalken){ const ey=T+34*K, eh=Math.max(40,B-ey-46*K);
-    malEBalken(W-tw-ebW-(tw?14*K:6*K),ey,ebW,eh,Kv,st); }
+  if(D.ebalken) malEBalken(L,R,B+24*K,ebH,Kv,st,X);
   /* Gleichungen */
   if(D.gl){ let y=H-glH+6*K;
     /* Breite der ersten Spalte aus dem laengsten Eintrag - sonst ueberlappen die Spalten */

@@ -2751,11 +2751,13 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     ohne dass Zeit vergeht. Die **Dauer** steht trotzdem dabei – in der Marke und bei den
     Gleichungen –, solange nur geheizt wird. Nebenbei sieht man so unmittelbar, **wie viel Energie**
     jeder Abschnitt braucht: Das Sieden ist das mit Abstand breiteste Stück.
-  - **Innere Energie (Knopf „Energie"):** ein senkrechter **Balken** zwischen Diagramm und
-    Teilchenmodell. Er zeigt, dass die innere Energie **auch dann weiter wächst, wenn die
-    Temperatur stehen bleibt**: Beim Sieden von 0,5 kg Wasser läuft er von 398 kJ auf 1526 kJ,
-    während das Thermometer die ganze Zeit 100 °C zeigt. Feine Striche markieren die Grenzen der
-    Abschnitte; unten steht der Wert und, falls mit dem Stempel gearbeitet wurde, die **Arbeit**.
+  - **Innere Energie (Knopf „Energie"):** ein **waagerechter Balken unmittelbar unter der
+    Achse**, in derselben Skala – die Achse ist ja nichts anderes als die zugeführte Energie.
+    Marke und Balken laufen deshalb zusammen, eine gestrichelte Linie verbindet beide. Er zeigt,
+    dass die innere Energie **auch dann weiter wächst, wenn die Temperatur stehen bleibt**: Beim
+    Sieden von 0,5 kg Wasser läuft er von 398 kJ auf 1526 kJ, während das Thermometer die ganze
+    Zeit 100 °C zeigt. Feine Striche markieren die Grenzen der Abschnitte; am Ende der Füllung
+    steht der Wert und, falls mit dem Stempel gearbeitet wurde, die **Arbeit**.
   - **Stempel (Knopf „Stempel"):** ein Kolben von oben, der am Griff **hineingedrückt und wieder
     herausgezogen** wird. Damit gibt es die **zweite Möglichkeit, die innere Energie zu ändern** –
     nicht Wärme zuführen, sondern **Arbeit verrichten**: W = p · ΔV wandert an dieselbe Stelle wie
@@ -2766,7 +2768,7 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     lassen sich nicht zusammendrücken – dort setzt der Stempel nur auf und verrichtet keine Arbeit;
     am rechten Rand des Diagramms bleibt er stehen, weil die innere Energie dort nicht weiter kann.
     Das Hineindrücken sieht man an **drei Stellen zugleich**: Die Marke im Diagramm wandert nach
-    rechts und oben, der Energiebalken steigt, und die **Gasteilchen werden schneller** (gemessen
+    rechts und oben, der Energiebalken wächst mit, und die **Gasteilchen werden schneller** (gemessen
     von 20 auf 33 Bildpunkte je Sekunde). Dass der Kasten dabei schrumpft, wird herausgerechnet –
     sonst sähen die Teilchen trotz höherer Temperatur langsamer aus.
     Mit **ausgeschalteter Heizung** sieht man den Fall sauber: Vorlage *Nur Arbeit, keine Wärme* –
@@ -3074,9 +3076,11 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   sich seinen Stand, auch über das Speichern des Projekts hinweg. Die Reiter sind als
   **Reiterleiste** gestaltet (der gewählte ist unterstrichen), nicht als Knopfreihe.
   - **Zerfall** (fünfter Reiter): das **Würfelmodell** des radioaktiven Zerfalls. Links liegt das
-    Feld der Würfel (blau = noch da, rot = gerade zerfallen, grau = schon zerfallen), rechts
-    entsteht Wurf für Wurf die **Zerfallskurve**. **würfeln** macht einen Wurf, **▶ laufen**
-    würfelt alle 0,7 s weiter, **↺** fängt von vorn an.
+    Feld der Würfel (blau = noch da, rot = gerade zerfallen), rechts entsteht Wurf für Wurf die
+    **Zerfallskurve**. Die Bedienung steht in **zwei Zeilen**: oben alles, was mit den **Würfeln**
+    zu tun hat (würfeln, ▶ laufen, ↺, Zahl der Kerne, Wahrscheinlichkeit, Augen, Zwischenschritt),
+    unten der **Stoff** und was im **Diagramm** zu sehen ist (Halbwertszeit, Ablesen, Tabelle).
+    **würfeln** macht einen Wurf, **▶ laufen** würfelt alle 0,7 s weiter, **↺** fängt von vorn an.
     - **Zahl der Würfel:** von 10 bis **1 000 000** in Stufen (10, 20, 50, 100 … 200 000, 500 000,
       1 000 000) oder durch Antippen der Zahl frei eingebbar. Ein Wurf über alle 100 000 dauert rund
       **11 ms**, über eine Million **58 ms**, das Zeichnen 9 ms. Ab etwa 3000 Würfeln wird das Feld
