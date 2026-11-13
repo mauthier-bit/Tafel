@@ -3596,8 +3596,18 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     Emitter zur Basisschicht und von dort weiter zum Kollektor, ein kleiner Teil über die Basis;
     im Elektronenbild in der umgekehrten Richtung. Sperrt der Transistor, bewegt sich nichts
     und I_B, I_C werden als 0 angezeigt.
-  - **Vorlagen:** einfacher Stromkreis, Reihen-, Parallel-, gemischte Schaltung, Diode, Messgeräte,
+  - **Vorlagen:** einfacher Stromkreis, Reihen-, Parallel-, gemischte Schaltung, **Und-Schaltung**,
+    **Oder-Schaltung**, **Wechselschaltung**, Diode, Messgeräte,
     Kondensator laden/entladen, Wechselspannung, Transistor als Schalter, Spule, leeres Blatt.
+    - **Und-Schaltung:** zwei Schalter **hintereinander** – die Lampe leuchtet nur, wenn **beide**
+      geschlossen sind (nachgemessen: 0 / 0 / 0 / 497 mA).
+    - **Oder-Schaltung:** zwei Schalter **nebeneinander** – die Lampe leuchtet, sobald **einer**
+      geschlossen ist (0 / 497 / 497 / 497 mA). Beide Vorlagen starten mit offenen Schaltern, so
+      dass die Klasse die vier Fälle selbst durchprobieren kann.
+    - **Wechselschaltung** (Flur, Treppenhaus): zwei **Wechselschalter**, dazwischen die beiden
+      **korrespondierenden Leitungen**. Jeder der beiden schaltet das Licht um, egal wie der andere
+      gerade steht – die Lampe brennt, wenn die Schalter **verschieden** stehen (gemessen
+      497 mA bei verschiedenen, 0 mA bei gleichen Stellungen). Sie startet mit brennender Lampe.
   - **📈 Diagramm:** Bauteil antippen → „📈 Diagramm" blendet ein verschiebbares Fenster mit dem
     **zeitlichen Verlauf von Spannung U und Stromstärke I** an diesem Bauteil ein (Nulllinien beider
     Achsen auf gleicher Höhe, beim Transistor U_CE und I_C, bei Quellen der abgegebene Strom). U/I
