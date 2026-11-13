@@ -3081,11 +3081,10 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     zu tun hat (würfeln, ▶ laufen, ↺, Zahl der Kerne, Wahrscheinlichkeit, Augen, Zwischenschritt),
     unten der **Stoff** und was im **Diagramm** zu sehen ist (Halbwertszeit, Ablesen, Tabelle).
     **würfeln** macht einen Wurf, **▶ laufen** würfelt von selbst weiter, **↺** fängt von vorn an.
-    Der **Temporegler** daneben bestimmt, wie schnell: ganz links ein Schritt alle **2 s** – man
-    sieht jeden einzelnen lange –, ganz rechts alle **0,06 s**, dann rauscht es durch (gemessen
-    25 Schritte in 1,5 s, auch mit einer Million Würfeln). Dazwischen logarithmisch, damit sich
-    das langsame Ende so fein einstellen lässt wie das schnelle; die Zeit je Schritt steht daneben.
-    Wird der Regler während des Laufens bewegt, läuft es sofort im neuen Takt weiter.
+    Das **Tempo** daneben hat sieben Stufen (−/+): **Stufe 1** ist ein Schritt alle **2 s** – man
+    sieht jeden einzelnen lange –, **Stufe 3** die Vorgabe mit 0,7 s, **Stufe 7** alle **0,06 s**,
+    dann rauscht es durch (gemessen 20 Schritte in 1,2 s, auch mit 100 000 Würfeln). Wird das
+    Tempo während des Laufens geändert, läuft es sofort im neuen Takt weiter.
     - **Zahl der Würfel:** von 10 bis **1 000 000** in Stufen (10, 20, 50, 100 … 200 000, 500 000,
       1 000 000) oder durch Antippen der Zahl frei eingebbar. Ein Wurf über alle 100 000 dauert rund
       **11 ms**, über eine Million **58 ms**, das Zeichnen 9 ms. Ab etwa 3000 Würfeln wird das Feld

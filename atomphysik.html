@@ -38,7 +38,6 @@
   .bar label{display:inline-flex;gap:4px;align-items:center;font-weight:600;white-space:nowrap;}
   .bar .trenn{width:1px;height:20px;background:#e3e8ef;}
   .bar.bar2{background:#fafbfd;}      /* zweite Leiste leicht abgesetzt */
-  .bar input[type=range]{width:92px;height:22px;accent-color:#2563eb;}
   /* „würfeln" und „wegnehmen" wechseln sich ab - der Knopf behaelt dabei seine
      Breite, sonst wandert beim Laufen die ganze Leiste hin und her. */
   #zWurf{min-width:7.4em;text-align:center;}
@@ -285,9 +284,9 @@
         <button type="button" id="zWurf" title="Alle übrigen Kerne einmal würfeln lassen">würfeln</button>
         <button type="button" id="zLauf" title="Immer weiter würfeln">▶ laufen</button>
         <b>Tempo</b>
-        <input type="range" id="zTmp" min="0" max="100" step="1" value="30"
-               title="Wie schnell „laufen" würfelt und wegnimmt – links langsam, rechts schnell">
-        <span class="wert" id="ztV" style="min-width:4.4em">0,70 s</span>
+        <button type="button" id="zTmM" title="langsamer würfeln">−</button>
+        <span class="wert" id="ztV">3</span>
+        <button type="button" id="zTmP" title="schneller würfeln">+</button>
         <button type="button" id="zNeu" title="Von vorn mit allen Kernen">↺</button>
         <span class="trenn"></span>
         <b>Kerne</b>
@@ -339,7 +338,7 @@ let D={ v:1, tab:'pse', fontSize:13, fontBold:false, fontItalic:false,
         hz:11, he:null, hs:true,            /* Hülle: Ordnungszahl, gesetzte Elektronen (null = alle), Schalenbild */
         kz:6, kn:6, kmag:true, ksub:false,  /* Kern: Protonen, Neutronen, magische Zahlen, Unterschalen */
         zn:200, zp:16.7, zreihe:null, zhalb:false,  /* Zerfall: Kerne, Wahrscheinlichkeit, Verlauf */
-        zschritt:false, zphase:'weg', zpunkt:false, zpn:0, ztabAb:undefined, znuk:0, zzeit:false, ztempo:30,
+        zschritt:false, zphase:'weg', zpunkt:false, zpn:0, ztabAb:undefined, znuk:0, zzeit:false, ztempo:2,
         pse:null, nuklid:null };
 
 const fontStr=(px,bold)=>(D.fontItalic?'italic ':'')+((bold||D.fontBold)?'800 ':'600 ')+px+'px -apple-system,BlinkMacSystemFont,sans-serif';
@@ -526,10 +525,13 @@ function zSchritt(){
     setzeZerfall(); zeichneZerfall(); sync(); return; }
   zerfallWurf();
 }
-/* Tempo: 0 = alle 2 s, 100 = alle 0,06 s. Dazwischen logarithmisch, damit sich das
-   langsame Ende ebenso fein einstellen lässt wie das schnelle. */
-const zTempo=()=>Math.max(0,Math.min(100,D.ztempo===undefined?30:+D.ztempo||0));
-const zTakt=()=>Math.round(2000*Math.pow(0.03,zTempo()/100));
+/* Tempo in sieben Stufen: von einem Schritt alle 2 s bis zu einem alle 0,06 s.
+   Ältere Stände hatten hier einen Regler von 0 bis 100 - der wird umgerechnet. */
+const Z_TAKT=[2000,1200,700,400,200,100,60];
+function zTempo(){ let v=(D.ztempo===undefined)?2:(+D.ztempo||0);
+  if(v>6) v=Math.round(v/100*(Z_TAKT.length-1));
+  return Math.max(0,Math.min(Z_TAKT.length-1,Math.round(v))); }
+const zTakt=()=>Z_TAKT[zTempo()];
 function zerfallLauf(an){ if(zTimer){ clearInterval(zTimer); zTimer=null; }
   if(an) zTimer=setInterval(()=>{ if(zLebt()<=0&&D.zphase!=='wurf'){ zerfallLauf(false); setzeZerfall(); return; } zSchritt(); },zTakt());
   const b=$('zLauf'); if(b){ b.classList.toggle('on',!!zTimer); b.textContent=zTimer?'⏸ anhalten':'▶ laufen'; } }
@@ -545,8 +547,8 @@ function setzeZerfall(){ if(!$('zaV')) return;
   $('zTab').classList.toggle('on',!!D.ztab);
   $('zPkt').classList.toggle('on',!!D.zpunkt);
   $('zSchr').classList.toggle('on',!!D.zschritt);
-  const tr=$('zTmp'); if(tr&&document.activeElement!==tr) tr.value=String(zTempo());
-  if($('ztV')) $('ztV').textContent=zahlD(zTakt()/1000,2)+' s';
+  if($('ztV')){ $('ztV').textContent=String(zTempo()+1);
+    $('ztV').title='ein Schritt alle '+zahlD(zTakt()/1000,2)+' s'; }
   const zz=$('zZeit'); if(zz){ zz.classList.toggle('on',!!D.zzeit&&!!zNukOf()); zz.disabled=!zNukOf();
     zz.style.opacity=zNukOf()?'1':'.45'; }
   const sl=$('zNuk'); if(sl){ sl.value=D.znuk?String(D.znuk):'';
@@ -1204,10 +1206,12 @@ $('zAug').onclick=()=>{ D.zaugen=!zAugen(); if(zAugen()) D.zp=zK()*100/6; zerfal
                  :'Ohne Augen ist die Wahrscheinlichkeit frei einstellbar'); };
 $('zTab').onclick=()=>{ D.ztab=!D.ztab; setzeZerfall(); zeichneZerfall(); sync(); };
 $('zCsv').onclick=zerfallCsv;
-$('zTmp').oninput=()=>{ D.ztempo=+$('zTmp').value;
-  $('ztV').textContent=zahlD(zTakt()/1000,2)+' s';
+function zTempoUm(d){ D.ztempo=Math.max(0,Math.min(Z_TAKT.length-1,zTempo()+d));
+  setzeZerfall();
   if(zTimer) zerfallLauf(true);               /* läuft gerade: mit neuem Takt weiter */
-  sync(); };
+  sync(); }
+$('zTmM').onclick=()=>zTempoUm(-1);
+$('zTmP').onclick=()=>zTempoUm(1);
 $('zZeit').onclick=()=>{ if(!zNukOf()){ toast2('Erst einen Stoff wählen'); return; }
   D.zzeit=!D.zzeit; setzeZerfall(); zeichneZerfall(); sync();
   toast2(D.zzeit?'Waagerecht steht jetzt die Zeit':'Waagerecht stehen wieder die Würfe'); };
