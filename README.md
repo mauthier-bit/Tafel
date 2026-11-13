@@ -2729,10 +2729,11 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     **Kernenergie** (E = Δm·c²).
   - **Mehrere Reservoire am Anfang:** Der Knopf **Reservoir** stellt bis zu drei nebeneinander; ihre
     Energien **addieren sich** (im Bild mit **+** und einer eigenen Zeile E_ges = E₁ + E₂).
-  - **Wandler:** **Umwandlung** hängt einen Wandler mit neuem Reservoir an – Fallen, schiefe Ebene
-    (hinauf und hinunter), Flaschenzug, Hebel, Katapult, Armbrust, Feder, Trampolin, Gummiseil,
-    Generator, Motor, Lampe, Solarzelle, Reibung, Feuer, Heizplatte, Schmelzen/Verdampfen, Batterie,
-    Akku laden, Verbrennungsmotor, Muskel, Pendel, Kernreaktor oder ein frei wählbarer Wandler. Jeder
+  - **Wandler:** **Umwandlung** hängt einen Wandler mit neuem Reservoir an – Fallen, **Pendeln**
+    (abwärts und aufwärts), schiefe Ebene (hinunter und hinauf), Flaschenzug, Hebel, Katapult,
+    Armbrust, Feder, Trampolin, Gummiseil, Generator, **Windrad**, Motor, Lampe, Solarzelle,
+    Reibung, Feuer, Heizplatte, Schmelzen/Verdampfen, Batterie, Akku laden, Verbrennungsmotor,
+    Muskel, Kernreaktor oder ein frei wählbarer Wandler. Jeder
     bringt seine **Energieform am Ausgang** und einen **Wirkungsgrad** als Anhaltswert mit.
   - **Zeitregler und „Ablauf":** Der Regler schiebt die Energie durch die Kette. Dabei **leert sich
     das vordere Reservoir, während sich das hintere füllt** – und die charakteristischen Größen
@@ -2747,8 +2748,10 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     **mit Zahlen**. Unter jeder Stufe stehen dann die Formel der Energieform, die Umwandlung
     (E_zu = η · E_ab) und die **Umkehrung** zur charakteristischen Größe (v = √(2·E/m)), jeweils mit
     den Werten des **aktuellen** Standes – wer den Zeitregler bewegt, sieht die Zahlen mitlaufen.
-  - **Vorlagen:** Fallender Stein, Pendel, Katapult, Wasserkraftwerk, Auto bremst, Wasserkocher,
-    Eis schmilzt, Taschenlampe, Solarlampe, Kernkraftwerk, Zwei Reservoire, leeres Blatt.
+  - **Vorlagen:** Fallender Stein, Pendel, Katapult, Wasserkraftwerk, **Windrad**, Auto bremst,
+    Wasserkocher, Eis schmilzt, Taschenlampe, Solarlampe, Kernkraftwerk, Zwei Reservoire,
+    leeres Blatt. Beim **Pendel** sieht man an der Höhe, was die Verluste ausmachen: Aus 0,40 m
+    werden nach Hin- und Rückweg 0,37 m (98 % · 95 %).
   - Antippen wählt ein Reservoir oder einen Wandler aus; alles Weitere steht dann in der zweiten
     Zeile (Energieform, Größen mit − / + oder durch Antippen des Wertes eingeben, Löschen).
     Dazu **Zurück/Vor**, **Schrift A−/A+**, **Bild → Tafel**, **Kopieren** und **Teilen (QR-Code)**.
