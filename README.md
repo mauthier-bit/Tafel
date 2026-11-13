@@ -3102,7 +3102,12 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
       Treffer wie bisher gleich mit weg.
     - **Ausschnitt:** Mit **zwei Fingern** lässt sich ins Diagramm hineinzoomen (bis 500-fach), ein
       Finger verschiebt den Ausschnitt, ein **Doppeltipp** stellt ihn zurück; am Rechner zoomt das
-      Mausrad. Damit sieht man den eigentlichen Punkt: Bei **vielen** Würfeln bleibt die Kurve auch
+      Mausrad (mit Umschalt nur waagerecht, mit Alt nur senkrecht).
+      **Die Richtung der Fingergeste entscheidet, welche Achse gedehnt wird:** Liegen die Finger
+      nebeneinander (bis 25°), wird nur **waagerecht** gezoomt, übereinander (ab 65°) nur
+      **senkrecht**, dazwischen **beides**. Gemessen bei einer Geste auf das Doppelte: waagerecht
+      ↔ 2,0 / ↕ 1,0 – senkrecht ↔ 1,0 / ↕ 2,0 – schräg ↔ 2,0 / ↕ 2,0. Oben steht, wie weit jede
+      Achse gedehnt ist. Damit sieht man den eigentlichen Punkt: Bei **vielen** Würfeln bleibt die Kurve auch
       stark vergrößert glatt und liegt auf der erwarteten Kurve, bei **wenigen** wird sie
       sprunghaft und weicht sichtbar ab – Zufall im Großen und im Kleinen.
     - **Augen:** Bei wenigen Würfeln (bis etwa 100) zeigt jeder Würfel seine **Augenzahl** – und es
@@ -3119,6 +3124,8 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
       bei einer Sechs 0,263 davon. Für **Radon-222** (3,82 d) ist **ein Wurf ≙ 1 Tag**, für
       **C-14** (5730 a) **1,5 ka**. Die Zeit steht an der Achse, bei der Halbwertszeit
       („≈ 3,8 Würfe ≙ 5,7 ka") und am Ablesepunkt („Wurf 4 · t = 6 ka").
+      Der Knopf **„Zeit"** trägt waagerecht die **Zeit statt der Würfe** auf (mit eigener,
+      runder Einteilung: 0, 2, 4 … ka); die **Tabelle zeigt dann beides**, Wurf **und** Zeit.
       Umgekehrt geht es auch: Ein Tippen auf „1 Wurf ≙ …" fragt nach der gewünschten Zeit je Wurf
       („1000 a", „5 d", „30 min") und stellt die **Wahrscheinlichkeit** passend ein – für C-14 und
       1000 Jahre je Wurf sind das 11,39 %. Was auf weniger als 1 % oder mehr als 90 % hinausliefe,
@@ -3136,6 +3143,11 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
       Mausrad) lässt sich darin **blättern**, kleine Dreiecke und die Fußzeile sagen, wo man ist. Daran sieht man das Entscheidende: ΔN wird immer kleiner, weil N kleiner wird –
       das Verhältnis bleibt bei der Zerfallswahrscheinlichkeit. Beispiel mit 20 000 Würfeln:
       3285, 2876, 2370, 1862, 1551 zerfallene Würfel bei 16,4 / 17,2 / 17,1 / 16,2 / 16,1 %.
+    - **CSV:** sichert alle Würfe als **CSV-Datei** für die Tabellenkalkulation – mit Semikolon
+      und Komma wie in den anderen Werkzeugen, einem Kopf aus Kernzahl, Wahrscheinlichkeit,
+      Würfelregel, Stoff, Halbwertszeit und Zeit je Wurf und den Spalten **Wurf, Zeit, N vorher,
+      ΔN zerfallen, ΔN : N, N nachher**. Die Zeile zum Wurf 0 bringt den Anfangswert mit, so dass
+      sich N(t) unmittelbar auftragen lässt.
     - **Halbwertszeit:** legt die erwartete Kurve N₀·(1−p)^n und die Halbwertszeit darüber (bei
       einer Sechs: 3,8 Würfe). Sie ist **anfangs aus** – erst die eigene Messung, dann der
       Vergleich mit der Theorie.
