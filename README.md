@@ -2804,14 +2804,19 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     **Mars** ist es umgekehrt: Deferent die Marsbahn, Epizykel die **Erdbahn** – deshalb wird er
     rückläufig, wenn die Erde ihn überholt. Die beiden Arme enden **genau** beim gezeichneten Planeten,
     denn geozentrischer Ort = (Planet − Sonne) + (Sonne − Erde).
-  - **Bahnen, Ebenen, Schatten, Sterne** lassen sich einzeln einblenden. Die beiden **Bahnebenen**
+  - **Bahnen, Ebenen, Schatten, Sterne** lassen sich einzeln einblenden. Die drei **Ebenen**
     haben **je einen eigenen Schalter** und **je einen Regler für die Größe** der Scheibe (30 bis
     300 %), so dass man sie einzeln zeigen und so groß machen kann, wie es zum Bild passt:
     die **Sonnenbahnebene** (heliozentrisch die Erdbahnebene, am Ort die **Ekliptik** mit dem
-    Tierkreis) und die **Mondbahnebene**. Sind **beide** eingeblendet, erscheint zusätzlich die
+    Tierkreis), die **Mondbahnebene** und die **Äquatorebene der Erde**. Sind die beiden
+    *Bahn*ebenen eingeblendet, erscheint zusätzlich die
     **Knotenlinie** – sie ist die Schnittgerade der beiden Ebenen und hat allein keinen Sinn. Aus der
     Nähe liegen beide Scheiben um die Erde, und man sieht die 5,1°
-    – damit wird sichtbar, warum es nicht bei jedem Neumond eine Finsternis gibt. Die
+    – damit wird sichtbar, warum es nicht bei jedem Neumond eine Finsternis gibt.
+    Die **Äquatorebene der Erde** ist die Scheibe senkrecht zur Erdachse (hellblau wie der
+    Himmelsäquator, nur von außen): Zusammen mit der Sonnenbahnebene sieht man die **23,4°** der
+    Erdachse unmittelbar, und weil die Scheibe beim Umlauf **immer gleich geneigt** bleibt, auch,
+    warum es Jahreszeiten gibt. Die
     Erdkugel bekommt ab einer gewissen Größe **Gradnetz, Wendekreise, Polarkreise und Achse**, dazu
     die **Tag-Nacht-Grenze**: So sind die **Jahreszeiten** zu zeigen.
   - **Grundfälle für den Unterricht:** Ganz oben in der Ereignisliste stehen fünf Fälle, bei denen das

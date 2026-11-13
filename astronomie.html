@@ -714,7 +714,7 @@ function suchen(art,t0){
    Zustand
    ============================================================ */
 const standard=()=>({ v:1, tab:'system', fontSize:14, fontBold:false, fontItalic:false,
-  sys:{ t:0, lauf:false, tempo2:355, echt:false, stufe:'ansch', sf:SF_STD, bahnen:true, ebeneSonne:false, ebeneSonneGr:100, ebeneMond:false, ebeneMondGr:100, schatten:true,
+  sys:{ t:0, lauf:false, tempo2:355, echt:false, stufe:'ansch', sf:SF_STD, bahnen:true, ebeneSonne:false, ebeneSonneGr:100, ebeneMond:false, ebeneMondGr:100, ebeneAequator:false, ebeneAequatorGr:100, schatten:true,
         sterne:true, namen:true, von:'aussen', ziel:'erde', bezug:'sonne', pip:'aus', pipZiel:'auto',
         lupe:false, tempoAlt2:355, letztes:null, wahl:null, ort:0, kuppelAn:false, kuppel:78,
         kuppelDreht:true, kuppelStd:12, kbSonne:true, kbMond:true, kbPlaneten:false,
@@ -983,7 +983,7 @@ function malEbenen(){
   const mRel=tt=>sub(ortZ('mond',tt),ortZ('erde',tt));           /* so, wie gezeichnet wird */
   const nMond=norm(kreuz(mRel(t),mRel(t+KOERPER.mond.T/4)));
   const rMond=betrag(sub(ortZ('mond',t),ortZ('erde',t)))*1.25;
-  const fS=ebeneGr('ebeneSonneGr'), fM=ebeneGr('ebeneMondGr');
+  const fS=ebeneGr('ebeneSonneGr'), fM=ebeneGr('ebeneMondGr'), fA=ebeneGr('ebeneAequatorGr');
   /* Heliozentrisch laeuft die Erde in dieser Ebene, geozentrisch die Sonne - dasselbe
      Blatt, nur anders herum gelesen. */
   const nameS=(S.bezug==='erde')?'Sonnenbahnebene':'Erdbahnebene';
@@ -1000,7 +1000,15 @@ function malEbenen(){
     scheibe(ep,rMond*fM,nMond,'rgba(226,232,240,.10)','rgba(226,232,240,.6)','Mondbahnebene','#e2e8f0');
     EBENEN.push({mitte:ep,normale:nMond,fuell:'rgba(226,232,240,.10)',strich:'rgba(226,232,240,.6)'});
   }
-  /* Die Knotenlinie ist die Schnittgerade der beiden Ebenen - sie hat nur einen Sinn,
+  /* Die Aequatorebene steht senkrecht auf der Erdachse und ist deshalb um die Schiefe
+     der Erdachse gegen die Ekliptik gekippt - zusammen mit der Sonnenbahnebene sieht man
+     die 23,4 Grad unmittelbar. Sie laeuft, anders als die beiden Bahnebenen, mit der
+     Erde mit, ohne sich zu drehen. */
+  if(S.ebeneAequator){
+    scheibe(ep,rMond*fA,ERDACHSE,'rgba(56,189,248,.10)','rgba(56,189,248,.6)','Äquatorebene der Erde','#7dd3fc');
+    EBENEN.push({mitte:ep,normale:ERDACHSE,fuell:'rgba(56,189,248,.10)',strich:'rgba(56,189,248,.6)'});
+  }
+  /* Die Knotenlinie ist die Schnittgerade der beiden Bahnebenen - sie hat nur einen Sinn,
      wenn auch beide zu sehen sind. */
   if(S.ebeneSonne&&S.ebeneMond){
     const O=(KOERPER.mond.O+KOERPER.mond.dO*t)*RAD;
@@ -1873,7 +1881,7 @@ function szeneMalen(){
   malSterne();                         /* der Sternhimmel gehört immer dazu */
   BAHNEN=[];                           /* sammelt, was später VOR den Kugeln nachzutragen ist */
   if(amOrt){ if(S.ebeneSonne) malEkliptik(); }
-  else if(S.ebeneSonne||S.ebeneMond) malEbenen();
+  else if(S.ebeneSonne||S.ebeneMond||S.ebeneAequator) malEbenen();
   if(S.aequator&&amOrt) malAequator();
   if(S.bahnen){ malBahnen();
     if(amOrt){ malTagbogen('sonne','rgba(253,224,71,.9)');
@@ -1886,7 +1894,7 @@ function szeneMalen(){
     .map(id=>({id,p:rahmen(ortZ(id,t))}));
   liste.sort((a,b)=>betrag(sub(b.p,KAM.pos))-betrag(sub(a.p,KAM.pos)));
   liste.forEach(o=>malKoerper(o.id,o.p));
-  if((S.ebeneSonne||S.ebeneMond)&&!amOrt) malEbenenVorn();   /* die Ebenen gehen durch die Kugeln hindurch */
+  if((S.ebeneSonne||S.ebeneMond||S.ebeneAequator)&&!amOrt) malEbenenVorn();   /* die Ebenen gehen durch die Kugeln hindurch */
   if(!amOrt) malBahnenVorn();               /* ebenso die Bahnen - die Mondbahn läuft vor der Erde vorbei */
   if(schattenAn()) malSchatten();
   malFlecken();                        /* liegen auf der Kugel, also über dem Kegel */
@@ -2169,6 +2177,7 @@ function grundfall(art){
   if(G.mittag) S.t=naechsterMittag(S.t);          /* mittags steht die Sonne am höchsten */
   /* Einzeln abgeschaltete Bahnen gehören nicht in einen Grundfall hinein. */
   S.bahnMond=S.bahnMerkur=S.bahnVenus=S.bahnMars=true;
+  S.ebeneAequator=false;          /* wie die beiden Bahnebenen: im Grundfall erst einmal weg */
   G.stellen(S);
   S.wahl={art:'grund',key:art,t:S.t};        /* Zeitpunkt merken: hält den Ort auf der Erde fest */
   S.lauf=false; laufStopp();
@@ -3101,6 +3110,9 @@ const ANZEIGEN=[
   {k:'ebeneMond',t:'Mond­bahn­ebene',
    h:'Um 5,1° gegen die Ekliptik geneigt – nur von außen. Zusammen mit der Sonnenbahnebene erscheint auch die Knotenlinie',
    gr:'ebeneMondGr'},
+  {k:'ebeneAequator',t:'Äquator­ebene der Erde',
+   h:'Senkrecht zur Erdachse – um 23,4° gegen die Ekliptik gekippt. Nur von außen',
+   gr:'ebeneAequatorGr'},
   {k:'schatten',t:'Schattenkegel',
    h:'Kern- und Halbschatten von Erde und Mond – nur von außen und nicht im anschaulichen Modell'},
   {gruppe:'Erde, Ort und Himmel'},
@@ -3157,8 +3169,10 @@ function anzeigenStand(){
       (S.bahnen&&zeigeKoerper(el.dataset.fuer))?'1':'.5'; }
     if(k==='schatten'){ el.closest('.chk').style.opacity=(S.von==='aussen')?'1':'.55'; }
     if(k==='epizykel'){ el.closest('.chk').style.opacity=(S.bezug==='erde'&&S.von==='aussen')?'1':'.55'; }
-    /* Die Mondbahnebene gibt es nur von außen - am Ort zeigt der Himmel nur die Ekliptik. */
-    if(k==='ebeneMond'){ el.closest('.chk').style.opacity=(S.von==='aussen')?'1':'.55'; } });
+    /* Mondbahnebene und Äquatorebene gibt es nur von außen - am Ort zeigt der Himmel
+       die Ekliptik und den Himmelsäquator. */
+    if(k==='ebeneMond'||k==='ebeneAequator'){
+      el.closest('.chk').style.opacity=(S.von==='aussen')?'1':'.55'; } });
   document.querySelectorAll('[data-zeile]').forEach(z=>{ z.hidden=!S[z.dataset.zeile]; });
   document.querySelectorAll('[data-gr]').forEach(r=>{ const k=r.dataset.gr;
     const v=(S[k]===undefined?100:S[k]); r.value=String(v);
@@ -3362,9 +3376,9 @@ const HILFE={
     '<b>Weltbild des Ptolemäus</b>. Bei jedem Himmelskörper steht links der Haken für den <b>Körper</b> und '+
     'rechts daneben einer für seine <b>Bahn</b>; <b>alle Bahnkurven</b> ist der Hauptschalter darüber. '+
     'Im Einzelnen: <b>Sonnenbahnebene</b> (vom Ort aus die Ekliptik mit '+
-    'dem Tierkreis) und <b>Mondbahnebene</b> – beide einzeln und je mit einem Regler für die <b>Größe</b> der '+
-    'Scheibe; die <b>Knotenlinie</b> erscheint, sobald beide Ebenen zu sehen sind, denn sie ist deren '+
-    'Schnittgerade. Dazu Schattenkegel, die <b>vier Erden im Jahreslauf</b>, der <b>gewählte Ort</b> '+
+    'dem Tierkreis), <b>Mondbahnebene</b> und <b>Äquatorebene der Erde</b> – jede einzeln und je mit einem '+
+    'Regler für die <b>Größe</b> der Scheibe; die <b>Knotenlinie</b> erscheint, sobald die beiden '+
+    '<i>Bahn</i>ebenen zu sehen sind, denn sie ist deren Schnittgerade. Dazu Schattenkegel, die <b>vier Erden im Jahreslauf</b>, der <b>gewählte Ort</b> '+
     '(roter Punkt mit Namen) und seine <b>Bahn</b> '+
     '(heller Teil Tag, blauer Nacht – dazu steht die Tageslänge im Bild), die Horizontkuppel mit ihrem Radius, '+
     'der <b>Himmelsäquator</b> über dem Ort, <b>Deferent und Epizykel</b>, der <b>Sehstrahl Erde–Mars</b> '+
@@ -3372,7 +3386,11 @@ const HILFE={
     'einzeln wegschalten – der Körper, seine Bahn oder beides; bei den <b>Jahreszeiten</b> ist der Mond '+
     'voreingestellt aus, mit ihm auch die drei Planeten. Die Zahl am Knopf sagt, wie viel gerade '+
     'eingeblendet ist; die Haken für die einzelnen Bahnen zählen dabei nicht mit.</p>'+
-    '<p>Der <b>Himmelsäquator</b> ist die Ebene senkrecht zur Erdachse, an den Himmel verlängert: der Himmel '+
+    '<p>Die <b>Äquatorebene der Erde</b> ist dieselbe Ebene als Scheibe um die Erde herum: Sie steht '+
+    'senkrecht auf der Erdachse und ist deshalb um die <b>Schiefe der Erdachse</b> (23,4°) gegen die '+
+    'Ekliptik gekippt. Zusammen mit der <b>Sonnenbahnebene</b> sieht man diesen Winkel unmittelbar – und '+
+    'daran, dass die Scheibe beim Umlauf immer gleich geneigt bleibt, warum es Jahreszeiten gibt.</p>'+
+    '<p>Der <b>Himmelsäquator</b> ist dieselbe Ebene, an den Himmel verlängert: der Himmel '+
     'über dem Erdäquator. Er steht am Ort genau im Süden <b>90° minus Breite</b> hoch (in Amberg 40,6°), geht '+
     'immer <b>im Osten auf und im Westen unter</b> und schneidet die Ekliptik im <b>Frühlings- und im '+
     'Herbstpunkt</b>; der Winkel zwischen beiden ist die Schiefe der Erdachse. Für den Blick vom Ort steht er '+
@@ -3654,6 +3672,7 @@ function uebernimm(d){
   neu.sys.kuppelStd=clamp(neu.sys.kuppelStd===undefined?12:+neu.sys.kuppelStd||0,0,24);
   neu.sys.ebeneSonneGr=clamp(+neu.sys.ebeneSonneGr||100,30,300);
   neu.sys.ebeneMondGr=clamp(+neu.sys.ebeneMondGr||100,30,300);
+  neu.sys.ebeneAequatorGr=clamp(+neu.sys.ebeneAequatorGr||100,30,300);
   /* älterer Stand kannte nur „ansch: true/false" */
   if(d.sys&&typeof d.sys.stufe!=='string'&&typeof d.sys.ansch==='boolean')
     neu.sys.stufe=d.sys.ansch?'ansch':'echt';
