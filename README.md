@@ -748,6 +748,13 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
 - **Ebene ändern:** Im Kontextmenü eines ausgewählten Objekts gibt es **▲ Vor / ▼ Zurück** (eine Ebene)
   und **⤒ Ganz vorn / ⤓ Ganz hinten**. Funktioniert auch mit einer Mehrfachauswahl und mit
   eingebetteten Werkzeugen (Tabelle, Glücksrad …) gegenüber Gezeichnetem.
+- **Angetipptes Fenster kommt nach vorne:** Liegen zwei eingebettete Werkzeuge oder Videos
+  übereinander, genügt im Auswahlmodus ein Tipp auf das hintere – es rückt sofort vor das andere,
+  „⤒ Ganz vorn" braucht man dafür nicht mehr. Das gilt **nur für eingebettete Objekte**: Ein Bild
+  nach vorn zu holen würde die Striche verdecken, die darauf gezeichnet sind, und das will niemand,
+  der es bloß verschieben wollte – Gezeichnetes behält seine Reihenfolge also, bis man sie von Hand
+  ändert. Dasselbe passiert schon bisher, wenn man ein Werkzeug an seiner Kopfleiste anfasst oder
+  eine Minimier-Pille wieder aufklappt.
 - **Text:** Textfelder anlegen; **Doppeltipp** auf einen Text zum Nachbearbeiten. Bei ausgewähltem
   Text bietet das **Kontextmenü** zusätzlich **Fett, Kursiv, Aufzählung (Liste)** und eine
   **Schriftgrößen-Einstellung** (＋/−). Texte sind immer **linksbündig am Textanker** – auch dann,
