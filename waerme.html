@@ -36,7 +36,7 @@
   .stp button{border:1px solid #cfd6e0;background:#fff;border-radius:8px;width:32px;height:32px;font:inherit;font-weight:700;cursor:pointer;color:#1f2430;}
   .stp .val{min-width:92px;text-align:center;font-weight:700;}
   .val{min-width:104px;text-align:center;font-weight:700;}
-  input.rng{width:160px;height:34px;accent-color:#2563eb;}
+  input.rng{width:140px;height:34px;accent-color:#2563eb;}
   input.rng:disabled{opacity:.4;}
   #cvbox{position:relative;flex:1;min-height:0;background:#fff;}
   #cvbox canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;}
@@ -267,20 +267,28 @@ function en(E){ const a=Math.abs(E);
   return zahl(E,0)+' J'; }
 const zeitText=s=>s>=600?zahl(s/60,1)+' min':zahl(s,0)+' s';
 /* Die Heizleistung trägt ihr Vorzeichen: positiv heizen, negativ kühlen, 0 nichts.
-   Der Knopf „Heizung" ist zugleich Start und Stopp - einen Play-Knopf braucht der
-   Versuch nicht mehr, es ändert sich alles durch Heizen, Kühlen und den Stempel. */
+   Der Regler ist zugleich Start und Stopp - einen eigenen Knopf braucht der Versuch
+   nicht, es ändert sich alles durch Heizen, Kühlen und den Stempel. */
 const Pw=()=>+D.P||0;
-const laeuft=()=>D.tab==='kurve'&&D.heiz===true&&Pw()!==0;
+const laeuft=()=>D.tab==='kurve'&&Pw()!==0&&platzDa();
+/* Ist im Diagramm noch Platz in der Richtung, in die geheizt oder gekühlt wird? */
+function platzDa(){ const Kz=kurve();
+  return Pw()>0?(D.E<Kz.EGes-1e-6):(Pw()<0?(D.E>1e-6):false); }
 /* Zeitraffer: 1,6 MJ Wasser bei 500 W dauern echte 52 min. Der Faktor ist eine runde
    Zehnerpotenz, damit mehr Leistung auch sichtbar schneller geht und der Versuch
    trotzdem immer zwischen etwa fünf und fünfzig Sekunden dauert. */
 function raffer(Kv){ if(!(Kv.tGes>0)) return 1;
   return Math.max(1,Math.min(1e6,Math.pow(10,Math.round(Math.log10(Math.max(1e-9,Kv.tGes/16)))))); }
-const PMAX=50000;
-function rundNett(x){ if(x<1) return 0; const p=Math.pow(10,Math.floor(Math.log10(x))), r=x/p;
+const PMAX=50000, RAST=6;        /* RAST = halbe Breite der Raststelle bei 0 W */
+function rundNett(x){ if(x<1) return 1; const p=Math.pow(10,Math.floor(Math.log10(x))), r=x/p;
   return Math.round((r<1.5?1:r<2.5?2:r<3.5?3:r<7.5?5:10)*p); }
-const pVonS=v=>{ const a=Math.abs(v)/100; return (v<0?-1:1)*rundNett(PMAX*a*a*a); };
-const sVonP=P=>{ const a=Math.cbrt(Math.min(1,Math.abs(P)/PMAX)); return Math.round((P<0?-1:1)*a*100); };
+/* Zwischen 1 W und 50 kW liegen fast fünf Zehnerpotenzen - deshalb steht der Regler
+   logarithmisch, sonst wäre unten nichts einzustellen. In der Mitte rastet er bei 0 W ein. */
+const pVonS=v=>{ if(Math.abs(v)<=RAST) return 0;
+  const a=(Math.abs(v)-RAST)/(100-RAST); return (v<0?-1:1)*rundNett(Math.pow(PMAX,a)); };
+const sVonP=P=>{ const a=Math.abs(P); if(a<1) return 0;
+  const v=Math.max(RAST+1,Math.round(RAST+Math.log(a)/Math.log(PMAX)*(100-RAST)));
+  return (P<0?-v:v); };
 
 /* ---------- Stoffe ----------
    c = spezifische Wärmekapazität (fest / flüssig / gasförmig), q = Schmelz- bzw.
@@ -290,6 +298,8 @@ const sVonP=P=>{ const a=Math.cbrt(Math.min(1,Math.abs(P)/PMAX)); return Math.ro
 const STOFFE={
   wasser:  {name:'Wasser',     cf:2100, cl:4200, cg:2000, Ts:0,    qs:334000, Tv:100,  qv:2256000, Rs:461, farbe:'#2563eb', festName:'Eis', gasName:'Wasserdampf'},
   luft:    {name:'Luft',       cf:1000, cl:1900, cg:1005, Ts:-213, qs:25000,  Tv:-194, qv:199000,  Rs:287, farbe:'#0ea5e9', festName:'feste Luft', gasName:'Luft'},
+  schwefel:{name:'Schwefel',   cf:710,  cl:1000, cg:700,  Ts:115,  qs:53400,  Tv:445,  qv:1400000, Rs:260, farbe:'#ca8a04', festName:'fester Schwefel'},
+  brom:    {name:'Brom',       cf:400,  cl:473,  cg:225,  Ts:-7.2, qs:66000,  Tv:58.8, qv:188000,  Rs:52,  farbe:'#b91c1c', festName:'festes Brom'},
   ethanol: {name:'Ethanol',    cf:2300, cl:2430, cg:1420, Ts:-114, qs:108000, Tv:78,   qv:841000,  Rs:181, farbe:'#7c3aed'},
   eisen:   {name:'Eisen',      cf:460,  cl:820,  cg:460,  Ts:1538, qs:247000, Tv:2861, qv:6090000, Rs:149, farbe:'#64748b'},
   alu:     {name:'Aluminium',  cf:896,  cl:1180, cg:900,  Ts:660,  qs:397000, Tv:2470, qv:10500000,Rs:308, farbe:'#94a3b8'},
@@ -303,7 +313,7 @@ const festName=s=>s.festName||(s.name+' (fest)');
 const gasName=s=>s.gasName||(s.name+'dampf');
 
 /* ---------- Zustand ---------- */
-const standard=()=>({v:1, tab:'kurve', stoff:'wasser', m:0.5, P:500, T0:-20, heiz:false,
+const standard=()=>({v:1, tab:'kurve', stoff:'wasser', m:0.5, P:0, T0:-20,
   E:0, teilchen:true, gl:0, ebalken:false, stempel:false, mess:false, sy:0, Wst:0,
   a:{stoff:'wasser',m:1,T:80}, b:{stoff:'wasser',m:2,T:20}, mt:0,
   fontSize:14, edit:true});
@@ -585,7 +595,8 @@ function zeichneKurve(){
   const glH=D.gl?Math.round((Kv.ab.length+2)*17*K+12):0;
   const tw=D.teilchen?Math.min(360*K,W*0.40):0;
   const ebW=D.ebalken?Math.min(78*K,W*0.12):0;
-  const L=66*K, R=W-tw-ebW-((tw||ebW)?26*K:18*K), T=26*K, B=H-glH-40*K;
+  /* unten bleiben 14 px frei, damit die Achsenbeschriftung nicht in die Hinweiszeile läuft */
+  const L=66*K, R=W-tw-ebW-((tw||ebW)?26*K:18*K), T=26*K, B=H-glH-54*K;
   /* Achsenbereiche */
   const xMax=Math.max(1e-9,Kv.EGes), Tlo=Kv.Tlo-8, Thi=Kv.Thi+8;
   const X=v=>L+(R-L)*(v/xMax), Y=T0=>B-(B-T)*((T0-Tlo)/(Thi-Tlo));
@@ -629,6 +640,9 @@ function zeichneKurve(){
   /* Kopfzeile: was gerade passiert */
   txtPass(artText(Kv,st),(L+R)/2,T-10*K,R-L,{sz:15*K,fett:true,farbe:'#1f2430'});
   txt('zugeführt: '+en(st.E)+(Kv.dauer?' · '+zeitText(st.E/Kv.P):''),R,B-6*K,{al:'right',sz:13*K,farbe:'#64748b'});
+  if(Pw()!==0&&!platzDa()) txtPass(Pw()>0?'weiter geht es nicht – hier ist das Diagramm zu Ende'
+                                         :'tiefer geht es nicht – hier fängt das Diagramm an',
+    R,B-23*K,(R-L)*0.7,{al:'right',sz:13*K,fett:true,farbe:'#ea580c'});
   /* Teilchenmodell rechts, davor der Balken für die innere Energie */
   if(D.teilchen){ const tempF=Math.max(0,Math.min(1,(st.T-Tlo)/Math.max(1,Thi-Tlo)));
     const ty=T+8*K+(D.stempel?20*K:0);                  /* über dem Kasten liegt der Griff */
@@ -765,31 +779,25 @@ function renderBar2(){ const b=$('bar2'); b.innerHTML='';
       z=>{ D.m=grenz(z,0.01,100); D.E=0; renderBar2(); zeichne(); sync(); });
     stepper('Starttemperatur',zahl(D.T0,0)+' °C',d=>{ D.T0=grenz(D.T0+d*5,-270,T0Max(stoff(D.stoff))); D.E=0; D.Wst=0; renderBar2(); zeichne(); sync(); },
       z=>{ D.T0=grenz(z,-270,T0Max(stoff(D.stoff))); D.E=0; D.Wst=0; renderBar2(); zeichne(); sync(); });
-    /* Ein Knopf schaltet die Heizung ein und aus, der Regler stellt die Leistung ein:
-       nach rechts heizen (Flamme), nach links kühlen (Schneeflocken), in der Mitte 0 W. */
-    el('button','btn'+(D.heiz===true?' on':''),D.heiz===true?'■ Heizung an':'▶ Heizung aus',()=>{
-      D.heiz=(D.heiz!==true);
-      if(D.heiz){ const Kv=kurve();
-        if(Pw()===0){ D.heiz=false; toast('Erst eine Leistung einstellen'); }
-        else { if(Pw()>0&&D.E>=Kv.EGes-1e-6) D.E=0; if(Pw()<0&&D.E<=1e-6) D.E=Kv.EGes; } }
-      letztT=performance.now(); renderBar2(); zeichne(); sync();
-      toast(D.heiz?(Pw()<0?'Es wird gekühlt':'Es wird geheizt')
-                  :'Heizung aus – die innere Energie ändert sich jetzt nur noch über den Stempel'); });
+    /* Der Regler stellt die Leistung ein und startet damit zugleich den Versuch:
+       nach rechts heizen (Flamme), nach links kühlen (Schneeflocken), in der Mitte
+       rastet er bei 0 W ein - dann steht alles still. */
     el('span','lbl','Leistung');
     const rg=document.createElement('input'); rg.type='range'; rg.className='rng';
-    rg.min=-100; rg.max=100; rg.step=1; rg.value=sVonP(D.P); rg.title='nach rechts heizen, nach links kühlen';
+    rg.min=-100; rg.max=100; rg.step=1; rg.value=sVonP(D.P);
+    rg.title='nach rechts heizen, nach links kühlen, in der Mitte rastet er bei 0 W ein';
     b.appendChild(rg);
     const wert=document.createElement('span'); wert.className='val'; wert.style.cursor='text';
     wert.title='Antippen und Leistung eingeben';
     const zeig=()=>{ const P=Pw();
-      wert.textContent=(P===0?'0 W (aus)':zahl(Math.abs(P),0)+' W '+(P<0?'kühlen':'heizen'));
+      wert.textContent=(P===0?'0 W · steht':zahl(Math.abs(P),0)+' W '+(P<0?'kühlen':'heizen'));
       wert.style.color=P>0?'#ea580c':P<0?'#0284c7':'#94a3b8'; };
     zeig(); b.appendChild(wert);
-    rg.oninput=()=>{ D.P=pVonS(+rg.value); if(D.P===0) D.heiz=false;
-      zeig(); zeichne(); sync(); };
+    rg.oninput=()=>{ if(Math.abs(+rg.value)<=RAST&&+rg.value!==0) rg.value=0;   /* einrasten */
+      D.P=pVonS(+rg.value); letztT=performance.now(); zeig(); zeichne(); sync(); };
     wert.onclick=()=>{ const t=prompt('Leistung in Watt eingeben (negativ = kühlen):',zahl(D.P,0)); if(t===null) return;
       const z=parseFloat(String(t).replace(',','.')); if(!isFinite(z)) return;
-      D.P=grenz(z,-PMAX,PMAX); if(D.P===0) D.heiz=false; renderBar2(); zeichne(); sync(); };
+      D.P=grenz(z,-PMAX,PMAX); letztT=performance.now(); renderBar2(); zeichne(); sync(); };
     schluss(); return; }
 
   ['a','b'].forEach(k=>{ const R=D[k];
@@ -823,7 +831,7 @@ function setzeTab(t){ D.tab=t; lauf=false; playBtn();
   $('t-kurve').classList.toggle('on',t==='kurve'); $('t-mischen').classList.toggle('on',t==='mischen');
   ['bTeil','bEn','bStp','bMess'].forEach(k=>{ $(k).hidden=(t!=='kurve'); });
   $('bPlay').hidden=(t==='kurve');            /* beim Erwärmen ist der Heizungsknopf der Start */
-  $('hint').textContent=(t==='kurve')?(D.stempel?'„Heizung an" lässt den Versuch laufen · am Stempel ziehen verrichtet Arbeit':'„Heizung an" lässt den Versuch laufen · der Regler bestimmt, wie stark und wie schnell')
+  $('hint').textContent=(t==='kurve')?(D.stempel?'Regler heizt und kühlt · am Stempel ziehen verrichtet Arbeit':'Der Regler heizt und kühlt · in der Mitte rastet er bei 0 W ein')
     :'Massen und Temperaturen unten einstellen, dann „Start"';
   renderBar2(); zeichne(); sync(); }
 $('t-kurve').onclick=()=>setzeTab('kurve'); $('t-mischen').onclick=()=>setzeTab('mischen');
@@ -833,7 +841,7 @@ function playBtn(){ $('bPlay').classList.toggle('on',lauf);
 $('bPlay').onclick=()=>{ if(D.mt>=1){ D.mt=0; zeichne(); sync(); return; }
   lauf=!lauf; letztT=performance.now(); playBtn(); };
 $('bZur').onclick=()=>{ lauf=false; if(D.tab==='mischen') D.mt=0;
-  else { D.heiz=false; D.sy=0; D.Wst=0; D.E=Pw()<0?kurve().EGes:0; renderBar2(); }
+  else { D.sy=0; D.Wst=0; D.E=Pw()<0?kurve().EGes:0; letztT=performance.now(); }
   playBtn(); zeichne(); sync(); };
 $('bTeil').onclick=()=>{ D.teilchen=!D.teilchen; $('bTeil').classList.toggle('on',D.teilchen); zeichne(); sync(); };
 $('bEn').onclick=()=>{ D.ebalken=!D.ebalken; schalter(); zeichne(); sync();
@@ -885,10 +893,10 @@ $('bGl').onclick=()=>{ D.gl=((D.gl||0)+1)%3; glBtn(); zeichne(); sync(); };
 function glBtn(){ $('bGl').classList.toggle('on',!!D.gl);
   $('bGl').querySelector('span').textContent=['Gleichungen','Formeln','mit Zahlen'][D.gl||0]; }
 $('bHilfe').onclick=()=>{ const b=$('bar2'); b.innerHTML='';
-  [['Erwärmen','Stoff, Masse, Starttemperatur und Leistung unten einstellen. „Heizung an" lässt den Versuch laufen – einen Start-Knopf braucht es nicht, es ändert sich alles durch Heizen, Kühlen und den Stempel.'],
+  [['Erwärmen','Stoff, Masse und Starttemperatur unten einstellen. Der Leistungsregler startet den Versuch: nach rechts heizen, nach links kühlen, in der Mitte rastet er bei 0 W ein und alles steht still. Einen Start-Knopf braucht es nicht.'],
    ['Haltepunkte','Beim Schmelzen und Sieden bleibt die Temperatur stehen, obwohl weiter geheizt wird – die Energie steckt in der Umwandlung.'],
    ['Teilchen','Rechts sieht man dasselbe im Teilchenmodell: Gitter, Flüssigkeit, Gas.'],
-   ['Leistung','Der Regler stellt die Heizleistung ein: nach rechts heizen (Flamme), nach links kühlen (Schneeflocken), in der Mitte 0 W – dann steht unten die zugeführte Energie statt der Zeit. Mehr Leistung heißt auch: Es geht schneller.'],
+   ['Leistung','Der Regler steht logarithmisch von 1 W bis 50 kW: nach rechts heizen (Flamme), nach links kühlen (Schneeflocken), in der Mitte rastet er bei 0 W ein und der Versuch steht still. Mehr Leistung heißt auch: Es geht schneller.'],
    ['Energie','Der Balken zeigt die innere Energie: Sie wächst beim Schmelzen und Sieden weiter, obwohl die Temperatur stehen bleibt.'],
    ['Stempel','Am Griff ziehen: Hineindrücken verrichtet Arbeit am Gas – auch bei ausgeschalteter Heizung steigt so die innere Energie. Unten steht dann die zugeführte Energie statt der Zeit, denn die Arbeit braucht keine Zeit.'],
    ['Messgeräte','Thermometer und Druckmessgerät im Teilchenmodell. Beim Erhitzen von Luft steigt der Druck, beim Hineindrücken Druck und Temperatur.'],
@@ -899,14 +907,17 @@ $('bHilfe').onclick=()=>{ const b=$('bar2'); b.innerHTML='';
 
 /* ---------- Vorlagen ---------- */
 const VORLAGEN={
-  'Eis schmilzt und Wasser siedet':()=>({tab:'kurve',stoff:'wasser',m:0.5,P:500,T0:-20,heiz:false,E:0}),
-  'Ein Liter Wasser kochen':()=>({tab:'kurve',stoff:'wasser',m:1,P:2000,T0:20,heiz:false,E:0}),
-  'Wasserdampf kühlt ab':()=>({tab:'kurve',stoff:'wasser',m:0.5,P:-500,T0:-20,heiz:false}),
-  'Blei schmelzen':()=>({tab:'kurve',stoff:'blei',m:0.2,P:300,T0:20,heiz:false,E:0}),
-  'Eisen glühen':()=>({tab:'kurve',stoff:'eisen',m:0.1,P:1000,T0:20,heiz:false,E:0}),
-  'Luft erhitzen':()=>({tab:'kurve',stoff:'luft',m:0.05,P:50,T0:20,heiz:false,E:0,
+  'Eis schmilzt und Wasser siedet':()=>({tab:'kurve',stoff:'wasser',m:0.5,P:500,T0:-20,E:0}),
+  'Ein Liter Wasser kochen':()=>({tab:'kurve',stoff:'wasser',m:1,P:2000,T0:20,E:0}),
+  'Wasserdampf kühlt ab':()=>({tab:'kurve',stoff:'wasser',m:0.5,P:-500,T0:-20}),
+  'Blei schmelzen':()=>({tab:'kurve',stoff:'blei',m:0.2,P:300,T0:20,E:0}),
+  'Eisen glühen':()=>({tab:'kurve',stoff:'eisen',m:0.1,P:1000,T0:20,E:0}),
+  'Schwefel schmelzen':()=>({tab:'kurve',stoff:'schwefel',m:0.2,P:300,T0:20,E:0}),
+  'Brom verdampft':()=>({tab:'kurve',stoff:'brom',m:0.1,P:100,T0:20,E:0,
+    teilchen:true,ebalken:true,mess:true,stempel:false,sy:0,Wst:0}),
+  'Luft erhitzen':()=>({tab:'kurve',stoff:'luft',m:0.05,P:50,T0:20,E:0,
     teilchen:true,ebalken:true,stempel:true,mess:true,sy:0,Wst:0}),
-  'Nur Arbeit, keine Wärme':()=>({tab:'kurve',stoff:'luft',m:0.05,P:50,T0:20,heiz:false,E:0,
+  'Nur Arbeit, keine Wärme':()=>({tab:'kurve',stoff:'luft',m:0.05,P:0,T0:20,E:0,
     teilchen:true,ebalken:true,stempel:true,mess:true,sy:0,Wst:0}),
   'Heißes Wasser abkühlen':()=>({tab:'mischen',a:{stoff:'wasser',m:1,T:80},b:{stoff:'wasser',m:2,T:20},mt:0}),
   'Eisen ins Wasser':()=>({tab:'mischen',a:{stoff:'eisen',m:0.5,T:300},b:{stoff:'wasser',m:2,T:20},mt:0}),
@@ -927,8 +938,8 @@ function loop(ts){ const dt=Math.min(0.08,(ts-letztT)/1000||0); letztT=ts;
     const Kv=kurve();
     if(laeuft()){                                 /* die zugeführte Energie wächst mit P · t */
       D.E+=Pw()*raffer(Kv)*dt;
-      if(D.E>=Kv.EGes){ D.E=Kv.EGes; D.heiz=false; renderBar2(); sync(); }
-      if(D.E<=0){ D.E=0; D.heiz=false; renderBar2(); sync(); } }
+      if(D.E>=Kv.EGes){ D.E=Kv.EGes; sync(); }
+      if(D.E<=0){ D.E=0; sync(); } }
     const st=standKurve(Kv,D.E);
     const Tlo=Kv.Tlo-8, Thi=Kv.Thi+8;
     if(D.teilchen) teilchenSchritt(dt,st,Math.max(0,Math.min(1,(st.T-Tlo)/Math.max(1,Thi-Tlo))));
@@ -951,7 +962,6 @@ function uebernimm(d){ if(!d) return;
     D[k].m=grenz(+D[k].m||1,0.01,100); D[k].T=grenz(+D[k].T||0,-200,2000); });
   D.m=grenz(+D.m||0.5,0.01,100); D.P=grenz(+D.P||500,-PMAX,PMAX);
   if(d.kuehlen&&D.P>0) D.P=-D.P;                   /* früher ein eigener Schalter */
-  D.heiz=(D.heiz===true);
   D.T0=grenz(+D.T0||0,-270,T0Max(stoff(D.stoff)));
   D.sy=grenz(+D.sy||0,0,0.55); D.Wst=+D.Wst||0;
   if(d.E===undefined&&d.t!==undefined) D.E=Math.abs(+d.t||0)*Math.abs(D.P);

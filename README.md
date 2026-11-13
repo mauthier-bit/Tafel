@@ -2722,17 +2722,19 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   - **Erwärmen und Abkühlen:** die **Erwärmungskurve** T(t) bei fester Heizleistung – mit den
     **Haltepunkten** beim Schmelzen und Sieden, an denen die Temperatur stehen bleibt, obwohl
     weiter geheizt wird. Einstellbar sind **Stoff** (Wasser, **Luft**, Ethanol, Eisen, Aluminium,
-    Kupfer, Blei, Speiseöl), **Masse**, **Starttemperatur** und **Heizleistung** (in dieser Reihenfolge,
+    **Schwefel**, **Brom**, Kupfer, Blei, Speiseöl), **Masse**, **Starttemperatur** und **Leistung** (in dieser Reihenfolge,
     weil man erst sagt, wo man anfängt, und dann, wie stark geheizt wird). Die Kurve beginnt in dem
     **Aggregatzustand, der zur Starttemperatur gehört**: Wasser bei −20 °C als Eis, bei 20 °C als
     Wasser, Luft gleich als Gas – es kommen nur die Abschnitte oberhalb der Starttemperatur vor.
-  - **Heizung statt Start:** Ein **Schieberegler** stellt die Leistung ein – **nach rechts heizen**
-    (Flamme), **nach links kühlen** (Schneeflocken), **in der Mitte 0 W** (nichts, keine Flamme).
-    Der Knopf **„Heizung an/aus"** daneben ist zugleich **Start und Stopp**; einen eigenen
-    Play-Knopf gibt es beim Erwärmen nicht mehr, denn es ändert sich alles durch Heizen, Kühlen und
-    den Stempel. Beim Kühlen läuft derselbe Versuch rückwärts: Der Dampf kondensiert und das Wasser
-    erstarrt – die Haltepunkte sind dieselben. Das Ausschalten **behält die Stelle**, man kann also
-    bis zur Hälfte heizen und von dort wieder abkühlen.
+  - **Der Leistungsregler ist der Start:** Ein **Schieberegler** stellt die Leistung ein – **nach
+    rechts heizen** (Flamme), **nach links kühlen** (Schneeflocken), und **in der Mitte rastet er
+    bei 0 W ein**: Dann steht alles still, ohne Flamme. Einen Start-Knopf gibt es beim Erwärmen
+    nicht, auch keinen für die Heizung – es ändert sich alles durch Heizen, Kühlen und den Stempel.
+    Der Regler steht **logarithmisch von 1 W bis 50 kW** (sonst wäre unten nichts einzustellen);
+    die Zahl daneben lässt sich antippen und frei eingeben. Beim Kühlen läuft derselbe Versuch
+    rückwärts: Der Dampf kondensiert und das Wasser erstarrt – die Haltepunkte sind dieselben. Die
+    Raststelle **behält die Stelle**, man kann also bis zur Hälfte heizen, anhalten und von dort
+    wieder abkühlen. Am Ende des Diagramms bleibt der Versuch stehen und sagt es.
     **Mehr Leistung heißt auch schneller:** Die Darstellung läuft im **Zeitraffer** (eine runde
     Zehnerpotenz, die in der Achsenbeschriftung steht), so dass 0,5 kg Wasser bei 500 W rund 31 s
     dauern, bei 2000 W noch 8 s – echte 52 min wären es ohne Raffer. Eine Marke wandert über die
@@ -2791,7 +2793,10 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     **E = c · m · ΔT** bzw. **E = q · m** mit Werten, Energie und Dauer sowie die Summe; im zweiten
     **abgegebene Wärme = aufgenommene Wärme** und daraus T_M.
   - **Vorlagen:** Eis schmilzt und Wasser siedet, Ein Liter Wasser kochen, Wasserdampf kühlt ab,
-    Blei schmelzen, Eisen glühen, **Luft erhitzen** und **Nur Arbeit, keine Wärme** (beide bringen Balken,
+    Blei schmelzen, Eisen glühen, **Schwefel schmelzen** (0,2 kg, Haltepunkte bei 115 °C und
+    445 °C, zusammen 386 kJ), **Brom verdampft** (0,1 kg; Brom ist bei Zimmertemperatur flüssig und
+    siedet schon bei 58,8 °C – die Kurve beginnt deshalb flüssig, und am Manometer sieht man, wie
+    der Druck beim Verdampfen steigt), **Luft erhitzen** und **Nur Arbeit, keine Wärme** (beide bringen Balken,
     Stempel und Messgeräte gleich mit), Heißes Wasser abkühlen, Eisen ins Wasser, Gleiche Massen.
     Dazu **Schrift A−/A+**, **Bild → Tafel**, **Kopieren** und **Teilen (QR-Code)**.
 - **Energieumwandlung** (Mathe & Physik, Symbol: ein großes **E**): eine ganze
