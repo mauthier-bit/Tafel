@@ -875,18 +875,35 @@ const SPEK={
   20:[646.3,643.9,612.2,445.5,422.7],
   80:[579.1,577.0,546.1,435.8,434.7,404.7,365.0]
 };
-/* Übergänge: beim Wasserstoff die drei bekannten Serien, ab Bor die
-   charakteristischen Röntgenlinien (Moseley, Abschirmung Z−1 bzw. Z−7,4). */
-function uebergaenge(z){
-  const l=[];
+/* Zugeordnete Übergänge der äußeren Elektronen: Die Wellenlänge ist gemessen (NIST),
+   die Zuordnung der Unterschalen steht so in den Lehrbüchern. Sie zeigen, woher das
+   sichtbare Licht wirklich kommt - nämlich von den äußersten Elektronen. */
+const AUSSEN={
+  2: [[587.6,'3d','2p']], 3:[[670.8,'2p','2s']], 10:[[640.2,'3p','3s']],
+  11:[[589.0,'3p','3s']], 19:[[766.5,'4p','4s']], 20:[[422.7,'4p','4s']],
+  80:[[546.1,'7s','6p']]
+};
+/* Übergänge: beim Wasserstoff die bekannten Serien, sonst die charakteristischen
+   Röntgenlinien (Moseley, Abschirmung Z−1 bzw. Z−7,4) und die zugeordneten Linien
+   der äußeren Elektronen. Gezeichnet wird nur, was es im Atom auch gibt: Die
+   Ausgangsschale muss besetzt sein - Neon zum Beispiel hat gar keine M-Schale,
+   also auch kein K_beta. */
+function uebergaenge(z,S){
+  const l=[], be=n=>(S&&S[n-1])||0;
   if(z===1){
-    [[1,'Lyman',4],[2,'Balmer',5],[3,'Paschen',3]].forEach(([n1,serie,bis])=>{
-      for(let n2=n1+1;n2<=bis;n2++) l.push({n1,n2,E:RY*(1/(n1*n1)-1/(n2*n2)),nm:serie+' '+n2+'→'+n1}); });
+    [[1,'Lyman',4],[2,'Balmer',5],[3,'Paschen',4]].forEach(([n1,serie,bis])=>{
+      for(let n2=n1+1;n2<=bis;n2++)
+        l.push({n1,n2,E:RY*(1/(n1*n1)-1/(n2*n2)),nm:serie+' '+n2+'→'+n1,art:'serie'}); });
     return l; }
-  if(z>=5){ const zk=z-1, zl=z-7.4;
-    l.push({n1:1,n2:2,E:RY*zk*zk*(1-1/4),nm:'K\u03b1  L→K'});
-    l.push({n1:1,n2:3,E:RY*zk*zk*(1-1/9),nm:'K\u03b2  M→K'});
-    if(z>=20) l.push({n1:2,n2:3,E:RY*zl*zl*(1/4-1/9),nm:'L\u03b1  M→L'}); }
+  const zk=z-1, zl=z-7.4;
+  if(z>=5&&be(2)>0)
+    l.push({n1:1,n2:2,von:'2p',nach:'1s',E:RY*zk*zk*0.75,nm:'K\u03b1  2p→1s',art:'roentgen'});
+  if(z>=5&&be(3)>0)
+    l.push({n1:1,n2:3,von:'3p',nach:'1s',E:RY*zk*zk*(8/9),nm:'K\u03b2  3p→1s',art:'roentgen'});
+  if(z>=20&&be(3)>0)
+    l.push({n1:2,n2:3,von:'3d',nach:'2p',E:RY*zl*zl*(1/4-1/9),nm:'L\u03b1  3d→2p',art:'roentgen'});
+  (AUSSEN[z]||[]).forEach(([nm,von,nach])=>
+    l.push({von,nach,n2:+von[0],n1:+nach[0],E:HC/nm,nm:von+'→'+nach+' (gemessen)',art:'aussen'}));
   return l;
 }
 const eText=E=>E>=1000?zahlD(E/1000,2)+' keV':zahlD(E,2)+' eV';
@@ -947,7 +964,7 @@ function zeichneHuelle(){
   ctx.clearRect(0,0,w,h); ctx.fillStyle='#fff'; ctx.fillRect(0,0,w,h);
   const fs=Math.max(10,D.fontSize||13), el=elOf(D.hz), e=hElektronen(), L=besetzung(e), S=schalen(L);
   const auf=D.auf!==false;
-  const UEB=D.hspek?uebergaenge(el.z):[];
+  const UEB=D.hspek?uebergaenge(el.z,S):[];
   const spekH=D.hspek?fs*6.0:0;
   const textH=fs*6.2, unten=h-textH-spekH, diaW=D.hs?Math.max(w*0.52,w-Math.min(w*0.46,unten*0.95)):w;
 
@@ -969,7 +986,10 @@ function zeichneHuelle(){
   const ys=rows.map((r,i)=>unten-padB-rowH*(i+0.5));
   /* Ohne Aufspaltung: alle Plätze gleich breit – die Linie zeigt, wie viele Plätze die Schale hat */
   const capMax=Math.max(2,...rows.map(r=>r.cap));
-  const brMax=Math.min(diaW-padL-padR-fs*4.2, fs*17);
+  /* Rechts neben den Stufen bleibt Platz für die Übergangspfeile. Ist das Schalenbild
+     aus, dürfen die Stufen dafür länger werden. */
+  const uebW=UEB.length?Math.min(fs*15,(diaW-padL)*0.45):0;
+  const brMax=Math.min(diaW-padL-padR-fs*4.2-uebW, fs*(UEB.length&&!D.hs?26:17));
   const schritt=(brMax-8)/capMax, punkt=Math.min(schritt*0.42,rowH*0.16,fs*0.55);
   const alsBalken=punkt<3.2;                       /* zu eng für einzelne Punkte: besetzter Teil als Balken */
   ctx.textBaseline='middle';
@@ -996,6 +1016,7 @@ function zeichneHuelle(){
       ctx.globalAlpha=1; });
   }
 
+  let inhaltX=padL;                 /* wie weit reichen Kästchen bzw. Stufenlinien? */
   rows.forEach((r,i)=>{
     const y=ys[i], col=schalFarbe(r.n);
     ctx.font=fontStr(fs*0.92,true); ctx.textAlign='right'; ctx.fillStyle=col;
@@ -1015,6 +1036,7 @@ function zeichneHuelle(){
         if(k<paare) pfeil(false); }
       if(r.neu){ const k=Math.max(0,Math.min(r.boxen-1,(r.k<=r.boxen?r.k-1:r.k-r.boxen-1)));
         ctx.strokeStyle='#f59e0b'; ctx.lineWidth=2.4; ctx.strokeRect(padL+k*(bw+3)-1.5,y-bw/2-1.5,bw+3,bw+3); }
+      inhaltX=Math.max(inhaltX,padL+r.boxen*(bw+3)+(r.k?fs*2.6:0));
       if(r.k){ ctx.font=fontStr(fs*0.76,false); ctx.textAlign='left'; ctx.fillStyle='#94a3b8';
         ctx.fillText(String(r.k)+' e⁻', padL+r.boxen*(bw+3)+3, y); }
     } else {                                         /* nur die Hauptschale: eine Stufe mit ihren Elektronen */
@@ -1026,21 +1048,45 @@ function zeichneHuelle(){
       else for(let k=0;k<r.k;k++){
         ctx.beginPath(); ctx.arc(padL+4+(k+0.5)*schritt, y-punkt-2, punkt, 0, 7); ctx.fill(); }
       ctx.font=fontStr(fs*0.78,false); ctx.textAlign='left'; ctx.fillStyle='#94a3b8';
-      ctx.fillText(r.k+' von '+r.cap, padL+br+6, y); }
+      ctx.fillText(r.k+' von '+r.cap, padL+br+6, y);
+      inhaltX=Math.max(inhaltX,padL+br+fs*3.6); }
   });
 
-  /* ---- Übergänge: Pfeile von der oberen zur unteren Stufe ---- */
+  /* ---- Übergänge: Pfeile rechts neben den Stufen ---- */
   if(UEB.length){
-    const yVonN={}; rows.forEach((r,i)=>{ if(yVonN[r.n]===undefined) yVonN[r.n]=ys[i]; });
-    const da=UEB.filter(u=>yVonN[u.n1]!==undefined&&yVonN[u.n2]!==undefined);
-    const x0=padL+fs*1.4, platz=Math.max(fs*1.3,Math.min(fs*2.6,(brMax-fs*2)/Math.max(1,da.length)));
-    da.forEach((u,i)=>{ const x=x0+i*platz, y2=yVonN[u.n2], y1=yVonN[u.n1];
-      u.farbe=(el.z===1)?wlFarbe(HC/u.E):['#7c3aed','#2563eb','#0891b2'][i%3];
-      ctx.strokeStyle=u.farbe; ctx.globalAlpha=.9; ctx.lineWidth=2;
-      ctx.beginPath(); ctx.moveTo(x,y2); ctx.lineTo(x,y1+fs*0.34); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(x,y1); ctx.lineTo(x-fs*0.26,y1+fs*0.46);
-      ctx.lineTo(x+fs*0.26,y1+fs*0.46); ctx.closePath(); ctx.fillStyle=u.farbe; ctx.fill();
-      ctx.globalAlpha=1; });
+    /* Zeile zu einer Unterschale (2p, 3s …) oder, ohne Aufspaltung, zur Hauptschale */
+    const yVonNm={}, yVonN={};
+    rows.forEach((r,i)=>{ const k=String(r.nm).split(' ')[0];
+      if(yVonNm[k]===undefined) yVonNm[k]=ys[i];
+      if(yVonN[r.n]===undefined) yVonN[r.n]=ys[i]; });
+    const hol=(nm,n)=>(auf&&nm&&yVonNm[nm]!==undefined)?yVonNm[nm]:yVonN[n];
+    const da=UEB.filter(u=>{ u.y2=hol(u.von,u.n2); u.y1=hol(u.nach,u.n1);
+      return u.y1!==undefined&&u.y2!==undefined&&Math.abs(u.y1-u.y2)>2; });
+    const xA=Math.min(diaW-padR-fs*5,Math.max(padL+fs*6,inhaltX+fs*2.2)), xB=diaW-padR-fs*0.5;
+    const platz=Math.min((xB-xA)/Math.max(1,da.length+1),fs*3.4);
+    /* Hilfslinien: die Stufen reichen gestrichelt bis zu den Pfeilen */
+    ctx.save(); ctx.setLineDash([3,4]); ctx.lineWidth=1;
+    const yGes=new Set(); da.forEach(u=>{ yGes.add(u.y1); yGes.add(u.y2); });
+    yGes.forEach(y=>{ ctx.strokeStyle='#cbd5e1';
+      ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(xB,y); ctx.stroke(); });
+    ctx.restore();
+    da.forEach((u,i)=>{ const x=xA+(i+1)*platz;
+      u.farbe=(u.art==='roentgen')?'#7c3aed':(u.art==='aussen')?wlFarbe(HC/u.E)
+        :(el.z===1?wlFarbe(HC/u.E):'#2563eb');
+      ctx.strokeStyle=u.farbe; ctx.lineWidth=2.2;
+      ctx.beginPath(); ctx.moveTo(x,u.y2); ctx.lineTo(x,u.y1+fs*0.34); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x,u.y1); ctx.lineTo(x-fs*0.28,u.y1+fs*0.5);
+      ctx.lineTo(x+fs*0.28,u.y1+fs*0.5); ctx.closePath(); ctx.fillStyle=u.farbe; ctx.fill(); });
+    /* Beim Röntgenübergang muss vorher ein Elektron herausgeschlagen werden */
+    if(da.some(u=>u.art==='roentgen')){
+      const y=yVonN[1], x=xA-fs*1.1;
+      ctx.save(); ctx.setLineDash([4,3]); ctx.strokeStyle='#dc2626'; ctx.lineWidth=1.8;
+      ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x,padT+fs*1.2); ctx.stroke(); ctx.restore();
+      ctx.fillStyle='#dc2626'; ctx.beginPath(); ctx.moveTo(x,padT+fs*0.6);
+      ctx.lineTo(x-fs*0.28,padT+fs*1.25); ctx.lineTo(x+fs*0.28,padT+fs*1.25); ctx.closePath(); ctx.fill();
+      ctx.font=fontStr(fs*0.72,true); ctx.textAlign='left'; ctx.textBaseline='middle'; ctx.fillStyle='#dc2626';
+      ctx.fillText('Loch', x+fs*0.4, padT+fs*0.9);
+    }
   }
 
   /* ---- Schalenbild (Bohr) ---- */

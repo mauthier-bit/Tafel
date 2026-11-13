@@ -3189,7 +3189,9 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     **Außenelektronen** – damit wird die Anordnung im Periodensystem erklärt. Weicht die wirkliche
     Konfiguration von der Reihenfolge ab (Chrom, Kupfer, Silber, Gold …), steht sie als Hinweis darunter.
   - **Spektrum (Knopf „Spektrum")** blendet unter dem Diagramm ein **Spektrumband** von 380 bis
-    780 nm ein und zeichnet die zugehörigen **Übergänge als Pfeile** zwischen die Energiestufen.
+    780 nm ein und zeichnet die zugehörigen **Übergänge als Pfeile neben die Energiestufen** –
+    gestrichelte Hilfslinien verlängern jede beteiligte Stufe bis zu den Pfeilen. Schaltet man das
+    **Schalenbild aus**, bekommen Stufen und Pfeile die ganze Breite.
     Der Knopf **nm / eV** schaltet zwischen **Wellenlänge** und **Photonenenergie** um (E = h·c/λ
     mit h·c = 1239,84 eV·nm); das Band bleibt dabei nach der Wellenlänge geordnet, in eV stehen die
     Zahlen deshalb nicht gleichabständig und laufen von links 3,26 eV nach rechts 1,59 eV.
@@ -3200,15 +3202,28 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
       und **Hg** (579,1 · 577,0 · 546,1 · 435,8 · 404,7 nm). Bei allen anderen Elementen bleibt das
       Band leer und sagt das auch.
     - **Übergänge:** Beim **Wasserstoff** rechnet das Bohrmodell sie nach – **Lyman** (nach n = 1,
-      im UV), **Balmer** (nach n = 2, sichtbar) und **Paschen** (nach n = 3). Die gerechneten
-      Balmer-Linien (656,1 · 486,0 · 433,9 nm) treffen die gemessenen auf 0,3 Promille; der Rest
-      ist der Unterschied zwischen Vakuum- und Luftwellenlänge und die mitschwingende Kernmasse.
-    - Bei schwereren Elementen gilt das Bohrmodell nur noch für die **inneren** Schalen. Ab Bor
-      stehen deshalb die **charakteristischen Röntgenlinien nach Moseley** (Abschirmung Z−1 für die
-      K-Linien, Z−7,4 für L): **Kupfer Kα 8,00 keV** (gemessen 8,05), **Molybdän Kα 17,15 keV**
-      (17,48), **Mo Lα 2,26 keV** (2,29). Für schwere Kerne wird die Näherung schlechter
+      im UV), **Balmer** (nach n = 2, sichtbar) und **Paschen** (4→3, 1874,6 nm im Infraroten). Die
+      gerechneten Balmer-Linien (656,1 · 486,0 · 433,9 nm) treffen die gemessenen auf 0,3 Promille;
+      der Rest ist der Unterschied zwischen Vakuum- und Luftwellenlänge und die mitschwingende
+      Kernmasse.
+    - Bei schwereren Elementen gilt das Bohrmodell nur noch für die **inneren** Schalen. Dort
+      stehen die **charakteristischen Röntgenlinien nach Moseley** (Abschirmung Z−1 für die
+      K-Linien, Z−7,4 für L), und zwar mit den richtigen Unterschalen: **Kα 2p→1s**, **Kβ 3p→1s**,
+      **Lα 3d→2p**. Sie werden nur gezeichnet, wenn es die Elektronen dafür **wirklich gibt**:
+      Neon hat keine M-Schale, also auch kein Kβ; bei Bor bleibt es bei Kα. Dass dafür erst ein
+      Elektron **herausgeschlagen** werden muss, zeigt der rote gestrichelte Pfeil **„Loch"** aus
+      der K-Schale heraus – ohne Loch kein Übergang dorthin.
+      Zahlen: **Cobalt Kα 6,90 keV** (gemessen 6,93), **Kupfer Kα 8,00** (8,05), **Molybdän Kα
+      17,15** (17,48), **Mo Lα 2,26 keV** (2,29). Für schwere Kerne wird die Näherung schlechter
       (Quecksilber Kα 63,7 statt 70,8 keV), und **Kβ** überschätzt das Modell deutlich – es rechnet
-      mit derselben Abschirmung wie für Kα. Die Pfeile zeigen dazu die Übergänge L→K, M→K und M→L.
+      mit derselben Abschirmung wie für Kα.
+    - **Woher das sichtbare Licht kommt:** Die Röntgenlinien sind Übergänge *innen*, während die
+      besetzten Stufen viel höher reichen. Für die Elemente mit gemessenen Linien steht deshalb
+      zusätzlich der zugeordnete **Übergang der äußeren Elektronen** im Bild – die Wellenlänge ist
+      gemessen, die Zuordnung steht so in den Lehrbüchern: **Na 3p→3s** (589,0 nm, die gelbe
+      D-Linie), **Li 2p→2s** (670,8), **K 4p→4s** (766,5), **Ca 4p→4s** (422,7), **He 3d→2p**
+      (587,6), **Ne 3p→3s** (640,2), **Hg 7s→6p** (546,1). Diese Pfeile sieht man in der Sicht mit
+      **Unterschalen**; ohne sie fallen Anfang und Ende in dieselbe Hauptschale.
   - **Kern** zeigt den **Potentialtopf mit zwei Hälften**: links die **Protonen**, rechts die
     **Neutronen**, gefüllt nach den Schalen der magischen Zahlen **2, 8, 20, 28, 50, 82, 126**; eine
     abgeschlossene Schale wird grün hervorgehoben. Die **linke Hälfte ist flacher** (gleiche Ladungen
