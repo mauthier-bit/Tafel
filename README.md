@@ -2726,11 +2726,22 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     weil man erst sagt, wo man anfängt, und dann, wie stark geheizt wird). Die Kurve beginnt in dem
     **Aggregatzustand, der zur Starttemperatur gehört**: Wasser bei −20 °C als Eis, bei 20 °C als
     Wasser, Luft gleich als Gas – es kommen nur die Abschnitte oberhalb der Starttemperatur vor.
-    **Start** lässt die Zeit
-    laufen, eine Marke wandert über die Kurve und zeigt Temperatur, zugeführte Energie und Dauer.
-    Der Knopf **heizen/kühlen** dreht den Vorgang um: Dann kondensiert der Dampf und das Wasser
-    erstarrt – die Haltepunkte sind dieselben. Der Wechsel **behält die Stelle**, man kann also bis
-    zur Hälfte heizen und von dort wieder abkühlen; nur am jeweiligen Ende springt es ans andere.
+  - **Heizung statt Start:** Ein **Schieberegler** stellt die Leistung ein – **nach rechts heizen**
+    (Flamme), **nach links kühlen** (Schneeflocken), **in der Mitte 0 W** (nichts, keine Flamme).
+    Der Knopf **„Heizung an/aus"** daneben ist zugleich **Start und Stopp**; einen eigenen
+    Play-Knopf gibt es beim Erwärmen nicht mehr, denn es ändert sich alles durch Heizen, Kühlen und
+    den Stempel. Beim Kühlen läuft derselbe Versuch rückwärts: Der Dampf kondensiert und das Wasser
+    erstarrt – die Haltepunkte sind dieselben. Das Ausschalten **behält die Stelle**, man kann also
+    bis zur Hälfte heizen und von dort wieder abkühlen.
+    **Mehr Leistung heißt auch schneller:** Die Darstellung läuft im **Zeitraffer** (eine runde
+    Zehnerpotenz, die in der Achsenbeschriftung steht), so dass 0,5 kg Wasser bei 500 W rund 31 s
+    dauern, bei 2000 W noch 8 s – echte 52 min wären es ohne Raffer. Eine Marke wandert über die
+    Kurve und zeigt Temperatur, zugeführte Energie und Dauer.
+  - **Die Achse unten** zeigt immer die **zugeführte Energie**. Eine Zeitachse wäre bei 0 W gar
+    nicht definiert und mit dem Stempel sogar falsch, denn die Arbeit am Gas steckt Energie hinein,
+    ohne dass Zeit vergeht. Die **Dauer** steht trotzdem dabei – in der Marke und bei den
+    Gleichungen –, solange nur geheizt wird. Nebenbei sieht man so unmittelbar, **wie viel Energie**
+    jeder Abschnitt braucht: Das Sieden ist das mit Abstand breiteste Stück.
   - **Innere Energie (Knopf „Energie"):** ein senkrechter **Balken** zwischen Diagramm und
     Teilchenmodell. Er zeigt, dass die innere Energie **auch dann weiter wächst, wenn die
     Temperatur stehen bleibt**: Beim Sieden von 0,5 kg Wasser läuft er von 398 kJ auf 1526 kJ,
@@ -2745,6 +2756,13 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     steht alles wieder bei 20 °C (gemessene Abweichung 0,1 %). **Flüssigkeiten und Festkörper**
     lassen sich nicht zusammendrücken – dort setzt der Stempel nur auf und verrichtet keine Arbeit;
     am rechten Rand des Diagramms bleibt er stehen, weil die innere Energie dort nicht weiter kann.
+    Das Hineindrücken sieht man an **drei Stellen zugleich**: Die Marke im Diagramm wandert nach
+    rechts und oben, der Energiebalken steigt, und die **Gasteilchen werden schneller** (gemessen
+    von 20 auf 33 Bildpunkte je Sekunde). Dass der Kasten dabei schrumpft, wird herausgerechnet –
+    sonst sähen die Teilchen trotz höherer Temperatur langsamer aus.
+    Mit **ausgeschalteter Heizung** sieht man den Fall sauber: Vorlage *Nur Arbeit, keine Wärme* –
+    0,05 kg Luft, kein Feuer, nur drücken, und die Temperatur steigt trotzdem (35 % Weg hinein sind
+    1,9 kJ Arbeit, 20 °C → 58,2 °C, 100 → 174 kPa).
   - **Messgeräte (Knopf „Messgeräte"):** **Thermometer** und **Druckmessgerät** im Teilchenmodell.
     Der Druck wird aus p · V = m · R_s · T bestimmt; das Gefäß ist so groß gedacht, dass der Stoff
     als Gas bei der Starttemperatur gerade unter 1 bar steht. Damit sieht man beides: Beim
@@ -2773,8 +2791,8 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     **E = c · m · ΔT** bzw. **E = q · m** mit Werten, Energie und Dauer sowie die Summe; im zweiten
     **abgegebene Wärme = aufgenommene Wärme** und daraus T_M.
   - **Vorlagen:** Eis schmilzt und Wasser siedet, Ein Liter Wasser kochen, Wasserdampf kühlt ab,
-    Blei schmelzen, Eisen glühen, **Luft erhitzen** (bringt Balken, Stempel und Messgeräte gleich
-    mit), Heißes Wasser abkühlen, Eisen ins Wasser, Gleiche Massen.
+    Blei schmelzen, Eisen glühen, **Luft erhitzen** und **Nur Arbeit, keine Wärme** (beide bringen Balken,
+    Stempel und Messgeräte gleich mit), Heißes Wasser abkühlen, Eisen ins Wasser, Gleiche Massen.
     Dazu **Schrift A−/A+**, **Bild → Tafel**, **Kopieren** und **Teilen (QR-Code)**.
 - **Energieumwandlung** (Mathe & Physik, Symbol: ein großes **E**): eine ganze
   **Umwandlungskette** aus **Reservoiren** und **Wandlern**, mit Animation, Zeitregler, Verlusten und
@@ -3050,6 +3068,15 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
       **11 ms**, über eine Million **58 ms**, das Zeichnen 9 ms. Ab etwa 3000 Würfeln wird das Feld
       als Punktbild gesetzt; sind es mehr Würfel als Bildpunkte, steht **ein Punkt für mehrere**
       Würfel und wird umso blasser, je mehr davon zerfallen sind (es steht darunter, für wie viele).
+      Das Punktbild wird in **Gerätepunkten** gebaut und als Bild gezeichnet – mit `putImageData`
+      landete es an halber Stelle in halber Größe und verdeckte die Zeile mit der Anzahl darüber.
+    - **Nachrücken:** Der Knopf nimmt die **zerfallenen Würfel weg**; die übrigen rücken nach, und
+      weil es immer weniger werden, wird **jeder einzelne größer**. Die Darstellung wandert so von
+      selbst zurück: aus dem Punktbild werden **Quadrate** und schließlich wieder **Würfel mit
+      Augen**. Gemessen mit 100 000 Würfeln: Punkte bis etwa 23 000 übrige, Quadrate bis etwa 700,
+      ab da Würfel mit Augen (bei 45 übrigen rund 69 Bildpunkte groß). Die **gerade zerfallenen**
+      bleiben als Zwischenschritt noch einen Wurf lang rot liegen; wer das nicht will, schaltet den
+      Knopf aus – dann bleiben alle Würfel liegen wie bisher.
     - **Ausschnitt:** Mit **zwei Fingern** lässt sich ins Diagramm hineinzoomen (bis 500-fach), ein
       Finger verschiebt den Ausschnitt, ein **Doppeltipp** stellt ihn zurück; am Rechner zoomt das
       Mausrad. Damit sieht man den eigentlichen Punkt: Bei **vielen** Würfeln bleibt die Kurve auch
@@ -3060,8 +3087,15 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
       Schalter stellt die Wahrscheinlichkeit entsprechend: 16,7 % („Sechs zerfällt"), 33,3 %
       („Fünf und Sechs") bis 83,3 %. Ohne **Augen** lässt sich die **Zerfallswahrscheinlichkeit**
       frei von 1 bis 90 % wählen.
+    - **Ablesen:** Der Knopf setzt einen **Punkt auf die Messkurve**, der sich mit dem Finger
+      verschieben lässt – er rastet dabei auf den **nächsten Wurf** ein, denn zwischen den Würfen
+      gibt es nichts abzulesen. Daneben stehen **Wurf, N und ΔN**, und in der Tabelle wird die
+      zugehörige **Zeile hervorgehoben** (sie wird nötigenfalls in den sichtbaren Bereich
+      geschoben). Solange der Punkt aktiv ist, **verschiebt und zoomt** eine Fingerbewegung im
+      Diagramm **nicht** mehr den Ausschnitt, sondern nur noch den Punkt.
     - **Tabelle:** zeigt zu jedem Wurf **N davor**, die zerfallenen **ΔN** und das Verhältnis
-      **ΔN : N**. Daran sieht man das Entscheidende: ΔN wird immer kleiner, weil N kleiner wird –
+      **ΔN : N**. Sie zeigt neun Zeilen und läuft dem letzten Wurf nach; mit dem Finger (oder dem
+      Mausrad) lässt sich darin **blättern**, kleine Dreiecke und die Fußzeile sagen, wo man ist. Daran sieht man das Entscheidende: ΔN wird immer kleiner, weil N kleiner wird –
       das Verhältnis bleibt bei der Zerfallswahrscheinlichkeit. Beispiel mit 20 000 Würfeln:
       3285, 2876, 2370, 1862, 1551 zerfallene Würfel bei 16,4 / 17,2 / 17,1 / 16,2 / 16,1 %.
     - **Halbwertszeit:** legt die erwartete Kurve N₀·(1−p)^n und die Halbwertszeit darüber (bei
