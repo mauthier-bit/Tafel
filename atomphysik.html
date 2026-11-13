@@ -293,7 +293,7 @@
         <button type="button" id="zAug" class="on" title="Mit echten Würfelaugen: Dann zerfallen genau die hohen Augenzahlen">Augen</button>
         <button type="button" id="zTab" title="Tabelle mit N und den zerfallenen ΔN">Tabelle</button>
         <button type="button" id="zPkt" title="Einen Punkt auf die Messkurve setzen und Werte ablesen">Ablesen</button>
-        <button type="button" id="zNach" title="Zerfallene Würfel wegnehmen – die übrigen rücken nach und werden größer">Nachrücken</button>
+        <button type="button" id="zSchr" title="Erst würfeln und die Sechser zeigen, dann wegnehmen – „würfeln" macht beide Schritte einzeln">Zwischenschritt</button>
         <button type="button" id="zHalb" class="on" title="Halbwertszeit und erwartete Kurve einzeichnen">Halbwertszeit</button>
       </div>
       <div class="flaeche"><canvas id="cvZ"></canvas></div>
@@ -319,8 +319,8 @@ const elOf=z=>EL[z-1]||{z,sym:'?',name:'',conf:''};
 let D={ v:1, tab:'pse', fontSize:13, fontBold:false, fontItalic:false,
         hz:11, he:null, hs:true,            /* Hülle: Ordnungszahl, gesetzte Elektronen (null = alle), Schalenbild */
         kz:6, kn:6, kmag:true, ksub:false,  /* Kern: Protonen, Neutronen, magische Zahlen, Unterschalen */
-        zn:200, zp:16.7, zreihe:null, zhalb:true,   /* Zerfall: Kerne, Wahrscheinlichkeit, Verlauf */
-        znach:false, zpunkt:false, zpn:0, ztabAb:undefined,  /* Nachrücken, Ablesepunkt, Blätterstand */
+        zn:200, zp:16.7, zreihe:null, zhalb:false,  /* Zerfall: Kerne, Wahrscheinlichkeit, Verlauf */
+        zschritt:false, zphase:'weg', zpunkt:false, zpn:0, ztabAb:undefined,
         pse:null, nuklid:null };
 
 const fontStr=(px,bold)=>(D.fontItalic?'italic ':'')+((bold||D.fontBold)?'800 ':'600 ')+px+'px -apple-system,BlinkMacSystemFont,sans-serif';
@@ -377,16 +377,21 @@ function zViewZurueck(){ D.zv={s:1,ox:0,oy:0}; }
 function zClamp(){ const v=zView(); v.s=Math.max(1,Math.min(500,v.s));
   v.ox=Math.max(1-v.s,Math.min(0,v.ox)); v.oy=Math.max(1-v.s,Math.min(0,v.oy)); }
 let ZD=null, ZF=null;          /* je Würfel: Wurf des Zerfalls (0 = lebt) und zuletzt geworfene Augenzahl */
-/* „Nachrücken": Dann werden nur noch die übrigen Würfel gezeigt (und die gerade
-   zerfallenen als Zwischenschritt). Weil es immer weniger werden, wird jeder einzelne
-   größer - aus dem Punktbild werden wieder Quadrate und schließlich echte Würfel. */
-let ZIDX=null, ZM=0, ZIW=-1;
+/* Gezeigt werden immer nur die Würfel, die noch im Spiel sind - zerfallene werden
+   weggenommen, die übrigen rücken nach. Weil es immer weniger werden, wird jeder
+   einzelne größer: aus dem Punktbild werden wieder Quadrate und schließlich echte
+   Würfel. Im Zwischenschritt („wurf") liegen die gerade gefallenen Sechser noch dabei,
+   damit man sie sieht, bevor sie weggenommen werden. */
+let ZIDX=null, ZM=0, ZIW=-1, ZIP='';
 function zIndexNeu(){
-  if(!D.znach||!ZD){ ZIDX=null; ZM=0; ZIW=-1; return; }
+  if(!ZD){ ZIDX=null; ZM=0; ZIW=-1; return; }
   if(!ZIDX||ZIDX.length!==ZD.length) ZIDX=new Int32Array(ZD.length);
-  const w=zWurfNr(); let m=0;
-  for(let i=0;i<ZD.length;i++){ const d=ZD[i]; if(!d||d===w) ZIDX[m++]=i; }
-  ZM=m; ZIW=w; }
+  const w=zWurfNr(), mit=(D.zschritt&&D.zphase==='wurf'); let m=0;
+  for(let i=0;i<ZD.length;i++){ const d=ZD[i]; if(!d||(mit&&d===w)) ZIDX[m++]=i; }
+  ZM=m; ZIW=w; ZIP=D.zphase||''; }
+/* Wie heißen die Augenzahlen, die zerfallen? */
+function zTrefferName(){ if(!zAugen()) return 'Zerfallene';
+  return ['','Sechser','Fünfer und Sechser','Vierer bis Sechser','Dreier bis Sechser','Zweier bis Sechser'][zK()]; }
 /* Ablesepunkt auf der Messkurve */
 let ZTAB=null;
 const zPktN=()=>Math.max(0,Math.min(zReihe().length-1,D.zpn|0));
@@ -412,7 +417,7 @@ function zFeldAus(reihe){ zFeldNeu(); const n=ZD.length;
   let k=0, gr=7-zK();
   for(let w=1;w<reihe.length;w++){ const weg=reihe[w-1]-reihe[w];
     for(let m=0;m<weg&&k<n;m++,k++){ ZD[frei[k]]=w; ZF[frei[k]]=gr+Math.floor(Math.random()*(7-gr)); } } }
-function zerfallNeu(){ D.zreihe=[zAnz()]; zFeldNeu(); zIndexNeu(); D.zpn=0; D.ztabAb=undefined;
+function zerfallNeu(){ D.zreihe=[zAnz()]; D.zphase='weg'; zFeldNeu(); zIndexNeu(); D.zpn=0; D.ztabAb=undefined;
   zViewZurueck(); zerfallLauf(false); setzeZerfall(); zeichneZerfall(); sync(); }
 function zerfallWurf(){
   const r=zReihe(), w=r.length, augen=zAugen(), gr=7-zK(), p=zP0();
@@ -423,12 +428,21 @@ function zerfallWurf(){
     if(weg) ZD[i]=w; else lebt++; }
   r.push(lebt);
   if(D.zpunkt&&D.zpn!==undefined&&D.zpn>=r.length-2) D.zpn=r.length-1;
+  D.zphase=D.zschritt?'wurf':'weg';          /* mit Zwischenschritt liegen die Sechser noch */
   zIndexNeu();
-  if(lebt<=0) zerfallLauf(false);
+  if(lebt<=0&&D.zphase!=='wurf') zerfallLauf(false);
   setzeZerfall(); zeichneZerfall(); sync();
 }
+/* Ein Schritt: entweder würfeln oder - im Zwischenschritt - die Sechser wegnehmen. */
+function zSchritt(){
+  if(D.zschritt&&D.zphase==='wurf'){
+    D.zphase='weg'; zIndexNeu();
+    if(zLebt()<=0) zerfallLauf(false);
+    setzeZerfall(); zeichneZerfall(); sync(); return; }
+  zerfallWurf();
+}
 function zerfallLauf(an){ if(zTimer){ clearInterval(zTimer); zTimer=null; }
-  if(an) zTimer=setInterval(()=>{ if(zLebt()<=0){ zerfallLauf(false); setzeZerfall(); return; } zerfallWurf(); },700);
+  if(an) zTimer=setInterval(()=>{ if(zLebt()<=0&&D.zphase!=='wurf'){ zerfallLauf(false); setzeZerfall(); return; } zSchritt(); },700);
   const b=$('zLauf'); if(b){ b.classList.toggle('on',!!zTimer); b.textContent=zTimer?'⏸ anhalten':'▶ laufen'; } }
 function zWuerfelText(){ const k=zK();
   if(zAugen()) return ['','Sechs zerfällt','Fünf und Sechs','Vier bis Sechs','Drei bis Sechs','Zwei bis Sechs'][k];
@@ -437,11 +451,12 @@ function setzeZerfall(){ if(!$('zaV')) return;
   $('zaV').textContent=zahlT(zAnz());
   $('zpV').textContent=zahlD(zP()*100,1)+' %';
   $('zwV').textContent=zWuerfelText();
-  $('zHalb').classList.toggle('on',D.zhalb!==false);
+  $('zHalb').classList.toggle('on',D.zhalb===true);
   $('zAug').classList.toggle('on',zAugen());
   $('zTab').classList.toggle('on',!!D.ztab);
   $('zPkt').classList.toggle('on',!!D.zpunkt);
-  $('zNach').classList.toggle('on',!!D.znach);
+  $('zSchr').classList.toggle('on',!!D.zschritt);
+  const w=$('zWurf'); if(w) w.textContent=(D.zschritt&&D.zphase==='wurf')?'wegnehmen':'würfeln';
   const b=$('zLauf'); if(b){ b.classList.toggle('on',!!zTimer); b.textContent=zTimer?'⏸ anhalten':'▶ laufen'; } }
 
 /* Augenbilder wie auf einem Würfel */
@@ -464,18 +479,32 @@ function zeichneZerfall(){
   c.clearRect(0,0,W,H);
   const r=zReihe(), N0=zAnz(), lebt=zLebt(), p=zP();
   if(!ZD||ZD.length!==N0) zFeldAus(r);
-  if(D.znach&&(!ZIDX||ZIDX.length!==N0||ZIW!==zWurfNr())) zIndexNeu();
-  const liste=(D.znach&&ZIDX)?ZIDX:null, M=liste?ZM:N0, ix=k=>liste?liste[k]:k;
+  if(!ZIDX||ZIDX.length!==N0||ZIW!==zWurfNr()||ZIP!==(D.zphase||'')) zIndexNeu();
+  const liste=ZIDX, M=liste?ZM:N0, ix=k=>liste?liste[k]:k;
   const DPR=Math.max(1,window.devicePixelRatio||1);
   const txt=(s,x,y,px,bold,farbe,al)=>{ c.font=fontStr(px,bold); c.textAlign=al||'center'; c.textBaseline='middle';
     c.fillStyle=farbe||'#1f2430'; c.fillText(s,x,y); };
   /* ----- links das Feld der Würfel ----- */
   const FW=Math.min(W*0.46,H*1.15), FX=10*K, FY=34*K, FH=H-FY-30*K;   /* unten bleibt Platz für den Hinweis */
-  const sp=Math.max(1,Math.round(Math.sqrt(Math.max(1,M)*FW/Math.max(1,FH))));
-  const ze=Math.max(1,Math.ceil(M/sp));
-  const zell=Math.min(FW/sp,FH/ze), s=Math.max(1,zell-(zell>6?2:zell>2?1:0));
+  /* Mehr als etwa 1,2 cm Kantenlänge bringt nichts - dann wird nicht weiter vergrößert,
+     sondern das Feld bleibt stehen und wird nur noch schmaler. */
+  const ZMAXZ=47;
+  let sp=Math.max(1,Math.round(Math.sqrt(Math.max(1,M)*FW/Math.max(1,FH))));
+  let ze=Math.max(1,Math.ceil(M/sp));
+  let zell=Math.min(FW/sp,FH/ze);
+  if(zell>ZMAXZ){ zell=ZMAXZ; sp=Math.max(1,Math.min(M,Math.floor(FW/zell))); ze=Math.max(1,Math.ceil(M/sp)); }
+  const s=Math.max(1,zell-(zell>6?2:zell>2?1:0));
   const feldB=sp*zell, feldH=ze*zell;
-  txt(zahlT(lebt)+' von '+zahlT(N0)+' übrig',FX+feldB/2,FY-16*K,14*K,true,'#1f2430');
+  const FXb=FX+Math.max(0,(FW-feldB)/2);          /* schmale Felder in der Mitte */
+  /* Die Zeile über dem Feld erzählt beim Zwischenschritt, was gerade geschieht. */
+  const wNr=zWurfNr(), vor=wNr>0?r[wNr-1]:N0, weg=wNr>0?r[wNr-1]-r[wNr]:0;
+  if(D.zschritt&&D.zphase==='wurf'&&wNr>0)
+    txt(zahlT(vor)+' Würfel geworfen · davon '+zahlT(weg)+' '+zTrefferName(),
+      FXb+feldB/2,FY-16*K,14*K,true,'#dc2626');
+  else if(D.zschritt&&wNr>0)
+    txt(zTrefferName()+' weggenommen · '+zahlT(lebt)+' Würfel übrig',
+      FXb+feldB/2,FY-16*K,14*K,true,'#2563eb');
+  else txt(zahlT(lebt)+' von '+zahlT(N0)+' übrig',FXb+feldB/2,FY-16*K,14*K,true,'#1f2430');
   const gr=7-zK(), mitAugen=zAugen()&&s>=15;
   if(zell<3){                                   /* sehr viele: als Punktbild */
     /* Das Punktbild wird in Gerätepunkten gebaut und dann als Bild gezeichnet.
@@ -508,10 +537,10 @@ function zeichneZerfall(){
     const zw=document.createElement('canvas'); zw.width=bw; zw.height=bh;
     zw.getContext('2d').putImageData(img,0,0);
     c.imageSmoothingEnabled=false;
-    c.drawImage(zw,FX,FY,bw/DPR,bh/DPR);
+    c.drawImage(zw,FXb,FY,bw/DPR,bh/DPR);
     c.imageSmoothingEnabled=true;
   } else {
-    for(let k=0;k<M;k++){ const i=ix(k), x=FX+(k%sp)*zell, y=FY+Math.floor(k/sp)*zell;
+    for(let k=0;k<M;k++){ const i=ix(k), x=FXb+(k%sp)*zell, y=FY+Math.floor(k/sp)*zell;
       const w=ZD[i], lebtJ=!w, neu=(w===zWurfNr());
       const farbe=lebtJ?'#2563eb':(neu?'#dc2626':'#e2e8f0');
       if(mitAugen) malWuerfel(c,x,y,s,ZF[i],farbe,lebtJ||neu?'#ffffff':'#94a3b8');
@@ -519,10 +548,8 @@ function zeichneZerfall(){
   }
   if(zAugen()&&!mitAugen)
     txt(zell*DPR<1?'ein Punkt steht für '+Math.ceil(M/Math.max(1,Math.round(sp*zell*DPR)*Math.round(ze*zell*DPR)))+' Würfel'
-              :(D.znach?'die Augen sieht man, sobald wenige genug übrig sind':'die Augen sieht man ab etwa 100 Würfeln'),
-      FX+feldB/2,FY+feldH+13*K,11.5*K,false,'#94a3b8');
-  if(D.znach) txt('zerfallene sind weggenommen – die übrigen rücken nach',
-    FX+feldB/2,FY+feldH+(zAugen()&&!mitAugen?27:13)*K,11.5*K,false,'#94a3b8');
+              :'die Augen sieht man, sobald wenige genug übrig sind',
+      FXb+feldB/2,FY+feldH+13*K,11.5*K,false,'#94a3b8');
   /* ----- rechts: Kurve und, wenn gewünscht, die Tabelle ----- */
   const L=FX+FW+56*K, R=W-14*K, T=FY+6*K;
   const tabH=D.ztab?Math.min(H*0.46,(2+Math.min(9,r.length))*17*K+30*K):0;
@@ -548,7 +575,7 @@ function zeichneZerfall(){
   for(let n=Math.ceil(nVon/dW)*dW;n<=nBis;n+=dW){ const x=X(n); c.beginPath(); c.moveTo(x,B); c.lineTo(x,B+4*K); c.stroke();
     txt(dW<1?zahlD(n,1):String(Math.round(n)),x,B+14*K,12*K,false,'#64748b'); }
   c.save(); c.beginPath(); c.rect(L,T,R-L,B-T); c.clip();
-  if(D.zhalb!==false){
+  if(D.zhalb===true){
     c.strokeStyle='#94a3b8'; c.lineWidth=2; c.setLineDash([6,5]); c.beginPath();
     for(let n=0;n<=nMax;n+=0.25){ const v=N0*Math.pow(1-p,n); const x=X(n), y=Y(v); n?c.lineTo(x,y):c.moveTo(x,y); }
     c.stroke(); c.setLineDash([]);
@@ -1048,14 +1075,16 @@ $('zPkt').onclick=()=>{ D.zpunkt=!D.zpunkt;
   setzeZerfall(); zeichneZerfall(); sync();
   toast2(D.zpunkt?'Punkt auf der Kurve ziehen – die zugehörige Zeile in der Tabelle wird hervorgehoben'
                  :'Ablesepunkt aus – jetzt lässt sich wieder zoomen und schieben'); };
-$('zNach').onclick=()=>{ D.znach=!D.znach; zIndexNeu(); setzeZerfall(); zeichneZerfall(); sync();
-  toast2(D.znach?'Zerfallene Würfel werden weggenommen – die übrigen rücken nach und werden größer'
-                :'Zerfallene Würfel bleiben liegen'); };
-$('zWurf').onclick=()=>{ if(zLebt()<=0){ zerfallNeu(); return; } zerfallLauf(false); zerfallWurf(); };
+$('zSchr').onclick=()=>{ D.zschritt=!D.zschritt; if(!D.zschritt) D.zphase='weg';
+  zIndexNeu(); setzeZerfall(); zeichneZerfall(); sync();
+  toast2(D.zschritt?'„würfeln" macht jetzt zwei Schritte: erst werfen, dann die '+zTrefferName()+' wegnehmen'
+                   :'„würfeln" nimmt die '+zTrefferName()+' gleich mit weg'); };
+$('zWurf').onclick=()=>{ if(zLebt()<=0&&D.zphase!=='wurf'){ zerfallNeu(); return; }
+  zerfallLauf(false); zSchritt(); };
 $('zLauf').onclick=()=>{ if(zTimer){ zerfallLauf(false); return; }
   if(zLebt()<=0) zerfallNeu(); zerfallLauf(true); };
 $('zNeu').onclick=()=>zerfallNeu();
-$('zHalb').onclick=()=>{ D.zhalb=D.zhalb===false; setzeZerfall(); zeichneZerfall(); sync(); };
+$('zHalb').onclick=()=>{ D.zhalb=(D.zhalb!==true); setzeZerfall(); zeichneZerfall(); sync(); };
 $('zpV').style.cursor=$('zaV').style.cursor='text';
 $('zpV').title=$('zaV').title='antippen und Wert eingeben';
 
@@ -1133,6 +1162,7 @@ function uebernehmen(d){
   D=Object.assign(D,d); delete D.edit;          /* der Modus gehört der Tafel, nicht dem Stand */
   if(!(D.hz>=1)) D.hz=11; if(!(D.kz>=0)) D.kz=6; if(!(D.kn>=0)) D.kn=6;
   if(!Array.isArray(D.zreihe)||!D.zreihe.length) D.zreihe=[zAnz()];
+  if(D.zphase!=='wurf') D.zphase='weg';
   zFeldAus(D.zreihe); zIndexNeu();
   D.zpn=Math.max(0,Math.min(D.zreihe.length-1,D.zpn|0));
   setTab(D.tab||'pse',true); setzeHuelle(); setzeTopf(); setzeZerfall(); resize();

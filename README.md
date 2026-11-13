@@ -3075,13 +3075,18 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
       Würfel und wird umso blasser, je mehr davon zerfallen sind (es steht darunter, für wie viele).
       Das Punktbild wird in **Gerätepunkten** gebaut und als Bild gezeichnet – mit `putImageData`
       landete es an halber Stelle in halber Größe und verdeckte die Zeile mit der Anzahl darüber.
-    - **Nachrücken:** Der Knopf nimmt die **zerfallenen Würfel weg**; die übrigen rücken nach, und
-      weil es immer weniger werden, wird **jeder einzelne größer**. Die Darstellung wandert so von
-      selbst zurück: aus dem Punktbild werden **Quadrate** und schließlich wieder **Würfel mit
-      Augen**. Gemessen mit 100 000 Würfeln: Punkte bis etwa 23 000 übrige, Quadrate bis etwa 700,
-      ab da Würfel mit Augen (bei 45 übrigen rund 69 Bildpunkte groß). Die **gerade zerfallenen**
-      bleiben als Zwischenschritt noch einen Wurf lang rot liegen; wer das nicht will, schaltet den
-      Knopf aus – dann bleiben alle Würfel liegen wie bisher.
+    - **Nachrücken** geschieht immer: Zerfallene Würfel werden **weggenommen**, die übrigen rücken
+      nach, und weil es immer weniger werden, wird **jeder einzelne größer**. Die Darstellung
+      wandert so von selbst zurück – aus dem Punktbild werden **Quadrate** und schließlich wieder
+      **Würfel mit Augen** (gemessen mit 100 000 Würfeln: Punkte bis etwa 23 000 übrige, Quadrate
+      bis etwa 700, ab da Würfel). Größer als **1,2 cm** (45 Bildpunkte) wird ein Würfel nicht
+      mehr; ab etwa 60 übrigen bleibt er so groß, und das Feld wird nur noch kürzer.
+    - **Zwischenschritt:** Mit diesem Knopf macht **„würfeln" zwei Schritte einzeln**. Erst der
+      Wurf: Alle Würfel zeigen ihre Augen, die Treffer liegen **rot** dazwischen, und darüber steht
+      *„120 Würfel geworfen · davon 21 Sechser"*. Der Knopf heißt nun **„wegnehmen"**; der nächste
+      Druck räumt sie ab und ordnet die übrigen neu: *„Sechser weggenommen · 99 Würfel übrig"*.
+      **▶ laufen** macht die beiden Schritte abwechselnd im Takt. Ohne den Knopf nimmt ein Wurf die
+      Treffer wie bisher gleich mit weg.
     - **Ausschnitt:** Mit **zwei Fingern** lässt sich ins Diagramm hineinzoomen (bis 500-fach), ein
       Finger verschiebt den Ausschnitt, ein **Doppeltipp** stellt ihn zurück; am Rechner zoomt das
       Mausrad. Damit sieht man den eigentlichen Punkt: Bei **vielen** Würfeln bleibt die Kurve auch
@@ -3104,7 +3109,8 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
       das Verhältnis bleibt bei der Zerfallswahrscheinlichkeit. Beispiel mit 20 000 Würfeln:
       3285, 2876, 2370, 1862, 1551 zerfallene Würfel bei 16,4 / 17,2 / 17,1 / 16,2 / 16,1 %.
     - **Halbwertszeit:** legt die erwartete Kurve N₀·(1−p)^n und die Halbwertszeit darüber (bei
-      einer Sechs: 3,8 Würfe).
+      einer Sechs: 3,8 Würfe). Sie ist **anfangs aus** – erst die eigene Messung, dann der
+      Vergleich mit der Theorie.
     Jeder Würfel wird dabei **einzeln** geworfen – die Kurve entsteht also wirklich aus dem Zufall
     und nicht aus einer eingesetzten Formel. Nachgemessen: 12 Versuche mit 1000 Würfeln und
     p = 50 % ergaben im Mittel 502,8 übrige nach dem ersten Wurf.
