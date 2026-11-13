@@ -2751,9 +2751,18 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     der **Wirkungsgrad** ist je Wandler einstellbar (Vorgabe aus der Literatur, z. B. Glühlampe 10 %,
     Generator 90 %).
   - **Gleichungen:** Der Knopf schaltet in drei Stufen – aus, **Formeln** (nur mit Variablen) und
-    **mit Zahlen**. Unter jeder Stufe stehen dann die Formel der Energieform, die Umwandlung
-    (E_zu = η · E_ab) und die **Umkehrung** zur charakteristischen Größe (v = √(2·E/m)), jeweils mit
-    den Werten des **aktuellen** Standes – wer den Zeitregler bewegt, sieht die Zahlen mitlaufen.
+    **mit Zahlen**. Unter jeder Stufe stehen dann die Formel der Energieform, die Umwandlung und die
+    **Umkehrung** zur charakteristischen Größe (v = √(2·E/m)).
+    Die **Umwandlung** steht zweifach da: einmal als Energiebilanz (**E_zu = η · E_ab**) und einmal
+    **mit den Formeln beider Energieformen** – also der Ansatz, den man an der Tafel hinschreibt:
+    `½ · m · v² = m · g · h`, darunter mit den bekannten Werten
+    `½ · 2 kg · v² = 2 kg · 9,81 m/s² · 5 m`. Mit Verlusten steht das η mit drin
+    (`½ · m · v² = η · m · g · h`), und bei **mehreren Reservoiren** wird daraus die gewohnte
+    Energieerhaltungsgleichung `m · g · h₂ + ½ · m · v² = m · g · h₁` – kommt dieselbe Energieform
+    auf beiden Seiten vor, bekommt ihre Größe dafür eine **Nummer**.
+    Die Zeilen zu den einzelnen Reservoiren zeigen die Werte des **aktuellen** Standes – wer den
+    Zeitregler bewegt, sieht sie mitlaufen; die Umwandlungsgleichung beschreibt dagegen immer den
+    **ganzen** Schritt.
   - **Vorlagen:** Fallender Stein, Pendel, Katapult, Wasserkraftwerk, **Windrad**, Auto bremst,
     Wasserkocher, Eis schmilzt, Taschenlampe, Solarlampe, Kernkraftwerk, Zwei Reservoire,
     leeres Blatt. Beim **Pendel** sieht man an der Höhe, was die Verluste ausmachen: Aus 0,40 m
