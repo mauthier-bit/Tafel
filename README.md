@@ -2716,16 +2716,41 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   - **Einrasten:** besondere Winkel (Vielfache von 30° und 45°) und die zugehörigen Werte
     (0, ±½, ±½√2, ±½√3, ±1; bei tan 0, ±⅓√3, ±1, ±√3) rasten beim Ziehen ein; ohne Einrasten ganze Grad
     bzw. Hundertstel. **Besondere Winkel** markiert diese am Kreis, **Bogenmaß** beschriftet sie mit π.
-- **Wärme und Teilchen** (Mathe & Physik, Symbol: ein Thermometer): zwei Reiter zur Wärmelehre.
+- **Wärme und Teilchen** (Mathe & Physik, Symbol: ein Thermometer): zwei Teile zur Wärmelehre, die
+  mit dem **Umschalter oben links** („Erwärmen" / „Mischen") gewechselt werden – er steht in der
+  Werkzeugleiste und spart die eigene Reiterzeile.
   - **Erwärmen und Abkühlen:** die **Erwärmungskurve** T(t) bei fester Heizleistung – mit den
     **Haltepunkten** beim Schmelzen und Sieden, an denen die Temperatur stehen bleibt, obwohl
-    weiter geheizt wird. Einstellbar sind **Stoff** (Wasser, Ethanol, Eisen, Aluminium, Kupfer,
-    Blei, Speiseöl), **Masse**, **Starttemperatur** und **Heizleistung** (in dieser Reihenfolge,
-    weil man erst sagt, wo man anfängt, und dann, wie stark geheizt wird); **Start** lässt die Zeit
+    weiter geheizt wird. Einstellbar sind **Stoff** (Wasser, **Luft**, Ethanol, Eisen, Aluminium,
+    Kupfer, Blei, Speiseöl), **Masse**, **Starttemperatur** und **Heizleistung** (in dieser Reihenfolge,
+    weil man erst sagt, wo man anfängt, und dann, wie stark geheizt wird). Die Kurve beginnt in dem
+    **Aggregatzustand, der zur Starttemperatur gehört**: Wasser bei −20 °C als Eis, bei 20 °C als
+    Wasser, Luft gleich als Gas – es kommen nur die Abschnitte oberhalb der Starttemperatur vor.
+    **Start** lässt die Zeit
     laufen, eine Marke wandert über die Kurve und zeigt Temperatur, zugeführte Energie und Dauer.
     Der Knopf **heizen/kühlen** dreht den Vorgang um: Dann kondensiert der Dampf und das Wasser
     erstarrt – die Haltepunkte sind dieselben. Der Wechsel **behält die Stelle**, man kann also bis
     zur Hälfte heizen und von dort wieder abkühlen; nur am jeweiligen Ende springt es ans andere.
+  - **Innere Energie (Knopf „Energie"):** ein senkrechter **Balken** zwischen Diagramm und
+    Teilchenmodell. Er zeigt, dass die innere Energie **auch dann weiter wächst, wenn die
+    Temperatur stehen bleibt**: Beim Sieden von 0,5 kg Wasser läuft er von 398 kJ auf 1526 kJ,
+    während das Thermometer die ganze Zeit 100 °C zeigt. Feine Striche markieren die Grenzen der
+    Abschnitte; unten steht der Wert und, falls mit dem Stempel gearbeitet wurde, die **Arbeit**.
+  - **Stempel (Knopf „Stempel"):** ein Kolben von oben, der am Griff **hineingedrückt und wieder
+    herausgezogen** wird. Damit gibt es die **zweite Möglichkeit, die innere Energie zu ändern** –
+    nicht Wärme zuführen, sondern **Arbeit verrichten**: W = p · ΔV wandert an dieselbe Stelle wie
+    die Heizenergie, der Versuch rückt um W/P vor, Temperatur und Druck steigen. Beispiel aus der
+    Vorlage *Luft erhitzen* (0,05 kg Luft, 42 l, 20 °C): 40 % Weg hinein sind **2,3 kJ Arbeit**,
+    die Luft wird **65,9 °C** warm und der Druck steigt von 100 auf **193 kPa**; herausgezogen
+    steht alles wieder bei 20 °C (gemessene Abweichung 0,1 %). **Flüssigkeiten und Festkörper**
+    lassen sich nicht zusammendrücken – dort setzt der Stempel nur auf und verrichtet keine Arbeit;
+    am rechten Rand des Diagramms bleibt er stehen, weil die innere Energie dort nicht weiter kann.
+  - **Messgeräte (Knopf „Messgeräte"):** **Thermometer** und **Druckmessgerät** im Teilchenmodell.
+    Der Druck wird aus p · V = m · R_s · T bestimmt; das Gefäß ist so groß gedacht, dass der Stoff
+    als Gas bei der Starttemperatur gerade unter 1 bar steht. Damit sieht man beides: Beim
+    **Erhitzen von Luft** steigt der Druck allein durch die Temperatur (20 °C → 140 °C ergibt
+    100 kPa → 141 kPa), beim **Hineindrücken** steigen Druck und Temperatur zusammen. Die Werte
+    sind qualitativ gemeint.
   - **Teilchenmodell:** daneben ein großer Kasten mit **160 Teilchen**, die zeigen, was gerade
     passiert – im Gitter schwingend (fest), dicht durcheinander (flüssig) oder frei fliegend
     (gasförmig). Im **festen** Zustand zittert dabei jedes Teilchen **für sich** um seinen
@@ -2735,6 +2760,9 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     dunkel im Gitter, in der Stofffarbe flüssig, hell und durchscheinend als Gas. Beim Schmelzen und Sieden wechseln sie **nach und
     nach** hinüber, so dass man sieht, wofür die Energie während des Haltepunkts gebraucht wird;
     die Bewegung wird mit der Temperatur schneller.
+    Beim Sieden sinkt der **Flüssigkeitsspiegel**, und die flüssigen Teilchen bleiben darunter.
+    Ist der Stempel aktiv, wird **nur das Gas** zusammengedrückt; Flüssigkeit und Festkörper
+    bleiben unten liegen.
     Unter dem Kasten steht, **womit** gearbeitet wird: beim Heizen eine **Flamme**, beim Kühlen
     **Schneeflocken**.
   - **Mischungstemperatur:** zwei Behälter mit Stoff, Masse und Temperatur; **Start** schüttet sie
@@ -2745,7 +2773,8 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     **E = c · m · ΔT** bzw. **E = q · m** mit Werten, Energie und Dauer sowie die Summe; im zweiten
     **abgegebene Wärme = aufgenommene Wärme** und daraus T_M.
   - **Vorlagen:** Eis schmilzt und Wasser siedet, Ein Liter Wasser kochen, Wasserdampf kühlt ab,
-    Blei schmelzen, Eisen glühen, Heißes Wasser abkühlen, Eisen ins Wasser, Gleiche Massen.
+    Blei schmelzen, Eisen glühen, **Luft erhitzen** (bringt Balken, Stempel und Messgeräte gleich
+    mit), Heißes Wasser abkühlen, Eisen ins Wasser, Gleiche Massen.
     Dazu **Schrift A−/A+**, **Bild → Tafel**, **Kopieren** und **Teilen (QR-Code)**.
 - **Energieumwandlung** (Mathe & Physik, Symbol: ein großes **E**): eine ganze
   **Umwandlungskette** aus **Reservoiren** und **Wandlern**, mit Animation, Zeitregler, Verlusten und
