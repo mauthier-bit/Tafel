@@ -3188,6 +3188,27 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     paaren). Unten stehen Konfiguration, Schalenbesetzung, **Periode und Gruppe** sowie die Zahl der
     **Außenelektronen** – damit wird die Anordnung im Periodensystem erklärt. Weicht die wirkliche
     Konfiguration von der Reihenfolge ab (Chrom, Kupfer, Silber, Gold …), steht sie als Hinweis darunter.
+  - **Spektrum (Knopf „Spektrum")** blendet unter dem Diagramm ein **Spektrumband** von 380 bis
+    780 nm ein und zeichnet die zugehörigen **Übergänge als Pfeile** zwischen die Energiestufen.
+    Der Knopf **nm / eV** schaltet zwischen **Wellenlänge** und **Photonenenergie** um (E = h·c/λ
+    mit h·c = 1239,84 eV·nm); das Band bleibt dabei nach der Wellenlänge geordnet, in eV stehen die
+    Zahlen deshalb nicht gleichabständig und laufen von links 3,26 eV nach rechts 1,59 eV.
+    - **Gemessene Linien** (farbig im Band): die starken Linien des neutralen Atoms aus dem
+      **NIST Handbook of Basic Atomic Spectroscopic Data** (Strong Lines, Luftwellenlängen) –
+      übernommen, nicht gerechnet. Hinterlegt sind die üblichen Spektrallampen: **H** (656,3 ·
+      486,1 · 434,0 · 410,2 nm), **He**, **Li**, **Ne**, **Na** (589,0 / 589,6 nm), **K**, **Ca**
+      und **Hg** (579,1 · 577,0 · 546,1 · 435,8 · 404,7 nm). Bei allen anderen Elementen bleibt das
+      Band leer und sagt das auch.
+    - **Übergänge:** Beim **Wasserstoff** rechnet das Bohrmodell sie nach – **Lyman** (nach n = 1,
+      im UV), **Balmer** (nach n = 2, sichtbar) und **Paschen** (nach n = 3). Die gerechneten
+      Balmer-Linien (656,1 · 486,0 · 433,9 nm) treffen die gemessenen auf 0,3 Promille; der Rest
+      ist der Unterschied zwischen Vakuum- und Luftwellenlänge und die mitschwingende Kernmasse.
+    - Bei schwereren Elementen gilt das Bohrmodell nur noch für die **inneren** Schalen. Ab Bor
+      stehen deshalb die **charakteristischen Röntgenlinien nach Moseley** (Abschirmung Z−1 für die
+      K-Linien, Z−7,4 für L): **Kupfer Kα 8,00 keV** (gemessen 8,05), **Molybdän Kα 17,15 keV**
+      (17,48), **Mo Lα 2,26 keV** (2,29). Für schwere Kerne wird die Näherung schlechter
+      (Quecksilber Kα 63,7 statt 70,8 keV), und **Kβ** überschätzt das Modell deutlich – es rechnet
+      mit derselben Abschirmung wie für Kα. Die Pfeile zeigen dazu die Übergänge L→K, M→K und M→L.
   - **Kern** zeigt den **Potentialtopf mit zwei Hälften**: links die **Protonen**, rechts die
     **Neutronen**, gefüllt nach den Schalen der magischen Zahlen **2, 8, 20, 28, 50, 82, 126**; eine
     abgeschlossene Schale wird grün hervorgehoben. Die **linke Hälfte ist flacher** (gleiche Ladungen
