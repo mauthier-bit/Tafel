@@ -2422,7 +2422,7 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
    Vierfeldertafel — **4.** Baumdiagramm · Wahrscheinlichkeitsrechner · **Tabellenkalkulation** ·
    Motion-Tracker · **Bewegungsdiagramme** · **Mathe und Physik Geschichte** — **5.** Stromkreis ·
    Optiklabor · Wellenwanne · **Atomphysik** · **Induktion** · **Energieumwandlung** ·
-   **Wärme und Teilchen** — **6.** **Video-Physik** · **Audio-Physik** · Messwert-Analyse ·
+   **Wärme und Teilchen** · **Stoßvorgänge** — **6.** **Video-Physik** · **Audio-Physik** · Messwert-Analyse ·
    **Versuchsprotokoll** · Einheitenumrechner.
    Die Aufklappmenüs legen sich **nie über die Werkzeugleiste**: Sie öffnen neben ihr, bleiben unter
    der oberen Leiste und nehmen bei schmalem Fenster **weniger Spalten** (bei wenig Höhe lassen sie
@@ -2810,6 +2810,46 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     der Druck beim Verdampfen steigt), **Luft erhitzen** und **Nur Arbeit, keine Wärme** (beide bringen Balken,
     Stempel und Messgeräte gleich mit), Heißes Wasser abkühlen, Eisen ins Wasser, Gleiche Massen.
     Dazu **Schrift A−/A+**, **Bild → Tafel**, **Kopieren** und **Teilen (QR-Code)**.
+- **Stoßvorgänge** (Mathe & Physik, Symbol: zwei Kugeln mit Pfeil): zwei Körper stoßen zusammen –
+  **1D** auf einer Bahn wie auf der Luftkissenbahn oder **2D** in der Fläche wie auf dem Billardtisch,
+  **elastisch** oder **unelastisch**, mit Werten, Vektorpfeilen, Aufnahme und Stroboskopbild.
+  - **Körper einstellen:** Die **Masse** steht in der Zeile unter den Knöpfen (0,05 bis 50 kg); der
+    Radius wächst mit der dritten Wurzel der Masse, beide Körper haben also dieselbe Dichte. Die
+    **Anfangsgeschwindigkeit** lässt sich eintippen – in 2D als Betrag und Richtung (0° = nach
+    rechts) – **oder mit dem Finger geben:** Körper antippen und wegschnippen, der Körper bekommt
+    die Geschwindigkeit des Fingers (höchstens 15 m/s). **Langsames Ziehen verschiebt ihn nur**; so
+    stellt man in 2D ein, **wie mittig** der Stoß wird. Angeschubst und verschoben wird nur im Stand,
+    danach führt „Anfang" (↺) wieder dorthin zurück.
+  - **Ablauf:** „Start" lässt den Stoß laufen, **Tempo** (1:1 bis 1:8) macht Zeitlupe daraus – beim
+    Ablauf wie beim Abspielen. Der Ablauf **endet, sobald beide** Körper die Bahn bzw. die Fläche
+    verlassen haben; einer allein reicht nicht.
+  - **Stoßrechnung:** Der Zeitpunkt der Berührung wird **ausgerechnet** und nicht gesucht – deshalb
+    liegt im Mitschnitt genau eine Probe im Augenblick des Stoßes, egal wie schnell die Körper sind.
+    **Elastisch** werden nur die Anteile längs der Verbindungslinie der Mittelpunkte getauscht
+    (zentral in 1D, schief in 2D); **unelastisch** bekommen beide die Schwerpunktsgeschwindigkeit und
+    fahren zusammen weiter. Der **Impuls bleibt in beiden Fällen** erhalten, die kinetische Energie
+    nur beim elastischen Stoß.
+  - **Werte v, p, E** (drei Knöpfe): eine Tabelle über dem Bild, je Größe eine Zeile **vor** und eine
+    **nach** dem Stoß, für jeden Körper und **zusammen**; in 2D stehen in jeder Zelle die beiden
+    Komponenten **x | y**. Beim unelastischen Stoß kommt die Zeile **„davon innere Energie"** dazu –
+    dort steht, was die kinetische Energie verloren hat.
+  - **Pfeile:** „Pfeil v" und „Pfeil p" zeichnen die Vektoren an den Körpern und zusätzlich an der
+    **Stoßstelle**: blass gestrichelt der Wert **vorher**, durchgezogen **nachher** (v₁′). „Änderung"
+    hängt **Δv** bzw. **Δp** an – in 2D als Verbindung von der Spitze des Vorher-Pfeils zur Spitze
+    des Nachher-Pfeils, in 1D als eigener Pfeil darunter. Die Pfeillängen richten sich nach dem
+    größten vorkommenden Wert, Geschwindigkeit und Impuls haben dabei getrennte Maßstäbe.
+  - **Aufnahme:** Jeder Ablauf wird **von selbst** mitgeschnitten, einen Aufnahmeknopf braucht es
+    nicht. In der unteren Zeile spielt **▶** ihn wieder ab, der Regler sucht jede Stelle.
+  - **Stroboskopbild:** macht aus der Aufnahme ein Bild mit **gleichmäßigen Blitzen** (Anzahl über
+    „Blitze"). Der **Zeitpunkt des Stoßes ist immer ein Blitz**: Der Abstand wird so gedehnt, dass
+    zwischen Anfang und Stoß ganze Schritte liegen – das Bild beginnt trotzdem bei t = 0. In **1D**
+    steht jeder Blitz in einer eigenen Zeile mit seiner Zeit (Zeit nach unten – das ist das
+    x-t-Bild des Stoßes), in **2D** stehen die Bilder in der Fläche, mit Zeitmarken und gepunkteter
+    Bahn. **Speichern** legt das Bild als PNG-Datei ab; daneben liegen **Bild → Tafel** und
+    **Kopieren**, dazu **Teilen (QR-Code)**.
+  - **Grenzen:** Die Körper sind Massenpunkte mit Radius; **Drehung** (Drall) beim schiefen Stoß,
+    Reibung und Rollen kommen nicht vor. Beim unelastischen Stoß in 2D fahren beide deshalb genau
+    mit der Schwerpunktsgeschwindigkeit weiter, statt sich dabei zu drehen.
 - **Energieumwandlung** (Mathe & Physik, Symbol: ein großes **E**): eine ganze
   **Umwandlungskette** aus **Reservoiren** und **Wandlern**, mit Animation, Zeitregler, Verlusten und
   den Gleichungen dazu.

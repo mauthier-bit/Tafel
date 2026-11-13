@@ -1,0 +1,1028 @@
+<!DOCTYPE html><html lang="de"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<title>Stoßvorgänge</title>
+<style>
+  :root{--fs:14px;}
+  *{box-sizing:border-box;} [hidden]{display:none!important;}
+  html,body{margin:0;height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#1f2430;font-size:var(--fs);}
+  #wrap{position:absolute;inset:0;display:flex;flex-direction:column;}
+  #bar{display:flex;gap:4px;padding:6px;border-bottom:1px solid #e2e7ef;align-items:center;flex:none;overflow:hidden;}
+  #barL,#barR{display:flex;gap:4px;align-items:center;flex:none;}
+  #barMid{display:flex;gap:4px;align-items:center;flex:1 1 auto;min-width:0;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:thin;padding:0 2px;}
+  #bar.compact #barL .tb span,#bar.compact #barR .tb span{display:none;}
+  #bar.compact #barL .tb,#bar.compact #barR .tb{min-width:42px;padding:0 3px;}
+  #barMid::-webkit-scrollbar{height:5px;} #barMid::-webkit-scrollbar-thumb{background:#c8d0dc;border-radius:3px;}
+  #barMid.more{-webkit-mask-image:linear-gradient(90deg,#000 0,#000 calc(100% - 22px),transparent);mask-image:linear-gradient(90deg,#000 0,#000 calc(100% - 22px),transparent);}
+  .tb{flex:none;min-width:52px;height:50px;border:1px solid #d6dce5;background:#fff;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;padding:0 5px;color:#1f2430;font:inherit;}
+  .tb svg{width:32px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+  .tb span{font-size:.7em;font-weight:600;white-space:nowrap;}
+  .tb.on{background:#2563eb;border-color:#2563eb;color:#fff;}
+  .tb:disabled{opacity:.35;}
+  .sep{width:1px;align-self:stretch;background:#e2e7ef;margin:0 3px;flex:none;}
+  #bar2,#bar3{display:flex;gap:6px;padding:5px 8px;border-bottom:1px solid #e2e7ef;align-items:center;flex-wrap:nowrap;flex:none;min-height:44px;font-size:.92em;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:thin;}
+  #bar2>*,#bar3>*{flex:0 0 auto;}
+  #bar2::-webkit-scrollbar,#bar3::-webkit-scrollbar{height:4px;} #bar2::-webkit-scrollbar-thumb,#bar3::-webkit-scrollbar-thumb{background:#cfd6e0;border-radius:2px;}
+  .lbl{color:#64748b;font-weight:600;}
+  .grow{flex:1 1 auto!important;min-width:4px;}
+  .btn{border:1px solid #cfd6e0;background:#fff;border-radius:9px;padding:5px 10px;font:inherit;font-weight:600;color:#1f2430;cursor:pointer;white-space:nowrap;}
+  .btn.pri{background:#2563eb;border-color:#2563eb;color:#fff;}
+  .btn.red{color:#dc2626;border-color:#fca5a5;}
+  .btn.on{background:#2563eb;border-color:#2563eb;color:#fff;}
+  select.sel{border:1px solid #cfd6e0;border-radius:9px;padding:5px 8px;font:inherit;font-weight:600;background:#fff;color:#1f2430;max-width:200px;}
+  .stp{display:inline-flex;align-items:center;gap:4px;}
+  .stp button{border:1px solid #cfd6e0;background:#fff;border-radius:8px;width:32px;height:32px;font:inherit;font-weight:700;cursor:pointer;color:#1f2430;}
+  .stp .val{min-width:84px;text-align:center;font-weight:700;}
+  .seg{display:inline-flex;border:1px solid #cfd6e0;border-radius:9px;overflow:hidden;}
+  .seg button{border:0;background:#fff;font:inherit;font-weight:600;padding:5px 10px;cursor:pointer;color:#1f2430;}
+  .seg button.on{background:#2563eb;color:#fff;}
+  #zeitR{flex:1 1 auto;min-width:120px;accent-color:#2563eb;height:30px;}
+  #cvbox{position:relative;flex:1;min-height:0;background:#fff;}
+  #cvbox canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;}
+  #hint{position:absolute;left:10px;bottom:6px;font-size:.78em;color:#94a3b8;pointer-events:none;}
+  .segBig{display:inline-flex;flex:none;border:1px solid #d6dce5;border-radius:10px;overflow:hidden;height:50px;}
+  .segBig button{border:none;background:#f1f4f9;padding:0 11px;height:100%;font:inherit;font-weight:700;font-size:.78em;color:#475569;cursor:pointer;white-space:nowrap;}
+  .segBig button+button{border-left:1px solid #d6dce5;}
+  .segBig button.on{background:#2563eb;color:#fff;}
+  input.num{width:4.4em;border:1px solid #cfd6e0;border-radius:8px;padding:5px 6px;font:inherit;font-weight:700;text-align:right;color:#1f2430;background:#fff;}
+  input.num.k1{border-color:#2563eb;} input.num.k2{border-color:#dc2626;}
+  #abR{flex:1 1 auto;min-width:90px;max-width:260px;accent-color:#2563eb;height:30px;}
+  #bar3 .val{min-width:62px;}
+</style>
+<script>
+/* Scharfe Kante unter der iPadOS-Statusleiste (iPadOS 26/27).
+   WebKit legt in Web-Apps vom Homebildschirm am oberen Rand sonst einen
+   weichen Verlauf ueber den Inhalt. Er entfaellt, wenn dort eine deckende
+   Leiste liegt - ein bildschirmfuellender Kasten genuegt nicht (am
+   13.10.2026 auf iPadOS 27 geprueft). Das Skript legt deshalb einen 16 px
+   hohen, deckenden Streifen an den oberen Rand und rueckt alles, was in
+   diese 16 px hineinragt, um 16 px nach unten. Laeuft nur in der App vom
+   Homebildschirm, nicht in Safari und nicht in einem Rahmen; mit #kante in
+   der Adresse laesst es sich zum Pruefen erzwingen. */
+(function(){
+  if(window.top!==window) return;
+  var pruef=/kante/i.test(location.hash||'');
+  var alsApp=(navigator.standalone===true) ||
+             (window.matchMedia && matchMedia('(display-mode: standalone)').matches);
+  if(!alsApp && !pruef) return;
+
+  var HOCH=16;
+  function leer(f){ return !f || f==='transparent' || f.replace(/\s/g,'')==='rgba(0,0,0,0)'; }
+  function seite(){
+    var s=getComputedStyle(document.body), f=s.backgroundColor, b=s.backgroundImage;
+    if(leer(f) && (!b || b==='none')){
+      s=getComputedStyle(document.documentElement); f=s.backgroundColor; b=s.backgroundImage;
+    }
+    return { farbe: leer(f) ? '#ffffff' : f, bild: (b && b!=='none') ? b : '' };
+  }
+  /* Faerbt dieses Element am oberen Rand etwas sichtbar ein? */
+  function tinte(n){
+    var r=n.getBoundingClientRect();
+    if(r.top>=HOCH || r.bottom<=0 || r.width<=0) return false;
+    var s=getComputedStyle(n);
+    if(s.display==='none' || s.visibility==='hidden' || s.opacity==='0') return false;
+    if(n.id==='randKante') return false;
+    var t=n.tagName.toLowerCase();
+    if(t==='img'||t==='svg'||t==='canvas'||t==='video') return true;
+    if(!leer(s.backgroundColor) || s.backgroundImage!=='none') return true;
+    if(parseFloat(s.borderTopWidth)>0) return true;
+    var kn=n.childNodes;
+    for(var j=0;j<kn.length;j++)
+      if(kn[j].nodeType===3 && kn[j].nodeValue.replace(/\s/g,'')) return true;
+    for(var i=0;i<n.children.length;i++) if(tinte(n.children[i])) return true;
+    return false;
+  }
+  function ragtRein(z){
+    for(var i=0;i<z.children.length;i++) if(tinte(z.children[i])) return true;
+    return false;
+  }
+  function luft(z){
+    if(z.dataset.kanteLuft) return;
+    if(!ragtRein(z) && !tinte(z)) return;    /* noch nichts oben - spaeter nochmal */
+    z.dataset.kanteLuft='1';
+    var p=parseFloat(getComputedStyle(z).paddingTop)||0;
+    if(p>=HOCH) return;
+    z.style.paddingTop=(p+HOCH)+'px';
+  }
+  function sichtbar(n,s){
+    return s.display!=='none' && s.visibility!=='hidden' && n.id!=='randKante';
+  }
+  /* bildschirmfuellende fixierte Kaesten */
+  function kaesten(){
+    var alle=document.querySelectorAll('body > *, body > * > *'), raus=[];
+    for(var i=0;i<alle.length;i++){
+      var n=alle[i], s=getComputedStyle(n);
+      if(s.position!=='fixed' || !sichtbar(n,s)) continue;
+      var r=n.getBoundingClientRect();
+      if(r.top<=4 && r.width>=innerWidth*0.9 && r.height>=innerHeight*0.9) raus.push(n);
+    }
+    return raus;
+  }
+  /* Leisten am oberen Rand (fixiert oder klebend, aber kein Vollbildkasten) */
+  function leisten(){
+    var alle=document.querySelectorAll('body > *, body > * > *'), raus=[];
+    for(var i=0;i<alle.length;i++){
+      var n=alle[i], s=getComputedStyle(n);
+      if((s.position!=='fixed' && s.position!=='sticky') || !sichtbar(n,s)) continue;
+      var r=n.getBoundingClientRect();
+      if(r.top<=4 && r.width>=innerWidth*0.8 && r.height>=6 && r.height<=innerHeight*0.6) raus.push(n);
+    }
+    return raus;
+  }
+  /* Liegt oben schon eine deckende Leiste, ist nichts zu tun. */
+  function schonGut(){
+    var st=document.elementsFromPoint ? document.elementsFromPoint(Math.round(innerWidth/2),2) : [];
+    for(var i=0;i<st.length;i++){
+      var n=st[i];
+      if(n.id==='randKante') continue;
+      if(n===document.body || n===document.documentElement) return false;
+      var s=getComputedStyle(n), r=n.getBoundingClientRect();
+      return (s.position==='fixed'||s.position==='sticky') && r.top<=4 &&
+             r.width>=innerWidth*0.8 && r.height>=6 && r.height<=innerHeight*0.6 &&
+             !leer(s.backgroundColor);
+    }
+    return false;
+  }
+  var band=null;
+  function streifen(farbe){
+    if(!band){
+      band=document.createElement('div');
+      band.id='randKante'; band.setAttribute('aria-hidden','true');
+      band.style.cssText='position:fixed;left:0;top:0;width:100%;height:'+HOCH+'px;'+
+        'z-index:2147483646;pointer-events:none';
+      document.body.appendChild(band);
+    }
+    band.style.display='block';
+    if(farbe){
+      band.style.backgroundColor=farbe;
+      band.style.backgroundImage='none';
+      return;
+    }
+    var s=getComputedStyle(document.body), h=seite();
+    band.style.backgroundColor=h.farbe;
+    band.style.backgroundImage=h.bild||'none';
+    band.style.backgroundAttachment='fixed';
+    if(h.bild && s.backgroundAttachment!=='fixed')
+      band.style.backgroundSize='100% '+Math.max(innerHeight,document.body.scrollHeight)+'px';
+  }
+  var schild=null;
+  function zeigen(txt){
+    if(!pruef) return;
+    if(!schild){
+      schild=document.createElement('div');
+      schild.style.cssText='position:fixed;left:6px;bottom:52px;z-index:2147483647;max-width:92%;'+
+        'padding:6px 9px;border-radius:8px;background:#ffe600;color:#000;'+
+        'font:600 12px/1.35 -apple-system,sans-serif;white-space:pre-wrap;pointer-events:none';
+      document.body.appendChild(schild);
+    }
+    schild.textContent='Kante K6 · '+innerWidth+'x'+innerHeight+'\n'+txt;
+  }
+  function name(n){
+    if(n.id) return '#'+n.id;
+    var c=(typeof n.className==='string'&&n.className.trim())?'.'+n.className.trim().split(/\s+/)[0]:'';
+    return n.tagName.toLowerCase()+c;
+  }
+  function malen(){
+    var b=document.body; if(!b) return;
+    if(schonGut()){
+      if(band) band.style.display='none';
+      zeigen('oben liegt schon eine deckende Leiste');
+      return;
+    }
+    var k=kaesten(), l=leisten(), h=null, farbe=null, text=[];
+    for(var i=0;i<k.length;i++){
+      var z=k[i], s=getComputedStyle(z);
+      if(!z.dataset.kante){
+        if(leer(s.backgroundColor)){
+          if(!h) h=seite();
+          z.style.backgroundColor=h.farbe;
+          if(s.backgroundImage==='none' && h.bild) z.style.backgroundImage=h.bild;
+        }
+        z.dataset.kante='1';
+        s=getComputedStyle(z);
+      }
+      luft(z);
+      text.push(name(z)+' bg='+s.backgroundColor+(s.backgroundImage!=='none'?'+Verlauf':''));
+    }
+    for(var j=0;j<l.length;j++){
+      var le=l[j], sl=getComputedStyle(le);
+      if(!tinte(le) && !ragtRein(le)) continue;
+      if(!farbe && !leer(sl.backgroundColor)) farbe=sl.backgroundColor;
+      luft(le);
+      text.push('Leiste '+name(le)+' bg='+sl.backgroundColor);
+    }
+    if(!k.length && !l.length){ luft(b); text.push('kein Kasten, nur Streifen'); }
+    streifen(farbe);
+    zeigen(text.join('\n'));
+  }
+  var warte=null;
+  function spaeter(){
+    if(warte) return;
+    warte=setTimeout(function(){ warte=null; malen(); },200);
+  }
+  try{
+    new MutationObserver(spaeter).observe(document.documentElement,
+      {childList:true, subtree:true, attributes:true, attributeFilter:['class','style','hidden']});
+  }catch(e){}
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',malen);
+  else malen();
+  addEventListener('load',spaeter);
+  addEventListener('resize',spaeter);
+  addEventListener('orientationchange',spaeter);
+})();
+</script>
+<style>
+  #hilfe{position:absolute;left:8px;right:8px;top:8px;bottom:8px;background:rgba(255,255,255,.975);border:1px solid #d6dce5;border-radius:12px;padding:12px 14px 14px;overflow:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y;font-size:.95em;line-height:1.5;z-index:5;}
+  #hilfe h3{margin:0 40px 8px 0;font-size:1.1em;}
+  #hilfe p{margin:0 0 7px;}
+  #hilfe b{color:#1f2430;}
+  #hilfeZu{position:absolute;right:10px;top:9px;}
+</style></head><body>
+<div id="wrap">
+  <div id="bar"><div id="barL">
+    <div class="segBig tafelEdit" id="segDim">
+      <button type="button" id="dim1" title="Eindimensional: beide Körper auf einer Bahn">1D</button>
+      <button type="button" id="dim2" title="Zweidimensional: beide Körper in der Fläche">2D</button>
+    </div>
+    <div class="segBig tafelEdit" id="segArt">
+      <button type="button" id="artEl" title="Elastischer Stoß: die kinetische Energie bleibt erhalten">elastisch</button>
+      <button type="button" id="artUn" title="Unelastischer Stoß: die Körper bleiben zusammen, ein Teil der Energie wird innere Energie">unelastisch</button>
+    </div>
+    </div><div id="barMid">
+    <button class="tb" id="bPlay" title="Den Stoß ablaufen lassen"><svg id="icPlay" viewBox="0 0 32 20"><path d="M12 4l12 6-12 6Z" fill="currentColor" stroke="none"/></svg><svg id="icPause" viewBox="0 0 32 20" hidden><rect x="11" y="4" width="4" height="12" rx="1" fill="currentColor" stroke="none"/><rect x="18" y="4" width="4" height="12" rx="1" fill="currentColor" stroke="none"/></svg><span>Start</span></button>
+    <button class="tb" id="bZur" title="Beide Körper wieder an den Startplatz"><svg viewBox="0 0 32 20"><path d="M24 10a8 8 0 1 1-2.5-5.8M24 2v4h-4"/></svg><span>Anfang</span></button>
+    <span class="sep"></span>
+    <button class="tb" id="wV" title="Geschwindigkeiten als Werte anzeigen"><svg viewBox="0 0 32 20"><rect x="4" y="3" width="24" height="14" rx="2"/><path d="M4 8h24M14 3v14"/></svg><span>v</span></button>
+    <button class="tb" id="wP" title="Impulse als Werte anzeigen"><svg viewBox="0 0 32 20"><rect x="4" y="3" width="24" height="14" rx="2"/><path d="M4 8h24M14 3v14"/></svg><span>p</span></button>
+    <button class="tb" id="wE" title="Kinetische Energien als Werte anzeigen"><svg viewBox="0 0 32 20"><rect x="4" y="3" width="24" height="14" rx="2"/><path d="M4 8h24M14 3v14"/></svg><span>E</span></button>
+    <span class="sep"></span>
+    <button class="tb" id="pV" title="Geschwindigkeiten als Pfeile – vor und nach dem Stoß"><svg viewBox="0 0 32 20"><path d="M4 10h20M19 5l5 5-5 5"/></svg><span>Pfeil v</span></button>
+    <button class="tb" id="pP" title="Impulse als Pfeile – vor und nach dem Stoß"><svg viewBox="0 0 32 20"><path d="M4 10h20M19 5l5 5-5 5" stroke-width="3"/></svg><span>Pfeil p</span></button>
+    <button class="tb" id="pD" title="Die Änderung beim Stoß als Pfeil (Δv bzw. Δp)"><svg viewBox="0 0 32 20"><path d="M16 4 26 16H6Z"/></svg><span>Änderung</span></button>
+    <span class="sep"></span>
+    <button class="tb" id="bStrob" title="Stroboskopbild der Aufnahme – der Zeitpunkt des Stoßes ist immer dabei"><svg viewBox="0 0 32 20"><circle cx="6" cy="10" r="2.4"/><circle cx="14" cy="10" r="2.4"/><circle cx="22" cy="10" r="2.4"/><circle cx="29" cy="10" r="2.4"/></svg><span>Stroboskop</span></button>
+    </div><div id="barR"><span class="sep"></span>
+    <button class="tb" id="bHilfe" title="Kurze Anleitung"><svg viewBox="0 0 32 20"><circle cx="16" cy="10" r="8"/><path d="M13.6 7.6a2.5 2.5 0 1 1 3.3 2.6c-.6.3-.9.8-.9 1.4v.4"/><circle cx="16" cy="15" r=".9" fill="currentColor" stroke="none"/></svg><span>?</span></button>
+  </div></div>
+  <div id="bar2">
+    <span class="lbl" style="color:#2563eb">Körper 1</span>
+    <span>m<sub>1</sub> <input class="num k1" id="em1" inputmode="decimal" title="Masse des ersten Körpers in Kilogramm"> <span class="lbl">kg</span></span>
+    <span>v<sub>1</sub> <input class="num k1" id="ev1" inputmode="decimal" title="Anfangsgeschwindigkeit des ersten Körpers in Meter pro Sekunde"> <span class="lbl">m/s</span></span>
+    <span id="box1" hidden>unter <input class="num k1" id="ew1" inputmode="decimal" title="Richtung der Anfangsgeschwindigkeit, 0° = nach rechts"> <span class="lbl">°</span></span>
+    <span class="sep"></span>
+    <span class="lbl" style="color:#dc2626">Körper 2</span>
+    <span>m<sub>2</sub> <input class="num k2" id="em2" inputmode="decimal" title="Masse des zweiten Körpers in Kilogramm"> <span class="lbl">kg</span></span>
+    <span>v<sub>2</sub> <input class="num k2" id="ev2" inputmode="decimal" title="Anfangsgeschwindigkeit des zweiten Körpers in Meter pro Sekunde"> <span class="lbl">m/s</span></span>
+    <span id="box2" hidden>unter <input class="num k2" id="ew2" inputmode="decimal" title="Richtung der Anfangsgeschwindigkeit, 0° = nach rechts"> <span class="lbl">°</span></span>
+    <span class="sep"></span>
+    <span class="lbl">Tempo</span>
+    <span class="stp"><button type="button" id="tmM" title="Langsamer ablaufen lassen">−</button><span class="val" id="tmV" style="min-width:48px">1:1</span><button type="button" id="tmP" title="Schneller ablaufen lassen">+</button></span>
+  </div>
+  <div id="bar3">
+    <span class="lbl">Aufnahme</span>
+    <button class="btn" id="bAb" title="Die Aufnahme abspielen">▶</button>
+    <input type="range" id="abR" min="0" max="1000" step="1" value="0" title="In der Aufnahme suchen">
+    <span class="val" id="abT">0,00 s</span>
+    <span class="sep"></span>
+    <span class="lbl">Blitze</span>
+    <span class="stp"><button type="button" id="blM" title="Weniger Blitze">−</button><span class="val" id="blV" style="min-width:34px">7</span><button type="button" id="blP" title="Mehr Blitze">+</button></span>
+    <span class="sep"></span>
+    <span id="shotBtns" style="display:flex;gap:6px;align-items:center"></span>
+    <button class="btn" id="bSpeich" title="Das Bild als PNG-Datei speichern">⤓ Speichern</button>
+  </div>
+  <div id="cvbox"><canvas id="cv"></canvas>
+    <div id="hint"></div>
+    <div id="hilfe" hidden></div>
+  </div>
+</div>
+<script src="shot.js"></script>
+<script src="modus.js"></script>
+<script src="vendor/qrcode.min.js"></script>
+<script src="teilen.js"></script>
+<script>
+"use strict";
+const $=id=>document.getElementById(id), cv=$('cv'), ctx=cv.getContext('2d');
+const toast=m=>window.TafelShot&&TafelShot.toast(m);
+const F1='#2563eb', F2='#dc2626', FP='#7c3aed', FD='#ea580c', FGR='#94a3b8';
+const F1H='#93b4f6', F2H='#f0a0a0', FPH='#c4b0ee';          /* blasse Fassung für „vorher" */
+const LX=4, LY=2.5;                      /* Bahn 4 m lang, Fläche 4 m × 2,5 m */
+const TEMPI=[1,0.5,0.25,0.125], TEMPON=['1:1','1:2','1:4','1:8'];
+const VMAX=15, MMIN=0.05, MMAX=50, TMAX=40;
+
+/* ---------- Zahlen in deutscher Schreibweise ---------- */
+function zahl(v,n){ if(v===null||v===undefined||!isFinite(v)) return '–';
+  if(Math.abs(v)<5e-13) v=0;
+  const a=Math.abs(v);
+  if(n===undefined) n = a>=100?1 : a>=10?2 : 3;
+  let s=v.toFixed(n);
+  if(s.indexOf('.')>=0) s=s.replace(/0+$/,'').replace(/\.$/,'');
+  if(s==='-0') s='0';
+  return s.replace('.',','); }
+/* feste Stellenzahl – damit die Spalten in der Tabelle ruhig stehen */
+function fz(v,n){ if(v===null||v===undefined||!isFinite(v)) return '–';
+  n=(n===undefined)?2:n; if(Math.abs(v)<5e-13) v=0;
+  let s=v.toFixed(n); if(/^-0[.,]?0*$/.test(s)) s=s.slice(1);
+  return s.replace('.',','); }
+function zahlEin(s){ if(typeof s!=='string') s=String(s==null?'':s);
+  s=s.replace(',','.').replace(/[^0-9.+-]/g,'');
+  const v=parseFloat(s); return isFinite(v)?v:null; }
+
+/* ---------- Zustand ----------
+   s1/s2 = Startplatz in Metern, g1/g2 = Startgeschwindigkeit in m/s.
+   y zählt im Modell nach unten; angezeigt und eingegeben wird y nach oben. */
+const standard=()=>({v:1, dim:1, elast:true, m1:1, m2:2,
+  s1:{x:1,y:LY/2}, s2:{x:3,y:LY/2},
+  g1:{x:2.5,y:0}, g2:{x:0,y:0},
+  wert:{v:true,p:true,E:false}, pfeil:{v:true,p:false,d:false},
+  tempo:0, blitze:7, strobo:false, fontSize:14, edit:true});
+let D=standard();
+
+let B=[{x:1,y:LY/2,vx:0,vy:0},{x:3,y:LY/2,vx:0,vy:0}];
+let t=0, lauf=false, verbunden=false, tStoss=null, stossOrt=null, vVor=null, vNach=null;
+let rec=[], tEnde=null, ab=false, tAb=0, schau=false, letztT=0;
+let W=320, H=240, DPR=1, SC=100, OX=0, OY=0, yMid=120, kk=1;
+let zieh=null, winkelMerk=[0,180];
+
+const masse=i=>Math.max(MMIN,Math.min(MMAX, i?(+D.m2||0):(+D.m1||0)));
+/* gleiche Dichte: der Radius wächst mit der dritten Wurzel der Masse */
+const rad=m=>0.10*Math.cbrt(Math.max(0.02,m));
+const rI=i=>rad(masse(i));
+const gv=i=>i?D.g2:D.g1;
+const sv=i=>i?D.s2:D.s1;
+const tempo=()=>TEMPI[Math.max(0,Math.min(TEMPI.length-1,D.tempo|0))];
+const recEnde=()=>rec.length?rec[rec.length-1].t:0;
+
+/* ---------- Anfang ---------- */
+function neuStart(){
+  for(let i=0;i<2;i++){ const s=sv(i), g=gv(i), r=rI(i);
+    B[i].x=Math.max(r,Math.min(LX-r,+s.x||0));
+    B[i].y=(D.dim===1)?LY/2:Math.max(r,Math.min(LY-r,(s.y===undefined?LY/2:+s.y)||0));
+    B[i].vx=+g.x||0; B[i].vy=(D.dim===1)?0:(+g.y||0); }
+  trennen();
+  t=0; lauf=false; ab=false; tAb=0; schau=false; verbunden=false;
+  tStoss=null; stossOrt=null; vVor=null; vNach=null; tEnde=null;
+  rec=[]; probe(); }
+/* Falls die Startplätze einander überdecken: auseinanderschieben */
+function trennen(){ const R=rI(0)+rI(1);
+  let dx=B[1].x-B[0].x, dy=(D.dim===1)?0:B[1].y-B[0].y;
+  let d=Math.hypot(dx,dy);
+  if(d>=R-1e-9) return;
+  if(d<1e-9){ dx=1; dy=0; d=1; }
+  const f=(R-d)/d/2;
+  B[0].x-=dx*f; B[1].x+=dx*f;
+  if(D.dim===2){ B[0].y-=dy*f; B[1].y+=dy*f; }
+  for(let i=0;i<2;i++){ const r=rI(i);
+    B[i].x=Math.max(r,Math.min(LX-r,B[i].x));
+    if(D.dim===2) B[i].y=Math.max(r,Math.min(LY-r,B[i].y)); } }
+
+function probe(){ if(rec.length>6000) return;
+  rec.push({t:t, a:{x:B[0].x,y:B[0].y,vx:B[0].vx,vy:B[0].vy},
+                 b:{x:B[1].x,y:B[1].y,vx:B[1].vx,vy:B[1].vy}}); }
+
+/* ---------- Ablauf ----------
+   Der Zeitpunkt der Berührung wird ausgerechnet, nicht gesucht: Damit liegt im
+   Mitschnitt genau eine Probe auf dem Stoß – nur so trifft das Stroboskopbild ihn. */
+function kontaktZeit(h){
+  if(verbunden) return null;
+  const R=rI(0)+rI(1);
+  const dx=B[1].x-B[0].x, dy=(D.dim===1)?0:B[1].y-B[0].y;
+  const wx=B[1].vx-B[0].vx, wy=(D.dim===1)?0:B[1].vy-B[0].vy;
+  const dw=dx*wx+dy*wy;
+  if(dw>=-1e-12) return null;                       /* sie entfernen sich */
+  const a=wx*wx+wy*wy; if(a<1e-14) return null;
+  const c=dx*dx+dy*dy-R*R;
+  if(c<=0) return 0;                                /* berühren sich schon */
+  const disc=dw*dw-a*c; if(disc<0) return null;
+  const tau=(-dw-Math.sqrt(disc))/a;
+  return (tau>=0&&tau<=h)?tau:null; }
+
+function bewege(h){ for(let i=0;i<2;i++){ B[i].x+=B[i].vx*h; if(D.dim===2) B[i].y+=B[i].vy*h; } }
+
+function stossAus(){
+  const m1=masse(0), m2=masse(1);
+  let nx=B[1].x-B[0].x, ny=(D.dim===1)?0:B[1].y-B[0].y;
+  const L=Math.hypot(nx,ny); if(L<1e-9){ nx=1; ny=0; } else { nx/=L; ny/=L; }
+  vVor=[{x:B[0].vx,y:B[0].vy},{x:B[1].vx,y:B[1].vy}];
+  if(D.elast){
+    /* nur die Anteile längs der Verbindungslinie werden getauscht */
+    const u1=B[0].vx*nx+B[0].vy*ny, u2=B[1].vx*nx+B[1].vy*ny;
+    const n1=((m1-m2)*u1+2*m2*u2)/(m1+m2), n2=((m2-m1)*u2+2*m1*u1)/(m1+m2);
+    B[0].vx+=(n1-u1)*nx; B[0].vy+=(n1-u1)*ny;
+    B[1].vx+=(n2-u2)*nx; B[1].vy+=(n2-u2)*ny;
+  } else {
+    const gx=(m1*B[0].vx+m2*B[1].vx)/(m1+m2), gy=(m1*B[0].vy+m2*B[1].vy)/(m1+m2);
+    B[0].vx=B[1].vx=gx; B[0].vy=B[1].vy=gy; verbunden=true;
+  }
+  if(D.dim===1){ B[0].vy=0; B[1].vy=0; }
+  vNach=[{x:B[0].vx,y:B[0].vy},{x:B[1].vx,y:B[1].vy}];
+  tStoss=t;
+  const r1=rI(0), f=r1/(r1+rI(1));
+  stossOrt={a:{x:B[0].x,y:B[0].y}, b:{x:B[1].x,y:B[1].y},
+            k:{x:B[0].x+(B[1].x-B[0].x)*f, y:B[0].y+(B[1].y-B[0].y)*f}}; }
+
+function schritt(dt){
+  let rest=dt, schutz=0;
+  while(rest>1e-9&&schutz++<4){
+    const tc=kontaktZeit(rest);
+    const h=(tc===null)?rest:tc;
+    bewege(h); t+=h; rest-=h;
+    if(tc!==null){ probe(); stossAus(); probe(); }
+  }
+  if(!lauf) return;
+  probe(); }
+
+const draussen=i=>{ const r=rI(i), b=B[i];
+  if(b.x+r<0||b.x-r>LX) return true;
+  return (D.dim===2)&&(b.y+r<0||b.y-r>LY); };
+function pruefEnde(){
+  if((draussen(0)&&draussen(1))||t>=TMAX){ lauf=false; tEnde=t; tAb=0; return true; }
+  return false; }
+
+/* ---------- Stelle in der Aufnahme ---------- */
+function probeBei(tt){
+  if(!rec.length) return null;
+  if(tt<=rec[0].t) return rec[0];
+  if(tt>=rec[rec.length-1].t) return rec[rec.length-1];
+  let lo=0, hi=rec.length-1;
+  while(hi-lo>1){ const m=(lo+hi)>>1; if(rec[m].t<=tt) lo=m; else hi=m; }
+  const A=rec[lo], C=rec[hi], sp=C.t-A.t, f=(sp>1e-12)?(tt-A.t)/sp:0;
+  const ip=k=>({x:A[k].x+(C[k].x-A[k].x)*f, y:A[k].y+(C[k].y-A[k].y)*f, vx:A[k].vx, vy:A[k].vy});
+  return {t:tt, a:ip('a'), b:ip('b')}; }
+
+/* Blitzzeiten des Stroboskops: gleichmäßiges Raster, verankert am Stoß –
+   dadurch fällt immer ein Blitz genau auf den Zusammenstoß. */
+function blitzZeiten(){
+  if(rec.length<2) return [];
+  const t0=rec[0].t, t1=rec[rec.length-1].t;
+  if(!(t1>t0+1e-9)) return [];
+  const n=Math.max(2,Math.min(30,D.blitze|0||7));
+  let dt=(t1-t0)/(n-1);
+  /* Der Abstand wird so gedehnt, dass zwischen Anfang und Stoß ganze Schritte
+     liegen – dann ist der Stoß dabei und das Bild beginnt trotzdem bei t = 0. */
+  if(tStoss!==null&&tStoss>t0+1e-9&&tStoss<t1-1e-9){
+    const k=Math.max(1,Math.round((tStoss-t0)/dt)), dt2=(tStoss-t0)/k;
+    if((t1-t0)/dt2+1<=3*n+2) dt=dt2;
+    else { const anker=tStoss, k0=Math.ceil((t0-anker)/dt-1e-9), k1=Math.floor((t1-anker)/dt+1e-9);
+      const L2=[]; for(let q=k0;q<=k1;q++) L2.push(anker+q*dt);
+      return L2; }
+  }
+  const L=[];
+  for(let j=0;t0+j*dt<=t1+1e-9&&j<200;j++) L.push(t0+j*dt);
+  if(tStoss!==null&&!L.some(x=>Math.abs(x-tStoss)<dt*1e-6)) L.push(tStoss);
+  return L.sort((a,b)=>a-b); }
+
+/* ---------- Zeichnen: Grundbausteine ---------- */
+function schrift(sz,fett){ return (fett?'700 ':'')+sz+'px -apple-system,BlinkMacSystemFont,Arial,sans-serif'; }
+function txt(s,x,y,o){ o=o||{}; ctx.font=schrift(o.sz||13,o.fett);
+  ctx.textAlign=o.al||'center'; ctx.textBaseline=o.bl||'middle';
+  if(o.rand){ ctx.lineWidth=o.randB||3; ctx.strokeStyle=o.rand; ctx.lineJoin='round'; ctx.strokeText(s,x,y); }
+  ctx.fillStyle=o.farbe||'#1f2430'; ctx.fillText(s,x,y); }
+const perp=(dx,dy,d)=>{ const L=Math.hypot(dx,dy)||1; return {x:-dy/L*d, y:dx/L*d}; };
+
+/* Pfeil mit Beschriftung über (bzw. unter) der Mitte */
+function malPfeil(x0,y0,dx,dy,farbe,lw,gestr,label,lu){
+  const L=Math.hypot(dx,dy);
+  if(L<6) return;                              /* ein Pfeil der Länge null wird nicht gezeichnet */
+  const ux=dx/L, uy=dy/L, sp=Math.min(L*0.5,9+lw*2.4);
+  ctx.save(); ctx.strokeStyle=farbe; ctx.fillStyle=farbe; ctx.lineWidth=lw; ctx.lineCap='round';
+  if(gestr) ctx.setLineDash([5,4]);
+  ctx.beginPath(); ctx.moveTo(x0,y0); ctx.lineTo(x0+dx-ux*sp*0.85,y0+dy-uy*sp*0.85); ctx.stroke();
+  ctx.setLineDash([]);
+  const b=sp*0.42;
+  ctx.beginPath(); ctx.moveTo(x0+dx,y0+dy);
+  ctx.lineTo(x0+dx-ux*sp-uy*b, y0+dy-uy*sp+ux*b);
+  ctx.lineTo(x0+dx-ux*sp+uy*b, y0+dy-uy*sp-ux*b);
+  ctx.closePath(); ctx.fill(); ctx.restore();
+  if(label){ const p=perp(dx,dy,(lu?1:-1)*13*kk);
+    txt(label,x0+dx/2+p.x,y0+dy/2+p.y,{sz:11.5*kk,fett:true,farbe:farbe,rand:'#fff',randB:3}); } }
+
+function malKoerperR(px,py,i,rpx,o){ o=o||{};
+  const f=i?F2:F1, r=Math.max(5,rpx), al=(o.alpha===undefined)?1:o.alpha;
+  ctx.save();
+  if(o.offen){ ctx.globalAlpha=al*0.5; ctx.fillStyle='#fff';
+    ctx.beginPath(); ctx.arc(px,py,r,0,7); ctx.fill();
+    ctx.globalAlpha=al; ctx.strokeStyle=f; ctx.lineWidth=Math.max(1.5,r*0.1);
+    if(o.strich) ctx.setLineDash([4,3]);
+    ctx.beginPath(); ctx.arc(px,py,r,0,7); ctx.stroke(); }
+  else { ctx.globalAlpha=al; ctx.fillStyle=f;
+    ctx.beginPath(); ctx.arc(px,py,r,0,7); ctx.fill();
+    ctx.lineWidth=2; ctx.strokeStyle='#fff';
+    ctx.beginPath(); ctx.arc(px,py,r,0,7); ctx.stroke(); }
+  ctx.restore();
+  if(o.nr!==false&&r>=9) txt(String(i+1),px,py+0.5,{sz:Math.min(r*1.1,15*kk),fett:true,farbe:o.offen?f:'#fff'});
+  if(o.masse) txt(zahl(masse(i))+' kg',px,py+r+11*kk,{sz:11*kk,fett:true,farbe:f,rand:'#fff',randB:3}); }
+
+/* ---------- Bahn (1D) und Fläche (2D) ---------- */
+function malBahn1D(px,sc,y,skala){
+  const x0=px(0), x1=px(LX);
+  ctx.strokeStyle='#cbd5e1'; ctx.lineWidth=3; ctx.lineCap='butt';
+  ctx.beginPath(); ctx.moveTo(x0,y); ctx.lineTo(x1,y); ctx.stroke();
+  const hh=Math.max(13,Math.max(rI(0),rI(1))*sc*1.15);
+  ctx.strokeStyle='#64748b'; ctx.lineWidth=4;
+  [x0,x1].forEach(x=>{ ctx.beginPath(); ctx.moveTo(x,y-hh); ctx.lineTo(x,y+hh); ctx.stroke(); });
+  if(skala){ const yS=y+hh+9;
+    ctx.strokeStyle='#cbd5e1'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(x0,yS); ctx.lineTo(x1,yS); ctx.stroke();
+    for(let k=0;k<=LX*2;k++){ const x=px(k/2), gr=(k%2===0);
+      ctx.beginPath(); ctx.moveTo(x,yS); ctx.lineTo(x,yS+(gr?7:4)); ctx.stroke();
+      if(gr) txt((k/2)+(k===LX*2?' m':''),x,yS+16,{sz:10.5*kk,farbe:FGR}); } } }
+
+function malFeld2D(px,py,sc,skala){
+  const x0=px(0), y0=py(0), x1=px(LX), y1=py(LY);
+  ctx.fillStyle='#fbfcfe'; ctx.fillRect(x0,y0,x1-x0,y1-y0);
+  ctx.strokeStyle='#e8edf4'; ctx.lineWidth=1;
+  for(let k=1;k<LX*2;k++){ const x=px(k/2); ctx.beginPath(); ctx.moveTo(x,y0); ctx.lineTo(x,y1); ctx.stroke(); }
+  for(let k=1;k<LY*2;k++){ const y=py(k/2); ctx.beginPath(); ctx.moveTo(x0,y); ctx.lineTo(x1,y); ctx.stroke(); }
+  ctx.strokeStyle='#64748b'; ctx.lineWidth=2.5; ctx.strokeRect(x0,y0,x1-x0,y1-y0);
+  if(skala){ for(let k=0;k<=LX;k++) txt(k+(k===LX?' m':''),px(k),y1+11*kk,{sz:10.5*kk,farbe:FGR});
+    for(let k=0;k<=2;k++) txt(String(k),x0-11*kk,py(LY-k),{sz:10.5*kk,farbe:FGR}); } }
+
+/* ---------- Pfeillängen ---------- */
+function pfeilSkala(){
+  let vm=0.4, pm=0.4;
+  for(let i=0;i<2;i++){
+    const g=gv(i), L=[{x:B[i].vx,y:B[i].vy},{x:+g.x||0,y:(D.dim===1?0:+g.y||0)}];
+    if(vVor) L.push(vVor[i]);
+    if(vNach) L.push(vNach[i]);
+    L.forEach(v=>{ const b=Math.hypot(v.x,v.y); vm=Math.max(vm,b); pm=Math.max(pm,b*masse(i)); }); }
+  return {kv:0.9/vm, kp:0.9/pm}; }
+
+/* ---------- Stoßstelle und Vorher-Nachher-Pfeile ---------- */
+function malStossOrt(px,py,sc){
+  if(!stossOrt) return;
+  const k=stossOrt.k;
+  ctx.save(); ctx.strokeStyle='#f59e0b'; ctx.lineWidth=1.6; ctx.setLineDash([5,4]);
+  if(D.dim===1){ const h=Math.max(rI(0),rI(1))*sc+26*kk;
+    ctx.beginPath(); ctx.moveTo(px(k.x),py(k.y)-h); ctx.lineTo(px(k.x),py(k.y)+h); ctx.stroke(); ctx.restore();
+    txt('Stoß',px(k.x),py(k.y)-h-9*kk,{sz:11.5*kk,fett:true,farbe:'#b45309',rand:'#fff',randB:3}); }
+  else { const r=Math.max(10,Math.min(rI(0),rI(1))*sc*0.6);
+    ctx.beginPath(); ctx.arc(px(k.x),py(k.y),r,0,7); ctx.stroke(); ctx.restore();
+    txt('Stoß',px(k.x),py(k.y)-r-9*kk,{sz:11.5*kk,fett:true,farbe:'#b45309',rand:'#fff',randB:3}); } }
+
+function malKonstruktion(K,px,py,sc){
+  if(!(vVor&&vNach&&stossOrt)) return;
+  const dim1=(D.dim===1);
+  /* blasse Umrisse an der Stoßstelle, damit die Pfeile einen Ort haben */
+  for(let i=0;i<2;i++){ const o=i?stossOrt.b:stossOrt.a;
+    malKoerperR(px(o.x),py(o.y),i,rI(i)*sc,{offen:true,strich:true,alpha:0.5,nr:false}); }
+  const arten=[];
+  if(D.pfeil.v) arten.push({na:'v',k:K.kv,mas:false,f:[F1,F2],h:[F1H,F2H]});
+  if(D.pfeil.p) arten.push({na:'p',k:K.kp,mas:true,f:[FP,FP],h:[FPH,FPH]});
+  arten.forEach(a=>{
+    for(let i=0;i<2;i++){
+      const o=i?stossOrt.b:stossOrt.a, x=px(o.x), y=py(o.y);
+      const m=a.mas?masse(i):1, s=m*a.k*sc;
+      const ax=vVor[i].x*s, ay=dim1?0:vVor[i].y*s;
+      const bx=vNach[i].x*s, by=dim1?0:vNach[i].y*s;
+      const nr=(i?'₂':'₁'), lab=a.na+nr;
+      if(dim1){
+        malPfeil(x,y-15*kk,ax,0,a.h[i],2.6,true,lab,false);
+        malPfeil(x,y+15*kk,bx,0,a.f[i],3.2,false,lab+'′',true);
+        if(D.pfeil.d) malPfeil(x,y+44*kk,bx-ax,0,FD,3,false,'Δ'+lab,true);
+      } else {
+        malPfeil(x,y,ax,ay,a.h[i],2.6,true,lab,false);
+        malPfeil(x,y,bx,by,a.f[i],3.2,false,lab+'′',false);
+        if(D.pfeil.d) malPfeil(x+ax,y+ay,bx-ax,by-ay,FD,3,false,'Δ'+lab,true);
+      } } }); }
+
+/* ---------- Wertetabelle ---------- */
+function tabDaten(){
+  const q=[]; if(D.wert.v)q.push('v'); if(D.wert.p)q.push('p'); if(D.wert.E)q.push('E');
+  if(!q.length) return null;
+  const m=[masse(0),masse(1)], zwei=(D.dim===2);
+  const vv=vVor||[{x:B[0].vx,y:B[0].vy},{x:B[1].vx,y:B[1].vy}], vn=vNach;
+  const fv=v=>zwei?(fz(v.x,2)+'  |  '+fz(-v.y,2)):fz(v.x,2);
+  const mul=(s,a)=>({x:s*a.x,y:s*a.y}), add=(a,b)=>({x:a.x+b.x,y:a.y+b.y}), q2=a=>a.x*a.x+a.y*a.y;
+  const Z=[];
+  q.forEach(k=>{
+    if(k==='v'){
+      Z.push({neu:true,l:'v vor dem Stoß in m/s',c:[fv(vv[0]),fv(vv[1]),'']});
+      Z.push({l:'v nach dem Stoß in m/s',c:vn?[fv(vn[0]),fv(vn[1]),'']:['–','–','']});
+    } else if(k==='p'){
+      const a=[mul(m[0],vv[0]),mul(m[1],vv[1])];
+      Z.push({neu:true,l:'p vor dem Stoß in kg·m/s',c:[fv(a[0]),fv(a[1]),fv(add(a[0],a[1]))]});
+      if(vn){ const b=[mul(m[0],vn[0]),mul(m[1],vn[1])];
+        Z.push({l:'p nach dem Stoß in kg·m/s',c:[fv(b[0]),fv(b[1]),fv(add(b[0],b[1]))]}); }
+      else Z.push({l:'p nach dem Stoß in kg·m/s',c:['–','–','–']});
+    } else {
+      const E1=[0.5*m[0]*q2(vv[0]),0.5*m[1]*q2(vv[1])];
+      Z.push({neu:true,l:'E vor dem Stoß in J',c:[fz(E1[0]),fz(E1[1]),fz(E1[0]+E1[1])]});
+      if(vn){ const E2=[0.5*m[0]*q2(vn[0]),0.5*m[1]*q2(vn[1])];
+        Z.push({l:'E nach dem Stoß in J',c:[fz(E2[0]),fz(E2[1]),fz(E2[0]+E2[1])]});
+        Z.push({l:'davon innere Energie in J',c:['','',fz(Math.max(0,E1[0]+E1[1]-E2[0]-E2[1]))]});
+      } else Z.push({l:'E nach dem Stoß in J',c:['–','–','–']});
+    } });
+  return {kopf:['',zwei?'Körper 1   x | y':'Körper 1',zwei?'Körper 2   x | y':'Körper 2','zusammen'],z:Z}; }
+
+function malTabelle(tb,x0,y0,maxW){
+  let fs=Math.min(14,13*kk);
+  const masse_=()=>{ ctx.font=schrift(fs,true);
+    let wl=0, wc=0;
+    tb.z.forEach(z=>{ ctx.font=schrift(fs,false); wl=Math.max(wl,ctx.measureText(z.l).width);
+      ctx.font=schrift(fs,true); z.c.forEach(s=>{ wc=Math.max(wc,ctx.measureText(s).width); }); });
+    tb.kopf.slice(1).forEach(s=>{ wc=Math.max(wc,ctx.measureText(s).width); });
+    return {wl:wl+14, wc:wc+20}; };
+  let b=masse_(), ges=b.wl+3*b.wc;
+  if(ges>maxW){ fs=Math.max(8,fs*maxW/ges); b=masse_(); ges=b.wl+3*b.wc; }
+  const rh=Math.max(13,fs*1.6), hGes=rh*(tb.z.length+1)+4;
+  const mitte=j=>x0+b.wl+(j+0.5)*b.wc;
+  /* Spalte „zusammen" leicht hinterlegt */
+  ctx.fillStyle='#f6f8fc'; ctx.fillRect(x0+b.wl+2*b.wc,y0,b.wc,rh*(tb.z.length+1));
+  for(let j=0;j<3;j++) txt(tb.kopf[j+1],mitte(j),y0+rh*0.55,{sz:fs,fett:true,farbe:[F1,F2,'#334155'][j]});
+  ctx.strokeStyle='#dde4ee'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(x0,y0+rh); ctx.lineTo(x0+ges,y0+rh); ctx.stroke();
+  tb.z.forEach((z,k)=>{
+    const y=y0+rh*(k+1)+rh*0.55;
+    if(z.neu&&k>0){ ctx.strokeStyle='#eef2f7'; ctx.beginPath();
+      ctx.moveTo(x0,y0+rh*(k+1)); ctx.lineTo(x0+ges,y0+rh*(k+1)); ctx.stroke(); }
+    txt(z.l,x0+4,y,{al:'left',sz:fs,farbe:'#475569'});
+    for(let j=0;j<3;j++){ if(!z.c[j]) continue;
+      txt(z.c[j],mitte(j),y,{sz:fs,fett:true,farbe:[F1,F2,'#1f2430'][j]}); } });
+  return hGes; }
+
+/* ---------- Gesamtbild ---------- */
+function geo(oben,unten){
+  const hV=Math.max(50,unten-oben), wV=Math.max(80,W-32);
+  let sc;
+  if(D.dim===1){ sc=wV/LX;
+    const d=2*Math.max(rI(0),rI(1));
+    if(d*sc>hV*0.5) sc=hV*0.5/d; }
+  else sc=Math.min(wV/LX,hV/LY);
+  SC=sc; OX=(W-LX*sc)/2;
+  OY=oben+(hV-LY*sc)/2;
+  yMid=(D.dim===1)?(oben+hV*0.44):(OY+LY*sc/2); }
+const PX=x=>OX+x*SC;
+const PY=y=>(D.dim===1)?yMid:(OY+y*SC);
+
+function malLive(oben,unten){
+  geo(oben,unten);
+  if(D.dim===1) malBahn1D(PX,SC,yMid,true); else malFeld2D(PX,PY,SC,true);
+  /* alles Bewegte bleibt im Spielbereich – sonst schiebt sich ein Körper,
+     der die Fläche verlässt, über die Wertetabelle */
+  ctx.save(); ctx.beginPath(); ctx.rect(0,oben-2,W,unten-oben+4); ctx.clip();
+  const S=(schau&&rec.length)?probeBei(tAb):null;
+  const pos=S?[S.a,S.b]:[B[0],B[1]];
+  const K=pfeilSkala();
+  malStossOrt(PX,PY,SC);
+  if(D.pfeil.v||D.pfeil.p) malKonstruktion(K,PX,PY,SC);
+  const tt=S?S.t:t, nach=(tStoss!==null&&tt>=tStoss-1e-9), st=nach?'′':'';
+  /* erst die Pfeile, dann die Körper – so liegt kein Schaft über der Nummer */
+  for(let i=0;i<2;i++){ const p=pos[i], nr=(i?'₂':'₁');
+    if(D.pfeil.v) malPfeil(PX(p.x),PY(p.y),p.vx*K.kv*SC,(D.dim===1?0:p.vy*K.kv*SC),i?F2:F1,3.2,false,'v'+nr+st,false);
+    if(D.pfeil.p){ const o=perp(p.vx||1,(D.dim===1?0:p.vy),13*kk);
+      malPfeil(PX(p.x)+o.x,PY(p.y)+o.y,p.vx*masse(i)*K.kp*SC,(D.dim===1?0:p.vy*masse(i)*K.kp*SC),FP,3.2,false,'p'+nr+st,true); } }
+  for(let i=0;i<2;i++) malKoerperR(PX(pos[i].x),PY(pos[i].y),i,rI(i)*SC,{masse:true});
+  ctx.restore();
+  txt('t = '+fz(tt,2)+' s',W-12,oben+3,{al:'right',bl:'top',sz:12.5*kk,fett:true,farbe:'#475569'}); }
+
+function strobo1D(Z,oben,unten){
+  const n=Z.length, u2=unten-20*kk;
+  const hV=Math.max(40,u2-oben), rh=hV/n;
+  const fs0=Math.min(12*kk,Math.max(8.5,rh*0.46));
+  ctx.font=schrift(fs0,true);
+  const lm=Math.min(W*0.3,ctx.measureText('t = 00,00 s').width+20);
+  const rmax=Math.max(rI(0),rI(1)), wV=W-14-lm;
+  const sc=Math.min(wV/LX,0.36*rh/rmax);
+  const ox=lm+(wV-LX*sc)/2, px=x=>ox+x*sc;
+  const P=Z.map((tt,k)=>{ const S=probeBei(tt);
+    return {t:tt,y:oben+(k+0.5)*rh,a:S.a.x,b:S.b.x,
+            st:(tStoss!==null&&Math.abs(tt-tStoss)<1e-9)}; });
+  P.forEach(p=>{ if(p.st){ ctx.fillStyle='#fef6e0';
+    ctx.fillRect(lm-10,p.y-rh/2+1,W-8-(lm-10),rh-2); } });
+  ctx.strokeStyle='#eaeff6'; ctx.lineWidth=1;
+  P.forEach(p=>{ ctx.beginPath(); ctx.moveTo(px(0),p.y); ctx.lineTo(px(LX),p.y); ctx.stroke(); });
+  [['a',F1],['b',F2]].forEach(ab=>{ ctx.save(); ctx.strokeStyle=ab[1]; ctx.globalAlpha=0.5;
+    ctx.lineWidth=1.6; ctx.setLineDash([3,3]); ctx.beginPath();
+    P.forEach((p,i)=>{ const x=px(p[ab[0]]); if(i) ctx.lineTo(x,p.y); else ctx.moveTo(x,p.y); });
+    ctx.stroke(); ctx.restore(); });
+  const fs=fs0;
+  P.forEach(p=>{
+    txt('t = '+fz(p.t,2)+' s',lm-14,p.y,{al:'right',sz:fs,fett:p.st,farbe:p.st?'#b45309':'#64748b'});
+    malKoerperR(px(p.a),p.y,0,rI(0)*sc,{alpha:p.st?1:0.82,nr:p.st});
+    malKoerperR(px(p.b),p.y,1,rI(1)*sc,{alpha:p.st?1:0.82,nr:p.st});
+    if(p.st) txt('Stoß',W-10,p.y,{al:'right',sz:fs,fett:true,farbe:'#b45309'}); });
+  /* Maßstab unten */
+  const yS=u2+4;
+  ctx.strokeStyle='#cbd5e1'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(px(0),yS); ctx.lineTo(px(LX),yS); ctx.stroke();
+  for(let k=0;k<=LX*2;k++){ const x=px(k/2), gr=(k%2===0);
+    ctx.beginPath(); ctx.moveTo(x,yS); ctx.lineTo(x,yS+(gr?6:3)); ctx.stroke();
+    if(gr) txt((k/2)+(k===LX*2?' m':''),x,yS+13*kk,{sz:10*kk,farbe:FGR}); } }
+
+function strobo2D(Z,oben,unten){
+  const hV=Math.max(60,unten-oben), wV=W-32;
+  const sc=Math.min(wV/LX,hV/LY);
+  const ox=(W-LX*sc)/2, oy=oben+(hV-LY*sc)/2;
+  const px=x=>ox+x*sc, py=y=>oy+y*sc;
+  malFeld2D(px,py,sc,true);
+  const P=Z.map(tt=>{ const S=probeBei(tt);
+    return {t:tt,a:S.a,b:S.b,st:(tStoss!==null&&Math.abs(tt-tStoss)<1e-9)}; });
+  [['a',F1],['b',F2]].forEach(ab=>{ ctx.save(); ctx.strokeStyle=ab[1]; ctx.globalAlpha=0.45;
+    ctx.lineWidth=1.6; ctx.setLineDash([3,3]); ctx.beginPath();
+    P.forEach((p,i)=>{ const x=px(p[ab[0]].x), y=py(p[ab[0]].y); if(i) ctx.lineTo(x,y); else ctx.moveTo(x,y); });
+    ctx.stroke(); ctx.restore(); });
+  P.forEach((p,k)=>{ const al=0.35+0.65*(P.length<2?1:k/(P.length-1));
+    for(let i=0;i<2;i++){ const o=i?p.b:p.a, r=rI(i)*sc;
+      malKoerperR(px(o.x),py(o.y),i,r,{offen:!p.st,alpha:p.st?1:al,nr:false});
+      txt(fz(p.t,2)+' s',px(o.x),py(o.y)+(i?r+10*kk:-r-10*kk),
+        {sz:10*kk,fett:p.st,farbe:p.st?'#b45309':'#64748b',rand:'#fff',randB:3}); } });
+  if(tStoss!==null){ malStossOrt(px,py,sc);
+    if(D.pfeil.v||D.pfeil.p) malKonstruktion(pfeilSkala(),px,py,sc); } }
+
+function malStrobo(oben,unten){
+  const Z=blitzZeiten();
+  if(!Z.length){ txt('Noch keine Aufnahme – erst einen Stoß ablaufen lassen',
+    W/2,(oben+unten)/2,{sz:15*kk,farbe:FGR}); return; }
+  if(D.dim===1) strobo1D(Z,oben,unten); else strobo2D(Z,oben,unten); }
+
+function zeichne(){
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  ctx.clearRect(0,0,W,H); ctx.fillStyle='#fff'; ctx.fillRect(0,0,W,H);
+  kk=Math.min(1.9,(D.fontSize||14)/14);
+  const tb=tabDaten();
+  const tH=tb?malTabelle(tb,8,7,W-16):0;
+  const oben=tH+(tb?12:8), unten=H-24-14*kk;      /* unten bleibt Platz für Maßstab und Hinweiszeile */
+  if(unten-oben<60){ txt('Zu wenig Platz – Werte ausblenden oder das Fenster größer ziehen',
+      W/2,(oben+H)/2,{sz:12*kk,farbe:FGR}); hinweis(); return; }
+  if(D.strobo) malStrobo(oben,unten); else malLive(oben,unten);
+  hinweis(); }
+function resize(){ DPR=Math.min(3,window.devicePixelRatio||1);
+  W=cv.clientWidth||320; H=cv.clientHeight||240;
+  cv.width=Math.round(W*DPR); cv.height=Math.round(H*DPR); zeichne(); }
+
+/* ---------- Hinweiszeile ---------- */
+function hinweis(){ const h=$('hint');
+  let s;
+  if(D.strobo) s='Stroboskop: Der Zeitpunkt des Stoßes ist immer dabei · „Blitze" ändert die Anzahl · „Speichern" legt das Bild als Datei ab';
+  else if(lauf) s='Der Stoß läuft – er endet, sobald beide Körper '+(D.dim===1?'die Bahn':'die Fläche')+' verlassen haben';
+  else if(ab||schau) s='Aufnahme: ▶ spielt ab, der Regler sucht eine Stelle';
+  else if(tEnde!==null) s='Fertig – abspielen, als Stroboskopbild zeigen oder mit ↺ wieder an den Anfang';
+  else s='Körper mit dem Finger anschubsen (schnippen) oder Werte unten eingeben, dann Start';
+  if(h.textContent!==s) h.textContent=s; }
+
+/* ---------- Knöpfe ---------- */
+function segs(){ $('dim1').classList.toggle('on',D.dim===1); $('dim2').classList.toggle('on',D.dim===2);
+  $('artEl').classList.toggle('on',!!D.elast); $('artUn').classList.toggle('on',!D.elast); }
+function playBtn(){ $('icPlay').hidden=lauf; $('icPause').hidden=!lauf;
+  $('bPlay').querySelector('span').textContent=lauf?'Pause':(tEnde!==null?'Nochmal':'Start');
+  $('bPlay').classList.toggle('on',lauf); }
+function abBtn(){ const b=$('bAb'), leer=(rec.length<2);
+  b.textContent=ab?'⏸':'▶'; b.classList.toggle('on',ab);
+  b.disabled=leer; $('abR').disabled=leer; }
+function abZeig(){ const e=recEnde();
+  $('abT').textContent=fz((schau||ab)?tAb:t,2)+' s';
+  const r=$('abR'), w=(e>0)?Math.round(((schau||ab)?tAb:t)/e*1000):0;
+  if(document.activeElement!==r&&+r.value!==w) r.value=w; }
+function knoepfe(){
+  $('wV').classList.toggle('on',!!D.wert.v);
+  $('wP').classList.toggle('on',!!D.wert.p);
+  $('wE').classList.toggle('on',!!D.wert.E);
+  $('pV').classList.toggle('on',!!D.pfeil.v);
+  $('pP').classList.toggle('on',!!D.pfeil.p);
+  $('pD').classList.toggle('on',!!D.pfeil.d);
+  $('pD').disabled=!(D.pfeil.v||D.pfeil.p);
+  $('bStrob').classList.toggle('on',!!D.strobo);
+  $('tmV').textContent=TEMPON[Math.max(0,Math.min(3,D.tempo|0))];
+  $('blV').textContent=String(D.blitze);
+  segs(); playBtn(); abBtn(); abZeig(); }
+
+function setDim(d){ if(D.dim===d) return;
+  D.dim=d;
+  if(d===2){ if(Math.abs((+D.s1.y||0)-(+D.s2.y||0))<0.03)
+      D.s1.y=Math.max(rI(0),Math.min(LY-rI(0),(+D.s2.y||LY/2)-0.12)); }   /* gleich ein schiefer Stoß */
+  else { D.s1.y=LY/2; D.s2.y=LY/2; D.g1.y=0; D.g2.y=0; }
+  neuStart(); knoepfe(); feldSync(); zeichne(); sync(); }
+
+$('dim1').onclick=()=>setDim(1);
+$('dim2').onclick=()=>setDim(2);
+function setArt(e){ if(D.elast===e) return; D.elast=e; neuStart(); knoepfe(); zeichne(); sync();
+  toast(e?'Elastisch: Die kinetische Energie bleibt erhalten'
+         :'Unelastisch: Die Körper bleiben zusammen – ein Teil der Energie wird innere Energie'); }
+$('artEl').onclick=()=>setArt(true);
+$('artUn').onclick=()=>setArt(false);
+
+$('bPlay').onclick=()=>{
+  if(lauf){ lauf=false; playBtn(); hinweis(); return; }
+  D.strobo=false;                              /* Start verlässt das Stroboskopbild */
+  if(tEnde!==null||schau) neuStart();            /* nach dem Ablauf neu beginnen – aus der Pause weiterlaufen */
+  if(Math.hypot(B[0].vx,B[0].vy)<1e-6&&Math.hypot(B[1].vx,B[1].vy)<1e-6){
+    knoepfe(); zeichne();
+    toast('Erst einen Körper anschubsen oder eine Geschwindigkeit eingeben'); return; }
+  lauf=true; schau=false; letztT=performance.now();
+  knoepfe(); zeichne(); };
+$('bZur').onclick=()=>{ D.strobo=false; neuStart(); knoepfe(); zeichne(); sync(); };
+
+const umW=(k,f)=>{ $(k).onclick=()=>{ f(); knoepfe(); zeichne(); sync(); }; };
+umW('wV',()=>{ D.wert.v=!D.wert.v; });
+umW('wP',()=>{ D.wert.p=!D.wert.p; });
+umW('wE',()=>{ D.wert.E=!D.wert.E; });
+umW('pV',()=>{ D.pfeil.v=!D.pfeil.v; });
+umW('pP',()=>{ D.pfeil.p=!D.pfeil.p; });
+umW('pD',()=>{ D.pfeil.d=!D.pfeil.d; });
+
+$('bStrob').onclick=()=>{
+  if(!D.strobo){
+    if(rec.length<2||!(recEnde()>0)){ toast('Erst einen Stoß ablaufen lassen – die Aufnahme läuft dabei mit'); return; }
+    D.strobo=true; lauf=false; ab=false;
+  } else D.strobo=false;
+  knoepfe(); zeichne(); sync(); };
+
+$('tmM').onclick=()=>{ D.tempo=Math.min(TEMPI.length-1,(D.tempo|0)+1); knoepfe(); sync(); };
+$('tmP').onclick=()=>{ D.tempo=Math.max(0,(D.tempo|0)-1); knoepfe(); sync(); };
+$('blM').onclick=()=>{ D.blitze=Math.max(3,(D.blitze|0)-1); knoepfe(); if(D.strobo) zeichne(); sync(); };
+$('blP').onclick=()=>{ D.blitze=Math.min(30,(D.blitze|0)+1); knoepfe(); if(D.strobo) zeichne(); sync(); };
+
+$('bAb').onclick=()=>{
+  if(rec.length<2){ toast('Noch keine Aufnahme'); return; }
+  if(ab){ ab=false; }
+  else { ab=true; schau=true; lauf=false; if(tAb>=recEnde()-1e-6) tAb=0; letztT=performance.now(); }
+  knoepfe(); zeichne(); };
+$('abR').addEventListener('input',e=>{
+  if(rec.length<2) return;
+  lauf=false; ab=false; schau=true;
+  tAb=recEnde()*(+e.target.value/1000);
+  knoepfe(); zeichne(); });
+
+/* ---------- Eingabefelder ---------- */
+function feldSync(){
+  const setz=(id,s)=>{ const el=$(id); if(document.activeElement===el) return; if(el.value!==s) el.value=s; };
+  setz('em1',zahl(masse(0))); setz('em2',zahl(masse(1)));
+  $('box1').hidden=(D.dim!==2); $('box2').hidden=(D.dim!==2);
+  if(D.dim===1){ setz('ev1',zahl(+D.g1.x||0,2)); setz('ev2',zahl(+D.g2.x||0,2)); }
+  else for(let i=0;i<2;i++){ const g=gv(i), b=Math.hypot(+g.x||0,+g.y||0);
+    if(b>1e-6) winkelMerk[i]=Math.atan2(-(+g.y||0),+g.x||0)*180/Math.PI;
+    setz(i?'ev2':'ev1',zahl(b,2)); setz(i?'ew2':'ew1',zahl(winkelMerk[i],1)); } }
+
+function leseFelder(){
+  const m1=zahlEin($('em1').value); if(m1!==null) D.m1=Math.max(MMIN,Math.min(MMAX,m1));
+  const m2=zahlEin($('em2').value); if(m2!==null) D.m2=Math.max(MMIN,Math.min(MMAX,m2));
+  if(D.dim===1){
+    const a=zahlEin($('ev1').value); if(a!==null) D.g1={x:Math.max(-VMAX,Math.min(VMAX,a)),y:0};
+    const b=zahlEin($('ev2').value); if(b!==null) D.g2={x:Math.max(-VMAX,Math.min(VMAX,b)),y:0};
+  } else for(let i=0;i<2;i++){
+    let b=zahlEin($(i?'ev2':'ev1').value);
+    const w=zahlEin($(i?'ew2':'ew1').value);
+    if(w!==null) winkelMerk[i]=w;
+    if(b===null) continue;
+    if(b<0){ b=-b; winkelMerk[i]+=180; }
+    b=Math.min(VMAX,b);
+    const a=winkelMerk[i]*Math.PI/180, g=gv(i);
+    g.x=b*Math.cos(a); g.y=-b*Math.sin(a);
+    if(Math.abs(g.x)<1e-12) g.x=0; if(Math.abs(g.y)<1e-12) g.y=0;
+  }
+  neuStart(); knoepfe(); feldSync(); zeichne(); sync(); }
+['em1','em2','ev1','ev2','ew1','ew2'].forEach(id=>{ const el=$(id);
+  el.addEventListener('change',leseFelder);
+  el.addEventListener('keydown',e=>{ if(e.key==='Enter') el.blur(); }); });
+
+/* ---------- Anschubsen mit dem Finger ----------
+   Langsam ziehen verschiebt den Körper, schnippen gibt ihm die Geschwindigkeit
+   des Fingers. Beides geht nur im Stand – während des Ablaufs wäre es kein Stoß mehr. */
+function ortVon(e){ const r=cv.getBoundingClientRect();
+  const pxx=e.clientX-r.left, pyy=e.clientY-r.top;
+  return {px:pxx, py:pyy, x:(pxx-OX)/SC, y:(D.dim===1)?LY/2:((pyy-OY)/SC)}; }
+function treffer(p){
+  for(let i=1;i>=0;i--){ const r=rI(i), tol=14/Math.max(1,SC);
+    if(D.dim===1){ if(Math.abs(p.py-yMid)>r*SC+16) continue;
+      if(Math.abs(p.x-B[i].x)<=r+tol) return i; }
+    else if(Math.hypot(p.x-B[i].x,p.y-B[i].y)<=r+tol) return i; }
+  return -1; }
+cv.addEventListener('pointerdown',e=>{
+  if(D.strobo||lauf) return;
+  const p=ortVon(e), i=treffer(p);
+  if(i<0) return;
+  e.preventDefault();
+  if(tEnde!==null||t>1e-4||schau){ toast('Erst mit ↺ an den Anfang'); return; }
+  zieh={i:i, gx:p.x-B[i].x, gy:p.y-B[i].y, h:[{x:p.x,y:p.y,t:performance.now()}]};
+  try{ cv.setPointerCapture(e.pointerId); }catch(err){} });
+cv.addEventListener('pointermove',e=>{
+  if(!zieh) return;
+  e.preventDefault();
+  const p=ortVon(e), i=zieh.i, r=rI(i), R=r+rI(1-i), o=B[1-i];
+  let nx=p.x-zieh.gx, ny=(D.dim===1)?LY/2:(p.y-zieh.gy);
+  nx=Math.max(r,Math.min(LX-r,nx));
+  if(D.dim===2) ny=Math.max(r,Math.min(LY-r,ny));
+  let dx=nx-o.x, dy=(D.dim===1)?0:ny-o.y, d=Math.hypot(dx,dy);
+  if(d<R){ if(d<1e-9){ dx=(i?1:-1); dy=0; d=1; }
+    nx=o.x+dx/d*R; if(D.dim===2) ny=o.y+dy/d*R;
+    nx=Math.max(r,Math.min(LX-r,nx)); if(D.dim===2) ny=Math.max(r,Math.min(LY-r,ny)); }
+  B[i].x=nx; B[i].y=ny;
+  const s=sv(i); s.x=nx; s.y=ny;
+  zieh.h.push({x:p.x,y:p.y,t:performance.now()});
+  if(zieh.h.length>14) zieh.h.shift();
+  rec=[]; probe(); zeichne(); },{passive:false});
+function ziehEnde(){
+  if(!zieh) return;
+  const i=zieh.i, h=zieh.h, n=h.length;
+  let vx=0, vy=0;
+  if(n>=2){ let j=n-1; const tE=h[n-1].t;
+    while(j>0&&tE-h[j-1].t<90) j--;
+    const dt=(tE-h[j].t)/1000;
+    if(dt>0.012){ vx=(h[n-1].x-h[j].x)/dt; vy=(h[n-1].y-h[j].y)/dt; } }
+  if(D.dim===1) vy=0;
+  const sp=Math.hypot(vx,vy);
+  if(sp>0.3){ const f=Math.min(1,VMAX/sp), g=gv(i);
+    g.x=vx*f; g.y=D.dim===1?0:vy*f;
+    B[i].vx=g.x; B[i].vy=g.y; }
+  zieh=null; rec=[]; probe(); knoepfe(); feldSync(); zeichne(); sync(); }
+cv.addEventListener('pointerup',ziehEnde);
+cv.addEventListener('pointercancel',ziehEnde);
+
+/* ---------- Ablaufschleife ---------- */
+function loop(ts){
+  const dt=Math.min(0.05,(ts-letztT)/1000||0); letztT=ts;
+  if(lauf){ schritt(dt*tempo());
+    if(pruefEnde()){ knoepfe(); }
+    abZeig(); zeichne(); }
+  else if(ab){ tAb+=dt*tempo();
+    if(tAb>=recEnde()){ tAb=recEnde(); ab=false; knoepfe(); }
+    abZeig(); zeichne(); }
+  requestAnimationFrame(loop); }
+
+/* ---------- Bild ---------- */
+function bild(){ return window.TafelShot?TafelShot.rasterize($('cvbox'),{scale:2,bg:'#fff',exclude:'#hint,#hilfe'}):null; }
+$('bSpeich').onclick=()=>{
+  const im=bild(); if(!im){ toast('Bild konnte nicht erstellt werden'); return; }
+  const nam=(D.strobo?'stroboskop-':'stoss-')+(D.dim===1?'1d-':'2d-')+(D.elast?'elastisch':'unelastisch')+'.png';
+  im.canvas.toBlob(b=>{ if(!b){ toast('Nicht möglich'); return; }
+    const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=nam;
+    document.body.appendChild(a); a.click();
+    setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },2000);
+    toast('Gespeichert: '+nam); },'image/png'); };
+
+/* ---------- Hilfe ---------- */
+const HILFE=[
+  ['Anschubsen','Einen Körper antippen und mit dem Finger wegschnippen – so schnell wie der Finger, so schnell fährt der Körper los. Langsam ziehen verschiebt ihn nur; in 2D stellt man damit ein, wie mittig der Stoß wird. Genaue Werte stehen in der Zeile unter den Knöpfen: Masse, Geschwindigkeit und in 2D die Richtung (0° = nach rechts).'],
+  ['1D und 2D','1D: beide Körper auf einer Bahn wie auf der Luftkissenbahn. 2D: beide in der Fläche wie auf dem Billardtisch.'],
+  ['elastisch / unelastisch','elastisch: Impuls und kinetische Energie bleiben erhalten. unelastisch: Die Körper bleiben zusammen und fahren gemeinsam weiter – der Impuls bleibt, ein Teil der kinetischen Energie wird innere Energie.'],
+  ['Werte v, p, E','Die drei Knöpfe blenden die Tabelle oben ein: Geschwindigkeit, Impuls und kinetische Energie, jeweils vor und nach dem Stoß, für jeden Körper und zusammen. In 2D stehen in jeder Zelle die beiden Komponenten x | y.'],
+  ['Pfeile','„Pfeil v" und „Pfeil p" zeigen die Vektoren an den Körpern und zusätzlich an der Stoßstelle: gestrichelt vorher, durchgezogen nachher (v₁′). „Änderung" hängt den Pfeil der Änderung an (Δv bzw. Δp) – in 2D von der Spitze des Vorher-Pfeils zur Spitze des Nachher-Pfeils.'],
+  ['Aufnahme','Jeder Ablauf wird von selbst mitgeschnitten. Mit ▶ in der unteren Zeile läuft er wieder, der Regler sucht jede Stelle; „Tempo" schaltet auf Zeitlupe – beim Ablauf wie beim Abspielen.'],
+  ['Stroboskop','Macht aus der Aufnahme ein Stroboskopbild. Der Zeitpunkt des Zusammenstoßes ist immer einer der Blitze; die anderen liegen gleichmäßig davor und danach. In 1D liegt jeder Blitz in einer eigenen Zeile (Zeit nach unten), in 2D stehen die Bilder in der Fläche. „Speichern" legt das Bild als PNG ab, die beiden Knöpfe daneben legen es auf die Tafel oder in die Zwischenablage.'],
+  ['Ende des Ablaufs','Der Ablauf endet, sobald beide Körper die Bahn (1D) bzw. die Fläche (2D) verlassen haben. Ein Körper allein drüber hinaus reicht nicht.']
+];
+$('bHilfe').onclick=()=>{
+  const h=$('hilfe');
+  if(!h.hidden){ h.hidden=true; return; }
+  h.innerHTML='<h3>Stoßvorgänge</h3>'+
+    HILFE.map(a=>'<p><b>'+a[0]+':</b> '+a[1]+'</p>').join('')+
+    '<button class="btn" id="hilfeZu">✕</button>';
+  h.hidden=false;
+  $('hilfeZu').onclick=()=>{ h.hidden=true; }; };
+
+/* ---------- Tafel-Anbindung ---------- */
+let ready=false, syncT=null;
+function post(){ syncT=null; if(window.parent===window||!ready) return;
+  try{ parent.postMessage({type:'embed-data',data:D},'*'); }catch(e){} }
+function sync(){ if(!syncT) syncT=setTimeout(post,250); }
+function punkt(a,b){ return {x:(b&&isFinite(+b.x))?+b.x:a.x, y:(b&&isFinite(+b.y))?+b.y:a.y}; }
+function uebernimm(d){ if(!d) return;
+  const s=standard();
+  D=Object.assign(s,d);
+  D.dim=(+d.dim===2)?2:1;
+  D.elast=(d.elast!==false);
+  D.m1=Math.max(MMIN,Math.min(MMAX,+d.m1||s.m1));
+  D.m2=Math.max(MMIN,Math.min(MMAX,+d.m2||s.m2));
+  D.s1=punkt(s.s1,d.s1); D.s2=punkt(s.s2,d.s2);
+  D.g1=punkt(s.g1,d.g1); D.g2=punkt(s.g2,d.g2);
+  D.wert=Object.assign({},s.wert,d.wert||{});
+  D.pfeil=Object.assign({},s.pfeil,d.pfeil||{});
+  D.tempo=Math.max(0,Math.min(TEMPI.length-1,+d.tempo||0));
+  D.blitze=Math.max(3,Math.min(30,+d.blitze||s.blitze));
+  D.strobo=false;                         /* die Aufnahme selbst wird nicht gespeichert */
+  document.documentElement.style.setProperty('--fs',Math.min(18,D.fontSize||14)+'px');
+  neuStart(); knoepfe(); feldSync(); resize(); }
+function zustand(){ return D; }
+addEventListener('message',e=>{
+  if(e.source!==window&&(window.parent===window||e.source!==window.parent)) return;
+  if(!(e.data&&e.data.type==='embed-data'&&e.data.data)) return;
+  uebernimm(e.data.data); ready=true;
+  if(window.TafelModus) TafelModus.refresh(); });
+if(window.TafelTeilen&&!TafelTeilen.istGeteilt())
+  TafelTeilen.knopf($('barR'),'stoss.html',()=>({w:'stoss', d:zustand()}));
+addEventListener('resize',()=>{ resize(); barFade(); });
+function barFade(){ const bar=$('bar'), m=$('barMid');
+  bar.classList.remove('compact');
+  const mehr=m.scrollWidth>m.clientWidth+2;
+  if(mehr&&m.clientWidth<170) bar.classList.add('compact');
+  m.classList.toggle('more',mehr); }
+$('barMid').addEventListener('scroll',barFade);
+
+window.addEventListener('load',()=>{
+  const geteilt=window.TafelTeilen&&TafelTeilen.istGeteilt();
+  if(window.TafelModus&&!geteilt)
+    TafelModus.init({get:()=>D.edit!==false, set:v=>{ D.edit=v; resize(); barFade(); sync(); }});
+  document.documentElement.style.setProperty('--fs',Math.min(18,D.fontSize||14)+'px');
+  if(window.TafelShot) TafelShot.buttons($('shotBtns'),bild,'btn');
+  neuStart(); knoepfe(); feldSync(); resize(); barFade();
+  requestAnimationFrame(ts=>{ letztT=ts; loop(ts); });
+  if(window.ResizeObserver) new ResizeObserver(()=>{ resize(); barFade(); }).observe($('cvbox'));
+  if(geteilt){ TafelTeilen.nurBenutzen(); D.edit=false; ready=true;
+    TafelTeilen.empfangen().then(p=>{ if(p&&p.w==='stoss'&&p.d) TafelTeilen.einspielen(p.d); }).catch(()=>{});
+    return; }
+  if(window.parent===window){ ready=true; return; }
+  try{ parent.postMessage({type:'embed-ready'},'*'); }catch(e){}
+  setTimeout(()=>{ ready=true; },700); });
+</script>
+</body></html>
