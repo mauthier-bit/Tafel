@@ -1,0 +1,727 @@
+<!DOCTYPE html><html lang="de"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<title>Wärme und Teilchen</title>
+<style>
+  :root{--fs:14px;}
+  *{box-sizing:border-box;} [hidden]{display:none!important;}
+  html,body{margin:0;height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#1f2430;font-size:var(--fs);}
+  #wrap{position:absolute;inset:0;display:flex;flex-direction:column;}
+  #bar{display:flex;gap:4px;padding:6px;border-bottom:1px solid #e2e7ef;align-items:center;flex:none;overflow:hidden;}
+  #barL,#barR{display:flex;gap:4px;align-items:center;flex:none;}
+  #barMid{display:flex;gap:4px;align-items:center;flex:1 1 auto;min-width:0;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:thin;padding:0 2px;}
+  #bar.compact #barL .tb span,#bar.compact #barR .tb span{display:none;}
+  #bar.compact #barL .tb,#bar.compact #barR .tb{min-width:42px;padding:0 3px;}
+  #barMid::-webkit-scrollbar{height:5px;} #barMid::-webkit-scrollbar-thumb{background:#c8d0dc;border-radius:3px;}
+  .tb{flex:none;min-width:52px;height:50px;border:1px solid #d6dce5;background:#fff;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;padding:0 5px;color:#1f2430;font:inherit;}
+  .tb svg{width:32px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+  .tb span{font-size:.7em;font-weight:600;white-space:nowrap;}
+  .tb.on{background:#2563eb;border-color:#2563eb;color:#fff;}
+  .sep{width:1px;align-self:stretch;background:#e2e7ef;margin:0 3px;flex:none;}
+  #tabs{display:flex;gap:6px;padding:6px 8px 0;flex:none;}
+  #tabs button{border:1px solid #d6dce5;border-bottom:none;background:#f1f4f9;border-radius:10px 10px 0 0;padding:7px 14px;font:inherit;font-weight:700;color:#475569;cursor:pointer;}
+  #tabs button.on{background:#fff;color:#1f2430;box-shadow:0 2px 0 #fff;}
+  #bar2{display:flex;gap:6px;padding:5px 8px;border-top:1px solid #e2e7ef;border-bottom:1px solid #e2e7ef;align-items:center;flex-wrap:nowrap;flex:none;min-height:44px;font-size:.92em;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:thin;}
+  #bar2>*{flex:0 0 auto;}
+  #bar2::-webkit-scrollbar{height:4px;} #bar2::-webkit-scrollbar-thumb{background:#cfd6e0;border-radius:2px;}
+  .lbl{color:#64748b;font-weight:600;}
+  .grow{flex:1 1 auto!important;min-width:4px;}
+  .btn{border:1px solid #cfd6e0;background:#fff;border-radius:9px;padding:5px 10px;font:inherit;font-weight:600;color:#1f2430;cursor:pointer;white-space:nowrap;}
+  .btn.pri{background:#2563eb;border-color:#2563eb;color:#fff;}
+  .btn.on{background:#2563eb;border-color:#2563eb;color:#fff;}
+  select.sel{border:1px solid #cfd6e0;border-radius:9px;padding:5px 8px;font:inherit;font-weight:600;background:#fff;color:#1f2430;max-width:190px;}
+  .stp{display:inline-flex;align-items:center;gap:4px;}
+  .stp button{border:1px solid #cfd6e0;background:#fff;border-radius:8px;width:32px;height:32px;font:inherit;font-weight:700;cursor:pointer;color:#1f2430;}
+  .stp .val{min-width:92px;text-align:center;font-weight:700;}
+  #cvbox{position:relative;flex:1;min-height:0;background:#fff;}
+  #cvbox canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;}
+  #hint{position:absolute;left:10px;bottom:6px;font-size:.78em;color:#94a3b8;pointer-events:none;}
+</style>
+<script>
+/* Scharfe Kante unter der iPadOS-Statusleiste (iPadOS 26/27).
+   WebKit legt in Web-Apps vom Homebildschirm am oberen Rand sonst einen
+   weichen Verlauf ueber den Inhalt. Er entfaellt, wenn dort eine deckende
+   Leiste liegt - ein bildschirmfuellender Kasten genuegt nicht (am
+   13.10.2026 auf iPadOS 27 geprueft). Das Skript legt deshalb einen 16 px
+   hohen, deckenden Streifen an den oberen Rand und rueckt alles, was in
+   diese 16 px hineinragt, um 16 px nach unten. Laeuft nur in der App vom
+   Homebildschirm, nicht in Safari und nicht in einem Rahmen; mit #kante in
+   der Adresse laesst es sich zum Pruefen erzwingen. */
+(function(){
+  if(window.top!==window) return;
+  var pruef=/kante/i.test(location.hash||'');
+  var alsApp=(navigator.standalone===true) ||
+             (window.matchMedia && matchMedia('(display-mode: standalone)').matches);
+  if(!alsApp && !pruef) return;
+
+  var HOCH=16;
+  function leer(f){ return !f || f==='transparent' || f.replace(/\s/g,'')==='rgba(0,0,0,0)'; }
+  function seite(){
+    var s=getComputedStyle(document.body), f=s.backgroundColor, b=s.backgroundImage;
+    if(leer(f) && (!b || b==='none')){
+      s=getComputedStyle(document.documentElement); f=s.backgroundColor; b=s.backgroundImage;
+    }
+    return { farbe: leer(f) ? '#ffffff' : f, bild: (b && b!=='none') ? b : '' };
+  }
+  /* Faerbt dieses Element am oberen Rand etwas sichtbar ein? */
+  function tinte(n){
+    var r=n.getBoundingClientRect();
+    if(r.top>=HOCH || r.bottom<=0 || r.width<=0) return false;
+    var s=getComputedStyle(n);
+    if(s.display==='none' || s.visibility==='hidden' || s.opacity==='0') return false;
+    if(n.id==='randKante') return false;
+    var t=n.tagName.toLowerCase();
+    if(t==='img'||t==='svg'||t==='canvas'||t==='video') return true;
+    if(!leer(s.backgroundColor) || s.backgroundImage!=='none') return true;
+    if(parseFloat(s.borderTopWidth)>0) return true;
+    var kn=n.childNodes;
+    for(var j=0;j<kn.length;j++)
+      if(kn[j].nodeType===3 && kn[j].nodeValue.replace(/\s/g,'')) return true;
+    for(var i=0;i<n.children.length;i++) if(tinte(n.children[i])) return true;
+    return false;
+  }
+  function ragtRein(z){
+    for(var i=0;i<z.children.length;i++) if(tinte(z.children[i])) return true;
+    return false;
+  }
+  function luft(z){
+    if(z.dataset.kanteLuft) return;
+    if(!ragtRein(z) && !tinte(z)) return;    /* noch nichts oben - spaeter nochmal */
+    z.dataset.kanteLuft='1';
+    var p=parseFloat(getComputedStyle(z).paddingTop)||0;
+    if(p>=HOCH) return;
+    z.style.paddingTop=(p+HOCH)+'px';
+  }
+  function sichtbar(n,s){
+    return s.display!=='none' && s.visibility!=='hidden' && n.id!=='randKante';
+  }
+  /* bildschirmfuellende fixierte Kaesten */
+  function kaesten(){
+    var alle=document.querySelectorAll('body > *, body > * > *'), raus=[];
+    for(var i=0;i<alle.length;i++){
+      var n=alle[i], s=getComputedStyle(n);
+      if(s.position!=='fixed' || !sichtbar(n,s)) continue;
+      var r=n.getBoundingClientRect();
+      if(r.top<=4 && r.width>=innerWidth*0.9 && r.height>=innerHeight*0.9) raus.push(n);
+    }
+    return raus;
+  }
+  /* Leisten am oberen Rand (fixiert oder klebend, aber kein Vollbildkasten) */
+  function leisten(){
+    var alle=document.querySelectorAll('body > *, body > * > *'), raus=[];
+    for(var i=0;i<alle.length;i++){
+      var n=alle[i], s=getComputedStyle(n);
+      if((s.position!=='fixed' && s.position!=='sticky') || !sichtbar(n,s)) continue;
+      var r=n.getBoundingClientRect();
+      if(r.top<=4 && r.width>=innerWidth*0.8 && r.height>=6 && r.height<=innerHeight*0.6) raus.push(n);
+    }
+    return raus;
+  }
+  /* Liegt oben schon eine deckende Leiste, ist nichts zu tun. */
+  function schonGut(){
+    var st=document.elementsFromPoint ? document.elementsFromPoint(Math.round(innerWidth/2),2) : [];
+    for(var i=0;i<st.length;i++){
+      var n=st[i];
+      if(n.id==='randKante') continue;
+      if(n===document.body || n===document.documentElement) return false;
+      var s=getComputedStyle(n), r=n.getBoundingClientRect();
+      return (s.position==='fixed'||s.position==='sticky') && r.top<=4 &&
+             r.width>=innerWidth*0.8 && r.height>=6 && r.height<=innerHeight*0.6 &&
+             !leer(s.backgroundColor);
+    }
+    return false;
+  }
+  var band=null;
+  function streifen(farbe){
+    if(!band){
+      band=document.createElement('div');
+      band.id='randKante'; band.setAttribute('aria-hidden','true');
+      band.style.cssText='position:fixed;left:0;top:0;width:100%;height:'+HOCH+'px;'+
+        'z-index:2147483646;pointer-events:none';
+      document.body.appendChild(band);
+    }
+    band.style.display='block';
+    if(farbe){
+      band.style.backgroundColor=farbe;
+      band.style.backgroundImage='none';
+      return;
+    }
+    var s=getComputedStyle(document.body), h=seite();
+    band.style.backgroundColor=h.farbe;
+    band.style.backgroundImage=h.bild||'none';
+    band.style.backgroundAttachment='fixed';
+    if(h.bild && s.backgroundAttachment!=='fixed')
+      band.style.backgroundSize='100% '+Math.max(innerHeight,document.body.scrollHeight)+'px';
+  }
+  var schild=null;
+  function zeigen(txt){
+    if(!pruef) return;
+    if(!schild){
+      schild=document.createElement('div');
+      schild.style.cssText='position:fixed;left:6px;bottom:52px;z-index:2147483647;max-width:92%;'+
+        'padding:6px 9px;border-radius:8px;background:#ffe600;color:#000;'+
+        'font:600 12px/1.35 -apple-system,sans-serif;white-space:pre-wrap;pointer-events:none';
+      document.body.appendChild(schild);
+    }
+    schild.textContent='Kante K6 · '+innerWidth+'x'+innerHeight+'\n'+txt;
+  }
+  function name(n){
+    if(n.id) return '#'+n.id;
+    var c=(typeof n.className==='string'&&n.className.trim())?'.'+n.className.trim().split(/\s+/)[0]:'';
+    return n.tagName.toLowerCase()+c;
+  }
+  function malen(){
+    var b=document.body; if(!b) return;
+    if(schonGut()){
+      if(band) band.style.display='none';
+      zeigen('oben liegt schon eine deckende Leiste');
+      return;
+    }
+    var k=kaesten(), l=leisten(), h=null, farbe=null, text=[];
+    for(var i=0;i<k.length;i++){
+      var z=k[i], s=getComputedStyle(z);
+      if(!z.dataset.kante){
+        if(leer(s.backgroundColor)){
+          if(!h) h=seite();
+          z.style.backgroundColor=h.farbe;
+          if(s.backgroundImage==='none' && h.bild) z.style.backgroundImage=h.bild;
+        }
+        z.dataset.kante='1';
+        s=getComputedStyle(z);
+      }
+      luft(z);
+      text.push(name(z)+' bg='+s.backgroundColor+(s.backgroundImage!=='none'?'+Verlauf':''));
+    }
+    for(var j=0;j<l.length;j++){
+      var le=l[j], sl=getComputedStyle(le);
+      if(!tinte(le) && !ragtRein(le)) continue;
+      if(!farbe && !leer(sl.backgroundColor)) farbe=sl.backgroundColor;
+      luft(le);
+      text.push('Leiste '+name(le)+' bg='+sl.backgroundColor);
+    }
+    if(!k.length && !l.length){ luft(b); text.push('kein Kasten, nur Streifen'); }
+    streifen(farbe);
+    zeigen(text.join('\n'));
+  }
+  var warte=null;
+  function spaeter(){
+    if(warte) return;
+    warte=setTimeout(function(){ warte=null; malen(); },200);
+  }
+  try{
+    new MutationObserver(spaeter).observe(document.documentElement,
+      {childList:true, subtree:true, attributes:true, attributeFilter:['class','style','hidden']});
+  }catch(e){}
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',malen);
+  else malen();
+  addEventListener('load',spaeter);
+  addEventListener('resize',spaeter);
+  addEventListener('orientationchange',spaeter);
+})();
+</script></head><body>
+<div id="wrap">
+  <div id="bar"><div id="barL">
+    <button class="tb tafelEdit" id="bTpl" title="Fertigen Versuch laden"><svg viewBox="0 0 32 20"><rect x="7" y="3" width="18" height="14" rx="2"/><path d="M11 8h10M11 12h6"/></svg><span>Vorlagen</span></button>
+    </div><div id="barMid">
+    <button class="tb" id="bPlay" title="Den Versuch ablaufen lassen"><svg viewBox="0 0 32 20"><path d="M12 4l12 6-12 6Z" fill="currentColor" stroke="none"/></svg><span>Start</span></button>
+    <button class="tb" id="bZur" title="Wieder an den Anfang"><svg viewBox="0 0 32 20"><path d="M24 10a8 8 0 1 1-2.5-5.8M24 2v4h-4"/></svg><span>Anfang</span></button>
+    <span class="sep"></span>
+    <button class="tb" id="bTeil" title="Das Teilchenmodell daneben zeigen"><svg viewBox="0 0 32 20"><circle cx="9" cy="6" r="2.2"/><circle cx="16" cy="11" r="2.2"/><circle cx="23" cy="5" r="2.2"/><circle cx="22" cy="14" r="2.2"/><circle cx="9" cy="15" r="2.2"/></svg><span>Teilchen</span></button>
+    <button class="tb" id="bGl" title="Die Gleichungen einblenden"><svg viewBox="0 0 32 20"><path d="M4 7h10M4 13h10M19 10h9M23.5 5.5 28 10l-4.5 4.5"/></svg><span>Gleichungen</span></button>
+    </div><div id="barR"><span class="sep"></span>
+    <button class="tb" id="bHilfe" title="Kurze Anleitung"><svg viewBox="0 0 32 20"><circle cx="16" cy="10" r="8"/><path d="M13.6 7.6a2.5 2.5 0 1 1 3.3 2.6c-.6.3-.9.8-.9 1.4v.4"/><circle cx="16" cy="15" r=".9" fill="currentColor" stroke="none"/></svg><span>?</span></button>
+  </div></div>
+  <div id="tabs">
+    <button id="t-kurve" class="on">Erwärmen und Abkühlen</button>
+    <button id="t-mischen">Mischungstemperatur</button>
+  </div>
+  <div id="bar2"></div>
+  <div id="cvbox"><canvas id="cv"></canvas><div id="hint"></div></div>
+</div>
+<script src="shot.js"></script>
+<script src="modus.js"></script>
+<script src="vendor/qrcode.min.js"></script>
+<script src="teilen.js"></script>
+<script>
+"use strict";
+const $=id=>document.getElementById(id), cv=$('cv'), ctx=cv.getContext('2d');
+const toast=m=>window.TafelShot&&TafelShot.toast(m);
+
+function zahl(v,n){ if(v===null||v===undefined||!isFinite(v)) return '–';
+  const a=Math.abs(v);
+  if(n===undefined) n = a>=1000?0 : a>=100?1 : a>=1?1 : a>=0.1?2 : 3;
+  let s=v.toFixed(n); if(s.indexOf('.')>=0) s=s.replace(/0+$/,'').replace(/\.$/,'');
+  return s.replace('.',','); }
+function en(E){ const a=Math.abs(E);
+  if(a>=1e6) return zahl(E/1e6)+' MJ';
+  if(a>=1000) return zahl(E/1000)+' kJ';
+  return zahl(E,0)+' J'; }
+const zeitText=s=>s>=600?zahl(s/60,1)+' min':zahl(s,0)+' s';
+
+/* ---------- Stoffe ----------
+   c = spezifische Wärmekapazität (fest / flüssig / gasförmig), q = Schmelz- bzw.
+   Verdampfungswärme. Werte gerundet, wie sie in der Formelsammlung stehen. */
+const STOFFE={
+  wasser:  {name:'Wasser',     cf:2100, cl:4200, cg:2000, Ts:0,    qs:334000, Tv:100,  qv:2256000, farbe:'#2563eb', festName:'Eis', gasName:'Wasserdampf'},
+  ethanol: {name:'Ethanol',    cf:2300, cl:2430, cg:1420, Ts:-114, qs:108000, Tv:78,   qv:841000,  farbe:'#7c3aed'},
+  eisen:   {name:'Eisen',      cf:460,  cl:820,  cg:460,  Ts:1538, qs:247000, Tv:2861, qv:6090000, farbe:'#64748b'},
+  alu:     {name:'Aluminium',  cf:896,  cl:1180, cg:900,  Ts:660,  qs:397000, Tv:2470, qv:10500000,farbe:'#94a3b8'},
+  kupfer:  {name:'Kupfer',     cf:382,  cl:490,  cg:382,  Ts:1085, qs:205000, Tv:2562, qv:4730000, farbe:'#b45309'},
+  blei:    {name:'Blei',       cf:129,  cl:147,  cg:129,  Ts:327,  qs:23000,  Tv:1749, qv:871000,  farbe:'#475569'},
+  oel:     {name:'Speiseöl',   cf:1600, cl:1970, cg:1600, Ts:-20,  qs:120000, Tv:300,  qv:400000,  farbe:'#ca8a04'}
+};
+const S_LISTE=Object.keys(STOFFE);
+const stoff=k=>STOFFE[k]||STOFFE.wasser;
+const festName=s=>s.festName||(s.name+' (fest)');
+const gasName=s=>s.gasName||(s.name+'dampf');
+
+/* ---------- Zustand ---------- */
+const standard=()=>({v:1, tab:'kurve', stoff:'wasser', m:0.5, P:500, T0:-20, kuehlen:false,
+  t:0, teilchen:true, gl:0,
+  a:{stoff:'wasser',m:1,T:80}, b:{stoff:'wasser',m:2,T:20}, mt:0,
+  fontSize:14, edit:true});
+let D=standard();
+let lauf=false, letztT=0;
+
+/* ---------- Die Erwärmungskurve ----------
+   Fünf Abschnitte: fest erwärmen, schmelzen, flüssig erwärmen, sieden, Gas erwärmen.
+   Jeder Abschnitt braucht eine Energie, bei fester Heizleistung also eine Zeit. */
+function kurve(){
+  const s=stoff(D.stoff), m=Math.max(0.001,D.m), P=Math.max(1,D.P);
+  const T0=Math.min(D.T0,s.Ts-0.001), ab=[];
+  const dazu=(art,T1,T2,E)=>{ const dt=E/P; ab.push({art,T1,T2,E,dt}); };
+  dazu('fest', T0, s.Ts, s.cf*m*(s.Ts-T0));
+  dazu('schmelzen', s.Ts, s.Ts, s.qs*m);
+  dazu('fluessig', s.Ts, s.Tv, s.cl*m*(s.Tv-s.Ts));
+  dazu('sieden', s.Tv, s.Tv, s.qv*m);
+  const dT=Math.max(40,(s.Tv-s.Ts)*0.35);
+  dazu('gas', s.Tv, s.Tv+dT, s.cg*m*dT);
+  let t=0, E=0;
+  ab.forEach(x=>{ x.t1=t; x.E1=E; t+=x.dt; E+=x.E; x.t2=t; x.E2=E; });
+  return {s,m,P,ab,tGes:t,EGes:E,T0};
+}
+/* Wo steht der Versuch zur Zeit t? */
+function standKurve(K,t){
+  t=Math.max(0,Math.min(K.tGes,t));
+  for(const x of K.ab){ if(t<=x.t2+1e-9){
+    const f=x.dt>0?(t-x.t1)/x.dt:1;
+    const T=x.T1+(x.T2-x.T1)*f;
+    return {art:x.art, T, f, E:x.E1+x.E*f, ab:x}; } }
+  const l=K.ab[K.ab.length-1];
+  return {art:l.art, T:l.T2, f:1, E:K.EGes, ab:l};
+}
+const ART_NAME={fest:'erwärmt sich',schmelzen:'schmilzt',fluessig:'erwärmt sich',sieden:'siedet',gas:'erwärmt sich'};
+function artText(K,st){ const s=K.s;
+  if(st.art==='fest') return festName(s)+' erwärmt sich';
+  if(st.art==='schmelzen') return festName(s)+' schmilzt – die Temperatur bleibt stehen';
+  if(st.art==='fluessig') return s.name+' erwärmt sich';
+  if(st.art==='sieden') return s.name+' siedet – die Temperatur bleibt stehen';
+  return gasName(s)+' erwärmt sich';
+}
+/* ---------- Mischungstemperatur ----------
+   abgegebene Wärme = aufgenommene Wärme, daraus folgt die Mischungstemperatur. */
+const cBei=(s,T)=>T<s.Ts?s.cf:(T<s.Tv?s.cl:s.cg);
+function mischung(){
+  const A=D.a, B=D.b, sa=stoff(A.stoff), sb=stoff(B.stoff);
+  const ca=cBei(sa,A.T), cb=cBei(sb,B.T);
+  const ma=Math.max(0.001,A.m), mb=Math.max(0.001,B.m);
+  const TM=(ca*ma*A.T+cb*mb*B.T)/(ca*ma+cb*mb);
+  return {sa,sb,ca,cb,ma,mb,TA:A.T,TB:B.T,TM,
+    Qab:ca*ma*(A.T-TM), Qauf:cb*mb*(TM-B.T)};
+}
+
+/* ---------- Zeichnen: Grundlagen ---------- */
+let W=0,H=0,DPR=1,K=1;
+function resize(){ DPR=Math.min(3,window.devicePixelRatio||1);
+  W=cv.clientWidth||320; H=cv.clientHeight||240;
+  cv.width=Math.round(W*DPR); cv.height=Math.round(H*DPR); zeichne(); }
+function rr(x,y,w,h,r){ r=Math.max(0,Math.min(r,w/2,h/2)); ctx.beginPath();
+  ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+function txt(s,x,y,o){ o=o||{}; ctx.font=(o.fett?'700 ':'')+(o.sz||13*K)+'px -apple-system,BlinkMacSystemFont,Arial,sans-serif';
+  ctx.textAlign=o.al||'center'; ctx.textBaseline=o.bl||'middle';
+  if(o.rand){ ctx.lineWidth=o.randB||3; ctx.strokeStyle=o.rand; ctx.lineJoin='round'; ctx.strokeText(s,x,y); }
+  ctx.fillStyle=o.farbe||'#1f2430'; ctx.fillText(s,x,y); }
+function txtPass(s,x,y,maxB,o){ o=o||{}; let sz=o.sz||13*K;
+  const f=()=>ctx.font=(o.fett?'700 ':'')+sz+'px -apple-system,BlinkMacSystemFont,Arial,sans-serif';
+  f(); while(sz>7&&ctx.measureText(s).width>maxB){ sz-=0.5; f(); }
+  txt(s,x,y,Object.assign({},o,{sz})); }
+/* hübsche Schrittweite für die Achsen */
+function schritt(spanne,ziel){ const roh=spanne/Math.max(1,ziel), p=Math.pow(10,Math.floor(Math.log10(roh)));
+  const r=roh/p; return (r<1.5?1:r<3.5?2:r<7.5?5:10)*p; }
+
+/* ---------- Teilchenmodell ---------- */
+const TN=56; let TP=null, TPH=0;
+function teilchenNeu(){ TP=[];
+  const sp=8, ze=Math.ceil(TN/sp);
+  for(let i=0;i<TN;i++){ const c=i%sp, r=Math.floor(i/sp);
+    const gx=0.12+c*(0.76/(sp-1)), gy=0.94-r*(0.5/Math.max(1,ze-1));
+    TP.push({x:gx,y:gy,gx,gy,vx:0,vy:0,z:'f'}); } }
+teilchenNeu();
+/* Welcher Teil der Teilchen ist flüssig bzw. gasförmig? */
+function teilchenZustand(st){
+  if(st.art==='fest') return {fl:0,ga:0};
+  if(st.art==='schmelzen') return {fl:st.f,ga:0};
+  if(st.art==='fluessig') return {fl:1,ga:0};
+  if(st.art==='sieden') return {fl:1,ga:st.f};
+  return {fl:1,ga:1};
+}
+function teilchenSchritt(dt,st,tempF){
+  const z=teilchenZustand(st), nGa=Math.round(z.ga*TN), nFl=Math.round(z.fl*TN);
+  TPH+=dt*(2+6*tempF);
+  TP.forEach((p,i)=>{
+    p.z = (i<nGa)?'g' : (i<nFl?'l':'f');
+    if(p.z==='f'){                                    /* im Gitter, es schwingt nur */
+      const a=0.006+0.016*tempF;
+      p.x=p.gx+a*Math.sin(TPH*1.7+i*1.3); p.y=p.gy+a*Math.cos(TPH*2.1+i*0.7);
+      p.vx=p.vy=0;
+    } else {
+      const v=(p.z==='g'?0.16:0.05)*(0.35+tempF);
+      if(!p.vx&&!p.vy){ const w=Math.random()*6.283; p.vx=Math.cos(w)*v; p.vy=Math.sin(w)*v; }
+      const sk=v/Math.max(1e-6,Math.hypot(p.vx,p.vy));
+      p.vx*=sk; p.vy*=sk;
+      p.x+=p.vx*dt; p.y+=p.vy*dt;
+      const unten=(p.z==='g')?0.04:0.42;              /* Flüssigkeit bleibt im Gefäß unten */
+      if(p.x<0.05){ p.x=0.05; p.vx=Math.abs(p.vx); } if(p.x>0.95){ p.x=0.95; p.vx=-Math.abs(p.vx); }
+      if(p.y<unten){ p.y=unten; p.vy=Math.abs(p.vy); } if(p.y>0.96){ p.y=0.96; p.vy=-Math.abs(p.vy); }
+      if(p.z==='l'&&Math.random()<dt*2){ const w=Math.random()*6.283; p.vx=Math.cos(w)*v; p.vy=Math.sin(w)*v; }
+    }
+  });
+}
+function malTeilchen(x,y,w,h,s,st,tempF){
+  ctx.save(); rr(x,y,w,h,12); ctx.fillStyle='#f8fafc'; ctx.fill();
+  ctx.strokeStyle='#94a3b8'; ctx.lineWidth=2; ctx.stroke(); ctx.clip();
+  const z=teilchenZustand(st);
+  if(z.fl>0&&z.ga<1){                                  /* angedeuteter Flüssigkeitsspiegel */
+    const sp=y+h*0.40+h*0.52*z.ga;
+    ctx.fillStyle=s.farbe; ctx.globalAlpha=.12; ctx.fillRect(x,sp,w,y+h-sp); ctx.globalAlpha=1;
+    ctx.strokeStyle=s.farbe; ctx.globalAlpha=.4; ctx.beginPath(); ctx.moveTo(x,sp); ctx.lineTo(x+w,sp); ctx.stroke(); ctx.globalAlpha=1; }
+  const r=Math.max(3,Math.min(9,w*0.035));
+  TP.forEach(p=>{ const px=x+p.x*w, py=y+p.y*h;
+    ctx.beginPath(); ctx.arc(px,py,r,0,7);
+    ctx.fillStyle=(p.z==='g')?'#94a3b8':s.farbe; ctx.globalAlpha=(p.z==='g')?.75:1; ctx.fill(); ctx.globalAlpha=1;
+    if(p.z==='f'){ ctx.strokeStyle='rgba(255,255,255,.55)'; ctx.lineWidth=1.2; ctx.stroke(); } });
+  ctx.restore();
+  const nm=(st.art==='fest')?'fest':(st.art==='gas')?'gasförmig':(st.art==='fluessig')?'flüssig':
+    (st.art==='schmelzen'?'fest → flüssig':'flüssig → gasförmig');
+  txtPass('Teilchenmodell · '+nm,x+w/2,y+h+14*K,w,{sz:13*K,fett:true,farbe:'#475569'});
+}
+
+/* ---------- Reiter 1: Erwärmungskurve ---------- */
+function zeichneKurve(){
+  const Kv=kurve(), st=standKurve(Kv,D.t), s=Kv.s;
+  const glH=D.gl?Math.round((Kv.ab.length+2)*17*K+12):0;
+  const tw=D.teilchen?Math.min(260*K,W*0.3):0;
+  const L=66*K, R=W-tw-(tw?26*K:18*K), T=26*K, B=H-glH-40*K;
+  /* Achsenbereiche */
+  const tMax=Math.max(1,Kv.tGes), Tlo=Math.min(Kv.T0,s.Ts)-8, Thi=Kv.ab[Kv.ab.length-1].T2+8;
+  const X=t=>L+(R-L)*(t/tMax), Y=T0=>B-(B-T)*((T0-Tlo)/(Thi-Tlo));
+  /* Gitter */
+  ctx.strokeStyle='#e8edf4'; ctx.lineWidth=1;
+  const dT=schritt(Thi-Tlo,6), dt=schritt(tMax,6);
+  for(let v=Math.ceil(Tlo/dT)*dT;v<=Thi;v+=dT){ const y=Y(v);
+    ctx.beginPath(); ctx.moveTo(L,y); ctx.lineTo(R,y); ctx.stroke();
+    txt(zahl(v,0),L-8*K,y,{al:'right',sz:12*K,farbe:'#64748b'}); }
+  const inMin=tMax>=600, tLab=v=>inMin?zahl(v/60,1):zahl(v,0);
+  for(let v=0;v<=tMax+1e-6;v+=dt){ const x=X(v);
+    ctx.beginPath(); ctx.moveTo(x,T); ctx.lineTo(x,B); ctx.stroke();
+    txt(tLab(v),x,B+14*K,{sz:12*K,farbe:'#64748b'}); }
+  ctx.strokeStyle='#64748b'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(L,T); ctx.lineTo(L,B); ctx.lineTo(R,B); ctx.stroke();
+  txt('T in °C',L-8*K,T-12*K,{al:'right',sz:13*K,fett:true,farbe:'#475569'});
+  txt('Zeit in '+(inMin?'min':'s')+(D.kuehlen?' (gekühlt':' (geheizt')+' wird mit '+zahl(D.P,0)+' W)',
+    (L+R)/2,B+30*K,{sz:13*K,fett:true,farbe:'#475569'});
+  /* Kurve: waagrechte Stücke sind die Übergänge */
+  Kv.ab.forEach(x=>{ const halt=(x.art==='schmelzen'||x.art==='sieden');
+    ctx.strokeStyle=halt?'#ea580c':s.farbe; ctx.lineWidth=halt?4.5:3.2;
+    ctx.beginPath(); ctx.moveTo(X(x.t1),Y(x.T1)); ctx.lineTo(X(x.t2),Y(x.T2)); ctx.stroke();
+    if(halt&&x.dt>0){ const xm=(X(x.t1)+X(x.t2))/2;
+      txtPass(x.art==='schmelzen'?(D.kuehlen?'erstarrt':'schmilzt'):(D.kuehlen?'kondensiert':'siedet'),
+        xm,Y(x.T1)-14*K,Math.max(50,X(x.t2)-X(x.t1)+40*K),{sz:12.5*K,fett:true,farbe:'#ea580c'}); } });
+  /* Marke */
+  const mx=X(D.t), my=Y(st.T);
+  ctx.strokeStyle='rgba(100,116,139,.5)'; ctx.lineWidth=1.4; ctx.setLineDash([5,4]);
+  ctx.beginPath(); ctx.moveTo(L,my); ctx.lineTo(mx,my); ctx.lineTo(mx,B); ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle='#1f2430'; ctx.beginPath(); ctx.arc(mx,my,6*K,0,7); ctx.fill();
+  ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.stroke();
+  { const re=(mx<(L+R)/2);        /* links vom Bild: Text nach rechts, sonst nach links */
+    txt(zahl(st.T,1)+' °C',mx+(re?12*K:-12*K),my+14*K,
+      {al:re?'left':'right',sz:16*K,fett:true,rand:'#fff',randB:4}); }
+  /* Kopfzeile: was gerade passiert */
+  txtPass(artText(Kv,st),(L+R)/2,T-10*K,R-L,{sz:15*K,fett:true,farbe:'#1f2430'});
+  txt('zugeführt: '+en(st.E)+' · '+zeitText(D.t),R,B-6*K,{al:'right',sz:13*K,farbe:'#64748b'});
+  /* Teilchen */
+  if(D.teilchen){ const tempF=Math.max(0,Math.min(1,(st.T-Tlo)/Math.max(1,Thi-Tlo)));
+    malTeilchen(W-tw-6*K,T+10*K,tw,Math.min(B-T-30*K,tw*1.15),s,st,tempF); }
+  /* Gleichungen */
+  if(D.gl){ let y=H-glH+6*K;
+    /* Breite der ersten Spalte aus dem laengsten Eintrag - sonst ueberlappen die Spalten */
+    ctx.font='700 '+(13*K)+'px -apple-system,BlinkMacSystemFont,Arial,sans-serif';
+    let sp=0; Kv.ab.forEach(x=>{ const halt=(x.art==='schmelzen'||x.art==='sieden');
+      const nm=x.art==='fest'?festName(s)+' erwärmen':x.art==='schmelzen'?'schmelzen':
+        x.art==='fluessig'?s.name+' erwärmen':x.art==='sieden'?'sieden':gasName(s)+' erwärmen';
+      sp=Math.max(sp,ctx.measureText(nm+':  '+(halt?'E = q · m':'E = c · m · ΔT')).width); });
+    sp+=16*K;
+    const zeile=(a,b2,f)=>{ txt(a,L,y,{al:'left',sz:13*K,fett:true,farbe:f||'#1f2430'});
+      txt(b2,L+sp,y,{al:'left',sz:13*K,farbe:'#475569'}); y+=17*K; };
+    Kv.ab.forEach(x=>{ const halt=(x.art==='schmelzen'||x.art==='sieden');
+      const nm=x.art==='fest'?festName(s)+' erwärmen':x.art==='schmelzen'?'schmelzen':
+        x.art==='fluessig'?s.name+' erwärmen':x.art==='sieden'?'sieden':gasName(s)+' erwärmen';
+      const c=x.art==='fest'?s.cf:x.art==='fluessig'?s.cl:s.cg;
+      const form=halt?'E = q · m':'E = c · m · ΔT';
+      const zahlen=halt?(zahl((x.art==='schmelzen'?s.qs:s.qv)/1000,0)+' kJ/kg · '+zahl(Kv.m,2)+' kg')
+        :(zahl(c,0)+' J/(kg·K) · '+zahl(Kv.m,2)+' kg · '+zahl(Math.abs(x.T2-x.T1),0)+' K');
+      zeile(nm+':  '+form, zahlen+'  =  '+en(x.E)+'   ('+zeitText(x.dt)+')', halt?'#ea580c':'#1f2430'); });
+    zeile('zusammen:', en(Kv.EGes)+'   ('+zeitText(Kv.tGes)+')'); }
+}
+
+/* ---------- Reiter 2: Mischungstemperatur ---------- */
+function zeichneMischen(){
+  const M=mischung(), lauft=D.mt>0, f=Math.max(0,Math.min(1,D.mt));
+  const glH=D.gl?Math.round(6*17*K+14):0;
+  const B=H-glH-16*K, T=40*K;
+  const bw=Math.min(190*K,W*0.26), bh=Math.min(200*K,(B-T)*0.74);
+  const y0=Math.max(T+10*K,(T+B-bh)/2-16*K);
+  const links=W*0.18-bw/2, rechts=W*0.5-bw/2, ziel=W*0.82-bw/2;
+  const TA=M.TA, TB=M.TB;        /* A und B behalten ihre Temperatur, sie werden ausgeschüttet */
+  const warm=t=>{ const u=Math.max(0,Math.min(1,(t+20)/120));          /* -20 bis 100 °C */
+    return 'rgb('+Math.round(60+180*u)+','+Math.round(130-60*u)+','+Math.round(246-200*u)+')'; };
+  function becher(x,nm,s,m,Tv,anteil){
+    ctx.save(); rr(x,y0,bw,bh,14); ctx.fillStyle='#f8fafc'; ctx.fill();
+    ctx.save(); ctx.clip();
+    const fh=bh*Math.max(0.12,Math.min(0.92,anteil));
+    ctx.fillStyle=warm(Tv); ctx.globalAlpha=.82; ctx.fillRect(x,y0+bh-fh,bw,fh); ctx.globalAlpha=1;
+    ctx.restore();
+    ctx.strokeStyle='#94a3b8'; ctx.lineWidth=2.4; rr(x,y0,bw,bh,14); ctx.stroke(); ctx.restore();
+    txtPass(nm,x+bw/2,y0-14*K,bw+40*K,{sz:15*K,fett:true,farbe:'#1f2430'});
+    txtPass(zahl(Tv,1)+' °C',x+bw/2,y0+bh/2,bw-14*K,{sz:22*K,fett:true,rand:'#fff',randB:4});
+    txtPass(s.name+' · m = '+zahl(m,2)+' kg',x+bw/2,y0+bh+15*K,bw+60*K,{sz:13*K,farbe:'#475569'});
+    txtPass('c = '+zahl(cBei(s,Tv),0)+' J/(kg·K)',x+bw/2,y0+bh+32*K,bw+60*K,{sz:12.5*K,farbe:'#94a3b8'});
+  }
+  const mges=M.ma+M.mb;
+  becher(links,'Behälter A',M.sa,M.ma,TA,(M.ma/mges*0.8+0.15)*(1-f));
+  becher(rechts,'Behälter B',M.sb,M.mb,TB,(M.mb/mges*0.8+0.15)*(1-f));
+  txt('+',(links+bw+rechts)/2,y0+bh/2,{sz:26*K,fett:true,farbe:'#64748b'});
+  /* Pfeile zum Ergebnis */
+  ctx.strokeStyle='#94a3b8'; ctx.lineWidth=2.5;
+  const ym=y0+bh/2;
+  [links+bw,rechts+bw].forEach((x,i)=>{ const x2=ziel-8*K;
+    if(i===0) return;                                   /* nur ein Pfeil vom rechten Becher */
+    ctx.beginPath(); ctx.moveTo(x+8*K,ym); ctx.lineTo(x2-10*K,ym); ctx.stroke();
+    ctx.fillStyle='#94a3b8'; ctx.beginPath(); ctx.moveTo(x2,ym); ctx.lineTo(x2-12*K,ym-7*K); ctx.lineTo(x2-12*K,ym+7*K); ctx.closePath(); ctx.fill(); });
+  txt('mischen',(rechts+bw+ziel)/2,ym-14*K,{sz:13*K,fett:true,farbe:'#64748b'});
+  /* Ergebnis */
+  ctx.save(); ctx.globalAlpha=lauft?1:0.45;
+  { const x=ziel;
+    ctx.save(); rr(x,y0,bw,bh,14); ctx.fillStyle='#f8fafc'; ctx.fill(); ctx.save(); ctx.clip();
+    const fh=bh*0.92*f; ctx.fillStyle=warm(M.TM); ctx.globalAlpha=.82; ctx.fillRect(x,y0+bh-fh,bw,fh); ctx.globalAlpha=1; ctx.restore();
+    ctx.strokeStyle='#2563eb'; ctx.lineWidth=3; rr(x,y0,bw,bh,14); ctx.stroke(); ctx.restore();
+    txtPass('Mischung',x+bw/2,y0-14*K,bw+40*K,{sz:15*K,fett:true,farbe:'#2563eb'});
+    txtPass(lauft?zahl(M.TM,1)+' °C':'?',x+bw/2,y0+bh/2,bw-14*K,{sz:24*K,fett:true,rand:'#fff',randB:4});
+    txtPass('m = '+zahl(M.ma+M.mb,2)+' kg',x+bw/2,y0+bh+15*K,bw+60*K,{sz:13*K,farbe:'#475569'});
+  }
+  ctx.restore();
+  if(!lauft) txtPass('„Start" antippen: Die Behälter werden zusammengeschüttet',W/2,y0+bh+60*K,W*0.8,{sz:14*K,farbe:'#64748b'});
+  else txtPass('Die abgegebene Wärme ist genauso groß wie die aufgenommene',W/2,y0+bh+60*K,W*0.8,{sz:14*K,fett:true,farbe:'#1f2430'});
+  /* Gleichungen */
+  if(D.gl){ let y=H-glH+8*K; const L=30*K;
+    ctx.font='700 '+(13.5*K)+'px -apple-system,BlinkMacSystemFont,Arial,sans-serif';
+    const sp=Math.max(ctx.measureText('c₁ · m₁ · (T₁ − T_M) = c₂ · m₂ · (T_M − T₂)').width,
+      ctx.measureText(zahl(M.ca,0)+' J/(kg·K) · '+zahl(M.ma,2)+' kg · ('+zahl(M.TA,1)+' °C − T_M)').width)+16*K;
+    const zeile=(a,b2,fa)=>{ txt(a,L,y,{al:'left',sz:13.5*K,fett:true,farbe:fa||'#1f2430'});
+      if(b2) txt(b2,L+sp,y,{al:'left',sz:13.5*K,farbe:'#475569'}); y+=17*K; };
+    zeile('abgegebene Wärme = aufgenommene Wärme');
+    zeile('c₁ · m₁ · (T₁ − T_M) = c₂ · m₂ · (T_M − T₂)');
+    if(D.gl>1){
+      zeile(zahl(M.ca,0)+' J/(kg·K) · '+zahl(M.ma,2)+' kg · ('+zahl(M.TA,1)+' °C − T_M)',
+            '= '+zahl(M.cb,0)+' J/(kg·K) · '+zahl(M.mb,2)+' kg · (T_M − '+zahl(M.TB,1)+' °C)');
+      zeile('T_M = (c₁m₁T₁ + c₂m₂T₂) / (c₁m₁ + c₂m₂)');
+      zeile('T_M = '+zahl(M.TM,1)+' °C',lauft?'abgegeben '+en(M.Qab)+' = aufgenommen '+en(M.Qauf):'');
+    } else zeile('T_M = (c₁m₁T₁ + c₂m₂T₂) / (c₁m₁ + c₂m₂)');
+  }
+}
+function zeichne(){
+  ctx.setTransform(DPR,0,0,DPR,0,0); ctx.clearRect(0,0,W,H);
+  ctx.fillStyle='#fff'; ctx.fillRect(0,0,W,H);
+  K=Math.min(1.9,(D.fontSize||14)/14);
+  if(D.tab==='mischen') zeichneMischen(); else zeichneKurve();
+}
+
+/* ---------- Bedienung ---------- */
+const grenz=(v,a,b)=>Math.max(a,Math.min(b,Math.round(v*1e6)/1e6));
+function renderBar2(){ const b=$('bar2'); b.innerHTML='';
+  const el=(t,c,x,fn)=>{ const e=document.createElement(t); if(c)c.split(' ').forEach(k=>k&&e.classList.add(k));
+    if(x!==undefined) e.textContent=x; if(fn) e.onclick=fn; b.appendChild(e); return e; };
+  const stepper=(name,anzeige,setz,eingabe)=>{
+    el('span','lbl',name);
+    const g=document.createElement('span'); g.className='stp'; b.appendChild(g);
+    const mk=(t,f)=>{ const x=document.createElement('button'); x.textContent=t; x.onclick=f; g.appendChild(x); };
+    mk('−',()=>setz(-1));
+    const v=document.createElement('span'); v.className='val'; v.textContent=anzeige;
+    if(eingabe){ v.style.cursor='text'; v.title='Antippen und Wert eingeben';
+      v.onclick=()=>{ const s=prompt(name+' eingeben:',anzeige.replace(/[^0-9,.\-]/g,'')); if(s===null) return;
+        const z=parseFloat(String(s).replace(',','.')); if(isFinite(z)) eingabe(z); }; }
+    g.appendChild(v); mk('+',()=>setz(1));
+  };
+  const stoffWahl=(akt,setz)=>{ const s=document.createElement('select'); s.className='sel';
+    S_LISTE.forEach(k=>{ const o=document.createElement('option'); o.value=k; o.textContent=STOFFE[k].name; if(k===akt)o.selected=true; s.appendChild(o); });
+    s.onchange=()=>setz(s.value); b.appendChild(s); };
+  const schluss=()=>{ el('span','grow'); el('span','sep tafelEdit');
+    el('span','lbl tafelEdit','Schrift'); el('button','btn tafelEdit','A−',()=>fontBy(-2)); el('button','btn tafelEdit','A+',()=>fontBy(2));
+    el('span','sep tafelEdit'); bildKnoepfe(); };
+
+  if(D.tab==='kurve'){
+    el('span','lbl','Stoff'); stoffWahl(D.stoff,k=>{ D.stoff=k; D.t=0; lauf=false; playBtn(); renderBar2(); zeichne(); sync(); });
+    stepper('Masse',zahl(D.m,2)+' kg',d=>{ D.m=grenz(D.m+d*(D.m<0.2?0.05:0.25),0.01,100); D.t=0; renderBar2(); zeichne(); sync(); },
+      z=>{ D.m=grenz(z,0.01,100); D.t=0; renderBar2(); zeichne(); sync(); });
+    stepper('Leistung',zahl(D.P,0)+' W',d=>{ D.P=grenz(D.P+d*(D.P<500?50:250),10,100000); D.t=0; renderBar2(); zeichne(); sync(); },
+      z=>{ D.P=grenz(z,10,100000); D.t=0; renderBar2(); zeichne(); sync(); });
+    stepper('Starttemperatur',zahl(D.T0,0)+' °C',d=>{ D.T0=grenz(D.T0+d*5,-270,stoff(D.stoff).Ts-1); D.t=0; renderBar2(); zeichne(); sync(); },
+      z=>{ D.T0=grenz(z,-270,stoff(D.stoff).Ts-1); D.t=0; renderBar2(); zeichne(); sync(); });
+    el('button','btn'+(D.kuehlen?' on':''),D.kuehlen?'kühlen':'heizen',()=>{ D.kuehlen=!D.kuehlen;
+      D.t=D.kuehlen?kurve().tGes:0; lauf=false; playBtn(); renderBar2(); zeichne(); sync();
+      toast(D.kuehlen?'Beim Kühlen läuft alles rückwärts: Dampf kondensiert, Wasser erstarrt':'Geheizt wird wieder von vorn'); });
+    schluss(); return; }
+
+  ['a','b'].forEach(k=>{ const R=D[k];
+    el('span','lbl','Behälter '+k.toUpperCase());
+    stoffWahl(R.stoff,x=>{ R.stoff=x; D.mt=0; renderBar2(); zeichne(); sync(); });
+    stepper('m',zahl(R.m,2)+' kg',d=>{ R.m=grenz(R.m+d*(R.m<0.3?0.05:0.25),0.01,100); D.mt=0; renderBar2(); zeichne(); sync(); },
+      z=>{ R.m=grenz(z,0.01,100); D.mt=0; renderBar2(); zeichne(); sync(); });
+    stepper('T',zahl(R.T,0)+' °C',d=>{ R.T=grenz(R.T+d*5,-200,2000); D.mt=0; renderBar2(); zeichne(); sync(); },
+      z=>{ R.T=grenz(z,-200,2000); D.mt=0; renderBar2(); zeichne(); sync(); });
+    el('span','sep');
+  });
+  schluss();
+}
+function fontBy(d){ D.fontSize=Math.max(9,Math.min(36,(D.fontSize||14)+d));
+  document.documentElement.style.setProperty('--fs',Math.min(18,D.fontSize)+'px'); zeichne(); sync(); toast('Schriftgröße '+D.fontSize); }
+function bildKnoepfe(){ const b=$('bar2');
+  const mk=(t,ti,fn)=>{ const x=document.createElement('button'); x.className='btn tafelEdit'+(t.indexOf('Tafel')>=0?' pri':''); x.textContent=t; x.title=ti; x.onclick=fn; b.appendChild(x); };
+  if(window.parent!==window) mk('🖼 Bild → Tafel','Als Bild neben das Werkzeug legen',zurTafel);
+  mk('📋 Kopieren','Als Bild in die Zwischenablage kopieren',kopieren); }
+const bild=()=>window.TafelShot?TafelShot.rasterize($('cvbox'),{scale:2,bg:'#fff'}):null;
+function zurTafel(){ const im=bild(); if(!im) return; if(window.parent===window){ toast('Nur innerhalb der Tafel möglich'); return; }
+  try{ parent.postMessage({type:'embed-image',url:im.canvas.toDataURL('image/png'),w:im.w,h:im.h},'*'); toast('Als Bild auf die Tafel gelegt'); }catch(e){ toast('Nicht möglich'); } }
+function kopieren(){ const im=bild(); if(!im) return;
+  try{ if(!navigator.clipboard||!window.ClipboardItem) throw new Error('x');
+    const blob=new Promise(r=>im.canvas.toBlob(r,'image/png'));
+    navigator.clipboard.write([new ClipboardItem({'image/png':blob})]).then(()=>toast('Bild kopiert'),()=>toast('Kopieren wurde vom Browser verhindert'));
+  }catch(e){ toast('Kopieren wird hier nicht unterstützt'); } }
+
+/* ---------- Reiter, Knöpfe, Ablauf ---------- */
+function setzeTab(t){ D.tab=t; lauf=false; playBtn();
+  $('t-kurve').classList.toggle('on',t==='kurve'); $('t-mischen').classList.toggle('on',t==='mischen');
+  $('bTeil').hidden=(t!=='kurve');
+  $('hint').textContent=(t==='kurve')?'Start lässt die Temperatur laufen · die Werte stehen unten in der Leiste'
+    :'Massen und Temperaturen unten einstellen, dann „Start"';
+  renderBar2(); zeichne(); sync(); }
+$('t-kurve').onclick=()=>setzeTab('kurve'); $('t-mischen').onclick=()=>setzeTab('mischen');
+function playBtn(){ $('bPlay').classList.toggle('on',lauf);
+  $('bPlay').innerHTML=(lauf?'<svg viewBox="0 0 32 20"><path d="M12 4v12M20 4v12" stroke-width="3"/></svg><span>Pause</span>'
+                            :'<svg viewBox="0 0 32 20"><path d="M12 4l12 6-12 6Z" fill="currentColor" stroke="none"/></svg><span>Start</span>'); }
+$('bPlay').onclick=()=>{ if(D.tab==='mischen'){ if(D.mt>=1){ D.mt=0; zeichne(); sync(); return; } lauf=!lauf; letztT=performance.now(); playBtn(); return; }
+  const g=kurve().tGes;
+  if(!lauf){ if(!D.kuehlen&&D.t>=g-1e-6) D.t=0; if(D.kuehlen&&D.t<=1e-6) D.t=g; }
+  lauf=!lauf; letztT=performance.now(); playBtn(); sync(); };
+$('bZur').onclick=()=>{ lauf=false; if(D.tab==='mischen') D.mt=0; else D.t=D.kuehlen?kurve().tGes:0;
+  playBtn(); zeichne(); sync(); };
+$('bTeil').onclick=()=>{ D.teilchen=!D.teilchen; $('bTeil').classList.toggle('on',D.teilchen); zeichne(); sync(); };
+$('bGl').onclick=()=>{ D.gl=((D.gl||0)+1)%3; glBtn(); zeichne(); sync(); };
+function glBtn(){ $('bGl').classList.toggle('on',!!D.gl);
+  $('bGl').querySelector('span').textContent=['Gleichungen','Formeln','mit Zahlen'][D.gl||0]; }
+$('bHilfe').onclick=()=>{ const b=$('bar2'); b.innerHTML='';
+  [['Erwärmen','Stoff, Masse, Heizleistung und Starttemperatur unten einstellen. „Start" lässt die Zeit laufen.'],
+   ['Haltepunkte','Beim Schmelzen und Sieden bleibt die Temperatur stehen, obwohl weiter geheizt wird – die Energie steckt in der Umwandlung.'],
+   ['Teilchen','Rechts sieht man dasselbe im Teilchenmodell: Gitter, Flüssigkeit, Gas.'],
+   ['Kühlen','Der Knopf „heizen/kühlen" dreht den Vorgang um: kondensieren und erstarren.'],
+   ['Mischen','Im zweiten Reiter zwei Behälter einstellen und mischen – die Gleichung steht darunter.']
+  ].forEach(([k,v])=>{ const s=document.createElement('span'); s.className='lbl'; s.textContent=k+': ';
+    const x=document.createElement('span'); x.textContent=v; x.style.marginRight='14px'; b.appendChild(s); b.appendChild(x); });
+  const z=document.createElement('button'); z.className='btn'; z.textContent='✕'; z.onclick=renderBar2; b.appendChild(z); };
+
+/* ---------- Vorlagen ---------- */
+const VORLAGEN={
+  'Eis schmilzt und Wasser siedet':()=>({tab:'kurve',stoff:'wasser',m:0.5,P:500,T0:-20,kuehlen:false,t:0}),
+  'Ein Liter Wasser kochen':()=>({tab:'kurve',stoff:'wasser',m:1,P:2000,T0:20,kuehlen:false,t:0}),
+  'Wasserdampf kühlt ab':()=>({tab:'kurve',stoff:'wasser',m:0.5,P:500,T0:-20,kuehlen:true}),
+  'Blei schmelzen':()=>({tab:'kurve',stoff:'blei',m:0.2,P:300,T0:20,kuehlen:false,t:0}),
+  'Eisen glühen':()=>({tab:'kurve',stoff:'eisen',m:0.1,P:1000,T0:20,kuehlen:false,t:0}),
+  'Heißes Wasser abkühlen':()=>({tab:'mischen',a:{stoff:'wasser',m:1,T:80},b:{stoff:'wasser',m:2,T:20},mt:0}),
+  'Eisen ins Wasser':()=>({tab:'mischen',a:{stoff:'eisen',m:0.5,T:300},b:{stoff:'wasser',m:2,T:20},mt:0}),
+  'Gleiche Massen':()=>({tab:'mischen',a:{stoff:'wasser',m:1,T:90},b:{stoff:'wasser',m:1,T:10},mt:0})
+};
+$('bTpl').onclick=()=>{ const b=$('bar2'); b.innerHTML='';
+  const l=document.createElement('span'); l.className='lbl'; l.textContent='Vorlage:'; b.appendChild(l);
+  Object.keys(VORLAGEN).forEach(k=>{ const bt=document.createElement('button'); bt.className='btn'; bt.textContent=k;
+    bt.onclick=()=>ladeVorlage(k); b.appendChild(bt); });
+  const x=document.createElement('button'); x.className='btn'; x.textContent='✕'; x.onclick=renderBar2; b.appendChild(x); };
+function ladeVorlage(k){ const f=VORLAGEN[k]; if(!f) return;
+  Object.assign(D,f()); if(D.kuehlen&&D.tab==='kurve') D.t=kurve().tGes;
+  lauf=false; teilchenNeu(); playBtn(); setzeTab(D.tab); toast(k); }
+
+/* ---------- Ablauf (Animation) ---------- */
+function loop(ts){ const dt=Math.min(0.08,(ts-letztT)/1000||0); letztT=ts;
+  if(D.tab==='kurve'){
+    const Kv=kurve(), g=Kv.tGes;
+    if(lauf){ const v=g/16;                       /* der ganze Versuch dauert rund 16 Sekunden */
+      D.t+=(D.kuehlen?-1:1)*v*dt;
+      if(D.t>=g){ D.t=g; lauf=false; playBtn(); sync(); }
+      if(D.t<=0){ D.t=0; lauf=false; playBtn(); sync(); } }
+    const st=standKurve(Kv,D.t);
+    const Tlo=Math.min(Kv.T0,Kv.s.Ts)-8, Thi=Kv.ab[Kv.ab.length-1].T2+8;
+    if(D.teilchen) teilchenSchritt(dt,st,Math.max(0,Math.min(1,(st.T-Tlo)/Math.max(1,Thi-Tlo))));
+    if(lauf||D.teilchen) zeichne();
+  } else {
+    if(lauf){ D.mt+=dt/1.2; if(D.mt>=1){ D.mt=1; lauf=false; playBtn(); sync(); } zeichne(); }
+  }
+  requestAnimationFrame(loop); }
+
+/* ---------- Tafel-Anbindung ---------- */
+let ready=false, syncT=null;
+function post(){ syncT=null; if(window.parent===window||!ready) return;
+  try{ parent.postMessage({type:'embed-data',data:D},'*'); }catch(e){} }
+function sync(){ if(!syncT) syncT=setTimeout(post,250); }
+function uebernimm(d){ if(!d) return;
+  D=Object.assign(standard(),d);
+  if(!STOFFE[D.stoff]) D.stoff='wasser';
+  ['a','b'].forEach(k=>{ D[k]=Object.assign({stoff:'wasser',m:1,T:20},D[k]||{});
+    if(!STOFFE[D[k].stoff]) D[k].stoff='wasser';
+    D[k].m=grenz(+D[k].m||1,0.01,100); D[k].T=grenz(+D[k].T||0,-200,2000); });
+  D.m=grenz(+D.m||0.5,0.01,100); D.P=grenz(+D.P||500,10,100000);
+  D.T0=grenz(+D.T0||0,-270,stoff(D.stoff).Ts-1);
+  D.t=Math.max(0,Math.min(kurve().tGes,+D.t||0)); D.mt=grenz(+D.mt||0,0,1);
+  if(D.tab!=='mischen') D.tab='kurve';
+  document.documentElement.style.setProperty('--fs',Math.min(18,D.fontSize||14)+'px');
+  lauf=false; teilchenNeu(); playBtn(); glBtn();
+  $('bTeil').classList.toggle('on',D.teilchen!==false);
+  setzeTab(D.tab); }
+addEventListener('message',e=>{ if(e.source!==window&&(window.parent===window||e.source!==window.parent)) return;
+  if(!(e.data&&e.data.type==='embed-data'&&e.data.data)) return;
+  uebernimm(e.data.data); ready=true;
+  if(window.TafelModus) TafelModus.refresh(); });
+if(window.TafelTeilen&&!TafelTeilen.istGeteilt())
+  TafelTeilen.knopf($('barR'),'waerme.html',()=>({w:'wrm', d:D}));
+function barFade(){ const bar=$('bar'), m=$('barMid');
+  bar.classList.remove('compact');
+  if(m.scrollWidth>m.clientWidth+2&&m.clientWidth<180) bar.classList.add('compact'); }
+addEventListener('resize',()=>{ resize(); barFade(); });
+window.addEventListener('load',()=>{
+  const geteilt=window.TafelTeilen&&TafelTeilen.istGeteilt();
+  if(window.TafelModus&&!geteilt)
+    TafelModus.init({get:()=>D.edit!==false, set:v=>{ D.edit=v; renderBar2(); resize(); barFade(); sync(); }});
+  document.documentElement.style.setProperty('--fs',Math.min(18,D.fontSize||14)+'px');
+  playBtn(); glBtn(); $('bTeil').classList.toggle('on',D.teilchen!==false);
+  setzeTab(D.tab); resize(); barFade();
+  requestAnimationFrame(ts=>{ letztT=ts; loop(ts); });
+  if(window.ResizeObserver) new ResizeObserver(()=>{ resize(); barFade(); }).observe($('cvbox'));
+  if(geteilt){ TafelTeilen.nurBenutzen(); D.edit=false; ready=true;
+    TafelTeilen.empfangen().then(p=>{ if(p&&p.w==='wrm'&&p.d) TafelTeilen.einspielen(p.d); }).catch(()=>{});
+    return; }
+  if(window.parent===window){ ready=true; return; }
+  try{ parent.postMessage({type:'embed-ready'},'*'); }catch(e){}
+  setTimeout(()=>{ ready=true; },700);
+});
+</script>
+</body></html>

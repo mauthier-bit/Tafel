@@ -2421,7 +2421,8 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
    Figuren & Körper · 3D-Koordinatensystem — **3.** GeoGebra-App · CODAP · Diagramm · Zufall ·
    Vierfeldertafel — **4.** Baumdiagramm · Wahrscheinlichkeitsrechner · **Tabellenkalkulation** ·
    Motion-Tracker · **Bewegungsdiagramme** · **Mathe und Physik Geschichte** — **5.** Stromkreis ·
-   Optiklabor · Wellenwanne · **Atomphysik** · **Induktion** · **Energieumwandlung** — **6.** **Video-Physik** · **Audio-Physik** · Messwert-Analyse ·
+   Optiklabor · Wellenwanne · **Atomphysik** · **Induktion** · **Energieumwandlung** ·
+   **Wärme und Teilchen** — **6.** **Video-Physik** · **Audio-Physik** · Messwert-Analyse ·
    **Versuchsprotokoll** · Einheitenumrechner.
    Die Aufklappmenüs legen sich **nie über die Werkzeugleiste**: Sie öffnen neben ihr, bleiben unter
    der oberen Leiste und nehmen bei schmalem Fenster **weniger Spalten** (bei wenig Höhe lassen sie
@@ -2715,7 +2716,29 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   - **Einrasten:** besondere Winkel (Vielfache von 30° und 45°) und die zugehörigen Werte
     (0, ±½, ±½√2, ±½√3, ±1; bei tan 0, ±⅓√3, ±1, ±√3) rasten beim Ziehen ein; ohne Einrasten ganze Grad
     bzw. Hundertstel. **Besondere Winkel** markiert diese am Kreis, **Bogenmaß** beschriftet sie mit π.
-- **Energieumwandlung** (Mathe & Physik, Symbol: zwei Behälter mit Pfeil): eine ganze
+- **Wärme und Teilchen** (Mathe & Physik, Symbol: ein Thermometer): zwei Reiter zur Wärmelehre.
+  - **Erwärmen und Abkühlen:** die **Erwärmungskurve** T(t) bei fester Heizleistung – mit den
+    **Haltepunkten** beim Schmelzen und Sieden, an denen die Temperatur stehen bleibt, obwohl
+    weiter geheizt wird. Einstellbar sind **Stoff** (Wasser, Ethanol, Eisen, Aluminium, Kupfer,
+    Blei, Speiseöl), **Masse**, **Heizleistung** und **Starttemperatur**; **Start** lässt die Zeit
+    laufen, eine Marke wandert über die Kurve und zeigt Temperatur, zugeführte Energie und Dauer.
+    Der Knopf **heizen/kühlen** dreht den Vorgang um: Dann kondensiert der Dampf und das Wasser
+    erstarrt – die Haltepunkte sind dieselben.
+  - **Teilchenmodell:** daneben ein Kasten mit rund 56 Teilchen, die zeigen, was gerade passiert –
+    im Gitter schwingend (fest), dicht durcheinander (flüssig) oder frei fliegend (gasförmig). Beim
+    Schmelzen und Sieden wechseln sie **nach und nach** hinüber, so dass man sieht, wofür die
+    Energie während des Haltepunkts gebraucht wird. Die Bewegung wird mit der Temperatur schneller.
+  - **Mischungstemperatur:** zwei Behälter mit Stoff, Masse und Temperatur; **Start** schüttet sie
+    zusammen – die beiden leeren sich, die Mischung füllt sich und zeigt **T_M**. Beispiel: 0,5 kg
+    Eisen mit 300 °C in 2 kg Wasser mit 20 °C ergibt **27,5 °C** – daran sieht man, wie viel mehr
+    Wärme Wasser aufnimmt.
+  - **Gleichungen** in drei Stufen (aus, Formeln, mit Zahlen): im ersten Reiter je Abschnitt
+    **E = c · m · ΔT** bzw. **E = q · m** mit Werten, Energie und Dauer sowie die Summe; im zweiten
+    **abgegebene Wärme = aufgenommene Wärme** und daraus T_M.
+  - **Vorlagen:** Eis schmilzt und Wasser siedet, Ein Liter Wasser kochen, Wasserdampf kühlt ab,
+    Blei schmelzen, Eisen glühen, Heißes Wasser abkühlen, Eisen ins Wasser, Gleiche Massen.
+    Dazu **Schrift A−/A+**, **Bild → Tafel**, **Kopieren** und **Teilen (QR-Code)**.
+- **Energieumwandlung** (Mathe & Physik, Symbol: ein großes **E**): eine ganze
   **Umwandlungskette** aus **Reservoiren** und **Wandlern**, mit Animation, Zeitregler, Verlusten und
   den Gleichungen dazu.
   - **Reservoire:** Jedes steht für eine Energieform; sein **Füllstand** zeigt die Energie. Die für
