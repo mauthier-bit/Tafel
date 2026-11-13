@@ -718,7 +718,7 @@ const standard=()=>({ v:1, tab:'system', fontSize:14, fontBold:false, fontItalic
         sterne:true, namen:true, von:'aussen', ziel:'erde', bezug:'sonne', pip:'aus', pipZiel:'auto',
         lupe:false, tempoAlt2:355, letztes:null, wahl:null, ort:0, kuppelAn:false, kuppel:78,
         kuppelDreht:true, kuppelStd:12, kbSonne:true, kbMond:true, kbPlaneten:false,
-        kbEkliptik:false, kbAequator:false,
+        kbEkliptik:false, kbAequator:false, kbStrahl:false,
         bahnMond:true, bahnMerkur:true, bahnVenus:true, bahnMars:true,
         jahrErden:false, tagbahn:false, merkur:true, venus:true, mars:true, mond:true,
         ortMarke:true, aequator:false, durch:80,
@@ -1458,7 +1458,11 @@ function kuppelOrte(p,r,R){
       ctx.fillStyle=farbe; ctx.beginPath(); ctx.arc(q[0],q[1],4,0,7); ctx.fill();
       ctx.strokeStyle='rgba(7,11,24,.9)'; ctx.lineWidth=1; ctx.stroke();
     }
-    if(betrag(sub(ziel,p))<4*r) linie3([p,ziel],farbe,1,hoch>0?0.5:0.22,[4,4]);
+    /* Der Strahl vom Körper bis zum Ort zeigt, unter welchem Winkel das Licht dort
+       ankommt - bei der Sonne reicht er über das ganze Bild hinaus. Ohne den Schalter
+       bleibt es bei der kurzen Sichtlinie, solange der Körper nah genug steht. */
+    if(S.kbStrahl) linie3([ziel,p],farbe,1.4,hoch>0?0.85:0.3,[7,5]);
+    else if(betrag(sub(ziel,p))<4*r) linie3([p,ziel],farbe,1,hoch>0?0.5:0.22,[4,4]);
   });
 }
 /* ============================================================
@@ -1866,6 +1870,46 @@ function malMassstab(unten){
   ctx.beginPath(); ctx.moveTo(x0,y-5); ctx.lineTo(x0,y); ctx.lineTo(x0+px,y); ctx.lineTo(x0+px,y-5); ctx.stroke();
   text(zahl(wert,wert<10&&einh==='AE'?(wert<1?2:1):0)+' '+einh,x0+px/2,y-12,'#cbd5e1',{al:'center',sz:12});
 }
+/* ---------- Grundfall „Siderische und synodische Umlaufzeit" ----------
+   Vom Start aus zeigen zwei Strahlen weg: einer in die Richtung, in der der Mond beim
+   Start stand - der steht fest zu den Sternen -, einer zur Sonne, der im Lauf des Monats
+   mitwandert. Nach 27,3 Tagen hat der Mond den ersten wieder erreicht, nach 29,5 Tagen
+   den zweiten. Genau das ist der Unterschied der beiden Umlaufzeiten. */
+const SID_MONAT=27.321582, SYN_MONAT=29.530589;      /* mittlere Umlaufzeiten in Tagen */
+const mondLaenge=t=>{ const d=sub(ortW('mond',t),ortW('erde',t));
+  return (Math.atan2(d[1],d[0])*GRD+360)%360; };
+/* Gesamtwinkel seit dem Start, ueber volle Umlaeufe hinweg gezaehlt: Wie viele Umlaeufe
+   es sind, schaetzt die verstrichene Zeit; den Rest gibt die Laenge genau. */
+function umlaufWinkel(t0,t,P,f){
+  const roh=((f(t)-f(t0))%360+360)%360;
+  return roh+360*Math.round(((t-t0)/P*360-roh)/360);
+}
+/* Startzeitpunkt, wenn gerade dieser Grundfall gewaehlt ist - sonst null */
+function umlaufStart(){
+  const w=D.sys.wahl;
+  return (w&&w.art==='grund'&&w.key==='umlauf'&&typeof w.t==='number')?w.t:null;
+}
+function malUmlauf(){
+  const t0=umlaufStart(); if(t0===null||AKT_VON!=='aussen') return;
+  const t=D.sys.t, E=rahmen(ortZ('erde',t));
+  /* Die Strahlen reichen über die Mondbahn hinaus, damit ihre Beschriftung nicht auf
+     dem Mond landet - gerade dann nicht, wenn er die Startrichtung wieder erreicht. */
+  const r=betrag(sub(ortZ('mond',t),ortZ('erde',t)))*2.1;
+  const strahl=(v,farbe,hell,nm,unten)=>{
+    if(!(betrag(v)>0)) return;
+    const bis=add(E,mul(norm(v),r));
+    linie3([E,bis],farbe,1.5,1,[7,5]);
+    BAHNEN.push({pk:[E,bis],farbe,breite:1.5,alpha:1,strich:[7,5]});
+    const q=p2(bis);
+    if(q&&q[0]>-80&&q[0]<W+80&&q[1]>-20&&q[1]<H){
+      text(nm,q[0]+6*K,q[1],hell,{sz:12,fett:true,rand:'rgba(7,11,24,.8)'});
+      if(unten) text(unten,q[0]+6*K,q[1]+13*K,hell,{sz:10.5,rand:'rgba(7,11,24,.8)'});
+    }
+  };
+  strahl(sub(ortZ('mond',t0),ortZ('erde',t0)),'rgba(226,232,240,.8)','#e2e8f0',
+    'Startrichtung','fest zu den Sternen');
+  strahl(sub(ortZ('sonne',t),ortZ('erde',t)),'rgba(253,224,71,.9)','#fde047','Richtung zur Sonne');
+}
 /* ---------- Die Zeile unter dem Bild ---------- */
 function malInfoSystem(){
   const S=D.sys, t=S.t, mp=mondphase(t), fi=finsternisse(t);
@@ -1880,6 +1924,16 @@ function malInfoSystem(){
   if(fi.mofi) los.push(fi.mofi);
   if(transit(t)) los.push('Venustransit');
   if(sep('erde','mars','sonne',t)>176) los.push('Mars in Opposition');
+  /* Beim Grundfall „Umlaufzeit" steht darunter, wie weit der Mond schon gekommen ist. */
+  const tU=umlaufStart();
+  if(tU!==null){
+    const wSid=umlaufWinkel(tU,t,SID_MONAT,mondLaenge);
+    const wSyn=umlaufWinkel(tU,t,SYN_MONAT,tt=>mondLaenge(tt)-sonnenLaenge(tt));
+    zeilen.push({t:'Seit dem Start '+zahl(t-tU,1)+' d   ·   gegenüber den Sternen '+zahl(wSid,0)
+      +'° von 360°   ·   gegenüber der Sonne '+zahl(wSyn,0)+'° von 360°', f:'#9ec5f3', sz:12.5});
+    if(wSid>=360) los.push('siderischer Umlauf voll – wieder dieselbe Richtung (Mittel 27,3 d)');
+    if(wSyn>=360) los.push('synodischer Umlauf voll – wieder Neumond (Mittel 29,5 d)');
+  }
   if(los.length) zeilen.push({t:'▶ '+los.join(' · '),f:'#fbbf24',sz:14,fett:true});
   const zl=zeilenBauen(zeilen);
   let hoch=10; zl.forEach(z=>hoch+=z.h);
@@ -1901,6 +1955,7 @@ function szeneMalen(){
       if(zeigeKoerper('mond')) malTagbogen('mond','rgba(226,232,240,.75)'); } }
   malEpizykel();
   malSehstrahl();
+  malUmlauf();
   if(!amOrt) malJahresErden();
   const liste=['sonne','merkur','venus','erde','mars','mond']
     .filter(id=>id!==AKT_VON&&!(amOrt&&id==='erde')&&zeigeKoerper(id))
@@ -2150,6 +2205,18 @@ const GRUNDFALL={
       S.az=sonnenLaenge(S.t)+127; S.el=66;        /* so läuft der Mond am zweiten Fenster vorbei */ S.bahnen=true; S.ebeneSonne=false; S.ebeneMond=false; S.schatten=false; S.sterne=true;
       S.pip='erde'; S.pipZiel='mond'; S.jahrErden=false; S.tagbahn=false; S.kuppelAn=false;
       S.mond=true; S.merkur=true; S.venus=true; S.mars=true; S.sehstrahl=false; } },
+  umlauf:{name:'Siderische und synodische Umlaufzeit', suche:'neumond', tempo:2,
+    hinweis:'Vom Neumond an: Nach 27,3 Tagen steht der Mond wieder in derselben Richtung wie beim Start – '
+      +'zur Sonne braucht er bis 29,5 Tage, weil die Erde inzwischen weitergewandert ist',
+    /* Von oben auf die Ekliptik, geozentrisch: Die Erde steht still, die Richtung zur
+       Sonne wandert im Lauf des Monats um gut 27° weiter - genau diese Strecke muss der
+       Mond nachholen. Maßstabsgetreu, damit die Winkel stimmen (nahLupe vergrößert nur
+       die beiden Kugeln, nicht ihren Abstand). */
+    stellen(S){ S.von='aussen'; S.bezug='erde'; S.ziel='erde'; S.stufe='echt'; S.dist=0.0135;
+      S.az=sonnenLaenge(S.t)+90; S.el=74; S.bahnen=true; S.ebeneSonne=false; S.ebeneMond=false;
+      S.schatten=false; S.sterne=true; S.pip='aus'; S.jahrErden=false; S.tagbahn=false;
+      S.kuppelAn=false; S.aequator=false; S.mond=true; S.merkur=true; S.venus=true; S.mars=true;
+      S.sehstrahl=false; } },
   sofi:{name:'Sonnenfinsternis', suche:'sofiT', tempo:0.006, hinweis:'Eine totale Sonnenfinsternis: Der Kernschatten des Mondes trifft die Erde – rechts zieht der Mond vor die Sonne',
     stellen(S){ ansichtFuer('sofi'); S.pip='erde'; S.pipZiel='sonne';
       S.sf=12;                                     /* Körper und Schattenkegel doppelt so groß */
@@ -3147,6 +3214,9 @@ const ANZEIGEN=[
       +'<label class="mini"><input type="checkbox" data-kup="kbSonne">Sonne</label>'
       +'<label class="mini"><input type="checkbox" data-kup="kbMond">Mond</label>'
       +'<label class="mini"><input type="checkbox" data-kup="kbPlaneten">Planeten</label></div>'
+      +'<label class="chk"><input type="checkbox" data-kup="kbStrahl"><span>Strahl zum Ort'
+      +'<span class="klein">Von Sonne, Mond und Planeten bis zum Ort – er zeigt, unter welchem Winkel '
+      +'das Licht dort ankommt</span></span></label>'
       +'<label class="chk"><input type="checkbox" data-kup="kuppelDreht"><span>Dreht sich mit der Erde'
       +'<span class="klein">Aus: Die Kuppel bleibt stehen, der Ort wandert auf seiner Bahn darunter hindurch</span>'
       +'</span></label>'
@@ -3325,6 +3395,9 @@ const HILFE={
     'die Tagesdrehung ab: Dann bleibt die Kuppel so stehen, wie der Himmel über dem Ort zu der mit '+
     '<b>Richtung</b> gewählten <b>Uhrzeit</b> steht, und der Ort wandert im Lauf des Tages auf seiner Bahn '+
     'darunter hindurch. Daran sieht man, dass sich nicht der Himmel dreht, sondern die Erde unter ihm.</p>'+
+    '<p><b>Strahl zum Ort</b> zieht von jedem eingeblendeten Körper eine gestrichelte Linie bis zum Ort '+
+    'selbst – bei der Sonne reicht sie weit über das Bild hinaus. An ihrem Winkel zum Horizont sieht man, '+
+    'wie hoch die Sonne dort gerade steht, und warum sie im Winter so flach einfällt.</p>'+
     '<p>Ganz oben im Untermenü stehen zwei Haken für das, was auf die Kuppel gezeichnet wird: die '+
     '<b>Ekliptik mit Tierkreis</b> – die Bahn der Sonne am Himmel und die zwölf Zeichen, ohne dass dafür die '+
     'ganze Sonnenbahnebene im Raum nötig wäre – und der <b>Himmelsäquator</b>. '+
@@ -3363,6 +3436,7 @@ const HILFE={
     'das Himmelsbild trotzdem genauso aus wie am echten Himmel; nur die Uhr dahinter geht langsamer.</p>'+
     '<h4>Ereignisse</h4><p>Die Liste hat zwei Teile. Oben stehen die <b>Grundfälle</b>, bei denen das Datum '+
     'keine Rolle spielt: <b>Mondphasen</b> (ein Monat von Neumond zu Neumond, daneben der Blick von der Erde), '+
+    '<b>Siderische und synodische Umlaufzeit</b>, '+
     '<b>Sonnenfinsternis</b>, <b>Mondfinsternis</b>, <b>Jahreszeiten</b> (ein Jahr um die Sonne, mit den vier '+
     'Erden an den Wendepunkten) und <b>Tageslängen</b> (ein Tag, mit dem Breitenkreis des Ortes; dieselbe '+
     'Bahn liegt auch auf den vier Erden des Jahreslaufs, so dass der lange Sommer- und der kurze Wintertag '+
@@ -3373,6 +3447,15 @@ const HILFE={
     'unter Anzeigen). Jeder '+
     'Grundfall sucht sich einen passenden Zeitpunkt, stellt die Ansichten ein – auch das zweite Fenster – und '+
     'setzt ein Tempo, mit dem ▶ den Ablauf gut zeigt.</p>'+
+    '<p>Der Grundfall <b>Siderische und synodische Umlaufzeit</b> beginnt bei Neumond und schaut von oben '+
+    'auf das Erde-Mond-System, geozentrisch: Die Erde steht still, und zwei gestrichelte Strahlen gehen von '+
+    'ihr aus – die <b>Startrichtung</b>, in der der Mond beim Start stand (sie steht fest zu den Sternen), und '+
+    'die <b>Richtung zur Sonne</b>, die im Lauf des Monats mitwandert. Nach rund <b>27,3 Tagen</b> hat der Mond '+
+    'die Startrichtung wieder erreicht – das ist der <b>siderische</b> Umlauf. Bis zum nächsten Neumond dauert '+
+    'es rund <b>29,5 Tage</b>, denn die Erde ist inzwischen ein Stück um die Sonne weitergelaufen, und der Mond '+
+    'muss diese gut 27° noch nachholen – das ist der <b>synodische</b> Umlauf. Unter dem Bild steht, wie weit '+
+    'er gegenüber den Sternen und gegenüber der Sonne jeweils gekommen ist; die genannten Zeiten sind Mittel'+
+    'werte, der einzelne Monat weicht um bis zu einem halben Tag davon ab.</p>'+
     '<p>Darunter stehen die <b>wirklichen Ereignisse mit Datum</b>: die nächsten Finsternisse, Mondphasen, '+
     'Sonnenwenden, Tag-und-Nacht-Gleichen, die Mars-Opposition und der nächste Venustransit. Ein Tipp stellt die '+
     'Zeit dorthin, <b>↻</b> füllt die Liste ab der eingestellten Zeit neu, und „▸ weiter ab …" blättert vor.</p>'+

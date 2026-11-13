@@ -2770,7 +2770,9 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     (maßstabsgetreu und im Schattenmodell lag er vorher im Erdmittelpunkt, die Kuppel steckte dann in der
     Kugel). **Bahnen auf der Kuppel** haben eigene Schalter – **Sonne**, **Mond**, **Planeten** –,
     unabhängig voneinander und unabhängig von den Bahnkurven im Raum; unter dem Horizont bleibt eine
-    Lücke. **Dreht sich mit der Erde** schaltet die **Tagesdrehung** ab: Dann bleibt die Kuppel so
+    Lücke. **Strahl zum Ort** zieht von jedem eingeblendeten Körper eine gestrichelte Linie bis zum
+    Ort selbst – bei der Sonne reicht sie weit über den Bildrand hinaus. An ihrem Winkel zum Horizont
+    sieht man, wie hoch die Sonne dort gerade steht und warum sie im Winter so flach einfällt. **Dreht sich mit der Erde** schaltet die **Tagesdrehung** ab: Dann bleibt die Kuppel so
     stehen, wie der Himmel über dem Ort zu der mit **Richtung** gewählten **Uhrzeit** steht, und der Ort
     wandert im Lauf des Tages auf seiner Bahn darunter hindurch – so sieht man, dass sich nicht der
     Himmel dreht, sondern die Erde unter ihm. Oben im Untermenü stehen zwei Haken für das, was auf die
@@ -2822,11 +2824,20 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     sind überall gleich lang. Sie ist das Gegenstück zur Knotenlinie der beiden Bahnebenen. Die
     Erdkugel bekommt ab einer gewissen Größe **Gradnetz, Wendekreise, Polarkreise und Achse**, dazu
     die **Tag-Nacht-Grenze**: So sind die **Jahreszeiten** zu zeigen.
-  - **Grundfälle für den Unterricht:** Ganz oben in der Ereignisliste stehen fünf Fälle, bei denen das
+  - **Grundfälle für den Unterricht:** Ganz oben in der Ereignisliste stehen sechs Fälle, bei denen das
     Datum keine Rolle spielt: **Mondphasen** (ein Monat von Neumond zu Neumond, daneben der Blick von
     der Erde auf den Mond; **Erde und Mond werden dabei gemeinsam vergrößert** – mit demselben Faktor,
     so dass Größenverhältnis und Abstand richtig bleiben; bei eingeblendeten Schattenkegeln und beim
-    Hineinzoomen gilt wieder das wahre Maß), **Sonnenfinsternis** (gesucht wird eine **totale**: Das
+    Hineinzoomen gilt wieder das wahre Maß), **Siderische und synodische Umlaufzeit** (ab Neumond,
+    von oben auf das Erde-Mond-System und geozentrisch, damit die Erde stillsteht: Von ihr gehen zwei
+    gestrichelte Strahlen aus, die **Startrichtung** des Mondes – sie steht fest zu den Sternen – und
+    die **Richtung zur Sonne**, die mitwandert. Nach gut **27,3 Tagen** ist der Mond wieder auf der
+    Startrichtung, bis zum nächsten Neumond vergehen rund **29,5 Tage**, weil die Erde inzwischen
+    weitergelaufen ist und der Mond diese gut 27° nachholen muss. Unter dem Bild stehen laufend beide
+    Winkel „von 360°", und ein **▶** meldet jeden vollen Umlauf. Im Modell nachgemessen, drei Monate
+    hintereinander: siderisch 27,30 · 27,31 · 27,32 d, synodisch 29,82 · 29,70 · 29,54 d – der
+    einzelne Monat weicht vom Mittel ab, und jeder synodische Umlauf endet wirklich bei Neumond),
+    **Sonnenfinsternis** (gesucht wird eine **totale**: Das
     Schattenmodell steht dabei auf 12-fach, und im zweiten Fenster steht man genau dort, wo der
     **Kernschatten auftrifft** – die Sonne verschwindet also wirklich ganz hinter dem Mond),
     **Mondfinsternis**, **Jahreszeiten** (ein Jahr um die
@@ -2841,7 +2852,7 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     69 Tage, rund um die Opposition). Jeder
     Grundfall sucht sich einen passenden Zeitpunkt – bei den Tageslängen den **Ortsmittag** –, stellt
     beide Fenster ein und setzt ein **Tempo**, mit dem ▶ den Ablauf gut zeigt (Finsternis rund zehn
-    Minuten je Sekunde, Mondphasen ein Tag, Jahreszeiten acht Tage).
+    Minuten je Sekunde, Mondphasen ein Tag, Umlaufzeiten zwei Tage, Jahreszeiten acht Tage).
   - **Ereignisse mit Datum:** Darunter führt die Liste die nächsten Finsternisse, Mondphasen,
     Sonnenwenden, Tag-und-Nacht-Gleichen, die Mars-Opposition und den nächsten Venustransit **mit Datum
     und Art** auf („21.1.2000 · totale Mondfinsternis"); ein Tipp stellt die Zeit dorthin, **↻** füllt
