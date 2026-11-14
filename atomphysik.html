@@ -405,8 +405,17 @@ function zView(){ const v=D.zv;
     D.zv={sx:s,sy:s,ox:+v.ox||0,oy:+v.oy||0}; }
   return D.zv; }
 function zViewZurueck(){ D.zv={sx:1,sy:1,ox:0,oy:0}; }
+/* Waagerecht reichen 500-fach - mehr Wuerfe als ein paar hundert gibt es nicht.
+   Senkrecht geht es bis 100000-fach: Bei einer Million Kernen ist der Schwanz der
+   Kurve sonst nicht zu sehen, und gerade dort zeigt sich der Zufall am deutlichsten
+   (3 -> 3 -> 1 -> 1 -> 0 statt einer glatten Kurve). */
+const ZSX=500, ZSY=100000;
+/* Weiter als bis zu einem einzelnen Wuerfel im ganzen Bild zu zoomen bringt nichts
+   mehr - dann steht nur noch eine leere Achse da. Bei einer Million Kernen sind
+   das die vollen 100000-fach, bei 1000 Kernen eben 1000-fach. */
+const zsyMax=()=>Math.min(ZSY,Math.max(20,zAnz()));
 function zClamp(){ const v=zView();
-  v.sx=Math.max(1,Math.min(500,v.sx)); v.sy=Math.max(1,Math.min(500,v.sy));
+  v.sx=Math.max(1,Math.min(ZSX,v.sx)); v.sy=Math.max(1,Math.min(zsyMax(),v.sy));
   v.ox=Math.max(1-v.sx,Math.min(0,v.ox)); v.oy=Math.max(1-v.sy,Math.min(0,v.oy)); }
 let ZD=null, ZF=null;          /* je Würfel: Wurf des Zerfalls (0 = lebt) und zuletzt geworfene Augenzahl */
 /* Gezeigt werden immer nur die Würfel, die noch im Spiel sind - zerfallene werden
@@ -498,6 +507,7 @@ const zWurfNr=()=>zReihe().length-1;
 const zLebt=()=>zReihe()[zReihe().length-1];
 const zahlD=(v,n)=>{ let s=(+v).toFixed(n===undefined?1:n); if(s.indexOf('.')>=0) s=s.replace(/0+$/,'').replace(/\.$/,''); return s.replace('.',','); };
 const zahlT=v=>String(Math.round(v)).replace(/\B(?=(\d{3})+(?!\d))/g,'.');   /* 100.000 */
+const zFach=x=>x>=100?zahlT(x):zahlD(x,1);     /* Massstab: ab 100-fach ohne Nachkommastelle */
 function zFeldNeu(){ const n=zAnz(); ZD=new Int32Array(n); ZF=new Uint8Array(n);
   for(let i=0;i<n;i++) ZF[i]=1+Math.floor(Math.random()*6); }
 /* Nach dem Laden eines gespeicherten Standes das Feld aus dem Verlauf nachbauen */
@@ -672,7 +682,7 @@ function zeichneZerfall(){
   const stufe=(sp2,ziel)=>{ const roh2=sp2/Math.max(1,ziel), pot2=Math.pow(10,Math.floor(Math.log10(Math.max(1e-9,roh2))));
     const rr2=roh2/pot2; return (rr2<1.5?1:rr2<3.5?2:rr2<7.5?5:10)*pot2; };
   c.strokeStyle='#e8edf4'; c.lineWidth=1;
-  const dN=stufe(NBis-NVon,5);
+  const dN=Math.max(1,stufe(NBis-NVon,5));      /* Wuerfel sind ganzzahlig - tief gezoomt also Striche bei 1, 2, 3 ... */
   for(let v=Math.ceil(NVon/dN)*dN;v<=NBis;v+=dN){ const y=Y(v); c.beginPath(); c.moveTo(L,y); c.lineTo(R,y); c.stroke();
     txt(zahlT(v),L-8*K,y,12*K,false,'#64748b','right'); }
   c.strokeStyle='#64748b'; c.lineWidth=2;
@@ -710,7 +720,7 @@ function zeichneZerfall(){
   c.strokeStyle='#2563eb'; c.lineWidth=3; c.beginPath();
   r.forEach((v,n)=>{ const x=X(n), y=Y(v); n?c.lineTo(x,y):c.moveTo(x,y); }); c.stroke();
   c.fillStyle='#2563eb';
-  if(r.length<=60||v0.sx>1) r.forEach((v,n)=>{ c.beginPath(); c.arc(X(n),Y(v),3.5*K,0,7); c.fill(); });
+  if(r.length<=60||v0.sx>1||v0.sy>1) r.forEach((v,n)=>{ c.beginPath(); c.arc(X(n),Y(v),3.5*K,0,7); c.fill(); });
   if(D.zpunkt){                        /* Punkt zum Ablesen auf der Messkurve */
     const n=zPktN(), v=r[n], x=X(n), y=Y(v);
     c.strokeStyle='#7c3aed'; c.lineWidth=1.6; c.setLineDash([5,4]);
@@ -724,10 +734,16 @@ function zeichneZerfall(){
     const n=zPktN(), v=r[n], dN=n>0?r[n-1]-r[n]:0;
     txt('Wurf '+n+(nkD?'  ·  t = '+hlText(n*dtD):'')+'  ·  N = '+zahlT(v)
         +(n>0?'  ·  ΔN = '+zahlT(dN):''),(L+R)/2,T-14*K,13*K,true,'#7c3aed'); }
-  else if(v0.sx>1.02||v0.sy>1.02) txt('Ausschnitt '
-      +(Math.abs(v0.sx-v0.sy)<0.05?zahlD(v0.sx,1)+'-fach'
-        :'↔ '+zahlD(v0.sx,1)+'-fach · ↕ '+zahlD(v0.sy,1)+'-fach')
-      +' · Doppeltipp stellt ihn zurück',(L+R)/2,T-14*K,12*K,false,'#2563eb');
+  else if(v0.sx>1.02||v0.sy>1.02){
+    /* Nur nennen, was wirklich vergroessert ist - sonst wird die Zeile zu lang. */
+    const g=Math.abs(v0.sx-v0.sy)<0.05;
+    const wie=g?zFach(v0.sx)+'-fach'
+      :v0.sx<1.02?'↕ '+zFach(v0.sy)+'-fach'
+      :v0.sy<1.02?'↔ '+zFach(v0.sx)+'-fach'
+      :'↔ '+zFach(v0.sx)+'-fach · ↕ '+zFach(v0.sy)+'-fach';
+    /* Steht in der Zeile viel, rueckt sie nach rechts - links steht sonst „Wuerfel“ im Weg. */
+    const lang=wie.length>16;
+    txt('Ausschnitt '+wie+' · Doppeltipp stellt ihn zurück',lang?R:(L+R)/2,T-14*K,12*K,false,'#2563eb',lang?'right':undefined); }
   else txt('mit zwei Fingern zoomen – senkrecht, waagerecht oder schräg',
     (L+R)/2,T-14*K,12*K,false,'#94a3b8');
   const letzteWeg=r.length>1?r[r.length-2]-r[r.length-1]:0;
@@ -831,7 +847,7 @@ function zTabZeigen(n){ if(!D.ztab) return;
       const m={x:(a[0].x+a[1].x)/2,y:(a[0].y+a[1].y)/2};
       let fx=1, fy=1;
       if(g.rich==='x') fx=dx/g.dx0; else if(g.rich==='y') fy=dy/g.dy0; else fx=fy=d/g.d0;
-      const sx=Math.max(1,Math.min(500,g.sx0*fx)), sy=Math.max(1,Math.min(500,g.sy0*fy));
+      const sx=Math.max(1,Math.min(ZSX,g.sx0*fx)), sy=Math.max(1,Math.min(zsyMax(),g.sy0*fy));
       const u0=(g.m0.x-ZPLOT.L)/BW, w0=(ZPLOT.B-g.m0.y)/BH;      /* Punkt unter den Fingern */
       const du=(u0-g.ox0)/g.sx0, dw=(w0-g.oy0)/g.sy0;
       const u1=(m.x-ZPLOT.L)/BW, w1=(ZPLOT.B-m.y)/BH;
@@ -852,8 +868,8 @@ function zTabZeigen(n){ if(!D.ztab) return;
     const BW=ZPLOT.R-ZPLOT.L, BH=ZPLOT.B-ZPLOT.T, v=zView();
     /* Mit der Maus: Rad zoomt beides, mit Umschalt nur waagerecht, mit Alt nur senkrecht. */
     const f=Math.exp(-e.deltaY*0.0015);
-    const sx=e.altKey?v.sx:Math.max(1,Math.min(500,v.sx*f));
-    const sy=e.shiftKey?v.sy:Math.max(1,Math.min(500,v.sy*f));
+    const sx=e.altKey?v.sx:Math.max(1,Math.min(ZSX,v.sx*f));
+    const sy=e.shiftKey?v.sy:Math.max(1,Math.min(zsyMax(),v.sy*f));
     const u=(p.x-ZPLOT.L)/BW, w=(ZPLOT.B-p.y)/BH;
     const du=(u-v.ox)/v.sx, dw=(w-v.oy)/v.sy;
     v.sx=sx; v.sy=sy; v.ox=u-du*sx; v.oy=w-dw*sy; zClamp(); zeichneZerfall(); },{passive:false});

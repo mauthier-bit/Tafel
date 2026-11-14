@@ -3172,9 +3172,17 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
       Druck räumt sie ab und ordnet die übrigen neu: *„Sechser weggenommen · 99 Würfel übrig"*.
       **▶ laufen** macht die beiden Schritte abwechselnd im Takt. Ohne den Knopf nimmt ein Wurf die
       Treffer wie bisher gleich mit weg.
-    - **Ausschnitt:** Mit **zwei Fingern** lässt sich ins Diagramm hineinzoomen (bis 500-fach), ein
+    - **Ausschnitt:** Mit **zwei Fingern** lässt sich ins Diagramm hineinzoomen, ein
       Finger verschiebt den Ausschnitt, ein **Doppeltipp** stellt ihn zurück; am Rechner zoomt das
       Mausrad (mit Umschalt nur waagerecht, mit Alt nur senkrecht).
+      Waagerecht geht es **bis 500-fach**, senkrecht **bis 100 000-fach** – damit sind bei einer
+      Million Kernen auch die **letzten Zerfälle** zu sehen: Die Hochachse reicht dann von 0 bis 10
+      Würfeln, und man liest ab, wie der Zufall am Ende arbeitet (gemessen: … 6 · 6 · 3 · 3 · 3 · 3 · 2
+      – sechs Würfe lang passiert nichts, dann fallen gleich mehrere). Weiter als bis zu **einem
+      einzelnen Würfel im ganzen Bild** lässt sich nicht zoomen, sonst stünde nur noch eine leere
+      Achse da: Die Grenze ist also die Zahl der Kerne, höchstens 100 000-fach. Senkrecht stark
+      vergrößert zeigt die Kurve **jeden einzelnen Wurf als Punkt**, und die Striche der Hochachse
+      stehen dort nur noch auf **ganzen Würfeln**.
       **Die Richtung der Fingergeste entscheidet, welche Achse gedehnt wird:** Liegen die Finger
       nebeneinander (bis 25°), wird nur **waagerecht** gezoomt, übereinander (ab 65°) nur
       **senkrecht**, dazwischen **beides**. Gemessen bei einer Geste auf das Doppelte: waagerecht
