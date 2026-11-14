@@ -2721,7 +2721,11 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   Werkzeugleiste und spart die eigene Reiterzeile.
   - **Erwärmen und Abkühlen:** die **Erwärmungskurve** T(t) bei fester Heizleistung – mit den
     **Haltepunkten** beim Schmelzen und Sieden, an denen die Temperatur stehen bleibt, obwohl
-    weiter geheizt wird. Einstellbar sind **Stoff** (Wasser, **Luft**, Ethanol, Eisen, Aluminium,
+    weiter geheizt wird. Die Kurve **steht nicht von Anfang an da**, sondern **entsteht als Spur
+    des Punktes**: Gezeichnet wird nur das Stück, das schon durchfahren ist – so lässt sich erst
+    fragen, wie es weitergeht. Beim Kühlen wächst die Spur von rechts nach links; „Anfang" (↺),
+    ein anderer Stoff, eine andere Masse oder Starttemperatur und jede Vorlage fangen die Spur
+    wieder neu an. Einstellbar sind **Stoff** (Wasser, **Luft**, Ethanol, Eisen, Aluminium,
     **Kohlenstoffdioxid**, **Helium**, **Schwefel**, **Brom**, **Quecksilber**, Kupfer, Blei,
     Speiseöl), **Masse**, **Starttemperatur** und **Leistung** (in dieser Reihenfolge,
     weil man erst sagt, wo man anfängt, und dann, wie stark geheizt wird). Die Kurve beginnt in dem

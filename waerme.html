@@ -612,8 +612,20 @@ function malEBalken(L,R,y,h,Kv,st,X){
 }
 
 /* ---------- Reiter 1: Erwärmungskurve ---------- */
+/* ---------- Spur ----------
+   Die Kurve steht nicht von Anfang an da: Gezeichnet wird nur das Stück, das
+   der Punkt schon durchfahren hat. spA/spB merken sich, wie weit er nach links
+   und nach rechts gekommen ist; beim Zurückstellen und bei jeder neuen Aufgabe
+   fängt die Spur wieder bei null an. */
+let spA=0, spB=0;
+function spurNeu(){ spA=spB=Math.max(0,+D.E||0); }
+function spurAuf(){ const e=Math.max(0,+D.E||0);
+  if(e<spA) spA=e;
+  if(e>spB) spB=e; }
+
 function zeichneKurve(){
   const Kv=kurve(), st=standKurve(Kv,D.E), s=Kv.s;
+  spurAuf();
   const glH=D.gl?Math.round((Kv.ab.length+2)*17*K+12):0;
   const tw=D.teilchen?Math.min(360*K,W*0.40):0;
   /* Der Energiebalken liegt unter der Achse und braucht dort eine Zeile.
@@ -643,12 +655,20 @@ function zeichneKurve(){
           +(rf>1?' · Zeitraffer '+zahl(rf,0)+' : 1':'')+')'
         :' (Leistung 0 W)'),
     (L+R)/2,B+30*K+(D.ebalken?34*K:0),{sz:13*K,fett:true,farbe:'#475569'});
-  /* Kurve: waagrechte Stücke sind die Übergänge */
+  /* Kurve als Spur: nur der Teil, den der Punkt schon durchfahren hat.
+     Waagrechte Stücke sind die Übergänge. */
   Kv.ab.forEach(x=>{ const halt=istHalt(x.art);
-    const x1=X(x.E1), x2=X(x.E2);
+    const a=Math.max(x.E1,spA), b=Math.min(x.E2,spB);
+    if(b<a-1e-9) return;                                   /* noch gar nicht erreicht */
+    const sp=x.E2-x.E1;
+    const TA=sp>1e-9?(x.T1+(x.T2-x.T1)*(a-x.E1)/sp):x.T1;
+    const TB=sp>1e-9?(x.T1+(x.T2-x.T1)*(b-x.E1)/sp):x.T2;
+    const x1=X(a), x2=X(b);
     ctx.strokeStyle=halt?'#ea580c':s.farbe; ctx.lineWidth=halt?4.5:3.2;
-    ctx.beginPath(); ctx.moveTo(x1,Y(x.T1)); ctx.lineTo(x2,Y(x.T2)); ctx.stroke();
-    if(halt&&x.E>0){ const xm=(x1+x2)/2;
+    ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(x1,Y(TA)); ctx.lineTo(x2,Y(TB)); ctx.stroke();
+    ctx.lineCap='butt';
+    if(halt&&x.E>0&&b>a+1e-9){ const xm=(x1+x2)/2;        /* Beschriftung über dem schon gezeichneten Stück */
       txtPass(x.art==='sublim'?(Pw()<0?'wird fest':'sublimiert')
              :x.art==='schmelzen'?(Pw()<0?'erstarrt':'schmilzt'):(Pw()<0?'kondensiert':'siedet'),
         xm,Y(x.T1)-14*K,Math.max(50,x2-x1+40*K),{sz:12.5*K,fett:true,farbe:'#ea580c'}); } });
@@ -801,11 +821,11 @@ function renderBar2(){ const b=$('bar2'); b.innerHTML='';
 
   if(D.tab==='kurve'){
     el('span','lbl','Stoff'); stoffWahl(D.stoff,k=>{ D.stoff=k; D.T0=grenz(D.T0,-270,T0Max(stoff(k)));
-      D.E=0; D.sy=0; D.Wst=0; lauf=false; playBtn(); renderBar2(); zeichne(); sync(); });
-    stepper('Masse',zahl(D.m,2)+' kg',d=>{ D.m=grenz(D.m+d*(D.m<0.2?0.05:0.25),0.01,100); D.E=0; renderBar2(); zeichne(); sync(); },
-      z=>{ D.m=grenz(z,0.01,100); D.E=0; renderBar2(); zeichne(); sync(); });
-    stepper('Starttemperatur',zahl(D.T0,0)+' °C',d=>{ D.T0=grenz(D.T0+d*5,-270,T0Max(stoff(D.stoff))); D.E=0; D.Wst=0; renderBar2(); zeichne(); sync(); },
-      z=>{ D.T0=grenz(z,-270,T0Max(stoff(D.stoff))); D.E=0; D.Wst=0; renderBar2(); zeichne(); sync(); });
+      D.E=0; D.sy=0; D.Wst=0; lauf=false; spurNeu(); playBtn(); renderBar2(); zeichne(); sync(); });
+    stepper('Masse',zahl(D.m,2)+' kg',d=>{ D.m=grenz(D.m+d*(D.m<0.2?0.05:0.25),0.01,100); D.E=0; spurNeu(); renderBar2(); zeichne(); sync(); },
+      z=>{ D.m=grenz(z,0.01,100); D.E=0; spurNeu(); renderBar2(); zeichne(); sync(); });
+    stepper('Starttemperatur',zahl(D.T0,0)+' °C',d=>{ D.T0=grenz(D.T0+d*5,-270,T0Max(stoff(D.stoff))); D.E=0; D.Wst=0; spurNeu(); renderBar2(); zeichne(); sync(); },
+      z=>{ D.T0=grenz(z,-270,T0Max(stoff(D.stoff))); D.E=0; D.Wst=0; spurNeu(); renderBar2(); zeichne(); sync(); });
     /* Der Regler stellt die Leistung ein und startet damit zugleich den Versuch:
        nach rechts heizen (Flamme), nach links kühlen (Schneeflocken), in der Mitte
        rastet er bei 0 W ein - dann steht alles still. */
@@ -868,7 +888,7 @@ function playBtn(){ $('bPlay').classList.toggle('on',lauf);
 $('bPlay').onclick=()=>{ if(D.mt>=1){ D.mt=0; zeichne(); sync(); return; }
   lauf=!lauf; letztT=performance.now(); playBtn(); };
 $('bZur').onclick=()=>{ lauf=false; if(D.tab==='mischen') D.mt=0;
-  else { D.sy=0; D.Wst=0; D.E=Pw()<0?kurve().EGes:0; letztT=performance.now(); }
+  else { D.sy=0; D.Wst=0; D.E=Pw()<0?kurve().EGes:0; spurNeu(); letztT=performance.now(); }
   playBtn(); zeichne(); sync(); };
 $('bTeil').onclick=()=>{ D.teilchen=!D.teilchen; $('bTeil').classList.toggle('on',D.teilchen); zeichne(); sync(); };
 $('bEn').onclick=()=>{ D.ebalken=!D.ebalken; schalter(); zeichne(); sync();
@@ -959,7 +979,7 @@ $('bTpl').onclick=()=>{ const b=$('bar2'); b.innerHTML='';
   const x=document.createElement('button'); x.className='btn'; x.textContent='✕'; x.onclick=renderBar2; b.appendChild(x); };
 function ladeVorlage(k){ const f=VORLAGEN[k]; if(!f) return;
   D.sy=0; D.Wst=0; Object.assign(D,f()); if(Pw()<0&&D.tab==='kurve') D.E=kurve().EGes;
-  lauf=false; teilchenNeu(); playBtn(); schalter(); setzeTab(D.tab); toast(k); }
+  spurNeu(); lauf=false; teilchenNeu(); playBtn(); schalter(); setzeTab(D.tab); toast(k); }
 
 /* ---------- Ablauf (Animation) ---------- */
 function loop(ts){ const dt=Math.min(0.08,(ts-letztT)/1000||0); letztT=ts;
@@ -995,6 +1015,8 @@ function uebernimm(d){ if(!d) return;
   D.sy=grenz(+D.sy||0,0,0.55); D.Wst=+D.Wst||0;
   if(d.E===undefined&&d.t!==undefined) D.E=Math.abs(+d.t||0)*Math.abs(D.P);
   D.E=Math.max(0,Math.min(kurve().EGes,+D.E||0)); D.mt=grenz(+D.mt||0,0,1);
+  /* Übernommener Stand: die Spur reicht von dort, wo der Vorgang begonnen hat, bis zum Punkt. */
+  if(Pw()<0){ spA=D.E; spB=kurve().EGes; } else { spA=0; spB=D.E; }
   if(D.tab!=='mischen') D.tab='kurve';
   document.documentElement.style.setProperty('--fs',Math.min(18,D.fontSize||14)+'px');
   lauf=false; teilchenNeu(); playBtn(); glBtn(); schalter();
