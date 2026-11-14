@@ -3462,7 +3462,7 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   Untertitel und der Schalter heißt kurz **„Experiment"**.
 - **Periodensystem** (im Reiter „Periodensystem" der Atomphysik): alle **118 Elemente** mit Symbol, Name, Ordnungszahl und Atommasse.
   Seine eigenen Bedienelemente stehen in **einer einzigen Zeile** (Suchfeld, **Protonen − +**,
-  **Neutronen − +**, Nebengruppen, La/Ac, Einfärbung, Atommasse, Name) – die Knöpfe für Schrift, Bild
+  **Neutronen − +**, Nebengruppen, La/Ac, Einfärbung, Name) – die Knöpfe für Schrift, Bild
   und Drucken sitzen in der Atomphysik eine Zeile höher, allein geöffnet rechts in derselben Zeile.
   **↺ Ansicht** steht in der Atomphysik ebenfalls oben in der Reiterzeile (nur beim Periodensystem
   sichtbar), damit in der ersten Zeile Platz für die Schrittknöpfe bleibt; allein geöffnet bleibt er
@@ -3484,7 +3484,10 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   Elemente ohne Wert (z. B. Edelgase bei der Elektronegativität) bleiben grau. So werden die
   **Trends im Periodensystem** sichtbar: Die Elektronegativität nimmt nach rechts oben zu, die
   Ionisierungsenergie ebenso, die hohen Schmelzpunkte liegen in der Mitte der Nebengruppen.
-  Elektronegativität und Ionisierungsenergie stehen auch in der **Infokarte** jedes Elements. Dazu **Atommasse** und **Name** ein-/ausblendbar,
+  Elektronegativität und Ionisierungsenergie stehen auch in der **Infokarte** jedes Elements. Der **Name** ist
+  ein-/ausblendbar; die **Atommasse** steht ohne eigenen Schalter in der Zelle, sobald diese groß genug ist
+  (ab etwa 46 Bildpunkten) – darunter wäre die Schrift nicht mehr zu lesen, und der frühere Haken dafür
+  blieb in einem kleinen Werkzeugfenster wirkungslos. Dazu
   A−/A+, 🖼 Tafel, 📋 Kopieren und **🖨 Drucken** (Querformat). Läuft vollständig offline.
 - **Nuklidkarte** (im Reiter „Nuklidkarte" der Atomphysik): alle **3082 Nuklide bis Plutonium (Z ≤ 94)** – N waagerecht,
   Z senkrecht, eingefärbt nach Zerfallsart: **stabil** (schwarz), **α** (gelb), **β⁻** (blau),
