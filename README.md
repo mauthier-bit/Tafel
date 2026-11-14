@@ -2836,8 +2836,9 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   - **Kein Stoß:** Führen die eingestellten Werte zu keinem Zusammenstoß, steht das über dem Bild –
     mit dem Grund: Sie bewegen sich nicht aufeinander zu, sie fliegen aneinander vorbei oder sie
     treffen sich erst weit außerhalb.
-  - **Ablauf:** „Start" lässt den Stoß laufen, **Tempo** (1:1 bis 1:8) macht Zeitlupe daraus – beim
-    Ablauf wie beim Abspielen. Der Ablauf **endet, sobald beide** Körper die Bahn bzw. die Fläche
+  - **Ablauf:** „Start" lässt den Stoß laufen; „Start" und „Anfang" stehen links fest und
+    scrollen nie weg. **Tempo** (1:1 bis 1:8) steht unten neben der Wiedergabe und macht Zeitlupe
+    daraus – beim Ablauf wie beim Abspielen. Der Ablauf **endet, sobald beide** Körper die Bahn bzw. die Fläche
     verlassen haben; einer allein reicht nicht.
   - **Stoßrechnung:** Der Zeitpunkt der Berührung wird **ausgerechnet** und nicht gesucht – deshalb
     liegt im Mitschnitt genau eine Probe im Augenblick des Stoßes, egal wie schnell die Körper sind.
@@ -3259,12 +3260,14 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     Zahlen deshalb nicht gleichabständig und laufen von links 3,26 eV nach rechts 1,59 eV.
     - **Gemessene Linien** (farbig im Band): die starken Linien des **neutralen** Atoms aus dem
       **NIST Handbook of Basic Atomic Spectroscopic Data** (Strong Lines, Luftwellenlängen) –
-      übernommen, nicht gerechnet. Hinterlegt sind **24 Elemente**: **H** (656,3 · 486,1 · 434,0 ·
-      410,2 nm), **He**, **Li**, **Ne**, **Na** (589,0 / 589,6 nm), **Mg** (die b-Linien 518,4 ·
-      517,3 · 516,7 nm), **Al**, **Ar**, **K**, **Ca**, **Fe**, **Cu** (das Grün 521,8 · 515,3 ·
-      510,6 nm), **Zn**, **Kr**, **Rb**, **Sr** (460,7 · 496,2 · 548,1 · 640,8 · 650,4 · 707,0 nm),
-      **Ag**, **Cd**, **Xe**, **Cs**, **Ba** (553,5 nm), **Hg** (579,1 · 577,0 · 546,1 · 435,8 ·
-      404,7 nm), **Tl** und **Pb**. Bei allen anderen bleibt das Band leer und sagt das auch.
+      übernommen, nicht gerechnet. Hinterlegt sind **38 Elemente**: **H** (656,3 · 486,1 · 434,0 ·
+      410,2 nm), **He**, **Li**, **C**, **N**, **O**, **Ne**, **Na** (589,0 / 589,6 nm), **Mg** (die
+      b-Linien 518,4 · 517,3 · 516,7 nm), **Al**, **Si**, **S**, **Cl**, **Ar**, **K**, **Ca**,
+      **Ti**, **Cr**, **Mn**, **Fe**, **Co**, **Ni**, **Cu** (das Grün 521,8 · 515,3 · 510,6 nm),
+      **Zn**, **Kr**, **Rb**, **Sr** (460,7 · 496,2 · 548,1 · 640,8 · 650,4 · 707,0 nm), **Ag**,
+      **Cd**, **Sn**, **I**, **Xe**, **Cs**, **Ba** (553,5 nm), **Au**, **Hg** (579,1 · 577,0 ·
+      546,1 · 435,8 · 404,7 nm), **Tl** und **Pb**. Bei allen anderen bleibt das Band leer und sagt
+      das auch.
       Gezeigt werden nur **Linien des neutralen Atoms** – passend zur Hülle, die daneben steht. In
       einer Flamme oder Gasentladung leuchten zusätzlich **Ionen** (etwa Sr II 407,8 nm) und
       **Moleküle** mit, deshalb ist die Flammenfarbe nicht einfach die Summe dieser Linien.
@@ -3287,14 +3290,22 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
       (Quecksilber Kα 63,7 statt 70,8 keV), und **Kβ** überschätzt das Modell deutlich – es rechnet
       mit derselben Abschirmung wie für Kα.
     - **Woher das sichtbare Licht kommt:** Die Röntgenlinien sind Übergänge *innen*, während die
-      besetzten Stufen viel höher reichen. Für die Elemente mit gemessenen Linien steht deshalb
-      zusätzlich der zugeordnete **Übergang der äußeren Elektronen** im Bild – die Wellenlänge ist
-      gemessen, die Zuordnung steht so in den Lehrbüchern: **Na 3p→3s** (589,0 nm, die gelbe
-      D-Linie), **Li 2p→2s** (670,8), **Mg 4s→3p** (518,4), **K 4p→4s** (766,5), **Ca 4p→4s**
-      (422,7), **He 3d→2p** (587,6), **Ne 3p→3s** (640,2), **Zn 5s→4p** (481,1), **Sr 5p→5s**
-      (460,7), **Cd 5d→5p** (643,8), **Ba 6p→6s** (553,5), **Hg 7s→6p** (546,1). Diese Pfeile sieht
-      man in der Sicht mit **Unterschalen**; ohne sie fallen Anfang und Ende in dieselbe
-      Hauptschale.
+      besetzten Stufen viel höher reichen. Deshalb steht zu **jeder** gemessenen Linie der
+      zugeordnete **Übergang der äußeren Elektronen** im Bild. Die Wellenlänge ist gemessen, die
+      Zuordnung stammt aus der **NIST Atomic Spectra Database** (Linienabfrage mit den Spalten
+      `conf_i` und `conf_k`): Angegeben ist die Unterschale, aus der das Elektron kommt, und die,
+      in die es fällt – der Teil der Konfiguration also, der sich ändert. Beispiele: **Na 3p→3s**
+      (die gelbe D-Linie), **He 3d→2p** und **3p→2s**, **Ne 3p→3s** (alle sieben Linien),
+      **Ca 4p→4s · 5s→4p · 4d→4p**, **Cu 4d→4p · 5s→4p · 5d→4p**, **Co 4p→3d · 4p→4s**,
+      **Ba 6p→6s** (alle sechs), **Hg 7s→6p · 6d→6p**.
+      **Mehrere Linien gehören oft zum selben Paar von Unterschalen** – dann gibt es einen Pfeil,
+      und darunter stehen seine Wellenlängen nebeneinander. Dass sie trotzdem verschieden sind,
+      liegt an den **Termen** (Feinstruktur, Wechselwirkung der Elektronen), die das Schalenbild
+      nicht zeigt. Zwei Fälle bleiben **ohne Pfeil** und werden darunter gemeldet: Das obere Niveau
+      liegt über den gezeichneten Stufen (etwa 7d oder 8p), oder es wechseln **zwei Elektronen
+      gleichzeitig** den Platz (zum Beispiel Cu 510,6 nm: 3d⁹4s² ↔ 3d¹⁰4p). Die Leiter wird dafür
+      so weit nach oben gezeigt, wie die Pfeile es brauchen. Diese Pfeile sieht man in der Sicht mit
+      **Unterschalen**; ohne sie fallen Anfang und Ende in dieselbe Hauptschale.
   - **Kern** zeigt den **Potentialtopf mit zwei Hälften**: links die **Protonen**, rechts die
     **Neutronen**, gefüllt nach den Schalen der magischen Zahlen **2, 8, 20, 28, 50, 82, 126**; eine
     abgeschlossene Schale wird grün hervorgehoben. Die **linke Hälfte ist flacher** (gleiche Ladungen
