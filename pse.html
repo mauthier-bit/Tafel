@@ -17,6 +17,8 @@
   #bar input[type=search]{cursor:text;width:120px;}
   #bar button.on{background:#2563eb;border-color:#2563eb;color:#fff;}
   #bar label{display:inline-flex;gap:4px;align-items:center;font-weight:600;white-space:nowrap;}
+  #bar .grp{display:inline-flex;gap:3px;align-items:center;font-weight:600;white-space:nowrap;color:#475569;}
+  #bar .grp button{padding:4px 8px;min-width:30px;text-align:center;}
   #shotBtns{display:inline-flex;gap:5px;flex:0 0 auto;}
   #area{flex:1;position:relative;min-height:0;overflow:hidden;}
   #area canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;}
@@ -210,6 +212,8 @@
     <div id="row1">
       <div id="scroll1">
         <input type="search" id="q" placeholder="🔍 Element…" autocomplete="off" autocorrect="off" spellcheck="false">
+        <span class="grp" title="Protonenzahl ändern – die Auswahl springt zum Nachbarelement">Protonen<button type="button" id="pM">−</button><button type="button" id="pP">+</button></span>
+        <span class="grp" title="Neutronenzahl ändern – die Infokarte zeigt das Isotop">Neutronen<button type="button" id="nM">−</button><button type="button" id="nP">+</button></span>
         <button type="button" id="bNeben" class="on" title="Nebengruppen (3–12) ein- und ausklappen">Nebengruppen</button>
         <button type="button" id="bLan" class="on" title="Lanthanoide und Actinoide ein- und ausklappen">La/Ac</button>
         <select id="color" title="Einfärbung">
@@ -236,6 +240,7 @@
 <script src="shot.js"></script>
 <script src="modus.js"></script>
 <script src="pse-data.js"></script>
+<script src="nuklid-data.js"></script>
 <script>
 "use strict";
 const $=id=>document.getElementById(id), cv=$('cv'), ctx=cv.getContext('2d');
@@ -244,7 +249,35 @@ const CATS={ alkali:['Alkalimetall','#fca5a5'], erdalkali:['Erdalkalimetall','#f
   metall:['Metall','#bbf7d0'], halbmetall:['Halbmetall','#a7f3d0'], nichtmetall:['Nichtmetall','#bfdbfe'],
   edelgas:['Edelgas','#ddd6fe'], lanthanoid:['Lanthanoid','#f5d0fe'], actinoid:['Actinoid','#fbcfe8'], unbekannt:['unbekannt','#e5e7eb'] };
 const NONMETAL=new Set(['nichtmetall','edelgas']);
-let D={ v:1, neben:true, lan:true, color:'cat', mass:true, name:true, sel:0, fontSize:13, fontBold:false, fontItalic:false };
+let D={ v:1, neben:true, lan:true, color:'cat', mass:true, name:true, sel:0, n:null, fontSize:13, fontBold:false, fontItalic:false };
+
+/* ---------- Isotope zum gewählten Element ----------
+   Die Nukliddaten sind dieselben wie in der Nuklidkarte: [Z, N, Halbwertszeit in s,
+   Zerfallsart, Anteil, zweite Art, Anteil, natürliche Häufigkeit %]. Beim Auswählen
+   eines Elements steht das häufigste Isotop da; gibt es keines (Technetium, alles
+   jenseits von Uran), das langlebigste. */
+const NUK=window.NUK_DATA||[];
+const NMAP=new Map(); NUK.forEach(e=>NMAP.set(e[0]*1000+e[1],e));
+const nuk=(z,n)=>NMAP.get(z*1000+n)||null;
+const lebensdauer=e=>e[2]===0?Infinity:(e[2]===-1||e[2]==null?-1:e[2]);
+function isoStart(z){
+  let best=null, bestH=-1, bestL=-2;
+  NUK.forEach(e=>{ if(e[0]!==z) return;
+    const h=+e[7]||0, l=lebensdauer(e);
+    if(h>bestH||(h===bestH&&h===0&&l>bestL)){ best=e; bestH=h; bestL=l; } });
+  return best?best[1]:null; }
+/* Halbwertszeit lesbar schreiben - dieselbe Staffel wie in der Nuklidkarte. */
+const JA=3.15576e7;
+function hlText(sek){
+  if(sek===0) return 'stabil';
+  if(sek===-1||sek===undefined||sek===null) return 'unbekannt';
+  const U=[[1e-21,'zs'],[1e-18,'as'],[1e-15,'fs'],[1e-12,'ps'],[1e-9,'ns'],[1e-6,'\u00b5s'],[1e-3,'ms'],[1,'s'],
+           [60,'min'],[3600,'h'],[86400,'d'],[JA,'a'],[1e3*JA,'ka'],[1e6*JA,'Ma'],[1e9*JA,'Ga']];
+  let u=U[0]; for(const x of U){ if(sek>=x[0]) u=x; }
+  const v=sek/u[0];
+  const t=v>=100?Math.round(v):v>=10?Math.round(v*10)/10:Math.round(v*100)/100;
+  return String(t).replace('.',',')+' '+u[1]; }
+function waehle(z){ D.sel=z||0; D.n=z?isoStart(z):null; }
 let cells=[], hitBoxes=[];
 
 /* Farbskalen: je Größe ein eigener Farbton, von hell (klein) nach kräftig (groß).
@@ -380,6 +413,12 @@ function drawCard(e,w,h,cell){
     ['Elektronegativität',(()=>{const v=(window.PSE_EN||[])[e.z-1]; return (v===null||v===undefined)?'–':String(v).replace('.',',');})()],
     ['Ionisierungsenergie',(()=>{const v=(window.PSE_ION||[])[e.z-1]; return (v===null||v===undefined)?'–':(String(v).replace('.',',')+' eV');})()],
     ['Konfiguration',e.conf||'–']];
+  /* Das eingestellte Isotop: Massenzahl A = Z + N, dazu was aus dem Kern wird. */
+  if(D.n!==null&&D.n!==undefined){
+    const k=nuk(e.z,D.n);
+    lines.push(['Nuklid',e.sym+'-'+(e.z+D.n)],['Neutronen',String(D.n)]);
+    if(k){ const h=+k[7]||0;
+      lines.push(['Halbwertszeit',hlText(k[2])+(h?' · '+String(Math.round(h*100)/100).replace('.',',')+' % natürlich':'')]); } }
   ctx.font=fontStr(fs);
   const bw=Math.min(w*0.44, Math.max(...lines.map(l=>ctx.measureText(l[0]+': '+l[1]).width))+fs*1.6);
   const bh=(lines.length+1.8)*fs*1.35;
@@ -397,16 +436,33 @@ function drawCard(e,w,h,cell){
 function refresh(){ draw(); sync(); }
 cv.addEventListener('pointerdown',e=>{ const r=cv.getBoundingClientRect(), x=e.clientX-r.left, y=e.clientY-r.top;
   const hit=hitBoxes.find(b=>x>=b.x&&x<=b.x+b.w&&y>=b.y&&y<=b.y+b.h);
-  D.sel=(hit&&hit.z!==D.sel)?hit.z:0; refresh(); });
+  waehle((hit&&hit.z!==D.sel)?hit.z:0); refresh(); });
 $('bNeben').onclick=()=>{ D.neben=!D.neben; $('bNeben').classList.toggle('on',D.neben); refresh(); };
 $('bLan').onclick=()=>{ D.lan=!D.lan; $('bLan').classList.toggle('on',D.lan); refresh(); };
 $('color').onchange=()=>{ D.color=$('color').value; refresh(); };
 $('cMass').onchange=()=>{ D.mass=$('cMass').checked; refresh(); };
 $('cName').onchange=()=>{ D.name=$('cName').checked; refresh(); };
-$('bReset').onclick=()=>{ D.sel=0; $('q').value=''; setMsg(''); refresh(); };
-$('q').addEventListener('input',()=>{ const t=$('q').value.trim().toLowerCase(); if(!t){ D.sel=0; setMsg(''); refresh(); return; }
+function ansichtZurueck(){ waehle(0); $('q').value=''; setMsg(''); refresh(); }
+$('bReset').onclick=ansichtZurueck;
+/* Ein Feld weiter: Protonen springen zum Nachbarelement (und holen dessen häufigstes
+   Isotop), Neutronen ändern das Isotop - gibt es den Kern nicht, bleibt alles stehen. */
+function schiebeZ(d){
+  const z=(D.sel||0)+d;
+  if(z<1||z>EL.length){ setMsg(z<1?'vor Wasserstoff ist nichts':'nach dem letzten Element ist Schluss'); draw(); return; }
+  if(!EL.find(e=>e.z===z)) return;
+  waehle(z); $('q').value=''; setMsg(''); refresh(); }
+function schiebeN(d){
+  if(!D.sel){ setMsg('erst ein Element antippen'); draw(); return; }
+  if(D.n===null||D.n===undefined){ setMsg('zu diesem Element sind keine Kerne hinterlegt'); draw(); return; }
+  const n=D.n+d, e=EL.find(x=>x.z===D.sel);
+  if(n<0){ setMsg('weniger als null Neutronen gibt es nicht'); draw(); return; }
+  if(!nuk(D.sel,n)){ setMsg(e.sym+'-'+(D.sel+n)+' gibt es nicht'); draw(); return; }
+  D.n=n; setMsg(''); refresh(); }
+$('pM').onclick=()=>schiebeZ(-1); $('pP').onclick=()=>schiebeZ(1);
+$('nM').onclick=()=>schiebeN(-1); $('nP').onclick=()=>schiebeN(1);
+$('q').addEventListener('input',()=>{ const t=$('q').value.trim().toLowerCase(); if(!t){ waehle(0); setMsg(''); refresh(); return; }
   const hit=EL.find(e=>e.sym.toLowerCase()===t)||EL.find(e=>String(e.z)===t)||EL.find(e=>e.name.toLowerCase().startsWith(t));
-  if(hit){ D.sel=hit.z; setMsg(''); } else setMsg('nicht gefunden');
+  if(hit){ waehle(hit.z); setMsg(''); } else setMsg('nicht gefunden');
   refresh(); });
 for(const [id,d] of [['fsM',-1],['fsP',1]]){ $(id).addEventListener('pointerdown',e=>e.preventDefault());
   $(id).onclick=()=>{ D.fontSize=Math.max(8,Math.min(30,(D.fontSize||13)+d)); refresh(); }; }
@@ -429,12 +485,15 @@ if(window.TafelModus&&TafelModus.anTafel) TafelModus.anTafel({ button:false,
    ihre eigenen Knöpfe aus und führt die Aktionen auf Zuruf aus. */
 function kartenBild(){ return TafelShot.rasterize($('app'),{exclude:'#bar',pad:6}); }
 addEventListener('message',e=>{ const m=e.data; if(!m||typeof m!=='object') return;
-  if(m.type==='karte-knoepfe'){ const g=$('shotBtns'), p=$('bPrint');
-    if(g) g.style.display=m.an?'':'none'; if(p) p.style.display=m.an?'':'none'; return; }
+  if(m.type==='karte-knoepfe'){ const g=$('shotBtns'), p=$('bPrint'), r=$('bReset');
+    if(g) g.style.display=m.an?'':'none'; if(p) p.style.display=m.an?'':'none';
+    if(r) r.style.display=m.an?'':'none';          /* „Ansicht“ steht dann oben in der Atomphysik */
+    return; }
   if(m.type!=='karte-aktion') return;
   if(m.was==='board') TafelShot.toBoard(kartenBild());
   else if(m.was==='copy') TafelShot.copy(kartenBild());
-  else if(m.was==='print') printSheet(); });
+  else if(m.was==='print') printSheet();
+  else if(m.was==='reset') ansichtZurueck(); });
 /* ---------- Tafel-Anbindung ---------- */
 function sync(){ if(window.parent===window) return; /* allein geöffnet: nicht an sich selbst senden */
   try{ parent.postMessage({type:'embed-data',data:D},'*'); }catch(e){} }

@@ -3447,9 +3447,19 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   und Reiterzeile brauchen dadurch nur noch **je eine Zeile** – bei schmalem Objekt entfällt der
   Untertitel und der Schalter heißt kurz **„Experiment"**.
 - **Periodensystem** (im Reiter „Periodensystem" der Atomphysik): alle **118 Elemente** mit Symbol, Name, Ordnungszahl und Atommasse.
-  Seine eigenen Bedienelemente stehen in **einer einzigen Zeile** (Suchfeld, Nebengruppen, La/Ac,
-  Einfärbung, Atommasse, Name, ↺ Ansicht) – die Knöpfe für Schrift, Bild und Drucken sitzen in der
-  Atomphysik eine Zeile höher, allein geöffnet rechts in derselben Zeile.
+  Seine eigenen Bedienelemente stehen in **einer einzigen Zeile** (Suchfeld, **Protonen − +**,
+  **Neutronen − +**, Nebengruppen, La/Ac, Einfärbung, Atommasse, Name) – die Knöpfe für Schrift, Bild
+  und Drucken sitzen in der Atomphysik eine Zeile höher, allein geöffnet rechts in derselben Zeile.
+  **↺ Ansicht** steht in der Atomphysik ebenfalls oben in der Reiterzeile (nur beim Periodensystem
+  sichtbar), damit in der ersten Zeile Platz für die Schrittknöpfe bleibt; allein geöffnet bleibt er
+  am Ende der Zeile.
+  - **Protonen − +** springt zum **Nachbarelement** und stellt dabei dessen **häufigstes Isotop** ein
+    (gibt es keines – Technetium, alles jenseits von Uran –, das langlebigste). **Neutronen − +**
+    wechselt das **Isotop**: Die Infokarte nennt dann **Nuklid** (z. B. U-235), **Neutronenzahl** und
+    **Halbwertszeit** mit der **natürlichen Häufigkeit** (U-235: 703 Ma · 0,72 % natürlich). Die Daten
+    kommen aus derselben Datei wie die Nuklidkarte (`nuklid-data.js`), so dass beide Reiter dasselbe
+    sagen. Einen Kern, den es nicht gibt, lehnt der Knopf ab und sagt es (`C-23 gibt es nicht`);
+    jenseits von Plutonium meldet er, dass keine Kerne hinterlegt sind.
   Ein Tipp auf ein Element öffnet eine **Infokarte** (Atommasse, Kategorie, Zustand bei 20 °C, Schmelz- und
   Siedepunkt, Dichte, Elektronenkonfiguration); das **Suchfeld** findet Symbol, Name oder Ordnungszahl.
   **„Nebengruppen"** klappt die Gruppen 3–12 weg (Kurzform mit den Hauptgruppen), **„La/Ac"** blendet die
@@ -3475,6 +3485,12 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     **Nochmal auf dasselbe Nuklid tippen blendet die Karte wieder aus** (ein Tipp auf ein anderes
     Nuklid wechselt wie bisher direkt dorthin).
   - **Suchfeld:** `Cs-137`, `U238` oder `Kohlenstoff 14` springt zum Nuklid und wählt es aus.
+  - **Protonen − + und Neutronen − +** in der ersten Zeile rücken die Auswahl **Feld für Feld** weiter:
+    Protonen senkrecht, Neutronen waagerecht. Die Karte schiebt sich dabei nur so weit, dass das Feld
+    im Bild bleibt. Ohne Auswahl greift der erste Druck das Nuklid, das der **Mitte des Ausschnitts**
+    am nächsten liegt – man muss also nicht erst zielen. Gibt es den Nachbarn nicht, bleibt die
+    Auswahl stehen und die Zeile sagt `He-2 gibt es nicht`; so sieht man die **Ränder der Karte**
+    (Protonen- und Neutronen-Abbruchkante) beim Durchklicken von selbst.
   - **Zerfallsreihen:** Die vier klassischen Reihen (**Thorium 4n**, **Neptunium 4n+1**,
     **Uran-Radium 4n+2**, **Uran-Actinium 4n+3**) werden als Pfeilkette in die Karte gezeichnet –
     α-Schritte und β-Schritte farblich unterschieden. **„Zerfallsweg"** verfolgt die Kette eines

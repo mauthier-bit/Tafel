@@ -18,6 +18,8 @@
   #bar button.on{background:#2563eb;border-color:#2563eb;color:#fff;}
   #bar button:disabled{opacity:.4;}
   #bar label{display:inline-flex;gap:4px;align-items:center;font-weight:600;white-space:nowrap;}
+  #bar .grp{display:inline-flex;gap:3px;align-items:center;font-weight:600;white-space:nowrap;color:#475569;}
+  #bar .grp button{padding:4px 8px;min-width:30px;text-align:center;}
   #shotBtns{display:inline-flex;gap:5px;flex:0 0 auto;}
   #area{flex:1;position:relative;min-height:0;}
   #area canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;}
@@ -212,6 +214,8 @@
       <div id="scroll1">
         <input type="search" id="q" placeholder="z. B. Cs-137" title="Nuklid suchen: Symbol und Massenzahl, z. B. C-14, U238, Cäsium 137">
         <button type="button" id="bFind">Suchen</button>
+        <span class="grp" title="Protonenzahl ändern – die Auswahl wandert in der Karte nach oben oder unten">Protonen<button type="button" id="pM">−</button><button type="button" id="pP">+</button></span>
+        <span class="grp" title="Neutronenzahl ändern – die Auswahl wandert in der Karte nach links oder rechts">Neutronen<button type="button" id="nM">−</button><button type="button" id="nP">+</button></span>
         <select id="zoomSel" title="Ausschnitt">
           <option value="all">ganze Karte</option>
           <option value="light">leichte Kerne (Z ≤ 20)</option>
@@ -495,6 +499,34 @@ $('zOut').onclick=()=>{ zoomAt(1/1.4,(cv.clientWidth+M.l)/2,(cv.clientHeight-M.b
 $('zoomSel').onchange=()=>{ const v=$('zoomSel').value;
   if(v==='all') fitAll(); else if(v==='light') fitRange(0,20); else if(v==='mid') fitRange(20,60); else fitRange(80,94);
   sync(); };
+/* Ein Feld weiter: Protonen nach oben und unten, Neutronen nach links und rechts.
+   Ohne Auswahl greift der erste Druck das Nuklid, das der Mitte des Ausschnitts am
+   naechsten liegt - so muss niemand erst zielen. */
+function nahestes(z0,n0){
+  for(let r=0;r<=90;r++) for(let dz=-r;dz<=r;dz++){ const rest=r-Math.abs(dz);
+    for(const dn of (rest?[-rest,rest]:[0])){ const z=z0+dz, n=n0+dn;
+      if(z>=0&&n>=0&&get(z,n)) return [z,n]; } }
+  return null; }
+function insSicht(z,n){                      /* nur so weit schieben, dass das Feld im Bild liegt */
+  const w=(cv.clientWidth-M.l-M.r)/V.c, h=(cv.clientHeight-M.t-M.b)/V.c;
+  if(n<V.n0+1) V.n0=n-1; else if(n>V.n0+w-2) V.n0=n-w+2;
+  if(z<V.z0+1) V.z0=z-1; else if(z>V.z0+h-2) V.z0=z-h+2; }
+function schiebe(dz,dn){
+  if(!D.sel){
+    const m=nahestes(Math.round(V.z0+((cv.clientHeight-M.t-M.b)/V.c)/2),
+                     Math.round(V.n0+((cv.clientWidth-M.l-M.r)/V.c)/2));
+    if(!m){ setMsg('kein Nuklid in der Nähe'); return; }
+    D.sel=m; }
+  else{
+    const z=D.sel[0]+dz, n=D.sel[1]+dn;
+    if(z<0||n<0){ setMsg(dz?'weniger als null Protonen gibt es nicht':'weniger als null Neutronen gibt es nicht'); draw(); return; }
+    if(!get(z,n)){ setMsg(symOf(z)+'-'+(z+n)+' gibt es nicht'); draw(); return; }
+    D.sel=[z,n]; }
+  const e=get(D.sel[0],D.sel[1]);
+  setMsg(symOf(D.sel[0])+'-'+(D.sel[0]+D.sel[1])+' · '+hlText(e[2]));
+  insSicht(D.sel[0],D.sel[1]); draw(); sync(); }
+$('pM').onclick=()=>schiebe(-1,0); $('pP').onclick=()=>schiebe(1,0);
+$('nM').onclick=()=>schiebe(0,-1); $('nP').onclick=()=>schiebe(0,1);
 $('cMagic').onchange=()=>{ D.magic=$('cMagic').checked; draw(); sync(); };
 $('cLeg').onchange=()=>{ D.leg=$('cLeg').checked; draw(); sync(); };
 
