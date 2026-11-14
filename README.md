@@ -3138,8 +3138,8 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     **d[pc] = 1/p[″]**. Beispielsterne von Proxima Centauri bis Wega, ein **Lupen-Regler** für den
     Himmelsausschnitt und der Vergleich mit dem Vollmond (1 800″) – so wird klar, warum die erste
     Sternparallaxe erst 1838 gelang.
-- **Atomphysik** (Mathe & Physik): ein Werkzeug mit **fünf Reitern**, die zusammen vom Periodensystem
-  bis in den Kern führen. Oben steht die Reiterleiste, darunter der jeweilige Inhalt; jeder Reiter merkt
+- **Atomphysik** (Mathe & Physik): ein Werkzeug mit **sechs Reitern**, die zusammen vom Periodensystem
+  bis zu den Elementarteilchen führen. Oben steht die Reiterleiste, darunter der jeweilige Inhalt; jeder Reiter merkt
   sich seinen Stand, auch über das Speichern des Projekts hinweg. Die Reiter sind als
   **Reiterleiste** gestaltet (der gewählte ist unterstrichen), nicht als Knopfreihe.
   - **Zerfall** (fünfter Reiter): das **Würfelmodell** des radioaktiven Zerfalls. Links liegt das
@@ -3240,18 +3240,50 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     Jeder Würfel wird dabei **einzeln** geworfen – die Kurve entsteht also wirklich aus dem Zufall
     und nicht aus einer eingesetzten Formel. Nachgemessen: 12 Versuche mit 1000 Würfeln und
     p = 50 % ergaben im Mittel 502,8 übrige nach dem ersten Wurf.
+  - **Elementarteilchen** (sechster Reiter): ein Überblick über die Teilchen und ihre Kategorien.
+    Oben wird zwischen **drei Ansichten** gewählt, rechts (auf schmalen Geräten unten) steht die
+    **Infokarte** zum angetippten Feld. Angetippt wird alles: Teilchen **und** Kategorien.
+    - **Standardmodell:** die zwölf **Fermionen** in drei **Generationen** (oben die Quarks u/d,
+      c/s, t/b, unten die Leptonen e, µ, τ mit ihren Neutrinos) und daneben die **Bosonen**
+      (Gluon, Photon, Z⁰, W±, H⁰). In jedem Feld stehen oben links die **Ladung**, oben rechts der
+      **Spin** und unten die **Masse** – der Schalter **Werte** blendet sie aus. Die Beschriftungen
+      **Fermionen**, **Bosonen**, **Quarks** und **Leptonen** sind selbst antippbar und erklären
+      die Kategorie.
+    - **Kategorien:** der **Stammbaum**. Oben die Elementarteilchen (Teilchen → Fermionen/Bosonen →
+      Quarks, Leptonen, Eichbosonen, Higgs), unten die zusammengesetzten **Hadronen** → **Baryonen**
+      (drei Quarks, Fermionen) und **Mesonen** (Quark + Antiquark, Bosonen). Ein gestrichelter Pfeil
+      führt von den Quarks zu den Hadronen: *Quarks kommen nie einzeln vor.* Unter jedem Kasten
+      stehen Beispiele zum Antippen.
+    - **Hadronen:** die klassischen Teilchenbilder – waagerecht der **Isospin I₃**, senkrecht die
+      **Strangeness S**. Umschaltbar zwischen **Baryonen** (Spin ½: das **Oktett** mit p, n, Λ⁰, Σ,
+      Ξ; Spin 3/2: das **Dekuplett** mit den vier Δ bis hinunter zum Ω⁻) und **Mesonen** (Spin 0:
+      das **pseudoskalare Nonett** mit π, K, η, η′; Spin 1: das **Vektornonett** mit ρ, K*, ω, φ).
+      In jedem Kreis stehen Symbol, Quarkinhalt und Masse. Wo zwei Teilchen am selben Platz stehen
+      (Λ⁰ und Σ⁰, oder π⁰, η und η′), stehen sie nebeneinander. **Ladungslinien** zeichnet die
+      Linien gleicher Ladung ein und macht **Q = I₃ + (B + S)/2** sichtbar. Unter dem Bild liegen
+      die schwereren Geschwister mit Charm und Bottom (Λ_c⁺, Λ_b⁰ bzw. J/ψ, Υ, D⁰, D⁺, B⁰).
+    - Die **Infokarte** nennt Symbol und Namen, die **Kategorienkette** („Hadron → Baryon →
+      Fermion"), **Ladung, Spin, Isospin I und I₃, Strangeness, Baryonen- und Leptonenzahl, Masse,
+      mittlere Lebensdauer τ** (bei Resonanzen zusätzlich die **Breite Γ**), den **Aufbau**, das
+      **Antiteilchen**, die wichtigsten **Zerfälle mit ihren Anteilen** und einen Satz zum Teilchen.
+      Zeichen, für die es keine gibt (ν_µ, Λ_c⁺, K⁰_S), werden selbst tiefgestellt gesetzt.
+    - **Zahlen:** nach den Tabellen der Particle Data Group (2024). Geprüft wurde maschinell, dass
+      Oktett, Dekuplett und die beiden Nonetts vollständig besetzt sind, dass der Quarkinhalt jedes
+      Hadrons seine Ladung, Baryonenzahl und Strangeness ergibt, dass **Q = I₃ + (B + S)/2** für
+      jedes Hadron stimmt, dass halbzahliger Spin genau bei den Fermionen steht und dass bei allen
+      Resonanzen τ = ħ/Γ gilt.
   - **Periodensystem** und **Nuklidkarte** sind unverändert die bisherigen Werkzeuge (siehe unten) –
     sie laufen im Reiter weiter wie zuvor.
-  - **Eine Knopfgruppe für alle vier Reiter:** Rechts in der Reiterleiste stehen **A−/A+**,
+  - **Eine Knopfgruppe für alle Reiter:** Rechts in der Reiterleiste stehen **A−/A+**,
     **🖼 Tafel**, **📋 Kopieren**, bei den beiden Karten dazu **🖨 Drucken**, und ganz rechts
     **⇪ Teilen**. Früher brachten Periodensystem und Nuklidkarte diese Knöpfe selbst mit, sodass sie
     je nach Reiter woanders saßen; jetzt blenden die beiden Karten ihre eigenen aus, und die
     Atomphysik gibt den Auftrag an die Karte weiter (das Bild einer Karte reicht sie an die Tafel
-    durch). **A−/A+** gilt für alle vier Reiter. Der **Teilen**-QR-Code gibt den **ganzen Stand**
+    durch). **A−/A+** gilt für alle Reiter. Der **Teilen**-QR-Code gibt den **ganzen Stand**
     weiter – Reiter, Element, gesetzte Elektronen, Protonen und Neutronen und auch die
     Einstellungen der beiden Karten. Ist das Fenster zu schmal für die ganze Zeile, bleiben die
-    **vier Reiter stehen** und nur die **Knopfgruppe lässt sich quer schieben**; senkrecht bewegt
-    sich nichts. Erst wenn selbst die vier Reiter nicht mehr nebeneinander passen, lässt sich
+    **Reiter stehen** und nur die **Knopfgruppe lässt sich quer schieben**; senkrecht bewegt
+    sich nichts. Erst wenn selbst die Reiter nicht mehr nebeneinander passen, lässt sich
     auch ihre Reihe schieben – so bleibt alles erreichbar.
   - **Hülle: Schalen und Energien** zeigt links die **Energiestufen** (1s, 2s, 2p, 3s …) als Kästchen
     mit Elektronenpfeilen und rechts das **Schalenbild** (K, L, M … mit der Zahl der Elektronen) zum
@@ -4324,7 +4356,9 @@ luecken.html          ← Lückentext (Lücken wählen oder zufällig, tippen od
 lernkarte.html        ← Lernlandkarte (Orte, Wege, Freischaltung, Unterkarten)
 nuklid.html, nuklid-data.js ← Nuklidkarte bis Z = 94 mit Zerfallsreihen (offline)
 pse.html, pse-data.js ← Periodensystem der Elemente (alle 118 Elemente, offline)
-atomphysik.html       ← Atomphysik: vier Reiter (Periodensystem, Nuklidkarte, Hülle, Kernpotentialtopf)
+atomphysik.html       ← Atomphysik: sechs Reiter (Periodensystem, Nuklidkarte, Hülle,
+                        Kernpotentialtopf, Zerfall, Elementarteilchen)
+teilchen-data.js      ← Daten der Elementarteilchen und Hadronen (Ladung, Spin, Isospin, Zerfälle)
 induktion.html        ← Induktion und Feldlinien (Film und eigenes Ausprobieren)
 mindmap.html          ← Mindmap (Diverses)
 pinnwand.html         ← Pinnwand mit Karten (Diverses)
