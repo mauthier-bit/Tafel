@@ -3183,6 +3183,12 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
       Achse da: Die Grenze ist also die Zahl der Kerne, höchstens 100 000-fach. Senkrecht stark
       vergrößert zeigt die Kurve **jeden einzelnen Wurf als Punkt**, und die Striche der Hochachse
       stehen dort nur noch auf **ganzen Würfeln**.
+      **„ans Ende"** (in der unteren Leiste) macht das in **einem Druck**: Der Knopf stellt die
+      Hochachse auf **zehn Würfel** (oder das Doppelte dessen, was noch lebt) und zeigt waagerecht
+      die **letzten vierzehn Würfe**. Bei einer Million Kernen sieht man danach z. B. die Würfe
+      59 bis 73: 9 · 8 · 5 · 3 · 3 · 3 · 3 · 3 · 2 · 1 – fünf Würfe lang bleibt es bei drei Kernen,
+      dann geht es Schlag auf Schlag. Mitten im Lauf führt der Knopf ans **aktuelle** Ende der
+      Kurve, statt ins Leere zu zoomen; der **Doppeltipp** stellt den vollen Ausschnitt zurück.
       **Die Richtung der Fingergeste entscheidet, welche Achse gedehnt wird:** Liegen die Finger
       nebeneinander (bis 25°), wird nur **waagerecht** gezoomt, übereinander (ab 65°) nur
       **senkrecht**, dazwischen **beides**. Gemessen bei einer Geste auf das Doppelte: waagerecht
