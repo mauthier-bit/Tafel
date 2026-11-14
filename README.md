@@ -2813,13 +2813,25 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
 - **Stoßvorgänge** (Mathe & Physik, Symbol: zwei Kugeln mit Pfeil): zwei Körper stoßen zusammen –
   **1D** auf einer Bahn wie auf der Luftkissenbahn oder **2D** in der Fläche wie auf dem Billardtisch,
   **elastisch** oder **unelastisch**, mit Werten, Vektorpfeilen, Aufnahme und Stroboskopbild.
-  - **Körper einstellen:** Die **Masse** steht in der Zeile unter den Knöpfen (0,05 bis 50 kg); der
-    Radius wächst mit der dritten Wurzel der Masse, beide Körper haben also dieselbe Dichte. Die
-    **Anfangsgeschwindigkeit** lässt sich eintippen – in 2D als Betrag und Richtung (0° = nach
-    rechts) – **oder mit dem Finger geben:** Körper antippen und wegschnippen, der Körper bekommt
-    die Geschwindigkeit des Fingers (höchstens 15 m/s). **Langsames Ziehen verschiebt ihn nur**; so
-    stellt man in 2D ein, **wie mittig** der Stoß wird. Angeschubst und verschoben wird nur im Stand,
-    danach führt „Anfang" (↺) wieder dorthin zurück.
+  - **Aufstellen:** Mit dem Finger wird der Körper **hingestellt** – in 2D stellt man damit ein,
+    **wie mittig** der Stoß wird.
+  - **Geschwindigkeit:** Am runden **Griff an der Spitze des Geschwindigkeitspfeils** ziehen: Die
+    Länge gibt den Betrag, die Richtung die Richtung (in 1D nur nach links oder rechts, höchstens
+    15 m/s). Steht ein Körper still, sitzt der Griff dicht neben ihm – von dort zieht man den Pfeil
+    heraus. Der Wert erscheint beim Ziehen daneben und steht auch in der Zeile unter den Knöpfen,
+    wo er sich eintippen lässt; dort steht ebenso die **Masse** (0,05 bis 50 kg; der Radius wächst
+    mit der dritten Wurzel der Masse, beide Körper haben also dieselbe Dichte). Damit die Spitze
+    dem Finger nicht davonläuft, hängt die Pfeillänge an festen Stufen und steht während des
+    Ziehens ganz still. Aufgestellt und eingestellt wird nur im Stand, danach führt „Anfang" (↺)
+    wieder dorthin zurück.
+  - **Vorlagen:** die klassischen Aufgaben auf Knopfdruck – gleiche Massen mit ruhendem Partner
+    (die Geschwindigkeiten tauschen), leicht gegen schwer und umgekehrt, gegeneinander, die
+    unelastischen Fälle (zusammen weiter, beide bleiben stehen, Auffahrunfall) und drei schiefe
+    Stöße in der Fläche, darunter der Klassiker **gleiche Massen: die Bahnen stehen danach
+    senkrecht aufeinander**.
+  - **Kein Stoß:** Führen die eingestellten Werte zu keinem Zusammenstoß, steht das über dem Bild –
+    mit dem Grund: Sie bewegen sich nicht aufeinander zu, sie fliegen aneinander vorbei oder sie
+    treffen sich erst weit außerhalb.
   - **Ablauf:** „Start" lässt den Stoß laufen, **Tempo** (1:1 bis 1:8) macht Zeitlupe daraus – beim
     Ablauf wie beim Abspielen. Der Ablauf **endet, sobald beide** Körper die Bahn bzw. die Fläche
     verlassen haben; einer allein reicht nicht.
@@ -2838,10 +2850,16 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     hängt **Δv** bzw. **Δp** an – in 2D als Verbindung von der Spitze des Vorher-Pfeils zur Spitze
     des Nachher-Pfeils, in 1D als eigener Pfeil darunter. Die Pfeillängen richten sich nach dem
     größten vorkommenden Wert, Geschwindigkeit und Impuls haben dabei getrennte Maßstäbe.
-  - **Aufnahme:** Jeder Ablauf wird **von selbst** mitgeschnitten, einen Aufnahmeknopf braucht es
-    nicht. In der unteren Zeile spielt **▶** ihn wieder ab, der Regler sucht jede Stelle.
-  - **Stroboskopbild:** macht aus der Aufnahme ein Bild mit **gleichmäßigen Blitzen** (Anzahl über
-    „Blitze"). Der **Zeitpunkt des Stoßes ist immer ein Blitz**: Der Abstand wird so gedehnt, dass
+  - **Impulse zusammen:** Sind die Impulspfeile an, erscheint unten links der Vergleich
+    **gesamt vorher ↔ gesamt nachher**: Die beiden Impulse werden aneinandergehängt (Spitze an
+    Fuß), der dicke Pfeil vom Anfang zum Ende ist der Gesamtimpuls. Beide Ketten enden am selben
+    Punkt – auch beim schiefen Stoß in der Fläche.
+  - **Start und Wiedergabe:** „Start" oben lässt den Stoß **wirklich ablaufen** und zeichnet ihn
+    dabei von selbst auf – einen Aufnahmeknopf braucht es nicht. Das **▶** unten bei „Wiedergabe"
+    spielt diesen **Mitschnitt noch einmal ab**, der Regler daneben sucht jede Stelle.
+  - **Stroboskopbild:** macht aus der Aufnahme ein Bild mit **gleichmäßigen Blitzen**. Anzahl und
+    zeitlicher Abstand lassen sich mit − und + bei „Blitze" **auch im Nachhinein** ändern; beides
+    steht nebeneinander („7 · je 0,71 s"), denn das eine ergibt das andere. Der **Zeitpunkt des Stoßes ist immer ein Blitz**: Der Abstand wird so gedehnt, dass
     zwischen Anfang und Stoß ganze Schritte liegen – das Bild beginnt trotzdem bei t = 0. In **1D**
     steht jeder Blitz in einer eigenen Zeile mit seiner Zeit (Zeit nach unten – das ist das
     x-t-Bild des Stoßes), in **2D** stehen die Bilder in der Fläche, mit Zeitmarken und gepunkteter
