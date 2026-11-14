@@ -2741,6 +2741,9 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     rechts heizen** (Flamme), **nach links kühlen** (Schneeflocken), und **in der Mitte rastet er
     bei 0 W ein**: Dann steht alles still, ohne Flamme. Einen Start-Knopf gibt es beim Erwärmen
     nicht, auch keinen für die Heizung – es ändert sich alles durch Heizen, Kühlen und den Stempel.
+    **Frisch eingefügt steht der Regler auf 0 W**, auf der Tafel genauso wie in der einzelnen Seite:
+    Das Werkzeug fängt nie von selbst an zu heizen, der Versuch beginnt erst, wenn jemand den Regler
+    anfasst oder eine Vorlage lädt.
     Der Regler steht **logarithmisch von 1 W bis 50 kW** (sonst wäre unten nichts einzustellen);
     die Zahl daneben lässt sich antippen und frei eingeben. Beim Kühlen läuft derselbe Versuch
     rückwärts: Der Dampf kondensiert und das Wasser erstarrt – die Haltepunkte sind dieselben. Die
@@ -2805,7 +2808,8 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   - **Gleichungen** in drei Stufen (aus, Formeln, mit Zahlen): im ersten Reiter je Abschnitt
     **E = c · m · ΔT** bzw. **E = q · m** mit Werten, Energie und Dauer sowie die Summe; im zweiten
     **abgegebene Wärme = aufgenommene Wärme** und daraus T_M.
-  - **Vorlagen:** Eis schmilzt und Wasser siedet, Ein Liter Wasser kochen, Wasserdampf kühlt ab,
+  - **Vorlagen** (der Knopf steht **ganz rechts neben dem „?"**, wie beim Stoß-Werkzeug, und nur im
+    Bearbeiten-Modus): Eis schmilzt und Wasser siedet, Ein Liter Wasser kochen, Wasserdampf kühlt ab,
     **Trockeneis sublimiert** (0,2 kg Kohlenstoffdioxid ab −100 °C: 5,2 kJ zum Erwärmen,
     114,2 kJ zum Sublimieren, zusammen 126 kJ – der Haltepunkt frisst fast alles),
     Blei schmelzen, Eisen glühen, **Schwefel schmelzen** (0,2 kg, Haltepunkte bei 115 °C und
