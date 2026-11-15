@@ -291,6 +291,7 @@
     </div>
     <span class="sep"></span>
     <button class="tb" id="bPlay" title="Den Stoß ablaufen lassen"><svg id="icPlay" viewBox="0 0 32 20"><path d="M12 4l12 6-12 6Z" fill="currentColor" stroke="none"/></svg><svg id="icPause" viewBox="0 0 32 20" hidden><rect x="11" y="4" width="4" height="12" rx="1" fill="currentColor" stroke="none"/><rect x="18" y="4" width="4" height="12" rx="1" fill="currentColor" stroke="none"/></svg><span>Start</span></button>
+    <button class="tb" id="bStop" hidden title="Den Ablauf hier beenden – die Aufnahme bleibt stehen (nützlich, wenn ein Körper sehr langsam ist)"><svg viewBox="0 0 32 20"><rect x="11" y="5" width="10" height="10" rx="1.5" fill="currentColor" stroke="none"/></svg><span>Beenden</span></button>
     <button class="tb" id="bZur" title="Beide Körper wieder an den Startplatz"><svg viewBox="0 0 32 20"><path d="M24 10a8 8 0 1 1-2.5-5.8M24 2v4h-4"/></svg><span>Anfang</span></button>
     <button class="tb" id="bAusw" hidden title="Den gelaufenen Stoß auswerten: Pfeile anfassen und aneinanderlegen"><svg viewBox="0 0 32 20"><path d="M4 14h13M13 10l4 4-4 4"/><path d="M19 6h9M24 2l4 4-4 4"/></svg><span>Auswerten</span></button>
     </div><div id="barMid">
@@ -1142,7 +1143,7 @@ function hinweis(){ const h=$('hint');
 function segs(){ $('dim1').classList.toggle('on',D.dim===1); $('dim2').classList.toggle('on',D.dim===2);
   $('artEl').classList.toggle('on',!!D.elast); $('artUn').classList.toggle('on',!D.elast); }
 function playBtn(){ $('icPlay').hidden=lauf; $('icPause').hidden=!lauf;
-  $('bPlay').querySelector('span').textContent=lauf?'Pause':(tEnde!==null?'Nochmal':'Start');
+  $('bPlay').querySelector('span').textContent=lauf?'Pause':'Start';
   $('bPlay').classList.toggle('on',lauf); }
 function abBtn(){ const b=$('bAb'), leer=(rec.length<2);
   b.textContent=ab?'⏸':'▶'; b.classList.toggle('on',ab);
@@ -1168,6 +1169,7 @@ function knoepfe(){
             +(w.length||f.length?'':' – gerade nichts'); }
   $('pKop').hidden=!kopien.length;
   { const a=$('bAusw'); a.hidden=!auswertbar(); a.classList.toggle('on',!!auswerten); }
+  $('bStop').hidden=!(!D.strobo&&tEnde===null&&t>1e-6);
   $('bStrob').classList.toggle('on',!!D.strobo);
   $('tmV').textContent=TEMPON[Math.max(0,Math.min(3,D.tempo|0))];
   const g=raster(), Z=blitzZeiten();
@@ -1199,6 +1201,14 @@ $('bPlay').onclick=()=>{
     toast('Erst einen Körper anschubsen oder eine Geschwindigkeit eingeben'); return; }
   lauf=true; schau=false; letztT=performance.now();
   knoepfe(); zeichne(); };
+/* Von Hand beenden: Bei sehr kleinen Geschwindigkeiten dauert es sonst, bis beide
+   Körper die Bahn verlassen haben – der Mitschnitt endet dann einfach hier. */
+$('bStop').onclick=()=>{
+  if(tEnde!==null||t<=1e-6) return;
+  lauf=false; ab=false; tEnde=t; tAb=0;
+  knoepfe(); zeichne(); hinweis();
+  toast(tStoss!==null?'Ablauf beendet – die Aufnahme steht, jetzt lässt sich auswerten'
+                     :'Ablauf beendet – zu einem Stoß ist es dabei nicht gekommen'); };
 $('bZur').onclick=()=>{ D.strobo=false; neuStart(); knoepfe(); zeichne(); sync(); };
 $('bAusw').onclick=()=>{
   auswerten=!auswerten;
@@ -1440,6 +1450,7 @@ const HILFE=[
   ['Pfeile ziehen und ergänzen','Ist der Stoß gelaufen, lässt sich <b>jeder Pfeil an der Stoßstelle anfassen</b>: Eine <b>Kopie</b> folgt dem Finger. Legt man sie richtig an einen anderen Pfeil, rastet sie ein und das <b>fehlende Stück wird ergänzt</b>:<br>• <b>Fuß an Fuß</b>, derselbe Körper, vorher und nachher → <b>Δp₁</b> bzw. <b>Δv₁</b> (und genauso für Körper 2). So sieht man, dass Δv₁ und Δv₂ verschieden sind, Δp₁ und Δp₂ aber entgegengesetzt gleich.<br>• <b>Spitze an Fuß</b>, beide Körper zur selben Zeit → <b>p₁ + p₂ = p gesamt</b>, einmal vorher und einmal nachher: beide Male derselbe Pfeil.<br>Bei den Geschwindigkeiten gibt es kein „v gesamt" – dort erscheint stattdessen ein Hinweis. Ein <b>Tipp auf eine Kopie</b> entfernt sie, „Kopien entfernen" unter „Anzeigen" räumt alle weg.'],
   ['Impulse zusammen','Sind die Impulspfeile an, erscheint unten links der Vergleich: Die beiden Impulse werden aneinandergehängt (Spitze an Fuß), der dicke Pfeil vom Anfang zum Ende ist der Gesamtimpuls – einmal vorher, einmal nachher. Beide sind gleich lang und zeigen in dieselbe Richtung, auch beim schiefen Stoß.'],
   ['Vorlagen','Die klassischen Aufgaben auf Knopfdruck: gleiche Massen, leicht gegen schwer und umgekehrt, gegeneinander, die unelastischen Fälle und drei schiefe Stöße in der Fläche.'],
+  ['Beenden','Der Ablauf endet von selbst, sobald <b>beide</b> Körper die Bahn bzw. die Fläche verlassen haben. Ist ein Körper sehr langsam, dauert das; dann schließt der Knopf <b>„Beenden"</b> neben „Start" den Ablauf an Ort und Stelle ab. Die Aufnahme bleibt stehen – Wiedergabe, Stroboskop und „Auswerten" gehen sofort.'],
   ['Start und Wiedergabe','„Start" oben lässt den Stoß <b>wirklich ablaufen</b> und zeichnet ihn dabei von selbst auf. Das ▶ unten bei „Wiedergabe" spielt diesen <b>Mitschnitt noch einmal ab</b> – beliebig oft, der Regler daneben sucht jede Stelle. „Tempo" schaltet auf Zeitlupe, beim Ablauf wie beim Abspielen.'],
   ['Stroboskop','Macht aus der Aufnahme ein Stroboskopbild. Der Zeitpunkt des Zusammenstoßes ist immer einer der Blitze; die anderen liegen gleichmäßig davor und danach. Mit − und + bei „Blitze" lässt sich das auch <b>nach der Aufnahme</b> noch ändern; daneben steht der zeitliche Abstand der Blitze, der sich dabei mitändert. In 1D liegt jeder Blitz in einer eigenen Zeile (Zeit nach unten), in 2D stehen die Bilder in der Fläche. „Speichern" legt das Bild als PNG ab, die beiden Knöpfe daneben legen es auf die Tafel oder in die Zwischenablage.'],
   ['Ende des Ablaufs','Der Ablauf endet, sobald beide Körper die Bahn (1D) bzw. die Fläche (2D) verlassen haben. Ein Körper allein drüber hinaus reicht nicht.']

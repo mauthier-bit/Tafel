@@ -2880,10 +2880,14 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   - **Kein Stoß:** Führen die eingestellten Werte zu keinem Zusammenstoß, steht das über dem Bild –
     mit dem Grund: Sie bewegen sich nicht aufeinander zu, sie fliegen aneinander vorbei oder sie
     treffen sich erst weit außerhalb.
-  - **Ablauf:** „Start" lässt den Stoß laufen; „Start" und „Anfang" stehen links fest und
-    scrollen nie weg. **Tempo** (1:1 bis 1:8) steht unten neben der Wiedergabe und macht Zeitlupe
-    daraus – beim Ablauf wie beim Abspielen. Der Ablauf **endet, sobald beide** Körper die Bahn bzw. die Fläche
-    verlassen haben; einer allein reicht nicht.
+  - **Ablauf:** „Start" lässt den Stoß laufen (und heißt beim Laufen „Pause"); „Start",
+    „Beenden" und „Anfang" stehen links fest und scrollen nie weg. **Tempo** (1:1 bis 1:8) steht
+    unten neben der Wiedergabe und macht Zeitlupe daraus – beim Ablauf wie beim Abspielen. Der
+    Ablauf **endet, sobald beide** Körper die Bahn bzw. die Fläche verlassen haben; einer allein
+    reicht nicht. Weil das bei sehr kleinen Geschwindigkeiten dauern kann, steht neben „Start"
+    der Knopf **„Beenden"**: Er schließt den Ablauf **hier und jetzt** ab – die Aufnahme bleibt
+    stehen, Wiedergabe, Stroboskop und „Auswerten" stehen sofort bereit. Er erscheint nur,
+    solange ein Ablauf läuft oder angehalten ist.
   - **Stoßrechnung:** Der Zeitpunkt der Berührung wird **ausgerechnet** und nicht gesucht – deshalb
     liegt im Mitschnitt genau eine Probe im Augenblick des Stoßes, egal wie schnell die Körper sind.
     **Elastisch** werden nur die Anteile längs der Verbindungslinie der Mittelpunkte getauscht
