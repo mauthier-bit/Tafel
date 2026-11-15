@@ -2902,7 +2902,9 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     **2D rechts daneben** – und lässt sich dort **für sich scrollen**. Die **Stoßfläche hat
     Vorrang**: Wird das Fenster klein, gibt die Tabelle nach und scrollt, statt der Fläche die
     Höhe zu nehmen. Je Größe eine Zeile **vorher** und eine **nachher**, für jeden Körper und
-    **zusammen**; in 2D stehen in jeder Zelle die **Koordinaten x | y** und darunter der **Betrag**.
+    **zusammen**; in 2D steht in jeder Zelle der **Betrag**, und unter „Anzeigen" lassen sich die
+    **Komponenten x | y** dazuschalten (beides zusammen geht auch – dann steht der Betrag klein
+    darunter). Voreingestellt ist der Betrag allein, damit die Tabelle schmal bleibt.
     Die Spalte **„zusammen" gibt es auch bei v** – dort sieht man, dass die Summe vorher und
     nachher **nicht** gleich ist, während sie beim Impuls gleich bleibt. Beim unelastischen Stoß
     kommt die Zeile **„davon E<sub>i</sub>"** dazu (innere Energie) – das, was die kinetische

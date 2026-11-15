@@ -344,6 +344,8 @@
     <button class="apB" id="wP" title="Impulse in die Tabelle">p – Impuls</button>
     <button class="apB" id="wE" title="Kinetische Energien in die Tabelle">E – kinetische Energie</button>
     <button class="apB" id="wEinh" title="Die Einheiten in der ersten Spalte mitschreiben – ohne sie bleibt die Spalte schmal">Einheiten dazuschreiben</button>
+    <button class="apB" id="wBetr" title="Den Betrag der Vektoren in die Zellen schreiben (nur in 2D)">Beträge</button>
+    <button class="apB" id="wKomp" title="Die Koordinaten x | y in die Zellen schreiben (nur in 2D)">Komponenten x | y</button>
     <div class="apG">Pfeile am Stoß</div>
     <button class="apB" id="pV" title="Geschwindigkeiten als Pfeile – vor und nach dem Stoß">v – Geschwindigkeitspfeile</button>
     <button class="apB" id="pP" title="Impulse als Pfeile – vor und nach dem Stoß">p – Impulspfeile</button>
@@ -403,7 +405,8 @@ function zahlEin(s){ if(typeof s!=='string') s=String(s==null?'':s);
 const standard=()=>({v:1, dim:1, elast:true, m1:1, m2:2,
   s1:{x:1,y:LY/2}, s2:{x:3,y:LY/2},
   g1:{x:2.5,y:0}, g2:{x:0,y:0},
-  wert:{v:true,p:true,E:false}, pfeil:{v:true,p:false,d:false}, bilanz:{v:false,p:false}, einheiten:false,
+  wert:{v:true,p:true,E:false}, pfeil:{v:true,p:false,d:false}, bilanz:{v:false,p:false},
+  einheiten:false, komp:false, betrag:true,
   tempo:0, blitze:7, babst:0, strobo:false, fontSize:14, edit:true});
 let D=standard();
 
@@ -1025,7 +1028,13 @@ function tabDaten(){
   if(!q.length) return null;
   const m=[masse(0),masse(1)], zwei=(D.dim===2);
   const vv=vVor||[{x:B[0].vx,y:B[0].vy},{x:B[1].vx,y:B[1].vy}], vn=vNach;
-  const fv=v=>zwei?(fz(v.x,2)+'  |  '+fz(-v.y,2)+'<small>Betrag '+fz(Math.hypot(v.x,v.y),2)+'</small>'):fz(v.x,2);
+  /* In 2D lässt sich wählen, was in der Zelle steht: die Koordinaten, der Betrag oder
+     beides. Voreingestellt ist der Betrag – damit bleibt die Tabelle schmal. */
+  const kp=zwei&&!!D.komp, bt=zwei&&(D.betrag!==false||!D.komp);
+  const fv=v=>{ if(!zwei) return fz(v.x,2);
+    const k=fz(v.x,2)+'  |  '+fz(-v.y,2), b=fz(Math.hypot(v.x,v.y),2);
+    if(kp&&bt) return k+'<small>Betrag '+b+'</small>';
+    return kp?k:b; };
   const mul=(s,a)=>({x:s*a.x,y:s*a.y}), add=(a,b)=>({x:a.x+b.x,y:a.y+b.y}), q2=a=>a.x*a.x+a.y*a.y;
   const Z=[];
   /* Einheiten nur auf Wunsch – sie machen die erste Spalte breit, und im Unterricht
@@ -1051,7 +1060,8 @@ function tabDaten(){
                 titel:'innere Energie: was die kinetische Energie beim Stoß verloren hat'});
       } else Z.push({l:E('E nachher','J'),c:['–','–','–']});
     } });
-  return {kopf:['',zwei?'Körper 1   x | y':'Körper 1',zwei?'Körper 2   x | y':'Körper 2','zusammen'],z:Z}; }
+  const kz=(kp&&!bt)?'   x | y':'';
+  return {kopf:['','Körper 1'+kz,'Körper 2'+kz,'zusammen'],z:Z}; }
 
 /* Die Tabelle steht als echte Tabelle unter dem Stoßfenster (1D) bzw. daneben (2D)
    und ist dort für sich scrollbar – im Bild nahm sie dem Stoß den Platz weg. */
@@ -1221,6 +1231,9 @@ function knoepfe(){
   $('wP').classList.toggle('on',!!D.wert.p);
   $('wE').classList.toggle('on',!!D.wert.E);
   $('wEinh').classList.toggle('on',!!D.einheiten);
+  $('wBetr').classList.toggle('on',D.betrag!==false);
+  $('wKomp').classList.toggle('on',!!D.komp);
+  $('wBetr').disabled=$('wKomp').disabled=(D.dim===1);   /* in 1D steht ohnehin eine Zahl je Zelle */
   $('pV').classList.toggle('on',!!D.pfeil.v);
   $('pP').classList.toggle('on',!!D.pfeil.p);
   $('pD').classList.toggle('on',!!D.pfeil.d);
@@ -1308,6 +1321,9 @@ umW('wV',()=>{ D.wert.v=!D.wert.v; });
 umW('wP',()=>{ D.wert.p=!D.wert.p; });
 umW('wE',()=>{ D.wert.E=!D.wert.E; });
 umW('wEinh',()=>{ D.einheiten=!D.einheiten; });
+/* Eines von beiden muss bleiben – sonst stünde die Zelle leer da */
+umW('wBetr',()=>{ if(D.dim===1) return; D.betrag=(D.betrag===false); if(!D.betrag&&!D.komp) D.komp=true; });
+umW('wKomp',()=>{ if(D.dim===1) return; D.komp=!D.komp; if(!D.betrag&&!D.komp) D.betrag=true; });
 umW('pV',()=>{ D.pfeil.v=!D.pfeil.v; });
 umW('pP',()=>{ D.pfeil.p=!D.pfeil.p; });
 umW('pD',()=>{ D.pfeil.d=!D.pfeil.d; });
@@ -1528,7 +1544,7 @@ const HILFE=[
   ['1D und 2D','1D: beide Körper auf einer Bahn wie auf der Luftkissenbahn. 2D: beide in der Fläche wie auf dem Billardtisch.'],
   ['elastisch / unelastisch','elastisch: Impuls und kinetische Energie bleiben erhalten. unelastisch: Die Körper bleiben zusammen und fahren gemeinsam weiter – der Impuls bleibt, ein Teil der kinetischen Energie wird innere Energie.'],
   ['Anzeigen','Hinter dem Knopf „Anzeigen" steckt alles, was eingeblendet werden kann: oben die <b>Werte</b> für die Tabelle (v, p, E), in der Mitte die <b>Pfeile</b> (v, p und die Änderung Δ), unten die <b>Auswertung</b> (siehe dort). Alles lässt sich frei zusammenstellen, auch im Benutzen-Modus. 1D/2D und elastisch/unelastisch stehen daneben und bleiben ebenfalls immer sichtbar.'],
-  ['Wertetabelle','Die Tabelle steht in einem eigenen Feld: in <b>1D unter</b> dem Stoßfenster, in <b>2D rechts daneben</b>; wird sie zu groß, lässt sie sich für sich scrollen. Sie zeigt Geschwindigkeit, Impuls und kinetische Energie, jeweils vor und nach dem Stoß, für jeden Körper und <b>zusammen</b> – auch bei v, denn dort sieht man, dass die Summe vorher und nachher <b>nicht</b> gleich ist, während sie beim Impuls gleich bleibt. In 2D stehen in jeder Zelle die beiden Komponenten x | y und darunter der Betrag. Die <b>Einheiten</b> lässt „Einheiten dazuschreiben" (unter „Anzeigen") in der ersten Spalte mitlaufen; ohne sie bleibt die Spalte schmal. „davon E<sub>i</sub>" ist die innere Energie – das, was die kinetische Energie beim Stoß verloren hat.'],
+  ['Wertetabelle','Die Tabelle steht in einem eigenen Feld: in <b>1D unter</b> dem Stoßfenster, in <b>2D rechts daneben</b>; wird sie zu groß, lässt sie sich für sich scrollen. Sie zeigt Geschwindigkeit, Impuls und kinetische Energie, jeweils vor und nach dem Stoß, für jeden Körper und <b>zusammen</b> – auch bei v, denn dort sieht man, dass die Summe vorher und nachher <b>nicht</b> gleich ist, während sie beim Impuls gleich bleibt. In 2D steht in jeder Zelle der <b>Betrag</b>; die <b>Komponenten x | y</b> lassen sich unter „Anzeigen" dazuschalten (beides zusammen geht auch). Die <b>Einheiten</b> lässt „Einheiten dazuschreiben" (unter „Anzeigen") in der ersten Spalte mitlaufen; ohne sie bleibt die Spalte schmal. „davon E<sub>i</sub>" ist die innere Energie – das, was die kinetische Energie beim Stoß verloren hat.'],
   ['Pfeile','„v" und „p" zeigen die Vektoren an den Körpern und zusätzlich an der Stoßstelle: gestrichelt vorher, durchgezogen nachher (v₁′). „Änderung" hängt den Pfeil der Änderung an (Δv bzw. Δp) – in 2D von der Spitze des Vorher-Pfeils zur Spitze des Nachher-Pfeils.'],
   ['Zurück und Zurücksetzen','Solange „Auswerten" an ist, stehen daneben zwei Knöpfe: <b>Zurück</b> nimmt den letzten Schritt der Auswertung zurück (Kopie ziehen, einrasten, entfernen), <b>Zurücksetzen</b> räumt die ganze Auswertung weg – auch das lässt sich mit „Zurück" wieder holen. Beide gelten nur für die Pfeile; am Stoß selbst ändern sie nichts.'],
   ['Pfeile ziehen und ergänzen','Ist der Stoß gelaufen und „Auswerten" an, lässt sich <b>jeder Pfeil anfassen</b>: Eine <b>Kopie</b> folgt dem Finger. Legt man sie richtig an einen anderen Pfeil, rastet sie ein und das <b>fehlende Stück wird ergänzt</b>:<br>• <b>Fuß an Fuß</b>, derselbe Körper, vorher und nachher → <b>Δp₁</b> bzw. <b>Δv₁</b> (und genauso für Körper 2). So sieht man, dass Δv₁ und Δv₂ verschieden sind, Δp₁ und Δp₂ aber entgegengesetzt gleich.<br>• <b>Spitze an Fuß</b>, beide Körper zur selben Zeit → die <b>Summe</b>: Bei den Impulsen ist <b>p₁ + p₂ vorher und nachher derselbe Pfeil</b>, bei den Geschwindigkeiten <b>nicht</b> – eine Erhaltung der Geschwindigkeit gibt es nicht, und genau das zeigt der Vergleich.<br>Eingerastet wird auch an <b>anderen Kopien</b>: Zieht man erst eine Kopie in eine freie Ecke und hängt die zweite dort an, lässt sich die ganze Konstruktion später <b>am ersten Pfeil verschieben</b> – die angehängten gehen mit. <b>Mehrere Auswertungen nebeneinander</b> sind kein Problem: Am Original entsteht <b>jedes Mal eine neue Kopie</b>, auch wenn dort schon eine liegt – Fertiges bleibt stehen. Blendet man eine Pfeilart aus, <b>ruhen</b> ihre Kopien nur und sind wieder da, sobald man sie einblendet. Ein <b>Tipp auf eine Kopie</b> entfernt sie, „Kopien entfernen" unter „Anzeigen" räumt alle weg.'],
@@ -1568,6 +1584,8 @@ function uebernimm(d){ if(!d) return;
   D.pfeil=Object.assign({},s.pfeil,d.pfeil||{});
   D.bilanz=Object.assign({},s.bilanz,d.bilanz||{});
   D.einheiten=!!d.einheiten;
+  D.komp=!!d.komp; D.betrag=(d.betrag!==false);
+  if(!D.komp&&!D.betrag) D.betrag=true;
   if(geteiltesFenster) D.bilanz={v:false,p:false};   /* geteilt: die Klasse wertet selbst aus */
   D.tempo=Math.max(0,Math.min(TEMPI.length-1,+d.tempo||0));
   D.blitze=Math.max(3,Math.min(60,+d.blitze||s.blitze));
