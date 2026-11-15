@@ -2889,19 +2889,43 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     (zentral in 1D, schief in 2D); **unelastisch** bekommen beide die Schwerpunktsgeschwindigkeit und
     fahren zusammen weiter. Der **Impuls bleibt in beiden Fällen** erhalten, die kinetische Energie
     nur beim elastischen Stoß.
-  - **Werte v, p, E** (drei Knöpfe): eine Tabelle über dem Bild, je Größe eine Zeile **vor** und eine
-    **nach** dem Stoß, für jeden Körper und **zusammen**; in 2D stehen in jeder Zelle die beiden
-    Komponenten **x | y**. Beim unelastischen Stoß kommt die Zeile **„davon innere Energie"** dazu –
-    dort steht, was die kinetische Energie verloren hat.
-  - **Pfeile:** „Pfeil v" und „Pfeil p" zeichnen die Vektoren an den Körpern und zusätzlich an der
+  - **„Anzeigen":** Ein einziger Knopf öffnet das Menü mit allem, was eingeblendet werden kann –
+    oben die **Werte** für die Tabelle (v, p, E), darunter die **Pfeile** (v, p und die Änderung Δ).
+    Er bleibt auch im **Benutzen-Modus** erreichbar, ebenso **1D/2D** und **elastisch/unelastisch**:
+    Diese vier Umschalter gehören zum Vorführen und stehen deshalb immer in der Leiste.
+  - **Wertetabelle:** Sie steht in einem **eigenen Feld** – in **1D unter** dem Stoßfenster, in
+    **2D rechts daneben** – und lässt sich dort **für sich scrollen**, ohne dem Stoß Platz
+    wegzunehmen. Je Größe eine Zeile **vorher** und eine **nachher**, für jeden Körper und
+    **zusammen**; in 2D stehen in jeder Zelle die **Koordinaten x | y** und darunter der **Betrag**.
+    Beim unelastischen Stoß kommt die Zeile **„davon innere Energie"** dazu – dort steht, was die
+    kinetische Energie verloren hat.
+  - **Pfeile:** „v" und „p" zeichnen die Vektoren an den Körpern und zusätzlich an der
     **Stoßstelle**: blass gestrichelt der Wert **vorher**, durchgezogen **nachher** (v₁′). „Änderung"
     hängt **Δv** bzw. **Δp** an – in 2D als Verbindung von der Spitze des Vorher-Pfeils zur Spitze
     des Nachher-Pfeils, in 1D als eigener Pfeil darunter. Die Pfeillängen richten sich nach dem
-    größten vorkommenden Wert, Geschwindigkeit und Impuls haben dabei getrennte Maßstäbe.
+    größten vorkommenden Wert, Geschwindigkeit und Impuls haben dabei getrennte Maßstäbe. Sind
+    **beide Arten** eingeblendet, bekommt die zweite eine eigene Spur – sonst lägen die Pfeile
+    genau übereinander und man wüsste beim Anfassen nicht, welchen man erwischt.
+  - **„Auswerten" – Pfeile anfassen und ergänzen:** Sobald der Stoß gelaufen ist, erscheint in der
+    Leiste der Knopf **„Auswerten"**. Ist er an, lässt sich **jeder Pfeil an der Stoßstelle anfassen**:
+    Eine **Kopie** folgt dem Finger, und legt man sie richtig an einen anderen Pfeil, **rastet sie
+    ein und das fehlende Stück wird ergänzt**:
+    - **Fuß an Fuß**, derselbe Körper, vorher und nachher → **Δp₁** bzw. **Δv₁** (und genauso für
+      Körper 2). So sieht man, dass **Δv₁ und Δv₂ verschieden** sind, **Δp₁ und Δp₂** aber
+      entgegengesetzt gleich.
+    - **Spitze an Fuß**, beide Körper zur selben Zeit → **p₁ + p₂ = p gesamt**, einmal vorher und
+      einmal nachher – beide Male derselbe Pfeil.
+    - Bei den **Geschwindigkeiten** gibt es **kein „v gesamt"**: Dort erscheint statt eines Pfeils
+      der Hinweis, dass man Geschwindigkeiten nicht addiert.
+    Eingerastet wird auch an **anderen Kopien**, die Konstruktion lässt sich also an einer freien
+    Stelle aufbauen. Ein **Tipp auf eine Kopie** entfernt sie, **„Kopien entfernen"** unter
+    „Anzeigen" räumt alle weg. Während der Auswertung stehen die **Körper fest** (mit ↺ geht es
+    zurück an den Anfang); ist „Auswerten" aus, liegen auch die Pfeile fest.
   - **Impulse zusammen:** Sind die Impulspfeile an, erscheint unten links der Vergleich
     **gesamt vorher ↔ gesamt nachher**: Die beiden Impulse werden aneinandergehängt (Spitze an
     Fuß), der dicke Pfeil vom Anfang zum Ende ist der Gesamtimpuls. Beide Ketten enden am selben
-    Punkt – auch beim schiefen Stoß in der Fläche.
+    Punkt – auch beim schiefen Stoß in der Fläche. Sobald man **selbst** Pfeile zieht, tritt dieser
+    Kasten beiseite und überlässt der eigenen Konstruktion den Platz.
   - **Start und Wiedergabe:** „Start" oben lässt den Stoß **wirklich ablaufen** und zeichnet ihn
     dabei von selbst auf – einen Aufnahmeknopf braucht es nicht. Das **▶** unten bei „Wiedergabe"
     spielt diesen **Mitschnitt noch einmal ab**, der Regler daneben sucht jede Stelle.
