@@ -1488,6 +1488,31 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   Weil auf dem iPad das Wischen vom oberen Rand dem System gehört, ist der Knopf **groß und deutlich**
   und lässt sich am Griff **an eine beliebige Stelle ziehen**, wenn er im Weg ist – die Stelle wird
   gemerkt.
+  - **☰ – das Menü in der schwebenden Pille.** Neben „Vollbild beenden" sitzt in derselben Pille ein
+    **☰**. Es klappt ein kleines Menü auf, das **über dem Vollbild** liegt und nur das zeigt, was sich
+    hier auch wirklich bedienen lässt – das große Kontext-Panel der Tafel ist im Vollbild ja nicht
+    erreichbar. Je nach Objekt sind das:
+    - bei **Dokumenten und Bildern**: **✎ Beschriften** (siehe unten), **🧽 Notizen löschen**,
+      **🖼 Als Bild sichern** und bei Dokumenten **📄 Als PDF sichern**;
+    - bei **Werkzeugen** der Umschalter **Bearbeiten / Benutzen** – im Vollbild ist die Kopfleiste des
+      Fensters ja ausgeblendet – sowie **Schrift −/+** bei allen Werkzeugen, die eine Schriftgröße kennen,
+      und **⇪ Teilen (QR-Code)** bei Web-, GeoGebra- und Videoobjekten;
+    - ganz unten noch einmal **⤢ Vollbild beenden**.
+    Ein Tipp auf die Pille selbst beendet das Vollbild weiterhin **sofort**; das Menü bleibt offen, bis
+    man es wieder zuklappt, und wandert beim Verschieben der Pille mit.
+  - **Beschriften im Vollbild.** „✎ Beschriften" schreibt auch hier **direkt auf die Seite**: Die Seite
+    wird ohne ihre Notizen gezeigt, darüber liegt eine durchsichtige Zeichenfläche, und was dort
+    entsteht, gehört **zur Seite** – genau wie auf der Tafel, nur in Beamergröße. Im Menü stehen dafür
+    **Stift, Marker, Radierer**, die **Farbpalette**, **Dicke −/+** und **↶ Rückgängig**, denn die
+    Werkzeugleisten sind im Vollbild ausgeblendet. Ein Strich ist so dick, **wie er hier erscheint** –
+    am kleinen Objekt auf der Tafel wird er entsprechend feiner, er gehört ja zur Seite.
+    Solange beschriftet wird, liegt ein **roter Rahmen** um den Bildschirm; der rote Knopf
+    „Beschriften beenden" bleibt im Vollbild weg, er stünde im Bild. Beendet wird über das ☰-Menü.
+    Beim **Blättern** bleibt jede Notiz bei ihrer Seite. Ist die Seite höher als der Bildschirm,
+    **scrollt der Finger** weiter und der **Stift schreibt** (bei „Mit dem Finger schreiben" nimmt die
+    Zeichenfläche jede Berührung an – dann erst das Beschriften beenden, um zu scrollen).
+    **Videos** lassen sich im Vollbild nicht beschriften – der Stift käme nicht an das Bild heran;
+    der Knopf beendet dort das Vollbild und schaltet in der normalen Ansicht aufs Beschriften um.
 - **Kopieren / Ausschneiden / Einfügen:** im Kontext-Panel **Kopieren**/**Ausschneiden** (oder
   ⌘/Strg + C/X) – Objekte lassen sich **auf einer anderen Seite** oder **in einer anderen App**
   einfügen (als Bild). Umgekehrt fügt **„Aus Zwischenablage einfügen"** im Einfügen-Fenster (oder
@@ -1743,6 +1768,8 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   die angezeigte Seite auf einmal frei. Die Knöpfe stehen als eigener, durch Trennlinien abgesetzter Block im
   Kontextmenü: „Beschriften" oben, darunter die Blätter-Knöpfe mit „Notizen löschen" daneben, darunter
   **„🖼 Als Bild sichern"** und „Als PDF sichern".
+  **Auch im Vollbild lässt sich beschriften** – über das ☰-Menü in der schwebenden Pille; dort stehen
+  dann auch Stift, Marker, Radierer, Farben, Dicke und Rückgängig (siehe „⤢ Vollbild").
   **„🖼 Als Bild sichern"** legt die **angezeigte Seite** bzw. **das Bild mitsamt allen Notizen** als
   Bilddatei ab – in voller Auflösung der Vorlage, nicht als Bildschirmausschnitt. Die Datei heißt nach dem
   Objekt (`Arbeitsblatt-Seite-2.png`); ein Bild ohne Notizen kommt unverändert heraus, sonst wird ein PNG
