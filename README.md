@@ -2899,8 +2899,9 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     Er bleibt auch im **Benutzen-Modus** erreichbar, ebenso **1D/2D** und **elastisch/unelastisch**:
     Diese vier Umschalter gehören zum Vorführen und stehen deshalb immer in der Leiste.
   - **Wertetabelle:** Sie steht in einem **eigenen Feld** – in **1D unter** dem Stoßfenster, in
-    **2D rechts daneben** – und lässt sich dort **für sich scrollen**, ohne dem Stoß Platz
-    wegzunehmen. Je Größe eine Zeile **vorher** und eine **nachher**, für jeden Körper und
+    **2D rechts daneben** – und lässt sich dort **für sich scrollen**. Die **Stoßfläche hat
+    Vorrang**: Wird das Fenster klein, gibt die Tabelle nach und scrollt, statt der Fläche die
+    Höhe zu nehmen. Je Größe eine Zeile **vorher** und eine **nachher**, für jeden Körper und
     **zusammen**; in 2D stehen in jeder Zelle die **Koordinaten x | y** und darunter der **Betrag**.
     Beim unelastischen Stoß kommt die Zeile **„davon innere Energie"** dazu – dort steht, was die
     kinetische Energie verloren hat.
@@ -2926,8 +2927,11 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
       und nicht die des Impulses.
     Eingerastet wird auch an **anderen Kopien**: Zieht man erst eine Kopie in eine freie Ecke und
     hängt die zweite dort an, lässt sich die **ganze Konstruktion am ersten Pfeil verschieben** –
-    die angehängten gehen mit. Ein **Tipp auf eine Kopie** entfernt sie, **„Kopien entfernen"**
-    unter „Anzeigen" räumt alle weg. Während der Auswertung stehen die **Körper fest** (mit ↺ geht
+    die angehängten gehen mit. **Mehrere Auswertungen nebeneinander** gehen ohne weiteres: Am
+    Original entsteht **jedes Mal eine neue Kopie**, auch wenn dort schon eine liegt, und Fertiges
+    bleibt stehen (hat man etwa p₁ + p₂ gebaut, geht Δp₁ gleich daneben). Blendet man eine
+    Pfeilart aus, **ruhen** ihre Kopien nur und sind wieder da, sobald man sie einblendet. Ein
+    **Tipp auf eine Kopie** entfernt sie, **„Kopien entfernen"** unter „Anzeigen" räumt alle weg. Während der Auswertung stehen die **Körper fest** (mit ↺ geht
     es zurück an den Anfang); ist „Auswerten" aus, liegen auch die Pfeile fest.
   - **Auswertung im Stroboskopbild:** Schaltet man nach der Auswertung auf **Stroboskop**, bleibt
     die Konstruktion stehen – sie liegt über dem Stroboskopbild und lässt sich dort **weiter

@@ -43,10 +43,13 @@
      in 2D daneben – beide bei Bedarf für sich scrollbar. */
   #mitte{display:flex;flex:1;min-height:0;min-width:0;flex-direction:column;}
   body.dim2 #mitte{flex-direction:row;}
-  #cvbox{position:relative;flex:1 1 auto;min-height:0;min-width:0;background:#fff;}
-  #tabBox{flex:0 0 auto;max-height:42%;overflow:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y;
+  /* Der Stoß hat Vorrang: In einem kleinen Fenster gibt die Tabelle nach (sie scrollt
+     dann), statt der Fläche die Höhe zu nehmen. */
+  #cvbox{position:relative;flex:1 1 auto;min-height:150px;min-width:0;background:#fff;}
+  #tabBox{flex:0 1 auto;max-height:42%;overflow:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y;
     border-top:1px solid #e2e7ef;background:#fff;}
-  body.dim2 #tabBox{max-height:none;max-width:46%;border-top:none;border-left:1px solid #e2e7ef;touch-action:pan-y pan-x;}
+  body.dim2 #cvbox{min-height:0;min-width:46%;}
+  body.dim2 #tabBox{max-height:none;max-width:54%;border-top:none;border-left:1px solid #e2e7ef;touch-action:pan-y pan-x;}
   /* breiter als das Feld darf sie werden – dann wird waagrecht gescrollt, statt
      die Zeilenbeschriftung in viele Zeilen umzubrechen */
   #tabBox table{border-collapse:collapse;width:max-content;min-width:100%;font-size:1em;}
@@ -783,7 +786,7 @@ function haengtAn(k,ziel,tiefe){
 function rastListe(K,sc,ausser){
   const L=konstPfeile.map(O=>({ref:{art:O.art,i:O.i,ph:O.ph},art:O.art,i:O.i,ph:O.ph,
                                x0:O.x0,y0:O.y0,dx:O.dx,dy:O.dy}));
-  kopien.forEach(k=>{ if(k===ausser||haengtAn(k,ausser)) return;
+  kopien.forEach(k=>{ if(k===ausser||haengtAn(k,ausser)||!kopSichtbar(k)) return;
     const f=fussVon(k,K,MAP.sc,0), v=pfeilVektor(k.art,k.i,k.ph,K,MAP.sc);
     L.push({ref:{id:k.id},art:k.art,i:k.i,ph:k.ph,x0:f.x,y0:f.y,dx:v.dx,dy:v.dy}); });
   return L; }
@@ -828,9 +831,12 @@ function malErgaenzung(k,K,sc,f){
   if(dim1){ const yL=Math.max(ay,by)+24*kk; fuehrung(ax,ay,yL); fuehrung(bx,by,yL);
     malPfeil(ax,yL,bx-ax,0,farbe,3.6,false,lab,true); }
   else malPfeil(ax,ay,bx-ax,by-ay,farbe,3.6,false,lab,true); }
+/* Ist eine Pfeilart ausgeblendet, ruhen ihre Kopien nur – gelöscht werden sie nicht,
+   sonst wäre eine fertige Auswertung nach einem Blick auf die andere Größe weg. */
+const kopSichtbar=k=>(k.art==='v')?!!D.pfeil.v:!!D.pfeil.p;
 function malKopien(K,px,py,sc){
-  kopien=kopien.filter(k=>(k.art==='v')?D.pfeil.v:D.pfeil.p);
   kopien.forEach(k=>{
+    if(!kopSichtbar(k)) return;
     const f=fussVon(k,K,sc,0), v=pfeilVektor(k.art,k.i,k.ph,K,sc);
     const O=origFinden(k.art,k.i,k.ph);
     malPfeil(f.x,f.y,v.dx,v.dy,O?O.farbe:FGR,O?O.lw:3,k.ph==='vor',O?O.lab:'',k.ph!=='vor');
@@ -850,8 +856,12 @@ function pfeilZiehStart(p){
   if(!ziehbar()) return false;
   const K=pfeilSkala(), tol=Math.max(12,13*kk);
   let best=null;
-  kopien.forEach(k=>{ const f=fussVon(k,K,MAP.sc,0), v=pfeilVektor(k.art,k.i,k.ph,K,MAP.sc);
-    const d=abstandPfeil(p.px,p.py,f.x,f.y,v.dx,v.dy)-6;
+  /* Kopien bekommen einen kleinen Aufschlag: Liegt eine über einem Original, ist das
+     Original gemeint – daraus entsteht eine weitere Kopie, die fertige Auswertung
+     bleibt unangetastet. Eine frei abgelegte Kopie gewinnt dort, wo sie allein liegt. */
+  kopien.forEach(k=>{ if(!kopSichtbar(k)) return;
+    const f=fussVon(k,K,MAP.sc,0), v=pfeilVektor(k.art,k.i,k.ph,K,MAP.sc);
+    const d=abstandPfeil(p.px,p.py,f.x,f.y,v.dx,v.dy)+8;
     if(d<=tol&&(!best||d<best.d)) best={d:d,k:k,x:f.x,y:f.y}; });
   konstPfeile.forEach(O=>{ const d=abstandPfeil(p.px,p.py,O.x0,O.y0,O.dx,O.dy);
     if(d<=tol&&(!best||d<best.d)) best={d:d,O:O,x:O.x0,y:O.y0}; });
@@ -861,7 +871,7 @@ function pfeilZiehStart(p){
   else { const O=best.O;
     k={id:kopNr++,art:O.art,i:O.i,ph:O.ph,mx:0,my:0,dy:0,snap:null};
     fussSetzen(k,O.x0,O.y0);
-    kopien.push(k); if(kopien.length>6) kopien.shift(); }
+    kopien.push(k); if(kopien.length>12) kopien.shift(); }
   ziehK={k:k, gx:p.px-best.x, gy:p.py-best.y, sx:p.px, sy:p.py, bewegt:false};
   knoepfe(); zeichne(); return true; }
 function pfeilZiehen(p){
@@ -1409,7 +1419,9 @@ function loop(ts){
   requestAnimationFrame(loop); }
 
 /* ---------- Bild ---------- */
-function bild(){ return window.TafelShot?TafelShot.rasterize($('mitte'),{scale:2,bg:'#fff',exclude:'#hint,#hilfe,#vorl,#anzPop'}):null; }
+function bild(){ if(!window.TafelShot) return null;
+  zeichne();                     /* frisch zeichnen – das Bild zeigt genau das, was zu sehen ist */
+  return TafelShot.rasterize($('mitte'),{scale:2,bg:'#fff',exclude:'#hint,#hilfe,#vorl,#anzPop'}); }
 $('bSpeich').onclick=()=>{
   const im=bild(); if(!im){ toast('Bild konnte nicht erstellt werden'); return; }
   const nam=(D.strobo?'stroboskop-':'stoss-')+(D.dim===1?'1d-':'2d-')+(D.elast?'elastisch':'unelastisch')+'.png';
@@ -1486,7 +1498,7 @@ const HILFE=[
   ['Anzeigen','Hinter dem Knopf „Anzeigen" steckt alles, was eingeblendet werden kann: oben die <b>Werte</b> für die Tabelle (v, p, E), in der Mitte die <b>Pfeile</b> (v, p und die Änderung Δ), unten die <b>Auswertung</b> (siehe dort). Alles lässt sich frei zusammenstellen, auch im Benutzen-Modus. 1D/2D und elastisch/unelastisch stehen daneben und bleiben ebenfalls immer sichtbar.'],
   ['Wertetabelle','Die Tabelle steht in einem eigenen Feld: in <b>1D unter</b> dem Stoßfenster, in <b>2D rechts daneben</b>; wird sie zu groß, lässt sie sich für sich scrollen. Sie zeigt Geschwindigkeit, Impuls und kinetische Energie, jeweils vor und nach dem Stoß, für jeden Körper und zusammen. In 2D stehen in jeder Zelle die beiden Komponenten x | y.'],
   ['Pfeile','„v" und „p" zeigen die Vektoren an den Körpern und zusätzlich an der Stoßstelle: gestrichelt vorher, durchgezogen nachher (v₁′). „Änderung" hängt den Pfeil der Änderung an (Δv bzw. Δp) – in 2D von der Spitze des Vorher-Pfeils zur Spitze des Nachher-Pfeils.'],
-  ['Pfeile ziehen und ergänzen','Ist der Stoß gelaufen und „Auswerten" an, lässt sich <b>jeder Pfeil anfassen</b>: Eine <b>Kopie</b> folgt dem Finger. Legt man sie richtig an einen anderen Pfeil, rastet sie ein und das <b>fehlende Stück wird ergänzt</b>:<br>• <b>Fuß an Fuß</b>, derselbe Körper, vorher und nachher → <b>Δp₁</b> bzw. <b>Δv₁</b> (und genauso für Körper 2). So sieht man, dass Δv₁ und Δv₂ verschieden sind, Δp₁ und Δp₂ aber entgegengesetzt gleich.<br>• <b>Spitze an Fuß</b>, beide Körper zur selben Zeit → die <b>Summe</b>: Bei den Impulsen ist <b>p₁ + p₂ vorher und nachher derselbe Pfeil</b>, bei den Geschwindigkeiten <b>nicht</b> – eine Erhaltung der Geschwindigkeit gibt es nicht, und genau das zeigt der Vergleich.<br>Eingerastet wird auch an <b>anderen Kopien</b>: Zieht man erst eine Kopie in eine freie Ecke und hängt die zweite dort an, lässt sich die ganze Konstruktion später <b>am ersten Pfeil verschieben</b> – die angehängten gehen mit. Ein <b>Tipp auf eine Kopie</b> entfernt sie, „Kopien entfernen" unter „Anzeigen" räumt alle weg.'],
+  ['Pfeile ziehen und ergänzen','Ist der Stoß gelaufen und „Auswerten" an, lässt sich <b>jeder Pfeil anfassen</b>: Eine <b>Kopie</b> folgt dem Finger. Legt man sie richtig an einen anderen Pfeil, rastet sie ein und das <b>fehlende Stück wird ergänzt</b>:<br>• <b>Fuß an Fuß</b>, derselbe Körper, vorher und nachher → <b>Δp₁</b> bzw. <b>Δv₁</b> (und genauso für Körper 2). So sieht man, dass Δv₁ und Δv₂ verschieden sind, Δp₁ und Δp₂ aber entgegengesetzt gleich.<br>• <b>Spitze an Fuß</b>, beide Körper zur selben Zeit → die <b>Summe</b>: Bei den Impulsen ist <b>p₁ + p₂ vorher und nachher derselbe Pfeil</b>, bei den Geschwindigkeiten <b>nicht</b> – eine Erhaltung der Geschwindigkeit gibt es nicht, und genau das zeigt der Vergleich.<br>Eingerastet wird auch an <b>anderen Kopien</b>: Zieht man erst eine Kopie in eine freie Ecke und hängt die zweite dort an, lässt sich die ganze Konstruktion später <b>am ersten Pfeil verschieben</b> – die angehängten gehen mit. <b>Mehrere Auswertungen nebeneinander</b> sind kein Problem: Am Original entsteht <b>jedes Mal eine neue Kopie</b>, auch wenn dort schon eine liegt – Fertiges bleibt stehen. Blendet man eine Pfeilart aus, <b>ruhen</b> ihre Kopien nur und sind wieder da, sobald man sie einblendet. Ein <b>Tipp auf eine Kopie</b> entfernt sie, „Kopien entfernen" unter „Anzeigen" räumt alle weg.'],
   ['Auswertung (fertig gezeichnet)','Unter „Anzeigen → Auswertung" lassen sich die beiden fertigen Bilder einblenden: <b>Geschwindigkeiten zusammen</b> und <b>Impulse zusammen</b>. In jedem stehen zwei Ketten untereinander – vorher und nachher – mit der Summe als Zahl daneben. Beim Impuls kommt <b>zweimal dasselbe</b> heraus, bei der Geschwindigkeit nicht. Beide sind <b>von Haus aus aus</b>, denn meist will man selbst auswerten; beim <b>Teilen per QR-Code</b> bleiben sie aus, damit die Klasse selbst konstruiert.'],
   ['Vorlagen','Die klassischen Aufgaben auf Knopfdruck: gleiche Massen, leicht gegen schwer und umgekehrt, gegeneinander, die unelastischen Fälle und drei schiefe Stöße in der Fläche.'],
   ['Beenden','Der Ablauf endet von selbst, sobald <b>beide</b> Körper die Bahn bzw. die Fläche verlassen haben. Ist ein Körper sehr langsam, dauert das; dann schließt der Knopf <b>„Beenden"</b> neben „Start" den Ablauf an Ort und Stelle ab. Die Aufnahme bleibt stehen – Wiedergabe, Stroboskop und „Auswerten" gehen sofort.'],
