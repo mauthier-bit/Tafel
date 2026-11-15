@@ -24,6 +24,8 @@
      zerf   [[Produkte, Anteil in %], …]
      anti   Symbol des Antiteilchens
      bem    ein Satz für den Unterricht
+
+   Am Ende steht BAUM: der Baum für die Mindmap-Ansicht.
 */
 (function(){
 "use strict";
@@ -309,5 +311,80 @@ const K=[
  bsp:['pip','pi0','Kp','eta','rho0','phi','Jpsi']}
 ];
 
-window.TEILCHEN_DATA={ teilchen:T, kategorien:K };
+/* ---------- Baum für die Mindmap ----------
+   Jeder Ast: id ('k:…' eine Kategorie von oben, 'g:…' eine Gruppe, die es nur
+   in der Mindmap gibt), t Beschriftung, u Untertitel, d Erklärung für die
+   Infokarte, s Seite der Wurzel ('l' links, sonst rechts), c Farbe des Astes,
+   k die Unteräste. Ein Blatt nennt nur sein Teilchen: {p:'id'}.
+   Die Kategorien-Äste holen Name und Erklärung aus K. */
+const bl=s=>s.split(' ').map(id=>({p:id}));
+const BAUM={id:'k:teilchen',c:'#475569',u:'Einteilung nach Spin und Aufbau',k:[
+ {id:'k:fermion',s:'r',c:'#4338ca',u:'Spin ½ · Materie',k:[
+  {id:'k:quark',c:'#6d28d9',u:'6 Sorten · nie einzeln',k:bl('u d s c b t')},
+  {id:'k:lepton',c:'#15803d',u:'6 Sorten · ohne starke Kraft',k:[
+   {id:'g:gelad',t:'geladene Leptonen',u:'Ladung −1',c:'#15803d',
+    d:'Elektron, Myon und Tauon tragen alle die Ladung −1 und unterscheiden sich nur in der Masse. Myon und Tauon zerfallen; am Ende steht immer ein Elektron.',
+    k:bl('e mu tau')},
+   {id:'g:neutrino',t:'Neutrinos',u:'ungeladen, fast masselos',c:'#15803d',
+    d:'Zu jedem geladenen Lepton gehört ein Neutrino. Sie sind ungeladen, extrem leicht und spüren nur die schwache Kraft – deshalb durchdringen sie die Erde fast ungehindert.',
+    k:bl('nue numu nutau')}]}]},
+ {id:'k:boson',s:'r',c:'#c2410c',u:'ganzzahliger Spin · Kräfte',k:[
+  {id:'k:eich',c:'#c2410c',u:'übertragen die Kräfte',k:bl('gamma g W Z')},
+  {id:'k:higgs',c:'#a16207',u:'Spin 0',k:bl('H')}]},
+ {id:'k:hadron',s:'l',c:'#475569',u:'aus Quarks – nicht elementar',k:[
+  {id:'k:baryon',c:'#1d4ed8',u:'3 Quarks · zugleich Fermionen',k:[
+   {id:'g:nukleon',t:'Nukleonen',u:'bauen die Atomkerne',c:'#1d4ed8',
+    d:'Proton und Neutron sind die leichtesten Baryonen und fast gleich schwer. Nur aus ihnen bestehen die Atomkerne.',
+    k:bl('p n')},
+   {id:'g:hyperon',t:'Hyperonen',u:'mit Strange-Quark',c:'#1d4ed8',
+    d:'Baryonen, in denen mindestens ein Strange-Quark steckt. Sie sind schwerer als die Nukleonen und zerfallen über die schwache Kraft stufenweise bis zum Proton.',
+    k:[
+    {id:'g:lambda',t:'Lambda',u:'Isospin 0',c:'#1d4ed8',
+     d:'Λ⁰ (u d s) war das erste „seltsame" Teilchen: In Stößen entsteht es sofort, es zerfällt aber erst nach 10⁻¹⁰ s. Diese Trägheit beim Zerfall heißt Strangeness.',
+     k:bl('L0')},
+    {id:'g:sigma',t:'Sigma',u:'Isospin 1 · drei Ladungen',c:'#1d4ed8',
+     d:'Die Sigma-Baryonen gibt es in drei Ladungszuständen. Σ* hat denselben Aufbau mit Spin 3/2: Die Quarkspins stehen dann parallel, das Teilchen ist schwerer und zerfällt sofort.',
+     k:bl('Sp S0 Sm Ssp Ss0 Ssm')},
+    {id:'g:xi',t:'Xi',u:'zwei Strange-Quarks',c:'#1d4ed8',
+     d:'Die Xi-Baryonen heißen auch Kaskadenteilchen: Sie zerfallen in zwei Stufen, erst zum Λ⁰, dann zum Proton.',
+     k:bl('X0 Xm Xs0 Xsm')},
+    {id:'g:omega',t:'Omega',u:'drei Strange-Quarks',c:'#1d4ed8',
+     d:'Ω⁻ (s s s) füllte 1964 die letzte freie Stelle im Dekuplett: Masse und Ladung waren vorhergesagt, bevor man das Teilchen fand.',
+     k:bl('Om')}]},
+   {id:'g:delta',t:'Delta',u:'Spin 3/2 · Resonanzen',c:'#1d4ed8',
+    d:'Die vier Delta-Baryonen sind angeregte Nukleonen: gleicher Quarkinhalt, aber alle drei Spins parallel. Nach rund 10⁻²³ s zerfallen sie stark in Nukleon und Pion.',
+    k:bl('Dpp Dp D0 Dm')},
+   {id:'g:schwer',t:'Charm und Bottom',u:'schwere Baryonen',c:'#1d4ed8',
+    d:'Baryonen mit einem schweren Quark statt des Strange-Quarks. Sie entstehen nur an Beschleunigern.',
+    k:bl('Lc Lb')}]},
+  {id:'k:meson',c:'#b91c1c',u:'Quark + Antiquark · zugleich Bosonen',k:[
+   {id:'g:pion',t:'Pionen',u:'leichteste Hadronen',c:'#b91c1c',
+    d:'Die drei Pionen sind die leichtesten Hadronen. Zwischen Proton und Neutron werden sie ausgetauscht – so hält die Kernkraft den Kern zusammen.',
+    k:bl('pip pi0 pim')},
+   {id:'g:kaon',t:'Kaonen',u:'mit Strange-Quark',c:'#b91c1c',
+    d:'Mesonen mit einem Strange-Quark. An ihrem Zerfall entdeckte man, dass die schwache Kraft Bild und Spiegelbild unterscheidet.',
+    k:bl('Kp K0 K0b Km')},
+   {id:'g:eta',t:'Eta-Mesonen',u:'ohne Ladung',c:'#b91c1c',
+    d:'η und η′ sind ungeladene Mischungen aus u ū, d d̄ und s s̄. Sie vervollständigen mit Pionen und Kaonen das Nonett.',
+    k:bl('eta etap')},
+   {id:'g:rho',t:'Rho-Mesonen',u:'Spin 1',c:'#b91c1c',
+    d:'Die Rho-Mesonen haben denselben Quarkinhalt wie die Pionen, aber Spin 1. Nach rund 10⁻²³ s zerfallen sie stark in zwei Pionen.',
+    k:bl('rhop rho0 rhom')},
+   {id:'g:kstern',t:'K*-Mesonen',u:'Spin 1',c:'#b91c1c',
+    d:'Die Kaonen mit Spin 1. Sie zerfallen sofort wieder in ein Kaon und ein Pion.',
+    k:bl('Ksp Ks0 Ks0b Ksm')},
+   {id:'g:omphi',t:'Omega und Phi',u:'Spin 1, ohne Ladung',c:'#b91c1c',
+    d:'ω und φ sind die ungeladenen Partner im Vektornonett. φ besteht fast nur aus s s̄ und zerfällt deshalb am liebsten in zwei Kaonen.',
+    k:bl('omega phi')},
+   {id:'g:dmeson',t:'D-Mesonen',u:'mit Charm-Quark',c:'#b91c1c',
+    d:'Die leichtesten Mesonen mit einem Charm-Quark. Weil das c-Quark nur schwach zerfallen kann, leben sie vergleichsweise lange.',
+    k:bl('Dm0 Dpl')},
+   {id:'g:bmeson',t:'B-Mesonen',u:'mit Bottom-Quark',c:'#b91c1c',
+    d:'Mesonen mit einem Bottom-Quark. An ihnen untersucht man, warum es im Weltall mehr Materie als Antimaterie gibt.',
+    k:bl('B0')},
+   {id:'g:onium',t:'Quarkonia',u:'Quark + eigenes Antiquark',c:'#b91c1c',
+    d:'J/ψ (c c̄) und Υ (b b̄) bestehen aus einem schweren Quark und seinem Antiquark. Mit der Entdeckung des J/ψ 1974 war das Charm-Quark bewiesen.',
+    k:bl('Jpsi Ups')}]}]}]};
+
+window.TEILCHEN_DATA={ teilchen:T, kategorien:K, baum:BAUM };
 })();

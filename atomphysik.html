@@ -28,7 +28,7 @@
   .view{position:absolute;inset:0;display:none;flex-direction:column;}
   .view.on{display:flex;}
   .view iframe{flex:1;width:100%;border:0;display:block;}
-  #cvZ{touch-action:none;}            /* im Zerfallsdiagramm wird mit zwei Fingern gezoomt */
+  #cvZ,#cvT{touch-action:none;}       /* im Zerfallsdiagramm und in der Mindmap wird geschoben und gezoomt */
   .bar{flex:none;display:flex;gap:5px;align-items:center;flex-wrap:nowrap;overflow-x:auto;padding:6px 8px;border-bottom:1px solid #eef1f5;font-size:13px;}
   .bar>*{flex:0 0 auto;}
   .bar button,.bar select{border:1px solid #cfd6e0;background:#fff;border-radius:7px;padding:4px 9px;font:600 13px -apple-system,sans-serif;cursor:pointer;color:#1f2430;white-space:nowrap;}
@@ -330,6 +330,7 @@
         <b>Ansicht</b>
         <button type="button" id="tSm" class="on" title="Die Elementarteilchen des Standardmodells in drei Generationen">Standardmodell</button>
         <button type="button" id="tBaumB" title="Wie sich die Teilchen einteilen: Fermionen und Bosonen, Quarks und Leptonen, Baryonen und Mesonen">Kategorien</button>
+        <button type="button" id="tMapB" title="Mindmap: der ganze Baum zum Aufklappen – ein Tipp auf einen Ast klappt ihn auf oder zu">Mindmap</button>
         <button type="button" id="tHadB" title="Die zusammengesetzten Teilchen, aufgetragen über Isospin I₃ und Strangeness S">Hadronen</button>
         <span class="trenn"></span>
         <span class="grp" id="tHadGrp">
@@ -338,6 +339,13 @@
           <b>Spin</b>
           <button type="button" id="tSp0" class="on" title="Grundzustand: Oktett bzw. pseudoskalares Nonett">½</button>
           <button type="button" id="tSp1" title="Angeregt: Dekuplett bzw. Vektornonett">3/2</button>
+        </span>
+        <span class="grp" id="tMapGrp">
+          <button type="button" id="tAufB" title="Alle Äste aufklappen">alles auf</button>
+          <button type="button" id="tZuB" title="Alle Äste zuklappen">alles zu</button>
+          <button type="button" id="tFitB" title="Den ganzen Baum wieder ins Bild passen">einpassen</button>
+          <button type="button" id="tKleinB" title="Kleiner">−</button>
+          <button type="button" id="tGrossB" title="Größer">+</button>
         </span>
         <button type="button" id="tLad" title="Linien gleicher Ladung einzeichnen: Q = I₃ + (B + S)/2">Ladungslinien</button>
         <span class="trenn"></span>
@@ -371,6 +379,7 @@ let D={ v:1, tab:'pse', fontSize:13, fontBold:false, fontItalic:false,
         zn:200, zp:16.7, zreihe:null, zhalb:false,  /* Zerfall: Kerne, Wahrscheinlichkeit, Verlauf */
         zschritt:false, zphase:'weg', zpunkt:false, zpn:0, ztabAb:undefined, znuk:0, zzeit:false, ztempo:2,
         tans:'sm', tsel:null, thad:'baryon', tmul:0, twert:true, tlad:false,   /* Elementarteilchen: Ansicht, Auswahl, Gruppe, Multiplett, Werte, Ladungslinien */
+        tauf:null, tmz:null, tmx:0, tmy:0,   /* Mindmap: offene Äste, Zoom und Verschiebung (tmz null = von selbst einpassen) */
         pse:null, nuklid:null };
 
 const fontStr=(px,bold)=>(D.fontItalic?'italic ':'')+((bold||D.fontBold)?'800 ':'600 ')+px+'px -apple-system,BlinkMacSystemFont,sans-serif';
@@ -1676,10 +1685,11 @@ $('kUm').onclick=()=>{ const e=nukOf(D.kz,D.kn); if(!e||e[2]===0) return;
   kernAnim(art); };
 
 /* ============ Elementarteilchen ============
-   Drei Ansichten auf einer Leinwand:
+   Vier Ansichten auf einer Leinwand:
      „Standardmodell"  die Elementarteilchen als Tabelle der drei Generationen,
      „Kategorien"      der Stammbaum Fermionen/Bosonen, Quarks/Leptonen,
                        Hadronen/Baryonen/Mesonen,
+     „Mindmap"         derselbe Baum zum Aufklappen, verschiebbar und zoombar,
      „Hadronen"        die zusammengesetzten Teilchen über Isospin I₃ und
                        Strangeness S - das Oktett, das Dekuplett und die Nonetts.
    Angetippt wird jedes Feld: rechts (auf schmalen Geräten unten) steht dann die
@@ -1694,7 +1704,7 @@ const TFARB={quark:['#ede9fe','#6d28d9'],lepton:['#dcfce7','#15803d'],boson:['#f
 const tFarbe=a=>TFARB[a]||TFARB.kat;
 const tArtName={quark:'Quark',lepton:'Lepton',boson:'Eichboson',higgs:'Higgs-Boson',baryon:'Baryon',meson:'Meson'};
 const hochZ=n=>(n<0?'⁻':'')+hoch(Math.abs(n));
-const tAnsicht=()=>D.tans==='baum'||D.tans==='had'?D.tans:'sm';
+const tAnsicht=()=>(D.tans==='baum'||D.tans==='had'||D.tans==='map')?D.tans:'sm';
 const tGrp=()=>D.thad==='meson'?'meson':'baryon';
 const tMult=()=>(+D.tmul===1)?'d':'o';
 let TREF=[];                    /* Trefferflächen der laufenden Zeichnung */
@@ -1884,7 +1894,146 @@ function tStammbaum(ctx,B,fs){
   tChips(ctx,X(.25)-B.w*.2,y2[2],B.w*.4,chipH2,TBAUM_CHIPS.baryon,fs);
   tChips(ctx,X(.75)-B.w*.2,y2[2],B.w*.4,chipH2,TBAUM_CHIPS.meson,fs); }
 
-/* ---- Ansicht 3: Hadronen über I₃ und S ---- */
+/* ---- Ansicht 3: Mindmap ----
+   Der Baum aus teilchen-data.js, zum Aufklappen. Ein Tipp auf einen Ast klappt
+   ihn auf oder zu und zeigt zugleich die Infokarte; mit einem Finger wird
+   geschoben, mit zweien gezoomt. Solange niemand gezoomt hat (D.tmz === null),
+   passt sich das Bild nach jedem Aufklappen von selbst ein. */
+const TMM=((window.TEILCHEN_DATA||{}).baum)||{id:'k:teilchen',k:[]};
+const TMAUF=['k:teilchen','k:fermion','k:boson','k:hadron'];   /* am Anfang offen */
+let TMKN=[];                        /* Trefferflächen der Mindmap (Leinwandmaß) */
+let TMT={s:1,tx:0,ty:0};            /* laufende Abbildung Welt → Leinwand */
+let TMBER=null;                     /* Zeichenfläche der Mindmap */
+function tmAuf(){ if(!Array.isArray(D.tauf)) D.tauf=TMAUF.slice(); return D.tauf; }
+const tmOffen=id=>tmAuf().indexOf(id)>=0;
+function tmSchalte(id){ const a=tmAuf(), i=a.indexOf(id);
+  if(i>=0) a.splice(i,1); else a.push(id); }
+/* alle Äste (ohne Blätter) - für „alles auf" */
+function tmAlle(n,aus){ aus=aus||[];
+  if(n.k&&n.k.length){ aus.push(n.id); n.k.forEach(c=>tmAlle(c,aus)); } return aus; }
+const tmZahl=n=>(n.k&&n.k.length)?n.k.reduce((s,c)=>s+tmZahl(c),0):1;
+function tmBlaetter(n,aus){ aus=aus||[];
+  if(n.p) aus.push(n.p); else (n.k||[]).forEach(c=>tmBlaetter(c,aus)); return aus; }
+function tmSuche(id,n){ n=n||TMM; if(n.id===id) return n;
+  const k=n.k||[]; for(let i=0;i<k.length;i++){ const r=tmSuche(id,k[i]); if(r) return r; }
+  return null; }
+function tmEltern(id,n){ n=n||TMM; const k=n.k||[];
+  for(let i=0;i<k.length;i++){ if(k[i].id===id) return n;
+    const r=tmEltern(id,k[i]); if(r) return r; }
+  return null; }
+const tmName=n=>n?(n.t||((n.id||'').indexOf('k:')===0?((TKMAP.get(n.id.slice(2))||{}).name||''):'')):'';
+
+/* Beschriftung, Untertitel, Farbe und Kinder eines Astes */
+function tmLesen(n){
+  if(n.p){ const p=TPMAP.get(n.p);
+    return p?{id:p.id,t:p.sym,u:p.name,art:p.art,k:[]}:null; }
+  const k=(n.id||'').indexOf('k:')===0?TKMAP.get(n.id.slice(2)):null;
+  return {id:n.id,t:n.t||(k?k.name:n.id),
+    u:(n.u!==undefined)?n.u:(k?k.kurz:''),art:'kat',k:n.k||[]}; }
+const tmPx=(d,fs)=>fs*(d===0?1.5:d===1?1.22:d===2?1.08:0.98);
+
+/* Jeden sichtbaren Ast messen: Breite, Höhe und Höhe des ganzen Teilbaums */
+function tmBau(ctx,n,d,fs,erb){
+  const K=tmLesen(n); if(!K) return null;
+  const c=n.c||erb||'#475569', px=tmPx(d,fs), uPx=px*0.62;
+  const u=(D.twert!==false)?K.u:'';
+  let w=tTeileBreite(ctx,tTeile(K.t),px,true);
+  if(u){ ctx.font=fontStr(uPx,false); w=Math.max(w,ctx.measureText(u).width); }
+  w+=px*1.2;
+  const h=u?px*2.3:px*1.75;
+  const kinder=(tmOffen(K.id)&&K.k.length)?K.k.map(x=>tmBau(ctx,x,d+1,fs,c)).filter(Boolean):[];
+  const g=fs*0.5;
+  let kh=0; kinder.forEach((x,i)=>{ kh+=x.H+(i?g:0); });
+  return {K,u,px,uPx,w,h,H:Math.max(h,kh),kh,kinder,g,d,c,
+    zu:(!kinder.length&&K.k.length)?tmZahl(n):0}; }
+
+/* Spalten nach Tiefe, Äste untereinander; die Wurzel steht in der Mitte */
+function tmLege(wu,fs){
+  const colW=[]; (function m(n){ colW[n.d]=Math.max(colW[n.d]||0,n.w); n.kinder.forEach(m); })(wu);
+  const hg=fs*2.4, colX=[0];
+  for(let i=1;i<colW.length;i++) colX[i]=(i===1?colW[0]/2:colX[i-1]+colW[i-1])+hg;
+  const aus=[];
+  wu.x=-wu.w/2; wu.y=-wu.h/2; wu.dir=1; aus.push(wu);
+  const platz=(n,d,dir,ym)=>{ const x=colX[Math.min(d,colX.length-1)]*dir;
+    n.x=dir>0?x:x-n.w; n.y=ym-n.h/2; n.dir=dir; aus.push(n);
+    let y=ym-n.kh/2;
+    n.kinder.forEach(c=>{ platz(c,d+1,dir,y+c.H/2); y+=c.H+n.g; }); };
+  const stapel=(liste,dir)=>{ const g=fs*1.0; let H=0;
+    liste.forEach((c,i)=>{ H+=c.H+(i?g:0); });
+    let y=-H/2; liste.forEach(c=>{ platz(c,1,dir,y+c.H/2); y+=c.H+g; }); };
+  const seite=i=>((TMM.k[i]||{}).s==='l');
+  const li=[], re=[];
+  wu.kinder.forEach((c,i)=>{ (seite(i)?li:re).push(c); });
+  stapel(li,-1); stapel(re,1);
+  return aus; }
+
+/* geschwungener Ast vom Rand des einen zum Rand des anderen Kastens */
+function tmAst(ctx,a,b){
+  const dir=b.dir;
+  const x0=dir>0?a.x+a.w:a.x, y0=a.y+a.h/2;
+  const x1=dir>0?b.x:b.x+b.w, y1=b.y+b.h/2;
+  ctx.strokeStyle=b.c; ctx.globalAlpha=0.8;
+  ctx.lineWidth=Math.max(1.2,3.4-b.d*0.7);
+  ctx.beginPath(); ctx.moveTo(x0,y0);
+  ctx.bezierCurveTo(x0+(x1-x0)*0.5,y0,x0+(x1-x0)*0.5,y1,x1,y1);
+  ctx.stroke(); ctx.globalAlpha=1; }
+
+function tmFeld(ctx,n){
+  const K=n.K, an=D.tsel===K.id, blatt=K.art!=='kat', f=blatt?tFarbe(K.art):null;
+  const rad=Math.min(n.h*0.32,10), cx=n.x+n.w/2, cy=n.y+n.h/2;
+  ctx.fillStyle=blatt?f[0]:'#fff'; tRR(ctx,n.x,n.y,n.w,n.h,rad); ctx.fill();
+  const lw=an?2.8:1.5;
+  ctx.lineWidth=lw; ctx.strokeStyle=an?'#111827':(blatt?f[1]:n.c);
+  tRR(ctx,n.x+lw/2,n.y+lw/2,n.w-lw,n.h-lw,rad); ctx.stroke();
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  zeileT(ctx,K.t,cx,n.u?cy-n.px*0.36:cy,n.px,true,blatt?f[1]:'#1f2430',n.w-n.px*0.7);
+  if(n.u) zeile(ctx,n.u,cx,cy+n.px*0.6,n.uPx,false,'#64748b',n.w-n.px*0.6);
+  /* zugeklappt: ein Punkt mit der Zahl der Teilchen, die darin stecken */
+  if(n.zu){ const r=Math.max(n.px*0.56,9), px0=(n.dir>0?n.x+n.w:n.x)+n.dir*r*0.72;
+    ctx.beginPath(); ctx.arc(px0,cy,r,0,Math.PI*2); ctx.fillStyle=n.c; ctx.fill();
+    ctx.fillStyle='#fff'; ctx.font=fontStr(r*1.05,true);
+    ctx.fillText(String(n.zu),px0,cy+r*0.06); } }
+
+function tmBild(ctx,B,fs){
+  TMBER=B;
+  const wu=tmBau(ctx,TMM,0,fs,'#475569'); if(!wu) return;
+  const N=tmLege(wu,fs);
+  let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;
+  N.forEach(n=>{ const b=n.zu?Math.max(n.px*0.56,9)*1.8:0;   /* der Punkt steht außen vor dem Kasten */
+    x0=Math.min(x0,n.x-(n.dir<0?b:0)); x1=Math.max(x1,n.x+n.w+(n.dir>0?b:0));
+    y0=Math.min(y0,n.y); y1=Math.max(y1,n.y+n.h); });
+  const pad=fs*1.4;
+  let s,tx,ty;
+  if(typeof D.tmz==='number'&&D.tmz>0){ s=D.tmz; tx=D.tmx||0; ty=D.tmy||0;
+    /* Wird das Fenster kleiner oder kommt ein Stand von einem anderen Gerät,
+       darf der Baum nicht ganz aus dem Bild rutschen: ein Rand bleibt immer da. */
+    const rx=Math.min(B.w*0.35,(x1-x0)*s*0.9), ry=Math.min(B.h*0.35,(y1-y0)*s*0.9);
+    tx=Math.min(Math.max(tx,B.x+rx-x1*s),B.x+B.w-rx-x0*s);
+    ty=Math.min(Math.max(ty,B.y+ry-y1*s),B.y+B.h-ry-y0*s);
+    D.tmx=tx; D.tmy=ty; }
+  else { s=Math.max(0.2,Math.min(1.2,Math.min(B.w/(x1-x0+2*pad),B.h/(y1-y0+2*pad))));
+    tx=B.x+B.w/2-(x0+x1)/2*s; ty=B.y+B.h/2-(y0+y1)/2*s; }
+  TMT={s,tx,ty};
+  ctx.save();
+  ctx.beginPath(); ctx.rect(B.x,B.y,B.w,B.h); ctx.clip();
+  ctx.translate(tx,ty); ctx.scale(s,s);
+  (function aeste(n){ n.kinder.forEach(c=>{ tmAst(ctx,n,c); aeste(c); }); })(wu);
+  N.forEach(n=>tmFeld(ctx,n));
+  ctx.restore();
+  /* Trefferflächen im Leinwandmaß - nur, was auch im Ausschnitt liegt */
+  TMKN=[];
+  N.forEach(n=>{ const r={x:n.x*s+tx,y:n.y*s+ty,w:n.w*s,h:n.h*s,
+      id:n.K.id,auf:n.K.k.length>0};
+    if(r.x+r.w>B.x&&r.x<B.x+B.w&&r.y+r.h>B.y&&r.y<B.y+B.h) TMKN.push(r); });
+}
+
+/* Zoomen über die Knöpfe und das Mausrad; p ist der Punkt, der stehen bleibt */
+function tmZoom(f,p){ const B=TMBER; if(!B) return;
+  const s0=TMT.s||1, s=Math.max(0.2,Math.min(3,s0*f));
+  const cx=p?p.x:B.x+B.w/2, cy=p?p.y:B.y+B.h/2;
+  D.tmz=s; D.tmx=cx-(cx-TMT.tx)*s/s0; D.tmy=cy-(cy-TMT.ty)*s/s0; }
+
+/* ---- Ansicht 4: Hadronen über I₃ und S ---- */
 const TTITEL={'baryon|o':'Baryonen-Oktett · Spin ½ · drei Quarks',
   'baryon|d':'Baryonen-Dekuplett · Spin 3/2 · alle drei Spins parallel',
   'meson|o':'Pseudoskalares Mesonen-Nonett · Spin 0',
@@ -1978,6 +2127,7 @@ function tKarte(ctx,K,fs){
   ctx.textAlign='left'; ctx.textBaseline='middle';
   if(!sel){ tKarteLeer(ctx,I,fs); return; }
   if(sel.indexOf('k:')===0){ tKarteKat(ctx,I,fs,TKMAP.get(sel.slice(2))); return; }
+  if(sel.indexOf('g:')===0){ tKarteGrp(ctx,I,fs,tmSuche(sel)); return; }
   const p=TPMAP.get(sel); if(!p){ tKarteLeer(ctx,I,fs); return; }
   const f=tFarbe(p.art);
   let y=K.y+fs*1.6;
@@ -2018,8 +2168,29 @@ function tKarteKat(ctx,I,fs,k){
     const bh=Math.min(fs*3.2,I.y+I.h-y-fs*0.3);
     k.bsp.forEach((id,i)=>{ const p=TPMAP.get(id); if(p) tKachel(ctx,x+i*(bw+g),y,bw,bh,p,fs); }); } }
 
+/* ---- Infokarte für eine Gruppe, die es nur in der Mindmap gibt ---- */
+function tKarteGrp(ctx,I,fs,g){
+  if(!g) return;
+  const x=I.x; let y=I.y+fs*1.7;
+  zeile(ctx,tmName(g),x,y,fs*1.5,true,'#1f2430',I.w); y+=fs*1.5;
+  const o=tmEltern(g.id);
+  if(o){ zeile(ctx,'gehört zu: '+tmName(o),x,y,fs*0.84,false,'#64748b',I.w); y+=fs*1.25; }
+  tBruch(ctx,g.d||'',I.w,fs*0.92,false).forEach(l=>{
+    if(y<I.y+I.h-fs*0.8){ tTxt(ctx,l,x,y,fs*0.92,false,'#1f2430','left'); y+=fs*1.26; } });
+  const ids=tmBlaetter(g);
+  if(ids.length&&y<I.y+I.h-fs*3.8){
+    y+=fs*0.6;
+    tTxt(ctx,ids.length===1?'das Teilchen:':'die '+ids.length+' Teilchen:',x,y,fs*0.82,false,'#8795a8','left');
+    y+=fs*1.1;
+    const sp=Math.min(ids.length,4), g2=Math.max(3,I.w*0.012);
+    const bw=Math.min((I.w-(sp-1)*g2)/sp,fs*4.6), bh=Math.min(fs*3.2,I.y+I.h-y-fs*0.3);
+    ids.forEach((id,i)=>{ const p=TPMAP.get(id); if(!p) return;
+      const yy=y+Math.floor(i/sp)*(bh+g2);
+      if(yy+bh<=I.y+I.h) tKachel(ctx,x+(i%sp)*(bw+g2),yy,bw,bh,p,fs); }); } }
+
 const TLEER={sm:'Das Standardmodell: zwölf Fermionen in drei Generationen und die Bosonen, die die Kräfte übertragen. Nach rechts werden die Teilchen schwerer; nur die erste Generation ist stabil und baut die gewöhnliche Materie.',
   baum:'Jedes Teilchen ist entweder Fermion (halbzahliger Spin) oder Boson (ganzzahliger Spin). Elementar sind nur Quarks, Leptonen und die Bosonen – Hadronen sind aus Quarks zusammengesetzt.',
+  map:'Der ganze Baum zum Aufklappen: Ein Tipp auf einen Ast öffnet oder schließt ihn, die Zahl im Punkt sagt, wie viele Teilchen darin stecken. Mit einem Finger wird geschoben, mit zwei Fingern gezoomt.',
   had:'Die Hadronen ordnen sich nach Isospin I₃ (waagerecht) und Strangeness S (senkrecht). Mit „Ladungslinien" wird sichtbar: Q = I₃ + (B + S)/2.'};
 function tKarteLeer(ctx,I,fs){
   const x=I.x; let y=I.y+fs*1.7;
@@ -2040,7 +2211,7 @@ function zeichneTeilchen(){
   const ctx=cv.getContext('2d'), w=cv.clientWidth, h=cv.clientHeight;
   if(!w||!h) return;
   ctx.clearRect(0,0,w,h); ctx.fillStyle='#fff'; ctx.fillRect(0,0,w,h);
-  TREF=[];
+  TREF=[]; TMKN=[];
   const fs=Math.max(10,D.fontSize||13);
   /* Breiter Bildschirm: Karte rechts. Schmaler: Karte unten. */
   const rechts=w>=720;
@@ -2050,6 +2221,7 @@ function zeichneTeilchen(){
   const A=tAnsicht();
   if(B.w>120&&B.h>120){
     if(A==='baum') tStammbaum(ctx,B,fs);
+    else if(A==='map') tmBild(ctx,B,fs);
     else if(A==='had') tHadBild(ctx,B,fs);
     else tStandard(ctx,B,fs); }
   const K=rechts?{x:w-kw+2,y:6,w:kw-10,h:h-12}:{x:8,y:h-kh+2,w:w-16,h:kh-8};
@@ -2060,8 +2232,12 @@ function setzeTeilchen(){ if(!$('tSm')) return;
   const A=tAnsicht(), had=A==='had';
   $('tSm').classList.toggle('on',A==='sm');
   $('tBaumB').classList.toggle('on',A==='baum');
+  $('tMapB').classList.toggle('on',A==='map');
   $('tHadB').classList.toggle('on',A==='had');
   $('tHadGrp').style.display=had?'inline-flex':'none';
+  $('tMapGrp').style.display=(A==='map')?'inline-flex':'none';
+  $('tWert').title=(A==='map')?'Die kurze Erklärung unter den Namen anzeigen'
+    :'Ladung, Spin und Masse in den Feldern anzeigen';
   $('tLad').style.display=had?'':'none';
   $('tBar').classList.toggle('on',tGrp()==='baryon');
   $('tMes').classList.toggle('on',tGrp()==='meson');
@@ -2074,7 +2250,13 @@ function setzeTeilchen(){ if(!$('tSm')) return;
 function tNeu(){ setzeTeilchen(); zeichneTeilchen(); sync(); }
 $('tSm').onclick=()=>{ D.tans='sm'; tNeu(); };
 $('tBaumB').onclick=()=>{ D.tans='baum'; tNeu(); };
+$('tMapB').onclick=()=>{ D.tans='map'; tNeu(); };
 $('tHadB').onclick=()=>{ D.tans='had'; tNeu(); };
+$('tAufB').onclick=()=>{ D.tauf=tmAlle(TMM); tNeu(); };
+$('tZuB').onclick=()=>{ D.tauf=['k:teilchen']; tNeu(); };
+$('tFitB').onclick=()=>{ D.tmz=null; tNeu(); };
+$('tKleinB').onclick=()=>{ tmZoom(0.8); tNeu(); };
+$('tGrossB').onclick=()=>{ tmZoom(1.25); tNeu(); };
 $('tBar').onclick=()=>{ D.thad='baryon'; tNeu(); };
 $('tMes').onclick=()=>{ D.thad='meson'; tNeu(); };
 $('tSp0').onclick=()=>{ D.tmul=0; tNeu(); };
@@ -2082,12 +2264,57 @@ $('tSp1').onclick=()=>{ D.tmul=1; tNeu(); };
 $('tLad').onclick=()=>{ D.tlad=!D.tlad; tNeu(); };
 $('tWert').onclick=()=>{ D.twert=(D.twert===false); tNeu(); };
 $('tNull').onclick=()=>{ D.tsel=null; tNeu(); };
-$('cvT').addEventListener('pointerdown',e=>{
-  const r=$('cvT').getBoundingClientRect(), x=e.clientX-r.left, y=e.clientY-r.top;
-  for(let i=TREF.length-1;i>=0;i--){ const t=TREF[i];
-    if(x>=t.x&&x<=t.x+t.w&&y>=t.y&&y<=t.y+t.h){
-      D.tsel=(D.tsel===t.id)?null:t.id; zeichneTeilchen(); sync(); return; } }
-  if(D.tsel){ D.tsel=null; zeichneTeilchen(); sync(); } });
+/* Ein Tipp wählt aus; in der Mindmap klappt er außerdem den Ast auf oder zu.
+   Dort wird mit einem Finger geschoben und mit zwei Fingern gezoomt - ein
+   kurzes Tippen bleibt ein Tippen, erst ab 6 px gilt es als Ziehen. */
+(function(){
+  const cv=$('cvT'); if(!cv) return;
+  const pt=new Map(); let g=null, weit=false;
+  const lokal=e=>{ const r=cv.getBoundingClientRect(); return {x:e.clientX-r.left,y:e.clientY-r.top}; };
+  function treffer(p){
+    for(let i=TREF.length-1;i>=0;i--){ const t=TREF[i];
+      if(p.x>=t.x&&p.x<=t.x+t.w&&p.y>=t.y&&p.y<=t.y+t.h) return t; }
+    if(tAnsicht()==='map') for(let i=TMKN.length-1;i>=0;i--){ const t=TMKN[i];
+      if(p.x>=t.x&&p.x<=t.x+t.w&&p.y>=t.y&&p.y<=t.y+t.h) return t; }
+    return null; }
+  function tippen(p){ const t=treffer(p);
+    if(!t){ if(D.tsel){ D.tsel=null; zeichneTeilchen(); sync(); } return; }
+    if(t.auf){ tmSchalte(t.id); D.tsel=t.id; }
+    else D.tsel=(D.tsel===t.id)?null:t.id;
+    zeichneTeilchen(); sync(); }
+  function fassen(){ const a=[...pt.values()];
+    if(a.length>=2) return {art:'zoom',d0:Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y)||1,
+      m0:{x:(a[0].x+a[1].x)/2,y:(a[0].y+a[1].y)/2},s0:TMT.s,tx0:TMT.tx,ty0:TMT.ty};
+    return a.length?{art:'schieben',p0:a[0],tx0:TMT.tx,ty0:TMT.ty}:null; }
+  cv.addEventListener('pointerdown',e=>{ const p=lokal(e);
+    if(tAnsicht()!=='map'){ tippen(p); return; }
+    try{ cv.setPointerCapture(e.pointerId); }catch(_){}
+    if(!pt.size) weit=false;
+    pt.set(e.pointerId,p); g=fassen(); e.preventDefault(); },{passive:false});
+  cv.addEventListener('pointermove',e=>{
+    if(!pt.has(e.pointerId)||!g) return;
+    const p=lokal(e); pt.set(e.pointerId,p); e.preventDefault();
+    if(g.art==='schieben'){ const dx=p.x-g.p0.x, dy=p.y-g.p0.y;
+      if(!weit&&Math.hypot(dx,dy)<6) return;
+      weit=true; D.tmz=TMT.s; D.tmx=g.tx0+dx; D.tmy=g.ty0+dy; zeichneTeilchen(); return; }
+    const a=[...pt.values()]; if(a.length<2) return;
+    weit=true;
+    const d=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y)||1;
+    const m={x:(a[0].x+a[1].x)/2,y:(a[0].y+a[1].y)/2};
+    const s=Math.max(0.2,Math.min(3,g.s0*d/g.d0));
+    D.tmz=s; D.tmx=m.x-(g.m0.x-g.tx0)*s/g.s0; D.tmy=m.y-(g.m0.y-g.ty0)*s/g.s0;
+    zeichneTeilchen(); },{passive:false});
+  const ende=e=>{ if(!pt.has(e.pointerId)) return;
+    const p=pt.get(e.pointerId); pt.delete(e.pointerId);
+    g=pt.size?fassen():null;
+    if(!pt.size){ if(weit) sync(); else tippen(p); } };
+  cv.addEventListener('pointerup',ende); cv.addEventListener('pointercancel',ende);
+  /* mit der Maus: Rad zoomt */
+  cv.addEventListener('wheel',e=>{ if(tAnsicht()!=='map'||!TMBER) return;
+    const p=lokal(e);
+    if(p.x<TMBER.x||p.x>TMBER.x+TMBER.w||p.y<TMBER.y||p.y>TMBER.y+TMBER.h) return;
+    e.preventDefault(); tmZoom(Math.exp(-e.deltaY*0.0015),p); zeichneTeilchen(); },{passive:false});
+})();
 
 /* ============ Größe und Zeichnen ============ */
 function resize(){ const dpr=window.devicePixelRatio||1;
@@ -2145,7 +2372,10 @@ function uebernehmen(d){
   if(D.zphase!=='wurf') D.zphase='weg';
   zFeldAus(D.zreihe); zIndexNeu();
   D.zpn=Math.max(0,Math.min(D.zreihe.length-1,D.zpn|0));
-  if(D.tsel&&!(TPMAP.has(D.tsel)||(String(D.tsel).indexOf('k:')===0&&TKMAP.has(String(D.tsel).slice(2))))) D.tsel=null;
+  if(D.tsel&&!(TPMAP.has(D.tsel)||(String(D.tsel).indexOf('k:')===0&&TKMAP.has(String(D.tsel).slice(2)))
+      ||(String(D.tsel).indexOf('g:')===0&&tmSuche(String(D.tsel))))) D.tsel=null;
+  if(D.tauf&&!Array.isArray(D.tauf)) D.tauf=null;
+  if(typeof D.tmz!=='number'||!(D.tmz>0)) D.tmz=null;
   setTab(D.tab||'pse',true); setzeHuelle(); setzeTopf(); setzeZerfall(); setzeTeilchen(); resize();
   if($('fPse').dataset.auf) fuettern('pse');
   if($('fNuk').dataset.auf) fuettern('nuklid'); }

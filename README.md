@@ -3241,7 +3241,7 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     und nicht aus einer eingesetzten Formel. Nachgemessen: 12 Versuche mit 1000 Würfeln und
     p = 50 % ergaben im Mittel 502,8 übrige nach dem ersten Wurf.
   - **Elementarteilchen** (sechster Reiter): ein Überblick über die Teilchen und ihre Kategorien.
-    Oben wird zwischen **drei Ansichten** gewählt, rechts (auf schmalen Geräten unten) steht die
+    Oben wird zwischen **vier Ansichten** gewählt, rechts (auf schmalen Geräten unten) steht die
     **Infokarte** zum angetippten Feld. Angetippt wird alles: Teilchen **und** Kategorien.
     - **Standardmodell:** die zwölf **Fermionen** in drei **Generationen** (oben die Quarks u/d,
       c/s, t/b, unten die Leptonen e, µ, τ mit ihren Neutrinos) und daneben die **Bosonen**
@@ -3254,6 +3254,17 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
       (drei Quarks, Fermionen) und **Mesonen** (Quark + Antiquark, Bosonen). Ein gestrichelter Pfeil
       führt von den Quarks zu den Hadronen: *Quarks kommen nie einzeln vor.* Unter jedem Kasten
       stehen Beispiele zum Antippen.
+    - **Mindmap:** derselbe Baum, aber **zum Aufklappen** und über den ganzen Platz verteilt –
+      die Wurzel *Teilchen* in der Mitte, links die **Hadronen**, rechts **Fermionen** und
+      **Bosonen**. Ein Tipp auf einen Ast klappt ihn auf oder zu und zeigt zugleich seine
+      Erklärung in der Infokarte; die **Zahl im farbigen Punkt** sagt, wie viele Teilchen in einem
+      zugeklappten Ast stecken. Mit **einem Finger** wird geschoben, mit **zwei Fingern** gezoomt
+      (Maus: Rad); die Knöpfe **alles auf**, **alles zu**, **einpassen** und **− / +** tun dasselbe.
+      Solange niemand selbst gezoomt hat, passt sich das Bild nach jedem Aufklappen von allein ein.
+      Unterhalb der Kategorien stehen die Gruppen, die es nur hier gibt – **Nukleonen, Hyperonen**
+      (Lambda, Sigma, Xi, Omega), **Delta**, **Pionen, Kaonen, Eta-, Rho-, K*-, D-, B-Mesonen,
+      Quarkonia** –, jede mit eigener Erklärung und ihren Teilchen in der Infokarte.
+      **Werte** blendet hier die kurzen Erklärungen unter den Namen aus.
     - **Hadronen:** die klassischen Teilchenbilder – waagerecht der **Isospin I₃**, senkrecht die
       **Strangeness S**. Umschaltbar zwischen **Baryonen** (Spin ½: das **Oktett** mit p, n, Λ⁰, Σ,
       Ξ; Spin 3/2: das **Dekuplett** mit den vier Δ bis hinunter zum Ω⁻) und **Mesonen** (Spin 0:
@@ -4357,8 +4368,9 @@ lernkarte.html        ← Lernlandkarte (Orte, Wege, Freischaltung, Unterkarten)
 nuklid.html, nuklid-data.js ← Nuklidkarte bis Z = 94 mit Zerfallsreihen (offline)
 pse.html, pse-data.js ← Periodensystem der Elemente (alle 118 Elemente, offline)
 atomphysik.html       ← Atomphysik: sechs Reiter (Periodensystem, Nuklidkarte, Hülle,
-                        Kernpotentialtopf, Zerfall, Elementarteilchen)
+                        Kernpotentialtopf, Zerfall, Elementarteilchen mit Mindmap)
 teilchen-data.js      ← Daten der Elementarteilchen und Hadronen (Ladung, Spin, Isospin, Zerfälle)
+                        und der Baum für die Mindmap
 induktion.html        ← Induktion und Feldlinien (Film und eigenes Ausprobieren)
 mindmap.html          ← Mindmap (Diverses)
 pinnwand.html         ← Pinnwand mit Karten (Diverses)
