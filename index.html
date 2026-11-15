@@ -3048,13 +3048,20 @@ function startSelect(e,w){
     if(h.role==='rot'){ xform.startAngle=Math.atan2(w.y-C.y,w.x-C.x)-(o.rot||0); }
     lastTap={t:now,o:hit}; return; }
   // 4) Objekt getroffen -> auswählen/verschieben
-  if(hit){ lastTap={t:now,o:hit}; if(!selection.includes(hit)) selectObject(hit,false); moveDrag={lx:w.x,ly:w.y}; markDirty(); return; }
+  if(hit){ lastTap={t:now,o:hit}; if(!selection.includes(hit)) selectObject(hit,false);
+    moveDrag={lx:w.x,ly:w.y,sx:e.clientX,sy:e.clientY,undo:false}; markDirty(); return; }
   // 5) leer -> Rahmenauswahl
   lastTap={t:0,o:null}; selection=[]; refreshProps(); marquee={x0:e.clientX,y0:e.clientY,x1:e.clientX,y1:e.clientX}; markDirty();
 }
 function moveSelect(e,w){
-  if(xform){ xform.ev=e; applyXform(w); markDirty(); return; }
-  if(moveDrag){ const dx=w.x-moveDrag.lx,dy=w.y-moveDrag.ly; moveDrag.lx=w.x; moveDrag.ly=w.y; translateSel(dx,dy); positionProps(); markDirty(); return; }
+  if(xform){ if(!xform.undo){ xform.undo=true; undoVorZiehen([xform.o]); }     /* Strecken/Drehen zurücknehmbar */
+    xform.ev=e; applyXform(w); markDirty(); return; }
+  if(moveDrag){
+    /* Die ersten Punkte gelten noch als Tippen: So verrutscht nichts aus Versehen,
+       und erst beim echten Ziehen entsteht ein Schritt für „Zurück". */
+    if(!moveDrag.undo){ if(Math.hypot(e.clientX-moveDrag.sx,e.clientY-moveDrag.sy)<=3) return;
+      moveDrag.undo=true; undoVorZiehen(selection); }
+    const dx=w.x-moveDrag.lx,dy=w.y-moveDrag.ly; moveDrag.lx=w.x; moveDrag.ly=w.y; translateSel(dx,dy); positionProps(); markDirty(); return; }
   if(marquee){ marquee.x1=e.clientX; marquee.y1=e.clientY; markDirty(); } }
 function endSelect(e){
   if(xform){ const o=xform.o; if(xform.role==='form') hideMeasure(); xform=null;
@@ -3068,6 +3075,13 @@ function endSelect(e){
     marquee=null; refreshProps(); return; }
   if(moveDrag){ moveDrag=null; selection.forEach(o=>{ if(o.type==='coord'&&o.snap){ coordSnapFix(o); markDirty(); }
     else if(o.type==='numline'&&o.snap){ nlSnapFix(o); markDirty(); } }); scheduleAutosave(); } }
+/* Vor dem Verschieben: die Punkte der Striche einmal neu anlegen. Der Schnappschuss für
+   „Zurück" hält dann weiter die alten Punkte – sonst würde das Verschieben sie mitändern,
+   weil der Schnappschuss die Objekte nur flach kopiert. */
+function punkteLoesen(objs){ for(const o of objs||[])
+  if(o&&o.type==='stroke'&&Array.isArray(o.points)) o.points=o.points.map(q=>({...q})); }
+/* Ein Schnappschuss, bevor eine Auswahl verschoben, gestreckt oder gedreht wird */
+function undoVorZiehen(objs){ pushUndo(); punkteLoesen(objs||selection); }
 function translateObj(o,dx,dy){
   if(o.type==='stroke') o.points.forEach(p=>{p.x+=dx;p.y+=dy;});
   else if(o.type==='shape'){o.x0+=dx;o.x1+=dx;o.y0+=dy;o.y1+=dy;} else {o.x+=dx;o.y+=dy;} }
@@ -3083,6 +3097,9 @@ function updateObjGesture(){ const g=objGesture; if(!g)return;
   const p0=pointers.get(g.ids[0]), p1=pointers.get(g.ids[1]); if(!p0||!p1)return;
   const cur=gestureState(p0,p1); let s=Math.max(.05,Math.min(40,cur.dist/g.dist)); const dth=cur.ang-g.ang;
   const cos=Math.cos(dth), sin=Math.sin(dth), tx=cur.mid.x-g.mid.x, ty=cur.mid.y-g.mid.y;
+  /* Erst wenn sich wirklich etwas tut, einen Schritt für „Zurück" anlegen */
+  if(!g.undo && (Math.abs(s-1)>0.02||Math.abs(dth)>0.02||Math.hypot(tx,ty)>3/scale)){
+    g.undo=true; undoVorZiehen(g.items.map(it=>it.o)); }
   for(const it of g.items){ const o=it.o, oc=it.oc;
     scaleObj(o,it.snap,s,s,oc.x,oc.y); o.rot=(it.snap.rot||0)+dth;
     const rx=oc.x-g.mid.x, ry=oc.y-g.mid.y;

@@ -433,8 +433,12 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   - **Rückgängig / Wiederherstellen** (↶ ↷ in der Leiste, auch ⌘Z / Strg+Z bzw. ⇧⌘Z).
     Es wirkt auf **alle Änderungen an den Objekten einer Seite**: Schreiben, **Radieren**,
     Löschen, Einfügen, Duplizieren, Gruppieren/Lösen, Ebenen-Wechsel und „Seite leeren"
-    (bis zu 40 Schritte je Seite). Nicht erfasst wird das **Verschieben/Skalieren/Drehen**
-    von Objekten.
+    (bis zu 40 Schritte je Seite). Auch das **Verschieben, Skalieren und Drehen** von Objekten
+    wird zurückgenommen – mit dem Finger, an den Eckgriffen und mit der Zwei-Finger-Geste:
+    Wer im Auswahl-Modus statt der Seite aus Versehen etwas Geschriebenes verschiebt, holt es
+    mit einem Tipp auf ↶ zurück. Ein Schritt entsteht erst, wenn wirklich gezogen wird
+    (die ersten drei Punkte gelten noch als Tippen) – ein Antippen zum Auswählen legt also
+    keinen leeren Schritt an.
   - **Schriftgröße** direkt im Werkzeug über **A− / A+**.
   - **Datei-Menü** (📁): **Neu** (leere Tabelle – setzt auch Spaltenbreiten, Schriftgröße und
     Zeilenzahl zurück), **Öffnen** (eigene `.json`-Tabelle, CSV, Excel), **Tabelle speichern**
