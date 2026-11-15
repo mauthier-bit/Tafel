@@ -72,7 +72,9 @@
     box-shadow:inset 0 0 0 2px #fff, inset 0 0 0 3px #2563eb;}
   #anzPop .apB:disabled{opacity:.4;}
   #anzPop hr{border:none;border-top:1px solid #e2e7ef;margin:3px 0;width:100%;}
-  #anzPop .apZu{align-self:flex-end;}
+  #anzPop .apKopf{display:flex;align-items:center;justify-content:space-between;gap:10px;
+    font-weight:700;color:#1f2430;margin-bottom:2px;}
+  #anzPop .apNote{font-size:.8em;color:#8a93a2;line-height:1.35;max-width:230px;}
   #cvbox canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;}
   #hint{position:absolute;left:10px;bottom:6px;font-size:.78em;color:#94a3b8;pointer-events:none;}
   .segBig{display:inline-flex;flex:none;border:1px solid #d6dce5;border-radius:10px;overflow:hidden;height:50px;}
@@ -329,6 +331,7 @@
     <div id="tabBox" hidden></div>
   </div>
   <div id="anzPop" hidden>
+    <div class="apKopf"><span>Anzeigen</span><button class="btn" id="anzZu" title="Schließen">✕</button></div>
     <div class="apG">Werte in der Tabelle</div>
     <button class="apB" id="wV" title="Geschwindigkeiten in die Tabelle">v – Geschwindigkeit</button>
     <button class="apB" id="wP" title="Impulse in die Tabelle">p – Impuls</button>
@@ -339,7 +342,10 @@
     <button class="apB" id="pD" title="Die Änderung beim Stoß als Pfeil (Δv bzw. Δp)">Δ – Änderung</button>
     <hr>
     <button class="apB" id="pKop" title="Alle gezogenen Pfeilkopien entfernen" hidden>Kopien entfernen</button>
-    <button class="btn apZu" id="anzZu" title="Schließen">✕</button>
+    <div class="apG">Auswertung – fertig gezeichnet</div>
+    <button class="apB" id="bzV" title="Die Geschwindigkeiten vorher und nachher aneinandergehängt – die Summen sind verschieden">Geschwindigkeiten zusammen</button>
+    <button class="apB" id="bzP" title="Die Impulse vorher und nachher aneinandergehängt – beide Male derselbe Pfeil">Impulse zusammen</button>
+    <div class="apNote" id="bzNote" hidden>Beim Teilen per QR-Code bleiben diese Bilder aus – die Klasse soll selbst auswerten.</div>
   </div>
   <div id="bar3">
     <span class="lbl">Wiedergabe</span>
@@ -389,7 +395,7 @@ function zahlEin(s){ if(typeof s!=='string') s=String(s==null?'':s);
 const standard=()=>({v:1, dim:1, elast:true, m1:1, m2:2,
   s1:{x:1,y:LY/2}, s2:{x:3,y:LY/2},
   g1:{x:2.5,y:0}, g2:{x:0,y:0},
-  wert:{v:true,p:true,E:false}, pfeil:{v:true,p:false,d:false},
+  wert:{v:true,p:true,E:false}, pfeil:{v:true,p:false,d:false}, bilanz:{v:false,p:false},
   tempo:0, blitze:7, babst:0, strobo:false, fontSize:14, edit:true});
 let D=standard();
 
@@ -399,6 +405,7 @@ let rec=[], tEnde=null, ab=false, tAb=0, schau=false, letztT=0;
 let W=320, H=240, DPR=1, SC=100, OX=0, OY=0, yMid=120, kk=1;
 let zieh=null, ziehG=null, winkelMerk=[0,180];
 let auswerten=false;          /* „Auswerten“: nur dann lassen sich die Pfeile anfassen */
+let geteiltesFenster=false;   /* per QR-Code weitergegeben: fertige Auswertungen bleiben aus */
 
 const masse=i=>Math.max(MMIN,Math.min(MMAX, i?(+D.m2||0):(+D.m1||0)));
 /* gleiche Dichte: der Radius wächst mit der dritten Wurzel der Masse */
@@ -689,6 +696,13 @@ function malStossOrt(px,py,sc){
 /* Jeder Pfeil der Konstruktion steht als Datensatz in `konstPfeile` – daraus entstehen
    das Zeichnen, das Antippen und die Kopien, die sich herausziehen lassen. */
 let konstPfeile=[], kopien=[], ziehK=null, kopGesagt=false;
+/* Die Konstruktion gibt es in der Live-Ansicht und im Stroboskopbild. Beide rechnen
+   anders in Bildschirmpunkte um – deshalb merkt sich MAP die Abbildung der zuletzt
+   gezeichneten Ansicht; die Kopien liegen in Metern und finden damit überall ihren Platz. */
+let MAP={ox:0,oy:0,sc:1,yb:0};
+function mapSetzen(ox,oy,sc,yb){ MAP={ox:ox,oy:oy,sc:sc,yb:(yb===undefined?MAP.yb:yb)}; }
+const mapPx=x=>MAP.ox+x*MAP.sc;
+const mapPy=y=>(D.dim===1)?MAP.yb:(MAP.oy+y*MAP.sc);
 const SNAP=()=>26*kk;
 const nrI=i=>(i?'₂':'₁');
 function pfeilVektor(art,i,ph,K,sc){
@@ -716,11 +730,11 @@ function konstListe(K,px,py,sc){
             farbe:a.f[i], lw:3.2, gestr:false, lab:a.na+nrI(i)+'′', lu:true});
   }});
   return L; }
-function malKonstruktion(K,px,py,sc){
+function malKonstruktion(K,px,py,sc,ohneKoerper){
   if(!(vVor&&vNach&&stossOrt)) return;
   const dim1=(D.dim===1);
   /* blasse Umrisse an der Stoßstelle, damit die Pfeile einen Ort haben */
-  for(let i=0;i<2;i++){ const o=i?stossOrt.b:stossOrt.a;
+  if(!ohneKoerper) for(let i=0;i<2;i++){ const o=i?stossOrt.b:stossOrt.a;
     malKoerperR(px(o.x),py(o.y),i,rI(i)*sc,{offen:true,strich:true,alpha:0.5,nr:false}); }
   const L=konstListe(K,px,py,sc);
   konstPfeile=L;
@@ -748,14 +762,14 @@ function lageVon(ref,K,sc,tiefe){
   const O=origFinden(ref.art,ref.i,ref.ph); if(!O) return null;
   return {x0:O.x0,y0:O.y0,dx:O.dx,dy:O.dy,art:O.art,i:O.i,ph:O.ph}; }
 function fussSetzen(k,x,y){
-  k.mx=(x-OX)/Math.max(1e-6,SC);
-  if(D.dim===1) k.dy=y-yMid; else k.my=(y-OY)/Math.max(1e-6,SC); }
+  k.mx=(x-MAP.ox)/Math.max(1e-6,MAP.sc);
+  if(D.dim===1) k.dy=y-MAP.yb; else k.my=(y-MAP.oy)/Math.max(1e-6,MAP.sc); }
 function fussVon(k,K,sc,tiefe){
   if(k.snap&&(tiefe||0)<4){ const z=snapOrt(k,k.snap,K,sc,tiefe||0); if(z) return z; }
-  return {x:OX+k.mx*SC, y:(D.dim===1)?(yMid+k.dy):(OY+k.my*SC)}; }
+  return {x:mapPx(k.mx), y:(D.dim===1)?(MAP.yb+k.dy):mapPy(k.my)}; }
 function snapOrt(k,sn,K,sc,tiefe){
   const O=lageVon(sn,K,sc,tiefe); if(!O) return null;
-  if(sn.typ==='delta') return {x:O.x0, y:(D.dim===1)?(yMid+k.dy):O.y0};
+  if(sn.typ==='delta') return {x:O.x0, y:(D.dim===1)?(MAP.yb+k.dy):O.y0};
   if(sn.typ==='anhaengen') return {x:O.x0+O.dx, y:O.y0+O.dy};
   const v=pfeilVektor(k.art,k.i,k.ph,K,sc);
   return {x:O.x0-v.dx, y:O.y0-v.dy}; }                 /* 'davor' */
@@ -770,7 +784,7 @@ function rastListe(K,sc,ausser){
   const L=konstPfeile.map(O=>({ref:{art:O.art,i:O.i,ph:O.ph},art:O.art,i:O.i,ph:O.ph,
                                x0:O.x0,y0:O.y0,dx:O.dx,dy:O.dy}));
   kopien.forEach(k=>{ if(k===ausser||haengtAn(k,ausser)) return;
-    const f=fussVon(k,K,sc,0), v=pfeilVektor(k.art,k.i,k.ph,K,sc);
+    const f=fussVon(k,K,MAP.sc,0), v=pfeilVektor(k.art,k.i,k.ph,K,MAP.sc);
     L.push({ref:{id:k.id},art:k.art,i:k.i,ph:k.ph,x0:f.x,y0:f.y,dx:v.dx,dy:v.dy}); });
   return L; }
 function snapSuche(k,fx,fy,K,sc){
@@ -790,15 +804,6 @@ function snapSuche(k,fx,fy,K,sc){
   return best; }
 function fuehrung(x,y,yL){ ctx.save(); ctx.strokeStyle='#cbd5e1'; ctx.lineWidth=1.2; ctx.setLineDash([4,3]);
   ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x,yL); ctx.stroke(); ctx.restore(); }
-function hinweisKasten(zeilen,xm,ym){
-  const fs=Math.min(13,12*kk);
-  ctx.font=schrift(fs,false);
-  let bw=0; zeilen.forEach(z=>{ bw=Math.max(bw,ctx.measureText(z).width); });
-  bw=Math.min(W-16,bw+22); const bh=fs*1.7*zeilen.length+12;
-  const x0=Math.max(8,Math.min(W-bw-8,xm-bw/2)), y0=Math.max(8,Math.min(H-bh-26,ym));
-  ctx.save(); ctx.fillStyle='rgba(254,243,199,.97)'; ctx.strokeStyle='#f0b429'; ctx.lineWidth=1.4;
-  rrund(x0,y0,bw,bh,9); ctx.fill(); ctx.stroke(); ctx.restore();
-  zeilen.forEach((z,j)=>txt(z,x0+bw/2,y0+8+fs*1.7*(j+0.5)-fs*0.35,{sz:fs,fett:j===0,farbe:'#92400e'})); }
 function malErgaenzung(k,K,sc,f){
   const O=lageVon(k.snap,K,sc,0); if(!O) return;
   const dim1=(D.dim===1), v=pfeilVektor(k.art,k.i,k.ph,K,sc);
@@ -814,19 +819,16 @@ function malErgaenzung(k,K,sc,f){
     return; }
   const erst=(k.snap.typ==='anhaengen')?O:kop, letzt=(k.snap.typ==='anhaengen')?kop:O;
   const ax=erst.x0, ay=erst.y0, bx=letzt.x0+letzt.dx, by=letzt.y0+letzt.dy;
-  if(k.art==='v'){
-    hinweisKasten(['Geschwindigkeiten addiert man nicht.',
-                   'v\u2081 + v\u2082 hat keine Bedeutung \u2013 sinnvoll sind \u0394v\u2081 und \u0394v\u2082',
-                   'oder die Impulse: p\u2081 + p\u2082 = p gesamt.'],
-                  (ax+bx)/2, Math.max(ay,by)+18*kk);
-    return; }
+  /* Auch die Geschwindigkeiten lassen sich aneinanderhängen: Die Summe vorher und die
+     Summe nachher sind verschieden – genau das zeigt, dass es keine Erhaltung der
+     Geschwindigkeit gibt. Deshalb eine eigene Farbe, nicht die des Impulses. */
   const st=(k.ph==='vor')?'':'\u2032';
-  const lab='p\u2081'+st+' + p\u2082'+st;
+  const farbe=(k.art==='p')?FP:FVS;
+  const lab=k.art+'\u2081'+st+' + '+k.art+'\u2082'+st;
   if(dim1){ const yL=Math.max(ay,by)+24*kk; fuehrung(ax,ay,yL); fuehrung(bx,by,yL);
-    malPfeil(ax,yL,bx-ax,0,FP,3.6,false,lab,true); }
-  else malPfeil(ax,ay,bx-ax,by-ay,FP,3.6,false,lab,true); }
+    malPfeil(ax,yL,bx-ax,0,farbe,3.6,false,lab,true); }
+  else malPfeil(ax,ay,bx-ax,by-ay,farbe,3.6,false,lab,true); }
 function malKopien(K,px,py,sc){
-  if(D.strobo) return;
   kopien=kopien.filter(k=>(k.art==='v')?D.pfeil.v:D.pfeil.p);
   kopien.forEach(k=>{
     const f=fussVon(k,K,sc,0), v=pfeilVektor(k.art,k.i,k.ph,K,sc);
@@ -839,7 +841,7 @@ function abstandPfeil(px0,py0,x0,y0,dx,dy){
   if(L2<36) return Infinity;                    /* Länge null – wird nicht gezeichnet */
   let t=((px0-x0)*dx+(py0-y0)*dy)/L2; t=Math.max(0,Math.min(1,t));
   return Math.hypot(px0-(x0+dx*t), py0-(y0+dy*t)); }
-const auswertbar=()=>!D.strobo&&!lauf&&!!(vVor&&vNach&&stossOrt);
+const auswertbar=()=>!lauf&&!!(vVor&&vNach&&stossOrt);
 const ziehbar=()=>auswerten&&auswertbar()&&(D.pfeil.v||D.pfeil.p);
 /* Angefasst wird der Pfeil, der dem Finger am nächsten liegt – in 1D liegen
    mehrere Pfeile auf derselben Linie, „der erste in der Liste" wäre Zufall.
@@ -848,7 +850,7 @@ function pfeilZiehStart(p){
   if(!ziehbar()) return false;
   const K=pfeilSkala(), tol=Math.max(12,13*kk);
   let best=null;
-  kopien.forEach(k=>{ const f=fussVon(k,K,SC,0), v=pfeilVektor(k.art,k.i,k.ph,K,SC);
+  kopien.forEach(k=>{ const f=fussVon(k,K,MAP.sc,0), v=pfeilVektor(k.art,k.i,k.ph,K,MAP.sc);
     const d=abstandPfeil(p.px,p.py,f.x,f.y,v.dx,v.dy)-6;
     if(d<=tol&&(!best||d<best.d)) best={d:d,k:k,x:f.x,y:f.y}; });
   konstPfeile.forEach(O=>{ const d=abstandPfeil(p.px,p.py,O.x0,O.y0,O.dx,O.dy);
@@ -866,9 +868,9 @@ function pfeilZiehen(p){
   const z=ziehK, k=z.k, K=pfeilSkala();
   const fx=p.px-z.gx, fy=p.py-z.gy;
   if(!z.bewegt&&Math.hypot(p.px-z.sx,p.py-z.sy)>4) z.bewegt=true;
-  const s=snapSuche(k,fx,fy,K,SC);
-  if(s){ k.snap=s.sn; if(D.dim===1&&s.sn.typ==='delta') k.dy=fy-yMid;
-    const o=snapOrt(k,k.snap,K,SC,0); if(o) fussSetzen(k,o.x,o.y);   /* auch frei dort liegen bleiben, wenn der Partner verschwindet */ }
+  const s=snapSuche(k,fx,fy,K,MAP.sc);
+  if(s){ k.snap=s.sn; if(D.dim===1&&s.sn.typ==='delta') k.dy=fy-MAP.yb;
+    const o=snapOrt(k,k.snap,K,MAP.sc,0); if(o) fussSetzen(k,o.x,o.y);   /* auch frei dort liegen bleiben, wenn der Partner verschwindet */ }
   else { k.snap=null; fussSetzen(k,fx,fy); }
   zeichne(); }
 function pfeilZiehEnde(){
@@ -879,6 +881,7 @@ function pfeilZiehEnde(){
   if(k.snap){
     if(k.snap.typ==='delta') toast('Δ'+k.art+nrI(k.i)+' ergänzt – von der Spitze des Vorher-Pfeils zur Spitze des Nachher-Pfeils');
     else if(k.art==='p') toast('p gesamt '+(k.ph==='vor'?'vorher':'nachher')+' ergänzt');
+    else toast('v₁ + v₂ '+(k.ph==='vor'?'vorher':'nachher')+' ergänzt – beide Summen vergleichen: anders als beim Impuls ändert sie sich');
   } else if(!kopGesagt){ kopGesagt=true;
     toast('Kopie abgelegt – richtig an einen anderen Pfeil gelegt, ergänzt sich das fehlende Stück'); }
   knoepfe(); zeichne(); }
@@ -931,12 +934,22 @@ function spitzeAuf(i,p){
    Die beiden Impulse werden aneinandergehängt (Spitze an Fuß); der dicke Pfeil
    vom Anfang zum Ende ist der Gesamtimpuls. Zwei solche Ketten untereinander –
    vorher und nachher – zeigen, dass dabei dasselbe herauskommt. */
+/* Die fertige Auswertung: Vorher- und Nachher-Kette untereinander. Sie steht nur da,
+   wenn man sie unter „Anzeigen → Auswertung" einschaltet – sonst gehört die Fläche der
+   eigenen Konstruktion. Beim Impuls kommt beide Male derselbe Pfeil heraus, bei der
+   Geschwindigkeit nicht: Es gibt keine Erhaltung der Geschwindigkeit. */
+const FVS='#334155';                 /* Summe der Geschwindigkeiten – bewusst nicht die Impulsfarbe */
 function malBilanz(oben,unten){
-  if(!(D.pfeil.p&&vVor&&vNach)) return;
-  if(kopien.length) return;        /* wird von Hand konstruiert: der Kasten tritt beiseite */
-  const dim1=(D.dim===1), m=[masse(0),masse(1)];
-  const K=[[{x:m[0]*vVor[0].x,y:dim1?0:m[0]*vVor[0].y},{x:m[1]*vVor[1].x,y:dim1?0:m[1]*vVor[1].y}],
-           [{x:m[0]*vNach[0].x,y:dim1?0:m[0]*vNach[0].y},{x:m[1]*vNach[1].x,y:dim1?0:m[1]*vNach[1].y}]];
+  if(!(vVor&&vNach)) return;
+  const arten=[];
+  if(D.bilanz&&D.bilanz.v) arten.push('v');
+  if(D.bilanz&&D.bilanz.p) arten.push('p');
+  arten.forEach((art,bi)=>bilanzKasten(art,oben,unten,bi,arten.length)); }
+function bilanzKasten(art,oben,unten,bi,anz){
+  const dim1=(D.dim===1), imp=(art==='p'), m=[masse(0),masse(1)];
+  const f=i=>imp?m[i]:1;
+  const K=[[{x:f(0)*vVor[0].x,y:dim1?0:f(0)*vVor[0].y},{x:f(1)*vVor[1].x,y:dim1?0:f(1)*vVor[1].y}],
+           [{x:f(0)*vNach[0].x,y:dim1?0:f(0)*vNach[0].y},{x:f(1)*vNach[1].x,y:dim1?0:f(1)*vNach[1].y}]];
   const pts=[];
   K.forEach(a=>{ let x=0,y=0; pts.push({x:x,y:y});
     a.forEach(q=>{ x+=q.x; y+=q.y; pts.push({x:x,y:y}); }); });
@@ -944,15 +957,22 @@ function malBilanz(oben,unten){
   const x0=Math.min.apply(null,xs), x1=Math.max.apply(null,xs);
   const y0=Math.min.apply(null,ys), y1=Math.max.apply(null,ys);
   const fs=Math.min(12,11*kk);
-  const bw=Math.min(W*0.46,340), bh=Math.min((unten-oben)*0.5,dim1?96:150);
-  const bx=10, by=unten-bh-2;
+  const bw=Math.min(anz>1?W*0.46:W*0.5,340), bh=Math.min((unten-oben)*0.5,dim1?96:150);
+  const bx=(bi===0)?10:Math.max(bw+16,W-bw-10), by=unten-bh-2;
   const lw=Math.max(46,fs*4.2);                       /* Spalte für „vorher"/„nachher" */
-  const iw=bw-lw-16, rh=(bh-fs*1.9-8)/2;
+  /* Rechts steht die Summe als Zahl: Beim Impuls zweimal dieselbe, bei der
+     Geschwindigkeit zwei verschiedene – daran sieht man den Unterschied sofort. */
+  const summe=r=>K[r].reduce((a,q)=>({x:a.x+q.x,y:a.y+q.y}),{x:0,y:0});
+  const wert=r=>{ const g=summe(r); return dim1?fz(g.x,2):(fz(g.x,2)+' | '+fz(-g.y,2)); };
+  ctx.font=schrift(fs,true);
+  const rw=Math.min(bw*0.4,Math.max(ctx.measureText(wert(0)).width,ctx.measureText(wert(1)).width)+12);
+  const iw=bw-lw-rw-16, rh=(bh-fs*1.9-8)/2;
   const sc=Math.min(iw/Math.max(1e-6,x1-x0), (dim1?1e9:rh*0.8/Math.max(1e-6,y1-y0)));
+  const fsum=imp?FP:FVS;
   ctx.save();
   ctx.fillStyle='rgba(255,255,255,.92)'; ctx.strokeStyle='#e2e8f0'; ctx.lineWidth=1;
   rrund(bx,by,bw,bh,10); ctx.fill(); ctx.stroke(); ctx.restore();
-  txt('Impulse zusammen',bx+8,by+fs*1.1,{al:'left',sz:fs,fett:true,farbe:'#64748b'});
+  txt(imp?'Impulse zusammen':'Geschwindigkeiten zusammen',bx+8,by+fs*1.1,{al:'left',sz:fs,fett:true,farbe:'#64748b'});
   ['vorher','nachher'].forEach((nam,r)=>{
     const yM=by+fs*1.9+rh*(r+0.5);
     const ox=bx+lw+8-x0*sc, oy=yM-((y0+y1)/2)*sc;
@@ -963,12 +983,11 @@ function malBilanz(oben,unten){
         malPfeil(ox+x*sc,oy+y*sc,q.x*sc,q.y*sc,i?F2:F1,2.4,false,'',false);
       x+=q.x; y+=q.y; });
     if(Math.hypot(x,y)>1e-9)
-      malPfeil(ox,oy+(dim1?13:0),x*sc,y*sc,FP,3.4,false,'',true);
-    else txt('0',ox,oy+13,{sz:fs,fett:true,farbe:FP});
+      malPfeil(ox,oy+(dim1?13:0),x*sc,y*sc,fsum,3.4,false,'',true);
+    else txt('0',ox,oy+13,{sz:fs,fett:true,farbe:fsum});
+    txt(wert(r),bx+bw-8,yM,{al:'right',sz:fs,fett:true,farbe:fsum});
   });
-  const g=K[1].reduce((a,q)=>({x:a.x+q.x,y:a.y+q.y}),{x:0,y:0});
-  const sg=dim1?(fz(g.x,2)+' kg·m/s'):(fz(g.x,2)+' | '+fz(-g.y,2)+' kg·m/s');
-  txt('p = '+sg,bx+bw-8,by+fs*1.1,{al:'right',sz:fs,fett:true,farbe:FP}); }
+  txt(imp?'kg·m/s':'m/s',bx+bw-8,by+fs*1.1,{al:'right',sz:fs,farbe:'#94a3b8'}); }
 
 /* ---------- Wertetabelle ---------- */
 function tabDaten(){
@@ -1031,6 +1050,7 @@ const PY=y=>(D.dim===1)?yMid:(OY+y*SC);
 
 function malLive(oben,unten){
   geo(oben,unten);
+  mapSetzen(OX,OY,SC,yMid);
   if(D.dim===1) malBahn1D(PX,SC,yMid,true); else malFeld2D(PX,PY,SC,true);
   /* alles Bewegte bleibt im Spielbereich – sonst schiebt sich ein Körper,
      der die Fläche verlässt, über die Wertetabelle */
@@ -1079,6 +1099,13 @@ function strobo1D(Z,oben,unten){
     malKoerperR(px(p.a),p.y,0,rI(0)*sc,{alpha:p.st?1:0.82,nr:p.st});
     malKoerperR(px(p.b),p.y,1,rI(1)*sc,{alpha:p.st?1:0.82,nr:p.st});
     if(p.st) txt('Stoß',W-10,p.y,{al:'right',sz:fs,fett:true,farbe:'#b45309'}); });
+  /* Auswertung im Stroboskopbild: Die Pfeile sitzen in der Zeile des Stoßes – dort ist
+     im Bild der Ort des Stoßes. Sie erscheinen nur, wenn ausgewertet wird, sonst bliebe
+     das Bild nicht so ruhig, wie es gedacht ist. */
+  if((auswerten||kopien.length)&&vVor&&vNach&&stossOrt){
+    const zs=P.find(q=>q.st)||P[Math.floor(P.length/2)];
+    mapSetzen(ox,0,sc,zs.y);
+    malKonstruktion(pfeilSkala(),px,()=>zs.y,sc,true); }
   /* Maßstab unten */
   const yS=u2+4;
   ctx.strokeStyle='#cbd5e1'; ctx.lineWidth=1;
@@ -1105,7 +1132,8 @@ function strobo2D(Z,oben,unten){
       txt(fz(p.t,2)+' s',px(o.x),py(o.y)+(i?r+10*kk:-r-10*kk),
         {sz:10*kk,fett:p.st,farbe:p.st?'#b45309':'#64748b',rand:'#fff',randB:3}); } });
   if(tStoss!==null){ malStossOrt(px,py,sc);
-    if(D.pfeil.v||D.pfeil.p) malKonstruktion(pfeilSkala(),px,py,sc); } }
+    mapSetzen(ox,oy,sc);
+    if(D.pfeil.v||D.pfeil.p||kopien.length) malKonstruktion(pfeilSkala(),px,py,sc); } }
 
 function malStrobo(oben,unten){
   const Z=blitzZeiten();
@@ -1121,7 +1149,7 @@ function zeichne(){
   const oben=8, unten=H-24-14*kk;                 /* unten bleibt Platz für Maßstab und Hinweiszeile */
   if(unten-oben<60){ txt('Zu wenig Platz – das Fenster größer ziehen',
       W/2,(oben+H)/2,{sz:12*kk,farbe:FGR}); hinweis(); return; }
-  if(D.strobo) malStrobo(oben,unten); else malLive(oben,unten);
+  if(D.strobo){ malStrobo(oben,unten); malBilanz(oben,unten); } else malLive(oben,unten);
   hinweis(); }
 function resize(){ DPR=Math.min(3,window.devicePixelRatio||1);
   W=cv.clientWidth||320; H=cv.clientHeight||240;
@@ -1168,8 +1196,12 @@ function knoepfe(){
     b.title='Was angezeigt wird'+(w.length?' · Werte: '+w.join(', '):'')+(f.length?' · Pfeile: '+f.join(', '):'')
             +(w.length||f.length?'':' – gerade nichts'); }
   $('pKop').hidden=!kopien.length;
+  $('bzV').classList.toggle('on',!!(D.bilanz&&D.bilanz.v));
+  $('bzP').classList.toggle('on',!!(D.bilanz&&D.bilanz.p));
+  $('bzV').disabled=$('bzP').disabled=geteiltesFenster;
+  $('bzNote').hidden=!geteiltesFenster;
   { const a=$('bAusw'); a.hidden=!auswertbar(); a.classList.toggle('on',!!auswerten); }
-  $('bStop').hidden=!(!D.strobo&&tEnde===null&&t>1e-6);
+  $('bStop').hidden=!(!D.strobo&&tEnde===null&&(lauf||t>1e-6));
   $('bStrob').classList.toggle('on',!!D.strobo);
   $('tmV').textContent=TEMPON[Math.max(0,Math.min(3,D.tempo|0))];
   const g=raster(), Z=blitzZeiten();
@@ -1204,7 +1236,9 @@ $('bPlay').onclick=()=>{
 /* Von Hand beenden: Bei sehr kleinen Geschwindigkeiten dauert es sonst, bis beide
    Körper die Bahn verlassen haben – der Mitschnitt endet dann einfach hier. */
 $('bStop').onclick=()=>{
-  if(tEnde!==null||t<=1e-6) return;
+  if(tEnde!==null) return;
+  if(t<=1e-6){ lauf=false; knoepfe(); zeichne(); hinweis();
+    toast('Der Ablauf hat noch gar nicht begonnen'); return; }
   lauf=false; ab=false; tEnde=t; tAb=0;
   knoepfe(); zeichne(); hinweis();
   toast(tStoss!==null?'Ablauf beendet – die Aufnahme steht, jetzt lässt sich auswerten'
@@ -1235,11 +1269,14 @@ umW('wE',()=>{ D.wert.E=!D.wert.E; });
 umW('pV',()=>{ D.pfeil.v=!D.pfeil.v; });
 umW('pP',()=>{ D.pfeil.p=!D.pfeil.p; });
 umW('pD',()=>{ D.pfeil.d=!D.pfeil.d; });
+umW('bzV',()=>{ if(!geteiltesFenster) D.bilanz.v=!D.bilanz.v; });
+umW('bzP',()=>{ if(!geteiltesFenster) D.bilanz.p=!D.bilanz.p; });
 
 $('bStrob').onclick=()=>{
   if(!D.strobo){
     if(rec.length<2||!(recEnde()>0)){ toast('Erst einen Stoß ablaufen lassen – die Aufnahme läuft dabei mit'); return; }
     D.strobo=true; lauf=false; ab=false;
+    if(kopien.length) toast('Die Auswertung bleibt stehen – sie lässt sich auch hier verschieben');
   } else D.strobo=false;
   knoepfe(); zeichne(); sync(); };
 
@@ -1315,11 +1352,13 @@ function griffTreffer(p){
   return -1; }
 cv.addEventListener('pointerdown',e=>{
   if(!$('anzPop').hidden) $('anzPop').hidden=true;
-  if(D.strobo||lauf) return;
+  if(lauf) return;
   const p=ortVon(e);
+  /* Die Auswertung lässt sich auch über dem Stroboskopbild anfassen */
   if(pfeilZiehStart(p)){ e.preventDefault();
     try{ cv.setPointerCapture(e.pointerId); }catch(err){}
     return; }
+  if(D.strobo) return;                       /* sonst wird im Stroboskopbild nichts gezogen */
   const gi=griffTreffer(p);
   if(gi>=0){ e.preventDefault();
     skalaFest=pfeilSkala();                 /* Maßstab festhalten, sonst läuft die Spitze davon */
@@ -1444,15 +1483,15 @@ const HILFE=[
   ['Kein Stoß','Führen die eingestellten Werte zu keinem Zusammenstoß, steht das über dem Bild – mit dem Grund (sie fliegen aneinander vorbei, bewegen sich nicht aufeinander zu …).'],
   ['1D und 2D','1D: beide Körper auf einer Bahn wie auf der Luftkissenbahn. 2D: beide in der Fläche wie auf dem Billardtisch.'],
   ['elastisch / unelastisch','elastisch: Impuls und kinetische Energie bleiben erhalten. unelastisch: Die Körper bleiben zusammen und fahren gemeinsam weiter – der Impuls bleibt, ein Teil der kinetischen Energie wird innere Energie.'],
-  ['Anzeigen','Hinter dem Knopf „Anzeigen" steckt alles, was eingeblendet werden kann: oben die <b>Werte</b> für die Tabelle (v, p, E), darunter die <b>Pfeile</b> (v, p und die Änderung Δ). Beides lässt sich frei zusammenstellen, auch im Benutzen-Modus. 1D/2D und elastisch/unelastisch stehen daneben und bleiben ebenfalls immer sichtbar.'],
+  ['Anzeigen','Hinter dem Knopf „Anzeigen" steckt alles, was eingeblendet werden kann: oben die <b>Werte</b> für die Tabelle (v, p, E), in der Mitte die <b>Pfeile</b> (v, p und die Änderung Δ), unten die <b>Auswertung</b> (siehe dort). Alles lässt sich frei zusammenstellen, auch im Benutzen-Modus. 1D/2D und elastisch/unelastisch stehen daneben und bleiben ebenfalls immer sichtbar.'],
   ['Wertetabelle','Die Tabelle steht in einem eigenen Feld: in <b>1D unter</b> dem Stoßfenster, in <b>2D rechts daneben</b>; wird sie zu groß, lässt sie sich für sich scrollen. Sie zeigt Geschwindigkeit, Impuls und kinetische Energie, jeweils vor und nach dem Stoß, für jeden Körper und zusammen. In 2D stehen in jeder Zelle die beiden Komponenten x | y.'],
   ['Pfeile','„v" und „p" zeigen die Vektoren an den Körpern und zusätzlich an der Stoßstelle: gestrichelt vorher, durchgezogen nachher (v₁′). „Änderung" hängt den Pfeil der Änderung an (Δv bzw. Δp) – in 2D von der Spitze des Vorher-Pfeils zur Spitze des Nachher-Pfeils.'],
-  ['Pfeile ziehen und ergänzen','Ist der Stoß gelaufen, lässt sich <b>jeder Pfeil an der Stoßstelle anfassen</b>: Eine <b>Kopie</b> folgt dem Finger. Legt man sie richtig an einen anderen Pfeil, rastet sie ein und das <b>fehlende Stück wird ergänzt</b>:<br>• <b>Fuß an Fuß</b>, derselbe Körper, vorher und nachher → <b>Δp₁</b> bzw. <b>Δv₁</b> (und genauso für Körper 2). So sieht man, dass Δv₁ und Δv₂ verschieden sind, Δp₁ und Δp₂ aber entgegengesetzt gleich.<br>• <b>Spitze an Fuß</b>, beide Körper zur selben Zeit → <b>p₁ + p₂ = p gesamt</b>, einmal vorher und einmal nachher: beide Male derselbe Pfeil.<br>Bei den Geschwindigkeiten gibt es kein „v gesamt" – dort erscheint stattdessen ein Hinweis. Ein <b>Tipp auf eine Kopie</b> entfernt sie, „Kopien entfernen" unter „Anzeigen" räumt alle weg.'],
-  ['Impulse zusammen','Sind die Impulspfeile an, erscheint unten links der Vergleich: Die beiden Impulse werden aneinandergehängt (Spitze an Fuß), der dicke Pfeil vom Anfang zum Ende ist der Gesamtimpuls – einmal vorher, einmal nachher. Beide sind gleich lang und zeigen in dieselbe Richtung, auch beim schiefen Stoß.'],
+  ['Pfeile ziehen und ergänzen','Ist der Stoß gelaufen und „Auswerten" an, lässt sich <b>jeder Pfeil anfassen</b>: Eine <b>Kopie</b> folgt dem Finger. Legt man sie richtig an einen anderen Pfeil, rastet sie ein und das <b>fehlende Stück wird ergänzt</b>:<br>• <b>Fuß an Fuß</b>, derselbe Körper, vorher und nachher → <b>Δp₁</b> bzw. <b>Δv₁</b> (und genauso für Körper 2). So sieht man, dass Δv₁ und Δv₂ verschieden sind, Δp₁ und Δp₂ aber entgegengesetzt gleich.<br>• <b>Spitze an Fuß</b>, beide Körper zur selben Zeit → die <b>Summe</b>: Bei den Impulsen ist <b>p₁ + p₂ vorher und nachher derselbe Pfeil</b>, bei den Geschwindigkeiten <b>nicht</b> – eine Erhaltung der Geschwindigkeit gibt es nicht, und genau das zeigt der Vergleich.<br>Eingerastet wird auch an <b>anderen Kopien</b>: Zieht man erst eine Kopie in eine freie Ecke und hängt die zweite dort an, lässt sich die ganze Konstruktion später <b>am ersten Pfeil verschieben</b> – die angehängten gehen mit. Ein <b>Tipp auf eine Kopie</b> entfernt sie, „Kopien entfernen" unter „Anzeigen" räumt alle weg.'],
+  ['Auswertung (fertig gezeichnet)','Unter „Anzeigen → Auswertung" lassen sich die beiden fertigen Bilder einblenden: <b>Geschwindigkeiten zusammen</b> und <b>Impulse zusammen</b>. In jedem stehen zwei Ketten untereinander – vorher und nachher – mit der Summe als Zahl daneben. Beim Impuls kommt <b>zweimal dasselbe</b> heraus, bei der Geschwindigkeit nicht. Beide sind <b>von Haus aus aus</b>, denn meist will man selbst auswerten; beim <b>Teilen per QR-Code</b> bleiben sie aus, damit die Klasse selbst konstruiert.'],
   ['Vorlagen','Die klassischen Aufgaben auf Knopfdruck: gleiche Massen, leicht gegen schwer und umgekehrt, gegeneinander, die unelastischen Fälle und drei schiefe Stöße in der Fläche.'],
   ['Beenden','Der Ablauf endet von selbst, sobald <b>beide</b> Körper die Bahn bzw. die Fläche verlassen haben. Ist ein Körper sehr langsam, dauert das; dann schließt der Knopf <b>„Beenden"</b> neben „Start" den Ablauf an Ort und Stelle ab. Die Aufnahme bleibt stehen – Wiedergabe, Stroboskop und „Auswerten" gehen sofort.'],
   ['Start und Wiedergabe','„Start" oben lässt den Stoß <b>wirklich ablaufen</b> und zeichnet ihn dabei von selbst auf. Das ▶ unten bei „Wiedergabe" spielt diesen <b>Mitschnitt noch einmal ab</b> – beliebig oft, der Regler daneben sucht jede Stelle. „Tempo" schaltet auf Zeitlupe, beim Ablauf wie beim Abspielen.'],
-  ['Stroboskop','Macht aus der Aufnahme ein Stroboskopbild. Der Zeitpunkt des Zusammenstoßes ist immer einer der Blitze; die anderen liegen gleichmäßig davor und danach. Mit − und + bei „Blitze" lässt sich das auch <b>nach der Aufnahme</b> noch ändern; daneben steht der zeitliche Abstand der Blitze, der sich dabei mitändert. In 1D liegt jeder Blitz in einer eigenen Zeile (Zeit nach unten), in 2D stehen die Bilder in der Fläche. „Speichern" legt das Bild als PNG ab, die beiden Knöpfe daneben legen es auf die Tafel oder in die Zwischenablage.'],
+  ['Stroboskop','Macht aus der Aufnahme ein Stroboskopbild. Eine <b>fertige Auswertung bleibt dabei stehen</b>: Die gezogenen Pfeile liegen auch über dem Stroboskopbild und lassen sich dort weiter verschieben – „Bild → Tafel", „Kopieren" und „Speichern" nehmen genau das auf, was man sieht. Der Zeitpunkt des Zusammenstoßes ist immer einer der Blitze; die anderen liegen gleichmäßig davor und danach. Mit − und + bei „Blitze" lässt sich das auch <b>nach der Aufnahme</b> noch ändern; daneben steht der zeitliche Abstand der Blitze, der sich dabei mitändert. In 1D liegt jeder Blitz in einer eigenen Zeile (Zeit nach unten), in 2D stehen die Bilder in der Fläche. „Speichern" legt das Bild als PNG ab, die beiden Knöpfe daneben legen es auf die Tafel oder in die Zwischenablage.'],
   ['Ende des Ablaufs','Der Ablauf endet, sobald beide Körper die Bahn (1D) bzw. die Fläche (2D) verlassen haben. Ein Körper allein drüber hinaus reicht nicht.']
 ];
 $('bHilfe').onclick=()=>{
@@ -1482,6 +1521,8 @@ function uebernimm(d){ if(!d) return;
   D.g1=punkt(s.g1,d.g1); D.g2=punkt(s.g2,d.g2);
   D.wert=Object.assign({},s.wert,d.wert||{});
   D.pfeil=Object.assign({},s.pfeil,d.pfeil||{});
+  D.bilanz=Object.assign({},s.bilanz,d.bilanz||{});
+  if(geteiltesFenster) D.bilanz={v:false,p:false};   /* geteilt: die Klasse wertet selbst aus */
   D.tempo=Math.max(0,Math.min(TEMPI.length-1,+d.tempo||0));
   D.blitze=Math.max(3,Math.min(60,+d.blitze||s.blitze));
   D.babst=Math.max(0,+d.babst||0);
@@ -1506,6 +1547,8 @@ $('barMid').addEventListener('scroll',barFade);
 
 window.addEventListener('load',()=>{
   const geteilt=window.TafelTeilen&&TafelTeilen.istGeteilt();
+  geteiltesFenster=!!geteilt;
+  if(geteilt) D.bilanz={v:false,p:false};      /* die Klasse soll selbst auswerten */
   if(window.TafelModus&&!geteilt)
     TafelModus.init({get:()=>D.edit!==false, set:v=>{ D.edit=v; resize(); barFade(); sync(); }});
   document.documentElement.style.setProperty('--fs',Math.min(18,D.fontSize||14)+'px');

@@ -2920,17 +2920,26 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
       entgegengesetzt gleich.
     - **Spitze an Fuß**, beide Körper zur selben Zeit → **p₁ + p₂ = p gesamt**, einmal vorher und
       einmal nachher – beide Male derselbe Pfeil.
-    - Bei den **Geschwindigkeiten** gibt es **kein „v gesamt"**: Dort erscheint statt eines Pfeils
-      der Hinweis, dass man Geschwindigkeiten nicht addiert.
-    Eingerastet wird auch an **anderen Kopien**, die Konstruktion lässt sich also an einer freien
-    Stelle aufbauen. Ein **Tipp auf eine Kopie** entfernt sie, **„Kopien entfernen"** unter
-    „Anzeigen" räumt alle weg. Während der Auswertung stehen die **Körper fest** (mit ↺ geht es
-    zurück an den Anfang); ist „Auswerten" aus, liegen auch die Pfeile fest.
-  - **Impulse zusammen:** Sind die Impulspfeile an, erscheint unten links der Vergleich
-    **gesamt vorher ↔ gesamt nachher**: Die beiden Impulse werden aneinandergehängt (Spitze an
-    Fuß), der dicke Pfeil vom Anfang zum Ende ist der Gesamtimpuls. Beide Ketten enden am selben
-    Punkt – auch beim schiefen Stoß in der Fläche. Sobald man **selbst** Pfeile zieht, tritt dieser
-    Kasten beiseite und überlässt der eigenen Konstruktion den Platz.
+    - Dasselbe geht mit den **Geschwindigkeiten**: **v₁ + v₂** lässt sich genauso aneinanderhängen –
+      und vorher und nachher kommt **nicht** dasselbe heraus. Genau daran sieht man, dass es
+      **keine Erhaltung der Geschwindigkeit** gibt; der Summenpfeil hat deshalb eine eigene Farbe
+      und nicht die des Impulses.
+    Eingerastet wird auch an **anderen Kopien**: Zieht man erst eine Kopie in eine freie Ecke und
+    hängt die zweite dort an, lässt sich die **ganze Konstruktion am ersten Pfeil verschieben** –
+    die angehängten gehen mit. Ein **Tipp auf eine Kopie** entfernt sie, **„Kopien entfernen"**
+    unter „Anzeigen" räumt alle weg. Während der Auswertung stehen die **Körper fest** (mit ↺ geht
+    es zurück an den Anfang); ist „Auswerten" aus, liegen auch die Pfeile fest.
+  - **Auswertung im Stroboskopbild:** Schaltet man nach der Auswertung auf **Stroboskop**, bleibt
+    die Konstruktion stehen – sie liegt über dem Stroboskopbild und lässt sich dort **weiter
+    verschieben**. In 1D sitzen die Pfeile in der **Zeile des Stoßes**, in 2D an der Stoßstelle.
+    **„Bild → Tafel", „Kopieren" und „Speichern" nehmen genau das auf, was man sieht** – Aufnahme
+    und eigene Auswertung in einem Bild.
+  - **Auswertung – fertig gezeichnet:** Unter **„Anzeigen → Auswertung"** lassen sich zwei fertige
+    Bilder einblenden: **Geschwindigkeiten zusammen** und **Impulse zusammen**. In jedem stehen
+    zwei Ketten untereinander – **vorher** und **nachher** – mit der Summe als Zahl daneben: Beim
+    Impuls steht beide Male **dasselbe**, bei der Geschwindigkeit nicht. Beide sind **von Haus aus
+    aus**, denn meist will man selbst auswerten; beim **Teilen per QR-Code** bleiben sie aus, damit
+    die Klasse selbst konstruiert.
   - **Start und Wiedergabe:** „Start" oben lässt den Stoß **wirklich ablaufen** und zeichnet ihn
     dabei von selbst auf – einen Aufnahmeknopf braucht es nicht. Das **▶** unten bei „Wiedergabe"
     spielt diesen **Mitschnitt noch einmal ab**, der Regler daneben sucht jede Stelle.
