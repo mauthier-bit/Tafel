@@ -752,15 +752,16 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
 - **Ebene ändern:** Im Kontextmenü eines ausgewählten Objekts gibt es **▲ Vor / ▼ Zurück** (eine Ebene)
   und **⤒ Ganz vorn / ⤓ Ganz hinten**. Funktioniert auch mit einer Mehrfachauswahl und mit
   eingebetteten Werkzeugen (Tabelle, Glücksrad …) gegenüber Gezeichnetem.
-- **Angetipptes Fenster kommt nach vorne:** Liegen zwei eingebettete Werkzeuge oder Videos
-  übereinander, genügt ein Tipp auf das hintere – es rückt sofort vor das andere, „⤒ Ganz vorn"
-  braucht man dafür nicht mehr. Das gilt in **beiden Modi**: beim **Auswählen** (Tipp auf das
-  Objekt) und beim **Bedienen** (Tipp in das Werkzeug selbst – die Tafel erkennt am Tastaturfokus,
-  welches gemeint ist). Dasselbe passierte schon bisher beim Anfassen an der Kopfleiste und beim
-  Aufklappen einer Minimier-Pille.
-  Das gilt **nur für eingebettete Objekte**: Ein Bild nach vorn zu holen würde die Striche
-  verdecken, die darauf gezeichnet sind, und das will niemand, der es bloß verschieben wollte –
-  Gezeichnetes behält seine Reihenfolge also, bis man sie von Hand ändert.
+- **Angetipptes Objekt kommt nach vorne:** Liegen zwei **Werkzeuge, Videos, Bilder oder
+  Dokumente** übereinander, genügt ein Tipp auf das hintere – es rückt sofort vor das andere,
+  „⤒ Ganz vorn" braucht man dafür nicht mehr. Das gilt in **beiden Modi**: beim **Auswählen**
+  (Tipp auf das Objekt) und beim **Bedienen** (Tipp in das Werkzeug selbst – die Tafel erkennt am
+  Tastaturfokus, welches gemeint ist). Dasselbe passierte schon bisher beim Anfassen an der
+  Kopfleiste und beim Aufklappen einer Minimier-Pille.
+  **Was darauf liegt, kommt mit:** Striche, Texte und Formen, die **ganz im Rahmen** des Objekts
+  stehen und vorher **darüber** lagen, werden mit nach vorne gestellt – sonst verschwände die
+  Beschriftung unter dem Bild, das man bloß greifen wollte. Was vorher **darunter** lag, bleibt
+  unten, und Gezeichnetes außerhalb des Rahmens behält seinen Platz.
   **Dabei lädt nichts neu:** Die Reihenfolge der Einbettungen steckt seit Version 688 in der
   Stapelfolge (z-index) statt in der Reihenfolge im Dokument. Vorher wurden die Rahmen umgehängt,
   und Safari lud sie dabei neu – ein laufendes Video sprang an den Anfang zurück. Jetzt läuft es

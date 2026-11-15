@@ -2756,14 +2756,25 @@ function selectObject(o,add){ if(!o){ if(!add)selection=[]; refreshProps(); retu
   const grp=o.groupId?page().objects.filter(x=>x.groupId===o.groupId):[o];
   if(add){ for(const g of grp) if(!selection.includes(g)) selection.push(g); } else selection=grp.slice();
   embedsNachVorn(grp); refreshProps(); }
-/* Angetipptes Fenster kommt nach vorne: Liegen zwei Videos oder Werkzeuge übereinander,
-   genügt das Auswählen - „⤒ Vorn" braucht man dafür nicht mehr. Nur eingebettete Objekte
-   werden so umsortiert; ein Bild nach vorn zu holen würde die Striche verdecken, die
-   darauf gezeichnet sind, und das will niemand, der es nur verschieben wollte. */
+/* Angetipptes Objekt kommt nach vorne: Liegen zwei Werkzeuge, Bilder oder Dokumente
+   übereinander, genügt das Auswählen - „⤒ Vorn" braucht man dafür nicht mehr.
+   Damit das Hochholen nichts verdeckt, kommt alles mit, was auf dem Objekt liegt:
+   Striche, Texte und Formen, die ganz in seinem Rahmen stehen und vorher darüber lagen –
+   sonst verschwände die Beschriftung unter dem Bild, das man nur greifen wollte. */
+const FLAECHIG=['embed','image','doc'];
 function embedsNachVorn(objs){
-  const p=page(), hoch=objs.filter(o=>o&&o.type==='embed'&&p.objects.includes(o));
+  const p=page(), hoch=objs.filter(o=>o&&FLAECHIG.includes(o.type)&&p.objects.includes(o));
   if(!hoch.length) return;
-  const neu=p.objects.filter(o=>!hoch.includes(o)).concat(hoch);
+  const stelle=o=>p.objects.indexOf(o);
+  const ab=Math.min.apply(null,hoch.map(stelle));
+  const drin=(a,b)=>b.x>=a.x-0.5&&b.y>=a.y-0.5&&b.x+b.w<=a.x+a.w+0.5&&b.y+b.h<=a.y+a.h+0.5;
+  const rahmen=hoch.map(geomBounds);
+  const drauf=p.objects.filter((o,i)=>{
+    if(hoch.includes(o)||i<ab) return false;          /* lag ohnehin schon darunter */
+    if(FLAECHIG.includes(o.type)) return false;       /* ein zweites Bild gehört nicht dazu */
+    const b=geomBounds(o);
+    return rahmen.some(r=>drin(r,b)); });
+  const neu=p.objects.filter(o=>!hoch.includes(o)&&!drauf.includes(o)).concat(hoch,drauf);
   if(neu.every((o,i)=>o===p.objects[i])) return;      /* steht schon ganz vorne */
   p.objects=neu; layerReorderEmbeds(); markDirty(); scheduleAutosave();
 }
