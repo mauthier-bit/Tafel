@@ -3321,20 +3321,26 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     Zahlen deshalb nicht gleichabständig und laufen von links 3,26 eV nach rechts 1,59 eV.
     - **Gemessene Linien** (farbig im Band): die starken Linien des **neutralen** Atoms aus dem
       **NIST Handbook of Basic Atomic Spectroscopic Data** (Strong Lines, Luftwellenlängen) –
-      übernommen, nicht gerechnet. Hinterlegt sind **38 Elemente**: **H** (656,3 · 486,1 · 434,0 ·
-      410,2 nm), **He**, **Li**, **C**, **N**, **O**, **Ne**, **Na** (589,0 / 589,6 nm), **Mg** (die
-      b-Linien 518,4 · 517,3 · 516,7 nm), **Al**, **Si**, **S**, **Cl**, **Ar**, **K**, **Ca**,
-      **Ti**, **Cr**, **Mn**, **Fe**, **Co**, **Ni**, **Cu** (das Grün 521,8 · 515,3 · 510,6 nm),
-      **Zn**, **Kr**, **Rb**, **Sr** (460,7 · 496,2 · 548,1 · 640,8 · 650,4 · 707,0 nm), **Ag**,
-      **Cd**, **Sn**, **I**, **Xe**, **Cs**, **Ba** (553,5 nm), **Au**, **Hg** (579,1 · 577,0 ·
-      546,1 · 435,8 · 404,7 nm), **Tl** und **Pb**. Bei allen anderen bleibt das Band leer und sagt
-      das auch.
+      übernommen, nicht gerechnet; sie stehen zusammen mit den Übergängen in `spektrum-data.js`.
+      Hinterlegt sind **79 Elemente** mit zusammen **438 Linien**: alle von **Wasserstoff bis
+      Barium** außer **B, Se, Zr und Nb**, dazu **La bis Th** ohne **Pr, Pm, Re, Os, Po, At, Fr,
+      Pa und U**. Je Element stehen **bis zu sechs** Linien zwischen 380 nm und 780 nm: zuerst die
+      **persistenten** (die „P"-Linien des Handbooks), dann die stärksten; was näher als 0,25 nm
+      beieinander liegt, steht nur einmal, sonst wäre die Auswahl von einer einzigen Liniengruppe
+      gefüllt. Sind es im Handbook weniger als drei, kommt die Auswahl aus der Linienliste der
+      **NIST Atomic Spectra Database**. Beispiele: **H** (656,3 · 486,1 · 434,0 · 410,2 nm),
+      **Na** (589,6 / 589,0 nm), **Mg** (die b-Linien 518,4 · 517,3 · 516,7 nm), **Cr** (das
+      Tripel 425,4 · 427,5 · 429,0 nm und 520,8 · 520,5 nm), **Sr** 460,7 nm, **Ba** 553,5 nm,
+      **Hg** (579,1 · 546,1 · 435,8 · 404,7 nm). Bei den übrigen Elementen bleibt das Band leer und
+      sagt das auch – dort gibt die Datenbank zu den sichtbaren Linien keine Konfigurationen an, es
+      gäbe also nur Linien ohne Pfeil.
       Gezeigt werden nur **Linien des neutralen Atoms** – passend zur Hülle, die daneben steht. In
       einer Flamme oder Gasentladung leuchten zusätzlich **Ionen** (etwa Sr II 407,8 nm) und
       **Moleküle** mit, deshalb ist die Flammenfarbe nicht einfach die Summe dieser Linien.
     - **Übergänge:** Beim **Wasserstoff** rechnet das Bohrmodell sie nach – **Lyman** (nach n = 1,
-      im UV), **Balmer** (nach n = 2, sichtbar) und **Paschen** (4→3, 1874,6 nm im Infraroten). Die
-      gerechneten Balmer-Linien (656,1 · 486,0 · 433,9 nm) treffen die gemessenen auf 0,3 Promille;
+      im UV), **Balmer** (nach n = 2, sichtbar, bis 6→2, damit **alle vier** Balmer-Linien im Band
+      ihren Pfeil bekommen) und **Paschen** (4→3, 1874,6 nm im Infraroten). Die gerechneten
+      Balmer-Linien (656,1 · 486,0 · 433,9 · 410,1 nm) treffen die gemessenen auf 0,3 Promille;
       der Rest ist der Unterschied zwischen Vakuum- und Luftwellenlänge und die mitschwingende
       Kernmasse.
     - **Röntgen (eigener Knopf, anfangs aus):** Es geht um das **sichtbare** Spektrum – die
@@ -3355,18 +3361,31 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
       zugeordnete **Übergang der äußeren Elektronen** im Bild. Die Wellenlänge ist gemessen, die
       Zuordnung stammt aus der **NIST Atomic Spectra Database** (Linienabfrage mit den Spalten
       `conf_i` und `conf_k`): Angegeben ist die Unterschale, aus der das Elektron kommt, und die,
-      in die es fällt – der Teil der Konfiguration also, der sich ändert. Beispiele: **Na 3p→3s**
-      (die gelbe D-Linie), **He 3d→2p** und **3p→2s**, **Ne 3p→3s** (alle sieben Linien),
-      **Ca 4p→4s · 5s→4p · 4d→4p**, **Cu 4d→4p · 5s→4p · 5d→4p**, **Co 4p→3d · 4p→4s**,
-      **Ba 6p→6s** (alle sechs), **Hg 7s→6p · 6d→6p**.
+      in die es fällt – der Teil der Konfiguration also, der sich ändert. Zugeordnet ist nur, was
+      **eindeutig** ist: genau eine Linie der Datenbank innerhalb von 0,015 nm, genau **ein**
+      Elektron wechselt die Unterschale, und das obere Niveau liegt in der Aufbaureihenfolge auch
+      wirklich **über** dem unteren. Beispiele: **Na 3p→3s** (die gelbe D-Linie), **He 3d→2p** und
+      **3p→2s**, **Ne 3p→3s**, **Ca 4p→4s · 5s→4p · 4d→4p**, **Cr 4p→4s · 4p→3d**,
+      **Cu 4d→4p · 5s→4p · 5d→4p**, **Ba 6p→6s** (alle sechs), **Hg 7s→6p · 6d→6p · 7d→6p**,
+      **Cs 7p→6s · 7d→6p · 8d→6p · 6f→5d**.
       **Mehrere Linien gehören oft zum selben Paar von Unterschalen** – dann gibt es einen Pfeil,
       und darunter stehen seine Wellenlängen nebeneinander. Dass sie trotzdem verschieden sind,
       liegt an den **Termen** (Feinstruktur, Wechselwirkung der Elektronen), die das Schalenbild
-      nicht zeigt. Zwei Fälle bleiben **ohne Pfeil** und werden darunter gemeldet: Das obere Niveau
-      liegt über den gezeichneten Stufen (etwa 7d oder 8p), oder es wechseln **zwei Elektronen
-      gleichzeitig** den Platz (zum Beispiel Cu 510,6 nm: 3d⁹4s² ↔ 3d¹⁰4p). Die Leiter wird dafür
-      so weit nach oben gezeigt, wie die Pfeile es brauchen. Diese Pfeile sieht man in der Sicht mit
-      **Unterschalen**; ohne sie fallen Anfang und Ende in dieselbe Hauptschale.
+      nicht zeigt.
+      Liegt das obere Niveau **über der Aufbaureihenfolge** (7d, 8p, 8d, 9d, 6f, 8s – bei Rb, Ag,
+      Cd, In, Te, I, Xe, Cs, Hg, Pb, Bi, Rn und Ra), steht es als **gestrichelte Stufe** über der
+      Leiter, und der Pfeil kommt von dort; die Leiter wird dann bis 7p durchgezogen, damit
+      zwischen ihr und den angedeuteten Stufen keine Unterschale fehlt. Ein Hinweis unter dem Band
+      sagt, dass dort im Grundzustand kein Elektron sitzt.
+      So haben von den 438 Linien nur noch **fünf** keinen Pfeil (bei Si, Ce, Sm, Au und Th):
+      Zu vieren nennt die Datenbank keine Konfiguration des oberen Niveaus, und bei Gold
+      627,8 nm wechseln **zwei Elektronen gleichzeitig** den Platz (5d⁹6s² ↔ 5d¹⁰6p) – das kann
+      das Schalenbild nicht zeigen. Gemeldet wird es unter dem Band.
+      Ein Pfeil zeigt immer **nach unten**. Diese Pfeile sieht man in der Sicht mit
+      **Unterschalen**; ohne sie fallen Anfang und Ende oft in dieselbe Hauptschale – dann steht
+      unter dem Band der Hinweis auf den Knopf „Unterschalen". Passt die Leiter nicht mehr ins
+      Bild, rücken die Stufen enger zusammen und die Beschriftung schrumpft mit, statt oben
+      abgeschnitten zu werden.
   - **Kern** zeigt den **Potentialtopf mit zwei Hälften**: links die **Protonen**, rechts die
     **Neutronen**, gefüllt nach den Schalen der magischen Zahlen **2, 8, 20, 28, 50, 82, 126**; eine
     abgeschlossene Schale wird grün hervorgehoben. Die **linke Hälfte ist flacher** (gleiche Ladungen
@@ -4371,6 +4390,8 @@ atomphysik.html       ← Atomphysik: sechs Reiter (Periodensystem, Nuklidkarte,
                         Kernpotentialtopf, Zerfall, Elementarteilchen mit Mindmap)
 teilchen-data.js      ← Daten der Elementarteilchen und Hadronen (Ladung, Spin, Isospin, Zerfälle)
                         und der Baum für die Mindmap
+spektrum-data.js      ← starke sichtbare Spektrallinien von 79 Elementen (NIST) mit den
+                        zugeordneten Übergängen der äußeren Elektronen
 induktion.html        ← Induktion und Feldlinien (Film und eigenes Ausprobieren)
 mindmap.html          ← Mindmap (Diverses)
 pinnwand.html         ← Pinnwand mit Karten (Diverses)
