@@ -2903,8 +2903,12 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     Vorrang**: Wird das Fenster klein, gibt die Tabelle nach und scrollt, statt der Fläche die
     Höhe zu nehmen. Je Größe eine Zeile **vorher** und eine **nachher**, für jeden Körper und
     **zusammen**; in 2D stehen in jeder Zelle die **Koordinaten x | y** und darunter der **Betrag**.
-    Beim unelastischen Stoß kommt die Zeile **„davon innere Energie"** dazu – dort steht, was die
-    kinetische Energie verloren hat.
+    Die Spalte **„zusammen" gibt es auch bei v** – dort sieht man, dass die Summe vorher und
+    nachher **nicht** gleich ist, während sie beim Impuls gleich bleibt. Beim unelastischen Stoß
+    kommt die Zeile **„davon E<sub>i</sub>"** dazu (innere Energie) – das, was die kinetische
+    Energie verloren hat. Die **Einheiten** schreibt die erste Spalte nur auf Wunsch mit
+    (**„Einheiten dazuschreiben"** unter „Anzeigen"); ohne sie bleibt sie schmal, und der Platz
+    gehört den Zahlen.
   - **Pfeile:** „v" und „p" zeichnen die Vektoren an den Körpern und zusätzlich an der
     **Stoßstelle**: blass gestrichelt der Wert **vorher**, durchgezogen **nachher** (v₁′). „Änderung"
     hängt **Δv** bzw. **Δp** an – in 2D als Verbindung von der Spitze des Vorher-Pfeils zur Spitze
@@ -2931,8 +2935,12 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     Original entsteht **jedes Mal eine neue Kopie**, auch wenn dort schon eine liegt, und Fertiges
     bleibt stehen (hat man etwa p₁ + p₂ gebaut, geht Δp₁ gleich daneben). Blendet man eine
     Pfeilart aus, **ruhen** ihre Kopien nur und sind wieder da, sobald man sie einblendet. Ein
-    **Tipp auf eine Kopie** entfernt sie, **„Kopien entfernen"** unter „Anzeigen" räumt alle weg. Während der Auswertung stehen die **Körper fest** (mit ↺ geht
-    es zurück an den Anfang); ist „Auswerten" aus, liegen auch die Pfeile fest.
+    **Tipp auf eine Kopie** entfernt sie, **„Kopien entfernen"** unter „Anzeigen" räumt alle weg.
+    Solange „Auswerten" an ist, stehen in der Leiste außerdem **↶ Zurück** (nimmt den letzten
+    Schritt der Auswertung zurück – Ziehen, Einrasten, Entfernen) und **🗑 Zurücksetzen** (räumt
+    die ganze Auswertung weg; auch das holt „Zurück" wieder). Während der Auswertung stehen die
+    **Körper fest** (mit ↺ geht es zurück an den Anfang); ist „Auswerten" aus, liegen auch die
+    Pfeile fest.
   - **Auswertung im Stroboskopbild:** Schaltet man nach der Auswertung auf **Stroboskop**, bleibt
     die Konstruktion stehen – sie liegt über dem Stroboskopbild und lässt sich dort **weiter
     verschieben**. In 1D sitzen die Pfeile in der **Zeile des Stoßes**, in 2D an der Stoßstelle.
