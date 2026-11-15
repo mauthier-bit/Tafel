@@ -1738,7 +1738,15 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   innerhalb des Dokuments nur Notizen, nicht das Dokument selbst; **„🧽 Notizen löschen"** räumt
   die angezeigte Seite auf einmal frei. Die Knöpfe stehen als eigener, durch Trennlinien abgesetzter Block im
   Kontextmenü: „Beschriften" oben, darunter die Blätter-Knöpfe mit „Notizen löschen" daneben, darunter
-  „Als PDF sichern".
+  **„🖼 Als Bild sichern"** und „Als PDF sichern".
+  **„🖼 Als Bild sichern"** legt die **angezeigte Seite** bzw. **das Bild mitsamt allen Notizen** als
+  Bilddatei ab – in voller Auflösung der Vorlage, nicht als Bildschirmausschnitt. Die Datei heißt nach dem
+  Objekt (`Arbeitsblatt-Seite-2.png`); ein Bild ohne Notizen kommt unverändert heraus, sonst wird ein PNG
+  daraus. So lässt sich ein ausgefülltes Arbeitsblatt einzeln weitergeben, ohne gleich das ganze Dokument
+  als PDF zu sichern.
+  **Rückgängig** nimmt auch die Notizen zurück, eine nach der anderen, und das Beschriften läuft danach
+  weiter – der rote Rahmen und der Knopf bleiben stehen, der nächste Strich landet wieder auf der Seite.
+  Ist das Dokument nicht mehr da (gelöscht oder andere Tafelseite), endet das Beschriften von selbst.
   Beim **Bild** gilt alles genauso, nur ohne Blättern: Die Notizen gehören zu diesem einen Bild.
 - **Video beschriften.** Dasselbe gibt es jetzt auch bei **Videos** – beim Videoclip aus der Kamera, bei
   einer eingefügten Videodatei und beim eingebetteten Video. Ein von Hand gezeichneter **Pfeil bleibt
@@ -1787,8 +1795,8 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   stimmt hinterher. Die Notizen werden **mit dem Projekt gespeichert**, erscheinen im **Vollbild** und in
   **„📄 Als PDF sichern"** sowie im PDF-Export der Tafelseite.
   Was neben dem Dokument geschrieben wird, bleibt wie bisher ein gewöhnliches Objekt der Tafelseite.
-  Im Kontextmenü eines Bildes erscheinen deshalb dieselben zwei Knöpfe; die Blätter-Knöpfe und
-  „Als PDF sichern" bleiben den Dokumenten vorbehalten.
+  Im Kontextmenü eines Bildes erscheinen deshalb „Beschriften", „Notizen löschen" und „Als Bild sichern"
+  genauso; die Blätter-Knöpfe und „Als PDF sichern" bleiben den Dokumenten vorbehalten.
   *Warum als Folie und nicht im PDF?* Ein eingefügtes PDF liegt in der Tafel schon als **Bild je Seite** vor
   (so lässt es sich überhaupt verschieben, zoomen und auf der Tafel zeigen); die PDF-Datei selbst ist dann
   nicht mehr da. Die Folie ist außerdem **verlustfrei**: Striche bleiben Striche, lassen sich einzeln
