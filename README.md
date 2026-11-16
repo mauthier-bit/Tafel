@@ -2097,6 +2097,10 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   und nur im sichtbaren Bereich. Gesucht wird numerisch, auch **Berührpunkte** ohne Vorzeichenwechsel
   werden gefunden; an einer **Polstelle** wechselt zwar das Vorzeichen, der Wert ist dort aber riesig –
   solche Stellen werden geprüft und nicht angezeigt (nachgemessen an 1/(x−2): keine Nullstelle).
+  Auch eine Nullstelle **am Rand des Definitionsbereichs** wird gefunden, wo es keinen
+  Vorzeichenwechsel gibt: √(x−3) bei x = 3, √(4−x²) bei −2 und 2, √x bei 0. Gehört der Rand
+  nicht zum Definitionsbereich („x²−1 für x>1“), bleibt dort nur der offene Kreis und keine
+  Nullstelle; mit „x≥1“ steht sie da.
   Verdeckte Funktionen bleiben außen vor, damit Rätselaufgaben nicht verraten werden.
   **Punktweise zum Graphen:** In **Tabelle** und **Maschine** steht bei jeder Funktion der Knopf
   **„→ Graph"** (in der Maschine gleich neben dem y-Wert). In der Tabelle zeichnet er **alle
