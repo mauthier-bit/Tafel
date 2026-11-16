@@ -139,7 +139,7 @@
   /* links der Term groß und darunter der Graph */
   #lmLinks{flex:1;min-width:0;min-height:0;display:flex;flex-direction:column;gap:calc(var(--k) * 4px);}
   #lmTermGross{flex:none;text-align:center;font-size:calc(var(--k) * 21px);color:#1f2430;line-height:1.25;
-    padding:calc(var(--k) * 2px) 4px;min-height:1.5em;}
+    padding:calc(var(--k) * 2px) 4px;min-height:1.5em;overflow:hidden;white-space:nowrap;}
   /* rechts die Ränder: antippen öffnet das Ergebnis */
   .lmRand{border:1px solid #e6ebf3;border-left-width:5px;border-left-color:#cbd5e1;border-radius:10px;
        padding:calc(var(--k) * 6px) calc(var(--k) * 8px);margin-bottom:calc(var(--k) * 6px);cursor:pointer;background:#fff;}
@@ -2538,6 +2538,11 @@ function lmPolyHtml(p,stark){ p=pTrim(p); const g=p.length-1, teile=[];
     teile.push(cls?('<span class="'+cls+'">'+vz+lmMono(c,i)+'</span>'):(vz+lmMono(c,i))); }
   return teile.join('')||'0'; }
 const lmBruchHtml=(zh,nh)=>'<span class="lmBr"><span>'+zh+'</span><span>'+nh+'</span></span>';
+/* Den eingegebenen Term anzeigen – ein Quotient wird dabei auch als Bruch gesetzt */
+function lmOrigHtml(ast,toks){
+  if(ast&&ast.k==='/'){ const zt=termText(tokenize(lmAstText(ast.l))), nt=termText(tokenize(lmAstText(ast.r)));
+    if(zt&&nt) return lmBruchHtml(zt,nt); }
+  return termText(toks); }
 /* Vergleichstext „(x² + 1)/(x − 2)" zu einer Darstellung – einteilige Zähler/Nenner ohne Klammern */
 function lmTermVgl(zh,nh){ const t=h=>{ const r=String(h).replace(/<[^>]+>/g,'').trim();
     if(r.startsWith('(')&&r.endsWith(')')) return r;          /* steht schon in Klammern */
@@ -2614,9 +2619,10 @@ function lmAnalyse(){
   e.ok=true;
   const ast=lmAst(toks), rat=ast?lmRat(ast):null, F=lmFlags(ast);
   const origT=termText(toks);                                  /* der Term, wie er eingegeben wurde */
+  const origHtml=lmOrigHtml(ast,toks);                         /* derselbe Term, Quotienten als Bruch */
   const ohneLeer=t=>String(t).replace(/[\s·]/g,'');
   /* steht links dasselbe wie rechts, wird nur einmal geschrieben */
-  const mitOrig=(h,vgl)=>(ohneLeer(vgl)===ohneLeer(origT))?('f(x) = '+h):('f(x) = '+origT+' = '+h);
+  const mitOrig=(h,vgl)=>(ohneLeer(vgl)===ohneLeer(origT))?('f(x) = '+h):('f(x) = '+origHtml+' = '+h);
   const randKarte=(x0,seite,wert,grund,proben)=>({ziel:'x → '+lmX(x0)+(seite<0?'⁻':'⁺'), wert, grund, proben, x:x0, seite});
 
   /* ===== gebrochen-rationale und ganzrationale Terme: alles am Term ablesbar ===== */
@@ -2690,7 +2696,7 @@ function lmAnalyse(){
 
   /* ===== alle anderen Terme: Lücken suchen, Grenzwerte belegen ===== */
   e.art='sonst';
-  e.termHtml='f(x) = '+origT;
+  e.termHtml='f(x) = '+origHtml;
   let st=lmScan(f); e.mehr=!!st.mehr;
   /* Zwei Rand-Treffer dicht beieinander sind in Wirklichkeit eine Lücke mitten im Definitionsbereich
      (z. B. sin(x)/x bei 0): dann beide Seiten anschauen statt „Definitionsbereich endet". */
@@ -2769,7 +2775,14 @@ function lmText(){ const o=$('lmOut'), gr=$('lmTermGross'); if(!o) return; const
   if(!e||!e.ok){ o.innerHTML='<div class="lmHead">'+((e&&e.hinweis)||'')+'</div>'; if(gr) gr.innerHTML=''; return; }
   const k=e.karten[lmSel];
   /* Im großen Term steht hervorgehoben, worauf es beim gewählten Rand ankommt */
-  if(gr) gr.innerHTML=(k&&k.termHtml)||e.termHtml||'';
+  if(gr){ gr.innerHTML=(k&&k.termHtml)||e.termHtml||'';
+    /* lange Ketten kleiner setzen, damit sie ganz hineinpassen */
+    gr.style.fontSize='';
+    for(let i=0;i<5&&gr.clientWidth>40&&gr.scrollWidth>gr.clientWidth+2;i++){
+      const b0=parseFloat(getComputedStyle(gr).fontSize)||21;
+      const neu=Math.max(10,b0*gr.clientWidth/(gr.scrollWidth+8));
+      if(neu>=b0-0.2) break;
+      gr.style.fontSize=neu.toFixed(1)+'px'; } }
   let h='<div class="lmHead">'+e.kopf+'</div>'+
         '<div class="lmHinw">Rand antippen – dann steht hier der Grenzwert, und Term und Graph zeigen, woran man ihn sieht.</div>';
   e.karten.forEach((q,i)=>{ const an=i===lmSel;

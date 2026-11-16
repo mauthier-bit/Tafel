@@ -2100,7 +2100,9 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     an einer Definitionslücke der Nenner als Produkt mit dem Faktor, der 0 wird, hervorgehoben, bei einer
     **hebbaren Lücke** zusätzlich gekürzt:
     `f(x) = (x² − 1)/(x − 1) = (x − 1)·(x + 1) / (x − 1) = x + 1 für x ≠ 1`.
-    Steht links schon dasselbe wie rechts, wird es nur einmal geschrieben.
+    Steht links schon dasselbe wie rechts, wird es nur einmal geschrieben. **Auch der eingegebene Term
+    steht als Bruch** da (nicht in einer Zeile mit Schrägstrich); wird die Kette zu breit, setzt sie sich
+    automatisch kleiner, bis sie ganz hineinpasst.
   - **Zusammengesetzte Terme werden zerlegt:** Bei einem Produkt oder Quotienten steht das Verhalten der
     einzelnen Teile dabei – z. B. bei `x·e^(−x)` für x → +∞: „Die einzelnen Teile: x → +∞, e^(−x) → 0",
     bei `x·ln(x)` für x → 0⁺: „x → 0, ln(x) → −∞", bei `sin(x)/x`: „sin(x) bleibt zwischen −1 und 1,
