@@ -18,8 +18,19 @@
   #bar label{display:inline-flex;gap:4px;align-items:center;font-weight:600;white-space:nowrap;}
   #shotBtns{display:inline-flex;gap:5px;flex:0 0 auto;}
   #words{flex:none;padding:6px 8px;border-bottom:1px solid #e6eaf0;}
-  #words textarea{width:100%;height:92px;border:1px solid #cfd6e0;border-radius:8px;padding:6px 8px;font:500 14px -apple-system,sans-serif;resize:vertical;}
   #words .hint{font-size:12px;color:#8a93a2;margin-top:4px;}
+  #wAdd{display:flex;gap:6px;align-items:center;}
+  #wIn{flex:1 1 auto;min-width:0;border:1px solid #cfd6e0;border-radius:8px;padding:7px 9px;font:500 15px -apple-system,sans-serif;}
+  #wPlus{flex:0 0 auto;border:1px solid #cfd6e0;border-radius:8px;background:#2563eb;color:#fff;font:700 14px -apple-system,sans-serif;padding:7px 12px;cursor:pointer;}
+  #wList{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;max-height:116px;overflow-y:auto;overflow-x:hidden;}
+  #wLeer{font-size:13px;color:#8a93a2;margin-top:6px;}
+  .wChip{display:inline-flex;align-items:center;gap:1px;border:1px solid #cfd6e0;border-radius:999px;background:#fff;padding:1px 3px 1px 9px;}
+  .wChip input.t{border:0;outline:0;background:transparent;font:600 14px -apple-system,sans-serif;color:#1f2430;padding:2px 0;min-width:2.4em;}
+  .wChip input.n{border:0;outline:0;background:#eef2f7;border-radius:6px;font:700 13px -apple-system,sans-serif;color:#2563eb;text-align:center;width:2.1em;padding:2px 0;margin:0 1px;}
+  .wChip button{border:0;background:transparent;font:700 15px -apple-system,sans-serif;color:#64748b;width:22px;height:22px;border-radius:50%;cursor:pointer;padding:0;}
+  .wChip button:hover{background:#eef2f7;}
+  .wChip button.x{color:#b91c1c;font-size:13px;}
+  #wMsg{color:#b45309;font-weight:600;}
   #area{flex:1;position:relative;min-height:0;}
   #area canvas{position:absolute;inset:0;width:100%;height:100%;}
   #msg{font-size:12.5px;color:#64748b;white-space:nowrap;}
@@ -231,8 +242,13 @@
     </div></div>
   </div>
   <div id="words" hidden>
-    <textarea id="wIn" placeholder="Ein Wort je Zeile – mehrfach genannte Wörter werden größer.&#10;Oder Gewicht angeben: Bruch = 5"></textarea>
-    <div class="hint">Ein Begriff je Zeile (Komma geht auch) · <b>Begriff = 5</b> setzt das Gewicht · mehrfach genannte Begriffe werden automatisch größer</div>
+    <div id="wAdd">
+      <input type="text" id="wIn" placeholder="Begriff eingeben – oder ganze Liste einfügen" autocomplete="off" autocapitalize="sentences" spellcheck="false">
+      <button type="button" id="wPlus" title="Begriff hinzufügen (oder Eingabetaste)">+ Hinzufügen</button>
+    </div>
+    <div id="wLeer" hidden>Noch keine Begriffe – oben eintippen und Eingabetaste drücken.</div>
+    <div id="wList"></div>
+    <div class="hint"><span id="wMsg"></span><span id="wTipp">Eingabetaste fügt hinzu · schon vorhandene Begriffe zählen nur hoch · ganze Liste mit Komma oder Zeilenumbruch einfügen</span></div>
   </div>
   <div id="area"><canvas id="cv"></canvas></div>
 </div>
@@ -252,15 +268,76 @@ let D={ v:1, words:'Bruch\nBruch\nNenner\nZähler\nKürzen\nErweitern\nAnteil\nP
 let items=[], laid=[];
 
 /* ---------- Begriffe zählen ---------- */
-function parse(){
+/* Liste in der Reihenfolge der Eingabe – jeder Begriff nur einmal, mit seinem Zähler. */
+function wortListe(txt){
   const map=new Map();
-  (D.words||'').split(/[\n,;]+/).forEach(line=>{
+  (txt===undefined?(D.words||''):txt).split(/[\n,;]+/).forEach(line=>{
     const m=line.split(/\s*=\s*/);
-    const w=(m[0]||'').trim(); if(!w) return;
+    const w=(m[0]||'').trim().replace(/\s+/g,' '); if(!w) return;
     const extra=m.length>1?Math.max(1,Math.min(99,parseFloat(m[1].replace(',','.'))||1)):1;
-    map.set(w,(map.get(w)||0)+extra);
+    map.set(w,Math.min(99,(map.get(w)||0)+extra));
   });
-  return [...map.entries()].map(([text,n])=>({text,n})).sort((a,b)=>b.n-a.n).slice(0,60);
+  return [...map.entries()].map(([text,n])=>({text,n}));
+}
+function parse(){ return wortListe().sort((a,b)=>b.n-a.n).slice(0,60); }
+const fmtN=n=>String(Math.round(n*10)/10).replace('.',',');
+
+/* ---------- Eingabeliste mit Zählern ---------- */
+let wMsgT=null;
+function wMeldung(t){ $('wMsg').textContent=t||''; $('wTipp').hidden=!!t;
+  clearTimeout(wMsgT); if(t) wMsgT=setTimeout(()=>{ $('wMsg').textContent=''; $('wTipp').hidden=false; },5000); }
+function schreibe(liste,ohneNeu){
+  D.words=liste.filter(it=>it.text).map(it=>it.n>1?(it.text+' = '+fmtN(it.n)):it.text).join('\n');
+  if(!ohneNeu) listeMalen();
+  refresh();
+}
+/* Beim Hoch- und Runterzählen nur die Zahl ändern – sonst wäre der Knopf unter dem Finger jedesmal neu. */
+function setzeZahl(i,v,feld){ const l=wortListe(); if(!l[i]) return;
+  if(!isFinite(v)) { listeMalen(); return; }
+  l[i].n=Math.max(1,Math.min(99,Math.round(v*10)/10));
+  if(feld){ feld.value=fmtN(l[i].n); schreibe(l,true); } else schreibe(l); }
+const zahlVon=(i,ersatz)=>{ const l=wortListe(); return l[i]?l[i].n:ersatz; };
+function entfernen(i){ const l=wortListe(); if(!l[i]) return; l.splice(i,1); schreibe(l); }
+function umbenennen(i,name){ const l=wortListe(); if(!l[i]) return;
+  const neu=(name||'').trim().replace(/\s+/g,' ');
+  if(!neu){ l.splice(i,1); schreibe(l); return; }
+  const j=l.findIndex((it,k)=>k!==i&&it.text.toLowerCase()===neu.toLowerCase());
+  if(j>=0){ l[j].n=Math.min(99,l[j].n+l[i].n); l.splice(i,1); schreibe(l);
+    wMeldung('„'+l[j].text+'“ gibt es schon – Zähler jetzt '+fmtN(l[j].n)); return; }
+  l[i].text=neu; schreibe(l); }
+function hinzufuegen(txt){
+  const l=wortListe(); let neu=0, hoch=0, letzt=null;
+  wortListe(txt||'').forEach(w=>{
+    const j=l.findIndex(it=>it.text.toLowerCase()===w.text.toLowerCase());
+    if(j>=0){ l[j].n=Math.min(99,l[j].n+w.n); hoch++; letzt=l[j]; }
+    else if(l.length<200){ l.push({text:w.text,n:w.n}); neu++; letzt=l[l.length-1]; }
+  });
+  if(!neu&&!hoch) return;
+  schreibe(l);
+  if(hoch===1&&!neu) wMeldung('„'+letzt.text+'“ gibt es schon – Zähler jetzt '+fmtN(letzt.n));
+  else if(hoch) wMeldung(neu+' neu, '+hoch+' schon vorhanden (Zähler erhöht)');
+  else wMeldung('');
+}
+function listeMalen(){
+  const box=$('wList'); if(!box) return; box.innerHTML='';
+  const l=wortListe(); $('wLeer').hidden=l.length>0;
+  l.forEach((it,i)=>{
+    const chip=document.createElement('span'); chip.className='wChip';
+    const t=document.createElement('input'); t.className='t'; t.type='text'; t.value=it.text;
+    t.size=Math.max(3,it.text.length); t.title='Begriff ändern'; t.spellcheck=false;
+    t.onchange=()=>umbenennen(i,t.value);
+    t.onkeydown=e=>{ if(e.key==='Enter') t.blur(); };
+    const z=document.createElement('input'); z.className='n'; z.type='text'; z.inputMode='numeric';
+    z.value=fmtN(it.n); z.title='Anzahl'; z.onchange=()=>setzeZahl(i,parseFloat(z.value.replace(',','.')),z);
+    z.onkeydown=e=>{ if(e.key==='Enter') z.blur(); };
+    const mk=(txt,cls,titel,fn)=>{ const b=document.createElement('button'); b.type='button'; b.textContent=txt;
+      if(cls) b.className=cls; b.title=titel; b.onclick=fn; return b; };
+    chip.append(t,
+      mk('−','','seltener genannt',()=>setzeZahl(i,zahlVon(i,it.n)-1,z)), z,
+      mk('+','','noch einmal genannt',()=>setzeZahl(i,zahlVon(i,it.n)+1,z)),
+      mk('✕','x','Begriff entfernen',()=>entfernen(i)));
+    box.appendChild(chip);
+  });
 }
 const rnd=seed=>{ let t=(seed|0)||1; return ()=>((t=t*16807%2147483647)/2147483647); };
 const setMsg=t=>{ $('msg').textContent=t||''; };
@@ -342,8 +419,13 @@ function printSheet(title){
 /* ---------- Bedienung ---------- */
 function refresh(){ layout(); draw(); sync(); }
 $('bEdit').onclick=()=>{ const wb=$('words'); wb.hidden=!wb.hidden; $('bEdit').classList.toggle('on',!wb.hidden);
-  if(!wb.hidden){ $('wIn').value=D.words; $('wIn').focus(); } resize(); };
-$('wIn').addEventListener('input',()=>{ D.words=$('wIn').value; refresh(); });
+  if(!wb.hidden){ listeMalen(); wMeldung(''); $('wIn').focus(); } resize(); };
+function eingeben(){ const t=$('wIn').value; $('wIn').value=''; hinzufuegen(t); $('wIn').focus(); }
+$('wPlus').onclick=eingeben;
+$('wIn').addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); eingeben(); } });
+/* ganze Liste einfügen: Zeilenumbrüche gehen in einem einzeiligen Feld sonst verloren */
+$('wIn').addEventListener('paste',e=>{ const t=e.clipboardData&&e.clipboardData.getData('text');
+  if(t&&/[\n,;]/.test(t)){ e.preventDefault(); $('wIn').value=''; hinzufuegen(t); } });
 $('bNew').onclick=()=>{ D.seed=Math.max(1,Math.floor(Math.random()*1e6)); refresh(); };
 $('bPrint').onclick=()=>printSheet('Wortwolke');
 $('pal').onchange=()=>{ D.pal=$('pal').value; refresh(); };
@@ -355,16 +437,16 @@ if(window.TafelShot) TafelShot.buttons($('shotBtns'),()=>TafelShot.rasterize($('
 /* ---------- Tafel-Anbindung ---------- */
 function sync(){ if(window.parent===window) return; /* allein geöffnet: nicht an sich selbst senden */
   try{ parent.postMessage({type:'embed-data',data:D},'*'); }catch(e){} }
-addEventListener('message',e=>{ if(window.parent===window||e.source!==window.parent) return;   // eigene Nachrichten ignorieren
+addEventListener('message',e=>{ if(e.source!==window&&(window.parent===window||e.source!==window.parent)) return;   /* nur Tafel oder eigenes Fenster (Teilen-Link) */
   if(!(e.data&&e.data.type==='embed-data'&&e.data.data)) return;
   D=Object.assign(D,e.data.data);
-  $('wIn').value=D.words||''; $('pal').value=D.pal||'bunt'; $('rot').value=D.rot||'mix'; $('cCount').checked=!!D.count;
+  listeMalen(); $('pal').value=D.pal||'bunt'; $('rot').value=D.rot||'mix'; $('cCount').checked=!!D.count;
   resize(); 
   if(window.TafelModus) TafelModus.refresh(); });
 /* Umschalter „Benutzen / Bearbeiten“: beim Benutzen bleibt nur das Blatt stehen */
 if(window.TafelModus) TafelModus.init({ get:()=>D.edit!==false, set:v=>{ D.edit=v; sync(); }, after:()=>resize() });
 addEventListener('resize',resize);
-window.addEventListener('load',()=>{ resize();
+window.addEventListener('load',()=>{ resize(); listeMalen();
   if(window.ResizeObserver) new ResizeObserver(resize).observe(cv);
   try{ if(window.parent!==window) parent.postMessage({type:'embed-ready'},'*'); }catch(e){} });
 

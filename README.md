@@ -1722,8 +1722,15 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     einstellen und die Richtungen wählen: **→ und ↓** (leicht), **+ schräg** oder **+ rückwärts** (schwer).
     **🎲 Neu mischen** erzeugt ein neues Gitter, der Haken **„Lösung"** markiert alle Wörter farbig, die
     **Wortliste** lässt sich ausblenden (sie steht unter oder – bei breitem Objekt – neben dem Gitter).
-  - **Wortwolke:** Begriffe über **„✎ Wörter"** eintragen – **mehrfach genannte Wörter werden automatisch größer**,
-    ein Gewicht lässt sich auch direkt angeben (`Bruch = 5`). Die Wolke ordnet sich in einer Spirale an, **skaliert
+  - **Wortwolke:** Begriffe über **„✎ Wörter"** eintragen – **mehrfach genannte Wörter werden automatisch größer**.
+    Jeder Begriff steht in der Liste **nur einmal**, dahinter sein **Zähler** mit **− / + zum Hoch- und
+    Runterzählen** und **✕ zum Entfernen**; auf den Begriff tippen benennt ihn um. Wird ein Begriff **noch
+    einmal eingegeben**, verschwindet die Dopplung und es wird nur der Zähler erhöht (mit Hinweis
+    „… gibt es schon – Zähler jetzt 3"; Groß- und Kleinschreibung spielt dabei keine Rolle). Wird eine
+    **ganze Liste eingefügt** (Zeilen, Komma oder Semikolon), steht jeder Begriff ebenfalls nur einmal da und
+    die Zähler stimmen – gemeldet wird z. B. „2 neu, 4 schon vorhanden (Zähler erhöht)". So bleibt die
+    Eingabe auch bei einer Zuruf-Runde übersichtlich. Ein Gewicht lässt sich weiterhin direkt angeben
+    (`Bruch = 5`). Die Wolke ordnet sich in einer Spirale an, **skaliert
     sich selbst** auf die Objektgröße und lässt sich in **vier Farbstimmungen** (bunt, blau, warm, grau) sowie
     wahlweise **nur waagerecht** oder **waagerecht & senkrecht** anzeigen; **„Anzahl zeigen"** schreibt die
     Nennungen in Klammern dazu. Gut für Brainstorming, Wortschatz oder Auswertungen von Zuruf-Runden.
