@@ -4139,7 +4139,17 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   - **Bauteile:** Quelle (Gleichspannung, U einstellbar), **Wechselspannungsquelle** (Scheitelwert Û und
     **Frequenz f** einstellbar, z. B. 0,5 Hz zum Zuschauen), Schalter, **Wechselschalter**, Widerstand,
     Lampe (leuchtet je nach Leistung), Diode, **Transistor (NPN)**, Motor (dreht sich je nach Strom),
-    **Spule** (mit 5 Ω Drahtwiderstand), **Kondensator**, **Strommesser** und **Spannungsmesser**.
+    **Spule** (mit 5 Ω Drahtwiderstand), **Transformator**, **Kondensator**, **Strommesser** und **Spannungsmesser**.
+  - **Transformator** (vier Anschlüsse, 2 × 2 Felder groß): links die Primär-, rechts die Sekundärspule,
+    dazwischen der Eisenkern. Einstellbar sind die **Windungszahlen N₁ und N₂**; die Leiste zeigt die
+    **Übersetzung N₂/N₁** und den Drahtwiderstand (0,001 Ω je Windung). Angezeigt werden **U₁, U₂, I₁, I₂**,
+    mit dem Haken „R, C, L“ auch N₁ und N₂. Gerechnet wird mit **zwei gekoppelten Spulen**
+    (L ∝ N², Kopplungsgrad 0,99999): unbelastet ist U₂/U₁ = N₂/N₁ (gemessen 0,5000 bei 500/250),
+    unter Last fällt die Spannung etwas ab (gemessen 0,485 bei einer 12-Ω-Lampe), und die Stromstärken
+    verhalten sich umgekehrt (gemessen I₂/I₁ = 1,98). **Bei Gleichspannung** gibt es nur beim Ein- und
+    Ausschalten einen kurzen Stoß: der Eisenkern gerät in die **Sättigung** (höchster Fluss 0,02 Vs je
+    Windung), danach ist U₂ = 0 und der Trafo wirkt wie ein Kurzschluss – gemessen 2,9 V für 1,8 s,
+    dann 0 V. Im **Diagramm** zeigt der Transformator **U₁ und U₂** statt U und I.
   - **Zeichnen:** Bauteil wählen und antippen (waagrecht) oder in eine Richtung ziehen; auf eine
     Leitung gesetzt ersetzt es das Leitungsstück. „Leitung" von Gitterpunkt zu Gitterpunkt ziehen
     (Ecken automatisch); Verzweigungen bekommen einen Knotenpunkt. Auswahl: antippen = auswählen,
@@ -4159,19 +4169,31 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     und I_B, I_C werden als 0 angezeigt.
   - **Vorlagen:** einfacher Stromkreis, Reihen-, Parallel-, gemischte Schaltung, **Und-Schaltung**,
     **Oder-Schaltung**, **Wechselschaltung**, Diode, Messgeräte,
-    Kondensator laden/entladen, Wechselspannung, Transistor als Schalter, Spule, leeres Blatt.
+    Kondensator laden/entladen, Wechselspannung, **Transformator**, **Energietransport ohne Trafo**,
+    **Energietransport mit Hochspannung**, Transistor als Schalter, Spule, leeres Blatt.
     - **Und-Schaltung:** zwei Schalter **hintereinander** – die Lampe leuchtet nur, wenn **beide**
       geschlossen sind (nachgemessen: 0 / 0 / 0 / 497 mA).
     - **Oder-Schaltung:** zwei Schalter **nebeneinander** – die Lampe leuchtet, sobald **einer**
       geschlossen ist (0 / 497 / 497 / 497 mA). Beide Vorlagen starten mit offenen Schaltern, so
       dass die Klasse die vier Fälle selbst durchprobieren kann.
+    - **Transformator:** Wechselspannung (Û = 12 V, 2 Hz) an der Primärspule 500, Lampe an der
+      Sekundärspule 250 – die Lampe leuchtet mit der halben Spannung.
+    - **Energietransport ohne Trafo / mit Hochspannung** (nach dem Arbeitsblatt „Energieübertragung
+      durch Hochspannungsleitungen“): Generator – Fernleitung mit ½R_L = 5 Ω in **jedem** Leiter –
+      drei **zuschaltbare** Lampen als Verbraucher. Gleiche Leitung, gleiche Lampen, einmal direkt und
+      einmal über zwei Transformatoren (100 : 1000 hinauf, 1000 : 100 herunter, also 12 V → 120 V → 12 V).
+      Gemessen bei 1 / 2 / 3 zugeschalteten Lampen – **ohne Trafo:** Lampenspannung 6,5 / 4,5 / 3,4 V,
+      Leitungsverlust 1,5 / 2,8 / 3,6 W, Wirkungsgrad 55 / 38 / 29 %; **mit Hochspannung:**
+      11,6 / 11,3 / 11,0 V, Leitungsverlust 0,05 / 0,18 / 0,37 W, Wirkungsgrad 97 / 95 / 92 %.
+      Die Lampen werden also nur ohne Transformation sichtbar dunkler, je mehr Verbraucher dazukommen.
     - **Wechselschaltung** (Flur, Treppenhaus): zwei **Wechselschalter**, dazwischen die beiden
       **korrespondierenden Leitungen**. Jeder der beiden schaltet das Licht um, egal wie der andere
       gerade steht – die Lampe brennt, wenn die Schalter **verschieden** stehen (gemessen
       497 mA bei verschiedenen, 0 mA bei gleichen Stellungen). Sie startet mit brennender Lampe.
   - **📈 Diagramm:** Bauteil antippen → „📈 Diagramm" blendet ein verschiebbares Fenster mit dem
     **zeitlichen Verlauf von Spannung U und Stromstärke I** an diesem Bauteil ein (Nulllinien beider
-    Achsen auf gleicher Höhe, beim Transistor U_CE und I_C, bei Quellen der abgegebene Strom). U/I
+    Achsen auf gleicher Höhe, beim Transistor U_CE und I_C, beim **Transformator U₁ und U₂**,
+    bei Quellen der abgegebene Strom). U/I
     einzeln ein-/ausblendbar, Zeitfenster 5–60 s, ⏸ anhalten, 🖼 Diagramm als Bild auf die Tafel. Das
     Bauteil ist in der Schaltung grün gestrichelt markiert. Gut sichtbar z. B. Laden/Entladen des
     Kondensators, Einschaltverzögerung der Spule oder die Gleichrichtung an der Diode.

@@ -265,6 +265,7 @@
     <button class="tb" data-tool="motor" title="Motor"><svg viewBox="0 0 32 20"><path d="M2 10H10M22 10H30"/><circle cx="16" cy="10" r="6"/><text x="16" y="13.4" text-anchor="middle" font-size="9" font-weight="800" fill="currentColor" stroke="none" font-family="-apple-system,Arial,sans-serif">M</text></svg><span>Motor</span></button>
     <button class="tb" data-tool="npn" title="Transistor (NPN): B links, C oben, E unten"><svg viewBox="0 0 32 20"><circle cx="17" cy="10" r="7.5"/><path d="M2 10H13M13 5V15M13 8 20 3.5V1M13 12 20 16.5V19"/><path d="M17.2 15.6 20 16.5 19.2 13.8" fill="currentColor"/></svg><span>Transistor</span></button>
     <button class="tb" data-tool="coil" title="Spule"><svg viewBox="0 0 32 20"><path d="M2 12H7M25 12H30M7 12a2.25 2.25 0 0 1 4.5 0a2.25 2.25 0 0 1 4.5 0a2.25 2.25 0 0 1 4.5 0a2.25 2.25 0 0 1 4.5 0"/></svg><span>Spule</span></button>
+    <button class="tb" data-tool="trafo" title="Transformator (vier Anschlüsse)"><svg viewBox="0 0 32 20"><path d="M2 3H11M2 17H11M21 3H30M21 17H30"/><path d="M11 3V4.5a1.75 1.75 0 0 0 0 3.5a1.75 1.75 0 0 0 0 3.5a1.75 1.75 0 0 0 0 3.5V17"/><path d="M21 3V4.5a1.75 1.75 0 0 1 0 3.5a1.75 1.75 0 0 1 0 3.5a1.75 1.75 0 0 1 0 3.5V17"/><path d="M15 2V18M17 2V18"/></svg><span>Trafo</span></button>
     <button class="tb" data-tool="cap" title="Kondensator"><svg viewBox="0 0 32 20"><path d="M2 10H14M18 10H30"/><path d="M14 3V17M18 3V17" stroke-width="2.6"/></svg><span>Kondensator</span></button>
     <button class="tb" data-tool="amm" title="Strommesser (Amperemeter) – in Reihe schalten"><svg viewBox="0 0 32 20"><path d="M2 10H10M22 10H30"/><circle cx="16" cy="10" r="6"/><text x="16" y="13.4" text-anchor="middle" font-size="9" font-weight="800" fill="currentColor" stroke="none" font-family="-apple-system,Arial,sans-serif">A</text></svg><span>Strommesser</span></button>
     <button class="tb" data-tool="volt" title="Spannungsmesser (Voltmeter) – parallel schalten"><svg viewBox="0 0 32 20"><path d="M2 10H10M22 10H30"/><circle cx="16" cy="10" r="6"/><text x="16" y="13.4" text-anchor="middle" font-size="9" font-weight="800" fill="currentColor" stroke="none" font-family="-apple-system,Arial,sans-serif">V</text></svg><span>Spannungsm.</span></button>
@@ -297,12 +298,21 @@ const INFO={
   motor:{name:'Motor',      q:'R', unit:'Ω', def:6,  list:[2,4,6,10,20,50], min:0.5, max:1e5},
   cap:  {name:'Kondensator',q:'C', unit:'µF',def:1000,list:[10,47,100,470,1000,2200,4700,10000,47000], min:1, max:1e7},
   coil: {name:'Spule',      q:'L', unit:'H', def:2,  list:[0.1,0.5,1,2,5,10,20,50], min:0.001, max:1000},
+  trafo:{name:'Transformator', q:'N₁', unit:'', def:500, list:[50,100,200,250,500,1000,2000], min:5, max:20000, int:true,
+         q2:'N₂', unit2:'', def2:250, list2:[50,100,200,250,500,1000,2000], min2:5, max2:20000},
   sw:   {name:'Schalter'},
   sw2:  {name:'Wechselschalter'},
   diode:{name:'Diode'},
   amm:  {name:'Strommesser'},
   volt: {name:'Spannungsmesser'} };
 const RL=5;                                   // Drahtwiderstand der Spule in Ω
+/* Transformator: zwei gekoppelte Spulen. Die Induktivität steigt mit dem Quadrat der Windungszahl,
+   der Drahtwiderstand linear. Die Werte sind so gewählt, dass der Trafo bei den wählbaren
+   Frequenzen nahe am idealen Verhalten liegt (U₂/U₁ ≈ N₂/N₁), bei Gleichspannung aber nichts tut. */
+const TR_A=2e-3, TR_K=0.99999, TR_RW=0.001;    // H je Windung², Kopplungsgrad, Ω je Windung
+const TR_PSI=0.02;                            // höchster Fluss je Windung (Vs) – dann sättigt der Eisenkern
+function trWerte(p){ const n1=Math.max(1,p.val||1), n2=Math.max(1,p.val2||1);
+  return {n1,n2,L1:TR_A*n1*n1,L2:TR_A*n2*n2,M:TR_K*TR_A*n1*n2,R1:TR_RW*n1,R2:TR_RW*n2,Is:TR_PSI/(TR_A*n1)}; }
 const BETA=100, VBE=0.7, VSAT=0.1, RSAT=0.5;   // Transistor-Modell
 let simT=0;                                   // Simulationszeit für Wechselspannung
 const defaults=()=>({wires:[],parts:[],show:{U:true,I:true,R:false},flow:true,carrier:'e',zoom:1,ox:null,oy:null,fontSize:14,edit:true});
@@ -326,9 +336,15 @@ const nkey=(x,y)=>x+','+y;
 /* Bauteil: Anschluss a liegt auf (x|y), d = Drehung (0 → rechts, 1 → unten, 2 → links, 3 → oben), f = gespiegelt */
 function toG(p,u,v){ if(p.f) v=-v; const X=p.x, Y=p.y; switch(p.d){ case 0: return [X+u,Y+v]; case 1: return [X-v,Y+u]; case 2: return [X-u,Y-v]; default: return [X+v,Y-u]; } }
 function ends(p){ if(p.type==='npn') return {a:toG(p,0,0),b:toG(p,2,-1),c:toG(p,2,1)};
+  /* Transformator: 2×2 groß, a/c = Primärspule (links), b/d = Sekundärspule (rechts) */
+  if(p.type==='trafo') return {a:toG(p,0,0),b:toG(p,2,0),c:toG(p,0,2),d:toG(p,2,2)};
   const e={a:toG(p,0,0),b:toG(p,2,0)}; if(p.type==='sw2') e.c=toG(p,2,-1); return e; }
-function terminals(p){ const e=ends(p); return e.c?[e.a,e.b,e.c]:[e.a,e.b]; }
-function partEdges(p){ if(p.type==='npn'){ const a=toG(p,0,0), m=toG(p,1,0); return a[1]===m[1]?[ekey(Math.min(a[0],m[0]),a[1],'h')]:[ekey(a[0],Math.min(a[1],m[1]),'v')]; }
+function terminals(p){ const e=ends(p), t=[e.a,e.b]; if(e.c) t.push(e.c); if(e.d) t.push(e.d); return t; }
+function partEdges(p){ if(p.type==='trafo'){ const t=terminals(p);   // alle Kanten im 2×2-Feld sind belegt
+    const X=Math.min.apply(null,t.map(q=>q[0])), Y=Math.min.apply(null,t.map(q=>q[1])), l=[];
+    for(let i=0;i<2;i++) for(let j=0;j<3;j++){ l.push(ekey(X+i,Y+j,'h')); l.push(ekey(X+j,Y+i,'v')); }
+    return l; }
+  if(p.type==='npn'){ const a=toG(p,0,0), m=toG(p,1,0); return a[1]===m[1]?[ekey(Math.min(a[0],m[0]),a[1],'h')]:[ekey(a[0],Math.min(a[1],m[1]),'v')]; }
   const {a,b}=ends(p); const x0=Math.min(a[0],b[0]), y0=Math.min(a[1],b[1]);
   return a[1]===b[1]?[ekey(x0,y0,'h'),ekey(x0+1,y0,'h')]:[ekey(x0,y0,'v'),ekey(x0,y0+1,'v')]; }
 function edgeEnds(k){ const [x,y,o]=k.split(','); const X=+x,Y=+y; return o==='h'?[[X,Y],[X+1,Y]]:[[X,Y],[X,Y+1]]; }
@@ -343,11 +359,16 @@ function changed(){ dirty=true; if(chart&&!data.parts.some(q=>q.id===chart.id)) 
 /* ================= Diagramm: zeitlicher Verlauf von U und I am ausgewählten Bauteil ================= */
 let chart=null, clockT=0;                         // chart = {id, U, I, win, samples:[{t,U,I}], paused}
 function partLabel(p){ const same=data.parts.filter(q=>q.type===p.type); return INFO[p.type].name+(same.length>1?' '+(same.indexOf(p)+1):''); }
-function openChart(p){ chart={id:p.id,U:true,I:true,win:+$('chWin').value||10,samples:[],paused:false};
-  $('chart').hidden=false; $('chTitle').textContent='📈 '+partLabel(p)+(p.type==='npn'?' (U_CE, I_C)':''); $('chPause').textContent='⏸';
-  document.querySelectorAll('#chHead .chip').forEach(b=>b.classList.add('on')); renderBar2(); requestDraw(); }
-function closeChart(){ chart=null; $('chart').hidden=true; renderBar2(); requestDraw(); }
-function sampleOf(p,r){ let U=r.U, I=r.I; if(p.type==='bat'||p.type==='ac') I=-I; return {U,I}; }   // Quellen: abgegebener Strom positiv
+function openChart(p){ const tr=p.type==='trafo';
+  chart={id:p.id,U:true,I:true,win:+$('chWin').value||10,samples:[],paused:false,
+         nmU:tr?'U₁':'U', nmI:tr?'U₂':'I', unU:'V', unI:tr?'V':'A'};
+  $('chart').hidden=false; $('chTitle').textContent='📈 '+partLabel(p)+(p.type==='npn'?' (U_CE, I_C)':tr?' (U₁, U₂)':''); $('chPause').textContent='⏸';
+  document.querySelectorAll('#chHead .chip').forEach(b=>{ b.classList.add('on'); b.textContent=b.dataset.q==='U'?chart.nmU:chart.nmI; });
+  renderBar2(); requestDraw(); }
+function closeChart(){ chart=null; $('chart').hidden=true;
+  document.querySelectorAll('#chHead .chip').forEach(b=>b.textContent=b.dataset.q); renderBar2(); requestDraw(); }
+function sampleOf(p,r){ if(p.type==='trafo') return {U:r.U,I:r.U2};         // Trafo: zwei Spannungen
+  let U=r.U, I=r.I; if(p.type==='bat'||p.type==='ac') I=-I; return {U,I}; }   // Quellen: abgegebener Strom positiv
 function niceRange(lo,hi){ if(hi-lo<1e-9){ const m=Math.max(Math.abs(hi),1e-3); lo=Math.min(lo,-0*m); hi=hi+m; }
   const raw=(hi-lo)/4, mag=Math.pow(10,Math.floor(Math.log10(raw))), n=raw/mag, step=(n<=1?1:n<=2?2:n<=5?5:10)*mag;
   return {lo:Math.floor(lo/step-1e-9)*step, hi:Math.ceil(hi/step+1e-9)*step, step}; }
@@ -369,8 +390,9 @@ function drawChart(){ if(!chart) return; const c=$('chCv'), dpr=window.devicePix
   for(let k=0;k<=5;k++){ const x=L+pw*k/5; g.strokeStyle='#f1f5f9'; g.beginPath(); g.moveTo(x,T); g.lineTo(x,T+ph); g.stroke();
     g.fillStyle='#64748b'; g.textAlign='center'; g.textBaseline='top'; g.fillText((k===5?'0':'−'+fmtNum(chart.win*(5-k)/5))+' s',x,T+ph+4); }
   g.strokeStyle='#cbd5e1'; g.strokeRect(L,T,pw,ph);
+  const unU=chart.unU||'V', unI=chart.unI||'A', nmU=chart.nmU||'U', nmI=chart.nmI||'I';
   const axis=(r,q,col,x,al)=>{ g.fillStyle=col; g.textAlign=al; g.textBaseline='middle';
-    for(let v=Math.ceil(r.lo/r.step-1e-9)*r.step;v<=r.hi+1e-9;v+=r.step) g.fillText(fmtQ(Math.abs(v)<1e-12?0:v,q==='U'?'V':'A'),x,Y(v,r)); };
+    for(let v=Math.ceil(r.lo/r.step-1e-9)*r.step;v<=r.hi+1e-9;v+=r.step) g.fillText(fmtQ(Math.abs(v)<1e-12?0:v,q==='U'?unU:unI),x,Y(v,r)); };
   if(chart.U) axis(rU,'U','#b45309',L-5,'right');
   if(chart.I) axis(rI,'I','#1d4ed8',L+pw+5,'left');
   g.save(); g.beginPath(); g.rect(L,T,pw,ph); g.clip();
@@ -378,8 +400,8 @@ function drawChart(){ if(!chart) return; const c=$('chCv'), dpr=window.devicePix
   if(chart.U) plot('U',rU,'#b45309'); if(chart.I) plot('I',rI,'#1d4ed8');
   g.restore();
   const last=S[S.length-1]; g.textBaseline='middle'; g.textAlign='left'; g.font='700 '+fs+'px -apple-system,BlinkMacSystemFont,sans-serif';
-  let tx=L; if(last){ if(chart.U){ g.fillStyle='#b45309'; const t='U = '+fmtQ(last.U,'V'); g.fillText(t,tx,T/2); tx+=g.measureText(t).width+14; }
-    if(chart.I){ g.fillStyle='#1d4ed8'; g.fillText('I = '+fmtQ(last.I,'A'),tx,T/2); } }
+  let tx=L; if(last){ if(chart.U){ g.fillStyle='#b45309'; const t=nmU+' = '+fmtQ(last.U,unU); g.fillText(t,tx,T/2); tx+=g.measureText(t).width+14; }
+    if(chart.I){ g.fillStyle='#1d4ed8'; g.fillText(nmI+' = '+fmtQ(last.I,unI),tx,T/2); } }
   if(chart.paused){ g.fillStyle='#dc2626'; g.textAlign='right'; g.fillText('angehalten',L+pw,T/2); } }
 document.querySelectorAll('#chHead .chip').forEach(b=>b.onclick=()=>{ if(!chart) return; const q=b.dataset.q; if(chart[q]&&!chart[q==='U'?'I':'U']) return; chart[q]=!chart[q]; b.classList.toggle('on',chart[q]); requestDraw(); });
 $('chWin').onchange=()=>{ if(chart){ chart.win=+$('chWin').value; requestDraw(); } };
@@ -402,7 +424,8 @@ function addWireEdges(list){ const s=wireSet(), occ=new Set(data.parts.flatMap(p
 function canPlace(p,ignoreId){ const mine=partEdges(p); return !data.parts.some(q=>q.id!==ignoreId&&partEdges(q).some(e=>mine.includes(e))); }
 function removeWiresUnder(p){ const mine=new Set(partEdges(p)); data.wires=data.wires.filter(k=>!mine.has(k)); }
 function newPart(type,x,y,d){ const p={id:uid(),type,x,y,d}; if(INFO[type].def!==undefined) p.val=INFO[type].def; if(type==='sw') p.on=false; if(type==='sw2') p.pos=0; if(INFO[type].def2!==undefined) p.val2=INFO[type].def2; return p; }
-function rotatePart(p){ const c=toG(p,1,0), n={...p,d:(p.d+1)%4}; const c2=toG({...n,x:0,y:0},1,0); n.x=c[0]-c2[0]; n.y=c[1]-c2[1]; return n; }
+function rotatePart(p){ const pv=p.type==='trafo'?1:0;                // Trafo dreht um die Mitte des 2×2-Feldes
+  const c=toG(p,1,pv), n={...p,d:(p.d+1)%4}; const c2=toG({...n,x:0,y:0},1,pv); n.x=c[0]-c2[0]; n.y=c[1]-c2[1]; return n; }
 function flipPolarity(p){ const b=ends(p).b; return {...p,x:b[0],y:b[1],d:(p.d+2)%4}; }
 /* zusammenhängendes gerades Leitungsstück (bis zu Abzweigungen/Bauteilen) */
 function degreeMap(){ const deg=new Map(); const inc=k=>deg.set(k,(deg.get(k)||0)+1);
@@ -426,7 +449,7 @@ function gauss(M,r){ const n=r.length;
   for(let i=n-1;i>=0;i--){ let s=r[i]; for(let j=i+1;j<n;j++) s-=M[i][j]*x[j]; x[i]=Math.abs(M[i][i])<1e-30?0:s/M[i][i]; }
   return x; }
 const dyn=new Map();                                   // Zustand von Kondensatoren (u) und Spulen (i)
-const hasDyn=()=>data.parts.some(p=>p.type==='cap'||p.type==='coil'||p.type==='ac');
+const hasDyn=()=>data.parts.some(p=>p.type==='cap'||p.type==='coil'||p.type==='ac'||p.type==='trafo');
 function solve(h,commit){ const nodes=new Map(); const idx=(p)=>{ const k=nkey(...p); if(!nodes.has(k)) nodes.set(k,nodes.size); return nodes.get(k); };
   const br=[];
   data.wires.forEach(k=>{ const [a,b]=edgeEnds(k); br.push({w:k,a:idx(a),b:idx(b),G:GW,J:0}); });
@@ -443,7 +466,19 @@ function solve(h,commit){ const nodes=new Map(); const idx=(p)=>{ const k=nkey(.
       case 'npn': B.npn=true; B.c=ic; B.be=true; B.ce='act'; break;
       case 'diode': B.diode=true; B.on=true; break;
       case 'cap': { const C=p.val*1e-6; if(h){ B.G=C/h; B.J=B.G*st.u; } break; }
-      case 'coil': { if(h){ const Lh=p.val/h; B.G=1/(RL+Lh); B.J=-Lh*st.i*B.G; } else B.G=1/RL; break; } }
+      case 'coil': { if(h){ const Lh=p.val/h; B.G=1/(RL+Lh); B.J=-Lh*st.i*B.G; } else B.G=1/RL; break; }
+      /* Transformator: zwei gekoppelte Spulen, rückwärtsgenommener Zeitschritt.
+         u = R·i + L·di/dt wird zu i = Y·u + j mit Y = (R + L/h)⁻¹ und j = Y·(L/h)·i_alt. */
+      case 'trafo': { const w=trWerte(p), hh=h||0.004, i1=st.i1||0, i2=st.i2||0;
+        /* Eisenkern: über dem Sättigungsstrom bricht die Induktivität zusammen. Deshalb gibt der
+           Trafo bei Gleichspannung nur beim Ein- und Ausschalten einen kurzen Stoß. */
+        const im=Math.abs(i1+w.n2/w.n1*i2), sa=1/(1+Math.pow(im/w.Is,8));
+        const L1=w.L1*sa, L2=w.L2*sa, Mk=w.M*sa;
+        const a11=w.R1+L1/hh, a22=w.R2+L2/hh, a12=Mk/hh, det=a11*a22-a12*a12;
+        B.tr=true; B.n=[ia,idx(e.c),ib,idx(e.d)];
+        B.Y=[a22/det,-a12/det,-a12/det,a11/det];
+        const f1=(L1*i1+Mk*i2)/hh, f2=(Mk*i1+L2*i2)/hh;
+        B.j=[B.Y[0]*f1+B.Y[1]*f2, B.Y[2]*f1+B.Y[3]*f2]; break; } }
     br.push(B); });
   const n=nodes.size; let V=new Array(n).fill(0);
   for(let it=0;it<30&&n;it++){
@@ -455,6 +490,11 @@ function solve(h,commit){ const nodes=new Map(); const idx=(p)=>{ const k=nkey(.
         if(B.be&&B.ce==='act'){ const gm=BETA/RD; M[cc][b]+=gm; M[cc][e]-=gm; M[e][b]-=gm; M[e][e]+=gm; r[cc]+=gm*VBE; r[e]-=gm*VBE; }
         else if(B.be&&B.ce==='sat'){ const g=1/RSAT; M[cc][cc]+=g; M[e][e]+=g; M[cc][e]-=g; M[e][cc]-=g; r[cc]+=VSAT*g; r[e]-=VSAT*g; }
         const gl=GOFF; M[cc][cc]+=gl; M[e][e]+=gl; M[cc][e]-=gl; M[e][cc]-=gl; return; }
+      if(B.tr){ const [n0,n1,n2,n3]=B.n, Y=B.Y;                        // Zweitor: i₁ über n0/n1, i₂ über n2/n3
+        M[n0][n0]+=Y[0]; M[n0][n1]-=Y[0]; M[n0][n2]+=Y[1]; M[n0][n3]-=Y[1]; r[n0]-=B.j[0];
+        M[n1][n0]-=Y[0]; M[n1][n1]+=Y[0]; M[n1][n2]-=Y[1]; M[n1][n3]+=Y[1]; r[n1]+=B.j[0];
+        M[n2][n0]+=Y[2]; M[n2][n1]-=Y[2]; M[n2][n2]+=Y[3]; M[n2][n3]-=Y[3]; r[n2]-=B.j[1];
+        M[n3][n0]-=Y[2]; M[n3][n1]+=Y[2]; M[n3][n2]-=Y[3]; M[n3][n3]+=Y[3]; r[n3]+=B.j[1]; return; }
       M[B.a][B.a]+=B.G; M[B.b][B.b]+=B.G; M[B.a][B.b]-=B.G; M[B.b][B.a]-=B.G; r[B.a]+=B.J; r[B.b]-=B.J; });
     V=gauss(M,Array.from(r));
     let ch=false;
@@ -473,6 +513,11 @@ function solve(h,commit){ const nodes=new Map(); const idx=(p)=>{ const k=nkey(.
       if(leitet&&B.ce==='act') ic=BETA*ib; else if(leitet&&B.ce==='sat') ic=Math.max(0,(uce-VSAT)/RSAT);
       if(ib<1e-6) ib=0; if(ic<1e-6) ic=0;
       out.part.set(B.p.id,{U:uce,I:ic,IB:ib,UBE:ube,state:leitet?B.ce:'off'}); out.imax=Math.max(out.imax,ic,ib); return; }
+    if(B.tr){ const u1=V[B.n[0]]-V[B.n[1]], u2=V[B.n[2]]-V[B.n[3]];
+      const i1=B.Y[0]*u1+B.Y[1]*u2+B.j[0], i2=B.Y[2]*u1+B.Y[3]*u2+B.j[1];
+      out.part.set(B.p.id,{U:u1,U2:u2,I:Math.abs(i1)<1e-7?0:i1,I2:Math.abs(i2)<1e-7?0:i2});
+      if(commit){ const old=dyn.get(B.p.id)||{}; out.change=Math.max(out.change,Math.abs((old.i1||0)-i1)*10,Math.abs((old.i2||0)-i2)*10); dyn.set(B.p.id,{i1,i2}); }
+      out.imax=Math.max(out.imax,Math.abs(i1),Math.abs(i2)); return; }
     const u=V[B.a]-V[B.b]; let I=B.G*u-B.J; if(Math.abs(I)<1e-7) I=0;
     if(B.w) out.wire.set(B.w,I);
     else { out.part.set(B.p.id,{U:u,I,on:B.on});
@@ -508,7 +553,7 @@ function frame(t){ rafId=null; const dt=lastT?Math.min(0.05,(t-lastT)/1000):0; l
     /* Tempo proportional zur Stromstaerke, aber mit Mindesttempo: ein sehr kleiner Strom
        (z. B. der Basisstrom, rund 1 % des Kollektorstroms) stuende sonst scheinbar still. */
     const adv=(key,I)=>{ const v=Math.max(0.12, 2.2*Math.abs(I)/Math.max(R.imax,0.02)); flowPos.set(key,((flowPos.get(key)||0)+v*dt)); };
-    R.wire.forEach((I,k)=>{ if(I) adv(k,I); }); R.part.forEach((o,id)=>{ if(o.I) adv(id,o.I); if(o.IB!==undefined){ adv(id+'b',o.IB); adv(id+'e',o.I+o.IB); } }); }
+    R.wire.forEach((I,k)=>{ if(I) adv(k,I); }); R.part.forEach((o,id)=>{ if(o.I) adv(id,o.I); if(o.I2) adv(id+'2',o.I2); if(o.IB!==undefined){ adv(id+'b',o.IB); adv(id+'e',o.I+o.IB); } }); }
   if(R) data.parts.forEach(p=>{ if(p.type!=='motor') return; const o=R.part.get(p.id); if(!o||!o.I) return; anim=true;
     const inom=6/Math.max(0.1,p.val); motorAng.set(p.id,(motorAng.get(p.id)||0)+dt*6*Math.max(-2,Math.min(2,o.I/inom))); });
   ctx.setTransform(DPR,0,0,DPR,0,0); drawScene(ctx,{W,H,ox:data.ox,oy:data.oy,cell:cellPx(),grid:true,charges:data.flow,selection:true});
@@ -549,10 +594,13 @@ function drawScene(c,o){ const cell=o.cell, K=(data.fontSize||14)/14, R=ensureSo
         const u=Math.max(0,Math.min(1,d/(len[i]||1)));
         punkt(...S(g[i][0]+(g[i+1][0]-g[i][0])*u, g[i][1]+(g[i+1][1]-g[i][1])*u)); } };
     R.wire.forEach((I,k)=>{ const [a,b]=edgeEnds(k); dots(S(...a),S(...b),1,I,k); });
-    data.parts.forEach(p=>{ if(p.type==='cap'||p.type==='volt'||p.type==='npn') return; const r=R.part.get(p.id); if(!r) return; const e=ends(p);
+    data.parts.forEach(p=>{ if(p.type==='cap'||p.type==='volt'||p.type==='npn'||p.type==='trafo') return; const r=R.part.get(p.id); if(!r) return; const e=ends(p);
       if(p.type==='sw2'&&p.pos){ dots(S(...e.a),S(...e.c),2.24,r.I,p.id); return; } dots(S(...e.a),S(...e.b),2,r.I,p.id); });
-    npnFluss=()=>data.parts.forEach(p=>{ if(p.type!=='npn') return; const r=R.part.get(p.id); if(!r) return;
-      const G=(x,y)=>toG(p,x,y);
+    npnFluss=()=>data.parts.forEach(p=>{ const G=(x,y)=>toG(p,x,y);
+      if(p.type==='trafo'){ const r=R.part.get(p.id); if(!r) return;                 // entlang der beiden Wickellinien
+        dotsWeg([G(0,0),G(0.6,0),G(0.6,2),G(0,2)], r.I, p.id);
+        dotsWeg([G(2,0),G(1.4,0),G(1.4,2),G(2,2)], r.I2, p.id+'2'); return; }
+      if(p.type!=='npn') return; const r=R.part.get(p.id); if(!r) return;
       dotsWeg([G(0,0),G(0.72,0)], r.IB, p.id+'b');                           // Basisanschluss
       dotsWeg([G(2,-1),G(1.45,-0.55),G(0.72,-0.14)], r.I, p.id);             // Kollektor zur Basisschicht
       dotsWeg([G(0.72,0.14),G(1.45,0.55),G(2,1)], r.I+r.IB, p.id+'e'); }); } // Basisschicht zum Emitter
@@ -566,7 +614,7 @@ function drawScene(c,o){ const cell=o.cell, K=(data.fontSize||14)/14, R=ensureSo
   deg.forEach((d,k)=>{ const [x,y]=k.split(',').map(Number), [sx,sy]=S(x,y);
     if(d>=3){ c.fillStyle=ink; c.beginPath(); c.arc(sx,sy,lw*1.6,0,7); c.fill(); }
     else if(d===1){ c.fillStyle='#fff'; c.strokeStyle='#94a3b8'; c.lineWidth=Math.max(1,lw*0.6); c.beginPath(); c.arc(sx,sy,lw*1.2,0,7); c.fill(); c.stroke(); } });
-  if(o.selection&&chart){ const cp=data.parts.find(q=>q.id===chart.id); if(cp){ const e=ends(cp), m=cp.type==='npn'?toG(cp,1.1,0):[(e.a[0]+e.b[0])/2,(e.a[1]+e.b[1])/2], [mx,my]=S(...m);
+  if(o.selection&&chart){ const cp=data.parts.find(q=>q.id===chart.id); if(cp){ const e=ends(cp), m=cp.type==='npn'?toG(cp,1.1,0):cp.type==='trafo'?toG(cp,1,1):[(e.a[0]+e.b[0])/2,(e.a[1]+e.b[1])/2], [mx,my]=S(...m);
       c.save(); c.setLineDash([5,4]); c.strokeStyle='#16a34a'; c.lineWidth=2; c.beginPath(); c.arc(mx,my,cell*0.72,0,7); c.stroke(); c.restore(); } }
   // Werte
   if(R){ const fs=Math.max(8,Math.min(16,cell*0.3))*K;
@@ -582,16 +630,21 @@ function drawScene(c,o){ const cell=o.cell, K=(data.fontSize||14)/14, R=ensureSo
         if(data.show.U) lines.push(['u = '+fmtQ(r.U,'V').replace(/^0 V$/,'0 V'),'#b45309']);
         if(data.show.I) lines.push(['i = '+fmtQ(-r.I,'A'),'#1d4ed8']);
         if(data.show.R) lines.push(['Û = '+fmtQ(p.val,'V')+', f = '+fmtNum(p.val2)+' Hz','#475569']); }
+      else if(p.type==='trafo'){
+        if(data.show.U){ lines.push(['U₁ = '+fmtQ(r.U,'V'),'#b45309']); lines.push(['U₂ = '+fmtQ(r.U2,'V'),'#b45309']); }
+        if(data.show.I){ lines.push(['I₁ = '+fmtQ(r.I,'A'),'#1d4ed8']); lines.push(['I₂ = '+fmtQ(-r.I2,'A'),'#1d4ed8']); }
+        if(data.show.R) lines.push(['N₁ = '+fmtNum(p.val)+' · N₂ = '+fmtNum(p.val2),'#475569']); }
       else if(p.type!=='sw2'){
         if(data.show.U) lines.push(['U = '+fmtQ(Math.abs(r.U),'V'),'#b45309']);
         if(data.show.I) lines.push(['I = '+fmtQ(Math.abs(r.I),'A'),'#1d4ed8']);
         if(data.show.R&&(q==='R'||q==='C'||q==='L')) lines.push([q+' = '+fmtQ(p.val,INFO[p.type].unit),'#475569']);
         if(data.show.R&&p.type==='coil') lines.push(['R = '+RL+' Ω','#475569']); }
       if(!lines.length) return;
-      const e=ends(p), mx=(e.a[0]+e.b[0])/2, my=(e.a[1]+e.b[1])/2, h=p.d%2===0, lh=fs*1.18;
+      const tr=p.type==='trafo', e=ends(p), ct=tr?toG(p,1,1):null;
+      const mx=tr?ct[0]:(e.a[0]+e.b[0])/2, my=tr?ct[1]:(e.a[1]+e.b[1])/2, h=!tr&&p.d%2===0, lh=fs*1.18;
       let [sx,sy]=S(mx,my);
       if(h){ c.textAlign='center'; c.textBaseline='bottom'; sy-=cell*0.52; lines.slice().reverse().forEach(([t,col],i)=>label(c,t,sx,sy-i*lh,col,fs)); }
-      else { c.textAlign='left'; c.textBaseline='middle'; sx+=cell*0.55; const y0=sy-(lines.length-1)*lh/2; lines.forEach(([t,col],i)=>label(c,t,sx,y0+i*lh,col,fs)); } }); } }
+      else { c.textAlign='left'; c.textBaseline='middle'; sx+=cell*(tr?1.2:0.55); const y0=sy-(lines.length-1)*lh/2; lines.forEach(([t,col],i)=>label(c,t,sx,y0+i*lh,col,fs)); } }); } }
 function label(c,t,x,y,col,fs){ c.lineJoin='round'; c.lineWidth=Math.max(3,fs*0.28); c.strokeStyle='rgba(255,255,255,.92)'; c.strokeText(t,x,y); c.fillStyle=col; c.fillText(t,x,y); }
 function drawPart(c,p,S,cell,lw,col,R,isGhost){ const e=ends(p), A=S(...e.a), B=S(...toG(p,2,0));
   const ang=Math.atan2(B[1]-A[1],B[0]-A[0]);
@@ -623,6 +676,12 @@ function drawPart(c,p,S,cell,lw,col,R,isGhost){ const e=ends(p), A=S(...e.a), B=
   else if(p.type==='cap'){ line(0,0,0.9,0); line(1.1,0,2,0); line(0.9,-0.38,0.9,0.38,L*1.5); line(1.1,-0.38,1.1,0.38,L*1.5);
   }
   else if(p.type==='coil'){ line(0,0,0.45,0); line(1.55,0,2,0); const rr=1.1/8; c.beginPath(); for(let k=0;k<4;k++){ const cx=0.45+rr+k*2*rr; c.moveTo(cx-rr,0); c.arc(cx,0,rr,Math.PI,0); } c.stroke(); }
+  else if(p.type==='trafo'){ const xp=0.6, xs=1.4, r0=0.2167;         // zwei Spulen, dazwischen der Eisenkern
+    line(0,0,xp,0); line(0,2,xp,2); line(2,0,xs,0); line(2,2,xs,2);
+    line(xp,0,xp,0.35); line(xp,1.65,xp,2); line(xs,0,xs,0.35); line(xs,1.65,xs,2);
+    [[xp,true],[xs,false]].forEach(([x,links])=>{ c.beginPath();
+      for(let k=0;k<3;k++){ const cy=0.35+r0+k*2*r0; c.moveTo(x,cy-r0); c.arc(x,cy,r0,-Math.PI/2,Math.PI/2,links); } c.stroke(); });
+    line(0.9,0.2,0.9,1.8); line(1.1,0.2,1.1,1.8); }
   else if(p.type==='amm'||p.type==='volt'){ line(0,0,0.62,0); line(1.38,0,2,0); c.fillStyle='#fff'; c.beginPath(); c.arc(1,0,0.38,0,7); c.fill(); c.stroke();
     c.save(); c.translate(1,0); c.rotate(-ang); c.fillStyle=col; c.font='800 0.42px -apple-system,Arial,sans-serif'; c.textAlign='center'; c.textBaseline='middle'; c.fillText(p.type==='amm'?'A':'V',0,0.02); c.restore(); }
   else if(p.type==='sw2'){ const fv=p.f?-1:1; line(0,0,0.5,0); line(1.5,0,2,0); line(1.5,-fv,2,-fv);
@@ -648,18 +707,18 @@ function renderBar2(){ const b=$('bar2'); b.innerHTML='';
   if(p){ const inf=INFO[p.type]; el('span','lbl',inf.name);
     if(inf.q){ const st=document.createElement('span'); st.className='stp'; b.appendChild(st);
       const minus=document.createElement('button'); minus.textContent='−'; const inp=document.createElement('input'); inp.inputMode='decimal'; inp.value=fmtNum(p.val);
-      const plus=document.createElement('button'); plus.textContent='+'; const unit=document.createElement('span'); unit.className='lbl'; unit.textContent=inf.q+' in '+inf.unit;
+      const plus=document.createElement('button'); plus.textContent='+'; const unit=document.createElement('span'); unit.className='lbl'; unit.textContent=inf.unit?inf.q+' in '+inf.unit:inf.q;
       st.append(minus,inp,plus,unit);
-      const setVal=v=>{ v=Math.max(inf.min,Math.min(inf.max,v)); if(!isFinite(v)||v===p.val) return; pushUndo(); p.val=v; inp.value=fmtNum(v); dirty=true; sync(true); requestDraw(); };
+      const setVal=v=>{ if(inf.int) v=Math.round(v); v=Math.max(inf.min,Math.min(inf.max,v)); if(!isFinite(v)||v===p.val) return; pushUndo(); p.val=v; inp.value=fmtNum(v); dirty=true; sync(true); requestDraw(); };
       minus.onclick=()=>{ const l=inf.list; const i=l.findIndex(x=>x>=p.val-1e-9); setVal(i>0?l[i-1]:(p.val>l[0]?l[0]:p.val/2)); };
       plus.onclick=()=>{ const l=inf.list; const i=l.findIndex(x=>x>p.val+1e-9); setVal(i>=0?l[i]:p.val*2); };
       inp.onchange=()=>{ const v=parseFloat(inp.value.replace(',','.')); if(isFinite(v)) setVal(v); else inp.value=fmtNum(p.val); };
       inp.onkeydown=e=>{ if(e.key==='Enter') inp.blur(); }; }
     if(inf.q2){ const st=document.createElement('span'); st.className='stp'; b.appendChild(st);
       const minus=document.createElement('button'); minus.textContent='−'; const inp=document.createElement('input'); inp.inputMode='decimal'; inp.value=fmtNum(p.val2);
-      const plus=document.createElement('button'); plus.textContent='+'; const unit=document.createElement('span'); unit.className='lbl'; unit.textContent=inf.q2+' in '+inf.unit2;
+      const plus=document.createElement('button'); plus.textContent='+'; const unit=document.createElement('span'); unit.className='lbl'; unit.textContent=inf.unit2?inf.q2+' in '+inf.unit2:inf.q2;
       st.append(minus,inp,plus,unit);
-      const setVal=v=>{ v=Math.max(inf.min2,Math.min(inf.max2,v)); if(!isFinite(v)||v===p.val2) return; pushUndo(); p.val2=v; inp.value=fmtNum(v); dirty=true; sync(true); requestDraw(); };
+      const setVal=v=>{ if(inf.int) v=Math.round(v); v=Math.max(inf.min2,Math.min(inf.max2,v)); if(!isFinite(v)||v===p.val2) return; pushUndo(); p.val2=v; inp.value=fmtNum(v); dirty=true; sync(true); requestDraw(); };
       minus.onclick=()=>{ const l=inf.list2; const i=l.findIndex(x=>x>=p.val2-1e-9); setVal(i>0?l[i-1]:p.val2/2); };
       plus.onclick=()=>{ const l=inf.list2; const i=l.findIndex(x=>x>p.val2+1e-9); setVal(i>=0?l[i]:p.val2*2); };
       inp.onchange=()=>{ const v=parseFloat(inp.value.replace(',','.')); if(isFinite(v)) setVal(v); else inp.value=fmtNum(p.val2); };
@@ -669,6 +728,9 @@ function renderBar2(){ const b=$('bar2'); b.innerHTML='';
     if(p.type==='sw2'){ el('button','btn','Umschalten',()=>{ pushUndo(); p.pos=p.pos?0:1; changed(); }); el('button','btn','⇅ Spiegeln',()=>{ pushUndo(); p.f=!p.f; changed(); }); }
     if(p.type==='cap') el('button','btn','Entladen',()=>{ dyn.set(p.id,{u:0,i:0}); dirty=true; requestDraw(); });
     if(p.type==='coil') el('span','lbl','Drahtwiderstand '+RL+' Ω');
+    if(p.type==='trafo'){ const w=trWerte(p);
+      el('span','lbl','Übersetzung N₂/N₁ = '+fmtNum(w.n2/w.n1));
+      el('span','lbl','Drahtwiderstand '+fmtNum(w.R1)+' Ω / '+fmtNum(w.R2)+' Ω · nur Wechselspannung'); }
     if(p.type==='amm') el('span','lbl','in Reihe schalten');
     if(p.type==='volt') el('span','lbl','parallel schalten');
     if(p.type==='diode') el('span','lbl','Durchlassspannung 0,7 V');
@@ -734,6 +796,25 @@ const TEMPLATES={
   'Kondensator laden/entladen':()=>build([...hline(2,6,1),...vline(2,1,7),...hline(8,10,1),...vline(10,1,7),...hline(2,10,7),...vline(6,2,7)],
     [['bat',2,3,1],['res',3,1,0,{val:220}],['sw2',8,1,2],['cap',10,3,1,{val:10000}],['lamp',6,3,1,{val:100}]]),
   'Wechselspannung':()=>build([...rectWires(2,1,10,6)],[['ac',2,2,1,{val:6,val2:0.5}],['lamp',5,1,0],['diode',10,2,1],['res',5,6,0,{val:10}]]),
+  'Transformator':()=>build([...hline(3,6,2),...hline(3,6,4),...hline(8,11,2),...hline(8,11,4)],
+    [['ac',3,2,1,{val:12,val2:2}],['trafo',6,2,0,{val:500,val2:250}],['lamp',11,2,1,{val:12}]]),
+  /* Energietransport (nach dem Arbeitsblatt „Energieübertragung durch Hochspannungsleitungen“):
+     Generator – Fernleitung mit ½R_L = 5 Ω in jedem Leiter – zuschaltbare Verbraucher.
+     Ohne Trafo werden die Lampen mit jedem zugeschalteten Verbraucher deutlich dunkler,
+     mit Hochspannung bleiben sie hell. */
+  'Energietransport ohne Trafo':()=>{
+    const w=[...vline(2,0,1),...vline(2,3,4),...hline(2,5,0),...hline(7,16,0),...hline(2,5,4),...hline(7,16,4)];
+    const p=[['ac',2,1,1,{val:12,val2:2}],['res',5,0,0,{val:5}],['res',5,4,0,{val:5}]];
+    [10,13,16].forEach((x,i)=>{ p.push(['sw',x,0,1,{on:i===0}]); p.push(['lamp',x,2,1,{val:12}]); });
+    build(w,p); },
+  'Energietransport mit Hochspannung':()=>{
+    const w=[...hline(2,5,0),...hline(2,5,2),                       // Niederspannung: Generator → Trafo
+      ...hline(7,9,0),...hline(11,14,0),...hline(7,9,2),...hline(11,14,2),   // Hochspannungs-Fernleitung
+      ...hline(16,24,0),...vline(16,2,4),...hline(16,24,4)];         // Niederspannung: Trafo → Verbraucher
+    const p=[['ac',2,0,1,{val:12,val2:2}],['trafo',5,0,0,{val:100,val2:1000}],
+      ['res',9,0,0,{val:5}],['res',9,2,0,{val:5}],['trafo',14,0,0,{val:1000,val2:100}]];
+    [18,21,24].forEach((x,i)=>{ p.push(['sw',x,0,1,{on:i===0}]); p.push(['lamp',x,2,1,{val:12}]); });
+    build(w,p); },
   'Transistor als Schalter':()=>build([...hline(2,9,1),...vline(2,1,9),...hline(2,9,9),...vline(9,1,4),...vline(9,6,9),...hline(4,7,5),...vline(4,1,5)],
     [['bat',2,4,1,{val:9}],['lamp',9,1,1,{val:12}],['res',5,5,0,{val:1000}],['sw',4,2,1,{on:false}],['npn',7,5,0]]),
   'Spule (Einschaltverzögerung)':()=>build([...rectWires(2,1,12,8),...vline(8,1,8)],[['bat',2,3,1],['sw',4,8,0],['res',8,2,1,{val:5}],['lamp',8,5,1],['coil',12,2,1,{val:10}],['lamp',12,5,1]]),
@@ -774,7 +855,10 @@ $('bNew').onclick=()=>{ const b=$('bar2'); b.innerHTML=''; const lab=document.cr
 /* ================= Bedienung auf der Zeichenfläche ================= */
 function hit(gx,gy){ // Bauteile zuerst
   let best=null, bd=1e9;
-  for(const p of data.parts){ const e=ends(p); let d=p.type==='npn'?Math.hypot(gx-toG(p,1.1,0)[0],gy-toG(p,1.1,0)[1])-0.35:distSeg(gx,gy,e.a,e.b); if(e.c) d=Math.min(d,distSeg(gx,gy,e.a,e.c)); if(d<0.45&&d<bd){ bd=d; best={part:p}; } }
+  for(const p of data.parts){ const e=ends(p);
+    if(p.type==='trafo'){ const C=toG(p,1,1), d=Math.max(Math.abs(gx-C[0]),Math.abs(gy-C[1]))-0.6;
+      if(d<0.45&&d<bd){ bd=d; best={part:p}; } continue; }
+    let d=p.type==='npn'?Math.hypot(gx-toG(p,1.1,0)[0],gy-toG(p,1.1,0)[1])-0.35:distSeg(gx,gy,e.a,e.b); if(e.c) d=Math.min(d,distSeg(gx,gy,e.a,e.c)); if(d<0.45&&d<bd){ bd=d; best={part:p}; } }
   if(best) return best;
   for(const k of data.wires){ const [a,b]=edgeEnds(k); const d=distSeg(gx,gy,a,b); if(d<0.32&&d<bd){ bd=d; best={wire:k}; } }
   return best; }
@@ -786,6 +870,8 @@ function placementFor(type,start,cur,moved){ let x,y,d;
   if(!moved){ x=Math.round(start[0])-1; y=Math.round(start[1]); d=0; }
   else { const A=[Math.round(start[0]),Math.round(start[1])], dx=cur[0]-start[0], dy=cur[1]-start[1];
     if(Math.abs(dx)>=Math.abs(dy)){ d=dx>0?0:2; x=dx>0?A[0]:A[0]-2; y=A[1]; } else { d=dy>0?1:3; x=A[0]; y=dy>0?A[1]:A[1]-2; } }
+  if(type==='trafo'){ const c2=toG({x:0,y:0,d},1,1);                   // 2×2-Feld mittig um den Gitterpunkt
+    x=Math.round(start[0])-c2[0]; y=Math.round(start[1])-c2[1]; }
   return newPart(type,x,y,d); }
 const ptrs=new Map(); let gest=null;
 cv.addEventListener('pointerdown',e=>{ e.preventDefault(); try{ cv.setPointerCapture(e.pointerId); }catch(_){}
