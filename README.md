@@ -2069,6 +2069,12 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   flacher Verlauf in y strecken, ohne dass er in x auseinandergezogen wird. Am Rechner macht das
   Mausrad beides; mit **Umschalt** nur x, mit **Alt** nur y. **„Ansicht"** stellt wieder gleiche
   Maßstäbe her.
+  **Nullstellen (Reiter Graph):** Der Knopf **„Nullstellen"** blendet die Nullstellen **am Graphen**
+  ein – als Kreis auf der x-Achse mit dem Wert daneben (`x = −3`), in der Farbe der jeweiligen Funktion
+  und nur im sichtbaren Bereich. Gesucht wird numerisch, auch **Berührpunkte** ohne Vorzeichenwechsel
+  werden gefunden; an einer **Polstelle** wechselt zwar das Vorzeichen, der Wert ist dort aber riesig –
+  solche Stellen werden geprüft und nicht angezeigt (nachgemessen an 1/(x−2): keine Nullstelle).
+  Verdeckte Funktionen bleiben außen vor, damit Rätselaufgaben nicht verraten werden.
   **Tabelle:** in der Kopfzeile stehen die **x-Werte zum Eintippen** („＋ x-Wert“ hängt eine Spalte an und
   setzt den bisherigen Schritt fort, „− x-Wert“ nimmt die letzte weg); darunter für **jede Funktion eine
   Zeile** mit den berechneten y-Werten in der Farbe der Funktion.
@@ -2098,7 +2104,8 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     bei `x·ln(x)` für x → 0⁺: „x → 0, ln(x) → −∞", bei `sin(x)/x`: „sin(x) bleibt zwischen −1 und 1,
     im Nenner x → +∞". Dazu kommt jeweils, welcher Teil gewinnt.
   - **Parameter a, b, c** dürfen im Term stehen; gerechnet wird mit den **eingestellten Reglerwerten**
-    (sie stehen in der Kopfzeile). Zieht man den Regler, ändern sich Grenzwerte, Lücken und Begründungen
+    (sie stehen in der Kopfzeile). Im Reiter lim gehören die **Regler zum dortigen Term** – steht dort
+    ein `a`, erscheint oben der Regler für a (die Funktionen der anderen Reiter spielen keine Rolle). Zieht man den Regler, ändern sich Grenzwerte, Lücken und Begründungen
     sofort mit – bei `a/(x−2)` kippen mit dem Vorzeichen von a auch die beiden Seiten der Polstelle.
     Eine **symbolische Fallunterscheidung** (a > 0 / a < 0) macht der Reiter nicht.
   - Bei **e-Funktion, Logarithmus, Wurzel und Sinus** steht die passende Begründung dabei („die e-Funktion

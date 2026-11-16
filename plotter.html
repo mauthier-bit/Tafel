@@ -476,7 +476,7 @@
   <div id="top">
     <div id="tabs"><div class="tgrp"><button type="button" id="tabG" class="on">Graph</button><button type="button" id="tabT">Tabelle</button><button type="button" id="tabM">Maschine</button></div><button type="button" id="tabR">Transformationen</button><button type="button" id="tabL" title="Grenzwerte an den Rändern des Definitionsbereichs">lim</button><button type="button" id="tabD">Modellieren</button></div>
     <div id="funcs"></div>
-    <div class="frow" id="fbtns"><button id="add" title="Weitere Funktion hinzufügen">＋ Funktion</button><button id="fit">Ansicht</button><button class="fsb" id="btnX" title="Beweglicher Punkt auf der x-Achse"><i>x</i></button><button class="fsb" id="btnY" title="Beweglicher Punkt auf der y-Achse"><i>y</i></button><button class="fsb" id="btnKeys" title="Formel-Tastatur ein-/ausblenden">⌨ Formeln</button><button class="fsb tafelEdit" id="fsM" title="Schrift kleiner">A−</button><button class="fsb tafelEdit" id="fsP" title="Schrift größer">A+</button><span id="teilenBtn" style="display:inline-flex"></span><span id="shotBtns" style="display:inline-flex;gap:6px"></span></div>
+    <div class="frow" id="fbtns"><button id="add" title="Weitere Funktion hinzufügen">＋ Funktion</button><button id="fit">Ansicht</button><button class="fsb" id="btnN" title="Nullstellen am Graphen anzeigen">Nullstellen</button><button class="fsb" id="btnX" title="Beweglicher Punkt auf der x-Achse"><i>x</i></button><button class="fsb" id="btnY" title="Beweglicher Punkt auf der y-Achse"><i>y</i></button><button class="fsb" id="btnKeys" title="Formel-Tastatur ein-/ausblenden">⌨ Formeln</button><button class="fsb tafelEdit" id="fsM" title="Schrift kleiner">A−</button><button class="fsb tafelEdit" id="fsP" title="Schrift größer">A+</button><span id="teilenBtn" style="display:inline-flex"></span><span id="shotBtns" style="display:inline-flex;gap:6px"></span></div>
     <div id="sliders"></div>
   </div>
   <div id="wrap">
@@ -652,6 +652,7 @@ let activeIdx=0;
 let tab='g';                                       /* g = Graph, t = Tabelle, m = Maschine */
 let xs=['−2','−1','0','1','2'];                    /* x-Werte der Tabelle */
 let xPt={on:false,v:1}, yPt={on:false,v:1};        /* bewegliche Punkte auf den Achsen */
+let nullAn=false;                                  /* Nullstellen am Graphen zeigen */
 
 const SUB='₀₁₂₃₄₅₆₇₈₉';
 const sub=n=>String(n).split('').map(d=>SUB[+d]).join('');
@@ -802,7 +803,11 @@ document.addEventListener('pointerdown',e=>{ if(!colPop.classList.contains('show
 addEventListener('resize',farbeZu);
 
 /* ---- Parameter-Schieberegler (über alle Funktionen) ---- */
-function updateSliders(){ const ids=new Set(); funcs.forEach(f=>f.toks.forEach(t=>{ if(t.k==='id')ids.add(t.v); })); const used=['a','b','c'].filter(p=>ids.has(p));
+function updateSliders(){ const ids=new Set();
+  /* im Reiter lim gehören die Regler zum dortigen Term */
+  if(tab==='l') tokenize(lm.term||'').forEach(t=>{ if(t.k==='id') ids.add(t.v); });
+  else funcs.forEach(f=>f.toks.forEach(t=>{ if(t.k==='id')ids.add(t.v); }));
+  const used=['a','b','c'].filter(p=>ids.has(p));
   const el=$('sliders'); el.innerHTML='';
   used.forEach(p=>{ const row=document.createElement('div'); row.className='sl';
     row.innerHTML='<label>'+p+' =</label><input type="range" min="-5" max="5" step="0.1"><span class="v"></span>';
@@ -927,6 +932,7 @@ function setTab(t){ tab=['g','t','m','r','l','d'].includes(t)?t:'g';
   document.body.classList.toggle('t-r',tab==='r');
   document.body.classList.toggle('t-l',tab==='l');
   document.body.classList.toggle('t-d',tab==='d');
+  updateSliders();
   if(lastInp&&!lastInp.offsetParent) lastInp=null;
   if(tab==='g') resize(); else if(tab==='t') buildTable(); else if(tab==='m') buildMachines();
   else if(tab==='d') mdResize(); else if(tab==='l'){ lmResize(); lmNeu(); } else trResize();
@@ -974,9 +980,24 @@ function draw(){ if(!W||!H) return;
       if(!isFinite(py)){ prev=null; continue; } anyOk=true;
       if(prev!==null && Math.abs(py-prev)>H*3){ ctx.moveTo(px,py); } else if(prev===null){ ctx.moveTo(px,py); } else { ctx.lineTo(px,py); } prev=py; }
     ctx.stroke(); });
+  if(nullAn) nullstellenZeigen();
   achsenPunkte();
   $('err').textContent = (!anyTerm||anyOk)?'':'Term nicht auswertbar';
 }
+/* ---- Nullstellen am Graphen ----
+   Gesucht wird im sichtbaren Bereich (dieselbe Suche wie für die Lösungen zum y-Punkt);
+   an einer Polstelle wechselt das Vorzeichen ebenfalls, dort ist der Wert aber riesig – deshalb
+   wird jede gefundene Stelle noch geprüft. */
+function nullstellenZeigen(){ const u=view.ux, uy=view.uy, oy=view.oy, ox=view.ox;
+  const tol=Math.max(1e-9, 2/Math.max(uy,1e-9));
+  funcs.forEach(f=>{ if(!f.toks.length||f.hide) return; let n=0;
+    loesungen(f.toks,0).forEach(x0=>{ const y=evalAt(x0,f.toks);
+      if(!isFinite(y)||Math.abs(y)>tol) return;
+      const px=ox+x0*u, py=oy;
+      ctx.save(); ctx.beginPath(); ctx.arc(px,py,5.5,0,7); ctx.fillStyle='#fff'; ctx.fill();
+      ctx.lineWidth=2.6; ctx.strokeStyle=f.color; ctx.stroke(); ctx.restore();
+      beschrift('x = '+zahl(Math.round(x0*1000)/1000), px, py+16+(n++%2)*15, f.color,'center'); }); }); }
+
 /* ---- bewegliche Punkte auf x- und y-Achse ---- */
 function beschrift(t,x,y,col,al){ ctx.save(); ctx.font='700 '+Math.max(11,fontSize+1)+'px -apple-system,BlinkMacSystemFont,sans-serif';
   ctx.textAlign=al||'left'; ctx.textBaseline='middle'; ctx.lineJoin='round';
@@ -1063,6 +1084,7 @@ cv.addEventListener('wheel',e=>{ e.preventDefault(); const r=cv.getBoundingClien
   view.ox=mx-wx*view.ux; view.oy=my+wy*view.uy; draw(); sync(); },{passive:false});
 
 /* ---- Eingabe & Sync ---- */
+$('btnN').onclick=()=>{ nullAn=!nullAn; $('btnN').classList.toggle('on',nullAn); draw(); sync(); };
 $('fit').onclick=()=>{ view={ox:W/2,oy:H/2,ux:40,uy:40}; draw(); sync(); };
 let uiK=null; function applyUiFont(){ const k=(fontSize||13)/13; if(k===uiK&&document.body.classList.contains('fb')===fontBold&&document.body.classList.contains('fi')===fontItalic) return; uiK=k; document.documentElement.style.setProperty('--k',k); document.body.classList.toggle('fb',fontBold); document.body.classList.toggle('fi',fontItalic); }
 
@@ -2886,7 +2908,7 @@ function lmNeu(sofort){
   const as=$('lmAs'); if(as) as.classList.toggle('on',!!lm.asym);
   const rechne=()=>{ if(t!==lmLetzt) lmSel=-1;
     lmErg=lmAnalyse(); if(lmSel>=lmErg.karten.length) lmSel=-1;
-    if(t!==lmLetzt){ lmLetzt=t; lmText(); lmFit(); } else { lmText(); lmDraw(); } };
+    if(t!==lmLetzt){ lmLetzt=t; updateSliders(); lmText(); lmFit(); } else { lmText(); lmDraw(); } };
   clearTimeout(lmTO);
   if(sofort===false) lmTO=setTimeout(rechne,260); else rechne(); }
 (function lmUi(){
@@ -2923,7 +2945,7 @@ function lmNeu(sofort){
     lmView.unit=Math.max(2,Math.min(4000,lmView.unit*f)); lmView.ox=p[0]-x*lmView.unit; lmView.oy=p[1]+y*lmView.unit; lmDraw(); },{passive:false});
 })();
 
-function zustand(){ return {funcs:funcs.map(f=>({term:f.term,color:f.color,width:f.width,mx:f.mx,hide:!!f.hide})), params, view, fontSize, fontBold, fontItalic, activeIdx, tab, xs:xs.slice(), xPt:{on:xPt.on,v:xPt.v}, yPt:{on:yPt.on,v:yPt.v}, tr:Object.assign({},tr),
+function zustand(){ return {funcs:funcs.map(f=>({term:f.term,color:f.color,width:f.width,mx:f.mx,hide:!!f.hide})), params, view, fontSize, fontBold, fontItalic, activeIdx, tab, nullAn, xs:xs.slice(), xPt:{on:xPt.on,v:xPt.v}, yPt:{on:yPt.on,v:yPt.v}, tr:Object.assign({},tr),
   md:{typ:md.typ, genau:!!md.genau, grad:md.grad, abl:!!md.abl, offC:!!md.offC, zGraph:!!md.zGraph,
       wf:md.wf||'xe', wterm:md.wterm||'',
       zTerm:!!md.zTerm, col:mdKurve(), zAbw:!!md.zAbw, zWert:!!md.zWert,
@@ -2942,6 +2964,7 @@ addEventListener('message',e=>{ if(e.source!==window&&(window.parent===window||e
       document.querySelectorAll('#funcs .func').forEach((r,i)=>{ if(funcs[i]){ r.querySelector('.fcol').style.background=funcs[i].color; r.querySelector('.fname').style.color=funcs[i].color; maskeZeigen(r,funcs[i],i); } }); }
     else { funcs=nf.map(g=>({term:g.term||'', color:g.color, width:g.width, mx:g.mx, hide:!!g.hide, toks:tokenize(g.term||'')})); if(activeIdx>=funcs.length)activeIdx=funcs.length-1; strukturNeu=true; }
   }
+  if(d.nullAn!==undefined){ nullAn=!!d.nullAn; const b=$('btnN'); if(b) b.classList.toggle('on',nullAn); }
   if(d.activeIdx!=null && d.activeIdx<funcs.length){ activeIdx=d.activeIdx; markActive(); }
   if(d.params) params=Object.assign({a:1,b:0,c:0},d.params);
   if(d.view){ view=Object.assign({ox:W/2,oy:H/2,ux:40,uy:40},d.view);
