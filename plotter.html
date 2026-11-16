@@ -154,6 +154,7 @@
   .lmLim em{font-style:normal;font-size:calc(var(--k) * 10px);color:#475569;margin-top:1px;}
   /* Term mit Hervorhebung: worauf es ankommt, steht kräftig da, der Rest blass */
   .lmT{margin-top:5px;font-size:calc(var(--k) * 14px);color:#475569;line-height:1.15;}
+  .lmFuer{font-size:.62em;color:#64748b;white-space:nowrap;}
   .lmStark{font-weight:800;color:#1f2430;}
   .lmBlass{opacity:.36;}
   .lmBr{display:inline-flex;flex-direction:column;vertical-align:middle;text-align:center;margin:0 2px;}
@@ -2530,6 +2531,39 @@ function lmWText(w){ if(!w) return '—';
 const lmWCol=w=>(!w?'#64748b':(w.art==='zahl'?'#15803d':(w.art==='kein'||w.art==='undef'?'#b45309':'#b91c1c')));
 const lmX=x=>(Math.abs(x)<1e-9?'0':zahl(x));
 const lmVZ=v=>v>0?'positiv':'negativ';
+/* Einen Teilbaum wieder als Term schreiben – so lässt er sich einzeln auswerten und anzeigen */
+function lmAstText(nd){ if(!nd) return '';
+  const P={'+':1,'-':1,'*':2,'/':2};
+  const ein=(t,min)=>{ const p=P[t.k]||9; return p<min?'('+lmAstText(t)+')':lmAstText(t); };
+  const hoch2=t=>(t.k==='num'||t.k==='id')?lmAstText(t):'('+lmAstText(t)+')';
+  switch(nd.k){
+    case 'num': return String(nd.v);
+    case 'id': return nd.n;
+    case 'neg': return '-'+ein(nd.a,2);
+    case 'fn': return nd.n+'('+lmAstText(nd.a)+')';
+    case '^': return hoch2(nd.l)+'^'+hoch2(nd.r);
+    case '*': return ein(nd.l,2)+'*'+ein(nd.r,2);
+    case '/': return ein(nd.l,2)+'/'+((P[nd.r.k]||9)<=2?'('+lmAstText(nd.r)+')':lmAstText(nd.r));
+    case '+': return lmAstText(nd.l)+'+'+ein(nd.r,1);
+    case '-': return lmAstText(nd.l)+'-'+ein(nd.r,2); }
+  return ''; }
+/* oberste Faktoren eines Produkts/Quotienten einsammeln */
+function lmTeile(nd,out,imNenner){ out=out||[];
+  if(!nd) return out;
+  if(nd.k==='*'){ lmTeile(nd.l,out,imNenner); lmTeile(nd.r,out,imNenner); return out; }
+  if(nd.k==='/'){ lmTeile(nd.l,out,imNenner); lmTeile(nd.r,out,!imNenner); return out; }
+  out.push({nd,nenner:!!imNenner}); return out; }
+/* „Dabei geht x → +∞ und e^(−x) → 0" – das Verhalten der einzelnen Teile */
+function lmTeilText(ast,x0,seite){
+  const t=lmTeile(ast).filter(q=>/x/.test(lmAstText(q.nd)));
+  if(t.length<2||t.length>4) return '';
+  const stk=t.map(q=>{ const txt=lmAstText(q.nd), tk=tokenize(txt);
+    const w=lmAusProben(lmProben(x=>evalAt(x,tk),x0,seite));
+    const beschr=(q.nd.k==='fn'&&(q.nd.n==='sin'||q.nd.n==='cos'))?'bleibt zwischen −1 und 1'
+                :(w.art==='kein'?'schwankt':'→ '+lmWert(w));
+    return (q.nenner?'im Nenner ':'')+termText(tk)+' '+beschr; });
+  return 'Die einzelnen Teile: '+stk.join(', ')+'. '; }
+
 /* Polynomdivision – für die schiefe Asymptote */
 function pDiv(z,n){ let rest=pTrim(z).slice(); n=pTrim(n); const gn=n.length-1; const q=[];
   for(let s=0;s<40;s++){ rest=pTrim(rest); const gz=rest.length-1;
@@ -2586,7 +2620,9 @@ function lmAnalyse(){
       else {                                                       /* hebbare Lücke */
         const w=(kz>kn)?0:pWert(zz,x0)/pWert(nk,x0);
         e.loecher.push({x:x0,y:w});
-        e.karten.push({ziel:'x → '+lmX(x0), wert:{art:'zahl',v:w}, x:x0, seite:0, loch:true, termHtml:tHtmlPol,
+        const gek=(pGrad(nk)===0&&Math.abs(nk[0]-1)<1e-12)?lmPolyHtml(zz,null):lmBruchHtml(lmPolyHtml(zz,null),lmPolyHtml(nk,null));
+        const tHtmlLoch=tHtmlPol+' = '+gek+' <span class="lmFuer">für x ≠ '+lmX(x0)+'</span>';
+        e.karten.push({ziel:'x → '+lmX(x0), wert:{art:'zahl',v:w}, x:x0, seite:0, loch:true, termHtml:tHtmlLoch,
           grund:'Zähler und Nenner werden beide 0. Der Faktor '+klT+(kz>1?hoch(kz):'')+' kürzt sich weg; übrig bleibt der Wert '+zahl(w)+
             '. An der Stelle selbst ist der Term nicht definiert – der Graph hat dort nur ein <b>Loch</b>.',
           proben:[[x0-0.01,f(x0-0.01)],[x0+0.01,f(x0+0.01)]]}); }
@@ -2615,7 +2651,7 @@ function lmAnalyse(){
       e.karten.push({ziel, wert, grund, x:s*Infinity, seite:0, termHtml:tHtml,
         proben:lmProben(f,s*Infinity,0).filter((p,i)=>i%2===0).slice(0,4)}); });
     e.karten.sort((a,b)=>lmOrd(a)-lmOrd(b));
-    e.kopf=lmKopf(e,gebrochen?'gebrochen-rationaler Term':'ganzrationaler Term');
+    e.kopf=lmKopf(e,gebrochen?'gebrochen-rationaler Term':'ganzrationaler Term',toks);
     return e;
   }
 
@@ -2640,18 +2676,18 @@ function lmAnalyse(){
       [-1,1].forEach(seite=>{ const pr=lmProben(f,g.x,seite), wert=lmAusProben(pr);
         if(wert.art==='inf'||wert.art==='ninf') e.pole.push(g.x);
         e.karten.push(randKarte(g.x,seite,wert,
-          'An dieser Stelle ist der Term nicht definiert. '+(seite<0?'Links':'Rechts')+' davon zeigen die Werte, wohin es geht.',pr.slice(1,4))); });
+          lmTeilText(ast,g.x,seite)+'An dieser Stelle ist der Term nicht definiert. '+(seite<0?'Links':'Rechts')+' davon zeigen die Werte, wohin es geht.',pr.slice(1,4))); });
       return; }
     st.push({x:g.x,art:g.art,seite:g.seiten[0]}); });
   st.forEach(s=>{
     if(s.art==='pol'){ e.pole.push(s.x);
       [-1,1].forEach(seite=>{ const pr=lmProben(f,s.x,seite), wert=lmAusProben(pr);
         e.karten.push(randKarte(s.x,seite,wert,
-          'Dort ist der Term nicht definiert (Nenner 0). '+(seite<0?'Links':'Rechts')+' davon wachsen die Werte über alle Grenzen – das zeigen die Zahlen daneben.',
+          lmTeilText(ast,s.x,seite)+'Dort ist der Term nicht definiert (Nenner 0). '+(seite<0?'Links':'Rechts')+' davon wachsen die Werte über alle Grenzen – das zeigen die Zahlen daneben.',
           pr.slice(1,4))); }); }
     else { e.raender.push(s);
       const pr=lmProben(f,s.x,s.seite), wert=lmAusProben(pr);
-      let grund='Hier endet der Definitionsbereich: ';
+      let grund=lmTeilText(ast,s.x,s.seite)+'Hier endet der Definitionsbereich: ';
       if(F.wurzel) grund+='unter der Wurzel darf nichts Negatives stehen. ';
       else if(F.ln) grund+='der ln ist nur für positive Werte erklärt. ';
       else grund+='weiter '+(s.seite>0?'links':'rechts')+' gibt es die Funktion nicht. ';
@@ -2668,7 +2704,8 @@ function lmAnalyse(){
       if(plus&&minus) wert={art:'kein'}; }
     let grund='';
     if(wert.art==='undef') grund='Für diese x gibt es die Funktion nicht – der Definitionsbereich endet vorher.';
-    else { if(F.exp) grund+='Hier steckt eine e-Funktion: sie wächst schneller als jede Potenz von x und bestimmt deshalb das Verhalten. ';
+    else { grund+=lmTeilText(ast,s*Infinity,0);
+      if(F.exp) grund+='Hier steckt eine e-Funktion: sie wächst schneller als jede Potenz von x und bestimmt deshalb das Verhalten. ';
       if(F.ln) grund+='Der ln wächst langsamer als jede Potenz – aber immer weiter, eine Schranke hat er nicht. ';
       if(F.trig&&wert.art==='kein') grund+='Sinus und Kosinus schwanken immer wieder zwischen −1 und 1 – deshalb nähert sich der Wert keiner Zahl an. ';
       if(F.wurzel) grund+='Die Wurzel wächst langsamer als x, aber unbeschränkt. ';
@@ -2676,11 +2713,15 @@ function lmAnalyse(){
       if(wert.art==='zahl'&&isFinite(wert.v)){ grund+='Die Werte nähern sich '+zahl(wert.v)+' an: <b>waagrechte Asymptote</b> y = '+zahl(wert.v)+'.'; e.asym.push(wert.v); } }
     e.karten.push({ziel, wert, grund, x:s*Infinity, seite:0, proben:pr.slice(0,4)}); });
   e.karten.sort((a,b)=>lmOrd(a)-lmOrd(b));
-  e.kopf=lmKopf(e,'Term mit '+[F.exp?'e-Funktion':'',F.ln?'Logarithmus':'',F.wurzel?'Wurzel':'',F.trig?'Sinus/Kosinus':'',F.betrag?'Betrag':''].filter(Boolean).join(', ')||'Term');
+  e.kopf=lmKopf(e,'Term mit '+([F.exp?'e-Funktion':'',F.ln?'Logarithmus':'',F.wurzel?'Wurzel':'',F.trig?'Sinus/Kosinus':'',F.betrag?'Betrag':''].filter(Boolean).join(', ')||'Term'),toks);
   return e;
 }
 function lmOrd(k){ const x=k.x; if(x===-Infinity) return -1e9; if(x===Infinity) return 1e9; return x*10+(k.seite||0)*0.1; }
-function lmKopf(e,art){
+function lmKopf(e,art,toks){
+  const pars=['a','b','c'].filter(p=>(toks||[]).some(t=>t.k==='id'&&t.v===p));
+  const pt=pars.length?(' · gerechnet mit '+pars.map(p=>p+' = '+zahl(params[p])).join('; ')+'; die Regler oben zeigen, wie sich das Verhalten ändert'):'';
+  return lmKopf0(e,art)+pt; }
+function lmKopf0(e,art){
   const l=lmEinfach(e.pole.concat(e.loecher.map(o=>o.x)));
   const rand=e.raender.map(r=>lmX(r.x));
   let t='<b>'+art+'</b>';

@@ -2090,6 +2090,17 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     gebracht und **am Term** entschieden: Gradvergleich für x → ±∞ (Nenner größer → 0; gleich → Quotient der
     größten Koeffizienten; Zähler größer → ±∞ mit Vorzeichen), an den Nullstellen des Nenners **Polstelle
     oder hebbare Lücke** (Kürzen von (x − x₀)), samt Vorzeichenbetrachtung links und rechts.
+  - **Faktorisiert, wo es nötig ist:** An einer Definitionslücke steht der Nenner als Produkt da, der
+    Faktor, der 0 wird, hervorgehoben – bei einer **hebbaren Lücke** zusätzlich gekürzt:
+    `f(x) = (x − 1)·(x + 1) / (x − 1) = x + 1 für x ≠ 1`.
+  - **Zusammengesetzte Terme werden zerlegt:** Bei einem Produkt oder Quotienten steht das Verhalten der
+    einzelnen Teile dabei – z. B. bei `x·e^(−x)` für x → +∞: „Die einzelnen Teile: x → +∞, e^(−x) → 0",
+    bei `x·ln(x)` für x → 0⁺: „x → 0, ln(x) → −∞", bei `sin(x)/x`: „sin(x) bleibt zwischen −1 und 1,
+    im Nenner x → +∞". Dazu kommt jeweils, welcher Teil gewinnt.
+  - **Parameter a, b, c** dürfen im Term stehen; gerechnet wird mit den **eingestellten Reglerwerten**
+    (sie stehen in der Kopfzeile). Zieht man den Regler, ändern sich Grenzwerte, Lücken und Begründungen
+    sofort mit – bei `a/(x−2)` kippen mit dem Vorzeichen von a auch die beiden Seiten der Polstelle.
+    Eine **symbolische Fallunterscheidung** (a > 0 / a < 0) macht der Reiter nicht.
   - Bei **e-Funktion, Logarithmus, Wurzel und Sinus** steht die passende Begründung dabei („die e-Funktion
     wächst schneller als jede Potenz", „der ln wächst langsamer, aber unbeschränkt", „Sinus schwankt immer
     wieder zwischen −1 und 1"); der Wert selbst wird durch Einsetzen bestimmt – das sieht man den Karten an.
