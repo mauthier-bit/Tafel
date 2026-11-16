@@ -41,7 +41,7 @@
   .fkosy.on{background:#dbeafe;border-color:#93c5fd;color:#1d4ed8;}
   .fkosyX{border:1px solid #cfd6e0;background:#fff;color:#8a93a2;border-radius:8px;width:calc(var(--k) * 26px);
     height:calc(var(--k) * 26px);font-size:calc(var(--k) * 15px);line-height:1;cursor:pointer;flex:none;font-family:inherit;}
-  .mfuss{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:8px;flex-wrap:wrap;}
+  .mfuss{display:flex;align-items:center;justify-content:center;gap:calc(var(--k) * 8px);flex-wrap:wrap;}
   .verdeckt{flex:1;min-width:0;padding:calc(var(--k) * 7px) 8px;border:1px dashed #cfd6e0;border-radius:8px;
     font-size:calc(var(--k) * 15px);color:#94a3b8;letter-spacing:4px;background:#f8fafc;white-space:nowrap;overflow:hidden;}
   #fbtns{gap:8px;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:thin;}
@@ -152,11 +152,15 @@
   #lmLinks{flex:1;min-width:0;min-height:0;display:flex;flex-direction:column;gap:calc(var(--k) * 4px);}
   #lmTermGross{flex:none;text-align:center;font-size:calc(var(--k) * 21px);color:#1f2430;line-height:1.25;
     padding:calc(var(--k) * 2px) 4px;min-height:1.5em;overflow:hidden;white-space:nowrap;}
+  /* Platz für die schwebenden Werte über und unter den Teiltermen */
+  #lmTermGross.mitAnn{padding-top:.85em;padding-bottom:.85em;}
   /* rechts die Ränder: antippen öffnet das Ergebnis */
   .lmRand{border:1px solid #e6ebf3;border-left-width:5px;border-left-color:#cbd5e1;border-radius:10px;
        padding:calc(var(--k) * 6px) calc(var(--k) * 8px);margin-bottom:calc(var(--k) * 6px);cursor:pointer;background:#fff;}
   .lmRand.on{background:#f3f7ff;border-color:#2563eb;}
-  .lmRK{display:flex;align-items:center;gap:3px;}
+  /* f(x) und das Ergebnis stehen auf der Grundlinie von „lim" – nicht mittig zur ganzen
+     Spalte aus lim und x → …, sonst rutschen sie tiefer als das lim */
+  .lmRK{display:flex;align-items:baseline;gap:3px;}
   .lmRand .lmZ{font-size:calc(var(--k) * 14px);font-weight:800;color:#1f2430;}
   .lmRand .lmW{font-size:calc(var(--k) * 15px);font-weight:800;margin-left:4px;}
   .lmFrage{margin-left:auto;color:#94a3b8;font-weight:800;font-size:calc(var(--k) * 15px);}
@@ -174,9 +178,12 @@
   .lmPlus{background:#d7f5e0;color:#14532d;}
   .lmMinus{background:#ffdede;color:#7f1d1d;}
   /* Wert, den ein Teilterm an der Stelle annimmt – über dem Zähler, unter dem Nenner */
-  .lmAnn{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;line-height:1.15;}
-  .lmAnn.unten{flex-direction:column-reverse;}
-  .lmAnn>.v{font-size:.58em;font-weight:700;color:#64748b;line-height:1.4;white-space:nowrap;}
+  /* Der Wert schwebt über bzw. unter dem Teilterm, ohne die Zeile höher zu machen –
+     sonst rutscht ein Produkt wie x · e^(−x) gegenüber dem „f(x) =" nach unten. */
+  .lmAnn{position:relative;display:inline-block;}
+  .lmAnn>.v{position:absolute;left:50%;transform:translateX(-50%);bottom:100%;margin-bottom:1px;
+    font-size:.58em;font-weight:700;color:#64748b;line-height:1.3;white-space:nowrap;}
+  .lmAnn.unten>.v{bottom:auto;top:100%;margin-bottom:0;margin-top:1px;}
   .lmAnn>.v.vP{color:#15803d;}
   .lmAnn>.v.vM{color:#b91c1c;}
   .lmAnn>.v.vDom{font-size:.72em;font-weight:800;text-decoration:underline;text-underline-offset:2px;}
@@ -928,7 +935,7 @@ function buildTable(){ const host=$('pT'); host.innerHTML='';
   funcs.forEach((f,i)=>{ const tr=document.createElement('tr');
     const td=document.createElement('td'); td.className='fz';
     const box=document.createElement('div'); box.className='fzin';
-    box.innerHTML='<span class="fcol"></span><b class="fname"></b><input class="fterm" spellcheck="false" placeholder="Term"><span class="verdeckt">? ? ?</span><button class="fhide" type="button">👁</button><button class="fkosy" type="button">Ins Koordinatensystem</button><button class="fdel" title="Funktion entfernen">×</button>';
+    box.innerHTML='<span class="fcol"></span><b class="fname"></b><input class="fterm" spellcheck="false" placeholder="Term"><span class="verdeckt">? ? ?</span><button class="fhide" type="button">👁</button><button class="fkosy" type="button">→ Graph</button><button class="fdel" title="Funktion entfernen">×</button>';
     const dot=box.querySelector('.fcol'); dot.style.background=f.color; dot.title='Farbe dieser Funktion wählen';
     dot.onclick=e=>{ e.stopPropagation(); farbwahl(i,dot); };
     const nm=box.querySelector('.fname'); nm.textContent='f'+sub(i+1)+'(x)='; nm.style.color=f.color;
@@ -957,8 +964,8 @@ function buildTable(){ const host=$('pT'); host.innerHTML='';
 /* Schalter „Ins Koordinatensystem" in der Tabellenzeile */
 function tabKosy(box,f){ const b=box.querySelector('.fkosy'); if(!b) return;
   const an=!!f.tpk; b.classList.toggle('on',an);
-  b.title=an?'Die Wertepaare dieser Zeile nicht mehr im Reiter Graph zeigen'
-            :'Die Wertepaare dieser Zeile als Punkte im Reiter Graph einzeichnen'; }
+  b.title=an?'Die Wertepaare dieser Zeile nicht mehr im Koordinatensystem zeigen'
+            :'Die Wertepaare dieser Zeile als Punkte in das Koordinatensystem im Reiter Graph einzeichnen'; }
 /* nurWerte: Term-Eingaben nicht anfassen (Tippen in der Tabelle) */
 function refreshTable(nurWerte){ const t=$('ttab'); if(!t) return;
   const rows=t.querySelectorAll('tr');
@@ -987,8 +994,8 @@ function buildMachines(){ const host=$('pM'); host.innerHTML='';
       +'<div class="mbody"><span class="zahn z1">⚙</span><span class="mterm"></span><span class="zahn z2">⚙</span></div>'
       +'<div class="mch"></div>'
       +'<div class="mweg"></div>'
-      +'<div class="maus"><span class="mlab">y</span>=<span class="mval">—</span></div>'
-      +'<div class="mfuss"><button class="fkosy" type="button">Ins Koordinatensystem</button>'
+      +'<div class="mfuss"><div class="maus"><span class="mlab">y</span>=<span class="mval">—</span></div>'
+      +'<button class="fkosy" type="button">→ Graph</button>'
       +'<button class="fkosyX" type="button" title="Alle eingezeichneten Punkte dieser Funktion entfernen">×</button></div>'
       +'</div>';
     const dot=d.querySelector('.fcol'); dot.style.background=f.color; dot.title='Farbe dieser Funktion wählen';
@@ -1023,9 +1030,9 @@ function maschKosy(d,f){ const b=d.querySelector('.fkosy'), x=d.querySelector('.
   const xv=pz(f.mx), n=(f.pkt||[]).length;
   const drin=isFinite(xv)&&(f.pkt||[]).some(q=>Math.abs(q-xv)<1e-9);
   b.classList.toggle('on',drin);
-  b.textContent='Ins Koordinatensystem'+(n?(' · '+n):'');
-  b.title=drin?'Diesen Punkt wieder herausnehmen'
-              :'Diesen Punkt im Reiter Graph einzeichnen – so entsteht der Graph Punkt für Punkt';
+  b.textContent='→ Graph'+(n?(' · '+n):'');
+  b.title=drin?'Diesen Punkt wieder aus dem Koordinatensystem herausnehmen'
+              :'Diesen Punkt in das Koordinatensystem im Reiter Graph einzeichnen – so entsteht der Graph Punkt für Punkt';
   if(x) x.style.display=n?'':'none'; }
 function refreshMachine(d,i,nurWerte){ const f=funcs[i]; if(!f) return;
   const dot=d.querySelector('.fcol'), nm=d.querySelector('.fname'), inp=d.querySelector('.fterm'), mx=d.querySelector('.mxin');
@@ -3091,7 +3098,8 @@ function lmText(){ const o=$('lmOut'), gr=$('lmTermGross'); if(!o) return; const
   if(!e||!e.ok){ o.innerHTML='<div class="lmHead">'+((e&&e.hinweis)||'')+'</div>'; if(gr) gr.innerHTML=''; return; }
   const k=e.karten[lmSel];
   /* Im großen Term steht hervorgehoben, worauf es beim gewählten Rand ankommt */
-  if(gr){ gr.innerHTML=(k&&k.termHtml)||e.termHtml||'';
+  if(gr){ const th=(k&&k.termHtml)||e.termHtml||'';
+    gr.innerHTML=th; gr.classList.toggle('mitAnn', th.indexOf('lmAnn')>=0);
     /* lange Ketten kleiner setzen, damit sie ganz hineinpassen */
     gr.style.fontSize='';
     for(let i=0;i<5&&gr.clientWidth>40&&gr.scrollWidth>gr.clientWidth+2;i++){

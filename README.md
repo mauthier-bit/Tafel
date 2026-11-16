@@ -2099,7 +2099,8 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   solche Stellen werden geprüft und nicht angezeigt (nachgemessen an 1/(x−2): keine Nullstelle).
   Verdeckte Funktionen bleiben außen vor, damit Rätselaufgaben nicht verraten werden.
   **Punktweise zum Graphen:** In **Tabelle** und **Maschine** steht bei jeder Funktion der Knopf
-  **„Ins Koordinatensystem"**. In der Tabelle zeichnet er **alle Wertepaare dieser Zeile** als Punkte
+  **„→ Graph"** (in der Maschine gleich neben dem y-Wert). In der Tabelle zeichnet er **alle
+  Wertepaare dieser Zeile** als Punkte
   in das Koordinatensystem des Reiters Graph, bei der Maschine **den gerade eingestellten Punkt**
   (nochmaliges Antippen nimmt ihn wieder weg; die Zahl am Knopf sagt, wie viele Punkte gesetzt sind,
   das „×“ daneben räumt alle weg). Im Reiter **Graph** hat jede Funktion dafür **zwei Schalter**:
