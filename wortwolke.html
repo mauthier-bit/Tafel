@@ -33,6 +33,9 @@
   .wChip button:hover{background:#eef2f7;}
   .wChip button.x{color:#b91c1c;font-size:13px;}
   #wMsg{color:#b45309;font-weight:600;}
+  #bTipp.on{background:#2563eb;border-color:#2563eb;color:#fff;}
+  #tippHinweis{position:absolute;left:8px;top:6px;font:600 12px -apple-system,sans-serif;color:#8a93a2;pointer-events:none;}
+  body.tippt #cv{cursor:pointer;}
   #area{flex:1;position:relative;min-height:0;}
   #area canvas{position:absolute;inset:0;width:100%;height:100%;}
   #msg{font-size:12.5px;color:#64748b;white-space:nowrap;}
@@ -225,6 +228,7 @@
     <div id="row1">
       <div id="scroll1">
         <button type="button" id="bEdit">✎ Wörter</button>
+        <button type="button" id="bTipp" title="Begriff in der Wolke antippen zählt ihn eine Nennung hoch">☝ Antippen zählt</button>
         <button type="button" id="bNew" class="tafelEdit" title="Anordnung neu berechnen">🎲 Neu anordnen</button>
         <button type="button" id="bPrint" class="tafelEdit" title="Wolke drucken">🖨 Drucken</button>
         <span id="msg"></span>
@@ -253,7 +257,7 @@
     <div id="wList"></div>
     <div class="hint"><span id="wMsg"></span><span id="wTipp">Eingabetaste fügt hinzu · schon vorhandene Begriffe zählen nur hoch · ganze Liste mit Komma oder Zeilenumbruch einfügen</span></div>
   </div>
-  <div id="area"><canvas id="cv"></canvas></div>
+  <div id="area"><canvas id="cv"></canvas><div id="tippHinweis" hidden>Begriff antippen zählt ihn hoch</div></div>
 </div>
 <script src="shot.js"></script>
 <script src="vendor/qrcode.min.js"></script>
@@ -267,7 +271,7 @@ const PAL={ bunt:['#2563eb','#dc2626','#16a34a','#d97706','#7c3aed','#0891b2','#
   warm:['#b91c1c','#dc2626','#ea580c','#d97706','#ca8a04','#9a3412'],
   grau:['#1f2430','#374151','#4b5563','#6b7280','#111827'] };
 let D={ v:1, words:'Bruch\nBruch\nNenner\nZähler\nKürzen\nErweitern\nAnteil\nProzent\nDezimalbruch\nGanzes\nTeil\nBruchstrich',
-  pal:'bunt', rot:'mix', count:false, seed:5, fontSize:18, fontBold:false, fontItalic:false };
+  pal:'bunt', rot:'mix', count:false, tipp:false, seed:5, fontSize:18, fontBold:false, fontItalic:false };
 let items=[], laid=[];
 
 /* ---------- Begriffe zählen ---------- */
@@ -367,7 +371,7 @@ function layoutOnce(f){
       const b={x:cx-bw/2, y:cy-bh/2, w:bw+5, h:bh+5};
       if(b.x<4||b.y<4||b.x+b.w>w-4||b.y+b.h>h-4) continue;
       if(hit(b)) continue;
-      boxes.push(b); out.push({label,size,vertical,cx,cy,idx});
+      boxes.push(b); out.push({label,size,vertical,cx,cy,idx,bw,bh});
       bb.x0=Math.min(bb.x0,b.x); bb.y0=Math.min(bb.y0,b.y); bb.x1=Math.max(bb.x1,b.x+b.w); bb.y1=Math.max(bb.y1,b.y+b.h);
       break;
     }
@@ -409,7 +413,7 @@ function draw(){ const w=cv.clientWidth, h=cv.clientHeight;
 /* ---------- Drucken ---------- */
 function printSheet(title){
   let url='';
-  try{ const c=(window.TafelShot&&TafelShot.rasterize)?TafelShot.rasterize($('area'),{scale:2.5,pad:6}):cv; url=c.toDataURL('image/png'); }
+  try{ const c=(window.TafelShot&&TafelShot.rasterize)?TafelShot.rasterize($('area'),{scale:2.5,pad:6,exclude:'#tippHinweis'}):cv; url=c.toDataURL('image/png'); }
   catch(e){ url=cv.toDataURL('image/png'); }
   const win=window.open('','_blank');
   if(!win){ setMsg('Bitte Pop-ups erlauben – dann klappt das Drucken'); return; }
@@ -425,6 +429,25 @@ $('bEdit').onclick=()=>{ const wb=$('words'); wb.hidden=!wb.hidden; $('bEdit').c
   if(!wb.hidden){ listeMalen(); wMeldung(''); $('wIn').focus(); } resize(); };
 function eingeben(){ const t=$('wIn').value; $('wIn').value=''; hinzufuegen(t); $('wIn').focus(); }
 $('wPlus').onclick=eingeben;
+/* ---------- Antippen zählt hoch ----------
+   Praktisch während einer Zuruf-Runde: einen Begriff, den man in der Liste erst suchen müsste,
+   einfach in der Wolke antippen. Nur mit dem Knopf aktiv, damit nichts aus Versehen hochzählt. */
+function tippUi(){ const an=!!D.tipp; $('bTipp').classList.toggle('on',an);
+  document.body.classList.toggle('tippt',an); $('tippHinweis').hidden=!an; }
+$('bTipp').onclick=()=>{ D.tipp=!D.tipp; tippUi(); sync();
+  if(D.tipp) setMsg('Begriff in der Wolke antippen zählt ihn hoch'); else setMsg(''); };
+function wortBeiPunkt(px,py){
+  for(let i=laid.length-1;i>=0;i--){ const l=laid[i];
+    if(Math.abs(px-l.cx)<=l.bw/2+3&&Math.abs(py-l.cy)<=l.bh/2+3) return l; }
+  return null; }
+function tippZaehlt(l){ const it=items[l.idx]; if(!it) return;
+  const liste=wortListe(), j=liste.findIndex(w=>w.text===it.text); if(j<0) return;
+  liste[j].n=Math.min(99,liste[j].n+1); schreibe(liste);
+  if(!$('msg').textContent) setMsg('„'+liste[j].text+'“ jetzt '+fmtN(liste[j].n)); }
+cv.addEventListener('pointerdown',e=>{ if(!D.tipp) return;
+  const r=cv.getBoundingClientRect(), l=wortBeiPunkt(e.clientX-r.left,e.clientY-r.top);
+  if(!l) return; e.preventDefault(); tippZaehlt(l); });
+
 $('wSort').onclick=()=>{ const l=wortListe(); if(l.length<2) return;
   l.sort((a,b)=>a.text.localeCompare(b.text,'de',{sensitivity:'base'}));
   schreibe(l); wMeldung('alphabetisch sortiert'); };
@@ -439,20 +462,20 @@ $('rot').onchange=()=>{ D.rot=$('rot').value; refresh(); };
 $('cCount').onchange=()=>{ D.count=$('cCount').checked; refresh(); };
 for(const [id,d] of [['fsM',-2],['fsP',2]]){ $(id).addEventListener('pointerdown',e=>e.preventDefault());
   $(id).onclick=()=>{ D.fontSize=Math.max(10,Math.min(60,(D.fontSize||18)+d)); refresh(); }; }
-if(window.TafelShot) TafelShot.buttons($('shotBtns'),()=>TafelShot.rasterize($('app'),{exclude:'#bar,#words',pad:6}),'tafelEdit');
+if(window.TafelShot) TafelShot.buttons($('shotBtns'),()=>TafelShot.rasterize($('app'),{exclude:'#bar,#words,#tippHinweis',pad:6}),'tafelEdit');
 /* ---------- Tafel-Anbindung ---------- */
 function sync(){ if(window.parent===window) return; /* allein geöffnet: nicht an sich selbst senden */
   try{ parent.postMessage({type:'embed-data',data:D},'*'); }catch(e){} }
 addEventListener('message',e=>{ if(e.source!==window&&(window.parent===window||e.source!==window.parent)) return;   /* nur Tafel oder eigenes Fenster (Teilen-Link) */
   if(!(e.data&&e.data.type==='embed-data'&&e.data.data)) return;
   D=Object.assign(D,e.data.data);
-  listeMalen(); $('pal').value=D.pal||'bunt'; $('rot').value=D.rot||'mix'; $('cCount').checked=!!D.count;
+  listeMalen(); tippUi(); $('pal').value=D.pal||'bunt'; $('rot').value=D.rot||'mix'; $('cCount').checked=!!D.count;
   resize(); 
   if(window.TafelModus) TafelModus.refresh(); });
 /* Umschalter „Benutzen / Bearbeiten“: beim Benutzen bleibt nur das Blatt stehen */
 if(window.TafelModus) TafelModus.init({ get:()=>D.edit!==false, set:v=>{ D.edit=v; sync(); }, after:()=>resize() });
 addEventListener('resize',resize);
-window.addEventListener('load',()=>{ resize(); listeMalen();
+window.addEventListener('load',()=>{ resize(); listeMalen(); tippUi();
   if(window.ResizeObserver) new ResizeObserver(resize).observe(cv);
   try{ if(window.parent!==window) parent.postMessage({type:'embed-ready'},'*'); }catch(e){} });
 

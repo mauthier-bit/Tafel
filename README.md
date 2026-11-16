@@ -1731,7 +1731,12 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     die Zähler stimmen – gemeldet wird z. B. „2 neu, 4 schon vorhanden (Zähler erhöht)". So bleibt die
     Eingabe auch bei einer Zuruf-Runde übersichtlich. **„A–Z"** sortiert die Liste alphabetisch
     (deutsche Sortierung: Umlaute wie a/o/u, Groß- und Kleinschreibung egal – „Zahl" vor „Zähler");
-    die Wolke selbst bleibt davon unberührt, dort entscheidet weiter die Anzahl der Nennungen. Ein Gewicht lässt sich weiterhin direkt angeben
+    die Wolke selbst bleibt davon unberührt, dort entscheidet weiter die Anzahl der Nennungen.
+    **„☝ Antippen zählt"** schaltet eine zweite Eingabeart frei: Solange der Knopf leuchtet,
+    zählt ein Tipp **auf den Begriff in der Wolke** diesen eine Nennung hoch (mit Hinweis über der
+    Wolke und Rückmeldung „… jetzt 3" in der Leiste) – praktisch, wenn man den Begriff in der Liste
+    erst suchen müsste. Ohne den Knopf bleibt ein Tipp wirkungslos, damit nichts aus Versehen
+    hochzählt; der Hinweis steht weder im Tafelbild noch im Ausdruck. Ein Gewicht lässt sich weiterhin direkt angeben
     (`Bruch = 5`). Die Wolke ordnet sich in einer Spirale an, **skaliert
     sich selbst** auf die Objektgröße und lässt sich in **vier Farbstimmungen** (bunt, blau, warm, grau) sowie
     wahlweise **nur waagerecht** oder **waagerecht & senkrecht** anzeigen; **„Anzahl zeigen"** schreibt die
