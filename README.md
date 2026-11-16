@@ -2175,6 +2175,9 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     wieder zwischen −1 und 1"); der Wert selbst wird durch Einsetzen bestimmt – das sieht man den Karten an.
   - **Asymptoten** blendet ein Knopf ein: **waagrechte** (y = …), **senkrechte** (x = …) und – über
     Polynomdivision – auch die **schiefe Asymptote** (z. B. y = x bei (x²+1)/x), jeweils **mit Gleichung**.
+    **Farben:** **senkrechte** Asymptoten **orange**, **waagrechte und schiefe** **lila**.
+    Der Grenzwert selbst steht in der Farbe seines Vorzeichens: **+∞ grün**, **−∞ rot** – wie die
+    Vorzeichen-Marker am Term; der Pfeil am Graphen hat dieselbe Farbe.
   - **Die Ansicht passt sich dem angetippten Rand an:** Bei **x → ±∞** zoomt der Graph in x weit hinaus
     (bis x = 100 bzw. −100), der y-Ausschnitt bleibt – so sieht man, wie die Kurve abflacht, sich einer
     Asymptote nähert oder oben bzw. unten aus dem Bild läuft. Bei einer **Definitionslücke** rückt der
