@@ -2090,7 +2090,9 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   Art gegliedert (ganzrational, gebrochen-rational, e-Funktion, Logarithmus und Wurzel, Sinus und Kosinus).
   **Ablauf:** Term eintippen oder ein Beispiel wählen – dann stehen **Term und Graph groß** da (der Term als
   echter Bruch über der Zeichenfläche), und rechts erscheinen die **Ränder des Definitionsbereichs** zum
-  Untersuchen: ±∞ und jede Definitionslücke, jeweils in **lim-Schreibweise** (`lim` mit `x → 2⁻` darunter)
+  Untersuchen: ±∞ und jede Definitionslücke **einzeln von links und von rechts** (`x → 2⁻` und `x → 2⁺`,
+  auch bei einer hebbaren Lücke – dass beide Seiten denselben Wert ergeben, ist ja der Grund dafür),
+  jeweils in **lim-Schreibweise** (`lim` mit `x → 2⁻` darunter)
   mit einem **„?"** statt des Ergebnisses. **Tippt man einen Rand an**, erscheint in diesem Feld der
   Grenzwert mit der **Begründung am Term** und den **eingesetzten Werten** als Beleg; gleichzeitig wird
   im großen Term hervorgehoben, worauf es ankommt (die **größte Potenz** kräftig, alles Übrige blass; an
