@@ -184,6 +184,7 @@
   #trOut .wLeer{color:#64748b;}
   #plotR,#plotL{position:absolute;inset:0;width:100%;height:100%;touch-action:none;}
   body.t-r #sliders,body.t-d #sliders{display:none;}
+  body:not(.t-g) #btnN{display:none;}        /* Nullstellen gehören zum Graphen */
   /* ---- Reiter „Modell": Daten eingeben (Tabelle oder Punkte) und modellieren ---- */
   #pD{display:none;flex-direction:column;overflow:hidden;}
   #pD.on{display:flex;}
@@ -803,11 +804,9 @@ document.addEventListener('pointerdown',e=>{ if(!colPop.classList.contains('show
 addEventListener('resize',farbeZu);
 
 /* ---- Parameter-Schieberegler (über alle Funktionen) ---- */
-function updateSliders(){ const ids=new Set();
-  /* im Reiter lim gehören die Regler zum dortigen Term */
-  if(tab==='l') tokenize(lm.term||'').forEach(t=>{ if(t.k==='id') ids.add(t.v); });
-  else funcs.forEach(f=>f.toks.forEach(t=>{ if(t.k==='id')ids.add(t.v); }));
-  const used=['a','b','c'].filter(p=>ids.has(p));
+/* a, b und c stehen immer bereit – in Graph, Tabelle, Maschine und lim.
+   (In den Reitern Transformationen und Modellieren blendet das CSS die Zeile aus.) */
+function updateSliders(){ const used=['a','b','c'];
   const el=$('sliders'); el.innerHTML='';
   used.forEach(p=>{ const row=document.createElement('div'); row.className='sl';
     row.innerHTML='<label>'+p+' =</label><input type="range" min="-5" max="5" step="0.1"><span class="v"></span>';
@@ -2539,6 +2538,12 @@ function lmPolyHtml(p,stark){ p=pTrim(p); const g=p.length-1, teile=[];
     teile.push(cls?('<span class="'+cls+'">'+vz+lmMono(c,i)+'</span>'):(vz+lmMono(c,i))); }
   return teile.join('')||'0'; }
 const lmBruchHtml=(zh,nh)=>'<span class="lmBr"><span>'+zh+'</span><span>'+nh+'</span></span>';
+/* Vergleichstext „(x² + 1)/(x − 2)" zu einer Darstellung – einteilige Zähler/Nenner ohne Klammern */
+function lmTermVgl(zh,nh){ const t=h=>{ const r=String(h).replace(/<[^>]+>/g,'').trim();
+    if(r.startsWith('(')&&r.endsWith(')')) return r;          /* steht schon in Klammern */
+    return (/[+−-]\s/.test(r)||/·/.test(r))?('('+r+')'):r; };
+  if(nh===undefined) return String(zh).replace(/<[^>]+>/g,'').trim();
+  return t(zh)+'/'+t(nh); }
 const lmKlammer=(x0,k)=>(Math.abs(x0)<1e-12?'x':('(x '+(x0<0?'+ '+zahl(-x0):'− '+zahl(x0))+')'))+(k>1?hoch(k):'');
 function lmWert(w){ if(!w) return '—';
   if(w.art==='inf') return '+∞';
@@ -2608,6 +2613,10 @@ function lmAnalyse(){
   if(!gut){ e.hinweis='Dieser Term lässt sich nicht auswerten – bitte prüfen.'; return e; }
   e.ok=true;
   const ast=lmAst(toks), rat=ast?lmRat(ast):null, F=lmFlags(ast);
+  const origT=termText(toks);                                  /* der Term, wie er eingegeben wurde */
+  const ohneLeer=t=>String(t).replace(/[\s·]/g,'');
+  /* steht links dasselbe wie rechts, wird nur einmal geschrieben */
+  const mitOrig=(h,vgl)=>(ohneLeer(vgl)===ohneLeer(origT))?('f(x) = '+h):('f(x) = '+origT+' = '+h);
   const randKarte=(x0,seite,wert,grund,proben)=>({ziel:'x → '+lmX(x0)+(seite<0?'⁻':'⁺'), wert, grund, proben, x:x0, seite});
 
   /* ===== gebrochen-rationale und ganzrationale Terme: alles am Term ablesbar ===== */
@@ -2625,7 +2634,7 @@ function lmAnalyse(){
       const klammerRein=p=>(pGrad(p)>0?'('+lmPolyHtml(p,-1)+')':lmPolyHtml(p,-1));
       const nFakt='<span class="lmStark">'+lmKlammer(x0,kn)+'</span>'+((pGrad(nk)>0||Math.abs(nk[0]-1)>1e-12)?(' · '+klammerRein(nk)):'');
       const zFakt=kz?('<span class="lmStark">'+lmKlammer(x0,kz)+'</span> · '+klammerRein(zz)):lmPolyHtml(z,-1);
-      const tHtmlPol='f(x) = '+lmBruchHtml(zFakt,nFakt);
+      const tHtmlPol=mitOrig(lmBruchHtml(zFakt,nFakt), lmTermVgl(zFakt,nFakt));
       if(kn>kz){                                                   /* Polstelle */
         e.pole.push(x0);
         const zV=pWert(zz,x0), ord=kn-kz;
@@ -2668,8 +2677,10 @@ function lmAnalyse(){
               'Für '+ziel+' wird '+(d%2?('x'+(d>1?hoch(d):'')+' → '+(s<0?'−∞':'+∞')):('x'+hoch(d)+' → +∞'))+
               (q<0?' und der negative Faktor dreht das Vorzeichen um':'')+': f(x) → '+(vz>0?'+∞':'−∞')+'.';
         if(e.schief) grund+=' Die Polynomdivision ergibt '+lmGerade(e.schief)+' plus einen Rest, der für große |x| gegen 0 geht – das ist die <b>schiefe Asymptote</b>.'; }
-      e.termHtml='f(x) = '+(gebrochen?lmBruchHtml(lmPolyHtml(z,null),lmPolyHtml(nn,null)):lmPolyHtml(z,null));
-      const tHtml='f(x) = '+(gebrochen?lmBruchHtml(lmPolyHtml(z,gz),lmPolyHtml(nn,gn)):lmPolyHtml(z,gz));
+      e.termHtml=mitOrig(gebrochen?lmBruchHtml(lmPolyHtml(z,null),lmPolyHtml(nn,null)):lmPolyHtml(z,null),
+        gebrochen?lmTermVgl(lmPolyHtml(z,null),lmPolyHtml(nn,null)):lmTermVgl(lmPolyHtml(z,null)));
+      const tHtml=mitOrig(gebrochen?lmBruchHtml(lmPolyHtml(z,gz),lmPolyHtml(nn,gn)):lmPolyHtml(z,gz),
+        gebrochen?lmTermVgl(lmPolyHtml(z,null),lmPolyHtml(nn,null)):lmTermVgl(lmPolyHtml(z,null)));
       e.karten.push({ziel, wert, grund, x:s*Infinity, seite:0, termHtml:tHtml,
         proben:lmProben(f,s*Infinity,0).filter((p,i)=>i%2===0).slice(0,4)}); });
     e.karten.sort((a,b)=>lmOrd(a)-lmOrd(b));
@@ -2679,7 +2690,7 @@ function lmAnalyse(){
 
   /* ===== alle anderen Terme: Lücken suchen, Grenzwerte belegen ===== */
   e.art='sonst';
-  e.termHtml='f(x) = '+termText(toks);
+  e.termHtml='f(x) = '+origT;
   let st=lmScan(f); e.mehr=!!st.mehr;
   /* Zwei Rand-Treffer dicht beieinander sind in Wirklichkeit eine Lücke mitten im Definitionsbereich
      (z. B. sin(x)/x bei 0): dann beide Seiten anschauen statt „Definitionsbereich endet". */
