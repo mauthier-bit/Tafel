@@ -4155,6 +4155,13 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     (Ecken automatisch); Verzweigungen bekommen einen Knotenpunkt. Auswahl: antippen = auswählen,
     ziehen = verschieben, Schalter/Wechselschalter antippen = umlegen. Eigenschaften oben: Wert mit −/+
     oder Eingabe, **↻ Drehen**, **⇄ Umpolen**, **⇅ Spiegeln**, Löschen. Radierer, Zurück/Vor.
+  - **Anzeigeart bei Wechselspannung:** Ist eine **Wechselspannungsquelle** ausgewählt, steht in der
+    Leiste ein Umschalter **Momentanwerte / Effektivwerte / Scheitelwerte**. „Momentanwerte“ zeigt wie
+    bisher die dauernd schwankenden Augenblickswerte (an der Quelle als *u* und *i*), „Effektivwerte“
+    das, was ein **Messgerät** anzeigen würde (U, I), „Scheitelwerte“ die größten Werte einer Periode
+    (Û, Î). Gerechnet wird über eine volle Periode **echt effektiv** – also auch bei verformten Kurven:
+    hinter einer Diode (Einweggleichrichtung) wurde Û/U = 2,07 gemessen, bei der reinen Sinuskurve
+    1,4141 (√2 = 1,4142). Die Anzeigeart gilt für **alle** Bauteile und steht links oben im Bild.
   - **Rechnen:** Knotenanalyse – Reihen-, Parallel- und gemischte Schaltungen; Werte **U, I** und
     **R/C/L** einblendbar, Messgeräte zeigen ihren Messwert immer. Kondensator lädt/entlädt sich,
     Spule verzögert den Stromanstieg, Wechselspannung wechselt die Richtung, Diode sperrt,
@@ -4186,6 +4193,8 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
       Leitungsverlust 1,5 / 2,8 / 3,6 W, Wirkungsgrad 55 / 38 / 29 %; **mit Hochspannung:**
       11,6 / 11,3 / 11,0 V, Leitungsverlust 0,05 / 0,18 / 0,37 W, Wirkungsgrad 97 / 95 / 92 %.
       Die Lampen werden also nur ohne Transformation sichtbar dunkler, je mehr Verbraucher dazukommen.
+      Beide Vorlagen starten mit **Effektivwerten**, damit die Werte ruhig stehen (die angegebenen
+      Spannungen sind Scheitelwerte, angezeigt wird davon das 1/√2-fache).
     - **Wechselschaltung** (Flur, Treppenhaus): zwei **Wechselschalter**, dazwischen die beiden
       **korrespondierenden Leitungen**. Jeder der beiden schaltet das Licht um, egal wie der andere
       gerade steht – die Lampe brennt, wenn die Schalter **verschieden** stehen (gemessen

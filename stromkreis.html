@@ -315,7 +315,7 @@ function trWerte(p){ const n1=Math.max(1,p.val||1), n2=Math.max(1,p.val2||1);
   return {n1,n2,L1:TR_A*n1*n1,L2:TR_A*n2*n2,M:TR_K*TR_A*n1*n2,R1:TR_RW*n1,R2:TR_RW*n2,Is:TR_PSI/(TR_A*n1)}; }
 const BETA=100, VBE=0.7, VSAT=0.1, RSAT=0.5;   // Transistor-Modell
 let simT=0;                                   // Simulationszeit für Wechselspannung
-const defaults=()=>({wires:[],parts:[],show:{U:true,I:true,R:false},flow:true,carrier:'e',zoom:1,ox:null,oy:null,fontSize:14,edit:true});
+const defaults=()=>({wires:[],parts:[],show:{U:true,I:true,R:false},flow:true,carrier:'e',ws:'mom',zoom:1,ox:null,oy:null,fontSize:14,edit:true});
 let data=defaults();
 let tool='sel', sel=null;             // sel: {part:id} oder {wires:[keys]}
 let undoSt=[], redoSt=[];
@@ -354,7 +354,7 @@ function restore(s){ const o=JSON.parse(s); data.wires=o.wires; data.parts=o.par
 function updUndo(){ $('bUndo').disabled=!undoSt.length; $('bRedo').disabled=!redoSt.length; }
 $('bUndo').onclick=()=>{ if(!undoSt.length) return; redoSt.push(snapshot()); restore(undoSt.pop()); updUndo(); };
 $('bRedo').onclick=()=>{ if(!redoSt.length) return; undoSt.push(snapshot()); restore(redoSt.pop()); updUndo(); };
-function changed(){ dirty=true; if(chart&&!data.parts.some(q=>q.id===chart.id)) closeChart(); renderBar2(); sync(true); requestDraw(); }
+function changed(){ dirty=true; messReset(); if(chart&&!data.parts.some(q=>q.id===chart.id)) closeChart(); renderBar2(); sync(true); requestDraw(); }
 
 /* ================= Diagramm: zeitlicher Verlauf von U und I am ausgewählten Bauteil ================= */
 let chart=null, clockT=0;                         // chart = {id, U, I, win, samples:[{t,U,I}], paused}
@@ -527,6 +527,24 @@ function solve(h,commit){ const nodes=new Map(); const idx=(p)=>{ const k=nkey(.
   return out; }
 function ensureSolved(){ if(dirty){ if(!hasDyn()){ res=solve(null,false); flowPos=new Map(); } else if(!res){ res=solve(0.004,true); } dirty=false; } return res; }
 
+/* ================= Messwerk: Effektiv- und Scheitelwerte ================= */
+/* Ein Messgerät zeigt nicht den Augenblickswert, sondern den Effektivwert. Dazu werden die
+   Quadrate über eine volle Periode der Wechselspannung gemittelt (und der größte Betrag gemerkt). */
+const MESSF=['U','I','U2','I2','IB'];
+const messAkk=new Map(), messW=new Map(); let messT=0;
+function messPeriode(){ let T=0; data.parts.forEach(p=>{ if(p.type==='ac') T=Math.max(T,1/Math.max(0.01,p.val2||0.5)); }); return T||0.5; }
+function messReset(){ messAkk.clear(); messT=0; }
+function messSchritt(R,h){ if(!R||!h) return; messT+=h;
+  R.part.forEach((o,id)=>{ let a=messAkk.get(id); if(!a){ a={}; messAkk.set(id,a); }
+    MESSF.forEach(f=>{ const v=o[f]; if(typeof v!=='number') return;
+      const t=a[f]||(a[f]={q:0,m:0,t:0}); t.q+=v*v*h; t.m=Math.max(t.m,Math.abs(v)); t.t+=h; }); });
+  if(messT>=messPeriode()){ messW.clear();
+    messAkk.forEach((a,id)=>{ const o={}; Object.keys(a).forEach(f=>{ const t=a[f]; o[f]={e:Math.sqrt(t.q/t.t),m:t.m}; }); messW.set(id,o); });
+    messReset(); } }
+function messTeil(id){ const a=messAkk.get(id); if(!a) return null; const o={};
+  Object.keys(a).forEach(f=>{ const t=a[f]; if(t.t>1e-6) o[f]={e:Math.sqrt(t.q/t.t),m:t.m}; }); return o; }
+const messArt=()=>((data.ws==='eff'||data.ws==='max')&&data.parts.some(p=>p.type==='ac'))?data.ws:null;
+
 /* ================= Ansicht ================= */
 let W=300,H=300,DPR=1;
 const cellPx=()=>36*data.zoom;
@@ -547,7 +565,7 @@ function requestDraw(){ if(!rafId) rafId=requestAnimationFrame(frame); }
 function frame(t){ rafId=null; const dt=lastT?Math.min(0.05,(t-lastT)/1000):0; lastT=t;
   let anim=!!chart; clockT+=dt;
   if(hasDyn()){ const steps=Math.max(1,Math.min(40,Math.ceil(dt/0.004))), h=dt>0?dt/steps:0.004; let ch=0;
-    for(let k=0;k<steps;k++){ simT+=h; res=solve(h,true); ch=Math.max(ch,res.change); } dirty=false; if(ch>1e-5||data.parts.some(p=>p.type==='ac')) anim=true; }
+    for(let k=0;k<steps;k++){ simT+=h; res=solve(h,true); messSchritt(res,h); ch=Math.max(ch,res.change); } dirty=false; if(ch>1e-5||data.parts.some(p=>p.type==='ac')) anim=true; }
   const R=ensureSolved();
   if(data.flow&&R&&R.imax>1e-6&&!R.short){ anim=true;
     /* Tempo proportional zur Stromstaerke, aber mit Mindesttempo: ein sehr kleiner Strom
@@ -619,24 +637,29 @@ function drawScene(c,o){ const cell=o.cell, K=(data.fontSize||14)/14, R=ensureSo
   // Werte
   if(R){ const fs=Math.max(8,Math.min(16,cell*0.3))*K;
     c.font=(data.fontItalic?'italic ':'')+(data.fontBold?'800 ':'700 ')+fs+'px -apple-system,BlinkMacSystemFont,sans-serif';
+    const art=messArt();
     data.parts.forEach(p=>{ const r=R.part.get(p.id); if(!r) return; const lines=[], q=INFO[p.type].q;
-      if(p.type==='amm') lines.push(['I = '+fmtQ(Math.abs(r.I),'A'),'#1d4ed8']);
-      else if(p.type==='volt') lines.push(['U = '+fmtQ(Math.abs(r.U),'V'),'#b45309']);
+      /* Augenblickswert oder das, was ein Messgerät anzeigen würde */
+      const zu=(fe,v)=>{ if(!art) return Math.abs(v); const m=messW.get(p.id)||messTeil(p.id), t=m&&m[fe];
+        return t?(art==='eff'?t.e:t.m):Math.abs(v); };
+      const nU=art==='max'?'\u00db':'U', nI=art==='max'?'\u00ce':'I';
+      if(p.type==='amm') lines.push([nI+' = '+fmtQ(zu('I',r.I),'A'),'#1d4ed8']);
+      else if(p.type==='volt') lines.push([nU+' = '+fmtQ(zu('U',r.U),'V'),'#b45309']);
       else if(p.type==='npn'){
-        if(data.show.I){ lines.push(['I_B = '+fmtQ(r.IB,'A'),'#1d4ed8']); lines.push(['I_C = '+fmtQ(r.I,'A'),'#1d4ed8']); }
-        if(data.show.U){ lines.push(['U_CE = '+fmtQ(Math.max(0,r.U),'V'),'#b45309']); }
+        if(data.show.I){ lines.push(['I_B = '+fmtQ(art?zu('IB',r.IB):r.IB,'A'),'#1d4ed8']); lines.push(['I_C = '+fmtQ(art?zu('I',r.I):r.I,'A'),'#1d4ed8']); }
+        if(data.show.U){ lines.push(['U_CE = '+fmtQ(art?zu('U',r.U):Math.max(0,r.U),'V'),'#b45309']); }
         if(data.show.R) lines.push([{off:'gesperrt',act:'verstärkt (β = '+BETA+')',sat:'durchgeschaltet'}[r.state],'#475569']); }
       else if(p.type==='ac'){
-        if(data.show.U) lines.push(['u = '+fmtQ(r.U,'V').replace(/^0 V$/,'0 V'),'#b45309']);
-        if(data.show.I) lines.push(['i = '+fmtQ(-r.I,'A'),'#1d4ed8']);
+        if(data.show.U) lines.push([art?(nU+' = '+fmtQ(zu('U',r.U),'V')):('u = '+fmtQ(r.U,'V')),'#b45309']);
+        if(data.show.I) lines.push([art?(nI+' = '+fmtQ(zu('I',r.I),'A')):('i = '+fmtQ(-r.I,'A')),'#1d4ed8']);
         if(data.show.R) lines.push(['Û = '+fmtQ(p.val,'V')+', f = '+fmtNum(p.val2)+' Hz','#475569']); }
       else if(p.type==='trafo'){
-        if(data.show.U){ lines.push(['U₁ = '+fmtQ(r.U,'V'),'#b45309']); lines.push(['U₂ = '+fmtQ(r.U2,'V'),'#b45309']); }
-        if(data.show.I){ lines.push(['I₁ = '+fmtQ(r.I,'A'),'#1d4ed8']); lines.push(['I₂ = '+fmtQ(-r.I2,'A'),'#1d4ed8']); }
+        if(data.show.U){ lines.push([nU+'₁ = '+fmtQ(art?zu('U',r.U):r.U,'V'),'#b45309']); lines.push([nU+'₂ = '+fmtQ(art?zu('U2',r.U2):r.U2,'V'),'#b45309']); }
+        if(data.show.I){ lines.push([nI+'₁ = '+fmtQ(art?zu('I',r.I):r.I,'A'),'#1d4ed8']); lines.push([nI+'₂ = '+fmtQ(art?zu('I2',r.I2):-r.I2,'A'),'#1d4ed8']); }
         if(data.show.R) lines.push(['N₁ = '+fmtNum(p.val)+' · N₂ = '+fmtNum(p.val2),'#475569']); }
       else if(p.type!=='sw2'){
-        if(data.show.U) lines.push(['U = '+fmtQ(Math.abs(r.U),'V'),'#b45309']);
-        if(data.show.I) lines.push(['I = '+fmtQ(Math.abs(r.I),'A'),'#1d4ed8']);
+        if(data.show.U) lines.push([nU+' = '+fmtQ(zu('U',r.U),'V'),'#b45309']);
+        if(data.show.I) lines.push([nI+' = '+fmtQ(zu('I',r.I),'A'),'#1d4ed8']);
         if(data.show.R&&(q==='R'||q==='C'||q==='L')) lines.push([q+' = '+fmtQ(p.val,INFO[p.type].unit),'#475569']);
         if(data.show.R&&p.type==='coil') lines.push(['R = '+RL+' Ω','#475569']); }
       if(!lines.length) return;
@@ -644,7 +667,12 @@ function drawScene(c,o){ const cell=o.cell, K=(data.fontSize||14)/14, R=ensureSo
       const mx=tr?ct[0]:(e.a[0]+e.b[0])/2, my=tr?ct[1]:(e.a[1]+e.b[1])/2, h=!tr&&p.d%2===0, lh=fs*1.18;
       let [sx,sy]=S(mx,my);
       if(h){ c.textAlign='center'; c.textBaseline='bottom'; sy-=cell*0.52; lines.slice().reverse().forEach(([t,col],i)=>label(c,t,sx,sy-i*lh,col,fs)); }
-      else { c.textAlign='left'; c.textBaseline='middle'; sx+=cell*(tr?1.2:0.55); const y0=sy-(lines.length-1)*lh/2; lines.forEach(([t,col],i)=>label(c,t,sx,y0+i*lh,col,fs)); } }); } }
+      else { c.textAlign='left'; c.textBaseline='middle'; sx+=cell*(tr?1.2:0.55); const y0=sy-(lines.length-1)*lh/2; lines.forEach(([t,col],i)=>label(c,t,sx,y0+i*lh,col,fs)); } }); }
+  messHinweis(c,o,K); }
+function messHinweis(c,o,K){ const art=messArt(); if(!art) return;
+  const fs=Math.max(9,Math.min(15,o.cell*0.28))*K;
+  c.font='700 '+fs+'px -apple-system,BlinkMacSystemFont,sans-serif'; c.textAlign='left'; c.textBaseline='top';
+  c.fillStyle='#64748b'; c.fillText(art==='eff'?'Effektivwerte':'Scheitelwerte',8,6); }
 function label(c,t,x,y,col,fs){ c.lineJoin='round'; c.lineWidth=Math.max(3,fs*0.28); c.strokeStyle='rgba(255,255,255,.92)'; c.strokeText(t,x,y); c.fillStyle=col; c.fillText(t,x,y); }
 function drawPart(c,p,S,cell,lw,col,R,isGhost){ const e=ends(p), A=S(...e.a), B=S(...toG(p,2,0));
   const ang=Math.atan2(B[1]-A[1],B[0]-A[0]);
@@ -723,6 +751,11 @@ function renderBar2(){ const b=$('bar2'); b.innerHTML='';
       plus.onclick=()=>{ const l=inf.list2; const i=l.findIndex(x=>x>p.val2+1e-9); setVal(i>=0?l[i]:p.val2*2); };
       inp.onchange=()=>{ const v=parseFloat(inp.value.replace(',','.')); if(isFinite(v)) setVal(v); else inp.value=fmtNum(p.val2); };
       inp.onkeydown=e=>{ if(e.key==='Enter') inp.blur(); }; }
+    if(p.type==='ac'){ const sg=document.createElement('span'); sg.className='seg'; b.appendChild(sg);
+      [['mom','Momentanwerte'],['eff','Effektivwerte'],['max','Scheitelwerte']].forEach(([k,t])=>{
+        const bt=document.createElement('button'); bt.textContent=t; bt.className=(data.ws||'mom')===k?'on':'';
+        bt.title=k==='mom'?'Augenblickswerte, wie sie sich dauernd ändern':k==='eff'?'Werte, die ein Messgerät anzeigt':'größte Werte einer Periode';
+        bt.onclick=()=>{ data.ws=k; renderBar2(); sync(true); requestDraw(); }; sg.appendChild(bt); }); }
     if(p.type==='npn'){ el('span','lbl','B links · C oben · E unten'); el('button','btn','⇅ Spiegeln',()=>{ pushUndo(); p.f=!p.f; changed(); }); }
     if(p.type==='sw') el('button','btn',p.on?'Öffnen':'Schließen',()=>{ pushUndo(); p.on=!p.on; changed(); });
     if(p.type==='sw2'){ el('button','btn','Umschalten',()=>{ pushUndo(); p.pos=p.pos?0:1; changed(); }); el('button','btn','⇅ Spiegeln',()=>{ pushUndo(); p.f=!p.f; changed(); }); }
@@ -796,8 +829,9 @@ const TEMPLATES={
   'Kondensator laden/entladen':()=>build([...hline(2,6,1),...vline(2,1,7),...hline(8,10,1),...vline(10,1,7),...hline(2,10,7),...vline(6,2,7)],
     [['bat',2,3,1],['res',3,1,0,{val:220}],['sw2',8,1,2],['cap',10,3,1,{val:10000}],['lamp',6,3,1,{val:100}]]),
   'Wechselspannung':()=>build([...rectWires(2,1,10,6)],[['ac',2,2,1,{val:6,val2:0.5}],['lamp',5,1,0],['diode',10,2,1],['res',5,6,0,{val:10}]]),
-  'Transformator':()=>build([...hline(3,6,2),...hline(3,6,4),...hline(8,11,2),...hline(8,11,4)],
-    [['ac',3,2,1,{val:12,val2:2}],['trafo',6,2,0,{val:500,val2:250}],['lamp',11,2,1,{val:12}]]),
+  'Transformator':()=>{ data.ws='mom';
+    build([...hline(3,6,2),...hline(3,6,4),...hline(8,11,2),...hline(8,11,4)],
+      [['ac',3,2,1,{val:12,val2:2}],['trafo',6,2,0,{val:500,val2:250}],['lamp',11,2,1,{val:12}]]); },
   /* Energietransport (nach dem Arbeitsblatt „Energieübertragung durch Hochspannungsleitungen“):
      Generator – Fernleitung mit ½R_L = 5 Ω in jedem Leiter – zuschaltbare Verbraucher.
      Ohne Trafo werden die Lampen mit jedem zugeschalteten Verbraucher deutlich dunkler,
@@ -806,7 +840,7 @@ const TEMPLATES={
     const w=[...vline(2,0,1),...vline(2,3,4),...hline(2,5,0),...hline(7,16,0),...hline(2,5,4),...hline(7,16,4)];
     const p=[['ac',2,1,1,{val:12,val2:2}],['res',5,0,0,{val:5}],['res',5,4,0,{val:5}]];
     [10,13,16].forEach((x,i)=>{ p.push(['sw',x,0,1,{on:i===0}]); p.push(['lamp',x,2,1,{val:12}]); });
-    build(w,p); },
+    data.ws='eff'; build(w,p); },
   'Energietransport mit Hochspannung':()=>{
     const w=[...hline(2,5,0),...hline(2,5,2),                       // Niederspannung: Generator → Trafo
       ...hline(7,9,0),...hline(11,14,0),...hline(7,9,2),...hline(11,14,2),   // Hochspannungs-Fernleitung
@@ -814,7 +848,7 @@ const TEMPLATES={
     const p=[['ac',2,0,1,{val:12,val2:2}],['trafo',5,0,0,{val:100,val2:1000}],
       ['res',9,0,0,{val:5}],['res',9,2,0,{val:5}],['trafo',14,0,0,{val:1000,val2:100}]];
     [18,21,24].forEach((x,i)=>{ p.push(['sw',x,0,1,{on:i===0}]); p.push(['lamp',x,2,1,{val:12}]); });
-    build(w,p); },
+    data.ws='eff'; build(w,p); },
   'Transistor als Schalter':()=>build([...hline(2,9,1),...vline(2,1,9),...hline(2,9,9),...vline(9,1,4),...vline(9,6,9),...hline(4,7,5),...vline(4,1,5)],
     [['bat',2,4,1,{val:9}],['lamp',9,1,1,{val:12}],['res',5,5,0,{val:1000}],['sw',4,2,1,{on:false}],['npn',7,5,0]]),
   'Spule (Einschaltverzögerung)':()=>build([...rectWires(2,1,12,8),...vline(8,1,8)],[['bat',2,3,1],['sw',4,8,0],['res',8,2,1,{val:5}],['lamp',8,5,1],['coil',12,2,1,{val:10}],['lamp',12,5,1]]),
@@ -828,13 +862,14 @@ function applyFile(o,undoable){ if(undoable) pushUndo();
   data.parts=o.parts.filter(p=>p&&INFO[p.type]).map(p=>({...p,id:p.id||uid(),x:p.x|0,y:p.y|0,d:(p.d|0)%4}));
   if(o.show) data.show=Object.assign({U:true,I:true,R:false},o.show);
   if(o.carrier) data.carrier=o.carrier==='p'?'p':'e'; if(o.flow!==undefined) data.flow=!!o.flow; if(o.fontSize) data.fontSize=+o.fontSize||14;
+  if(o.ws) data.ws=o.ws==='eff'||o.ws==='max'?o.ws:'mom';
   document.documentElement.style.setProperty('--fs',Math.min(18,data.fontSize||14)+'px');
   dyn.clear(); res=null; sel=null; if(chart) closeChart(); fitView(); changed(); }
 $('fNew').onclick=()=>{ if(unsaved()&&!confirm('Neue Schaltung beginnen? Nicht gespeicherte Änderungen gehen verloren.')) return;
   pushUndo(); TEMPLATES['Leeres Blatt'](); dyn.clear(); res=null; sel=null; if(chart) closeChart(); savedSnap=null; fitView(); changed(); setTool('sel'); toast('Neue Schaltung'); };
 $('fSave').onclick=()=>{ if(!data.parts.length&&!data.wires.length){ toast('Noch keine Schaltung gezeichnet'); return; }
   const name=(prompt('Dateiname:','stromkreis-'+new Date().toISOString().slice(0,10))||'').trim(); if(!name) return;
-  const file={app:'tafel-stromkreis',v:1,wires:data.wires,parts:data.parts,show:data.show,flow:data.flow,carrier:data.carrier,fontSize:data.fontSize};
+  const file={app:'tafel-stromkreis',v:1,wires:data.wires,parts:data.parts,show:data.show,flow:data.flow,carrier:data.carrier,ws:data.ws,fontSize:data.fontSize};
   const blob=new Blob([JSON.stringify(file)],{type:'application/json'}), fname=name.replace(/[\\/:*?"<>|]+/g,'_').replace(/\.json$/i,'')+'.json';
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=fname; document.body.appendChild(a); a.click();
   setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },2000); savedSnap=snapshot(); toast('Gespeichert: '+fname); };
