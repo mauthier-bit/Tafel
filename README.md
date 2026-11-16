@@ -2098,6 +2098,15 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   werden gefunden; an einer **Polstelle** wechselt zwar das Vorzeichen, der Wert ist dort aber riesig –
   solche Stellen werden geprüft und nicht angezeigt (nachgemessen an 1/(x−2): keine Nullstelle).
   Verdeckte Funktionen bleiben außen vor, damit Rätselaufgaben nicht verraten werden.
+  **Punktweise zum Graphen:** In **Tabelle** und **Maschine** steht bei jeder Funktion der Knopf
+  **„Ins Koordinatensystem"**. In der Tabelle zeichnet er **alle Wertepaare dieser Zeile** als Punkte
+  in das Koordinatensystem des Reiters Graph, bei der Maschine **den gerade eingestellten Punkt**
+  (nochmaliges Antippen nimmt ihn wieder weg; die Zahl am Knopf sagt, wie viele Punkte gesetzt sind,
+  das „×“ daneben räumt alle weg). Im Reiter **Graph** hat jede Funktion dafür **zwei Schalter**:
+  das **Auge** verdeckt den **Term** (wie bisher), das **∿** blendet den **Graphen** aus – beides
+  unabhängig voneinander und unabhängig von den anderen Reitern. So lässt sich der Graph erst
+  **Punkt für Punkt aus der Wertetabelle aufbauen** und dann als Kurve darüberlegen. Die Punkte liegen
+  immer **über** der Kurve, bleiben also sichtbar; sie folgen dem Term, wenn er sich ändert.
   **Tabelle:** in der Kopfzeile stehen die **x-Werte zum Eintippen** („＋ x-Wert“ hängt eine Spalte an und
   setzt den bisherigen Schritt fort, „− x-Wert“ nimmt die letzte weg); darunter für **jede Funktion eine
   Zeile** mit den berechneten y-Werten in der Farbe der Funktion.

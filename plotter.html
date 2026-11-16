@@ -30,6 +30,18 @@
   .fdel{border:none;background:#eef1f5;color:#8a93a2;width:30px;height:30px;border-radius:8px;font-size:18px;line-height:1;cursor:pointer;flex:none;}
   .fhide{border:none;background:#eef1f5;width:30px;height:30px;border-radius:8px;font-size:15px;line-height:1;cursor:pointer;flex:none;filter:grayscale(1);opacity:.6;}
   .fhide.on{background:#dbeafe;filter:none;opacity:1;}
+  /* zweiter Schalter je Funktion im Reiter Graph: blendet den Graphen aus (der Term bleibt) */
+  .fgraph{border:none;background:#eef1f5;color:#8a93a2;width:30px;height:30px;border-radius:8px;
+    font-size:calc(var(--k) * 18px);line-height:1;cursor:pointer;flex:none;font-family:inherit;}
+  .fgraph.on{background:#dbeafe;color:#2563eb;}
+  /* „Ins Koordinatensystem": Punkte aus Tabelle bzw. Maschine im Reiter Graph zeigen */
+  .fkosy{border:1px solid #cfd6e0;background:#fff;color:#1f2430;border-radius:8px;
+    padding:calc(var(--k) * 5px) calc(var(--k) * 9px);font-size:calc(var(--k) * 12px);font-weight:600;
+    font-family:inherit;cursor:pointer;flex:none;white-space:nowrap;}
+  .fkosy.on{background:#dbeafe;border-color:#93c5fd;color:#1d4ed8;}
+  .fkosyX{border:1px solid #cfd6e0;background:#fff;color:#8a93a2;border-radius:8px;width:calc(var(--k) * 26px);
+    height:calc(var(--k) * 26px);font-size:calc(var(--k) * 15px);line-height:1;cursor:pointer;flex:none;font-family:inherit;}
+  .mfuss{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:8px;flex-wrap:wrap;}
   .verdeckt{flex:1;min-width:0;padding:calc(var(--k) * 7px) 8px;border:1px dashed #cfd6e0;border-radius:8px;
     font-size:calc(var(--k) * 15px);color:#94a3b8;letter-spacing:4px;background:#f8fafc;white-space:nowrap;overflow:hidden;}
   #fbtns{gap:8px;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:thin;}
@@ -833,15 +845,23 @@ function maskeZeigen(root,f,i){ const inp=root.querySelector('.fterm'), vd=root.
   if(!inp||!vd||!b) return; const h=!!f.hide;
   inp.style.display=h?'none':''; vd.style.display=h?'':'none';
   b.classList.toggle('on',h); b.title=h?'Term wieder zeigen':'Term verdecken';
-  if(!b.onclick) b.onclick=()=>{ funcs[i].hide=!funcs[i].hide; if(lastInp===inp) lastInp=null; neuBauen(); sync(); }; }
+  if(!b.onclick) b.onclick=()=>{ funcs[i].hide=!funcs[i].hide; if(lastInp===inp) lastInp=null; neuBauen(); sync(); };
+  graphSchalter(root,f,i); }
+/* Graph dieser Funktion aus-/einblenden – unabhängig davon, ob der Term verdeckt ist.
+   So lässt sich der Graph erst punktweise aus der Wertetabelle aufbauen und dann darüberlegen. */
+function graphSchalter(root,f,i){ const g=root.querySelector('.fgraph'); if(!g) return;
+  const aus=!!f.gaus;
+  g.classList.toggle('on',aus);       /* blau = das Ausblenden ist eingeschaltet, wie beim Auge daneben */
+  g.title=aus?'Graph wieder einblenden':'Graph ausblenden (Term bleibt stehen)';
+  if(!g.onclick) g.onclick=()=>{ funcs[i].gaus=!funcs[i].gaus; graphSchalter(root,funcs[i],i); draw(); sync(); }; }
 function funcLoeschen(i){ funcs.splice(i,1); if(activeIdx>=funcs.length)activeIdx=funcs.length-1; neuBauen(); sync(); }
-function funcNeu(){ funcs.push({term:'', color:GCOL[funcs.length%GCOL.length], width:DEFW, mx:'2', hide:false, toks:[]}); activeIdx=funcs.length-1; neuBauen(); sync();
+function funcNeu(){ funcs.push({term:'', color:GCOL[funcs.length%GCOL.length], width:DEFW, mx:'2', hide:false, gaus:false, tpk:false, pkt:[], toks:[]}); activeIdx=funcs.length-1; neuBauen(); sync();
   const sel=tab==='g'?'#funcs .fterm':(tab==='t'?'#pT .fterm':(tab==='d'?'#mdBody .mdin':'#pM .fterm'));
   const inps=document.querySelectorAll(sel), last=inps[inps.length-1]; if(last){ lastInp=last; try{ last.focus(); }catch(_){} } }
 
 function buildRows(){ const host=$('funcs'); host.innerHTML='';
   funcs.forEach((f,i)=>{ const row=document.createElement('div'); row.className='frow func'+(i===activeIdx?' active':'');
-    row.innerHTML='<span class="fcol"></span><b class="fname"></b><input class="fterm" spellcheck="false" placeholder="z. B. a*x^2+b*x+c, sin(a*x), 1/x" title="Abschnittsweise: Term und Bedingung abwechselnd mit ; trennen – z. B. x^2; x&lt;=2; x+2; 2&lt;x&lt;=3; x^3; x&gt;3"><span class="verdeckt">? ? ?</span><button class="fhide" type="button">👁</button><button class="fdel" title="Funktion entfernen">×</button>';
+    row.innerHTML='<span class="fcol"></span><b class="fname"></b><input class="fterm" spellcheck="false" placeholder="z. B. a*x^2+b*x+c, sin(a*x), 1/x" title="Abschnittsweise: Term und Bedingung abwechselnd mit ; trennen – z. B. x^2; x&lt;=2; x+2; 2&lt;x&lt;=3; x^3; x&gt;3"><span class="verdeckt">? ? ?</span><button class="fhide" type="button">👁</button><button class="fgraph" type="button">∿</button><button class="fdel" title="Funktion entfernen">×</button>';
     const dot=row.querySelector('.fcol'); dot.style.background=f.color;
     dot.title='Farbe dieser Funktion wählen';
     dot.onclick=e=>{ e.stopPropagation(); farbwahl(i,dot); };
@@ -908,7 +928,7 @@ function buildTable(){ const host=$('pT'); host.innerHTML='';
   funcs.forEach((f,i)=>{ const tr=document.createElement('tr');
     const td=document.createElement('td'); td.className='fz';
     const box=document.createElement('div'); box.className='fzin';
-    box.innerHTML='<span class="fcol"></span><b class="fname"></b><input class="fterm" spellcheck="false" placeholder="Term"><span class="verdeckt">? ? ?</span><button class="fhide" type="button">👁</button><button class="fdel" title="Funktion entfernen">×</button>';
+    box.innerHTML='<span class="fcol"></span><b class="fname"></b><input class="fterm" spellcheck="false" placeholder="Term"><span class="verdeckt">? ? ?</span><button class="fhide" type="button">👁</button><button class="fkosy" type="button">Ins Koordinatensystem</button><button class="fdel" title="Funktion entfernen">×</button>';
     const dot=box.querySelector('.fcol'); dot.style.background=f.color; dot.title='Farbe dieser Funktion wählen';
     dot.onclick=e=>{ e.stopPropagation(); farbwahl(i,dot); };
     const nm=box.querySelector('.fname'); nm.textContent='f'+sub(i+1)+'(x)='; nm.style.color=f.color;
@@ -918,6 +938,9 @@ function buildTable(){ const host=$('pT'); host.innerHTML='';
     inp.addEventListener('input',()=>termGeaendert(i,inp.value,'t'));
     const del=box.querySelector('.fdel'); del.style.display=funcs.length>1?'':'none';
     del.onclick=()=>funcLoeschen(i);
+    const ko=box.querySelector('.fkosy');
+    ko.onclick=()=>{ funcs[i].tpk=!funcs[i].tpk; tabKosy(box,funcs[i]); draw(); sync(); };
+    tabKosy(box,f);
     td.appendChild(box); tr.appendChild(td);
     xs.forEach(()=>{ const c=document.createElement('td'); c.className='yv'; tr.appendChild(c); });
     t.appendChild(tr); });
@@ -931,6 +954,11 @@ function buildTable(){ const host=$('pT'); host.innerHTML='';
   bm.onclick=()=>{ if(xs.length>1){ xs.pop(); buildTable(); sync(); } };
   btns.appendChild(bf); btns.appendChild(bx); btns.appendChild(bm); host.appendChild(btns);
   refreshTable(); }
+/* Schalter „Ins Koordinatensystem" in der Tabellenzeile */
+function tabKosy(box,f){ const b=box.querySelector('.fkosy'); if(!b) return;
+  const an=!!f.tpk; b.classList.toggle('on',an);
+  b.title=an?'Die Wertepaare dieser Zeile nicht mehr im Reiter Graph zeigen'
+            :'Die Wertepaare dieser Zeile als Punkte im Reiter Graph einzeichnen'; }
 /* nurWerte: Term-Eingaben nicht anfassen (Tippen in der Tabelle) */
 function refreshTable(nurWerte){ const t=$('ttab'); if(!t) return;
   const rows=t.querySelectorAll('tr');
@@ -942,6 +970,7 @@ function refreshTable(nurWerte){ const t=$('ttab'); if(!t) return;
     if(nm){ nm.textContent='f'+sub(i+1)+'(x)='; nm.style.color=f.color; }
     if(inp&&!nurWerte&&document.activeElement!==inp) inp.value=f.term;
     maskeZeigen(tr,f,i);
+    const box=tr.querySelector('.fzin'); if(box) tabKosy(box,f);
     const cells=tr.querySelectorAll('td.yv');
     xw.forEach((x,j)=>{ const c=cells[j]; if(!c) return;
       c.textContent=(!isFinite(x)||!f.toks.length)?'–':zahl(evalAt(x,f.toks));
@@ -959,6 +988,8 @@ function buildMachines(){ const host=$('pM'); host.innerHTML='';
       +'<div class="mch"></div>'
       +'<div class="mweg"></div>'
       +'<div class="maus"><span class="mlab">y</span>=<span class="mval">—</span></div>'
+      +'<div class="mfuss"><button class="fkosy" type="button">Ins Koordinatensystem</button>'
+      +'<button class="fkosyX" type="button" title="Alle eingezeichneten Punkte dieser Funktion entfernen">×</button></div>'
       +'</div>';
     const dot=d.querySelector('.fcol'); dot.style.background=f.color; dot.title='Farbe dieser Funktion wählen';
     dot.onclick=e=>{ e.stopPropagation(); farbwahl(i,dot); };
@@ -973,12 +1004,29 @@ function buildMachines(){ const host=$('pM'); host.innerHTML='';
     mx.addEventListener('input',()=>{ f.mx=mx.value; refreshMachine(d,i,true); laufen(d); sync(); });
     const del=d.querySelector('.fdel'); del.style.display=funcs.length>1?'':'none';
     del.onclick=()=>funcLoeschen(i);
+    const ko=d.querySelector('.fkosy');
+    ko.onclick=()=>{ const g=funcs[i], x=pz(g.mx); if(!isFinite(x)) return;
+      if(!g.pkt) g.pkt=[];
+      const j=g.pkt.findIndex(q=>Math.abs(q-x)<1e-9);
+      if(j>=0) g.pkt.splice(j,1); else g.pkt.push(x);
+      maschKosy(d,g); draw(); sync(); };
+    d.querySelector('.fkosyX').onclick=()=>{ funcs[i].pkt=[]; maschKosy(d,funcs[i]); draw(); sync(); };
     list.appendChild(d); });
   host.appendChild(list);
   const btns=document.createElement('div'); btns.id='mbtns';
   const b=document.createElement('button'); b.className='plus'; b.textContent='＋ Maschine'; b.title='Weitere Funktion als Maschine'; b.onclick=funcNeu;
   btns.appendChild(b); host.appendChild(btns);
   refreshMachines(); }
+/* Schalter „Ins Koordinatensystem" an der Maschine: er zeigt den gerade eingestellten Punkt.
+   Steht er schon im Koordinatensystem, nimmt ein zweites Antippen ihn wieder weg. */
+function maschKosy(d,f){ const b=d.querySelector('.fkosy'), x=d.querySelector('.fkosyX'); if(!b) return;
+  const xv=pz(f.mx), n=(f.pkt||[]).length;
+  const drin=isFinite(xv)&&(f.pkt||[]).some(q=>Math.abs(q-xv)<1e-9);
+  b.classList.toggle('on',drin);
+  b.textContent='Ins Koordinatensystem'+(n?(' · '+n):'');
+  b.title=drin?'Diesen Punkt wieder herausnehmen'
+              :'Diesen Punkt im Reiter Graph einzeichnen – so entsteht der Graph Punkt für Punkt';
+  if(x) x.style.display=n?'':'none'; }
 function refreshMachine(d,i,nurWerte){ const f=funcs[i]; if(!f) return;
   const dot=d.querySelector('.fcol'), nm=d.querySelector('.fname'), inp=d.querySelector('.fterm'), mx=d.querySelector('.mxin');
   if(dot) dot.style.background=f.color;
@@ -992,7 +1040,8 @@ function refreshMachine(d,i,nurWerte){ const f=funcs[i]; if(!f) return;
   const x=pz(f.mx), gut=isFinite(x)&&f.toks.length, y=gut?evalAt(x,f.toks):NaN;
   const weg=d.querySelector('.mweg');
   weg.textContent=(gut&&!f.hide) ? ('f'+sub(i+1)+'('+zahl(x)+') = '+termText(f.toks,zahl(x),true)) : '';
-  const val=d.querySelector('.mval'); val.textContent=zahl(y); val.style.color=isFinite(y)?f.color:'#94a3b8'; }
+  const val=d.querySelector('.mval'); val.textContent=zahl(y); val.style.color=isFinite(y)?f.color:'#94a3b8';
+  maschKosy(d,f); }
 function refreshMachines(nurWerte){ const list=$('mlist'); if(!list) return;
   const ms=list.querySelectorAll('.masch');
   if(ms.length!==funcs.length){ buildMachines(); return; }
@@ -1053,7 +1102,8 @@ function draw(){ if(!W||!H) return;
   for(let y=Math.ceil(ymin/sy)*sy; y<=ymax; y+=sy){ if(Math.abs(y)<1e-9)continue; ctx.fillText(fmt(y), Math.min(Math.max(ox-4,fontSize*2),W-2), oy-y*uy); }
   // Graphen
   let anyOk=false, anyTerm=false;
-  funcs.forEach(f=>{ if(!f.toks.length)return; anyTerm=true;
+  funcs.forEach(f=>{ if(!f.toks.length||f.gaus) return;   /* ausgeblendeter Graph zaehlt auch nicht fuer die Fehlermeldung */
+    anyTerm=true;
     ctx.strokeStyle=f.color; ctx.lineWidth=f.width||DEFW;
     const stk=stueckeVon(f.toks);
     if(stk){ if(stueckeMalen(f,stk,xmin,xmax)) anyOk=true; return; }
@@ -1062,6 +1112,7 @@ function draw(){ if(!W||!H) return;
       if(!isFinite(py)){ prev=null; continue; } anyOk=true;
       if(prev!==null && Math.abs(py-prev)>H*3){ ctx.moveTo(px,py); } else if(prev===null){ ctx.moveTo(px,py); } else { ctx.lineTo(px,py); } prev=py; }
     ctx.stroke(); });
+  punkteZeigen();
   if(nullAn) nullstellenZeigen();
   if(y0An) y0Zeigen();
   achsenPunkte();
@@ -1119,6 +1170,21 @@ function nullstellenZeigen(){ const u=view.ux, uy=view.uy, oy=view.oy, ox=view.o
       ctx.save(); ctx.beginPath(); ctx.arc(px,py,5.5,0,7); ctx.fillStyle=f.color; ctx.fill();
       ctx.lineWidth=2; ctx.strokeStyle='#fff'; ctx.stroke(); ctx.restore();
       beschrift('x = '+zahl(Math.round(x0*1000)/1000), px, py+16+(n++%2)*15, f.color,'center'); }); }); }
+
+/* ---- Punkte aus Tabelle und Maschine ----
+   „Ins Koordinatensystem" zeichnet die Wertepaare hier ein; der Graph selbst kann dabei
+   ausgeblendet sein, so entsteht er Punkt für Punkt. Die Punkte liegen über dem Graphen. */
+function punkteX(f){ const aus=[];
+  if(f.tpk) xs.forEach(v=>{ const x=pz(v); if(isFinite(x)) aus.push(x); });
+  (f.pkt||[]).forEach(x=>{ if(isFinite(x)&&!aus.some(q=>Math.abs(q-x)<1e-9)) aus.push(x); });
+  return aus; }
+function punkteZeigen(){ const ux=view.ux, uy=view.uy, ox=view.ox, oy=view.oy;
+  funcs.forEach(f=>{ if(!f.toks.length) return;
+    punkteX(f).forEach(x=>{ const y=evalAt(x,f.toks); if(!isFinite(y)) return;
+      const px=ox+x*ux, py=oy-y*uy;
+      if(px<-20||px>W+20||py<-20||py>H+20) return;
+      ctx.save(); ctx.beginPath(); ctx.arc(px,py,5,0,7); ctx.fillStyle=f.color; ctx.fill();
+      ctx.lineWidth=2; ctx.strokeStyle='#fff'; ctx.stroke(); ctx.restore(); }); }); }
 
 /* ---- Schnittpunkt mit der y-Achse: f(0), falls es ihn gibt ---- */
 function y0Zeigen(){ const uy=view.uy, ox=view.ox, oy=view.oy;
@@ -3251,7 +3317,7 @@ function lmNeu(sofort){
     lmView.ox=p[0]-x*lmView.ux; lmView.oy=p[1]+y*lmView.uy; lmDraw(); },{passive:false});
 })();
 
-function zustand(){ return {funcs:funcs.map(f=>({term:f.term,color:f.color,width:f.width,mx:f.mx,hide:!!f.hide})), params, view, fontSize, fontBold, fontItalic, activeIdx, tab, nullAn, y0An, xs:xs.slice(), xPt:{on:xPt.on,v:xPt.v}, yPt:{on:yPt.on,v:yPt.v}, tr:Object.assign({},tr),
+function zustand(){ return {funcs:funcs.map(f=>({term:f.term,color:f.color,width:f.width,mx:f.mx,hide:!!f.hide,gaus:!!f.gaus,tpk:!!f.tpk,pkt:(f.pkt||[]).slice()})), params, view, fontSize, fontBold, fontItalic, activeIdx, tab, nullAn, y0An, xs:xs.slice(), xPt:{on:xPt.on,v:xPt.v}, yPt:{on:yPt.on,v:yPt.v}, tr:Object.assign({},tr),
   md:{typ:md.typ, genau:!!md.genau, grad:md.grad, abl:!!md.abl, offC:!!md.offC, zGraph:!!md.zGraph,
       wf:md.wf||'xe', wterm:md.wterm||'',
       zTerm:!!md.zTerm, col:mdKurve(), zAbw:!!md.zAbw, zWert:!!md.zWert,
@@ -3266,9 +3332,11 @@ addEventListener('message',e=>{ if(e.source!==window&&(window.parent===window||e
   let strukturNeu=false;
   if(nf&&nf.length){ nf.forEach((g,i)=>{ if(g.color==null)g.color=GCOL[i%GCOL.length]; if(g.width==null)g.width=DEFW; if(g.mx==null)g.mx='2'; });
     const same = nf.length===funcs.length && nf.every((g,i)=>g.term===funcs[i].term);
-    if(same){ nf.forEach((g,i)=>{ funcs[i].color=g.color; funcs[i].width=g.width; funcs[i].mx=g.mx; funcs[i].hide=!!g.hide; });   // nur Farbe/Dicke → Eingaben nicht neu bauen (Fokus bleibt)
+    if(same){ nf.forEach((g,i)=>{ funcs[i].color=g.color; funcs[i].width=g.width; funcs[i].mx=g.mx; funcs[i].hide=!!g.hide;
+        funcs[i].gaus=!!g.gaus; funcs[i].tpk=!!g.tpk; funcs[i].pkt=Array.isArray(g.pkt)?g.pkt.slice():[]; });   // nur Farbe/Dicke → Eingaben nicht neu bauen (Fokus bleibt)
       document.querySelectorAll('#funcs .func').forEach((r,i)=>{ if(funcs[i]){ r.querySelector('.fcol').style.background=funcs[i].color; r.querySelector('.fname').style.color=funcs[i].color; maskeZeigen(r,funcs[i],i); } }); }
-    else { funcs=nf.map(g=>({term:g.term||'', color:g.color, width:g.width, mx:g.mx, hide:!!g.hide, toks:tokenize(g.term||'')})); if(activeIdx>=funcs.length)activeIdx=funcs.length-1; strukturNeu=true; }
+    else { funcs=nf.map(g=>({term:g.term||'', color:g.color, width:g.width, mx:g.mx, hide:!!g.hide,
+        gaus:!!g.gaus, tpk:!!g.tpk, pkt:Array.isArray(g.pkt)?g.pkt.slice():[], toks:tokenize(g.term||'')})); if(activeIdx>=funcs.length)activeIdx=funcs.length-1; strukturNeu=true; }
   }
   if(d.nullAn!==undefined){ nullAn=!!d.nullAn; const b=$('btnN'); if(b) b.classList.toggle('on',nullAn); }
   if(d.y0An!==undefined){ y0An=!!d.y0An; const b=$('btnY0'); if(b) b.classList.toggle('on',y0An); }
