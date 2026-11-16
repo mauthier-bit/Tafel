@@ -157,6 +157,10 @@
   .lmFuer{font-size:.62em;color:#64748b;white-space:nowrap;}
   .lmStark{font-weight:800;color:#1f2430;}
   .lmBlass{opacity:.36;}
+  /* Vorzeichen-Marker: grün = positiv, rot = negativ (steht nach .lmStark, damit die Farbe gewinnt) */
+  .lmPlus,.lmMinus{border-radius:5px;padding:0 3px;-webkit-box-decoration-break:clone;box-decoration-break:clone;}
+  .lmPlus{background:#d7f5e0;color:#14532d;}
+  .lmMinus{background:#ffdede;color:#7f1d1d;}
   .lmBr{display:inline-flex;flex-direction:column;vertical-align:middle;text-align:center;margin:0 2px;}
   .lmBr>span{padding:0 4px;}
   .lmBr>span+span{border-top:1.5px solid #94a3b8;}
@@ -1102,8 +1106,9 @@ function nullstellenZeigen(){ const u=view.ux, uy=view.uy, oy=view.oy, ox=view.o
     loesungen(f.toks,0).forEach(x0=>{ const y=evalAt(x0,f.toks);
       if(!isFinite(y)||Math.abs(y)>tol) return;
       const px=ox+x0*u, py=oy;
-      ctx.save(); ctx.beginPath(); ctx.arc(px,py,5.5,0,7); ctx.fillStyle='#fff'; ctx.fill();
-      ctx.lineWidth=2.6; ctx.strokeStyle=f.color; ctx.stroke(); ctx.restore();
+      /* ausgefüllt – der offene Kreis bleibt den Nahtstellen abschnittsweiser Funktionen vorbehalten */
+      ctx.save(); ctx.beginPath(); ctx.arc(px,py,5.5,0,7); ctx.fillStyle=f.color; ctx.fill();
+      ctx.lineWidth=2; ctx.strokeStyle='#fff'; ctx.stroke(); ctx.restore();
       beschrift('x = '+zahl(Math.round(x0*1000)/1000), px, py+16+(n++%2)*15, f.color,'center'); }); }); }
 
 /* ---- bewegliche Punkte auf x- und y-Achse ---- */
@@ -2721,6 +2726,26 @@ function lmTeilText(ast,x0,seite){
     return (q.nenner?'im Nenner ':'')+lmAstHtml(q.nd)+' '+beschr; });
   return 'Die einzelnen Teile: '+stk.join(', ')+'. '; }
 
+/* Ein Polynom als Produkt schreiben, soweit es in Linearfaktoren aufgeht – so hat jeder
+   Teil neben einer Stelle ein eigenes Vorzeichen. Gleiche Faktoren werden zu einer Potenz
+   zusammengefasst; das Produkt aller Teile ist wieder das Polynom. */
+function lmFaktoren(p){ p=pTrim(p); const lin=[]; let rest=p.slice();
+  for(let s=0;s<10&&pGrad(rest)>0;s++){
+    const ns=lmEinfach(pNull(rest)).filter(x0=>Math.abs(pWert(rest,x0))<1e-7*lmNorm(rest));
+    if(!ns.length) break;
+    lin.push(ns[0]); rest=pTeil(rest,ns[0]).q; }
+  const aus=[], g=pGrad(rest), c=g===0?pTrim(rest)[0]:null;
+  if(c!==null&&(!lin.length||Math.abs(c-1)>1e-9)) aus.push({p:[c],html:zahl(c)});
+  const grp=[]; lin.forEach(x0=>{ const q=grp.find(u=>Math.abs(u.x-x0)<1e-7); if(q) q.k++; else grp.push({x:x0,k:1}); });
+  grp.forEach(q=>{ let pp=[1]; for(let i=0;i<q.k;i++) pp=pMul(pp,[-q.x,1]);
+    aus.push({p:pp, html:lmKlammer(q.x,q.k)}); });
+  if(g>0) aus.push({p:rest, html:'('+lmPolyHtml(rest,null)+')'});
+  return aus.length?aus:[{p:p.slice(), html:lmPolyHtml(p,null)}]; }
+/* ein Faktor mit Marker: grün wenn er bei xp positiv ist, rot wenn negativ */
+function lmVZTeil(q,xp,stark){ const v=pWert(q.p,xp), cls=(v>0?'lmPlus':(v<0?'lmMinus':''));
+  return '<span class="'+(stark?'lmStark ':'')+cls+'">'+q.html+'</span>'; }
+const lmVZListe=(F,xp)=>F.map(q=>q.html+' '+lmVZ(pWert(q.p,xp))).join(', ');
+
 /* Polynomdivision – für die schiefe Asymptote */
 function pDiv(z,n){ let rest=pTrim(z).slice(); n=pTrim(n); const gn=n.length-1; const q=[];
   for(let s=0;s<40;s++){ rest=pTrim(rest); const gz=rest.length-1;
@@ -2746,7 +2771,15 @@ function lmAnalyse(){
   const ast=lmAst(toks), rat=ast?lmRat(ast):null, F=lmFlags(ast);
   const origT=termText(toks);                                  /* der Term, wie er eingegeben wurde */
   const origHtml=lmOrigHtml(ast,toks);                         /* derselbe Term, Quotienten als Bruch */
-  const ohneLeer=t=>String(t).replace(/[\s·]/g,'');
+  /* Vergleichsform: ohne Leerzeichen und Malpunkte, und ein reines Faktorenprodukt
+     wird sortiert – (x−2)(x+3) und (x+3)(x−2) sind derselbe Term. */
+  const ohneLeer=t=>String(t).replace(/[\s·]/g,'').split('/').map(q=>{
+    let r=q;
+    if(/^\(.*\)$/.test(r)){ const inn=r.slice(1,-1); let d=0, ok=true;
+      for(const ch of inn){ if(ch==='(')d++; else if(ch===')'){ d--; if(d<0){ ok=false; break; } } }
+      if(ok&&d===0) r=inn; }
+    const st=r.match(/\([^()]*\)/g);
+    return (st&&st.join('')===r)?st.slice().sort().join(''):r; }).join('/');
   /* steht links dasselbe wie rechts, wird nur einmal geschrieben */
   const mitOrig=(h,vgl)=>(ohneLeer(vgl)===ohneLeer(origT))?('f(x) = '+h):('f(x) = '+origHtml+' = '+h);
   const randKarte=(x0,seite,wert,grund,proben)=>({ziel:'x → '+lmX(x0)+(seite<0?'⁻':'⁺'), wert, grund, proben, x:x0, seite});
@@ -2770,16 +2803,26 @@ function lmAnalyse(){
       if(kn>kz){                                                   /* Polstelle */
         e.pole.push(x0);
         const zV=pWert(zz,x0), ord=kn-kz;
+        /* Zähler und Nenner als Produkt – jeder Faktor bekommt neben der Stelle seinen Marker */
+        const zF=lmFaktoren(z), nF=lmFaktoren(nn);
+        const null0=q=>Math.abs(pWert(q.p,x0))<1e-9*lmNorm(q.p);
         const anf= kz? ('Zähler und Nenner werden beide 0. Nach dem Kürzen von '+klT+(kz>1?hoch(kz):'')+' bleibt im Nenner noch '+kl+(ord>1?hoch(ord):'')+' stehen – also eine Polstelle.')
                      : ('Der Nenner wird 0, der Zähler ist dort '+zahl(zV)+' ≠ 0 – eine <b>Polstelle</b>.');
         [-1,1].forEach(seite=>{
-          const h=1e-6, zN=pWert(z,x0+seite*h), nN=pWert(nn,x0+seite*h);   /* dicht neben der Lücke */
+          const h=1e-6, xp=x0+seite*h, zN=pWert(z,xp), nN=pWert(nn,xp);   /* dicht neben der Lücke */
+          const mal=F=>F.map(q=>lmVZTeil(q,xp,null0(q))).join(' · ');
+          const zH=mal(zF), nH=mal(nF);
           const pr=lmProben(f,x0,seite), wert=lmAusProben(pr);
-          const grund=anf+' '+(seite<0?'Links':'Rechts')+' von '+lmX(x0)+' ist der Zähler '+lmVZ(zN)+
-            ' und der Nenner '+lmVZ(nN)+' – er strebt von '+(nN>0?'oben':'unten')+' gegen 0. '+
+          const grund=anf+' '+(seite<0?'Links':'Rechts')+' von '+lmX(x0)+' hat jeder Faktor ein festes Vorzeichen – '+
+            'im Term <span class="lmPlus">grün</span> für positiv, <span class="lmMinus">rot</span> für negativ: '+
+            'im Zähler '+lmVZListe(zF,xp)+', im Nenner '+lmVZListe(nF,xp)+'. '+
+            'Der Zähler ist damit '+lmVZ(zN)+' und der Nenner '+lmVZ(nN)+
+            ' – er strebt von '+(nN>0?'oben':'unten')+' gegen 0. '+
             'Der Bruch wird also betragsmäßig immer größer und ist '+lmVZ(zN*nN)+'.'+
-            (ord>1?' (Der Nenner steht in gerader Potenz – deshalb auf beiden Seiten dasselbe Vorzeichen.)':'');
-          const kt=randKarte(x0,seite,wert,grund,pr.slice(1,4)); kt.termHtml=tHtmlPol; e.karten.push(kt); }); }
+            (ord>1?' (Der Faktor, der 0 wird, steht in gerader Potenz – deshalb auf beiden Seiten dasselbe Vorzeichen.)':'');
+          const kt=randKarte(x0,seite,wert,grund,pr.slice(1,4));
+          kt.termHtml=mitOrig(lmBruchHtml(zH,nH), lmTermVgl(zH,nH));
+          e.karten.push(kt); }); }
       else {                                                       /* hebbare Lücke */
         const w=(kz>kn)?0:pWert(zz,x0)/pWert(nk,x0);
         e.loecher.push({x:x0,y:w});
@@ -3233,7 +3276,7 @@ function tabBild(){ if(tab==='d') return TafelShot.rasterize($('mdMain'),{pad:8,
   return plotImage(); }
 /* ---- Formel-Tastatur ---- */
 let keysOn=false, lastInp=null;
-const KP_CHIPS=[['sin','sin('],['cos','cos('],['tan','tan('],['√','sqrt('],['ln','ln('],['eˣ','exp('],['|x|','abs('],['π','pi'],['²','^2'],['a','a'],['b','b'],['c','c'],
+const KP_CHIPS=[['sin','sin('],['cos','cos('],['tan','tan('],['√','sqrt('],['ln','ln('],['eˣ','exp('],['|x|','abs('],['π','pi'],['²','^2'],['x','x'],['a','a'],['b','b'],['c','c'],
   [';','; '],['<','<'],['≤','≤'],['>','>'],['≥','≥']];      /* für abschnittsweise definierte Funktionen */
 const KP_ROWS=[[['7','7'],['8','8'],['9','9'],['(','(',1],[')',')',1],['⌫',null,0,'del']],
   [['4','4'],['5','5'],['6','6'],['×','*',1],['÷','/',1],['^','^',1]],

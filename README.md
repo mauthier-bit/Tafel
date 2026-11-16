@@ -2084,8 +2084,13 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   Außerhalb des Definitionsbereichs wird nichts gezeichnet (Tabelle und Maschine zeigen dort „—“), und
   in der Maschine steht der Rechenweg des Abschnitts, der für dieses x zuständig ist. Die Reiter
   **Transformationen** und **lim** arbeiten weiter mit einem einzigen Term.
+  **Formel-Tastatur** („⌨ Formeln"): In der oberen Zeile stehen neben den Funktionen auch **x, a, b, c**
+  sowie **; < ≤ > ≥** für abschnittsweise definierte Funktionen; ein zweites `x` liegt wie bisher rechts
+  unten im Zahlenblock.
   **Nullstellen (Reiter Graph):** Der Knopf **„Nullstellen"** blendet die Nullstellen **am Graphen**
-  ein – als Kreis auf der x-Achse mit dem Wert daneben (`x = −3`), in der Farbe der jeweiligen Funktion
+  ein – als **ausgefüllter Punkt** auf der x-Achse mit dem Wert daneben (`x = −3`), in der Farbe der
+  jeweiligen Funktion (ausgefüllt, weil der offene Kreis bei abschnittsweise definierten Funktionen
+  „gehört nicht dazu“ bedeutet)
   und nur im sichtbaren Bereich. Gesucht wird numerisch, auch **Berührpunkte** ohne Vorzeichenwechsel
   werden gefunden; an einer **Polstelle** wechselt zwar das Vorzeichen, der Wert ist dort aber riesig –
   solche Stellen werden geprüft und nicht angezeigt (nachgemessen an 1/(x−2): keine Nullstelle).
@@ -2107,7 +2112,15 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   mit einem **„?"** statt des Ergebnisses. **Tippt man einen Rand an**, erscheint in diesem Feld der
   Grenzwert mit der **Begründung am Term** und den **eingesetzten Werten** als Beleg; gleichzeitig wird
   im großen Term hervorgehoben, worauf es ankommt (die **größte Potenz** kräftig, alles Übrige blass; an
-  einer Lücke der **Faktor, der 0 wird**) und im Graphen die passende Stelle markiert. Nochmaliges Antippen
+  einer Lücke der **Faktor, der 0 wird**) und im Graphen die passende Stelle markiert.
+  **Vorzeichen-Marker an Polstellen:** Dort, wo nur das Vorzeichen über „+∞ oder −∞" entscheidet, werden
+  Zähler und Nenner als **Produkt von Faktoren** geschrieben und jeder Faktor wie mit einem Marker
+  eingefärbt: **grün**, wenn er neben der Stelle positiv ist, **rot**, wenn er negativ ist. Bei
+  `(x−5)/((x−2)(x+3))` und `x → 2⁻` sind also `(x−5)` und `(x−2)` rot und `(x+3)` grün – daraus ergibt
+  sich insgesamt **+**, und weil der Nenner gegen 0 geht, `f(x) → +∞`. Von rechts wechselt nur `(x−2)`
+  die Farbe, und damit kippt das Gesamtvorzeichen. Mehrfache Faktoren stehen als Potenz (`(x−1)²`, auf
+  beiden Seiten grün), der Faktor, der 0 wird, bleibt zusätzlich **fett**. Die Begründung daneben nennt
+  dieselben Vorzeichen noch einmal in Worten. Nochmaliges Antippen
   schließt das Feld wieder – so lässt sich ein Rand nach dem anderen besprechen.
   - **Gebrochen-rationale und ganzrationale Terme** werden dafür ausmultipliziert in die Form Zähler/Nenner
     gebracht und **am Term** entschieden: Gradvergleich für x → ±∞ (Nenner größer → 0; gleich → Quotient der
