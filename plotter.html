@@ -527,7 +527,6 @@
           <button type="button" class="trLbl on" id="lmLbl">f(x) =</button>
           <input id="lmTerm" class="trIn on" spellcheck="false" autocomplete="off">
           <select id="lmBsp" title="Beispielfunktion"></select>
-          <button type="button" id="lmHol" class="trSeg" title="Funktion aus dem Reiter Graph übernehmen">⤓ f(x)</button>
           <button type="button" id="lmAs" class="trSeg" title="Asymptoten mit Gleichung einblenden">Asymptoten</button>
           <button type="button" id="lmFit" class="trSeg" title="Ansicht einpassen">Ansicht</button>
           <button type="button" id="lmZm" class="trSeg" title="kleiner">−</button>
@@ -695,7 +694,7 @@ const PNAMES=[...PFUNCS,'pi','x','a','b','c','e'];
 /* w: eigene Werte fuer a und b (das Anpassen im Reiter Modellieren rechnet damit,
    ohne die Schieberegler des Reiters Graph anzufassen) */
 function evalAt(x, T, w){ const sc={x,a:params.a,b:params.b,c:params.c,pi:Math.PI,e:Math.E};
-  if(w){ if(w.a!==undefined) sc.a=w.a; if(w.b!==undefined) sc.b=w.b; }
+  if(w){ if(w.a!==undefined) sc.a=w.a; if(w.b!==undefined) sc.b=w.b; if(w.c!==undefined) sc.c=w.c; }
   let p=0;
   const peek=()=>T[p], next=()=>T[p++];
   function E(){ let v=Tm(); while(peek()&&(peek().k==='+'||peek().k==='-')){ const o=next().k, r=Tm(); v=o==='+'?v+r:v-r; } return v; }
@@ -740,7 +739,7 @@ const klammer=v=>(v<0?'(−'+zahl(-v)+')':zahl(v));
 /* ---- Funktionszeilen (Tab Graph) ---- */
 function retok(){ funcs.forEach(f=>f.toks=tokenize(f.term)); }
 function markActive(){ document.querySelectorAll('#funcs .func').forEach((r,i)=>r.classList.toggle('active',i===activeIdx)); }
-function neuRechnen(){ draw(); refreshTable(); refreshMachines(); if(tab==='l') lmNeu(); }
+function neuRechnen(){ draw(); refreshTable(); refreshMachines(); }
 function neuBauen(){ buildRows(); buildTable(); buildMachines(); updateSliders(); draw(); }
 /* Term aus einem beliebigen Tab übernehmen */
 function termGeaendert(i,wert,ausser){ if(!funcs[i]) return; funcs[i].term=wert; funcs[i].toks=tokenize(wert);
@@ -748,7 +747,6 @@ function termGeaendert(i,wert,ausser){ if(!funcs[i]) return; funcs[i].term=wert;
   if(ausser!=='t') refreshTable(); else refreshTable(true);
   if(ausser!=='m') refreshMachines(); else refreshMachines(true);
   if(ausser!=='g'){ const el=document.querySelectorAll('#funcs .fterm')[i]; if(el&&document.activeElement!==el) el.value=wert; }
-  if(ausser!=='l'&&tab==='l') lmNeu();
   sync(); }
 /* Term verdecken: er bleibt erhalten, ist aber nirgends zu sehen (Raetselaufgabe) */
 function maskeZeigen(root,f,i){ const inp=root.querySelector('.fterm'), vd=root.querySelector('.verdeckt'), b=root.querySelector('.fhide');
@@ -805,13 +803,15 @@ addEventListener('resize',farbeZu);
 
 /* ---- Parameter-Schieberegler (über alle Funktionen) ---- */
 /* a, b und c stehen immer bereit – in Graph, Tabelle, Maschine und lim.
+   Der Reiter lim hat dabei seine eigenen Werte (lm.p), die vorderen Reiter ihre (params).
    (In den Reitern Transformationen und Modellieren blendet das CSS die Zeile aus.) */
-function updateSliders(){ const used=['a','b','c'];
-  const el=$('sliders'); el.innerHTML='';
-  used.forEach(p=>{ const row=document.createElement('div'); row.className='sl';
+function updateSliders(){ const el=$('sliders'); el.innerHTML='';
+  const ziel=(tab==='l')?lm.p:params;
+  ['a','b','c'].forEach(p=>{ const row=document.createElement('div'); row.className='sl';
     row.innerHTML='<label>'+p+' =</label><input type="range" min="-5" max="5" step="0.1"><span class="v"></span>';
-    const r=row.querySelector('input'), v=row.querySelector('.v'); r.value=params[p]; v.textContent=(+params[p]).toFixed(1);
-    r.oninput=()=>{ params[p]=+r.value; v.textContent=(+r.value).toFixed(1); neuRechnen(); sync(); };
+    const r=row.querySelector('input'), v=row.querySelector('.v'); r.value=ziel[p]; v.textContent=(+ziel[p]).toFixed(1);
+    r.oninput=()=>{ ziel[p]=+r.value; v.textContent=(+r.value).toFixed(1);
+      if(tab==='l') lmNeu(); else neuRechnen(); sync(); };
     el.appendChild(row); }); }
 
 /* ---- Tab Tabelle ---- */
@@ -2383,7 +2383,7 @@ function mdUi(){ ['p','e','t','n','w'].forEach(k=>$('mdT'+k).classList.toggle('o
    Zähler/Nenner gebracht (Koeffizientenlisten), bei e-Funktion, ln, Wurzel und sin/cos kommen
    die typischen Begründungen dazu. Gerechnet wird mit den aktuellen Werten von a, b und c. */
 /* Der Reiter steht für sich: eigener Term, unabhängig von Graph/Tabelle/Maschine. */
-let lm={term:'(x^2+1)/(x^2−4)', asym:false};
+let lm={term:'(x^2+1)/(x^2−4)', asym:false, p:{a:1,b:0,c:0}};   /* eigene a, b, c – unabhängig von den vorderen Reitern */
 let lmView={unit:40,ox:0,oy:0}, lmW=0, lmH=0, lmSel=0, lmErg=null;
 
 /* ---- Term als Baum (gleiche Vorrangregeln wie evalAt) ---- */
@@ -2422,7 +2422,7 @@ function lmRat(nd){ if(!nd) return null;
     if(n==='x') return R([0,1],[1]);
     if(n==='pi') return R([Math.PI],[1]);
     if(n==='e') return R([Math.E],[1]);
-    if(n==='a'||n==='b'||n==='c') return R([params[n]],[1]);
+    if(n==='a'||n==='b'||n==='c') return R([lm.p[n]],[1]);
     return null; }
   if(nd.k==='neg'){ const a=lmRat(nd.a); return a?R(pNeg(a.z),a.n):null; }
   if(nd.k==='+'||nd.k==='-'){ const a=lmRat(nd.l), b=lmRat(nd.r); if(!a||!b) return null;
@@ -2585,7 +2585,7 @@ function lmTeilText(ast,x0,seite){
   const t=lmTeile(ast).filter(q=>/x/.test(lmAstText(q.nd)));
   if(t.length<2||t.length>4) return '';
   const stk=t.map(q=>{ const txt=lmAstText(q.nd), tk=tokenize(txt);
-    const w=lmAusProben(lmProben(x=>evalAt(x,tk),x0,seite));
+    const w=lmAusProben(lmProben(x=>evalAt(x,tk,lm.p),x0,seite));
     const beschr=(q.nd.k==='fn'&&(q.nd.n==='sin'||q.nd.n==='cos'))?'bleibt zwischen −1 und 1'
                 :(w.art==='kein'?'schwankt':'→ '+lmWert(w));
     return (q.nenner?'im Nenner ':'')+termText(tk)+' '+beschr; });
@@ -2605,7 +2605,7 @@ function lmGerade(p){ const m=p[1]||0, b=p[0]||0;
 /* ---- Hauptanalyse ---- */
 function lmAnalyse(){
   const toks=tokenize(lm.term||'');
-  const f=x=>evalAt(x,toks);
+  const f=x=>evalAt(x,toks,lm.p);
   const e={term:lm.term||'', farbe:'#2563eb', toks, f,
            karten:[], pole:[], loecher:[], raender:[], asym:[], schief:null, ok:false, kopf:'', hinweis:''};
   if(!toks.length){ e.hinweis='Oben einen Term eintragen – dann stehen hier die Grenzwerte.'; return e; }
@@ -2752,7 +2752,7 @@ function lmAnalyse(){
 function lmOrd(k){ const x=k.x; if(x===-Infinity) return -1e9; if(x===Infinity) return 1e9; return x*10+(k.seite||0)*0.1; }
 function lmKopf(e,art,toks){
   const pars=['a','b','c'].filter(p=>(toks||[]).some(t=>t.k==='id'&&t.v===p));
-  const pt=pars.length?(' · gerechnet mit '+pars.map(p=>p+' = '+zahl(params[p])).join('; ')+'; die Regler oben zeigen, wie sich das Verhalten ändert'):'';
+  const pt=pars.length?(' · gerechnet mit '+pars.map(p=>p+' = '+zahl(lm.p[p])).join('; ')+'; die Regler oben zeigen, wie sich das Verhalten ändert'):'';
   return lmKopf0(e,art)+pt; }
 function lmKopf0(e,art){
   const l=lmEinfach(e.pole.concat(e.loecher.map(o=>o.x)));
@@ -2930,8 +2930,6 @@ function lmNeu(sofort){
   const inp=$('lmTerm');
   if(inp){ inp.addEventListener('input',()=>{ lm.term=inp.value; lmNeu(false); sync(); });
     inp.addEventListener('focus',()=>{ lastInp=inp; if(keysOn) kpTarget(); }); }
-  const hol=$('lmHol'); if(hol) hol.onclick=()=>{ const g=funcs[Math.max(0,Math.min(activeIdx,funcs.length-1))];
-    if(!g||!g.term) return; lm.term=g.term; $('lmTerm').value=lm.term; lmLetzt=''; lmNeu(); sync(); };
   const as=$('lmAs'); if(as) as.onclick=()=>{ lm.asym=!lm.asym; as.classList.toggle('on',lm.asym); lmDraw(); sync(); };
   const fit=$('lmFit'); if(fit) fit.onclick=()=>{ lmFit(); sync(); };
   const zm=$('lmZm'), zp=$('lmZp');
@@ -2962,7 +2960,7 @@ function zustand(){ return {funcs:funcs.map(f=>({term:f.term,color:f.color,width
       zTerm:!!md.zTerm, col:mdKurve(), zAbw:!!md.zAbw, zWert:!!md.zWert,
       setz:!!md.setz, linie:!!md.linie, bild:md.bild?Object.assign({},md.bild):null, bildAn:!!md.bildAn, bmod:md.bmod||'',
       p:md.p.map(r=>[r[0],r[1],r[2]||'']), view:Object.assign({},md.view)},
-  lm:{term:lm.term, asym:!!lm.asym, sel:lmSel, view:Object.assign({},lmView)}}; }
+  lm:{term:lm.term, asym:!!lm.asym, p:Object.assign({},lm.p), sel:lmSel, view:Object.assign({},lmView)}}; }
 function sync(){ if(window.parent===window) return; /* allein geöffnet: nicht an sich selbst senden */ try{ parent.postMessage({type:'embed-data',data:zustand()},'*'); }catch(e){} }
 addEventListener('message',e=>{ if(e.source!==window&&(window.parent===window||e.source!==window.parent)) return;   // eigene Nachrichten ignorieren
   if(!(e.data&&e.data.type==='embed-data'&&e.data.data))return; const d=e.data.data;
@@ -3013,6 +3011,7 @@ addEventListener('message',e=>{ if(e.source!==window&&(window.parent===window||e
   updateSliders();
   if(d.lm){ if(typeof d.lm.term==='string'){ lm.term=d.lm.term; lmLetzt=''; }
     lm.asym=!!d.lm.asym;
+    if(d.lm.p) lm.p=Object.assign({a:1,b:0,c:0},d.lm.p);
     if(typeof d.lm.sel==='number') lmSel=d.lm.sel;
     if(d.lm.view&&d.lm.view.unit) lmView=Object.assign(lmView,d.lm.view); }
   if(d.tab&&d.tab!==tab) setTab(d.tab); else { draw(); refreshTable(); refreshMachines(); trDraw(); mdDraw(); if(tab==='l') lmNeu(); } });

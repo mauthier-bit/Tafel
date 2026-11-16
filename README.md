@@ -2082,7 +2082,7 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   Funktionsvorschrift) fällt, darunter der **Rechenweg mit eingesetztem x** (`f₁(−1,5) = 2·(−1,5)² + (−3)·(−1,5) + 1`;
   negative Werte werden nur geklammert, wo es nötig ist) und unten der ausgeworfene y-Wert.
   **lim (Grenzwerte):** Dieser Reiter steht wie „Transformationen" **für sich** – eigener Term, eigene
-  Zeichenfläche; **⤓ f(x)** holt die Funktion aus dem Reiter Graph herüber, die **Beispiele** sind nach
+  Zeichenfläche und eigene Parameter; die **Beispiele** sind nach
   Art gegliedert (ganzrational, gebrochen-rational, e-Funktion, Logarithmus und Wurzel, Sinus und Kosinus).
   **Ablauf:** Term eintippen oder ein Beispiel wählen – dann stehen **Term und Graph groß** da (der Term als
   echter Bruch über der Zeichenfläche), und rechts erscheinen die **Ränder des Definitionsbereichs** zum
@@ -2107,7 +2107,8 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     im Nenner x → +∞". Dazu kommt jeweils, welcher Teil gewinnt.
   - **Parameter a, b, c** dürfen im Term stehen; gerechnet wird mit den **eingestellten Reglerwerten**
     (sie stehen in der Kopfzeile). Die **Regler für a, b und c** stehen in **Graph, Tabelle, Maschine und
-    lim** immer bereit, auch wenn der Term sie (noch) nicht enthält. Zieht man den Regler, ändern sich Grenzwerte, Lücken und Begründungen
+    lim** immer bereit, auch wenn der Term sie (noch) nicht enthält. Der Reiter lim hat dabei **eigene
+    Werte**: zieht man dort an a, bleibt a in den vorderen drei Reitern, wie es war – und umgekehrt. Zieht man den Regler, ändern sich Grenzwerte, Lücken und Begründungen
     sofort mit – bei `a/(x−2)` kippen mit dem Vorzeichen von a auch die beiden Seiten der Polstelle.
     Eine **symbolische Fallunterscheidung** (a > 0 / a < 0) macht der Reiter nicht.
   - Bei **e-Funktion, Logarithmus, Wurzel und Sinus** steht die passende Begründung dabei („die e-Funktion
