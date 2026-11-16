@@ -2059,7 +2059,7 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   reagiert dann nicht. Das kleine **⚙ im Zifferblatt** (zwischen Mitte und 12) öffnet ihr Menü mit
   **Größe**, **Schulstunden**, **Digitalanzeige**, **„Wieder als Objekt auf die Seite"** (legt sie mit
   gleicher Größe und Position zurück auf die aktuelle Seite) und **„Uhr ausblenden"**.
-- **Funktionsplotter** (Werkzeug) – **fünf Reiter: Graph, Tabelle, Maschine, Transformationen, Modellieren.** Der Funktionsterm lässt
+- **Funktionsplotter** (Werkzeug) – **sechs Reiter: Graph, Tabelle, Maschine, Transformationen, lim, Modellieren.** Der Funktionsterm lässt
   sich **in den ersten drei Reitern** eingeben und gilt sofort in allen dreien; „＋“ legt überall eine weitere Funktion an
   (im Graph eine Eingabezeile, in der Tabelle eine Zeile, bei der Maschine eine weitere Maschine).
   **Zoomen je Achse (Graph und Modellieren):** Zwei Finger zoomen – und zwar **so, wie sie stehen**:
@@ -2075,10 +2075,30 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   **Maschine:** oben der x-Wert, der durch einen Trichter in die Maschine (Zahnräder, darin die
   Funktionsvorschrift) fällt, darunter der **Rechenweg mit eingesetztem x** (`f₁(−1,5) = 2·(−1,5)² + (−3)·(−1,5) + 1`;
   negative Werte werden nur geklammert, wo es nötig ist) und unten der ausgeworfene y-Wert.
+  **lim (Grenzwerte):** Dieser Reiter steht wie „Transformationen" **für sich** – eigener Term, eigene
+  Zeichenfläche; **⤓ f(x)** holt die Funktion aus dem Reiter Graph herüber, die **Beispiele** sind nach
+  Art gegliedert (ganzrational, gebrochen-rational, e-Funktion, Logarithmus und Wurzel, Sinus und Kosinus).
+  Zu jedem **Rand des Definitionsbereichs** – ±∞ und jede Definitionslücke – erscheint eine Karte in der
+  **lim-Schreibweise** (`lim` mit `x → 2⁻` darunter) mit dem Grenzwert, der **Begründung am Term** und den
+  **eingesetzten Werten** als Beleg. Im Term ist hervorgehoben, worauf es ankommt: die **größte Potenz**
+  steht kräftig da, alles Übrige blass; an einer Lücke ist der **Faktor, der 0 wird**, hervorgehoben.
+  - **Gebrochen-rationale und ganzrationale Terme** werden dafür ausmultipliziert in die Form Zähler/Nenner
+    gebracht und **am Term** entschieden: Gradvergleich für x → ±∞ (Nenner größer → 0; gleich → Quotient der
+    größten Koeffizienten; Zähler größer → ±∞ mit Vorzeichen), an den Nullstellen des Nenners **Polstelle
+    oder hebbare Lücke** (Kürzen von (x − x₀)), samt Vorzeichenbetrachtung links und rechts.
+  - Bei **e-Funktion, Logarithmus, Wurzel und Sinus** steht die passende Begründung dabei („die e-Funktion
+    wächst schneller als jede Potenz", „der ln wächst langsamer, aber unbeschränkt", „Sinus schwankt immer
+    wieder zwischen −1 und 1"); der Wert selbst wird durch Einsetzen bestimmt – das sieht man den Karten an.
+  - **Asymptoten** blendet ein Knopf ein: **waagrechte** (y = …), **senkrechte** (x = …) und – über
+    Polynomdivision – auch die **schiefe Asymptote** (z. B. y = x bei (x²+1)/x), jeweils **mit Gleichung**.
+  - Die **gewählte Karte** ist im Graphen hervorgehoben: der Streifen auf der richtigen Seite, Punkte, die
+    sich der Stelle nähern, und ein Pfeil in die Richtung des Grenzwerts. Hebbare Lücken erscheinen als
+    **offener Kreis**. Nachgerechnet wurden unter anderem 1/(x−2), (x²−1)/(x−1), (3x²−12)/(x²−4x+4),
+    e^x/x, x·e^(−x), ln(x), √(x−1), √(4−x²), sin(x)/x, tan(x) und 1/sin(x).
   **Transformationen:** Dieser Reiter steht **für sich** – er hat seine **eigene Funktion** und
   seine eigene Zeichenfläche, die Funktionen der drei anderen Reiter bleiben unberührt. Das zeigt auch
   die Reiterleiste: **Graph, Tabelle und Maschine** sitzen als **eine Gruppe** in einem gemeinsamen
-  Rahmen (sie teilen sich dieselben Funktionen), **Transformationen** steht mit Abstand daneben.
+  Rahmen (sie teilen sich dieselben Funktionen), **Transformationen** und **lim** stehen mit Abstand daneben.
   In der Eingabezeile stehen **zwei Funktionen nebeneinander**: **f(x) =** und **f₂(x) =**.
   Ein Tipp auf die Beschriftung (oder in das Feld) macht eine davon **aktiv** – sie ist blau
   hervorgehoben, und die **vier Regler gehören ab dann ihr**. Die andere behält ihre eigenen Werte,
