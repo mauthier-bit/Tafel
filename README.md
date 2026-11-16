@@ -2073,6 +2073,17 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   flacher Verlauf in y strecken, ohne dass er in x auseinandergezogen wird. Am Rechner macht das
   Mausrad beides; mit **Umschalt** nur x, mit **Alt** nur y. **„Ansicht"** stellt wieder gleiche
   Maßstäbe her.
+  **Abschnittsweise definierte Funktionen:** Term und Bedingung abwechselnd mit **Semikolon** trennen –
+  `x^2; x<=2; x+2; 2<x<=3; x^3; x>3`. Erlaubt sind `<`, `<=`, `>`, `>=` (auch `≤` und `≥`, beide liegen
+  auf der Formel-Tastatur neben dem `;`), einseitig (`x>3`) oder beidseitig (`2<x<=3`); der **letzte**
+  Abschnitt darf ohne Bedingung bleiben oder `sonst` heißen und gilt dann für alle übrigen x. Trifft mehr
+  als eine Bedingung zu, gewinnt der **vordere** Abschnitt. Als Grenze ist auch ein Term erlaubt (`x<a`) –
+  die Grenze wandert dann mit dem Schieberegler. Gezeichnet wird jeder Abschnitt **genau bis an seine
+  Grenze**, und an den Nahtstellen steht die übliche Schreibweise: **ausgefüllter Punkt**, wo der Wert
+  dazugehört, **offener Kreis**, wo nicht – geht der Graph ohne Sprung weiter, bleibt die Stelle frei.
+  Außerhalb des Definitionsbereichs wird nichts gezeichnet (Tabelle und Maschine zeigen dort „—“), und
+  in der Maschine steht der Rechenweg des Abschnitts, der für dieses x zuständig ist. Die Reiter
+  **Transformationen** und **lim** arbeiten weiter mit einem einzigen Term.
   **Nullstellen (Reiter Graph):** Der Knopf **„Nullstellen"** blendet die Nullstellen **am Graphen**
   ein – als Kreis auf der x-Achse mit dem Wert daneben (`x = −3`), in der Farbe der jeweiligen Funktion
   und nur im sichtbaren Bereich. Gesucht wird numerisch, auch **Berührpunkte** ohne Vorzeichenwechsel

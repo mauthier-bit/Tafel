@@ -674,7 +674,11 @@ function resize(){ if(!cv.clientWidth||!cv.clientHeight) return;
   if(!view.ox&&!view.oy){ view.ox=W/2; view.oy=H/2; } draw(); }
 
 /* ---- Term auswerten ---- */
-function tokenize(s){ s=String(s).replace(/\|([^|]*)\|/g,'abs($1)');   /* |x| = Betrag */
+/* Terme mit ';' sind abschnittsweise definiert und werden eigens gelesen. */
+function tokenize(s){ const g=String(s==null?'':s);
+  if(g.indexOf(';')<0) return tokenEinfach(g);
+  const stk=stueckeLesen(g); return stk?[{k:'stk',v:stk}]:[{k:'?'}]; }
+function tokenEinfach(s){ s=String(s).replace(/\|([^|]*)\|/g,'abs($1)');   /* |x| = Betrag */
   const t=[]; let i=0; while(i<s.length){ const c=s[i];
   if(c===' '){i++;continue;}
   if('+-*/^(),'.includes(c)){ t.push({k:c}); i++; continue; }
@@ -694,7 +698,8 @@ const PFUNCS=['asin','acos','atan','sin','cos','tan','sqrt','abs','ln','log','ex
 const PNAMES=[...PFUNCS,'pi','x','a','b','c','e'];
 /* w: eigene Werte fuer a und b (das Anpassen im Reiter Modellieren rechnet damit,
    ohne die Schieberegler des Reiters Graph anzufassen) */
-function evalAt(x, T, w){ const sc={x,a:params.a,b:params.b,c:params.c,pi:Math.PI,e:Math.E};
+function evalAt(x, T, w){ const stk=stueckeVon(T); if(stk) return stueckWert(stk,x,w);
+  const sc={x,a:params.a,b:params.b,c:params.c,pi:Math.PI,e:Math.E};
   if(w){ if(w.a!==undefined) sc.a=w.a; if(w.b!==undefined) sc.b=w.b; if(w.c!==undefined) sc.c=w.c; }
   let p=0;
   const peek=()=>T[p], next=()=>T[p++];
@@ -713,10 +718,72 @@ function evalAt(x, T, w){ const sc={x,a:params.a,b:params.b,c:params.c,pi:Math.P
     next(); return NaN; }
   const r=E(); return (p<T.length)?NaN:r; }                /* Rest uebrig = Tippfehler: lieber nichts zeichnen */
 
+/* ---- abschnittsweise definierte Funktionen ----
+   Eingabe: Term und Bedingung abwechselnd, mit ';' getrennt, z. B.
+   „x^2; x<=2; x+2; 2<x<=3; x^3; x>3“. Der letzte Abschnitt darf ohne Bedingung
+   bleiben („sonst“). Trifft mehr als eine Bedingung zu, gewinnt der vordere Abschnitt.
+   Die Grenzen bleiben als Terme gespeichert, damit „x<a“ dem Schieberegler folgt. */
+function stueckeLesen(s){
+  const teile=String(s).split(';').map(t=>t.trim()).filter(t=>t!=='');
+  if(!teile.length) return null;
+  const roh=[]; let offen=null;
+  for(const t of teile){ const b=bedLesen(t);
+    if(b){ if(offen&&offen.bed===null){ offen.bed=b; roh.push(offen); offen=null; }
+           else { if(offen) roh.push(offen); offen={t:null,bed:b}; }
+      continue; }
+    if(offen&&offen.t===null){ offen.t=tokenEinfach(t); roh.push(offen); offen=null; continue; }
+    if(offen) roh.push(offen);
+    offen={t:tokenEinfach(t),bed:null}; }
+  if(offen) roh.push(offen);
+  const aus=[];
+  for(const p of roh){ if(!p.t||!p.t.length) return null;
+    const b=p.bed||{lo:null,loZu:false,hi:null,hiZu:false,sonst:true};
+    aus.push({t:p.t, lo:b.lo, loZu:b.loZu, hi:b.hi, hiZu:b.hiZu, sonst:!!b.sonst}); }
+  /* ohne Bedingung darf nur der letzte Abschnitt sein – sonst fehlt irgendwo eine */
+  for(let i=0;i<aus.length-1;i++) if(aus[i].sonst) return null;
+  return aus.length?aus:null; }
+/* eine Bedingung lesen: „x<=2“, „2<x<=3“, „x>a“, „sonst“ – sonst null */
+function bedLesen(s){ const t=String(s).replace(/≤/g,'<=').replace(/≥/g,'>=').replace(/=</g,'<=').replace(/=>/g,'>=').trim();
+  if(/^(sonst|rest|else|immer|übrige|uebrige)$/i.test(t)) return {lo:null,loZu:false,hi:null,hiZu:false,sonst:true};
+  if(!/[<>]/.test(t)) return null;
+  const ops=[], tl=[]; const re=/<=|>=|<|>/g; let m, last=0;
+  while((m=re.exec(t))){ tl.push(t.slice(last,m.index)); ops.push(m[0]); last=m.index+m[0].length; }
+  tl.push(t.slice(last));
+  let lo=null, loZu=false, hi=null, hiZu=false;
+  for(let i=0;i<ops.length;i++){ const L=tl[i].trim(), R=tl[i+1].trim(), op=ops[i], zu=op.length===2;
+    const lx=/^x$/i.test(L), rx=/^x$/i.test(R); let art, w;
+    if(lx&&!rx){ art=(op[0]==='<')?'hi':'lo'; w=R; }
+    else if(rx&&!lx){ art=(op[0]==='<')?'lo':'hi'; w=L; }
+    else return null;
+    const G=tokenEinfach(w);
+    if(!G.length||G.some(q=>q.k==='id'&&q.v==='x')||!isFinite(evalAt(0,G))) return null;
+    if(art==='hi'){ if(hi===null){ hi=G; hiZu=zu; } else hiZu=hiZu&&zu; }
+    else { if(lo===null){ lo=G; loZu=zu; } else loZu=loZu&&zu; } }
+  if(lo===null&&hi===null) return null;
+  return {lo,loZu,hi,hiZu,sonst:false}; }
+function stueckeVon(T){ return (T&&T.length===1&&T[0].k==='stk')?T[0].v:null; }
+function stueckGrenzen(p,w){ const f=(G,s)=>{ if(!G) return s; const v=evalAt(0,G,w); return isFinite(v)?v:s; };
+  return {lo:f(p.lo,-Infinity), hi:f(p.hi,Infinity)}; }
+function stueckGilt(p,x,w){ const g=stueckGrenzen(p,w);
+  return (g.lo===-Infinity||(p.loZu?x>=g.lo:x>g.lo)) && (g.hi===Infinity||(p.hiZu?x<=g.hi:x<g.hi)); }
+/* welcher Abschnitt gilt bei diesem x – der vorderste gewinnt */
+function stueckAktiv(stk,x,w){ for(let i=0;i<stk.length;i++) if(stueckGilt(stk[i],x,w)) return i; return -1; }
+function stueckWert(stk,x,w){ const i=stueckAktiv(stk,x,w); return i<0?NaN:evalAt(x,stk[i].t,w); }
+function stueckBedText(p){ if(p.sonst||(!p.lo&&!p.hi)) return 'sonst';
+  const l=p.lo?termText(p.lo,null,false):null, h=p.hi?termText(p.hi,null,false):null;
+  if(l&&h) return l+(p.loZu?' ≤ ':' < ')+'x'+(p.hiZu?' ≤ ':' < ')+h;
+  if(h) return 'x'+(p.hiZu?' ≤ ':' < ')+h;
+  return 'x'+(p.loZu?' ≥ ':' > ')+l; }
+
 /* ---- Term lesbar schreiben: a*x^2 → a·x², mit Einsetzen von x und den Parametern ---- */
 const SYM={pi:'π',sqrt:'√'};
 /* xvH: dieselbe Einsetzung, nur eingefaerbt – die Klammerfrage entscheidet immer xv (reiner Text) */
-function termText(toks,xv,mitP,zus,xvH){ let s='';
+function termText(toks,xv,mitP,zus,xvH){
+  const stk=stueckeVon(toks);
+  if(stk){ if(xv!=null){ const xn=pz(xv), i=isFinite(xn)?stueckAktiv(stk,xn):-1;      /* ein Wert eingesetzt: nur der zuständige Abschnitt */
+      return i<0?'nicht definiert':termText(stk[i].t,xv,mitP,zus,xvH); }
+    return stk.map(p=>{ const b=stueckBedText(p); return termText(p.t,null,mitP)+(b==='sonst'?' sonst':' für '+b); }).join(';  '); }
+  let s='';
   for(let i=0;i<toks.length;i++){ const t=toks[i];
     if(t.k==='num'){ s+=zahl(t.v); continue; }
     if(t.k==='id'){ if(t.v==='x'&&xv!=null){ const vor=i>0?toks[i-1].k:null, nach=toks[i+1]?toks[i+1].k:null;
@@ -762,7 +829,7 @@ function funcNeu(){ funcs.push({term:'', color:GCOL[funcs.length%GCOL.length], w
 
 function buildRows(){ const host=$('funcs'); host.innerHTML='';
   funcs.forEach((f,i)=>{ const row=document.createElement('div'); row.className='frow func'+(i===activeIdx?' active':'');
-    row.innerHTML='<span class="fcol"></span><b class="fname"></b><input class="fterm" spellcheck="false" placeholder="z. B. a*x^2+b*x+c, sin(a*x), 1/x"><span class="verdeckt">? ? ?</span><button class="fhide" type="button">👁</button><button class="fdel" title="Funktion entfernen">×</button>';
+    row.innerHTML='<span class="fcol"></span><b class="fname"></b><input class="fterm" spellcheck="false" placeholder="z. B. a*x^2+b*x+c, sin(a*x), 1/x" title="Abschnittsweise: Term und Bedingung abwechselnd mit ; trennen – z. B. x^2; x&lt;=2; x+2; 2&lt;x&lt;=3; x^3; x&gt;3"><span class="verdeckt">? ? ?</span><button class="fhide" type="button">👁</button><button class="fdel" title="Funktion entfernen">×</button>';
     const dot=row.querySelector('.fcol'); dot.style.background=f.color;
     dot.title='Farbe dieser Funktion wählen';
     dot.onclick=e=>{ e.stopPropagation(); farbwahl(i,dot); };
@@ -975,7 +1042,10 @@ function draw(){ if(!W||!H) return;
   // Graphen
   let anyOk=false, anyTerm=false;
   funcs.forEach(f=>{ if(!f.toks.length)return; anyTerm=true;
-    ctx.strokeStyle=f.color; ctx.lineWidth=f.width||DEFW; ctx.beginPath(); let prev=null;
+    ctx.strokeStyle=f.color; ctx.lineWidth=f.width||DEFW;
+    const stk=stueckeVon(f.toks);
+    if(stk){ if(stueckeMalen(f,stk,xmin,xmax)) anyOk=true; return; }
+    ctx.beginPath(); let prev=null;
     for(let px=0;px<=W;px++){ const x=(px-ox)/ux; const y=evalAt(x,f.toks); const py=oy-y*uy;
       if(!isFinite(py)){ prev=null; continue; } anyOk=true;
       if(prev!==null && Math.abs(py-prev)>H*3){ ctx.moveTo(px,py); } else if(prev===null){ ctx.moveTo(px,py); } else { ctx.lineTo(px,py); } prev=py; }
@@ -984,6 +1054,44 @@ function draw(){ if(!W||!H) return;
   achsenPunkte();
   $('err').textContent = (!anyTerm||anyOk)?'':'Term nicht auswertbar';
 }
+/* ---- abschnittsweise definierte Funktionen zeichnen ----
+   Jeder Abschnitt wird nur dort gezeichnet, wo er auch gilt, und genau bis an seine
+   Grenze (das Pixelraster trifft die Grenze sonst nur zufällig). */
+function stueckeMalen(f,stk,xmin,xmax){ const ux=view.ux, uy=view.uy, ox=view.ox, oy=view.oy; let ok=false;
+  stk.forEach((p,j)=>{ const g=stueckGrenzen(p);
+    const xa=Math.max(g.lo,xmin), xb=Math.min(g.hi,xmax);
+    if(!(xb>xa)) return;
+    const n=Math.max(2,Math.min(4000,Math.ceil((xb-xa)*ux))), d=(xb-xa)/n, e=d*1e-4;
+    ctx.beginPath(); let prev=null;
+    for(let k=0;k<=n;k++){ const x=xa+d*k;
+      const xq=k===0?x+e:(k===n?x-e:x);                            /* am Rand knapp hineinschauen */
+      if(stueckAktiv(stk,xq)!==j){ prev=null; continue; }
+      const y=evalAt(x,p.t), px=ox+x*ux, py=oy-y*uy;
+      if(!isFinite(py)){ prev=null; continue; } ok=true;
+      if(prev===null||Math.abs(py-prev)>H*3) ctx.moveTo(px,py); else ctx.lineTo(px,py); prev=py; }
+    ctx.stroke(); });
+  stueckePunkte(f,stk,xmin,xmax);
+  return ok; }
+/* Randpunkte: ausgefüllt = der Wert gehört dazu, offen = er gehört nicht dazu.
+   Läuft der Graph an der Grenze ohne Sprung weiter, wird nichts gezeichnet. */
+function stueckePunkte(f,stk,xmin,xmax){ const ux=view.ux, uy=view.uy, ox=view.ox, oy=view.oy;
+  const stellen=new Map();
+  stk.forEach((p,j)=>{ const g=stueckGrenzen(p);
+    [[g.lo,p.loZu],[g.hi,p.hiZu]].forEach(gr=>{ const xb=gr[0];
+      if(!isFinite(xb)||xb<xmin||xb>xmax) return;
+      const y=evalAt(xb,p.t); if(!isFinite(y)) return;
+      const key=xb.toFixed(9); if(!stellen.has(key)) stellen.set(key,{x:xb,liste:[]});
+      stellen.get(key).liste.push({y:y, zu:gr[1]&&stueckAktiv(stk,xb)===j}); }); });
+  stellen.forEach(st=>{ const grp=[];
+    st.liste.forEach(q=>{ const g=grp.find(G=>Math.abs(G.y-q.y)*uy<0.6); if(g) g.zu=g.zu||q.zu; else grp.push({y:q.y,zu:q.zu}); });
+    if(grp.length===1&&grp[0].zu&&st.liste.length>1) return;        /* nahtloser Übergang: kein Punkt nötig */
+    grp.forEach(G=>{ const px=ox+st.x*ux, py=oy-G.y*uy;
+      if(py<-20||py>H+20) return;
+      ctx.save(); ctx.beginPath(); ctx.arc(px,py,5.5,0,7);
+      if(G.zu){ ctx.fillStyle=f.color; ctx.fill(); ctx.lineWidth=2; ctx.strokeStyle='#fff'; ctx.stroke(); }
+      else { ctx.fillStyle='#fff'; ctx.fill(); ctx.lineWidth=2.6; ctx.strokeStyle=f.color; ctx.stroke(); }
+      ctx.restore(); }); }); }
+
 /* ---- Nullstellen am Graphen ----
    Gesucht wird im sichtbaren Bereich (dieselbe Suche wie für die Lösungen zum y-Punkt);
    an einer Polstelle wechselt das Vorzeichen ebenfalls, dort ist der Wert aber riesig – deshalb
@@ -2631,6 +2739,7 @@ function lmAnalyse(){
   const e={term:lm.term||'', farbe:'#2563eb', toks, f,
            karten:[], pole:[], loecher:[], raender:[], asym:[], schief:null, ok:false, kopf:'', hinweis:''};
   if(!toks.length){ e.hinweis='Oben einen Term eintragen – dann stehen hier die Grenzwerte.'; return e; }
+  if(stueckeVon(toks)){ e.hinweis='Abschnittsweise Terme (mit „;“) untersucht dieser Reiter nicht – zeichnen lassen sie sich im Reiter Graph.'; return e; }
   let gut=0; for(let i=0;i<=200;i++){ const x=-20+i*0.2; if(isFinite(f(x))) gut++; }
   if(!gut){ e.hinweis='Dieser Term lässt sich nicht auswerten – bitte prüfen.'; return e; }
   e.ok=true;
@@ -3124,7 +3233,8 @@ function tabBild(){ if(tab==='d') return TafelShot.rasterize($('mdMain'),{pad:8,
   return plotImage(); }
 /* ---- Formel-Tastatur ---- */
 let keysOn=false, lastInp=null;
-const KP_CHIPS=[['sin','sin('],['cos','cos('],['tan','tan('],['√','sqrt('],['ln','ln('],['eˣ','exp('],['|x|','abs('],['π','pi'],['²','^2'],['a','a'],['b','b'],['c','c']];
+const KP_CHIPS=[['sin','sin('],['cos','cos('],['tan','tan('],['√','sqrt('],['ln','ln('],['eˣ','exp('],['|x|','abs('],['π','pi'],['²','^2'],['a','a'],['b','b'],['c','c'],
+  [';','; '],['<','<'],['≤','≤'],['>','>'],['≥','≥']];      /* für abschnittsweise definierte Funktionen */
 const KP_ROWS=[[['7','7'],['8','8'],['9','9'],['(','(',1],[')',')',1],['⌫',null,0,'del']],
   [['4','4'],['5','5'],['6','6'],['×','*',1],['÷','/',1],['^','^',1]],
   [['1','1'],['2','2'],['3','3'],['+','+',1],['−','-',1],['x','x',1]],
