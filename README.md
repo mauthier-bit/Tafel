@@ -4155,7 +4155,14 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
       gerät in die **Sättigung** (höchster Fluss 0,02 Vs je Windung), danach ist U₂ = 0 und der Trafo
       wirkt wie ein Kurzschluss – gemessen 2,9 V für 1,8 s, dann 0 V (beim idealen Trafo 3,0 V für
       1,8 s, dann Kurzschlusswarnung).
-    - Im **Diagramm** zeigt der Transformator **U₁ und U₂** statt U und I.
+    - **Wicklungssinn / Phasenlage:** Die beiden **Punkte am Symbol** stehen an den gleichsinnigen
+      Anschlüssen (Punktkonvention). **„⇄ Sekundärspule umpolen“** vertauscht die beiden
+      Sekundäranschlüsse – der untere Punkt wandert, und U₂ wird **gegenphasig** zu U₁
+      (gemessen: gleichsinnig 0,1°, gegensinnig 179,9° Phasenverschiebung).
+    - Im **Diagramm** zeigt der Transformator **U₁ und U₂** statt U und I, und zwar auf
+      **einer gemeinsamen Achse** (beides sind Spannungen). Man sieht damit auf einen Blick
+      beides: dass U₂ halb so groß ist (bei 500/250) und dass beide Kurven gleichzeitig steigen
+      und fallen – nach dem Umpolen liegen die Hochpunkte der einen über den Tiefpunkten der anderen.
   - **Zeichnen:** Bauteil wählen und antippen (waagrecht) oder in eine Richtung ziehen; auf eine
     Leitung gesetzt ersetzt es das Leitungsstück. „Leitung" von Gitterpunkt zu Gitterpunkt ziehen
     (Ecken automatisch); Verzweigungen bekommen einen Knotenpunkt. Auswahl: antippen = auswählen,

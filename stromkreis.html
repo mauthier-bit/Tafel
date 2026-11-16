@@ -312,7 +312,7 @@ const RL=5;                                   // Drahtwiderstand der Spule in Ω
 const TR_A=2e-3, TR_K=0.99999, TR_RW=0.001;    // H je Windung², Kopplungsgrad, Ω je Windung
 const TR_PSI=0.02;                            // höchster Fluss je Windung (Vs) – dann sättigt der Eisenkern
 function trWerte(p){ const n1=Math.max(1,p.val||1), n2=Math.max(1,p.val2||1), rw=p.ideal?0:TR_RW;
-  return {n1,n2,L1:TR_A*n1*n1,L2:TR_A*n2*n2,M:TR_K*TR_A*n1*n2,R1:rw*n1,R2:rw*n2,Is:TR_PSI/(TR_A*n1)}; }
+  return {n1,n2,L1:TR_A*n1*n1,L2:TR_A*n2*n2,M:(p.geg?-1:1)*TR_K*TR_A*n1*n2,R1:rw*n1,R2:rw*n2,Is:TR_PSI/(TR_A*n1)}; }
 const BETA=100, VBE=0.7, VSAT=0.1, RSAT=0.5;   // Transistor-Modell
 let simT=0;                                   // Simulationszeit für Wechselspannung
 const defaults=()=>({wires:[],parts:[],show:{U:true,I:true,R:false},flow:true,carrier:'e',ws:'mom',zoom:1,ox:null,oy:null,fontSize:14,edit:true});
@@ -327,7 +327,7 @@ function toast(t){ const el=$('toast'); el.textContent=t; el.classList.add('show
 function fmtNum(v){ const a=Math.abs(v); let s; if(a===0) s='0'; else if(a>=100) s=String(Math.round(v)); else s=String(parseFloat(v.toPrecision(3))); return s.replace('.',','); }
 function fmtQ(v,unit){ const a=Math.abs(v), sg=v<0?'−':'';
   if(v<0) return sg+fmtQ(-v,unit);
-  if(unit==='A'&&a<1&&a>=0.001) return fmtNum(v*1000)+' mA';
+  if(unit==='A'&&a<1&&a>=0.0005) return fmtNum(v*1000)+' mA';
   if(unit==='Ω'&&a>=1000) return fmtNum(v/1000)+' kΩ';
   if((unit==='V'&&a<0.005)||(unit==='A'&&a<0.0005)) return '0 '+unit;
   return fmtNum(v)+' '+unit; }
@@ -354,14 +354,15 @@ function restore(s){ const o=JSON.parse(s); data.wires=o.wires; data.parts=o.par
 function updUndo(){ $('bUndo').disabled=!undoSt.length; $('bRedo').disabled=!redoSt.length; }
 $('bUndo').onclick=()=>{ if(!undoSt.length) return; redoSt.push(snapshot()); restore(undoSt.pop()); updUndo(); };
 $('bRedo').onclick=()=>{ if(!redoSt.length) return; undoSt.push(snapshot()); restore(redoSt.pop()); updUndo(); };
-function changed(){ dirty=true; messReset(); if(chart&&!data.parts.some(q=>q.id===chart.id)) closeChart(); renderBar2(); sync(true); requestDraw(); }
+function changed(){ dirty=true; messReset();
+  data.parts.forEach(p=>{ if(p.type==='trafo') dyn.delete(p.id); });   /* sonst springt der Fluss */ if(chart&&!data.parts.some(q=>q.id===chart.id)) closeChart(); renderBar2(); sync(true); requestDraw(); }
 
 /* ================= Diagramm: zeitlicher Verlauf von U und I am ausgewählten Bauteil ================= */
 let chart=null, clockT=0;                         // chart = {id, U, I, win, samples:[{t,U,I}], paused}
 function partLabel(p){ const same=data.parts.filter(q=>q.type===p.type); return INFO[p.type].name+(same.length>1?' '+(same.indexOf(p)+1):''); }
 function openChart(p){ const tr=p.type==='trafo';
   chart={id:p.id,U:true,I:true,win:+$('chWin').value||10,samples:[],paused:false,
-         nmU:tr?'U₁':'U', nmI:tr?'U₂':'I', unU:'V', unI:tr?'V':'A'};
+         nmU:tr?'U₁':'U', nmI:tr?'U₂':'I', unU:'V', unI:tr?'V':'A', eine:tr};
   $('chart').hidden=false; $('chTitle').textContent='📈 '+partLabel(p)+(p.type==='npn'?' (U_CE, I_C)':tr?' (U₁, U₂)':''); $('chPause').textContent='⏸';
   document.querySelectorAll('#chHead .chip').forEach(b=>{ b.classList.add('on'); b.textContent=b.dataset.q==='U'?chart.nmU:chart.nmI; });
   renderBar2(); requestDraw(); }
@@ -376,12 +377,14 @@ function drawChart(){ if(!chart) return; const c=$('chCv'), dpr=window.devicePix
   if(c.width!==Math.round(w*dpr)||c.height!==Math.round(h*dpr)){ c.width=Math.round(w*dpr); c.height=Math.round(h*dpr); }
   const g=c.getContext('2d'); g.setTransform(dpr,0,0,dpr,0,0); g.fillStyle='#fff'; g.fillRect(0,0,w,h);
   const K=Math.min(1.6,(data.fontSize||14)/14), fs=Math.round(11*K);
-  const L=52*K, Rm=58*K, T=22*K, B=20*K, pw=w-L-Rm, ph=h-T-B; if(pw<30||ph<20) return;
+  const eine=!!chart.eine;                       /* beide Kurven sind Spannungen – ein Maßstab */
+  const L=52*K, Rm=(eine?18:58)*K, T=22*K, B=20*K, pw=w-L-Rm, ph=h-T-B; if(pw<30||ph<20) return;
   const S=chart.samples, tEnd=S.length?(chart.paused?S[S.length-1].t:clockT):clockT, t0=tEnd-chart.win;
   const vis=S.filter(q=>q.t>=t0-0.05);
-  const rng=q=>{ let lo=0,hi=0; vis.forEach(v=>{ lo=Math.min(lo,v[q]); hi=Math.max(hi,v[q]); }); if(hi-lo<1e-6) hi=lo+(q==='U'?1:0.1); return niceRange(lo,hi); };
-  const rU=rng('U'), rI=rng('I');
-  if(chart.U&&chart.I){ const z=r=>-r.lo/(r.hi-r.lo), zz=Math.max(z(rU),z(rI));     // Nulllinien beider Achsen auf gleiche Höhe
+  const rng=(...qs)=>{ let lo=0,hi=0; vis.forEach(v=>qs.forEach(q=>{ lo=Math.min(lo,v[q]); hi=Math.max(hi,v[q]); })); if(hi-lo<1e-6) hi=lo+(qs[0]==='U'?1:0.1); return niceRange(lo,hi); };
+  const beide=eine?[chart.U?'U':null,chart.I?'I':null].filter(Boolean):null;
+  const rU=eine?rng(...(beide.length?beide:['U'])):rng('U'), rI=eine?rU:rng('I');
+  if(chart.U&&chart.I&&!eine){ const z=r=>-r.lo/(r.hi-r.lo), zz=Math.max(z(rU),z(rI));     // Nulllinien beider Achsen auf gleiche Höhe
     [rU,rI].forEach(r=>{ if(z(r)<zz-1e-9){ if(zz>=1-1e-9) r.lo=Math.min(r.lo,-r.step); else r.lo=-zz/(1-zz)*r.hi; } }); }
   const X=t=>L+(t-t0)/chart.win*pw, Y=(v,r)=>T+ph-(v-r.lo)/(r.hi-r.lo)*ph;
   g.font='600 '+fs+'px -apple-system,BlinkMacSystemFont,sans-serif'; g.lineWidth=1;
@@ -394,7 +397,7 @@ function drawChart(){ if(!chart) return; const c=$('chCv'), dpr=window.devicePix
   const axis=(r,q,col,x,al)=>{ g.fillStyle=col; g.textAlign=al; g.textBaseline='middle';
     for(let v=Math.ceil(r.lo/r.step-1e-9)*r.step;v<=r.hi+1e-9;v+=r.step) g.fillText(fmtQ(Math.abs(v)<1e-12?0:v,q==='U'?unU:unI),x,Y(v,r)); };
   if(chart.U) axis(rU,'U','#b45309',L-5,'right');
-  if(chart.I) axis(rI,'I','#1d4ed8',L+pw+5,'left');
+  if(chart.I&&!eine) axis(rI,'I','#1d4ed8',L+pw+5,'left');
   g.save(); g.beginPath(); g.rect(L,T,pw,ph); g.clip();
   const plot=(q,r,col)=>{ g.strokeStyle=col; g.lineWidth=2.2; g.lineJoin='round'; g.beginPath(); vis.forEach((v,i)=>{ const x=X(v.t), y=Y(v[q],r); i?g.lineTo(x,y):g.moveTo(x,y); }); g.stroke(); };
   if(chart.U) plot('U',rU,'#b45309'); if(chart.I) plot('I',rI,'#1d4ed8');
@@ -472,7 +475,7 @@ function solve(h,commit){ const nodes=new Map(); const idx=(p)=>{ const k=nkey(.
       case 'trafo': { const w=trWerte(p), hh=h||0.004, i1=st.i1||0, i2=st.i2||0;
         /* Eisenkern: über dem Sättigungsstrom bricht die Induktivität zusammen. Deshalb gibt der
            Trafo bei Gleichspannung nur beim Ein- und Ausschalten einen kurzen Stoß. */
-        const im=Math.abs(i1+w.n2/w.n1*i2), sa=1/(1+Math.pow(im/w.Is,8));
+        const im=Math.abs(i1+w.M/w.L1*i2), sa=1/(1+Math.pow(im/w.Is,8));
         const L1=w.L1*sa, L2=w.L2*sa, Mk=w.M*sa;
         const a11=w.R1+L1/hh, a22=w.R2+L2/hh, a12=Mk/hh, det=a11*a22-a12*a12;
         B.tr=true; B.n=[ia,idx(e.c),ib,idx(e.d)];
@@ -709,7 +712,10 @@ function drawPart(c,p,S,cell,lw,col,R,isGhost){ const e=ends(p), A=S(...e.a), B=
     line(xp,0,xp,0.35); line(xp,1.65,xp,2); line(xs,0,xs,0.35); line(xs,1.65,xs,2);
     [[xp,true],[xs,false]].forEach(([x,links])=>{ c.beginPath();
       for(let k=0;k<3;k++){ const cy=0.35+r0+k*2*r0; c.moveTo(x,cy-r0); c.arc(x,cy,r0,-Math.PI/2,Math.PI/2,links); } c.stroke(); });
-    line(0.9,0.2,0.9,1.8); line(1.1,0.2,1.1,1.8); }
+    line(0.9,0.2,0.9,1.8); line(1.1,0.2,1.1,1.8);
+    c.fillStyle=col;                                              // Punkte = gleichsinnige Anschlüsse
+    c.beginPath(); c.arc(xp+0.19,0.3,0.08,0,7); c.fill();
+    c.beginPath(); c.arc(xs-0.19,p.geg?1.7:0.3,0.08,0,7); c.fill(); }
   else if(p.type==='amm'||p.type==='volt'){ line(0,0,0.62,0); line(1.38,0,2,0); c.fillStyle='#fff'; c.beginPath(); c.arc(1,0,0.38,0,7); c.fill(); c.stroke();
     c.save(); c.translate(1,0); c.rotate(-ang); c.fillStyle=col; c.font='800 0.42px -apple-system,Arial,sans-serif'; c.textAlign='center'; c.textBaseline='middle'; c.fillText(p.type==='amm'?'A':'V',0,0.02); c.restore(); }
   else if(p.type==='sw2'){ const fv=p.f?-1:1; line(0,0,0.5,0); line(1.5,0,2,0); line(1.5,-fv,2,-fv);
@@ -764,7 +770,9 @@ function renderBar2(){ const b=$('bar2'); b.innerHTML='';
     if(p.type==='trafo'){ const w=trWerte(p);
       el('span','lbl','Übersetzung N₂/N₁ = '+fmtNum(w.n2/w.n1));
       el('button','chip'+(p.ideal?' on':''),'idealer Trafo',()=>{ pushUndo(); p.ideal=!p.ideal; changed(); });
-      el('span','lbl',(p.ideal?'ohne Drahtwiderstand':'Drahtwiderstand '+fmtNum(w.R1)+' Ω / '+fmtNum(w.R2)+' Ω')+' · nur Wechselspannung'); }
+      el('span','lbl',(p.ideal?'ohne Drahtwiderstand':'Drahtwiderstand '+fmtNum(w.R1)+' Ω / '+fmtNum(w.R2)+' Ω')+' · nur Wechselspannung');
+      const bt=el('button','btn','⇄ Sekundärspule umpolen',()=>{ pushUndo(); p.geg=!p.geg; changed(); });
+      bt.title='Anschlüsse der Sekundärspule vertauschen – U₂ wird gegenphasig zu U₁ (Punkte am Symbol)'; }
     if(p.type==='amm') el('span','lbl','in Reihe schalten');
     if(p.type==='volt') el('span','lbl','parallel schalten');
     if(p.type==='diode') el('span','lbl','Durchlassspannung 0,7 V');
