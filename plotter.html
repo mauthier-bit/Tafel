@@ -161,6 +161,13 @@
   .lmPlus,.lmMinus{border-radius:5px;padding:0 3px;-webkit-box-decoration-break:clone;box-decoration-break:clone;}
   .lmPlus{background:#d7f5e0;color:#14532d;}
   .lmMinus{background:#ffdede;color:#7f1d1d;}
+  /* Wert, den ein Teilterm an der Stelle annimmt – über dem Zähler, unter dem Nenner */
+  .lmAnn{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;line-height:1.15;}
+  .lmAnn.unten{flex-direction:column-reverse;}
+  .lmAnn>.v{font-size:.58em;font-weight:700;color:#64748b;line-height:1.4;white-space:nowrap;}
+  .lmAnn>.v.vP{color:#15803d;}
+  .lmAnn>.v.vM{color:#b91c1c;}
+  .lmAnn>.v.vDom{font-size:.72em;font-weight:800;text-decoration:underline;text-underline-offset:2px;}
   .lmBr{display:inline-flex;flex-direction:column;vertical-align:middle;text-align:center;margin:0 2px;}
   .lmBr>span{padding:0 4px;}
   .lmBr>span+span{border-top:1.5px solid #94a3b8;}
@@ -189,7 +196,7 @@
   #trOut .wLeer{color:#64748b;}
   #plotR,#plotL{position:absolute;inset:0;width:100%;height:100%;touch-action:none;}
   body.t-r #sliders,body.t-d #sliders{display:none;}
-  body:not(.t-g) #btnN{display:none;}        /* Nullstellen gehören zum Graphen */
+  body:not(.t-g) #btnN,body:not(.t-g) #btnY0{display:none;}        /* Nullstellen gehören zum Graphen */
   /* ---- Reiter „Modell": Daten eingeben (Tabelle oder Punkte) und modellieren ---- */
   #pD{display:none;flex-direction:column;overflow:hidden;}
   #pD.on{display:flex;}
@@ -482,7 +489,7 @@
   <div id="top">
     <div id="tabs"><div class="tgrp"><button type="button" id="tabG" class="on">Graph</button><button type="button" id="tabT">Tabelle</button><button type="button" id="tabM">Maschine</button></div><button type="button" id="tabR">Transformationen</button><button type="button" id="tabL" title="Grenzwerte an den Rändern des Definitionsbereichs">lim</button><button type="button" id="tabD">Modellieren</button></div>
     <div id="funcs"></div>
-    <div class="frow" id="fbtns"><button id="add" title="Weitere Funktion hinzufügen">＋ Funktion</button><button id="fit">Ansicht</button><button class="fsb" id="btnN" title="Nullstellen am Graphen anzeigen">Nullstellen</button><button class="fsb" id="btnX" title="Beweglicher Punkt auf der x-Achse"><i>x</i></button><button class="fsb" id="btnY" title="Beweglicher Punkt auf der y-Achse"><i>y</i></button><button class="fsb" id="btnKeys" title="Formel-Tastatur ein-/ausblenden">⌨ Formeln</button><button class="fsb tafelEdit" id="fsM" title="Schrift kleiner">A−</button><button class="fsb tafelEdit" id="fsP" title="Schrift größer">A+</button><span id="teilenBtn" style="display:inline-flex"></span><span id="shotBtns" style="display:inline-flex;gap:6px"></span></div>
+    <div class="frow" id="fbtns"><button id="add" title="Weitere Funktion hinzufügen">＋ Funktion</button><button id="fit">Ansicht</button><button class="fsb" id="btnN" title="Nullstellen am Graphen anzeigen">Nullstellen</button><button class="fsb" id="btnY0" title="Schnittpunkt mit der y-Achse anzeigen">f(0)</button><button class="fsb" id="btnX" title="Beweglicher Punkt auf der x-Achse"><i>x</i></button><button class="fsb" id="btnY" title="Beweglicher Punkt auf der y-Achse"><i>y</i></button><button class="fsb" id="btnKeys" title="Formel-Tastatur ein-/ausblenden">⌨ Formeln</button><button class="fsb tafelEdit" id="fsM" title="Schrift kleiner">A−</button><button class="fsb tafelEdit" id="fsP" title="Schrift größer">A+</button><span id="teilenBtn" style="display:inline-flex"></span><span id="shotBtns" style="display:inline-flex;gap:6px"></span></div>
     <div id="sliders"></div>
   </div>
   <div id="wrap">
@@ -658,6 +665,7 @@ let tab='g';                                       /* g = Graph, t = Tabelle, m 
 let xs=['−2','−1','0','1','2'];                    /* x-Werte der Tabelle */
 let xPt={on:false,v:1}, yPt={on:false,v:1};        /* bewegliche Punkte auf den Achsen */
 let nullAn=false;                                  /* Nullstellen am Graphen zeigen */
+let y0An=false;                                    /* Schnittpunkt mit der y-Achse zeigen */
 
 const SUB='₀₁₂₃₄₅₆₇₈₉';
 const sub=n=>String(n).split('').map(d=>SUB[+d]).join('');
@@ -1055,6 +1063,7 @@ function draw(){ if(!W||!H) return;
       if(prev!==null && Math.abs(py-prev)>H*3){ ctx.moveTo(px,py); } else if(prev===null){ ctx.moveTo(px,py); } else { ctx.lineTo(px,py); } prev=py; }
     ctx.stroke(); });
   if(nullAn) nullstellenZeigen();
+  if(y0An) y0Zeigen();
   achsenPunkte();
   $('err').textContent = (!anyTerm||anyOk)?'':'Term nicht auswertbar';
 }
@@ -1110,6 +1119,17 @@ function nullstellenZeigen(){ const u=view.ux, uy=view.uy, oy=view.oy, ox=view.o
       ctx.save(); ctx.beginPath(); ctx.arc(px,py,5.5,0,7); ctx.fillStyle=f.color; ctx.fill();
       ctx.lineWidth=2; ctx.strokeStyle='#fff'; ctx.stroke(); ctx.restore();
       beschrift('x = '+zahl(Math.round(x0*1000)/1000), px, py+16+(n++%2)*15, f.color,'center'); }); }); }
+
+/* ---- Schnittpunkt mit der y-Achse: f(0), falls es ihn gibt ---- */
+function y0Zeigen(){ const uy=view.uy, ox=view.ox, oy=view.oy;
+  if(ox<-20||ox>W+20) return;                       /* die y-Achse liegt gar nicht im Bild */
+  let n=0;
+  funcs.forEach(f=>{ if(!f.toks.length||f.hide) return;
+    const y=evalAt(0,f.toks); if(!isFinite(y)) return;   /* an x = 0 nicht definiert: nichts zu zeigen */
+    const py=oy-y*uy; if(py<-20||py>H+20) return;
+    ctx.save(); ctx.beginPath(); ctx.arc(ox,py,5.5,0,7); ctx.fillStyle=f.color; ctx.fill();
+    ctx.lineWidth=2; ctx.strokeStyle='#fff'; ctx.stroke(); ctx.restore();
+    beschrift('y = '+zahl(Math.round(y*1000)/1000), ox+11, py-13-(n++%2)*15, f.color,'left'); }); }
 
 /* ---- bewegliche Punkte auf x- und y-Achse ---- */
 function beschrift(t,x,y,col,al){ ctx.save(); ctx.font='700 '+Math.max(11,fontSize+1)+'px -apple-system,BlinkMacSystemFont,sans-serif';
@@ -1198,6 +1218,7 @@ cv.addEventListener('wheel',e=>{ e.preventDefault(); const r=cv.getBoundingClien
 
 /* ---- Eingabe & Sync ---- */
 $('btnN').onclick=()=>{ nullAn=!nullAn; $('btnN').classList.toggle('on',nullAn); draw(); sync(); };
+$('btnY0').onclick=()=>{ y0An=!y0An; $('btnY0').classList.toggle('on',y0An); draw(); sync(); };
 $('fit').onclick=()=>{ view={ox:W/2,oy:H/2,ux:40,uy:40}; draw(); sync(); };
 let uiK=null; function applyUiFont(){ const k=(fontSize||13)/13; if(k===uiK&&document.body.classList.contains('fb')===fontBold&&document.body.classList.contains('fi')===fontItalic) return; uiK=k; document.documentElement.style.setProperty('--k',k); document.body.classList.toggle('fb',fontBold); document.body.classList.toggle('fi',fontItalic); }
 
@@ -2715,6 +2736,28 @@ function lmTeile(nd,out,imNenner){ out=out||[];
   if(nd.k==='*'){ lmTeile(nd.l,out,imNenner); lmTeile(nd.r,out,imNenner); return out; }
   if(nd.k==='/'){ lmTeile(nd.l,out,imNenner); lmTeile(nd.r,out,!imNenner); return out; }
   out.push({nd,nenner:!!imNenner}); return out; }
+/* Den Term als Produkt bzw. Quotient seiner Teile schreiben und über jeden Teil den Wert
+   setzen, den er an der Stelle annimmt (über dem Zähler, unter dem Nenner). Unterstrichen
+   wird, was das Ergebnis bestimmt: bei 0 der Teil, der 0 wird, bei ±∞ der, der wächst.
+   null, wenn sich der Term nicht in mehrere Teile zerlegen lässt. */
+function lmTeileAnn(ast,x0,seite,gesamt){ if(!ast) return null;
+  const T=lmTeile(ast); if(T.length<2||T.length>5) return null;
+  const klam=nd=>((nd.k==='+'||nd.k==='-')?'('+lmAstHtml(nd)+')':lmAstHtml(nd));
+  const teile=T.map(q=>{ const tk=tokenize(lmAstText(q.nd));
+    const pr=lmProben(x=>evalAt(x,tk,lm.p),x0,seite), w=lmAusProben(pr);
+    let vzN=0;
+    if(w.art==='zahl'&&Math.abs(w.v)<1e-9){ const y=pr[pr.length-1][1]; vzN=y<0?-1:(y>0?1:0); }
+    return {q, w, a:lmAnnWert(w,vzN), html:klam(q.nd)}; });
+  if(teile.some(t=>!t.a)) return null;
+  const istInf=w=>w.art==='inf'||w.art==='ninf', istNull=w=>w.art==='zahl'&&Math.abs(w.v)<1e-9;
+  const zielNull=!!gesamt&&istNull(gesamt), zielInf=!!gesamt&&istInf(gesamt);
+  teile.forEach(t=>{ t.dom = zielNull ? (t.q.nenner?istInf(t.w):istNull(t.w))
+                    : (zielInf ? (t.q.nenner?istNull(t.w):istInf(t.w)) : false); });
+  if(teile.every(t=>t.dom)||!teile.some(t=>t.dom)) teile.forEach(t=>{ t.dom=false; });
+  const zt=teile.filter(t=>!t.q.nenner), nt=teile.filter(t=>t.q.nenner);
+  if(!zt.length) return null;
+  const bau=(l,unten)=>l.map(t=>lmAnnHtml(t.html,t.a.txt,t.a.vz,t.dom,unten)).join(' · ');
+  return nt.length? lmBruchHtml(bau(zt,false),bau(nt,true)) : bau(zt,false); }
 /* „Dabei geht x → +∞ und e^(−x) → 0" – das Verhalten der einzelnen Teile */
 function lmTeilText(ast,x0,seite){
   const t=lmTeile(ast).filter(q=>/x/.test(lmAstText(q.nd)));
@@ -2741,6 +2784,18 @@ function lmFaktoren(p){ p=pTrim(p); const lin=[]; let rest=p.slice();
     aus.push({p:pp, html:lmKlammer(q.x,q.k)}); });
   if(g>0) aus.push({p:rest, html:'('+lmPolyHtml(rest,null)+')'});
   return aus.length?aus:[{p:p.slice(), html:lmPolyHtml(p,null)}]; }
+/* Einen Teilterm mit dem Wert beschriften, den er an der Stelle annimmt:
+   über dem Zähler, unter dem Nenner; fett unterstrichen, was das Ergebnis bestimmt. */
+function lmAnnHtml(html,txt,vz,dom,unten){ if(txt==null) return html;
+  return '<span class="lmAnn'+(unten?' unten':'')+'"><span class="v'+(vz>0?' vP':(vz<0?' vM':''))+(dom?' vDom':'')+'">'+
+    txt+'</span><span class="t">'+html+'</span></span>'; }
+/* Grenzwert eines Teilterms als kurzer Text: 5, −3, +0, −0, +∞, −∞, schwankt */
+function lmAnnWert(w,vzNull){ if(!w||w.art==='undef') return null;
+  if(w.art==='inf') return {txt:'+∞',vz:1};
+  if(w.art==='ninf') return {txt:'−∞',vz:-1};
+  if(w.art==='kein') return {txt:'schwankt',vz:0};
+  if(Math.abs(w.v)<1e-9) return vzNull? {txt:(vzNull<0?'−0':'+0'),vz:vzNull} : {txt:'0',vz:0};
+  return {txt:zahl(w.v), vz:w.v>0?1:-1}; }
 /* ein Faktor mit Marker: grün wenn er bei xp positiv ist, rot wenn negativ */
 function lmVZTeil(q,xp,stark){ const v=pWert(q.p,xp), cls=(v>0?'lmPlus':(v<0?'lmMinus':''));
   return '<span class="'+(stark?'lmStark ':'')+cls+'">'+q.html+'</span>'; }
@@ -2810,8 +2865,13 @@ function lmAnalyse(){
                      : ('Der Nenner wird 0, der Zähler ist dort '+zahl(zV)+' ≠ 0 – eine <b>Polstelle</b>.');
         [-1,1].forEach(seite=>{
           const h=1e-6, xp=x0+seite*h, zN=pWert(z,xp), nN=pWert(nn,xp);   /* dicht neben der Lücke */
-          const mal=F=>F.map(q=>lmVZTeil(q,xp,null0(q))).join(' · ');
-          const zH=mal(zF), nH=mal(nF);
+          /* über bzw. unter jedem Faktor steht, welchen Wert er an der Stelle annimmt –
+             der Faktor, der 0 wird, als „−0“ bzw. „+0“, je nach Seite */
+          const mal=(F,unten)=>F.map(q=>{ const n0=null0(q), v0=pWert(q.p,x0), vp=pWert(q.p,xp);
+            const a=n0?{txt:(vp<0?'−0':'+0'),vz:vp<0?-1:1}:{txt:zahl(v0),vz:v0>0?1:(v0<0?-1:0)};
+            return lmAnnHtml(lmVZTeil(q,xp,n0),a.txt,a.vz,n0,unten); }).join(' · ');
+          const zH=mal(zF,false), nH=mal(nF,true);
+          const zP=zF.map(q=>q.html).join(' · '), nP=nF.map(q=>q.html).join(' · ');
           const pr=lmProben(f,x0,seite), wert=lmAusProben(pr);
           const grund=anf+' '+(seite<0?'Links':'Rechts')+' von '+lmX(x0)+' hat jeder Faktor ein festes Vorzeichen – '+
             'im Term <span class="lmPlus">grün</span> für positiv, <span class="lmMinus">rot</span> für negativ: '+
@@ -2821,7 +2881,7 @@ function lmAnalyse(){
             'Der Bruch wird also betragsmäßig immer größer und ist '+lmVZ(zN*nN)+'.'+
             (ord>1?' (Der Faktor, der 0 wird, steht in gerader Potenz – deshalb auf beiden Seiten dasselbe Vorzeichen.)':'');
           const kt=randKarte(x0,seite,wert,grund,pr.slice(1,4));
-          kt.termHtml=mitOrig(lmBruchHtml(zH,nH), lmTermVgl(zH,nH));
+          kt.termHtml=mitOrig(lmBruchHtml(zH,nH), lmTermVgl(zP,nP));
           e.karten.push(kt); }); }
       else {                                                       /* hebbare Lücke */
         const w=(kz>kn)?0:pWert(zz,x0)/pWert(nk,x0);
@@ -2861,7 +2921,16 @@ function lmAnalyse(){
         if(e.schief) grund+=' Die Polynomdivision ergibt '+lmGerade(e.schief)+' plus einen Rest, der für große |x| gegen 0 geht – das ist die <b>schiefe Asymptote</b>.'; }
       e.termHtml=mitOrig(gebrochen?lmBruchHtml(lmPolyHtml(z,null),lmPolyHtml(nn,null)):lmPolyHtml(z,null),
         gebrochen?lmTermVgl(lmPolyHtml(z,null),lmPolyHtml(nn,null)):lmTermVgl(lmPolyHtml(z,null)));
-      const tHtml=mitOrig(gebrochen?lmBruchHtml(lmPolyHtml(z,gz),lmPolyHtml(nn,gn)):lmPolyHtml(z,gz),
+      /* über dem Zähler und unter dem Nenner steht, wohin der jeweilige Teil geht;
+         unterstrichen, wer das Ergebnis bestimmt (der höhere Grad) */
+      const polLim=pp=>{ const gg=pGrad(pp);
+        if(gg===0) return {txt:zahl(pp[0]), vz:pp[0]>0?1:(pp[0]<0?-1:0)};
+        const vv=pp[gg]*Math.pow(s,gg); return {txt:vv>0?'+∞':'−∞', vz:vv>0?1:-1}; };
+      const aZ=polLim(z), aN=polLim(nn);
+      const tHtml=mitOrig(gebrochen
+          ? lmBruchHtml(lmAnnHtml(lmPolyHtml(z,gz),aZ.txt,aZ.vz,gz>gn,false),
+                        lmAnnHtml(lmPolyHtml(nn,gn),aN.txt,aN.vz,gn>gz,true))
+          : lmPolyHtml(z,gz),
         gebrochen?lmTermVgl(lmPolyHtml(z,null),lmPolyHtml(nn,null)):lmTermVgl(lmPolyHtml(z,null)));
       e.karten.push({ziel, wert, grund, x:s*Infinity, seite:0, termHtml:tHtml,
         proben:lmProben(f,s*Infinity,0).filter((p,i)=>i%2===0).slice(0,4)}); });
@@ -2873,6 +2942,8 @@ function lmAnalyse(){
   /* ===== alle anderen Terme: Lücken suchen, Grenzwerte belegen ===== */
   e.art='sonst';
   e.termHtml='f(x) = '+origHtml;
+  /* jede Karte bekommt den Term mit den Werten der Teile an ihrer Stelle */
+  const annKarte=k=>{ const h=lmTeileAnn(ast,k.x,k.seite||0,k.wert); if(h) k.termHtml='f(x) = '+h; return k; };
   let st=lmScan(f); e.mehr=!!st.mehr;
   /* Zwei Rand-Treffer dicht beieinander sind in Wirklichkeit eine Lücke mitten im Definitionsbereich
      (z. B. sin(x)/x bei 0): dann beide Seiten anschauen statt „Definitionsbereich endet". */
@@ -2885,24 +2956,24 @@ function lmAnalyse(){
       if(wl.art==='zahl'&&wr.art==='zahl'&&Math.abs(wl.v-wr.v)<1e-6*(1+Math.abs(wl.v))){
         e.loecher.push({x:g.x,y:wl.v});
         [-1,1].forEach(seite=>{ const pr=lmProben(f,g.x,seite);
-          e.karten.push({ziel:'x → '+lmX(g.x)+(seite<0?'⁻':'⁺'), wert:seite<0?wl:wr, x:g.x, seite, loch:true,
+          e.karten.push(annKarte({ziel:'x → '+lmX(g.x)+(seite<0?'⁻':'⁺'), wert:seite<0?wl:wr, x:g.x, seite, loch:true,
             grund:'An dieser Stelle ist der Term nicht definiert. '+(seite<0?'Von links':'Von rechts')+
               ' nähern sich die Werte '+zahl(seite<0?wl.v:wr.v)+' – von der anderen Seite ebenso. Weil beide Seiten '+
               'denselben Wert ergeben, ist die Lücke <b>hebbar</b>: der Graph hat dort nur ein <b>Loch</b>.',
-            proben:pr.slice(1,4)}); });
+            proben:pr.slice(1,4)})); });
         return; }
       [-1,1].forEach(seite=>{ const pr=lmProben(f,g.x,seite), wert=lmAusProben(pr);
         if(wert.art==='inf'||wert.art==='ninf') e.pole.push(g.x);
-        e.karten.push(randKarte(g.x,seite,wert,
-          lmTeilText(ast,g.x,seite)+'An dieser Stelle ist der Term nicht definiert. '+(seite<0?'Links':'Rechts')+' davon zeigen die Werte, wohin es geht.',pr.slice(1,4))); });
+        e.karten.push(annKarte(randKarte(g.x,seite,wert,
+          lmTeilText(ast,g.x,seite)+'An dieser Stelle ist der Term nicht definiert. '+(seite<0?'Links':'Rechts')+' davon zeigen die Werte, wohin es geht.',pr.slice(1,4)))); });
       return; }
     st.push({x:g.x,art:g.art,seite:g.seiten[0]}); });
   st.forEach(s=>{
     if(s.art==='pol'){ e.pole.push(s.x);
       [-1,1].forEach(seite=>{ const pr=lmProben(f,s.x,seite), wert=lmAusProben(pr);
-        e.karten.push(randKarte(s.x,seite,wert,
+        e.karten.push(annKarte(randKarte(s.x,seite,wert,
           lmTeilText(ast,s.x,seite)+'Dort ist der Term nicht definiert (Nenner 0). '+(seite<0?'Links':'Rechts')+' davon wachsen die Werte über alle Grenzen – das zeigen die Zahlen daneben.',
-          pr.slice(1,4))); }); }
+          pr.slice(1,4)))); }); }
     else { e.raender.push(s);
       const pr=lmProben(f,s.x,s.seite), wert=lmAusProben(pr);
       let grund=lmTeilText(ast,s.x,s.seite)+'Hier endet der Definitionsbereich: ';
@@ -2911,7 +2982,7 @@ function lmAnalyse(){
       else grund+='weiter '+(s.seite>0?'links':'rechts')+' gibt es die Funktion nicht. ';
       grund+='Die Funktion gibt es nur '+(s.seite>0?'rechts':'links')+' von '+lmX(s.x)+'.';
       if(F.ln&&(wert.art==='ninf'||wert.art==='inf')) grund+=' ln(z) → −∞, wenn z von oben gegen 0 geht.';
-      e.karten.push(randKarte(s.x,s.seite,wert,grund,pr.slice(1,4))); } });
+      e.karten.push(annKarte(randKarte(s.x,s.seite,wert,grund,pr.slice(1,4)))); } });
   [-1,1].forEach(s=>{
     const ziel='x → '+(s<0?'−∞':'+∞'), pr=lmProben(f,s*Infinity,0);
     let wert=lmAusProben(pr);
@@ -2929,7 +3000,7 @@ function lmAnalyse(){
       if(F.wurzel) grund+='Die Wurzel wächst langsamer als x, aber unbeschränkt. ';
       if(!grund) grund='Am Term allein ist das nicht sofort abzulesen – die Werte daneben zeigen, wohin es geht. ';
       if(wert.art==='zahl'&&isFinite(wert.v)){ grund+='Die Werte nähern sich '+zahl(wert.v)+' an: <b>waagrechte Asymptote</b> y = '+zahl(wert.v)+'.'; e.asym.push(wert.v); } }
-    e.karten.push({ziel, wert, grund, x:s*Infinity, seite:0, proben:pr.slice(0,4)}); });
+    e.karten.push(annKarte({ziel, wert, grund, x:s*Infinity, seite:0, proben:pr.slice(0,4)})); });
   e.karten.sort((a,b)=>lmOrd(a)-lmOrd(b));
   e.kopf=lmKopf(e,'Term mit '+([F.exp?'e-Funktion':'',F.ln?'Logarithmus':'',F.wurzel?'Wurzel':'',F.trig?'Sinus/Kosinus':'',F.betrag?'Betrag':''].filter(Boolean).join(', ')||'Term'),toks);
   return e;
@@ -3180,7 +3251,7 @@ function lmNeu(sofort){
     lmView.ox=p[0]-x*lmView.ux; lmView.oy=p[1]+y*lmView.uy; lmDraw(); },{passive:false});
 })();
 
-function zustand(){ return {funcs:funcs.map(f=>({term:f.term,color:f.color,width:f.width,mx:f.mx,hide:!!f.hide})), params, view, fontSize, fontBold, fontItalic, activeIdx, tab, nullAn, xs:xs.slice(), xPt:{on:xPt.on,v:xPt.v}, yPt:{on:yPt.on,v:yPt.v}, tr:Object.assign({},tr),
+function zustand(){ return {funcs:funcs.map(f=>({term:f.term,color:f.color,width:f.width,mx:f.mx,hide:!!f.hide})), params, view, fontSize, fontBold, fontItalic, activeIdx, tab, nullAn, y0An, xs:xs.slice(), xPt:{on:xPt.on,v:xPt.v}, yPt:{on:yPt.on,v:yPt.v}, tr:Object.assign({},tr),
   md:{typ:md.typ, genau:!!md.genau, grad:md.grad, abl:!!md.abl, offC:!!md.offC, zGraph:!!md.zGraph,
       wf:md.wf||'xe', wterm:md.wterm||'',
       zTerm:!!md.zTerm, col:mdKurve(), zAbw:!!md.zAbw, zWert:!!md.zWert,
@@ -3200,6 +3271,7 @@ addEventListener('message',e=>{ if(e.source!==window&&(window.parent===window||e
     else { funcs=nf.map(g=>({term:g.term||'', color:g.color, width:g.width, mx:g.mx, hide:!!g.hide, toks:tokenize(g.term||'')})); if(activeIdx>=funcs.length)activeIdx=funcs.length-1; strukturNeu=true; }
   }
   if(d.nullAn!==undefined){ nullAn=!!d.nullAn; const b=$('btnN'); if(b) b.classList.toggle('on',nullAn); }
+  if(d.y0An!==undefined){ y0An=!!d.y0An; const b=$('btnY0'); if(b) b.classList.toggle('on',y0An); }
   if(d.activeIdx!=null && d.activeIdx<funcs.length){ activeIdx=d.activeIdx; markActive(); }
   if(d.params) params=Object.assign({a:1,b:0,c:0},d.params);
   if(d.view){ view=Object.assign({ox:W/2,oy:H/2,ux:40,uy:40},d.view);

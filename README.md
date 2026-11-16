@@ -2084,6 +2084,9 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   Außerhalb des Definitionsbereichs wird nichts gezeichnet (Tabelle und Maschine zeigen dort „—“), und
   in der Maschine steht der Rechenweg des Abschnitts, der für dieses x zuständig ist. Die Reiter
   **Transformationen** und **lim** arbeiten weiter mit einem einzigen Term.
+  **f(0) (Reiter Graph):** Der Knopf **„f(0)"** markiert den **Schnittpunkt mit der y-Achse** – einen
+  ausgefüllten Punkt auf der y-Achse mit `y = −1,5` daneben, in der Farbe jeder Funktion. Gibt es ihn
+  nicht (`1/x`, `√(x−3)`, ein Abschnitt, der x = 0 auslässt), wird für diese Funktion nichts gezeichnet.
   **Formel-Tastatur** („⌨ Formeln"): In der oberen Zeile stehen neben den Funktionen auch **x, a, b, c**
   sowie **; < ≤ > ≥** für abschnittsweise definierte Funktionen; ein zweites `x` liegt wie bisher rechts
   unten im Zahlenblock.
@@ -2120,7 +2123,17 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   sich insgesamt **+**, und weil der Nenner gegen 0 geht, `f(x) → +∞`. Von rechts wechselt nur `(x−2)`
   die Farbe, und damit kippt das Gesamtvorzeichen. Mehrfache Faktoren stehen als Potenz (`(x−1)²`, auf
   beiden Seiten grün), der Faktor, der 0 wird, bleibt zusätzlich **fett**. Die Begründung daneben nennt
-  dieselben Vorzeichen noch einmal in Worten. Nochmaliges Antippen
+  dieselben Vorzeichen noch einmal in Worten.
+  **Werte über und unter den Teiltermen:** Über jedem Teil des Zählers und unter jedem Teil des Nenners
+  steht, welchen Wert er an der untersuchten Stelle annimmt – bei `(x−5)/((x−2)(x+3))` und `x → 2⁻`
+  also `−3` über dem Zähler sowie `5` und `−0` unter den beiden Nennerfaktoren (von rechts `+0`).
+  Für `x → ±∞` stehen dort `+∞` bzw. `−∞` über Zähler und Nenner. Auch Terme, die kein Bruch sind,
+  werden dazu in ihre Faktoren zerlegt: `x·e^(−x)` zeigt für `x → +∞` über `x` ein `+∞` und über
+  `e^(−x)` eine `0`, für `x → −∞` ein rotes `−∞` und ein grünes `+∞`; `sin(x)/x` zeigt bei 0
+  die Form `0/0`. **Unterstrichen und größer steht, was das Ergebnis bestimmt** – bei `x·e^(−x)` für
+  `x → +∞` also die `0`, bei einem Bruch der Teil mit dem höheren Grad. Gehen beide Teile in dieselbe
+  Richtung (`∞/∞`, `−∞ · ∞`), wird nichts unterstrichen – dann entscheidet nur das Vorzeichen bzw.
+  der Vergleich der Potenzen. Nochmaliges Antippen
   schließt das Feld wieder – so lässt sich ein Rand nach dem anderen besprechen.
   - **Gebrochen-rationale und ganzrationale Terme** werden dafür ausmultipliziert in die Form Zähler/Nenner
     gebracht und **am Term** entschieden: Gradvergleich für x → ±∞ (Nenner größer → 0; gleich → Quotient der
