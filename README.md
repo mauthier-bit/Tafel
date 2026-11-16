@@ -2078,10 +2078,14 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   **lim (Grenzwerte):** Dieser Reiter steht wie „Transformationen" **für sich** – eigener Term, eigene
   Zeichenfläche; **⤓ f(x)** holt die Funktion aus dem Reiter Graph herüber, die **Beispiele** sind nach
   Art gegliedert (ganzrational, gebrochen-rational, e-Funktion, Logarithmus und Wurzel, Sinus und Kosinus).
-  Zu jedem **Rand des Definitionsbereichs** – ±∞ und jede Definitionslücke – erscheint eine Karte in der
-  **lim-Schreibweise** (`lim` mit `x → 2⁻` darunter) mit dem Grenzwert, der **Begründung am Term** und den
-  **eingesetzten Werten** als Beleg. Im Term ist hervorgehoben, worauf es ankommt: die **größte Potenz**
-  steht kräftig da, alles Übrige blass; an einer Lücke ist der **Faktor, der 0 wird**, hervorgehoben.
+  **Ablauf:** Term eintippen oder ein Beispiel wählen – dann stehen **Term und Graph groß** da (der Term als
+  echter Bruch über der Zeichenfläche), und rechts erscheinen die **Ränder des Definitionsbereichs** zum
+  Untersuchen: ±∞ und jede Definitionslücke, jeweils in **lim-Schreibweise** (`lim` mit `x → 2⁻` darunter)
+  mit einem **„?"** statt des Ergebnisses. **Tippt man einen Rand an**, erscheint in diesem Feld der
+  Grenzwert mit der **Begründung am Term** und den **eingesetzten Werten** als Beleg; gleichzeitig wird
+  im großen Term hervorgehoben, worauf es ankommt (die **größte Potenz** kräftig, alles Übrige blass; an
+  einer Lücke der **Faktor, der 0 wird**) und im Graphen die passende Stelle markiert. Nochmaliges Antippen
+  schließt das Feld wieder – so lässt sich ein Rand nach dem anderen besprechen.
   - **Gebrochen-rationale und ganzrationale Terme** werden dafür ausmultipliziert in die Form Zähler/Nenner
     gebracht und **am Term** entschieden: Gradvergleich für x → ±∞ (Nenner größer → 0; gleich → Quotient der
     größten Koeffizienten; Zähler größer → ±∞ mit Vorzeichen), an den Nullstellen des Nenners **Polstelle
