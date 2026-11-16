@@ -1729,7 +1729,9 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     „… gibt es schon – Zähler jetzt 3"; Groß- und Kleinschreibung spielt dabei keine Rolle). Wird eine
     **ganze Liste eingefügt** (Zeilen, Komma oder Semikolon), steht jeder Begriff ebenfalls nur einmal da und
     die Zähler stimmen – gemeldet wird z. B. „2 neu, 4 schon vorhanden (Zähler erhöht)". So bleibt die
-    Eingabe auch bei einer Zuruf-Runde übersichtlich. Ein Gewicht lässt sich weiterhin direkt angeben
+    Eingabe auch bei einer Zuruf-Runde übersichtlich. **„A–Z"** sortiert die Liste alphabetisch
+    (deutsche Sortierung: Umlaute wie a/o/u, Groß- und Kleinschreibung egal – „Zahl" vor „Zähler");
+    die Wolke selbst bleibt davon unberührt, dort entscheidet weiter die Anzahl der Nennungen. Ein Gewicht lässt sich weiterhin direkt angeben
     (`Bruch = 5`). Die Wolke ordnet sich in einer Spirale an, **skaliert
     sich selbst** auf die Objektgröße und lässt sich in **vier Farbstimmungen** (bunt, blau, warm, grau) sowie
     wahlweise **nur waagerecht** oder **waagerecht & senkrecht** anzeigen; **„Anzahl zeigen"** schreibt die
