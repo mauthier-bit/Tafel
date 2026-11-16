@@ -1674,13 +1674,13 @@
     <div class="toggle"><span>Druckstärke des Pencils</span><div class="sw2 on" id="usePressure"></div></div>
     <div class="toggle"><span>Eckgriffe am eingebetteten Objekt<br><small style="color:#888">(im Bedienmodus die Größe ändern – die Kopfleiste bleibt immer)</small></span><div class="sw2 on" id="ebGriffeSw"></div></div>
     <div class="toggle"><span>Freihand erkennen<br><small style="color:#888">(Stift-Kritzel werden zu Linie, Rechteck, Ellipse oder Dreieck – steht auch im Formen-Menü)</small></span><div class="sw2" id="recogSw2"></div></div>
-    <label class="lbl">Linie gerade ziehen</label>
-    <div style="display:flex;align-items:center;gap:6px;margin-top:4px;font-size:13px">
+    <div class="toggle"><span>Linie gerade ziehen<br><small style="color:#888">(am Ende der Linie ruhig halten → gerade Strecke)</small></span><div class="sw2 on" id="geradeSw"></div></div>
+    <div style="display:flex;align-items:center;gap:6px;margin-top:4px;font-size:13px" id="gerZeile">
       <span style="flex:1;color:#555">Haltezeit am Ende</span>
       <button class="stepbtn" id="gerM">−</button><span class="stepv" id="gerV">0,7 s</span><button class="stepbtn" id="gerP">+</button>
       <button class="stepbtn" id="gerR" title="Standard" style="width:auto;padding:6px 9px;font-size:13px;font-weight:600">Standard</button>
     </div>
-    <div class="hint" style="margin-top:6px">Hält man den Stift am Ende einer gezogenen Linie so lange ruhig auf der Stelle, wird daraus eine <b>gerade Strecke</b> vom Anfang zum gehaltenen Punkt (0,2 s bis 2 s). Kürzer heißt schneller, aber es passiert auch leichter aus Versehen beim langsamen Schreiben.</div>
+    <div class="hint" style="margin-top:6px" id="gerHint">Hält man den Stift am Ende einer gezogenen Linie so lange ruhig auf der Stelle, wird daraus eine <b>gerade Strecke</b> vom Anfang zum gehaltenen Punkt (0,2 s bis 2 s). Kürzer heißt schneller, aber es passiert auch leichter aus Versehen beim langsamen Schreiben.</div>
     <label class="lbl">Scheinwerfer</label>
     <div class="seg" id="spotSeg"><button data-spot="ellipse" class="active">Kreis / Ellipse</button><button data-spot="rect">Rechteck</button></div>
     <div class="hint" style="margin-top:6px">Der Lichtfleck wird mit <b>zwei Fingern</b> aufgezogen: waagrecht nur breiter, senkrecht nur höher, diagonal insgesamt größer. Das Rechteck rahmt einen Textabschnitt oder eine Aufgabe genauer ein.</div>
@@ -1765,6 +1765,7 @@ const ERAS_F=1.75;                    // Umrechnung Stärkestufe → Radierer-Ra
 let spotForm='ellipse';          /* Scheinwerfer: 'ellipse' (rund) oder 'rect' (Kasten) */
 let laserMs=700;                 /* so lange leuchtet die Laserspur nach */
 let geradeMs=700;                /* so lange am Ende ruhig halten → aus der Linie wird eine gerade Strecke */
+let geradeAn=true;               /* ob aus einer gehaltenen Linie überhaupt eine Strecke werden soll */
 let ebGriffe=true;               /* Eckgriffe am eingebetteten Objekt zeigen */
 let popZu=true;                  /* Werkzeugmenues nach der Wahl von selbst schliessen */
 let popWarteMs=200;              /* so lange bleibt es danach noch stehen */
@@ -2940,7 +2941,7 @@ function endAction(e){ clearTimeout(dwellTimer); cancelGeoRay(); hideMeasure(); 
     } cur=null; markDirty(); } }
 /* Im Schreibmodus: am Ende ruhig halten → aus der Linie wird eine gerade Strecke
    (Anfang → gehaltener Punkt). Die Haltezeit steht in den Einstellungen unter „Bedienen". */
-function scheduleStraighten(){ clearTimeout(dwellTimer); dwellTimer=setTimeout(()=>{ if(cur&&cur.type==='stroke'&&!cur.rulerSnap&&cur.points.length>2){ cur.points=[cur.points[0],cur.points[cur.points.length-1]]; cur._straight=true; cur.varw=false; markDirty(); toast('→ gerade Strecke'); } },geradeMs); }
+function scheduleStraighten(){ clearTimeout(dwellTimer); if(!geradeAn) return; dwellTimer=setTimeout(()=>{ if(cur&&cur.type==='stroke'&&!cur.rulerSnap&&cur.points.length>2){ cur.points=[cur.points[0],cur.points[cur.points.length-1]]; cur._straight=true; cur.varw=false; markDirty(); toast('→ gerade Strecke'); } },geradeMs); }
 /* ============ Freihand → Form (optional, über den Schalter im Formen-Menü) ============ */
 let shapeRecog=false;
 /* Ramer-Douglas-Peucker: Linienzug vereinfachen, um Ecken zu zählen */
@@ -5243,13 +5244,13 @@ $('pageMenu').addEventListener('pointerdown',e=>e.stopPropagation());
 document.addEventListener('pointerdown',e=>{ if($('pageMenu').classList.contains('show') && !e.target.closest('#pageMenu') && !e.target.closest('.pmBtn') && !e.target.closest('#ppMore')) closePageMenu(); }, true);
 $('setMin').onclick=()=>{ $('settingsbar').classList.toggle('min'); rotateChev('setMin',$('settingsbar').classList.contains('min'),true); saveUI(); positionAnnoToggle(); };
 function rotateChev(id,min){ $(id).querySelector('svg').style.transform=min?'scaleX(-1)':''; }
-function saveUI(){ try{ localStorage.setItem('tafel_ui',JSON.stringify({page:$('pagebar').classList.contains('min'),set:$('settingsbar').classList.contains('min'),side:mainbarSide,theme:barTheme,tint:barTint,favs,pxcm:PXCM,pal:palette,cols:toolColors,rec:shapeRecog,wv:2,pp:propPos,ppH:propHint,ent:camEntz,hell:camHell,ob:obenPx,pw:penWidth,mw:markerWidth,ew:eraserWidth,sz:streckZeigen,sa:shapeAlpha,spf:spotForm,lup:lupeAn,lupz:lupeZoom,lms:laserMs,gms:geradeMs,pz:popZu,pzw:popWarteMs,pzd:popWegMs,pzv:2,ebg:ebGriffe,rul:{len:ruler.len,color:ruler.color,mm:ruler.mm,nums:ruler.nums,pct:ruler.pct,fs:ruler.fs},geo:{size:geo.size,color:geo.color,mm:geo.mm,nums:geo.nums,fs:geo.fs}})); }catch(e){} }
+function saveUI(){ try{ localStorage.setItem('tafel_ui',JSON.stringify({page:$('pagebar').classList.contains('min'),set:$('settingsbar').classList.contains('min'),side:mainbarSide,theme:barTheme,tint:barTint,favs,pxcm:PXCM,pal:palette,cols:toolColors,rec:shapeRecog,wv:2,pp:propPos,ppH:propHint,ent:camEntz,hell:camHell,ob:obenPx,pw:penWidth,mw:markerWidth,ew:eraserWidth,sz:streckZeigen,sa:shapeAlpha,spf:spotForm,lup:lupeAn,lupz:lupeZoom,lms:laserMs,gms:geradeMs,gan:geradeAn,pz:popZu,pzw:popWarteMs,pzd:popWegMs,pzv:2,ebg:ebGriffe,rul:{len:ruler.len,color:ruler.color,mm:ruler.mm,nums:ruler.nums,pct:ruler.pct,fs:ruler.fs},geo:{size:geo.size,color:geo.color,mm:geo.mm,nums:geo.nums,fs:geo.fs}})); }catch(e){} }
 function restoreUI(){ try{ const u=JSON.parse(localStorage.getItem('tafel_ui')||'{}'); if(u.page){$('pagebar').classList.add('min');pageChev(true);} if(u.set){$('settingsbar').classList.add('min');rotateChev('setMin',true);} if(u.side==='right'||u.side==='bottom')mainbarSide=u.side; if(u.theme==='light'||u.theme==='dark')barTheme=u.theme; if(u.tint&&typeof u.tint==='object')barTint=Object.assign(barTint,u.tint); if(Array.isArray(u.favs))favs=u.favs.filter(f=>f!=='w-export').slice(0,FAV_MAX);   // PDF-Export sitzt jetzt in den Einstellungen
   if(+u.pxcm>0&&Math.abs(+u.pxcm-37.8)>0.2) PXCM=Math.max(28,Math.min(64,+u.pxcm));   // alter Standard 37,8 → neuer, am iPad gemessener Wert
   if(Array.isArray(u.pal)&&u.pal.length===palette.length&&u.pal.every(c=>/^#[0-9a-f]{6}$/i.test(c))) palette=u.pal.slice();
   if(u.rec){ shapeRecog=true; $('shapeRecogSw').classList.add('on'); $('recogSw2').classList.add('on'); }
   if(u.cols&&typeof u.cols==='object')Object.assign(toolColors,u.cols); if(u.wv===2){ if(+u.pw>0)penWidth=+u.pw; if(+u.mw>0)markerWidth=+u.mw; } if(+u.ew>0)eraserWidth=+u.ew; if(+u.sa>=0&&+u.sa<=1)shapeAlpha=+u.sa; propHint=!!u.ppH; if(+u.hell>=0&&+u.hell<=100) camHell=+u.hell; if(+u.ob>=0&&+u.ob<=48) obenPx=+u.ob; if(u.ent&&Array.isArray(u.ent.q)&&u.ent.q.length===4) camEntz={an:!!u.ent.an,ar:+u.ent.ar||0,q:u.ent.q.map(p=>({x:+p.x||0,y:+p.y||0}))}; if(u.pp&&isFinite(u.pp.l)&&isFinite(u.pp.t)) propPosSetzen({l:+u.pp.l,t:+u.pp.t}); streckZeigen=!!u.sz;   // ältere Stärken (4 Stufen) verwerfen
-  if(u.spf==='rect'||u.spf==='ellipse') spotForm=u.spf; if(+u.lms>=100&&+u.lms<=3000) laserMs=+u.lms; if(+u.gms>=200&&+u.gms<=2000) geradeMs=+u.gms;
+  if(u.spf==='rect'||u.spf==='ellipse') spotForm=u.spf; if(+u.lms>=100&&+u.lms<=3000) laserMs=+u.lms; if(+u.gms>=200&&+u.gms<=2000) geradeMs=+u.gms; if(typeof u.gan==='boolean') geradeAn=u.gan;
   if(typeof u.ebg==='boolean') ebGriffe=u.ebg;
   if(typeof u.pz==='boolean') popZu=u.pz;
   if(u.pzv>=2){ if(+u.pzw>=0&&+u.pzw<=3000) popWarteMs=+u.pzw; if(+u.pzd>=0&&+u.pzd<=3000) popWegMs=+u.pzd; }   /* aeltere Staende: neue Standardzeiten 0,2 s / 0,8 s */
@@ -8645,7 +8646,11 @@ $('obP').onclick=()=>obenSetz(obenPx+4);
 $('obR').onclick=()=>obenSetz(0);
 document.querySelectorAll('#spotSeg button').forEach(b=>b.onclick=()=>{ spotForm=b.dataset.spot; spotSegUI(); moveSpot(spotMid.x||W/2,spotMid.y||H/2); saveUI(); });
 const lasSetz=v=>{ laserMs=Math.max(100,Math.min(3000,v)); lasUI(); saveUI(); };
-function gerUI(){ $('gerV').textContent=(geradeMs/1000).toFixed(1).replace('.',',')+' s'; }
+function gerUI(){ $('gerV').textContent=(geradeMs/1000).toFixed(1).replace('.',',')+' s';
+  $('geradeSw').classList.toggle('on',geradeAn);
+  $('gerZeile').style.display=geradeAn?'':'none'; $('gerHint').style.display=geradeAn?'':'none'; }
+$('geradeSw').onclick=()=>{ geradeAn=!geradeAn; if(!geradeAn) clearTimeout(dwellTimer); gerUI(); saveUI();
+  toast(geradeAn?'Linie gerade ziehen: an':'Linie gerade ziehen: aus'); };
 const gerSetz=v=>{ geradeMs=Math.max(200,Math.min(2000,v)); gerUI(); saveUI(); };
 $('gerM').onclick=()=>gerSetz(geradeMs-100);
 $('gerP').onclick=()=>gerSetz(geradeMs+100);

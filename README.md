@@ -204,8 +204,9 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   und „Freihand erkennen" stehen kompakt direkt untereinander.
 - **Freihand → gerade Strecke:** Beim normalen Schreiben am Ende einer Linie **kurz
   ruhig halten** → aus der Linie wird eine gerade Strecke (Anfang → gehaltener Punkt).
-  Sonst bleibt es die Freihandlinie. Die **Haltezeit** steht in den **Einstellungen →
-  Bedienung** („Linie gerade ziehen"): **0,2 s bis 2 s**, Standard **0,7 s**. Kürzer heißt
+  Sonst bleibt es die Freihandlinie. In den **Einstellungen → Bedienung** lässt sich
+  **„Linie gerade ziehen" ganz abschalten** (Standard: an) und die **Haltezeit** einstellen:
+  **0,2 s bis 2 s**, Standard **0,7 s**. Kürzer heißt
   schneller, aber es passiert auch leichter aus Versehen beim langsamen Schreiben.
   (Als „ruhig" zählt dabei ein Wackeln bis 14 px.)
 - **Konstruktionswerkzeuge:** **Kreis** (erster Punkt = Mittelpunkt – bleibt als Punkt sichtbar –,
