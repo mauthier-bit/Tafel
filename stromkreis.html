@@ -311,8 +311,8 @@ const RL=5;                                   // Drahtwiderstand der Spule in Ω
    Frequenzen nahe am idealen Verhalten liegt (U₂/U₁ ≈ N₂/N₁), bei Gleichspannung aber nichts tut. */
 const TR_A=2e-3, TR_K=0.99999, TR_RW=0.001;    // H je Windung², Kopplungsgrad, Ω je Windung
 const TR_PSI=0.02;                            // höchster Fluss je Windung (Vs) – dann sättigt der Eisenkern
-function trWerte(p){ const n1=Math.max(1,p.val||1), n2=Math.max(1,p.val2||1);
-  return {n1,n2,L1:TR_A*n1*n1,L2:TR_A*n2*n2,M:TR_K*TR_A*n1*n2,R1:TR_RW*n1,R2:TR_RW*n2,Is:TR_PSI/(TR_A*n1)}; }
+function trWerte(p){ const n1=Math.max(1,p.val||1), n2=Math.max(1,p.val2||1), rw=p.ideal?0:TR_RW;
+  return {n1,n2,L1:TR_A*n1*n1,L2:TR_A*n2*n2,M:TR_K*TR_A*n1*n2,R1:rw*n1,R2:rw*n2,Is:TR_PSI/(TR_A*n1)}; }
 const BETA=100, VBE=0.7, VSAT=0.1, RSAT=0.5;   // Transistor-Modell
 let simT=0;                                   // Simulationszeit für Wechselspannung
 const defaults=()=>({wires:[],parts:[],show:{U:true,I:true,R:false},flow:true,carrier:'e',ws:'mom',zoom:1,ox:null,oy:null,fontSize:14,edit:true});
@@ -656,7 +656,7 @@ function drawScene(c,o){ const cell=o.cell, K=(data.fontSize||14)/14, R=ensureSo
       else if(p.type==='trafo'){
         if(data.show.U){ lines.push([nU+'₁ = '+fmtQ(art?zu('U',r.U):r.U,'V'),'#b45309']); lines.push([nU+'₂ = '+fmtQ(art?zu('U2',r.U2):r.U2,'V'),'#b45309']); }
         if(data.show.I){ lines.push([nI+'₁ = '+fmtQ(art?zu('I',r.I):r.I,'A'),'#1d4ed8']); lines.push([nI+'₂ = '+fmtQ(art?zu('I2',r.I2):-r.I2,'A'),'#1d4ed8']); }
-        if(data.show.R) lines.push(['N₁ = '+fmtNum(p.val)+' · N₂ = '+fmtNum(p.val2),'#475569']); }
+        if(data.show.R) lines.push(['N₁ = '+fmtNum(p.val)+' · N₂ = '+fmtNum(p.val2)+(p.ideal?' · ideal':''),'#475569']); }
       else if(p.type!=='sw2'){
         if(data.show.U) lines.push([nU+' = '+fmtQ(zu('U',r.U),'V'),'#b45309']);
         if(data.show.I) lines.push([nI+' = '+fmtQ(zu('I',r.I),'A'),'#1d4ed8']);
@@ -763,7 +763,8 @@ function renderBar2(){ const b=$('bar2'); b.innerHTML='';
     if(p.type==='coil') el('span','lbl','Drahtwiderstand '+RL+' Ω');
     if(p.type==='trafo'){ const w=trWerte(p);
       el('span','lbl','Übersetzung N₂/N₁ = '+fmtNum(w.n2/w.n1));
-      el('span','lbl','Drahtwiderstand '+fmtNum(w.R1)+' Ω / '+fmtNum(w.R2)+' Ω · nur Wechselspannung'); }
+      el('button','chip'+(p.ideal?' on':''),'idealer Trafo',()=>{ pushUndo(); p.ideal=!p.ideal; changed(); });
+      el('span','lbl',(p.ideal?'ohne Drahtwiderstand':'Drahtwiderstand '+fmtNum(w.R1)+' Ω / '+fmtNum(w.R2)+' Ω')+' · nur Wechselspannung'); }
     if(p.type==='amm') el('span','lbl','in Reihe schalten');
     if(p.type==='volt') el('span','lbl','parallel schalten');
     if(p.type==='diode') el('span','lbl','Durchlassspannung 0,7 V');
@@ -831,7 +832,7 @@ const TEMPLATES={
   'Wechselspannung':()=>build([...rectWires(2,1,10,6)],[['ac',2,2,1,{val:6,val2:0.5}],['lamp',5,1,0],['diode',10,2,1],['res',5,6,0,{val:10}]]),
   'Transformator':()=>{ data.ws='mom';
     build([...hline(3,6,2),...hline(3,6,4),...hline(8,11,2),...hline(8,11,4)],
-      [['ac',3,2,1,{val:12,val2:2}],['trafo',6,2,0,{val:500,val2:250}],['lamp',11,2,1,{val:12}]]); },
+      [['ac',3,2,1,{val:12,val2:2}],['trafo',6,2,0,{val:500,val2:250,ideal:true}],['lamp',11,2,1,{val:12}]]); },
   /* Energietransport (nach dem Arbeitsblatt „Energieübertragung durch Hochspannungsleitungen“):
      Generator – Fernleitung mit ½R_L = 5 Ω in jedem Leiter – zuschaltbare Verbraucher.
      Ohne Trafo werden die Lampen mit jedem zugeschalteten Verbraucher deutlich dunkler,
@@ -845,8 +846,8 @@ const TEMPLATES={
     const w=[...hline(2,5,0),...hline(2,5,2),                       // Niederspannung: Generator → Trafo
       ...hline(7,9,0),...hline(11,14,0),...hline(7,9,2),...hline(11,14,2),   // Hochspannungs-Fernleitung
       ...hline(16,24,0),...vline(16,2,4),...hline(16,24,4)];         // Niederspannung: Trafo → Verbraucher
-    const p=[['ac',2,0,1,{val:12,val2:2}],['trafo',5,0,0,{val:100,val2:1000}],
-      ['res',9,0,0,{val:5}],['res',9,2,0,{val:5}],['trafo',14,0,0,{val:1000,val2:100}]];
+    const p=[['ac',2,0,1,{val:12,val2:2}],['trafo',5,0,0,{val:100,val2:1000,ideal:true}],
+      ['res',9,0,0,{val:5}],['res',9,2,0,{val:5}],['trafo',14,0,0,{val:1000,val2:100,ideal:true}]];
     [18,21,24].forEach((x,i)=>{ p.push(['sw',x,0,1,{on:i===0}]); p.push(['lamp',x,2,1,{val:12}]); });
     data.ws='eff'; build(w,p); },
   'Transistor als Schalter':()=>build([...hline(2,9,1),...vline(2,1,9),...hline(2,9,9),...vline(9,1,4),...vline(9,6,9),...hline(4,7,5),...vline(4,1,5)],
