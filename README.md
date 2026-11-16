@@ -2118,6 +2118,15 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     wieder zwischen −1 und 1"); der Wert selbst wird durch Einsetzen bestimmt – das sieht man den Karten an.
   - **Asymptoten** blendet ein Knopf ein: **waagrechte** (y = …), **senkrechte** (x = …) und – über
     Polynomdivision – auch die **schiefe Asymptote** (z. B. y = x bei (x²+1)/x), jeweils **mit Gleichung**.
+  - **Die Ansicht passt sich dem angetippten Rand an:** Bei **x → ±∞** zoomt der Graph in x weit hinaus
+    (bis x = 100 bzw. −100), der y-Ausschnitt bleibt – so sieht man, wie die Kurve abflacht, sich einer
+    Asymptote nähert oder oben bzw. unten aus dem Bild läuft. Bei einer **Definitionslücke** rückt der
+    Ausschnitt nah an die Stelle heran (x₀ ± 7). Schließt man die Karte wieder, steht die Standardansicht.
+    Mit **zwei Fingern** wird wie im Reiter Graph gezoomt: **waagrecht** nebeneinander nur die x-Achse,
+    **senkrecht** übereinander nur die y-Achse, **schräg** beides (am Rechner Mausrad, mit Umschalt nur x,
+    mit Alt nur y).
+  - **Exponenten stehen hoch:** Der angezeigte Term schreibt `x·e^(−x)` als x·e<sup>−x</sup>, ebenso bei
+    allen anderen Termen mit Potenzen.
   - Die **gewählte Karte** ist im Graphen hervorgehoben: der Streifen auf der richtigen Seite, Punkte, die
     sich der Stelle nähern, und ein Pfeil in die Richtung des Grenzwerts. Hebbare Lücken erscheinen als
     **offener Kreis**. Nachgerechnet wurden unter anderem 1/(x−2), (x²−1)/(x−1), (3x²−12)/(x²−4x+4),

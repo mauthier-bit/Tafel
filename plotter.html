@@ -161,6 +161,7 @@
   .lmBr>span{padding:0 4px;}
   .lmBr>span+span{border-top:1.5px solid #94a3b8;}
   .lmRand .lmG{font-size:calc(var(--k) * 12.5px);color:#475569;margin-top:4px;line-height:1.35;}
+  .lmRand .lmG sup,#lmTermGross sup{font-size:.68em;line-height:0;}
   .lmRand .lmB{font-size:calc(var(--k) * 11.5px);color:#8a93a2;margin-top:3px;font-variant-numeric:tabular-nums;}
   .lmHead{font-size:calc(var(--k) * 12px);color:#64748b;margin:0 0 6px;line-height:1.35;}
   .lmHead b{color:#1f2430;}
@@ -2384,7 +2385,7 @@ function mdUi(){ ['p','e','t','n','w'].forEach(k=>$('mdT'+k).classList.toggle('o
    die typischen Begründungen dazu. Gerechnet wird mit den aktuellen Werten von a, b und c. */
 /* Der Reiter steht für sich: eigener Term, unabhängig von Graph/Tabelle/Maschine. */
 let lm={term:'(x^2+1)/(x^2−4)', asym:false, p:{a:1,b:0,c:0}};   /* eigene a, b, c – unabhängig von den vorderen Reitern */
-let lmView={unit:40,ox:0,oy:0}, lmW=0, lmH=0, lmSel=0, lmErg=null;
+let lmView={ux:40,uy:40,ox:0,oy:0}, lmW=0, lmH=0, lmSel=0, lmErg=null;
 
 /* ---- Term als Baum (gleiche Vorrangregeln wie evalAt) ---- */
 function lmAst(T){ let p=0; const peek=()=>T[p], next=()=>T[p++];
@@ -2540,9 +2541,9 @@ function lmPolyHtml(p,stark){ p=pTrim(p); const g=p.length-1, teile=[];
 const lmBruchHtml=(zh,nh)=>'<span class="lmBr"><span>'+zh+'</span><span>'+nh+'</span></span>';
 /* Den eingegebenen Term anzeigen – ein Quotient wird dabei auch als Bruch gesetzt */
 function lmOrigHtml(ast,toks){
-  if(ast&&ast.k==='/'){ const zt=termText(tokenize(lmAstText(ast.l))), nt=termText(tokenize(lmAstText(ast.r)));
+  if(ast&&ast.k==='/'){ const zt=lmAstHtml(ast.l), nt=lmAstHtml(ast.r);
     if(zt&&nt) return lmBruchHtml(zt,nt); }
-  return termText(toks); }
+  return ast?lmAstHtml(ast):termText(toks); }
 /* Vergleichstext „(x² + 1)/(x − 2)" zu einer Darstellung – einteilige Zähler/Nenner ohne Klammern */
 function lmTermVgl(zh,nh){ const t=h=>{ const r=String(h).replace(/<[^>]+>/g,'').trim();
     if(r.startsWith('(')&&r.endsWith(')')) return r;          /* steht schon in Klammern */
@@ -2579,6 +2580,22 @@ function lmAstText(nd){ if(!nd) return '';
     case '+': return lmAstText(nd.l)+'+'+ein(nd.r,1);
     case '-': return lmAstText(nd.l)+'-'+ein(nd.r,2); }
   return ''; }
+/* Term aus dem Baum als HTML – Exponenten stehen hoch (e^(−x) → e<sup>−x</sup>) */
+function lmAstHtml(nd){ if(!nd) return '';
+  const P={'+':1,'-':1,'*':2,'/':2,'^':3};
+  const ein=(t,min)=>{ const p=P[t.k]||9; return p<min?'('+lmAstHtml(t)+')':lmAstHtml(t); };
+  switch(nd.k){
+    case 'num': return zahl(nd.v);
+    case 'id': return SYM[nd.n]||nd.n;
+    case 'neg': return '−'+ein(nd.a,2);
+    case 'fn': return (nd.n==='sqrt'?'√(':(nd.n+'('))+lmAstHtml(nd.a)+')';
+    case '^': return ein(nd.l,4)+'<sup>'+lmAstHtml(nd.r)+'</sup>';
+    case '*': return ein(nd.l,2)+'·'+ein(nd.r,2);
+    case '/': return ein(nd.l,2)+'/'+ein(nd.r,3);
+    case '+': return lmAstHtml(nd.l)+' + '+ein(nd.r,1);
+    case '-': return lmAstHtml(nd.l)+' − '+ein(nd.r,2); }
+  return ''; }
+
 /* oberste Faktoren eines Produkts/Quotienten einsammeln */
 function lmTeile(nd,out,imNenner){ out=out||[];
   if(!nd) return out;
@@ -2593,7 +2610,7 @@ function lmTeilText(ast,x0,seite){
     const w=lmAusProben(lmProben(x=>evalAt(x,tk,lm.p),x0,seite));
     const beschr=(q.nd.k==='fn'&&(q.nd.n==='sin'||q.nd.n==='cos'))?'bleibt zwischen −1 und 1'
                 :(w.art==='kein'?'schwankt':'→ '+lmWert(w));
-    return (q.nenner?'im Nenner ':'')+termText(tk)+' '+beschr; });
+    return (q.nenner?'im Nenner ':'')+lmAstHtml(q.nd)+' '+beschr; });
   return 'Die einzelnen Teile: '+stk.join(', ')+'. '; }
 
 /* Polynomdivision – für die schiefe Asymptote */
@@ -2795,7 +2812,9 @@ function lmText(){ const o=$('lmOut'), gr=$('lmTermGross'); if(!o) return; const
        '</div>'; });
   o.innerHTML=h;
   o.querySelectorAll('.lmRand').forEach(el=>{ el.onclick=()=>{ const i=+el.dataset.i;
-    lmSel=(lmSel===i)?-1:i; lmText(); lmDraw(); sync(); }; }); }
+    const zu=(lmSel===i); lmSel=zu?-1:i; lmText();
+    if(zu) lmFit(); else lmBlick(e.karten[i]);                  /* passender Blick zum Rand */
+    sync(); }; }); }
 
 /* ---- Zeichnen ---- */
 let lmWarte=0;
@@ -2806,25 +2825,44 @@ function lmResize(){ const el=$('plotL'); if(!el) return; const r=el.getBounding
   lmW=Math.max(10,Math.round(r.width)); lmH=Math.max(10,Math.round(r.height));
   el.width=Math.round(lmW*dpr); el.height=Math.round(lmH*dpr);
   if(!lmView.ox&&!lmView.oy) lmFit(); else lmDraw(); }
+/* x-Bereich vorgeben, y-Bereich aus Stichproben dazu – x und y haben eigene Maßstäbe,
+   sonst wäre beim Blick ins Unendliche in y nichts mehr zu erkennen. */
+function lmBereich(x0,x1){ if(!lmW) return; const e=lmErg, f=e&&e.f;
+  const ys=[];
+  for(let i=0;i<=400;i++){ const y=f?f(x0+(x1-x0)*i/400):NaN; if(isFinite(y)) ys.push(y); }
+  ys.sort((a,b)=>a-b);
+  let lo=-5, hi=5;
+  if(ys.length>10){ lo=Math.min(lo,ys[Math.floor(ys.length*0.08)]); hi=Math.max(hi,ys[Math.floor(ys.length*0.92)]); }
+  /* Schießt die Funktion davon (x³, x·e^(−x) …), bleibt der y-Ausschnitt in vernünftigen Grenzen */
+  const grenze=4*(x1-x0);
+  if(hi-lo>grenze){ const m=ys.length?ys[Math.floor(ys.length/2)]:0; lo=m-grenze/2; hi=m+grenze/2; }
+  if(e) lmEinfach(e.asym).forEach(a=>{ lo=Math.min(lo,a-1.5); hi=Math.max(hi,a+1.5); });
+  if(hi-lo<2){ const m=(hi+lo)/2; lo=m-1; hi=m+1; }
+  lmView.ux=Math.max(0.05,lmW/(x1-x0)); lmView.uy=Math.max(0.05,lmH*0.86/(hi-lo));
+  lmView.ox=lmW/2-((x0+x1)/2)*lmView.ux;
+  lmView.oy=lmH/2+((lo+hi)/2)*lmView.uy;
+  lmDraw(); }
 function lmFit(){ if(!lmW) return; const e=lmErg;
   let x0=-8, x1=8;
   const xs=e?e.pole.concat(e.loecher.map(o=>o.x), e.raender.map(r=>r.x)):[];
   if(xs.length){ x0=Math.min(x0,Math.min.apply(null,xs)-3); x1=Math.max(x1,Math.max.apply(null,xs)+3); }
-  const ux=lmW/(x1-x0), ys=[];
-  for(let i=0;i<=300;i++){ const y=e&&e.f?e.f(x0+(x1-x0)*i/300):NaN; if(isFinite(y)) ys.push(y); }
-  ys.sort((a,b)=>a-b);
-  let lo=-5, hi=5;
-  if(ys.length>10){ lo=Math.min(lo,ys[Math.floor(ys.length*0.08)]); hi=Math.max(hi,ys[Math.floor(ys.length*0.92)]); }
-  if(e) lmEinfach(e.asym).forEach(a=>{ lo=Math.min(lo,a-1.5); hi=Math.max(hi,a+1.5); });
-  if(hi-lo<2){ const m=(hi+lo)/2; lo=m-1; hi=m+1; }
-  const uy=lmH*0.86/(hi-lo);
-  lmView.unit=Math.max(3,Math.min(ux,uy));
-  lmView.ox=lmW/2-((x0+x1)/2)*lmView.unit;
-  lmView.oy=lmH/2+((lo+hi)/2)*lmView.unit;
-  lmDraw(); }
+  lmBereich(x0,x1); }
+/* Blick passend zum angetippten Rand: ins Unendliche weit hinaus, an einer Lücke nah heran */
+function lmBlick(k){ if(!lmW||!k){ return; }
+  if(!isFinite(k.x)){
+    /* Nur in x hinauszoomen: der y-Ausschnitt bleibt, sonst verliert man den Bezug.
+       Läuft der Graph gegen eine Zahl, wird dieser Wert in die Mitte genommen. */
+    const s=k.x>0?1:-1, x0=s>0?-12:-100, x1=s>0?100:12;
+    const ymin=(lmView.oy-lmH)/lmView.uy, ymax=lmView.oy/lmView.uy;
+    lmView.ux=Math.max(0.05,lmW/(x1-x0)); lmView.ox=-x0*lmView.ux;
+    if(k.wert&&k.wert.art==='zahl'&&isFinite(k.wert.v)){
+      const v=k.wert.v, rand=0.15*(ymax-ymin);
+      if(v<ymin+rand||v>ymax-rand) lmView.oy=lmH/2+v*lmView.uy; }
+    lmDraw(); return; }
+  lmBereich(k.x-7, k.x+7); }
 function lmKurve(c,f,col,w){ c.save(); c.strokeStyle=col; c.lineWidth=w; c.lineJoin='round'; c.beginPath();
   let prev=null;
-  for(let px=0;px<=lmW;px++){ const x=(px-lmView.ox)/lmView.unit, y=f(x), py=lmView.oy-y*lmView.unit;
+  for(let px=0;px<=lmW;px++){ const x=(px-lmView.ox)/lmView.ux, y=f(x), py=lmView.oy-y*lmView.uy;
     if(!isFinite(py)){ prev=null; continue; }
     if(prev===null||Math.abs(py-prev)>lmH*2) c.moveTo(px,py); else c.lineTo(px,py);
     prev=py; }
@@ -2838,22 +2876,23 @@ function lmPfeil(c,x,y,dx,dy,col){ const l=Math.hypot(dx,dy)||1, ux=dx/l, uy=dy/
 function lmDraw(){ if(tab!=='l'||!lmW) return; const e=lmErg;
   const c=$('plotL').getContext('2d'); c.setTransform(dpr,0,0,dpr,0,0);
   c.clearRect(0,0,lmW,lmH); c.fillStyle='#fff'; c.fillRect(0,0,lmW,lmH);
-  const u=lmView.unit, ox=lmView.ox, oy=lmView.oy, X=x=>ox+x*u, Y=y=>oy-y*u;
-  const xmin=(0-ox)/u, xmax=(lmW-ox)/u, ymin=(oy-lmH)/u, ymax=oy/u;
-  const raw=44/u, p10=Math.pow(10,Math.floor(Math.log10(raw)));
-  let step=p10*10; for(const m of [1,2,5,10]){ if(p10*m>=raw){ step=p10*m; break; } }
+  const ux=lmView.ux, uy=lmView.uy, ox=lmView.ox, oy=lmView.oy, X=x=>ox+x*ux, Y=y=>oy-y*uy;
+  const xmin=(0-ox)/ux, xmax=(lmW-ox)/ux, ymin=(oy-lmH)/uy, ymax=oy/uy;
+  const schritt=u=>{ const raw=44/u, p10=Math.pow(10,Math.floor(Math.log10(raw)));
+    for(const m of [1,2,5,10]) if(p10*m>=raw) return p10*m; return p10*10; };
+  const sx=schritt(ux), sy=schritt(uy);
   c.strokeStyle='#eef1f6'; c.lineWidth=1; c.beginPath();
-  for(let x=Math.ceil(xmin/step)*step;x<=xmax;x+=step){ c.moveTo(X(x),0); c.lineTo(X(x),lmH); }
-  for(let y=Math.ceil(ymin/step)*step;y<=ymax;y+=step){ c.moveTo(0,Y(y)); c.lineTo(lmW,Y(y)); }
+  for(let x=Math.ceil(xmin/sx)*sx;x<=xmax;x+=sx){ c.moveTo(X(x),0); c.lineTo(X(x),lmH); }
+  for(let y=Math.ceil(ymin/sy)*sy;y<=ymax;y+=sy){ c.moveTo(0,Y(y)); c.lineTo(lmW,Y(y)); }
   c.stroke();
   c.strokeStyle='#98a2b3'; c.lineWidth=1.6; c.beginPath();
   c.moveTo(0,Y(0)); c.lineTo(lmW,Y(0)); c.moveTo(X(0),0); c.lineTo(X(0),lmH); c.stroke();
   c.fillStyle='#667085'; c.font=(fontItalic?'italic ':'')+(fontBold?'bold ':'')+fontSize+'px sans-serif';
   c.textAlign='center'; c.textBaseline='top';
-  for(let x=Math.ceil(xmin/step)*step;x<=xmax;x+=step){ if(Math.abs(x)<1e-9) continue;
+  for(let x=Math.ceil(xmin/sx)*sx;x<=xmax;x+=sx){ if(Math.abs(x)<1e-9) continue;
     c.fillText(fmt(x), X(x), Math.min(Math.max(Y(0)+3,2),lmH-fontSize-3)); }
   c.textAlign='right'; c.textBaseline='middle';
-  for(let y=Math.ceil(ymin/step)*step;y<=ymax;y+=step){ if(Math.abs(y)<1e-9) continue;
+  for(let y=Math.ceil(ymin/sy)*sy;y<=ymax;y+=sy){ if(Math.abs(y)<1e-9) continue;
     c.fillText(fmt(y), Math.min(Math.max(X(0)-4,fontSize*2),lmW-2), Y(y)); }
   if(!e||!e.ok) return;
   /* Asymptoten – nur wenn eingeblendet */
@@ -2946,25 +2985,37 @@ function lmNeu(sofort){
   const as=$('lmAs'); if(as) as.onclick=()=>{ lm.asym=!lm.asym; as.classList.toggle('on',lm.asym); lmDraw(); sync(); };
   const fit=$('lmFit'); if(fit) fit.onclick=()=>{ lmFit(); sync(); };
   const zm=$('lmZm'), zp=$('lmZp');
-  const zoom=f=>{ const mx=lmW/2, my=lmH/2, x=(mx-lmView.ox)/lmView.unit, y=(lmView.oy-my)/lmView.unit;
-    lmView.unit=Math.max(2,Math.min(4000,lmView.unit*f)); lmView.ox=mx-x*lmView.unit; lmView.oy=my+y*lmView.unit; lmDraw(); sync(); };
+  /* zoomt x und y gleichermaßen */
+  const zoomUm=(mx,my,f)=>{ const x=(mx-lmView.ox)/lmView.ux, y=(lmView.oy-my)/lmView.uy;
+    lmView.ux=Math.max(0.05,Math.min(4000,lmView.ux*f)); lmView.uy=Math.max(0.05,Math.min(4000,lmView.uy*f));
+    lmView.ox=mx-x*lmView.ux; lmView.oy=my+y*lmView.uy; lmDraw(); };
+  const zoom=f=>{ zoomUm(lmW/2,lmH/2,f); sync(); };
   if(zm) zm.onclick=()=>zoom(1/1.3); if(zp) zp.onclick=()=>zoom(1.3);
   const el=$('plotL'); if(!el) return;
-  const zs=new Map(); let last=null, d0=0, u0=0;
+  const zs=new Map(); let last=null, g0=null, u0={ux:40,uy:40};
   const lok=e=>{ const r=el.getBoundingClientRect(); return [e.clientX-r.left, e.clientY-r.top]; };
   el.addEventListener('pointerdown',e=>{ el.setPointerCapture&&el.setPointerCapture(e.pointerId);
-    zs.set(e.pointerId,lok(e)); if(zs.size===2){ const [a,b]=[...zs.values()]; d0=Math.hypot(a[0]-b[0],a[1]-b[1])||1; u0=lmView.unit; }
+    zs.set(e.pointerId,lok(e));
+    if(zs.size===2){ const [a,b]=[...zs.values()], mx=(a[0]+b[0])/2, my=(a[1]+b[1])/2;
+      /* Merken, wie die Finger stehen: waagrecht zoomt nur x, senkrecht nur y, schräg beides */
+      g0={a:a.slice(), b:b.slice(), wx:(mx-lmView.ox)/lmView.ux, wy:(lmView.oy-my)/lmView.uy};
+      u0={ux:lmView.ux,uy:lmView.uy}; }
     last={x:e.clientX,y:e.clientY}; });
   el.addEventListener('pointermove',e=>{ if(!zs.has(e.pointerId)) return; zs.set(e.pointerId,lok(e));
-    if(zs.size===2){ const [a,b]=[...zs.values()], d=Math.hypot(a[0]-b[0],a[1]-b[1])||1;
-      const mx=(a[0]+b[0])/2, my=(a[1]+b[1])/2, x=(mx-lmView.ox)/lmView.unit, y=(lmView.oy-my)/lmView.unit;
-      lmView.unit=Math.max(2,Math.min(4000,u0*d/d0)); lmView.ox=mx-x*lmView.unit; lmView.oy=my+y*lmView.unit; lmDraw(); return; }
+    if(zs.size===2&&g0){ const [a,b]=[...zs.values()];
+      const f=zoomF({x:g0.a[0],y:g0.a[1]},{x:g0.b[0],y:g0.b[1]},{x:a[0],y:a[1]},{x:b[0],y:b[1]});
+      const mx=(a[0]+b[0])/2, my=(a[1]+b[1])/2;
+      lmView.ux=Math.max(0.05,Math.min(4000,u0.ux*f[0]));
+      lmView.uy=Math.max(0.05,Math.min(4000,u0.uy*f[1]));
+      lmView.ox=mx-g0.wx*lmView.ux; lmView.oy=my+g0.wy*lmView.uy; lmDraw(); return; }
     if(!last) return; lmView.ox+=e.clientX-last.x; lmView.oy+=e.clientY-last.y; last={x:e.clientX,y:e.clientY}; lmDraw(); });
-  const auf=e=>{ zs.delete(e.pointerId); if(zs.size<2) d0=0; if(!zs.size){ last=null; sync(); } };
+  const auf=e=>{ zs.delete(e.pointerId); if(zs.size<2) g0=null; if(!zs.size){ last=null; sync(); } };
   el.addEventListener('pointerup',auf); el.addEventListener('pointercancel',auf);
   el.addEventListener('wheel',e=>{ e.preventDefault(); const f=Math.exp(-e.deltaY*0.0015), p=lok(e);
-    const x=(p[0]-lmView.ox)/lmView.unit, y=(lmView.oy-p[1])/lmView.unit;
-    lmView.unit=Math.max(2,Math.min(4000,lmView.unit*f)); lmView.ox=p[0]-x*lmView.unit; lmView.oy=p[1]+y*lmView.unit; lmDraw(); },{passive:false});
+    const x=(p[0]-lmView.ox)/lmView.ux, y=(lmView.oy-p[1])/lmView.uy;
+    if(!e.altKey) lmView.ux=Math.max(0.05,Math.min(4000,lmView.ux*f));     /* Umschalt: nur x, Alt: nur y */
+    if(!e.shiftKey) lmView.uy=Math.max(0.05,Math.min(4000,lmView.uy*f));
+    lmView.ox=p[0]-x*lmView.ux; lmView.oy=p[1]+y*lmView.uy; lmDraw(); },{passive:false});
 })();
 
 function zustand(){ return {funcs:funcs.map(f=>({term:f.term,color:f.color,width:f.width,mx:f.mx,hide:!!f.hide})), params, view, fontSize, fontBold, fontItalic, activeIdx, tab, nullAn, xs:xs.slice(), xPt:{on:xPt.on,v:xPt.v}, yPt:{on:yPt.on,v:yPt.v}, tr:Object.assign({},tr),
@@ -3026,7 +3077,8 @@ addEventListener('message',e=>{ if(e.source!==window&&(window.parent===window||e
     lm.asym=!!d.lm.asym;
     if(d.lm.p) lm.p=Object.assign({a:1,b:0,c:0},d.lm.p);
     if(typeof d.lm.sel==='number') lmSel=d.lm.sel;
-    if(d.lm.view&&d.lm.view.unit) lmView=Object.assign(lmView,d.lm.view); }
+    if(d.lm.view&&(d.lm.view.ux||d.lm.view.unit)){ const v=d.lm.view;
+      lmView=Object.assign(lmView,{ux:v.ux||v.unit, uy:v.uy||v.unit, ox:v.ox, oy:v.oy}); } }
   if(d.tab&&d.tab!==tab) setTab(d.tab); else { draw(); refreshTable(); refreshMachines(); trDraw(); mdDraw(); if(tab==='l') lmNeu(); } });
 addEventListener('resize',()=>{ resize(); if(tab==='d') mdResize(); });
 /* Wachsen die Bedienzeilen (z. B. weil die Bild-Knöpfe dazukommen), wird die Zeichenfläche
