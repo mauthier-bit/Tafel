@@ -2118,6 +2118,10 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   **Maschine:** oben der x-Wert, der durch einen Trichter in die Maschine (Zahnräder, darin die
   Funktionsvorschrift) fällt, darunter der **Rechenweg mit eingesetztem x** (`f₁(−1,5) = 2·(−1,5)² + (−3)·(−1,5) + 1`;
   negative Werte werden nur geklammert, wo es nötig ist) und unten der ausgeworfene y-Wert.
+  Neben dem x steht ein **Schieberegler**, mit dem sich x durchfahren lässt – die Maschine rechnet
+  dabei mit, und mit „→ Graph“ lassen sich einzelne Punkte festhalten. Er deckt den gerade
+  **sichtbaren x-Bereich** des Reiters Graph ab (und einen Wert, der daneben liegt). Die x-Pille
+  bleibt dabei **mittig über der Maschine** stehen, der Regler sitzt rechts daneben.
   **lim (Grenzwerte):** Dieser Reiter steht wie „Transformationen" **für sich** – eigener Term, eigene
   Zeichenfläche und eigene Parameter; die **Beispiele** sind nach
   Art gegliedert (ganzrational, gebrochen-rational, e-Funktion, Logarithmus und Wurzel, Sinus und Kosinus).
