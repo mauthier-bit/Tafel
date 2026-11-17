@@ -2123,6 +2123,15 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   Art gegliedert (ganzrational, gebrochen-rational, e-Funktion, Logarithmus und Wurzel, Sinus und Kosinus).
   **Ablauf:** Term eintippen oder ein Beispiel wählen – dann stehen **Term und Graph groß** da (der Term als
   echter Bruch über der Zeichenfläche), und rechts erscheinen die **Ränder des Definitionsbereichs** zum
+  **Exakte Stellen statt gerundeter Dezimalzahlen:** Definitionslücken, Ränder und Nullstellen stehen,
+  wo es geht, exakt da – `x² − 2` im Nenner ergibt `x = −√2; √2` (nicht „1,4142“), `2x² − 1` ergibt
+  `±√2/2`, `x² + 2x − 1` zerfällt in `(x + 1 + √2)(x + 1 − √2)`, `3x − 1` ergibt `1/3`, und bei
+  `tan(x)` stehen die Stellen bei `±π/2; ±3π/2`. Gerechnet wird weiter mit Dezimalzahlen voller
+  Rechengenauigkeit; nur für die Anzeige wird zurückübersetzt (gesucht wird die ganzzahlige Gleichung
+  `a·x² + b·x + c = 0` mit den kleinsten Zahlen, die die Stelle erfüllt). Was sich so nicht fassen
+  lässt, bleibt eine gerundete Dezimalzahl, und kurze Dezimalzahlen wie `2,5` bleiben, wie sie sind.
+  Früher wurde die Stelle auf acht Nachkommastellen gerundet weitergerechnet – dann ging die
+  Faktorisierung nicht mehr auf und aus der Polstelle bei `√2` wurde eine vermeintlich hebbare Lücke.
   Untersuchen: ±∞ und jede Definitionslücke **einzeln von links und von rechts** (`x → 2⁻` und `x → 2⁺`,
   auch bei einer hebbaren Lücke – dass beide Seiten denselben Wert ergeben, ist ja der Grund dafür),
   jeweils in **lim-Schreibweise** (`lim` mit `x → 2⁻` darunter)

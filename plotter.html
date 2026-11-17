@@ -1179,7 +1179,8 @@ function nullstellenZeigen(){ const u=view.ux, uy=view.uy, oy=view.oy, ox=view.o
       /* ausgefüllt – der offene Kreis bleibt den Nahtstellen abschnittsweiser Funktionen vorbehalten */
       ctx.save(); ctx.beginPath(); ctx.arc(px,py,5.5,0,7); ctx.fillStyle=f.color; ctx.fill();
       ctx.lineWidth=2; ctx.strokeStyle='#fff'; ctx.stroke(); ctx.restore();
-      beschrift('x = '+zahl(Math.round(x0*1000)/1000), px, py+16+(n++%2)*15, f.color,'center'); }); }); }
+      /* exakt, wo es geht (Wurzel(x^2-2) hat die Nullstellen +-Wurzel 2), sonst gerundet */
+      beschrift('x = '+(lmExakt(x0)||lmPi(x0)||zahl(Math.round(x0*1000)/1000)), px, py+16+(n++%2)*15, f.color,'center'); }); }); }
 
 /* ---- Punkte aus Tabelle und Maschine ----
    „Ins Koordinatensystem" zeichnet die Wertepaare hier ein; der Graph selbst kann dabei
@@ -2674,8 +2675,70 @@ function pNull(p){ p=pTrim(p); const g=p.length-1; if(g<1) return [];
     x0=x1; y0=y1; }
   return out; }
 /* Werte zusammenfassen, die praktisch gleich sind */
-function lmEinfach(xs){ const o=[]; xs.slice().sort((a,b)=>a-b).forEach(x=>{ const r=Math.abs(x)<1e-9?0:Math.round(x*1e8)/1e8;
+function lmEinfach(xs){ const o=[]; xs.slice().sort((a,b)=>a-b).forEach(x=>{
+  /* nur Rundungsrauschen glätten: eine fast ganze Zahl wird ganz, sonst bleibt der volle Wert.
+     (Früher auf 1e-8 gerundet – dann teilte (x − 1,41421356) das Polynom x² − 2 nicht mehr,
+     und aus der Polstelle bei √2 wurde eine vermeintlich hebbare Lücke.) */
+  const r=Math.abs(x)<1e-9?0:(Math.abs(x-Math.round(x))<1e-9?Math.round(x):x);
   if(!o.some(q=>Math.abs(q-r)<1e-6)) o.push(r); }); return o; }
+
+/* ---- Zahlen exakt schreiben: Brüche und Quadratwurzeln ----
+   Definitionslücken sind oft keine Dezimalzahlen: x² − 2 hat die Nullstellen ±√2.
+   Gerechnet wird weiter mit Dezimalzahlen (voller Rechengenauigkeit); nur für die Anzeige
+   wird zurückübersetzt. Gesucht wird die ganzzahlige Gleichung a·x² + b·x + c = 0 mit den
+   kleinsten Zahlen, die x erfüllt – daraus folgt x = (−b ± √(b² − 4ac)) / (2a). */
+const lmGgT=(a,b)=>{ a=Math.abs(Math.round(a)); b=Math.abs(Math.round(b));
+  while(b){ const t=a%b; a=b; b=t; } return a||1; };
+/* √d so weit wie möglich herausziehen: √8 = 2√2, √12 = 2√3 */
+function lmWurzelTeil(d){ let k=1, m=d;
+  for(let i=2;i*i<=m;i++){ while(m%(i*i)===0){ m/=i*i; k*=i; } }
+  return {k,m}; }
+/* (p + q√m)/n als lesbarer Text; q = 0 heißt: reiner Bruch */
+function lmExaktText(p,q,m,n){
+  if(n<0){ p=-p; q=-q; n=-n; }
+  const g=lmGgT(lmGgT(p,q),n); if(g>1){ p/=g; q/=g; n/=g; }
+  if(q===0) return n===1?zahl(p):(zahl(p)+'/'+zahl(n));
+  const wz=(Math.abs(q)===1?'':zahl(Math.abs(q)))+'√'+zahl(m);
+  if(p===0){ const t=(q<0?'−':'')+wz; return n===1?t:(t+'/'+zahl(n)); }
+  const t=zahl(p)+(q<0?' − ':' + ')+wz;
+  return n===1?t:('('+t+')/'+zahl(n)); }
+/* x exakt als (p + q√m)/n – null, wenn nichts Einfaches passt */
+function lmExaktTeile(x){
+  if(typeof x!=='number'||!isFinite(x)) return null;
+  if(Math.abs(x-Math.round(x))<1e-9) return null;             /* ganze Zahlen schreibt zahl() */
+  const fertig=(p,q,m,n)=>{ if(n<0){ p=-p; q=-q; n=-n; }
+    const g=lmGgT(lmGgT(p,q),n); return {p:p/g, q:q/g, m, n:n/g}; };
+  let h0=0,h1=1,k0=1,k1=0,t=x;                                /* Kettenbruch → Bruch p/q */
+  for(let i=0;i<24;i++){ const a=Math.floor(t), h=a*h1+h0, k=a*k1+k0;
+    h0=h1; h1=h; k0=k1; k1=k;
+    if(k1>10000) break;
+    if(k1>0&&Math.abs(x-h1/k1)<1e-11)                          /* 2,5 bleibt 2,5 – nur was
+      sich nicht als kurze Dezimalzahl schreiben lässt, wird zum Bruch */
+      return Math.abs(x*1e4-Math.round(x*1e4))<1e-9?null:fertig(h1,0,0,k1);
+    const r=t-a; if(Math.abs(r)<1e-13) break; t=1/r; }
+  for(let a=1;a<=20;a++) for(let b=-40;b<=40;b++){             /* quadratische Gleichung */
+    const cf=-(a*x*x+b*x), c=Math.round(cf);
+    if(Math.abs(cf-c)>1e-7||Math.abs(c)>400) continue;
+    if(Math.abs(a*x*x+b*x+c)>1e-9*(1+x*x)) continue;
+    const d=b*b-4*a*c; if(d<=0) continue;
+    const w=lmWurzelTeil(d); if(w.m<2) continue;               /* ginge glatt auf – dann rational */
+    return fertig(-b, (x>-b/(2*a)?1:-1)*w.k, w.m, 2*a); }
+  return null; }
+function lmExakt(x){ const T=lmExaktTeile(x); return T?lmExaktText(T.p,T.q,T.m,T.n):null; }
+/* Vielfache von π – bei Sinus, Kosinus und Tangens liegen die Stellen dort:
+   1,5708 ist π/2, −4,7124 ist −3π/2 */
+function lmPi(x){ const r=x/Math.PI;
+  if(Math.abs(r)<1e-9||Math.abs(r)>48) return null;
+  for(let q=1;q<=12;q++){ const p=Math.round(r*q);
+    if(!p||Math.abs(r-p/q)>1e-9) continue;
+    const g=lmGgT(p,q), pp=p/g, qq=q/g;
+    const z=(pp===1?'π':(pp===-1?'−π':zahl(pp)+'π'));
+    return qq===1?z:(z+'/'+zahl(qq)); }
+  return null; }
+/* Zahl für die Anzeige im Reiter lim: exakt, wo es geht, sonst gerundet */
+const lmZ=x=>(Math.abs(x)<1e-9?'0':(lmExakt(x)||lmPi(x)||zahl(x)));
+/* in Klammern setzen, wenn der Text selbst ein + oder − enthält (1 + √5) */
+const lmKlam=t=>(/^[^()]* [+−] /.test(t)?'('+t+')':t);
 
 /* ---- Was steckt im Term? ---- */
 function lmFlags(ast){ const F={exp:false,ln:false,wurzel:false,trig:false,betrag:false,xDrin:false};
@@ -2771,7 +2834,16 @@ function lmTermVgl(zh,nh){ const t=h=>{ const r=String(h).replace(/<[^>]+>/g,'')
     return (/[+−-]\s/.test(r)||/·/.test(r))?('('+r+')'):r; };
   if(nh===undefined) return String(zh).replace(/<[^>]+>/g,'').trim();
   return t(zh)+'/'+t(nh); }
-const lmKlammer=(x0,k)=>(Math.abs(x0)<1e-12?'x':('(x '+(x0<0?'+ '+zahl(-x0):'− '+zahl(x0))+')'))+(k>1?hoch(k):'');
+/* Der Linearfaktor (x − x₀). Ist x₀ exakt bekannt und ohne Nenner, wird glatt
+   angeschrieben: x₀ = −1 − √2 ergibt (x + 1 + √2) statt (x + (1 + √2)). */
+function lmKlammer(x0,k){ const h=(k>1?hoch(k):'');
+  if(Math.abs(x0)<1e-12) return 'x'+h;
+  const T=lmExaktTeile(-x0);
+  if(T&&T.n===1){ let t='';
+    if(T.p) t+=(T.p<0?' − ':' + ')+zahl(Math.abs(T.p));
+    if(T.q) t+=(T.q<0?' − ':' + ')+((Math.abs(T.q)===1?'':zahl(Math.abs(T.q)))+'√'+zahl(T.m));
+    return '(x'+t+')'+h; }
+  return '(x '+(x0<0?'+ '+lmKlam(lmZ(-x0)):'− '+lmKlam(lmZ(x0)))+')'+h; }
 function lmWert(w){ if(!w) return '—';
   if(w.art==='inf') return '+∞';
   if(w.art==='ninf') return '−∞';
@@ -2790,7 +2862,7 @@ const lmWCol=w=>(!w?'#64748b':(w.art==='inf'?'#15803d':(w.art==='ninf'?'#b91c1c'
   :(w.v<0?'#b91c1c':'#15803d'))))));
 const LM_SENK='#ea580c';      /* senkrechte Asymptoten (Polstellen): orange */
 const LM_WAAG='#7e22ce';      /* waagrechte und schiefe Asymptoten: lila */
-const lmX=x=>(Math.abs(x)<1e-9?'0':zahl(x));
+const lmX=x=>lmZ(x);
 const lmVZ=v=>v>0?'positiv':'negativ';
 /* Einen Teilbaum wieder als Term schreiben – so lässt er sich einzeln auswerten und anzeigen */
 function lmAstText(nd){ if(!nd) return '';
@@ -2980,7 +3052,7 @@ function lmAnalyse(){
     return (st&&st.join('')===r)?st.slice().sort().join(''):r; }).join('/');
   /* steht links dasselbe wie rechts, wird nur einmal geschrieben */
   const mitOrig=(h,vgl)=>(ohneLeer(vgl)===ohneLeer(origT))?('f(x) = '+h):('f(x) = '+origHtml+' = '+h);
-  const randKarte=(x0,seite,wert,grund,proben)=>({ziel:'x → '+lmX(x0)+(seite<0?'⁻':'⁺'), wert, grund, proben, x:x0, seite});
+  const randKarte=(x0,seite,wert,grund,proben)=>({ziel:'x → '+lmKlam(lmX(x0))+(seite<0?'⁻':'⁺'), wert, grund, proben, x:x0, seite});
 
   /* ===== gebrochen-rationale und ganzrationale Terme: alles am Term ablesbar ===== */
   if(rat){
@@ -3034,7 +3106,7 @@ function lmAnalyse(){
         /* auch hier beide Seiten einzeln – dass links und rechts dasselbe herauskommt, ist ja der Grund,
            warum die Lücke hebbar ist */
         [-1,1].forEach(seite=>{ const pr=lmProben(f,x0,seite);
-          e.karten.push({ziel:'x → '+lmX(x0)+(seite<0?'⁻':'⁺'), wert:{art:'zahl',v:w}, x:x0, seite, loch:true, termHtml:tHtmlLoch,
+          e.karten.push({ziel:'x → '+lmKlam(lmX(x0))+(seite<0?'⁻':'⁺'), wert:{art:'zahl',v:w}, x:x0, seite, loch:true, termHtml:tHtmlLoch,
             grund:'Zähler und Nenner werden beide 0. Der Faktor '+klT+(kz>1?hoch(kz):'')+' kürzt sich weg; übrig bleibt '+
               (pGrad(nk)===0&&Math.abs(nk[0]-1)<1e-12?('der Term '+lmPolyHtml(zz,null)):'der gekürzte Bruch')+
               ', und der hat an der Stelle den Wert '+zahl(w)+'. '+
@@ -3099,7 +3171,7 @@ function lmAnalyse(){
       if(wl.art==='zahl'&&wr.art==='zahl'&&Math.abs(wl.v-wr.v)<1e-6*(1+Math.abs(wl.v))){
         e.loecher.push({x:g.x,y:wl.v});
         [-1,1].forEach(seite=>{ const pr=lmProben(f,g.x,seite);
-          e.karten.push(annKarte({ziel:'x → '+lmX(g.x)+(seite<0?'⁻':'⁺'), wert:seite<0?wl:wr, x:g.x, seite, loch:true,
+          e.karten.push(annKarte({ziel:'x → '+lmKlam(lmX(g.x))+(seite<0?'⁻':'⁺'), wert:seite<0?wl:wr, x:g.x, seite, loch:true,
             grund:'An dieser Stelle ist der Term nicht definiert. '+(seite<0?'Von links':'Von rechts')+
               ' nähern sich die Werte '+zahl(seite<0?wl.v:wr.v)+' – von der anderen Seite ebenso. Weil beide Seiten '+
               'denselben Wert ergeben, ist die Lücke <b>hebbar</b>: der Graph hat dort nur ein <b>Loch</b>.',
