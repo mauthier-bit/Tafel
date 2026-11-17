@@ -193,6 +193,22 @@
   #favMenu button.d{background:#fee2e2;}
   #favMenu .fmcap{font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#98a1b0;padding:2px 4px;}
   #favList{max-height:clamp(220px,56vh,640px);overflow:auto;display:flex;flex-direction:column;gap:4px;}
+  /* ---- Werkzeugsuche ---- */
+  #suWort{flex:1;min-width:0;padding:8px 10px;border:1px solid #cfd6e0;border-radius:10px;
+    font-size:15px;font-family:inherit;color:#1f2430;background:#fff;}
+  #win-suche .row.fill #suX{flex:0 0 auto;min-width:44px;}
+  #suListe{max-height:min(50vh,420px);overflow-y:auto;margin-top:8px;}
+  #suListe .sugrp{font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;
+    color:#98a1b0;margin:8px 2px 3px;}
+  .surow{display:flex;align-items:center;gap:9px;width:100%;padding:7px 8px;border:0;background:none;
+    border-radius:10px;text-align:left;font-family:inherit;cursor:pointer;}
+  .surow:hover{background:#eef2f7;}
+  .surow .ic{width:28px;height:28px;flex:none;display:flex;align-items:center;justify-content:center;color:#42506a;}
+  .surow .ic svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+  .surow .tx{flex:1;min-width:0;}
+  .surow .nm{display:block;font-size:14px;font-weight:700;color:#1f2430;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .surow .bs{display:block;font-size:12px;color:#7a8498;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .surow .gr{flex:none;font-size:11px;color:#98a1b0;max-width:33%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   #favList .favrow{display:flex;align-items:center;gap:8px;font-size:13px;}
   #favList .favrow .ic{width:26px;height:26px;flex:none;display:flex;align-items:center;justify-content:center;color:#42506a;}
   #favList .favrow .ic svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
@@ -981,6 +997,7 @@
     <button class="modebtn modetoggle" id="mode-toggle" title="Schreibwerkzeuge – antippen für Auswählen & Werkzeuge"><svg class="mi-write" viewBox="0 0 24 24"><path d="M2 12C3.3 4 5.5 4 6.8 12S9.8 18.5 11 12 13.1 8.3 14 12 15.5 14.5 16.2 12C17.2 8.5 19.5 6.3 22 6"/></svg><svg class="mi-select" viewBox="0 0 24 24"><path d="M5 3v15l4-4 3.2 6.2 2.4-1.1-3.1-6.1H18z" fill="currentColor" stroke="none"/></svg></button>
     <button class="tbtn" id="t-laser" title="Laserpointer"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></svg></button>
     <button class="tbtn" id="t-spot" title="Scheinwerfer"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2"/></svg></button>
+    <button class="tbtn" id="t-suche" title="Werkzeug suchen"><svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.3 15.3 5.2 5.2"/></svg></button>
   </div>
   <div class="msep favsep" id="favSep" style="display:none"></div>
   <div class="favs" id="favBar"></div>
@@ -1346,6 +1363,12 @@
 <div id="fsPages"><button id="fsPrev" type="button">‹</button><span id="fsPageV">1/1</span><button id="fsNext" type="button">›</button></div>
 
 <!-- Fenster -->
+<div class="win" id="win-suche" style="left:70px;top:36px;width:min(430px,92vw);"><h3>Werkzeug suchen <span class="x" data-close="win-suche">×</span></h3>
+  <div class="body">
+    <div class="row fill" style="gap:6px;flex-wrap:nowrap"><input id="suWort" type="search" placeholder="Name oder Stichwort …" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"><button class="btn" id="suX" title="Suche leeren">×</button></div>
+    <div id="suListe"></div>
+    <div class="hint" id="suHint"></div>
+  </div></div>
 <div class="win" id="win-noise" style="left:70px;top:70px;"><h3>Lärmampel <span class="x" data-close="win-noise">×</span></h3>
   <div class="body"><div id="noiseLight">
       <div class="nzView" data-nv="ampel"><div class="lamp red" id="lampR"></div><div class="lamp yel" id="lampY"></div><div class="lamp grn" id="lampG"></div></div>
@@ -4981,6 +5004,7 @@ addEventListener('message',e=>{ if(!e.data)return;
 
 /* ============ Favoriten (immer sichtbare Knöpfe oben in der senkrechten Leiste) ============ */
 let favs=[]; const FAV_MAX=8;
+let suLast=[];                      /* zuletzt über die Suche geholte Werkzeuge */
 const FAV_GROUPS=[['Schreiben','#writeTools'],['Formen','#shapepop'],['Werkzeuge','#widgetTools'],
   ['Zeit','#timepop'],['Klasse & Interaktion','#classpop'],['Mathe & Physik','#mathpop'],['Diverses','#divpop'],
   ['Leiste oben links','#settingsbar'],['Seiten-Leiste','#pagebar']];
@@ -5022,6 +5046,149 @@ function buildFavList(){ const box=$('favList'); if(!box)return; box.innerHTML='
       st.onclick=()=>{ isFav(src.id)?favDel(src.id):favAdd(src.id); };
       row.appendChild(ic); row.appendChild(nm); row.appendChild(st); box.appendChild(row); }); });
   if(!box.children.length) box.innerHTML='<div class="hint">Keine Knöpfe gefunden.</div>'; }
+/* ---- Werkzeugsuche ----
+   Die Treffer kommen aus den Knöpfen der Leisten selbst – dieselbe Quelle wie die Favoritenliste.
+   Symbol, Name und Beschreibung stehen schon im title jedes Knopfes, eine zweite Liste wäre
+   eine zweite Wahrheit. Ein Treffer löst den echten Knopf aus (b.click()), damit Nachfrage,
+   Seitenverhältnis und Undo-Schnappschuss über den gewohnten Weg laufen. */
+const SU_EXTRA={
+  'w-strom':'spannung stromstaerke widerstand ohm schaltplan reihenschaltung parallelschaltung lampe elektrik',
+  'w-optik':'licht brechung reflexion linse spiegel schatten strahlengang',
+  'w-welle':'wellen interferenz beugung brechung huygens',
+  'w-atom':'periodensystem elemente radioaktiv zerfall halbwertszeit kern huelle spektrum nuklid',
+  'w-induktion':'magnetfeld spule generator transformator feldlinien',
+  'w-waerme':'temperatur schmelzen sieden aggregatzustand teilchen mischungstemperatur',
+  'w-stoss':'impuls geschwindigkeit elastisch unelastisch zusammenstoss',
+  'w-energie':'energieerhaltung wirkungsgrad umwandlung',
+  'w-bewegung':'geschwindigkeit beschleunigung weg zeit diagramm kinematik',
+  'w-motion':'geschwindigkeit messen kamera bewegung',
+  'w-astro':'sonne mond erde planeten mondphasen finsternis jahreszeiten',
+  'w-vphysik':'video stroboskop auswerten',
+  'w-aphysik':'ton frequenz schall obertoene',
+  'w-mess':'messwerte messreihe auswerten',
+  'w-umr':'einheiten umrechnen groessen praefix',
+  'w-protokoll':'messreihe auswerten protokoll',
+  'w-plot':'funktion graph parabel gerade nullstelle grenzwert wertetabelle term funktionsgleichung',
+  'w-abl':'ableitung stammfunktion steigung kurve',
+  'w-ekreis':'sinus kosinus tangens winkel bogenmass trigonometrie',
+  'w-strahl':'aehnlichkeit strecken verhaeltnis',
+  'w-figuren':'flaeche umfang volumen oberflaeche dreieck kreis zylinder kegel pyramide pythagoras',
+  'w-raum':'vektoren gerade ebene raum analytische geometrie',
+  'w-swt':'einheiten umrechnen komma zehnerpotenz stellen',
+  'w-bruch':'brueche zaehler nenner anteil',
+  'w-terme':'term variable klammer umformen',
+  't-gleichung':'gleichung loesen umstellen formel waage gleichungssystem',
+  'w-sheet':'tabelle kalkulation zellen formel',
+  'w-diag':'statistik saeulen balken linien kreis diagramm',
+  'w-zufall':'wuerfel gluecksrad urne laplace zufall',
+  'w-vier':'bedingte wahrscheinlichkeit tabelle',
+  'w-baum':'wahrscheinlichkeit pfad baum',
+  'w-vert':'binomial normal wahrscheinlichkeit verteilung',
+  'w-codap':'statistik daten',
+  'w-glossar':'begriffe erklaerung abfrage vokabeln',
+  'w-galgen':'spiel raten begriff',
+  'w-kreuz':'raetsel begriffe',
+  'w-gitter':'raetsel suchen woerter',
+  'w-wolke':'begriffe wolke',
+  'w-zuord':'zuordnen gruppen begriffe bilder',
+  'w-luecke':'lueckentext text ausfuellen',
+  'w-netz':'begriffe verbinden netz',
+  't-mindmap':'mindmap ideen sammeln',
+  'w-pin':'karten sammeln anheften',
+  'w-besch':'bild beschriften skizze',
+  'w-ivid':'video fragen',
+  'w-lernkarte':'lernweg fortschritt',
+  'w-reihen':'ordnen reihenfolge kette',
+  'w-zeit':'zeitleiste jahreszahlen geschichte',
+  'w-gesch':'geschichte zeitleiste mathematiker physiker',
+  'w-class':'schueler namen klasse liste',
+  'w-groups':'gruppen einteilen',
+  'w-name':'schueler aufrufen zufall',
+  'w-social':'arbeitsform partnerarbeit gruppenarbeit einzelarbeit',
+  'w-poll':'abstimmung abstimmen',
+  'w-score':'punkte zaehlen',
+  'w-noise':'lautstaerke ruhe',
+  'w-calc':'rechnen rechner',
+  'w-clock':'uhrzeit lernuhr',
+  'w-stop':'zeit messen',
+  'w-timer':'wecker countdown zeit',
+  'd-qr':'link teilen code',
+  'd-table':'tabelle zeilen spalten',
+  'w-cam':'dokumentenkamera live bild',
+  'w-shot':'bildschirmfoto ausschnitt',
+  'w-record':'video mitschnitt aufzeichnen',
+  'w-insert':'pdf bild video geogebra datei',
+  't-ruler':'laenge messen cm',
+  't-geo':'winkel messen zeichnen',
+  't-coord':'achsen gitter',
+  't-numline':'zahlen zahlengerade',
+  't-text':'schreiben tastatur handschrift',
+  't-dict':'sprechen diktieren',
+  't-eraser':'loeschen wegradieren',
+  't-lasso':'auswahl markieren',
+  's-settings':'hintergrund farbe klassen einstellung',
+  's-save':'speichern projekt',
+  's-load':'laden projekt oeffnen',
+  'p-share':'pdf teilen drucken',
+  'fs':'vollbild gross'};
+const suNorm=s=>String(s||'').toLowerCase()
+  .replace(/\u00e4/g,'a').replace(/\u00f6/g,'o').replace(/\u00fc/g,'u').replace(/\u00df/g,'ss')
+  .replace(/[^a-z0-9]+/g,' ').trim();
+const suName=b=>((b.title||'').split(/[(\u00b7:\u2013\u2014]/)[0].trim()||b.id);
+let suIdx=null;
+function suBauen(){ suIdx=[];
+  FAV_GROUPS.forEach(([label,sel])=>{ favBtns(sel).forEach(b=>{
+    if(/^w-grp-/.test(b.id)) return;            /* Gruppenknöpfe: ihre Werkzeuge stehen einzeln da */
+    const t=(b.title||'').replace(/\s+/g,' ').trim(), nm=suName(b);
+    const bs=t.slice(nm.length).replace(/^[\s\u2013\u2014\u00b7:(]+/,'').replace(/\)$/,'').trim();
+    suIdx.push({id:b.id, nm, bs, grp:label, titel:suNorm(nm+' '+t),
+      such:suNorm(nm+' '+t+' '+label+' '+(SU_EXTRA[b.id]||''))}); }); });
+  return suIdx; }
+function suTreffer(q){ const w=suNorm(q).split(' ').filter(Boolean); if(!suIdx) suBauen();
+  if(!w.length) return [];
+  const aus=[];
+  suIdx.forEach(e=>{ if(!w.every(x=>e.such.indexOf(x)>=0)) return;
+    const n=suNorm(e.nm); let r=4;                 /* Name vorn – Name – Beschreibung – nur Stichwort */
+    if(n.indexOf(w[0])===0) r=0; else if(n.indexOf(' '+w[0])>=0) r=1;
+    else if(n.indexOf(w[0])>=0) r=2; else if(e.titel.indexOf(w[0])>=0) r=3;
+    aus.push({e, r, pos:e.such.indexOf(w[0])});    /* bei gleichem Rang zuerst, wer es weiter vorn nennt */ });
+  aus.sort((a,b)=>a.r-b.r||a.pos-b.pos||a.e.nm.localeCompare(b.e.nm,'de'));
+  return aus.slice(0,40).map(o=>o.e); }
+function suZeile(e){ const src=$(e.id);
+  const row=document.createElement('button'); row.type='button'; row.className='surow';
+  const ic=document.createElement('span'); ic.className='ic';
+  if(src){ ic.innerHTML=src.innerHTML; ic.querySelectorAll('[id]').forEach(x=>x.removeAttribute('id')); }
+  const tx=document.createElement('span'); tx.className='tx';
+  const nm=document.createElement('span'); nm.className='nm'; nm.textContent=e.nm; tx.appendChild(nm);
+  if(e.bs){ const bs=document.createElement('span'); bs.className='bs'; bs.textContent=e.bs; tx.appendChild(bs); }
+  const gr=document.createElement('span'); gr.className='gr'; gr.textContent=e.grp;
+  row.appendChild(ic); row.appendChild(tx); row.appendChild(gr);
+  row.onclick=()=>suStarten(e.id);
+  return row; }
+function suStarten(id){ const b=$(id); if(!b) return;
+  suLast=[id].concat(suLast.filter(x=>x!==id)).slice(0,6); saveUI();
+  $('win-suche').classList.remove('show'); closeAllPops(); b.click(); }
+function suLeer(){ const box=$('suListe'); box.innerHTML=''; if(!suIdx) suBauen();
+  const zeig=(titel,ids)=>{ const l=ids.map(id=>suIdx.find(e=>e.id===id)).filter(Boolean); if(!l.length) return;
+    const h=document.createElement('div'); h.className='sugrp'; h.textContent=titel; box.appendChild(h);
+    l.forEach(e=>box.appendChild(suZeile(e))); };
+  zeig('Zuletzt benutzt',suLast); zeig('Favoriten',favs);
+  $('suHint').textContent=box.children.length?'' :
+    'Name oder Stichwort eintippen – zum Beispiel „Spannung“, „Trapez“ oder „Timer“.'; }
+function suZeigen(){ const q=$('suWort').value.trim(), box=$('suListe');
+  if(!q){ suLeer(); return; }
+  const tr=suTreffer(q); box.innerHTML='';
+  tr.forEach(e=>box.appendChild(suZeile(e)));
+  $('suHint').textContent=tr.length?'' :'Kein Treffer für „'+q+'“.'; }
+$('t-suche').onclick=()=>{ const w=$('win-suche'), auf=!w.classList.contains('show');
+  closeAllPops(); w.classList.toggle('show',auf);
+  if(auf){ suBauen(); const i=$('suWort'); i.value=''; suLeer(); i.focus(); } };
+$('suWort').addEventListener('input',suZeigen);
+$('suWort').addEventListener('keydown',e=>{ e.stopPropagation();
+  if(e.key==='Enter'){ const f=$('suListe').querySelector('.surow'); if(f) f.click(); }
+  if(e.key==='Escape'){ $('win-suche').classList.remove('show'); } });
+$('suX').onclick=()=>{ const i=$('suWort'); i.value=''; suZeigen(); i.focus(); };
+
 $('favReset').onclick=()=>{ favs=[]; renderFavs(); buildFavList(); saveUI(); toast('Favoriten zurückgesetzt'); };
 /* Langes Drücken auf einen Knopf → kleines Menü */
 let favPress=null, favSuppress=null;
@@ -5244,8 +5411,8 @@ $('pageMenu').addEventListener('pointerdown',e=>e.stopPropagation());
 document.addEventListener('pointerdown',e=>{ if($('pageMenu').classList.contains('show') && !e.target.closest('#pageMenu') && !e.target.closest('.pmBtn') && !e.target.closest('#ppMore')) closePageMenu(); }, true);
 $('setMin').onclick=()=>{ $('settingsbar').classList.toggle('min'); rotateChev('setMin',$('settingsbar').classList.contains('min'),true); saveUI(); positionAnnoToggle(); };
 function rotateChev(id,min){ $(id).querySelector('svg').style.transform=min?'scaleX(-1)':''; }
-function saveUI(){ try{ localStorage.setItem('tafel_ui',JSON.stringify({page:$('pagebar').classList.contains('min'),set:$('settingsbar').classList.contains('min'),side:mainbarSide,theme:barTheme,tint:barTint,favs,pxcm:PXCM,pal:palette,cols:toolColors,rec:shapeRecog,wv:2,pp:propPos,ppH:propHint,ent:camEntz,hell:camHell,ob:obenPx,pw:penWidth,mw:markerWidth,ew:eraserWidth,sz:streckZeigen,sa:shapeAlpha,spf:spotForm,lup:lupeAn,lupz:lupeZoom,lms:laserMs,gms:geradeMs,gan:geradeAn,pz:popZu,pzw:popWarteMs,pzd:popWegMs,pzv:2,ebg:ebGriffe,rul:{len:ruler.len,color:ruler.color,mm:ruler.mm,nums:ruler.nums,pct:ruler.pct,fs:ruler.fs},geo:{size:geo.size,color:geo.color,mm:geo.mm,nums:geo.nums,fs:geo.fs}})); }catch(e){} }
-function restoreUI(){ try{ const u=JSON.parse(localStorage.getItem('tafel_ui')||'{}'); if(u.page){$('pagebar').classList.add('min');pageChev(true);} if(u.set){$('settingsbar').classList.add('min');rotateChev('setMin',true);} if(u.side==='right'||u.side==='bottom')mainbarSide=u.side; if(u.theme==='light'||u.theme==='dark')barTheme=u.theme; if(u.tint&&typeof u.tint==='object')barTint=Object.assign(barTint,u.tint); if(Array.isArray(u.favs))favs=u.favs.filter(f=>f!=='w-export').slice(0,FAV_MAX);   // PDF-Export sitzt jetzt in den Einstellungen
+function saveUI(){ try{ localStorage.setItem('tafel_ui',JSON.stringify({page:$('pagebar').classList.contains('min'),set:$('settingsbar').classList.contains('min'),side:mainbarSide,theme:barTheme,tint:barTint,favs,suLast,pxcm:PXCM,pal:palette,cols:toolColors,rec:shapeRecog,wv:2,pp:propPos,ppH:propHint,ent:camEntz,hell:camHell,ob:obenPx,pw:penWidth,mw:markerWidth,ew:eraserWidth,sz:streckZeigen,sa:shapeAlpha,spf:spotForm,lup:lupeAn,lupz:lupeZoom,lms:laserMs,gms:geradeMs,gan:geradeAn,pz:popZu,pzw:popWarteMs,pzd:popWegMs,pzv:2,ebg:ebGriffe,rul:{len:ruler.len,color:ruler.color,mm:ruler.mm,nums:ruler.nums,pct:ruler.pct,fs:ruler.fs},geo:{size:geo.size,color:geo.color,mm:geo.mm,nums:geo.nums,fs:geo.fs}})); }catch(e){} }
+function restoreUI(){ try{ const u=JSON.parse(localStorage.getItem('tafel_ui')||'{}'); if(u.page){$('pagebar').classList.add('min');pageChev(true);} if(u.set){$('settingsbar').classList.add('min');rotateChev('setMin',true);} if(u.side==='right'||u.side==='bottom')mainbarSide=u.side; if(u.theme==='light'||u.theme==='dark')barTheme=u.theme; if(u.tint&&typeof u.tint==='object')barTint=Object.assign(barTint,u.tint); if(Array.isArray(u.favs))favs=u.favs.filter(f=>f!=='w-export').slice(0,FAV_MAX); if(Array.isArray(u.suLast))suLast=u.suLast.filter(x=>typeof x==='string').slice(0,6);   // PDF-Export sitzt jetzt in den Einstellungen
   if(+u.pxcm>0&&Math.abs(+u.pxcm-37.8)>0.2) PXCM=Math.max(28,Math.min(64,+u.pxcm));   // alter Standard 37,8 → neuer, am iPad gemessener Wert
   if(Array.isArray(u.pal)&&u.pal.length===palette.length&&u.pal.every(c=>/^#[0-9a-f]{6}$/i.test(c))) palette=u.pal.slice();
   if(u.rec){ shapeRecog=true; $('shapeRecogSw').classList.add('on'); $('recogSw2').classList.add('on'); }
