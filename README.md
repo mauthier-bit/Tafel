@@ -2144,7 +2144,11 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   Für `x → ±∞` stehen dort `+∞` bzw. `−∞` über Zähler und Nenner. Auch Terme, die kein Bruch sind,
   werden dazu in ihre Faktoren zerlegt: `x·e^(−x)` zeigt für `x → +∞` über `x` ein `+∞` und über
   `e^(−x)` eine `0`, für `x → −∞` ein rotes `−∞` und ein grünes `+∞`; `sin(x)/x` zeigt bei 0
-  die Form `0/0`. **Fett steht, was das Ergebnis bestimmt** – bei `x·e^(−x)` für
+  die Form `0/0`. **Auch Summen und Differenzen** werden so zerlegt: `x² − e^x` zeigt für
+  `x → +∞` über beiden Teilen ein `+∞`, fett über `e^x` – die e-Funktion wächst schneller und
+  gibt den Ausschlag; für `x → −∞` steht über `e^x` eine `0`, und fett ist `x²`. Bestimmend ist
+  dabei der Summand, der betragsmäßig weit (mindestens zehnfach) vor den übrigen liegt – heben sich
+  zwei auf wie bei `√(x²+x) − x`, ist nichts fett. **Fett steht, was das Ergebnis bestimmt** – bei `x·e^(−x)` für
   `x → +∞` also die `0`, bei einem Bruch der Teil mit dem höheren Grad. Gehen beide Teile in dieselbe
   Richtung (`∞/∞`, `−∞ · ∞`), ist nichts fett – dann entscheidet nur das Vorzeichen bzw.
   der Vergleich der Potenzen. Nochmaliges Antippen
@@ -2177,8 +2181,8 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     Polynomdivision – auch die **schiefe Asymptote** (z. B. y = x bei (x²+1)/x), jeweils **mit Gleichung**.
     **Farben:** **senkrechte** Asymptoten **orange**, **waagrechte und schiefe** **lila**.
     Der Grenzwert selbst steht in der Farbe seines Vorzeichens: **+∞ grün**, **−∞ rot**, ebenso
-    endliche Werte (**−1 rot**, **2 grün**) – wie die Vorzeichen-Marker am Term; der Pfeil am
-    Graphen hat dieselbe Farbe.
+    endliche Werte (**−1 rot**, **2 grün**); die **0** ist vorzeichenlos und bleibt **dunkelgrau** –
+    wie die Vorzeichen-Marker am Term; der Pfeil am Graphen hat dieselbe Farbe.
   - **Die Ansicht passt sich dem angetippten Rand an:** Bei **x → ±∞** zoomt der Graph in x weit hinaus
     (bis x = 100 bzw. −100), der y-Ausschnitt bleibt – so sieht man, wie die Kurve abflacht, sich einer
     Asymptote nähert oder oben bzw. unten aus dem Bild läuft. Bei einer **Definitionslücke** rückt der

@@ -185,7 +185,7 @@
      sonst rutscht ein Produkt wie x · e^(−x) gegenüber dem „f(x) =" nach unten. */
   .lmAnn{position:relative;display:inline-block;}
   .lmAnn>.v{position:absolute;left:50%;transform:translateX(-50%);bottom:100%;margin-bottom:1px;
-    font-size:.75em;font-weight:500;color:#64748b;line-height:1.3;white-space:nowrap;}
+    font-size:.75em;font-weight:500;color:#334155;line-height:1.3;white-space:nowrap;}
   .lmAnn.unten>.v{bottom:auto;top:100%;margin-bottom:0;margin-top:1px;}
   .lmAnn>.v.vP{color:#15803d;}
   .lmAnn>.v.vM{color:#b91c1c;}
@@ -2782,10 +2782,12 @@ function lmWText(w){ if(!w) return '—';
   if(w.art==='kein') return 'kein Grenzwert';
   if(w.art==='undef') return 'nicht definiert';
   return 'f(x) → '+lmWert(w); }
-/* Farben wie bei den Vorzeichen-Markern: + gruen, − rot; ohne Grenzwert bernstein */
+/* Farben wie bei den Vorzeichen-Markern: + gruen, − rot, 0 neutral dunkelgrau;
+   ohne Grenzwert bernstein */
 const lmWCol=w=>(!w?'#64748b':(w.art==='inf'?'#15803d':(w.art==='ninf'?'#b91c1c'
   :(w.art==='kein'||w.art==='undef'?'#b45309'
-  :(w.v<0?'#b91c1c':'#15803d')))));
+  :(/^[−-]?0(,0*)?$/.test(lmWert(w))?'#334155'   /* angezeigte 0: kein Vorzeichen */
+  :(w.v<0?'#b91c1c':'#15803d'))))));
 const LM_SENK='#ea580c';      /* senkrechte Asymptoten (Polstellen): orange */
 const LM_WAAG='#7e22ce';      /* waagrechte und schiefe Asymptoten: lila */
 const lmX=x=>(Math.abs(x)<1e-9?'0':zahl(x));
@@ -2828,11 +2830,34 @@ function lmTeile(nd,out,imNenner){ out=out||[];
   if(nd.k==='*'){ lmTeile(nd.l,out,imNenner); lmTeile(nd.r,out,imNenner); return out; }
   if(nd.k==='/'){ lmTeile(nd.l,out,imNenner); lmTeile(nd.r,out,!imNenner); return out; }
   out.push({nd,nenner:!!imNenner}); return out; }
+/* oberste Summanden einer Summe/Differenz einsammeln – je mit dem Vorzeichen davor */
+function lmSummanden(nd,out,vz){ out=out||[]; vz=vz||1;
+  if(!nd) return out;
+  if(nd.k==='+'){ lmSummanden(nd.l,out,vz); lmSummanden(nd.r,out,vz); return out; }
+  if(nd.k==='-'){ lmSummanden(nd.l,out,vz); lmSummanden(nd.r,out,-vz); return out; }
+  if(nd.k==='neg'){ lmSummanden(nd.a,out,-vz); return out; }
+  out.push({nd,vz}); return out; }
+/* Bei einer Summe bestimmt der Teil das Ergebnis, der betragsmäßig am schnellsten wächst.
+   Verglichen wird an der tiefsten eingesetzten Stelle, an der noch alle Teile eine Zahl liefern;
+   ein Teil gilt nur dann als bestimmend, wenn er dort mindestens zehnmal so groß ist wie die übrigen. */
+function lmSummeDom(teile){
+  if(!teile.some(t=>t.w.art==='inf'||t.w.art==='ninf')) return;
+  const n=teile[0].pr.length;
+  for(let i=n-1;i>=0;i--){
+    const ys=teile.map(t=>{ const q=t.pr[i]; return q?q[1]:null; });
+    if(ys.some(y=>typeof y!=='number'||!isFinite(y))) continue;
+    const b=ys.map(Math.abs), max=Math.max.apply(null,b);
+    if(!(max>0)) continue;
+    const zweit=Math.max.apply(null,b.map((v,j)=>b.indexOf(max)===j?0:v));
+    if(max>=10*zweit) teile[b.indexOf(max)].dom=true;
+    return; } }
+
 /* Den Term als Produkt bzw. Quotient seiner Teile schreiben und über jeden Teil den Wert
    setzen, den er an der Stelle annimmt (über dem Zähler, unter dem Nenner). Unterstrichen
    wird, was das Ergebnis bestimmt: bei 0 der Teil, der 0 wird, bei ±∞ der, der wächst.
    null, wenn sich der Term nicht in mehrere Teile zerlegen lässt. */
 function lmTeileAnn(ast,x0,seite,gesamt){ if(!ast) return null;
+  if(ast.k==='+'||ast.k==='-'||ast.k==='neg') return lmSummeAnn(ast,x0,seite);
   const T=lmTeile(ast); if(T.length<2||T.length>5) return null;
   const klam=nd=>((nd.k==='+'||nd.k==='-')?'('+lmAstHtml(nd)+')':lmAstHtml(nd));
   const teile=T.map(q=>{ const tk=tokenize(lmAstText(q.nd));
@@ -2850,9 +2875,35 @@ function lmTeileAnn(ast,x0,seite,gesamt){ if(!ast) return null;
   if(!zt.length) return null;
   const bau=(l,unten)=>l.map(t=>lmAnnHtml(t.html,t.a.txt,t.a.vz,t.dom,unten)).join(' · ');
   return nt.length? lmBruchHtml(bau(zt,false),bau(nt,true)) : bau(zt,false); }
+/* Dasselbe für eine Summe oder Differenz: über jeden Summanden kommt sein Wert,
+   fett der Summand, der das Ergebnis bestimmt (bei x² − e^x für x → +∞ also e^x). */
+function lmSummeAnn(ast,x0,seite){
+  const S=lmSummanden(ast); if(S.length<2||S.length>5) return null;
+  const teile=S.map(q=>{ const tk=tokenize(lmAstText(q.nd));
+    const pr=lmProben(x=>evalAt(x,tk,lm.p),x0,seite), w=lmAusProben(pr);
+    let vzN=0;
+    if(w.art==='zahl'&&Math.abs(w.v)<1e-9){ const y=pr[pr.length-1][1]; vzN=y<0?-1:(y>0?1:0); }
+    return {vz:q.vz, pr, w, a:lmAnnWert(w,vzN), html:lmAstHtml(q.nd), dom:false}; });
+  if(teile.some(t=>!t.a)) return null;
+  lmSummeDom(teile);
+  return teile.map((t,i)=>(i?(t.vz<0?' − ':' + '):(t.vz<0?'−':''))
+    +lmAnnHtml(t.html,t.a.txt,t.a.vz,t.dom,false)).join(''); }
+/* In einer Summe fällt eine e-Funktion, die selbst gegen 0 geht, gar nicht ins Gewicht
+   (x² − e^x für x → −∞) – dann darf die Begründung sie nicht zum Taktgeber erklären. */
+function lmExpGegenNull(ast,x0,seite){
+  if(!ast||!(ast.k==='+'||ast.k==='-'||ast.k==='neg')) return false;
+  let gefunden=false, ohneExp=false;
+  const S=lmSummanden(ast);
+  for(let i=0;i<S.length;i++){ const txt=lmAstText(S[i].nd);
+    if(!/e\^|exp\(/.test(txt)){ ohneExp=true; continue; }
+    const w=lmAusProben(lmProben(x=>evalAt(x,tokenize(txt),lm.p),x0,seite));
+    if(w.art==='inf'||w.art==='ninf') return false;
+    if(w.art==='zahl'&&Math.abs(w.v)<1e-9) gefunden=true; }
+  return gefunden?(ohneExp?'mit':'allein'):false; }
 /* „Dabei geht x → +∞ und e^(−x) → 0" – das Verhalten der einzelnen Teile */
 function lmTeilText(ast,x0,seite){
-  const t=lmTeile(ast).filter(q=>/x/.test(lmAstText(q.nd)));
+  const summe=!!ast&&(ast.k==='+'||ast.k==='-'||ast.k==='neg');
+  const t=(summe?lmSummanden(ast):lmTeile(ast)).filter(q=>/x/.test(lmAstText(q.nd)));
   if(t.length<2||t.length>4) return '';
   const stk=t.map(q=>{ const txt=lmAstText(q.nd), tk=tokenize(txt);
     const w=lmAusProben(lmProben(x=>evalAt(x,tk,lm.p),x0,seite));
@@ -3086,7 +3137,10 @@ function lmAnalyse(){
     let grund='';
     if(wert.art==='undef') grund='Für diese x gibt es die Funktion nicht – der Definitionsbereich endet vorher.';
     else { grund+=lmTeilText(ast,s*Infinity,0);
-      if(F.exp) grund+='Hier steckt eine e-Funktion: sie wächst schneller als jede Potenz von x und bestimmt deshalb das Verhalten. ';
+      if(F.exp){ const eNull=lmExpGegenNull(ast,s*Infinity,0);
+        grund+= eNull==='mit' ? 'Die e-Funktion strebt hier selbst gegen 0 und fällt nicht ins Gewicht – den Ausschlag gibt der übrige Teil. '
+              : eNull==='allein' ? 'Die e-Funktion strebt hier selbst gegen 0. '
+              : 'Hier steckt eine e-Funktion: sie wächst schneller als jede Potenz von x und bestimmt deshalb das Verhalten. '; }
       if(F.ln) grund+='Der ln wächst langsamer als jede Potenz – aber immer weiter, eine Schranke hat er nicht. ';
       if(F.trig&&wert.art==='kein') grund+='Sinus und Kosinus schwanken immer wieder zwischen −1 und 1 – deshalb nähert sich der Wert keiner Zahl an. ';
       if(F.wurzel) grund+='Die Wurzel wächst langsamer als x, aber unbeschränkt. ';
