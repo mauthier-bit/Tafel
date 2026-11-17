@@ -2144,9 +2144,9 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   Für `x → ±∞` stehen dort `+∞` bzw. `−∞` über Zähler und Nenner. Auch Terme, die kein Bruch sind,
   werden dazu in ihre Faktoren zerlegt: `x·e^(−x)` zeigt für `x → +∞` über `x` ein `+∞` und über
   `e^(−x)` eine `0`, für `x → −∞` ein rotes `−∞` und ein grünes `+∞`; `sin(x)/x` zeigt bei 0
-  die Form `0/0`. **Unterstrichen und größer steht, was das Ergebnis bestimmt** – bei `x·e^(−x)` für
+  die Form `0/0`. **Fett steht, was das Ergebnis bestimmt** – bei `x·e^(−x)` für
   `x → +∞` also die `0`, bei einem Bruch der Teil mit dem höheren Grad. Gehen beide Teile in dieselbe
-  Richtung (`∞/∞`, `−∞ · ∞`), wird nichts unterstrichen – dann entscheidet nur das Vorzeichen bzw.
+  Richtung (`∞/∞`, `−∞ · ∞`), ist nichts fett – dann entscheidet nur das Vorzeichen bzw.
   der Vergleich der Potenzen. Nochmaliges Antippen
   schließt das Feld wieder – so lässt sich ein Rand nach dem anderen besprechen.
   - **Gebrochen-rationale und ganzrationale Terme** werden dafür ausmultipliziert in die Form Zähler/Nenner
