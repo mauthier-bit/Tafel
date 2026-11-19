@@ -1,5 +1,5 @@
 /* Service Worker – macht die Tafel offline-fähig (App-Shell + Bibliotheken cachen). */
-const CACHE = 'tafel-v800';
+const CACHE = 'tafel-v801';
 const H5P_CACHE = 'tafel-h5p';   // entpackte .h5p-Inhalte (bleiben über App-Updates hinweg erhalten)
 const ASSETS = [
   './',
@@ -57,7 +57,7 @@ const ASSETS = [
   'spektrum-data.js',
   'atomphysik.html',
   'induktion.html','energie.html','waerme.html','stoss.html',
-  'wellen.html','doppelspalt.html',
+  'wellen.html','doppelspalt.html','silentzoo.html',
   'astronomie.html',
   'bewegung.html',
   'glossar.html',

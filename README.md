@@ -681,6 +681,17 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   Öffnen über das Werkzeug tun das ebenfalls. Im kleinen Fenster bleibt die **Lärmanzeige gut
   ablesbar**: Zeiger 190 × 112, Balken 190 × 80 und Lampen 44 px – also nur wenig kleiner als in
   der großen Ansicht.
+- **Silent Zoo** (Diverses, `silentzoo.html`): das **Gegenstück zur Lärmampel** – bestraft wird
+  nichts, **belohnt wird Ruhe**. Gezeigt wird eine gemalte Landschaft: **Wald**, **Savanne** oder
+  **Unterwasserwelt** (Korallen, Seegras, Anemonen, Lichtstrahlen von der Wasseroberfläche);
+  umschalten lässt sie sich oben oder im **⚙**, die Tiere passen sich an. Nach **▶ Start** hört das
+  Mikrofon mit: Bleibt es für die eingestellte **Ruhezeit** unter der **Schwelle**, kommt ein Tier
+  ins Bild – und so weiter, je länger die Ruhe hält, desto voller wird die Landschaft. Wird es zu
+  laut, läuft die zweite Uhr: hält der Lärm an, geht jedes Mal ein Tier wieder weg, bis es wieder
+  leise wird. Oben links zeigt ein Kasten die **Lautstärke**, die **Schwelle** als Strich und den
+  Stand der laufenden Uhr. Im **⚙** stehen **Empfindlichkeit**, **Schwelle**, beide **Zeiten** und
+  die **Höchstzahl** der Tiere; alles gehört zum Tafelbild und wird mitgespeichert. Das Mikrofon
+  läuft nur, solange der Knopf auf **Stopp** steht – aufgenommen oder gespeichert wird nichts.
 - **Lärmampel: drei Ansichten.** Über die Schalter **Ampel · Zeiger · Balken** lässt sich die
   Darstellung wechseln – in **beiden** Fenstern hinter dem **⚙** (siehe unten), und die Wahl gilt
   für das eigene Fenster und die Sozialform gemeinsam. Voreingestellt ist der **Zeiger**.

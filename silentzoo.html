@@ -1,0 +1,690 @@
+<!DOCTYPE html><html lang="de"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<title>Silent Zoo</title>
+<style>
+  :root{--fs:14px;}
+  *{box-sizing:border-box;} [hidden]{display:none!important;}
+  html,body{margin:0;height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#1f2430;font-size:var(--fs);}
+  #wrap{position:absolute;inset:0;display:flex;flex-direction:column;}
+  /* Wird es eng, rutschen die rechten Knöpfe in eine zweite Zeile */
+  #bar{display:flex;gap:6px;padding:6px 8px;border-bottom:1px solid #e2e7ef;align-items:center;flex:none;flex-wrap:wrap;}
+  #barR{display:flex;gap:6px;align-items:center;margin-left:auto;flex-wrap:wrap;}
+  .btn{border:1px solid #cfd6e0;background:#fff;border-radius:9px;padding:7px 11px;font:inherit;font-weight:600;
+    color:#2b3445;cursor:pointer;white-space:nowrap;}
+  .btn.pri{background:#2563eb;border-color:#2563eb;color:#fff;}
+  .btn.dang{background:#dc2626;border-color:#dc2626;color:#fff;}
+  .btn:disabled{opacity:.45;}
+  .seg{display:inline-flex;border:1px solid #cfd6e0;border-radius:9px;overflow:hidden;}
+  .seg button{border:0;background:#fff;padding:7px 13px;font:inherit;font-weight:700;color:#53617a;cursor:pointer;white-space:nowrap;}
+  .seg button+button{border-left:1px solid #cfd6e0;}
+  .seg button.on{background:#2563eb;color:#fff;}
+  .sep{width:1px;height:22px;background:#e2e7ef;}
+  .lbl{color:#53617a;font-weight:600;}
+  #cvbox{position:relative;flex:1 1 auto;min-height:0;background:#fff;}
+  canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;}
+  #hint{position:absolute;left:0;right:0;bottom:0;padding:4px 8px;font-size:.8em;color:#64748b;
+    background:rgba(255,255,255,.82);pointer-events:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  #einst,#hilfe{position:absolute;left:8px;top:8px;width:min(540px,calc(100% - 16px));max-height:calc(100% - 16px);
+    background:rgba(255,255,255,.985);border:1px solid #d6dce5;border-radius:12px;padding:12px 14px 14px;
+    overflow:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y;font-size:.95em;z-index:6;line-height:1.5;
+    box-shadow:0 8px 28px rgba(15,23,42,.18);}
+  #einst h3,#hilfe h3{margin:0 40px 8px 0;font-size:1.1em;}
+  #einstZu,#hilfeZu{position:absolute;right:8px;top:8px;}
+  #hilfe ul{margin:6px 0 0 18px;padding:0;} #hilfe li{margin:4px 0;}
+  #einst .ez{display:flex;flex-wrap:wrap;gap:8px 10px;align-items:center;padding:7px 0;border-top:1px solid #eef1f6;}
+  #einst .ez b{min-width:11em;}
+  #einst input[type=range]{width:150px;touch-action:none;}
+  #einst .v{font-variant-numeric:tabular-nums;font-weight:700;min-width:4.4em;}
+  #einst .ehint{margin:10px 0 8px;color:#6b7a90;font-weight:500;}
+</style>
+<script>
+/* Scharfe Kante unter der iPadOS-Statusleiste (iPadOS 26/27).
+   WebKit legt in Web-Apps vom Homebildschirm am oberen Rand sonst einen
+   weichen Verlauf ueber den Inhalt. Er entfaellt, wenn dort eine deckende
+   Leiste liegt - ein bildschirmfuellender Kasten genuegt nicht (am
+   13.10.2026 auf iPadOS 27 geprueft). Das Skript legt deshalb einen 16 px
+   hohen, deckenden Streifen an den oberen Rand und rueckt alles, was in
+   diese 16 px hineinragt, um 16 px nach unten. Laeuft nur in der App vom
+   Homebildschirm, nicht in Safari und nicht in einem Rahmen; mit #kante in
+   der Adresse laesst es sich zum Pruefen erzwingen. */
+(function(){
+  if(window.top!==window) return;
+  var pruef=/kante/i.test(location.hash||'');
+  var alsApp=(navigator.standalone===true) ||
+             (window.matchMedia && matchMedia('(display-mode: standalone)').matches);
+  if(!alsApp && !pruef) return;
+
+  var HOCH=16;
+  function leer(f){ return !f || f==='transparent' || f.replace(/\s/g,'')==='rgba(0,0,0,0)'; }
+  function seite(){
+    var s=getComputedStyle(document.body), f=s.backgroundColor, b=s.backgroundImage;
+    if(leer(f) && (!b || b==='none')){
+      s=getComputedStyle(document.documentElement); f=s.backgroundColor; b=s.backgroundImage;
+    }
+    return { farbe: leer(f) ? '#ffffff' : f, bild: (b && b!=='none') ? b : '' };
+  }
+  /* Faerbt dieses Element am oberen Rand etwas sichtbar ein? */
+  function tinte(n){
+    var r=n.getBoundingClientRect();
+    if(r.top>=HOCH || r.bottom<=0 || r.width<=0) return false;
+    var s=getComputedStyle(n);
+    if(s.display==='none' || s.visibility==='hidden' || s.opacity==='0') return false;
+    if(n.id==='randKante') return false;
+    var t=n.tagName.toLowerCase();
+    if(t==='img'||t==='svg'||t==='canvas'||t==='video') return true;
+    if(!leer(s.backgroundColor) || s.backgroundImage!=='none') return true;
+    if(parseFloat(s.borderTopWidth)>0) return true;
+    var kn=n.childNodes;
+    for(var j=0;j<kn.length;j++)
+      if(kn[j].nodeType===3 && kn[j].nodeValue.replace(/\s/g,'')) return true;
+    for(var i=0;i<n.children.length;i++) if(tinte(n.children[i])) return true;
+    return false;
+  }
+  function ragtRein(z){
+    for(var i=0;i<z.children.length;i++) if(tinte(z.children[i])) return true;
+    return false;
+  }
+  function luft(z){
+    if(z.dataset.kanteLuft) return;
+    if(!ragtRein(z) && !tinte(z)) return;    /* noch nichts oben - spaeter nochmal */
+    z.dataset.kanteLuft='1';
+    var p=parseFloat(getComputedStyle(z).paddingTop)||0;
+    if(p>=HOCH) return;
+    z.style.paddingTop=(p+HOCH)+'px';
+  }
+  function sichtbar(n,s){
+    return s.display!=='none' && s.visibility!=='hidden' && n.id!=='randKante';
+  }
+  /* bildschirmfuellende fixierte Kaesten */
+  function kaesten(){
+    var alle=document.querySelectorAll('body > *, body > * > *'), raus=[];
+    for(var i=0;i<alle.length;i++){
+      var n=alle[i], s=getComputedStyle(n);
+      if(s.position!=='fixed' || !sichtbar(n,s)) continue;
+      var r=n.getBoundingClientRect();
+      if(r.top<=4 && r.width>=innerWidth*0.9 && r.height>=innerHeight*0.9) raus.push(n);
+    }
+    return raus;
+  }
+  /* Leisten am oberen Rand (fixiert oder klebend, aber kein Vollbildkasten) */
+  function leisten(){
+    var alle=document.querySelectorAll('body > *, body > * > *'), raus=[];
+    for(var i=0;i<alle.length;i++){
+      var n=alle[i], s=getComputedStyle(n);
+      if((s.position!=='fixed' && s.position!=='sticky') || !sichtbar(n,s)) continue;
+      var r=n.getBoundingClientRect();
+      if(r.top<=4 && r.width>=innerWidth*0.8 && r.height>=6 && r.height<=innerHeight*0.6) raus.push(n);
+    }
+    return raus;
+  }
+  /* Liegt oben schon eine deckende Leiste, ist nichts zu tun. */
+  function schonGut(){
+    var st=document.elementsFromPoint ? document.elementsFromPoint(Math.round(innerWidth/2),2) : [];
+    for(var i=0;i<st.length;i++){
+      var n=st[i];
+      if(n.id==='randKante') continue;
+      if(n===document.body || n===document.documentElement) return false;
+      var s=getComputedStyle(n), r=n.getBoundingClientRect();
+      return (s.position==='fixed'||s.position==='sticky') && r.top<=4 &&
+             r.width>=innerWidth*0.8 && r.height>=6 && r.height<=innerHeight*0.6 &&
+             !leer(s.backgroundColor);
+    }
+    return false;
+  }
+  var band=null;
+  function streifen(farbe){
+    if(!band){
+      band=document.createElement('div');
+      band.id='randKante'; band.setAttribute('aria-hidden','true');
+      band.style.cssText='position:fixed;left:0;top:0;width:100%;height:'+HOCH+'px;'+
+        'z-index:2147483646;pointer-events:none';
+      document.body.appendChild(band);
+    }
+    band.style.display='block';
+    if(farbe){
+      band.style.backgroundColor=farbe;
+      band.style.backgroundImage='none';
+      return;
+    }
+    var s=getComputedStyle(document.body), h=seite();
+    band.style.backgroundColor=h.farbe;
+    band.style.backgroundImage=h.bild||'none';
+    band.style.backgroundAttachment='fixed';
+    if(h.bild && s.backgroundAttachment!=='fixed')
+      band.style.backgroundSize='100% '+Math.max(innerHeight,document.body.scrollHeight)+'px';
+  }
+  var schild=null;
+  function zeigen(txt){
+    if(!pruef) return;
+    if(!schild){
+      schild=document.createElement('div');
+      schild.style.cssText='position:fixed;left:6px;bottom:52px;z-index:2147483647;max-width:92%;'+
+        'padding:6px 9px;border-radius:8px;background:#ffe600;color:#000;'+
+        'font:600 12px/1.35 -apple-system,sans-serif;white-space:pre-wrap;pointer-events:none';
+      document.body.appendChild(schild);
+    }
+    schild.textContent='Kante K6 · '+innerWidth+'x'+innerHeight+'\n'+txt;
+  }
+  function name(n){
+    if(n.id) return '#'+n.id;
+    var c=(typeof n.className==='string'&&n.className.trim())?'.'+n.className.trim().split(/\s+/)[0]:'';
+    return n.tagName.toLowerCase()+c;
+  }
+  function malen(){
+    var b=document.body; if(!b) return;
+    if(schonGut()){
+      if(band) band.style.display='none';
+      zeigen('oben liegt schon eine deckende Leiste');
+      return;
+    }
+    var k=kaesten(), l=leisten(), h=null, farbe=null, text=[];
+    for(var i=0;i<k.length;i++){
+      var z=k[i], s=getComputedStyle(z);
+      if(!z.dataset.kante){
+        if(leer(s.backgroundColor)){
+          if(!h) h=seite();
+          z.style.backgroundColor=h.farbe;
+          if(s.backgroundImage==='none' && h.bild) z.style.backgroundImage=h.bild;
+        }
+        z.dataset.kante='1';
+        s=getComputedStyle(z);
+      }
+      luft(z);
+      text.push(name(z)+' bg='+s.backgroundColor+(s.backgroundImage!=='none'?'+Verlauf':''));
+    }
+    for(var j=0;j<l.length;j++){
+      var le=l[j], sl=getComputedStyle(le);
+      if(!tinte(le) && !ragtRein(le)) continue;
+      if(!farbe && !leer(sl.backgroundColor)) farbe=sl.backgroundColor;
+      luft(le);
+      text.push('Leiste '+name(le)+' bg='+sl.backgroundColor);
+    }
+    if(!k.length && !l.length){ luft(b); text.push('kein Kasten, nur Streifen'); }
+    streifen(farbe);
+    zeigen(text.join('\n'));
+  }
+  var warte=null;
+  function spaeter(){
+    if(warte) return;
+    warte=setTimeout(function(){ warte=null; malen(); },200);
+  }
+  try{
+    new MutationObserver(spaeter).observe(document.documentElement,
+      {childList:true, subtree:true, attributes:true, attributeFilter:['class','style','hidden']});
+  }catch(e){}
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',malen);
+  else malen();
+  addEventListener('load',spaeter);
+  addEventListener('resize',spaeter);
+  addEventListener('orientationchange',spaeter);
+})();
+</script>
+</head><body>
+<div id="wrap">
+  <div id="bar">
+    <span class="seg" id="grpM"><button data-m="wald" class="on">Wald</button><button data-m="savanne">Savanne</button><button data-m="meer">Meer</button></span>
+    <span class="sep"></span>
+    <button class="btn pri" id="bStart">▶ Start</button>
+    <button class="btn" id="bReset" title="Alle Tiere gehen, die Zeit fängt von vorn an">Zurücksetzen</button>
+    <span id="barR">
+      <span class="sep tafelEdit"></span>
+      <span id="shotBtns" class="tafelEdit" style="display:flex;gap:6px;align-items:center"></span>
+      <button class="btn tafelEdit" id="bEinst" title="Landschaft, Lautstärke und Zeiten einstellen">⚙</button>
+      <button class="btn" id="bHilfe" title="Kurze Anleitung">?</button>
+    </span>
+  </div>
+
+  <div id="cvbox">
+    <canvas id="cv"></canvas>
+    <div id="hint"></div>
+    <div id="einst" hidden>
+      <button class="btn" id="einstZu">×</button>
+      <h3>Einstellungen</h3>
+      <div class="ez"><b>Landschaft</b>
+        <span class="seg" id="grpME"><button data-m="wald" class="on">Wald</button><button data-m="savanne">Savanne</button><button data-m="meer">Meer</button></span>
+      </div>
+      <div class="ez"><b>Empfindlichkeit</b>
+        <input type="range" id="rgSens" min="1" max="10" step="1"><span class="v" id="vSens"></span>
+      </div>
+      <div class="ez"><b>Ruhe-Schwelle</b>
+        <input type="range" id="rgSchw" min="10" max="90" step="5"><span class="v" id="vSchw"></span>
+      </div>
+      <div class="ez"><b>Ruhe für ein Tier</b>
+        <input type="range" id="rgRuhe" min="3" max="60" step="1"><span class="v" id="vRuhe"></span>
+      </div>
+      <div class="ez"><b>Lärm bis eines geht</b>
+        <input type="range" id="rgGeduld" min="1" max="30" step="1"><span class="v" id="vGeduld"></span>
+      </div>
+      <div class="ez"><b>Höchstens Tiere</b>
+        <input type="range" id="rgMax" min="4" max="40" step="1"><span class="v" id="vMax"></span>
+      </div>
+      <p class="ehint">Die Einstellung gehört zum Bild: sie wird mit der Tafel gespeichert und mit dem
+        Teilen-Link weitergegeben. Das Mikrofon startet nur auf Knopfdruck.</p>
+      <button class="btn" id="einstStd">Standard wiederherstellen</button>
+    </div>
+    <div id="hilfe" hidden>
+      <button class="btn" id="hilfeZu">×</button>
+      <h3>Silent Zoo</h3>
+      <div id="hilfeText"></div>
+    </div>
+  </div>
+</div>
+
+<script src="shot.js"></script>
+<script src="modus.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+const toast=m=>window.TafelShot&&TafelShot.toast(m);
+
+/* ---------- Zustand ----------
+   Der Silent Zoo belohnt Ruhe: bleibt es leise, kommen Tiere ins Bild; wird es laut,
+   gehen sie wieder. Gespeichert werden nur die Einstellungen – die Tiere selbst sind
+   Tagesgeschäft, und das Mikrofon geht nie von allein an. */
+const STD={ motiv:'wald', sens:5, schwelle:35, ruhe:10, geduld:4, maxT:24, edit:true };
+let D=Object.assign({},STD);
+let ready=false;
+
+const MOTIVE=['wald','savanne','meer'];
+const NAME={wald:'Wald', savanne:'Savanne', meer:'Meer'};
+/* Die Tiere passen zur Landschaft */
+const TIERE={
+  wald:['🦌','🦊','🐗','🐻','🐇','🦔','🐿️','🦉','🦡','🐺','🦫','🐦','🦆','🐸'],
+  savanne:['🦁','🐘','🦒','🦓','🦛','🐆','🦏','🐊','🦩','🐒','🦜','🐃','🦧','🐫'],
+  meer:['🐬','🐳','🐟','🐠','🐡','🐢','🦭','🦈','🐙','🦀','🦑','🪼','🐋','🐧']
+};
+/* Wo in der Landschaft dürfen die Tiere stehen (Anteil der Bildhöhe)? */
+const BAND={wald:[0.60,0.95], savanne:[0.56,0.95], meer:[0.30,0.80]};
+const HORIZ={wald:0.55, savanne:0.50, meer:0.42};
+
+const cv=$('cv'), ctx=cv.getContext('2d');
+let cvW=300, cvH=200, dpr=1;
+let land=null, landKey='';
+let tiere=[], ruheT=0, lautT=0, pegel=0, gekommen=0;
+
+/* Immer derselbe Zufall für die Landschaft, damit nichts flimmert */
+function festerZufall(start){ let x=start>>>0||1;
+  return ()=>{ x=(x*1664525+1013904223)>>>0; return x/4294967296; }; }
+/* ---------- Landschaft ----------
+   Sie wird einmal in ein eigenes Bild gemalt und dann nur noch kopiert: so flimmert
+   nichts und jedes Einzelbild bleibt billig. */
+function landBauen(){
+  const key=D.motiv+'|'+Math.round(cvW)+'|'+Math.round(cvH)+'|'+dpr;
+  if(key===landKey&&land) return; landKey=key;
+  land=document.createElement('canvas');
+  land.width=Math.max(2,Math.round(cvW*dpr)); land.height=Math.max(2,Math.round(cvH*dpr));
+  const c=land.getContext('2d'); c.setTransform(dpr,0,0,dpr,0,0);
+  ({wald:waldMalen, savanne:savanneMalen, meer:meerMalen})[D.motiv](c);
+}
+function himmel(c,o1,o2,bis){ const g=c.createLinearGradient(0,0,0,cvH*bis);
+  g.addColorStop(0,o1); g.addColorStop(1,o2); c.fillStyle=g; c.fillRect(0,0,cvW,cvH*bis+1); }
+function sonne(c,x,y,r,f1,f2){
+  const g=c.createRadialGradient(x,y,r*0.2,x,y,r*2.6);
+  g.addColorStop(0,f1); g.addColorStop(1,f2);
+  c.fillStyle=g; c.beginPath(); c.arc(x,y,r*2.6,0,7); c.fill();
+  c.fillStyle=f1; c.beginPath(); c.arc(x,y,r,0,7); c.fill(); }
+function huegel(c,yv,hoehe,farbe,z){
+  c.fillStyle=farbe; c.beginPath(); c.moveTo(-10,cvH);
+  c.lineTo(-10,yv);
+  for(let x=-10;x<=cvW+10;x+=cvW/6){
+    c.quadraticCurveTo(x+cvW/12, yv-hoehe*(0.5+0.5*Math.sin((x/cvW*4+z)*1.7)), x+cvW/6, yv-hoehe*0.15*Math.cos((x/cvW*3+z))); }
+  c.lineTo(cvW+10,cvH); c.closePath(); c.fill(); }
+
+function waldMalen(c){
+  const hor=HORIZ.wald*cvH, z=festerZufall(8731);
+  himmel(c,'#9fd2f5','#e6f4ff',HORIZ.wald+0.02);
+  sonne(c,cvW*0.82,cvH*0.16,cvH*0.045,'rgba(255,250,210,.95)','rgba(255,250,210,0)');
+  huegel(c,hor+cvH*0.02,cvH*0.07,'#93bb8e',0.4);
+  huegel(c,hor+cvH*0.05,cvH*0.05,'#7aa877',1.9);
+  const g=c.createLinearGradient(0,hor+cvH*0.03,0,cvH);
+  g.addColorStop(0,'#6fa86a'); g.addColorStop(1,'#4f8a52');
+  c.fillStyle=g; c.fillRect(0,hor+cvH*0.02,cvW,cvH);
+  /* Bäume – hinten klein und blass, vorn groß */
+  const baeume=[];
+  for(let i=0;i<26;i++){ const t=z(); baeume.push({x:z()*1.1-0.05, y:(HORIZ.wald+0.03)+t*0.9*(0.97-HORIZ.wald), tanne:z()<0.55, f:z()}); }
+  baeume.sort((a,b)=>a.y-b.y);
+  baeume.forEach(b=>{
+    const x=b.x*cvW, y=b.y*cvH, s=cvH*(0.07+0.16*((b.y-HORIZ.wald)/(1-HORIZ.wald)));
+    const dunkel=0.55+0.45*((b.y-HORIZ.wald)/(1-HORIZ.wald));
+    c.fillStyle='rgba(92,64,41,'+dunkel.toFixed(2)+')';
+    c.fillRect(x-s*0.055,y-s*0.42,s*0.11,s*0.42);
+    const gr=b.tanne?'rgba(30,'+Math.round(90+40*b.f)+',60,':'rgba(46,'+Math.round(110+40*b.f)+',70,';
+    c.fillStyle=gr+dunkel.toFixed(2)+')';
+    if(b.tanne){ for(let k=0;k<3;k++){ const yy=y-s*0.35-k*s*0.22;
+        c.beginPath(); c.moveTo(x,yy-s*0.42); c.lineTo(x-s*0.26+k*s*0.03,yy); c.lineTo(x+s*0.26-k*s*0.03,yy); c.closePath(); c.fill(); } }
+    else { [[0,-0.62,0.26],[-0.2,-0.5,0.2],[0.2,-0.5,0.2]].forEach(k=>{
+        c.beginPath(); c.arc(x+k[0]*s,y+k[1]*s,k[2]*s,0,7); c.fill(); }); } });
+}
+
+function savanneMalen(c){
+  const hor=HORIZ.savanne*cvH, z=festerZufall(4417);
+  himmel(c,'#f6c678','#ffeec4',HORIZ.savanne+0.02);
+  sonne(c,cvW*0.76,cvH*0.2,cvH*0.07,'rgba(255,236,170,.98)','rgba(255,214,120,0)');
+  c.fillStyle='rgba(205,166,110,.55)'; c.fillRect(0,hor-cvH*0.03,cvW,cvH*0.05);
+  const g=c.createLinearGradient(0,hor,0,cvH);
+  g.addColorStop(0,'#dcb978'); g.addColorStop(1,'#c29453');
+  c.fillStyle=g; c.fillRect(0,hor,cvW,cvH);
+  /* Akazien: Stamm mit flachem Schirm */
+  const b=[]; for(let i=0;i<9;i++){ const t=z(); b.push({x:z()*1.1-0.05, y:(HORIZ.savanne+0.04)+t*0.86*(0.97-HORIZ.savanne)}); }
+  b.sort((a,b2)=>a.y-b2.y);
+  b.forEach(o=>{
+    const x=o.x*cvW, y=o.y*cvH, s=cvH*(0.09+0.2*((o.y-HORIZ.savanne)/(1-HORIZ.savanne)));
+    const d=0.5+0.5*((o.y-HORIZ.savanne)/(1-HORIZ.savanne));
+    c.strokeStyle='rgba(97,72,45,'+d.toFixed(2)+')'; c.lineWidth=s*0.07; c.lineCap='round';
+    c.beginPath(); c.moveTo(x,y); c.lineTo(x,y-s*0.42);
+    c.moveTo(x,y-s*0.3); c.lineTo(x-s*0.17,y-s*0.48);
+    c.moveTo(x,y-s*0.3); c.lineTo(x+s*0.17,y-s*0.48); c.stroke();
+    c.fillStyle='rgba(106,'+Math.round(122+20*d)+',62,'+d.toFixed(2)+')';
+    c.beginPath(); c.ellipse(x,y-s*0.52,s*0.34,s*0.13,0,0,7); c.fill();
+    c.beginPath(); c.ellipse(x-s*0.1,y-s*0.6,s*0.18,s*0.09,0,0,7); c.fill(); });
+  /* Grasbüschel im Vordergrund */
+  c.strokeStyle='rgba(150,120,60,.75)'; c.lineWidth=Math.max(1,cvH*0.004);
+  for(let i=0;i<70;i++){ const x=z()*cvW, y=hor+z()*(cvH-hor), s=cvH*0.02*(0.4+(y-hor)/(cvH-hor));
+    c.beginPath(); c.moveTo(x,y); c.lineTo(x-s*0.5,y-s); c.moveTo(x,y); c.lineTo(x+s*0.4,y-s*0.9); c.stroke(); }
+}
+
+function meerMalen(c){
+  /* Unterwasser: oben die Wasseroberflaeche mit Lichtstrahlen, unten Sand mit Riff */
+  const z=festerZufall(9091), sand=cvH*0.80;
+  const g=c.createLinearGradient(0,0,0,cvH);
+  g.addColorStop(0,'#7fd6ea'); g.addColorStop(0.35,'#2e9ec9'); g.addColorStop(1,'#105a86');
+  c.fillStyle=g; c.fillRect(0,0,cvW,cvH);
+  /* Wasseroberflaeche */
+  c.fillStyle='rgba(255,255,255,.35)';
+  c.beginPath(); c.moveTo(0,0); c.lineTo(cvW,0); c.lineTo(cvW,cvH*0.045);
+  for(let x=cvW;x>=0;x-=6) c.lineTo(x,cvH*0.045+Math.sin(x/cvW*14)*cvH*0.012);
+  c.closePath(); c.fill();
+  /* Lichtstrahlen von oben */
+  c.save(); c.globalAlpha=0.16; c.fillStyle='#ffffff';
+  for(let i=0;i<7;i++){ const x=z()*cvW, b=cvW*(0.03+z()*0.05), n=cvH*(0.45+z()*0.5);
+    c.beginPath(); c.moveTo(x,cvH*0.04); c.lineTo(x+b,cvH*0.04);
+    c.lineTo(x+b*2.6+cvW*0.05,n); c.lineTo(x+cvW*0.05,n); c.closePath(); c.fill(); }
+  c.restore();
+  /* Sandboden mit welliger Kante */
+  c.fillStyle='#e6d3a3'; c.beginPath(); c.moveTo(0,cvH);
+  c.lineTo(0,sand);
+  for(let x=0;x<=cvW;x+=cvW/10) c.quadraticCurveTo(x+cvW/20,sand-cvH*0.03*Math.sin(x/cvW*7+1.3),x+cvW/10,sand-cvH*0.012*Math.cos(x/cvW*5));
+  c.lineTo(cvW,cvH); c.closePath(); c.fill();
+  c.fillStyle='rgba(180,150,100,.35)';
+  for(let i=0;i<60;i++){ const x=z()*cvW, y=sand+z()*(cvH-sand);
+    c.beginPath(); c.arc(x,y,Math.max(1,cvH*0.004*z()),0,7); c.fill(); }
+  /* Riff: Felsbroecken, Korallen, Seegras, Anemonen */
+  const riff=[]; for(let i=0;i<14;i++) riff.push({x:z(), y:sand-cvH*0.01+z()*cvH*0.1, art:Math.floor(z()*4), f:z()});
+  riff.sort((a,b)=>a.y-b.y);
+  const KOR=['#f07b8c','#f3a04b','#c678d8','#f2d06b','#6fd3b8'];
+  riff.forEach(o=>{
+    const x=o.x*cvW, y=o.y, s=cvH*(0.07+0.07*o.f), farbe=KOR[Math.floor(o.f*KOR.length)%KOR.length];
+    if(o.art===0){                                   /* Verzweigte Koralle */
+      c.strokeStyle=farbe; c.lineWidth=s*0.14; c.lineCap='round';
+      c.beginPath(); c.moveTo(x,y); c.lineTo(x,y-s*0.5);
+      c.moveTo(x,y-s*0.3); c.lineTo(x-s*0.28,y-s*0.62);
+      c.moveTo(x,y-s*0.35); c.lineTo(x+s*0.3,y-s*0.7);
+      c.moveTo(x-s*0.18,y-s*0.5); c.lineTo(x-s*0.22,y-s*0.8);
+      c.moveTo(x+s*0.2,y-s*0.55); c.lineTo(x+s*0.26,y-s*0.9); c.stroke();
+    } else if(o.art===1){                            /* Hirnkoralle */
+      c.fillStyle=farbe; c.beginPath(); c.ellipse(x,y-s*0.18,s*0.36,s*0.26,0,0,7); c.fill();
+      c.strokeStyle='rgba(255,255,255,.45)'; c.lineWidth=Math.max(1,s*0.05);
+      for(let k=-2;k<=2;k++){ c.beginPath();
+        c.ellipse(x,y-s*0.18,s*0.3-Math.abs(k)*s*0.07,s*0.2-Math.abs(k)*s*0.05,0,0,7); c.stroke(); }
+    } else if(o.art===2){                            /* Seegras */
+      c.strokeStyle='#3f9d6a'; c.lineWidth=Math.max(1.5,s*0.1); c.lineCap='round';
+      for(let k=0;k<4;k++){ const dx=(k-1.5)*s*0.12;
+        c.beginPath(); c.moveTo(x+dx,y);
+        c.quadraticCurveTo(x+dx+s*0.22*(k%2?1:-1),y-s*0.5,x+dx+s*0.08*(k%2?1:-1),y-s*(0.8+0.12*k%0.3)); c.stroke(); }
+    } else {                                         /* Anemone */
+      c.fillStyle=farbe; c.beginPath(); c.ellipse(x,y-s*0.08,s*0.2,s*0.12,0,0,7); c.fill();
+      c.strokeStyle=farbe; c.lineWidth=Math.max(1.4,s*0.07); c.lineCap='round';
+      for(let k=0;k<9;k++){ const w=-Math.PI*0.1-k*(Math.PI*0.8/8);
+        c.beginPath(); c.moveTo(x,y-s*0.1);
+        c.lineTo(x+Math.cos(w)*s*0.3,y-s*0.1+Math.sin(w)*s*0.42); c.stroke(); } } });
+  /* ein paar Luftblasen */
+  c.strokeStyle='rgba(255,255,255,.45)'; c.lineWidth=Math.max(1,cvH*0.002);
+  for(let i=0;i<24;i++){ const x=z()*cvW, y=cvH*0.08+z()*cvH*0.8, r=cvH*0.004*(0.6+z()*1.6);
+    c.beginPath(); c.arc(x,y,r,0,7); c.stroke(); }
+}
+
+/* ---------- Tiere ---------- */
+function groesse(y){ const b=BAND[D.motiv]; const t=Math.max(0,Math.min(1,(y-b[0])/(b[1]-b[0]))); return 0.55+0.85*t; }
+function platzSuchen(){ const b=BAND[D.motiv];
+  return {x:0.08+Math.random()*0.84, y:b[0]+Math.random()*(b[1]-b[0])}; }
+function daZahl(){ let n=0; tiere.forEach(t=>{ if(t.zu!=='geht') n++; }); return n; }
+function tierKommt(){
+  if(daZahl()>=D.maxT) return false;
+  const liste=TIERE[D.motiv], e=liste[Math.floor(Math.random()*liste.length)];
+  const p=platzSuchen(), links=Math.random()<0.5;
+  tiere.push({e, x:links?-0.08:1.08, y:p.y, zx:p.x, zu:'kommt',
+    ph:Math.random()*6.3, sp:0.10+Math.random()*0.08, blick:links?1:-1});
+  gekommen++; return true; }
+function tierGeht(){
+  const da=tiere.filter(t=>t.zu!=='geht'); if(!da.length) return false;
+  const t=da[Math.floor(Math.random()*da.length)];
+  t.zu='geht'; t.zx=(t.x<0.5?-0.14:1.14); return true; }
+function tierSchritt(dt){
+  for(let i=tiere.length-1;i>=0;i--){ const t=tiere[i];
+    t.ph+=dt*(2+t.sp*6);
+    if(t.zu==='da'){
+      /* ab und zu ein paar Schritte zur Seite */
+      if(Math.random()<dt*0.22){ const b=BAND[D.motiv];
+        t.zx=Math.max(0.05,Math.min(0.95,t.x+(Math.random()-0.5)*0.2)); t.zu='wandert'; }
+      continue; }
+    const dx=t.zx-t.x; t.blick=dx>0?1:-1;
+    const v=t.sp*dt*(t.zu==='geht'?1.35:(t.zu==='wandert'?0.4:1));
+    if(Math.abs(dx)<=v){ t.x=t.zx;
+      if(t.zu==='geht'){ tiere.splice(i,1); continue; }
+      t.zu='da'; }
+    else t.x+=Math.sign(dx)*v;
+    if(t.zu==='geht'&&(t.x<-0.13||t.x>1.13)) tiere.splice(i,1); } }
+function tiereMalen(){
+  const basis=cvH*0.115, wasser=D.motiv==='meer';
+  const liste=tiere.slice().sort((a,b)=>a.y-b.y);
+  ctx.textAlign='center'; ctx.textBaseline='alphabetic';
+  liste.forEach(t=>{
+    const s=basis*groesse(t.y), x=t.x*cvW, y=t.y*cvH+Math.sin(t.ph)*s*(wasser?0.07:0.04);
+    ctx.save(); ctx.translate(x,y);
+    if(!wasser){ ctx.globalAlpha=0.18; ctx.fillStyle='#1f2937';
+      ctx.beginPath(); ctx.ellipse(0,s*0.05,s*0.3,s*0.08,0,0,7); ctx.fill(); ctx.globalAlpha=1; }
+    if(t.blick>0) ctx.scale(-1,1);
+    ctx.font=Math.round(s)+'px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
+    ctx.fillText(t.e,0,0);
+    ctx.restore(); }); }
+
+/* ---------- Mikrofon ----------
+   Es geht nur auf Knopfdruck an, läuft nur im Bild (nichts wird aufgenommen oder
+   gespeichert) und lässt sich mit demselben Knopf wieder ausschalten. */
+let ac=null, quelle=null, analyse=null, daten=null, strom=null, micAn=false;
+async function micStart(){
+  try{
+    strom=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
+    const AC=window.AudioContext||window.webkitAudioContext; if(!AC) return false;
+    ac=new AC(); quelle=ac.createMediaStreamSource(strom);
+    analyse=ac.createAnalyser(); analyse.fftSize=512; quelle.connect(analyse);
+    daten=new Uint8Array(analyse.fftSize);
+    if(ac.state==='suspended') await ac.resume();
+    micAn=true; return true;
+  }catch(e){ micAus(); return false; } }
+function micAus(){
+  micAn=false; pegel=0;
+  try{ if(quelle) quelle.disconnect(); }catch(e){}
+  try{ if(ac&&ac.state!=='closed') ac.close(); }catch(e){}
+  try{ if(strom) strom.getTracks().forEach(t=>t.stop()); }catch(e){}
+  ac=null; quelle=null; analyse=null; daten=null; strom=null; }
+function pegelMessen(){
+  if(!micAn||!analyse){ pegel=0; return; }
+  analyse.getByteTimeDomainData(daten);
+  let s=0; for(let i=0;i<daten.length;i++){ const v=(daten[i]-128)/128; s+=v*v; }
+  const roh=Math.min(1,Math.sqrt(s/daten.length)*D.sens*2.2);
+  pegel=pegel*0.6+roh*0.4; }
+
+/* ---------- Anzeige im Bild ---------- */
+const zahl=v=>(Math.round(v*10)/10).toString().replace('.',',');
+function kasten(c,x,y,w,h,r){ c.beginPath();
+  if(c.roundRect) c.roundRect(x,y,w,h,r); else c.rect(x,y,w,h); }
+function anzeigeMalen(){
+  const leise=pegel*100<=D.schwelle;
+  const fs=Math.max(12,Math.min(cvH*0.038,cvW*0.028));
+  const w=Math.max(cvW*0.3,fs*13), h=fs*5.2, x=fs*0.7, y=fs*0.7;
+  ctx.save();
+  ctx.fillStyle='rgba(255,255,255,.88)'; ctx.strokeStyle='rgba(148,163,184,.8)'; ctx.lineWidth=1.2;
+  kasten(ctx,x,y,w,h,fs*0.6); ctx.fill(); ctx.stroke();
+  /* Lautstärkebalken mit Marke für die Schwelle */
+  const bx=x+fs*0.6, by=y+fs*0.7, bw=w-fs*1.2, bh=fs*0.85;
+  ctx.fillStyle='#e8edf5'; kasten(ctx,bx,by,bw,bh,bh/2); ctx.fill();
+  ctx.fillStyle=micAn?(leise?'#16a34a':'#dc2626'):'#cbd5e1';
+  kasten(ctx,bx,by,Math.max(bh,bw*Math.min(1,pegel)),bh,bh/2); ctx.fill();
+  const sx=bx+bw*D.schwelle/100;
+  ctx.strokeStyle='#1f2937'; ctx.lineWidth=Math.max(2,fs*0.14);
+  ctx.beginPath(); ctx.moveTo(sx,by-fs*0.22); ctx.lineTo(sx,by+bh+fs*0.22); ctx.stroke();
+  /* Fortschritt: wie lange ist es schon leise (oder zu laut)? */
+  const py=by+bh+fs*0.7, ph=fs*0.5;
+  const anteil=micAn?(leise?Math.min(1,ruheT/D.ruhe):Math.min(1,lautT/D.geduld)):0;
+  ctx.fillStyle='#e8edf5'; kasten(ctx,bx,py,bw,ph,ph/2); ctx.fill();
+  ctx.fillStyle=leise?'#16a34a':'#dc2626';
+  if(anteil>0){ kasten(ctx,bx,py,Math.max(ph,bw*anteil),ph,ph/2); ctx.fill(); }
+  /* Text */
+  ctx.font='700 '+Math.round(fs)+'px -apple-system,sans-serif';
+  ctx.textAlign='left'; ctx.textBaseline='top';
+  ctx.fillStyle=micAn?(leise?'#15803d':'#b91c1c'):'#64748b';
+  const txt=!micAn?'Mikrofon aus'
+    :(leise?'leise – noch '+zahl(Math.max(0,D.ruhe-ruheT))+' s':'zu laut – noch '+zahl(Math.max(0,D.geduld-lautT))+' s');
+  ctx.fillText(txt,bx,py+ph+fs*0.45);
+  ctx.textAlign='right'; ctx.fillStyle='#334155';
+  ctx.fillText(daZahl()+(daZahl()===1?' Tier':' Tiere'),bx+bw,py+ph+fs*0.45);
+  ctx.restore();
+  /* Große Einladung, solange das Mikrofon aus ist */
+  if(!micAn&&!tiere.length){
+    const gf=Math.max(16,Math.min(cvH*0.07,cvW*0.045));
+    ctx.save(); ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.font='800 '+Math.round(gf)+'px -apple-system,sans-serif';
+    const t1='Mit ▶ Start geht es los', t2='Wenn es leise bleibt, kommen die Tiere.';
+    const bw2=Math.max(ctx.measureText(t1).width,ctx.measureText(t2).width*0.72)+gf*1.6;
+    ctx.fillStyle='rgba(255,255,255,.86)'; ctx.strokeStyle='rgba(148,163,184,.8)'; ctx.lineWidth=1.2;
+    kasten(ctx,cvW/2-bw2/2,cvH*0.5-gf*1.5,bw2,gf*3,gf*0.5); ctx.fill(); ctx.stroke();
+    ctx.fillStyle='#1f2937'; ctx.fillText(t1,cvW/2,cvH*0.5-gf*0.5);
+    ctx.font='600 '+Math.round(gf*0.62)+'px -apple-system,sans-serif';
+    ctx.fillStyle='#475569'; ctx.fillText(t2,cvW/2,cvH*0.5+gf*0.6);
+    ctx.restore(); } }
+
+/* ---------- Gesamtbild ---------- */
+function malen(){
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  landBauen();
+  ctx.drawImage(land,0,0,cvW,cvH);
+  tiereMalen();
+  anzeigeMalen();
+  const leise=pegel*100<=D.schwelle;
+  $('hint').textContent = !micAn
+    ? 'Mikrofon aus · Schwelle '+D.schwelle+' % · '+D.ruhe+' s Ruhe bringen ein Tier · '+NAME[D.motiv]
+    : (leise?'leise':'zu laut')+' · Pegel '+Math.round(pegel*100)+' % · Schwelle '+D.schwelle
+      +' % · '+NAME[D.motiv]+' · '+gekommen+' Tiere gekommen'; }
+
+/* ---------- Schleife ---------- */
+let letztT=0;
+function loop(ts){
+  const dt=Math.min(0.05,(ts-letztT)/1000||0); letztT=ts;
+  pegelMessen();
+  if(micAn){
+    if(pegel*100<=D.schwelle){
+      lautT=Math.max(0,lautT-dt*0.8); ruheT+=dt;
+      if(ruheT>=D.ruhe){ if(tierKommt()) ruheT=0; else ruheT=D.ruhe; } }
+    else {
+      ruheT=Math.max(0,ruheT-dt*0.8); lautT+=dt;
+      if(lautT>=D.geduld){ lautT=0; tierGeht(); } } }
+  tierSchritt(dt);
+  malen();
+  requestAnimationFrame(loop); }
+
+/* ---------- Bedienung ---------- */
+function resize(){
+  dpr=window.devicePixelRatio||1;
+  const r=$('cvbox').getBoundingClientRect();
+  cvW=Math.max(60,r.width); cvH=Math.max(60,r.height);
+  cv.width=Math.round(cvW*dpr); cv.height=Math.round(cvH*dpr);
+  landKey=''; landBauen(); }
+function knoepfe(){
+  document.querySelectorAll('#grpM button,#grpME button').forEach(b=>b.classList.toggle('on',b.dataset.m===D.motiv));
+  $('bStart').textContent=micAn?'⏹ Stopp':'▶ Start';
+  $('bStart').classList.toggle('pri',!micAn);
+  $('bStart').classList.toggle('dang',micAn);
+  if(!$('einst').hidden) einstUI(); }
+const REG=[['rgSens','sens','vSens',''],['rgSchw','schwelle','vSchw',' %'],
+  ['rgRuhe','ruhe','vRuhe',' s'],['rgGeduld','geduld','vGeduld',' s'],['rgMax','maxT','vMax','']];
+function einstUI(){ REG.forEach(([id,k,vid,eh])=>{ const e=$(id); if(!e) return;
+  if(document.activeElement!==e) e.value=D[k];
+  $(vid).textContent=D[k]+eh; }); }
+REG.forEach(([id,k])=>{ $(id).addEventListener('input',()=>{ D[k]=+$(id).value; knoepfe(); sync(); }); });
+function motivSetzen(m){ if(!MOTIVE.includes(m)||m===D.motiv) return;
+  D.motiv=m; tiere=[]; ruheT=0; lautT=0; gekommen=0; landKey=''; knoepfe(); sync(); }
+document.querySelectorAll('#grpM button,#grpME button').forEach(b=>{ b.onclick=()=>motivSetzen(b.dataset.m); });
+$('bStart').onclick=async()=>{
+  if(micAn){ micAus(); knoepfe(); return; }
+  $('bStart').disabled=true;
+  const ok=await micStart();
+  $('bStart').disabled=false;
+  if(!ok) toast('Kein Mikrofon – die Seite muss über https laufen und das Mikrofon erlauben.');
+  else { ruheT=0; lautT=0; }
+  knoepfe(); };
+$('bReset').onclick=()=>{ tiere=[]; ruheT=0; lautT=0; gekommen=0; knoepfe(); };
+$('bEinst').onclick=()=>{ const w=$('einst'); w.hidden=!w.hidden; if(!w.hidden){ $('hilfe').hidden=true; einstUI(); } };
+$('einstZu').onclick=()=>{ $('einst').hidden=true; };
+$('einstStd').onclick=()=>{ ['sens','schwelle','ruhe','geduld','maxT'].forEach(k=>{ D[k]=STD[k]; });
+  einstUI(); knoepfe(); sync(); };
+$('hilfeZu').onclick=()=>{ $('hilfe').hidden=true; };
+$('bHilfe').onclick=()=>{ $('hilfeText').innerHTML=HILFE; $('hilfe').hidden=!$('hilfe').hidden;
+  if(!$('hilfe').hidden) $('einst').hidden=true; };
+
+const HILFE='<ul>'+
+ '<li><b>So geht es:</b> Mit <b>▶ Start</b> hört das Mikrofon zu. Bleibt es leise – unter der '+
+ 'eingestellten <b>Schwelle</b> –, kommt nach der eingestellten <b>Ruhezeit</b> ein Tier ins Bild. '+
+ 'Je länger die Ruhe hält, desto mehr Tiere werden es.</li>'+
+ '<li>Wird es <b>zu laut</b>, läuft die zweite Uhr: hält der Lärm an, geht jedes Mal ein Tier wieder weg. '+
+ 'Sobald es wieder leise ist, kommen sie zurück. Bestraft wird also niemand – belohnt wird die Ruhe.</li>'+
+ '<li>Oben links zeigt der Balken die <b>Lautstärke</b>, der schwarze Strich die Schwelle und der dünne '+
+ 'Balken darunter, wie weit die Uhr schon gelaufen ist.</li>'+
+ '<li>Die <b>Landschaft</b> (Wald, Savanne, Meer) lässt sich oben oder im <b>⚙</b> umstellen – '+
+ 'die Tiere passen sich an.</li>'+
+ '<li>Im <b>⚙</b> stehen außerdem <b>Empfindlichkeit</b> des Mikrofons, <b>Schwelle</b>, die beiden '+
+ 'Zeiten und die Höchstzahl der Tiere.</li>'+
+ '<li>Das Mikrofon läuft nur, solange der Knopf auf <b>Stopp</b> steht. Es wird nichts aufgenommen '+
+ 'und nichts gespeichert – gemessen wird allein die Lautstärke.</li></ul>';
+
+/* ---------- Tafel ---------- */
+let syncTO=0;
+function sync(){ if(window.parent===window) return;
+  clearTimeout(syncTO); syncTO=setTimeout(()=>{
+    try{ parent.postMessage({type:'embed-data',data:zustand()},'*'); }catch(e){} },250); }
+function zustand(){ return Object.assign({},D); }
+function uebernimm(d){ if(!d) return;
+  const s=STD;
+  const m=MOTIVE.includes(d.motiv)?d.motiv:s.motiv;
+  if(m!==D.motiv){ D.motiv=m; tiere=[]; ruheT=0; lautT=0; gekommen=0; landKey=''; }
+  D.sens=Math.max(1,Math.min(10,+d.sens||s.sens));
+  D.schwelle=Math.max(10,Math.min(90,+d.schwelle||s.schwelle));
+  D.ruhe=Math.max(3,Math.min(60,+d.ruhe||s.ruhe));
+  D.geduld=Math.max(1,Math.min(30,+d.geduld||s.geduld));
+  D.maxT=Math.max(4,Math.min(40,+d.maxT||s.maxT));
+  D.edit=d.edit!==false;
+  knoepfe(); resize(); }
+function bild(){ if(!window.TafelShot) return null;
+  return TafelShot.rasterize($('cvbox'),{scale:2,bg:'#fff',exclude:'#hilfe,#einst,#hint'}); }
+addEventListener('message',e=>{
+  if(e.source!==window&&(window.parent===window||e.source!==window.parent)) return;
+  if(!(e.data&&e.data.type==='embed-data'&&e.data.data)) return;
+  uebernimm(e.data.data); ready=true;
+  if(window.TafelModus) TafelModus.refresh(); });
+addEventListener('resize',resize);
+addEventListener('pagehide',micAus);
+
+window.addEventListener('load',()=>{
+  if(window.TafelModus){
+    TafelModus.init({get:()=>D.edit!==false, set:v=>{ D.edit=v; resize(); sync(); }});
+    $('bar').style.paddingRight='108px';   /* Platz für den schwebenden Knopf Benutzen/Bearbeiten */ }
+  if(window.TafelShot) TafelShot.buttons($('shotBtns'),bild,'btn');
+  knoepfe(); resize();
+  requestAnimationFrame(ts=>{ letztT=ts; loop(ts); });
+  if(window.ResizeObserver) new ResizeObserver(resize).observe($('cvbox'));
+  if(window.parent===window){ ready=true; return; }
+  try{ parent.postMessage({type:'embed-ready'},'*'); }catch(e){}
+  setTimeout(()=>{ ready=true; },700); });
+</script>
+</body></html>
