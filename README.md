@@ -4099,6 +4099,29 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     Abstand ist jeweils ein Vielfaches von λ/2, sodass die Knoten an ihrem Platz bleiben), Brechung am
     Flachwasser und an schräger Grenze. Damit die Bäuche bei solchen Resonanzen nicht übersteuern, regelt
     sich die Helligkeit der Darstellung automatisch nach.
+- **Doppelspalt** (Mathe & Physik): drei Reiter – **Klassisch**, **Quantenobjekte** und **Licht**.
+  Fertig ist bisher **Klassisch**, die beiden anderen Reiter sagen das auch; sie kommen als Nächstes.
+  Für alle Reiter gleich eingestellt werden **Spaltabstand** und **Spaltbreite**, dazu **Start/Pause**
+  und **Zurücksetzen**. Die **Geschwindigkeit ist nicht einstellbar** – beim Schall liegt sie mit
+  c = λ·f fest, und die Teilchen sind alle gleich schnell; der Regler **Tempo** ändert nur, wie
+  schnell die Simulation läuft.
+  **Klassisch · Teilchen:** „Ein Teilchen" schießt einzeln, „Dauerfeuer" fortlaufend. Die Quelle liegt
+  weit links außerhalb des Bildes (sonst träfen die Teilchen die Spalte zu steil); zu sehen ist nur das
+  letzte Stück des Anflugs – gerade genug, um zu erkennen, dass ein Teil an der Blende **abgefangen**
+  wird. Wer einen Spalt trifft, fliegt **geradeaus** weiter. Das **Histogramm** am Schirm sammelt die Treffer auf – es entstehen
+  **zwei Streifen**, kein Muster. Die Zählung (abgefeuert · durch die Spalte · am Schirm) steht unten.
+  **Klassisch · Welle:** Hinter den Spalten laufen Elementarwellen los (**Schall**, 343 m/s; aus der
+  **Wellenlänge** folgt die Tonhöhe, 34 cm sind rund 1000 Hz); in jedem Spalt steht dazu ein
+  **Lautsprecher**. Ein breiter Spalt wird dabei in mehrere
+  Elementarwellen zerlegt, die Verbreiterung ergibt sich also von selbst. Einzeln einblendbar sind
+  **Wellenfeld** (Berg hell, Tal dunkelblau wie in der Wellenwanne), **Berge & Täler** als wandernde
+  Kreislinien und die Linien gleichen Gangunterschieds getrennt als **Maxima** (grün) und **Minima**
+  (rot gestrichelt) – das sind Hyperbeln mit den beiden Spalten als Brennpunkten.
+  **Punkt P** lässt sich frei im Feld verschieben. Dazu gibt es den **Gangunterschied** (beide Wege, das
+  überzählige Stück dick, dazu „Δs = … cm = … λ · Verstärkung/Auslöschung"), ein **Diagramm** mit den
+  beiden Teilschwingungen und ihrer Summe und ein **Mikrofon**, das den Ton mit der **Lautstärke an
+  dieser Stelle** hörbar macht (gemessen: Gangunterschied 0 → 98 %, ½ λ → 7 %, 1 λ → 87 %, 1½ λ → 5 %).
+  Der Ton geht nur auf Knopfdruck an und wird beim Reiterwechsel wieder stumm.
 - **Lernlandkarte** (Diverses): eine Karte aus **Orten** (Aufgaben, Themen, Stationen), die durch
   **Wege** verbunden sind – der Fortschritt schaltet nach und nach neue Orte frei.
   - **Arbeiten mit der Karte:** Ein Ort wird durch Antippen als **erledigt** markiert (grüner Haken);

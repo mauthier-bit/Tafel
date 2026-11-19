@@ -1,0 +1,738 @@
+<!DOCTYPE html><html lang="de"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<title>Doppelspalt</title>
+<style>
+  :root{--fs:14px;}
+  *{box-sizing:border-box;} [hidden]{display:none!important;}
+  html,body{margin:0;height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#1f2430;font-size:var(--fs);}
+  #wrap{position:absolute;inset:0;display:flex;flex-direction:column;}
+  /* Wird es eng, rutschen die rechten Knöpfe in eine zweite Zeile – sonst wären die
+     Reiter auf wenige Pixel zusammengedrückt oder Teilen wäre abgeschnitten. */
+  #bar{display:flex;gap:4px;padding:6px;border-bottom:1px solid #e2e7ef;align-items:center;flex:none;flex-wrap:wrap;}
+  #barR{display:flex;gap:4px;align-items:center;flex:none;}
+  #barMid{display:flex;gap:4px;align-items:center;flex:1 1 auto;min-width:150px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:thin;padding:0 2px;}
+  #barMid::-webkit-scrollbar{height:5px;} #barMid::-webkit-scrollbar-thumb{background:#c8d0dc;border-radius:3px;}
+  /* Die drei Reiter stehen als eine Gruppe zusammen – sie schließen einander aus */
+  .seg.gross{flex:none;border-radius:10px;}
+  .seg.gross button{padding:9px 14px;font-weight:700;font-size:1em;}
+  #bar2,#bar3{display:flex;gap:6px;padding:5px 8px;border-bottom:1px solid #e2e7ef;align-items:center;flex-wrap:nowrap;flex:none;min-height:44px;font-size:.92em;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:thin;}
+  #bar2>*,#bar3>*{flex:0 0 auto;}
+  #bar2::-webkit-scrollbar,#bar3::-webkit-scrollbar{height:4px;} #bar2::-webkit-scrollbar-thumb,#bar3::-webkit-scrollbar-thumb{background:#cfd6e0;border-radius:2px;}
+  .lbl{color:#64748b;font-weight:600;white-space:nowrap;}
+  .btn{border:1px solid #cfd6e0;background:#fff;border-radius:9px;padding:6px 11px;font:inherit;font-weight:600;color:#1f2430;cursor:pointer;white-space:nowrap;}
+  .btn.on{background:#2563eb;border-color:#2563eb;color:#fff;}
+  .btn.pri{background:#2563eb;border-color:#2563eb;color:#fff;}
+  .btn:disabled{opacity:.4;cursor:default;}
+  .sep{width:1px;align-self:stretch;background:#e2e7ef;margin:0 4px;flex:none;}
+  .seg{display:inline-flex;border:1px solid #cfd6e0;border-radius:9px;overflow:hidden;}
+  .seg button{border:0;background:#fff;padding:6px 11px;font:inherit;font-weight:600;color:#53617a;cursor:pointer;white-space:nowrap;}
+  .seg button+button{border-left:1px solid #cfd6e0;}
+  .seg button.on{background:#2563eb;color:#fff;}
+  .reg{display:inline-flex;align-items:center;gap:5px;}
+  .reg input[type=range]{width:calc(var(--fs) * 6.4);touch-action:none;}
+  .reg .v{font-variant-numeric:tabular-nums;font-weight:700;min-width:calc(var(--fs) * 3.4);text-align:right;}
+  #cvbox{position:relative;flex:1 1 auto;min-height:0;}
+  #cv{position:absolute;inset:0;width:100%;height:100%;touch-action:none;}
+  #hint{position:absolute;left:0;right:0;bottom:0;padding:4px 8px;font-size:.8em;color:#64748b;
+    background:rgba(255,255,255,.82);pointer-events:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+</style>
+<script>
+/* Scharfe Kante unter der iPadOS-Statusleiste (iPadOS 26/27).
+   WebKit legt in Web-Apps vom Homebildschirm am oberen Rand sonst einen
+   weichen Verlauf ueber den Inhalt. Er entfaellt, wenn dort eine deckende
+   Leiste liegt - ein bildschirmfuellender Kasten genuegt nicht (am
+   13.10.2026 auf iPadOS 27 geprueft). Das Skript legt deshalb einen 16 px
+   hohen, deckenden Streifen an den oberen Rand und rueckt alles, was in
+   diese 16 px hineinragt, um 16 px nach unten. Laeuft nur in der App vom
+   Homebildschirm, nicht in Safari und nicht in einem Rahmen; mit #kante in
+   der Adresse laesst es sich zum Pruefen erzwingen. */
+(function(){
+  if(window.top!==window) return;
+  var pruef=/kante/i.test(location.hash||'');
+  var alsApp=(navigator.standalone===true) ||
+             (window.matchMedia && matchMedia('(display-mode: standalone)').matches);
+  if(!alsApp && !pruef) return;
+
+  var HOCH=16;
+  function leer(f){ return !f || f==='transparent' || f.replace(/\s/g,'')==='rgba(0,0,0,0)'; }
+  function seite(){
+    var s=getComputedStyle(document.body), f=s.backgroundColor, b=s.backgroundImage;
+    if(leer(f) && (!b || b==='none')){
+      s=getComputedStyle(document.documentElement); f=s.backgroundColor; b=s.backgroundImage;
+    }
+    return { farbe: leer(f) ? '#ffffff' : f, bild: (b && b!=='none') ? b : '' };
+  }
+  /* Faerbt dieses Element am oberen Rand etwas sichtbar ein? */
+  function tinte(n){
+    var r=n.getBoundingClientRect();
+    if(r.top>=HOCH || r.bottom<=0 || r.width<=0) return false;
+    var s=getComputedStyle(n);
+    if(s.display==='none' || s.visibility==='hidden' || s.opacity==='0') return false;
+    if(n.id==='randKante') return false;
+    var t=n.tagName.toLowerCase();
+    if(t==='img'||t==='svg'||t==='canvas'||t==='video') return true;
+    if(!leer(s.backgroundColor) || s.backgroundImage!=='none') return true;
+    if(parseFloat(s.borderTopWidth)>0) return true;
+    var kn=n.childNodes;
+    for(var j=0;j<kn.length;j++)
+      if(kn[j].nodeType===3 && kn[j].nodeValue.replace(/\s/g,'')) return true;
+    for(var i=0;i<n.children.length;i++) if(tinte(n.children[i])) return true;
+    return false;
+  }
+  function ragtRein(z){
+    for(var i=0;i<z.children.length;i++) if(tinte(z.children[i])) return true;
+    return false;
+  }
+  function luft(z){
+    if(z.dataset.kanteLuft) return;
+    if(!ragtRein(z) && !tinte(z)) return;    /* noch nichts oben - spaeter nochmal */
+    z.dataset.kanteLuft='1';
+    var p=parseFloat(getComputedStyle(z).paddingTop)||0;
+    if(p>=HOCH) return;
+    z.style.paddingTop=(p+HOCH)+'px';
+  }
+  function sichtbar(n,s){
+    return s.display!=='none' && s.visibility!=='hidden' && n.id!=='randKante';
+  }
+  /* bildschirmfuellende fixierte Kaesten */
+  function kaesten(){
+    var alle=document.querySelectorAll('body > *, body > * > *'), raus=[];
+    for(var i=0;i<alle.length;i++){
+      var n=alle[i], s=getComputedStyle(n);
+      if(s.position!=='fixed' || !sichtbar(n,s)) continue;
+      var r=n.getBoundingClientRect();
+      if(r.top<=4 && r.width>=innerWidth*0.9 && r.height>=innerHeight*0.9) raus.push(n);
+    }
+    return raus;
+  }
+  /* Leisten am oberen Rand (fixiert oder klebend, aber kein Vollbildkasten) */
+  function leisten(){
+    var alle=document.querySelectorAll('body > *, body > * > *'), raus=[];
+    for(var i=0;i<alle.length;i++){
+      var n=alle[i], s=getComputedStyle(n);
+      if((s.position!=='fixed' && s.position!=='sticky') || !sichtbar(n,s)) continue;
+      var r=n.getBoundingClientRect();
+      if(r.top<=4 && r.width>=innerWidth*0.8 && r.height>=6 && r.height<=innerHeight*0.6) raus.push(n);
+    }
+    return raus;
+  }
+  /* Liegt oben schon eine deckende Leiste, ist nichts zu tun. */
+  function schonGut(){
+    var st=document.elementsFromPoint ? document.elementsFromPoint(Math.round(innerWidth/2),2) : [];
+    for(var i=0;i<st.length;i++){
+      var n=st[i];
+      if(n.id==='randKante') continue;
+      if(n===document.body || n===document.documentElement) return false;
+      var s=getComputedStyle(n), r=n.getBoundingClientRect();
+      return (s.position==='fixed'||s.position==='sticky') && r.top<=4 &&
+             r.width>=innerWidth*0.8 && r.height>=6 && r.height<=innerHeight*0.6 &&
+             !leer(s.backgroundColor);
+    }
+    return false;
+  }
+  var band=null;
+  function streifen(farbe){
+    if(!band){
+      band=document.createElement('div');
+      band.id='randKante'; band.setAttribute('aria-hidden','true');
+      band.style.cssText='position:fixed;left:0;top:0;width:100%;height:'+HOCH+'px;'+
+        'z-index:2147483646;pointer-events:none';
+      document.body.appendChild(band);
+    }
+    band.style.display='block';
+    if(farbe){
+      band.style.backgroundColor=farbe;
+      band.style.backgroundImage='none';
+      return;
+    }
+    var s=getComputedStyle(document.body), h=seite();
+    band.style.backgroundColor=h.farbe;
+    band.style.backgroundImage=h.bild||'none';
+    band.style.backgroundAttachment='fixed';
+    if(h.bild && s.backgroundAttachment!=='fixed')
+      band.style.backgroundSize='100% '+Math.max(innerHeight,document.body.scrollHeight)+'px';
+  }
+  var schild=null;
+  function zeigen(txt){
+    if(!pruef) return;
+    if(!schild){
+      schild=document.createElement('div');
+      schild.style.cssText='position:fixed;left:6px;bottom:52px;z-index:2147483647;max-width:92%;'+
+        'padding:6px 9px;border-radius:8px;background:#ffe600;color:#000;'+
+        'font:600 12px/1.35 -apple-system,sans-serif;white-space:pre-wrap;pointer-events:none';
+      document.body.appendChild(schild);
+    }
+    schild.textContent='Kante K6 · '+innerWidth+'x'+innerHeight+'\n'+txt;
+  }
+  function name(n){
+    if(n.id) return '#'+n.id;
+    var c=(typeof n.className==='string'&&n.className.trim())?'.'+n.className.trim().split(/\s+/)[0]:'';
+    return n.tagName.toLowerCase()+c;
+  }
+  function malen(){
+    var b=document.body; if(!b) return;
+    if(schonGut()){
+      if(band) band.style.display='none';
+      zeigen('oben liegt schon eine deckende Leiste');
+      return;
+    }
+    var k=kaesten(), l=leisten(), h=null, farbe=null, text=[];
+    for(var i=0;i<k.length;i++){
+      var z=k[i], s=getComputedStyle(z);
+      if(!z.dataset.kante){
+        if(leer(s.backgroundColor)){
+          if(!h) h=seite();
+          z.style.backgroundColor=h.farbe;
+          if(s.backgroundImage==='none' && h.bild) z.style.backgroundImage=h.bild;
+        }
+        z.dataset.kante='1';
+        s=getComputedStyle(z);
+      }
+      luft(z);
+      text.push(name(z)+' bg='+s.backgroundColor+(s.backgroundImage!=='none'?'+Verlauf':''));
+    }
+    for(var j=0;j<l.length;j++){
+      var le=l[j], sl=getComputedStyle(le);
+      if(!tinte(le) && !ragtRein(le)) continue;
+      if(!farbe && !leer(sl.backgroundColor)) farbe=sl.backgroundColor;
+      luft(le);
+      text.push('Leiste '+name(le)+' bg='+sl.backgroundColor);
+    }
+    if(!k.length && !l.length){ luft(b); text.push('kein Kasten, nur Streifen'); }
+    streifen(farbe);
+    zeigen(text.join('\n'));
+  }
+  var warte=null;
+  function spaeter(){
+    if(warte) return;
+    warte=setTimeout(function(){ warte=null; malen(); },200);
+  }
+  try{
+    new MutationObserver(spaeter).observe(document.documentElement,
+      {childList:true, subtree:true, attributes:true, attributeFilter:['class','style','hidden']});
+  }catch(e){}
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',malen);
+  else malen();
+  addEventListener('load',spaeter);
+  addEventListener('resize',spaeter);
+  addEventListener('orientationchange',spaeter);
+})();
+</script>
+<style>
+  #hilfe{position:absolute;left:8px;right:8px;top:8px;bottom:8px;background:rgba(255,255,255,.975);border:1px solid #d6dce5;border-radius:12px;padding:12px 14px 14px;overflow:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y;font-size:.95em;line-height:1.5;z-index:5;}
+  #hilfe h3{margin:0 40px 8px 0;font-size:1.1em;}
+  #hilfe ul{margin:6px 0 0 18px;padding:0;} #hilfe li{margin:3px 0;}
+  #hilfeZu{position:absolute;right:8px;top:8px;}
+  #bald{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;color:#64748b;
+    max-width:min(520px,86%);line-height:1.5;}
+  #bald b{display:block;font-size:1.25em;color:#1f2430;margin-bottom:6px;}
+</style>
+</head><body>
+<div id="wrap">
+  <div id="bar">
+    <div id="barMid">
+      <div class="seg gross" id="reiterSeg">
+        <button class="on" id="rK">Klassisch</button>
+        <button id="rQ">Quantenobjekte</button>
+        <button id="rL">Licht</button>
+      </div>
+    </div>
+    <div id="barR">
+      <span class="sep tafelEdit"></span>
+      <span class="lbl tafelEdit">Schrift</span>
+      <button class="btn tafelEdit" id="fnM" title="Kleinere Schrift">A−</button>
+      <button class="btn tafelEdit" id="fnP" title="Größere Schrift">A+</button>
+      <span id="shotBtns" class="tafelEdit" style="display:flex;gap:6px;align-items:center"></span>
+      <button class="btn" id="bHilfe" title="Kurze Anleitung">?</button>
+    </div>
+  </div>
+
+  <div id="bar2">
+    <span class="reg"><span class="lbl">Spaltabstand</span>
+      <input type="range" id="rgD" min="20" max="150" step="1"><span class="v" id="vD"></span></span>
+    <span class="reg"><span class="lbl">Spaltbreite</span>
+      <input type="range" id="rgB" min="2" max="60" step="1"><span class="v" id="vB"></span></span>
+    <span class="reg" id="boxLam"><span class="lbl">Wellenlänge</span>
+      <input type="range" id="rgL" min="10" max="100" step="1"><span class="v" id="vL"></span></span>
+    <span class="reg" id="boxV"><span class="lbl">Tempo</span>
+      <input type="range" id="rgV" min="1" max="10" step="1"><span class="v" id="vV"></span></span>
+    <span class="sep"></span>
+    <button class="btn pri" id="bPlay">▶ Start</button>
+    <button class="btn" id="bReset">Zurücksetzen</button>
+  </div>
+
+  <div id="bar3">
+    <span id="grpK" class="seg"><button data-km="t" class="on">Teilchen</button><button data-km="w">Welle</button></span>
+    <span id="grpL" class="seg" hidden><button data-lm="s" class="on">Strahlen</button><button data-lm="w">Welle</button><button data-lm="p">Photonen</button></span>
+    <span class="sep" id="sep3"></span>
+    <span id="optT">
+      <button class="btn" id="bSchuss">Ein Teilchen</button>
+      <button class="btn" id="bDauer">Dauerfeuer</button>
+      <button class="btn on" id="bHisto">Histogramm</button>
+    </span>
+    <span id="optW" hidden>
+      <button class="btn on" id="bFeld">Wellenfeld</button>
+      <button class="btn" id="bLinien">Berge &amp; Täler</button>
+      <button class="btn" id="bMax">Maxima</button>
+      <button class="btn" id="bMin">Minima</button>
+      <button class="btn" id="bPunkt">Punkt P</button>
+      <button class="btn" id="bGang">Gangunterschied</button>
+      <button class="btn" id="bDiag">Diagramm</button>
+      <button class="btn" id="bMikro">🔊 Mikrofon</button>
+    </span>
+  </div>
+
+  <div id="cvbox">
+    <canvas id="cv"></canvas>
+    <div id="hint"></div>
+    <div id="bald" hidden></div>
+    <div id="hilfe" hidden>
+      <button class="btn" id="hilfeZu">×</button>
+      <h3>Doppelspalt</h3>
+      <div id="hilfeText"></div>
+    </div>
+  </div>
+</div>
+
+<script src="shot.js"></script>
+<script src="modus.js"></script>
+<script src="vendor/qrcode.min.js"></script>
+<script src="teilen.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+const toast=m=>window.TafelShot&&TafelShot.toast(m);
+
+/* ---------- Zustand ---------- */
+const STD={ tab:'k', kmod:'t', lmod:'s',
+  d:60, b:10, lam:34, tempo:5, lauf:false, dauer:false, histo:true,
+  feld:true, linien:false, imax:false, imin:false, pAn:false, gang:false, diag:false, mikro:false,
+  px:170, py:28, fontSize:14, edit:true };
+let D=Object.assign({},STD);
+let ready=false, geteiltesFenster=false;
+
+/* Weltmaße in Zentimetern: der Doppelspalt sitzt bei x = 0, der Schirm bei x = 260.
+   Schall mit 343 m/s – aus der Wellenlänge folgt die Tonhöhe (34 cm → 1000 Hz). */
+/* Die Quelle steht weit links (QUELLX), damit die Teilchen die Spalte flach genug treffen
+   und dahinter zwei saubere Streifen entstehen – zu sehen ist davon aber nur das letzte
+   Stück ab XSTART: dort tauchen die Teilchen auf und fliegen auf die Blende zu. */
+const WX0=-60, WX1=325, SCHIRM=260, QUELLX=-400, XSTART=-55, CSCHALL=34300;
+let cvW=300, cvH=200, sc=1, oxp=0, oyp=0, dpr=1;
+const cv=$('cv'), ctx=cv.getContext('2d');
+const X=x=>oxp+x*sc, Y=y=>oyp-y*sc;
+const xW=px=>(px-oxp)/sc, yW=py=>(oyp-py)/sc;
+let yHalb=130;
+
+const wx0=()=>WX0;
+function mass(){
+  const x0=wx0();
+  sc=Math.min(cvW/(WX1-x0), cvH/260);
+  oxp=(cvW-(WX1-x0)*sc)/2-x0*sc; oyp=cvH/2;
+  yHalb=cvH/(2*sc); }
+
+/* ---------- Quellen (Huygens) ----------
+   Ein breiter Spalt ist kein Punkt: er wird in mehrere Elementarwellen zerlegt,
+   damit sich die Verbreiterung durch die Spaltbreite von selbst ergibt. */
+function quellen(){
+  const n=Math.max(1,Math.min(4,Math.round(D.b/D.lam*3)+1)), aus=[];
+  [-1,1].forEach(s=>{ const ym=s*D.d/2;
+    for(let i=0;i<n;i++){ const t=n===1?0:(i/(n-1)-0.5);
+      aus.push({x:0, y:ym+t*D.b, a:1/n}); } });
+  return aus; }
+function feldAn(x,y){ const k=2*Math.PI/D.lam; let cr=0, ci=0;
+  quellen().forEach(s=>{ const dx=x-s.x, dy=y-s.y, r=Math.hypot(dx,dy)||0.01;
+    const a=s.a/Math.sqrt(r); cr+=a*Math.cos(k*r); ci+=a*Math.sin(k*r); });
+  return {cr, ci, amp:Math.hypot(cr,ci)}; }
+/* So laut wäre es, wenn sich beide Spalte an dieser Stelle voll verstärken */
+function ampVoll(x,y){ const r1=Math.hypot(x,y-D.d/2)||0.01, r2=Math.hypot(x,y+D.d/2)||0.01;
+  return 1/Math.sqrt(r1)+1/Math.sqrt(r2); }
+
+/* ---------- Feldbild ---------- */
+let GW=0, GH=0, Cr=null, Ci=null, img=null, off=null, octx=null, feldNorm=1, feldAlt='';
+function feldSchluessel(){ return [D.d,D.b,D.lam,GW,GH,Math.round(cvW),Math.round(cvH),wx0()].join('|'); }
+function feldBauen(){
+  GW=Math.max(60,Math.min(440,Math.round(cvW/2))); GH=Math.max(50,Math.min(330,Math.round(cvH/2)));
+  const key=feldSchluessel(); if(key===feldAlt&&Cr) return; feldAlt=key;
+  off=document.createElement('canvas'); off.width=GW; off.height=GH; octx=off.getContext('2d');
+  img=octx.createImageData(GW,GH);
+  Cr=new Float32Array(GW*GH); Ci=new Float32Array(GW*GH);
+  const k=2*Math.PI/D.lam, q=quellen();
+  let mx=0;
+  for(let j=0;j<GH;j++){
+    const wy=yW((j+0.5)*cvH/GH);
+    for(let i=0;i<GW;i++){
+      const wx=xW((i+0.5)*cvW/GW), idx=j*GW+i;
+      if(wx<1){ Cr[idx]=0; Ci[idx]=0; continue; }
+      let cr=0, ci=0;
+      for(let s=0;s<q.length;s++){ const dx=wx-q[s].x, dy=wy-q[s].y;
+        const r=Math.sqrt(dx*dx+dy*dy)||0.01, a=q[s].a/Math.sqrt(r), ph=k*r;
+        cr+=a*Math.cos(ph); ci+=a*Math.sin(ph); }
+      Cr[idx]=cr; Ci[idx]=ci;
+      /* Dicht an den Spalten wird die Amplitude beliebig groß (1/√r). Würde man danach
+         normieren, bliebe das ganze Feld dahinter blass – deshalb zählt erst ab 40 cm. */
+      if(wx>40){ const m=cr*cr+ci*ci; if(m>mx) mx=m; } } }
+  feldNorm=1/Math.max(1e-6,Math.sqrt(mx)*0.62); }
+/* Farben wie in der Wellenwanne: Berg hell, Tal dunkelblau */
+function feldMalen(ph){
+  if(!img) return; const d=img.data, c=Math.cos(ph), s=Math.sin(ph);
+  for(let i=0,j=0;i<GW*GH;i++,j+=4){
+    const v=(Ci[i]*c-Cr[i]*s)*feldNorm;
+    if(v===0&&Cr[i]===0&&Ci[i]===0){ d[j]=255; d[j+1]=255; d[j+2]=255; d[j+3]=255; continue; }
+    const av=Math.min(1,Math.abs(v)*1.1), t=0.5+0.5*Math.sign(v)*Math.pow(av,0.65);
+    d[j]=Math.round(15+t*223); d[j+1]=Math.round(38+t*208); d[j+2]=Math.round(86+t*169); d[j+3]=255; }
+  octx.putImageData(img,0,0);
+  ctx.imageSmoothingEnabled=true; ctx.drawImage(off,0,0,cvW,cvH); }
+
+/* ---------- Teilchen ---------- */
+let teil=[], histo=new Int32Array(61), getroffen=0, durch=0, abgefeuert=0, dauerT=0;
+/* Die Quelle strahlt so breit, dass sie beide Spalte trifft – wer danebenfliegt, wird
+   an der Wand geschluckt. Sonst käme bei weitem Spaltabstand nie ein Teilchen durch.
+   Die Teilchen sind alle gleich schnell: wie schnell es aussieht, entscheidet allein das
+   Tempo der Simulation – genau wie bei der Welle, deren Geschwindigkeit c = λ·f feststeht. */
+const VTEIL=170;
+function schuss(){
+  const amax=Math.atan((D.d/2+D.b/2+14)/Math.abs(QUELLX));
+  const a=(Math.random()*2-1)*amax;
+  teil.push({x:XSTART, y:(XSTART-QUELLX)*Math.tan(a), vx:VTEIL*Math.cos(a), vy:VTEIL*Math.sin(a)});
+  abgefeuert++; }
+const tempoF=()=>D.tempo/5;
+function teilSchritt(dt){
+  const halb=D.b/2;
+  for(let i=teil.length-1;i>=0;i--){ const p=teil[i];
+    const x0=p.x; p.x+=p.vx*dt; p.y+=p.vy*dt;
+    if(x0<0&&p.x>=0){
+      const t=(0-x0)/(p.x-x0||1), ys=p.y-(p.vy*dt)*(1-t);
+      const of1=Math.abs(ys-D.d/2), of2=Math.abs(ys+D.d/2);
+      if(of1>halb&&of2>halb){ teil.splice(i,1); continue; }
+      durch++; }
+    if(Math.abs(p.y)>yHalb+10){ teil.splice(i,1); continue; }
+    if(p.x>=SCHIRM){ getroffen++;
+      const k=Math.round((p.y/yHalb*0.5+0.5)*(histo.length-1));
+      if(k>=0&&k<histo.length) histo[k]++;
+      teil.splice(i,1); } } }
+function histoMalen(){
+  let mx=1; for(let i=0;i<histo.length;i++) if(histo[i]>mx) mx=histo[i];
+  const breit=(WX1-SCHIRM-6)*sc, hb=cvH/histo.length;
+  ctx.save(); ctx.fillStyle='#2563eb';
+  for(let i=0;i<histo.length;i++){ if(!histo[i]) continue;
+    const l=breit*histo[i]/mx, py=Y((i/(histo.length-1)-0.5)*2*yHalb);
+    ctx.fillRect(X(SCHIRM)+3, py-hb*0.42, l, hb*0.84); }
+  ctx.restore(); }
+
+/* ---------- Linien und Punkt P ---------- */
+function bogen(c,x0,y0,r){
+  const a=Math.acos(Math.max(-1,Math.min(1,0)));
+  c.beginPath(); c.arc(X(x0),Y(y0),r*sc,-Math.PI/2,Math.PI/2); c.stroke(); }
+function linienMalen(ph){
+  const lam=D.lam, versch=lam*((ph/(2*Math.PI))%1);   /* nur innerhalb einer Wellenlänge wandern */
+  ctx.save(); ctx.lineWidth=1.3;
+  [-1,1].forEach(s=>{ const ym=s*D.d/2;
+    for(let n=0;n<60;n++){
+      const rB=n*lam+versch, rT=rB+lam/2;
+      if(rB*sc>cvW*1.6) break;
+      if(rB>0){ ctx.strokeStyle='rgba(15,38,86,.55)'; bogen(ctx,0,ym,rB); }
+      if(rT>0){ ctx.strokeStyle='rgba(37,99,235,.42)'; ctx.setLineDash([4,4]); bogen(ctx,0,ym,rT); ctx.setLineDash([]); } } });
+  ctx.restore(); }
+/* Linien gleichen Gangunterschieds sind Hyperbeln mit den Spalten als Brennpunkten */
+function hyperbel(a){
+  const e=D.d/2; if(Math.abs(a)>=e) return;
+  const b2=e*e-a*a;
+  [-1,1].forEach(vz=>{ ctx.beginPath();
+    for(let px=X(0);px<=cvW;px+=4){ const xx=xW(px); if(xx<0) continue;
+      const yy=vz*a*Math.sqrt(1+xx*xx/b2);
+      const py=Y(yy); if(px===X(0)) ctx.moveTo(px,py); else ctx.lineTo(px,py); }
+    ctx.stroke(); if(a===0) return; }); }
+/* Maxima (Gangunterschied n·λ) und Minima ((n+½)·λ) lassen sich einzeln einblenden */
+function intfMalen(){
+  const nMax=Math.floor(D.d/D.lam);
+  ctx.save(); ctx.lineWidth=2;
+  if(D.imax){ ctx.strokeStyle='#15803d';
+    for(let n=-nMax;n<=nMax;n++) hyperbel(n*D.lam/2); }
+  if(D.imin){ ctx.strokeStyle='#b91c1c'; ctx.setLineDash([7,5]);
+    for(let n=-nMax-1;n<=nMax;n++) hyperbel((n+0.5)*D.lam/2);
+    ctx.setLineDash([]); }
+  ctx.restore(); }
+function gangMalen(){
+  const f=feldAn(D.px,D.py), r1=Math.hypot(D.px,D.py-D.d/2), r2=Math.hypot(D.px,D.py+D.d/2);
+  const ds=Math.abs(r1-r2), nl=ds/D.lam;
+  ctx.save(); ctx.lineWidth=2; ctx.strokeStyle='#ea580c';
+  [[0,D.d/2],[0,-D.d/2]].forEach(q=>{ ctx.beginPath(); ctx.moveTo(X(q[0]),Y(q[1])); ctx.lineTo(X(D.px),Y(D.py)); ctx.stroke(); });
+  /* das längere Stück dick hervorheben: um so viel ist der eine Weg weiter */
+  const lang=r1>r2?[0,D.d/2]:[0,-D.d/2], kurz=Math.min(r1,r2);
+  const vx=(D.px-lang[0]), vy=(D.py-lang[1]), L=Math.hypot(vx,vy)||1;
+  ctx.lineWidth=5; ctx.strokeStyle='rgba(234,88,12,.55)';
+  ctx.beginPath(); ctx.moveTo(X(lang[0]+vx*kurz/L),Y(lang[1]+vy*kurz/L));
+  ctx.lineTo(X(D.px),Y(D.py)); ctx.stroke();
+  ctx.restore();
+  const art=Math.abs(nl-Math.round(nl))<0.12?'Verstärkung':(Math.abs(nl-Math.round(nl)-0.5)<0.12||Math.abs(nl-Math.round(nl)+0.5)<0.12?'Auslöschung':'dazwischen');
+  return 'Δs = '+zahl(ds)+' cm = '+zahl(nl)+' λ · '+art; }
+function punktMalen(){
+  const px=X(D.px), py=Y(D.py);
+  ctx.save(); ctx.beginPath(); ctx.arc(px,py,7,0,7);
+  ctx.fillStyle='#fff'; ctx.fill(); ctx.lineWidth=2.6; ctx.strokeStyle='#7e22ce'; ctx.stroke();
+  ctx.fillStyle='#7e22ce'; ctx.font='800 '+Math.max(12,fs())+'px sans-serif';
+  ctx.textAlign='left'; ctx.textBaseline='bottom'; ctx.fillText('P',px+10,py-6);
+  ctx.restore(); }
+function diagMalen(ph){
+  const w=Math.max(120,fs()*9), h=Math.max(64,fs()*4.6);
+  let x0=X(D.px)+16, y0=Y(D.py)-h-16;
+  if(x0+w>cvW-6) x0=X(D.px)-w-16; if(x0<6) x0=6;
+  if(y0<6) y0=Y(D.py)+16; if(y0+h>cvH-6) y0=cvH-h-6;
+  const r1=Math.hypot(D.px,D.py-D.d/2), r2=Math.hypot(D.px,D.py+D.d/2);
+  const k=2*Math.PI/D.lam, a1=1/Math.sqrt(r1||0.01), a2=1/Math.sqrt(r2||0.01);
+  const mx=a1+a2;
+  ctx.save(); ctx.fillStyle='rgba(255,255,255,.93)'; ctx.strokeStyle='#cfd6e0'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.rect(x0,y0,w,h); ctx.fill(); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x0+4,y0+h/2); ctx.lineTo(x0+w-4,y0+h/2); ctx.strokeStyle='#cbd5e1'; ctx.stroke();
+  const kurve=(fn,col,br)=>{ ctx.beginPath(); ctx.strokeStyle=col; ctx.lineWidth=br;
+    for(let i=0;i<=60;i++){ const t=i/60*2*Math.PI, u=fn(t);
+      const xx=x0+4+(w-8)*i/60, yy=y0+h/2-u/mx*(h/2-5);
+      if(i===0) ctx.moveTo(xx,yy); else ctx.lineTo(xx,yy); }
+    ctx.stroke(); };
+  kurve(t=>a1*Math.sin(k*r1-(ph+t)),'rgba(100,116,139,.75)',1.2);
+  kurve(t=>a2*Math.sin(k*r2-(ph+t)),'rgba(100,116,139,.75)',1.2);
+  kurve(t=>a1*Math.sin(k*r1-(ph+t))+a2*Math.sin(k*r2-(ph+t)),'#7e22ce',2.4);
+  ctx.restore(); }
+
+/* ---------- Aufbau zeichnen ---------- */
+function aufbauMalen(){
+  const dick=5*sc, xb=X(0);
+  ctx.save(); ctx.fillStyle='#475569';
+  const yo=Y(D.d/2+D.b/2), yu=Y(D.d/2-D.b/2), zo=Y(-D.d/2+D.b/2), zu=Y(-D.d/2-D.b/2);
+  ctx.fillRect(xb-dick/2, 0, dick, yo);
+  ctx.fillRect(xb-dick/2, yu, dick, zo-yu);
+  ctx.fillRect(xb-dick/2, zu, dick, cvH-zu);
+  ctx.restore();
+  ctx.save(); ctx.strokeStyle='#94a3b8'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(X(SCHIRM),0); ctx.lineTo(X(SCHIRM),cvH); ctx.stroke();
+  ctx.setLineDash([3,6]); ctx.strokeStyle='#cbd5e1'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(X(0),Y(0)); ctx.lineTo(X(SCHIRM),Y(0)); ctx.stroke();
+  ctx.restore();
+  /* Maßpfeil für den Spaltabstand */
+  ctx.save(); ctx.strokeStyle='#64748b'; ctx.fillStyle='#64748b'; ctx.lineWidth=1.4;
+  const xm=xb-14; ctx.beginPath(); ctx.moveTo(xm,Y(D.d/2)); ctx.lineTo(xm,Y(-D.d/2)); ctx.stroke();
+  ctx.font='700 '+Math.max(11,fs()*0.85)+'px sans-serif'; ctx.textAlign='right'; ctx.textBaseline='middle';
+  ctx.fillText('d = '+D.d+' cm', xm-4, Y(0));
+  ctx.restore(); }
+/* Beim Schall sitzt in jedem Spalt ein Lautsprecher – so ist zu sehen, woher die beiden
+   Elementarwellen kommen. */
+function lautsprecherMalen(){
+  const h=Math.max(13,Math.min(26,D.b*sc*0.9)), t=h*0.45, xb=X(0);
+  ctx.save(); ctx.lineWidth=1.6; ctx.strokeStyle='#1f2430'; ctx.fillStyle='#e2e8f0';
+  [-1,1].forEach(v=>{ const yc=Y(v*D.d/2);
+    ctx.beginPath();
+    ctx.moveTo(xb-t-t, yc-h*0.30); ctx.lineTo(xb-t, yc-h*0.30);
+    ctx.lineTo(xb+t*0.5, yc-h*0.62); ctx.lineTo(xb+t*0.5, yc+h*0.62);
+    ctx.lineTo(xb-t, yc+h*0.30); ctx.lineTo(xb-t-t, yc+h*0.30); ctx.closePath();
+    ctx.fill(); ctx.stroke(); });
+  ctx.restore(); }
+function teilchenMalen(){
+  ctx.save(); ctx.fillStyle='#2563eb';
+  teil.forEach(p=>{ ctx.beginPath(); ctx.arc(X(p.x),Y(p.y),3.4,0,7); ctx.fill(); });
+  ctx.restore(); }
+
+/* ---------- Gesamtbild ---------- */
+let phase=0;
+const fs=()=>D.fontSize||14;
+const zahl=v=>{ const r=Math.round(v*10)/10; return String(r).replace('.',','); };
+function malen(){
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.fillStyle='#fff'; ctx.fillRect(0,0,cvW,cvH);
+  let info='';
+  if(D.tab==='k'&&D.kmod==='w'){
+    if(D.feld) feldMalen(phase);
+    if(D.linien) linienMalen(phase);
+    if(D.imax||D.imin) intfMalen();
+    aufbauMalen(); lautsprecherMalen();
+    if(D.pAn){
+      if(D.gang) info=gangMalen();
+      punktMalen();
+      if(D.diag) diagMalen(phase);
+      const f=feldAn(D.px,D.py), rel=f.amp/Math.max(1e-6,ampVoll(D.px,D.py));
+      info=(info?info+' · ':'')+'Lautstärke '+Math.round(rel*100)+' %';
+    }
+    info=(info?info+' · ':'')+'λ = '+D.lam+' cm · f = '+Math.round(CSCHALL/D.lam)+' Hz';
+  } else if(D.tab==='k'){
+    aufbauMalen();
+    if(D.histo) histoMalen();
+    teilchenMalen();
+    info='abgefeuert: '+abgefeuert+' · durch die Spalte: '+durch+' · am Schirm: '+getroffen;
+  }
+  $('hint').textContent=info; }
+
+/* ---------- Mikrofon ---------- */
+let ac=null, osc=null, gain=null;
+function tonAn(){
+  try{
+    if(!ac){ const AC=window.AudioContext||window.webkitAudioContext; if(!AC) return false;
+      ac=new AC(); osc=ac.createOscillator(); gain=ac.createGain();
+      gain.gain.value=0; osc.type='sine'; osc.connect(gain); gain.connect(ac.destination); osc.start(); }
+    if(ac.state==='suspended') ac.resume();
+    return true;
+  }catch(e){ return false; } }
+function tonStellen(){
+  if(!ac||!osc) return;
+  const an=D.mikro&&D.pAn&&D.tab==='k'&&D.kmod==='w';
+  const f=feldAn(D.px,D.py), rel=an?f.amp/Math.max(1e-6,ampVoll(D.px,D.py)):0;
+  osc.frequency.setTargetAtTime(CSCHALL/D.lam, ac.currentTime, 0.04);
+  gain.gain.setTargetAtTime(an?0.25*rel:0, ac.currentTime, 0.05); }
+function tonAus(){ if(gain&&ac) gain.gain.setTargetAtTime(0, ac.currentTime, 0.03); }
+
+/* ---------- Schleife ---------- */
+let letztT=0;
+function loop(ts){
+  const dt=Math.min(0.05,(ts-letztT)/1000||0); letztT=ts;
+  if(D.lauf){
+    const st=dt*tempoF();
+    if(D.tab==='k'&&D.kmod==='t'){
+      teilSchritt(st);
+      if(D.dauer){ dauerT+=st; const ab=1/3.2;
+        while(dauerT>ab){ dauerT-=ab; schuss(); } }
+    } else { phase+=st*2*Math.PI*0.45; if(phase>1e6) phase=0; }
+  }
+  tonStellen();
+  malen();
+  requestAnimationFrame(loop); }
+
+/* ---------- Bedienung ---------- */
+function resize(){
+  dpr=window.devicePixelRatio||1;
+  const r=$('cvbox').getBoundingClientRect();
+  cvW=Math.max(60,r.width); cvH=Math.max(60,r.height);
+  cv.width=Math.round(cvW*dpr); cv.height=Math.round(cvH*dpr);
+  mass(); feldAlt=''; feldBauen(); }
+function knoepfe(){
+  $('rK').classList.toggle('on',D.tab==='k');
+  $('rQ').classList.toggle('on',D.tab==='q');
+  $('rL').classList.toggle('on',D.tab==='l');
+  const klass=D.tab==='k', welle=klass&&D.kmod==='w';
+  $('grpK').hidden=!klass; $('grpL').hidden=D.tab!=='l';
+  $('optT').hidden=!(klass&&D.kmod==='t'); $('optW').hidden=!welle;
+  $('sep3').hidden=!klass;
+  $('bar3').hidden=!klass;
+  $('boxLam').hidden=!welle;
+  $('bald').hidden=klass;
+  if(!klass) $('bald').innerHTML='<b>'+(D.tab==='q'?'Quantenobjekte':'Licht')+'</b>'+
+    'Dieser Reiter ist noch leer – er kommt als Nächstes. Fertig ist bisher der Reiter <b>Klassisch</b> mit Teilchen und Schallwelle.';
+  [['bDauer',D.dauer],['bHisto',D.histo],['bFeld',D.feld],['bLinien',D.linien],['bMax',D.imax],['bMin',D.imin],
+   ['bPunkt',D.pAn],['bGang',D.gang],['bDiag',D.diag],['bMikro',D.mikro]].forEach(([id,an])=>{
+    const b=$(id); if(b) b.classList.toggle('on',!!an); });
+  ['bGang','bDiag','bMikro'].forEach(id=>{ const b=$(id); if(b) b.disabled=!D.pAn; });
+  $('bPlay').textContent=D.lauf?'⏸ Pause':'▶ Start';
+  $('grpK').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.km===D.kmod));
+  $('grpL').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.lm===D.lmod));
+  $('rgD').value=D.d; $('vD').textContent=D.d+' cm';
+  $('rgB').value=D.b; $('vB').textContent=D.b+' cm';
+  $('rgL').value=D.lam; $('vL').textContent=D.lam+' cm';
+  $('rgV').value=D.tempo; $('vV').textContent=zahl(D.tempo/5)+' \u00d7'; }
+function neuStart(){ teil=[]; histo=new Int32Array(histo.length); getroffen=0; durch=0; abgefeuert=0; phase=0; dauerT=0; }
+
+const reg=(id,feld,nach)=>{ const el=$(id); if(!el) return;
+  el.addEventListener('input',()=>{ D[feld]=+el.value; if(nach) nach(); knoepfe(); sync(); }); };
+reg('rgD','d',()=>{ feldAlt=''; feldBauen(); });
+reg('rgB','b',()=>{ feldAlt=''; feldBauen(); });
+reg('rgL','lam',()=>{ feldAlt=''; feldBauen(); });
+reg('rgV','tempo');
+const um=(id,feld,nach)=>{ const b=$(id); if(!b) return;
+  b.onclick=()=>{ D[feld]=!D[feld]; if(nach) nach(); knoepfe(); sync(); }; };
+um('bDauer','dauer'); um('bHisto','histo'); um('bFeld','feld'); um('bLinien','linien');
+um('bMax','imax'); um('bMin','imin'); um('bGang','gang'); um('bDiag','diag');
+um('bPunkt','pAn',()=>{ if(!D.pAn){ D.mikro=false; tonAus(); } });
+$('bMikro').onclick=()=>{ if(!D.pAn) return;
+  D.mikro=!D.mikro;
+  if(D.mikro){ if(!tonAn()){ D.mikro=false; toast('Dieses Gerät gibt keinen Ton aus.'); } }
+  else tonAus();
+  knoepfe(); sync(); };
+$('bSchuss').onclick=()=>{ schuss(); if(!D.lauf){ D.lauf=true; knoepfe(); sync(); } };
+$('bPlay').onclick=()=>{ D.lauf=!D.lauf; knoepfe(); sync(); };
+$('bReset').onclick=()=>{ neuStart(); D.lauf=false; knoepfe(); sync(); };
+$('grpK').querySelectorAll('button').forEach(b=>{ b.onclick=()=>{ D.kmod=b.dataset.km; neuStart(); knoepfe(); resize(); sync(); }; });
+$('grpL').querySelectorAll('button').forEach(b=>{ b.onclick=()=>{ D.lmod=b.dataset.lm; knoepfe(); sync(); }; });
+[['rK','k'],['rQ','q'],['rL','l']].forEach(([id,t])=>{ $(id).onclick=()=>{ D.tab=t;
+  if(t!=='k'){ tonAus(); } knoepfe(); sync(); }; });
+$('fnM').onclick=()=>setFs((D.fontSize||14)-1);
+$('fnP').onclick=()=>setFs((D.fontSize||14)+1);
+function setFs(v){ D.fontSize=Math.max(10,Math.min(22,v));
+  document.documentElement.style.setProperty('--fs',D.fontSize+'px'); resize(); sync(); }
+$('bHilfe').onclick=()=>{ $('hilfeText').innerHTML=HILFE; $('hilfe').hidden=!$('hilfe').hidden; };
+$('hilfeZu').onclick=()=>{ $('hilfe').hidden=true; };
+const HILFE='<ul>'+
+ '<li><b>Klassisch · Teilchen:</b> „Ein Teilchen" schießt eines ab, „Dauerfeuer" feuert fortlaufend. '+
+ 'Wer einen Spalt trifft, fliegt geradeaus weiter – sonst wird er geschluckt. Das Histogramm sammelt, wo die Teilchen ankommen: '+
+ 'zwei Streifen, kein Muster.</li>'+
+ '<li><b>Klassisch · Welle:</b> Hinter den Spalten laufen zwei Elementarwellen los (Schall, 343 m/s). '+
+ 'Einblenden lassen sich das Wellenfeld, Berge und Täler als Linien '+
+ 'sowie die Linien gleichen Gangunterschieds einzeln als <b>Maxima</b> (grün) und <b>Minima</b> (rot gestrichelt).</li>'+
+ '<li><b>Punkt P</b> lässt sich mit dem Finger verschieben. Dazu gibt es den <b>Gangunterschied</b> '+
+ '(die beiden Wege und das überzählige Stück), ein <b>Diagramm</b> mit den beiden Teilschwingungen und ihrer Summe '+
+ 'und das <b>Mikrofon</b>, das den Ton mit der Lautstärke an dieser Stelle hörbar macht.</li>'+
+ '<li>Die Tonhöhe folgt aus der Wellenlänge: 34 cm sind rund 1000 Hz. '+
+ 'Die Geschwindigkeit ist nicht einstellbar – beim Schall liegt sie mit c = λ·f fest, '+
+ 'und die Teilchen sind alle gleich schnell. Der Regler <b>Tempo</b> ändert nur, wie schnell die Simulation läuft.</li></ul>';
+
+/* Punkt P ziehen */
+let zieht=false;
+cv.addEventListener('pointerdown',e=>{
+  if(!(D.tab==='k'&&D.kmod==='w'&&D.pAn)) return;
+  const r=cv.getBoundingClientRect(), mx=e.clientX-r.left, my=e.clientY-r.top;
+  if(Math.hypot(mx-X(D.px),my-Y(D.py))>Math.max(22,fs()*1.8)) return;
+  zieht=true; e.preventDefault(); },{passive:false});
+addEventListener('pointermove',e=>{ if(!zieht) return;
+  const r=cv.getBoundingClientRect();
+  D.px=Math.max(4,Math.min(SCHIRM-2,xW(e.clientX-r.left)));
+  D.py=Math.max(-yHalb+4,Math.min(yHalb-4,yW(e.clientY-r.top)));
+  e.preventDefault(); },{passive:false});
+addEventListener('pointerup',()=>{ if(zieht){ zieht=false; sync(); } });
+
+/* ---------- Tafel und Teilen ---------- */
+let syncTO=null;
+function sync(){ if(window.parent===window) return;
+  clearTimeout(syncTO); syncTO=setTimeout(()=>{
+    try{ parent.postMessage({type:'embed-data',data:zustand()},'*'); }catch(e){} },250); }
+function zustand(){ return D; }
+function uebernimm(d){ if(!d) return;
+  const s=STD;
+  D.tab=['k','q','l'].includes(d.tab)?d.tab:s.tab;
+  D.kmod=d.kmod==='w'?'w':'t'; D.lmod=['s','w','p'].includes(d.lmod)?d.lmod:'s';
+  D.d=Math.max(20,Math.min(150,+d.d||s.d));
+  D.b=Math.max(2,Math.min(60,+d.b||s.b));
+  D.lam=Math.max(10,Math.min(100,+d.lam||s.lam));
+  D.tempo=Math.max(1,Math.min(10,+d.tempo||s.tempo));
+  ['lauf','dauer','histo','feld','linien','imax','imin','pAn','gang','diag'].forEach(k=>{ D[k]=!!d[k]; });
+  D.mikro=false;                                  /* Ton nie ungefragt einschalten */
+  D.px=isFinite(+d.px)?+d.px:s.px; D.py=isFinite(+d.py)?+d.py:s.py;
+  D.fontSize=Math.max(10,Math.min(22,+d.fontSize||s.fontSize));
+  D.edit=d.edit!==false;
+  document.documentElement.style.setProperty('--fs',D.fontSize+'px');
+  neuStart(); knoepfe(); resize(); }
+function bild(){ if(!window.TafelShot) return null;
+  return TafelShot.rasterize($('cvbox'),{scale:2,bg:'#fff',exclude:'#hilfe,#hint'}); }
+addEventListener('message',e=>{
+  if(e.source!==window&&(window.parent===window||e.source!==window.parent)) return;
+  if(!(e.data&&e.data.type==='embed-data'&&e.data.data)) return;
+  uebernimm(e.data.data); ready=true;
+  if(window.TafelModus) TafelModus.refresh(); });
+if(window.TafelTeilen&&!TafelTeilen.istGeteilt())
+  TafelTeilen.knopf($('barR'),'doppelspalt.html',()=>({w:'dspalt', d:zustand()}));
+addEventListener('resize',resize);
+
+window.addEventListener('load',()=>{
+  const geteilt=window.TafelTeilen&&TafelTeilen.istGeteilt();
+  geteiltesFenster=!!geteilt;
+  if(window.TafelModus&&!geteilt){
+    TafelModus.init({get:()=>D.edit!==false, set:v=>{ D.edit=v; resize(); sync(); }});
+    $('bar').style.paddingRight='108px';   /* Platz für den schwebenden Knopf Benutzen/Bearbeiten */ }
+  document.documentElement.style.setProperty('--fs',(D.fontSize||14)+'px');
+  if(window.TafelShot) TafelShot.buttons($('shotBtns'),bild,'btn');
+  knoepfe(); resize();
+  requestAnimationFrame(ts=>{ letztT=ts; loop(ts); });
+  if(window.ResizeObserver) new ResizeObserver(resize).observe($('cvbox'));
+  if(geteilt){ TafelTeilen.nurBenutzen(); D.edit=false; ready=true;
+    TafelTeilen.empfangen().then(p=>{ if(p&&p.w==='dspalt'&&p.d) TafelTeilen.einspielen(p.d); }).catch(()=>{});
+    return; }
+  if(window.parent===window){ ready=true; return; }
+  try{ parent.postMessage({type:'embed-ready'},'*'); }catch(e){}
+  setTimeout(()=>{ ready=true; },700); });
+</script>
+</body></html>
