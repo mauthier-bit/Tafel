@@ -4116,8 +4116,9 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   **Wellenlänge** folgt die Tonhöhe, 34 cm sind rund 1000 Hz); in jedem Spalt steht dazu ein
   **Lautsprecher**. Ein breiter Spalt wird dabei in mehrere
   Elementarwellen zerlegt, die Verbreiterung ergibt sich also von selbst. Einzeln einblendbar sind
-  **Wellenfeld** (Verdichtungen **rot**, Verdünnungen **blau**, dazwischen weiß), **Berge** (durchgezogene) und
-  **Täler** (gestrichelte Kreislinien) einzeln, und die Linien gleichen Gangunterschieds getrennt als
+  **Wellenfeld** (Verdichtungen **rot**, Verdünnungen **blau**, dazwischen weiß), **Berge** (durchgezogen dunkelrot) und
+  **Täler** (gestrichelt dunkelblau) als Kreislinien einzeln – sie liegen genau auf dem Kamm bzw. im Tal
+  der Elementarwelle, also eine Viertel Wellenlänge neben dem Nulldurchgang, und die Linien gleichen Gangunterschieds getrennt als
   **Maxima** (grün) und **Minima** (rot gestrichelt) – das sind Hyperbeln mit den beiden Spalten als
   Brennpunkten. Mit **beide / oben / unten** läuft nur ein Lautsprecher: dann bleibt eine einzelne
   Kreiswelle übrig, das Muster verschwindet, und Maxima, Minima und Gangunterschied sind ausgegraut
