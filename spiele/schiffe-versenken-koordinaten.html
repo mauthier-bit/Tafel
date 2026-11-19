@@ -1,0 +1,1633 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Schiffe versenken">
+<title>Schiffe versenken im Koordinatensystem</title>
+<style>
+:root{--navy:#0a2342;--navy2:#123a63;--paper:#f6fafd;--ink:#15314d;--muted:#5b7089;--hit:#e11d48;--miss:#2f7fd8;--sel:#f59e0b;--ok:#15935a;--warn:#c27406;--bad:#d4332f;--p0:#1596b8;--p1:#e8603c;--pc:#1596b8}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",system-ui,sans-serif;-webkit-user-select:none;user-select:none;touch-action:manipulation;overscroll-behavior:none;-webkit-text-size-adjust:100%}
+body{background:#081c36;background:radial-gradient(1100px 700px at 15% -10%,#1b4d7e 0%,transparent 60%),linear-gradient(#0a2342,#061631)}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;touch-action:manipulation;padding:0}
+input{font:inherit;-webkit-user-select:text;user-select:text}
+.screen{position:fixed;inset:0;display:none}
+.screen.on{display:flex}
+.scroll.on{display:block;overflow-y:auto;-webkit-overflow-scrolling:touch}
+
+.btn{background:#fff;color:var(--ink);border-radius:14px;padding:10px 14px;font-weight:650;font-size:16.5px;box-shadow:inset 0 0 0 1.5px #cfdde9,0 2px 0 #cfdde9;min-height:48px;display:inline-flex;align-items:center;justify-content:center;gap:8px;text-align:center;line-height:1.15}
+.btn:active{transform:translateY(1px);filter:brightness(.95)}
+.btn:disabled{opacity:.4;pointer-events:none}
+.primary{background:var(--pc);color:#fff;box-shadow:0 3px 0 rgba(0,0,0,.2)}
+.go{background:linear-gradient(#fcc44a,#f59e0b);color:#3a2300;box-shadow:0 4px 0 #b86f00}
+.big{font-size:21px;min-height:60px;border-radius:16px;padding:12px 20px;width:100%;font-weight:750}
+.ghostbtn{color:#fff;background:rgba(255,255,255,.1);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.3)}
+
+/* ---------- Einstellungen ---------- */
+#scrSettings .wrap{max-width:1120px;margin:0 auto;padding:calc(20px + env(safe-area-inset-top)) 18px 120px}
+.brand{display:flex;align-items:center;gap:16px;color:#fff;margin-bottom:18px}
+.brand svg{width:64px;height:64px;flex:none}
+.brand h1{margin:0;font-size:32px;letter-spacing:-.02em;line-height:1.1}
+.brand p{margin:3px 0 0;color:#a9c3dc;font-size:17px}
+.brand .sp{flex:1}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+.col{display:flex;flex-direction:column;gap:18px;min-width:0}
+@media (max-width:880px){.cols{grid-template-columns:1fr}}
+.card{background:var(--paper);border-radius:22px;padding:16px 18px 18px;box-shadow:0 10px 30px rgba(0,0,0,.28)}
+.card h2{margin:0 0 12px;font-size:20px;display:flex;align-items:center;gap:10px}
+.card h2 .num{width:28px;height:28px;border-radius:50%;background:var(--navy2);color:#fff;font-size:15px;display:grid;place-items:center;flex:none}
+.seg{display:flex;background:#e2ecf4;border-radius:14px;padding:4px;gap:4px}
+.seg button{flex:1;padding:8px 6px;border-radius:11px;font-weight:650;font-size:15px;color:var(--muted);min-height:48px;line-height:1.15}
+.seg button.on{background:#fff;color:var(--ink);box-shadow:0 1px 4px rgba(10,35,66,.2)}
+.row{display:flex;align-items:center;gap:12px;padding:8px 0}
+.row+.row{border-top:1px solid #e2ebf2}
+.rowlbl{font-size:16.5px;font-weight:650;line-height:1.2}
+.rowlbl small{display:block;font-weight:400;color:var(--muted);font-size:14px}
+.stepper{display:flex;align-items:center;gap:6px;margin-left:auto;flex:none}
+.stepper button{width:46px;height:46px;border-radius:12px;background:#fff;box-shadow:inset 0 0 0 1.5px #cfdde9,0 2px 0 #cfdde9;font-size:26px;font-weight:600;line-height:1}
+.stepper button:active{transform:translateY(1px)}
+.stepper output{min-width:34px;text-align:center;font-size:22px;font-weight:750;font-variant-numeric:tabular-nums}
+.names{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.names label{display:flex;align-items:center;gap:8px;background:#fff;border-radius:14px;padding:4px 12px;box-shadow:inset 0 0 0 1.5px #cfdde9}
+.names input{border:0;outline:0;width:100%;min-width:0;font-size:18px;padding:10px 0;background:transparent;color:var(--ink);font-weight:600}
+.dot{width:14px;height:14px;border-radius:50%;flex:none;display:inline-block}
+.tog{display:flex;align-items:center;gap:14px;padding:9px 0;cursor:pointer}
+.tog+.tog{border-top:1px solid #e2ebf2}
+.tog input{display:none}
+.sw{width:52px;height:32px;border-radius:16px;background:#c5d3df;position:relative;flex:none;transition:background .2s}
+.sw::after{content:"";position:absolute;left:3px;top:3px;width:26px;height:26px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:left .2s}
+.tog input:checked+.sw{background:var(--ok)}
+.tog input:checked+.sw::after{left:23px}
+.tl{font-size:16.5px;font-weight:650;line-height:1.2}
+.tl small{display:block;font-weight:400;color:var(--muted);font-size:14px;margin-top:2px}
+.tog.dis{opacity:.4;pointer-events:none}
+.preview{display:flex;gap:14px;align-items:center;margin-top:10px}
+.preview svg{width:190px;height:190px;flex:none;background:#fff;border-radius:14px}
+.sizeinfo{font-size:15px;color:var(--muted);line-height:1.5}
+.sizeinfo b{color:var(--ink);font-size:18px}
+.shipico{display:flex;align-items:center;width:92px;flex:none}
+.balance{margin-top:10px;border-radius:16px;padding:12px 14px;background:#fff;box-shadow:inset 0 0 0 1.5px #d7e4ee}
+.fleetsum{font-size:15px;color:var(--muted)}
+.fleetsum b{color:var(--ink)}
+.meter{position:relative;height:14px;border-radius:7px;background:linear-gradient(90deg,#f6c56f 0 25%,#86d5a8 25% 75%,#f6c56f 75% 100%);margin:12px 4px 4px}
+.meter i{position:absolute;top:-6px;width:8px;height:26px;border-radius:4px;background:var(--navy);transform:translateX(-50%);transition:left .35s;box-shadow:0 0 0 2.5px #fff}
+.meterlbl{display:flex;justify-content:space-between;font-size:12.5px;color:var(--muted);padding:0 2px}
+.verdict{font-weight:750;font-size:16px;margin-top:10px;line-height:1.3}
+.verdict.ok{color:var(--ok)}.verdict.warn{color:var(--warn)}.verdict.bad{color:var(--bad)}
+.dur{font-size:15px;color:var(--muted);margin-top:4px;line-height:1.35}
+.modehelp{font-size:14.5px;color:var(--muted);margin:8px 2px 4px;line-height:1.35}
+.startbar{position:fixed;left:0;right:0;bottom:0;padding:26px 20px calc(14px + env(safe-area-inset-bottom));background:linear-gradient(rgba(6,22,49,0),rgba(6,22,49,.96) 40%);display:flex;justify-content:center;pointer-events:none}
+.startbar .btn{max-width:520px;pointer-events:auto}
+
+/* ---------- Spielbildschirme ---------- */
+.game{flex-direction:column}
+.topbar{flex:none;min-height:60px;display:flex;align-items:center;gap:12px;padding:env(safe-area-inset-top) 12px 0 18px;color:#fff;background:var(--pc)}
+.who{font-size:21px;display:flex;align-items:center;gap:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.who b{font-weight:800}
+.tstats{margin-left:auto;font-size:15px;opacity:.92;font-variant-numeric:tabular-nums;white-space:nowrap}
+.xbtn{background:rgba(255,255,255,.2);color:#fff;border-radius:12px;padding:8px 14px;font-weight:650;min-height:44px;margin-left:auto;white-space:nowrap}
+.tstats+.xbtn{margin-left:0}
+.layout{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:12px;padding:12px 12px calc(12px + env(safe-area-inset-bottom))}
+.boardbox{min-width:0;min-height:0;background:var(--paper);border-radius:20px;display:flex;flex-direction:column;padding:8px 8px 4px;box-shadow:0 10px 30px rgba(0,0,0,.3)}
+.boardcap{display:flex;align-items:center;gap:10px;padding:4px 8px 4px;font-size:17px;color:var(--muted);flex-wrap:wrap;min-height:34px}
+.boardcap b{color:var(--ink)}
+.fleeticons{margin-left:auto;display:flex;gap:4px 8px;flex-wrap:wrap;align-items:center;justify-content:flex-end}
+.fleeticons svg{height:18px;width:auto}
+.fleeticons svg.sunk{opacity:.28}
+.board{flex:1;min-height:0;width:100%;display:block}
+.panel{min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:12px;-webkit-overflow-scrolling:touch}
+.pcard{background:var(--paper);border-radius:20px;padding:14px;box-shadow:0 10px 30px rgba(0,0,0,.3)}
+@media (orientation:portrait){
+  .layout{grid-template-columns:1fr;grid-template-rows:minmax(0,1fr) auto}
+  .panel{flex-direction:row;align-items:stretch;overflow:visible}
+  .panel>.pcard{flex:1;min-width:0;max-height:47dvh;overflow-y:auto}
+}
+
+/* Spielbrett (SVG) */
+.sea{fill:#eaf4fb}
+.gl{stroke:#c3d7e8;stroke-width:1.5}
+.ax{stroke:#1f3e5e;stroke-width:3;fill:none;stroke-linecap:round}
+.axh{fill:#1f3e5e}
+.gp{fill:#8ba6be}
+.lbl{fill:#1f3e5e;font-weight:650;paint-order:stroke;stroke:#eaf4fb;stroke-width:6px;stroke-linejoin:round;font-variant-numeric:tabular-nums}
+.axn{font-style:italic;font-weight:700;fill:#1f3e5e;font-family:Georgia,"Times New Roman",serif}
+.free{fill:#dfe8ef;stroke:#a3b6c6;stroke-width:2.5}
+.miss{fill:#d3e6f9;stroke:var(--miss);stroke-width:3.5}
+.hitc{fill:var(--hit);stroke:#fff;stroke-width:2}
+.hitx{stroke:#fff;stroke-width:3.5;stroke-linecap:round}
+.selring{fill:rgba(245,158,11,.18);stroke:var(--sel);stroke-width:5}
+.pulse{fill:none;stroke:var(--sel);stroke-width:4.5;animation:pulse 1.2s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(1.3)}}
+.guide{fill:none;stroke:var(--sel);stroke-width:6;stroke-linecap:round;stroke-linejoin:round}
+.ghost{fill:none;stroke:#6f849a;stroke-width:3.5;stroke-dasharray:7 5}
+.shipsel{fill:none;stroke:var(--sel);stroke-width:5}
+.sunkship{fill:rgba(127,29,29,.22);stroke:#9f1239;stroke-width:3}
+
+/* Platzieren */
+.hint{font-size:16.5px;line-height:1.4;margin-bottom:10px}
+.shiplist{display:flex;flex-direction:column;gap:6px}
+.si{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:13px;background:#fff;box-shadow:inset 0 0 0 1.5px #d7e4ee;text-align:left;width:100%;min-height:52px}
+.si.sel{box-shadow:inset 0 0 0 3px var(--sel);background:#fff8ea}
+.si .nm{font-weight:700;font-size:16px;line-height:1.2}
+.si .co{font-size:14.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.si.done .co{color:var(--ok);font-weight:600}
+.btnrow{display:flex;gap:8px;margin-top:8px}
+.btnrow .btn{flex:1}
+.msg{font-size:15px;color:var(--bad);line-height:1.35;margin-top:8px;font-weight:600}
+.msg:empty{display:none}
+
+/* Zielen */
+.modetag{display:inline-block;font-size:12.5px;font-weight:750;text-transform:uppercase;letter-spacing:.05em;color:#fff;background:var(--navy2);border-radius:8px;padding:3px 8px;margin-bottom:6px}
+.prompt{font-size:17px;line-height:1.35}
+.cin{display:flex;align-items:center;justify-content:center;gap:6px;font-size:46px;font-weight:300;color:var(--ink);margin:10px 0}
+.cf{width:96px;height:74px;border-radius:14px;background:#fff;box-shadow:inset 0 0 0 2px #cfdde9;font-size:38px;font-weight:750;position:relative;font-variant-numeric:tabular-nums;color:var(--ink)}
+.cf small{position:absolute;left:9px;top:4px;font-size:16px;font-weight:700;color:var(--muted);font-style:italic;font-family:Georgia,serif}
+.cf.act{box-shadow:inset 0 0 0 3.5px var(--pc)}
+.keypad{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.keypad button{height:54px;border-radius:13px;background:#fff;box-shadow:inset 0 0 0 1.5px #cfdde9,0 2px 0 #cfdde9;font-size:26px;font-weight:650}
+.keypad button:active{background:#e3edf5;transform:translateY(1px)}
+.keypad button.inv{visibility:hidden}
+.dim{opacity:.35;pointer-events:none}
+.fire{margin-top:10px}
+.res{font-size:34px;font-weight:850;text-align:center;margin:4px 0 0;line-height:1.1}
+.res.miss{color:var(--miss)}.res.hit,.res.sunk{color:var(--hit)}.res.lost{color:var(--warn)}
+.ressub{text-align:center;font-size:19px;color:var(--muted);margin:6px 0 12px}
+.note{background:#fff3da;border-radius:12px;padding:10px 12px;font-size:15.5px;color:#6f4300;margin-bottom:12px;line-height:1.4}
+.owncap{font-weight:750;font-size:16px}
+.report{font-size:14.5px;color:var(--muted);margin:3px 0 4px;line-height:1.4}
+.report b{color:var(--ink)}
+.own svg{width:100%;height:230px;display:block}
+@media (orientation:portrait){.own svg{height:min(230px,30dvh)}}
+
+/* Übergabe */
+.cover{align-items:center;justify-content:center;background:var(--navy)}
+.cover::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 50% 35%,var(--pc),transparent 70%);opacity:.55}
+.cover-card{position:relative;background:var(--paper);border-radius:28px;padding:30px 30px 26px;max-width:540px;width:calc(100% - 40px);text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.45)}
+.cover-card svg{width:92px;height:92px}
+.cover-card h2{font-size:32px;margin:8px 0 8px;line-height:1.15}
+.cover-card p{font-size:19px;color:var(--muted);margin:0 0 22px;line-height:1.45}
+.cover-card p b{color:var(--ink)}
+
+/* Sieg */
+#scrWin .wrap{max-width:1040px;margin:0 auto;padding:calc(24px + env(safe-area-inset-top)) 18px 40px;color:#fff;text-align:center}
+.wtitle{font-size:40px;margin:4px 0 16px;line-height:1.1}
+.wstats{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
+@media (max-width:700px){.wstats{grid-template-columns:1fr}}
+.wcard{background:var(--paper);color:var(--ink);border-radius:20px;padding:14px 16px;text-align:left}
+.wcard h3{margin:0 0 6px;display:flex;align-items:center;gap:8px;font-size:21px}
+.wcard table{width:100%;font-size:16px;border-collapse:collapse}
+.wcard td{padding:3px 0}.wcard td:last-child{text-align:right;font-weight:750;font-variant-numeric:tabular-nums}
+.wcard svg{width:100%;height:auto;aspect-ratio:1;display:block;margin-top:8px}
+.wcard .cap{font-size:14px;color:var(--muted);margin-top:8px}
+#scrWin .btnrow{max-width:620px;margin:0 auto}
+
+/* Dialoge */
+.modal{position:fixed;inset:0;background:rgba(5,18,36,.62);display:flex;align-items:center;justify-content:center;z-index:50;padding:20px}
+.modal[hidden]{display:none}
+[hidden]{display:none!important}
+.cpucall{text-align:center;font-size:17px;color:var(--muted);margin:6px 0 10px}
+.cpucall span{display:block;font-size:44px;font-weight:800;color:var(--ink);margin-top:2px;font-variant-numeric:tabular-nums}
+.cpuopts{margin-top:10px}
+.cpuopts .seg{margin-bottom:4px}
+.sublbl{font-size:14px;font-weight:650;color:var(--muted);margin:10px 2px 6px}
+.mbox{background:var(--paper);border-radius:22px;padding:20px 22px;max-width:640px;width:100%;max-height:88dvh;overflow:auto}
+.mbox h2{margin:0 0 10px}
+.mbox p,.mbox li{font-size:16.5px;line-height:1.45}
+.mbox ul{padding-left:22px;margin:6px 0}
+</style>
+<script>
+/* Scharfe Kante unter der iPadOS-Statusleiste (iPadOS 26/27).
+   WebKit legt in Web-Apps vom Homebildschirm am oberen Rand sonst einen
+   weichen Verlauf ueber den Inhalt. Er entfaellt, wenn dort eine deckende
+   Leiste liegt - ein bildschirmfuellender Kasten genuegt nicht (am
+   13.10.2026 auf iPadOS 27 geprueft). Das Skript legt deshalb einen 16 px
+   hohen, deckenden Streifen an den oberen Rand und rueckt alles, was in
+   diese 16 px hineinragt, um 16 px nach unten. Laeuft nur in der App vom
+   Homebildschirm, nicht in Safari und nicht in einem Rahmen; mit #kante in
+   der Adresse laesst es sich zum Pruefen erzwingen. */
+(function(){
+  if(window.top!==window) return;
+  var pruef=/kante/i.test(location.hash||'');
+  var alsApp=(navigator.standalone===true) ||
+             (window.matchMedia && matchMedia('(display-mode: standalone)').matches);
+  if(!alsApp && !pruef) return;
+
+  var HOCH=16;
+  function leer(f){ return !f || f==='transparent' || f.replace(/\s/g,'')==='rgba(0,0,0,0)'; }
+  function seite(){
+    var s=getComputedStyle(document.body), f=s.backgroundColor, b=s.backgroundImage;
+    if(leer(f) && (!b || b==='none')){
+      s=getComputedStyle(document.documentElement); f=s.backgroundColor; b=s.backgroundImage;
+    }
+    return { farbe: leer(f) ? '#ffffff' : f, bild: (b && b!=='none') ? b : '' };
+  }
+  /* Faerbt dieses Element am oberen Rand etwas sichtbar ein? */
+  function tinte(n){
+    var r=n.getBoundingClientRect();
+    if(r.top>=HOCH || r.bottom<=0 || r.width<=0) return false;
+    var s=getComputedStyle(n);
+    if(s.display==='none' || s.visibility==='hidden' || s.opacity==='0') return false;
+    if(n.id==='randKante') return false;
+    var t=n.tagName.toLowerCase();
+    if(t==='img'||t==='svg'||t==='canvas'||t==='video') return true;
+    if(!leer(s.backgroundColor) || s.backgroundImage!=='none') return true;
+    if(parseFloat(s.borderTopWidth)>0) return true;
+    var kn=n.childNodes;
+    for(var j=0;j<kn.length;j++)
+      if(kn[j].nodeType===3 && kn[j].nodeValue.replace(/\s/g,'')) return true;
+    for(var i=0;i<n.children.length;i++) if(tinte(n.children[i])) return true;
+    return false;
+  }
+  function ragtRein(z){
+    for(var i=0;i<z.children.length;i++) if(tinte(z.children[i])) return true;
+    return false;
+  }
+  function luft(z){
+    if(z.dataset.kanteLuft) return;
+    if(!ragtRein(z) && !tinte(z)) return;    /* noch nichts oben - spaeter nochmal */
+    z.dataset.kanteLuft='1';
+    var p=parseFloat(getComputedStyle(z).paddingTop)||0;
+    if(p>=HOCH) return;
+    z.style.paddingTop=(p+HOCH)+'px';
+  }
+  function sichtbar(n,s){
+    return s.display!=='none' && s.visibility!=='hidden' && n.id!=='randKante';
+  }
+  /* bildschirmfuellende fixierte Kaesten */
+  function kaesten(){
+    var alle=document.querySelectorAll('body > *, body > * > *'), raus=[];
+    for(var i=0;i<alle.length;i++){
+      var n=alle[i], s=getComputedStyle(n);
+      if(s.position!=='fixed' || !sichtbar(n,s)) continue;
+      /* Deko-Ebenen wie Konfetti liegen durchsichtig ueber allem und duerfen
+         niemals angefasst werden - sie wuerden sonst das Spiel verdecken. */
+      if(s.pointerEvents==='none') continue;
+      var r=n.getBoundingClientRect();
+      if(r.top<=4 && r.width>=innerWidth*0.9 && r.height>=innerHeight*0.9) raus.push(n);
+    }
+    return raus;
+  }
+  /* Leisten am oberen Rand (fixiert oder klebend, aber kein Vollbildkasten) */
+  function leisten(){
+    var alle=document.querySelectorAll('body > *, body > * > *'), raus=[];
+    for(var i=0;i<alle.length;i++){
+      var n=alle[i], s=getComputedStyle(n);
+      if((s.position!=='fixed' && s.position!=='sticky') || !sichtbar(n,s)) continue;
+      var r=n.getBoundingClientRect();
+      if(r.top<=4 && r.width>=innerWidth*0.8 && r.height>=6 && r.height<=innerHeight*0.6) raus.push(n);
+    }
+    return raus;
+  }
+  /* Liegt oben schon eine deckende Leiste, ist nichts zu tun. */
+  function schonGut(){
+    var st=document.elementsFromPoint ? document.elementsFromPoint(Math.round(innerWidth/2),2) : [];
+    for(var i=0;i<st.length;i++){
+      var n=st[i];
+      if(n.id==='randKante') continue;
+      if(n===document.body || n===document.documentElement) return false;
+      var s=getComputedStyle(n), r=n.getBoundingClientRect();
+      return (s.position==='fixed'||s.position==='sticky') && r.top<=4 &&
+             r.width>=innerWidth*0.8 && r.height>=6 && r.height<=innerHeight*0.6 &&
+             !leer(s.backgroundColor);
+    }
+    return false;
+  }
+  var band=null;
+  function streifen(farbe){
+    if(!band){
+      band=document.createElement('div');
+      band.id='randKante'; band.setAttribute('aria-hidden','true');
+      band.style.cssText='position:fixed;left:0;top:0;width:100%;height:'+HOCH+'px;'+
+        'z-index:2147483646;pointer-events:none';
+      document.body.appendChild(band);
+    }
+    band.style.display='block';
+    if(farbe){
+      band.style.backgroundColor=farbe;
+      band.style.backgroundImage='none';
+      return;
+    }
+    var s=getComputedStyle(document.body), h=seite();
+    band.style.backgroundColor=h.farbe;
+    band.style.backgroundImage=h.bild||'none';
+    band.style.backgroundAttachment='fixed';
+    if(h.bild && s.backgroundAttachment!=='fixed')
+      band.style.backgroundSize='100% '+Math.max(innerHeight,document.body.scrollHeight)+'px';
+  }
+  var schild=null;
+  function zeigen(txt){
+    if(!pruef) return;
+    if(!schild){
+      schild=document.createElement('div');
+      schild.style.cssText='position:fixed;left:6px;bottom:52px;z-index:2147483647;max-width:92%;'+
+        'padding:6px 9px;border-radius:8px;background:#ffe600;color:#000;'+
+        'font:600 12px/1.35 -apple-system,sans-serif;white-space:pre-wrap;pointer-events:none';
+      document.body.appendChild(schild);
+    }
+    schild.textContent='Kante K6 · '+innerWidth+'x'+innerHeight+'\n'+txt;
+  }
+  function name(n){
+    if(n.id) return '#'+n.id;
+    var c=(typeof n.className==='string'&&n.className.trim())?'.'+n.className.trim().split(/\s+/)[0]:'';
+    return n.tagName.toLowerCase()+c;
+  }
+  function malen(){
+    var b=document.body; if(!b) return;
+    if(schonGut()){
+      if(band) band.style.display='none';
+      zeigen('oben liegt schon eine deckende Leiste');
+      return;
+    }
+    var k=kaesten(), l=leisten(), farbe=null, text=[];
+    /* Die Kaesten werden nur noch nach unten gerueckt, nicht mehr eingefaerbt:
+       ein bildschirmfuellender Kasten haelt den Verlauf ohnehin nicht ab
+       (am 13.10.2026 auf iPadOS 27 gemessen), das Einfaerben hat dagegen
+       durchsichtige Ebenen deckend gemacht. */
+    for(var i=0;i<k.length;i++){
+      var z=k[i];
+      luft(z);
+      text.push(name(z));
+    }
+    for(var j=0;j<l.length;j++){
+      var le=l[j], sl=getComputedStyle(le);
+      if(!tinte(le) && !ragtRein(le)) continue;
+      if(!farbe && !leer(sl.backgroundColor)) farbe=sl.backgroundColor;
+      luft(le);
+      text.push('Leiste '+name(le)+' bg='+sl.backgroundColor);
+    }
+    if(!k.length && !l.length){ luft(b); text.push('kein Kasten, nur Streifen'); }
+    streifen(farbe);
+    zeigen(text.join('\n'));
+  }
+  var warte=null;
+  function spaeter(){
+    if(warte) return;
+    warte=setTimeout(function(){ warte=null; malen(); },200);
+  }
+  try{
+    new MutationObserver(spaeter).observe(document.documentElement,
+      {childList:true, subtree:true, attributes:true, attributeFilter:['class','style','hidden']});
+  }catch(e){}
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',malen);
+  else malen();
+  addEventListener('load',spaeter);
+  addEventListener('resize',spaeter);
+  addEventListener('orientationchange',spaeter);
+})();
+</script>
+</head>
+<body>
+
+<!-- ================= EINSTELLUNGEN ================= -->
+<section id="scrSettings" class="screen scroll">
+ <div class="wrap">
+  <header class="brand">
+   <svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="16" fill="#123a63"/><path d="M10 54H56M10 54V8" stroke="#cfe3f5" stroke-width="3" stroke-linecap="round"/><g stroke="#35658f" stroke-width="1.5"><path d="M22 10V54M34 10V54M46 10V54M10 42H56M10 30H56M10 18H56"/></g><rect x="17" y="25" width="34" height="10" rx="5" fill="#f59e0b"/><circle cx="22" cy="30" r="2" fill="#fff"/><circle cx="34" cy="30" r="2" fill="#fff"/><circle cx="46" cy="30" r="2" fill="#fff"/><circle cx="46" cy="42" r="5" fill="#e11d48"/></svg>
+   <div><h1>Schiffe versenken</h1><p>Koordinaten setzen und ablesen · zu zweit an einem iPad</p></div>
+   <div class="sp"></div>
+   <button class="btn ghostbtn" id="btnHelp">Spielregeln</button>
+  </header>
+  <div class="cols">
+   <div class="col">
+    <div class="card">
+     <h2><span class="num">1</span>Spieler</h2>
+     <div class="seg" id="segOpp" style="margin-bottom:10px">
+      <button data-v="human">👥 Zu zweit<br><small>iPad wird weitergegeben</small></button>
+      <button data-v="cpu">💻 Gegen den Computer<br><small>allein spielen</small></button>
+     </div>
+     <div class="names">
+      <label><span class="dot" style="background:var(--p0)"></span><input id="name0" maxlength="16" autocomplete="off" spellcheck="false"></label>
+      <label id="name1wrap"><span class="dot" style="background:var(--p1)"></span><input id="name1" maxlength="16" autocomplete="off" spellcheck="false"></label>
+     </div>
+     <div class="cpuopts" id="cpuOpts">
+      <div class="sublbl">Stärke des Computers</div>
+      <div class="seg" id="segLevel">
+       <button data-v="easy">leicht</button><button data-v="mid">mittel</button><button data-v="hard">schwer</button>
+      </div>
+      <label class="tog"><input type="checkbox" id="tLocate"><span class="sw"></span><span class="tl">Schüsse des Computers selbst finden<small>Der Computer nennt die Koordinaten, du tippst den Punkt in deinem Meer an.</small></span></label>
+     </div>
+    </div>
+    <div class="card">
+     <h2><span class="num">2</span>Koordinatensystem</h2>
+     <div class="seg" id="segNeg">
+      <button data-v="0">nur positive Zahlen<br><small>1. Quadrant</small></button>
+      <button data-v="1">auch negative Zahlen<br><small>alle 4 Quadranten</small></button>
+     </div>
+     <div class="row" style="margin-top:6px">
+      <div class="rowlbl">Größe<small id="sizeText"></small></div>
+      <div class="stepper"><button id="sizeMinus" aria-label="kleiner">−</button><output id="sizeOut"></output><button id="sizePlus" aria-label="größer">+</button></div>
+     </div>
+     <div class="preview">
+      <svg id="prevBoard"></svg>
+      <div class="sizeinfo" id="sizeInfo"></div>
+     </div>
+    </div>
+   </div>
+   <div class="col">
+    <div class="card">
+     <h2><span class="num">3</span>Flotte</h2>
+     <div id="fleetRows"></div>
+     <label class="tog" style="border-top:1px solid #e2ebf2">
+      <input type="checkbox" id="tAuto"><span class="sw"></span>
+      <span class="tl">Flotte automatisch anpassen<small>passende Schiffe zur Spielfeldgröße wählen</small></span>
+     </label>
+     <div class="balance">
+      <div class="fleetsum" id="fleetSum"></div>
+      <div class="meter"><i id="meterMark"></i></div>
+      <div class="meterlbl"><span>lange Suche</span><span>gut</span><span>kaum Suche</span></div>
+      <div class="verdict" id="verdict"></div>
+      <div class="dur" id="duration"></div>
+     </div>
+    </div>
+    <div class="card">
+     <h2><span class="num">4</span>Schießen &amp; Regeln</h2>
+     <div class="seg" id="segMode">
+      <button data-v="type">Koordinaten<br>eintippen</button>
+      <button data-v="tap">Punkt antippen<br>&amp; ablesen</button>
+      <button data-v="mix">abwechselnd</button>
+     </div>
+     <div class="modehelp" id="modeHelp"></div>
+     <label class="tog" id="rowPenalty"><input type="checkbox" id="tPenalty"><span class="sw"></span><span class="tl">Falsch abgelesen → Schuss verfällt<small>sonst wird trotzdem geschossen</small></span></label>
+     <label class="tog"><input type="checkbox" id="tAgain"><span class="sw"></span><span class="tl">Nach einem Treffer nochmal schießen</span></label>
+     <label class="tog"><input type="checkbox" id="tNoTouch"><span class="sw"></span><span class="tl">Schiffe dürfen sich nicht berühren<small>auch nicht schräg – rund um jedes Schiff bleiben alle Punkte frei. Dafür passen weniger Schiffe aufs Feld.</small></span></label>
+     <label class="tog" id="rowMark"><input type="checkbox" id="tMark"><span class="sw"></span><span class="tl">Punkte um versenkte Schiffe als frei markieren<small>aus: Die Kinder überlegen selbst, wo nichts mehr liegen kann.</small></span></label>
+     <label class="tog"><input type="checkbox" id="tGuides"><span class="sw"></span><span class="tl">Weg zum Punkt einblenden<small>vom Ursprung erst entlang der x-Achse, dann in y-Richtung</small></span></label>
+     <label class="tog"><input type="checkbox" id="tSound"><span class="sw"></span><span class="tl">Töne</span></label>
+    </div>
+   </div>
+  </div>
+ </div>
+ <div class="startbar"><button class="btn big go" id="btnStart">Spiel starten</button></div>
+</section>
+
+<!-- ================= ÜBERGABE ================= -->
+<section id="scrCover" class="screen cover">
+ <div class="cover-card">
+  <svg viewBox="0 0 92 92" aria-hidden="true"><circle cx="46" cy="46" r="44" fill="var(--pc)" opacity=".15"/><rect x="20" y="16" width="52" height="64" rx="8" fill="#fff" stroke="var(--pc)" stroke-width="4"/><circle cx="46" cy="72" r="3" fill="var(--pc)"/><path d="M30 44h32M52 34l10 10-10 10" stroke="var(--pc)" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  <h2 id="cvTitle"></h2>
+  <p id="cvText"></p>
+  <button class="btn big primary" id="cvBtn"></button>
+ </div>
+</section>
+
+<!-- ================= FLOTTE AUFSTELLEN ================= -->
+<section id="scrPlace" class="screen game">
+ <div class="topbar"><div class="who"><b id="plName"></b>&nbsp;stellt die Flotte auf</div><button class="xbtn" data-abort>Abbrechen</button></div>
+ <div class="layout">
+  <div class="boardbox"><div class="boardcap">Dein Meer – tippe auf die Gitterpunkte</div><svg class="board" id="plBoard"></svg></div>
+  <div class="panel">
+   <div class="pcard">
+    <div class="hint" id="plHint"></div>
+    <div class="shiplist" id="plList"></div>
+   </div>
+   <div class="pcard">
+    <div class="btnrow" style="margin-top:0"><button class="btn" id="plRot">↻ Drehen</button><button class="btn" id="plDel">Zurücknehmen</button></div>
+    <div class="btnrow"><button class="btn" id="plRand">Zufällig verteilen</button><button class="btn" id="plClear">Alle zurück</button></div>
+    <div class="msg" id="plMsg"></div>
+    <button class="btn big primary" id="plDone" style="margin-top:12px">Fertig</button>
+   </div>
+  </div>
+ </div>
+</section>
+
+<!-- ================= SPIELZUG ================= -->
+<section id="scrPlay" class="screen game">
+ <div class="topbar"><div class="who"><b id="pyName"></b>&nbsp;ist dran</div><div class="tstats" id="pyStats"></div><button class="xbtn" data-abort>Beenden</button></div>
+ <div class="layout">
+  <div class="boardbox">
+   <div class="boardcap"><span id="pyCap"></span><div class="fleeticons" id="pyEnemy"></div></div>
+   <svg class="board" id="pyBoard"></svg>
+  </div>
+  <div class="panel">
+   <div class="pcard">
+    <div id="aimBox">
+     <div class="modetag" id="pyTag"></div>
+     <div class="prompt" id="pyPrompt"></div>
+     <div id="pyInputWrap">
+      <div class="cin"><span>(</span><button class="cf" data-f="x"><small>x</small><span id="vx"></span></button><span>|</span><button class="cf" data-f="y"><small>y</small><span id="vy"></span></button><span>)</span></div>
+      <div class="keypad" id="keypad">
+       <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button><button data-k="del" aria-label="löschen">⌫</button>
+       <button data-k="4">4</button><button data-k="5">5</button><button data-k="6">6</button><button data-k="neg" id="keyNeg">−</button>
+       <button data-k="1">1</button><button data-k="2">2</button><button data-k="3">3</button><button data-k="0">0</button>
+      </div>
+     </div>
+     <div class="msg" id="pyMsg"></div>
+     <button class="btn big primary fire" id="pyFire">Feuer!</button>
+    </div>
+    <div id="resBox" hidden>
+     <div class="res" id="resTitle"></div>
+     <div class="ressub" id="resSub"></div>
+     <div class="note" id="resNote" hidden></div>
+     <button class="btn big primary" id="resBtn"></button>
+    </div>
+   </div>
+   <div class="pcard own">
+    <div class="owncap" id="pyOwnCap">Deine Flotte</div>
+    <div class="report" id="pyReport"></div>
+    <svg id="pyOwn"></svg>
+   </div>
+  </div>
+ </div>
+</section>
+
+<!-- ================= SIEG ================= -->
+<section id="scrWin" class="screen scroll">
+ <div class="wrap">
+  <svg viewBox="0 0 80 80" width="84" height="84" aria-hidden="true"><path d="M24 12h32v14a16 16 0 0 1-32 0z" fill="#fbbf24"/><path d="M24 16H12v6a12 12 0 0 0 12 12M56 16h12v6a12 12 0 0 1-12 12" fill="none" stroke="#fbbf24" stroke-width="5"/><rect x="36" y="42" width="8" height="14" fill="#f59e0b"/><rect x="24" y="56" width="32" height="10" rx="3" fill="#fbbf24"/></svg>
+  <h1 class="wtitle" id="wnTitle"></h1>
+  <div class="wstats" id="wnStats"></div>
+  <div class="btnrow"><button class="btn big go" id="wnAgain">Revanche</button><button class="btn big" id="wnSet">Einstellungen</button></div>
+ </div>
+</section>
+
+<!-- ================= DIALOGE ================= -->
+<div class="modal" id="mHelp" hidden>
+ <div class="mbox">
+  <h2>Spielregeln</h2>
+  <ul>
+   <li>Jeder stellt geheim seine Flotte auf. Die Schiffe liegen <b>auf den Gitterpunkten</b> des Koordinatensystems – waagerecht oder senkrecht.</li>
+   <li>Abwechselnd wird auf einen Punkt im Meer des Gegners geschossen. Danach wird das iPad weitergegeben.</li>
+   <li><b>Koordinaten eintippen:</b> Du gibst (x | y) ein und siehst, wo dein Schuss landet.</li>
+   <li><b>Punkt antippen &amp; ablesen:</b> Du tippst einen Punkt an und musst seine Koordinaten richtig ablesen, damit der Schuss sitzt.</li>
+   <li>Merke: Erst <b>x</b> – nach rechts (oder links), dann <b>y</b> – nach oben (oder unten). Geschrieben wird z. B. (3 | 2).</li>
+   <li>Ist die Regel eingeschaltet, dürfen sich Schiffe <b>nicht berühren</b> – auch nicht schräg. Rund um ein versenktes Schiff muss man also nicht mehr suchen.</li>
+   <li><b>Wasser</b> = daneben, <b>Treffer</b> = ein Punkt eines Schiffs, <b>versenkt</b> = alle Punkte des Schiffs getroffen.</li>
+   <li>Wer zuerst die ganze gegnerische Flotte versenkt, gewinnt.</li>
+   <li><b>Gegen den Computer:</b> Der Computer sagt dir, wohin er schießt – du suchst den Punkt in deinem eigenen Meer.</li>
+  </ul>
+  <p style="color:var(--muted);font-size:15px">Tipp: Beim Übergeben schaut der andere Spieler weg, bis der Übergabe-Bildschirm erscheint.</p>
+  <button class="btn big primary" data-close style="margin-top:8px">Alles klar</button>
+ </div>
+</div>
+<div class="modal" id="mAbort" hidden>
+ <div class="mbox" style="max-width:440px;text-align:center">
+  <h2>Spiel beenden?</h2>
+  <p>Der aktuelle Spielstand geht verloren.</p>
+  <div class="btnrow"><button class="btn big" data-close>Weiterspielen</button><button class="btn big primary" id="abortYes" style="background:var(--bad)">Beenden</button></div>
+ </div>
+</div>
+
+<script>
+'use strict';
+/* ============ Grundlagen ============ */
+const $ = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+const NAMES = {1:'Rettungsboot', 2:'U-Boot', 3:'Zerstörer', 4:'Schlachtschiff', 5:'Flugzeugträger'};
+const ARTIKEL = {1:'das', 2:'das', 3:'den', 4:'das', 5:'den'};   // Akkusativ
+const DEIN = {1:'dein', 2:'dein', 3:'deinen', 4:'dein', 5:'deinen'};
+const SHIPCOL = {1:'#ea6a0c', 2:'#0d9488', 3:'#7c3aed', 4:'#2563eb', 5:'#3b4a5e'};
+const SEQ = [2,3,1,4,5,3,2,4,1,3,2,5,4,1,3,2];   // Reihenfolge für Flottenvorschläge
+const DEF = {names:['Spieler 1','Spieler 2'], neg:false, max:8, fleet:{1:1,2:1,3:1,4:1,5:0},
+  autoFleet:true, mode:'type', penalty:true, again:true, touch:false, markAround:false, opponent:'human', cpuLevel:'mid', cpuLocate:true, guides:true, sound:true};
+const LS = 'sv-koordinaten-v1';
+let S = loadSettings();
+
+function loadSettings(){
+  try{
+    const o = JSON.parse(localStorage.getItem(LS));
+    if(o) return Object.assign({}, DEF, o, {fleet:Object.assign({}, DEF.fleet, o.fleet||{}), names:(o.names||DEF.names).slice(0,2)});
+  }catch(e){}
+  return JSON.parse(JSON.stringify(DEF));
+}
+function saveSettings(){ try{ localStorage.setItem(LS, JSON.stringify(S)); }catch(e){} }
+
+const sizeBounds = () => S.neg ? [2,6] : [4,12];
+const range = () => S.neg ? [-S.max, S.max] : [0, S.max];
+const fmt = n => n < 0 ? '−' + (-n) : '' + n;
+const coord = (x,y) => `(${fmt(x)}&thinsp;|&thinsp;${fmt(y)})`;
+const key = (x,y) => x + ',' + y;
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const punkte = n => n === 1 ? '1 Punkt' : n + ' Punkte';
+
+function fleetLens(f){ f = f || S.fleet; const a = []; for(let L=5; L>=1; L--) for(let i=0; i<(f[L]||0); i++) a.push(L); return a; }
+
+function show(id){
+  $$('.screen').forEach(s => s.classList.toggle('on', s.id === id));
+}
+function setPlayerColor(i){ document.documentElement.style.setProperty('--pc', i==null ? 'var(--p0)' : `var(--p${i})`); }
+
+/* ============ Zufall, Platzierung, Simulation ============ */
+function mulberry(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+
+// Schiffe zufällig auf ein n×n-Punktegitter legen (Indizes 0..n-1)
+function placeIdx(n, lens, touch, rnd){
+  const order = lens.map((l,i)=>i).sort((a,b)=>lens[b]-lens[a]);
+  for(let att=0; att<60; att++){
+    const occ = new Int16Array(n*n).fill(-1), ships = new Array(lens.length); let ok = true;
+    for(const id of order){
+      const L = lens[id]; let placed = false;
+      for(let k=0; k<120 && !placed; k++){
+        const h = rnd() < .5;
+        const x = Math.floor(rnd()*(h ? n-L+1 : n)), y = Math.floor(rnd()*(h ? n : n-L+1));
+        if(x<0 || y<0) break;
+        let good = true;
+        for(let i=0; i<L && good; i++){
+          const px = x+(h?i:0), py = y+(h?0:i);
+          for(let dx=-1; dx<=1 && good; dx++) for(let dy=-1; dy<=1; dy++){
+            if(touch && (dx||dy)) continue;
+            const qx=px+dx, qy=py+dy;
+            if(qx<0||qy<0||qx>=n||qy>=n) continue;
+            if(occ[qy*n+qx] >= 0){ good=false; break; }
+          }
+        }
+        if(good){ for(let i=0;i<L;i++) occ[(y+(h?0:i))*n + x+(h?i:0)] = id; ships[id] = {x,y,h,len:L}; placed = true; }
+      }
+      if(!placed){ ok=false; break; }
+    }
+    if(ok) return {occ, ships};
+  }
+  return null;
+}
+
+// einfacher Spieler: zufällig suchen, nach Treffer die Nachbarn abklappern
+function simShots(n, lens, occ, rnd, touch){
+  const N=n*n, shot=new Uint8Array(N), hp=new Array(lens.length).fill(0), tg=[];
+  let left = lens.reduce((a,b)=>a+b,0), shots=0;
+  while(left > 0){
+    let c = -1;
+    while(tg.length){ const t = tg.pop(); if(!shot[t]){ c=t; break; } }
+    if(c < 0){ do{ c = Math.floor(rnd()*N); }while(shot[c]); }
+    shot[c]=1; shots++;
+    const s = occ[c];
+    if(s >= 0){
+      left--; hp[s]++;
+      if(hp[s] < lens[s]){ const x=c%n, y=(c/n)|0; if(x>0)tg.push(c-1); if(x<n-1)tg.push(c+1); if(y>0)tg.push(c-n); if(y<n-1)tg.push(c+n); }
+      else if(!touch){
+        for(let q=0; q<N; q++){ if(occ[q] !== s) continue; const x=q%n, y=(q/n)|0;
+          for(let dx=-1;dx<=1;dx++) for(let dy=-1;dy<=1;dy++){ const qx=x+dx, qy=y+dy; if(qx>=0&&qy>=0&&qx<n&&qy<n) shot[qy*n+qx]=1; } }
+      }
+    }
+  }
+  return shots;
+}
+
+// Schüsse, bis der schnellere von zwei Spielern fertig ist (= Spielende)
+function simulate(n, lens, touch, pairs, seed){
+  if(!lens.length) return {ok:false, empty:true};
+  const rnd = mulberry(seed); let sum = 0;
+  for(let p=0; p<pairs; p++){
+    const a = placeIdx(n,lens,touch,rnd), b = placeIdx(n,lens,touch,rnd);
+    if(!a || !b) return {ok:false};
+    sum += Math.min(simShots(n,lens,a.occ,rnd,touch), simShots(n,lens,b.occ,rnd,touch));
+  }
+  return {ok:true, S:sum/pairs, P:n*n};
+}
+
+// Vorschlag: Schiffe belegen etwa 17 % der Gitterpunkte (wie beim klassischen 10×10-Spiel)
+function recommendFleet(){
+  const [lo,hi] = range(), n = hi-lo+1, tgt = .17*n*n, lens = [];
+  let sum = 0;
+  for(const L of SEQ){ if(Math.abs(sum+L-tgt) < Math.abs(sum-tgt)){ lens.push(L); sum += L; } else break; }
+  if(!lens.length) lens.push(2);
+  while(lens.length > 1 && !simulate(n, lens, S.touch, 3, 99).ok) lens.pop();
+  const f = {1:0,2:0,3:0,4:0,5:0};
+  lens.forEach(L => f[L]++);
+  S.fleet = f;
+}
+
+/* ============ Zeichnen ============ */
+function shipIcon(len, cls){
+  const w = 12 + len*14;
+  let s = `<svg class="${cls||''}" viewBox="0 0 ${w} 18" width="${w}" height="18"><rect x="1" y="2" width="${w-2}" height="14" rx="7" fill="${SHIPCOL[len]}"/>`;
+  for(let i=0;i<len;i++) s += `<circle cx="${13+i*14}" cy="9" r="2.6" fill="#fff"/>`;
+  return s + '</svg>';
+}
+
+const U = 40;
+function geom(lo, hi, neg){
+  const padL = neg ? .85 : 1.35, padB = neg ? .85 : 1.2, padR = 1.0, padT = .95;
+  return {lo, hi, padL, padT,
+    W:(hi-lo+padL+padR)*U, H:(hi-lo+padT+padB)*U,
+    sx:x => (x-lo+padL)*U, sy:y => (hi-y+padT)*U};
+}
+function capsule(pts, r, attrs){
+  const xs = pts.map(p=>p[0]), ys = pts.map(p=>p[1]);
+  const x = Math.min(...xs), X = Math.max(...xs), y = Math.min(...ys), Y = Math.max(...ys);
+  return {x, X, y, Y, r, attrs};
+}
+
+/* o: {lo,hi, mini, ships:[{len,pts,sel,sunk}], shipsStyle:'own'|'sunk', marks:{key:'hit'|'miss'},
+       sel:[x,y], highlight:[[x,y]], guide:[x,y], guideAnim, ghost:[x,y], last:[x,y]} */
+function renderBoard(svg, o){
+  const neg = o.lo < 0, g = geom(o.lo, o.hi, neg), {sx, sy, lo, hi} = g;
+  svg.setAttribute('viewBox', `0 0 ${g.W} ${g.H}`);
+  svg._g = g;
+  const span = hi - lo;
+  const fs = o.mini ? Math.min(26, 13 + span*1.3) : Math.min(24, 15 + span*.7);
+  let s = '';
+  s += `<rect class="sea" x="${sx(lo)-U*.5}" y="${sy(hi)-U*.5}" width="${(span+1)*U}" height="${(span+1)*U}" rx="10"/>`;
+  for(let v=lo; v<=hi; v++){
+    s += `<line class="gl" x1="${sx(v)}" y1="${sy(hi)-U*.5}" x2="${sx(v)}" y2="${sy(lo)+U*.5}"/>`;
+    s += `<line class="gl" x1="${sx(lo)-U*.5}" y1="${sy(v)}" x2="${sx(hi)+U*.5}" y2="${sy(v)}"/>`;
+  }
+  // Achsen mit Pfeilen
+  const xa0 = sx(lo) - (neg ? U*.5 : 0), xa1 = sx(hi) + U*.75, ya0 = sy(lo) + (neg ? U*.5 : 0), ya1 = sy(hi) - U*.75;
+  s += `<line class="ax" x1="${xa0}" y1="${sy(0)}" x2="${xa1-6}" y2="${sy(0)}"/><path class="axh" d="M${xa1} ${sy(0)} l-14 -7 v14z"/>`;
+  s += `<line class="ax" x1="${sx(0)}" y1="${ya0}" x2="${sx(0)}" y2="${ya1+6}"/><path class="axh" d="M${sx(0)} ${ya1} l-7 14 h14z"/>`;
+  s += `<text class="axn" x="${xa1-2}" y="${sy(0)+U*.72}" text-anchor="end" font-size="${fs*1.15}">x</text>`;
+  s += `<text class="axn" x="${sx(0)-U*.3}" y="${ya1+fs*.35}" text-anchor="end" font-size="${fs*1.15}">y</text>`;
+  // Gitterpunkte
+  for(let x=lo; x<=hi; x++) for(let y=lo; y<=hi; y++) s += `<circle class="gp" cx="${sx(x)}" cy="${sy(y)}" r="${U*.08}"/>`;
+  // Schiffe
+  (o.ships||[]).forEach(sh => {
+    const c = capsule(sh.pts), r = U*.34;
+    const x = sx(c.x)-r, y = sy(c.Y)-r, w = sx(c.X)-sx(c.x)+2*r, h = sy(c.y)-sy(c.Y)+2*r;
+    if(o.shipsStyle === 'sunk'){
+      s += `<rect class="sunkship" x="${x}" y="${y}" width="${w}" height="${h}" rx="${r}"/>`;
+    }else{
+      s += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r}" fill="${SHIPCOL[sh.len]}" opacity="${sh.sunk ? .45 : .95}"/>`;
+      sh.pts.forEach(p => s += `<circle cx="${sx(p[0])}" cy="${sy(p[1])}" r="${U*.11}" fill="#fff"/>`);
+      if(sh.sel) s += `<rect class="shipsel" x="${x-5}" y="${y-5}" width="${w+10}" height="${h+10}" rx="${r+5}"/>`;
+    }
+  });
+  // Schüsse
+  const marks = o.marks || {};
+  Object.keys(marks).forEach(k => {
+    const [x,y] = k.split(',').map(Number), cx = sx(x), cy = sy(y);
+    if(marks[k] === 'free'){ if(!o.hideFree) s += `<circle class="free" cx="${cx}" cy="${cy}" r="${U*.15}"/>`; }
+    else if(marks[k] === 'miss') s += `<circle class="miss" cx="${cx}" cy="${cy}" r="${U*.2}"/>`;
+    else{
+      const d = U*.13;
+      s += `<circle class="hitc" cx="${cx}" cy="${cy}" r="${U*.27}"/><path class="hitx" d="M${cx-d} ${cy-d}L${cx+d} ${cy+d}M${cx+d} ${cy-d}L${cx-d} ${cy+d}"/>`;
+    }
+  });
+  // Beschriftung (über den Schiffen, damit sie immer lesbar bleibt)
+  const step = (o.mini && span > (neg ? 6 : 10)) ? 2 : 1;
+  for(let v=lo; v<=hi; v++){
+    if(v === 0 || v % step) continue;
+    s += `<text class="lbl" x="${sx(v) - (v<0 ? fs*.3 : 0)}" y="${sy(0)+fs*1.05+4}" text-anchor="middle" font-size="${fs}">${fmt(v)}</text>`;
+    s += `<text class="lbl" x="${sx(0)-8}" y="${sy(v)+fs*.36}" text-anchor="end" font-size="${fs}">${fmt(v)}</text>`;
+  }
+  s += `<text class="lbl" x="${sx(0)-8}" y="${sy(0)+fs*1.05+4}" text-anchor="end" font-size="${fs}">0</text>`;
+  (o.highlight||[]).forEach(p => s += `<circle class="pulse" cx="${sx(p[0])}" cy="${sy(p[1])}" r="${U*.44}"/>`);
+  if(o.ghost) s += `<circle class="ghost" cx="${sx(o.ghost[0])}" cy="${sy(o.ghost[1])}" r="${U*.38}"/>`;
+  if(o.guide){
+    const [gx,gy] = o.guide;
+    s += `<path class="guide" d="M${sx(0)} ${sy(0)}H${sx(gx)}V${sy(gy)}"${o.guideAnim ? ' data-anim="1"' : ''}/>`;
+  }
+  if(o.sel){
+    const cx = sx(o.sel[0]), cy = sy(o.sel[1]);
+    s += `<circle class="selring" cx="${cx}" cy="${cy}" r="${U*.4}"/>`;
+  }
+  if(o.last) s += `<circle class="pulse" cx="${sx(o.last[0])}" cy="${sy(o.last[1])}" r="${U*.46}"/>`;
+  svg.innerHTML = s;
+  const gp = svg.querySelector('path[data-anim]');
+  if(gp){
+    const L = gp.getTotalLength() || 1;
+    gp.style.strokeDasharray = L; gp.style.strokeDashoffset = L;
+    gp.getBoundingClientRect();
+    gp.style.transition = `stroke-dashoffset ${Math.max(.35, Math.min(1.1, L/U*.11))}s ease-in-out`;
+    requestAnimationFrame(() => gp.style.strokeDashoffset = 0);
+  }
+}
+
+// Tipp auf das Brett -> nächster Gitterpunkt
+function boardPoint(svg, e){
+  const g = svg._g; if(!g) return null;
+  const m = svg.getScreenCTM(); if(!m) return null;
+  const pt = new DOMPoint(e.clientX, e.clientY).matrixTransform(m.inverse());
+  const ux = pt.x/U - g.padL + g.lo, uy = g.hi - (pt.y/U - g.padT);
+  const x = Math.round(ux), y = Math.round(uy);
+  if(x<g.lo || x>g.hi || y<g.lo || y>g.hi) return null;
+  if(Math.hypot(ux-x, uy-y) > .55) return null;
+  return [x,y];
+}
+function onBoardTap(svg, fn){
+  svg.addEventListener('pointerdown', e => { const p = boardPoint(svg, e); if(p){ e.preventDefault(); fn(p[0], p[1]); } });
+}
+
+/* ============ Einstellungen ============ */
+function buildFleetRows(){
+  let h = '';
+  for(let L=1; L<=5; L++){
+    h += `<div class="row"><div class="shipico">${shipIcon(L)}</div><div class="rowlbl">${NAMES[L]}<small>${punkte(L)}</small></div>
+      <div class="stepper"><button data-fl="${L}" data-d="-1" aria-label="weniger">−</button><output id="fl${L}"></output><button data-fl="${L}" data-d="1" aria-label="mehr">+</button></div></div>`;
+  }
+  $('#fleetRows').innerHTML = h;
+}
+
+let balanceOK = true;
+function renderSettings(){
+  $('#name0').value = S.names[0]; $('#name1').value = S.names[1];
+  const cpu = S.opponent === 'cpu';
+  $$('#segOpp button').forEach(b => b.classList.toggle('on', b.dataset.v === S.opponent));
+  $$('#segLevel button').forEach(b => b.classList.toggle('on', b.dataset.v === S.cpuLevel));
+  $('#name1wrap').hidden = cpu; $('#cpuOpts').hidden = !cpu; $('#tLocate').checked = S.cpuLocate;
+  $('#name0').placeholder = 'Spieler 1';
+  $$('#segNeg button').forEach(b => b.classList.toggle('on', (b.dataset.v === '1') === S.neg));
+  $$('#segMode button').forEach(b => b.classList.toggle('on', b.dataset.v === S.mode));
+  const [lo,hi] = range(), n = hi-lo+1;
+  $('#sizeOut').textContent = S.neg ? '±' + S.max : S.max;
+  $('#sizeText').textContent = `x und y von ${fmt(lo)} bis ${fmt(hi)}`;
+  const [bmin,bmax] = sizeBounds();
+  $('#sizeMinus').disabled = S.max <= bmin; $('#sizePlus').disabled = S.max >= bmax;
+  $('#sizeInfo').innerHTML = `<b>${n*n}</b> Gitterpunkte<br>${n} × ${n}<br>${S.neg ? 'mit negativen Koordinaten' : 'nur positive Koordinaten'}`;
+  renderBoard($('#prevBoard'), {lo, hi, mini:true});
+  for(let L=1; L<=5; L++){
+    $('#fl'+L).textContent = S.fleet[L];
+    $(`[data-fl="${L}"][data-d="-1"]`).disabled = S.fleet[L] <= 0;
+    $(`[data-fl="${L}"][data-d="1"]`).disabled = S.fleet[L] >= 4;
+  }
+  $('#tAuto').checked = S.autoFleet; $('#tPenalty').checked = S.penalty; $('#tAgain').checked = S.again;
+  $('#tNoTouch').checked = !S.touch; $('#tMark').checked = S.markAround; $('#rowMark').classList.toggle('dis', S.touch); $('#tGuides').checked = S.guides; $('#tSound').checked = S.sound;
+  $('#rowPenalty').classList.toggle('dis', S.mode === 'type');
+  $('#modeHelp').textContent = {
+    type:'Übt das Setzen: Die Koordinaten werden eingetippt, dann sieht man, wo der Schuss landet.',
+    tap:'Übt das Ablesen: Ein Punkt wird angetippt, seine Koordinaten müssen richtig eingegeben werden.',
+    mix:'Beide Arten wechseln sich bei jedem Schuss ab.'}[S.mode];
+  renderBalance();
+}
+
+function renderBalance(){
+  const lens = fleetLens(), [lo,hi] = range(), n = hi-lo+1, P = n*n;
+  const pts = lens.reduce((a,b)=>a+b,0);
+  $('#fleetSum').innerHTML = lens.length
+    ? `<b>${lens.length} ${lens.length===1?'Schiff':'Schiffe'}</b> mit <b>${pts}</b> von ${P} Gitterpunkten`
+    : 'Noch keine Schiffe gewählt.';
+  const v = $('#verdict'), d = $('#duration'), mark = $('#meterMark');
+  if(!lens.length){
+    v.className = 'verdict bad'; v.textContent = 'Wähle mindestens ein Schiff.'; d.textContent = ''; mark.style.left = '0%';
+    balanceOK = false; $('#btnStart').disabled = true; return;
+  }
+  const r = simulate(n, lens, S.touch, 40, 4242);
+  if(!r.ok){
+    v.className = 'verdict bad';
+    v.textContent = 'Die Schiffe passen nicht auf das Spielfeld. Wähle weniger oder kleinere Schiffe' + (S.touch ? '.' : ' – oder schalte die Regel „Schiffe dürfen sich nicht berühren“ aus.');
+    d.textContent = ''; mark.style.left = '100%'; balanceOK = false; $('#btnStart').disabled = true; return;
+  }
+  balanceOK = true; $('#btnStart').disabled = false;
+  // Verhältnis Spielfeld/Flotte: Trefferquote (wie viel muss gesucht werden?)
+  const shots = pts + (r.S - pts) * 1.15, q = pts / shots, each = Math.max(1, Math.round(1/q));
+  let pos;
+  if(q <= .12) pos = 25 * Math.max(0, (q - .03) / .09);
+  else if(q <= .45) pos = 25 + 50 * (q - .12) / .33;
+  else pos = 75 + 25 * Math.min(1, (q - .45) / .3);
+  mark.style.left = pos + '%';
+  if(q < .12){ v.className = 'verdict warn'; v.textContent = `Lange Suche: Nur etwa jeder ${each}. Schuss trifft – das wird zäh. Mehr Schiffe oder ein kleineres Spielfeld helfen.`; }
+  else if(q > .45){ v.className = 'verdict warn'; v.textContent = 'Kaum Suche: Fast jeder zweite Schuss trifft. Weniger Schiffe oder ein größeres Spielfeld machen es spannender.'; }
+  else { v.className = 'verdict ok'; v.textContent = `Gutes Verhältnis von Spielfeldgröße und Flotte – etwa jeder ${each}. Schuss trifft.`; }
+  // Dauer getrennt davon: mehr Schiffe = mehr Treffer nötig = längeres Spiel
+  let sec = {type:9, tap:12, mix:10.5}[S.mode];
+  if(S.opponent === 'cpu') sec = (sec + (S.cpuLocate ? 7 : 3)) / 2;
+  const min = Math.max(2, Math.round(2 * shots * sec / 60));
+  let t = `Etwa ${Math.round(shots)} Schüsse pro Spieler (davon ${pts} Treffer) · Spieldauer ca. ${min} Minuten.`;
+  if(min > 25) t += ' Das ist eine lange Partie – ein kleineres Koordinatensystem oder weniger Schiffe verkürzen sie.';
+  d.textContent = t;
+}
+
+function initSettings(){
+  buildFleetRows();
+  $('#name0').addEventListener('input', e => { S.names[0] = e.target.value; saveSettings(); });
+  $('#name1').addEventListener('input', e => { S.names[1] = e.target.value; saveSettings(); });
+  $$('#segNeg button').forEach(b => b.addEventListener('click', () => {
+    const neg = b.dataset.v === '1'; if(neg === S.neg) return;
+    S.max = neg ? Math.max(2, Math.min(6, Math.floor(S.max/2))) : Math.max(4, Math.min(12, S.max*2));
+    S.neg = neg; if(S.autoFleet) recommendFleet(); saveSettings(); renderSettings();
+  }));
+  const size = d => { const [a,b] = sizeBounds(); S.max = Math.max(a, Math.min(b, S.max+d)); if(S.autoFleet) recommendFleet(); saveSettings(); renderSettings(); };
+  $('#sizeMinus').addEventListener('click', () => size(-1));
+  $('#sizePlus').addEventListener('click', () => size(1));
+  $('#fleetRows').addEventListener('click', e => {
+    const b = e.target.closest('button[data-fl]'); if(!b) return;
+    const L = +b.dataset.fl; S.fleet[L] = Math.max(0, Math.min(4, S.fleet[L] + (+b.dataset.d)));
+    S.autoFleet = false; saveSettings(); renderSettings();
+  });
+  $$('#segMode button').forEach(b => b.addEventListener('click', () => { S.mode = b.dataset.v; saveSettings(); renderSettings(); }));
+  $$('#segOpp button').forEach(b => b.addEventListener('click', () => { S.opponent = b.dataset.v; saveSettings(); renderSettings(); }));
+  $$('#segLevel button').forEach(b => b.addEventListener('click', () => { S.cpuLevel = b.dataset.v; saveSettings(); renderSettings(); }));
+  const tog = (id, prop, after) => $(id).addEventListener('change', e => { S[prop] = e.target.checked; if(after) after(); saveSettings(); renderSettings(); });
+  tog('#tAuto', 'autoFleet', () => { if(S.autoFleet) recommendFleet(); });
+  $('#tNoTouch').addEventListener('change', e => { S.touch = !e.target.checked; if(S.autoFleet) recommendFleet(); saveSettings(); renderSettings(); });
+  tog('#tMark', 'markAround'); tog('#tLocate', 'cpuLocate');
+  tog('#tPenalty', 'penalty'); tog('#tAgain', 'again'); tog('#tGuides', 'guides');
+  tog('#tSound', 'sound', () => { if(S.sound) sfx('place'); });
+  $('#btnHelp').addEventListener('click', () => $('#mHelp').hidden = false);
+  $$('[data-close]').forEach(b => b.addEventListener('click', () => b.closest('.modal').hidden = true));
+  $('#btnStart').addEventListener('click', () => { if(balanceOK) startGame(); });
+}
+
+/* ============ Töne ============ */
+let AC = null;
+function audio(){ if(!AC){ try{ AC = new (window.AudioContext || window.webkitAudioContext)(); }catch(e){ AC = null; } } if(AC && AC.state === 'suspended') AC.resume(); return AC; }
+function noise(a, t0, dur, type, freq, vol){
+  const len = Math.floor(a.sampleRate*dur), buf = a.createBuffer(1, len, a.sampleRate), d = buf.getChannelData(0);
+  for(let i=0;i<len;i++) d[i] = Math.random()*2-1;
+  const src = a.createBufferSource(); src.buffer = buf;
+  const f = a.createBiquadFilter(); f.type = type; f.frequency.value = freq;
+  const g = a.createGain(); g.gain.setValueAtTime(vol, t0); g.gain.exponentialRampToValueAtTime(.001, t0+dur);
+  src.connect(f); f.connect(g); g.connect(a.destination); src.start(t0);
+}
+function tone(a, t0, dur, f0, f1, vol, type){
+  const o = a.createOscillator(), g = a.createGain(); o.type = type||'sine';
+  o.frequency.setValueAtTime(f0, t0); o.frequency.exponentialRampToValueAtTime(f1, t0+dur);
+  g.gain.setValueAtTime(vol, t0); g.gain.exponentialRampToValueAtTime(.001, t0+dur);
+  o.connect(g); g.connect(a.destination); o.start(t0); o.stop(t0+dur);
+}
+function sfx(kind){
+  if(!S.sound) return; const a = audio(); if(!a) return; const t = a.currentTime + .01;
+  if(kind === 'place') tone(a, t, .12, 520, 780, .15, 'triangle');
+  else if(kind === 'key') tone(a, t, .05, 900, 900, .05, 'sine');
+  else if(kind === 'shoot') noise(a, t, .35, 'bandpass', 1400, .15);
+  else if(kind === 'miss'){ noise(a, t, .6, 'bandpass', 700, .5); tone(a, t, .25, 600, 180, .08); }
+  else if(kind === 'hit'){ noise(a, t, .7, 'lowpass', 500, .9); tone(a, t, .45, 140, 45, .45); }
+  else if(kind === 'sunk'){ noise(a, t, .8, 'lowpass', 500, .9); tone(a, t, .5, 140, 40, .45); noise(a, t+.28, 1, 'lowpass', 300, .8); tone(a, t+.3, .7, 110, 30, .4); }
+  else if(kind === 'wrong'){ tone(a, t, .18, 330, 300, .15, 'square'); tone(a, t+.2, .3, 250, 200, .15, 'square'); }
+  else if(kind === 'win'){ [523,659,784,1047].forEach((f,i) => tone(a, t+i*.14, .35, f, f, .18, 'triangle')); }
+}
+
+/* ============ Spielablauf ============ */
+let G = null, PL = null, T = null, starter = 0;
+
+function playerName(i){ const n = (S.names[i]||'').trim(); return n || ('Spieler ' + (i+1)); }
+
+function startGame(){
+  saveSettings();
+  const [lo,hi] = range();
+  const cpu = S.opponent === 'cpu';
+  G = {lo, hi, lens:fleetLens(), cur:0, report:[[],[]], mixCount:[0,0], cpu,
+       P:[0,1].map(i => ({name:(cpu && i === 1) ? 'Computer' : playerName(i), ships:[], recv:{}, stats:{shots:0, hits:0, err:0, reads:0, loc:0, locErr:0}}))};
+  audio();
+  if(cpu) openPlace(0); else placeFor(0);
+}
+
+function cover(i, title, text, btn, fn){
+  setPlayerColor(i);
+  $('#cvTitle').innerHTML = title; $('#cvText').innerHTML = text; $('#cvBtn').textContent = btn;
+  $('#cvBtn').onclick = fn;
+  show('scrCover');
+}
+
+function placeFor(i){
+  const me = G.P[i].name, other = G.P[1-i].name;
+  cover(i, `${esc(me)}, stell deine Flotte auf!`,
+    `Gib das iPad an <b>${esc(me)}</b>.<br>${esc(other)} schaut bitte weg.`, `Ich bin ${me} – los!`, () => openPlace(i));
+}
+
+/* ---------- Flotte aufstellen ---------- */
+function shipPts(s){ const a = []; for(let k=0;k<s.len;k++) a.push(s.h ? [s.x+k, s.y] : [s.x, s.y+k]); return a; }
+
+function openPlace(i){
+  G.cur = i;
+  PL = {i, sel:0, msg:'', ships:G.lens.map(len => ({len, placed:false, x:0, y:0, h:true}))};
+  $('#plName').textContent = G.P[i].name;
+  show('scrPlace'); renderPlace();
+}
+
+function blockedSet(except){
+  const set = new Set();
+  PL.ships.forEach((s,j) => {
+    if(!s.placed || j === except) return;
+    shipPts(s).forEach(([x,y]) => {
+      if(S.touch) set.add(key(x,y));
+      else for(let dx=-1;dx<=1;dx++) for(let dy=-1;dy<=1;dy++) set.add(key(x+dx,y+dy));
+    });
+  });
+  return set;
+}
+function fits(c, except){
+  const bl = blockedSet(except);
+  return shipPts(c).every(([x,y]) => x>=G.lo && x<=G.hi && y>=G.lo && y<=G.hi && !bl.has(key(x,y)));
+}
+// Schiff j so legen, dass es den Punkt (x|y) enthält – bevorzugt mit (x|y) als Anfang
+function tryPut(j, x, y, h){
+  const s = PL.ships[j];
+  for(let k=0; k<s.len; k++){
+    const c = {len:s.len, h, x:h ? x-k : x, y:h ? y : y-k};
+    if(fits(c, j)){ Object.assign(s, c, {placed:true}); return true; }
+  }
+  return false;
+}
+function noRoomMsg(){ return S.touch ? 'Hier ist kein Platz für dieses Schiff.' : 'Hier ist kein Platz. Denk dran: Schiffe dürfen sich nicht berühren – auch nicht schräg.'; }
+
+function placeTap(x, y){
+  const hit = PL.ships.findIndex(s => s.placed && shipPts(s).some(p => p[0]===x && p[1]===y));
+  PL.msg = '';
+  if(hit >= 0){
+    if(PL.sel === hit) rotateSel(); else PL.sel = hit;
+    renderPlace(); return;
+  }
+  const j = PL.sel;
+  if(j == null){ PL.msg = 'Wähle zuerst ein Schiff aus der Liste.'; renderPlace(); return; }
+  if(tryPut(j, x, y, PL.ships[j].h)){
+    sfx('place');
+    const nxt = PL.ships.findIndex(t => !t.placed);
+    PL.sel = nxt >= 0 ? nxt : j;
+  }else PL.msg = noRoomMsg();
+  renderPlace();
+}
+function rotateSel(){
+  const j = PL.sel; if(j == null) return;
+  const s = PL.ships[j];
+  if(!s.placed){ s.h = !s.h; return; }
+  if(s.len === 1) return;
+  const old = {x:s.x, y:s.y, h:s.h};
+  s.placed = false;
+  if(tryPut(j, old.x, old.y, !old.h)) sfx('place');
+  else { Object.assign(s, old, {placed:true}); PL.msg = 'Zum Drehen ist hier kein Platz.'; }
+}
+
+function renderPlace(){
+  const sel = PL.sel != null ? PL.ships[PL.sel] : null;
+  renderBoard($('#plBoard'), {lo:G.lo, hi:G.hi,
+    ships:PL.ships.map((s,j) => s.placed ? {len:s.len, pts:shipPts(s), sel:j===PL.sel} : null).filter(Boolean)});
+  const allDone = PL.ships.every(s => s.placed);
+  let hint;
+  if(allDone) hint = '<b>Alle Schiffe sind gesetzt!</b> Kontrolliere die Koordinaten in der Liste und tippe auf „Fertig“.';
+  else if(sel && !sel.placed) hint = `Tippe auf einen Gitterpunkt, um ${ARTIKEL[sel.len]} <b>${NAMES[sel.len]}</b> (${punkte(sel.len)}) zu setzen.` +
+      (sel.len > 1 ? ` Ausrichtung: <b>${sel.h ? 'waagerecht ↔' : 'senkrecht ↕'}</b>` : '');
+  else hint = 'Tippe ein gesetztes Schiff nochmal an, um es zu drehen – oder tippe auf einen freien Punkt, um es zu versetzen.';
+  if(sel && sel.placed && !allDone) hint = 'Schiff ausgewählt: Nochmal antippen dreht es, ein freier Punkt versetzt es.';
+  $('#plHint').innerHTML = hint;
+  $('#plList').innerHTML = PL.ships.map((s,j) => {
+    let co = 'noch nicht gesetzt';
+    if(s.placed){ const p = shipPts(s), a = p[0], b = p[p.length-1]; co = s.len === 1 ? coord(a[0],a[1]) : `${coord(a[0],a[1])} bis ${coord(b[0],b[1])}`; }
+    return `<button class="si${j===PL.sel?' sel':''}${s.placed?' done':''}" data-j="${j}"><span class="shipico">${shipIcon(s.len)}</span><span><span class="nm">${NAMES[s.len]}</span><br><span class="co">${co}</span></span></button>`;
+  }).join('');
+  $('#plMsg').textContent = PL.msg;
+  $('#plRot').disabled = !sel || sel.len === 1;
+  $('#plDel').disabled = !sel || !sel.placed;
+  $('#plClear').disabled = !PL.ships.some(s => s.placed);
+  $('#plDone').disabled = !allDone;
+}
+
+function placeDone(){
+  const me = G.P[PL.i];
+  me.ships = PL.ships.map(s => ({len:s.len, pts:shipPts(s), hits:0, sunk:false}));
+  if(G.cpu){
+    const n = G.hi-G.lo+1, r = placeIdx(n, G.lens, S.touch, Math.random);
+    G.P[1].ships = r.ships.map(c => ({len:c.len, pts:shipPts({len:c.len, h:c.h, x:c.x+G.lo, y:c.y+G.lo}), hits:0, sunk:false}));
+    G.cur = starter;
+    if(starter === 1) openCpuTurn(); else openTurn();
+    return;
+  }
+  if(PL.i === 0){ placeFor(1); return; }
+  G.cur = starter;
+  const nm = G.P[starter].name;
+  cover(starter, `${esc(nm)} beginnt!`, `Beide Flotten sind aufgestellt.<br>Gib das iPad an <b>${esc(nm)}</b>.`, `Ich bin ${nm} – los!`, openTurn);
+}
+
+function initPlace(){
+  onBoardTap($('#plBoard'), placeTap);
+  $('#plList').addEventListener('click', e => { const b = e.target.closest('.si'); if(!b) return; PL.sel = +b.dataset.j; PL.msg = ''; renderPlace(); });
+  $('#plRot').addEventListener('click', () => { PL.msg = ''; rotateSel(); renderPlace(); });
+  $('#plDel').addEventListener('click', () => { const s = PL.ships[PL.sel]; if(s){ s.placed = false; PL.msg = ''; renderPlace(); } });
+  $('#plClear').addEventListener('click', () => { PL.ships.forEach(s => s.placed = false); PL.sel = 0; PL.msg = ''; renderPlace(); });
+  $('#plRand').addEventListener('click', () => {
+    const n = G.hi-G.lo+1, r = placeIdx(n, PL.ships.map(s => s.len), S.touch, Math.random);
+    if(!r){ PL.msg = 'Das hat nicht geklappt – bitte nochmal versuchen.'; renderPlace(); return; }
+    r.ships.forEach((c,j) => Object.assign(PL.ships[j], {x:c.x+G.lo, y:c.y+G.lo, h:c.h, placed:true}));
+    PL.msg = ''; sfx('place'); renderPlace();
+  });
+  $('#plDone').addEventListener('click', placeDone);
+}
+
+/* ---------- Spielzug ---------- */
+function openTurn(){
+  const i = G.cur;
+  T = {report:G.report[i]}; G.report[i] = [];
+  setPlayerColor(i);
+  $('#pyName').textContent = G.P[i].name;
+
+  show('scrPlay');
+  newAim();
+}
+
+function newAim(){
+  const i = G.cur;
+  let mode = S.mode;
+  if(mode === 'mix') mode = (G.mixCount[i]++ % 2) ? 'tap' : 'type';
+  Object.assign(T, {mode, phase:'aim', sel:null, vx:'', vy:'', f:'x', guide:null, guideAnim:false, ghost:null, last:null, msg:'', res:null});
+  renderTurn();
+}
+
+function parseVal(v){ if(v === '' || v === '−') return null; const n = parseInt(v.replace('−',''), 10); return v[0] === '−' ? -n : n; }
+
+function renderTurn(){
+  if(T.cpu) return renderCpuTurn();
+  const i = G.cur, me = G.P[i], opp = G.P[1-i];
+  $('#pyCap').innerHTML = `Meer von <b>${esc(opp.name)}</b>`;
+  $('#pyOwnCap').textContent = 'Deine Flotte';
+  $('#pyStats').textContent = `Schüsse: ${me.stats.shots} · Treffer: ${me.stats.hits}`;
+  $('#pyEnemy').innerHTML = opp.ships.slice().sort((a,b) => b.len-a.len).map(s => shipIcon(s.len, s.sunk ? 'sunk' : '')).join('');
+  renderBoard($('#pyBoard'), {lo:G.lo, hi:G.hi, marks:opp.recv, shipsStyle:'sunk',
+    ships:opp.ships.filter(s => s.sunk), sel:T.sel, guide:T.guide, guideAnim:T.guideAnim, ghost:T.ghost, last:T.last});
+  T.guideAnim = false;
+  renderOwn();
+  renderAim();
+}
+
+function renderOwn(){
+  const me = G.P[G.cur], opp = G.P[1-G.cur];
+  renderBoard($('#pyOwn'), {lo:G.lo, hi:G.hi, mini:true, hideFree:true, ships:me.ships, marks:me.recv, highlight:T.report.map(r => [r.x, r.y])});
+  const word = {miss:'Wasser', hit:'Treffer', sunk:'versenkt'};
+  $('#pyReport').innerHTML = T.report.length
+    ? `<b>${esc(opp.name)}</b> hat geschossen: ` + T.report.map(r => `${coord(r.x,r.y)} ${word[r.res]}`).join(', ')
+    : (Object.keys(me.recv).length ? 'Kein neuer Schuss auf deine Flotte.' : 'Noch keine Schüsse auf deine Flotte.');
+}
+
+function renderAim(){
+  const aim = T.phase !== 'result';
+  $('#aimBox').hidden = !aim; $('#resBox').hidden = aim;
+  if(!aim) return renderResult();
+  const opp = G.P[1-G.cur];
+  $('#pyInputWrap').hidden = false; $('#pyFire').hidden = false;
+  $('#pyTag').textContent = T.mode === 'type' ? 'Koordinaten eintippen' : 'Punkt antippen & ablesen';
+  let p;
+  if(T.mode === 'type') p = `Wohin schießt du? Gib zuerst <b><i>x</i></b>, dann <b><i>y</i></b> ein.`;
+  else if(!T.sel) p = `Tippe im Meer von <b>${esc(opp.name)}</b> auf einen Gitterpunkt, auf den du schießen willst.`;
+  else p = `Lies die Koordinaten deines markierten Punktes ab und tippe sie ein.`;
+  $('#pyPrompt').innerHTML = p;
+  const locked = T.phase !== 'aim' || (T.mode === 'tap' && !T.sel);
+  $('#pyInputWrap').classList.toggle('dim', locked);
+  $('#vx').textContent = T.vx; $('#vy').textContent = T.vy;
+  $$('.cf').forEach(b => b.classList.toggle('act', b.dataset.f === T.f && !locked));
+  $('#keyNeg').classList.toggle('inv', !S.neg);
+  $('#pyMsg').innerHTML = T.msg;
+  $('#pyFire').disabled = locked || parseVal(T.vx) == null || parseVal(T.vy) == null;
+}
+
+function keyPress(k){
+  if(T.phase !== 'aim' || (T.mode === 'tap' && !T.sel)) return;
+  const f = T.f; let v = f === 'x' ? T.vx : T.vy;
+  if(k === 'del'){
+    if(v === ''){ if(f === 'y') T.f = 'x'; }
+    else v = v.slice(0, -1);
+  }else if(k === 'neg'){
+    if(!S.neg) return;
+    v = v[0] === '−' ? v.slice(1) : '−' + v;
+  }else{
+    const sg = v[0] === '−' ? '−' : '';
+    let dg = v.replace('−', '');
+    if(dg === '0') dg = '';
+    if(dg.length >= 2) return;
+    dg += k; v = sg + dg;
+    if(f === 'x' && !S.neg && (parseInt(dg,10)*10 > S.max || dg.length >= 2)) T.f = 'y';
+  }
+  if(f === 'x') T.vx = v; else T.vy = v;
+  T.msg = ''; sfx('key');
+  renderAim();
+}
+
+function targetTap(x, y){
+  if(T.cpu) return cpuTap(x, y);
+  if(T.phase !== 'aim') return;
+  if(T.mode === 'type'){ T.msg = 'Gib die Koordinaten unten über die Tasten ein.'; renderAim(); return; }
+  const m = G.P[1-G.cur].recv[key(x,y)];
+  if(m){ T.msg = m === 'free' ? 'Hier kann kein Schiff liegen – der Punkt grenzt an ein versenktes Schiff.' : 'Auf diesen Punkt hast du schon geschossen.'; renderAim(); return; }
+  T.sel = [x,y]; T.vx = ''; T.vy = ''; T.f = 'x'; T.msg = '';
+  sfx('key'); renderTurn();
+}
+
+function fire(){
+  if(T.phase !== 'aim') return;
+  const x = parseVal(T.vx), y = parseVal(T.vy);
+  if(x == null || y == null){ T.msg = 'Gib beide Koordinaten ein.'; renderAim(); return; }
+  const me = G.P[G.cur], opp = G.P[1-G.cur];
+  const inRange = (a,b) => a>=G.lo && a<=G.hi && b>=G.lo && b<=G.hi;
+  if(T.mode === 'type'){
+    if(!inRange(x,y)){ T.msg = `Der Punkt ${coord(x,y)} liegt nicht im Koordinatensystem: x und y gehen von ${fmt(G.lo)} bis ${fmt(G.hi)}.`; renderAim(); return; }
+    const m = opp.recv[key(x,y)];
+    if(m === 'free'){ T.msg = `Auf ${coord(x,y)} kann kein Schiff liegen – der Punkt grenzt an ein versenktes Schiff. Wähle einen anderen Punkt.`; renderAim(); return; }
+    if(m){ T.msg = `Auf ${coord(x,y)} hast du schon geschossen. Wähle einen anderen Punkt.`; renderAim(); return; }
+    shoot(x, y, null);
+    return;
+  }
+  const [px,py] = T.sel;
+  me.stats.reads++;
+  if(x === px && y === py){ shoot(px, py, null); return; }
+  me.stats.err++;
+  let note = `Du hast ${coord(x,y)} eingegeben. Dein Punkt hat aber die Koordinaten <b>${coord(px,py)}</b>.`;
+  if(x === py && y === px) note += ' Du hast <b>x und y vertauscht</b>: Zuerst kommt x (nach rechts/links), dann y (nach oben/unten).';
+  else if(x === px) note += ' Der x-Wert stimmt, schau dir y nochmal an.';
+  else if(y === py) note += ' Der y-Wert stimmt, schau dir x nochmal an.';
+  T.ghost = inRange(x,y) && !(x===px && y===py) ? [x,y] : null;
+  sfx('wrong');
+  if(!S.penalty){ shoot(px, py, note + ' Der Schuss geht trotzdem los.'); return; }
+  T.phase = 'anim'; T.guide = [px,py]; T.guideAnim = S.guides; if(!S.guides) T.guide = null;
+  renderTurn();
+  const turn = T; setTimeout(() => { if(!G || T !== turn) return; T.phase = 'result'; T.res = {kind:'lost', x:px, y:py, note}; renderAim(); }, S.guides ? 900 : 200);
+}
+
+function shoot(x, y, note){
+  T.phase = 'anim';
+  T.guide = S.guides ? [x,y] : null; T.guideAnim = S.guides;
+  T.sel = T.mode === 'tap' ? [x,y] : null;
+  renderTurn(); sfx('shoot');
+  const turn = T;
+  setTimeout(() => {
+    if(!G || T !== turn) return;
+    const me = G.P[G.cur], opp = G.P[1-G.cur], k = key(x,y);
+    const ship = opp.ships.find(s => s.pts.some(p => p[0]===x && p[1]===y));
+    me.stats.shots++;
+    let kind = 'miss';
+    if(ship){
+      ship.hits++; me.stats.hits++; opp.recv[k] = 'hit';
+      kind = ship.hits >= ship.len ? 'sunk' : 'hit';
+      if(kind === 'sunk'){
+        ship.sunk = true;
+        if(!S.touch && S.markAround) ship.pts.forEach(([px,py]) => {
+          for(let dx=-1;dx<=1;dx++) for(let dy=-1;dy<=1;dy++){
+            const qx=px+dx, qy=py+dy, q=key(qx,qy);
+            if(qx>=G.lo && qx<=G.hi && qy>=G.lo && qy<=G.hi && !opp.recv[q]) opp.recv[q] = 'free';
+          }
+        });
+      }
+    }else opp.recv[k] = 'miss';
+    G.report[1-G.cur].push({x, y, res:kind});
+    const won = opp.ships.every(s => s.sunk);
+    T.res = {kind, x, y, ship, note, won};
+    T.phase = 'result'; T.sel = null; T.last = [x,y];
+    sfx(won ? 'sunk' : kind);
+    renderTurn();
+    if(won) setTimeout(() => sfx('win'), 900);
+  }, S.guides ? 1000 : 250);
+}
+
+function renderResult(){
+  const r = T.res, opp = G.P[1-G.cur];
+  const t = $('#resTitle');
+  t.className = 'res ' + r.kind;
+  t.textContent = {miss:'Wasser!', hit:'Treffer!', sunk:'Versenkt!', lost:'Schuss verfällt'}[r.kind];
+  let sub = r.kind === 'lost' ? 'Falsch abgelesen' : `Schuss auf ${coord(r.x, r.y)}`;
+  if(r.kind === 'sunk') sub += T.cpu ? `<br>Der Computer hat ${DEIN[r.ship.len]} <b>${NAMES[r.ship.len]}</b> versenkt.` : `<br>Du hast ${ARTIKEL[r.ship.len]} <b>${NAMES[r.ship.len]}</b> versenkt.`;
+  if(r.kind === 'sunk' && !r.won && !S.touch && !T.cpu) sub += S.markAround ? '<br><small>Die Punkte rundherum sind jetzt als frei markiert.</small>' : '<br><small>Tipp: Rund um das Schiff kann nichts mehr liegen.</small>';
+  $('#resSub').innerHTML = sub;
+  $('#resNote').hidden = !r.note; $('#resNote').innerHTML = r.note || '';
+  const b = $('#resBtn');
+  if(r.won){ b.textContent = T.cpu ? 'Zur Auswertung' : 'Zur Siegerehrung'; b.onclick = showWin; }
+  else if((r.kind === 'hit' || r.kind === 'sunk') && S.again){ b.textContent = T.cpu ? 'Der Computer schießt nochmal' : 'Nochmal schießen'; b.onclick = T.cpu ? newCpuAim : newAim; }
+  else if(G.cpu){ b.textContent = T.cpu ? 'Weiter – du bist dran' : 'Weiter – der Computer ist dran'; b.onclick = endTurn; }
+  else { b.textContent = `Zug beenden – iPad an ${opp.name}`; b.onclick = endTurn; }
+}
+
+function endTurn(){
+  G.cur = 1 - G.cur;
+  if(G.cpu){ if(G.cur === 1) openCpuTurn(); else openTurn(); return; }
+  const nm = G.P[G.cur].name;
+  cover(G.cur, `${esc(nm)} ist dran`, `Gib das iPad an <b>${esc(nm)}</b>.`, `Ich bin ${nm} – los!`, openTurn);
+}
+
+
+/* ---------- Computergegner ---------- */
+function openCpuTurn(){
+  T = {cpu:true, report:[]};
+  G.report[0] = G.report[0] || [];
+  setPlayerColor(1);
+  $('#pyName').textContent = 'Der Computer';
+  show('scrPlay');
+  newCpuAim();
+}
+
+function newCpuAim(){
+  Object.assign(T, {cpu:true, mode:'cpu', phase:'cpuAim', target:cpuPick(), tries:0, sel:null, guide:null, guideAnim:false, ghost:null, last:null, msg:'', res:null});
+  renderTurn();
+  if(!S.cpuLocate){
+    const tg = T.target;
+    setTimeout(() => { if(T && T.cpu && T.phase === 'cpuAim' && T.target === tg) shoot(tg[0], tg[1], null); }, 1400);
+  }
+}
+
+// Zielwahl des Computers – nutzt nur öffentliche Informationen (Wasser / Treffer / versenkt)
+function cpuPick(){
+  const hu = G.P[0], recv = hu.recv, lvl = S.cpuLevel, lo = G.lo, hi = G.hi;
+  const inR = (x,y) => x>=lo && x<=hi && y>=lo && y<=hi;
+  const shipAt = (x,y) => hu.ships.find(s => s.pts.some(p => p[0]===x && p[1]===y));
+  const blocked = new Set();
+  const open = [];   // Treffer an noch nicht versenkten Schiffen
+  Object.keys(recv).forEach(k => {
+    if(recv[k] !== 'hit') return;
+    const [x,y] = k.split(',').map(Number), sh = shipAt(x,y);
+    if(!sh.sunk) open.push([x,y]);
+    else if(!S.touch && lvl !== 'easy') for(let dx=-1;dx<=1;dx++) for(let dy=-1;dy<=1;dy++) blocked.add(key(x+dx,y+dy));
+  });
+  if(!S.touch && lvl === 'hard') open.forEach(([x,y]) => [[1,1],[1,-1],[-1,1],[-1,-1]].forEach(([dx,dy]) => blocked.add(key(x+dx,y+dy))));
+  const free = (x,y) => inR(x,y) && !recv[key(x,y)] && !blocked.has(key(x,y));
+  const rnd = a => a[Math.floor(Math.random()*a.length)];
+  const openSet = new Set(open.map(p => key(p[0],p[1])));
+  const D4 = [[1,0],[-1,0],[0,1],[0,-1]];
+
+  if(lvl === 'hard'){
+    // Wahrscheinlichkeitskarte: Wie viele mögliche Lagen der restlichen Schiffe decken jeden Punkt ab?
+    const score = new Map();
+    const okPt = (x,y) => inR(x,y) && !blocked.has(key(x,y)) && (!recv[key(x,y)] || openSet.has(key(x,y)));
+    hu.ships.filter(sh => !sh.sunk).forEach(sh => {
+      const L = sh.len;
+      for(let x=lo; x<=hi; x++) for(let y=lo; y<=hi; y++) for(const h of (L === 1 ? [true] : [true,false])){
+        const pts = []; let ok = true, cover = 0;
+        for(let k=0; k<L; k++){ const px = h ? x+k : x, py = h ? y : y+k; if(!okPt(px,py)){ ok = false; break; } pts.push([px,py]); if(openSet.has(key(px,py))) cover++; }
+        if(!ok || (open.length && !cover)) continue;
+        const w = open.length ? Math.pow(20, cover) : 1;
+        pts.forEach(([px,py]) => { const q = key(px,py); if(!recv[q]) score.set(q, (score.get(q)||0) + w); });
+      }
+    });
+    let best = [], bs = 0;
+    score.forEach((v,q) => { if(v > bs){ bs = v; best = [q]; } else if(v === bs) best.push(q); });
+    if(best.length) return rnd(best).split(',').map(Number);
+  }
+
+  if(open.length && (lvl !== 'easy' || Math.random() < .5)){
+    let cand = [];
+    if(lvl !== 'easy'){
+      // zwei Treffer nebeneinander: die Linie verlängern
+      open.forEach(([x,y]) => D4.forEach(([dx,dy]) => {
+        if(!openSet.has(key(x+dx,y+dy))) return;
+        let ex = x, ey = y; while(openSet.has(key(ex+dx,ey+dy))){ ex+=dx; ey+=dy; }
+        let bx = x, by = y; while(openSet.has(key(bx-dx,by-dy))){ bx-=dx; by-=dy; }
+        if(free(ex+dx,ey+dy)) cand.push([ex+dx,ey+dy]);
+        if(free(bx-dx,by-dy)) cand.push([bx-dx,by-dy]);
+      }));
+    }
+    if(!cand.length) open.forEach(([x,y]) => D4.forEach(([dx,dy]) => { if(free(x+dx,y+dy)) cand.push([x+dx,y+dy]); }));
+    if(cand.length) return rnd(cand);
+  }
+  let all = [];
+  for(let x=lo; x<=hi; x++) for(let y=lo; y<=hi; y++) if(free(x,y)) all.push([x,y]);
+  if(!all.length) for(let x=lo; x<=hi; x++) for(let y=lo; y<=hi; y++) if(!recv[key(x,y)]) all.push([x,y]);
+  return rnd(all);
+}
+
+function cpuTap(x, y){
+  if(T.phase !== 'cpuAim' || !S.cpuLocate) return;
+  const [tx,ty] = T.target, hu = G.P[0];
+  if(T.tries === 0) hu.stats.loc++;
+  if(x === tx && y === ty){ T.msg = ''; T.ghost = null; shoot(tx, ty, null); return; }
+  if(T.tries === 0) hu.stats.locErr++;
+  T.tries++;
+  let m = `Du hast ${coord(x,y)} angetippt – gesucht ist ${coord(tx,ty)}.`;
+  if(x === ty && y === tx) m += ' Du hast <b>x und y vertauscht</b>.';
+  else if(x === tx) m += ' Der x-Wert stimmt schon.';
+  else if(y === ty) m += ' Der y-Wert stimmt schon.';
+  T.ghost = [x,y]; sfx('wrong');
+  if(T.tries >= 2){
+    shoot(tx, ty, m + ` So findest du ${coord(tx,ty)}: vom Ursprung ${Math.abs(tx)} nach ${tx<0?'links':'rechts'}, dann ${Math.abs(ty)} nach ${ty<0?'unten':'oben'}.`);
+    if(!S.guides){ T.guide = [tx,ty]; T.guideAnim = true; renderTurn(); }
+    return;
+  }
+  T.msg = m + ' Versuch es nochmal.';
+  renderTurn();
+}
+
+function renderCpuTurn(){
+  const hu = G.P[0], cp = G.P[1];
+  $('#pyStats').textContent = `Schüsse: ${cp.stats.shots} · Treffer: ${cp.stats.hits}`;
+  $('#pyCap').innerHTML = `<b>Deine Flotte</b>${T.phase === 'cpuAim' && S.cpuLocate ? ' – tippe den Punkt an' : ''}`;
+  $('#pyEnemy').innerHTML = hu.ships.slice().sort((a,b) => b.len-a.len).map(s => shipIcon(s.len, s.sunk ? 'sunk' : '')).join('');
+  renderBoard($('#pyBoard'), {lo:G.lo, hi:G.hi, ships:hu.ships, marks:hu.recv, hideFree:true,
+    guide:T.guide, guideAnim:T.guideAnim, ghost:T.ghost, last:T.last,
+    highlight:(T.phase === 'cpuAim' && !S.cpuLocate) ? [T.target] : []});
+  T.guideAnim = false;
+  $('#pyOwnCap').textContent = 'Meer des Computers';
+  $('#pyReport').innerHTML = `Deine bisherigen Schüsse: ${hu.stats.shots} · Treffer: ${hu.stats.hits}`;
+  renderBoard($('#pyOwn'), {lo:G.lo, hi:G.hi, mini:true, marks:cp.recv, shipsStyle:'sunk', ships:cp.ships.filter(s => s.sunk)});
+  const aim = T.phase !== 'result';
+  $('#aimBox').hidden = !aim; $('#resBox').hidden = aim;
+  if(!aim) return renderResult();
+  $('#pyTag').textContent = 'Der Computer ist dran';
+  const [tx,ty] = T.target;
+  $('#pyPrompt').innerHTML = `<div class="cpucall">Ich schieße auf<span>${coord(tx,ty)}</span></div>` +
+    (S.cpuLocate ? (T.phase === 'cpuAim' ? 'Wo landet der Schuss? Tippe den Punkt in <b>deinem Meer</b> an.' : '') : '');
+  $('#pyInputWrap').hidden = true; $('#pyFire').hidden = true;
+  $('#pyMsg').innerHTML = T.msg;
+}
+
+/* ---------- Sieg ---------- */
+function showWin(){
+  const w = G.cur;
+  setPlayerColor(w);
+  $('#wnTitle').textContent = !G.cpu ? `${G.P[w].name} hat gewonnen!` : (w === 0 ? `${G.P[0].name}, du hast gewonnen!` : 'Der Computer hat gewonnen!');
+  const tapUsed = S.mode !== 'type';
+  $('#wnStats').innerHTML = G.P.map((p,i) => {
+    const q = p.stats.shots ? Math.round(100*p.stats.hits/p.stats.shots) : 0;
+    return `<div class="wcard"><h3><span class="dot" style="background:var(--p${i})"></span>${esc(p.name)}${i===w ? ' 🏆' : ''}</h3>
+      <table><tr><td>Schüsse</td><td>${p.stats.shots}</td></tr><tr><td>Treffer</td><td>${p.stats.hits} (${q} %)</td></tr>
+      ${tapUsed && !(G.cpu && i === 1) ? `<tr><td>Punkte richtig abgelesen</td><td>${p.stats.reads - p.stats.err} von ${p.stats.reads}</td></tr>` : ''}
+      ${G.cpu && i === 0 && p.stats.loc ? `<tr><td>Computer-Schüsse sofort gefunden</td><td>${p.stats.loc - p.stats.locErr} von ${p.stats.loc}</td></tr>` : ''}</table>
+      <svg id="wnB${i}"></svg><div class="cap">Flotte von ${esc(p.name)} mit allen Schüssen des Gegners</div></div>`;
+  }).join('');
+  G.P.forEach((p,i) => renderBoard($('#wnB'+i), {lo:G.lo, hi:G.hi, mini:true, hideFree:true, ships:p.ships, marks:p.recv}));
+  show('scrWin');
+}
+
+/* ============ Start ============ */
+function initGame(){
+  initPlace();
+  onBoardTap($('#pyBoard'), targetTap);
+  $('#keypad').addEventListener('click', e => { const b = e.target.closest('button[data-k]'); if(b) keyPress(b.dataset.k); });
+  $$('.cf').forEach(b => b.addEventListener('click', () => { if(T && T.phase === 'aim'){ T.f = b.dataset.f; renderAim(); } }));
+  $('#pyFire').addEventListener('click', fire);
+  $$('[data-abort]').forEach(b => b.addEventListener('click', () => $('#mAbort').hidden = false));
+  $('#abortYes').addEventListener('click', () => { $('#mAbort').hidden = true; G = null; setPlayerColor(null); show('scrSettings'); renderSettings(); });
+  $('#wnAgain').addEventListener('click', () => { starter = 1 - starter; startGame(); });
+  $('#wnSet').addEventListener('click', () => { setPlayerColor(null); show('scrSettings'); renderSettings(); });
+  document.addEventListener('gesturestart', e => e.preventDefault());
+  document.addEventListener('dblclick', e => e.preventDefault());
+}
+
+initSettings();
+if(S.autoFleet) recommendFleet();
+initGame();
+renderSettings();
+show('scrSettings');
+window.__SV__ = {get S(){return S;}, get G(){return G;}, get PL(){return PL;}, get T(){return T;}, simulate, recommendFleet, cpuPick, placeIdx, shipPts};
+
+</script>
+<!-- ===================== Teilen / QR-Code (gemeinsamer Baustein) ===================== -->
+<style>
+  .sq-fab{position:fixed; left:calc(10px + env(safe-area-inset-left)); bottom:calc(10px + env(safe-area-inset-bottom));
+    z-index:120; display:none; align-items:center; gap:7px; padding:10px 14px; border-radius:999px; border:none;
+    background:rgba(20,20,26,.82); color:#fff; font:inherit; font-size:14.5px; font-weight:700; cursor:pointer;
+    box-shadow:0 4px 14px rgba(0,0,0,.3); -webkit-tap-highlight-color:transparent;}
+  .sq-fab.on{display:inline-flex;}
+  .sq-fab:active{transform:scale(.96);}
+  .sq-fab svg{width:17px; height:17px; display:block;}
+  .sq-inline{display:inline-flex; align-items:center; gap:6px;}
+  .sq-ov{position:fixed; inset:0; z-index:9000; display:none; align-items:center; justify-content:center;
+    background:rgba(12,14,18,.86); padding:16px; -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px);}
+  .sq-ov.on{display:flex;}
+  .sq-card{background:#fff; color:#1b1f24; border-radius:22px; padding:22px 22px 18px; width:100%; max-width:520px;
+    max-height:94vh; overflow:auto; text-align:center; box-shadow:0 24px 60px rgba(0,0,0,.45);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+  .sq-card h2{margin:0 0 2px; font-size:1.4rem; font-weight:800;}
+  .sq-card p.sq-sub{margin:0 0 14px; color:#5b6470; font-size:.95rem;}
+  /* Der weiße Rand um den Code ist Vorschrift: mindestens vier Module Ruhezone,
+     sonst erkennen Kameras den Code nicht. Die Breite setzt das Skript. */
+  .sq-code{display:flex; align-items:center; justify-content:center; margin:0 auto 12px;
+    width:min(74vw,330px); background:#fff; border:1px solid #e4e6ea; border-radius:14px; padding:14px 0;}
+  .sq-code canvas, .sq-code img{width:var(--sq-w,84%); height:auto; display:block; margin:0 auto; image-rendering:pixelated;}
+  .sq-code table{margin:0 auto;}
+  .sq-url{font-size:.86rem; color:#5b6470; word-break:break-all; background:#f3f4f6; border-radius:10px;
+    padding:9px 11px; margin-bottom:14px; line-height:1.4;
+    -webkit-user-select:text; user-select:text;}
+  .sq-row{display:flex; gap:9px; flex-wrap:wrap;}
+  .sq-row button{flex:1 1 130px; border:none; border-radius:12px; padding:13px 14px; font:inherit; font-size:1rem;
+    font-weight:750; cursor:pointer; background:#1b1f24; color:#fff; min-height:48px;}
+  .sq-row button.sq-alt{background:#fff; color:#1b1f24; box-shadow:inset 0 0 0 2px #dfe2e7;}
+  .sq-row button.sq-ok{background:#1f7a46;}
+  .sq-row button:active{transform:scale(.985);}
+  .sq-note{margin-top:11px; font-size:.8rem; color:#8a929c; line-height:1.45;}
+</style>
+<script>/* QR-Code: qrcodejs von David Shim (MIT) – dieselbe Bibliothek wie in der Digitalen Tafel */
+var QRCode;!function(){function a(a){this.mode=c.MODE_8BIT_BYTE,this.data=a,this.parsedData=[];for(var b=[],d=0,e=this.data.length;e>d;d++){var f=this.data.charCodeAt(d);f>65536?(b[0]=240|(1835008&f)>>>18,b[1]=128|(258048&f)>>>12,b[2]=128|(4032&f)>>>6,b[3]=128|63&f):f>2048?(b[0]=224|(61440&f)>>>12,b[1]=128|(4032&f)>>>6,b[2]=128|63&f):f>128?(b[0]=192|(1984&f)>>>6,b[1]=128|63&f):b[0]=f,this.parsedData=this.parsedData.concat(b)}this.parsedData.length!=this.data.length&&(this.parsedData.unshift(191),this.parsedData.unshift(187),this.parsedData.unshift(239))}function b(a,b){this.typeNumber=a,this.errorCorrectLevel=b,this.modules=null,this.moduleCount=0,this.dataCache=null,this.dataList=[]}function i(a,b){if(void 0==a.length)throw new Error(a.length+"/"+b);for(var c=0;c<a.length&&0==a[c];)c++;this.num=new Array(a.length-c+b);for(var d=0;d<a.length-c;d++)this.num[d]=a[d+c]}function j(a,b){this.totalCount=a,this.dataCount=b}function k(){this.buffer=[],this.length=0}function m(){return"undefined"!=typeof CanvasRenderingContext2D}function n(){var a=!1,b=navigator.userAgent;return/android/i.test(b)&&(a=!0,aMat=b.toString().match(/android ([0-9]\.[0-9])/i),aMat&&aMat[1]&&(a=parseFloat(aMat[1]))),a}function r(a,b){for(var c=1,e=s(a),f=0,g=l.length;g>=f;f++){var h=0;switch(b){case d.L:h=l[f][0];break;case d.M:h=l[f][1];break;case d.Q:h=l[f][2];break;case d.H:h=l[f][3]}if(h>=e)break;c++}if(c>l.length)throw new Error("Too long data");return c}function s(a){var b=encodeURI(a).toString().replace(/\%[0-9a-fA-F]{2}/g,"a");return b.length+(b.length!=a?3:0)}a.prototype={getLength:function(){return this.parsedData.length},write:function(a){for(var b=0,c=this.parsedData.length;c>b;b++)a.put(this.parsedData[b],8)}},b.prototype={addData:function(b){var c=new a(b);this.dataList.push(c),this.dataCache=null},isDark:function(a,b){if(0>a||this.moduleCount<=a||0>b||this.moduleCount<=b)throw new Error(a+","+b);return this.modules[a][b]},getModuleCount:function(){return this.moduleCount},make:function(){this.makeImpl(!1,this.getBestMaskPattern())},makeImpl:function(a,c){this.moduleCount=4*this.typeNumber+17,this.modules=new Array(this.moduleCount);for(var d=0;d<this.moduleCount;d++){this.modules[d]=new Array(this.moduleCount);for(var e=0;e<this.moduleCount;e++)this.modules[d][e]=null}this.setupPositionProbePattern(0,0),this.setupPositionProbePattern(this.moduleCount-7,0),this.setupPositionProbePattern(0,this.moduleCount-7),this.setupPositionAdjustPattern(),this.setupTimingPattern(),this.setupTypeInfo(a,c),this.typeNumber>=7&&this.setupTypeNumber(a),null==this.dataCache&&(this.dataCache=b.createData(this.typeNumber,this.errorCorrectLevel,this.dataList)),this.mapData(this.dataCache,c)},setupPositionProbePattern:function(a,b){for(var c=-1;7>=c;c++)if(!(-1>=a+c||this.moduleCount<=a+c))for(var d=-1;7>=d;d++)-1>=b+d||this.moduleCount<=b+d||(this.modules[a+c][b+d]=c>=0&&6>=c&&(0==d||6==d)||d>=0&&6>=d&&(0==c||6==c)||c>=2&&4>=c&&d>=2&&4>=d?!0:!1)},getBestMaskPattern:function(){for(var a=0,b=0,c=0;8>c;c++){this.makeImpl(!0,c);var d=f.getLostPoint(this);(0==c||a>d)&&(a=d,b=c)}return b},createMovieClip:function(a,b,c){var d=a.createEmptyMovieClip(b,c),e=1;this.make();for(var f=0;f<this.modules.length;f++)for(var g=f*e,h=0;h<this.modules[f].length;h++){var i=h*e,j=this.modules[f][h];j&&(d.beginFill(0,100),d.moveTo(i,g),d.lineTo(i+e,g),d.lineTo(i+e,g+e),d.lineTo(i,g+e),d.endFill())}return d},setupTimingPattern:function(){for(var a=8;a<this.moduleCount-8;a++)null==this.modules[a][6]&&(this.modules[a][6]=0==a%2);for(var b=8;b<this.moduleCount-8;b++)null==this.modules[6][b]&&(this.modules[6][b]=0==b%2)},setupPositionAdjustPattern:function(){for(var a=f.getPatternPosition(this.typeNumber),b=0;b<a.length;b++)for(var c=0;c<a.length;c++){var d=a[b],e=a[c];if(null==this.modules[d][e])for(var g=-2;2>=g;g++)for(var h=-2;2>=h;h++)this.modules[d+g][e+h]=-2==g||2==g||-2==h||2==h||0==g&&0==h?!0:!1}},setupTypeNumber:function(a){for(var b=f.getBCHTypeNumber(this.typeNumber),c=0;18>c;c++){var d=!a&&1==(1&b>>c);this.modules[Math.floor(c/3)][c%3+this.moduleCount-8-3]=d}for(var c=0;18>c;c++){var d=!a&&1==(1&b>>c);this.modules[c%3+this.moduleCount-8-3][Math.floor(c/3)]=d}},setupTypeInfo:function(a,b){for(var c=this.errorCorrectLevel<<3|b,d=f.getBCHTypeInfo(c),e=0;15>e;e++){var g=!a&&1==(1&d>>e);6>e?this.modules[e][8]=g:8>e?this.modules[e+1][8]=g:this.modules[this.moduleCount-15+e][8]=g}for(var e=0;15>e;e++){var g=!a&&1==(1&d>>e);8>e?this.modules[8][this.moduleCount-e-1]=g:9>e?this.modules[8][15-e-1+1]=g:this.modules[8][15-e-1]=g}this.modules[this.moduleCount-8][8]=!a},mapData:function(a,b){for(var c=-1,d=this.moduleCount-1,e=7,g=0,h=this.moduleCount-1;h>0;h-=2)for(6==h&&h--;;){for(var i=0;2>i;i++)if(null==this.modules[d][h-i]){var j=!1;g<a.length&&(j=1==(1&a[g]>>>e));var k=f.getMask(b,d,h-i);k&&(j=!j),this.modules[d][h-i]=j,e--,-1==e&&(g++,e=7)}if(d+=c,0>d||this.moduleCount<=d){d-=c,c=-c;break}}}},b.PAD0=236,b.PAD1=17,b.createData=function(a,c,d){for(var e=j.getRSBlocks(a,c),g=new k,h=0;h<d.length;h++){var i=d[h];g.put(i.mode,4),g.put(i.getLength(),f.getLengthInBits(i.mode,a)),i.write(g)}for(var l=0,h=0;h<e.length;h++)l+=e[h].dataCount;if(g.getLengthInBits()>8*l)throw new Error("code length overflow. ("+g.getLengthInBits()+">"+8*l+")");for(g.getLengthInBits()+4<=8*l&&g.put(0,4);0!=g.getLengthInBits()%8;)g.putBit(!1);for(;;){if(g.getLengthInBits()>=8*l)break;if(g.put(b.PAD0,8),g.getLengthInBits()>=8*l)break;g.put(b.PAD1,8)}return b.createBytes(g,e)},b.createBytes=function(a,b){for(var c=0,d=0,e=0,g=new Array(b.length),h=new Array(b.length),j=0;j<b.length;j++){var k=b[j].dataCount,l=b[j].totalCount-k;d=Math.max(d,k),e=Math.max(e,l),g[j]=new Array(k);for(var m=0;m<g[j].length;m++)g[j][m]=255&a.buffer[m+c];c+=k;var n=f.getErrorCorrectPolynomial(l),o=new i(g[j],n.getLength()-1),p=o.mod(n);h[j]=new Array(n.getLength()-1);for(var m=0;m<h[j].length;m++){var q=m+p.getLength()-h[j].length;h[j][m]=q>=0?p.get(q):0}}for(var r=0,m=0;m<b.length;m++)r+=b[m].totalCount;for(var s=new Array(r),t=0,m=0;d>m;m++)for(var j=0;j<b.length;j++)m<g[j].length&&(s[t++]=g[j][m]);for(var m=0;e>m;m++)for(var j=0;j<b.length;j++)m<h[j].length&&(s[t++]=h[j][m]);return s};for(var c={MODE_NUMBER:1,MODE_ALPHA_NUM:2,MODE_8BIT_BYTE:4,MODE_KANJI:8},d={L:1,M:0,Q:3,H:2},e={PATTERN000:0,PATTERN001:1,PATTERN010:2,PATTERN011:3,PATTERN100:4,PATTERN101:5,PATTERN110:6,PATTERN111:7},f={PATTERN_POSITION_TABLE:[[],[6,18],[6,22],[6,26],[6,30],[6,34],[6,22,38],[6,24,42],[6,26,46],[6,28,50],[6,30,54],[6,32,58],[6,34,62],[6,26,46,66],[6,26,48,70],[6,26,50,74],[6,30,54,78],[6,30,56,82],[6,30,58,86],[6,34,62,90],[6,28,50,72,94],[6,26,50,74,98],[6,30,54,78,102],[6,28,54,80,106],[6,32,58,84,110],[6,30,58,86,114],[6,34,62,90,118],[6,26,50,74,98,122],[6,30,54,78,102,126],[6,26,52,78,104,130],[6,30,56,82,108,134],[6,34,60,86,112,138],[6,30,58,86,114,142],[6,34,62,90,118,146],[6,30,54,78,102,126,150],[6,24,50,76,102,128,154],[6,28,54,80,106,132,158],[6,32,58,84,110,136,162],[6,26,54,82,110,138,166],[6,30,58,86,114,142,170]],G15:1335,G18:7973,G15_MASK:21522,getBCHTypeInfo:function(a){for(var b=a<<10;f.getBCHDigit(b)-f.getBCHDigit(f.G15)>=0;)b^=f.G15<<f.getBCHDigit(b)-f.getBCHDigit(f.G15);return(a<<10|b)^f.G15_MASK},getBCHTypeNumber:function(a){for(var b=a<<12;f.getBCHDigit(b)-f.getBCHDigit(f.G18)>=0;)b^=f.G18<<f.getBCHDigit(b)-f.getBCHDigit(f.G18);return a<<12|b},getBCHDigit:function(a){for(var b=0;0!=a;)b++,a>>>=1;return b},getPatternPosition:function(a){return f.PATTERN_POSITION_TABLE[a-1]},getMask:function(a,b,c){switch(a){case e.PATTERN000:return 0==(b+c)%2;case e.PATTERN001:return 0==b%2;case e.PATTERN010:return 0==c%3;case e.PATTERN011:return 0==(b+c)%3;case e.PATTERN100:return 0==(Math.floor(b/2)+Math.floor(c/3))%2;case e.PATTERN101:return 0==b*c%2+b*c%3;case e.PATTERN110:return 0==(b*c%2+b*c%3)%2;case e.PATTERN111:return 0==(b*c%3+(b+c)%2)%2;default:throw new Error("bad maskPattern:"+a)}},getErrorCorrectPolynomial:function(a){for(var b=new i([1],0),c=0;a>c;c++)b=b.multiply(new i([1,g.gexp(c)],0));return b},getLengthInBits:function(a,b){if(b>=1&&10>b)switch(a){case c.MODE_NUMBER:return 10;case c.MODE_ALPHA_NUM:return 9;case c.MODE_8BIT_BYTE:return 8;case c.MODE_KANJI:return 8;default:throw new Error("mode:"+a)}else if(27>b)switch(a){case c.MODE_NUMBER:return 12;case c.MODE_ALPHA_NUM:return 11;case c.MODE_8BIT_BYTE:return 16;case c.MODE_KANJI:return 10;default:throw new Error("mode:"+a)}else{if(!(41>b))throw new Error("type:"+b);switch(a){case c.MODE_NUMBER:return 14;case c.MODE_ALPHA_NUM:return 13;case c.MODE_8BIT_BYTE:return 16;case c.MODE_KANJI:return 12;default:throw new Error("mode:"+a)}}},getLostPoint:function(a){for(var b=a.getModuleCount(),c=0,d=0;b>d;d++)for(var e=0;b>e;e++){for(var f=0,g=a.isDark(d,e),h=-1;1>=h;h++)if(!(0>d+h||d+h>=b))for(var i=-1;1>=i;i++)0>e+i||e+i>=b||(0!=h||0!=i)&&g==a.isDark(d+h,e+i)&&f++;f>5&&(c+=3+f-5)}for(var d=0;b-1>d;d++)for(var e=0;b-1>e;e++){var j=0;a.isDark(d,e)&&j++,a.isDark(d+1,e)&&j++,a.isDark(d,e+1)&&j++,a.isDark(d+1,e+1)&&j++,(0==j||4==j)&&(c+=3)}for(var d=0;b>d;d++)for(var e=0;b-6>e;e++)a.isDark(d,e)&&!a.isDark(d,e+1)&&a.isDark(d,e+2)&&a.isDark(d,e+3)&&a.isDark(d,e+4)&&!a.isDark(d,e+5)&&a.isDark(d,e+6)&&(c+=40);for(var e=0;b>e;e++)for(var d=0;b-6>d;d++)a.isDark(d,e)&&!a.isDark(d+1,e)&&a.isDark(d+2,e)&&a.isDark(d+3,e)&&a.isDark(d+4,e)&&!a.isDark(d+5,e)&&a.isDark(d+6,e)&&(c+=40);for(var k=0,e=0;b>e;e++)for(var d=0;b>d;d++)a.isDark(d,e)&&k++;var l=Math.abs(100*k/b/b-50)/5;return c+=10*l}},g={glog:function(a){if(1>a)throw new Error("glog("+a+")");return g.LOG_TABLE[a]},gexp:function(a){for(;0>a;)a+=255;for(;a>=256;)a-=255;return g.EXP_TABLE[a]},EXP_TABLE:new Array(256),LOG_TABLE:new Array(256)},h=0;8>h;h++)g.EXP_TABLE[h]=1<<h;for(var h=8;256>h;h++)g.EXP_TABLE[h]=g.EXP_TABLE[h-4]^g.EXP_TABLE[h-5]^g.EXP_TABLE[h-6]^g.EXP_TABLE[h-8];for(var h=0;255>h;h++)g.LOG_TABLE[g.EXP_TABLE[h]]=h;i.prototype={get:function(a){return this.num[a]},getLength:function(){return this.num.length},multiply:function(a){for(var b=new Array(this.getLength()+a.getLength()-1),c=0;c<this.getLength();c++)for(var d=0;d<a.getLength();d++)b[c+d]^=g.gexp(g.glog(this.get(c))+g.glog(a.get(d)));return new i(b,0)},mod:function(a){if(this.getLength()-a.getLength()<0)return this;for(var b=g.glog(this.get(0))-g.glog(a.get(0)),c=new Array(this.getLength()),d=0;d<this.getLength();d++)c[d]=this.get(d);for(var d=0;d<a.getLength();d++)c[d]^=g.gexp(g.glog(a.get(d))+b);return new i(c,0).mod(a)}},j.RS_BLOCK_TABLE=[[1,26,19],[1,26,16],[1,26,13],[1,26,9],[1,44,34],[1,44,28],[1,44,22],[1,44,16],[1,70,55],[1,70,44],[2,35,17],[2,35,13],[1,100,80],[2,50,32],[2,50,24],[4,25,9],[1,134,108],[2,67,43],[2,33,15,2,34,16],[2,33,11,2,34,12],[2,86,68],[4,43,27],[4,43,19],[4,43,15],[2,98,78],[4,49,31],[2,32,14,4,33,15],[4,39,13,1,40,14],[2,121,97],[2,60,38,2,61,39],[4,40,18,2,41,19],[4,40,14,2,41,15],[2,146,116],[3,58,36,2,59,37],[4,36,16,4,37,17],[4,36,12,4,37,13],[2,86,68,2,87,69],[4,69,43,1,70,44],[6,43,19,2,44,20],[6,43,15,2,44,16],[4,101,81],[1,80,50,4,81,51],[4,50,22,4,51,23],[3,36,12,8,37,13],[2,116,92,2,117,93],[6,58,36,2,59,37],[4,46,20,6,47,21],[7,42,14,4,43,15],[4,133,107],[8,59,37,1,60,38],[8,44,20,4,45,21],[12,33,11,4,34,12],[3,145,115,1,146,116],[4,64,40,5,65,41],[11,36,16,5,37,17],[11,36,12,5,37,13],[5,109,87,1,110,88],[5,65,41,5,66,42],[5,54,24,7,55,25],[11,36,12],[5,122,98,1,123,99],[7,73,45,3,74,46],[15,43,19,2,44,20],[3,45,15,13,46,16],[1,135,107,5,136,108],[10,74,46,1,75,47],[1,50,22,15,51,23],[2,42,14,17,43,15],[5,150,120,1,151,121],[9,69,43,4,70,44],[17,50,22,1,51,23],[2,42,14,19,43,15],[3,141,113,4,142,114],[3,70,44,11,71,45],[17,47,21,4,48,22],[9,39,13,16,40,14],[3,135,107,5,136,108],[3,67,41,13,68,42],[15,54,24,5,55,25],[15,43,15,10,44,16],[4,144,116,4,145,117],[17,68,42],[17,50,22,6,51,23],[19,46,16,6,47,17],[2,139,111,7,140,112],[17,74,46],[7,54,24,16,55,25],[34,37,13],[4,151,121,5,152,122],[4,75,47,14,76,48],[11,54,24,14,55,25],[16,45,15,14,46,16],[6,147,117,4,148,118],[6,73,45,14,74,46],[11,54,24,16,55,25],[30,46,16,2,47,17],[8,132,106,4,133,107],[8,75,47,13,76,48],[7,54,24,22,55,25],[22,45,15,13,46,16],[10,142,114,2,143,115],[19,74,46,4,75,47],[28,50,22,6,51,23],[33,46,16,4,47,17],[8,152,122,4,153,123],[22,73,45,3,74,46],[8,53,23,26,54,24],[12,45,15,28,46,16],[3,147,117,10,148,118],[3,73,45,23,74,46],[4,54,24,31,55,25],[11,45,15,31,46,16],[7,146,116,7,147,117],[21,73,45,7,74,46],[1,53,23,37,54,24],[19,45,15,26,46,16],[5,145,115,10,146,116],[19,75,47,10,76,48],[15,54,24,25,55,25],[23,45,15,25,46,16],[13,145,115,3,146,116],[2,74,46,29,75,47],[42,54,24,1,55,25],[23,45,15,28,46,16],[17,145,115],[10,74,46,23,75,47],[10,54,24,35,55,25],[19,45,15,35,46,16],[17,145,115,1,146,116],[14,74,46,21,75,47],[29,54,24,19,55,25],[11,45,15,46,46,16],[13,145,115,6,146,116],[14,74,46,23,75,47],[44,54,24,7,55,25],[59,46,16,1,47,17],[12,151,121,7,152,122],[12,75,47,26,76,48],[39,54,24,14,55,25],[22,45,15,41,46,16],[6,151,121,14,152,122],[6,75,47,34,76,48],[46,54,24,10,55,25],[2,45,15,64,46,16],[17,152,122,4,153,123],[29,74,46,14,75,47],[49,54,24,10,55,25],[24,45,15,46,46,16],[4,152,122,18,153,123],[13,74,46,32,75,47],[48,54,24,14,55,25],[42,45,15,32,46,16],[20,147,117,4,148,118],[40,75,47,7,76,48],[43,54,24,22,55,25],[10,45,15,67,46,16],[19,148,118,6,149,119],[18,75,47,31,76,48],[34,54,24,34,55,25],[20,45,15,61,46,16]],j.getRSBlocks=function(a,b){var c=j.getRsBlockTable(a,b);if(void 0==c)throw new Error("bad rs block @ typeNumber:"+a+"/errorCorrectLevel:"+b);for(var d=c.length/3,e=[],f=0;d>f;f++)for(var g=c[3*f+0],h=c[3*f+1],i=c[3*f+2],k=0;g>k;k++)e.push(new j(h,i));return e},j.getRsBlockTable=function(a,b){switch(b){case d.L:return j.RS_BLOCK_TABLE[4*(a-1)+0];case d.M:return j.RS_BLOCK_TABLE[4*(a-1)+1];case d.Q:return j.RS_BLOCK_TABLE[4*(a-1)+2];case d.H:return j.RS_BLOCK_TABLE[4*(a-1)+3];default:return void 0}},k.prototype={get:function(a){var b=Math.floor(a/8);return 1==(1&this.buffer[b]>>>7-a%8)},put:function(a,b){for(var c=0;b>c;c++)this.putBit(1==(1&a>>>b-c-1))},getLengthInBits:function(){return this.length},putBit:function(a){var b=Math.floor(this.length/8);this.buffer.length<=b&&this.buffer.push(0),a&&(this.buffer[b]|=128>>>this.length%8),this.length++}};var l=[[17,14,11,7],[32,26,20,14],[53,42,32,24],[78,62,46,34],[106,84,60,44],[134,106,74,58],[154,122,86,64],[192,152,108,84],[230,180,130,98],[271,213,151,119],[321,251,177,137],[367,287,203,155],[425,331,241,177],[458,362,258,194],[520,412,292,220],[586,450,322,250],[644,504,364,280],[718,560,394,310],[792,624,442,338],[858,666,482,382],[929,711,509,403],[1003,779,565,439],[1091,857,611,461],[1171,911,661,511],[1273,997,715,535],[1367,1059,751,593],[1465,1125,805,625],[1528,1190,868,658],[1628,1264,908,698],[1732,1370,982,742],[1840,1452,1030,790],[1952,1538,1112,842],[2068,1628,1168,898],[2188,1722,1228,958],[2303,1809,1283,983],[2431,1911,1351,1051],[2563,1989,1423,1093],[2699,2099,1499,1139],[2809,2213,1579,1219],[2953,2331,1663,1273]],o=function(){var a=function(a,b){this._el=a,this._htOption=b};return a.prototype.draw=function(a){function g(a,b){var c=document.createElementNS("http://www.w3.org/2000/svg",a);for(var d in b)b.hasOwnProperty(d)&&c.setAttribute(d,b[d]);return c}var b=this._htOption,c=this._el,d=a.getModuleCount();Math.floor(b.width/d),Math.floor(b.height/d),this.clear();var h=g("svg",{viewBox:"0 0 "+String(d)+" "+String(d),width:"100%",height:"100%",fill:b.colorLight});h.setAttributeNS("http://www.w3.org/2000/xmlns/","xmlns:xlink","http://www.w3.org/1999/xlink"),c.appendChild(h),h.appendChild(g("rect",{fill:b.colorDark,width:"1",height:"1",id:"template"}));for(var i=0;d>i;i++)for(var j=0;d>j;j++)if(a.isDark(i,j)){var k=g("use",{x:String(i),y:String(j)});k.setAttributeNS("http://www.w3.org/1999/xlink","href","#template"),h.appendChild(k)}},a.prototype.clear=function(){for(;this._el.hasChildNodes();)this._el.removeChild(this._el.lastChild)},a}(),p="svg"===document.documentElement.tagName.toLowerCase(),q=p?o:m()?function(){function a(){this._elImage.src=this._elCanvas.toDataURL("image/png"),this._elImage.style.display="block",this._elCanvas.style.display="none"}function d(a,b){var c=this;if(c._fFail=b,c._fSuccess=a,null===c._bSupportDataURI){var d=document.createElement("img"),e=function(){c._bSupportDataURI=!1,c._fFail&&_fFail.call(c)},f=function(){c._bSupportDataURI=!0,c._fSuccess&&c._fSuccess.call(c)};return d.onabort=e,d.onerror=e,d.onload=f,d.src="data:image/gif;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg==",void 0}c._bSupportDataURI===!0&&c._fSuccess?c._fSuccess.call(c):c._bSupportDataURI===!1&&c._fFail&&c._fFail.call(c)}if(this._android&&this._android<=2.1){var b=1/window.devicePixelRatio,c=CanvasRenderingContext2D.prototype.drawImage;CanvasRenderingContext2D.prototype.drawImage=function(a,d,e,f,g,h,i,j){if("nodeName"in a&&/img/i.test(a.nodeName))for(var l=arguments.length-1;l>=1;l--)arguments[l]=arguments[l]*b;else"undefined"==typeof j&&(arguments[1]*=b,arguments[2]*=b,arguments[3]*=b,arguments[4]*=b);c.apply(this,arguments)}}var e=function(a,b){this._bIsPainted=!1,this._android=n(),this._htOption=b,this._elCanvas=document.createElement("canvas"),this._elCanvas.width=b.width,this._elCanvas.height=b.height,a.appendChild(this._elCanvas),this._el=a,this._oContext=this._elCanvas.getContext("2d"),this._bIsPainted=!1,this._elImage=document.createElement("img"),this._elImage.style.display="none",this._el.appendChild(this._elImage),this._bSupportDataURI=null};return e.prototype.draw=function(a){var b=this._elImage,c=this._oContext,d=this._htOption,e=a.getModuleCount(),f=d.width/e,g=d.height/e,h=Math.round(f),i=Math.round(g);b.style.display="none",this.clear();for(var j=0;e>j;j++)for(var k=0;e>k;k++){var l=a.isDark(j,k),m=k*f,n=j*g;c.strokeStyle=l?d.colorDark:d.colorLight,c.lineWidth=1,c.fillStyle=l?d.colorDark:d.colorLight,c.fillRect(m,n,f,g),c.strokeRect(Math.floor(m)+.5,Math.floor(n)+.5,h,i),c.strokeRect(Math.ceil(m)-.5,Math.ceil(n)-.5,h,i)}this._bIsPainted=!0},e.prototype.makeImage=function(){this._bIsPainted&&d.call(this,a)},e.prototype.isPainted=function(){return this._bIsPainted},e.prototype.clear=function(){this._oContext.clearRect(0,0,this._elCanvas.width,this._elCanvas.height),this._bIsPainted=!1},e.prototype.round=function(a){return a?Math.floor(1e3*a)/1e3:a},e}():function(){var a=function(a,b){this._el=a,this._htOption=b};return a.prototype.draw=function(a){for(var b=this._htOption,c=this._el,d=a.getModuleCount(),e=Math.floor(b.width/d),f=Math.floor(b.height/d),g=['<table style="border:0;border-collapse:collapse;">'],h=0;d>h;h++){g.push("<tr>");for(var i=0;d>i;i++)g.push('<td style="border:0;border-collapse:collapse;padding:0;margin:0;width:'+e+"px;height:"+f+"px;background-color:"+(a.isDark(h,i)?b.colorDark:b.colorLight)+';"></td>');g.push("</tr>")}g.push("</table>"),c.innerHTML=g.join("");var j=c.childNodes[0],k=(b.width-j.offsetWidth)/2,l=(b.height-j.offsetHeight)/2;k>0&&l>0&&(j.style.margin=l+"px "+k+"px")},a.prototype.clear=function(){this._el.innerHTML=""},a}();QRCode=function(a,b){if(this._htOption={width:256,height:256,typeNumber:4,colorDark:"#000000",colorLight:"#ffffff",correctLevel:d.H},"string"==typeof b&&(b={text:b}),b)for(var c in b)this._htOption[c]=b[c];"string"==typeof a&&(a=document.getElementById(a)),this._android=n(),this._el=a,this._oQRCode=null,this._oDrawing=new q(this._el,this._htOption),this._htOption.text&&this.makeCode(this._htOption.text)},QRCode.prototype.makeCode=function(a){this._oQRCode=new b(r(a,this._htOption.correctLevel),this._htOption.correctLevel),this._oQRCode.addData(a),this._oQRCode.make(),this._el.title=a,this._oDrawing.draw(this._oQRCode),this.makeImage()},QRCode.prototype.makeImage=function(){"function"==typeof this._oDrawing.makeImage&&(!this._android||this._android>=3)&&this._oDrawing.makeImage()},QRCode.prototype.clear=function(){this._oDrawing.clear()},QRCode.CorrectLevel=d}();
+</script>
+<script>
+(function(){
+  "use strict";
+  if(window.ShareQR) return;
+
+  var ANCHOR = "#scrSettings";          // Startbildschirm: Knopf nur sichtbar, solange der zu sehen ist
+  var INLINE = "_";          // optional: Leiste, in die der Knopf direkt eingebaut wird
+  var BASE_KEY = "spieleSuite.basis";
+  var BASE_STD = "https://mauthier-bit.github.io/Spiele-Suite/";
+
+  /* ---------------- Adresse bestimmen ---------------- */
+  function basis(){
+    var b=null;
+    try{ b=localStorage.getItem(BASE_KEY); }catch(e){}
+    b=b||BASE_STD;
+    return b.charAt(b.length-1)==="/" ? b : b+"/";
+  }
+  function dateiname(){
+    var p=location.pathname||"";
+    var name=p.substring(p.lastIndexOf("/")+1);
+    try{ name=decodeURIComponent(name); }catch(e){}
+    return /^[\w.%+ -]{1,80}\.html?$/i.test(name) ? name : "index.html";
+  }
+  function adresse(){
+    if(location.protocol==="http:"||location.protocol==="https:") return location.href.split("#")[0];
+    return basis()+encodeURIComponent(dateiname());
+  }
+
+  /* ---------------- QR-Code zeichnen ---------------- */
+  function zeichneCode(host,url){
+    host.innerHTML="";
+    host.style.removeProperty("--sq-w");
+    if(typeof QRCode==="undefined"){
+      host.innerHTML='<div style="padding:18px;color:#8a929c;font-size:.9rem;">QR-Code nicht verfügbar – bitte den Link weitergeben.</div>';
+      return;
+    }
+    try{
+      var q=new QRCode(host,{text:url, width:900, height:900, correctLevel:QRCode.CorrectLevel.M});
+      /* Ruhezone: vier Module weiß ringsum, sonst findet die Kamera den Code nicht */
+      var n=q._oQRCode && q._oQRCode.getModuleCount ? q._oQRCode.getModuleCount() : 0;
+      if(n) host.style.setProperty("--sq-w", (100*n/(n+8)).toFixed(2)+"%");
+    }catch(e){
+      host.innerHTML='<div style="padding:18px;color:#8a929c;font-size:.9rem;">Die Adresse ist zu lang für einen QR-Code – bitte den Link kopieren.</div>';
+    }
+  }
+
+  /* ---------------- Oberfläche ---------------- */
+  var ov=null;
+  function baueOverlay(){
+    ov=document.createElement("div");
+    ov.className="sq-ov";
+    ov.innerHTML='<div class="sq-card">'+
+      '<h2 id="sqTitle">Teilen</h2><p class="sq-sub">Mit der Kamera scannen – das Spiel öffnet sich direkt im Browser.</p>'+
+      '<div class="sq-code" id="sqCode"></div>'+
+      '<div class="sq-url" id="sqUrl"></div>'+
+      '<div class="sq-row">'+
+        '<button class="sq-copy">Link kopieren</button>'+
+        '<button class="sq-alt sq-edit">Adresse ändern</button>'+
+        '<button class="sq-alt sq-close">Schließen</button>'+
+      '</div>'+
+      '<div class="sq-note" id="sqNote"></div>'+
+      '</div>';
+    document.body.appendChild(ov);
+    ov.addEventListener("click",function(e){ if(e.target===ov) zu(); });
+    ov.querySelector(".sq-close").addEventListener("click",zu);
+    ov.querySelector(".sq-copy").addEventListener("click",function(){ kopiereLink(this); });
+    ov.querySelector(".sq-edit").addEventListener("click",function(){
+      var neu=prompt("Internetadresse des Ordners, in dem die Spiele liegen:", basis());
+      if(neu===null) return;
+      neu=neu.trim();
+      try{ if(neu) localStorage.setItem(BASE_KEY,neu); else localStorage.removeItem(BASE_KEY); }catch(e){}
+      fuelle();
+    });
+  }
+  function fuelle(){
+    var url=adresse();
+    var t=(document.title||"").split(/[\u2013\u2014|\u00b7]/)[0].trim();
+    ov.querySelector("#sqTitle").textContent=(t||"Diese Seite")+" teilen";
+    zeichneCode(ov.querySelector("#sqCode"), url);
+    ov.querySelector("#sqUrl").textContent=url;
+    ov.querySelector("#sqNote").innerHTML = (location.protocol==="http:"||location.protocol==="https:")
+      ? "Das ist die Adresse dieser Seite."
+      : "Die Datei liegt lokal auf diesem Gerät. Der Code zeigt deshalb auf die veröffentlichte Fassung – über „Adresse ändern“ anpassbar.";
+  }
+  function kopiereLink(btn){
+    var url=adresse();
+    function melde(ok){
+      btn.textContent = ok ? "Kopiert \u2713" : "Bitte von Hand kopieren";
+      btn.classList.toggle("sq-ok", !!ok);
+      if(!ok){
+        try{
+          var el=ov.querySelector("#sqUrl"), r=document.createRange();
+          r.selectNodeContents(el);
+          var s=window.getSelection(); s.removeAllRanges(); s.addRange(r);
+        }catch(e){}
+      }
+      clearTimeout(btn._t);
+      btn._t=setTimeout(function(){ btn.textContent="Link kopieren"; btn.classList.remove("sq-ok"); },1900);
+    }
+    function altweg(){
+      try{
+        var ta=document.createElement("textarea");
+        ta.value=url; ta.setAttribute("readonly","");
+        ta.style.position="fixed"; ta.style.top="-1000px"; ta.style.opacity="0";
+        document.body.appendChild(ta);
+        ta.select(); ta.setSelectionRange(0,ta.value.length);
+        var ok=document.execCommand("copy");
+        document.body.removeChild(ta);
+        melde(ok);
+      }catch(e){ melde(false); }
+    }
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(url).then(function(){ melde(true); }, altweg);
+    } else altweg();
+  }
+  function auf(){ if(!ov) baueOverlay(); fuelle(); ov.classList.add("on"); }
+  function zu(){ if(ov) ov.classList.remove("on"); }
+
+  var ICON='<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 3h8v8H3V3zm2 2v4h4V5H5zm8-2h8v8h-8V3zm2 2v4h4V5h-4zM3 13h8v8H3v-8zm2 2v4h4v-4H5zm8-2h3v3h-3v-3zm5 0h3v3h-3v-3zm-5 5h3v3h-3v-3zm5 0h3v3h-3v-3z"/></svg>';
+  function knopf(){
+    var inline=INLINE && INLINE.charAt(0)!=="_" ? document.querySelector(INLINE) : null;
+    if(inline){
+      var b=document.createElement("button");
+      b.className=(inline.querySelector("button")? inline.querySelector("button").className : "")+" sq-inline";
+      b.type="button"; b.innerHTML=ICON+"<span>Teilen</span>";
+      b.addEventListener("click",auf);
+      inline.appendChild(b);
+      return;
+    }
+    var f=document.createElement("button");
+    f.className="sq-fab"; f.type="button";
+    f.innerHTML=ICON+"<span>Teilen</span>";
+    f.addEventListener("click",auf);
+    document.body.appendChild(f);
+    var sel = ANCHOR && ANCHOR.charAt(0)!=="_" ? ANCHOR : null;
+    function sichtbar(){
+      if(!sel) return true;
+      var els=document.querySelectorAll(sel);
+      for(var i=0;i<els.length;i++){
+        var cs=getComputedStyle(els[i]);
+        if(cs.display!=="none" && cs.visibility!=="hidden" && els[i].getClientRects().length) return true;
+      }
+      return false;
+    }
+    function pruefe(){ f.classList.toggle("on", sichtbar() && !(ov&&ov.classList.contains("on"))); }
+    pruefe();
+    setInterval(pruefe,400);
+  }
+  function start(){ knopf(); }
+  if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",start);
+  else start();
+
+  window.ShareQR={open:auf, close:zu, url:adresse, basis:basis};
+})();
+</script>
+
+</body>
+</html>

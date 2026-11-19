@@ -1,0 +1,2256 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<title>Mattle — Mathe-Battle</title>
+<style>
+:root{
+  --bg-0:#0a0f2e; --bg-1:#131a46;
+  --panel:#161d4d; --panel-2:#1d2666; --line:#2d3780;
+  --ink:#eef1ff; --muted:#98a1d4;
+  --a:#22d3ee; --a-deep:#0e7490; --a-glow:rgba(34,211,238,.55);
+  --b:#fb7185; --b-deep:#be123c; --b-glow:rgba(251,113,133,.55);
+  --easy:#34d399; --easy-deep:#047857;
+  --hard:#fbbf24; --hard-deep:#b45309;
+  --radius:20px;
+  --shadow:0 18px 50px rgba(0,0,0,.45);
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+html,body{height:100%;}
+body{
+  margin:0;
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  color:var(--ink);
+  background:
+    radial-gradient(1200px 700px at 18% -10%, rgba(34,211,238,.10), transparent 60%),
+    radial-gradient(1200px 700px at 82% -10%, rgba(251,113,133,.10), transparent 60%),
+    linear-gradient(160deg,var(--bg-0),var(--bg-1));
+  background-attachment:fixed;
+  user-select:none; -webkit-user-select:none;
+  touch-action:manipulation;
+  overflow:hidden;
+}
+.app{display:flex; flex-direction:column; height:100dvh; padding:clamp(8px,1.4vw,16px); gap:clamp(6px,1vw,12px);}
+
+/* ---------- Top bar ---------- */
+.topbar{display:flex; align-items:center; justify-content:space-between; gap:12px; flex:0 0 auto;}
+.brand{display:flex; align-items:baseline; gap:10px;}
+.brand h1{margin:0; font-size:clamp(1.1rem,2.6vw,1.8rem); font-weight:900; letter-spacing:-.03em;
+  background:linear-gradient(90deg,var(--a),#fff 45%,var(--b)); -webkit-background-clip:text; background-clip:text; color:transparent;}
+.brand .sub{color:var(--muted); font-size:.8rem; font-weight:600; letter-spacing:.06em; text-transform:uppercase;}
+.top-actions{display:flex; gap:10px;}
+.icon-btn{
+  appearance:none; border:1px solid var(--line); background:var(--panel);
+  color:var(--ink); border-radius:14px; padding:10px 16px; font-size:.95rem; font-weight:700;
+  cursor:pointer; transition:transform .08s ease, background .15s, border-color .15s;
+}
+.icon-btn:hover{background:var(--panel-2); border-color:#3a45a0;}
+.icon-btn:active{transform:scale(.96);}
+
+/* ---------- Turn bar ---------- */
+.turnbar{
+  flex:0 0 auto; display:flex; align-items:center; justify-content:center; gap:12px;
+  min-height:clamp(40px,5.5vh,56px); border-radius:14px;
+  border:1.5px solid var(--line); background:rgba(13,17,46,.5);
+  font-weight:800; font-size:clamp(.95rem,2.2vw,1.25rem); letter-spacing:-.01em; padding:6px 16px; text-align:center;
+}
+.turnbar .dot{width:14px; height:14px; border-radius:50%; flex:0 0 auto; box-shadow:0 0 14px currentColor;}
+.turnbar.turnA{border-color:var(--a); color:var(--a);}
+.turnbar.turnB{border-color:var(--b); color:var(--b);}
+.turnbar .txt{color:var(--ink);}
+
+/* ---------- Main row ---------- */
+.main{flex:1 1 auto; min-height:0; display:flex; gap:clamp(8px,1.2vw,16px);}
+
+/* ---------- Team panels (= buzzers) ---------- */
+.team{
+  flex:0 0 clamp(120px,15vw,210px); min-width:0;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px;
+  border-radius:var(--radius); border:2px solid var(--line);
+  background:linear-gradient(180deg,var(--panel),rgba(13,17,46,.6));
+  padding:clamp(10px,1.6vw,20px) clamp(6px,1vw,14px); position:relative; overflow:hidden;
+  transition:border-color .15s, box-shadow .15s, background .15s, opacity .15s;
+}
+.team[data-side="A"]{--tc:var(--a); --tc-deep:var(--a-deep); --tc-glow:var(--a-glow);}
+.team[data-side="B"]{--tc:var(--b); --tc-deep:var(--b-deep); --tc-glow:var(--b-glow);}
+.team .tname{font-size:clamp(1rem,2.4vw,1.5rem); font-weight:900; letter-spacing:-.02em; color:var(--tc); text-align:center; line-height:1.05;}
+.team .count{font-size:clamp(2rem,5.5vw,3.6rem); font-weight:900; font-variant-numeric:tabular-nums; line-height:1;}
+.team .puck{display:inline-block; font-size:clamp(.72rem,1.6vw,.92rem); font-weight:900; padding:3px 12px; border-radius:999px; background:var(--tc); color:#06122a; letter-spacing:.02em; box-shadow:0 0 16px var(--tc-glow); margin:2px 0 4px;}
+.team .puck.hidden{display:none;}
+.team .count small{display:block; font-size:.32em; font-weight:700; letter-spacing:.08em; color:var(--muted); text-transform:uppercase;}
+.team .dir{font-size:clamp(.66rem,1.5vw,.82rem); color:var(--muted); font-weight:700; text-align:center; line-height:1.25;}
+.team .buzzhint{margin-top:2px; font-size:.78rem; font-weight:800; letter-spacing:.06em; text-transform:uppercase;
+  color:var(--tc); opacity:0; transition:opacity .15s;}
+.team.buzzable{cursor:pointer; border-color:var(--tc); box-shadow:0 0 0 2px var(--tc-glow), 0 0 40px var(--tc-glow) inset;}
+.team.buzzable:active{transform:scale(.99);}
+.team.buzzable .buzzhint{opacity:1;}
+.team.active{border-color:var(--tc); box-shadow:0 0 0 3px var(--tc), 0 0 60px var(--tc-glow);
+  background:linear-gradient(180deg,color-mix(in srgb,var(--tc) 14%,var(--panel)),rgba(13,17,46,.6));}
+.team.dim{opacity:.5;}
+.team.turn{border-color:var(--tc); box-shadow:0 0 0 2px var(--tc), 0 0 50px var(--tc-glow);}
+.team.turn .turnflag{opacity:1; transform:translateY(0);}
+.team.flash{animation:flash .5s ease;}
+@keyframes flash{0%,100%{box-shadow:0 0 0 2px var(--tc-glow);}30%{box-shadow:0 0 0 5px var(--tc),0 0 70px var(--tc-glow);}}
+.team .turnflag{position:absolute; top:8px; left:0; right:0; text-align:center; font-size:.7rem; font-weight:900;
+  letter-spacing:.08em; text-transform:uppercase; color:var(--tc); opacity:0; transform:translateY(-6px); transition:.2s;}
+
+/* ---------- Stage / board ---------- */
+.stage{flex:1 1 auto; min-width:0; position:relative; display:flex; align-items:center; justify-content:center;
+  border-radius:var(--radius); border:2px solid var(--line);
+  background:radial-gradient(120% 120% at 50% 0%, rgba(29,38,102,.5), rgba(13,17,46,.25)); overflow:hidden;}
+.board-wrap{position:absolute; inset:clamp(8px,1.6vw,22px); display:flex; align-items:center; justify-content:center;}
+.board{width:100%; height:100%; display:flex; align-items:center; justify-content:center;}
+.board svg{width:100%; height:100%; display:block; overflow:visible;}
+.hex{stroke:#0b1030; stroke-width:1.4; fill:#1b2358; transition:fill .2s, stroke .2s;}
+.hex.empty{fill:#1b2358;}
+.board.choosing.turnA .hex.empty{cursor:pointer;}
+.board.choosing.turnB .hex.empty{cursor:pointer;}
+.board.choosing.turnA .hex.empty:hover{fill:#26337f; stroke:var(--a); stroke-width:2.4;}
+.board.choosing.turnB .hex.empty:hover{fill:#3a2747; stroke:var(--b); stroke-width:2.4;}
+.hex.A{fill:color-mix(in srgb,var(--a) 80%, #0b1030); stroke:var(--a);}
+.hex.B{fill:color-mix(in srgb,var(--b) 80%, #0b1030); stroke:var(--b);}
+.hex.pop{transform-box:fill-box; transform-origin:center; animation:hexpop .42s cubic-bezier(.2,1.5,.4,1);}
+@keyframes hexpop{0%{transform:scale(.2);}60%{transform:scale(1.12);}100%{transform:scale(1);}}
+.hex.win{stroke:#fff; stroke-width:3; animation:hexglow 1s ease-in-out infinite alternate;}
+@keyframes hexglow{from{filter:drop-shadow(0 0 2px #fff);}to{filter:drop-shadow(0 0 12px #fff);}}
+.edge{fill:none; stroke-linecap:round; stroke-linejoin:round; opacity:.92;}
+.edge.A{stroke:var(--a);}
+.edge.B{stroke:var(--b);}
+.edgelabel{font-weight:900; letter-spacing:.06em; text-transform:uppercase;}
+.edgelabel.A{fill:var(--a);}
+.edgelabel.B{fill:var(--b);}
+
+/* ---------- Question card (overlay on board) ---------- */
+.qcard{position:absolute; inset:0; z-index:5; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:clamp(8px,1.4vh,16px); padding:clamp(12px,2.2vw,26px); text-align:center;
+  background:rgba(7,10,30,.78); backdrop-filter:blur(7px); -webkit-backdrop-filter:blur(7px);}
+.qcard.hidden{display:none;}
+.badge{display:inline-flex; align-items:center; gap:8px; font-weight:800; font-size:clamp(.78rem,1.7vw,1rem);
+  border:1.5px solid; border-radius:999px; padding:5px 14px; letter-spacing:.02em;}
+.badge .bdot{width:9px; height:9px; border-radius:50%; background:currentColor;}
+.badge.easy{color:var(--easy); border-color:var(--easy); background:color-mix(in srgb,var(--easy) 12%,transparent);}
+.badge.hard{color:var(--hard); border-color:var(--hard); background:color-mix(in srgb,var(--hard) 12%,transparent);}
+.area-label{color:var(--muted); font-weight:700; letter-spacing:.05em; text-transform:uppercase; font-size:clamp(.7rem,1.6vw,.9rem);}
+.problem{flex:1 1 auto; min-height:0; overflow:hidden; display:flex; align-items:center; justify-content:center; width:100%; font-size:clamp(1.8rem,6vw,4rem); font-weight:900; letter-spacing:-.01em; line-height:1.1; font-variant-numeric:tabular-nums;}
+.badge,.area-label,.timerwrap,.ansrow,.keypad,.status,.reveal-btn,#btnContinue{flex:0 0 auto;}
+.solution{flex:0 1 auto; max-height:38vh; overflow-y:auto;}
+/* math notation (Brüche, Wurzeln, Exponenten) — auch in der Lösung */
+.problem sup,.solution sup{font-size:.52em; vertical-align:.78em; font-weight:800; margin-left:.04em; line-height:0;}
+.problem sub,.solution sub{font-size:.5em; vertical-align:-.62em; font-weight:800; line-height:0;}
+.problem .fit,.solution .fit{display:inline-block; white-space:nowrap; transform-origin:center center; flex:0 0 auto;}
+.frac{display:inline-flex; flex-direction:column; align-items:center; vertical-align:middle; margin:0 .12em; line-height:1;}
+.frac .fr-n{padding:0 .25em;}
+.frac .fr-d{padding:.06em .25em 0; border-top:.08em solid currentColor;}
+.root{display:inline-flex; align-items:flex-start; white-space:nowrap;}
+.root .rsign{font-size:1.05em; margin-right:-.04em; transform:translateY(-.02em);}
+.root .radicand{border-top:.08em solid currentColor; padding:.06em .12em 0;}
+.num{padding:0 .04em;}
+.timerwrap{display:flex; align-items:center; gap:12px; width:min(440px,80%);}
+.timerwrap.hidden,.keypad.hidden,.ansrow.hidden,.solution.hidden,.reveal-btn.hidden{display:none !important;}
+.qcard .cta.hidden{display:none !important;}
+#btnContinue{margin-top:2px;}
+.timebar{flex:1 1 auto; height:12px; border-radius:999px; background:rgba(255,255,255,.1); overflow:hidden;}
+.timebar i{display:block; height:100%; width:100%; background:var(--easy); border-radius:999px;}
+.timenum{font-weight:900; font-size:clamp(1rem,2.4vw,1.5rem); font-variant-numeric:tabular-nums; min-width:1.4em;}
+.ansrow{width:min(560px,92%); display:flex; align-items:center; justify-content:center;
+  min-height:clamp(46px,7vh,64px); border-radius:14px; border:2px solid var(--ac,var(--line));
+  background:rgba(0,0,0,.3); font-size:clamp(1.6rem,4vw,2.6rem); font-weight:800;
+  font-variant-numeric:tabular-nums; letter-spacing:.02em; padding:0 18px; color:var(--ink);}
+.ansrow .ph{color:var(--muted); font-weight:600; font-size:.5em; letter-spacing:.04em;}
+.keypad{width:min(420px,92%); display:grid; grid-template-columns:repeat(4,1fr); gap:clamp(6px,1vw,10px);}
+.key{appearance:none; border:1.5px solid var(--line); background:var(--panel-2); color:var(--ink);
+  border-radius:14px; font-size:clamp(1.2rem,3vw,1.7rem); font-weight:800;
+  padding:clamp(7px,1.5vh,16px) 0; cursor:pointer; transition:transform .06s, background .12s, border-color .12s;}
+.key:hover{background:#27316f;}
+.key:active{transform:scale(.94);}
+.key.fn{color:var(--muted); font-size:clamp(1rem,2.4vw,1.4rem);}
+.key.ok{background:var(--ac,var(--easy)); color:#06122a; border-color:transparent; font-weight:900; box-shadow:0 8px 22px rgba(0,0,0,.3);}
+.key.ok:hover{filter:brightness(1.06);}
+.status{font-weight:800; font-size:clamp(1rem,2.4vw,1.45rem); text-align:center; min-height:1.4em; letter-spacing:-.01em;}
+.status.good{color:var(--easy);} .status.bad{color:var(--b);} .status.neutral{color:var(--ink);}
+.solution{text-align:center; color:var(--muted); font-weight:600; font-size:clamp(.85rem,1.8vw,1.05rem); line-height:1.4; max-width:680px;}
+.solution b{color:var(--ink); font-weight:800;}
+.reveal-btn{appearance:none; background:none; border:none; color:var(--muted); font-weight:700; font-size:.85rem; text-decoration:underline; cursor:pointer; padding:4px;}
+.reveal-btn:hover{color:var(--ink);}
+
+/* ---------- Bottom bar ---------- */
+.bottombar{flex:0 0 auto; display:flex; align-items:center; justify-content:center; gap:12px;}
+.cta{appearance:none; border:none; border-radius:16px; padding:13px 26px; font-size:1.05rem; font-weight:800;
+  cursor:pointer; color:#06122a; background:linear-gradient(180deg,#fff,#cfe0ff); box-shadow:var(--shadow); transition:transform .08s, filter .15s;}
+.cta:hover{filter:brightness(1.04);} .cta:active{transform:scale(.97);}
+.cta.ghost{background:var(--panel); color:var(--ink); border:1.5px solid var(--line); box-shadow:none;}
+.cta.ghost:hover{background:var(--panel-2);}
+
+/* ---------- Overlays (settings) ---------- */
+.overlay{position:fixed; inset:0; z-index:40; display:flex; align-items:center; justify-content:center; padding:18px;
+  background:rgba(5,8,24,.72); backdrop-filter:blur(6px);}
+.overlay.hidden{display:none;}
+.modal{width:min(680px,96vw); max-height:92dvh; overflow:auto; background:linear-gradient(180deg,var(--panel),#10153a);
+  border:1.5px solid var(--line); border-radius:22px; padding:clamp(18px,3vw,30px); box-shadow:var(--shadow);}
+.modal h2{margin:0 0 4px; font-size:clamp(1.3rem,3vw,1.8rem); font-weight:900;}
+.modal .lead{margin:0 0 18px; color:var(--muted); font-weight:600;}
+.field{margin-bottom:18px;}
+.lbl{display:block; font-weight:800; margin-bottom:8px; font-size:.98rem;}
+.help{color:var(--muted); font-size:.82rem; margin-top:6px; font-weight:600;}
+.inp{width:100%; border:1.5px solid var(--line); background:var(--panel); color:var(--ink); border-radius:12px; padding:12px 14px; font-size:1.05rem; font-weight:700; font-family:inherit;}
+.inp:focus{outline:none; border-color:var(--a);}
+.checks{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:8px;}
+.chk{display:flex; align-items:center; gap:10px; padding:11px 13px; border:1.5px solid var(--line); border-radius:12px; background:var(--panel); cursor:pointer; font-weight:700; transition:border-color .15s, background .15s;}
+.chk input{width:20px; height:20px; accent-color:var(--a); cursor:pointer;}
+.chk:hover{border-color:#3a45a0;}
+.chk.disabled{opacity:.4; cursor:not-allowed;}
+.chk.disabled input{cursor:not-allowed;}
+.seg{display:inline-flex; border:1.5px solid var(--line); border-radius:12px; overflow:hidden; background:var(--panel); flex-wrap:wrap;}
+.seg button{appearance:none; border:none; background:none; color:var(--muted); font-weight:800; padding:11px 18px; cursor:pointer; font-size:.95rem; transition:background .15s, color .15s;}
+.seg button.on{background:var(--panel-2); color:var(--ink);}
+.row2{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+.stepper{display:inline-flex; align-items:center; gap:0; border:1.5px solid var(--line); border-radius:12px; overflow:hidden; background:var(--panel);}
+.stepper button{appearance:none; border:none; background:var(--panel-2); color:var(--ink); width:46px; height:46px; font-size:1.4rem; font-weight:900; cursor:pointer;}
+.stepper button:active{background:#2b3578;}
+.stepper input{width:64px; text-align:center; border:none; background:none; color:var(--ink); font-size:1.2rem; font-weight:800; font-family:inherit;}
+.stepper input:focus{outline:none;}
+.switch{display:flex; align-items:center; gap:12px; font-weight:700;}
+.switch input{width:46px; height:26px; appearance:none; background:var(--line); border-radius:999px; position:relative; cursor:pointer; transition:background .2s;}
+.switch input:checked{background:var(--a-deep);}
+.switch input::after{content:""; position:absolute; top:3px; left:3px; width:20px; height:20px; border-radius:50%; background:#fff; transition:transform .2s;}
+.switch input:checked::after{transform:translateX(20px);}
+.modal-actions{display:flex; justify-content:flex-end; gap:12px; margin-top:8px;}
+
+/* ---------- Win overlay ---------- */
+.win{position:fixed; inset:0; z-index:60; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px; text-align:center; background:rgba(5,8,24,.86); backdrop-filter:blur(8px);}
+.win.hidden{display:none;}
+.win .trophy{font-size:clamp(4rem,14vw,9rem); animation:pop .6s cubic-bezier(.2,1.4,.4,1) both;}
+@keyframes pop{0%{transform:scale(0) rotate(-20deg);}100%{transform:scale(1) rotate(0);}}
+.win h2{margin:0; font-size:clamp(2rem,7vw,4rem); font-weight:900; letter-spacing:-.02em;}
+.win .final{color:var(--muted); font-size:clamp(1rem,2.6vw,1.4rem); font-weight:700;}
+.win .final .pa{color:var(--a);} .win .final .pb{color:var(--b);}
+.win-actions{display:flex; gap:14px; flex-wrap:wrap; justify-content:center; margin-top:10px;}
+.confetti{position:fixed; inset:0; pointer-events:none; overflow:hidden; z-index:59;}
+.confetti i{position:absolute; top:-12px; width:11px; height:16px; border-radius:2px; animation:fall linear forwards;}
+@keyframes fall{to{transform:translateY(108vh) rotate(720deg);}}
+
+/* ---------- Intro animation ---------- */
+.intro{position:fixed; inset:0; z-index:80; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:26px;
+  background:radial-gradient(900px 600px at 50% 40%, #1a2360, #070a1e 75%); overflow:hidden;}
+.intro.hidden{display:none;}
+.intro .merge{position:relative; height:clamp(80px,20vh,180px); width:min(96vw,900px); display:flex; align-items:center; justify-content:center;}
+.intro .word{position:absolute; font-weight:900; letter-spacing:-.02em; font-size:clamp(2.4rem,11vw,7rem); line-height:1; white-space:nowrap;}
+.intro .mathe{color:var(--a); animation:fromLeft 1.5s cubic-bezier(.3,.8,.2,1) forwards;}
+.intro .battle{color:var(--b); animation:fromRight 1.5s cubic-bezier(.3,.8,.2,1) forwards;}
+.intro .plus{color:var(--muted); font-size:clamp(1.6rem,7vw,4rem); animation:plusFade 1.5s ease forwards;}
+.intro .mattle{font-size:clamp(3rem,15vw,9rem); font-weight:900; letter-spacing:-.03em;
+  background:linear-gradient(90deg,var(--a),#fff 50%,var(--b)); -webkit-background-clip:text; background-clip:text; color:transparent;
+  opacity:0; transform:scale(.4); animation:mattleIn 1s cubic-bezier(.2,1.6,.4,1) 1.55s forwards;}
+.intro .tag{color:var(--muted); font-weight:700; letter-spacing:.12em; text-transform:uppercase; font-size:clamp(.8rem,2.2vw,1.1rem);
+  opacity:0; animation:tagIn .6s ease 2.35s forwards;}
+.intro .start{opacity:0; animation:tagIn .6s ease 2.6s forwards;}
+@keyframes fromLeft{0%{transform:translateX(-58vw) rotate(-8deg); opacity:0;}55%{opacity:1;}75%{transform:translateX(-3vw) rotate(0); opacity:1;}100%{transform:translateX(0) scale(.5); opacity:0;}}
+@keyframes fromRight{0%{transform:translateX(58vw) rotate(8deg); opacity:0;}55%{opacity:1;}75%{transform:translateX(3vw) rotate(0); opacity:1;}100%{transform:translateX(0) scale(.5); opacity:0;}}
+@keyframes plusFade{0%,40%{opacity:0;}55%{opacity:1; transform:scale(1);}80%{opacity:1;}100%{opacity:0; transform:scale(.3);}}
+@keyframes mattleIn{0%{opacity:0; transform:scale(.4) rotate(-6deg);}60%{opacity:1; transform:scale(1.12) rotate(0);}100%{opacity:1; transform:scale(1);}}
+@keyframes tagIn{to{opacity:1;}}
+.spark{position:absolute; width:10px; height:10px; border-radius:50%; pointer-events:none;}
+
+@media (prefers-reduced-motion:reduce){
+  .intro .mathe,.intro .battle,.intro .plus{animation:none; opacity:0;}
+  .intro .mattle{animation:none; opacity:1; transform:none;}
+  .intro .tag,.intro .start{animation:none; opacity:1;}
+  *{animation-duration:.001ms !important;}
+}
+
+/* ---------- Responsive (portrait / small) ---------- */
+@media (max-width:820px){
+  .main{flex-direction:row;}
+  .team{flex:0 0 clamp(92px,22vw,150px);}
+  .team .count{font-size:clamp(1.6rem,7vw,2.6rem);}
+}
+@media (max-width:560px){
+  .team .dir{display:none;}
+}
+</style>
+<script>
+/* Scharfe Kante unter der iPadOS-Statusleiste (iPadOS 26/27).
+   WebKit legt in Web-Apps vom Homebildschirm am oberen Rand sonst einen
+   weichen Verlauf ueber den Inhalt. Er entfaellt, wenn dort eine deckende
+   Leiste liegt - ein bildschirmfuellender Kasten genuegt nicht (am
+   13.10.2026 auf iPadOS 27 geprueft). Das Skript legt deshalb einen 16 px
+   hohen, deckenden Streifen an den oberen Rand und rueckt alles, was in
+   diese 16 px hineinragt, um 16 px nach unten. Laeuft nur in der App vom
+   Homebildschirm, nicht in Safari und nicht in einem Rahmen; mit #kante in
+   der Adresse laesst es sich zum Pruefen erzwingen. */
+(function(){
+  if(window.top!==window) return;
+  var pruef=/kante/i.test(location.hash||'');
+  var alsApp=(navigator.standalone===true) ||
+             (window.matchMedia && matchMedia('(display-mode: standalone)').matches);
+  if(!alsApp && !pruef) return;
+
+  var HOCH=16;
+  function leer(f){ return !f || f==='transparent' || f.replace(/\s/g,'')==='rgba(0,0,0,0)'; }
+  function seite(){
+    var s=getComputedStyle(document.body), f=s.backgroundColor, b=s.backgroundImage;
+    if(leer(f) && (!b || b==='none')){
+      s=getComputedStyle(document.documentElement); f=s.backgroundColor; b=s.backgroundImage;
+    }
+    return { farbe: leer(f) ? '#ffffff' : f, bild: (b && b!=='none') ? b : '' };
+  }
+  /* Faerbt dieses Element am oberen Rand etwas sichtbar ein? */
+  function tinte(n){
+    var r=n.getBoundingClientRect();
+    if(r.top>=HOCH || r.bottom<=0 || r.width<=0) return false;
+    var s=getComputedStyle(n);
+    if(s.display==='none' || s.visibility==='hidden' || s.opacity==='0') return false;
+    if(n.id==='randKante') return false;
+    var t=n.tagName.toLowerCase();
+    if(t==='img'||t==='svg'||t==='canvas'||t==='video') return true;
+    if(!leer(s.backgroundColor) || s.backgroundImage!=='none') return true;
+    if(parseFloat(s.borderTopWidth)>0) return true;
+    var kn=n.childNodes;
+    for(var j=0;j<kn.length;j++)
+      if(kn[j].nodeType===3 && kn[j].nodeValue.replace(/\s/g,'')) return true;
+    for(var i=0;i<n.children.length;i++) if(tinte(n.children[i])) return true;
+    return false;
+  }
+  function ragtRein(z){
+    for(var i=0;i<z.children.length;i++) if(tinte(z.children[i])) return true;
+    return false;
+  }
+  function luft(z){
+    if(z.dataset.kanteLuft) return;
+    if(!ragtRein(z) && !tinte(z)) return;    /* noch nichts oben - spaeter nochmal */
+    z.dataset.kanteLuft='1';
+    var p=parseFloat(getComputedStyle(z).paddingTop)||0;
+    if(p>=HOCH) return;
+    z.style.paddingTop=(p+HOCH)+'px';
+  }
+  function sichtbar(n,s){
+    return s.display!=='none' && s.visibility!=='hidden' && n.id!=='randKante';
+  }
+  /* bildschirmfuellende fixierte Kaesten */
+  function kaesten(){
+    var alle=document.querySelectorAll('body > *, body > * > *'), raus=[];
+    for(var i=0;i<alle.length;i++){
+      var n=alle[i], s=getComputedStyle(n);
+      if(s.position!=='fixed' || !sichtbar(n,s)) continue;
+      /* Deko-Ebenen wie Konfetti liegen durchsichtig ueber allem und duerfen
+         niemals angefasst werden - sie wuerden sonst das Spiel verdecken. */
+      if(s.pointerEvents==='none') continue;
+      var r=n.getBoundingClientRect();
+      if(r.top<=4 && r.width>=innerWidth*0.9 && r.height>=innerHeight*0.9) raus.push(n);
+    }
+    return raus;
+  }
+  /* Leisten am oberen Rand (fixiert oder klebend, aber kein Vollbildkasten) */
+  function leisten(){
+    var alle=document.querySelectorAll('body > *, body > * > *'), raus=[];
+    for(var i=0;i<alle.length;i++){
+      var n=alle[i], s=getComputedStyle(n);
+      if((s.position!=='fixed' && s.position!=='sticky') || !sichtbar(n,s)) continue;
+      var r=n.getBoundingClientRect();
+      if(r.top<=4 && r.width>=innerWidth*0.8 && r.height>=6 && r.height<=innerHeight*0.6) raus.push(n);
+    }
+    return raus;
+  }
+  /* Liegt oben schon eine deckende Leiste, ist nichts zu tun. */
+  function schonGut(){
+    var st=document.elementsFromPoint ? document.elementsFromPoint(Math.round(innerWidth/2),2) : [];
+    for(var i=0;i<st.length;i++){
+      var n=st[i];
+      if(n.id==='randKante') continue;
+      if(n===document.body || n===document.documentElement) return false;
+      var s=getComputedStyle(n), r=n.getBoundingClientRect();
+      return (s.position==='fixed'||s.position==='sticky') && r.top<=4 &&
+             r.width>=innerWidth*0.8 && r.height>=6 && r.height<=innerHeight*0.6 &&
+             !leer(s.backgroundColor);
+    }
+    return false;
+  }
+  var band=null;
+  function streifen(farbe){
+    if(!band){
+      band=document.createElement('div');
+      band.id='randKante'; band.setAttribute('aria-hidden','true');
+      band.style.cssText='position:fixed;left:0;top:0;width:100%;height:'+HOCH+'px;'+
+        'z-index:2147483646;pointer-events:none';
+      document.body.appendChild(band);
+    }
+    band.style.display='block';
+    if(farbe){
+      band.style.backgroundColor=farbe;
+      band.style.backgroundImage='none';
+      return;
+    }
+    var s=getComputedStyle(document.body), h=seite();
+    band.style.backgroundColor=h.farbe;
+    band.style.backgroundImage=h.bild||'none';
+    band.style.backgroundAttachment='fixed';
+    if(h.bild && s.backgroundAttachment!=='fixed')
+      band.style.backgroundSize='100% '+Math.max(innerHeight,document.body.scrollHeight)+'px';
+  }
+  var schild=null;
+  function zeigen(txt){
+    if(!pruef) return;
+    if(!schild){
+      schild=document.createElement('div');
+      schild.style.cssText='position:fixed;left:6px;bottom:52px;z-index:2147483647;max-width:92%;'+
+        'padding:6px 9px;border-radius:8px;background:#ffe600;color:#000;'+
+        'font:600 12px/1.35 -apple-system,sans-serif;white-space:pre-wrap;pointer-events:none';
+      document.body.appendChild(schild);
+    }
+    schild.textContent='Kante K6 · '+innerWidth+'x'+innerHeight+'\n'+txt;
+  }
+  function name(n){
+    if(n.id) return '#'+n.id;
+    var c=(typeof n.className==='string'&&n.className.trim())?'.'+n.className.trim().split(/\s+/)[0]:'';
+    return n.tagName.toLowerCase()+c;
+  }
+  function malen(){
+    var b=document.body; if(!b) return;
+    if(schonGut()){
+      if(band) band.style.display='none';
+      zeigen('oben liegt schon eine deckende Leiste');
+      return;
+    }
+    var k=kaesten(), l=leisten(), farbe=null, text=[];
+    /* Die Kaesten werden nur noch nach unten gerueckt, nicht mehr eingefaerbt:
+       ein bildschirmfuellender Kasten haelt den Verlauf ohnehin nicht ab
+       (am 13.10.2026 auf iPadOS 27 gemessen), das Einfaerben hat dagegen
+       durchsichtige Ebenen deckend gemacht. */
+    for(var i=0;i<k.length;i++){
+      var z=k[i];
+      luft(z);
+      text.push(name(z));
+    }
+    for(var j=0;j<l.length;j++){
+      var le=l[j], sl=getComputedStyle(le);
+      if(!tinte(le) && !ragtRein(le)) continue;
+      if(!farbe && !leer(sl.backgroundColor)) farbe=sl.backgroundColor;
+      luft(le);
+      text.push('Leiste '+name(le)+' bg='+sl.backgroundColor);
+    }
+    if(!k.length && !l.length){ luft(b); text.push('kein Kasten, nur Streifen'); }
+    streifen(farbe);
+    zeigen(text.join('\n'));
+  }
+  var warte=null;
+  function spaeter(){
+    if(warte) return;
+    warte=setTimeout(function(){ warte=null; malen(); },200);
+  }
+  try{
+    new MutationObserver(spaeter).observe(document.documentElement,
+      {childList:true, subtree:true, attributes:true, attributeFilter:['class','style','hidden']});
+  }catch(e){}
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',malen);
+  else malen();
+  addEventListener('load',spaeter);
+  addEventListener('resize',spaeter);
+  addEventListener('orientationchange',spaeter);
+})();
+</script>
+</head>
+<body>
+
+<div class="app">
+
+  <div class="topbar">
+    <div class="brand">
+      <h1>Mattle</h1>
+      <span class="sub">Mathe · Battle</span>
+    </div>
+    <div class="top-actions">
+      <button class="icon-btn" id="btnSolution">Lösung</button>
+      <button class="icon-btn" id="btnSettings">⚙ Einstellungen</button>
+    </div>
+  </div>
+
+  <div class="turnbar" id="turnbar"><span class="txt">Bereit.</span></div>
+
+  <div class="main">
+
+    <div class="team" data-side="A" id="teamA" role="button" tabindex="0" aria-label="Buzzer Team A">
+      <div class="turnflag">Am Zug</div>
+      <div class="tname" id="nameA">Team A</div>
+      <div class="puck hidden" id="puckA">🏒 Puck</div>
+      <div class="count" id="countA">0<small>Felder</small></div>
+      <div class="dir">↔ verbinde&nbsp;links&nbsp;&amp;&nbsp;rechts</div>
+      <div class="buzzhint">Buzzern</div>
+    </div>
+
+    <div class="stage">
+      <div class="board-wrap"><div class="board" id="board"></div></div>
+
+      <div class="qcard hidden" id="qcard">
+        <div class="badge easy" id="badge"><span class="bdot"></span><span id="badgeText">Leicht</span></div>
+        <div class="area-label" id="areaLabel"></div>
+        <div class="problem" id="problem"></div>
+
+        <div class="timerwrap hidden" id="timerwrap">
+          <div class="timebar"><i id="timebar"></i></div>
+          <div class="timenum" id="timenum">8</div>
+        </div>
+
+        <div class="ansrow hidden" id="ansrow"><span class="ph" id="ansph">Antwort eingeben …</span></div>
+        <div class="keypad hidden" id="keypad"></div>
+
+        <div class="status neutral" id="status"></div>
+        <div class="solution hidden" id="solution"></div>
+        <button class="cta hidden" id="btnContinue">Weiter →</button>
+        <button class="reveal-btn hidden" id="revealInline">Lösung anzeigen &amp; Runde beenden</button>
+      </div>
+    </div>
+
+    <div class="team" data-side="B" id="teamB" role="button" tabindex="0" aria-label="Buzzer Team B">
+      <div class="turnflag">Am Zug</div>
+      <div class="tname" id="nameB">Team B</div>
+      <div class="puck hidden" id="puckB">🏒 Puck</div>
+      <div class="count" id="countB">0<small>Felder</small></div>
+      <div class="dir">↕ verbinde&nbsp;oben&nbsp;&amp;&nbsp;unten</div>
+      <div class="buzzhint">Buzzern</div>
+    </div>
+
+  </div>
+
+  <div class="bottombar">
+    <button class="cta ghost" id="btnReset">Spiel neu starten</button>
+  </div>
+</div>
+
+<!-- ---------- Settings ---------- -->
+<div class="overlay hidden" id="settingsOverlay">
+  <div class="modal">
+    <h2>Einstellungen</h2>
+    <p class="lead">Jahrgangsstufe, Bereiche, Spielfeld und Regeln festlegen.</p>
+
+    <div class="field">
+      <label class="lbl" for="selGrade">Jahrgangsstufe</label>
+      <select class="inp" id="selGrade">
+        <option value="5">Jahrgangsstufe 5</option>
+        <option value="6">Jahrgangsstufe 6</option>
+        <option value="7">Jahrgangsstufe 7</option>
+        <option value="8">Jahrgangsstufe 8</option>
+        <option value="9">Jahrgangsstufe 9</option>
+        <option value="10">Jahrgangsstufe 10</option>
+        <option value="11">Jahrgangsstufe 11</option>
+      </select>
+      <div class="help">Die Jahrgangsstufe gibt vor, welche Bereiche verfügbar sind.</div>
+    </div>
+
+    <div class="field">
+      <label class="lbl">Bereiche</label>
+      <div class="checks" id="areaChecks"></div>
+      <div class="help">Graue Bereiche sind in dieser Jahrgangsstufe noch nicht dran.</div>
+    </div>
+
+    <div class="field">
+      <label class="lbl">Schwierigkeit</label>
+      <div class="seg" id="segDiff" role="group">
+        <button data-v="easy">Nur leicht</button>
+        <button data-v="mixed">Gemischt</button>
+        <button data-v="hard">Nur schwer</button>
+      </div>
+      <div class="help">Schwere Aufgaben nutzen größere Zahlen oder Rechengesetze.</div>
+    </div>
+
+    <div class="field">
+      <label class="lbl">Spielmodus</label>
+      <div class="seg" id="segMode" role="group">
+        <button data-v="buzz">Buzzern</button>
+        <button data-v="alt">Abwechselnd</button>
+        <button data-v="puck">Puck</button>
+      </div>
+      <div class="help"><b>Buzzern:</b> wer zuerst buzzert. <b>Abwechselnd:</b> das Zug-Team wählt sein Sechseck und beantwortet es selbst — nur bei einer falschen Antwort kommt das andere Team dran. <b>Puck:</b> nur das Team mit dem Puck erobert Felder; das andere muss den Puck erst durch eine richtige Lösung gewinnen (dauert länger).</div>
+    </div>
+
+    <div class="field">
+      <label class="lbl">Spielfeldgröße</label>
+      <div class="seg" id="segSize" role="group">
+        <button data-v="5">5 × 5</button>
+        <button data-v="7">7 × 7</button>
+        <button data-v="9">9 × 9</button>
+        <button data-v="11">11 × 11</button>
+      </div>
+      <div class="help">Mehr Felder = längere Partie. Empfehlung: 7 × 7.</div>
+    </div>
+
+    <div class="row2">
+      <div class="field">
+        <label class="lbl" for="inpTime">Antwortzeit (Sekunden)</label>
+        <div class="stepper"><button data-step="time" data-d="-1">−</button><input id="inpTime" type="text" inputmode="numeric" value="8"><button data-step="time" data-d="1">+</button></div>
+      </div>
+      <div class="field">
+        <label class="lbl">Beginnt</label>
+        <div class="seg" id="segStart" role="group">
+          <button data-v="random">Zufall</button>
+          <button data-v="A">Team A</button>
+          <button data-v="B">Team B</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="row2">
+      <div class="field"><label class="lbl" for="inpNameA">Name Team A</label><input class="inp" id="inpNameA" value="Team A" maxlength="18"></div>
+      <div class="field"><label class="lbl" for="inpNameB">Name Team B</label><input class="inp" id="inpNameB" value="Team B" maxlength="18"></div>
+    </div>
+
+    <div class="field">
+      <label class="switch"><input type="checkbox" id="chkSound" checked> Töne abspielen</label>
+    </div>
+
+    <div class="modal-actions">
+      <button class="cta ghost" id="btnSettingsClose">Schließen</button>
+      <button class="cta" id="btnSettingsSave">Speichern &amp; neues Spiel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ---------- Win ---------- -->
+<div class="confetti hidden" id="confetti"></div>
+<div class="win hidden" id="winOverlay">
+  <div class="trophy">🏆</div>
+  <h2 id="winTitle">Team A gewinnt!</h2>
+  <div class="final" id="winFinal"></div>
+  <div class="win-actions">
+    <button class="cta" id="btnPlayAgain">Neues Spiel</button>
+    <button class="cta ghost" id="btnWinSettings">⚙ Einstellungen</button>
+  </div>
+</div>
+
+<!-- ---------- Intro ---------- -->
+<div class="intro" id="intro">
+  <div class="merge">
+    <span class="word mathe">Mathe</span>
+    <span class="word plus">+</span>
+    <span class="word battle">Battle</span>
+    <span class="word mattle">Mattle</span>
+  </div>
+  <div class="tag">Das Mathe-Battle ums Spielfeld</div>
+  <button class="cta start" id="btnStart">Los geht's</button>
+</div>
+
+<script>
+/* gen */
+/* ============================================================
+   Kopfrechen-Duell — Aufgabengenerator
+   Jeder Generator liefert: { html, answer, hint, area, difficulty }
+   - html:   angezeigte Aufgabe (HTML)
+   - answer: exakter Zahlenwert der Lösung
+   - hint:   kurzer Rechenweg (Text) für die Spielleitung
+   ============================================================ */
+
+// ---------- Zufalls-Helfer ----------
+function randInt(a, b) { return Math.floor(Math.random() * (b - a + 1)) + a; }
+function choice(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+// ---------- Zahl-Formatierung (deutsches Dezimalkomma) ----------
+function fmt(n) {
+  if (!isFinite(n)) return String(n);
+  // auf 10 Nachkommastellen runden, Komma-Notation, Nullen entfernen
+  let s = (Math.round(n * 1e10) / 1e10).toString();
+  return s.replace('.', ',');
+}
+
+// ---------- Brüche ----------
+function gcd(a, b) { a = Math.abs(a); b = Math.abs(b); while (b) { [a, b] = [b, a % b]; } return a || 1; }
+function frac(n, d) {
+  if (d < 0) { n = -n; d = -d; }
+  const g = gcd(n, d);
+  return { n: n / g, d: d / g };
+}
+function fracAdd(a, b) { return frac(a.n * b.d + b.n * a.d, a.d * b.d); }
+function fracSub(a, b) { return frac(a.n * b.d - b.n * a.d, a.d * b.d); }
+function fracMul(a, b) { return frac(a.n * b.n, a.d * b.d); }
+function fracDiv(a, b) { return frac(a.n * b.d, a.d * b.n); }
+function fracVal(a) { return a.n / a.d; }
+// teilerfremder Zähler in [1, d-1] → Bruch ist bereits gekürzt
+function coNum(d) {
+  const cands = [];
+  for (let k = 1; k < d; k++) if (gcd(k, d) === 1) cands.push(k);
+  return choice(cands);
+}
+// Bruch als HTML (gestapelt). Ganze Zahlen ohne Bruchstrich.
+function fracHTML(n, d) {
+  if (d === 1) return `<span class="num">${n}</span>`;
+  const sign = n < 0 ? '<span class="num">−</span>' : '';
+  return `${sign}<span class="frac"><span class="fr-n">${Math.abs(n)}</span><span class="fr-d">${d}</span></span>`;
+}
+
+// ---------- Wurzel & Log als HTML ----------
+function rootHTML(inner) { return `<span class="root"><span class="rsign">√</span><span class="radicand">${inner}</span></span>`; }
+function powHTML(base, exp) { return `${base}<sup>${exp}</sup>`; }
+function logHTML(base, arg) { return `log<sub>${base}</sub>(${arg})`; }
+
+// ============================================================
+//  BEREICH-GENERATOREN
+//  Jeder Bereich hat easy() und hard().
+// ============================================================
+const GEN = {
+
+  // ---------------- Ganze Zahlen ----------------
+  ganze: {
+    name: 'Ganze Zahlen',
+    easy(grade) {
+      const big = grade >= 7;
+      const type = choice(['add', 'sub', 'mulkl', 'mulmittel']);
+      if (type === 'add') {
+        const a = randInt(big ? 23 : 11, big ? 89 : 49);
+        const b = randInt(big ? 23 : 11, big ? 89 : 49);
+        return { html: `${a} + ${b}`, answer: a + b, hint: `${a}+${b} = ${a + b}` };
+      }
+      if (type === 'sub') {
+        const a = randInt(big ? 45 : 25, 99);
+        const b = randInt(11, a - 1);
+        return { html: `${a} − ${b}`, answer: a - b, hint: `${a}−${b} = ${a - b}` };
+      }
+      if (type === 'mulkl') {
+        const a = randInt(3, 9), b = randInt(3, 9);
+        return { html: `${a} · ${b}`, answer: a * b, hint: `kleines Einmaleins: ${a * b}` };
+      }
+      // einstellig · zweistellig
+      const a = randInt(3, 8), b = randInt(11, 19);
+      return { html: `${a} · ${b}`, answer: a * b, hint: `${a}·${b} = ${a * b}` };
+    },
+    hard(grade) {
+      const type = choice(['distrib', 'distrib', 'fastrund', 'diffquad', 'schoen']);
+      if (type === 'distrib') {
+        // a·b + a·c  mit b+c = runde Zahl  → a·(b+c)
+        const a = randInt(3, 24);
+        const sum = choice([10, 100, 100, 1000]);
+        const b = randInt(1, sum - 1);
+        const c = sum - b;
+        return {
+          html: `${a} · ${b} + ${a} · ${c}`,
+          answer: a * sum,
+          hint: `Distributivgesetz: ${a}·(${b}+${c}) = ${a}·${sum} = ${a * sum}`
+        };
+      }
+      if (type === 'fastrund') {
+        // a · 99 / 101 / 98 / 102 (zweistellig) bzw. · 999 / 1001 (kleiner)
+        const f = choice([99, 101, 98, 102, 999, 1001]);
+        const round = f >= 998 ? 1000 : 100;
+        const a = f >= 998 ? randInt(11, 29) : randInt(12, 89);
+        const diff = f - round;
+        return {
+          html: `${a} · ${f}`,
+          answer: a * f,
+          hint: `${a}·${f} = ${a}·${round} ${diff < 0 ? '−' : '+'} ${a}·${Math.abs(diff)} = ${a * f}`
+        };
+      }
+      if (type === 'diffquad') {
+        // (n−k)(n+k) = n²−k²
+        const n = choice([20, 30, 40, 50, 60, 70, 80, 90, 100, 25, 15]);
+        const k = randInt(1, Math.min(9, n - 2));
+        return {
+          html: `${n - k} · ${n + k}`,
+          answer: (n - k) * (n + k),
+          hint: `3. binom. Formel: ${n}²−${k}² = ${n * n}−${k * k} = ${(n - k) * (n + k)}`
+        };
+      }
+      if (type === 'schoen') {
+        // geschickt zerlegen: 25·…, 8·125, 4·25, 5·…
+        const opts = [
+          { a: 25, b: choice([4, 8, 12, 16, 24, 28, 36, 44]) },
+          { a: 4, b: 25 },
+          { a: 8, b: 125 },
+          { a: 5, b: choice([14, 16, 18, 22, 24, 26]) },
+          { a: 50, b: choice([6, 8, 12, 14, 18]) },
+          { a: 125, b: choice([8, 16, 24]) },
+        ];
+        const o = choice(opts);
+        return { html: `${o.a} · ${o.b}`, answer: o.a * o.b, hint: `geschickt zerlegen: ${o.a}·${o.b} = ${o.a * o.b}` };
+      }
+    }
+  },
+
+  // ---------------- Einheiten umrechnen ----------------
+  // Leitern von der kleinsten zur groessten Einheit, Wert = wie viele der
+  // kleinsten Einheit. Benachbarte Einheiten liegen genau einen Schritt
+  // auseinander. Laengen und Flaechen ab Jgst. 5, Volumen und Hohlmasse ab 6.
+  einheiten: {
+    name: 'Einheiten umrechnen',
+    // Leitern als Eigenschaft, damit beide Schwierigkeiten sie nutzen
+    leitern: {
+      laenge:  [['mm', 1], ['cm', 10], ['dm', 100], ['m', 1000], ['km', 1000000]],
+      flaeche: [['mm²', 1], ['cm²', 100], ['dm²', 10000], ['m²', 1000000], ['a', 100000000], ['ha', 10000000000], ['km²', 1000000000000]],
+      volumen: [['mm³', 1], ['cm³', 1000], ['dm³', 1000000], ['m³', 1000000000]],
+      hohl:    [['ml', 1], ['l', 1000], ['hl', 100000]]
+    },
+    // gemischte Schreibweise: [grosse Einheit, kleine Einheit, Faktor, ab Jgst.]
+    gemischt: [
+      ['m', 'cm', 100, 5], ['km', 'm', 1000, 5], ['m', 'dm', 10, 5], ['cm', 'mm', 10, 5],
+      ['m²', 'dm²', 100, 5], ['dm²', 'cm²', 100, 5],
+      ['m³', 'dm³', 1000, 6], ['l', 'ml', 1000, 6]
+    ],
+    // 1 l = 1 dm³ und Verwandte: [von, nach, Faktor]
+    bruecken: [['l', 'dm³', 1], ['ml', 'cm³', 1], ['dm³', 'l', 1], ['cm³', 'ml', 1]],
+    brueckenGross: [['m³', 'l', 1000], ['l', 'cm³', 1000], ['hl', 'l', 100], ['l', 'ml', 1000]],
+
+    arten(grade) {
+      return grade >= 6 ? ['laenge', 'laenge', 'flaeche', 'volumen', 'hohl'] : ['laenge', 'laenge', 'flaeche'];
+    },
+    // benachbartes Paar aus einer Leiter, Abstand d
+    paar(art, d) {
+      const L = this.leitern[art];
+      const i = randInt(0, L.length - 1 - d);
+      const f = L[i + d][1] / L[i][1];
+      return { klein: L[i][0], gross: L[i + d][0], f };
+    },
+
+    easy(grade) {
+      // ab Jgst. 6 hin und wieder die Brücke 1 l = 1 dm³
+      if (grade >= 6 && Math.random() < 0.18) {
+        const [von, nach] = choice(this.bruecken);
+        const v = choice([2, 3, 5, 8, 12, 20, 250, 500]);
+        return {
+          html: `${v} ${von} in ${nach}`, answer: v,
+          hint: `1 ${von} = 1 ${nach}, also ${v} ${von} = ${v} ${nach}`
+        };
+      }
+      const p = this.paar(choice(this.arten(grade)), 1);
+      const v = choice([2, 3, 4, 5, 6, 7, 8, 9, 12, 15, 20, 25]);
+      if (choice([true, false])) {
+        return {
+          html: `${v} ${p.gross} in ${p.klein}`, answer: v * p.f,
+          hint: `1 ${p.gross} = ${fmt(p.f)} ${p.klein}, also ${v} · ${fmt(p.f)} = ${fmt(v * p.f)}`
+        };
+      }
+      return {
+        html: `${fmt(v * p.f)} ${p.klein} in ${p.gross}`, answer: v,
+        hint: `${fmt(p.f)} ${p.klein} = 1 ${p.gross}, also ${fmt(v * p.f)} : ${fmt(p.f)} = ${v}`
+      };
+    },
+
+    hard(grade) {
+      const typen = ['gemischt', 'gemischt', 'zwei'];
+      if (grade >= 6) typen.push('komma', 'komma', 'bruecke');
+      const typ = choice(typen);
+
+      if (typ === 'gemischt') {
+        const [gross, klein, f] = choice(this.gemischt.filter(g => grade >= g[3]));
+        const a = randInt(2, 9);
+        const b = f === 10 ? randInt(1, 9) : f === 100 ? randInt(1, 19) * 5 : randInt(1, 19) * 50;
+        return {
+          html: `${a} ${gross} ${b} ${klein} in ${klein}`, answer: a * f + b,
+          hint: `${a} ${gross} = ${fmt(a * f)} ${klein}, dazu ${b} ${klein} = ${fmt(a * f + b)}`
+        };
+      }
+
+      if (typ === 'zwei') {
+        // zwei Stufen auf einmal, aber nur bis zum Faktor 10 000
+        const moegl = this.arten(grade)
+          .filter(art => this.leitern[art].length >= 3)
+          .map(art => this.paar(art, 2))
+          .filter(p => p.f <= 10000);
+        if (!moegl.length) return this.easy(grade);
+        const p = choice(moegl);
+        const v = choice([2, 3, 4, 5, 6, 8, 12, 25]);
+        if (choice([true, false])) {
+          return {
+            html: `${v} ${p.gross} in ${p.klein}`, answer: v * p.f,
+            hint: `1 ${p.gross} = ${fmt(p.f)} ${p.klein}, also ${v} · ${fmt(p.f)} = ${fmt(v * p.f)}`
+          };
+        }
+        return {
+          html: `${fmt(v * p.f)} ${p.klein} in ${p.gross}`, answer: v,
+          hint: `${fmt(p.f)} ${p.klein} = 1 ${p.gross}, also ${fmt(v * p.f)} : ${fmt(p.f)} = ${v}`
+        };
+      }
+
+      if (typ === 'bruecke') {
+        const [von, nach, f] = choice(this.brueckenGross);
+        const z = choice([15, 25, 35, 45, 75, 20, 50]);   // Zehntel
+        const gr = z * (f / 10);
+        if (choice([true, false])) {
+          return {
+            html: `${fmt(z / 10)} ${von} in ${nach}`, answer: gr,
+            hint: `1 ${von} = ${fmt(f)} ${nach}, also ${fmt(z / 10)} · ${fmt(f)} = ${fmt(gr)}`
+          };
+        }
+        return {
+          html: `${fmt(gr)} ${nach} in ${von}`, answer: z / 10,
+          hint: `${fmt(f)} ${nach} = 1 ${von}, also ${fmt(gr)} : ${fmt(f)} = ${fmt(z / 10)}`
+        };
+      }
+
+      // Kommazahlen (ab Jgst. 6): in Zehnteln gerechnet, damit nichts rundet
+      const p = this.paar(choice(this.arten(grade)), 1);
+      const z = randInt(11, 95);
+      const gr = z * (p.f / 10);
+      if (choice([true, false])) {
+        return {
+          html: `${fmt(z / 10)} ${p.gross} in ${p.klein}`, answer: gr,
+          hint: `1 ${p.gross} = ${fmt(p.f)} ${p.klein}, also ${fmt(z / 10)} · ${fmt(p.f)} = ${fmt(gr)}`
+        };
+      }
+      return {
+        html: `${fmt(gr)} ${p.klein} in ${p.gross}`, answer: z / 10,
+        hint: `${fmt(p.f)} ${p.klein} = 1 ${p.gross}, also ${fmt(gr)} : ${fmt(p.f)} = ${fmt(z / 10)}`
+      };
+    }
+  },
+
+  // ---------------- Zehnerpotenzen ----------------
+  // Jgst. 5 nur positive Exponenten, ab Jgst. 6 auch negative.
+  zehnerpotenzen: {
+    name: 'Zehnerpotenzen',
+    easy(grade) {
+      const typen = ['rein', 'rein', 'vielfaches', 'vielfaches'];
+      if (grade >= 6) typen.push('negativ', 'negativ');
+      const typ = choice(typen);
+      if (typ === 'rein') {
+        const e = randInt(2, 6);
+        const w = Math.pow(10, e);
+        return {
+          html: powHTML(10, e), answer: w,
+          hint: `10 hoch ${e} = eine 1 mit ${e} Nullen = ${fmt(w)}`
+        };
+      }
+      if (typ === 'vielfaches') {
+        const a = randInt(2, 9), e = randInt(2, 4);
+        const w = a * Math.pow(10, e);
+        return {
+          html: `${a} · ${powHTML(10, e)}`, answer: w,
+          hint: `${a} · ${fmt(Math.pow(10, e))} = ${fmt(w)}`
+        };
+      }
+      // negative Exponenten ab Jgst. 6
+      const e = randInt(1, 3);
+      const w = Math.pow(10, -e);
+      return {
+        html: powHTML(10, '−' + e), answer: w,
+        hint: `10 hoch −${e} = 1 : ${fmt(Math.pow(10, e))} = ${fmt(w)}`
+      };
+    },
+    hard(grade) {
+      const typen = ['produkt', 'stellenwert', 'stellenwert'];
+      if (grade >= 6) typen.push('komma', 'komma', 'geteilt');
+      const typ = choice(typen);
+
+      if (typ === 'produkt') {
+        const a = randInt(1, 3), b = randInt(1, 3);
+        const w = Math.pow(10, a + b);
+        return {
+          html: `${powHTML(10, a)} · ${powHTML(10, b)}`, answer: w,
+          hint: `${fmt(Math.pow(10, a))} · ${fmt(Math.pow(10, b))} = ${fmt(w)}`
+        };
+      }
+
+      if (typ === 'stellenwert') {
+        // Exponent 0 bleibt draussen - die Potenz 10^0 kommt erst spaeter vor
+        const e1 = randInt(2, 4), e2 = randInt(1, e1 - 1);
+        const a = randInt(2, 9), b = randInt(1, 9);
+        const w = a * Math.pow(10, e1) + b * Math.pow(10, e2);
+        return {
+          html: `${a} · ${powHTML(10, e1)} + ${b} · ${powHTML(10, e2)}`, answer: w,
+          hint: `${fmt(a * Math.pow(10, e1))} + ${fmt(b * Math.pow(10, e2))} = ${fmt(w)}`
+        };
+      }
+
+      if (typ === 'geteilt') {
+        // durch eine Stufenzahl teilen - klassisch zu den Dezimalbrüchen
+        const a = randInt(2, 9), e = randInt(1, 3);
+        const w = a / Math.pow(10, e);
+        return {
+          html: `${a} : ${powHTML(10, e)}`, answer: w,
+          hint: `${a} : ${fmt(Math.pow(10, e))} = ${fmt(w)}`
+        };
+      }
+
+      // Kommazahl mal Zehnerpotenz, ab Jgst. 6 auch mit negativem Exponenten
+      const z = choice([15, 25, 35, 45, 55, 65, 75, 85, 95]);   // Zehntel
+      const e = choice([2, 3, 4, -2, -3]);
+      const w = e > 0 ? z * Math.pow(10, e - 1) : z / Math.pow(10, 1 - e);
+      return {
+        html: `${fmt(z / 10)} · ${powHTML(10, e < 0 ? '−' + (-e) : e)}`, answer: w,
+        hint: `${fmt(z / 10)} · ${fmt(Math.pow(10, e))} = ${fmt(w)}`
+      };
+    }
+  },
+
+  // ---------------- Brüche ----------------
+  brueche: {
+    name: 'Brüche',
+    easy(grade) {
+      const type = choice(['addgleich', 'addgleich', 'subgleich', 'mul', 'mulganz']);
+      const dens = [2, 3, 4, 5, 6, 8];
+      if (type === 'addgleich') {
+        const d = choice(dens);
+        let a = randInt(1, d - 1), b = randInt(1, d - 1);
+        const r = fracAdd({ n: a, d }, { n: b, d });
+        return { html: `${fracHTML(a, d)} + ${fracHTML(b, d)}`, answer: fracVal(r), hint: `${a}/${d} + ${b}/${d} = ${r.n}/${r.d}` };
+      }
+      if (type === 'subgleich') {
+        const d = choice([3, 4, 5, 6, 8]);
+        let a = randInt(2, d - 1), b = randInt(1, a - 1);
+        const r = fracSub({ n: a, d }, { n: b, d });
+        return { html: `${fracHTML(a, d)} − ${fracHTML(b, d)}`, answer: fracVal(r), hint: `${a}/${d} − ${b}/${d} = ${r.n}/${r.d}` };
+      }
+      if (type === 'mul') {
+        const d1 = choice([2, 3, 4, 5]), d2 = choice([2, 3, 4, 5]);
+        const n1 = coNum(d1), n2 = coNum(d2);
+        const r = fracMul({ n: n1, d: d1 }, { n: n2, d: d2 });
+        return { html: `${fracHTML(n1, d1)} · ${fracHTML(n2, d2)}`, answer: fracVal(r), hint: `Zähler·Zähler, Nenner·Nenner = ${r.n}/${r.d}` };
+      }
+      // Bruch · ganze Zahl
+      const d = choice([2, 3, 4, 5, 6]);
+      const n = coNum(d);
+      const k = randInt(2, 6);
+      const r = fracMul({ n, d }, { n: k, d: 1 });
+      return { html: `${fracHTML(n, d)} · ${k}`, answer: fracVal(r), hint: `${n}/${d}·${k} = ${r.n}/${r.d}` };
+    },
+    hard(grade) {
+      const type = choice(['addungleich', 'addungleich', 'div', 'mulkuerz', 'subungleich']);
+      if (type === 'addungleich' || type === 'subungleich') {
+        const pairs = [[2, 3], [2, 5], [3, 4], [3, 5], [4, 6], [3, 6], [5, 6], [2, 6], [4, 5], [3, 8], [4, 8], [2, 8]];
+        const [d1, d2] = choice(pairs);
+        const n1 = coNum(d1), n2 = coNum(d2);
+        if (type === 'addungleich') {
+          const r = fracAdd({ n: n1, d: d1 }, { n: n2, d: d2 });
+          return { html: `${fracHTML(n1, d1)} + ${fracHTML(n2, d2)}`, answer: fracVal(r), hint: `gleichnamig machen = ${r.n}/${r.d}` };
+        } else {
+          let A = { n: n1, d: d1 }, B = { n: n2, d: d2 };
+          if (fracVal(A) < fracVal(B)) [A, B] = [B, A];
+          const r = fracSub(A, B);
+          return { html: `${fracHTML(A.n, A.d)} − ${fracHTML(B.n, B.d)}`, answer: fracVal(r), hint: `gleichnamig machen = ${r.n}/${r.d}` };
+        }
+      }
+      if (type === 'div') {
+        const d1 = choice([2, 3, 4, 5, 6]), d2 = choice([2, 3, 4, 5]);
+        const n1 = coNum(d1), n2 = coNum(d2);
+        const A = { n: n1, d: d1 }, B = { n: n2, d: d2 };
+        const r = fracDiv(A, B);
+        return { html: `${fracHTML(n1, d1)} : ${fracHTML(n2, d2)}`, answer: fracVal(r), hint: `mit Kehrbruch malnehmen = ${r.n}/${r.d}` };
+      }
+      // Bruch · ganze Zahl (Vielfaches des Nenners) → ganze Zahl
+      const d = choice([3, 4, 6, 8, 5, 7]);
+      const n = coNum(d);
+      const k = d * randInt(2, 4);
+      const r = fracMul({ n, d }, { n: k, d: 1 });
+      return { html: `${fracHTML(n, d)} · ${k}`, answer: fracVal(r), hint: `${k} ist Vielfaches von ${d}, kürzen = ${r.n / r.d}` };
+    }
+  },
+
+  // ---------------- Dezimalbrüche ----------------
+  dezimal: {
+    name: 'Dezimalbrüche',
+    easy(grade) {
+      const type = choice(['add', 'sub', 'mulganz', 'add']);
+      const r10 = () => randInt(1, 9) / 10;
+      if (type === 'add') {
+        const a = randInt(1, 19) / 10, b = randInt(1, 19) / 10;
+        return { html: `${fmt(a)} + ${fmt(b)}`, answer: a + b, hint: `${fmt(a)}+${fmt(b)} = ${fmt(a + b)}` };
+      }
+      if (type === 'sub') {
+        let a = randInt(5, 25) / 10, b = randInt(1, Math.round(a * 10) - 1) / 10;
+        return { html: `${fmt(a)} − ${fmt(b)}`, answer: a - b, hint: `${fmt(a)}−${fmt(b)} = ${fmt(a - b)}` };
+      }
+      // Dezimalzahl · ganze Zahl
+      const a = randInt(1, 9) / 10, k = randInt(2, 9);
+      return { html: `${fmt(a)} · ${k}`, answer: a * k, hint: `${fmt(a)}·${k} = ${fmt(a * k)}` };
+    },
+    hard(grade) {
+      const opts = [
+        { a: 0.25, b: choice([4, 8, 12, 16, 20, 24, 40, 48]) },
+        { a: 0.5, b: choice([6, 8, 12, 14, 18, 24]) },
+        { a: 0.125, b: choice([8, 16, 24, 32]) },
+        { a: 2.5, b: choice([4, 8, 12, 6, 20]) },
+        { a: 0.2, b: choice([15, 25, 35, 45, 30]) },
+        { a: 1.5, b: choice([6, 8, 12, 14]) },
+        { a: 0.75, b: choice([4, 8, 12, 40, 20]) },
+        { a: 12.5, b: choice([4, 8, 16]) },
+        { a: 0.1, b: choice([0.1, 0.5, 0.3, 0.7]) },
+        { a: 0.4, b: choice([15, 25, 35]) },
+      ];
+      const o = choice(opts);
+      return { html: `${fmt(o.a)} · ${fmt(o.b)}`, answer: o.a * o.b, hint: `geschickt: ${fmt(o.a)}·${fmt(o.b)} = ${fmt(o.a * o.b)}` };
+    }
+  },
+
+  // ---------------- Potenzen ----------------
+  potenzen: {
+    name: 'Potenzen',
+    easy(grade) {
+      const opts = [
+        [2, 2], [2, 3], [2, 4], [2, 5], [2, 6], [3, 2], [3, 3], [3, 4],
+        [4, 2], [4, 3], [5, 2], [5, 3], [6, 2], [7, 2], [8, 2], [9, 2],
+        [10, 2], [10, 3], [10, 4], [11, 2], [12, 2], [1, 5], [13, 2]
+      ];
+      const [b, e] = choice(opts);
+      return { html: powHTML(b, e), answer: Math.pow(b, e), hint: `${b}^${e} = ${Math.pow(b, e)}` };
+    },
+    hard(grade) {
+      const types = ['mul', 'div', 'powpow', 'neg'];
+      if (grade >= 10) types.push('rational', 'rational');
+      const type = choice(types);
+      if (type === 'mul') {
+        // Basis gleich, Exponenten addieren — Ergebnis ≤ 1024
+        const o = choice([
+          { b: 2, e1: 2, e2: 3 }, { b: 2, e1: 3, e2: 4 }, { b: 2, e1: 2, e2: 5 }, { b: 2, e1: 4, e2: 4 },
+          { b: 3, e1: 2, e2: 2 }, { b: 3, e1: 2, e2: 3 }, { b: 5, e1: 1, e2: 2 }, { b: 5, e1: 2, e2: 1 },
+          { b: 10, e1: 2, e2: 1 }, { b: 10, e1: 2, e2: 2 },
+        ]);
+        return { html: `${powHTML(o.b, o.e1)} · ${powHTML(o.b, o.e2)}`, answer: Math.pow(o.b, o.e1 + o.e2), hint: `Exponenten addieren: ${o.b}^${o.e1 + o.e2} = ${Math.pow(o.b, o.e1 + o.e2)}` };
+      }
+      if (type === 'div') {
+        const o = choice([
+          { b: 2, e1: 5, e2: 2 }, { b: 2, e1: 6, e2: 3 }, { b: 2, e1: 7, e2: 4 }, { b: 2, e1: 8, e2: 6 },
+          { b: 3, e1: 4, e2: 2 }, { b: 3, e1: 5, e2: 3 }, { b: 5, e1: 3, e2: 1 }, { b: 10, e1: 4, e2: 2 },
+          { b: 10, e1: 5, e2: 2 }, { b: 10, e1: 3, e2: 1 },
+        ]);
+        return { html: `${powHTML(o.b, o.e1)} : ${powHTML(o.b, o.e2)}`, answer: Math.pow(o.b, o.e1 - o.e2), hint: `Exponenten subtrahieren: ${o.b}^${o.e1 - o.e2} = ${Math.pow(o.b, o.e1 - o.e2)}` };
+      }
+      if (type === 'powpow') {
+        // Potenz einer Potenz — Ergebnis ≤ 1000
+        const o = choice([
+          { b: 2, e1: 2, e2: 3 }, { b: 2, e1: 3, e2: 2 }, { b: 2, e1: 2, e2: 2 }, { b: 2, e1: 2, e2: 4 },
+          { b: 3, e1: 2, e2: 2 }, { b: 3, e1: 1, e2: 4 }, { b: 5, e1: 1, e2: 3 }, { b: 10, e1: 1, e2: 3 },
+          { b: 2, e1: 5, e2: 2 },
+        ]);
+        return { html: `(${powHTML(o.b, o.e1)})<sup>${o.e2}</sup>`, answer: Math.pow(o.b, o.e1 * o.e2), hint: `Exponenten multiplizieren: ${o.b}^${o.e1 * o.e2} = ${Math.pow(o.b, o.e1 * o.e2)}` };
+      }
+      if (type === 'neg') {
+        const b = choice([2, 3, 4, 5, 10]);
+        const e = choice([1, 2, 2, 3]);
+        const val = Math.pow(b, -e);
+        return { html: powHTML(b, '−' + e), answer: val, hint: `${b}^(−${e}) = 1/${Math.pow(b, e)} = ${fmt(val)}` };
+      }
+      // rationale Exponenten (ab Jgst 10)
+      const r = choice([
+        { base: 16, exp: '1/2', val: 4 }, { base: 25, exp: '1/2', val: 5 },
+        { base: 27, exp: '1/3', val: 3 }, { base: 8, exp: '1/3', val: 2 },
+        { base: 8, exp: '2/3', val: 4 }, { base: 16, exp: '3/4', val: 8 },
+        { base: 64, exp: '1/3', val: 4 }, { base: 32, exp: '1/5', val: 2 },
+        { base: 81, exp: '1/4', val: 3 }, { base: 100, exp: '1/2', val: 10 },
+        { base: 9, exp: '3/2', val: 27 }, { base: 4, exp: '5/2', val: 32 },
+      ]);
+      return { html: powHTML(r.base, r.exp), answer: r.val, hint: `${r.base}^(${r.exp}) = ${r.val}` };
+    }
+  },
+
+  // ---------------- Wurzeln ----------------
+  wurzeln: {
+    name: 'Wurzeln',
+    easy(grade) {
+      const sq = choice([4, 9, 16, 25, 36, 49, 64, 81, 100, 121, 144, 169, 196, 225, 400, 900, 256, 324]);
+      return { html: rootHTML(sq), answer: Math.sqrt(sq), hint: `√${sq} = ${Math.sqrt(sq)}` };
+    },
+    hard(grade) {
+      const type = choice(['prod', 'prod', 'quot', 'square']);
+      if (type === 'prod') {
+        // √a · √b mit a·b = Quadratzahl
+        const pairs = [[2, 18], [2, 8], [2, 32], [2, 50], [3, 12], [3, 27], [3, 48], [5, 20], [5, 45], [6, 24], [6, 54], [7, 28], [2, 72], [8, 2], [12, 3], [10, 40], [5, 80], [3, 75]];
+        const [a, b] = choice(pairs);
+        const v = Math.sqrt(a * b);
+        return { html: `${rootHTML(a)} · ${rootHTML(b)}`, answer: v, hint: `√(${a}·${b}) = √${a * b} = ${v}` };
+      }
+      if (type === 'quot') {
+        // √a : √b mit a/b = Quadratzahl
+        const pairs = [[50, 2], [72, 2], [48, 3], [98, 2], [45, 5], [27, 3], [80, 5], [200, 2], [108, 3], [128, 2], [180, 5]];
+        const [a, b] = choice(pairs);
+        const v = Math.sqrt(a / b);
+        return { html: `${rootHTML(a)} : ${rootHTML(b)}`, answer: v, hint: `√(${a}:${b}) = √${a / b} = ${v}` };
+      }
+      // (√a)² = a
+      const a = choice([2, 3, 5, 6, 7, 10, 11, 13]);
+      return { html: `(${rootHTML(a)})<sup>2</sup>`, answer: a, hint: `(√${a})² = ${a}` };
+    }
+  },
+
+  // ---------------- Logarithmen ----------------
+  logarithmen: {
+    name: 'Logarithmen',
+    easy(grade) {
+      const opts = [
+        [2, 8, 3], [2, 16, 4], [2, 32, 5], [2, 4, 2], [2, 2, 1], [2, 64, 6],
+        [3, 9, 2], [3, 27, 3], [3, 81, 4], [3, 3, 1],
+        [5, 25, 2], [5, 125, 3], [10, 100, 2], [10, 1000, 3], [10, 10, 1],
+        [4, 16, 2], [4, 64, 3], [7, 49, 2], [6, 36, 2], [2, 128, 7]
+      ];
+      const [b, arg, val] = choice(opts);
+      return { html: logHTML(b, arg), answer: val, hint: `log_${b}(${arg}) = ${val}, da ${b}^${val} = ${arg}` };
+    },
+    hard(grade) {
+      const type = choice(['sum', 'diff', 'recip', 'recip', 'pow']);
+      if (type === 'sum') {
+        // log_b(x) + log_b(y) = log_b(xy)
+        const opts = [
+          { b: 2, x: 8, y: 4, v: 5 }, { b: 2, x: 16, y: 2, v: 5 }, { b: 2, x: 4, y: 8, v: 5 },
+          { b: 3, x: 9, y: 3, v: 3 }, { b: 3, x: 27, y: 3, v: 4 }, { b: 5, x: 5, y: 25, v: 3 },
+          { b: 10, x: 2, y: 5, v: 1 }, { b: 10, x: 4, y: 25, v: 2 }, { b: 10, x: 20, y: 5, v: 2 },
+          { b: 2, x: 16, y: 4, v: 6 },
+        ];
+        const o = choice(opts);
+        return { html: `${logHTML(o.b, o.x)} + ${logHTML(o.b, o.y)}`, answer: o.v, hint: `= log_${o.b}(${o.x}·${o.y}) = log_${o.b}(${o.x * o.y}) = ${o.v}` };
+      }
+      if (type === 'diff') {
+        const opts = [
+          { b: 2, x: 32, y: 2, v: 4 }, { b: 2, x: 64, y: 4, v: 4 }, { b: 2, x: 16, y: 2, v: 3 },
+          { b: 3, x: 81, y: 9, v: 2 }, { b: 3, x: 27, y: 3, v: 2 }, { b: 10, x: 1000, y: 10, v: 2 },
+          { b: 5, x: 125, y: 5, v: 2 },
+        ];
+        const o = choice(opts);
+        return { html: `${logHTML(o.b, o.x)} − ${logHTML(o.b, o.y)}`, answer: o.v, hint: `= log_${o.b}(${o.x}:${o.y}) = log_${o.b}(${o.x / o.y}) = ${o.v}` };
+      }
+      if (type === 'recip') {
+        // log_b(1/x) = negativ
+        const opts = [
+          { b: 2, x: 8, v: -3 }, { b: 2, x: 4, v: -2 }, { b: 2, x: 16, v: -4 },
+          { b: 3, x: 9, v: -2 }, { b: 3, x: 27, v: -3 }, { b: 10, x: 100, v: -2 },
+          { b: 5, x: 25, v: -2 }, { b: 2, x: 32, v: -5 },
+        ];
+        const o = choice(opts);
+        return { html: logHTML(o.b, fracHTML(1, o.x)), answer: o.v, hint: `log_${o.b}(1/${o.x}) = −log_${o.b}(${o.x}) = ${o.v}` };
+      }
+      // log_b(b^k) mit größerem k, oder log_b(arg^p)
+      const opts = [
+        { b: 2, arg: '8<sup>2</sup>', v: 6, note: '8²=64, log₂64=6' },
+        { b: 3, arg: '9<sup>2</sup>', v: 4, note: '9²=81, log₃81=4' },
+        { b: 2, arg: '4<sup>3</sup>', v: 6, note: '4³=64, log₂64=6' },
+        { b: 10, arg: '10<sup>5</sup>', v: 5, note: 'log₁₀10⁵=5' },
+        { b: 2, arg: '2<sup>9</sup>', v: 9, note: 'log₂2⁹=9' },
+      ];
+      const o = choice(opts);
+      return { html: logHTML(o.b, o.arg), answer: o.v, hint: o.note };
+    }
+  }
+};
+
+// ============================================================
+//  Öffentliche API: erzeugt eine Aufgabe
+// ============================================================
+function makeProblem(areas, difficulties, grade) {
+  const area = choice(areas);
+  const difficulty = choice(difficulties);
+  const g = GEN[area][difficulty](grade);
+  return { ...g, area, areaName: GEN[area].name, difficulty };
+}
+
+// Für Node-Test exportieren
+
+
+/* app */
+/* ============================================================
+   Mattle — Mathe-Battle (Hex-Verbindungsspiel)
+   Erwartet: makeProblem, fmt (aus generators.js)
+   ============================================================ */
+(function () {
+  "use strict";
+
+  /* ---------- Bereiche ---------- */
+  var AREA_FROM = {
+    ganze: 5, einheiten: 5, zehnerpotenzen: 5, brueche: 6, dezimal: 6,
+    potenzen: 8, wurzeln: 9, logarithmen: 10
+  };
+  var AREA_LABEL = {
+    ganze: "Ganze Zahlen", einheiten: "Einheiten umrechnen", zehnerpotenzen: "Zehnerpotenzen",
+    brueche: "Brüche", dezimal: "Dezimalbrüche",
+    potenzen: "Potenzen", wurzeln: "Wurzeln", logarithmen: "Logarithmen"
+  };
+  var AREA_ORDER = ["ganze", "einheiten", "zehnerpotenzen", "brueche", "dezimal",
+    "potenzen", "wurzeln", "logarithmen"];
+  var COL = { A: "#22d3ee", B: "#fb7185" };
+
+  /* ---------- DOM ---------- */
+  var $ = function (id) { return document.getElementById(id); };
+  var teamA = $("teamA"), teamB = $("teamB");
+  var nameA = $("nameA"), nameB = $("nameB");
+  var countA = $("countA"), countB = $("countB");
+  var puckA = $("puckA"), puckB = $("puckB");
+  var turnbar = $("turnbar");
+  var board = $("board");
+  var qcard = $("qcard");
+  var badge = $("badge"), badgeText = $("badgeText");
+  var areaLabel = $("areaLabel"), problemEl = $("problem");
+  var timerwrap = $("timerwrap"), timebar = $("timebar"), timenum = $("timenum");
+  var ansrow = $("ansrow"), ansph = $("ansph");
+  var keypad = $("keypad"), statusEl = $("status");
+  var solutionEl = $("solution"), revealInline = $("revealInline"), btnContinue = $("btnContinue");
+  var btnReset = $("btnReset"), btnSolution = $("btnSolution"), btnSettings = $("btnSettings");
+  // Settings
+  var ov = $("settingsOverlay"), selGrade = $("selGrade"), areaChecks = $("areaChecks");
+  var segDiff = $("segDiff"), segMode = $("segMode"), segSize = $("segSize"), segStart = $("segStart");
+  var inpTime = $("inpTime"), inpNameA = $("inpNameA"), inpNameB = $("inpNameB"), chkSound = $("chkSound");
+  var btnSettingsClose = $("btnSettingsClose"), btnSettingsSave = $("btnSettingsSave");
+  // Win
+  var winOverlay = $("winOverlay"), winTitle = $("winTitle"), winFinal = $("winFinal");
+  var btnPlayAgain = $("btnPlayAgain"), btnWinSettings = $("btnWinSettings"), confetti = $("confetti");
+  // Intro
+  var intro = $("intro"), btnStart = $("btnStart");
+
+  /* ---------- Einstellungen ---------- */
+  var LS_KEY = "mattle-v1";
+  function defaultAreasFor(grade) {
+    var a = {}; AREA_ORDER.forEach(function (k) { a[k] = grade >= AREA_FROM[k]; }); return a;
+  }
+  var settings = {
+    grade: 6,
+    areas: defaultAreasFor(6),
+    difficulty: "mixed",
+    mode: "buzz",          // 'buzz' | 'alt' | 'puck'
+    answerTime: 8,
+    size: 7,
+    start: "random",   // 'random' | 'A' | 'B'
+    teamA: "Team A",
+    teamB: "Team B",
+    sound: true
+  };
+
+  function loadSettings() {
+    try {
+      var raw = localStorage.getItem(LS_KEY); if (!raw) return;
+      var s = JSON.parse(raw);
+      if (s && typeof s === "object") {
+        if (typeof s.grade === "number") settings.grade = clampN(s.grade, 5, 11);
+        if (s.areas && typeof s.areas === "object")
+          // fehlt ein Bereich im Gesicherten, gab es ihn damals noch nicht
+          AREA_ORDER.forEach(function (k) { settings.areas[k] = (typeof s.areas[k] === "boolean") ? s.areas[k] : false; });
+        if (s.difficulty) settings.difficulty = s.difficulty;
+        if (s.mode === "buzz" || s.mode === "alt" || s.mode === "puck") settings.mode = s.mode;
+        if (typeof s.answerTime === "number") settings.answerTime = clampN(s.answerTime, 3, 60);
+        if (typeof s.size === "number") settings.size = [5, 7, 9, 11].indexOf(s.size) >= 0 ? s.size : 7;
+        if (s.start === "A" || s.start === "B" || s.start === "random") settings.start = s.start;
+        if (typeof s.teamA === "string") settings.teamA = s.teamA.slice(0, 18) || "Team A";
+        if (typeof s.teamB === "string") settings.teamB = s.teamB.slice(0, 18) || "Team B";
+        if (typeof s.sound === "boolean") settings.sound = s.sound;
+      }
+    } catch (e) { /* in-memory */ }
+  }
+  function saveSettings() { try { localStorage.setItem(LS_KEY, JSON.stringify(settings)); } catch (e) { } }
+
+  /* ---------- Helfer ---------- */
+  function clampN(v, lo, hi) { v = parseInt(v, 10); if (isNaN(v)) v = lo; return Math.max(lo, Math.min(hi, v)); }
+  function diffsAllowed() {
+    if (settings.difficulty === "easy") return ["easy"];
+    if (settings.difficulty === "hard") return ["hard"];
+    return ["easy", "hard"];
+  }
+  function selectedAreas() {
+    return AREA_ORDER.filter(function (k) { return settings.areas[k] && settings.grade >= AREA_FROM[k]; });
+  }
+  function show(el) { el.classList.remove("hidden"); }
+  function hide(el) { el.classList.add("hidden"); }
+  function escapeHTML(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+  function teamName(t) { return t === "A" ? settings.teamA : settings.teamB; }
+
+  /* ============================================================
+     Brett-Geometrie (spitze Sechsecke, Axialkoordinaten)
+     ============================================================ */
+  var SQRT3 = Math.sqrt(3), HS = 10; // Hex-Größe (SVG-Einheiten, skaliert via viewBox)
+  var DIRS = [[1, 0], [1, -1], [0, -1], [-1, 0], [-1, 1], [0, 1]];
+  function pix(q, r) { return { x: HS * SQRT3 * (q + r / 2), y: HS * 1.5 * r }; }
+  function corners(cx, cy) {
+    var p = [];
+    for (var i = 0; i < 6; i++) { var a = Math.PI / 180 * (60 * i - 90); p.push((cx + HS * Math.cos(a)).toFixed(2) + "," + (cy + HS * Math.sin(a)).toFixed(2)); }
+    return p.join(" ");
+  }
+
+  /* ---------- Brettzustand ---------- */
+  var N = 7;
+  var owner = {};            // "q,r" -> 'A' | 'B'
+  var counts = { A: 0, B: 0 };
+  var winPath = null;        // Set von "q,r"
+  function key(q, r) { return q + "," + r; }
+  function inBoard(q, r) { return q >= 0 && q < N && r >= 0 && r < N; }
+
+  function buildBoardSVG(popKey) {
+    var minX = 1e9, minY = 1e9, maxX = -1e9, maxY = -1e9, q, r, c;
+    for (r = 0; r < N; r++) for (q = 0; q < N; q++) {
+      c = pix(q, r);
+      minX = Math.min(minX, c.x - HS); maxX = Math.max(maxX, c.x + HS);
+      minY = Math.min(minY, c.y - HS); maxY = Math.max(maxY, c.y + HS);
+    }
+    // Randbalken berechnen (außerhalb der Ecken)
+    var c00 = pix(0, 0), cN0 = pix(N - 1, 0), c0N = pix(0, N - 1), cNN = pix(N - 1, N - 1);
+    var cen = { x: (c00.x + cN0.x + c0N.x + cNN.x) / 4, y: (c00.y + cN0.y + c0N.y + cNN.y) / 4 };
+    var off = HS * 1.35;
+    function bar(p1, p2, cls) {
+      var mx = (p1.x + p2.x) / 2, my = (p1.y + p2.y) / 2;
+      var dx = mx - cen.x, dy = my - cen.y, L = Math.hypot(dx, dy) || 1;
+      var ox = dx / L * off, oy = dy / L * off;
+      // Endpunkte etwas verlängern
+      var ex = (p2.x - p1.x), ey = (p2.y - p1.y), eL = Math.hypot(ex, ey) || 1;
+      var lx = ex / eL * HS * 0.7, ly = ey / eL * HS * 0.7;
+      var x1 = p1.x - lx + ox, y1 = p1.y - ly + oy, x2 = p2.x + lx + ox, y2 = p2.y + ly + oy;
+      minX = Math.min(minX, x1, x2); maxX = Math.max(maxX, x1, x2);
+      minY = Math.min(minY, y1, y2); maxY = Math.max(maxY, y1, y2);
+      return '<line class="edge ' + cls + '" x1="' + x1.toFixed(1) + '" y1="' + y1.toFixed(1) +
+        '" x2="' + x2.toFixed(1) + '" y2="' + y2.toFixed(1) + '" stroke-width="' + (HS * 0.62).toFixed(1) + '"/>';
+    }
+    var edges = "";
+    edges += bar(c00, cN0, "B");   // oben  (Team B)
+    edges += bar(c0N, cNN, "B");   // unten (Team B)
+    edges += bar(c00, c0N, "A");   // links (Team A)
+    edges += bar(cN0, cNN, "A");   // rechts(Team A)
+
+    var hexes = "";
+    for (r = 0; r < N; r++) for (q = 0; q < N; q++) {
+      c = pix(q, r);
+      var own = owner[key(q, r)];
+      var cls = "hex " + (own ? own : "empty");
+      if (popKey === key(q, r)) cls += " pop";
+      if (winPath && winPath.has(key(q, r))) cls += " win";
+      hexes += '<polygon class="' + cls + '" data-q="' + q + '" data-r="' + r + '" points="' + corners(c.x, c.y) + '"></polygon>';
+    }
+
+    var pad = HS * 0.6;
+    var vb = (minX - pad).toFixed(1) + " " + (minY - pad).toFixed(1) + " " +
+      (maxX - minX + 2 * pad).toFixed(1) + " " + (maxY - minY + 2 * pad).toFixed(1);
+    return '<svg viewBox="' + vb + '" preserveAspectRatio="xMidYMid meet">' + edges + hexes + '</svg>';
+  }
+
+  function renderBoard(popKey) {
+    board.innerHTML = buildBoardSVG(popKey);
+    board.classList.toggle("choosing", phase === "choose");
+    board.classList.toggle("turnA", chooser === "A");
+    board.classList.toggle("turnB", chooser === "B");
+  }
+
+  /* ---------- Verbindungsprüfung (Hex) ---------- */
+  function checkConnect(team) {
+    // A: q=0 -> q=N-1 ; B: r=0 -> r=N-1
+    var isA = team === "A";
+    var seen = {}, parent = {}, queue = [], q, r, k;
+    for (r = 0; r < N; r++) for (q = 0; q < N; q++) {
+      if (owner[key(q, r)] !== team) continue;
+      if (isA ? q === 0 : r === 0) { k = key(q, r); if (!seen[k]) { seen[k] = 1; parent[k] = null; queue.push([q, r]); } }
+    }
+    while (queue.length) {
+      var cell = queue.shift(); q = cell[0]; r = cell[1];
+      if (isA ? q === N - 1 : r === N - 1) {
+        // Pfad rekonstruieren
+        var path = new Set(), ck = key(q, r);
+        while (ck != null) { path.add(ck); ck = parent[ck]; }
+        return path;
+      }
+      for (var d = 0; d < 6; d++) {
+        var nq = q + DIRS[d][0], nr = r + DIRS[d][1];
+        if (!inBoard(nq, nr)) continue;
+        var nk = key(nq, nr);
+        if (owner[nk] === team && !seen[nk]) { seen[nk] = 1; parent[nk] = key(q, r); queue.push([nq, nr]); }
+      }
+    }
+    return null;
+  }
+
+  /* ============================================================
+     Spielzustand
+     ============================================================ */
+  var phase = "intro";       // intro | choose | ready | answering | resolved | won
+  var chooser = "A";         // wer ein Feld wählt
+  var active = null;         // wer gerade antwortet
+  var attempts = { A: false, B: false };
+  var pending = null;        // {q,r} aktuell umkämpftes Feld
+  var problem = null;
+  var buf = "";
+  var awaitingContinue = false;
+  var rafId = null, deadline = 0, totalMs = 0;
+  var puck = "A";            // Puck-Besitzer (Modus 'puck')
+  function other(t) { return t === "A" ? "B" : "A"; }
+  function startTeam() { return settings.start === "A" ? "A" : settings.start === "B" ? "B" : (Math.random() < 0.5 ? "A" : "B"); }
+
+  /* ---------- Spiel starten / zurücksetzen ---------- */
+  function startGame() {
+    N = settings.size;
+    owner = {}; counts = { A: 0, B: 0 }; winPath = null;
+    problem = null; pending = null; active = null; buf = "";
+    attempts = { A: false, B: false }; awaitingContinue = false;
+    stopTimer();
+    hide(winOverlay); clearConfetti(); hide(qcard);
+    chooser = startTeam();
+    puck = chooser;
+    phase = "choose";
+    renderBoard(null);
+    render();
+    setTurnbar();
+  }
+
+  /* ---------- Feld wählen ---------- */
+  function chooseHex(q, r) {
+    if (phase !== "choose") return;
+    if (owner[key(q, r)]) return;
+    var areas = selectedAreas();
+    if (areas.length === 0) { openSettings(); return; }
+    var p = makeProblem(areas, diffsAllowed(), settings.grade);
+    if (!p) { flashTurnbar("Keine Aufgabe für diese Auswahl möglich.", null); return; }
+    pending = { q: q, r: r };
+    problem = p; buf = ""; active = null;
+    attempts = { A: false, B: false };
+    awaitingContinue = false;
+    phase = "ready";
+
+    // Frage-Karte vorbereiten
+    show(problemEl); show(areaLabel);
+    problemEl.innerHTML = '<span class="fit">' + p.html + '</span>';
+    areaLabel.textContent = AREA_LABEL[p.area] || "";
+    var hard = p.difficulty === "hard";
+    badge.classList.toggle("easy", !hard);
+    badge.classList.toggle("hard", hard);
+    badgeText.textContent = hard ? "Schwer" : "Leicht";
+    qcard.style.removeProperty("--ac");
+    hide(timerwrap); hide(ansrow); hide(keypad); hide(solutionEl); show(revealInline);
+    hide(btnContinue);
+    ansrow.innerHTML = '<span class="ph">Antwort eingeben …</span>';
+    show(qcard);
+    fitProblem();
+    teamA.classList.remove("active", "dim", "turn"); teamB.classList.remove("active", "dim", "turn");
+
+    if (settings.mode === "alt") {
+      // Abwechselnd: das Zug-Team (chooser) beantwortet die eigene Wahl direkt
+      active = chooser; attempts[chooser] = true; phase = "answering";
+      beginAnswerUI(chooser);
+      sound("buzz"); startTimer();
+    } else {
+      // Buzzern / Puck: beide Teams buzzern — die Antwortzeit läuft bereits jetzt
+      phase = "ready";
+      setBuzzable(true);
+      setStatus(settings.mode === "puck"
+        ? (teamName(puck) + " hat den Puck — beide buzzern!")
+        : "Beide Teams buzzern — wer weiß es?", "neutral");
+      show(timerwrap);
+      startTimer();
+    }
+    renderBoard(null);
+    setTurnbar();
+  }
+
+  /* ---------- Buzzern ---------- */
+  function buzz(team) {
+    if (phase !== "ready") return;
+    if (!problem) return;
+    active = team; attempts[team] = true; phase = "answering"; buf = "";
+    beginAnswerUI(team);
+    sound("buzz");
+    startTimer();
+    setTurnbar();
+  }
+  function beginAnswerUI(team) {
+    setBuzzable(false);
+    var cur = team === "A" ? teamA : teamB, other = team === "A" ? teamB : teamA;
+    cur.classList.add("active"); cur.classList.remove("dim", "turn");
+    other.classList.remove("active", "turn"); other.classList.add("dim");
+    qcard.style.setProperty("--ac", COL[team]);
+    show(timerwrap); show(ansrow); show(keypad); hide(solutionEl); show(revealInline);
+    hide(btnContinue);
+    buildKeypad(); renderAnswer();
+    setStatus(teamName(team) + " ist dran …", "neutral");
+    fitProblem();
+  }
+
+  /* ---------- Timer ---------- */
+  function startTimer() {
+    stopTimer(); totalMs = settings.answerTime * 1000; deadline = now() + totalMs;
+    timebar.style.background = "var(--easy)"; tick();
+  }
+  function tick() {
+    var remain = deadline - now();
+    if (remain <= 0) { timebar.style.width = "0%"; timenum.textContent = "0"; stopTimer(); onTimeout(); return; }
+    var frac = remain / totalMs;
+    timebar.style.width = (frac * 100).toFixed(1) + "%";
+    timenum.textContent = Math.ceil(remain / 1000);
+    timebar.style.background = frac > 0.5 ? "var(--easy)" : (frac > 0.25 ? "var(--hard)" : "var(--b)");
+    rafId = requestAnimationFrame(tick);
+  }
+  function stopTimer() { if (rafId) { cancelAnimationFrame(rafId); rafId = null; } }
+  function now() { return (window.performance && performance.now) ? performance.now() : Date.now(); }
+  function onTimeout() {
+    if (phase === "ready") { noBuzzTimeout(); return; }
+    if (phase !== "answering") return;
+    resolveWrong(teamName(active) + ": Zeit abgelaufen.");
+  }
+  // Niemand hat innerhalb der Antwortzeit gebuzzert
+  function noBuzzTimeout() {
+    stopTimer();
+    sound("wrong");
+    phase = "resolved";
+    chooser = nextChooserOnFail();
+    setStatus("Zeit abgelaufen — niemand hat gebuzzert. Das Feld bleibt frei.", "bad");
+    revealSolution(true);
+    render();
+    armContinue();
+  }
+  // Nächster Wähler, wenn niemand richtig lag
+  function nextChooserOnFail() {
+    if (settings.mode === "alt") return other(chooser);   // reihum
+    if (settings.mode === "puck") return puck;             // Puck-Besitzer wählt weiter
+    return Math.random() < 0.5 ? "A" : "B";                // Buzzern: Zufall
+  }
+
+  /* ---------- Tastenfeld ---------- */
+  var KEYS = ["7", "8", "9", "back", "4", "5", "6", "clear", "1", "2", "3", "/", "−", "0", ",", "ok"];
+  function buildKeypad() {
+    if (keypad.dataset.built === "1") return;
+    keypad.innerHTML = "";
+    KEYS.forEach(function (k) {
+      var b = document.createElement("button"); b.type = "button"; b.className = "key";
+      if (k === "ok") { b.className += " ok"; b.textContent = "OK"; }
+      else if (k === "back") { b.className += " fn"; b.textContent = "⌫"; }
+      else if (k === "clear") { b.className += " fn"; b.textContent = "C"; }
+      else if (k === "/") { b.className += " fn"; b.textContent = "/"; }
+      else if (k === "−") { b.className += " fn"; b.textContent = "−"; }
+      else { b.textContent = k; }
+      b.addEventListener("click", function () { keyIn(k); });
+      keypad.appendChild(b);
+    });
+    keypad.dataset.built = "1";
+  }
+  function keyIn(k) {
+    if (phase !== "answering") return;
+    if (k === "ok") { submit(); return; }
+    if (k === "back") { buf = buf.slice(0, -1); renderAnswer(); return; }
+    if (k === "clear") { buf = ""; renderAnswer(); return; }
+    if (k === "−") { if (buf === "") buf = "−"; else if (buf === "−") buf = ""; renderAnswer(); return; }
+    if (k === "/") { if (buf === "" || buf === "−") return; if (buf.indexOf("/") !== -1) return; buf += "/"; renderAnswer(); return; }
+    if (k === ",") {
+      var part = buf.split("/").pop();
+      if (part.indexOf(",") !== -1) return;
+      if (part === "" || part === "−") buf += "0";
+      buf += ","; renderAnswer(); return;
+    }
+    buf += k; renderAnswer();
+  }
+  function renderAnswer() {
+    if (buf === "") ansrow.innerHTML = '<span class="ph">Antwort eingeben …</span>';
+    else ansrow.textContent = buf;
+  }
+  function parseAnswer(str) {
+    str = String(str).trim().replace(/−/g, "-").replace(/,/g, ".");
+    if (str === "" || str === "-") return NaN;
+    if (str.indexOf("/") !== -1) {
+      var p = str.split("/"); if (p.length !== 2) return NaN;
+      var na = parseFloat(p[0]), nb = parseFloat(p[1]);
+      if (!isFinite(na) || !isFinite(nb) || nb === 0) return NaN;
+      return na / nb;
+    }
+    var v = parseFloat(str); return isFinite(v) ? v : NaN;
+  }
+  function submit() {
+    if (phase !== "answering" || !problem) return;
+    var val = parseAnswer(buf);
+    if (isNaN(val)) { flashStatus("Bitte eine gültige Zahl eingeben.", "bad"); return; }
+    if (Math.abs(val - problem.answer) < 1e-6) resolveCorrect();
+    else resolveWrong(null);
+  }
+
+  /* ---------- Auswertung ---------- */
+  function resolveCorrect() {
+    stopTimer();
+    var team = active;
+    // PUCK-Modus: nur der Puck-Besitzer erobert Felder; sonst zuerst den Puck gewinnen
+    if (settings.mode === "puck" && team !== puck) {
+      puck = team; chooser = team;
+      sound("correct"); flashTeam(team);
+      phase = "resolved";
+      setStatus(teamName(team) + " erobert den Puck! (noch kein Feld) 🏒", "good");
+      revealSolution(false);
+      renderBoard(null);
+      render();
+      armContinue();
+      return;
+    }
+    claimHex(team, pending.q, pending.r);
+    sound("correct");
+    flashTeam(team);
+    var win = checkConnect(team);
+    if (win) {
+      winPath = win;
+      phase = "won";
+      setStatus("Richtig! " + teamName(team) + " verbindet die Seiten! 🎉", "good");
+      revealSolution(false);
+      renderBoard(key(pending.q, pending.r));
+      render();
+      setTimeout(function () { showWin(team); }, 750);
+      return;
+    }
+    phase = "resolved";
+    // Nächster Wähler je nach Modus
+    if (settings.mode === "alt") chooser = other(chooser);   // reihum
+    else if (settings.mode === "puck") chooser = puck;        // Puck-Besitzer wählt weiter
+    else chooser = team;                                      // Buzzern: Gewinner wählt
+    setStatus("Richtig! " + teamName(team) + " erobert das Feld.", "good");
+    revealSolution(false);
+    renderBoard(key(pending.q, pending.r));
+    render();
+    armContinue();
+  }
+
+  function resolveWrong(reasonMsg) {
+    stopTimer(); sound("wrong");
+    var failed = active, other = failed === "A" ? "B" : "A";
+    var base = reasonMsg || (teamName(failed) + ": leider falsch.");
+    flashTeam(failed);
+    if (!attempts[other]) {
+      setStatus(base + " — " + teamName(other) + " darf jetzt antworten!", "bad");
+      active = other; attempts[other] = true; phase = "answering"; buf = "";
+      setTimeout(function () { if (phase !== "answering") return; beginAnswerUI(other); startTimer(); setTurnbar(); }, 900);
+    } else {
+      // beide gescheitert -> Feld bleibt frei
+      phase = "resolved";
+      chooser = nextChooserOnFail();
+      setStatus("Schade — niemand richtig. Das Feld bleibt frei.", "bad");
+      revealSolution(true);
+      render();
+      armContinue();
+    }
+  }
+
+  /* ---------- Feld erobern ---------- */
+  function claimHex(team, q, r) {
+    var k = key(q, r);
+    if (owner[k]) counts[owner[k]]--;
+    owner[k] = team; counts[team]++;
+  }
+
+  /* ---------- Lösung ---------- */
+  function niceAnswer(p) {
+    var re = /-?\d+(?:[.,]\d+)?(?:\/\d+)?/g, m, best = null;
+    while ((m = re.exec(p.hint)) !== null) {
+      var v = parseAnswer(m[0]);
+      if (!isNaN(v) && Math.abs(v - p.answer) < 1e-6) best = m[0];
+    }
+    if (best !== null) return best;
+    if (typeof fmt === "function") return fmt(p.answer);
+    return String(p.answer).replace(".", ",");
+  }
+  function revealSolution(emphasize) {
+    if (!problem) return;
+    solutionEl.innerHTML =
+      '<div style="font-size:1.15em">Lösung: <b>' + problem.html + " = " + niceAnswer(problem) + "</b></div>" +
+      '<div style="margin-top:6px">Rechenweg: ' + escapeHTML(problem.hint) + "</div>";
+    show(solutionEl); hide(revealInline); hide(timerwrap); hide(keypad);
+    hide(problemEl); hide(areaLabel);
+    if (emphasize) hide(ansrow);
+    setBuzzable(false);
+    teamA.classList.remove("active", "dim"); teamB.classList.remove("active", "dim");
+  }
+
+  // Spielleitung erzwingt Lösung (kein Gewinn)
+  function giveUp() {
+    if (phase !== "ready" && phase !== "answering") return;
+    stopTimer();
+    phase = "resolved";
+    chooser = nextChooserOnFail();
+    setStatus("Aufgelöst durch Spielleitung. Feld bleibt frei.", "neutral");
+    revealSolution(true);
+    render();
+    armContinue();
+  }
+
+  /* ---------- Weiter zum Brett ---------- */
+  function armContinue() {
+    awaitingContinue = true;
+    show(btnContinue);
+    setTurnbar();
+  }
+  function continueToBoard() {
+    awaitingContinue = false;
+    hide(btnContinue);
+    pending = null; problem = null; active = null; buf = "";
+    phase = "choose";
+    hide(qcard);
+    teamA.classList.remove("active", "dim"); teamB.classList.remove("active", "dim");
+    renderBoard(null);
+    render();
+    setTurnbar();
+  }
+
+  /* ============================================================
+     Rendern (Panels & Turnbar)
+     ============================================================ */
+  function render() {
+    nameA.textContent = settings.teamA; nameB.textContent = settings.teamB;
+    countA.innerHTML = counts.A + "<small>Felder</small>";
+    countB.innerHTML = counts.B + "<small>Felder</small>";
+    teamA.classList.toggle("turn", phase === "choose" && chooser === "A");
+    teamB.classList.toggle("turn", phase === "choose" && chooser === "B");
+    var puckMode = settings.mode === "puck";
+    puckA.classList.toggle("hidden", !(puckMode && puck === "A"));
+    puckB.classList.toggle("hidden", !(puckMode && puck === "B"));
+  }
+  function fitProblem() {
+    var fit = problemEl.querySelector(".fit");
+    if (!fit) return;
+    if (problemEl.classList.contains("hidden")) return;
+    fit.style.transform = "none";
+    var run = function () {
+      fit.style.transform = "none";
+      var availW = problemEl.clientWidth, availH = problemEl.clientHeight;
+      var r = fit.getBoundingClientRect();
+      var sw = (availW > 0 && r.width > 0) ? availW / r.width : 1;
+      var sh = (availH > 0 && r.height > 0) ? availH / r.height : 1;
+      var s = Math.min(sw, sh) * 0.97;
+      if (s < 1) fit.style.transform = "scale(" + s.toFixed(4) + ")";
+    };
+    if (window.requestAnimationFrame) requestAnimationFrame(run); else run();
+  }
+  window.addEventListener("resize", function () { fitProblem(); });
+  function setTurnbar() {
+    turnbar.classList.remove("turnA", "turnB");
+    var txt = "", dot = "";
+    if (phase === "choose") {
+      turnbar.classList.add(chooser === "A" ? "turnA" : "turnB");
+      dot = '<span class="dot" style="background:' + COL[chooser] + '"></span>';
+      var suffix = settings.mode === "alt" ? " ist am Zug — Sechseck wählen"
+        : settings.mode === "puck" ? " hat den Puck — Sechseck wählen"
+          : " wählt ein Sechseck";
+      txt = '<span class="txt">' + escapeHTML(teamName(chooser)) + suffix + "</span>";
+    } else if (phase === "ready") {
+      txt = '<span class="txt">' + (settings.mode === "puck"
+        ? ("Frage offen — beide buzzern (Puck: " + escapeHTML(teamName(puck)) + ")")
+        : "Frage offen — beide Teams buzzern!") + "</span>";
+    } else if (phase === "answering") {
+      turnbar.classList.add(active === "A" ? "turnA" : "turnB");
+      dot = '<span class="dot" style="background:' + COL[active] + '"></span>';
+      txt = '<span class="txt">' + escapeHTML(teamName(active)) + " antwortet …</span>";
+    } else if (phase === "resolved") {
+      txt = '<span class="txt">' + (awaitingContinue ? "Tippe auf die Karte, um weiterzuspielen" : "…") + "</span>";
+    } else if (phase === "won") {
+      txt = '<span class="txt">Spiel entschieden!</span>';
+    } else {
+      txt = '<span class="txt">Bereit.</span>';
+    }
+    turnbar.innerHTML = dot + txt;
+  }
+
+  /* ---------- Status & Effekte ---------- */
+  function setStatus(msg, kind) { statusEl.textContent = msg; statusEl.className = "status " + (kind || "neutral"); }
+  var flashTimer = null;
+  function flashStatus(msg, kind) {
+    var prev = statusEl.textContent, prevC = statusEl.className;
+    setStatus(msg, kind);
+    if (flashTimer) clearTimeout(flashTimer);
+    flashTimer = setTimeout(function () { if (statusEl.textContent === msg) { statusEl.textContent = prev; statusEl.className = prevC; } }, 1700);
+  }
+  var tbTimer = null;
+  function flashTurnbar(msg) {
+    var prev = turnbar.innerHTML;
+    turnbar.innerHTML = '<span class="txt">' + escapeHTML(msg) + "</span>";
+    if (tbTimer) clearTimeout(tbTimer);
+    tbTimer = setTimeout(function () { turnbar.innerHTML = prev; }, 1600);
+  }
+  function flashTeam(team) {
+    var el = team === "A" ? teamA : teamB;
+    el.classList.remove("flash"); void el.offsetWidth; el.classList.add("flash");
+  }
+  function setBuzzable(on) { teamA.classList.toggle("buzzable", on); teamB.classList.toggle("buzzable", on); }
+
+  /* ---------- Sieg ---------- */
+  function showWin(team) {
+    winTitle.textContent = teamName(team) + " gewinnt!";
+    winFinal.innerHTML =
+      '<span class="pa">' + escapeHTML(settings.teamA) + " " + counts.A + " Felder</span>" +
+      " &nbsp;·&nbsp; " +
+      '<span class="pb">' + escapeHTML(settings.teamB) + " " + counts.B + " Felder</span>";
+    show(winOverlay); sound("win"); runConfetti();
+  }
+
+  /* ---------- Konfetti ---------- */
+  function runConfetti() {
+    clearConfetti(); show(confetti);
+    var cols = ["#22d3ee", "#fb7185", "#34d399", "#fbbf24", "#a78bfa", "#fff"];
+    for (var i = 0; i < 90; i++) {
+      var s = document.createElement("i");
+      s.style.left = (Math.random() * 100) + "%";
+      s.style.background = cols[(Math.random() * cols.length) | 0];
+      s.style.animationDuration = (2.4 + Math.random() * 2.2) + "s";
+      s.style.animationDelay = (Math.random() * 0.6) + "s";
+      s.style.transform = "rotate(" + (Math.random() * 360) + "deg)";
+      confetti.appendChild(s);
+    }
+    if (confetti._t) clearTimeout(confetti._t);
+    confetti._t = setTimeout(clearConfetti, 5200);
+  }
+  function clearConfetti() { if (confetti._t) { clearTimeout(confetti._t); confetti._t = null; } confetti.innerHTML = ""; hide(confetti); }
+
+  /* ---------- Audio ---------- */
+  var actx = null;
+  function ensureAudio() {
+    if (!settings.sound) return null;
+    try {
+      if (!actx) { var AC = window.AudioContext || window.webkitAudioContext; if (!AC) return null; actx = new AC(); }
+      if (actx.state === "suspended") actx.resume();
+    } catch (e) { actx = null; }
+    return actx;
+  }
+  function tone(freq, start, dur, type, gain) {
+    if (!actx) return;
+    try {
+      var o = actx.createOscillator(), g = actx.createGain();
+      o.type = type || "sine"; o.frequency.value = freq;
+      var t0 = actx.currentTime + start;
+      g.gain.setValueAtTime(0, t0);
+      g.gain.linearRampToValueAtTime(gain || 0.18, t0 + 0.012);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+      o.connect(g); g.connect(actx.destination);
+      o.start(t0); o.stop(t0 + dur + 0.02);
+    } catch (e) { }
+  }
+  function sound(kind) {
+    var ctx = ensureAudio(); if (!ctx) return;
+    if (kind === "buzz") { tone(440, 0, 0.12, "square", 0.16); tone(330, 0.05, 0.12, "square", 0.12); }
+    else if (kind === "correct") { tone(660, 0, 0.12, "sine", 0.18); tone(880, 0.10, 0.16, "sine", 0.18); tone(1175, 0.20, 0.20, "sine", 0.16); }
+    else if (kind === "wrong") { tone(220, 0, 0.22, "sawtooth", 0.16); tone(165, 0.12, 0.26, "sawtooth", 0.14); }
+    else if (kind === "win") { var seq = [523, 659, 784, 1047]; for (var i = 0; i < seq.length; i++) tone(seq[i], i * 0.13, 0.20, "triangle", 0.18); tone(1319, 0.55, 0.5, "triangle", 0.16); }
+  }
+
+  /* ============================================================
+     Einstellungen
+     ============================================================ */
+  function buildAreaChecks() {
+    areaChecks.innerHTML = "";
+    AREA_ORDER.forEach(function (k) {
+      var avail = settings.grade >= AREA_FROM[k];
+      var lab = document.createElement("label");
+      lab.className = "chk" + (avail ? "" : " disabled");
+      var cb = document.createElement("input");
+      cb.type = "checkbox"; cb.dataset.area = k; cb.disabled = !avail;
+      cb.checked = avail && !!settings.areas[k];
+      cb.addEventListener("change", function () { settings.areas[k] = cb.checked; });
+      var span = document.createElement("span");
+      span.textContent = AREA_LABEL[k] + (avail ? "" : " · ab Jgst. " + AREA_FROM[k]);
+      lab.appendChild(cb); lab.appendChild(span); areaChecks.appendChild(lab);
+    });
+  }
+  function syncSeg(seg, val) {
+    Array.prototype.forEach.call(seg.querySelectorAll("button"), function (b) { b.classList.toggle("on", b.dataset.v === String(val)); });
+  }
+  function syncSettingsForm() {
+    selGrade.value = String(settings.grade);
+    buildAreaChecks();
+    syncSeg(segDiff, settings.difficulty);
+    syncSeg(segMode, settings.mode);
+    syncSeg(segSize, settings.size);
+    syncSeg(segStart, settings.start);
+    inpTime.value = settings.answerTime;
+    inpNameA.value = settings.teamA; inpNameB.value = settings.teamB;
+    chkSound.checked = settings.sound;
+  }
+  function openSettings() { syncSettingsForm(); show(ov); hide(winOverlay); }
+  function closeSettings() { hide(ov); }
+  function saveFromForm() {
+    settings.answerTime = clampN(inpTime.value, 3, 60);
+    settings.teamA = (inpNameA.value || "Team A").slice(0, 18);
+    settings.teamB = (inpNameB.value || "Team B").slice(0, 18);
+    settings.sound = !!chkSound.checked;
+    AREA_ORDER.forEach(function (k) { if (settings.grade < AREA_FROM[k]) settings.areas[k] = false; });
+    saveSettings();
+    closeSettings();
+    startGame();
+  }
+
+  /* ============================================================
+     Events
+     ============================================================ */
+  // Brett: Feld wählen (delegiert)
+  board.addEventListener("click", function (e) {
+    var t = e.target;
+    if (!t || t.tagName.toLowerCase() !== "polygon") return;
+    var q = parseInt(t.getAttribute("data-q"), 10), r = parseInt(t.getAttribute("data-r"), 10);
+    if (isNaN(q) || isNaN(r)) return;
+    chooseHex(q, r);
+  });
+
+  // Buzzer
+  teamA.addEventListener("click", function () { buzz("A"); });
+  teamB.addEventListener("click", function () { buzz("B"); });
+  [["A", teamA], ["B", teamB]].forEach(function (pair) {
+    pair[1].addEventListener("keydown", function (e) {
+      if (e.key === "Enter" || e.key === " " || e.key === "Spacebar") { e.preventDefault(); buzz(pair[0]); }
+    });
+  });
+
+  // Weiter: Tippen auf die Karte (nicht auf Buttons) oder auf den Weiter-Button
+  qcard.addEventListener("click", function (e) {
+    if (!awaitingContinue) return;
+    if (e.target.closest("button")) return; // Tastenfeld/Weiter/Lösung nicht als Weiter-Tipp werten
+    continueToBoard();
+  });
+  btnContinue.addEventListener("click", function (e) { e.stopPropagation(); continueToBoard(); });
+
+  // Steuerung
+  btnReset.addEventListener("click", function () {
+    var started = counts.A > 0 || counts.B > 0 || phase !== "choose";
+    if (!started) { startGame(); return; }
+    var ok = true; try { ok = window.confirm("Spiel wirklich neu starten? Das Spielfeld wird geleert."); } catch (e) { }
+    if (ok) startGame();
+  });
+  btnSolution.addEventListener("click", giveUp);
+  revealInline.addEventListener("click", giveUp);
+  btnSettings.addEventListener("click", openSettings);
+
+  // Einstellungen
+  selGrade.addEventListener("change", function () {
+    settings.grade = clampN(selGrade.value, 5, 11);
+    AREA_ORDER.forEach(function (k) {
+      if (settings.grade < AREA_FROM[k]) settings.areas[k] = false;
+      else if (settings.grade === AREA_FROM[k]) settings.areas[k] = true;
+    });
+    buildAreaChecks();
+  });
+  Array.prototype.forEach.call(segDiff.querySelectorAll("button"), function (b) {
+    b.addEventListener("click", function () { settings.difficulty = b.dataset.v; syncSeg(segDiff, settings.difficulty); });
+  });
+  Array.prototype.forEach.call(segMode.querySelectorAll("button"), function (b) {
+    b.addEventListener("click", function () { settings.mode = b.dataset.v; syncSeg(segMode, settings.mode); });
+  });
+  Array.prototype.forEach.call(segSize.querySelectorAll("button"), function (b) {
+    b.addEventListener("click", function () { settings.size = parseInt(b.dataset.v, 10); syncSeg(segSize, settings.size); });
+  });
+  Array.prototype.forEach.call(segStart.querySelectorAll("button"), function (b) {
+    b.addEventListener("click", function () { settings.start = b.dataset.v; syncSeg(segStart, settings.start); });
+  });
+  Array.prototype.forEach.call(document.querySelectorAll("[data-step]"), function (b) {
+    b.addEventListener("click", function () {
+      var d = parseInt(b.dataset.d, 10);
+      if (b.dataset.step === "time") inpTime.value = clampN(parseInt(inpTime.value, 10) + d, 3, 60);
+    });
+  });
+  btnSettingsClose.addEventListener("click", closeSettings);
+  btnSettingsSave.addEventListener("click", saveFromForm);
+  ov.addEventListener("click", function (e) { if (e.target === ov) closeSettings(); });
+
+  // Win
+  btnPlayAgain.addEventListener("click", startGame);
+  btnWinSettings.addEventListener("click", openSettings);
+
+  // Physische Tastatur
+  document.addEventListener("keydown", function (e) {
+    if (!ov.classList.contains("hidden")) return;
+    if (!intro.classList.contains("hidden")) { if (e.key === "Enter") { e.preventDefault(); dismissIntro(); } return; }
+    if (!winOverlay.classList.contains("hidden")) { if (e.key === "Enter") { e.preventDefault(); startGame(); } return; }
+    if (phase === "resolved" && awaitingContinue) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); continueToBoard(); } return; }
+    if (phase === "ready") {
+      var t = e.key.toLowerCase();
+      if (t === "a") { e.preventDefault(); buzz("A"); }
+      else if (t === "b") { e.preventDefault(); buzz("B"); }
+      return;
+    }
+    if (phase === "answering") {
+      if (e.key >= "0" && e.key <= "9") { e.preventDefault(); keyIn(e.key); }
+      else if (e.key === "," || e.key === ".") { e.preventDefault(); keyIn(","); }
+      else if (e.key === "/") { e.preventDefault(); keyIn("/"); }
+      else if (e.key === "-" || e.key === "−") { e.preventDefault(); keyIn("−"); }
+      else if (e.key === "Backspace") { e.preventDefault(); keyIn("back"); }
+      else if (e.key === "Delete") { e.preventDefault(); keyIn("clear"); }
+      else if (e.key === "Enter") { e.preventDefault(); keyIn("ok"); }
+    }
+  });
+
+  // Audio bei erster Geste wecken
+  document.addEventListener("pointerdown", function once() { ensureAudio(); document.removeEventListener("pointerdown", once); }, { once: true });
+
+  /* ---------- Intro ---------- */
+  function dismissIntro() {
+    if (intro.classList.contains("hidden")) return;
+    hide(intro);
+    if (phase === "intro") startGame();
+  }
+  btnStart.addEventListener("click", dismissIntro);
+
+  /* ---------- Start ---------- */
+  loadSettings();
+  syncSettingsForm();
+  N = settings.size;
+  renderBoard(null);   // Brett schon hinter dem Intro zeichnen
+  render();
+  // Intro bleibt sichtbar bis Klick/Enter; Spiel startet via dismissIntro()
+})();
+</script>
+<!-- ===================== Teilen / QR-Code (gemeinsamer Baustein) ===================== -->
+<style>
+  .sq-fab{position:fixed; left:calc(10px + env(safe-area-inset-left)); bottom:calc(10px + env(safe-area-inset-bottom));
+    z-index:120; display:none; align-items:center; gap:7px; padding:10px 14px; border-radius:999px; border:none;
+    background:rgba(20,20,26,.82); color:#fff; font:inherit; font-size:14.5px; font-weight:700; cursor:pointer;
+    box-shadow:0 4px 14px rgba(0,0,0,.3); -webkit-tap-highlight-color:transparent;}
+  .sq-fab.on{display:inline-flex;}
+  .sq-fab:active{transform:scale(.96);}
+  .sq-fab svg{width:17px; height:17px; display:block;}
+  .sq-inline{display:inline-flex; align-items:center; gap:6px;}
+  .sq-ov{position:fixed; inset:0; z-index:9000; display:none; align-items:center; justify-content:center;
+    background:rgba(12,14,18,.86); padding:16px; -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px);}
+  .sq-ov.on{display:flex;}
+  .sq-card{background:#fff; color:#1b1f24; border-radius:22px; padding:22px 22px 18px; width:100%; max-width:520px;
+    max-height:94vh; overflow:auto; text-align:center; box-shadow:0 24px 60px rgba(0,0,0,.45);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+  .sq-card h2{margin:0 0 2px; font-size:1.4rem; font-weight:800;}
+  .sq-card p.sq-sub{margin:0 0 14px; color:#5b6470; font-size:.95rem;}
+  /* Der weiße Rand um den Code ist Vorschrift: mindestens vier Module Ruhezone,
+     sonst erkennen Kameras den Code nicht. Die Breite setzt das Skript. */
+  .sq-code{display:flex; align-items:center; justify-content:center; margin:0 auto 12px;
+    width:min(74vw,330px); background:#fff; border:1px solid #e4e6ea; border-radius:14px; padding:14px 0;}
+  .sq-code canvas, .sq-code img{width:var(--sq-w,84%); height:auto; display:block; margin:0 auto; image-rendering:pixelated;}
+  .sq-code table{margin:0 auto;}
+  .sq-url{font-size:.86rem; color:#5b6470; word-break:break-all; background:#f3f4f6; border-radius:10px;
+    padding:9px 11px; margin-bottom:14px; line-height:1.4;
+    -webkit-user-select:text; user-select:text;}
+  .sq-row{display:flex; gap:9px; flex-wrap:wrap;}
+  .sq-row button{flex:1 1 130px; border:none; border-radius:12px; padding:13px 14px; font:inherit; font-size:1rem;
+    font-weight:750; cursor:pointer; background:#1b1f24; color:#fff; min-height:48px;}
+  .sq-row button.sq-alt{background:#fff; color:#1b1f24; box-shadow:inset 0 0 0 2px #dfe2e7;}
+  .sq-row button.sq-ok{background:#1f7a46;}
+  .sq-row button:active{transform:scale(.985);}
+  .sq-note{margin-top:11px; font-size:.8rem; color:#8a929c; line-height:1.45;}
+</style>
+<script>/* QR-Code: qrcodejs von David Shim (MIT) – dieselbe Bibliothek wie in der Digitalen Tafel */
+var QRCode;!function(){function a(a){this.mode=c.MODE_8BIT_BYTE,this.data=a,this.parsedData=[];for(var b=[],d=0,e=this.data.length;e>d;d++){var f=this.data.charCodeAt(d);f>65536?(b[0]=240|(1835008&f)>>>18,b[1]=128|(258048&f)>>>12,b[2]=128|(4032&f)>>>6,b[3]=128|63&f):f>2048?(b[0]=224|(61440&f)>>>12,b[1]=128|(4032&f)>>>6,b[2]=128|63&f):f>128?(b[0]=192|(1984&f)>>>6,b[1]=128|63&f):b[0]=f,this.parsedData=this.parsedData.concat(b)}this.parsedData.length!=this.data.length&&(this.parsedData.unshift(191),this.parsedData.unshift(187),this.parsedData.unshift(239))}function b(a,b){this.typeNumber=a,this.errorCorrectLevel=b,this.modules=null,this.moduleCount=0,this.dataCache=null,this.dataList=[]}function i(a,b){if(void 0==a.length)throw new Error(a.length+"/"+b);for(var c=0;c<a.length&&0==a[c];)c++;this.num=new Array(a.length-c+b);for(var d=0;d<a.length-c;d++)this.num[d]=a[d+c]}function j(a,b){this.totalCount=a,this.dataCount=b}function k(){this.buffer=[],this.length=0}function m(){return"undefined"!=typeof CanvasRenderingContext2D}function n(){var a=!1,b=navigator.userAgent;return/android/i.test(b)&&(a=!0,aMat=b.toString().match(/android ([0-9]\.[0-9])/i),aMat&&aMat[1]&&(a=parseFloat(aMat[1]))),a}function r(a,b){for(var c=1,e=s(a),f=0,g=l.length;g>=f;f++){var h=0;switch(b){case d.L:h=l[f][0];break;case d.M:h=l[f][1];break;case d.Q:h=l[f][2];break;case d.H:h=l[f][3]}if(h>=e)break;c++}if(c>l.length)throw new Error("Too long data");return c}function s(a){var b=encodeURI(a).toString().replace(/\%[0-9a-fA-F]{2}/g,"a");return b.length+(b.length!=a?3:0)}a.prototype={getLength:function(){return this.parsedData.length},write:function(a){for(var b=0,c=this.parsedData.length;c>b;b++)a.put(this.parsedData[b],8)}},b.prototype={addData:function(b){var c=new a(b);this.dataList.push(c),this.dataCache=null},isDark:function(a,b){if(0>a||this.moduleCount<=a||0>b||this.moduleCount<=b)throw new Error(a+","+b);return this.modules[a][b]},getModuleCount:function(){return this.moduleCount},make:function(){this.makeImpl(!1,this.getBestMaskPattern())},makeImpl:function(a,c){this.moduleCount=4*this.typeNumber+17,this.modules=new Array(this.moduleCount);for(var d=0;d<this.moduleCount;d++){this.modules[d]=new Array(this.moduleCount);for(var e=0;e<this.moduleCount;e++)this.modules[d][e]=null}this.setupPositionProbePattern(0,0),this.setupPositionProbePattern(this.moduleCount-7,0),this.setupPositionProbePattern(0,this.moduleCount-7),this.setupPositionAdjustPattern(),this.setupTimingPattern(),this.setupTypeInfo(a,c),this.typeNumber>=7&&this.setupTypeNumber(a),null==this.dataCache&&(this.dataCache=b.createData(this.typeNumber,this.errorCorrectLevel,this.dataList)),this.mapData(this.dataCache,c)},setupPositionProbePattern:function(a,b){for(var c=-1;7>=c;c++)if(!(-1>=a+c||this.moduleCount<=a+c))for(var d=-1;7>=d;d++)-1>=b+d||this.moduleCount<=b+d||(this.modules[a+c][b+d]=c>=0&&6>=c&&(0==d||6==d)||d>=0&&6>=d&&(0==c||6==c)||c>=2&&4>=c&&d>=2&&4>=d?!0:!1)},getBestMaskPattern:function(){for(var a=0,b=0,c=0;8>c;c++){this.makeImpl(!0,c);var d=f.getLostPoint(this);(0==c||a>d)&&(a=d,b=c)}return b},createMovieClip:function(a,b,c){var d=a.createEmptyMovieClip(b,c),e=1;this.make();for(var f=0;f<this.modules.length;f++)for(var g=f*e,h=0;h<this.modules[f].length;h++){var i=h*e,j=this.modules[f][h];j&&(d.beginFill(0,100),d.moveTo(i,g),d.lineTo(i+e,g),d.lineTo(i+e,g+e),d.lineTo(i,g+e),d.endFill())}return d},setupTimingPattern:function(){for(var a=8;a<this.moduleCount-8;a++)null==this.modules[a][6]&&(this.modules[a][6]=0==a%2);for(var b=8;b<this.moduleCount-8;b++)null==this.modules[6][b]&&(this.modules[6][b]=0==b%2)},setupPositionAdjustPattern:function(){for(var a=f.getPatternPosition(this.typeNumber),b=0;b<a.length;b++)for(var c=0;c<a.length;c++){var d=a[b],e=a[c];if(null==this.modules[d][e])for(var g=-2;2>=g;g++)for(var h=-2;2>=h;h++)this.modules[d+g][e+h]=-2==g||2==g||-2==h||2==h||0==g&&0==h?!0:!1}},setupTypeNumber:function(a){for(var b=f.getBCHTypeNumber(this.typeNumber),c=0;18>c;c++){var d=!a&&1==(1&b>>c);this.modules[Math.floor(c/3)][c%3+this.moduleCount-8-3]=d}for(var c=0;18>c;c++){var d=!a&&1==(1&b>>c);this.modules[c%3+this.moduleCount-8-3][Math.floor(c/3)]=d}},setupTypeInfo:function(a,b){for(var c=this.errorCorrectLevel<<3|b,d=f.getBCHTypeInfo(c),e=0;15>e;e++){var g=!a&&1==(1&d>>e);6>e?this.modules[e][8]=g:8>e?this.modules[e+1][8]=g:this.modules[this.moduleCount-15+e][8]=g}for(var e=0;15>e;e++){var g=!a&&1==(1&d>>e);8>e?this.modules[8][this.moduleCount-e-1]=g:9>e?this.modules[8][15-e-1+1]=g:this.modules[8][15-e-1]=g}this.modules[this.moduleCount-8][8]=!a},mapData:function(a,b){for(var c=-1,d=this.moduleCount-1,e=7,g=0,h=this.moduleCount-1;h>0;h-=2)for(6==h&&h--;;){for(var i=0;2>i;i++)if(null==this.modules[d][h-i]){var j=!1;g<a.length&&(j=1==(1&a[g]>>>e));var k=f.getMask(b,d,h-i);k&&(j=!j),this.modules[d][h-i]=j,e--,-1==e&&(g++,e=7)}if(d+=c,0>d||this.moduleCount<=d){d-=c,c=-c;break}}}},b.PAD0=236,b.PAD1=17,b.createData=function(a,c,d){for(var e=j.getRSBlocks(a,c),g=new k,h=0;h<d.length;h++){var i=d[h];g.put(i.mode,4),g.put(i.getLength(),f.getLengthInBits(i.mode,a)),i.write(g)}for(var l=0,h=0;h<e.length;h++)l+=e[h].dataCount;if(g.getLengthInBits()>8*l)throw new Error("code length overflow. ("+g.getLengthInBits()+">"+8*l+")");for(g.getLengthInBits()+4<=8*l&&g.put(0,4);0!=g.getLengthInBits()%8;)g.putBit(!1);for(;;){if(g.getLengthInBits()>=8*l)break;if(g.put(b.PAD0,8),g.getLengthInBits()>=8*l)break;g.put(b.PAD1,8)}return b.createBytes(g,e)},b.createBytes=function(a,b){for(var c=0,d=0,e=0,g=new Array(b.length),h=new Array(b.length),j=0;j<b.length;j++){var k=b[j].dataCount,l=b[j].totalCount-k;d=Math.max(d,k),e=Math.max(e,l),g[j]=new Array(k);for(var m=0;m<g[j].length;m++)g[j][m]=255&a.buffer[m+c];c+=k;var n=f.getErrorCorrectPolynomial(l),o=new i(g[j],n.getLength()-1),p=o.mod(n);h[j]=new Array(n.getLength()-1);for(var m=0;m<h[j].length;m++){var q=m+p.getLength()-h[j].length;h[j][m]=q>=0?p.get(q):0}}for(var r=0,m=0;m<b.length;m++)r+=b[m].totalCount;for(var s=new Array(r),t=0,m=0;d>m;m++)for(var j=0;j<b.length;j++)m<g[j].length&&(s[t++]=g[j][m]);for(var m=0;e>m;m++)for(var j=0;j<b.length;j++)m<h[j].length&&(s[t++]=h[j][m]);return s};for(var c={MODE_NUMBER:1,MODE_ALPHA_NUM:2,MODE_8BIT_BYTE:4,MODE_KANJI:8},d={L:1,M:0,Q:3,H:2},e={PATTERN000:0,PATTERN001:1,PATTERN010:2,PATTERN011:3,PATTERN100:4,PATTERN101:5,PATTERN110:6,PATTERN111:7},f={PATTERN_POSITION_TABLE:[[],[6,18],[6,22],[6,26],[6,30],[6,34],[6,22,38],[6,24,42],[6,26,46],[6,28,50],[6,30,54],[6,32,58],[6,34,62],[6,26,46,66],[6,26,48,70],[6,26,50,74],[6,30,54,78],[6,30,56,82],[6,30,58,86],[6,34,62,90],[6,28,50,72,94],[6,26,50,74,98],[6,30,54,78,102],[6,28,54,80,106],[6,32,58,84,110],[6,30,58,86,114],[6,34,62,90,118],[6,26,50,74,98,122],[6,30,54,78,102,126],[6,26,52,78,104,130],[6,30,56,82,108,134],[6,34,60,86,112,138],[6,30,58,86,114,142],[6,34,62,90,118,146],[6,30,54,78,102,126,150],[6,24,50,76,102,128,154],[6,28,54,80,106,132,158],[6,32,58,84,110,136,162],[6,26,54,82,110,138,166],[6,30,58,86,114,142,170]],G15:1335,G18:7973,G15_MASK:21522,getBCHTypeInfo:function(a){for(var b=a<<10;f.getBCHDigit(b)-f.getBCHDigit(f.G15)>=0;)b^=f.G15<<f.getBCHDigit(b)-f.getBCHDigit(f.G15);return(a<<10|b)^f.G15_MASK},getBCHTypeNumber:function(a){for(var b=a<<12;f.getBCHDigit(b)-f.getBCHDigit(f.G18)>=0;)b^=f.G18<<f.getBCHDigit(b)-f.getBCHDigit(f.G18);return a<<12|b},getBCHDigit:function(a){for(var b=0;0!=a;)b++,a>>>=1;return b},getPatternPosition:function(a){return f.PATTERN_POSITION_TABLE[a-1]},getMask:function(a,b,c){switch(a){case e.PATTERN000:return 0==(b+c)%2;case e.PATTERN001:return 0==b%2;case e.PATTERN010:return 0==c%3;case e.PATTERN011:return 0==(b+c)%3;case e.PATTERN100:return 0==(Math.floor(b/2)+Math.floor(c/3))%2;case e.PATTERN101:return 0==b*c%2+b*c%3;case e.PATTERN110:return 0==(b*c%2+b*c%3)%2;case e.PATTERN111:return 0==(b*c%3+(b+c)%2)%2;default:throw new Error("bad maskPattern:"+a)}},getErrorCorrectPolynomial:function(a){for(var b=new i([1],0),c=0;a>c;c++)b=b.multiply(new i([1,g.gexp(c)],0));return b},getLengthInBits:function(a,b){if(b>=1&&10>b)switch(a){case c.MODE_NUMBER:return 10;case c.MODE_ALPHA_NUM:return 9;case c.MODE_8BIT_BYTE:return 8;case c.MODE_KANJI:return 8;default:throw new Error("mode:"+a)}else if(27>b)switch(a){case c.MODE_NUMBER:return 12;case c.MODE_ALPHA_NUM:return 11;case c.MODE_8BIT_BYTE:return 16;case c.MODE_KANJI:return 10;default:throw new Error("mode:"+a)}else{if(!(41>b))throw new Error("type:"+b);switch(a){case c.MODE_NUMBER:return 14;case c.MODE_ALPHA_NUM:return 13;case c.MODE_8BIT_BYTE:return 16;case c.MODE_KANJI:return 12;default:throw new Error("mode:"+a)}}},getLostPoint:function(a){for(var b=a.getModuleCount(),c=0,d=0;b>d;d++)for(var e=0;b>e;e++){for(var f=0,g=a.isDark(d,e),h=-1;1>=h;h++)if(!(0>d+h||d+h>=b))for(var i=-1;1>=i;i++)0>e+i||e+i>=b||(0!=h||0!=i)&&g==a.isDark(d+h,e+i)&&f++;f>5&&(c+=3+f-5)}for(var d=0;b-1>d;d++)for(var e=0;b-1>e;e++){var j=0;a.isDark(d,e)&&j++,a.isDark(d+1,e)&&j++,a.isDark(d,e+1)&&j++,a.isDark(d+1,e+1)&&j++,(0==j||4==j)&&(c+=3)}for(var d=0;b>d;d++)for(var e=0;b-6>e;e++)a.isDark(d,e)&&!a.isDark(d,e+1)&&a.isDark(d,e+2)&&a.isDark(d,e+3)&&a.isDark(d,e+4)&&!a.isDark(d,e+5)&&a.isDark(d,e+6)&&(c+=40);for(var e=0;b>e;e++)for(var d=0;b-6>d;d++)a.isDark(d,e)&&!a.isDark(d+1,e)&&a.isDark(d+2,e)&&a.isDark(d+3,e)&&a.isDark(d+4,e)&&!a.isDark(d+5,e)&&a.isDark(d+6,e)&&(c+=40);for(var k=0,e=0;b>e;e++)for(var d=0;b>d;d++)a.isDark(d,e)&&k++;var l=Math.abs(100*k/b/b-50)/5;return c+=10*l}},g={glog:function(a){if(1>a)throw new Error("glog("+a+")");return g.LOG_TABLE[a]},gexp:function(a){for(;0>a;)a+=255;for(;a>=256;)a-=255;return g.EXP_TABLE[a]},EXP_TABLE:new Array(256),LOG_TABLE:new Array(256)},h=0;8>h;h++)g.EXP_TABLE[h]=1<<h;for(var h=8;256>h;h++)g.EXP_TABLE[h]=g.EXP_TABLE[h-4]^g.EXP_TABLE[h-5]^g.EXP_TABLE[h-6]^g.EXP_TABLE[h-8];for(var h=0;255>h;h++)g.LOG_TABLE[g.EXP_TABLE[h]]=h;i.prototype={get:function(a){return this.num[a]},getLength:function(){return this.num.length},multiply:function(a){for(var b=new Array(this.getLength()+a.getLength()-1),c=0;c<this.getLength();c++)for(var d=0;d<a.getLength();d++)b[c+d]^=g.gexp(g.glog(this.get(c))+g.glog(a.get(d)));return new i(b,0)},mod:function(a){if(this.getLength()-a.getLength()<0)return this;for(var b=g.glog(this.get(0))-g.glog(a.get(0)),c=new Array(this.getLength()),d=0;d<this.getLength();d++)c[d]=this.get(d);for(var d=0;d<a.getLength();d++)c[d]^=g.gexp(g.glog(a.get(d))+b);return new i(c,0).mod(a)}},j.RS_BLOCK_TABLE=[[1,26,19],[1,26,16],[1,26,13],[1,26,9],[1,44,34],[1,44,28],[1,44,22],[1,44,16],[1,70,55],[1,70,44],[2,35,17],[2,35,13],[1,100,80],[2,50,32],[2,50,24],[4,25,9],[1,134,108],[2,67,43],[2,33,15,2,34,16],[2,33,11,2,34,12],[2,86,68],[4,43,27],[4,43,19],[4,43,15],[2,98,78],[4,49,31],[2,32,14,4,33,15],[4,39,13,1,40,14],[2,121,97],[2,60,38,2,61,39],[4,40,18,2,41,19],[4,40,14,2,41,15],[2,146,116],[3,58,36,2,59,37],[4,36,16,4,37,17],[4,36,12,4,37,13],[2,86,68,2,87,69],[4,69,43,1,70,44],[6,43,19,2,44,20],[6,43,15,2,44,16],[4,101,81],[1,80,50,4,81,51],[4,50,22,4,51,23],[3,36,12,8,37,13],[2,116,92,2,117,93],[6,58,36,2,59,37],[4,46,20,6,47,21],[7,42,14,4,43,15],[4,133,107],[8,59,37,1,60,38],[8,44,20,4,45,21],[12,33,11,4,34,12],[3,145,115,1,146,116],[4,64,40,5,65,41],[11,36,16,5,37,17],[11,36,12,5,37,13],[5,109,87,1,110,88],[5,65,41,5,66,42],[5,54,24,7,55,25],[11,36,12],[5,122,98,1,123,99],[7,73,45,3,74,46],[15,43,19,2,44,20],[3,45,15,13,46,16],[1,135,107,5,136,108],[10,74,46,1,75,47],[1,50,22,15,51,23],[2,42,14,17,43,15],[5,150,120,1,151,121],[9,69,43,4,70,44],[17,50,22,1,51,23],[2,42,14,19,43,15],[3,141,113,4,142,114],[3,70,44,11,71,45],[17,47,21,4,48,22],[9,39,13,16,40,14],[3,135,107,5,136,108],[3,67,41,13,68,42],[15,54,24,5,55,25],[15,43,15,10,44,16],[4,144,116,4,145,117],[17,68,42],[17,50,22,6,51,23],[19,46,16,6,47,17],[2,139,111,7,140,112],[17,74,46],[7,54,24,16,55,25],[34,37,13],[4,151,121,5,152,122],[4,75,47,14,76,48],[11,54,24,14,55,25],[16,45,15,14,46,16],[6,147,117,4,148,118],[6,73,45,14,74,46],[11,54,24,16,55,25],[30,46,16,2,47,17],[8,132,106,4,133,107],[8,75,47,13,76,48],[7,54,24,22,55,25],[22,45,15,13,46,16],[10,142,114,2,143,115],[19,74,46,4,75,47],[28,50,22,6,51,23],[33,46,16,4,47,17],[8,152,122,4,153,123],[22,73,45,3,74,46],[8,53,23,26,54,24],[12,45,15,28,46,16],[3,147,117,10,148,118],[3,73,45,23,74,46],[4,54,24,31,55,25],[11,45,15,31,46,16],[7,146,116,7,147,117],[21,73,45,7,74,46],[1,53,23,37,54,24],[19,45,15,26,46,16],[5,145,115,10,146,116],[19,75,47,10,76,48],[15,54,24,25,55,25],[23,45,15,25,46,16],[13,145,115,3,146,116],[2,74,46,29,75,47],[42,54,24,1,55,25],[23,45,15,28,46,16],[17,145,115],[10,74,46,23,75,47],[10,54,24,35,55,25],[19,45,15,35,46,16],[17,145,115,1,146,116],[14,74,46,21,75,47],[29,54,24,19,55,25],[11,45,15,46,46,16],[13,145,115,6,146,116],[14,74,46,23,75,47],[44,54,24,7,55,25],[59,46,16,1,47,17],[12,151,121,7,152,122],[12,75,47,26,76,48],[39,54,24,14,55,25],[22,45,15,41,46,16],[6,151,121,14,152,122],[6,75,47,34,76,48],[46,54,24,10,55,25],[2,45,15,64,46,16],[17,152,122,4,153,123],[29,74,46,14,75,47],[49,54,24,10,55,25],[24,45,15,46,46,16],[4,152,122,18,153,123],[13,74,46,32,75,47],[48,54,24,14,55,25],[42,45,15,32,46,16],[20,147,117,4,148,118],[40,75,47,7,76,48],[43,54,24,22,55,25],[10,45,15,67,46,16],[19,148,118,6,149,119],[18,75,47,31,76,48],[34,54,24,34,55,25],[20,45,15,61,46,16]],j.getRSBlocks=function(a,b){var c=j.getRsBlockTable(a,b);if(void 0==c)throw new Error("bad rs block @ typeNumber:"+a+"/errorCorrectLevel:"+b);for(var d=c.length/3,e=[],f=0;d>f;f++)for(var g=c[3*f+0],h=c[3*f+1],i=c[3*f+2],k=0;g>k;k++)e.push(new j(h,i));return e},j.getRsBlockTable=function(a,b){switch(b){case d.L:return j.RS_BLOCK_TABLE[4*(a-1)+0];case d.M:return j.RS_BLOCK_TABLE[4*(a-1)+1];case d.Q:return j.RS_BLOCK_TABLE[4*(a-1)+2];case d.H:return j.RS_BLOCK_TABLE[4*(a-1)+3];default:return void 0}},k.prototype={get:function(a){var b=Math.floor(a/8);return 1==(1&this.buffer[b]>>>7-a%8)},put:function(a,b){for(var c=0;b>c;c++)this.putBit(1==(1&a>>>b-c-1))},getLengthInBits:function(){return this.length},putBit:function(a){var b=Math.floor(this.length/8);this.buffer.length<=b&&this.buffer.push(0),a&&(this.buffer[b]|=128>>>this.length%8),this.length++}};var l=[[17,14,11,7],[32,26,20,14],[53,42,32,24],[78,62,46,34],[106,84,60,44],[134,106,74,58],[154,122,86,64],[192,152,108,84],[230,180,130,98],[271,213,151,119],[321,251,177,137],[367,287,203,155],[425,331,241,177],[458,362,258,194],[520,412,292,220],[586,450,322,250],[644,504,364,280],[718,560,394,310],[792,624,442,338],[858,666,482,382],[929,711,509,403],[1003,779,565,439],[1091,857,611,461],[1171,911,661,511],[1273,997,715,535],[1367,1059,751,593],[1465,1125,805,625],[1528,1190,868,658],[1628,1264,908,698],[1732,1370,982,742],[1840,1452,1030,790],[1952,1538,1112,842],[2068,1628,1168,898],[2188,1722,1228,958],[2303,1809,1283,983],[2431,1911,1351,1051],[2563,1989,1423,1093],[2699,2099,1499,1139],[2809,2213,1579,1219],[2953,2331,1663,1273]],o=function(){var a=function(a,b){this._el=a,this._htOption=b};return a.prototype.draw=function(a){function g(a,b){var c=document.createElementNS("http://www.w3.org/2000/svg",a);for(var d in b)b.hasOwnProperty(d)&&c.setAttribute(d,b[d]);return c}var b=this._htOption,c=this._el,d=a.getModuleCount();Math.floor(b.width/d),Math.floor(b.height/d),this.clear();var h=g("svg",{viewBox:"0 0 "+String(d)+" "+String(d),width:"100%",height:"100%",fill:b.colorLight});h.setAttributeNS("http://www.w3.org/2000/xmlns/","xmlns:xlink","http://www.w3.org/1999/xlink"),c.appendChild(h),h.appendChild(g("rect",{fill:b.colorDark,width:"1",height:"1",id:"template"}));for(var i=0;d>i;i++)for(var j=0;d>j;j++)if(a.isDark(i,j)){var k=g("use",{x:String(i),y:String(j)});k.setAttributeNS("http://www.w3.org/1999/xlink","href","#template"),h.appendChild(k)}},a.prototype.clear=function(){for(;this._el.hasChildNodes();)this._el.removeChild(this._el.lastChild)},a}(),p="svg"===document.documentElement.tagName.toLowerCase(),q=p?o:m()?function(){function a(){this._elImage.src=this._elCanvas.toDataURL("image/png"),this._elImage.style.display="block",this._elCanvas.style.display="none"}function d(a,b){var c=this;if(c._fFail=b,c._fSuccess=a,null===c._bSupportDataURI){var d=document.createElement("img"),e=function(){c._bSupportDataURI=!1,c._fFail&&_fFail.call(c)},f=function(){c._bSupportDataURI=!0,c._fSuccess&&c._fSuccess.call(c)};return d.onabort=e,d.onerror=e,d.onload=f,d.src="data:image/gif;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg==",void 0}c._bSupportDataURI===!0&&c._fSuccess?c._fSuccess.call(c):c._bSupportDataURI===!1&&c._fFail&&c._fFail.call(c)}if(this._android&&this._android<=2.1){var b=1/window.devicePixelRatio,c=CanvasRenderingContext2D.prototype.drawImage;CanvasRenderingContext2D.prototype.drawImage=function(a,d,e,f,g,h,i,j){if("nodeName"in a&&/img/i.test(a.nodeName))for(var l=arguments.length-1;l>=1;l--)arguments[l]=arguments[l]*b;else"undefined"==typeof j&&(arguments[1]*=b,arguments[2]*=b,arguments[3]*=b,arguments[4]*=b);c.apply(this,arguments)}}var e=function(a,b){this._bIsPainted=!1,this._android=n(),this._htOption=b,this._elCanvas=document.createElement("canvas"),this._elCanvas.width=b.width,this._elCanvas.height=b.height,a.appendChild(this._elCanvas),this._el=a,this._oContext=this._elCanvas.getContext("2d"),this._bIsPainted=!1,this._elImage=document.createElement("img"),this._elImage.style.display="none",this._el.appendChild(this._elImage),this._bSupportDataURI=null};return e.prototype.draw=function(a){var b=this._elImage,c=this._oContext,d=this._htOption,e=a.getModuleCount(),f=d.width/e,g=d.height/e,h=Math.round(f),i=Math.round(g);b.style.display="none",this.clear();for(var j=0;e>j;j++)for(var k=0;e>k;k++){var l=a.isDark(j,k),m=k*f,n=j*g;c.strokeStyle=l?d.colorDark:d.colorLight,c.lineWidth=1,c.fillStyle=l?d.colorDark:d.colorLight,c.fillRect(m,n,f,g),c.strokeRect(Math.floor(m)+.5,Math.floor(n)+.5,h,i),c.strokeRect(Math.ceil(m)-.5,Math.ceil(n)-.5,h,i)}this._bIsPainted=!0},e.prototype.makeImage=function(){this._bIsPainted&&d.call(this,a)},e.prototype.isPainted=function(){return this._bIsPainted},e.prototype.clear=function(){this._oContext.clearRect(0,0,this._elCanvas.width,this._elCanvas.height),this._bIsPainted=!1},e.prototype.round=function(a){return a?Math.floor(1e3*a)/1e3:a},e}():function(){var a=function(a,b){this._el=a,this._htOption=b};return a.prototype.draw=function(a){for(var b=this._htOption,c=this._el,d=a.getModuleCount(),e=Math.floor(b.width/d),f=Math.floor(b.height/d),g=['<table style="border:0;border-collapse:collapse;">'],h=0;d>h;h++){g.push("<tr>");for(var i=0;d>i;i++)g.push('<td style="border:0;border-collapse:collapse;padding:0;margin:0;width:'+e+"px;height:"+f+"px;background-color:"+(a.isDark(h,i)?b.colorDark:b.colorLight)+';"></td>');g.push("</tr>")}g.push("</table>"),c.innerHTML=g.join("");var j=c.childNodes[0],k=(b.width-j.offsetWidth)/2,l=(b.height-j.offsetHeight)/2;k>0&&l>0&&(j.style.margin=l+"px "+k+"px")},a.prototype.clear=function(){this._el.innerHTML=""},a}();QRCode=function(a,b){if(this._htOption={width:256,height:256,typeNumber:4,colorDark:"#000000",colorLight:"#ffffff",correctLevel:d.H},"string"==typeof b&&(b={text:b}),b)for(var c in b)this._htOption[c]=b[c];"string"==typeof a&&(a=document.getElementById(a)),this._android=n(),this._el=a,this._oQRCode=null,this._oDrawing=new q(this._el,this._htOption),this._htOption.text&&this.makeCode(this._htOption.text)},QRCode.prototype.makeCode=function(a){this._oQRCode=new b(r(a,this._htOption.correctLevel),this._htOption.correctLevel),this._oQRCode.addData(a),this._oQRCode.make(),this._el.title=a,this._oDrawing.draw(this._oQRCode),this.makeImage()},QRCode.prototype.makeImage=function(){"function"==typeof this._oDrawing.makeImage&&(!this._android||this._android>=3)&&this._oDrawing.makeImage()},QRCode.prototype.clear=function(){this._oDrawing.clear()},QRCode.CorrectLevel=d}();
+</script>
+<script>
+(function(){
+  "use strict";
+  if(window.ShareQR) return;
+
+  var ANCHOR = "_";          // Startbildschirm: Knopf nur sichtbar, solange der zu sehen ist
+  var INLINE = ".top-actions";          // optional: Leiste, in die der Knopf direkt eingebaut wird
+  var BASE_KEY = "spieleSuite.basis";
+  var BASE_STD = "https://mauthier-bit.github.io/Spiele-Suite/";
+
+  /* ---------------- Adresse bestimmen ---------------- */
+  function basis(){
+    var b=null;
+    try{ b=localStorage.getItem(BASE_KEY); }catch(e){}
+    b=b||BASE_STD;
+    return b.charAt(b.length-1)==="/" ? b : b+"/";
+  }
+  function dateiname(){
+    var p=location.pathname||"";
+    var name=p.substring(p.lastIndexOf("/")+1);
+    try{ name=decodeURIComponent(name); }catch(e){}
+    return /^[\w.%+ -]{1,80}\.html?$/i.test(name) ? name : "index.html";
+  }
+  function adresse(){
+    if(location.protocol==="http:"||location.protocol==="https:") return location.href.split("#")[0];
+    return basis()+encodeURIComponent(dateiname());
+  }
+
+  /* ---------------- QR-Code zeichnen ---------------- */
+  function zeichneCode(host,url){
+    host.innerHTML="";
+    host.style.removeProperty("--sq-w");
+    if(typeof QRCode==="undefined"){
+      host.innerHTML='<div style="padding:18px;color:#8a929c;font-size:.9rem;">QR-Code nicht verfügbar – bitte den Link weitergeben.</div>';
+      return;
+    }
+    try{
+      var q=new QRCode(host,{text:url, width:900, height:900, correctLevel:QRCode.CorrectLevel.M});
+      /* Ruhezone: vier Module weiß ringsum, sonst findet die Kamera den Code nicht */
+      var n=q._oQRCode && q._oQRCode.getModuleCount ? q._oQRCode.getModuleCount() : 0;
+      if(n) host.style.setProperty("--sq-w", (100*n/(n+8)).toFixed(2)+"%");
+    }catch(e){
+      host.innerHTML='<div style="padding:18px;color:#8a929c;font-size:.9rem;">Die Adresse ist zu lang für einen QR-Code – bitte den Link kopieren.</div>';
+    }
+  }
+
+  /* ---------------- Oberfläche ---------------- */
+  var ov=null;
+  function baueOverlay(){
+    ov=document.createElement("div");
+    ov.className="sq-ov";
+    ov.innerHTML='<div class="sq-card">'+
+      '<h2 id="sqTitle">Teilen</h2><p class="sq-sub">Mit der Kamera scannen – das Spiel öffnet sich direkt im Browser.</p>'+
+      '<div class="sq-code" id="sqCode"></div>'+
+      '<div class="sq-url" id="sqUrl"></div>'+
+      '<div class="sq-row">'+
+        '<button class="sq-copy">Link kopieren</button>'+
+        '<button class="sq-alt sq-edit">Adresse ändern</button>'+
+        '<button class="sq-alt sq-close">Schließen</button>'+
+      '</div>'+
+      '<div class="sq-note" id="sqNote"></div>'+
+      '</div>';
+    document.body.appendChild(ov);
+    ov.addEventListener("click",function(e){ if(e.target===ov) zu(); });
+    ov.querySelector(".sq-close").addEventListener("click",zu);
+    ov.querySelector(".sq-copy").addEventListener("click",function(){ kopiereLink(this); });
+    ov.querySelector(".sq-edit").addEventListener("click",function(){
+      var neu=prompt("Internetadresse des Ordners, in dem die Spiele liegen:", basis());
+      if(neu===null) return;
+      neu=neu.trim();
+      try{ if(neu) localStorage.setItem(BASE_KEY,neu); else localStorage.removeItem(BASE_KEY); }catch(e){}
+      fuelle();
+    });
+  }
+  function fuelle(){
+    var url=adresse();
+    var t=(document.title||"").split(/[\u2013\u2014|\u00b7]/)[0].trim();
+    ov.querySelector("#sqTitle").textContent=(t||"Diese Seite")+" teilen";
+    zeichneCode(ov.querySelector("#sqCode"), url);
+    ov.querySelector("#sqUrl").textContent=url;
+    ov.querySelector("#sqNote").innerHTML = (location.protocol==="http:"||location.protocol==="https:")
+      ? "Das ist die Adresse dieser Seite."
+      : "Die Datei liegt lokal auf diesem Gerät. Der Code zeigt deshalb auf die veröffentlichte Fassung – über „Adresse ändern“ anpassbar.";
+  }
+  function kopiereLink(btn){
+    var url=adresse();
+    function melde(ok){
+      btn.textContent = ok ? "Kopiert \u2713" : "Bitte von Hand kopieren";
+      btn.classList.toggle("sq-ok", !!ok);
+      if(!ok){
+        try{
+          var el=ov.querySelector("#sqUrl"), r=document.createRange();
+          r.selectNodeContents(el);
+          var s=window.getSelection(); s.removeAllRanges(); s.addRange(r);
+        }catch(e){}
+      }
+      clearTimeout(btn._t);
+      btn._t=setTimeout(function(){ btn.textContent="Link kopieren"; btn.classList.remove("sq-ok"); },1900);
+    }
+    function altweg(){
+      try{
+        var ta=document.createElement("textarea");
+        ta.value=url; ta.setAttribute("readonly","");
+        ta.style.position="fixed"; ta.style.top="-1000px"; ta.style.opacity="0";
+        document.body.appendChild(ta);
+        ta.select(); ta.setSelectionRange(0,ta.value.length);
+        var ok=document.execCommand("copy");
+        document.body.removeChild(ta);
+        melde(ok);
+      }catch(e){ melde(false); }
+    }
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(url).then(function(){ melde(true); }, altweg);
+    } else altweg();
+  }
+  function auf(){ if(!ov) baueOverlay(); fuelle(); ov.classList.add("on"); }
+  function zu(){ if(ov) ov.classList.remove("on"); }
+
+  var ICON='<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 3h8v8H3V3zm2 2v4h4V5H5zm8-2h8v8h-8V3zm2 2v4h4V5h-4zM3 13h8v8H3v-8zm2 2v4h4v-4H5zm8-2h3v3h-3v-3zm5 0h3v3h-3v-3zm-5 5h3v3h-3v-3zm5 0h3v3h-3v-3z"/></svg>';
+  function knopf(){
+    var inline=INLINE && INLINE.charAt(0)!=="_" ? document.querySelector(INLINE) : null;
+    if(inline){
+      var b=document.createElement("button");
+      b.className=(inline.querySelector("button")? inline.querySelector("button").className : "")+" sq-inline";
+      b.type="button"; b.innerHTML=ICON+"<span>Teilen</span>";
+      b.addEventListener("click",auf);
+      inline.appendChild(b);
+      return;
+    }
+    var f=document.createElement("button");
+    f.className="sq-fab"; f.type="button";
+    f.innerHTML=ICON+"<span>Teilen</span>";
+    f.addEventListener("click",auf);
+    document.body.appendChild(f);
+    var sel = ANCHOR && ANCHOR.charAt(0)!=="_" ? ANCHOR : null;
+    function sichtbar(){
+      if(!sel) return true;
+      var els=document.querySelectorAll(sel);
+      for(var i=0;i<els.length;i++){
+        var cs=getComputedStyle(els[i]);
+        if(cs.display!=="none" && cs.visibility!=="hidden" && els[i].getClientRects().length) return true;
+      }
+      return false;
+    }
+    function pruefe(){ f.classList.toggle("on", sichtbar() && !(ov&&ov.classList.contains("on"))); }
+    pruefe();
+    setInterval(pruefe,400);
+  }
+  function start(){ knopf(); }
+  if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",start);
+  else start();
+
+  window.ShareQR={open:auf, close:zu, url:adresse, basis:basis};
+})();
+</script>
+
+</body>
+</html>

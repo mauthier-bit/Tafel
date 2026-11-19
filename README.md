@@ -681,6 +681,15 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   Öffnen über das Werkzeug tun das ebenfalls. Im kleinen Fenster bleibt die **Lärmanzeige gut
   ablesbar**: Zeiger 190 × 112, Balken 190 × 80 und Lampen 44 px – also nur wenig kleiner als in
   der großen Ansicht.
+- **Spiele-Suite** (Diverses, Knopf **Galgenmännchen**): der Knopf öffnet nicht mehr nur ein Spiel,
+  sondern die **ganze Spiele-Suite** in einem eigenen Fenster – 22 fertige Unterrichtsspiele
+  (Galgenmännchen, Bruno, D-Uno, Termino, Memory, Mathe- und Physik-Tabu, Superhirn, Schiffe
+  versenken, Schatzsuche, Breakout …) mit den Filtern der Übersicht (Fach, Jahrgang, Spielform,
+  Suche). Die Spiele liegen als **Kopie** in `spiele/` und laufen damit auch **offline**; sie
+  starten **im Fenster** statt in einem neuen Tab, **◀ Übersicht** führt zurück. Der Service
+  Worker hält sie in einem **eigenen Vorrat** (`tafel-spiele`), der ein Tafel-Update übersteht –
+  erst wenn `SPIELE_V` in `sw.js` hochgezählt wird, werden sie neu geholt. Das macht
+  `~/git/sync-spiele.sh` von selbst, sobald es neue Spielstände in die Tafel kopiert.
 - **Silent Zoo** (Diverses, `silentzoo.html`): das **Gegenstück zur Lärmampel** – und wie diese
   ein **eigenes Fenster**, kein Tafelobjekt: es gehört zur Lehrkraft, nicht zu einer Seite, lässt
   sich an den unteren Rand legen und merkt sich seine Einstellung **geräteweit**. Bestraft wird

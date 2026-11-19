@@ -1,0 +1,1324 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Koordinaten-Schatzsuche</title>
+<style>
+  :root{
+    --pl:#efe2c6; --pl2:#e7d6b2; --ink:#3a2c1a; --sepia:#6b5333;
+    --ox:#9a2f22; --gold:#c79a31; --indigo:#2f4a6b; --verm:#c2451f;
+    --good:#3f6b46; --grid:#cdb98c; --grid2:#b89a63; --axis:#7a6238;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; height:100%; overflow:hidden; font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif; color:var(--ink); background:#cdbb95;}
+  #app{display:flex; flex-direction:column; height:100%; width:100%;}
+  /* Kopf */
+  #top{flex:0 0 auto; background:linear-gradient(#f3e8cf,#e7d6b2); border-bottom:2px solid #b79c63; padding:6px 12px; display:flex; align-items:center; gap:12px;}
+  #ttl{font-weight:700; font-size:17px; color:var(--ox); letter-spacing:.3px; white-space:nowrap;}
+  #meta{font-size:13px; color:var(--sepia);}
+  #pips{display:flex; gap:5px; margin-left:auto;}
+  .pip{width:11px; height:11px; border-radius:50%; border:1.6px solid var(--sepia); background:transparent;}
+  .pip.done{background:var(--good); border-color:var(--good);}
+  .pip.cur{border-color:var(--ox); box-shadow:0 0 0 2px rgba(154,47,34,.18);}
+  #hintbtn,#geohintbtn{font:inherit; font-size:13px; cursor:pointer; border:1.5px solid var(--gold); background:#f6edd7; color:var(--sepia); border-radius:8px; padding:3px 9px;}
+  #hintbtn.on,#geohintbtn.on{background:var(--gold); color:#3a2c1a;}
+  /* Hinweistext */
+  #hintbar{flex:0 0 auto; background:#f6edd7; border-bottom:1px solid #cdb98c; padding:7px 14px; font-size:15px; line-height:1.35;}
+  #hintbar .dh{color:var(--ink);}
+  #cluehelp{display:none; margin-top:6px; padding-top:6px; border-top:1px dashed #cdb98c; font-size:13.5px; color:var(--sepia);}
+  #cluehelp.show{display:block;}
+  .ck{display:inline-block; font-size:11px; background:var(--indigo); color:#f3e8cf; border-radius:5px; padding:1px 6px; margin-right:5px; vertical-align:1px;}
+  .cl{margin:3px 0;}
+  /* Mitte: Sidebar + Karte */
+  #mid{flex:1 1 auto; display:flex; min-height:0;}
+  #bar{flex:0 0 96px; background:linear-gradient(#ecdcbb,#e2cfa6); border-right:2px solid #b79c63; padding:8px 7px; display:flex; flex-direction:column; gap:7px; overflow-y:auto;}
+  .tool{border:1.6px solid #b08f54; background:#f6edd7; border-radius:10px; padding:6px 3px 5px; text-align:center; cursor:pointer; user-select:none;}
+  .tool svg{display:block; margin:0 auto 2px; width:38px; height:30px;}
+  .tool .tn{font-size:11.5px; font-weight:600; color:var(--sepia);}
+  .tool.sel{background:var(--gold); border-color:#8a6a1f; box-shadow:0 1px 4px rgba(0,0,0,.18);}
+  .tool.disabled{opacity:.34; cursor:not-allowed; filter:grayscale(.6);}
+  .tool.disabled .tn::after{content:" 🔒"; font-size:9px;}
+  .tool .ink{stroke:var(--sepia); stroke-width:2.4; fill:none; stroke-linecap:round;}
+  .tool .dot{fill:var(--ox);}
+  .tool.sel .ink{stroke:#3a2c1a;}
+  .sep{height:1px; background:#b79c63; margin:3px 1px; opacity:.6;}
+  .util{border:1.4px solid #b08f54; background:#f3e8cf; border-radius:9px; padding:6px 3px; text-align:center; font-size:12px; color:var(--sepia); cursor:pointer; user-select:none;}
+  .util.on{background:var(--indigo); color:#f3e8cf; border-color:#22364e;}
+  #wrap{flex:1 1 auto; position:relative; min-width:0; background:
+      radial-gradient(120% 120% at 50% 0%, #f0e4c8 0%, #e6d3ac 60%, #ddc79a 100%);}
+  svg#map{position:absolute; inset:0; width:100%; height:100%; touch-action:none;}
+  /* Toast */
+  #toast{position:absolute; left:50%; bottom:14px; transform:translateX(-50%); background:rgba(58,44,26,.92); color:#f3e8cf; padding:8px 16px; border-radius:11px; font-size:14px; opacity:0; transition:opacity .2s; pointer-events:none; max-width:80%; text-align:center;}
+  #toast.show{opacity:1;}
+  #toast.good{background:rgba(63,107,70,.95);} #toast.bad{background:rgba(154,47,34,.95);} #toast.info{background:rgba(47,74,107,.95);}
+  /* Win */
+  #win{position:absolute; inset:0; display:none; align-items:center; justify-content:center; background:rgba(40,30,16,.45); z-index:5;}
+  #win.show{display:flex;}
+  #wincard{background:#f3e8cf; border:3px solid var(--gold); border-radius:16px; padding:22px 26px; max-width:80%; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,.3);}
+  #wincard h2{margin:.2em 0; color:var(--ox);}
+  #wincard p{margin:.4em 0; font-size:15px;}
+  #wincard button{font:inherit; font-size:15px; margin-top:10px; cursor:pointer; background:var(--indigo); color:#f3e8cf; border:none; border-radius:9px; padding:8px 16px;}
+  /* Overlays */
+  .ov{position:absolute; inset:0; display:none; align-items:center; justify-content:center; background:rgba(40,30,16,.45); z-index:6;}
+  .ov.show{display:flex;}
+  .ovcard{background:#f3e8cf; border:2px solid #b79c63; border-radius:14px; padding:18px 22px; max-width:560px; max-height:84%; overflow:auto;}
+  .ovcard h3{color:var(--ox); margin:.5em 0 .2em;}
+  .ovcard p,.ovcard li{font-size:14px; line-height:1.4;}
+  .ovcard .x{float:right; cursor:pointer; font-size:20px; color:var(--sepia);}
+  #huntpick{position:absolute; left:8px; bottom:8px; z-index:4; display:flex; gap:6px; background:rgba(243,232,207,.9); border:1.4px solid #b79c63; border-radius:11px; padding:5px 7px;}
+  .hp{width:30px; height:30px; border-radius:8px; border:1.5px solid var(--sepia); background:#f6edd7; color:var(--sepia); font-size:14px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center;}
+  .hp.done{background:var(--good); color:#f3e8cf; border-color:var(--good);}
+  .hp.cur{border-color:var(--ox); box-shadow:0 0 0 2px rgba(154,47,34,.2);}
+  .hp.locked{opacity:.4; cursor:not-allowed;}
+  #teachercard input{font:inherit; font-size:16px; padding:6px 10px; border:1.5px solid #b79c63; border-radius:8px; width:130px;}
+  #teachercard button{font:inherit; cursor:pointer; background:var(--indigo); color:#f3e8cf; border:none; border-radius:8px; padding:7px 14px; margin-left:6px;}
+</style>
+<script>
+/* Scharfe Kante unter der iPadOS-Statusleiste (iPadOS 26/27).
+   WebKit legt in Web-Apps vom Homebildschirm am oberen Rand sonst einen
+   weichen Verlauf ueber den Inhalt. Er entfaellt, wenn dort eine deckende
+   Leiste liegt - ein bildschirmfuellender Kasten genuegt nicht (am
+   13.10.2026 auf iPadOS 27 geprueft). Das Skript legt deshalb einen 16 px
+   hohen, deckenden Streifen an den oberen Rand und rueckt alles, was in
+   diese 16 px hineinragt, um 16 px nach unten. Laeuft nur in der App vom
+   Homebildschirm, nicht in Safari und nicht in einem Rahmen; mit #kante in
+   der Adresse laesst es sich zum Pruefen erzwingen. */
+(function(){
+  if(window.top!==window) return;
+  var pruef=/kante/i.test(location.hash||'');
+  var alsApp=(navigator.standalone===true) ||
+             (window.matchMedia && matchMedia('(display-mode: standalone)').matches);
+  if(!alsApp && !pruef) return;
+
+  var HOCH=16;
+  function leer(f){ return !f || f==='transparent' || f.replace(/\s/g,'')==='rgba(0,0,0,0)'; }
+  function seite(){
+    var s=getComputedStyle(document.body), f=s.backgroundColor, b=s.backgroundImage;
+    if(leer(f) && (!b || b==='none')){
+      s=getComputedStyle(document.documentElement); f=s.backgroundColor; b=s.backgroundImage;
+    }
+    return { farbe: leer(f) ? '#ffffff' : f, bild: (b && b!=='none') ? b : '' };
+  }
+  /* Faerbt dieses Element am oberen Rand etwas sichtbar ein? */
+  function tinte(n){
+    var r=n.getBoundingClientRect();
+    if(r.top>=HOCH || r.bottom<=0 || r.width<=0) return false;
+    var s=getComputedStyle(n);
+    if(s.display==='none' || s.visibility==='hidden' || s.opacity==='0') return false;
+    if(n.id==='randKante') return false;
+    var t=n.tagName.toLowerCase();
+    if(t==='img'||t==='svg'||t==='canvas'||t==='video') return true;
+    if(!leer(s.backgroundColor) || s.backgroundImage!=='none') return true;
+    if(parseFloat(s.borderTopWidth)>0) return true;
+    var kn=n.childNodes;
+    for(var j=0;j<kn.length;j++)
+      if(kn[j].nodeType===3 && kn[j].nodeValue.replace(/\s/g,'')) return true;
+    for(var i=0;i<n.children.length;i++) if(tinte(n.children[i])) return true;
+    return false;
+  }
+  function ragtRein(z){
+    for(var i=0;i<z.children.length;i++) if(tinte(z.children[i])) return true;
+    return false;
+  }
+  function luft(z){
+    if(z.dataset.kanteLuft) return;
+    if(!ragtRein(z) && !tinte(z)) return;    /* noch nichts oben - spaeter nochmal */
+    z.dataset.kanteLuft='1';
+    var p=parseFloat(getComputedStyle(z).paddingTop)||0;
+    if(p>=HOCH) return;
+    z.style.paddingTop=(p+HOCH)+'px';
+  }
+  function sichtbar(n,s){
+    return s.display!=='none' && s.visibility!=='hidden' && n.id!=='randKante';
+  }
+  /* bildschirmfuellende fixierte Kaesten */
+  function kaesten(){
+    var alle=document.querySelectorAll('body > *, body > * > *'), raus=[];
+    for(var i=0;i<alle.length;i++){
+      var n=alle[i], s=getComputedStyle(n);
+      if(s.position!=='fixed' || !sichtbar(n,s)) continue;
+      /* Deko-Ebenen wie Konfetti liegen durchsichtig ueber allem und duerfen
+         niemals angefasst werden - sie wuerden sonst das Spiel verdecken. */
+      if(s.pointerEvents==='none') continue;
+      var r=n.getBoundingClientRect();
+      if(r.top<=4 && r.width>=innerWidth*0.9 && r.height>=innerHeight*0.9) raus.push(n);
+    }
+    return raus;
+  }
+  /* Leisten am oberen Rand (fixiert oder klebend, aber kein Vollbildkasten) */
+  function leisten(){
+    var alle=document.querySelectorAll('body > *, body > * > *'), raus=[];
+    for(var i=0;i<alle.length;i++){
+      var n=alle[i], s=getComputedStyle(n);
+      if((s.position!=='fixed' && s.position!=='sticky') || !sichtbar(n,s)) continue;
+      var r=n.getBoundingClientRect();
+      if(r.top<=4 && r.width>=innerWidth*0.8 && r.height>=6 && r.height<=innerHeight*0.6) raus.push(n);
+    }
+    return raus;
+  }
+  /* Liegt oben schon eine deckende Leiste, ist nichts zu tun. */
+  function schonGut(){
+    var st=document.elementsFromPoint ? document.elementsFromPoint(Math.round(innerWidth/2),2) : [];
+    for(var i=0;i<st.length;i++){
+      var n=st[i];
+      if(n.id==='randKante') continue;
+      if(n===document.body || n===document.documentElement) return false;
+      var s=getComputedStyle(n), r=n.getBoundingClientRect();
+      return (s.position==='fixed'||s.position==='sticky') && r.top<=4 &&
+             r.width>=innerWidth*0.8 && r.height>=6 && r.height<=innerHeight*0.6 &&
+             !leer(s.backgroundColor);
+    }
+    return false;
+  }
+  var band=null;
+  function streifen(farbe){
+    if(!band){
+      band=document.createElement('div');
+      band.id='randKante'; band.setAttribute('aria-hidden','true');
+      band.style.cssText='position:fixed;left:0;top:0;width:100%;height:'+HOCH+'px;'+
+        'z-index:2147483646;pointer-events:none';
+      document.body.appendChild(band);
+    }
+    band.style.display='block';
+    if(farbe){
+      band.style.backgroundColor=farbe;
+      band.style.backgroundImage='none';
+      return;
+    }
+    var s=getComputedStyle(document.body), h=seite();
+    band.style.backgroundColor=h.farbe;
+    band.style.backgroundImage=h.bild||'none';
+    band.style.backgroundAttachment='fixed';
+    if(h.bild && s.backgroundAttachment!=='fixed')
+      band.style.backgroundSize='100% '+Math.max(innerHeight,document.body.scrollHeight)+'px';
+  }
+  var schild=null;
+  function zeigen(txt){
+    if(!pruef) return;
+    if(!schild){
+      schild=document.createElement('div');
+      schild.style.cssText='position:fixed;left:6px;bottom:52px;z-index:2147483647;max-width:92%;'+
+        'padding:6px 9px;border-radius:8px;background:#ffe600;color:#000;'+
+        'font:600 12px/1.35 -apple-system,sans-serif;white-space:pre-wrap;pointer-events:none';
+      document.body.appendChild(schild);
+    }
+    schild.textContent='Kante K6 · '+innerWidth+'x'+innerHeight+'\n'+txt;
+  }
+  function name(n){
+    if(n.id) return '#'+n.id;
+    var c=(typeof n.className==='string'&&n.className.trim())?'.'+n.className.trim().split(/\s+/)[0]:'';
+    return n.tagName.toLowerCase()+c;
+  }
+  function malen(){
+    var b=document.body; if(!b) return;
+    if(schonGut()){
+      if(band) band.style.display='none';
+      zeigen('oben liegt schon eine deckende Leiste');
+      return;
+    }
+    var k=kaesten(), l=leisten(), farbe=null, text=[];
+    /* Die Kaesten werden nur noch nach unten gerueckt, nicht mehr eingefaerbt:
+       ein bildschirmfuellender Kasten haelt den Verlauf ohnehin nicht ab
+       (am 13.10.2026 auf iPadOS 27 gemessen), das Einfaerben hat dagegen
+       durchsichtige Ebenen deckend gemacht. */
+    for(var i=0;i<k.length;i++){
+      var z=k[i];
+      luft(z);
+      text.push(name(z));
+    }
+    for(var j=0;j<l.length;j++){
+      var le=l[j], sl=getComputedStyle(le);
+      if(!tinte(le) && !ragtRein(le)) continue;
+      if(!farbe && !leer(sl.backgroundColor)) farbe=sl.backgroundColor;
+      luft(le);
+      text.push('Leiste '+name(le)+' bg='+sl.backgroundColor);
+    }
+    if(!k.length && !l.length){ luft(b); text.push('kein Kasten, nur Streifen'); }
+    streifen(farbe);
+    zeigen(text.join('\n'));
+  }
+  var warte=null;
+  function spaeter(){
+    if(warte) return;
+    warte=setTimeout(function(){ warte=null; malen(); },200);
+  }
+  try{
+    new MutationObserver(spaeter).observe(document.documentElement,
+      {childList:true, subtree:true, attributes:true, attributeFilter:['class','style','hidden']});
+  }catch(e){}
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',malen);
+  else malen();
+  addEventListener('load',spaeter);
+  addEventListener('resize',spaeter);
+  addEventListener('orientationchange',spaeter);
+})();
+</script>
+</head>
+<body>
+<div id="app">
+  <div id="top">
+    <span id="ttl">Koordinaten-Schatzsuche</span>
+    <span id="meta"></span>
+    <button id="hintbtn">💡 Tipp</button>
+    <button id="geohintbtn" style="display:none">📐 Lage</button>
+    <div id="pips"></div>
+  </div>
+  <div id="hintbar">
+    <div id="hinttext"></div>
+    <div id="cluehelp"></div>
+    <div id="enterbar" style="display:none; margin-top:7px; padding-top:7px; border-top:1px dashed #cdb98c;">
+      <b id="entermsg">Marke gefunden!</b> Trage ihre Koordinaten ein:
+      <span style="white-space:nowrap"> &nbsp;(&thinsp;
+      <input id="tx" type="number" inputmode="numeric" style="width:54px; font:inherit; font-size:15px; padding:2px 5px; border:1.5px solid #b79c63; border-radius:7px; text-align:center;">
+      &thinsp;;&thinsp;
+      <input id="ty" type="number" inputmode="numeric" style="width:54px; font:inherit; font-size:15px; padding:2px 5px; border:1.5px solid #b79c63; border-radius:7px; text-align:center;">
+      &thinsp;)</span>
+      <button id="enterok" style="font:inherit; font-size:14px; margin-left:8px; cursor:pointer; background:var(--good); color:#f3e8cf; border:none; border-radius:8px; padding:4px 12px;">Weiter</button>
+    </div>
+  </div>
+  <div id="mid">
+    <div id="bar">
+      <div class="tool" data-tool="punkt" title="Punkt einzeichnen">
+        <svg viewBox="0 0 40 32"><line class="ink" x1="20" y1="6" x2="20" y2="26" stroke-width="1.2"/><line class="ink" x1="10" y1="16" x2="30" y2="16" stroke-width="1.2"/><circle class="dot" cx="20" cy="16" r="3.4"/></svg>
+        <div class="tn">Punkt</div></div>
+      <div class="tool" data-tool="kreis" title="Kreis um einen Mittelpunkt">
+        <svg viewBox="0 0 40 32"><circle class="ink" cx="20" cy="16" r="11"/><circle class="dot" cx="20" cy="16" r="2.6"/><line class="ink" x1="20" y1="16" x2="31" y2="16"/></svg>
+        <div class="tn">Kreis</div></div>
+      <div class="tool" data-tool="geo" title="Geodreieck anlegen und drehen">
+        <svg viewBox="0 0 40 32"><path class="ink" d="M5 24 L35 24 L20 9 Z" stroke-linejoin="round"/><line class="ink" x1="20" y1="24" x2="20" y2="9" stroke-width="1"/><line class="ink" x1="11" y1="24" x2="11" y2="21" stroke-width="1"/><line class="ink" x1="29" y1="24" x2="29" y2="21" stroke-width="1"/></svg>
+        <div class="tn">Geodreieck</div></div>
+      <div class="sep" data-grp="adv"></div>
+      <div class="tool adv" data-tool="strecke" title="Strecke zwischen zwei Punkten">
+        <svg viewBox="0 0 40 32"><line class="ink" x1="7" y1="25" x2="33" y2="8"/><circle class="dot" cx="7" cy="25" r="2.6"/><circle class="dot" cx="33" cy="8" r="2.6"/></svg>
+        <div class="tn">Strecke</div></div>
+      <div class="tool adv" data-tool="gerade" title="Gerade durch zwei Punkte">
+        <svg viewBox="0 0 40 32"><line class="ink" x1="3" y1="27" x2="37" y2="5"/><circle class="dot" cx="13" cy="20.5" r="2.6"/><circle class="dot" cx="27" cy="11.5" r="2.6"/></svg>
+        <div class="tn">Gerade</div></div>
+      <div class="tool adv" data-tool="parallele" title="Parallele zu einer Linie durch einen Punkt">
+        <svg viewBox="0 0 40 32"><line class="ink" x1="5" y1="24" x2="35" y2="12"/><line class="ink" x1="5" y1="30" x2="35" y2="18"/><circle class="dot" cx="14" cy="14.4" r="2.6"/></svg>
+        <div class="tn">Parallele</div></div>
+      <div class="tool adv" data-tool="lot" title="Lot von einem Punkt auf eine Linie">
+        <svg viewBox="0 0 40 32"><line class="ink" x1="5" y1="24" x2="35" y2="24"/><line class="ink" x1="20" y1="24" x2="20" y2="5"/><circle class="dot" cx="20" cy="5" r="2.6"/><path class="ink" d="M20 19 L25 19 L25 24" stroke-width="1.4"/></svg>
+        <div class="tn">Lot</div></div>
+      <div class="sep"></div>
+      <div class="util" data-util="undo">↩︎ Zurück</div>
+      <div class="util" data-util="reset">⟲ Neu</div>
+      <div class="util" data-util="solution" id="solbtn" style="display:none">Lösung</div>
+      <div class="util" data-util="help">? Hilfe</div>
+      <div class="util" data-util="teacher">🔑 Lehrer</div>
+    </div>
+    <div id="wrap">
+      <svg id="map" viewBox="0 0 1000 750" preserveAspectRatio="xMidYMid meet"></svg>
+      <div id="toast"></div>
+      <div id="huntpick"></div>
+      <div id="win"><div id="wincard"><h2>Schatz gefunden!</h2><p id="wintext"></p><button id="winnext">Weiter ⚓</button></div></div>
+      <div class="ov" id="help"><div class="ovcard"><span class="x" data-x="help">✕</span>
+        <h3>So funktioniert die Koordinaten-Schatzsuche</h3>
+        <p>Jeder Hinweis nennt <b>Koordinaten</b> – aber die Punkte sind noch nicht eingezeichnet. Lies sie ab und trage sie selbst ein. Punkte schreibt man als <b>P(x;y)</b>.</p>
+        <h3>Die Werkzeuge</h3>
+        <ul>
+          <li><b>Punkt:</b> Tippe die Koordinate an. Liegt sie richtig, bekommt der Punkt seinen Namen (z. B. H); sonst bleibt er grau.</li>
+          <li><b>Kreis:</b> Tippe den Mittelpunkt, dann einen Gitterpunkt im richtigen Abstand – der Radius rastet auf ganze Meilen ein.</li>
+          <li><b>Geodreieck:</b> Schiebe es mit dem Finger und drehe es am Griff (↻). Lege die dicke Zeichenkante an die gesuchte Linie. Sobald sie passt, rastet die Kante grün ein – beim Loslassen wird die Gerade, Strecke, Parallele oder das Lot gezeichnet. Der Knopf <b>📐 Lage</b> zeigt dir, wie das Geodreieck liegen muss.</li>
+        </ul>
+        <p>In den <b>Suchen 1–3</b> zeichnest du alle Linien mit dem Geodreieck – so übst du das Anlegen. Hast du diese drei gemeistert, öffnen sich die <b>Suchen 4–5</b>, und dort kannst du zusätzlich die fertigen Werkzeuge Strecke, Gerade, Lot und Parallele direkt verwenden.</p>
+        <p>Wo sich beide gezeichneten Objekte kreuzen, liegt die nächste Marke. Lies ihre Koordinaten am Gitter ab und trage sie unten ins Feld ein – erst dann erscheint der nächste Hinweis. Gibt es zwei Schnittpunkte, sagt der Hinweis, welcher gemeint ist; trage dessen Koordinaten ein. Die gefundenen Marken bleiben als 📍 auf der Karte stehen.</p>
+        <p>Die Küste, der Fluss und die Mauer sind <b>gegebene</b> Linien. Alles andere zeichnest du selbst. <b>Zurück</b> nimmt den letzten Schritt zurück, <b>Neu</b> startet die Suche neu.</p>
+      </div></div>
+      <div class="ov" id="teacher"><div class="ovcard" id="teachercard"><span class="x" data-x="teacher">✕</span>
+        <h3>Lehrer-Bereich</h3>
+        <p>Code eingeben, um alle Suchen und die Lösungsanzeige freizuschalten.</p>
+        <input id="teachercode" type="password" inputmode="numeric" placeholder="Code">
+        <button id="teacherok">OK</button>
+      </div></div>
+    </div>
+  </div>
+</div>
+<script>
+"use strict";
+/* =========================================================
+   Koordinaten-Schatzsuche · Geometrie der 5. Jahrgangsstufe
+   Ein-Datei, ohne Bibliotheken · iPad-optimiert
+========================================================= */
+const W=1000,H=750;
+const UNIT=42, OX=500, OY=375;          // Pixel pro Einheit, Ursprung (Pixel)
+const XMIN=-11,XMAX=11,YMIN=-8,YMAX=8;  // sichtbares Gitter
+const TEACHER_CODE="1234";              // bei Bedarf ändern
+
+/* Welt <-> Bildschirm (y zeigt nach oben) */
+const SX=x=>OX+x*UNIT, SY=y=>OY-y*UNIT;
+const WX=px=>(px-OX)/UNIT, WY=py=>(OY-py)/UNIT;
+
+/* Vektor-Helfer (Weltkoordinaten) */
+const sub=(a,b)=>({x:a.x-b.x,y:a.y-b.y}), add=(a,b)=>({x:a.x+b.x,y:a.y+b.y}), mul=(a,s)=>({x:a.x*s,y:a.y*s});
+const dot=(a,b)=>a.x*b.x+a.y*b.y, cross=(a,b)=>a.x*b.y-a.y*b.x, len=a=>Math.hypot(a.x,a.y);
+const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y), norm=a=>{const l=len(a)||1;return{x:a.x/l,y:a.y/l};};
+const perp=a=>({x:-a.y,y:a.x}), mid=(a,b)=>({x:(a.x+b.x)/2,y:(a.y+b.y)/2});
+const lineFromPts=(A,B)=>({p:{x:A.x,y:A.y}, d:norm(sub(B,A))});
+function lineIntersect(l1,l2){const den=cross(l1.d,l2.d); if(Math.abs(den)<1e-9)return null; const t=cross(sub(l2.p,l1.p),l2.d)/den; return add(l1.p,mul(l1.d,t));}
+function circleLine(c,r,line){const f=sub(line.p,c); const b=2*dot(f,line.d), cc=dot(f,f)-r*r; let dc=b*b-4*cc; if(dc<-1e-9)return[]; if(dc<0)dc=0; const s=Math.sqrt(dc); const o=[add(line.p,mul(line.d,(-b+s)/2))]; if(s>1e-6)o.push(add(line.p,mul(line.d,(-b-s)/2))); return o;}
+const onSeg=(p,A,B)=>{const t=dot(sub(p,A),norm(sub(B,A))); return t>=-0.02 && t<=dist(A,B)+0.02;};
+const distPtLine=(P,l)=>Math.abs(cross(sub(P,l.p),l.d));
+const inGrid=(p,m=0)=>p.x>=XMIN+m&&p.x<=XMAX-m&&p.y>=YMIN+m&&p.y<=YMAX-m;
+const fmt=n=>{const r=Math.round(n); return (Math.abs(n-r)<1e-6?r:Math.round(n*10)/10).toString().replace(".",",");};
+const COORD=p=>"("+fmt(p.x)+";"+fmt(p.y)+")";
+
+/* =========================================================
+   Daten der fünf Schatzsuchen (ganzzahlige Koordinaten)
+   mk: benannte Punkte · ft: gegebene Bezugslinien (Küste …)
+   stage.clues: zwei Orte; Schnittpunkt = nächste Marke
+   pick: bei zwei Schnittpunkten die gemeinte Himmelsrichtung
+========================================================= */
+const FLABEL={kueste:["Küste","f"],mauer:["Mauer","f"],fluss:["Fluss","m"],riff:["Riff","n"],
+  kueste5:["Küste","f"],mauer5:["Mauer","f"],fluss5:["Fluss","m"],riff5:["Riff","n"]};
+/* eingezeichnete Objekte: Icon -> [Name, Genus] */
+const OBJ={"🌳":["Baum","m"],"🪨":["Felsen","m"],"🗼":["Leuchtturm","m"],"⚓":["Anker","m"],
+  "🏝️":["Insel","f"],"🌴":["Palme","f"],"🔥":["Leuchtfeuer","n"],"🚢":["Wrack","n"]};
+/* mk: [x, y, given(0/1), icon]  — given=1 heißt: schon als Objekt eingezeichnet */
+const HUNTS=[
+{ id:1, title:"Bucht der ersten Schritte", level:2,
+  intro:"Lies Koordinaten ab, zeichne Punkte, Geraden und Kreise. Wo sie sich kreuzen, liegt die Marke.",
+  mk:{a0:[-2,1,1,"🌳"],b0:[4,4], c0:[-1,6,1,"🪨"],d0:[5,0], H:[0,0,1,"🗼"],a1:[1,2],b1:[5,6]},
+  ft:{},
+  stages:[
+    {clues:[{kind:"gerade",a:"a0",b:"b0"},{kind:"gerade",a:"c0",b:"d0"}]},
+    {pick:"ost",clues:[{kind:"kreis",c:"H",r:5},{kind:"gerade",a:"a1",b:"b1"}]},
+  ]},
+{ id:2, title:"Riff der Zahlen", level:2,
+  intro:"Strecke und zwei Kreise. Zwei Kreise schneiden sich in zwei Punkten – achte auf den Hinweis.",
+  mk:{A0:[-6,2,1,"⚓"],B0:[2,2], C0:[-1,4,1,"🪨"],D0:[-5,0], I1:[-4,0,1,"🏝️"],J1:[4,0]},
+  ft:{},
+  stages:[
+    {clues:[{kind:"strecke",a:"A0",b:"B0"},{kind:"gerade",a:"C0",b:"D0"}]},
+    {pick:"nord",clues:[{kind:"kreis",c:"I1",r:5},{kind:"kreis",c:"J1",r:5}]},
+  ]},
+{ id:3, title:"Insel der Linien", level:4,
+  intro:"Lot und Parallele zu schrägen Linien. Küste, Mauer und Fluss sind eingezeichnet.",
+  mk:{P0:[1,6,1,"🪨"],A0:[0,-1],B0:[6,5], R1:[-4,0,1,"🪨"],A1:[-6,5],B1:[0,-1],
+      Q2:[-1,-3,1,"🗼"],S2:[0,-4], P3:[-3,0,1,"🚢"],A3:[-6,-1],B3:[2,-5]},
+  ft:{kueste:{kind:"fluss",a:[-6,-2],b:[6,4]}, mauer:{kind:"mauer",a:[-4,-4],b:[2,8]}, fluss:{kind:"fluss",a:[-6,-3],b:[6,1]}},
+  stages:[
+    {clues:[{kind:"lot",p:"P0",ref:{feature:"kueste"}},{kind:"gerade",a:"A0",b:"B0"}]},
+    {clues:[{kind:"parallele",through:"R1",ref:{feature:"mauer"}},{kind:"gerade",a:"A1",b:"B1"}]},
+    {clues:[{kind:"parallele",through:"Q2",ref:{feature:"kueste"}},{kind:"parallele",through:"S2",ref:{feature:"mauer"}}]},
+    {clues:[{kind:"lot",p:"P3",ref:{feature:"fluss"}},{kind:"strecke",a:"A3",b:"B3"}]},
+  ]},
+{ id:4, title:"Karte der Gezeiten", level:4,
+  intro:"Gemischt: Parallele trifft Kreis, Lot trifft Parallele. Negative Koordinaten in allen Feldern.",
+  mk:{A0:[-3,-4,1,"🪨"],B0:[5,0], C0:[-2,1,1,"🌴"],D0:[4,-5], Z1:[0,-1,1,"🔥"],R1:[2,-6],
+      P2:[-3,0,1,"🪨"],R2:[-1,3], Z3:[-1,1,1,"⚓"],A3:[-9,0],B3:[-1,-4]},
+  ft:{mauer:{kind:"mauer",a:[-2,-8],b:[6,0]}, riff:{kind:"mauer",a:[-8,-2],b:[4,4]}, kueste:{kind:"fluss",a:[-6,-4],b:[6,0]}},
+  stages:[
+    {clues:[{kind:"gerade",a:"A0",b:"B0"},{kind:"gerade",a:"C0",b:"D0"}]},
+    {pick:"ost",clues:[{kind:"parallele",through:"R1",ref:{feature:"mauer"}},{kind:"kreis",c:"Z1",r:5}]},
+    {clues:[{kind:"lot",p:"P2",ref:{feature:"riff"}},{kind:"parallele",through:"R2",ref:{feature:"kueste"}}]},
+    {pick:"west",clues:[{kind:"kreis",c:"Z3",r:5},{kind:"gerade",a:"A3",b:"B3"}]},
+  ]},
+{ id:5, title:"Das Vermächtnis des Navigators", level:7,
+  intro:"Das große Finale: sieben Stufen, jeder Schnitt-Typ, der ganze Plan.",
+  mk:{A0:[-4,3,1,"🌳"],B0:[4,7], C0:[-3,8,1,"🪨"],D0:[3,2], Z1:[2,-1,1,"🔥"],A1:[2,4],B1:[8,1],
+      P2:[-5,5,1,"🪨"],A2:[-8,0],B2:[0,4], P3:[5,-4,1,"🗼"],S3:[2,-3],
+      I4:[-2,-5,1,"🏝️"],J4:[-2,1], P5:[3,7,1,"🪨"],Z5:[1,2,1,"🔥"], Z6:[0,-2,1,"🗼"],A6:[-8,-6],B6:[-1,-6]},
+  ft:{kueste5:{kind:"fluss",a:[-6,0],b:[6,4]}, mauer5:{kind:"mauer",a:[-8,-6],b:[4,0]},
+      fluss5:{kind:"fluss",a:[1,2],b:[5,-6]}, riff5:{kind:"mauer",a:[-2,-2],b:[6,6]}},
+  stages:[
+    {clues:[{kind:"gerade",a:"A0",b:"B0"},{kind:"gerade",a:"C0",b:"D0"}]},
+    {pick:"ost",clues:[{kind:"kreis",c:"Z1",r:5},{kind:"gerade",a:"A1",b:"B1"}]},
+    {clues:[{kind:"lot",p:"P2",ref:{feature:"kueste5"}},{kind:"gerade",a:"A2",b:"B2"}]},
+    {clues:[{kind:"parallele",through:"P3",ref:{feature:"mauer5"}},{kind:"parallele",through:"S3",ref:{feature:"fluss5"}}]},
+    {pick:"west",clues:[{kind:"kreis",c:"I4",r:5},{kind:"kreis",c:"J4",r:5}]},
+    {pick:"ost",clues:[{kind:"lot",p:"P5",ref:{feature:"riff5"}},{kind:"kreis",c:"Z5",r:5}]},
+    {clues:[{kind:"kreis",c:"Z6",r:5},{kind:"strecke",a:"A6",b:"B6"}]},
+  ]},
+];
+// Punkte zu Objekten machen (Anzeige-Name = erster Buchstabe; given/icon übernehmen)
+for(const h of HUNTS){
+  const m={}; for(const id in h.mk){ const a=h.mk[id]; m[id]={x:a[0],y:a[1],name:id[0].toUpperCase(),given:!!a[2],icon:a[3]||null}; }
+  h.mk=m;
+  for(const id in h.ft){ const f=h.ft[id]; f.a={x:f.a[0],y:f.a[1]}; f.b={x:f.b[0],y:f.b[1]};
+    const L=FLABEL[id]||["Linie","f"]; f.label=L[0]; f.genus=L[1]; }
+}
+const hunt=()=>HUNTS[state.hi];
+const MK=id=>hunt().mk[id];
+const FT=id=>hunt().ft[id];
+
+/* Welche Marken/Features gehören zur Stufe si? given/gesucht getrennt */
+function stageRefs(h,si){
+  const ids=new Set(), fts=new Set();
+  for(const c of h.stages[si].clues){
+    ["a","b","c","p","through"].forEach(k=>{ if(c[k]&&h.mk[c[k]]) ids.add(c[k]); });
+    if(c.ref&&c.ref.feature) fts.add(c.ref.feature);
+  }
+  const given=[...ids].filter(id=>h.mk[id].given), sought=[...ids].filter(id=>!h.mk[id].given);
+  return {ids,fts,given,sought};
+}
+
+/* Geometrischer Ort eines Hinweises (Weltkoordinaten) */
+function refLineOf(c){ const r=c.ref; return r.feature ? lineFromPts(FT(r.feature).a,FT(r.feature).b) : lineFromPts(MK(r.a),MK(r.b)); }
+function clueLocus(c){
+  if(c.kind==="kreis")     return {kind:"circle", c:MK(c.c), r:c.r};
+  if(c.kind==="gerade")    return {kind:"line", line:lineFromPts(MK(c.a),MK(c.b))};
+  if(c.kind==="strecke")   return {kind:"seg",  line:lineFromPts(MK(c.a),MK(c.b)), A:MK(c.a), B:MK(c.b)};
+  if(c.kind==="parallele") return {kind:"line", line:{p:MK(c.through), d:refLineOf(c).d}};
+  if(c.kind==="lot")       return {kind:"line", line:{p:MK(c.p), d:perp(refLineOf(c).d)}};
+}
+const CLUEKIND={kreis:"Kreis",gerade:"Gerade",strecke:"Strecke",parallele:"Parallele",lot:"Lot"};
+
+/* Hinweistext: eingezeichnete Objekte ohne Koordinate (zum Ablesen),
+   per Koordinate gegebene Punkte mit Koordinate (zum Einzeichnen) */
+function objName(m){ return OBJ[m.icon]?OBJ[m.icon][0]:"Objekt"; }
+function objGen(m){ return OBJ[m.icon]?OBJ[m.icon][1]:"n"; }
+function akk(m){ return ({m:"den",f:"die",n:"das"}[objGen(m)])+" "+objName(m); }       // durch den Baum
+function datVom(m){ return (objGen(m)==="f"?"von der ":"vom ")+objName(m); }            // vom Baum / von der Insel
+function refAkk(id){ const m=MK(id); return m.given?akk(m):(m.name+COORD(m)); }
+function refKreis(id){ const m=MK(id); return m.given?datVom(m):("vom Punkt "+m.name+COORD(m)); }
+function refLot(id){ const m=MK(id); return m.given?datVom(m):("von "+m.name+COORD(m)); }
+function refSeg(id){ const m=MK(id); return m.given?(({m:"dem",f:"der",n:"dem"}[objGen(m)])+" "+objName(m)):(m.name+COORD(m)); }
+function zur(f){ return (f.genus==="f"?"zur ":"zum ")+f.label; }                         // zur Küste / zum Fluss
+function aufAkk(f){ return ({m:"den",f:"die",n:"das"}[f.genus])+" "+f.label; }           // auf die Küste / auf den Fluss
+function clueText(c){
+  if(c.kind==="kreis")     return c.r+" Meilen "+refKreis(c.c)+" entfernt";
+  if(c.kind==="gerade")    return "auf der Geraden durch "+refAkk(c.a)+" und "+refAkk(c.b);
+  if(c.kind==="strecke")   return "auf der Strecke von "+refSeg(c.a)+" nach "+refSeg(c.b);
+  if(c.kind==="parallele") return "auf der Parallelen "+zur(FT(c.ref.feature))+" durch "+refAkk(c.through);
+  if(c.kind==="lot")       return "auf dem Lot "+refLot(c.p)+" auf "+aufAkk(FT(c.ref.feature));
+}
+const PICKTEXT={ost:"die Stelle rechts (größere x-Koordinate)",west:"die Stelle links (kleinere x-Koordinate)",
+  nord:"die Stelle oben (größere y-Koordinate)",sued:"die Stelle unten (kleinere y-Koordinate)"};
+function stageNarrative(st,si,n){
+  const last = si===n-1;
+  const subj = last ? "Der Schatz" : "Der nächste Hinweis";
+  const ziel = last ? "ruht der Schatz" : "liegt die nächste Marke";
+  let t = subj+" liegt "+clueText(st.clues[0])+". Außerdem liegt er "+clueText(st.clues[1])+". ";
+  t += "Wo sich beide Spuren kreuzen, "+ziel+".";
+  if(st.pick) t += " Zwei Stellen kommen infrage – gemeint ist "+PICKTEXT[st.pick]+".";
+  t += " Lies "+(last?"seine":"ihre")+" Koordinaten ab und trage sie unten ein.";
+  return t;
+}
+
+/* =========================================================
+   SVG-Aufbau
+========================================================= */
+const SVGNS="http://www.w3.org/2000/svg";
+const svg=document.getElementById("map");
+function el(tag,attrs,parent){const e=document.createElementNS(SVGNS,tag); for(const k in attrs)e.setAttribute(k,attrs[k]); (parent||svg).appendChild(e); return e;}
+function clear(g){while(g.firstChild)g.removeChild(g.firstChild);}
+const groups={};
+["grid","axis","feat","given","obj","marks","found","geotip","geo","cands","treasure","ghost"].forEach(n=>groups[n]=el("g",{id:"g_"+n}));
+
+/* Koordinatengitter mit beschrifteten Achsen */
+function drawGrid(){
+  clear(groups.grid); clear(groups.axis);
+  for(let x=XMIN;x<=XMAX;x++){
+    el("line",{x1:SX(x),y1:SY(YMIN),x2:SX(x),y2:SY(YMAX),stroke:(x===0?"none":"var(--grid)"),"stroke-width":1},groups.grid);
+  }
+  for(let y=YMIN;y<=YMAX;y++){
+    el("line",{x1:SX(XMIN),y1:SY(y),x2:SX(XMAX),y2:SY(y),stroke:(y===0?"none":"var(--grid)"),"stroke-width":1},groups.grid);
+  }
+  // Achsen
+  el("line",{x1:SX(XMIN),y1:SY(0),x2:SX(XMAX),y2:SY(0),stroke:"var(--axis)","stroke-width":2.2},groups.axis);
+  el("line",{x1:SX(0),y1:SY(YMIN),x2:SX(0),y2:SY(YMAX),stroke:"var(--axis)","stroke-width":2.2},groups.axis);
+  // Pfeile
+  const ar=(x,y,dx,dy)=>{const a={x,y},b={x:x+dx,y:y+dy},n2={x:-dy,y:dx};
+    el("path",{d:`M${b.x} ${b.y} L${a.x+n2.x*5} ${a.y+n2.y*5} L${a.x-n2.x*5} ${a.y-n2.y*5} Z`,fill:"var(--axis)"},groups.axis);};
+  ar(SX(XMAX)-2,SY(0),12,0); ar(SX(0),SY(YMAX)+2,0,-12);
+  el("text",{x:SX(XMAX)-4,y:SY(0)+18,"font-size":13,fill:"var(--axis)","font-style":"italic"},groups.axis).textContent="x";
+  el("text",{x:SX(0)+8,y:SY(YMAX)+12,"font-size":13,fill:"var(--axis)","font-style":"italic"},groups.axis).textContent="y";
+  // Zahlen
+  for(let x=XMIN;x<=XMAX;x++){ if(x===0)continue;
+    const t=el("text",{x:SX(x),y:SY(0)+15,"font-size":11,fill:"var(--axis)","text-anchor":"middle"},groups.axis); t.textContent=x; }
+  for(let y=YMIN;y<=YMAX;y++){ if(y===0)continue;
+    const t=el("text",{x:SX(0)-7,y:SY(y)+4,"font-size":11,fill:"var(--axis)","text-anchor":"end"},groups.axis); t.textContent=y; }
+  const o=el("text",{x:SX(0)-7,y:SY(0)+15,"font-size":11,fill:"var(--axis)","text-anchor":"end"},groups.axis); o.textContent="0";
+}
+
+/* Bezugslinien (Küste/Fluss = blau, Mauer/Riff = braun) */
+const FEATCOL={fluss:"#36678f",mauer:"#7b5a37"};
+function drawFeatures(){
+  clear(groups.feat);
+  const {fts}=stageRefs(hunt(),state.stage);
+  for(const id of fts){
+    const f=FT(id), col=FEATCOL[f.kind]||"#555";
+    const a={x:SX(f.a.x),y:SY(f.a.y)}, b={x:SX(f.b.x),y:SY(f.b.y)};
+    el("line",{x1:a.x,y1:a.y,x2:b.x,y2:b.y,stroke:"#efe2c6","stroke-width":8,"stroke-linecap":"round",opacity:.5},groups.feat);
+    el("line",{x1:a.x,y1:a.y,x2:b.x,y2:b.y,stroke:col,"stroke-width":3.4,"stroke-linecap":"round",opacity:.9,"stroke-dasharray":f.kind==="mauer"?"1 7":"none","stroke-linejoin":"round"},groups.feat);
+    // Label am Endpunkt
+    const m=mid(f.a,f.b), dir=norm(sub(f.b,f.a)), n2=perp(dir);
+    const lp={x:SX(m.x)+n2.x*16,y:SY(m.y)-n2.y*16};
+    const t=el("text",{x:lp.x,y:lp.y,"font-size":13,fill:col,"text-anchor":"middle","font-style":"italic"},groups.feat); t.textContent=f.label;
+  }
+}
+
+/* Eingezeichnete Objekte (Baum, Felsen …) – mit Icon und Name, ohne Koordinate */
+function drawGiven(){
+  clear(groups.given);
+  const {given}=stageRefs(hunt(),state.stage);
+  for(const id of given){
+    const m=MK(id), px=SX(m.x), py=SY(m.y);
+    el("circle",{cx:px,cy:py,r:3.4,fill:"var(--sepia)"},groups.given);
+    el("text",{x:px,y:py-9,"font-size":18,"text-anchor":"middle"},groups.given).textContent=m.icon||"📍";
+    const right=m.x<=XMAX-3;
+    el("text",{x:px+(right?11:-11),y:py+5,"font-size":12.5,"font-weight":700,fill:"var(--sepia)","text-anchor":right?"start":"end","paint-order":"stroke",stroke:"#f0e4c8","stroke-width":3},groups.given).textContent=objName(m);
+  }
+}
+
+/* Vom Schüler gesetzte Punkte (per Koordinate gegebene Punkte sind NICHT vorgezeichnet) */
+function hintPointAt(p){            // passt p zu einem GESUCHTEN Punkt der Stufe?
+  const {sought}=stageRefs(hunt(),state.stage);
+  for(const id of sought){ const m=MK(id); if(Math.abs(m.x-p.x)<1e-6&&Math.abs(m.y-p.y)<1e-6) return m; }
+  return null;
+}
+function drawPoints(){
+  clear(groups.marks);
+  for(const p of state.points){
+    const px=SX(p.x), py=SY(p.y);
+    const col = p.ok ? "var(--ox)" : "#9b8a6a";
+    el("circle",{cx:px,cy:py,r:4.6,fill:"#efe2c6",stroke:col,"stroke-width":2.2},groups.marks);
+    const lbl=(p.name?p.name:"")+COORD(p);
+    const right = p.x<=XMAX-3;
+    el("text",{x:px+(right?9:-9),y:py-8,"font-size":13,"font-weight":700,fill:p.ok?"var(--ink)":"#8a7a5c","text-anchor":right?"start":"end","paint-order":"stroke",stroke:"#f0e4c8","stroke-width":3},groups.marks).textContent=lbl;
+  }
+}
+
+/* gefundene Marken früherer Stufen */
+function drawFound(){
+  clear(groups.found);
+  for(const p of state.found){
+    const px=SX(p.x), py=SY(p.y);
+    el("circle",{cx:px,cy:py,r:5,fill:"var(--gold)",stroke:"var(--sepia)","stroke-width":1.6},groups.found);
+    el("text",{x:px,y:py-12,"font-size":17,"text-anchor":"middle"},groups.found).textContent="📍";
+    const right=p.x<=XMAX-3;
+    el("text",{x:px+(right?9:-9),y:py+5,"font-size":12,"font-weight":700,fill:"var(--sepia)","text-anchor":right?"start":"end","paint-order":"stroke",stroke:"#f0e4c8","stroke-width":3},groups.found).textContent=(p.name?p.name:"")+COORD(p);
+  }
+}
+
+/* gezeichnete Objekte */
+const OBJCOL=["#9a2f22","#2f4a6b","#7a4fa0","#1f7a5a","#b5651d"];
+function lineEnds(line){ // bis Kartenrand
+  const big=1e4; const a=add(line.p,mul(line.d,-big)), b=add(line.p,mul(line.d,big));
+  return [a,b];
+}
+function drawObjects(){
+  clear(groups.obj);
+  state.objects.forEach((o,i)=>{
+    const col=o.solved?(OBJCOL[o.colIdx%OBJCOL.length]):"#8d7a55";
+    const w=o.solved?2.6:1.8, op=o.solved?1:.5;
+    if(o.type==="circle"){
+      el("circle",{cx:SX(o.c.x),cy:SY(o.c.y),r:o.r*UNIT,fill:"none",stroke:col,"stroke-width":w,opacity:op},groups.obj);
+      el("circle",{cx:SX(o.c.x),cy:SY(o.c.y),r:3,fill:col,opacity:op},groups.obj);
+      if(o.label) el("text",{x:SX(o.c.x)+o.r*UNIT*0.7,y:SY(o.c.y)-o.r*UNIT*0.7,"font-size":13,"font-style":"italic",fill:col,"paint-order":"stroke",stroke:"#f0e4c8","stroke-width":3},groups.obj).textContent=o.label;
+    } else if(o.type==="seg"){
+      el("line",{x1:SX(o.a.x),y1:SY(o.a.y),x2:SX(o.b.x),y2:SY(o.b.y),stroke:col,"stroke-width":w,opacity:op,"stroke-linecap":"round"},groups.obj);
+      if(o.label){ const m=mid(o.a,o.b); el("text",{x:SX(m.x)+8,y:SY(m.y)-6,"font-size":13,"font-style":"italic",fill:col,"paint-order":"stroke",stroke:"#f0e4c8","stroke-width":3},groups.obj).textContent=o.label; }
+    } else { // line / para / lot
+      const [a,b]=lineEnds(o.line);
+      el("line",{x1:SX(a.x),y1:SY(a.y),x2:SX(b.x),y2:SY(b.y),stroke:col,"stroke-width":w,opacity:op},groups.obj);
+      if(o.label){ const lp=add(o.line.p,mul(o.line.d,3.2)); if(inGrid(lp,1)) el("text",{x:SX(lp.x)+6,y:SY(lp.y)-6,"font-size":13,"font-style":"italic",fill:col,"paint-order":"stroke",stroke:"#f0e4c8","stroke-width":3},groups.obj).textContent=o.label; }
+    }
+  });
+}
+const LINELABELS=["g","h","i","j","k","l"], CIRCLELABELS=["k₁","k₂","k₃","k₄"];
+function assignLabel(o){
+  if(o.type==="circle"){ const n=state.objects.filter(x=>x.solved&&x.type==="circle").length; o.label=CIRCLELABELS[n]||"k"; }
+  else { const n=state.objects.filter(x=>x.solved&&x.type!=="circle").length; o.label=LINELABELS[n]||"g"; }
+}
+
+/* =========================================================
+   Spielzustand & Ablauf
+========================================================= */
+let state=null;
+function freshState(hi){
+  return {hi, stage:0, phase:"draw", tool:null, buffer:[],
+    clueSolved:[false,false], objects:[], points:[], found:[], done:state?state.done:{},
+    teacher:state?state.teacher:false, colIdx:0, cands:[], target:null,
+    geo:null, geoTip:false};
+}
+/* Werkzeug-Freischaltung: Suchen 1–3 nur Punkt, Kreis, Geodreieck.
+   Strecke/Gerade/Lot/Parallele erst ab Suche 4 (wenn 1–3 gemeistert). */
+const BASIC_TOOLS=["punkt","kreis","geo"];
+function advUnlocked(){ return state.teacher || (state.done[1]&&state.done[2]&&state.done[3]); }
+function toolEnabled(t){ if(BASIC_TOOLS.includes(t)) return true; return hunt().id>=4 && advUnlocked(); }
+function huntUnlocked(i){ return state.teacher || HUNTS[i].id<=3 || (state.done[1]&&state.done[2]&&state.done[3]); }
+
+/* Schnittpunkte zweier Orte (im Gitter) */
+function circleCircle(c1,r1,c2,r2){
+  const dx=c2.x-c1.x, dy=c2.y-c1.y, dd=Math.hypot(dx,dy);
+  if(dd<1e-9||dd>r1+r2+1e-6||dd<Math.abs(r1-r2)-1e-6) return [];
+  const a=(r1*r1-r2*r2+dd*dd)/(2*dd); let h2=r1*r1-a*a; const h=h2>0?Math.sqrt(h2):0;
+  const ux=dx/dd, uy=dy/dd, mx=c1.x+a*ux, my=c1.y+a*uy;
+  if(h<1e-6) return [{x:mx,y:my}];
+  return [{x:mx-h*uy,y:my+h*ux},{x:mx+h*uy,y:my-h*ux}];
+}
+function locusIntersect(L1,L2){
+  const seg=(L)=>L.kind==="seg";
+  if(L1.kind==="circle"&&L2.kind==="circle") return circleCircle(L1.c,L1.r,L2.c,L2.r);
+  if(L1.kind==="circle") return circleLine(L1.c,L1.r,L2.line).filter(p=>!seg(L2)||onSeg(p,L2.A,L2.B));
+  if(L2.kind==="circle") return circleLine(L2.c,L2.r,L1.line).filter(p=>!seg(L1)||onSeg(p,L1.A,L1.B));
+  const p=lineIntersect(L1.line,L2.line); if(!p)return[];
+  if(seg(L1)&&!onSeg(p,L1.A,L1.B))return[];
+  if(seg(L2)&&!onSeg(p,L2.A,L2.B))return[];
+  return [p];
+}
+function stageCandidates(){
+  const st=hunt().stages[state.stage];
+  const Ls=st.clues.map(clueLocus);
+  return locusIntersect(Ls[0],Ls[1]).filter(p=>inGrid(p,0));
+}
+function stageTarget(cands){
+  const st=hunt().stages[state.stage];
+  if(cands.length===1||!st.pick) return cands[0];
+  const key={ost:p=>p.x,west:p=>-p.x,nord:p=>p.y,sued:p=>-p.y}[st.pick];
+  return cands.slice().sort((a,b)=>key(b)-key(a))[0];
+}
+
+/* Passt ein gezeichnetes Objekt zu einem noch offenen Hinweis? */
+function lineMatch(la,lb){ // gleiche Gerade?
+  if(Math.abs(cross(la.d,lb.d))>0.03) return false;          // Richtung
+  return distPtLine(la.p,lb)<0.28 && distPtLine(lb.p,la)<0.28; // Lage
+}
+function objLine(o){ return o.type==="seg"?lineFromPts(o.a,o.b):o.line; }
+function matchClue(o,c){
+  const L=clueLocus(c);
+  if(c.kind==="kreis") return o.type==="circle" && dist(o.c,L.c)<0.3 && Math.abs(o.r-L.r)<0.3;
+  if(o.type==="circle") return false;
+  return lineMatch(objLine(o), L.line);
+}
+function submitObject(o){
+  const st=hunt().stages[state.stage];
+  for(let i=0;i<2;i++){
+    if(!state.clueSolved[i] && matchClue(o,st.clues[i])){
+      state.clueSolved[i]=true; o.solved=true; o.colIdx=state.colIdx++; assignLabel(o);
+      state.objects.push(o);
+      toast(["Treffer!","Gut gezeichnet!","Hinweis gelöst!","Sauber!"][Math.floor(Math.random()*4)],"good");
+      afterSolve(); return true;
+    }
+  }
+  // passt zu keinem Hinweis -> blasse Hilfslinie
+  o.solved=false; state.objects.push(o);
+  toast("Das passt zu keinem Hinweis – als Hilfslinie behalten.","info");
+  drawObjects(); return false;
+}
+function afterSolve(){
+  drawObjects(); updatePips();
+  if(state.clueSolved[0]&&state.clueSolved[1]){
+    state.cands=stageCandidates();
+    state.target=stageTarget(state.cands);
+    if(state.cands.length>1) drawCandidates();   // beide Schnittpunkte zur Orientierung
+    else clear(groups.cands);
+    state.phase="enter"; showEnter(); setMeta();
+  } else { setMeta(); }
+}
+/* Kandidaten nur ZEICHNEN (zur Orientierung) – ausgewählt wird über die Koordinaten-Eingabe */
+function drawCandidates(){
+  clear(groups.cands);
+  state.cands.forEach(p=>{
+    el("circle",{cx:SX(p.x),cy:SY(p.y),r:13,fill:"rgba(199,154,49,.25)",stroke:"var(--gold)","stroke-width":2.4},groups.cands);
+    el("text",{x:SX(p.x),y:SY(p.y)+4,"font-size":12,fill:"var(--sepia)","text-anchor":"middle"},groups.cands).textContent="?";
+  });
+}
+/* Koordinaten eintragen – bei jeder Stufe, bevor der nächste Hinweis erscheint */
+function showEnter(){
+  const last=state.stage===hunt().stages.length-1;
+  document.getElementById("entermsg").textContent = last ? "Schatz fast geborgen!" : "Marke gefunden!";
+  document.getElementById("enterok").textContent  = last ? "Schatz bergen" : "Weiter";
+  document.getElementById("enterbar").style.display="block";
+  document.getElementById("tx").value=""; document.getElementById("ty").value="";
+  toast(last?"Lies die Koordinaten des Schatzes ab.":"Lies die Koordinaten der Marke ab.","info");
+}
+function hideEnter(){ document.getElementById("enterbar").style.display="none"; }
+function checkEnter(){
+  const xs=document.getElementById("tx").value.trim().replace(",","."), ys=document.getElementById("ty").value.trim().replace(",",".");
+  if(xs===""||ys===""){ toast("Bitte beide Koordinaten eintragen.","bad"); return; }
+  const x=Number(xs), y=Number(ys);
+  if(!Number.isFinite(x)||!Number.isFinite(y)){ toast("Bitte ganze Zahlen eintragen.","bad"); return; }
+  if(Math.abs(x-state.target.x)<1e-6 && Math.abs(y-state.target.y)<1e-6){ hideEnter(); clear(groups.cands); stageSolved(state.target); }
+  else toast("Stimmt noch nicht – lies am Gitter genau ab.","bad");
+}
+function stageSolved(T){
+  state.found.push({x:T.x,y:T.y,name:String.fromCharCode(77+state.stage)}); drawFound();
+  const last=state.stage>=hunt().stages.length-1;
+  if(last){ winHunt(T); return; }
+  toast("Marke "+COORD(T)+" eingetragen ⚓","good");
+  state.stage++; state.phase="draw"; state.tool=null; state.buffer=[];
+  state.clueSolved=[false,false]; state.objects=[]; state.points=[]; state.colIdx=0; state.cands=[]; state.target=null;
+  state.geo=null; state.geoTip=false; $("geohintbtn").style.display="none"; $("geohintbtn").classList.remove("on");
+  clear(groups.geo); clear(groups.geotip);
+  document.querySelectorAll(".tool").forEach(x=>x.classList.remove("sel"));
+  clear(groups.ghost);
+  renderStage();
+}
+function winHunt(T){
+  state.phase="won"; state.done[hunt().id]=true;
+  clear(groups.cands); clear(groups.ghost);
+  el("text",{x:SX(T.x),y:SY(T.y)+9,"font-size":26,"text-anchor":"middle"},groups.treasure).textContent="💰";
+  document.getElementById("wintext").textContent='„'+hunt().title+'" gemeistert – der Schatz lag bei '+COORD(T)+".";
+  document.getElementById("win").classList.add("show");
+  buildHuntPicker(); updatePips();
+}
+
+/* =========================================================
+   Zeichenwerkzeuge (zwei Tipps – oder ziehen)
+========================================================= */
+const TOOLDEF={
+  punkt:    {steps:["point"],         hint:["Koordinate antippen"]},
+  kreis:    {steps:["point","point"], hint:["Mittelpunkt antippen","Gitterpunkt im Abstand antippen"]},
+  geo:      {steps:[],                hint:["Geodreieck anlegen und drehen"]},
+  strecke:  {steps:["point","point"], hint:["ersten Punkt antippen","zweiten Punkt antippen"]},
+  gerade:   {steps:["point","point"], hint:["ersten Punkt antippen","zweiten Punkt antippen"]},
+  parallele:{steps:["line","point"],  hint:["Linie antippen (z. B. Küste)","Punkt antippen"]},
+  lot:      {steps:["point","line"],  hint:["Punkt antippen","Linie antippen"]},
+};
+function clientToSvg(e){
+  const ctm=svg.getScreenCTM(); if(!ctm)return null;
+  const pt=svg.createSVGPoint(); pt.x=e.clientX; pt.y=e.clientY;
+  const p=pt.matrixTransform(ctm.inverse()); return {x:p.x,y:p.y};
+}
+function snapWorld(sp){ const w={x:WX(sp.x),y:WY(sp.y)}; const r={x:Math.round(w.x),y:Math.round(w.y)}; return inGrid(r,0)?r:null; }
+function selectableLines(){
+  const out=[];
+  const {fts}=stageRefs(hunt(),state.stage);
+  for(const id of fts){ const f=FT(id); out.push({p:f.a,d:norm(sub(f.b,f.a)),label:f.label}); }
+  for(const o of state.objects){ if(o.solved&&o.type!=="circle") out.push({...objLine(o),label:"Linie"}); }
+  return out;
+}
+function nearestLine(sp){
+  const w={x:WX(sp.x),y:WY(sp.y)}; let best=null,bd=0.34;
+  for(const L of selectableLines()){ const d=distPtLine(w,L); if(d<bd){bd=d;best=L;} }
+  return best;
+}
+
+let down=null;
+svg.addEventListener("pointerdown",e=>{
+  if(!state||state.phase==="won") return;
+  const sp=clientToSvg(e);
+  if(state.tool==="geo"&&state.geo&&state.phase==="draw"){ if(geoPointerDown(sp,e)) return; }
+  down={sp, screen:{x:e.clientX,y:e.clientY}};
+  try{svg.setPointerCapture(e.pointerId);}catch(_){}
+});
+svg.addEventListener("pointermove",e=>{
+  if(!state) return;
+  const sp=clientToSvg(e);
+  if(geoDrag){ geoPointerMove(sp); return; }
+  if(!state.tool||state.buffer.length!==1||state.phase!=="draw") return;
+  drawGhost(sp);
+});
+svg.addEventListener("pointerup",e=>{
+  if(!state||state.phase==="won") return;
+  if(geoDrag){ geoPointerUp(); down=null; return; }
+  if(!down) return;
+  const up=clientToSvg(e);
+  const moved=Math.hypot(e.clientX-down.screen.x,e.clientY-down.screen.y);
+  if(state.phase==="enter"){ down=null; return; }               // Eingabe läuft übers Feld
+  if(!state.tool){ toast("Wähle links ein Werkzeug.","info"); down=null; return; }
+  if(state.tool==="geo"){ down=null; return; }                  // Geodreieck nur über Griff/Körper
+  // Punkt setzen (ein Tipp)
+  if(state.tool==="punkt"){ placePoint(up); down=null; return; }
+  const def=TOOLDEF[state.tool];
+  // Ziehen über zwei Punkte (nur Punkt-Punkt-Werkzeuge, leerer Puffer)
+  if(moved>10 && state.buffer.length===0 && def.steps[0]==="point" && def.steps[1]==="point"){
+    handleTap(down.sp); handleTap(up);
+  } else {
+    handleTap(up);
+  }
+  down=null;
+});
+function placePoint(sp){
+  const w=snapWorld(sp); if(!w){ toast("Bitte auf einen Gitterpunkt tippen.","bad"); return; }
+  // schon gesetzt? -> entfernen (Umschalten)
+  const idx=state.points.findIndex(p=>p.x===w.x&&p.y===w.y);
+  if(idx>=0){ state.points.splice(idx,1); drawPoints(); return; }
+  const hp=hintPointAt(w);
+  state.points.push({x:w.x,y:w.y, name:hp?hp.name:null, ok:!!hp});
+  drawPoints();
+  if(hp) toast("Punkt "+hp.name+COORD(w)+" gesetzt.","good");
+  else toast("Punkt "+COORD(w)+" gesetzt.","info");
+}
+
+function handleTap(sp){
+  const def=TOOLDEF[state.tool]; const step=def.steps[state.buffer.length];
+  if(step==="point"){
+    const w=snapWorld(sp); if(!w){ toast("Bitte auf einen Gitterpunkt tippen.","bad"); return; }
+    state.buffer.push({kind:"point",pt:w});
+  } else { // line
+    const L=nearestLine(sp); if(!L){ toast("Tippe genau auf eine Linie.","bad"); return; }
+    state.buffer.push({kind:"line",p:L.p,d:L.d});
+  }
+  clear(groups.ghost);
+  if(state.buffer.length>=def.steps.length) buildAndSubmit();
+  else { drawSelection(); setMeta(); }
+}
+function buildAndSubmit(){
+  const t=state.tool, B=state.buffer; let o=null;
+  if(t==="kreis"){ const c=B[0].pt, rp=B[1].pt, r=Math.round(dist(c,rp));
+    if(r<1){ toast("Der Radius muss mindestens 1 Meile sein.","bad"); state.buffer=[]; clear(groups.ghost); return; }
+    o={type:"circle",c,r}; }
+  else if(t==="strecke"){ if(dist(B[0].pt,B[1].pt)<0.5){toast("Zwei verschiedene Punkte wählen.","bad");state.buffer=[];return;} o={type:"seg",a:B[0].pt,b:B[1].pt}; }
+  else if(t==="gerade"){  if(dist(B[0].pt,B[1].pt)<0.5){toast("Zwei verschiedene Punkte wählen.","bad");state.buffer=[];return;} o={type:"line",line:lineFromPts(B[0].pt,B[1].pt)}; }
+  else if(t==="parallele"){ o={type:"para",line:{p:B[1].pt,d:B[0].d}}; }
+  else if(t==="lot"){ o={type:"lot",line:{p:B[0].pt,d:perp(B[1].d)}}; }
+  state.buffer=[]; clear(groups.ghost);
+  submitObject(o); drawSelection();
+}
+
+/* Vorschau & Auswahl-Hervorhebung */
+function drawSelection(){
+  clear(groups.ghost);
+  if(state.buffer.length===1){
+    const b=state.buffer[0];
+    if(b.kind==="point") el("circle",{cx:SX(b.pt.x),cy:SY(b.pt.y),r:7,fill:"none",stroke:"var(--gold)","stroke-width":2.4},groups.ghost);
+    else { const [a,c]=lineEnds(b); el("line",{x1:SX(a.x),y1:SY(a.y),x2:SX(c.x),y2:SY(c.y),stroke:"var(--gold)","stroke-width":3,opacity:.7},groups.ghost); }
+  }
+}
+function drawGhost(sp){
+  clear(groups.ghost); drawSelection();
+  const b=state.buffer[0]; if(!b) return;
+  const t=state.tool, col="var(--gold)";
+  if(t==="kreis"&&b.kind==="point"){ const w=snapWorld(sp)||{x:WX(sp.x),y:WY(sp.y)}; const r=Math.max(1,Math.round(dist(b.pt,w)));
+    el("circle",{cx:SX(b.pt.x),cy:SY(b.pt.y),r:r*UNIT,fill:"none",stroke:col,"stroke-width":2,opacity:.6,"stroke-dasharray":"5 5"},groups.ghost);
+    el("text",{x:SX(b.pt.x),y:SY(b.pt.y)-r*UNIT-5,"font-size":12,fill:"var(--sepia)","text-anchor":"middle"},groups.ghost).textContent="r = "+r+" Meilen";
+  } else if((t==="strecke"||t==="gerade")&&b.kind==="point"){ const w=snapWorld(sp)||{x:WX(sp.x),y:WY(sp.y)};
+    if(t==="strecke") el("line",{x1:SX(b.pt.x),y1:SY(b.pt.y),x2:SX(w.x),y2:SY(w.y),stroke:col,"stroke-width":2,opacity:.6,"stroke-dasharray":"5 5"},groups.ghost);
+    else { const [a,c]=lineEnds(lineFromPts(b.pt,w)); el("line",{x1:SX(a.x),y1:SY(a.y),x2:SX(c.x),y2:SY(c.y),stroke:col,"stroke-width":2,opacity:.6,"stroke-dasharray":"5 5"},groups.ghost); }
+  } else if(t==="parallele"&&b.kind==="line"){ const w=snapWorld(sp); if(w){ const [a,c]=lineEnds({p:w,d:b.d});
+    el("line",{x1:SX(a.x),y1:SY(a.y),x2:SX(c.x),y2:SY(c.y),stroke:col,"stroke-width":2,opacity:.6,"stroke-dasharray":"5 5"},groups.ghost); } }
+}
+
+/* =========================================================
+   Geodreieck (virtuell) – verschieben, drehen, einrasten
+========================================================= */
+const GEO_HL=213, GEO_AP=213, GEO_HANDLE=GEO_AP+28;   // Pixel
+const GEO_ANGTOL=3, GEO_POSTOL=0.3;                   // Einrast-Toleranz: Winkel (Grad) / Abstand (Kästchen)
+const projPtLine=(P,l)=>add(l.p, mul(l.d, dot(sub(P,l.p),l.d)));
+function geoEdgeLine(){ const a=state.geo.angle*Math.PI/180; return {p:{x:state.geo.cx,y:state.geo.cy}, d:{x:Math.cos(a),y:Math.sin(a)}}; }
+function openLineClues(){
+  const st=hunt().stages[state.stage], out=[];
+  st.clues.forEach((c,i)=>{ if(!state.clueSolved[i] && c.kind!=="kreis"){ out.push({i,c,line:clueLocus(c).line}); } });
+  return out;
+}
+function geoSnapTarget(){
+  if(!state.geo) return null;
+  const E=geoEdgeLine(); let best=null,bd=1e9;
+  for(const t of openLineClues()){
+    const ad0=Math.abs(Math.atan2(cross(E.d,t.line.d),dot(E.d,t.line.d)))*180/Math.PI;
+    const ad=Math.min(ad0,180-ad0), pd=distPtLine(E.p,t.line);
+    if(ad<GEO_ANGTOL && pd<GEO_POSTOL){ const sc=ad/GEO_ANGTOL+pd/GEO_POSTOL; if(sc<bd){bd=sc;best=t;} }
+  }
+  return best;
+}
+function applyGeoSnap(t){
+  const pr=projPtLine({x:state.geo.cx,y:state.geo.cy}, t.line);
+  state.geo.cx=pr.x; state.geo.cy=pr.y;
+  state.geo.angle=Math.atan2(t.line.d.y,t.line.d.x)*180/Math.PI;
+}
+function geoTriangle(g){
+  el("path",{d:`M ${-GEO_HL} 0 L ${GEO_HL} 0 L 0 ${-GEO_AP} Z`,fill:"rgba(120,170,210,.16)",stroke:"#2f4a6b","stroke-width":1.4,"stroke-linejoin":"round"},g);
+  // parallele Hilfslinien zur Zeichenkante (zum Anlegen von Parallelen)
+  for(let k=1;k<=6;k++){ const h=k*(GEO_AP/7), hw=GEO_HL*(1-h/GEO_AP);
+    el("line",{x1:-hw,y1:-h,x2:hw,y2:-h,stroke:"#2f4a6b","stroke-width":0.9,opacity:.42},g); }
+  // Mittellinie (Höhe, 90°) – für das Lot
+  el("line",{x1:0,y1:0,x2:0,y2:-GEO_AP,stroke:"#2f4a6b","stroke-width":1.1,"stroke-dasharray":"5 4",opacity:.7},g);
+  // Skalenstriche entlang der Zeichenkante
+  for(let k=-9;k<=9;k++){ const x=k*(GEO_HL/9); el("line",{x1:x,y1:0,x2:x,y2:(k%2?-5:-10),stroke:"#2f4a6b","stroke-width":1,opacity:.55},g); }
+}
+function drawGeo(){
+  clear(groups.geo);
+  if(!state.geo || state.tool!=="geo" || state.phase!=="draw") return;
+  const cxs=SX(state.geo.cx), cys=SY(state.geo.cy), snapped=!!geoSnapTarget();
+  const edgeCol=snapped?"var(--good)":"#2f4a6b";
+  // Vorschau der Zeichenkante über das ganze Gitter
+  const [pa,pb]=lineEnds(geoEdgeLine());
+  el("line",{x1:SX(pa.x),y1:SY(pa.y),x2:SX(pb.x),y2:SY(pb.y),stroke:edgeCol,"stroke-width":snapped?2:1.2,opacity:snapped?.85:.4,"stroke-dasharray":snapped?"none":"7 6"},groups.geo);
+  const g=el("g",{transform:`translate(${cxs},${cys}) rotate(${-state.geo.angle})`},groups.geo);
+  geoTriangle(g);
+  el("line",{x1:-GEO_HL,y1:0,x2:GEO_HL,y2:0,stroke:edgeCol,"stroke-width":4,"stroke-linecap":"round"},g);
+  el("line",{x1:0,y1:-GEO_AP,x2:0,y2:-GEO_HANDLE,stroke:"#2f4a6b","stroke-width":1.2,opacity:.6},g);
+  el("circle",{cx:0,cy:-GEO_HANDLE,r:12,fill:"#f6edd7",stroke:"var(--ox)","stroke-width":2.4},g);
+  el("text",{x:0,y:-GEO_HANDLE+5,"font-size":13,"text-anchor":"middle",fill:"var(--ox)"},g).textContent="↻";
+  if(snapped) el("text",{x:cxs,y:cys+22,"font-size":12.5,"text-anchor":"middle",fill:"var(--good)","font-weight":700,"paint-order":"stroke",stroke:"#f0e4c8","stroke-width":3.5},groups.geo).textContent="Eingerastet – loslassen zum Zeichnen ✏️";
+}
+function drawGeoTip(){
+  clear(groups.geotip);
+  if(!state.geoTip || state.tool!=="geo" || state.phase!=="draw") return;
+  for(const t of openLineClues()){
+    const ang=Math.atan2(t.line.d.y,t.line.d.x)*180/Math.PI;
+    let m=projPtLine({x:0,y:0},t.line); if(!inGrid(m,1)) m=t.line.p;
+    const g=el("g",{transform:`translate(${SX(m.x)},${SY(m.y)}) rotate(${-ang})`,opacity:.55},groups.geotip);
+    el("path",{d:`M ${-GEO_HL} 0 L ${GEO_HL} 0 L 0 ${-GEO_AP} Z`,fill:"none",stroke:"var(--good)","stroke-width":1.6,"stroke-dasharray":"5 5","stroke-linejoin":"round"},g);
+    el("line",{x1:-GEO_HL,y1:0,x2:GEO_HL,y2:0,stroke:"var(--good)","stroke-width":2.6,"stroke-dasharray":"5 5"},g);
+  }
+}
+function geoHitTest(sp){
+  const cxs=SX(state.geo.cx), cys=SY(state.geo.cy), A=state.geo.angle;
+  const hx=cxs - GEO_HANDLE*Math.sin(A*Math.PI/180), hy=cys - GEO_HANDLE*Math.cos(A*Math.PI/180);
+  if(Math.hypot(sp.x-hx,sp.y-hy)<20) return "rotate";
+  const ca=Math.cos(A*Math.PI/180), sa=Math.sin(A*Math.PI/180), dx=sp.x-cxs, dy=sp.y-cys;
+  const lx=ca*dx - sa*dy, ly=sa*dx + ca*dy;       // in lokale Dreieckskoordinaten
+  if(ly>=-GEO_AP-10 && ly<=12){ const hw=GEO_HL*(1+ly/GEO_AP)+10; if(Math.abs(lx)<=hw) return "move"; }
+  return null;
+}
+let geoDrag=null;
+function geoPointerDown(sp,e){
+  const hit=geoHitTest(sp); if(!hit) return false;
+  geoDrag={mode:hit, grab:{x:WX(sp.x)-state.geo.cx, y:WY(sp.y)-state.geo.cy}};
+  down={sp,screen:{x:e.clientX,y:e.clientY}}; try{svg.setPointerCapture(e.pointerId);}catch(_){}
+  return true;
+}
+function geoPointerMove(sp){
+  if(geoDrag.mode==="move"){ state.geo.cx=WX(sp.x)-geoDrag.grab.x; state.geo.cy=WY(sp.y)-geoDrag.grab.y; }
+  else { const bx=sp.x-SX(state.geo.cx), by=sp.y-SY(state.geo.cy); state.geo.angle=Math.atan2(-bx,-by)*180/Math.PI; }
+  drawGeo();
+}
+function geoPointerUp(){
+  const t=geoSnapTarget();
+  if(t){ applyGeoSnap(t);
+    const E=geoEdgeLine();
+    submitObject({type:"line", line:{p:{x:state.geo.cx,y:state.geo.cy}, d:E.d}});
+  } else toast("Noch nicht eingerastet – lege die Zeichenkante genau an.","info");
+  geoDrag=null; drawGeo();
+}
+
+/* =========================================================
+   Oberfläche
+========================================================= */
+const $=id=>document.getElementById(id);
+let toastTimer=null;
+function toast(msg,kind){ const t=$("toast"); t.textContent=msg; t.className="show"+(kind?" "+kind:"");
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.className="",2100); }
+function setMeta(){
+  const st=hunt().stages[state.stage], n=hunt().stages.length;
+  let m="Hinweis "+(state.stage+1)+" von "+n;
+  if(state.phase==="enter") m+=" · Koordinaten eintragen";
+  else if(state.tool==="punkt") m+=" · Punkt: Koordinate antippen";
+  else if(state.tool==="geo") m+=" · Geodreieck: anlegen, drehen, einrasten";
+  else if(state.tool){ const def=TOOLDEF[state.tool]; m+=" · "+CLUEKIND[state.tool]+": "+def.hint[state.buffer.length]; }
+  $("meta").textContent=m;
+}
+function renderHint(){
+  const st=hunt().stages[state.stage], n=hunt().stages.length;
+  $("hinttext").innerHTML='<span class="dh">'+stageNarrative(st,state.stage,n)+'</span>';
+  const ch=$("cluehelp"); ch.innerHTML="";
+  st.clues.forEach((c,i)=>{ const d=document.createElement("div"); d.className="cl";
+    d.innerHTML='<span class="ck">'+CLUEKIND[c.kind]+'</span>'+(state.clueSolved[i]?"✓ ":"")+clueText(c); ch.appendChild(d); });
+}
+function updatePips(){
+  const wrap=$("pips"); wrap.innerHTML="";
+  hunt().stages.forEach((s,i)=>{ const d=document.createElement("div");
+    d.className="pip"+(i<state.stage||(state.phase==="won")?" done":"")+(i===state.stage&&state.phase!=="won"?" cur":""); wrap.appendChild(d); });
+}
+function render(){ drawGrid(); drawFeatures(); drawGiven(); drawFound(); drawPoints(); drawObjects(); drawGeoTip(); drawGeo(); }
+function renderStage(){
+  $("ttl").textContent=hunt().title;
+  clear(groups.treasure); hideEnter();
+  render(); renderHint(); updatePips(); setMeta(); drawSelection();
+  if(state.showSolution&&state.teacher) drawSolution();
+}
+
+/* Werkzeugauswahl */
+function applyToolAvailability(){
+  document.querySelectorAll(".tool").forEach(b=>{
+    const t=b.dataset.tool, on=toolEnabled(t);
+    b.classList.toggle("disabled",!on);
+  });
+}
+document.querySelectorAll(".tool").forEach(b=>{
+  b.addEventListener("click",()=>{
+    if(state.phase!=="draw") return;
+    const t=b.dataset.tool;
+    if(!toolEnabled(t)){
+      toast("In den ersten drei Suchen zeichnest du Linien mit dem Geodreieck. Ab Suche 4 gibt es alle Werkzeuge.","info");
+      return;
+    }
+    state.tool=(state.tool===t?null:t); state.buffer=[]; clear(groups.ghost);
+    if(state.tool==="geo"){ if(!state.geo) state.geo={cx:0,cy:1,angle:0}; }
+    else { state.geoTip=false; $("geohintbtn").classList.remove("on"); }
+    $("geohintbtn").style.display = state.tool==="geo" ? "inline-block" : "none";
+    document.querySelectorAll(".tool").forEach(x=>x.classList.toggle("sel",x.dataset.tool===state.tool));
+    clear(groups.geo); clear(groups.geotip); drawGeo();
+    setMeta(); drawSelection();
+  });
+});
+$("geohintbtn").addEventListener("click",()=>{
+  state.geoTip=!state.geoTip; $("geohintbtn").classList.toggle("on",state.geoTip); drawGeoTip();
+});
+
+/* Hilfswerkzeuge */
+function undo(){
+  if(state.phase==="won") return;
+  if(state.phase==="enter"){ hideEnter(); state.phase="draw"; clear(groups.cands); }
+  if(state.buffer.length){ state.buffer=[]; clear(groups.ghost); setMeta(); return; }
+  for(let i=state.objects.length-1;i>=0;i--){ const o=state.objects[i];
+    if(o.solved){ const st=hunt().stages[state.stage];
+      for(let k=0;k<2;k++) if(matchClue(o,st.clues[k])) state.clueSolved[k]=false;
+    }
+    state.objects.splice(i,1); break;
+  }
+  state.cands=[]; state.target=null; clear(groups.cands);
+  drawObjects(); drawPoints(); renderHint(); updatePips(); setMeta();
+}
+function resetHunt(){ const hi=state.hi, keep={done:state.done,teacher:state.teacher}; state=freshState(hi); state.done=keep.done; state.teacher=keep.teacher; state.found=[]; state.showSolution=false; ["found","treasure","obj","cands","ghost","marks","given","geo","geotip"].forEach(g=>clear(groups[g])); $("geohintbtn").style.display="none"; $("geohintbtn").classList.remove("on"); hideEnter(); applyToolAvailability(); renderStage(); }
+function drawSolution(){
+  clear(groups.cands);
+  const st=hunt().stages[state.stage];
+  st.clues.forEach(c=>{ const L=clueLocus(c), col="rgba(63,107,70,.7)";
+    if(L.kind==="circle") el("circle",{cx:SX(L.c.x),cy:SY(L.c.y),r:L.r*UNIT,fill:"none",stroke:col,"stroke-width":1.6,"stroke-dasharray":"4 4"},groups.cands);
+    else if(L.kind==="seg") el("line",{x1:SX(L.A.x),y1:SY(L.A.y),x2:SX(L.B.x),y2:SY(L.B.y),stroke:col,"stroke-width":1.6,"stroke-dasharray":"4 4"},groups.cands);
+    else { const [a,b]=lineEnds(L.line); el("line",{x1:SX(a.x),y1:SY(a.y),x2:SX(b.x),y2:SY(b.y),stroke:col,"stroke-width":1.6,"stroke-dasharray":"4 4"},groups.cands); }
+  });
+  const cs=stageCandidates(), T=stageTarget(cs);
+  if(T) el("circle",{cx:SX(T.x),cy:SY(T.y),r:10,fill:"none",stroke:"var(--good)","stroke-width":2.6},groups.cands);
+}
+document.querySelectorAll(".util").forEach(b=>{
+  b.addEventListener("click",()=>{
+    const u=b.dataset.util;
+    if(u==="undo") undo();
+    else if(u==="reset") resetHunt();
+    else if(u==="help") $("help").classList.add("show");
+    else if(u==="teacher") $("teacher").classList.add("show");
+    else if(u==="solution"){ if(!state.teacher) return; state.showSolution=!state.showSolution; b.classList.toggle("on",state.showSolution);
+      if(state.showSolution) drawSolution(); else { clear(groups.cands); if(state.phase==="enter"&&state.cands.length>1) drawCandidates(); } }
+  });
+});
+document.querySelectorAll(".x").forEach(x=>x.addEventListener("click",()=>$(x.dataset.x).classList.remove("show")));
+$("hintbtn").addEventListener("click",()=>{ const c=$("cluehelp"); c.classList.toggle("show"); $("hintbtn").classList.toggle("on",c.classList.contains("show")); });
+$("enterok").addEventListener("click",checkEnter);
+["tx","ty"].forEach(id=>$(id).addEventListener("keydown",e=>{ if(e.key==="Enter") checkEnter(); }));
+
+/* Lehrer-Code */
+$("teacherok").addEventListener("click",()=>{
+  if($("teachercode").value.trim()===TEACHER_CODE){ state.teacher=true; $("solbtn").style.display="block";
+    $("teacher").classList.remove("show"); applyToolAvailability(); buildHuntPicker(); toast("Lehrer-Modus aktiv – alle Suchen und Werkzeuge frei.","good"); }
+  else toast("Code stimmt nicht.","bad");
+  $("teachercode").value="";
+});
+
+/* Schatzsuche-Auswahl */
+function buildHuntPicker(){
+  const wrap=$("huntpick"); wrap.innerHTML="";
+  HUNTS.forEach((h,i)=>{
+    const locked=!huntUnlocked(i);
+    const b=document.createElement("div"); b.className="hp"+(state.done[h.id]?" done":"")+(i===state.hi?" cur":"")+(locked?" locked":"");
+    b.textContent=locked?"🔒":h.id; b.title=locked?"Erst die Suchen 1–3 meistern":h.title+" ("+h.level+" Stufen)";
+    b.addEventListener("click",()=>{
+      if(locked){ toast("Diese Suche öffnet sich, sobald du die Suchen 1, 2 und 3 gemeistert hast.","info"); return; }
+      if(i===state.hi&&state.phase!=="won")return; loadHunt(i);
+    });
+    wrap.appendChild(b);
+  });
+}
+function loadHunt(hi){
+  $("win").classList.remove("show");
+  const keep={done:state&&state.done?state.done:{},teacher:state?state.teacher:false};
+  state=freshState(hi); state.done=keep.done; state.teacher=keep.teacher;
+  state.found=[]; state.showSolution=false;
+  document.querySelectorAll(".tool").forEach(x=>x.classList.remove("sel"));
+  $("solbtn").classList.remove("on");
+  $("geohintbtn").style.display="none"; $("geohintbtn").classList.remove("on");
+  ["found","treasure","obj","cands","ghost","marks","given","geo","geotip"].forEach(g=>clear(groups[g]));
+  hideEnter(); applyToolAvailability();
+  renderStage(); buildHuntPicker();
+}
+$("winnext").addEventListener("click",()=>{
+  if(state.hi<HUNTS.length-1) loadHunt(state.hi+1); else $("win").classList.remove("show");
+});
+
+/* Start */
+state={done:{},teacher:false};
+loadHunt(0);
+</script>
+<!-- ===================== Teilen / QR-Code (gemeinsamer Baustein) ===================== -->
+<style>
+  .sq-fab{position:fixed; left:calc(10px + env(safe-area-inset-left)); bottom:calc(10px + env(safe-area-inset-bottom));
+    z-index:120; display:none; align-items:center; gap:7px; padding:10px 14px; border-radius:999px; border:none;
+    background:rgba(20,20,26,.82); color:#fff; font:inherit; font-size:14.5px; font-weight:700; cursor:pointer;
+    box-shadow:0 4px 14px rgba(0,0,0,.3); -webkit-tap-highlight-color:transparent;}
+  .sq-fab.on{display:inline-flex;}
+  .sq-fab:active{transform:scale(.96);}
+  .sq-fab svg{width:17px; height:17px; display:block;}
+  .sq-inline{display:inline-flex; align-items:center; gap:6px;}
+  .sq-ov{position:fixed; inset:0; z-index:9000; display:none; align-items:center; justify-content:center;
+    background:rgba(12,14,18,.86); padding:16px; -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px);}
+  .sq-ov.on{display:flex;}
+  .sq-card{background:#fff; color:#1b1f24; border-radius:22px; padding:22px 22px 18px; width:100%; max-width:520px;
+    max-height:94vh; overflow:auto; text-align:center; box-shadow:0 24px 60px rgba(0,0,0,.45);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+  .sq-card h2{margin:0 0 2px; font-size:1.4rem; font-weight:800;}
+  .sq-card p.sq-sub{margin:0 0 14px; color:#5b6470; font-size:.95rem;}
+  /* Der weiße Rand um den Code ist Vorschrift: mindestens vier Module Ruhezone,
+     sonst erkennen Kameras den Code nicht. Die Breite setzt das Skript. */
+  .sq-code{display:flex; align-items:center; justify-content:center; margin:0 auto 12px;
+    width:min(74vw,330px); background:#fff; border:1px solid #e4e6ea; border-radius:14px; padding:14px 0;}
+  .sq-code canvas, .sq-code img{width:var(--sq-w,84%); height:auto; display:block; margin:0 auto; image-rendering:pixelated;}
+  .sq-code table{margin:0 auto;}
+  .sq-url{font-size:.86rem; color:#5b6470; word-break:break-all; background:#f3f4f6; border-radius:10px;
+    padding:9px 11px; margin-bottom:14px; line-height:1.4;
+    -webkit-user-select:text; user-select:text;}
+  .sq-row{display:flex; gap:9px; flex-wrap:wrap;}
+  .sq-row button{flex:1 1 130px; border:none; border-radius:12px; padding:13px 14px; font:inherit; font-size:1rem;
+    font-weight:750; cursor:pointer; background:#1b1f24; color:#fff; min-height:48px;}
+  .sq-row button.sq-alt{background:#fff; color:#1b1f24; box-shadow:inset 0 0 0 2px #dfe2e7;}
+  .sq-row button.sq-ok{background:#1f7a46;}
+  .sq-row button:active{transform:scale(.985);}
+  .sq-note{margin-top:11px; font-size:.8rem; color:#8a929c; line-height:1.45;}
+</style>
+<script>/* QR-Code: qrcodejs von David Shim (MIT) – dieselbe Bibliothek wie in der Digitalen Tafel */
+var QRCode;!function(){function a(a){this.mode=c.MODE_8BIT_BYTE,this.data=a,this.parsedData=[];for(var b=[],d=0,e=this.data.length;e>d;d++){var f=this.data.charCodeAt(d);f>65536?(b[0]=240|(1835008&f)>>>18,b[1]=128|(258048&f)>>>12,b[2]=128|(4032&f)>>>6,b[3]=128|63&f):f>2048?(b[0]=224|(61440&f)>>>12,b[1]=128|(4032&f)>>>6,b[2]=128|63&f):f>128?(b[0]=192|(1984&f)>>>6,b[1]=128|63&f):b[0]=f,this.parsedData=this.parsedData.concat(b)}this.parsedData.length!=this.data.length&&(this.parsedData.unshift(191),this.parsedData.unshift(187),this.parsedData.unshift(239))}function b(a,b){this.typeNumber=a,this.errorCorrectLevel=b,this.modules=null,this.moduleCount=0,this.dataCache=null,this.dataList=[]}function i(a,b){if(void 0==a.length)throw new Error(a.length+"/"+b);for(var c=0;c<a.length&&0==a[c];)c++;this.num=new Array(a.length-c+b);for(var d=0;d<a.length-c;d++)this.num[d]=a[d+c]}function j(a,b){this.totalCount=a,this.dataCount=b}function k(){this.buffer=[],this.length=0}function m(){return"undefined"!=typeof CanvasRenderingContext2D}function n(){var a=!1,b=navigator.userAgent;return/android/i.test(b)&&(a=!0,aMat=b.toString().match(/android ([0-9]\.[0-9])/i),aMat&&aMat[1]&&(a=parseFloat(aMat[1]))),a}function r(a,b){for(var c=1,e=s(a),f=0,g=l.length;g>=f;f++){var h=0;switch(b){case d.L:h=l[f][0];break;case d.M:h=l[f][1];break;case d.Q:h=l[f][2];break;case d.H:h=l[f][3]}if(h>=e)break;c++}if(c>l.length)throw new Error("Too long data");return c}function s(a){var b=encodeURI(a).toString().replace(/\%[0-9a-fA-F]{2}/g,"a");return b.length+(b.length!=a?3:0)}a.prototype={getLength:function(){return this.parsedData.length},write:function(a){for(var b=0,c=this.parsedData.length;c>b;b++)a.put(this.parsedData[b],8)}},b.prototype={addData:function(b){var c=new a(b);this.dataList.push(c),this.dataCache=null},isDark:function(a,b){if(0>a||this.moduleCount<=a||0>b||this.moduleCount<=b)throw new Error(a+","+b);return this.modules[a][b]},getModuleCount:function(){return this.moduleCount},make:function(){this.makeImpl(!1,this.getBestMaskPattern())},makeImpl:function(a,c){this.moduleCount=4*this.typeNumber+17,this.modules=new Array(this.moduleCount);for(var d=0;d<this.moduleCount;d++){this.modules[d]=new Array(this.moduleCount);for(var e=0;e<this.moduleCount;e++)this.modules[d][e]=null}this.setupPositionProbePattern(0,0),this.setupPositionProbePattern(this.moduleCount-7,0),this.setupPositionProbePattern(0,this.moduleCount-7),this.setupPositionAdjustPattern(),this.setupTimingPattern(),this.setupTypeInfo(a,c),this.typeNumber>=7&&this.setupTypeNumber(a),null==this.dataCache&&(this.dataCache=b.createData(this.typeNumber,this.errorCorrectLevel,this.dataList)),this.mapData(this.dataCache,c)},setupPositionProbePattern:function(a,b){for(var c=-1;7>=c;c++)if(!(-1>=a+c||this.moduleCount<=a+c))for(var d=-1;7>=d;d++)-1>=b+d||this.moduleCount<=b+d||(this.modules[a+c][b+d]=c>=0&&6>=c&&(0==d||6==d)||d>=0&&6>=d&&(0==c||6==c)||c>=2&&4>=c&&d>=2&&4>=d?!0:!1)},getBestMaskPattern:function(){for(var a=0,b=0,c=0;8>c;c++){this.makeImpl(!0,c);var d=f.getLostPoint(this);(0==c||a>d)&&(a=d,b=c)}return b},createMovieClip:function(a,b,c){var d=a.createEmptyMovieClip(b,c),e=1;this.make();for(var f=0;f<this.modules.length;f++)for(var g=f*e,h=0;h<this.modules[f].length;h++){var i=h*e,j=this.modules[f][h];j&&(d.beginFill(0,100),d.moveTo(i,g),d.lineTo(i+e,g),d.lineTo(i+e,g+e),d.lineTo(i,g+e),d.endFill())}return d},setupTimingPattern:function(){for(var a=8;a<this.moduleCount-8;a++)null==this.modules[a][6]&&(this.modules[a][6]=0==a%2);for(var b=8;b<this.moduleCount-8;b++)null==this.modules[6][b]&&(this.modules[6][b]=0==b%2)},setupPositionAdjustPattern:function(){for(var a=f.getPatternPosition(this.typeNumber),b=0;b<a.length;b++)for(var c=0;c<a.length;c++){var d=a[b],e=a[c];if(null==this.modules[d][e])for(var g=-2;2>=g;g++)for(var h=-2;2>=h;h++)this.modules[d+g][e+h]=-2==g||2==g||-2==h||2==h||0==g&&0==h?!0:!1}},setupTypeNumber:function(a){for(var b=f.getBCHTypeNumber(this.typeNumber),c=0;18>c;c++){var d=!a&&1==(1&b>>c);this.modules[Math.floor(c/3)][c%3+this.moduleCount-8-3]=d}for(var c=0;18>c;c++){var d=!a&&1==(1&b>>c);this.modules[c%3+this.moduleCount-8-3][Math.floor(c/3)]=d}},setupTypeInfo:function(a,b){for(var c=this.errorCorrectLevel<<3|b,d=f.getBCHTypeInfo(c),e=0;15>e;e++){var g=!a&&1==(1&d>>e);6>e?this.modules[e][8]=g:8>e?this.modules[e+1][8]=g:this.modules[this.moduleCount-15+e][8]=g}for(var e=0;15>e;e++){var g=!a&&1==(1&d>>e);8>e?this.modules[8][this.moduleCount-e-1]=g:9>e?this.modules[8][15-e-1+1]=g:this.modules[8][15-e-1]=g}this.modules[this.moduleCount-8][8]=!a},mapData:function(a,b){for(var c=-1,d=this.moduleCount-1,e=7,g=0,h=this.moduleCount-1;h>0;h-=2)for(6==h&&h--;;){for(var i=0;2>i;i++)if(null==this.modules[d][h-i]){var j=!1;g<a.length&&(j=1==(1&a[g]>>>e));var k=f.getMask(b,d,h-i);k&&(j=!j),this.modules[d][h-i]=j,e--,-1==e&&(g++,e=7)}if(d+=c,0>d||this.moduleCount<=d){d-=c,c=-c;break}}}},b.PAD0=236,b.PAD1=17,b.createData=function(a,c,d){for(var e=j.getRSBlocks(a,c),g=new k,h=0;h<d.length;h++){var i=d[h];g.put(i.mode,4),g.put(i.getLength(),f.getLengthInBits(i.mode,a)),i.write(g)}for(var l=0,h=0;h<e.length;h++)l+=e[h].dataCount;if(g.getLengthInBits()>8*l)throw new Error("code length overflow. ("+g.getLengthInBits()+">"+8*l+")");for(g.getLengthInBits()+4<=8*l&&g.put(0,4);0!=g.getLengthInBits()%8;)g.putBit(!1);for(;;){if(g.getLengthInBits()>=8*l)break;if(g.put(b.PAD0,8),g.getLengthInBits()>=8*l)break;g.put(b.PAD1,8)}return b.createBytes(g,e)},b.createBytes=function(a,b){for(var c=0,d=0,e=0,g=new Array(b.length),h=new Array(b.length),j=0;j<b.length;j++){var k=b[j].dataCount,l=b[j].totalCount-k;d=Math.max(d,k),e=Math.max(e,l),g[j]=new Array(k);for(var m=0;m<g[j].length;m++)g[j][m]=255&a.buffer[m+c];c+=k;var n=f.getErrorCorrectPolynomial(l),o=new i(g[j],n.getLength()-1),p=o.mod(n);h[j]=new Array(n.getLength()-1);for(var m=0;m<h[j].length;m++){var q=m+p.getLength()-h[j].length;h[j][m]=q>=0?p.get(q):0}}for(var r=0,m=0;m<b.length;m++)r+=b[m].totalCount;for(var s=new Array(r),t=0,m=0;d>m;m++)for(var j=0;j<b.length;j++)m<g[j].length&&(s[t++]=g[j][m]);for(var m=0;e>m;m++)for(var j=0;j<b.length;j++)m<h[j].length&&(s[t++]=h[j][m]);return s};for(var c={MODE_NUMBER:1,MODE_ALPHA_NUM:2,MODE_8BIT_BYTE:4,MODE_KANJI:8},d={L:1,M:0,Q:3,H:2},e={PATTERN000:0,PATTERN001:1,PATTERN010:2,PATTERN011:3,PATTERN100:4,PATTERN101:5,PATTERN110:6,PATTERN111:7},f={PATTERN_POSITION_TABLE:[[],[6,18],[6,22],[6,26],[6,30],[6,34],[6,22,38],[6,24,42],[6,26,46],[6,28,50],[6,30,54],[6,32,58],[6,34,62],[6,26,46,66],[6,26,48,70],[6,26,50,74],[6,30,54,78],[6,30,56,82],[6,30,58,86],[6,34,62,90],[6,28,50,72,94],[6,26,50,74,98],[6,30,54,78,102],[6,28,54,80,106],[6,32,58,84,110],[6,30,58,86,114],[6,34,62,90,118],[6,26,50,74,98,122],[6,30,54,78,102,126],[6,26,52,78,104,130],[6,30,56,82,108,134],[6,34,60,86,112,138],[6,30,58,86,114,142],[6,34,62,90,118,146],[6,30,54,78,102,126,150],[6,24,50,76,102,128,154],[6,28,54,80,106,132,158],[6,32,58,84,110,136,162],[6,26,54,82,110,138,166],[6,30,58,86,114,142,170]],G15:1335,G18:7973,G15_MASK:21522,getBCHTypeInfo:function(a){for(var b=a<<10;f.getBCHDigit(b)-f.getBCHDigit(f.G15)>=0;)b^=f.G15<<f.getBCHDigit(b)-f.getBCHDigit(f.G15);return(a<<10|b)^f.G15_MASK},getBCHTypeNumber:function(a){for(var b=a<<12;f.getBCHDigit(b)-f.getBCHDigit(f.G18)>=0;)b^=f.G18<<f.getBCHDigit(b)-f.getBCHDigit(f.G18);return a<<12|b},getBCHDigit:function(a){for(var b=0;0!=a;)b++,a>>>=1;return b},getPatternPosition:function(a){return f.PATTERN_POSITION_TABLE[a-1]},getMask:function(a,b,c){switch(a){case e.PATTERN000:return 0==(b+c)%2;case e.PATTERN001:return 0==b%2;case e.PATTERN010:return 0==c%3;case e.PATTERN011:return 0==(b+c)%3;case e.PATTERN100:return 0==(Math.floor(b/2)+Math.floor(c/3))%2;case e.PATTERN101:return 0==b*c%2+b*c%3;case e.PATTERN110:return 0==(b*c%2+b*c%3)%2;case e.PATTERN111:return 0==(b*c%3+(b+c)%2)%2;default:throw new Error("bad maskPattern:"+a)}},getErrorCorrectPolynomial:function(a){for(var b=new i([1],0),c=0;a>c;c++)b=b.multiply(new i([1,g.gexp(c)],0));return b},getLengthInBits:function(a,b){if(b>=1&&10>b)switch(a){case c.MODE_NUMBER:return 10;case c.MODE_ALPHA_NUM:return 9;case c.MODE_8BIT_BYTE:return 8;case c.MODE_KANJI:return 8;default:throw new Error("mode:"+a)}else if(27>b)switch(a){case c.MODE_NUMBER:return 12;case c.MODE_ALPHA_NUM:return 11;case c.MODE_8BIT_BYTE:return 16;case c.MODE_KANJI:return 10;default:throw new Error("mode:"+a)}else{if(!(41>b))throw new Error("type:"+b);switch(a){case c.MODE_NUMBER:return 14;case c.MODE_ALPHA_NUM:return 13;case c.MODE_8BIT_BYTE:return 16;case c.MODE_KANJI:return 12;default:throw new Error("mode:"+a)}}},getLostPoint:function(a){for(var b=a.getModuleCount(),c=0,d=0;b>d;d++)for(var e=0;b>e;e++){for(var f=0,g=a.isDark(d,e),h=-1;1>=h;h++)if(!(0>d+h||d+h>=b))for(var i=-1;1>=i;i++)0>e+i||e+i>=b||(0!=h||0!=i)&&g==a.isDark(d+h,e+i)&&f++;f>5&&(c+=3+f-5)}for(var d=0;b-1>d;d++)for(var e=0;b-1>e;e++){var j=0;a.isDark(d,e)&&j++,a.isDark(d+1,e)&&j++,a.isDark(d,e+1)&&j++,a.isDark(d+1,e+1)&&j++,(0==j||4==j)&&(c+=3)}for(var d=0;b>d;d++)for(var e=0;b-6>e;e++)a.isDark(d,e)&&!a.isDark(d,e+1)&&a.isDark(d,e+2)&&a.isDark(d,e+3)&&a.isDark(d,e+4)&&!a.isDark(d,e+5)&&a.isDark(d,e+6)&&(c+=40);for(var e=0;b>e;e++)for(var d=0;b-6>d;d++)a.isDark(d,e)&&!a.isDark(d+1,e)&&a.isDark(d+2,e)&&a.isDark(d+3,e)&&a.isDark(d+4,e)&&!a.isDark(d+5,e)&&a.isDark(d+6,e)&&(c+=40);for(var k=0,e=0;b>e;e++)for(var d=0;b>d;d++)a.isDark(d,e)&&k++;var l=Math.abs(100*k/b/b-50)/5;return c+=10*l}},g={glog:function(a){if(1>a)throw new Error("glog("+a+")");return g.LOG_TABLE[a]},gexp:function(a){for(;0>a;)a+=255;for(;a>=256;)a-=255;return g.EXP_TABLE[a]},EXP_TABLE:new Array(256),LOG_TABLE:new Array(256)},h=0;8>h;h++)g.EXP_TABLE[h]=1<<h;for(var h=8;256>h;h++)g.EXP_TABLE[h]=g.EXP_TABLE[h-4]^g.EXP_TABLE[h-5]^g.EXP_TABLE[h-6]^g.EXP_TABLE[h-8];for(var h=0;255>h;h++)g.LOG_TABLE[g.EXP_TABLE[h]]=h;i.prototype={get:function(a){return this.num[a]},getLength:function(){return this.num.length},multiply:function(a){for(var b=new Array(this.getLength()+a.getLength()-1),c=0;c<this.getLength();c++)for(var d=0;d<a.getLength();d++)b[c+d]^=g.gexp(g.glog(this.get(c))+g.glog(a.get(d)));return new i(b,0)},mod:function(a){if(this.getLength()-a.getLength()<0)return this;for(var b=g.glog(this.get(0))-g.glog(a.get(0)),c=new Array(this.getLength()),d=0;d<this.getLength();d++)c[d]=this.get(d);for(var d=0;d<a.getLength();d++)c[d]^=g.gexp(g.glog(a.get(d))+b);return new i(c,0).mod(a)}},j.RS_BLOCK_TABLE=[[1,26,19],[1,26,16],[1,26,13],[1,26,9],[1,44,34],[1,44,28],[1,44,22],[1,44,16],[1,70,55],[1,70,44],[2,35,17],[2,35,13],[1,100,80],[2,50,32],[2,50,24],[4,25,9],[1,134,108],[2,67,43],[2,33,15,2,34,16],[2,33,11,2,34,12],[2,86,68],[4,43,27],[4,43,19],[4,43,15],[2,98,78],[4,49,31],[2,32,14,4,33,15],[4,39,13,1,40,14],[2,121,97],[2,60,38,2,61,39],[4,40,18,2,41,19],[4,40,14,2,41,15],[2,146,116],[3,58,36,2,59,37],[4,36,16,4,37,17],[4,36,12,4,37,13],[2,86,68,2,87,69],[4,69,43,1,70,44],[6,43,19,2,44,20],[6,43,15,2,44,16],[4,101,81],[1,80,50,4,81,51],[4,50,22,4,51,23],[3,36,12,8,37,13],[2,116,92,2,117,93],[6,58,36,2,59,37],[4,46,20,6,47,21],[7,42,14,4,43,15],[4,133,107],[8,59,37,1,60,38],[8,44,20,4,45,21],[12,33,11,4,34,12],[3,145,115,1,146,116],[4,64,40,5,65,41],[11,36,16,5,37,17],[11,36,12,5,37,13],[5,109,87,1,110,88],[5,65,41,5,66,42],[5,54,24,7,55,25],[11,36,12],[5,122,98,1,123,99],[7,73,45,3,74,46],[15,43,19,2,44,20],[3,45,15,13,46,16],[1,135,107,5,136,108],[10,74,46,1,75,47],[1,50,22,15,51,23],[2,42,14,17,43,15],[5,150,120,1,151,121],[9,69,43,4,70,44],[17,50,22,1,51,23],[2,42,14,19,43,15],[3,141,113,4,142,114],[3,70,44,11,71,45],[17,47,21,4,48,22],[9,39,13,16,40,14],[3,135,107,5,136,108],[3,67,41,13,68,42],[15,54,24,5,55,25],[15,43,15,10,44,16],[4,144,116,4,145,117],[17,68,42],[17,50,22,6,51,23],[19,46,16,6,47,17],[2,139,111,7,140,112],[17,74,46],[7,54,24,16,55,25],[34,37,13],[4,151,121,5,152,122],[4,75,47,14,76,48],[11,54,24,14,55,25],[16,45,15,14,46,16],[6,147,117,4,148,118],[6,73,45,14,74,46],[11,54,24,16,55,25],[30,46,16,2,47,17],[8,132,106,4,133,107],[8,75,47,13,76,48],[7,54,24,22,55,25],[22,45,15,13,46,16],[10,142,114,2,143,115],[19,74,46,4,75,47],[28,50,22,6,51,23],[33,46,16,4,47,17],[8,152,122,4,153,123],[22,73,45,3,74,46],[8,53,23,26,54,24],[12,45,15,28,46,16],[3,147,117,10,148,118],[3,73,45,23,74,46],[4,54,24,31,55,25],[11,45,15,31,46,16],[7,146,116,7,147,117],[21,73,45,7,74,46],[1,53,23,37,54,24],[19,45,15,26,46,16],[5,145,115,10,146,116],[19,75,47,10,76,48],[15,54,24,25,55,25],[23,45,15,25,46,16],[13,145,115,3,146,116],[2,74,46,29,75,47],[42,54,24,1,55,25],[23,45,15,28,46,16],[17,145,115],[10,74,46,23,75,47],[10,54,24,35,55,25],[19,45,15,35,46,16],[17,145,115,1,146,116],[14,74,46,21,75,47],[29,54,24,19,55,25],[11,45,15,46,46,16],[13,145,115,6,146,116],[14,74,46,23,75,47],[44,54,24,7,55,25],[59,46,16,1,47,17],[12,151,121,7,152,122],[12,75,47,26,76,48],[39,54,24,14,55,25],[22,45,15,41,46,16],[6,151,121,14,152,122],[6,75,47,34,76,48],[46,54,24,10,55,25],[2,45,15,64,46,16],[17,152,122,4,153,123],[29,74,46,14,75,47],[49,54,24,10,55,25],[24,45,15,46,46,16],[4,152,122,18,153,123],[13,74,46,32,75,47],[48,54,24,14,55,25],[42,45,15,32,46,16],[20,147,117,4,148,118],[40,75,47,7,76,48],[43,54,24,22,55,25],[10,45,15,67,46,16],[19,148,118,6,149,119],[18,75,47,31,76,48],[34,54,24,34,55,25],[20,45,15,61,46,16]],j.getRSBlocks=function(a,b){var c=j.getRsBlockTable(a,b);if(void 0==c)throw new Error("bad rs block @ typeNumber:"+a+"/errorCorrectLevel:"+b);for(var d=c.length/3,e=[],f=0;d>f;f++)for(var g=c[3*f+0],h=c[3*f+1],i=c[3*f+2],k=0;g>k;k++)e.push(new j(h,i));return e},j.getRsBlockTable=function(a,b){switch(b){case d.L:return j.RS_BLOCK_TABLE[4*(a-1)+0];case d.M:return j.RS_BLOCK_TABLE[4*(a-1)+1];case d.Q:return j.RS_BLOCK_TABLE[4*(a-1)+2];case d.H:return j.RS_BLOCK_TABLE[4*(a-1)+3];default:return void 0}},k.prototype={get:function(a){var b=Math.floor(a/8);return 1==(1&this.buffer[b]>>>7-a%8)},put:function(a,b){for(var c=0;b>c;c++)this.putBit(1==(1&a>>>b-c-1))},getLengthInBits:function(){return this.length},putBit:function(a){var b=Math.floor(this.length/8);this.buffer.length<=b&&this.buffer.push(0),a&&(this.buffer[b]|=128>>>this.length%8),this.length++}};var l=[[17,14,11,7],[32,26,20,14],[53,42,32,24],[78,62,46,34],[106,84,60,44],[134,106,74,58],[154,122,86,64],[192,152,108,84],[230,180,130,98],[271,213,151,119],[321,251,177,137],[367,287,203,155],[425,331,241,177],[458,362,258,194],[520,412,292,220],[586,450,322,250],[644,504,364,280],[718,560,394,310],[792,624,442,338],[858,666,482,382],[929,711,509,403],[1003,779,565,439],[1091,857,611,461],[1171,911,661,511],[1273,997,715,535],[1367,1059,751,593],[1465,1125,805,625],[1528,1190,868,658],[1628,1264,908,698],[1732,1370,982,742],[1840,1452,1030,790],[1952,1538,1112,842],[2068,1628,1168,898],[2188,1722,1228,958],[2303,1809,1283,983],[2431,1911,1351,1051],[2563,1989,1423,1093],[2699,2099,1499,1139],[2809,2213,1579,1219],[2953,2331,1663,1273]],o=function(){var a=function(a,b){this._el=a,this._htOption=b};return a.prototype.draw=function(a){function g(a,b){var c=document.createElementNS("http://www.w3.org/2000/svg",a);for(var d in b)b.hasOwnProperty(d)&&c.setAttribute(d,b[d]);return c}var b=this._htOption,c=this._el,d=a.getModuleCount();Math.floor(b.width/d),Math.floor(b.height/d),this.clear();var h=g("svg",{viewBox:"0 0 "+String(d)+" "+String(d),width:"100%",height:"100%",fill:b.colorLight});h.setAttributeNS("http://www.w3.org/2000/xmlns/","xmlns:xlink","http://www.w3.org/1999/xlink"),c.appendChild(h),h.appendChild(g("rect",{fill:b.colorDark,width:"1",height:"1",id:"template"}));for(var i=0;d>i;i++)for(var j=0;d>j;j++)if(a.isDark(i,j)){var k=g("use",{x:String(i),y:String(j)});k.setAttributeNS("http://www.w3.org/1999/xlink","href","#template"),h.appendChild(k)}},a.prototype.clear=function(){for(;this._el.hasChildNodes();)this._el.removeChild(this._el.lastChild)},a}(),p="svg"===document.documentElement.tagName.toLowerCase(),q=p?o:m()?function(){function a(){this._elImage.src=this._elCanvas.toDataURL("image/png"),this._elImage.style.display="block",this._elCanvas.style.display="none"}function d(a,b){var c=this;if(c._fFail=b,c._fSuccess=a,null===c._bSupportDataURI){var d=document.createElement("img"),e=function(){c._bSupportDataURI=!1,c._fFail&&_fFail.call(c)},f=function(){c._bSupportDataURI=!0,c._fSuccess&&c._fSuccess.call(c)};return d.onabort=e,d.onerror=e,d.onload=f,d.src="data:image/gif;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg==",void 0}c._bSupportDataURI===!0&&c._fSuccess?c._fSuccess.call(c):c._bSupportDataURI===!1&&c._fFail&&c._fFail.call(c)}if(this._android&&this._android<=2.1){var b=1/window.devicePixelRatio,c=CanvasRenderingContext2D.prototype.drawImage;CanvasRenderingContext2D.prototype.drawImage=function(a,d,e,f,g,h,i,j){if("nodeName"in a&&/img/i.test(a.nodeName))for(var l=arguments.length-1;l>=1;l--)arguments[l]=arguments[l]*b;else"undefined"==typeof j&&(arguments[1]*=b,arguments[2]*=b,arguments[3]*=b,arguments[4]*=b);c.apply(this,arguments)}}var e=function(a,b){this._bIsPainted=!1,this._android=n(),this._htOption=b,this._elCanvas=document.createElement("canvas"),this._elCanvas.width=b.width,this._elCanvas.height=b.height,a.appendChild(this._elCanvas),this._el=a,this._oContext=this._elCanvas.getContext("2d"),this._bIsPainted=!1,this._elImage=document.createElement("img"),this._elImage.style.display="none",this._el.appendChild(this._elImage),this._bSupportDataURI=null};return e.prototype.draw=function(a){var b=this._elImage,c=this._oContext,d=this._htOption,e=a.getModuleCount(),f=d.width/e,g=d.height/e,h=Math.round(f),i=Math.round(g);b.style.display="none",this.clear();for(var j=0;e>j;j++)for(var k=0;e>k;k++){var l=a.isDark(j,k),m=k*f,n=j*g;c.strokeStyle=l?d.colorDark:d.colorLight,c.lineWidth=1,c.fillStyle=l?d.colorDark:d.colorLight,c.fillRect(m,n,f,g),c.strokeRect(Math.floor(m)+.5,Math.floor(n)+.5,h,i),c.strokeRect(Math.ceil(m)-.5,Math.ceil(n)-.5,h,i)}this._bIsPainted=!0},e.prototype.makeImage=function(){this._bIsPainted&&d.call(this,a)},e.prototype.isPainted=function(){return this._bIsPainted},e.prototype.clear=function(){this._oContext.clearRect(0,0,this._elCanvas.width,this._elCanvas.height),this._bIsPainted=!1},e.prototype.round=function(a){return a?Math.floor(1e3*a)/1e3:a},e}():function(){var a=function(a,b){this._el=a,this._htOption=b};return a.prototype.draw=function(a){for(var b=this._htOption,c=this._el,d=a.getModuleCount(),e=Math.floor(b.width/d),f=Math.floor(b.height/d),g=['<table style="border:0;border-collapse:collapse;">'],h=0;d>h;h++){g.push("<tr>");for(var i=0;d>i;i++)g.push('<td style="border:0;border-collapse:collapse;padding:0;margin:0;width:'+e+"px;height:"+f+"px;background-color:"+(a.isDark(h,i)?b.colorDark:b.colorLight)+';"></td>');g.push("</tr>")}g.push("</table>"),c.innerHTML=g.join("");var j=c.childNodes[0],k=(b.width-j.offsetWidth)/2,l=(b.height-j.offsetHeight)/2;k>0&&l>0&&(j.style.margin=l+"px "+k+"px")},a.prototype.clear=function(){this._el.innerHTML=""},a}();QRCode=function(a,b){if(this._htOption={width:256,height:256,typeNumber:4,colorDark:"#000000",colorLight:"#ffffff",correctLevel:d.H},"string"==typeof b&&(b={text:b}),b)for(var c in b)this._htOption[c]=b[c];"string"==typeof a&&(a=document.getElementById(a)),this._android=n(),this._el=a,this._oQRCode=null,this._oDrawing=new q(this._el,this._htOption),this._htOption.text&&this.makeCode(this._htOption.text)},QRCode.prototype.makeCode=function(a){this._oQRCode=new b(r(a,this._htOption.correctLevel),this._htOption.correctLevel),this._oQRCode.addData(a),this._oQRCode.make(),this._el.title=a,this._oDrawing.draw(this._oQRCode),this.makeImage()},QRCode.prototype.makeImage=function(){"function"==typeof this._oDrawing.makeImage&&(!this._android||this._android>=3)&&this._oDrawing.makeImage()},QRCode.prototype.clear=function(){this._oDrawing.clear()},QRCode.CorrectLevel=d}();
+</script>
+<script>
+(function(){
+  "use strict";
+  if(window.ShareQR) return;
+
+  var ANCHOR = "_";          // Startbildschirm: Knopf nur sichtbar, solange der zu sehen ist
+  var INLINE = "#top";          // optional: Leiste, in die der Knopf direkt eingebaut wird
+  var BASE_KEY = "spieleSuite.basis";
+  var BASE_STD = "https://mauthier-bit.github.io/Spiele-Suite/";
+
+  /* ---------------- Adresse bestimmen ---------------- */
+  function basis(){
+    var b=null;
+    try{ b=localStorage.getItem(BASE_KEY); }catch(e){}
+    b=b||BASE_STD;
+    return b.charAt(b.length-1)==="/" ? b : b+"/";
+  }
+  function dateiname(){
+    var p=location.pathname||"";
+    var name=p.substring(p.lastIndexOf("/")+1);
+    try{ name=decodeURIComponent(name); }catch(e){}
+    return /^[\w.%+ -]{1,80}\.html?$/i.test(name) ? name : "index.html";
+  }
+  function adresse(){
+    if(location.protocol==="http:"||location.protocol==="https:") return location.href.split("#")[0];
+    return basis()+encodeURIComponent(dateiname());
+  }
+
+  /* ---------------- QR-Code zeichnen ---------------- */
+  function zeichneCode(host,url){
+    host.innerHTML="";
+    host.style.removeProperty("--sq-w");
+    if(typeof QRCode==="undefined"){
+      host.innerHTML='<div style="padding:18px;color:#8a929c;font-size:.9rem;">QR-Code nicht verfügbar – bitte den Link weitergeben.</div>';
+      return;
+    }
+    try{
+      var q=new QRCode(host,{text:url, width:900, height:900, correctLevel:QRCode.CorrectLevel.M});
+      /* Ruhezone: vier Module weiß ringsum, sonst findet die Kamera den Code nicht */
+      var n=q._oQRCode && q._oQRCode.getModuleCount ? q._oQRCode.getModuleCount() : 0;
+      if(n) host.style.setProperty("--sq-w", (100*n/(n+8)).toFixed(2)+"%");
+    }catch(e){
+      host.innerHTML='<div style="padding:18px;color:#8a929c;font-size:.9rem;">Die Adresse ist zu lang für einen QR-Code – bitte den Link kopieren.</div>';
+    }
+  }
+
+  /* ---------------- Oberfläche ---------------- */
+  var ov=null;
+  function baueOverlay(){
+    ov=document.createElement("div");
+    ov.className="sq-ov";
+    ov.innerHTML='<div class="sq-card">'+
+      '<h2 id="sqTitle">Teilen</h2><p class="sq-sub">Mit der Kamera scannen – das Spiel öffnet sich direkt im Browser.</p>'+
+      '<div class="sq-code" id="sqCode"></div>'+
+      '<div class="sq-url" id="sqUrl"></div>'+
+      '<div class="sq-row">'+
+        '<button class="sq-copy">Link kopieren</button>'+
+        '<button class="sq-alt sq-edit">Adresse ändern</button>'+
+        '<button class="sq-alt sq-close">Schließen</button>'+
+      '</div>'+
+      '<div class="sq-note" id="sqNote"></div>'+
+      '</div>';
+    document.body.appendChild(ov);
+    ov.addEventListener("click",function(e){ if(e.target===ov) zu(); });
+    ov.querySelector(".sq-close").addEventListener("click",zu);
+    ov.querySelector(".sq-copy").addEventListener("click",function(){ kopiereLink(this); });
+    ov.querySelector(".sq-edit").addEventListener("click",function(){
+      var neu=prompt("Internetadresse des Ordners, in dem die Spiele liegen:", basis());
+      if(neu===null) return;
+      neu=neu.trim();
+      try{ if(neu) localStorage.setItem(BASE_KEY,neu); else localStorage.removeItem(BASE_KEY); }catch(e){}
+      fuelle();
+    });
+  }
+  function fuelle(){
+    var url=adresse();
+    var t=(document.title||"").split(/[\u2013\u2014|\u00b7]/)[0].trim();
+    ov.querySelector("#sqTitle").textContent=(t||"Diese Seite")+" teilen";
+    zeichneCode(ov.querySelector("#sqCode"), url);
+    ov.querySelector("#sqUrl").textContent=url;
+    ov.querySelector("#sqNote").innerHTML = (location.protocol==="http:"||location.protocol==="https:")
+      ? "Das ist die Adresse dieser Seite."
+      : "Die Datei liegt lokal auf diesem Gerät. Der Code zeigt deshalb auf die veröffentlichte Fassung – über „Adresse ändern“ anpassbar.";
+  }
+  function kopiereLink(btn){
+    var url=adresse();
+    function melde(ok){
+      btn.textContent = ok ? "Kopiert \u2713" : "Bitte von Hand kopieren";
+      btn.classList.toggle("sq-ok", !!ok);
+      if(!ok){
+        try{
+          var el=ov.querySelector("#sqUrl"), r=document.createRange();
+          r.selectNodeContents(el);
+          var s=window.getSelection(); s.removeAllRanges(); s.addRange(r);
+        }catch(e){}
+      }
+      clearTimeout(btn._t);
+      btn._t=setTimeout(function(){ btn.textContent="Link kopieren"; btn.classList.remove("sq-ok"); },1900);
+    }
+    function altweg(){
+      try{
+        var ta=document.createElement("textarea");
+        ta.value=url; ta.setAttribute("readonly","");
+        ta.style.position="fixed"; ta.style.top="-1000px"; ta.style.opacity="0";
+        document.body.appendChild(ta);
+        ta.select(); ta.setSelectionRange(0,ta.value.length);
+        var ok=document.execCommand("copy");
+        document.body.removeChild(ta);
+        melde(ok);
+      }catch(e){ melde(false); }
+    }
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(url).then(function(){ melde(true); }, altweg);
+    } else altweg();
+  }
+  function auf(){ if(!ov) baueOverlay(); fuelle(); ov.classList.add("on"); }
+  function zu(){ if(ov) ov.classList.remove("on"); }
+
+  var ICON='<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 3h8v8H3V3zm2 2v4h4V5H5zm8-2h8v8h-8V3zm2 2v4h4V5h-4zM3 13h8v8H3v-8zm2 2v4h4v-4H5zm8-2h3v3h-3v-3zm5 0h3v3h-3v-3zm-5 5h3v3h-3v-3zm5 0h3v3h-3v-3z"/></svg>';
+  function knopf(){
+    var inline=INLINE && INLINE.charAt(0)!=="_" ? document.querySelector(INLINE) : null;
+    if(inline){
+      var b=document.createElement("button");
+      b.className=(inline.querySelector("button")? inline.querySelector("button").className : "")+" sq-inline";
+      b.type="button"; b.innerHTML=ICON+"<span>Teilen</span>";
+      b.addEventListener("click",auf);
+      inline.appendChild(b);
+      return;
+    }
+    var f=document.createElement("button");
+    f.className="sq-fab"; f.type="button";
+    f.innerHTML=ICON+"<span>Teilen</span>";
+    f.addEventListener("click",auf);
+    document.body.appendChild(f);
+    var sel = ANCHOR && ANCHOR.charAt(0)!=="_" ? ANCHOR : null;
+    function sichtbar(){
+      if(!sel) return true;
+      var els=document.querySelectorAll(sel);
+      for(var i=0;i<els.length;i++){
+        var cs=getComputedStyle(els[i]);
+        if(cs.display!=="none" && cs.visibility!=="hidden" && els[i].getClientRects().length) return true;
+      }
+      return false;
+    }
+    function pruefe(){ f.classList.toggle("on", sichtbar() && !(ov&&ov.classList.contains("on"))); }
+    pruefe();
+    setInterval(pruefe,400);
+  }
+  function start(){ knopf(); }
+  if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",start);
+  else start();
+
+  window.ShareQR={open:auf, close:zu, url:adresse, basis:basis};
+})();
+</script>
+
+</body>
+</html>

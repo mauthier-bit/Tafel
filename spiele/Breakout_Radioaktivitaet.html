@@ -1,0 +1,2991 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Breakout Room: Radioaktivität</title>
+<style>
+  :root{
+    --bg-dark:#0a0e14;
+    --bg-panel:#121826;
+    --bg-panel2:#1a2436;
+    --accent:#39ff8f;
+    --accent-dim:#1d7a4a;
+    --warn:#ffb703;
+    --danger:#ff4757;
+    --text:#e8edf4;
+    --text-dim:#8b9bb4;
+    --border:#2a3850;
+    --font-main: 'Segoe UI', system-ui, -apple-system, Roboto, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0;padding:0;
+    background:var(--bg-dark);
+    color:var(--text);
+    font-family:var(--font-main);
+    min-height:100vh;
+    -webkit-tap-highlight-color: transparent;
+  }
+  body{
+    background-image:
+      radial-gradient(circle at 20% 20%, rgba(57,255,143,0.06) 0%, transparent 45%),
+      radial-gradient(circle at 80% 80%, rgba(255,71,87,0.05) 0%, transparent 45%);
+  }
+  .screen{
+    display:none;
+    min-height:100vh;
+    flex-direction:column;
+    align-items:center;
+    padding:20px 16px 40px;
+  }
+  .screen.active{display:flex;}
+
+  /* ---------- Geiger-Counter Hintergrund-Deko ---------- */
+  .crackle-dot{
+    position:fixed;
+    border-radius:50%;
+    background:var(--accent);
+    opacity:0;
+    pointer-events:none;
+    z-index:0;
+  }
+
+  /* ---------- TOPBAR ---------- */
+  .topbar{
+    width:100%;
+    max-width:900px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    margin-bottom:18px;
+    flex-wrap:wrap;
+  }
+  .progress-track{
+    flex:1;
+    height:10px;
+    background:var(--bg-panel2);
+    border-radius:6px;
+    overflow:hidden;
+    border:1px solid var(--border);
+    min-width:140px;
+  }
+  .progress-fill{
+    height:100%;
+    width:0%;
+    background:linear-gradient(90deg, var(--accent-dim), var(--accent));
+    transition:width 0.5s ease;
+  }
+  .station-counter{
+    font-size:0.85rem;
+    color:var(--text-dim);
+    white-space:nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+  .geiger-icon{
+    font-size:1.4rem;
+  }
+
+  /* ---------- INTRO SCREEN ---------- */
+  #screen-intro{
+    justify-content:center;
+    text-align:center;
+  }
+  .intro-box{
+    max-width:680px;
+  }
+  .intro-symbol{
+    font-size:4.5rem;
+    margin-bottom:8px;
+    filter: drop-shadow(0 0 18px rgba(57,255,143,0.5));
+    animation: pulseGlow 2.4s ease-in-out infinite;
+  }
+  @keyframes pulseGlow{
+    0%,100%{filter: drop-shadow(0 0 10px rgba(57,255,143,0.35));}
+    50%{filter: drop-shadow(0 0 26px rgba(57,255,143,0.7));}
+  }
+  h1.intro-title{
+    font-size:1.9rem;
+    margin:6px 0 4px;
+    letter-spacing:0.5px;
+  }
+  .intro-sub{
+    color:var(--text-dim);
+    font-size:1rem;
+    margin-bottom:26px;
+  }
+  .intro-text{
+    background:var(--bg-panel);
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:20px 22px;
+    text-align:left;
+    font-size:0.98rem;
+    line-height:1.55;
+    margin-bottom:26px;
+  }
+  .intro-text strong{color:var(--accent);}
+
+  .btn{
+    border:none;
+    border-radius:12px;
+    padding:16px 30px;
+    font-size:1.05rem;
+    font-weight:600;
+    cursor:pointer;
+    transition:transform 0.15s ease, box-shadow 0.15s ease;
+    color:#06140c;
+    background:linear-gradient(135deg, var(--accent), #1fc46a);
+    box-shadow:0 4px 20px rgba(57,255,143,0.3);
+  }
+  .btn:active{transform:scale(0.97);}
+  .btn:disabled{
+    opacity:0.5;
+    cursor:default;
+    box-shadow:none;
+  }
+  .btn-secondary{
+    background:var(--bg-panel2);
+    color:var(--text);
+    border:1px solid var(--border);
+    box-shadow:none;
+  }
+  .btn-danger{
+    background:linear-gradient(135deg, #ff6b6b, var(--danger));
+    color:#1a0606;
+  }
+  .btn-row{
+    display:flex;
+    gap:12px;
+    justify-content:center;
+    flex-wrap:wrap;
+  }
+
+  .speech-status{
+    margin-top:16px;
+    font-size:0.85rem;
+    color:var(--text-dim);
+    min-height:1.2em;
+  }
+
+  /* ---------- STATION CARD ---------- */
+  .station-card{
+    width:100%;
+    max-width:780px;
+    background:var(--bg-panel);
+    border:1px solid var(--border);
+    border-radius:16px;
+    padding:24px 22px 28px;
+    margin-bottom:18px;
+  }
+  .station-header{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    margin-bottom:14px;
+  }
+  .station-icon{
+    font-size:2rem;
+    flex-shrink:0;
+  }
+  .station-title{
+    font-size:1.25rem;
+    margin:0;
+    line-height:1.3;
+  }
+  .station-subtitle{
+    font-size:0.85rem;
+    color:var(--text-dim);
+    margin-top:2px;
+  }
+  .station-body{
+    font-size:0.97rem;
+    line-height:1.6;
+  }
+  .station-body p{margin:0 0 12px;}
+  .info-box{
+    background:var(--bg-panel2);
+    border-left:3px solid var(--accent);
+    border-radius:8px;
+    padding:12px 14px;
+    margin:14px 0;
+    font-size:0.92rem;
+  }
+  .info-box.warn{border-left-color:var(--warn);}
+  .info-box.danger{border-left-color:var(--danger);}
+  .glossary{
+    font-size:0.85rem;
+    color:var(--text-dim);
+    border-top:1px dashed var(--border);
+    margin-top:16px;
+    padding-top:12px;
+  }
+  .glossary summary{
+    cursor:pointer;
+    color:var(--accent);
+    font-weight:600;
+    margin-bottom:6px;
+  }
+  table.data-table{
+    width:100%;
+    border-collapse:collapse;
+    margin:14px 0;
+    font-size:0.88rem;
+  }
+  table.data-table th, table.data-table td{
+    border:1px solid var(--border);
+    padding:8px 10px;
+    text-align:left;
+  }
+  table.data-table th{
+    background:var(--bg-panel2);
+    color:var(--accent);
+  }
+
+  /* ---------- INPUT AREA ---------- */
+  .answer-area{
+    margin-top:18px;
+    padding-top:16px;
+    border-top:1px solid var(--border);
+  }
+  .answer-label{
+    font-size:0.88rem;
+    color:var(--text-dim);
+    margin-bottom:8px;
+    display:block;
+  }
+  input[type="text"], input[type="number"], textarea{
+    width:100%;
+    background:var(--bg-dark);
+    border:1px solid var(--border);
+    color:var(--text);
+    border-radius:10px;
+    padding:13px 14px;
+    font-size:1rem;
+    font-family:inherit;
+  }
+  input:focus, textarea:focus{
+    outline:none;
+    border-color:var(--accent);
+  }
+  textarea{resize:vertical;min-height:90px;}
+
+  .mc-options{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    margin-top:6px;
+  }
+  .mc-option{
+    background:var(--bg-dark);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:13px 14px;
+    cursor:pointer;
+    font-size:0.95rem;
+    transition:border-color 0.15s ease, background 0.15s ease;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .mc-option:active{transform:scale(0.99);}
+  .mc-option.selected{
+    border-color:var(--accent);
+    background:rgba(57,255,143,0.08);
+  }
+  .mc-option.correct{
+    border-color:var(--accent);
+    background:rgba(57,255,143,0.15);
+  }
+  .mc-option.incorrect{
+    border-color:var(--danger);
+    background:rgba(255,71,87,0.12);
+  }
+  .mc-marker{
+    width:22px;height:22px;flex-shrink:0;
+    border-radius:50%;
+    border:2px solid var(--border);
+    display:flex;align-items:center;justify-content:center;
+    font-size:0.75rem;
+  }
+
+  .match-container{
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+    margin-top:6px;
+  }
+  .match-row{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  .match-label{
+    flex:1 1 140px;
+    font-size:0.9rem;
+    background:var(--bg-dark);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:10px 12px;
+  }
+  select.match-select{
+    flex:1 1 140px;
+    background:var(--bg-dark);
+    border:1px solid var(--border);
+    color:var(--text);
+    border-radius:8px;
+    padding:10px 12px;
+    font-size:0.9rem;
+    font-family:inherit;
+  }
+
+  .feedback{
+    margin-top:14px;
+    padding:13px 14px;
+    border-radius:10px;
+    font-size:0.92rem;
+    display:none;
+  }
+  .feedback.show{display:block;}
+  .feedback.ok{
+    background:rgba(57,255,143,0.12);
+    border:1px solid var(--accent-dim);
+    color:var(--accent);
+  }
+  .feedback.err{
+    background:rgba(255,71,87,0.1);
+    border:1px solid var(--danger);
+    color:#ff8a93;
+  }
+
+  .code-display{
+    margin-top:16px;
+    text-align:center;
+    font-size:1.6rem;
+    letter-spacing:3px;
+    font-weight:700;
+    color:var(--accent);
+    background:var(--bg-dark);
+    border:1px solid var(--accent-dim);
+    border-radius:10px;
+    padding:10px;
+    display:none;
+  }
+  .code-display.show{display:block;}
+
+  .station-actions{
+    display:flex;
+    justify-content:flex-end;
+    gap:10px;
+    margin-top:18px;
+  }
+
+  /* ---------- FINAL SCREEN ---------- */
+  #screen-final .intro-symbol{font-size:5rem;}
+
+  .summary-list{
+    text-align:left;
+    background:var(--bg-panel);
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:18px 20px;
+    max-width:680px;
+    width:100%;
+    margin:0 auto 24px;
+    font-size:0.92rem;
+    line-height:1.6;
+  }
+
+  @media (max-width:480px){
+    .intro-title{font-size:1.5rem;}
+    .station-title{font-size:1.1rem;}
+    .btn{padding:14px 22px;font-size:0.98rem;}
+  }
+
+  /* ---------- LEHRER-MODUS ---------- */
+  .teacher-toggle{
+    position:fixed;
+    bottom:14px;
+    right:14px;
+    width:34px;
+    height:34px;
+    border-radius:50%;
+    background:var(--bg-panel2);
+    border:1px solid var(--border);
+    color:var(--text-dim);
+    font-size:0.95rem;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    z-index:50;
+    opacity:0.55;
+    transition:opacity 0.2s ease;
+  }
+  .teacher-toggle:active{opacity:1;}
+  .teacher-toggle.active-mode{
+    border-color:var(--accent);
+    color:var(--accent);
+    opacity:0.9;
+  }
+
+  .modal-overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(5,8,14,0.78);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:100;
+    padding:20px;
+  }
+  .modal-overlay.show{display:flex;}
+  .modal-box{
+    background:var(--bg-panel);
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:24px 22px;
+    max-width:340px;
+    width:100%;
+    text-align:center;
+  }
+  .modal-box h3{margin:0 0 6px;font-size:1.1rem;}
+  .modal-box p{color:var(--text-dim);font-size:0.85rem;margin:0 0 16px;}
+  .modal-box input{
+    text-align:center;
+    letter-spacing:2px;
+    margin-bottom:14px;
+  }
+  .modal-error{
+    color:var(--danger);
+    font-size:0.85rem;
+    min-height:1.2em;
+    margin-bottom:8px;
+  }
+
+  .teacher-box{
+    display:none;
+    margin-top:18px;
+    background:rgba(57,255,143,0.06);
+    border:1px dashed var(--accent-dim);
+    border-radius:12px;
+    padding:14px 16px;
+    font-size:0.88rem;
+  }
+  .teacher-box.show{display:block;}
+  .teacher-box .tb-label{
+    color:var(--accent);
+    font-weight:700;
+    font-size:0.78rem;
+    text-transform:uppercase;
+    letter-spacing:0.5px;
+    margin-bottom:8px;
+    display:flex;
+    align-items:center;
+    gap:6px;
+  }
+  .teacher-box p{margin:0 0 8px;line-height:1.5;}
+  .teacher-box p:last-child{margin-bottom:0;}
+  .teacher-box strong{color:var(--text);}
+
+  body.teacher-mode .teacher-box{display:block;}
+
+  .teacher-skip{
+    display:none;
+    margin-top:10px;
+  }
+  body.teacher-mode .teacher-skip{display:block;}
+  .btn-teacher-skip{
+    background:var(--bg-panel2);
+    color:var(--accent);
+    border:1px dashed var(--accent-dim);
+    box-shadow:none;
+    font-size:0.85rem;
+    padding:10px 16px;
+    width:100%;
+  }
+
+  .codes-overview{
+    display:none;
+    width:100%;
+    max-width:680px;
+    margin:0 auto 22px;
+  }
+  body.teacher-mode .codes-overview{display:block;}
+  .codes-overview table.data-table{margin:8px 0 0;}
+  .codes-overview-label{
+    color:var(--accent);
+    font-weight:700;
+    font-size:0.85rem;
+    text-transform:uppercase;
+    letter-spacing:0.5px;
+    margin-bottom:4px;
+  }
+
+  /* ---------- VIRTUELLES MESSGERÄT (STATION 1) ---------- */
+  .lab-box{
+    background:var(--bg-panel2);
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:16px;
+    margin:16px 0;
+  }
+  .source-select-row{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    margin-bottom:12px;
+  }
+  .source-btn{
+    flex:1 1 90px;
+    background:var(--bg-dark);
+    border:1px solid var(--border);
+    color:var(--text);
+    border-radius:10px;
+    padding:10px 6px;
+    font-size:0.85rem;
+    text-align:center;
+    cursor:pointer;
+  }
+  .source-btn.selected{
+    border-color:var(--accent);
+    background:rgba(57,255,143,0.1);
+    color:var(--accent);
+  }
+  .time-select-row{
+    display:flex;
+    gap:8px;
+    margin-bottom:14px;
+  }
+  .time-btn{
+    flex:1;
+    background:var(--bg-dark);
+    border:1px solid var(--border);
+    color:var(--text);
+    border-radius:10px;
+    padding:8px 4px;
+    font-size:0.82rem;
+    text-align:center;
+    cursor:pointer;
+  }
+  .time-btn.selected{
+    border-color:var(--warn);
+    background:rgba(255,183,3,0.1);
+    color:var(--warn);
+  }
+  .counter-display{
+    background:var(--bg-dark);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:18px;
+    text-align:center;
+    margin-bottom:12px;
+  }
+  .counter-main{
+    font-size:2.4rem;
+    font-weight:700;
+    color:var(--accent);
+    font-variant-numeric: tabular-nums;
+    line-height:1.1;
+  }
+  .counter-sub{
+    font-size:0.8rem;
+    color:var(--text-dim);
+    margin-top:2px;
+  }
+  .counter-row{
+    display:flex;
+    justify-content:space-around;
+    margin-top:10px;
+    font-size:0.85rem;
+  }
+  .counter-row div span{
+    display:block;
+    font-size:1.1rem;
+    font-weight:700;
+    color:var(--text);
+    font-variant-numeric: tabular-nums;
+  }
+  .geiger-pulse{
+    width:14px;height:14px;
+    border-radius:50%;
+    background:var(--border);
+    margin:0 auto 8px;
+    transition:background 0.08s ease, box-shadow 0.08s ease;
+  }
+  .geiger-pulse.flash{
+    background:var(--accent);
+    box-shadow:0 0 14px 4px rgba(57,255,143,0.7);
+  }
+  .lab-results-table{margin-top:10px;}
+  .source-tag{
+    display:inline-block;
+    padding:2px 8px;
+    border-radius:6px;
+    font-size:0.78rem;
+    font-weight:700;
+  }
+  .tag-niedrig{background:rgba(57,255,143,0.15);color:var(--accent);}
+  .tag-mittel{background:rgba(255,183,3,0.15);color:var(--warn);}
+  .tag-hoch{background:rgba(255,71,87,0.15);color:var(--danger);}
+
+  /* ---------- VIRTUELLES PRÄPARAT (STATION ZERFALL-EXPERIMENT) ---------- */
+  .decay-canvas-wrap{
+    background:var(--bg-dark);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:10px;
+    margin:14px 0;
+  }
+  #decay-canvas{
+    width:100%;
+    height:auto;
+    display:block;
+    border-radius:8px;
+    background:#060a10;
+  }
+  .decay-stats{
+    display:flex;
+    justify-content:space-around;
+    margin-top:10px;
+    font-size:0.85rem;
+  }
+  .decay-stats div span{
+    display:block;
+    font-size:1.3rem;
+    font-weight:700;
+    color:var(--accent);
+    font-variant-numeric: tabular-nums;
+  }
+  .decay-controls{
+    display:flex;
+    gap:10px;
+    margin-top:12px;
+    flex-wrap:wrap;
+  }
+  .decay-controls .btn{flex:1;min-width:130px;}
+
+  .decay-round-progress{
+    display:flex;
+    gap:8px;
+    margin-top:10px;
+    justify-content:center;
+  }
+  .decay-round-dot{
+    flex:1;
+    max-width:90px;
+    text-align:center;
+    padding:6px 4px;
+    border-radius:8px;
+    border:1px solid var(--border);
+    background:var(--bg-dark);
+    color:var(--text-dim);
+    font-size:0.75rem;
+  }
+  .decay-round-dot.done{
+    border-color:var(--accent);
+    background:rgba(57,255,143,0.1);
+    color:var(--accent);
+  }
+  .decay-round-dot.current{
+    border-color:var(--warn);
+    color:var(--warn);
+  }
+
+  .decay-stats.hidden-during-run{
+    visibility:hidden;
+    opacity:0;
+  }
+  .decay-chart-wrap{
+    background:var(--bg-dark);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:10px;
+    margin-top:12px;
+  }
+  #decay-chart-canvas{
+    width:100%;
+    height:auto;
+    display:block;
+  }
+  .decay-chart-label{
+    font-size:0.78rem;
+    color:var(--text-dim);
+    text-align:center;
+    margin-top:4px;
+  }
+
+  /* ---------- IDENTIFIKATIONSEXPERIMENT (STATION 2) ---------- */
+  .id-source-tabs{
+    display:flex;
+    gap:8px;
+    margin-bottom:14px;
+  }
+  .id-source-tab{
+    flex:1;
+    text-align:center;
+    padding:10px 6px;
+    border-radius:10px;
+    border:1px solid var(--border);
+    background:var(--bg-dark);
+    color:var(--text-dim);
+    cursor:pointer;
+    font-size:0.9rem;
+    font-weight:600;
+  }
+  .id-source-tab.active-tab{
+    border-color:var(--accent);
+    color:var(--accent);
+    background:rgba(57,255,143,0.08);
+  }
+  .id-source-tab.identified::after{
+    content:" ✓";
+  }
+  .option-grid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:8px;
+    margin-bottom:12px;
+  }
+  .option-btn{
+    background:var(--bg-dark);
+    border:1px solid var(--border);
+    color:var(--text);
+    border-radius:10px;
+    padding:9px 6px;
+    font-size:0.82rem;
+    text-align:center;
+    cursor:pointer;
+  }
+  .option-btn.selected{
+    border-color:var(--accent);
+    background:rgba(57,255,143,0.1);
+    color:var(--accent);
+  }
+  .id-results-table{margin-top:10px;}
+  .id-guess-row{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-top:10px;
+    flex-wrap:wrap;
+  }
+  .id-guess-multi{
+    margin-top:10px;
+  }
+  .id-guess-multi-label{
+    flex:0 0 100%;
+    font-size:0.85rem;
+    margin-bottom:6px;
+  }
+  .id-checkbox-row{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+  }
+  .id-checkbox-option{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    background:var(--bg-dark);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:9px 12px;
+    font-size:0.85rem;
+    cursor:pointer;
+  }
+  .id-checkbox-option.checked{
+    border-color:var(--accent);
+    background:rgba(57,255,143,0.1);
+    color:var(--accent);
+  }
+  .id-checkbox-option input{
+    accent-color:#39ff8f;
+    width:16px;height:16px;
+    margin:0;
+  }
+
+
+
+</style>
+<script>
+/* Scharfe Kante unter der iPadOS-Statusleiste (iPadOS 26/27).
+   WebKit legt in Web-Apps vom Homebildschirm am oberen Rand sonst einen
+   weichen Verlauf ueber den Inhalt. Er entfaellt, wenn dort eine deckende
+   Leiste liegt - ein bildschirmfuellender Kasten genuegt nicht (am
+   13.10.2026 auf iPadOS 27 geprueft). Das Skript legt deshalb einen 16 px
+   hohen, deckenden Streifen an den oberen Rand und rueckt alles, was in
+   diese 16 px hineinragt, um 16 px nach unten. Laeuft nur in der App vom
+   Homebildschirm, nicht in Safari und nicht in einem Rahmen; mit #kante in
+   der Adresse laesst es sich zum Pruefen erzwingen. */
+(function(){
+  if(window.top!==window) return;
+  var pruef=/kante/i.test(location.hash||'');
+  var alsApp=(navigator.standalone===true) ||
+             (window.matchMedia && matchMedia('(display-mode: standalone)').matches);
+  if(!alsApp && !pruef) return;
+
+  var HOCH=16;
+  function leer(f){ return !f || f==='transparent' || f.replace(/\s/g,'')==='rgba(0,0,0,0)'; }
+  function seite(){
+    var s=getComputedStyle(document.body), f=s.backgroundColor, b=s.backgroundImage;
+    if(leer(f) && (!b || b==='none')){
+      s=getComputedStyle(document.documentElement); f=s.backgroundColor; b=s.backgroundImage;
+    }
+    return { farbe: leer(f) ? '#ffffff' : f, bild: (b && b!=='none') ? b : '' };
+  }
+  /* Faerbt dieses Element am oberen Rand etwas sichtbar ein? */
+  function tinte(n){
+    var r=n.getBoundingClientRect();
+    if(r.top>=HOCH || r.bottom<=0 || r.width<=0) return false;
+    var s=getComputedStyle(n);
+    if(s.display==='none' || s.visibility==='hidden' || s.opacity==='0') return false;
+    if(n.id==='randKante') return false;
+    var t=n.tagName.toLowerCase();
+    if(t==='img'||t==='svg'||t==='canvas'||t==='video') return true;
+    if(!leer(s.backgroundColor) || s.backgroundImage!=='none') return true;
+    if(parseFloat(s.borderTopWidth)>0) return true;
+    var kn=n.childNodes;
+    for(var j=0;j<kn.length;j++)
+      if(kn[j].nodeType===3 && kn[j].nodeValue.replace(/\s/g,'')) return true;
+    for(var i=0;i<n.children.length;i++) if(tinte(n.children[i])) return true;
+    return false;
+  }
+  function ragtRein(z){
+    for(var i=0;i<z.children.length;i++) if(tinte(z.children[i])) return true;
+    return false;
+  }
+  function luft(z){
+    if(z.dataset.kanteLuft) return;
+    if(!ragtRein(z) && !tinte(z)) return;    /* noch nichts oben - spaeter nochmal */
+    z.dataset.kanteLuft='1';
+    var p=parseFloat(getComputedStyle(z).paddingTop)||0;
+    if(p>=HOCH) return;
+    z.style.paddingTop=(p+HOCH)+'px';
+  }
+  function sichtbar(n,s){
+    return s.display!=='none' && s.visibility!=='hidden' && n.id!=='randKante';
+  }
+  /* bildschirmfuellende fixierte Kaesten */
+  function kaesten(){
+    var alle=document.querySelectorAll('body > *, body > * > *'), raus=[];
+    for(var i=0;i<alle.length;i++){
+      var n=alle[i], s=getComputedStyle(n);
+      if(s.position!=='fixed' || !sichtbar(n,s)) continue;
+      /* Deko-Ebenen wie Konfetti liegen durchsichtig ueber allem und duerfen
+         niemals angefasst werden - sie wuerden sonst das Spiel verdecken. */
+      if(s.pointerEvents==='none') continue;
+      var r=n.getBoundingClientRect();
+      if(r.top<=4 && r.width>=innerWidth*0.9 && r.height>=innerHeight*0.9) raus.push(n);
+    }
+    return raus;
+  }
+  /* Leisten am oberen Rand (fixiert oder klebend, aber kein Vollbildkasten) */
+  function leisten(){
+    var alle=document.querySelectorAll('body > *, body > * > *'), raus=[];
+    for(var i=0;i<alle.length;i++){
+      var n=alle[i], s=getComputedStyle(n);
+      if((s.position!=='fixed' && s.position!=='sticky') || !sichtbar(n,s)) continue;
+      var r=n.getBoundingClientRect();
+      if(r.top<=4 && r.width>=innerWidth*0.8 && r.height>=6 && r.height<=innerHeight*0.6) raus.push(n);
+    }
+    return raus;
+  }
+  /* Liegt oben schon eine deckende Leiste, ist nichts zu tun. */
+  function schonGut(){
+    var st=document.elementsFromPoint ? document.elementsFromPoint(Math.round(innerWidth/2),2) : [];
+    for(var i=0;i<st.length;i++){
+      var n=st[i];
+      if(n.id==='randKante') continue;
+      if(n===document.body || n===document.documentElement) return false;
+      var s=getComputedStyle(n), r=n.getBoundingClientRect();
+      return (s.position==='fixed'||s.position==='sticky') && r.top<=4 &&
+             r.width>=innerWidth*0.8 && r.height>=6 && r.height<=innerHeight*0.6 &&
+             !leer(s.backgroundColor);
+    }
+    return false;
+  }
+  var band=null;
+  function streifen(farbe){
+    if(!band){
+      band=document.createElement('div');
+      band.id='randKante'; band.setAttribute('aria-hidden','true');
+      band.style.cssText='position:fixed;left:0;top:0;width:100%;height:'+HOCH+'px;'+
+        'z-index:2147483646;pointer-events:none';
+      document.body.appendChild(band);
+    }
+    band.style.display='block';
+    if(farbe){
+      band.style.backgroundColor=farbe;
+      band.style.backgroundImage='none';
+      return;
+    }
+    var s=getComputedStyle(document.body), h=seite();
+    band.style.backgroundColor=h.farbe;
+    band.style.backgroundImage=h.bild||'none';
+    band.style.backgroundAttachment='fixed';
+    if(h.bild && s.backgroundAttachment!=='fixed')
+      band.style.backgroundSize='100% '+Math.max(innerHeight,document.body.scrollHeight)+'px';
+  }
+  var schild=null;
+  function zeigen(txt){
+    if(!pruef) return;
+    if(!schild){
+      schild=document.createElement('div');
+      schild.style.cssText='position:fixed;left:6px;bottom:52px;z-index:2147483647;max-width:92%;'+
+        'padding:6px 9px;border-radius:8px;background:#ffe600;color:#000;'+
+        'font:600 12px/1.35 -apple-system,sans-serif;white-space:pre-wrap;pointer-events:none';
+      document.body.appendChild(schild);
+    }
+    schild.textContent='Kante K6 · '+innerWidth+'x'+innerHeight+'\n'+txt;
+  }
+  function name(n){
+    if(n.id) return '#'+n.id;
+    var c=(typeof n.className==='string'&&n.className.trim())?'.'+n.className.trim().split(/\s+/)[0]:'';
+    return n.tagName.toLowerCase()+c;
+  }
+  function malen(){
+    var b=document.body; if(!b) return;
+    if(schonGut()){
+      if(band) band.style.display='none';
+      zeigen('oben liegt schon eine deckende Leiste');
+      return;
+    }
+    var k=kaesten(), l=leisten(), farbe=null, text=[];
+    /* Die Kaesten werden nur noch nach unten gerueckt, nicht mehr eingefaerbt:
+       ein bildschirmfuellender Kasten haelt den Verlauf ohnehin nicht ab
+       (am 13.10.2026 auf iPadOS 27 gemessen), das Einfaerben hat dagegen
+       durchsichtige Ebenen deckend gemacht. */
+    for(var i=0;i<k.length;i++){
+      var z=k[i];
+      luft(z);
+      text.push(name(z));
+    }
+    for(var j=0;j<l.length;j++){
+      var le=l[j], sl=getComputedStyle(le);
+      if(!tinte(le) && !ragtRein(le)) continue;
+      if(!farbe && !leer(sl.backgroundColor)) farbe=sl.backgroundColor;
+      luft(le);
+      text.push('Leiste '+name(le)+' bg='+sl.backgroundColor);
+    }
+    if(!k.length && !l.length){ luft(b); text.push('kein Kasten, nur Streifen'); }
+    streifen(farbe);
+    zeigen(text.join('\n'));
+  }
+  var warte=null;
+  function spaeter(){
+    if(warte) return;
+    warte=setTimeout(function(){ warte=null; malen(); },200);
+  }
+  try{
+    new MutationObserver(spaeter).observe(document.documentElement,
+      {childList:true, subtree:true, attributes:true, attributeFilter:['class','style','hidden']});
+  }catch(e){}
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',malen);
+  else malen();
+  addEventListener('load',spaeter);
+  addEventListener('resize',spaeter);
+  addEventListener('orientationchange',spaeter);
+})();
+</script>
+</head>
+<body>
+
+<!-- LEHRER-MODUS: Toggle-Button und Login-Modal -->
+<div class="teacher-toggle" id="teacher-toggle" onclick="openTeacherModal()" title="Lehrer-Modus">🔑</div>
+
+<div class="modal-overlay" id="teacher-modal">
+  <div class="modal-box">
+    <h3>🔒 Lehrer-Modus</h3>
+    <p>Code eingeben, um Lösungen und Erklärungen für alle Stationen einzublenden.</p>
+    <input type="password" id="teacher-pw" placeholder="Code" inputmode="numeric" maxlength="10">
+    <div class="modal-error" id="teacher-error"></div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="closeTeacherModal()">Abbrechen</button>
+      <button class="btn" onclick="checkTeacherPw()">Bestätigen</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= INTRO SCREEN ================= -->
+<div class="screen active" id="screen-intro">
+  <div class="intro-box">
+    <div class="intro-symbol">☢️</div>
+    <h1 class="intro-title">Breakout Room: Radioaktivität</h1>
+    <div class="intro-sub">Physik trifft Geschichte trifft Gesellschaft</div>
+    <div class="intro-text">
+      <p>Im Jahr <strong>1986</strong> explodierte ein Reaktor in <strong>Tschernobyl</strong>. Im Jahr <strong>1945</strong> zerstörte eine einzige Bombe die Stadt <strong>Hiroshima</strong>. Beides hat mit derselben Physik zu tun – der Physik des Atomkerns.</p>
+      <p>In diesem Breakout Room löst ihr <strong>7 Stationen</strong>. Jede Station verlangt physikalisches Wissen und Können – und am Ende müsst ihr eine echte gesellschaftspolitische Frage beurteilen.</p>
+      <p>Drückt auf Start, um die Einführung zu hören, und dann beginnt die Mission.</p>
+    </div>
+    <div class="btn-row">
+      <button class="btn" id="btn-start-audio" onclick="startIntroAudio()">▶ Start: Einführung anhören</button>
+    </div>
+    <div class="speech-status" id="speech-status"></div>
+    <div class="btn-row" id="row-begin" style="display:none;margin-top:18px;">
+      <button class="btn" onclick="goToStation(1)">Mission beginnen →</button>
+    </div>
+    <div class="btn-row" id="introshare" style="margin-top:14px;">
+      <button class="btn btn-secondary" onclick="skipIntro()">⏭ Intro überspringen</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= STATION SCREENS WERDEN HIER EINGEFÜGT ================= -->
+<div id="stations-container">
+
+<!-- ===== STATION 1: NACHWEIS RADIOAKTIVER STRAHLUNG ===== -->
+<div class="screen" id="screen-station-1">
+  <div class="topbar">
+    <span class="geiger-icon">📡</span>
+    <div class="progress-track"><div class="progress-fill"></div></div>
+    <span class="station-counter"></span>
+  </div>
+  <div class="station-card">
+    <div class="station-header">
+      <div class="station-icon">📟</div>
+      <div>
+        <h2 class="station-title">Station 1: Die Sperrzone</h2>
+        <div class="station-subtitle">Nachweis radioaktiver Strahlung</div>
+      </div>
+    </div>
+    <div class="station-body">
+      <p>Ihr befindet euch in der Nähe der Sperrzone von <strong>Tschernobyl</strong> (Ukraine). Ein <strong>Geiger-Müller-Zählrohr</strong> registriert einzelne radioaktive Teilchen: Trifft ein Teilchen auf das Zählrohr, entsteht ein kurzer Stromstoß, der als „Klick“ hörbar gemacht wird. Je mehr Klicks pro Sekunde, desto mehr Teilchen treffen das Zählrohr – die <strong>Zählrate</strong> ist ein Maß für die Aktivität der Strahlungsquelle.</p>
+
+      <div class="info-box">
+        <strong>Zusammenhang mit der Ortsdosisleistung:</strong> Je mehr radioaktive Zerfälle pro Sekunde stattfinden, desto mehr Energie wird auch pro Sekunde in die Umgebung abgegeben. Eine <strong>hohe Zählrate</strong> bedeutet deshalb auch eine <strong>hohe Ortsdosisleistung</strong> (gemessen in Mikrosievert pro Stunde, µSv/h) – und damit ein höheres Gesundheitsrisiko für Menschen, die sich dort aufhalten. Mit dem Zählrohr könnt ihr also nicht nur Strahlung nachweisen, sondern über die Zählrate auch grob abschätzen, wie gefährlich ein Ort ist.
+      </div>
+
+      <details class="glossary">
+        <summary>Fachbegriffe erklärt</summary>
+        <p><strong>Aktivität:</strong> Anzahl der radioaktiven Zerfälle pro Sekunde in einer Probe. Einheit: Becquerel (Bq).</p>
+        <p><strong>Ortsdosisleistung:</strong> Wie stark die Strahlung an einem bestimmten Ort pro Stunde auf einen Körper einwirkt. Einheit: Mikrosievert pro Stunde (µSv/h).</p>
+        <p><strong>Geiger-Müller-Zählrohr:</strong> Ein Gerät, das einzelne ionisierende Teilchen (z. B. von radioaktivem Zerfall) registriert und zählbar macht.</p>
+      </details>
+
+      <p style="margin-top:18px;"><strong>Euer Experiment:</strong> Ihr besucht mit dem virtuellen Zählrohr drei reale Orte der Sperrzone, an denen auch echte Messteams regelmäßig Werte erheben. Führt an jedem Ort eine Messung durch und bestimmt so die jeweilige Zählrate – daraus könnt ihr die Gefahrenstufe ableiten und am Ende eine begründete Entscheidung treffen.</p>
+
+      <div class="lab-box">
+        <span class="answer-label">1. Ort auswählen:</span>
+        <div class="source-select-row" id="lab-source-row">
+          <div class="source-btn" data-source="X" onclick="selectLabSource('X')">Stadt Tschernobyl</div>
+          <div class="source-btn" data-source="Y" onclick="selectLabSource('Y')">Pripyat-Zentrum</div>
+          <div class="source-btn" data-source="Z" onclick="selectLabSource('Z')">Roter Wald</div>
+        </div>
+
+        <span class="answer-label">2. Messzeit auswählen:</span>
+        <div class="time-select-row" id="lab-time-row">
+          <div class="time-btn" data-time="5" onclick="selectLabTime(5)">5 s</div>
+          <div class="time-btn" data-time="10" onclick="selectLabTime(10)">10 s</div>
+          <div class="time-btn" data-time="20" onclick="selectLabTime(20)">20 s</div>
+        </div>
+
+        <div class="counter-display">
+          <div class="geiger-pulse" id="lab-pulse"></div>
+          <div class="counter-main" id="lab-counter">0</div>
+          <div class="counter-sub">registrierte Ereignisse</div>
+          <div class="counter-row">
+            <div>Zeit<span id="lab-time-display">0,0 s</span></div>
+            <div>Zählrate<span id="lab-rate-display">– /s</span></div>
+          </div>
+        </div>
+
+        <button class="btn" id="lab-start-btn" onclick="startLabMeasurement()" disabled>▶ Messung starten</button>
+        <p id="lab-hint" style="font-size:0.82rem;color:var(--text-dim);margin-top:8px;">Wählt zuerst eine Quelle und eine Messzeit aus.</p>
+
+        <table class="data-table lab-results-table" id="lab-results-table" style="display:none;">
+          <tr><th>Ort</th><th>Ereignisse</th><th>Messzeit</th><th>Zählrate</th></tr>
+          <tbody id="lab-results-body"></tbody>
+        </table>
+      </div>
+
+      <div class="info-box warn" id="lab-info-incomplete">
+        Vermesst <strong>alle drei Orte</strong> mindestens einmal, um die Gefahrenstufen einordnen zu können.
+      </div>
+
+      <div class="answer-area" id="lab-classify-area" style="display:none;">
+        <span class="answer-label">2. Ordnet die Orte nach eurer gemessenen Zählrate den Gefahrenstufen zu:</span>
+        <div class="match-container">
+          <div class="match-row">
+            <div class="match-label">Stadt Tschernobyl</div>
+            <select class="match-select" id="s1-class-x">
+              <option value="">– wählen –</option>
+              <option value="niedrig">Niedrige Gefahrenstufe</option>
+              <option value="mittel">Mittlere Gefahrenstufe</option>
+              <option value="hoch">Hohe Gefahrenstufe</option>
+            </select>
+          </div>
+          <div class="match-row">
+            <div class="match-label">Pripyat-Zentrum</div>
+            <select class="match-select" id="s1-class-y">
+              <option value="">– wählen –</option>
+              <option value="niedrig">Niedrige Gefahrenstufe</option>
+              <option value="mittel">Mittlere Gefahrenstufe</option>
+              <option value="hoch">Hohe Gefahrenstufe</option>
+            </select>
+          </div>
+          <div class="match-row">
+            <div class="match-label">Roter Wald</div>
+            <select class="match-select" id="s1-class-z">
+              <option value="">– wählen –</option>
+              <option value="niedrig">Niedrige Gefahrenstufe</option>
+              <option value="mittel">Mittlere Gefahrenstufe</option>
+              <option value="hoch">Hohe Gefahrenstufe</option>
+            </select>
+          </div>
+        </div>
+        <p style="font-size:0.82rem;color:var(--text-dim);margin-top:10px;">Tipp: Je höher die gemessene Zählrate (Ereignisse pro Sekunde), desto höher die Gefahrenstufe.</p>
+
+        <div class="info-box" style="margin-top:14px;">
+          <strong>Reale Größenordnungen zum Vergleich:</strong> Auf den Straßen der <strong>Stadt Tschernobyl</strong> liegt die Ortsdosisleistung heute bei etwa <strong>0,1–0,2 µSv/h</strong> (kaum höher als der natürliche Hintergrund in Deutschland). Im <strong>Zentrum von Pripyat</strong> werden auf Straßen ca. <strong>0,2–0,3 µSv/h</strong> gemessen, an einzelnen Stellen mit Moos/Erde auch <strong>1–4 µSv/h</strong>. Im <strong>Roten Wald</strong>, direkt im am stärksten kontaminierten Gebiet nahe des havarierten Reaktors, können stellenweise bis zu <strong>100 µSv/h</strong> erreicht werden.
+        </div>
+
+        <span class="answer-label" style="margin-top:14px;">3. Euer Team plant eine kurze, mehrstündige Exkursion mit Schutzkleidung. Welcher der drei Orte wäre dafür <strong>am ehesten vertretbar</strong>, welcher auf keinen Fall?</span>
+        <div class="id-guess-row">
+          <div class="match-label" style="flex:0 0 220px;">Am ehesten vertretbar für eine kurze Exkursion:</div>
+          <select class="match-select" id="s1-decision-ok">
+            <option value="">– wählen –</option>
+            <option value="tschernobyl">Stadt Tschernobyl</option>
+            <option value="pripyat">Pripyat-Zentrum</option>
+            <option value="wald">Roter Wald</option>
+          </select>
+        </div>
+        <div class="id-guess-row">
+          <div class="match-label" style="flex:0 0 220px;">Auf keinen Fall ohne besonderen Schutz betreten:</div>
+          <select class="match-select" id="s1-decision-no">
+            <option value="">– wählen –</option>
+            <option value="tschernobyl">Stadt Tschernobyl</option>
+            <option value="pripyat">Pripyat-Zentrum</option>
+            <option value="wald">Roter Wald</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="answer-area">
+        <button class="btn" id="s1-check-btn" onclick="checkS1()" style="display:none;">Einordnung prüfen</button>
+        <div class="feedback" id="s1-feedback"></div>
+        <div class="code-display" id="s1-code">Code: 417</div>
+        <div class="teacher-box" id="tb-s1">
+          <div class="tb-label">👩‍🏫 Lehrer-Info</div>
+          <p><strong>Tatsächliche Zählraten (simuliert):</strong> Stadt Tschernobyl ≈ 2 Ereignisse/s (niedrig), Pripyat-Zentrum ≈ 8 Ereignisse/s (mittel), Roter Wald ≈ 22 Ereignisse/s (hoch). Werte schwanken zufällig (Poisson-Verteilung), daher leichte Abweichungen zwischen Messungen normal – das ist physikalisch korrekt und kann mit der Klasse thematisiert werden (Schwankung/Statistik radioaktiven Zerfalls).</p>
+          <p><strong>Richtige Einordnung:</strong> Stadt Tschernobyl = niedrig, Pripyat-Zentrum = mittel, Roter Wald = hoch.</p>
+          <p><strong>Reale Hintergrundwerte (Stand: aktuelle BfS-/Reisebericht-Messungen):</strong> Stadt Tschernobyl ca. 0,1–0,2 µSv/h (kaum über deutschem Hintergrund), Pripyat-Straßen ca. 0,2–0,3 µSv/h mit Hot Spots bis 4 µSv/h, Roter Wald stellenweise bis zu 100 µSv/h. Die Sperrzone insgesamt schwankt laut BfS-Kartierung 2021/22 zwischen 0,06 und ca. 100 µSv/h.</p>
+          <p><strong>Entscheidungsfrage:</strong> Erwartete Antwort: Stadt Tschernobyl am ehesten vertretbar (niedrigste Werte, dort leben sogar einige Rückkehrer dauerhaft), Roter Wald auf keinen Fall ohne besonderen Schutz (höchste Kontamination der gesamten Sperrzone). Pripyat-Zentrum liegt dazwischen und wird touristisch nur kurz und mit Dosimeterkontrolle besucht – je nach Klassenargumentation auch als zweite richtige Antwort vertretbar; wichtig ist die Begründung über die gemessene Zählrate, nicht nur das "Erraten" der Lösung.</p>
+          <p><strong>Didaktischer Hinweis:</strong> Der neue Einleitungstext verknüpft Zählrate und Ortsdosisleistung bewusst nur qualitativ ("mehr Zerfälle pro Sekunde → mehr Energie pro Sekunde → höhere Dosisleistung"), ohne die eigentliche Dosimetrie-Formel (Energie pro Masse) einzuführen. Das passt zum Anspruchsniveau der 10. Jahrgangsstufe und vermeidet eine Vermischung mit dem Sievert-Begriff aus Station 7.</p>
+          <p><strong>Code:</strong> 417</p>
+        </div>
+        <div class="station-actions">
+          <button class="btn" id="s1-next" style="display:none;" onclick="goToStation(2)">Weiter zu Station 2 →</button>
+        </div>
+        <div class="teacher-skip">
+          <button class="btn-teacher-skip" onclick="goToStation(2)">🔓 Lehrer: Weiter ohne Lösung (Station 2)</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== STATION 2: STRAHLENARTEN UND WIRKUNG ===== -->
+<div class="screen" id="screen-station-2">
+  <div class="topbar">
+    <span class="geiger-icon">📡</span>
+    <div class="progress-track"><div class="progress-fill"></div></div>
+    <span class="station-counter"></span>
+  </div>
+  <div class="station-card">
+    <div class="station-header">
+      <div class="station-icon">🛡️</div>
+      <div>
+        <h2 class="station-title">Station 2: Drei Strahlenarten, drei Gefahren</h2>
+        <div class="station-subtitle">α-, β- und γ-Strahlung im Vergleich</div>
+      </div>
+    </div>
+    <div class="station-body">
+      <p>Radioaktive Strahlung tritt in drei Formen auf, die sich stark in ihrer <strong>Reichweite</strong> und <strong>Durchdringungsfähigkeit</strong> unterscheiden:</p>
+
+      <table class="data-table">
+        <tr><th>Strahlenart</th><th>Was ist es?</th><th>Reichweite in Luft</th><th>Abschirmung</th></tr>
+        <tr><td><strong>α (Alpha)</strong></td><td>Helium-Kerne (schwer, geladen)</td><td>wenige cm</td><td>schon ein Blatt Papier</td></tr>
+        <tr><td><strong>β (Beta)</strong></td><td>schnelle Elektronen</td><td>einige Meter</td><td>einige mm Aluminium</td></tr>
+        <tr><td><strong>γ (Gamma)</strong></td><td>energiereiche Strahlung (wie Licht, aber energiereicher)</td><td>sehr groß</td><td>dicke Bleischicht / Beton</td></tr>
+      </table>
+
+      <div class="info-box warn">
+        <strong>Wichtig:</strong> Geringe Reichweite bedeutet nicht „harmlos“! α-Strahlung ist zwar leicht abzuschirmen, richtet aber bei direktem Kontakt mit Körpergewebe (z. B. nach Verschlucken oder Einatmen) sehr viel Schaden an, weil sie ihre Energie auf kürzester Strecke vollständig abgibt.
+      </div>
+
+      <div class="info-box">
+        <strong>Hinweis:</strong> Manche radioaktiven Präparate senden nicht nur eine, sondern <strong>gleichzeitig mehrere Strahlenarten</strong> aus (z. B. weil beim Zerfall zuerst ein α-Teilchen freigesetzt wird und der entstehende Tochterkern danach zusätzlich γ-Strahlung abgibt). Eine solche Mischung lässt sich im Experiment daran erkennen, dass die Zählrate bei <strong>keiner Materialstufe vollständig auf null</strong> fällt, sondern nur stufenweise sinkt.
+      </div>
+
+      <details class="glossary">
+        <summary>Fachbegriffe erklärt</summary>
+        <p><strong>Ionisierende Strahlung:</strong> Strahlung, die Atome oder Moleküle in Materie elektrisch verändern (ionisieren) kann – dadurch entsteht auch die Wirkung auf biologisches Gewebe.</p>
+        <p><strong>Kontamination:</strong> Verschmutzung mit radioaktivem Material, das z. B. auf der Haut haftet oder in den Körper aufgenommen wurde (im Unterschied zur reinen „Bestrahlung von außen“).</p>
+      </details>
+
+      <p style="margin-top:18px;"><strong>Euer Experiment:</strong> Im Labor liegen drei unbekannte Präparate (P1, P2, P3). P1 und P2 senden jeweils <strong>nur eine</strong> Strahlenart aus, P3 könnte auch eine <strong>Kombination</strong> aussenden. Variiert <strong>Abstand</strong> und <strong>Abschirmmaterial</strong> und messt mit dem virtuellen Zählrohr, wie die Zählrate sich verändert – daraus könnt ihr auf die Strahlenart(en) schließen.</p>
+
+      <div class="lab-box">
+        <div class="id-source-tabs" id="id-source-tabs">
+          <div class="id-source-tab active-tab" data-src="P1" onclick="selectIdSource('P1')">Präparat P1</div>
+          <div class="id-source-tab" data-src="P2" onclick="selectIdSource('P2')">Präparat P2</div>
+          <div class="id-source-tab" data-src="P3" onclick="selectIdSource('P3')">Präparat P3</div>
+        </div>
+
+        <span class="answer-label">Abstand zur Quelle:</span>
+        <div class="option-grid" id="id-distance-row" style="grid-template-columns:repeat(3,1fr);">
+          <div class="option-btn" data-val="nah" onclick="selectIdOption('distance','nah')">Nah (5 cm)</div>
+          <div class="option-btn" data-val="mittel" onclick="selectIdOption('distance','mittel')">Mittel (1 m)</div>
+          <div class="option-btn" data-val="fern" onclick="selectIdOption('distance','fern')">Fern (2 m)</div>
+        </div>
+
+        <span class="answer-label">Abschirmmaterial:</span>
+        <div class="option-grid" id="id-material-row">
+          <div class="option-btn" data-val="keins" onclick="selectIdOption('material','keins')">Kein Material</div>
+          <div class="option-btn" data-val="papier" onclick="selectIdOption('material','papier')">Papier</div>
+          <div class="option-btn" data-val="alu" onclick="selectIdOption('material','alu')">Aluminium (3 mm)</div>
+          <div class="option-btn" data-val="blei" onclick="selectIdOption('material','blei')">Blei (2 cm)</div>
+        </div>
+
+        <div class="counter-display">
+          <div class="geiger-pulse" id="id-pulse"></div>
+          <div class="counter-main" id="id-counter">0</div>
+          <div class="counter-sub">registrierte Ereignisse</div>
+          <div class="counter-row">
+            <div>Zeit<span id="id-time-display">0,0 s</span></div>
+            <div>Zählrate<span id="id-rate-display">– /s</span></div>
+          </div>
+        </div>
+
+        <button class="btn" id="id-start-btn" onclick="startIdMeasurement()" disabled>▶ Messung starten (5 s)</button>
+        <p id="id-hint" style="font-size:0.82rem;color:var(--text-dim);margin-top:8px;">Wählt Abstand und Material aus.</p>
+
+        <table class="data-table id-results-table" id="id-results-table" style="display:none;">
+          <tr><th>Präparat</th><th>Abstand</th><th>Material</th><th>Zählrate</th></tr>
+          <tbody id="id-results-body"></tbody>
+        </table>
+      </div>
+
+      <div class="answer-area">
+        <span class="answer-label">Welche Strahlenart sendet jedes Präparat aus? (Tipp: Achtet darauf, bei welchem Material die Zählrate auf nahezu 0 fällt.)</span>
+        <div class="id-guess-row">
+          <div class="match-label" style="flex:0 0 90px;">Präparat P1:</div>
+          <select class="match-select" id="s2-id-p1">
+            <option value="">– wählen –</option>
+            <option value="alpha">Alpha</option>
+            <option value="beta">Beta</option>
+            <option value="gamma">Gamma</option>
+          </select>
+        </div>
+        <div class="id-guess-row">
+          <div class="match-label" style="flex:0 0 90px;">Präparat P2:</div>
+          <select class="match-select" id="s2-id-p2">
+            <option value="">– wählen –</option>
+            <option value="alpha">Alpha</option>
+            <option value="beta">Beta</option>
+            <option value="gamma">Gamma</option>
+          </select>
+        </div>
+        <div class="id-guess-multi">
+          <div class="id-guess-multi-label">Präparat P3 sendet folgende Strahlenart(en) aus (Mehrfachauswahl möglich):</div>
+          <div class="id-checkbox-row">
+            <label class="id-checkbox-option" id="s2-id-p3-alpha-label"><input type="checkbox" id="s2-id-p3-alpha" onchange="toggleP3Checkbox(this)"> Alpha</label>
+            <label class="id-checkbox-option" id="s2-id-p3-beta-label"><input type="checkbox" id="s2-id-p3-beta" onchange="toggleP3Checkbox(this)"> Beta</label>
+            <label class="id-checkbox-option" id="s2-id-p3-gamma-label"><input type="checkbox" id="s2-id-p3-gamma" onchange="toggleP3Checkbox(this)"> Gamma</label>
+          </div>
+        </div>
+        <button class="btn" id="s2-id-check-btn" style="margin-top:12px;" onclick="checkS2Identify()">Identifikation prüfen</button>
+        <div class="feedback" id="s2-id-feedback"></div>
+      </div>
+
+      <p style="margin-top:22px;"><strong>Zur Festigung:</strong> Ordnet nun die drei folgenden Gefahrenszenarien der jeweils gefährlichsten Strahlenart zu:</p>
+
+      <div class="match-container">
+        <div class="match-row">
+          <div class="match-label">Ein Tschernobyl-Liquidator steht ungeschützt mehrere Minuten in 10 m Entfernung vom offenen Reaktorkern.</div>
+          <select class="match-select" id="s2-q1">
+            <option value="">– wählen –</option>
+            <option value="alpha">Alpha</option>
+            <option value="beta">Beta</option>
+            <option value="gamma">Gamma</option>
+          </select>
+        </div>
+        <div class="match-row">
+          <div class="match-label">Ein Kind in Belarus isst mit Cäsium-137 belastete Pilze aus dem Wald (Strahlung wirkt von innen).</div>
+          <select class="match-select" id="s2-q2">
+            <option value="">– wählen –</option>
+            <option value="alpha">Alpha</option>
+            <option value="beta">Beta</option>
+            <option value="gamma">Gamma</option>
+          </select>
+        </div>
+        <div class="match-row">
+          <div class="match-label">Ein Feuerwehrmann trägt eine normale Stoffuniform und steht in einigen Metern Abstand zu einer Quelle, die nur diese Strahlenart aussendet – er bleibt dabei nahezu unversehrt.</div>
+          <select class="match-select" id="s2-q3">
+            <option value="">– wählen –</option>
+            <option value="alpha">Alpha</option>
+            <option value="beta">Beta</option>
+            <option value="gamma">Gamma</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="answer-area">
+        <button class="btn" onclick="checkS2()">Antworten prüfen</button>
+        <div class="feedback" id="s2-feedback"></div>
+        <div class="code-display" id="s2-code">Code: 829</div>
+        <div class="teacher-box" id="tb-s2">
+          <div class="tb-label">👩‍🏫 Lehrer-Info</div>
+          <p><strong>Identifikationsexperiment:</strong> Präparat P1 sendet <strong>Beta</strong>-Strahlung aus (Zählrate bricht erst bei Aluminium fast vollständig ein, Papier wirkt kaum). Präparat P2 sendet <strong>Gamma</strong>-Strahlung aus (Zählrate sinkt nur bei Blei deutlich, bleibt sonst nahezu unverändert). Präparat P3 sendet eine <strong>Kombination aus Alpha und Gamma</strong> aus (rein fiktives Lernkonstrukt, kein reales Nuklid) – erkennbar daran, dass schon Papier einen Teil der Zählrate wegnimmt (Alpha-Anteil), aber selbst bei Blei noch ein nennenswerter Rest bleibt (Gamma-Anteil). Die Zählrate fällt bei P3 bei keiner Materialstufe auf null.</p>
+          <p><strong>Hinweis zur Messung:</strong> Werte schwanken zufällig (Poisson-Statistik), daher empfiehlt es sich, jede Kombination notfalls mehrfach zu messen, bevor eine Schlussfolgerung gezogen wird. Der mittlere Abstand (1 m) liegt zwischen "nah" (5 cm) und "fern" (2 m) und macht den Reichweiten-Unterschied zwischen den Strahlenarten besonders deutlich: Alpha ist bei 1 m bereits vollständig weg (Reichweite in Luft nur wenige cm), Beta ist bei 1 m noch spürbar da und bricht erst bei 2 m stark ein (Reichweite einige Meter), Gamma bleibt auch bei 2 m noch recht stark messbar (sehr große Reichweite, nur 1/r²-Abnahme).</p>
+          <p><strong>Zuordnungsaufgabe (Gefahrenszenarien):</strong> 1 = Gamma, 2 = Alpha, 3 = Alpha.</p>
+          <p><strong>Begründung:</strong> Externe Bestrahlung aus der Ferne → Gamma (größte Reichweite/Durchdringung). Inkorporation (Verschlucken/Einatmen) → Alpha (größte Wirkung im Körper, da Energie auf kürzester Strecke abgegeben wird). Abschirmung durch Stoffuniform reicht aus → Alpha (wird schon von dünnem Material gestoppt).</p>
+          <p><strong>Code:</strong> 829</p>
+        </div>
+        <div class="station-actions">
+          <button class="btn" id="s2-next" style="display:none;" onclick="goToStation(3)">Weiter zu Station 3 →</button>
+        </div>
+        <div class="teacher-skip">
+          <button class="btn-teacher-skip" onclick="goToStation(3)">🔓 Lehrer: Weiter ohne Lösung (Station 3)</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== STATION 3: ZERFALLSGESETZ ===== -->
+<div class="screen" id="screen-station-3">
+  <div class="topbar">
+    <span class="geiger-icon">📡</span>
+    <div class="progress-track"><div class="progress-fill"></div></div>
+    <span class="station-counter"></span>
+  </div>
+  <div class="station-card">
+    <div class="station-header">
+      <div class="station-icon">⏳</div>
+      <div>
+        <h2 class="station-title">Station 3: Drei Nuklide, drei Zeiträume</h2>
+        <div class="station-subtitle">Zerfallsgesetz mit Basis 0,5</div>
+      </div>
+    </div>
+    <div class="station-body">
+      <p>Jeder radioaktive Stoff zerfällt nach dem <strong>Zerfallsgesetz</strong>:</p>
+      <div class="info-box">
+        N(t) = N₀ · 0,5<sup>t / T½</sup> &nbsp; bzw. &nbsp; A(t) = A₀ · 0,5<sup>t / T½</sup>
+        <br><span style="color:var(--text-dim);font-size:0.85rem;">N₀ / A₀ = Anfangsmenge bzw. Anfangsaktivität, T½ = Halbwertszeit, t = vergangene Zeit</span>
+      </div>
+      <p>Nach Tschernobyl wurden große Mengen verschiedener radioaktiver Nuklide freigesetzt – mit sehr unterschiedlichen Halbwertszeiten:</p>
+
+      <table class="data-table">
+        <tr><th>Nuklid</th><th>Halbwertszeit T½</th><th>Bedeutung</th></tr>
+        <tr><td>Jod-131</td><td>8 Tage</td><td>akute Gefahr für Schilddrüse, kurzfristig</td></tr>
+        <tr><td>Cäsium-137</td><td>30 Jahre</td><td>Boden-/Waldbelastung, mittelfristig</td></tr>
+        <tr><td>Uran-238</td><td>4,5 Milliarden Jahre</td><td>Restbrennstoff, Endlagerproblem</td></tr>
+      </table>
+
+      <p><strong>Aufgabe a)</strong> Direkt nach dem Unfall war die Aktivität von Jod-131 in einem Gebiet zu hoch. Nach wie vielen <strong>Halbwertszeiten</strong> ist die Aktivität auf <strong>1/16</strong> des Anfangswerts gesunken? Wie viele <strong>Tage</strong> sind das?</p>
+
+      <div class="answer-area">
+        <span class="answer-label">Anzahl der Halbwertszeiten (Zahl):</span>
+        <input type="number" id="s3a-hw" placeholder="z. B. 4" inputmode="numeric">
+        <span class="answer-label" style="margin-top:10px;">Zeit in Tagen:</span>
+        <input type="number" id="s3a-tage" placeholder="Tage" inputmode="numeric">
+      </div>
+
+      <p style="margin-top:20px;"><strong>Aufgabe b)</strong> Cäsium-137 hat eine Halbwertszeit von 30 Jahren. Nach Tschernobyl (1986) wurde ein Waldboden stark belastet. Nach wie vielen Jahren ist die Aktivität auf etwa <strong>ein Viertel (1/4)</strong> gesunken – und in welchem Jahr ist das ungefähr?</p>
+
+      <div class="answer-area">
+        <span class="answer-label">Zeit in Jahren (Zahl):</span>
+        <input type="number" id="s3b-jahre" placeholder="z. B. 60" inputmode="numeric">
+        <span class="answer-label" style="margin-top:10px;">Ungefähres Jahr:</span>
+        <input type="number" id="s3b-jahr" placeholder="z. B. 2046" inputmode="numeric">
+      </div>
+
+      <div class="info-box warn" style="margin-top:18px;">
+        <strong>Zum Vergleich – Uran-238:</strong> Mit einer Halbwertszeit von 4,5 <strong>Milliarden</strong> Jahren ist eine relevante Verringerung der Aktivität für uns Menschen praktisch nicht beobachtbar – das ist etwa das Alter unseres Sonnensystems! Genau das macht die <strong>Endlagerung</strong> von abgebranntem Kernbrennstoff zu einem Generationenproblem, das über jede menschliche Zeitspanne hinausgeht.
+      </div>
+
+      <p><strong>Aufgabe c)</strong> Welche gesellschaftliche Fragestellung passt zu welchem Nuklid? Ordnet zu:</p>
+
+      <div class="match-container">
+        <div class="match-row">
+          <div class="match-label">„Wie lange muss die Evakuierung direkt nach dem Unfall mindestens andauern, bis akute Gefahr für die Schilddrüse vorbei ist?“</div>
+          <select class="match-select" id="s3c-q1">
+            <option value="">– wählen –</option>
+            <option value="jod">Jod-131</option>
+            <option value="cs">Cäsium-137</option>
+            <option value="u">Uran-238</option>
+          </select>
+        </div>
+        <div class="match-row">
+          <div class="match-label">„Dürfen Wildschweine aus bayerischen Wäldern noch Jahrzehnte nach Tschernobyl bedenkenlos verzehrt werden?“</div>
+          <select class="match-select" id="s3c-q2">
+            <option value="">– wählen –</option>
+            <option value="jod">Jod-131</option>
+            <option value="cs">Cäsium-137</option>
+            <option value="u">Uran-238</option>
+          </select>
+        </div>
+        <div class="match-row">
+          <div class="match-label">„Wie kann eine Gesellschaft ein Endlager bauen, das über tausende Generationen sicher bleiben muss?“</div>
+          <select class="match-select" id="s3c-q3">
+            <option value="">– wählen –</option>
+            <option value="jod">Jod-131</option>
+            <option value="cs">Cäsium-137</option>
+            <option value="u">Uran-238</option>
+          </select>
+        </div>
+      </div>
+
+      <details class="glossary">
+        <summary>Fachbegriffe erklärt</summary>
+        <p><strong>Halbwertszeit:</strong> Die Zeit, nach der die Hälfte der ursprünglich vorhandenen radioaktiven Atomkerne zerfallen ist.</p>
+        <p><strong>Nuklid:</strong> Eine bestimmte Atomsorte, festgelegt durch Anzahl der Protonen und Neutronen im Kern (z. B. Jod-131 = Jod-Atom mit Massenzahl 131).</p>
+        <p><strong>Endlager:</strong> Ort zur dauerhaften, sicheren Aufbewahrung radioaktiver Abfälle.</p>
+      </details>
+
+      <div class="answer-area">
+        <button class="btn" onclick="checkS3()">Antworten prüfen</button>
+        <div class="feedback" id="s3-feedback"></div>
+        <div class="code-display" id="s3-code">Code: 304</div>
+        <div class="teacher-box" id="tb-s3">
+          <div class="tb-label">👩‍🏫 Lehrer-Info</div>
+          <p><strong>a) Jod-131:</strong> 1/16 = 0,5⁴ → <strong>4 Halbwertszeiten</strong> = 4 · 8 Tage = <strong>32 Tage</strong>.</p>
+          <p><strong>b) Cäsium-137:</strong> 1/4 = 0,5² → <strong>2 Halbwertszeiten</strong> = 2 · 30 Jahre = <strong>60 Jahre</strong> → 1986 + 60 ≈ <strong>2046</strong>.</p>
+          <p><strong>c) Zuordnung:</strong> Akute Evakuierungsfrage → Jod-131. Wildschwein/Wald-Frage → Cäsium-137. Endlager-Generationenfrage → Uran-238.</p>
+          <p><strong>Toleranz beim Auswerten:</strong> Tage ±1, Jahre ±2, Jahreszahl ±2 (Skript akzeptiert das automatisch).</p>
+          <p><strong>Code:</strong> 304</p>
+        </div>
+        <div class="station-actions">
+          <button class="btn" id="s3-next" style="display:none;" onclick="goToStation(4)">Weiter zu Station 4 →</button>
+        </div>
+        <div class="teacher-skip">
+          <button class="btn-teacher-skip" onclick="goToStation(4)">🔓 Lehrer: Weiter ohne Lösung (Station 4)</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== STATION 4: HALBWERTSZEIT-EXPERIMENT ===== -->
+<div class="screen" id="screen-station-4">
+  <div class="topbar">
+    <span class="geiger-icon">📡</span>
+    <div class="progress-track"><div class="progress-fill"></div></div>
+    <span class="station-counter"></span>
+  </div>
+  <div class="station-card">
+    <div class="station-header">
+      <div class="station-icon">🧪</div>
+      <div>
+        <h2 class="station-title">Station 4: Das Präparat im Labor</h2>
+        <div class="station-subtitle">Halbwertszeit experimentell bestimmen</div>
+      </div>
+    </div>
+    <div class="station-body">
+      <p>Vor euch liegt ein <strong>virtuelles radioaktives Präparat</strong>. Jeder Punkt im Kasten unten steht für einen radioaktiven Atomkern. Sobald ihr die Simulation startet, zerfallen die Kerne nacheinander – ein Kern, der zerfällt, blitzt kurz auf und wird <strong>grau</strong> (zerfallen, inaktiv).</p>
+
+      <div class="info-box">
+        Die <strong>Aktivität</strong> (Anzahl der noch aktiven, unzerfallenen Kerne) sinkt dabei nach dem euch bekannten Zerfallsgesetz. Während die Simulation läuft, seht ihr <strong>kein Zahlenfeld</strong> – stattdessen wächst unten ein <strong>Diagramm</strong>, das die Aktivität über die Zeit zeigt. Eure Aufgabe: Stoppt die laufende Simulation <strong>dreimal hintereinander</strong> – sobald ihr einen Stopp-Punkt erreicht habt, läuft die Simulation automatisch weiter zum nächsten:
+        <ul style="margin:8px 0 0 0;padding-left:20px;">
+          <li><strong>1. Stopp</strong> bei noch <strong>½</strong> der ursprünglichen Aktivität (eine Halbwertszeit T½)</li>
+          <li><strong>2. Stopp</strong> bei noch <strong>¼</strong> der ursprünglichen Aktivität (zwei Halbwertszeiten)</li>
+          <li><strong>3. Stopp</strong> bei noch <strong>⅛</strong> der ursprünglichen Aktivität (drei Halbwertszeiten)</li>
+        </ul>
+      </div>
+
+      <div class="decay-canvas-wrap">
+        <canvas id="decay-canvas" width="600" height="320"></canvas>
+        <div class="decay-stats" id="decay-stats">
+          <div>Aktive Kerne<span id="decay-active-count">200</span></div>
+          <div>Zeit<span id="decay-time">0,0 s</span></div>
+          <div>Anteil aktiv<span id="decay-percent">100 %</span></div>
+        </div>
+        <div class="decay-controls">
+          <button class="btn" id="decay-start-btn" onclick="startDecaySim()">▶ Simulation starten</button>
+          <button class="btn btn-danger" id="decay-stop-btn" onclick="stopDecaySim()" style="display:none;">⏹ Runde 1/3 stoppen (Ziel: ½)</button>
+        </div>
+        <div class="decay-round-progress" id="decay-round-progress"></div>
+      </div>
+
+      <div class="decay-chart-wrap">
+        <canvas id="decay-chart-canvas" width="600" height="260"></canvas>
+        <div class="decay-chart-label">Lest hier ab, bei welcher Zeit die Aktivität auf die Hälfte, ein Viertel und ein Achtel gesunken ist.</div>
+      </div>
+
+      <table class="data-table" id="decay-rounds-table" style="display:none;margin-top:14px;">
+        <tr><th>Stopp</th><th>Ziel-Anteil</th><th>Eure Stopp-Zeit</th><th>Tatsächlicher Anteil</th></tr>
+        <tbody id="decay-rounds-body"></tbody>
+      </table>
+
+      <div class="answer-area" id="decay-result-area" style="display:none;">
+        <p style="margin-top:4px;font-size:0.9rem;">Das simulierte Präparat hat tatsächlich eine Halbwertszeit von <strong>10 Sekunden</strong>. Vergleicht eure drei Stopp-Zeiten in der Tabelle oben mit den theoretischen Vorhersagen 10 s, 20 s und 30 s.</p>
+
+        <span class="answer-label" style="margin-top:10px;">Wie verhält sich die <strong>Zeit zwischen euren Stopps</strong> (also vom 1. zum 2. Stopp, und vom 2. zum 3. Stopp)? Was fällt euch auf, wenn ihr das mit dem Begriff "Halbwertszeit" vergleicht? (kurze Begründung, 1–2 Sätze)</span>
+        <textarea id="s4-begruendung" placeholder="z. B. 'Der Abstand zwischen den Stopps war ungefähr immer gleich groß, nämlich ca. ... Sekunden, weil...'"></textarea>
+
+        <button class="btn" style="margin-top:14px;" onclick="checkS4Decay()">Auswertung abschließen</button>
+      </div>
+
+      <div class="feedback" id="s4-feedback"></div>
+      <div class="code-display" id="s4-code">Code: 950</div>
+      <div class="teacher-box" id="tb-s4">
+        <div class="tb-label">👩‍🏫 Lehrer-Info</div>
+        <p><strong>Simuliertes Präparat:</strong> 200 Startkerne, T½ = 10 s (fest im Code hinterlegt). Theoretische Stopp-Zeiten: Runde 1 (½) bei ca. 10 s, Runde 2 (¼) bei ca. 20 s, Runde 3 (⅛) bei ca. 30 s. Da der Zerfall einzelner Kerne zufällig erfolgt (echtes Zerfallsgesetz, exponentiell mit Zufallskomponente), schwanken die von Schülern abgelesenen Werte leicht um diese Sollwerte – das ist physikalisch korrekt und kein Fehler. Bei Runde 3 sind nur noch ca. 25 Kerne aktiv, daher ist die statistische Schwankung dort am deutlichsten sichtbar.</p>
+        <p><strong>Auswertung:</strong> Es wird kein Einzelwert mehr automatisch geprüft, sondern die Reflexion über alle drei Stopps. Die Eingabe wird nur auf Mindestlänge (mind. 15 Zeichen) geprüft – bitte den Inhalt selbst gegenlesen. Erwartete Kernaussage: Der Zeitabstand zwischen den Stopps ist (näherungsweise) immer gleich groß (≈ T½ ≈ 10 s), weil sich die Aktivität in jeder Halbwertszeit erneut halbiert, unabhängig vom Startwert.</p>
+        <p><strong>Didaktischer Hinweis:</strong> Diese Erweiterung prüft das eigentliche Konzept der Halbwertszeit deutlich besser als ein einzelner Stopp – Schüler, die nur einen Punkt richtig getroffen haben (eventuell durch Zufall), fallen hier auf, wenn der Abstand zum zweiten oder dritten Stopp nicht passt. Gut geeignet für ein Tafelgespräch zum Exponentialgesetz.</p>
+        <p><strong>Code:</strong> 950</p>
+      </div>
+      <div class="station-actions">
+        <button class="btn" id="s4-next" style="display:none;" onclick="goToStation(5)">Weiter zu Station 5 →</button>
+      </div>
+      <div class="teacher-skip">
+        <button class="btn-teacher-skip" onclick="goToStation(5)">🔓 Lehrer: Weiter ohne Lösung (Station 5)</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== STATION 5: MASSENDEFEKT UND E=MC² ===== -->
+<div class="screen" id="screen-station-5">
+  <div class="topbar">
+    <span class="geiger-icon">📡</span>
+    <div class="progress-track"><div class="progress-fill"></div></div>
+    <span class="station-counter"></span>
+  </div>
+  <div class="station-card">
+    <div class="station-header">
+      <div class="station-icon">💥</div>
+      <div>
+        <h2 class="station-title">Station 5: Die unsichtbare Masse</h2>
+        <div class="station-subtitle">Massendefekt und Masse-Energie-Relation</div>
+      </div>
+    </div>
+    <div class="station-body">
+      <p>Am 6. August 1945 wurde über <strong>Hiroshima</strong> eine Atombombe gezündet. Sie enthielt nur wenige Kilogramm spaltbares Material – trotzdem war die Zerstörungskraft gewaltig größer als bei jeder chemischen Sprengstoffbombe vergleichbarer Masse. Der Grund liegt im Atomkern selbst.</p>
+
+      <div class="info-box">
+        <strong>Massendefekt:</strong> Bei der Kernspaltung (z. B. von Uran-235) ist die Masse der entstehenden Spaltprodukte geringfügig <strong>kleiner</strong> als die Masse des ursprünglichen Kerns. Dieser Massenunterschied Δm wird nicht „vernichtet“, sondern vollständig in Energie umgewandelt.
+      </div>
+
+      <p>Albert Einstein fand den Zusammenhang zwischen dieser fehlenden Masse und der freigesetzten Energie:</p>
+
+      <div class="info-box" style="text-align:center;font-size:1.3rem;">
+        E = Δm · c²
+      </div>
+      <p style="font-size:0.88rem;color:var(--text-dim);text-align:center;margin-top:-8px;">
+        c = Lichtgeschwindigkeit ≈ 3·10⁸ m/s (also c² ≈ 9·10¹⁶ m²/s²)
+      </p>
+
+      <p><strong>Aufgabe:</strong> Bei der Spaltung von ca. 1 kg Uran-235 in der Hiroshima-Bombe entstand ein Massendefekt von etwa <strong>Δm = 0,7 g = 0,0007 kg</strong>.</p>
+
+      <p>Berechnet die freigesetzte Energie E = Δm · c² in <strong>Joule</strong>. Rundet auf eine Nachkommastelle ·10¹³ J (z. B. „6,3“).</p>
+
+      <div class="answer-area">
+        <span class="answer-label">Freigesetzte Energie in 10¹³ Joule (nur die Zahl vor ·10¹³):</span>
+        <input type="text" id="s5-energie" placeholder="z. B. 6,3" inputmode="decimal">
+      </div>
+
+      <div class="info-box warn" style="margin-top:18px;">
+        Zum Vergleich: Diese Energiemenge entspricht in etwa der Sprengkraft von <strong>13.000 Tonnen</strong> des konventionellen Sprengstoffs TNT – freigesetzt durch eine Masse, die kleiner ist als eine Büroklammer.
+      </div>
+
+      <details class="glossary">
+        <summary>Fachbegriffe erklärt</summary>
+        <p><strong>Kernspaltung:</strong> Ein schwerer Atomkern (z. B. Uran-235) wird durch ein Neutron in zwei leichtere Kerne gespalten, wobei Energie und weitere Neutronen frei werden.</p>
+        <p><strong>Massendefekt Δm:</strong> Die "fehlende" Masse, die bei einer Kernreaktion in Energie umgewandelt wird.</p>
+        <p><strong>TNT-Äquivalent:</strong> Ein Vergleichsmaß, das die Sprengkraft einer Explosion in die entsprechende Masse des Standard-Sprengstoffs TNT umrechnet.</p>
+      </details>
+
+      <div class="answer-area">
+        <button class="btn" onclick="checkS5()">Antwort prüfen</button>
+        <div class="feedback" id="s5-feedback"></div>
+        <div class="code-display" id="s5-code">Code: 563</div>
+        <div class="teacher-box" id="tb-s5">
+          <div class="tb-label">👩‍🏫 Lehrer-Info</div>
+          <p><strong>Rechnung:</strong> Δm = 0,0007 kg, c² = (3·10⁸ m/s)² = 9·10¹⁶ m²/s².</p>
+          <p>E = Δm · c² = 0,0007 · 9·10¹⁶ = 6,3·10¹³ J.</p>
+          <p><strong>Erwartete Eingabe:</strong> 6,3 (Toleranz ±0,3 wird vom Skript akzeptiert, auch mit Punkt statt Komma).</p>
+          <p><strong>Didaktischer Hinweis:</strong> Größenvergleich zu TNT (13.000 t) macht den Unterschied zwischen chemischer und nuklearer Bindungsenergie greifbar.</p>
+          <p><strong>Code:</strong> 563</p>
+        </div>
+        <div class="station-actions">
+          <button class="btn" id="s5-next" style="display:none;" onclick="goToStation(6)">Weiter zu Station 6 →</button>
+        </div>
+        <div class="teacher-skip">
+          <button class="btn-teacher-skip" onclick="goToStation(6)">🔓 Lehrer: Weiter ohne Lösung (Station 6)</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== STATION 6: BEURTEILUNGSAUFGABE ===== -->
+<div class="screen" id="screen-station-6">
+  <div class="topbar">
+    <span class="geiger-icon">📡</span>
+    <div class="progress-track"><div class="progress-fill"></div></div>
+    <span class="station-counter"></span>
+  </div>
+  <div class="station-card">
+    <div class="station-header">
+      <div class="station-icon">⚖️</div>
+      <div>
+        <h2 class="station-title">Station 6: Eure Beurteilung</h2>
+        <div class="station-subtitle">Physik als Werkzeug für eine gesellschaftliche Frage</div>
+      </div>
+    </div>
+    <div class="station-body">
+      <p>Ihr habt jetzt das physikalische Werkzeug, um eine echte historische und gesellschaftliche Debatte fundiert zu beurteilen. Wählt <strong>eine</strong> der beiden Fragestellungen und bearbeitet sie in 4–6 Sätzen.</p>
+
+      <div class="info-box">
+        <strong>Option A – Kernenergie nach Tschernobyl:</strong><br>
+        War es aus heutiger, physikalisch begründeter Sicht vertretbar, dass Deutschland nach Tschernobyl und Fukushima den vollständigen Ausstieg aus der Kernenergie beschlossen hat? Berücksichtigt dabei: Energiedichte der Kernspaltung (Station 4), Langzeitfolgen durch lange Halbwertszeiten (Station 3) und die Frage, wie ein Restrisiko von Unfällen gesellschaftlich bewertet werden sollte.
+      </div>
+
+      <div class="info-box">
+        <strong>Option B – Hiroshima 1945:</strong><br>
+        Manche Historiker argumentieren, der Atombombenabwurf habe den Krieg verkürzt und damit Menschenleben gerettet. Beurteilt – ausgehend von der enormen Energiefreisetzung aus minimaler Masse (Station 4) und der zusätzlichen, lang anhaltenden Wirkung radioaktiver Strahlung (Stationen 2 und 3) – warum die Atombombe eine physikalisch und ethisch andere Kategorie von Waffe darstellt als eine konventionelle Bombe gleicher Sprengkraft.
+      </div>
+
+      <p style="font-size:0.88rem;color:var(--text-dim);">Hinweis: Es gibt hier keine einzig "richtige" Meinung – wichtig ist, dass ihr eure physikalischen Kenntnisse aus den vorherigen Stationen tatsächlich nutzt, um eure Position zu begründen.</p>
+
+      <div class="answer-area">
+        <span class="answer-label">Eure Beurteilung (mind. 4 Sätze, nutzt Fachbegriffe aus den Stationen):</span>
+        <textarea id="s6-text" placeholder="Schreibt hier eure Beurteilung..."></textarea>
+      </div>
+
+      <div class="info-box warn">
+        Damit ihr den Code für diese Station erhaltet, muss euer Text mindestens <strong>3 der folgenden Begriffe</strong> enthalten: <em>Halbwertszeit, Massendefekt, Energie, Strahlung, Risiko, Kernspaltung, Sievert, Folgen, Generationen</em>. Eine Lehrkraft kann den Text zusätzlich inhaltlich bewerten.
+      </div>
+
+      <div class="answer-area">
+        <button class="btn" onclick="checkS6()">Beurteilung abgeben</button>
+        <div class="feedback" id="s6-feedback"></div>
+        <div class="code-display" id="s6-code">Code: 182</div>
+        <div class="teacher-box" id="tb-s6">
+          <div class="tb-label">👩‍🏫 Lehrer-Info</div>
+          <p><strong>Automatische Prüfung:</strong> Mind. 25 Wörter UND mind. 3 der 9 Schlüsselbegriffe (Halbwertszeit, Massendefekt, Energie, Strahlung, Risiko, Kernspaltung, Sievert, Folgen, Generationen).</p>
+          <p><strong>Wichtig:</strong> Das ist nur eine Formalprüfung, keine inhaltliche Bewertung! Bitte den Text jeder Gruppe selbst lesen.</p>
+          <p><strong>Worauf bei der Beurteilung achten:</strong> Nutzt die Gruppe physikalische Fakten aus den Stationen (Energiedichte, Halbwertszeiten, Strahlenwirkung) zur Begründung, statt nur eine Meinung zu äußern? Wird zwischen technischem Risiko und gesellschaftlicher Risikobewertung unterschieden?</p>
+          <p><strong>Code:</strong> 182</p>
+        </div>
+        <div class="station-actions">
+          <button class="btn" id="s6-next" style="display:none;" onclick="goToStation(7)">Weiter zu Station 7 →</button>
+        </div>
+        <div class="teacher-skip">
+          <button class="btn-teacher-skip" onclick="goToStation(7)">🔓 Lehrer: Weiter ohne Lösung (Station 7)</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== STATION 7: DOSIS UND BIOLOGISCHE WIRKUNG ===== -->
+<div class="screen" id="screen-station-7">
+  <div class="topbar">
+    <span class="geiger-icon">📡</span>
+    <div class="progress-track"><div class="progress-fill"></div></div>
+    <span class="station-counter"></span>
+  </div>
+  <div class="station-card">
+    <div class="station-header">
+      <div class="station-icon">🧬</div>
+      <div>
+        <h2 class="station-title">Station 7: Wirkung auf den Körper</h2>
+        <div class="station-subtitle">Dosis, Sievert und Schädigungsarten</div>
+      </div>
+    </div>
+    <div class="station-body">
+      <p>Wie stark Strahlung dem Körper schadet, hängt von der aufgenommenen <strong>Äquivalentdosis</strong> ab, gemessen in <strong>Sievert (Sv)</strong>. Sie berücksichtigt sowohl die Energie der Strahlung als auch, wie schädlich die jeweilige Strahlenart für Gewebe ist.</p>
+
+      <table class="data-table">
+        <tr><th>Situation</th><th>Äquivalentdosis</th></tr>
+        <tr><td>Natürliche Strahlung pro Jahr (Deutschland)</td><td>ca. 2,1 mSv</td></tr>
+        <tr><td>Ein Langstreckenflug (z. B. Frankfurt–New York)</td><td>ca. 0,1 mSv</td></tr>
+        <tr><td>Eine Röntgenaufnahme des Brustkorbs</td><td>ca. 0,1 mSv</td></tr>
+        <tr><td>Tschernobyl-Liquidatoren (viele Fälle)</td><td>1.000–6.000 mSv (1–6 Sv)</td></tr>
+        <tr><td>Tödliche Akutdosis (ca. 50 % Sterberisiko)</td><td>ca. 4.500 mSv (4,5 Sv)</td></tr>
+      </table>
+
+      <p>Je nachdem, wie hoch die Dosis ist und über welchen Zeitraum sie wirkt, unterscheidet man drei Arten von Strahlenschäden:</p>
+
+      <div class="info-box danger">
+        <strong>1. Akute (direkte) Strahlenschäden:</strong> Treten bei sehr hohen Dosen innerhalb kurzer Zeit auf, z. B. die <strong>Strahlenkrankheit</strong> mit Übelkeit, Hautverbrennungen und Versagen des Knochenmarks. Betroffen waren z. B. die Feuerwehrleute, die direkt nach der Explosion in Tschernobyl im Einsatz waren.
+      </div>
+
+      <div class="info-box warn">
+        <strong>2. Langzeitschäden (somatische Spätschäden):</strong> Auch kleinere Dosen erhöhen über Jahre das Risiko, an <strong>Krebs</strong> zu erkranken – z. B. zeigte sich nach Tschernobyl ein deutlicher Anstieg von <strong>Schilddrüsenkrebs</strong> bei Kindern, die mit Jod-131 belastete Milch getrunken hatten.
+      </div>
+
+      <div class="info-box">
+        <strong>3. Erbschäden (genetische Schäden):</strong> Trifft Strahlung die <strong>Keimzellen</strong> (Ei- oder Samenzellen), kann das Erbgut verändert werden. Mögliche Folge sind <strong>Missbildungen</strong> oder Erkrankungen bei den Kindern und Nachkommen der betroffenen Person – auch wenn diese selbst gesund erscheint.
+      </div>
+
+      <details class="glossary">
+        <summary>Fachbegriffe erklärt</summary>
+        <p><strong>Äquivalentdosis:</strong> Maß dafür, wie stark Strahlung biologisches Gewebe schädigt; berücksichtigt Energie und Art der Strahlung. Einheit: Sievert (Sv).</p>
+        <p><strong>Strahlenkrankheit:</strong> Akute Erkrankung durch sehr hohe Strahlendosis in kurzer Zeit, betrifft v. a. schnell teilende Zellen (Knochenmark, Darm, Haut).</p>
+        <p><strong>Keimzellen:</strong> Ei- und Samenzellen, aus denen neue Lebewesen entstehen – Schäden hier werden potenziell vererbt.</p>
+        <p><strong>Somatisch:</strong> den eigenen Körper betreffend (im Unterschied zu „genetisch/vererbbar“).</p>
+      </details>
+
+      <p><strong>Aufgabe:</strong> Ordnet die drei beschriebenen Fälle der passenden Schadensart zu:</p>
+
+      <div class="match-container">
+        <div class="match-row">
+          <div class="match-label">Ein Feuerwehrmann erhält innerhalb weniger Stunden eine Dosis von 5 Sv und entwickelt innerhalb von Tagen schwere Übelkeit und Hautschäden.</div>
+          <select class="match-select" id="s7-q1">
+            <option value="">– wählen –</option>
+            <option value="akut">Akuter Strahlenschaden</option>
+            <option value="lang">Langzeitschaden (Krebs)</option>
+            <option value="erb">Erbschaden</option>
+          </select>
+        </div>
+        <div class="match-row">
+          <div class="match-label">Ein Kind, das 1986 Jod-131-belastete Milch trank, erkrankt zehn Jahre später an Schilddrüsenkrebs.</div>
+          <select class="match-select" id="s7-q2">
+            <option value="">– wählen –</option>
+            <option value="akut">Akuter Strahlenschaden</option>
+            <option value="lang">Langzeitschaden (Krebs)</option>
+            <option value="erb">Erbschaden</option>
+          </select>
+        </div>
+        <div class="match-row">
+          <div class="match-label">Eine bestrahlte Person bleibt selbst gesund, aber ihr später geborenes Kind zeigt eine Fehlbildung, die auf eine Veränderung der Keimzellen zurückgeht.</div>
+          <select class="match-select" id="s7-q3">
+            <option value="">– wählen –</option>
+            <option value="akut">Akuter Strahlenschaden</option>
+            <option value="lang">Langzeitschaden (Krebs)</option>
+            <option value="erb">Erbschaden</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="answer-area">
+        <button class="btn" onclick="checkS7()">Antworten prüfen</button>
+        <div class="feedback" id="s7-feedback"></div>
+        <div class="code-display" id="s7-code">Code: 731</div>
+        <div class="teacher-box" id="tb-s7">
+          <div class="tb-label">👩‍🏫 Lehrer-Info</div>
+          <p><strong>Richtige Zuordnung:</strong> 1 = Akuter Strahlenschaden, 2 = Langzeitschaden (Krebs), 3 = Erbschaden.</p>
+          <p><strong>Begründung:</strong> Hohe Dosis + Wirkung innerhalb von Tagen → akut. Erhöhtes Krebsrisiko Jahre später bei der betroffenen Person selbst → somatischer Langzeitschaden. Schaden an Keimzellen, der an Nachkommen weitergegeben wird → genetisch/Erbschaden.</p>
+          <p><strong>Code:</strong> 731</p>
+        </div>
+        <div class="station-actions">
+          <button class="btn" id="s7-next" style="display:none;" onclick="goToStation(8)">Mission abschließen →</button>
+        </div>
+        <div class="teacher-skip">
+          <button class="btn-teacher-skip" onclick="goToStation(8)">🔓 Lehrer: Weiter ohne Lösung (Abschluss)</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+
+
+
+
+
+<!-- ================= FINAL SCREEN ================= -->
+<div class="screen" id="screen-final">
+  <div class="intro-box">
+    <div class="intro-symbol">🏆</div>
+    <h1 class="intro-title">Mission abgeschlossen</h1>
+    <div class="intro-sub">Ihr habt alle Stationen gemeistert.</div>
+    <div class="summary-list" id="final-summary"></div>
+
+    <div class="codes-overview">
+      <div class="codes-overview-label">👩‍🏫 Lehrer-Übersicht: Alle Codes zum Abgleich</div>
+      <table class="data-table">
+        <tr><th>Station</th><th>Thema</th><th>Code</th></tr>
+        <tr><td>1</td><td>Nachweis radioaktiver Strahlung (Messexperiment)</td><td><strong>417</strong></td></tr>
+        <tr><td>2</td><td>Strahlenarten (α, β, γ)</td><td><strong>829</strong></td></tr>
+        <tr><td>3</td><td>Zerfallsgesetz (Jod/Cäsium/Uran)</td><td><strong>304</strong></td></tr>
+        <tr><td>4</td><td>Halbwertszeit-Experiment</td><td><strong>950</strong></td></tr>
+        <tr><td>5</td><td>Massendefekt / E=mc²</td><td><strong>563</strong></td></tr>
+        <tr><td>6</td><td>Gesellschaftliche Beurteilung</td><td><strong>182</strong></td></tr>
+        <tr><td>7</td><td>Dosis und Strahlenschäden</td><td><strong>731</strong></td></tr>
+      </table>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="restartAll()">↺ Neu starten</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =========================================================
+   GLOBALE STEUERUNG
+   ========================================================= */
+const TOTAL_STATIONS = 7;
+let currentStation = 0; // 0 = Intro
+let solvedStations = new Set();
+let decayChartData = []; // {t, activeCount} Punkte für die Live-Kurve, global verfügbar ab Start
+
+function setProgress(){
+  const pct = Math.round((solvedStations.size / TOTAL_STATIONS) * 100);
+  document.querySelectorAll('.progress-fill').forEach(el => el.style.width = pct + '%');
+  document.querySelectorAll('.station-counter').forEach(el => {
+    el.textContent = `Station ${currentStation} / ${TOTAL_STATIONS} · ${solvedStations.size} gelöst`;
+  });
+}
+
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const target = document.getElementById(id);
+  if(target) target.classList.add('active');
+  window.scrollTo({top:0, behavior:'instant'});
+}
+
+function goToStation(n){
+  currentStation = n;
+  if(n > TOTAL_STATIONS){
+    renderFinalSummary();
+    showScreen('screen-final');
+    return;
+  }
+  showScreen('screen-station-' + n);
+  setProgress();
+  if(n === 4 && decayChartData.length === 0){
+    decayChartData = [{t:0, n:DECAY_N0}];
+    drawDecayChart();
+  }
+}
+
+function markSolved(n){
+  solvedStations.add(n);
+  setProgress();
+}
+
+function restartAll(){
+  location.reload();
+}
+
+/* =========================================================
+   SPEECH SYNTHESIS - INTRO
+   ========================================================= */
+const introSpeechText = `Willkommen, Spezialistinnen und Spezialisten für Kernphysik.
+Im April neunzehnhundertsechsundachtzig explodierte Block vier des Kernkraftwerks Tschernobyl.
+Im August neunzehnhundertfünfundvierzig zerstörte eine einzige Bombe die japanische Stadt Hiroshima.
+Beide Ereignisse haben eine gemeinsame physikalische Grundlage: den Aufbau und Zerfall von Atomkernen.
+Eure Aufgabe ist es, sieben Stationen zu durchlaufen.
+Ihr werdet radioaktive Strahlung nachweisen, ihre Wirkung auf den menschlichen Körper verstehen,
+das Zerfallsgesetz auf echte Nuklide anwenden, den Massendefekt berechnen,
+und am Ende eine historische und gesellschaftliche Frage mit euren physikalischen Erkenntnissen beurteilen.
+Viel Erfolg. Die Mission beginnt jetzt.`;
+
+let speechAttempted = false;
+
+function skipIntro(){
+  if('speechSynthesis' in window){
+    window.speechSynthesis.cancel();
+  }
+  goToStation(1);
+}
+
+function startIntroAudio(){
+  const statusEl = document.getElementById('speech-status');
+  const startBtn = document.getElementById('btn-start-audio');
+  const beginRow = document.getElementById('row-begin');
+  speechAttempted = true;
+  startBtn.disabled = true;
+
+  if(!('speechSynthesis' in window)){
+    statusEl.textContent = 'Sprachausgabe wird von diesem Browser nicht unterstützt – ihr könnt trotzdem direkt starten.';
+    beginRow.style.display = 'flex';
+    startBtn.disabled = false;
+    return;
+  }
+
+  statusEl.textContent = '🔊 Einführung wird vorgelesen ...';
+
+  const utter = new SpeechSynthesisUtterance(introSpeechText);
+  utter.lang = 'de-DE';
+  utter.rate = 0.98;
+  utter.pitch = 1.0;
+
+  function pickGermanVoice(){
+    const voices = window.speechSynthesis.getVoices();
+    const deVoice = voices.find(v => v.lang && v.lang.toLowerCase().startsWith('de'));
+    if(deVoice) utter.voice = deVoice;
+  }
+  pickGermanVoice();
+  if(window.speechSynthesis.getVoices().length === 0){
+    window.speechSynthesis.onvoiceschanged = pickGermanVoice;
+  }
+
+  utter.onend = () => {
+    statusEl.textContent = '✅ Einführung beendet. Bereit für die Mission!';
+    beginRow.style.display = 'flex';
+    startBtn.disabled = false;
+    startBtn.textContent = '🔁 Einführung erneut anhören';
+  };
+  utter.onerror = () => {
+    statusEl.textContent = 'Sprachausgabe nicht möglich – ihr könnt trotzdem direkt starten.';
+    beginRow.style.display = 'flex';
+    startBtn.disabled = false;
+  };
+
+  window.speechSynthesis.cancel();
+  window.speechSynthesis.speak(utter);
+}
+
+/* =========================================================
+   HILFSFUNKTIONEN
+   ========================================================= */
+function showFeedback(id, ok, msg){
+  const el = document.getElementById(id);
+  el.textContent = msg;
+  el.className = 'feedback show ' + (ok ? 'ok' : 'err');
+}
+function revealCode(codeId, btnId){
+  document.getElementById(codeId).classList.add('show');
+  document.getElementById(btnId).style.display = 'inline-block';
+}
+function normalize(str){
+  return str.trim().toLowerCase().replace(',', '.');
+}
+
+/* =========================================================
+   STATION 1: Virtuelles Geiger-Zählrohr-Experiment
+   ========================================================= */
+
+// Wahre (simulierte) mittlere Zählraten der drei Orte in Ereignissen/Sekunde
+// X = Stadt Tschernobyl, Y = Pripyat-Zentrum, Z = Roter Wald
+const LAB_SOURCES = {
+  X: { rate: 2,  label: 'niedrig' },
+  Y: { rate: 8,  label: 'mittel'  },
+  Z: { rate: 22, label: 'hoch'    }
+};
+
+let labSelectedSource = null;
+let labSelectedTime = null;
+let labMeasuredSources = new Set();
+let labAudioCtx = null;
+let labTimerInterval = null;
+let labEventTimeouts = [];
+
+function getLabAudioCtx(){
+  if(!labAudioCtx){
+    try{
+      labAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }catch(e){ labAudioCtx = null; }
+  }
+  return labAudioCtx;
+}
+
+function playGeigerClick(){
+  const ctx = getLabAudioCtx();
+  if(!ctx) return;
+  try{
+    const t = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'square';
+    osc.frequency.value = 1800 + Math.random()*400;
+    gain.gain.setValueAtTime(0.18, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.045);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(t);
+    osc.stop(t + 0.05);
+  }catch(e){ /* Audio nicht verfügbar, Messung läuft trotzdem weiter */ }
+}
+
+function selectLabSource(src){
+  labSelectedSource = src;
+  document.querySelectorAll('#lab-source-row .source-btn').forEach(b => {
+    b.classList.toggle('selected', b.dataset.source === src);
+  });
+  updateLabStartButton();
+}
+
+function selectLabTime(t){
+  labSelectedTime = t;
+  document.querySelectorAll('#lab-time-row .time-btn').forEach(b => {
+    b.classList.toggle('selected', parseInt(b.dataset.time) === t);
+  });
+  updateLabStartButton();
+}
+
+function updateLabStartButton(){
+  const btn = document.getElementById('lab-start-btn');
+  const hint = document.getElementById('lab-hint');
+  const placeLabels = { X: 'Stadt Tschernobyl', Y: 'Pripyat-Zentrum', Z: 'Roter Wald' };
+  if(labSelectedSource && labSelectedTime){
+    btn.disabled = false;
+    hint.textContent = `Bereit: ${placeLabels[labSelectedSource]}, ${labSelectedTime} s Messzeit.`;
+  } else {
+    btn.disabled = true;
+    hint.textContent = 'Wählt zuerst einen Ort und eine Messzeit aus.';
+  }
+}
+
+function startLabMeasurement(){
+  if(!labSelectedSource || !labSelectedTime) return;
+  // Aufräumen falls vorherige Messung noch Timeouts offen hat
+  labEventTimeouts.forEach(id => clearTimeout(id));
+  labEventTimeouts = [];
+  if(labTimerInterval) clearInterval(labTimerInterval);
+
+  document.getElementById('lab-start-btn').disabled = true;
+  document.querySelectorAll('#lab-source-row .source-btn, #lab-time-row .time-btn').forEach(b => b.style.pointerEvents = 'none');
+
+  let count = 0;
+  const counterEl = document.getElementById('lab-counter');
+  const timeEl = document.getElementById('lab-time-display');
+  const rateEl = document.getElementById('lab-rate-display');
+  const pulseEl = document.getElementById('lab-pulse');
+  counterEl.textContent = '0';
+  rateEl.textContent = '– /s';
+
+  const meanRate = LAB_SOURCES[labSelectedSource].rate;
+  const duration = labSelectedTime; // Sekunden
+  const startTime = performance.now();
+
+  // Ereigniszeitpunkte nach Poisson-Prozess generieren (exponentiell verteilte Wartezeiten)
+  let t = 0;
+  while(t < duration){
+    const waitMs = -Math.log(1 - Math.random()) / meanRate * 1000;
+    t += waitMs / 1000;
+    if(t < duration){
+      const delay = t * 1000;
+      const id = setTimeout(() => {
+        count++;
+        counterEl.textContent = count;
+        pulseEl.classList.add('flash');
+        playGeigerClick();
+        setTimeout(() => pulseEl.classList.remove('flash'), 90);
+      }, delay);
+      labEventTimeouts.push(id);
+    }
+  }
+
+  // Live-Zeit-Update
+  labTimerInterval = setInterval(() => {
+    const elapsed = Math.min((performance.now() - startTime) / 1000, duration);
+    timeEl.textContent = elapsed.toFixed(1) + ' s';
+    if(elapsed > 0){
+      rateEl.textContent = (count / elapsed).toFixed(1) + ' /s';
+    }
+    if(elapsed >= duration){
+      clearInterval(labTimerInterval);
+      finishLabMeasurement(count, duration);
+    }
+  }, 100);
+}
+
+function finishLabMeasurement(count, duration){
+  document.getElementById('lab-start-btn').disabled = false;
+  document.querySelectorAll('#lab-source-row .source-btn, #lab-time-row .time-btn').forEach(b => b.style.pointerEvents = 'auto');
+
+  const rate = (count / duration).toFixed(1);
+  labMeasuredSources.add(labSelectedSource);
+
+  const placeLabels = { X: 'Stadt Tschernobyl', Y: 'Pripyat-Zentrum', Z: 'Roter Wald' };
+  const tbody = document.getElementById('lab-results-body');
+  const row = document.createElement('tr');
+  row.innerHTML = `<td>${placeLabels[labSelectedSource]}</td><td>${count}</td><td>${duration} s</td><td>${rate} /s</td>`;
+  tbody.appendChild(row);
+  document.getElementById('lab-results-table').style.display = 'table';
+
+  if(labMeasuredSources.size >= 3){
+    document.getElementById('lab-info-incomplete').style.display = 'none';
+    document.getElementById('lab-classify-area').style.display = 'block';
+    document.getElementById('s1-check-btn').style.display = 'inline-block';
+  }
+}
+
+function checkS1(){
+  const x = document.getElementById('s1-class-x').value;
+  const y = document.getElementById('s1-class-y').value;
+  const z = document.getElementById('s1-class-z').value;
+  const decisionOk = document.getElementById('s1-decision-ok').value;
+  const decisionNo = document.getElementById('s1-decision-no').value;
+
+  const classifyOk = (x === 'niedrig' && y === 'mittel' && z === 'hoch');
+  const decisionGiven = decisionOk && decisionNo;
+
+  if(!x || !y || !z){
+    showFeedback('s1-feedback', false, '❌ Bitte ordnet allen drei Orten eine Gefahrenstufe zu.');
+    return;
+  }
+  if(!classifyOk){
+    showFeedback('s1-feedback', false, '❌ Die Einordnung ist noch nicht korrekt. Vergleicht eure gemessenen Zählraten in der Tabelle nochmal: Welcher Ort hatte die wenigsten, welcher die meisten Ereignisse pro Sekunde?');
+    return;
+  }
+  if(!decisionGiven){
+    showFeedback('s1-feedback', false, '❌ Bitte beantwortet auch die Entscheidungsfrage: Welcher Ort wäre für eine kurze Exkursion am ehesten vertretbar, welcher auf keinen Fall?');
+    return;
+  }
+  if(decisionOk === decisionNo){
+    showFeedback('s1-feedback', false, '❌ Ihr könnt nicht denselben Ort als "vertretbar" und "auf keinen Fall" auswählen. Prüft eure Auswahl nochmal.');
+    return;
+  }
+  if(decisionOk === 'tschernobyl' && decisionNo === 'wald'){
+    showFeedback('s1-feedback', true, '✅ Richtig! Stadt Tschernobyl hat die niedrigste gemessene Zählrate und ist am ehesten für einen kurzen Aufenthalt vertretbar, der Rote Wald mit der höchsten Zählrate darf auf keinen Fall ohne besonderen Schutz betreten werden.');
+    revealCode('s1-code', 's1-next');
+    markSolved(1);
+  } else {
+    showFeedback('s1-feedback', false, '❌ Die Gefahrenstufen-Einordnung passt, aber überlegt bei der Entscheidung nochmal: Welcher Ort hatte die niedrigste, welcher die höchste Zählrate? Genau danach richtet sich auch die Vertretbarkeit eines Aufenthalts.');
+  }
+}
+
+/* =========================================================
+   STATION 2a: Virtuelles Identifikationsexperiment (Abschirmung/Abstand)
+   ========================================================= */
+
+// Grundzählrate (Ereignisse/s) bei "kein Material, nah" je nach tatsächlicher Strahlenart der Quelle
+const ID_BASE_RATE = 18;
+
+// Wahre Strahlenart der Präparate (für die Lösung fest, nicht für Schüler sichtbar)
+// P3 ist ein Mischpräparat: sendet zwei Strahlenarten gleichzeitig aus (rein fiktiv, kein reales Nuklid)
+const ID_TRUE_TYPE = { P1: 'beta', P2: 'gamma', P3: ['alpha','gamma'] };
+
+// Dämpfungsfaktoren: wie stark die Zählrate je Strahlenart durch Material/Abstand sinkt (0 = komplett blockiert, 1 = ungedämpft)
+const ID_MATERIAL_DAMPING = {
+  alpha: { keins: 1.0, papier: 0.02, alu: 0.0,  blei: 0.0  },
+  beta:  { keins: 1.0, papier: 0.9,  alu: 0.03, blei: 0.0  },
+  gamma: { keins: 1.0, papier: 0.97, alu: 0.85, blei: 0.08 }
+};
+// Dämpfung durch Abstand: Reichweite in Luft ist je Strahlenart sehr unterschiedlich.
+// Alpha: nur wenige cm Reichweite -> bei 1m und 2m praktisch komplett weg.
+// Beta: einige Meter Reichweite -> bei 1m noch deutlich da, bei 2m stark reduziert.
+// Gamma: sehr große Reichweite, Intensität nimmt nur mit 1/r² ab -> bei 1m/2m noch gut messbar.
+const ID_DISTANCE_DAMPING = {
+  alpha: { nah: 1.0, mittel: 0.0,  fern: 0.0   },
+  beta:  { nah: 1.0, mittel: 0.45, fern: 0.12  },
+  gamma: { nah: 1.0, mittel: 0.85, fern: 0.65  }
+};
+
+// Mischverhältnis für P3: Anteil der Grundzählrate, der auf jede Komponente entfällt
+const ID_MIX_SHARE = { alpha: 0.5, gamma: 0.5 };
+
+
+let idSelectedSource = 'P1';
+let idSelectedDistance = null;
+let idSelectedMaterial = null;
+let idMeasuredCount = { P1: 0, P2: 0, P3: 0 };
+let idEventTimeouts = [];
+let idTimerInterval = null;
+
+function selectIdSource(src){
+  idSelectedSource = src;
+  document.querySelectorAll('#id-source-tabs .id-source-tab').forEach(t => {
+    t.classList.toggle('active-tab', t.dataset.src === src);
+  });
+}
+
+function selectIdOption(kind, val){
+  if(kind === 'distance'){
+    idSelectedDistance = val;
+    document.querySelectorAll('#id-distance-row .option-btn').forEach(b => {
+      b.classList.toggle('selected', b.dataset.val === val);
+    });
+  } else {
+    idSelectedMaterial = val;
+    document.querySelectorAll('#id-material-row .option-btn').forEach(b => {
+      b.classList.toggle('selected', b.dataset.val === val);
+    });
+  }
+  updateIdStartButton();
+}
+
+function updateIdStartButton(){
+  const btn = document.getElementById('id-start-btn');
+  const hint = document.getElementById('id-hint');
+  if(idSelectedDistance && idSelectedMaterial){
+    btn.disabled = false;
+    hint.textContent = `Bereit: ${idSelectedSource}, Abstand ${idSelectedDistance}, Material ${idSelectedMaterial}.`;
+  } else {
+    btn.disabled = true;
+    hint.textContent = 'Wählt Abstand und Material aus.';
+  }
+}
+
+function startIdMeasurement(){
+  if(!idSelectedDistance || !idSelectedMaterial) return;
+  idEventTimeouts.forEach(id => clearTimeout(id));
+  idEventTimeouts = [];
+  if(idTimerInterval) clearInterval(idTimerInterval);
+
+  document.getElementById('id-start-btn').disabled = true;
+  document.querySelectorAll('#id-source-tabs .id-source-tab, #id-distance-row .option-btn, #id-material-row .option-btn').forEach(b => b.style.pointerEvents = 'none');
+
+  let count = 0;
+  const counterEl = document.getElementById('id-counter');
+  const timeEl = document.getElementById('id-time-display');
+  const rateEl = document.getElementById('id-rate-display');
+  const pulseEl = document.getElementById('id-pulse');
+  counterEl.textContent = '0';
+  rateEl.textContent = '– /s';
+
+  const trueType = ID_TRUE_TYPE[idSelectedSource];
+  let meanRate;
+  if(Array.isArray(trueType)){
+    // Mischpräparat: Summe der Einzelraten aus jeder Komponente, gewichtet nach Mischanteil
+    meanRate = trueType.reduce((sum, type) => {
+      const damping = ID_MATERIAL_DAMPING[type][idSelectedMaterial] * ID_DISTANCE_DAMPING[type][idSelectedDistance];
+      return sum + ID_BASE_RATE * (ID_MIX_SHARE[type] ?? 0.5) * damping;
+    }, 0);
+  } else {
+    const damping = ID_MATERIAL_DAMPING[trueType][idSelectedMaterial] * ID_DISTANCE_DAMPING[trueType][idSelectedDistance];
+    meanRate = ID_BASE_RATE * damping;
+  }
+  meanRate = Math.max(meanRate, 0.05); // minimaler Restwert, damit Poisson-Prozess nicht hängt
+  const duration = 5; // feste Messzeit von 5s für dieses Experiment
+  const startTime = performance.now();
+
+  let t = 0;
+  while(t < duration){
+    const waitMs = -Math.log(1 - Math.random()) / meanRate * 1000;
+    t += waitMs / 1000;
+    if(t < duration){
+      const delay = t * 1000;
+      const id = setTimeout(() => {
+        count++;
+        counterEl.textContent = count;
+        pulseEl.classList.add('flash');
+        playGeigerClick();
+        setTimeout(() => pulseEl.classList.remove('flash'), 90);
+      }, delay);
+      idEventTimeouts.push(id);
+    }
+  }
+
+  idTimerInterval = setInterval(() => {
+    const elapsed = Math.min((performance.now() - startTime) / 1000, duration);
+    timeEl.textContent = elapsed.toFixed(1) + ' s';
+    if(elapsed > 0){
+      rateEl.textContent = (count / elapsed).toFixed(1) + ' /s';
+    }
+    if(elapsed >= duration){
+      clearInterval(idTimerInterval);
+      finishIdMeasurement(count, duration);
+    }
+  }, 100);
+}
+
+function finishIdMeasurement(count, duration){
+  document.getElementById('id-start-btn').disabled = false;
+  document.querySelectorAll('#id-source-tabs .id-source-tab, #id-distance-row .option-btn, #id-material-row .option-btn').forEach(b => b.style.pointerEvents = 'auto');
+
+  const rate = (count / duration).toFixed(1);
+  idMeasuredCount[idSelectedSource]++;
+  if(idMeasuredCount[idSelectedSource] >= 1){
+    document.querySelector(`#id-source-tabs .id-source-tab[data-src="${idSelectedSource}"]`).classList.add('identified');
+  }
+
+  const distLabels = {nah:'Nah (5 cm)', mittel:'Mittel (1 m)', fern:'Fern (2 m)'};
+  const distLabel = distLabels[idSelectedDistance];
+  const matLabels = {keins:'Kein Material', papier:'Papier', alu:'Aluminium', blei:'Blei'};
+  const tbody = document.getElementById('id-results-body');
+  const row = document.createElement('tr');
+  row.innerHTML = `<td>${idSelectedSource}</td><td>${distLabel}</td><td>${matLabels[idSelectedMaterial]}</td><td>${rate} /s</td>`;
+  tbody.appendChild(row);
+  document.getElementById('id-results-table').style.display = 'table';
+}
+
+function toggleP3Checkbox(checkbox){
+  const label = checkbox.closest('.id-checkbox-option');
+  label.classList.toggle('checked', checkbox.checked);
+}
+
+function checkS2Identify(){
+  const p1 = document.getElementById('s2-id-p1').value;
+  const p2 = document.getElementById('s2-id-p2').value;
+  const p3Alpha = document.getElementById('s2-id-p3-alpha').checked;
+  const p3Beta = document.getElementById('s2-id-p3-beta').checked;
+  const p3Gamma = document.getElementById('s2-id-p3-gamma').checked;
+  const p3Selected = [];
+  if(p3Alpha) p3Selected.push('alpha');
+  if(p3Beta) p3Selected.push('beta');
+  if(p3Gamma) p3Selected.push('gamma');
+
+  if(!p1 || !p2){
+    showFeedback('s2-id-feedback', false, '❌ Bitte ordnet P1 und P2 jeweils eine Strahlenart zu.');
+    return;
+  }
+  if(p3Selected.length === 0){
+    showFeedback('s2-id-feedback', false, '❌ Bitte wählt für Präparat P3 mindestens eine Strahlenart aus.');
+    return;
+  }
+  if(idMeasuredCount.P1 === 0 || idMeasuredCount.P2 === 0 || idMeasuredCount.P3 === 0){
+    showFeedback('s2-id-feedback', false, '❌ Messt zunächst alle drei Präparate mindestens einmal, bevor ihr eine Vermutung abgebt.');
+    return;
+  }
+
+  const p1Ok = p1 === ID_TRUE_TYPE.P1;
+  const p2Ok = p2 === ID_TRUE_TYPE.P2;
+  const truP3 = ID_TRUE_TYPE.P3; // ['alpha','gamma']
+  const p3Ok = p3Selected.length === truP3.length && truP3.every(t => p3Selected.includes(t));
+
+  if(p1Ok && p2Ok && p3Ok){
+    showFeedback('s2-id-feedback', true, '✅ Richtig identifiziert! P1 ist Beta-Strahlung, P2 ist Gamma-Strahlung. P3 ist ein Mischpräparat aus Alpha- und Gamma-Strahlung – deshalb fiel die Zählrate bei keinem Material auf null.');
+  } else {
+    let hints = [];
+    if(!p1Ok || !p2Ok) hints.push('Prüft P1 und P2 nochmal: Bei welchem Material brach die Zählrate jeweils ein?');
+    if(!p3Ok) hints.push('Bei P3: Achtet darauf, dass selbst Blei die Zählrate nicht auf null bringt, und schon Papier einen Teil wegnimmt – das deutet auf zwei Strahlenarten gleichzeitig hin.');
+    showFeedback('s2-id-feedback', false, '❌ Noch nicht korrekt. ' + hints.join(' '));
+  }
+}
+
+/* =========================================================
+   STATION 2: Zuordnung Strahlenart
+   ========================================================= */
+function checkS2(){
+  const q1 = document.getElementById('s2-q1').value; // gamma
+  const q2 = document.getElementById('s2-q2').value; // alpha (innere Kontamination)
+  const q3 = document.getElementById('s2-q3').value; // beta wäre zu stark für Stoff... korrekt ist alpha
+  // Korrekte Zuordnung:
+  // q1: externe Bestrahlung aus der Ferne -> gamma (durchdringt am stärksten)
+  // q2: verschluckt / inkorporiert -> alpha (größte Wirkung bei innerer Kontamination)
+  // q3: Stoffuniform reicht aus -> alpha (durch Papier/Stoff schon abgeschirmt)
+  if(q1 === 'gamma' && q2 === 'alpha' && q3 === 'alpha'){
+    showFeedback('s2-feedback', true, '✅ Richtig! Gamma durchdringt am weitesten und ist bei externer Bestrahlung am gefährlichsten. Alpha ist bei Aufnahme in den Körper am gefährlichsten, wird aber schon von dünnem Material wie Stoff/Papier abgeschirmt.');
+    revealCode('s2-code', 's2-next');
+    markSolved(2);
+  } else {
+    showFeedback('s2-feedback', false, '❌ Noch nicht korrekt. Denkt an die Tabelle: Was durchdringt am weitesten? Was ist nur bei direktem/innerem Kontakt gefährlich, dafür aber leicht abzuschirmen?');
+  }
+}
+
+/* =========================================================
+   STATION 3: Zerfallsgesetz
+   ========================================================= */
+function checkS3(){
+  const hw = parseFloat(normalize(document.getElementById('s3a-hw').value));
+  const tage = parseFloat(normalize(document.getElementById('s3a-tage').value));
+  const jahre = parseFloat(normalize(document.getElementById('s3b-jahre').value));
+  const jahr = parseFloat(normalize(document.getElementById('s3b-jahr').value));
+  const q1 = document.getElementById('s3c-q1').value;
+  const q2 = document.getElementById('s3c-q2').value;
+  const q3 = document.getElementById('s3c-q3').value;
+
+  const hwOk = hw === 4;
+  const tageOk = Math.abs(tage - 32) <= 1;
+  const jahreOk = Math.abs(jahre - 60) <= 2;
+  const jahrOk = Math.abs(jahr - 2046) <= 2;
+  const matchOk = (q1 === 'jod' && q2 === 'cs' && q3 === 'u');
+
+  if(hwOk && tageOk && jahreOk && jahrOk && matchOk){
+    showFeedback('s3-feedback', true, '✅ Alles richtig! 1/16 = 0,5⁴ → 4 Halbwertszeiten = 32 Tage bei Jod-131. 1/4 = 0,5² → 2 Halbwertszeiten = 60 Jahre bei Cäsium-137, also ca. 2046. Die Zuordnung der gesellschaftlichen Fragen passt ebenfalls.');
+    revealCode('s3-code', 's3-next');
+    markSolved(3);
+  } else {
+    let hints = [];
+    if(!hwOk || !tageOk) hints.push('Aufgabe a): 1/16 = 0,5 hoch wie viel? Dann ·8 Tage.');
+    if(!jahreOk || !jahrOk) hints.push('Aufgabe b): 1/4 = 0,5 hoch wie viel? Dann ·30 Jahre, plus 1986.');
+    if(!matchOk) hints.push('Aufgabe c): Welches Nuklid passt zu welcher Zeitspanne (kurz/mittel/sehr lang)?');
+    showFeedback('s3-feedback', false, '❌ Noch nicht alles richtig. ' + hints.join(' '));
+  }
+}
+
+/* =========================================================
+   STATION 4: Virtuelles Zerfalls-Experiment (Halbwertszeit)
+   ========================================================= */
+const DECAY_N0 = 200;
+const DECAY_HALFLIFE = 10; // Sekunden, fest definiert
+let decayNuclei = [];
+let decayRunning = false;
+let decayStartTime = 0;
+let decayAnimFrame = null;
+let decayStoppedAt = null;
+
+// Rundenlogik: drei Stopps bei 1/2, 1/4, 1/8 der Ausgangsaktivität
+const DECAY_ROUND_TARGETS = [0.5, 0.25, 0.125];
+const DECAY_ROUND_LABELS = ['½', '¼', '⅛'];
+let decayCurrentRound = 0; // 0,1,2 = noch zu stoppende Runde; 3 = alle Runden fertig
+let decayRoundResults = []; // {time, percent} je Runde
+
+function initDecayCanvas(){
+  const canvas = document.getElementById('decay-canvas');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  decayNuclei = [];
+  decayChartData = [{t:0, n:DECAY_N0}];
+  decayCurrentRound = 0;
+  decayRoundResults = [];
+  document.getElementById('decay-rounds-table').style.display = 'none';
+  document.getElementById('decay-rounds-body').innerHTML = '';
+  document.getElementById('decay-result-area').style.display = 'none';
+  const cols = 20, rows = 10;
+  const w = canvas.width, h = canvas.height;
+  for(let i=0;i<DECAY_N0;i++){
+    const col = i % cols;
+    const row = Math.floor(i / cols);
+    decayNuclei.push({
+      x: (col + 0.5) * (w/cols) + (Math.random()-0.5)*8,
+      y: (row + 0.5) * (h/rows) + (Math.random()-0.5)*8,
+      decayed: false,
+      decayTime: -Math.log(1 - Math.random()) * (DECAY_HALFLIFE / Math.LN2), // exponentiell verteilte Lebensdauer
+      flash: 0
+    });
+  }
+  drawDecayCanvas(0);
+  drawDecayChart();
+  updateRoundProgressUI();
+  updateStopButtonLabel();
+}
+
+function updateRoundProgressUI(){
+  const wrap = document.getElementById('decay-round-progress');
+  if(!wrap) return;
+  let html = '';
+  for(let i=0;i<3;i++){
+    let cls = '';
+    if(i < decayCurrentRound) cls = 'done';
+    else if(i === decayCurrentRound) cls = 'current';
+    html += `<div class="decay-round-dot ${cls}">Stopp ${i+1}: ${DECAY_ROUND_LABELS[i]}</div>`;
+  }
+  wrap.innerHTML = html;
+}
+
+function updateStopButtonLabel(){
+  const btn = document.getElementById('decay-stop-btn');
+  if(!btn) return;
+  if(decayCurrentRound < 3){
+    btn.textContent = `⏹ Runde ${decayCurrentRound+1}/3 stoppen (Ziel: ${DECAY_ROUND_LABELS[decayCurrentRound]})`;
+  }
+}
+
+
+function drawDecayCanvas(elapsed){
+  const canvas = document.getElementById('decay-canvas');
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  let activeCount = 0;
+  for(const n of decayNuclei){
+    if(!n.decayed && n.decayTime <= elapsed){
+      n.decayed = true;
+      n.flash = 1;
+    }
+    if(!n.decayed) activeCount++;
+
+    ctx.beginPath();
+    ctx.arc(n.x, n.y, 6, 0, Math.PI*2);
+    if(n.decayed){
+      if(n.flash > 0){
+        ctx.fillStyle = `rgba(255,183,3,${n.flash})`;
+        n.flash -= 0.08;
+      } else {
+        ctx.fillStyle = 'rgba(120,130,150,0.35)';
+      }
+    } else {
+      ctx.fillStyle = '#39ff8f';
+      ctx.shadowColor = 'rgba(57,255,143,0.6)';
+      ctx.shadowBlur = 4;
+    }
+    ctx.fill();
+    ctx.shadowBlur = 0;
+  }
+  return activeCount;
+}
+
+function drawDecayChart(highlightElapsed){
+  const canvas = document.getElementById('decay-chart-canvas');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width, h = canvas.height;
+  ctx.clearRect(0,0,w,h);
+
+  const padL = 46, padB = 32, padT = 14, padR = 14;
+  const plotW = w - padL - padR;
+  const plotH = h - padT - padB;
+
+  // Zeitachse: feste Skala, damit Schüler nicht aus dem Kurvenverlauf auf t schließen können bevor sie selbst messen
+  const maxT = 40;
+  const maxN = DECAY_N0;
+
+  function xPix(t){ return padL + (t/maxT) * plotW; }
+  function yPix(n){ return padT + plotH - (n/maxN) * plotH; }
+
+  // Gitternetz
+  ctx.strokeStyle = 'rgba(139,155,180,0.18)';
+  ctx.lineWidth = 1;
+  ctx.font = '11px sans-serif';
+  ctx.fillStyle = '#8b9bb4';
+
+  for(let t=0; t<=maxT; t+=5){
+    const x = xPix(t);
+    ctx.beginPath(); ctx.moveTo(x, padT); ctx.lineTo(x, padT+plotH); ctx.stroke();
+    ctx.fillText(t+'s', x-8, h-10);
+  }
+  for(let frac=0; frac<=1.0001; frac+=0.25){
+    const n = frac*maxN;
+    const y = yPix(n);
+    ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(padL+plotW, y); ctx.stroke();
+    ctx.fillText(Math.round(n), 4, y+4);
+  }
+
+  // Achsen
+  ctx.strokeStyle = 'rgba(232,237,244,0.5)';
+  ctx.beginPath();
+  ctx.moveTo(padL, padT); ctx.lineTo(padL, padT+plotH); ctx.lineTo(padL+plotW, padT+plotH);
+  ctx.stroke();
+
+  // Hilfslinien bei 1/2, 1/4 und 1/8 (dezent, erst nach dem jeweiligen Stoppen klar relevant)
+  ctx.setLineDash([4,4]);
+  ctx.strokeStyle = 'rgba(255,183,3,0.4)';
+  [0.5, 0.25, 0.125].forEach(frac => {
+    const y = yPix(maxN*frac);
+    ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(padL+plotW, y); ctx.stroke();
+  });
+  ctx.setLineDash([]);
+
+  // Kurve
+  if(decayChartData.length > 1){
+    ctx.strokeStyle = '#39ff8f';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    decayChartData.forEach((p,i) => {
+      const x = xPix(p.t), y = yPix(p.n);
+      if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    });
+    ctx.stroke();
+
+    // aktueller Punkt
+    const last = decayChartData[decayChartData.length-1];
+    ctx.fillStyle = '#39ff8f';
+    ctx.beginPath();
+    ctx.arc(xPix(last.t), yPix(last.n), 4, 0, Math.PI*2);
+    ctx.fill();
+  }
+
+  // Wenn gestoppt: Fadenkreuz auf den Stopp-Punkt zeichnen
+  if(highlightElapsed !== undefined && decayChartData.length){
+    const last = decayChartData[decayChartData.length-1];
+    const x = xPix(last.t), y = yPix(last.n);
+    ctx.strokeStyle = 'rgba(255,71,87,0.7)';
+    ctx.setLineDash([3,3]);
+    ctx.beginPath(); ctx.moveTo(x, padT); ctx.lineTo(x, padT+plotH); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(padL+plotW, y); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+}
+
+function decayLoop(){
+  if(!decayRunning) return;
+  const elapsed = (performance.now() - decayStartTime) / 1000;
+  const activeCount = drawDecayCanvas(elapsed);
+  decayChartData.push({t: elapsed, n: activeCount});
+  drawDecayChart();
+
+  document.getElementById('decay-active-count').textContent = activeCount;
+  document.getElementById('decay-time').textContent = elapsed.toFixed(1) + ' s';
+  document.getElementById('decay-percent').textContent = Math.round((activeCount / DECAY_N0) * 100) + ' %';
+
+  if(activeCount <= 0 || elapsed > 80){
+    decayRunning = false;
+    document.getElementById('decay-stop-btn').style.display = 'none';
+    document.getElementById('decay-start-btn').style.display = 'inline-block';
+    document.getElementById('decay-start-btn').textContent = '↺ Neu versuchen';
+    document.getElementById('decay-stats').classList.remove('hidden-during-run');
+    if(decayCurrentRound < 3){
+      // Schüler haben nicht alle drei Runden gestoppt, bevor das Präparat komplett zerfallen ist / Zeit ablief
+      document.getElementById('decay-result-area').style.display = 'block';
+    }
+    return;
+  }
+  decayAnimFrame = requestAnimationFrame(decayLoop);
+}
+
+function startDecaySim(){
+  initDecayCanvas();
+  decayRunning = true;
+  decayStartTime = performance.now();
+  document.getElementById('decay-start-btn').style.display = 'none';
+  document.getElementById('decay-stop-btn').style.display = 'inline-block';
+  document.getElementById('decay-result-area').style.display = 'none';
+  document.getElementById('decay-stats').classList.add('hidden-during-run');
+  decayAnimFrame = requestAnimationFrame(decayLoop);
+}
+
+function stopDecaySim(){
+  if(!decayRunning) return;
+  if(decayCurrentRound >= 3) return; // alle Runden bereits erledigt
+
+  const elapsed = (performance.now() - decayStartTime) / 1000;
+  const activeCount = drawDecayCanvas(elapsed);
+  decayChartData.push({t: elapsed, n: activeCount});
+  const percent = (activeCount / DECAY_N0) * 100;
+
+  // Ergebnis dieser Runde merken und in Tabelle eintragen
+  decayRoundResults.push({time: elapsed, percent: percent});
+  const targetLabel = DECAY_ROUND_LABELS[decayCurrentRound];
+  const targetPercent = Math.round(DECAY_ROUND_TARGETS[decayCurrentRound] * 100);
+  const tbody = document.getElementById('decay-rounds-body');
+  const row = document.createElement('tr');
+  row.innerHTML = `<td>Stopp ${decayCurrentRound+1}</td><td>${targetLabel} (≈ ${targetPercent} %)</td><td>${elapsed.toFixed(1)} s</td><td>${Math.round(percent)} %</td>`;
+  tbody.appendChild(row);
+  document.getElementById('decay-rounds-table').style.display = 'table';
+
+  decayCurrentRound++;
+  updateRoundProgressUI();
+
+  // kurzes Fadenkreuz an dieser Stelle einblenden, dann automatisch weiterlaufen
+  drawDecayChart(elapsed);
+
+  if(decayCurrentRound >= 3 || activeCount <= 0){
+    // alle drei Runden erledigt (oder Präparat komplett zerfallen) -> Endauswertung zeigen
+    decayRunning = false;
+    cancelAnimationFrame(decayAnimFrame);
+    document.getElementById('decay-stop-btn').style.display = 'none';
+    document.getElementById('decay-start-btn').style.display = 'inline-block';
+    document.getElementById('decay-start-btn').textContent = '↺ Neu versuchen';
+    document.getElementById('decay-stats').classList.remove('hidden-during-run');
+    document.getElementById('decay-result-area').style.display = 'block';
+    decayStoppedAt = elapsed;
+  } else {
+    // Simulation läuft automatisch weiter zur nächsten Runde
+    updateStopButtonLabel();
+  }
+}
+
+function checkS4Decay(){
+  const begr = document.getElementById('s4-begruendung').value.trim();
+
+  if(decayRoundResults.length < 3){
+    showFeedback('s4-feedback', false, `❌ Ihr habt bisher nur ${decayRoundResults.length} von 3 Runden gestoppt. Startet die Simulation neu und stoppt dreimal hintereinander (bei ½, ¼ und ⅛).`);
+    return;
+  }
+  if(begr.length < 15){
+    showFeedback('s4-feedback', false, '❌ Bitte beschreibt in 1–2 Sätzen, was euch am Zeitabstand zwischen den drei Stopps auffällt.');
+    return;
+  }
+
+  // Zeitabstände zwischen den Runden berechnen, um Feedback inhaltlich zu personalisieren
+  const t1 = decayRoundResults[0].time;
+  const t2 = decayRoundResults[1].time;
+  const t3 = decayRoundResults[2].time;
+  const gap1 = t2 - t1;
+  const gap2 = t3 - t2;
+
+  showFeedback('s4-feedback', true, `✅ Auswertung gespeichert! Eure Stopps lagen bei ${t1.toFixed(1)} s, ${t2.toFixed(1)} s und ${t3.toFixed(1)} s. Der Abstand zwischen Stopp 1 und 2 betrug ${gap1.toFixed(1)} s, zwischen Stopp 2 und 3 waren es ${gap2.toFixed(1)} s. Bei einer echten Halbwertszeit von 10 s sollten beide Abstände nahe bei 10 s liegen – genau das macht die Halbwertszeit aus: Es ist immer derselbe Zeitabstand, egal wie viele Kerne noch übrig sind!`);
+  revealCode('s4-code', 's4-next');
+  markSolved(4);
+}
+
+/* =========================================================
+   STATION 5: Massendefekt
+   ========================================================= */
+function checkS5(){
+  const val = parseFloat(normalize(document.getElementById('s5-energie').value));
+  // E = 0.0007 kg * (3e8)^2 = 0.0007 * 9e16 = 6.3e13 J -> 6,3
+  if(!isNaN(val) && Math.abs(val - 6.3) <= 0.3){
+    showFeedback('s5-feedback', true, '✅ Richtig! E = 0,0007 kg · (3·10⁸ m/s)² = 6,3·10¹³ J. Eine winzige Masse von 0,7 g erzeugt diese gewaltige Energiemenge.');
+    revealCode('s5-code', 's5-next');
+    markSolved(4);
+  } else {
+    showFeedback('s5-feedback', false, '❌ Noch nicht richtig. Tipp: c² = (3·10⁸)² = 9·10¹⁶ m²/s². Rechnet Δm in kg, dann E = Δm · c² und formt das Ergebnis in die Form _·10¹³ J um.');
+  }
+}
+
+/* =========================================================
+   STATION 6: Offene Beurteilungsaufgabe (Keyword-Check)
+   ========================================================= */
+function checkS6(){
+  const text = document.getElementById('s6-text').value.toLowerCase();
+  const keywords = ['halbwertszeit','massendefekt','energie','strahlung','risiko','kernspaltung','sievert','folgen','generation'];
+  const found = keywords.filter(k => text.includes(k));
+  const longEnough = text.trim().split(/\s+/).length >= 25;
+
+  if(found.length >= 3 && longEnough){
+    showFeedback('s6-feedback', true, `✅ Eure Beurteilung enthält ${found.length} relevante Fachbegriffe (${found.join(', ')}) und ist ausführlich genug. Eine Lehrkraft sollte den Inhalt zusätzlich bewerten!`);
+    revealCode('s6-code', 's6-next');
+    markSolved(5);
+  } else if(!longEnough){
+    showFeedback('s6-feedback', false, '❌ Euer Text ist noch zu kurz. Schreibt mindestens 4–6 ganze Sätze.');
+  } else {
+    showFeedback('s6-feedback', false, `❌ Bisher nur ${found.length} Fachbegriffe gefunden. Nutzt mindestens 3 der genannten Begriffe in eurer Argumentation.`);
+  }
+}
+
+/* =========================================================
+   STATION 7: Dosis und Schadensarten
+   ========================================================= */
+function checkS7(){
+  const q1 = document.getElementById('s7-q1').value; // akut
+  const q2 = document.getElementById('s7-q2').value; // lang
+  const q3 = document.getElementById('s7-q3').value; // erb
+
+  if(q1 === 'akut' && q2 === 'lang' && q3 === 'erb'){
+    showFeedback('s7-feedback', true, '✅ Richtig! Hohe Dosis + kurzer Zeitraum = akuter Schaden. Erhöhtes Krebsrisiko Jahre später = Langzeitschaden. Schäden an Keimzellen, die vererbt werden = Erbschaden.');
+    revealCode('s7-code', 's7-next');
+    markSolved(6);
+  } else {
+    showFeedback('s7-feedback', false, '❌ Noch nicht korrekt. Überlegt: Wann tritt der Schaden auf (sofort/Jahre später) und wen betrifft er (die Person selbst oder ihre Nachkommen)?');
+  }
+}
+
+/* =========================================================
+   FINAL SUMMARY
+   ========================================================= */
+function renderFinalSummary(){
+  document.getElementById('final-summary').innerHTML = `
+    <p><strong>Station 1:</strong> Nachweis radioaktiver Strahlung – virtuelle Messung mit dem Geiger-Müller-Zählrohr</p>
+    <p><strong>Station 2:</strong> α-, β- und γ-Strahlung – Reichweite, Abschirmung, Gefahr</p>
+    <p><strong>Station 3:</strong> Zerfallsgesetz bei Jod-131, Cäsium-137 und Uran-238</p>
+    <p><strong>Station 4:</strong> Halbwertszeit experimentell am virtuellen Präparat bestimmt</p>
+    <p><strong>Station 5:</strong> Massendefekt und E = Δm·c² am Beispiel Hiroshima</p>
+    <p><strong>Station 6:</strong> Eure begründete gesellschaftspolitische Beurteilung</p>
+    <p><strong>Station 7:</strong> Äquivalentdosis (Sievert) und Strahlenschäden (akut, Langzeit, Erbschäden)</p>
+    <p style="margin-top:14px;color:var(--accent);">Ihr habt gezeigt, dass Physik kein abstraktes Schulfach ist, sondern ein Werkzeug, um die Welt – auch ihre dunkelsten Kapitel – zu verstehen und zu beurteilen.</p>
+  `;
+}
+/* =========================================================
+   LEHRER-MODUS
+   ========================================================= */
+const TEACHER_CODE = '1986';
+let teacherModeOn = false;
+
+function openTeacherModal(){
+  if(teacherModeOn){
+    // Bei aktivem Modus: Klick auf Icon deaktiviert ihn wieder direkt
+    deactivateTeacherMode();
+    return;
+  }
+  document.getElementById('teacher-pw').value = '';
+  document.getElementById('teacher-error').textContent = '';
+  document.getElementById('teacher-modal').classList.add('show');
+  setTimeout(() => document.getElementById('teacher-pw').focus(), 100);
+}
+function closeTeacherModal(){
+  document.getElementById('teacher-modal').classList.remove('show');
+}
+function checkTeacherPw(){
+  const val = document.getElementById('teacher-pw').value.trim();
+  if(val === TEACHER_CODE){
+    activateTeacherMode();
+    closeTeacherModal();
+  } else {
+    document.getElementById('teacher-error').textContent = 'Falscher Code.';
+  }
+}
+function activateTeacherMode(){
+  teacherModeOn = true;
+  document.body.classList.add('teacher-mode');
+  document.getElementById('teacher-toggle').classList.add('active-mode');
+  document.getElementById('teacher-toggle').textContent = '🔓';
+}
+function deactivateTeacherMode(){
+  teacherModeOn = false;
+  document.body.classList.remove('teacher-mode');
+  document.getElementById('teacher-toggle').classList.remove('active-mode');
+  document.getElementById('teacher-toggle').textContent = '🔑';
+}
+// Enter-Taste im Passwortfeld bestätigt
+document.addEventListener('DOMContentLoaded', () => {
+  const pwField = document.getElementById('teacher-pw');
+  if(pwField){
+    pwField.addEventListener('keydown', (e) => {
+      if(e.key === 'Enter') checkTeacherPw();
+    });
+  }
+});
+</script>
+
+<!-- ===================== Teilen / QR-Code (gemeinsamer Baustein) ===================== -->
+<style>
+  .sq-fab{position:fixed; left:calc(10px + env(safe-area-inset-left)); bottom:calc(10px + env(safe-area-inset-bottom));
+    z-index:120; display:none; align-items:center; gap:7px; padding:10px 14px; border-radius:999px; border:none;
+    background:rgba(20,20,26,.82); color:#fff; font:inherit; font-size:14.5px; font-weight:700; cursor:pointer;
+    box-shadow:0 4px 14px rgba(0,0,0,.3); -webkit-tap-highlight-color:transparent;}
+  .sq-fab.on{display:inline-flex;}
+  .sq-fab:active{transform:scale(.96);}
+  .sq-fab svg{width:17px; height:17px; display:block;}
+  .sq-inline{display:inline-flex; align-items:center; gap:6px;}
+  .sq-ov{position:fixed; inset:0; z-index:9000; display:none; align-items:center; justify-content:center;
+    background:rgba(12,14,18,.86); padding:16px; -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px);}
+  .sq-ov.on{display:flex;}
+  .sq-card{background:#fff; color:#1b1f24; border-radius:22px; padding:22px 22px 18px; width:100%; max-width:520px;
+    max-height:94vh; overflow:auto; text-align:center; box-shadow:0 24px 60px rgba(0,0,0,.45);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+  .sq-card h2{margin:0 0 2px; font-size:1.4rem; font-weight:800;}
+  .sq-card p.sq-sub{margin:0 0 14px; color:#5b6470; font-size:.95rem;}
+  /* Der weiße Rand um den Code ist Vorschrift: mindestens vier Module Ruhezone,
+     sonst erkennen Kameras den Code nicht. Die Breite setzt das Skript. */
+  .sq-code{display:flex; align-items:center; justify-content:center; margin:0 auto 12px;
+    width:min(74vw,330px); background:#fff; border:1px solid #e4e6ea; border-radius:14px; padding:14px 0;}
+  .sq-code canvas, .sq-code img{width:var(--sq-w,84%); height:auto; display:block; margin:0 auto; image-rendering:pixelated;}
+  .sq-code table{margin:0 auto;}
+  .sq-url{font-size:.86rem; color:#5b6470; word-break:break-all; background:#f3f4f6; border-radius:10px;
+    padding:9px 11px; margin-bottom:14px; line-height:1.4;
+    -webkit-user-select:text; user-select:text;}
+  .sq-row{display:flex; gap:9px; flex-wrap:wrap;}
+  .sq-row button{flex:1 1 130px; border:none; border-radius:12px; padding:13px 14px; font:inherit; font-size:1rem;
+    font-weight:750; cursor:pointer; background:#1b1f24; color:#fff; min-height:48px;}
+  .sq-row button.sq-alt{background:#fff; color:#1b1f24; box-shadow:inset 0 0 0 2px #dfe2e7;}
+  .sq-row button.sq-ok{background:#1f7a46;}
+  .sq-row button:active{transform:scale(.985);}
+  .sq-note{margin-top:11px; font-size:.8rem; color:#8a929c; line-height:1.45;}
+</style>
+<script>/* QR-Code: qrcodejs von David Shim (MIT) – dieselbe Bibliothek wie in der Digitalen Tafel */
+var QRCode;!function(){function a(a){this.mode=c.MODE_8BIT_BYTE,this.data=a,this.parsedData=[];for(var b=[],d=0,e=this.data.length;e>d;d++){var f=this.data.charCodeAt(d);f>65536?(b[0]=240|(1835008&f)>>>18,b[1]=128|(258048&f)>>>12,b[2]=128|(4032&f)>>>6,b[3]=128|63&f):f>2048?(b[0]=224|(61440&f)>>>12,b[1]=128|(4032&f)>>>6,b[2]=128|63&f):f>128?(b[0]=192|(1984&f)>>>6,b[1]=128|63&f):b[0]=f,this.parsedData=this.parsedData.concat(b)}this.parsedData.length!=this.data.length&&(this.parsedData.unshift(191),this.parsedData.unshift(187),this.parsedData.unshift(239))}function b(a,b){this.typeNumber=a,this.errorCorrectLevel=b,this.modules=null,this.moduleCount=0,this.dataCache=null,this.dataList=[]}function i(a,b){if(void 0==a.length)throw new Error(a.length+"/"+b);for(var c=0;c<a.length&&0==a[c];)c++;this.num=new Array(a.length-c+b);for(var d=0;d<a.length-c;d++)this.num[d]=a[d+c]}function j(a,b){this.totalCount=a,this.dataCount=b}function k(){this.buffer=[],this.length=0}function m(){return"undefined"!=typeof CanvasRenderingContext2D}function n(){var a=!1,b=navigator.userAgent;return/android/i.test(b)&&(a=!0,aMat=b.toString().match(/android ([0-9]\.[0-9])/i),aMat&&aMat[1]&&(a=parseFloat(aMat[1]))),a}function r(a,b){for(var c=1,e=s(a),f=0,g=l.length;g>=f;f++){var h=0;switch(b){case d.L:h=l[f][0];break;case d.M:h=l[f][1];break;case d.Q:h=l[f][2];break;case d.H:h=l[f][3]}if(h>=e)break;c++}if(c>l.length)throw new Error("Too long data");return c}function s(a){var b=encodeURI(a).toString().replace(/\%[0-9a-fA-F]{2}/g,"a");return b.length+(b.length!=a?3:0)}a.prototype={getLength:function(){return this.parsedData.length},write:function(a){for(var b=0,c=this.parsedData.length;c>b;b++)a.put(this.parsedData[b],8)}},b.prototype={addData:function(b){var c=new a(b);this.dataList.push(c),this.dataCache=null},isDark:function(a,b){if(0>a||this.moduleCount<=a||0>b||this.moduleCount<=b)throw new Error(a+","+b);return this.modules[a][b]},getModuleCount:function(){return this.moduleCount},make:function(){this.makeImpl(!1,this.getBestMaskPattern())},makeImpl:function(a,c){this.moduleCount=4*this.typeNumber+17,this.modules=new Array(this.moduleCount);for(var d=0;d<this.moduleCount;d++){this.modules[d]=new Array(this.moduleCount);for(var e=0;e<this.moduleCount;e++)this.modules[d][e]=null}this.setupPositionProbePattern(0,0),this.setupPositionProbePattern(this.moduleCount-7,0),this.setupPositionProbePattern(0,this.moduleCount-7),this.setupPositionAdjustPattern(),this.setupTimingPattern(),this.setupTypeInfo(a,c),this.typeNumber>=7&&this.setupTypeNumber(a),null==this.dataCache&&(this.dataCache=b.createData(this.typeNumber,this.errorCorrectLevel,this.dataList)),this.mapData(this.dataCache,c)},setupPositionProbePattern:function(a,b){for(var c=-1;7>=c;c++)if(!(-1>=a+c||this.moduleCount<=a+c))for(var d=-1;7>=d;d++)-1>=b+d||this.moduleCount<=b+d||(this.modules[a+c][b+d]=c>=0&&6>=c&&(0==d||6==d)||d>=0&&6>=d&&(0==c||6==c)||c>=2&&4>=c&&d>=2&&4>=d?!0:!1)},getBestMaskPattern:function(){for(var a=0,b=0,c=0;8>c;c++){this.makeImpl(!0,c);var d=f.getLostPoint(this);(0==c||a>d)&&(a=d,b=c)}return b},createMovieClip:function(a,b,c){var d=a.createEmptyMovieClip(b,c),e=1;this.make();for(var f=0;f<this.modules.length;f++)for(var g=f*e,h=0;h<this.modules[f].length;h++){var i=h*e,j=this.modules[f][h];j&&(d.beginFill(0,100),d.moveTo(i,g),d.lineTo(i+e,g),d.lineTo(i+e,g+e),d.lineTo(i,g+e),d.endFill())}return d},setupTimingPattern:function(){for(var a=8;a<this.moduleCount-8;a++)null==this.modules[a][6]&&(this.modules[a][6]=0==a%2);for(var b=8;b<this.moduleCount-8;b++)null==this.modules[6][b]&&(this.modules[6][b]=0==b%2)},setupPositionAdjustPattern:function(){for(var a=f.getPatternPosition(this.typeNumber),b=0;b<a.length;b++)for(var c=0;c<a.length;c++){var d=a[b],e=a[c];if(null==this.modules[d][e])for(var g=-2;2>=g;g++)for(var h=-2;2>=h;h++)this.modules[d+g][e+h]=-2==g||2==g||-2==h||2==h||0==g&&0==h?!0:!1}},setupTypeNumber:function(a){for(var b=f.getBCHTypeNumber(this.typeNumber),c=0;18>c;c++){var d=!a&&1==(1&b>>c);this.modules[Math.floor(c/3)][c%3+this.moduleCount-8-3]=d}for(var c=0;18>c;c++){var d=!a&&1==(1&b>>c);this.modules[c%3+this.moduleCount-8-3][Math.floor(c/3)]=d}},setupTypeInfo:function(a,b){for(var c=this.errorCorrectLevel<<3|b,d=f.getBCHTypeInfo(c),e=0;15>e;e++){var g=!a&&1==(1&d>>e);6>e?this.modules[e][8]=g:8>e?this.modules[e+1][8]=g:this.modules[this.moduleCount-15+e][8]=g}for(var e=0;15>e;e++){var g=!a&&1==(1&d>>e);8>e?this.modules[8][this.moduleCount-e-1]=g:9>e?this.modules[8][15-e-1+1]=g:this.modules[8][15-e-1]=g}this.modules[this.moduleCount-8][8]=!a},mapData:function(a,b){for(var c=-1,d=this.moduleCount-1,e=7,g=0,h=this.moduleCount-1;h>0;h-=2)for(6==h&&h--;;){for(var i=0;2>i;i++)if(null==this.modules[d][h-i]){var j=!1;g<a.length&&(j=1==(1&a[g]>>>e));var k=f.getMask(b,d,h-i);k&&(j=!j),this.modules[d][h-i]=j,e--,-1==e&&(g++,e=7)}if(d+=c,0>d||this.moduleCount<=d){d-=c,c=-c;break}}}},b.PAD0=236,b.PAD1=17,b.createData=function(a,c,d){for(var e=j.getRSBlocks(a,c),g=new k,h=0;h<d.length;h++){var i=d[h];g.put(i.mode,4),g.put(i.getLength(),f.getLengthInBits(i.mode,a)),i.write(g)}for(var l=0,h=0;h<e.length;h++)l+=e[h].dataCount;if(g.getLengthInBits()>8*l)throw new Error("code length overflow. ("+g.getLengthInBits()+">"+8*l+")");for(g.getLengthInBits()+4<=8*l&&g.put(0,4);0!=g.getLengthInBits()%8;)g.putBit(!1);for(;;){if(g.getLengthInBits()>=8*l)break;if(g.put(b.PAD0,8),g.getLengthInBits()>=8*l)break;g.put(b.PAD1,8)}return b.createBytes(g,e)},b.createBytes=function(a,b){for(var c=0,d=0,e=0,g=new Array(b.length),h=new Array(b.length),j=0;j<b.length;j++){var k=b[j].dataCount,l=b[j].totalCount-k;d=Math.max(d,k),e=Math.max(e,l),g[j]=new Array(k);for(var m=0;m<g[j].length;m++)g[j][m]=255&a.buffer[m+c];c+=k;var n=f.getErrorCorrectPolynomial(l),o=new i(g[j],n.getLength()-1),p=o.mod(n);h[j]=new Array(n.getLength()-1);for(var m=0;m<h[j].length;m++){var q=m+p.getLength()-h[j].length;h[j][m]=q>=0?p.get(q):0}}for(var r=0,m=0;m<b.length;m++)r+=b[m].totalCount;for(var s=new Array(r),t=0,m=0;d>m;m++)for(var j=0;j<b.length;j++)m<g[j].length&&(s[t++]=g[j][m]);for(var m=0;e>m;m++)for(var j=0;j<b.length;j++)m<h[j].length&&(s[t++]=h[j][m]);return s};for(var c={MODE_NUMBER:1,MODE_ALPHA_NUM:2,MODE_8BIT_BYTE:4,MODE_KANJI:8},d={L:1,M:0,Q:3,H:2},e={PATTERN000:0,PATTERN001:1,PATTERN010:2,PATTERN011:3,PATTERN100:4,PATTERN101:5,PATTERN110:6,PATTERN111:7},f={PATTERN_POSITION_TABLE:[[],[6,18],[6,22],[6,26],[6,30],[6,34],[6,22,38],[6,24,42],[6,26,46],[6,28,50],[6,30,54],[6,32,58],[6,34,62],[6,26,46,66],[6,26,48,70],[6,26,50,74],[6,30,54,78],[6,30,56,82],[6,30,58,86],[6,34,62,90],[6,28,50,72,94],[6,26,50,74,98],[6,30,54,78,102],[6,28,54,80,106],[6,32,58,84,110],[6,30,58,86,114],[6,34,62,90,118],[6,26,50,74,98,122],[6,30,54,78,102,126],[6,26,52,78,104,130],[6,30,56,82,108,134],[6,34,60,86,112,138],[6,30,58,86,114,142],[6,34,62,90,118,146],[6,30,54,78,102,126,150],[6,24,50,76,102,128,154],[6,28,54,80,106,132,158],[6,32,58,84,110,136,162],[6,26,54,82,110,138,166],[6,30,58,86,114,142,170]],G15:1335,G18:7973,G15_MASK:21522,getBCHTypeInfo:function(a){for(var b=a<<10;f.getBCHDigit(b)-f.getBCHDigit(f.G15)>=0;)b^=f.G15<<f.getBCHDigit(b)-f.getBCHDigit(f.G15);return(a<<10|b)^f.G15_MASK},getBCHTypeNumber:function(a){for(var b=a<<12;f.getBCHDigit(b)-f.getBCHDigit(f.G18)>=0;)b^=f.G18<<f.getBCHDigit(b)-f.getBCHDigit(f.G18);return a<<12|b},getBCHDigit:function(a){for(var b=0;0!=a;)b++,a>>>=1;return b},getPatternPosition:function(a){return f.PATTERN_POSITION_TABLE[a-1]},getMask:function(a,b,c){switch(a){case e.PATTERN000:return 0==(b+c)%2;case e.PATTERN001:return 0==b%2;case e.PATTERN010:return 0==c%3;case e.PATTERN011:return 0==(b+c)%3;case e.PATTERN100:return 0==(Math.floor(b/2)+Math.floor(c/3))%2;case e.PATTERN101:return 0==b*c%2+b*c%3;case e.PATTERN110:return 0==(b*c%2+b*c%3)%2;case e.PATTERN111:return 0==(b*c%3+(b+c)%2)%2;default:throw new Error("bad maskPattern:"+a)}},getErrorCorrectPolynomial:function(a){for(var b=new i([1],0),c=0;a>c;c++)b=b.multiply(new i([1,g.gexp(c)],0));return b},getLengthInBits:function(a,b){if(b>=1&&10>b)switch(a){case c.MODE_NUMBER:return 10;case c.MODE_ALPHA_NUM:return 9;case c.MODE_8BIT_BYTE:return 8;case c.MODE_KANJI:return 8;default:throw new Error("mode:"+a)}else if(27>b)switch(a){case c.MODE_NUMBER:return 12;case c.MODE_ALPHA_NUM:return 11;case c.MODE_8BIT_BYTE:return 16;case c.MODE_KANJI:return 10;default:throw new Error("mode:"+a)}else{if(!(41>b))throw new Error("type:"+b);switch(a){case c.MODE_NUMBER:return 14;case c.MODE_ALPHA_NUM:return 13;case c.MODE_8BIT_BYTE:return 16;case c.MODE_KANJI:return 12;default:throw new Error("mode:"+a)}}},getLostPoint:function(a){for(var b=a.getModuleCount(),c=0,d=0;b>d;d++)for(var e=0;b>e;e++){for(var f=0,g=a.isDark(d,e),h=-1;1>=h;h++)if(!(0>d+h||d+h>=b))for(var i=-1;1>=i;i++)0>e+i||e+i>=b||(0!=h||0!=i)&&g==a.isDark(d+h,e+i)&&f++;f>5&&(c+=3+f-5)}for(var d=0;b-1>d;d++)for(var e=0;b-1>e;e++){var j=0;a.isDark(d,e)&&j++,a.isDark(d+1,e)&&j++,a.isDark(d,e+1)&&j++,a.isDark(d+1,e+1)&&j++,(0==j||4==j)&&(c+=3)}for(var d=0;b>d;d++)for(var e=0;b-6>e;e++)a.isDark(d,e)&&!a.isDark(d,e+1)&&a.isDark(d,e+2)&&a.isDark(d,e+3)&&a.isDark(d,e+4)&&!a.isDark(d,e+5)&&a.isDark(d,e+6)&&(c+=40);for(var e=0;b>e;e++)for(var d=0;b-6>d;d++)a.isDark(d,e)&&!a.isDark(d+1,e)&&a.isDark(d+2,e)&&a.isDark(d+3,e)&&a.isDark(d+4,e)&&!a.isDark(d+5,e)&&a.isDark(d+6,e)&&(c+=40);for(var k=0,e=0;b>e;e++)for(var d=0;b>d;d++)a.isDark(d,e)&&k++;var l=Math.abs(100*k/b/b-50)/5;return c+=10*l}},g={glog:function(a){if(1>a)throw new Error("glog("+a+")");return g.LOG_TABLE[a]},gexp:function(a){for(;0>a;)a+=255;for(;a>=256;)a-=255;return g.EXP_TABLE[a]},EXP_TABLE:new Array(256),LOG_TABLE:new Array(256)},h=0;8>h;h++)g.EXP_TABLE[h]=1<<h;for(var h=8;256>h;h++)g.EXP_TABLE[h]=g.EXP_TABLE[h-4]^g.EXP_TABLE[h-5]^g.EXP_TABLE[h-6]^g.EXP_TABLE[h-8];for(var h=0;255>h;h++)g.LOG_TABLE[g.EXP_TABLE[h]]=h;i.prototype={get:function(a){return this.num[a]},getLength:function(){return this.num.length},multiply:function(a){for(var b=new Array(this.getLength()+a.getLength()-1),c=0;c<this.getLength();c++)for(var d=0;d<a.getLength();d++)b[c+d]^=g.gexp(g.glog(this.get(c))+g.glog(a.get(d)));return new i(b,0)},mod:function(a){if(this.getLength()-a.getLength()<0)return this;for(var b=g.glog(this.get(0))-g.glog(a.get(0)),c=new Array(this.getLength()),d=0;d<this.getLength();d++)c[d]=this.get(d);for(var d=0;d<a.getLength();d++)c[d]^=g.gexp(g.glog(a.get(d))+b);return new i(c,0).mod(a)}},j.RS_BLOCK_TABLE=[[1,26,19],[1,26,16],[1,26,13],[1,26,9],[1,44,34],[1,44,28],[1,44,22],[1,44,16],[1,70,55],[1,70,44],[2,35,17],[2,35,13],[1,100,80],[2,50,32],[2,50,24],[4,25,9],[1,134,108],[2,67,43],[2,33,15,2,34,16],[2,33,11,2,34,12],[2,86,68],[4,43,27],[4,43,19],[4,43,15],[2,98,78],[4,49,31],[2,32,14,4,33,15],[4,39,13,1,40,14],[2,121,97],[2,60,38,2,61,39],[4,40,18,2,41,19],[4,40,14,2,41,15],[2,146,116],[3,58,36,2,59,37],[4,36,16,4,37,17],[4,36,12,4,37,13],[2,86,68,2,87,69],[4,69,43,1,70,44],[6,43,19,2,44,20],[6,43,15,2,44,16],[4,101,81],[1,80,50,4,81,51],[4,50,22,4,51,23],[3,36,12,8,37,13],[2,116,92,2,117,93],[6,58,36,2,59,37],[4,46,20,6,47,21],[7,42,14,4,43,15],[4,133,107],[8,59,37,1,60,38],[8,44,20,4,45,21],[12,33,11,4,34,12],[3,145,115,1,146,116],[4,64,40,5,65,41],[11,36,16,5,37,17],[11,36,12,5,37,13],[5,109,87,1,110,88],[5,65,41,5,66,42],[5,54,24,7,55,25],[11,36,12],[5,122,98,1,123,99],[7,73,45,3,74,46],[15,43,19,2,44,20],[3,45,15,13,46,16],[1,135,107,5,136,108],[10,74,46,1,75,47],[1,50,22,15,51,23],[2,42,14,17,43,15],[5,150,120,1,151,121],[9,69,43,4,70,44],[17,50,22,1,51,23],[2,42,14,19,43,15],[3,141,113,4,142,114],[3,70,44,11,71,45],[17,47,21,4,48,22],[9,39,13,16,40,14],[3,135,107,5,136,108],[3,67,41,13,68,42],[15,54,24,5,55,25],[15,43,15,10,44,16],[4,144,116,4,145,117],[17,68,42],[17,50,22,6,51,23],[19,46,16,6,47,17],[2,139,111,7,140,112],[17,74,46],[7,54,24,16,55,25],[34,37,13],[4,151,121,5,152,122],[4,75,47,14,76,48],[11,54,24,14,55,25],[16,45,15,14,46,16],[6,147,117,4,148,118],[6,73,45,14,74,46],[11,54,24,16,55,25],[30,46,16,2,47,17],[8,132,106,4,133,107],[8,75,47,13,76,48],[7,54,24,22,55,25],[22,45,15,13,46,16],[10,142,114,2,143,115],[19,74,46,4,75,47],[28,50,22,6,51,23],[33,46,16,4,47,17],[8,152,122,4,153,123],[22,73,45,3,74,46],[8,53,23,26,54,24],[12,45,15,28,46,16],[3,147,117,10,148,118],[3,73,45,23,74,46],[4,54,24,31,55,25],[11,45,15,31,46,16],[7,146,116,7,147,117],[21,73,45,7,74,46],[1,53,23,37,54,24],[19,45,15,26,46,16],[5,145,115,10,146,116],[19,75,47,10,76,48],[15,54,24,25,55,25],[23,45,15,25,46,16],[13,145,115,3,146,116],[2,74,46,29,75,47],[42,54,24,1,55,25],[23,45,15,28,46,16],[17,145,115],[10,74,46,23,75,47],[10,54,24,35,55,25],[19,45,15,35,46,16],[17,145,115,1,146,116],[14,74,46,21,75,47],[29,54,24,19,55,25],[11,45,15,46,46,16],[13,145,115,6,146,116],[14,74,46,23,75,47],[44,54,24,7,55,25],[59,46,16,1,47,17],[12,151,121,7,152,122],[12,75,47,26,76,48],[39,54,24,14,55,25],[22,45,15,41,46,16],[6,151,121,14,152,122],[6,75,47,34,76,48],[46,54,24,10,55,25],[2,45,15,64,46,16],[17,152,122,4,153,123],[29,74,46,14,75,47],[49,54,24,10,55,25],[24,45,15,46,46,16],[4,152,122,18,153,123],[13,74,46,32,75,47],[48,54,24,14,55,25],[42,45,15,32,46,16],[20,147,117,4,148,118],[40,75,47,7,76,48],[43,54,24,22,55,25],[10,45,15,67,46,16],[19,148,118,6,149,119],[18,75,47,31,76,48],[34,54,24,34,55,25],[20,45,15,61,46,16]],j.getRSBlocks=function(a,b){var c=j.getRsBlockTable(a,b);if(void 0==c)throw new Error("bad rs block @ typeNumber:"+a+"/errorCorrectLevel:"+b);for(var d=c.length/3,e=[],f=0;d>f;f++)for(var g=c[3*f+0],h=c[3*f+1],i=c[3*f+2],k=0;g>k;k++)e.push(new j(h,i));return e},j.getRsBlockTable=function(a,b){switch(b){case d.L:return j.RS_BLOCK_TABLE[4*(a-1)+0];case d.M:return j.RS_BLOCK_TABLE[4*(a-1)+1];case d.Q:return j.RS_BLOCK_TABLE[4*(a-1)+2];case d.H:return j.RS_BLOCK_TABLE[4*(a-1)+3];default:return void 0}},k.prototype={get:function(a){var b=Math.floor(a/8);return 1==(1&this.buffer[b]>>>7-a%8)},put:function(a,b){for(var c=0;b>c;c++)this.putBit(1==(1&a>>>b-c-1))},getLengthInBits:function(){return this.length},putBit:function(a){var b=Math.floor(this.length/8);this.buffer.length<=b&&this.buffer.push(0),a&&(this.buffer[b]|=128>>>this.length%8),this.length++}};var l=[[17,14,11,7],[32,26,20,14],[53,42,32,24],[78,62,46,34],[106,84,60,44],[134,106,74,58],[154,122,86,64],[192,152,108,84],[230,180,130,98],[271,213,151,119],[321,251,177,137],[367,287,203,155],[425,331,241,177],[458,362,258,194],[520,412,292,220],[586,450,322,250],[644,504,364,280],[718,560,394,310],[792,624,442,338],[858,666,482,382],[929,711,509,403],[1003,779,565,439],[1091,857,611,461],[1171,911,661,511],[1273,997,715,535],[1367,1059,751,593],[1465,1125,805,625],[1528,1190,868,658],[1628,1264,908,698],[1732,1370,982,742],[1840,1452,1030,790],[1952,1538,1112,842],[2068,1628,1168,898],[2188,1722,1228,958],[2303,1809,1283,983],[2431,1911,1351,1051],[2563,1989,1423,1093],[2699,2099,1499,1139],[2809,2213,1579,1219],[2953,2331,1663,1273]],o=function(){var a=function(a,b){this._el=a,this._htOption=b};return a.prototype.draw=function(a){function g(a,b){var c=document.createElementNS("http://www.w3.org/2000/svg",a);for(var d in b)b.hasOwnProperty(d)&&c.setAttribute(d,b[d]);return c}var b=this._htOption,c=this._el,d=a.getModuleCount();Math.floor(b.width/d),Math.floor(b.height/d),this.clear();var h=g("svg",{viewBox:"0 0 "+String(d)+" "+String(d),width:"100%",height:"100%",fill:b.colorLight});h.setAttributeNS("http://www.w3.org/2000/xmlns/","xmlns:xlink","http://www.w3.org/1999/xlink"),c.appendChild(h),h.appendChild(g("rect",{fill:b.colorDark,width:"1",height:"1",id:"template"}));for(var i=0;d>i;i++)for(var j=0;d>j;j++)if(a.isDark(i,j)){var k=g("use",{x:String(i),y:String(j)});k.setAttributeNS("http://www.w3.org/1999/xlink","href","#template"),h.appendChild(k)}},a.prototype.clear=function(){for(;this._el.hasChildNodes();)this._el.removeChild(this._el.lastChild)},a}(),p="svg"===document.documentElement.tagName.toLowerCase(),q=p?o:m()?function(){function a(){this._elImage.src=this._elCanvas.toDataURL("image/png"),this._elImage.style.display="block",this._elCanvas.style.display="none"}function d(a,b){var c=this;if(c._fFail=b,c._fSuccess=a,null===c._bSupportDataURI){var d=document.createElement("img"),e=function(){c._bSupportDataURI=!1,c._fFail&&_fFail.call(c)},f=function(){c._bSupportDataURI=!0,c._fSuccess&&c._fSuccess.call(c)};return d.onabort=e,d.onerror=e,d.onload=f,d.src="data:image/gif;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg==",void 0}c._bSupportDataURI===!0&&c._fSuccess?c._fSuccess.call(c):c._bSupportDataURI===!1&&c._fFail&&c._fFail.call(c)}if(this._android&&this._android<=2.1){var b=1/window.devicePixelRatio,c=CanvasRenderingContext2D.prototype.drawImage;CanvasRenderingContext2D.prototype.drawImage=function(a,d,e,f,g,h,i,j){if("nodeName"in a&&/img/i.test(a.nodeName))for(var l=arguments.length-1;l>=1;l--)arguments[l]=arguments[l]*b;else"undefined"==typeof j&&(arguments[1]*=b,arguments[2]*=b,arguments[3]*=b,arguments[4]*=b);c.apply(this,arguments)}}var e=function(a,b){this._bIsPainted=!1,this._android=n(),this._htOption=b,this._elCanvas=document.createElement("canvas"),this._elCanvas.width=b.width,this._elCanvas.height=b.height,a.appendChild(this._elCanvas),this._el=a,this._oContext=this._elCanvas.getContext("2d"),this._bIsPainted=!1,this._elImage=document.createElement("img"),this._elImage.style.display="none",this._el.appendChild(this._elImage),this._bSupportDataURI=null};return e.prototype.draw=function(a){var b=this._elImage,c=this._oContext,d=this._htOption,e=a.getModuleCount(),f=d.width/e,g=d.height/e,h=Math.round(f),i=Math.round(g);b.style.display="none",this.clear();for(var j=0;e>j;j++)for(var k=0;e>k;k++){var l=a.isDark(j,k),m=k*f,n=j*g;c.strokeStyle=l?d.colorDark:d.colorLight,c.lineWidth=1,c.fillStyle=l?d.colorDark:d.colorLight,c.fillRect(m,n,f,g),c.strokeRect(Math.floor(m)+.5,Math.floor(n)+.5,h,i),c.strokeRect(Math.ceil(m)-.5,Math.ceil(n)-.5,h,i)}this._bIsPainted=!0},e.prototype.makeImage=function(){this._bIsPainted&&d.call(this,a)},e.prototype.isPainted=function(){return this._bIsPainted},e.prototype.clear=function(){this._oContext.clearRect(0,0,this._elCanvas.width,this._elCanvas.height),this._bIsPainted=!1},e.prototype.round=function(a){return a?Math.floor(1e3*a)/1e3:a},e}():function(){var a=function(a,b){this._el=a,this._htOption=b};return a.prototype.draw=function(a){for(var b=this._htOption,c=this._el,d=a.getModuleCount(),e=Math.floor(b.width/d),f=Math.floor(b.height/d),g=['<table style="border:0;border-collapse:collapse;">'],h=0;d>h;h++){g.push("<tr>");for(var i=0;d>i;i++)g.push('<td style="border:0;border-collapse:collapse;padding:0;margin:0;width:'+e+"px;height:"+f+"px;background-color:"+(a.isDark(h,i)?b.colorDark:b.colorLight)+';"></td>');g.push("</tr>")}g.push("</table>"),c.innerHTML=g.join("");var j=c.childNodes[0],k=(b.width-j.offsetWidth)/2,l=(b.height-j.offsetHeight)/2;k>0&&l>0&&(j.style.margin=l+"px "+k+"px")},a.prototype.clear=function(){this._el.innerHTML=""},a}();QRCode=function(a,b){if(this._htOption={width:256,height:256,typeNumber:4,colorDark:"#000000",colorLight:"#ffffff",correctLevel:d.H},"string"==typeof b&&(b={text:b}),b)for(var c in b)this._htOption[c]=b[c];"string"==typeof a&&(a=document.getElementById(a)),this._android=n(),this._el=a,this._oQRCode=null,this._oDrawing=new q(this._el,this._htOption),this._htOption.text&&this.makeCode(this._htOption.text)},QRCode.prototype.makeCode=function(a){this._oQRCode=new b(r(a,this._htOption.correctLevel),this._htOption.correctLevel),this._oQRCode.addData(a),this._oQRCode.make(),this._el.title=a,this._oDrawing.draw(this._oQRCode),this.makeImage()},QRCode.prototype.makeImage=function(){"function"==typeof this._oDrawing.makeImage&&(!this._android||this._android>=3)&&this._oDrawing.makeImage()},QRCode.prototype.clear=function(){this._oDrawing.clear()},QRCode.CorrectLevel=d}();
+</script>
+<script>
+(function(){
+  "use strict";
+  if(window.ShareQR) return;
+
+  var ANCHOR = "_";          // Startbildschirm: Knopf nur sichtbar, solange der zu sehen ist
+  var INLINE = "#introshare";          // optional: Leiste, in die der Knopf direkt eingebaut wird
+  var BASE_KEY = "spieleSuite.basis";
+  var BASE_STD = "https://mauthier-bit.github.io/Spiele-Suite/";
+
+  /* ---------------- Adresse bestimmen ---------------- */
+  function basis(){
+    var b=null;
+    try{ b=localStorage.getItem(BASE_KEY); }catch(e){}
+    b=b||BASE_STD;
+    return b.charAt(b.length-1)==="/" ? b : b+"/";
+  }
+  function dateiname(){
+    var p=location.pathname||"";
+    var name=p.substring(p.lastIndexOf("/")+1);
+    try{ name=decodeURIComponent(name); }catch(e){}
+    return /^[\w.%+ -]{1,80}\.html?$/i.test(name) ? name : "index.html";
+  }
+  function adresse(){
+    if(location.protocol==="http:"||location.protocol==="https:") return location.href.split("#")[0];
+    return basis()+encodeURIComponent(dateiname());
+  }
+
+  /* ---------------- QR-Code zeichnen ---------------- */
+  function zeichneCode(host,url){
+    host.innerHTML="";
+    host.style.removeProperty("--sq-w");
+    if(typeof QRCode==="undefined"){
+      host.innerHTML='<div style="padding:18px;color:#8a929c;font-size:.9rem;">QR-Code nicht verfügbar – bitte den Link weitergeben.</div>';
+      return;
+    }
+    try{
+      var q=new QRCode(host,{text:url, width:900, height:900, correctLevel:QRCode.CorrectLevel.M});
+      /* Ruhezone: vier Module weiß ringsum, sonst findet die Kamera den Code nicht */
+      var n=q._oQRCode && q._oQRCode.getModuleCount ? q._oQRCode.getModuleCount() : 0;
+      if(n) host.style.setProperty("--sq-w", (100*n/(n+8)).toFixed(2)+"%");
+    }catch(e){
+      host.innerHTML='<div style="padding:18px;color:#8a929c;font-size:.9rem;">Die Adresse ist zu lang für einen QR-Code – bitte den Link kopieren.</div>';
+    }
+  }
+
+  /* ---------------- Oberfläche ---------------- */
+  var ov=null;
+  function baueOverlay(){
+    ov=document.createElement("div");
+    ov.className="sq-ov";
+    ov.innerHTML='<div class="sq-card">'+
+      '<h2 id="sqTitle">Teilen</h2><p class="sq-sub">Mit der Kamera scannen – das Spiel öffnet sich direkt im Browser.</p>'+
+      '<div class="sq-code" id="sqCode"></div>'+
+      '<div class="sq-url" id="sqUrl"></div>'+
+      '<div class="sq-row">'+
+        '<button class="sq-copy">Link kopieren</button>'+
+        '<button class="sq-alt sq-edit">Adresse ändern</button>'+
+        '<button class="sq-alt sq-close">Schließen</button>'+
+      '</div>'+
+      '<div class="sq-note" id="sqNote"></div>'+
+      '</div>';
+    document.body.appendChild(ov);
+    ov.addEventListener("click",function(e){ if(e.target===ov) zu(); });
+    ov.querySelector(".sq-close").addEventListener("click",zu);
+    ov.querySelector(".sq-copy").addEventListener("click",function(){ kopiereLink(this); });
+    ov.querySelector(".sq-edit").addEventListener("click",function(){
+      var neu=prompt("Internetadresse des Ordners, in dem die Spiele liegen:", basis());
+      if(neu===null) return;
+      neu=neu.trim();
+      try{ if(neu) localStorage.setItem(BASE_KEY,neu); else localStorage.removeItem(BASE_KEY); }catch(e){}
+      fuelle();
+    });
+  }
+  function fuelle(){
+    var url=adresse();
+    var t=(document.title||"").split(/[\u2013\u2014|\u00b7]/)[0].trim();
+    ov.querySelector("#sqTitle").textContent=(t||"Diese Seite")+" teilen";
+    zeichneCode(ov.querySelector("#sqCode"), url);
+    ov.querySelector("#sqUrl").textContent=url;
+    ov.querySelector("#sqNote").innerHTML = (location.protocol==="http:"||location.protocol==="https:")
+      ? "Das ist die Adresse dieser Seite."
+      : "Die Datei liegt lokal auf diesem Gerät. Der Code zeigt deshalb auf die veröffentlichte Fassung – über „Adresse ändern“ anpassbar.";
+  }
+  function kopiereLink(btn){
+    var url=adresse();
+    function melde(ok){
+      btn.textContent = ok ? "Kopiert \u2713" : "Bitte von Hand kopieren";
+      btn.classList.toggle("sq-ok", !!ok);
+      if(!ok){
+        try{
+          var el=ov.querySelector("#sqUrl"), r=document.createRange();
+          r.selectNodeContents(el);
+          var s=window.getSelection(); s.removeAllRanges(); s.addRange(r);
+        }catch(e){}
+      }
+      clearTimeout(btn._t);
+      btn._t=setTimeout(function(){ btn.textContent="Link kopieren"; btn.classList.remove("sq-ok"); },1900);
+    }
+    function altweg(){
+      try{
+        var ta=document.createElement("textarea");
+        ta.value=url; ta.setAttribute("readonly","");
+        ta.style.position="fixed"; ta.style.top="-1000px"; ta.style.opacity="0";
+        document.body.appendChild(ta);
+        ta.select(); ta.setSelectionRange(0,ta.value.length);
+        var ok=document.execCommand("copy");
+        document.body.removeChild(ta);
+        melde(ok);
+      }catch(e){ melde(false); }
+    }
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(url).then(function(){ melde(true); }, altweg);
+    } else altweg();
+  }
+  function auf(){ if(!ov) baueOverlay(); fuelle(); ov.classList.add("on"); }
+  function zu(){ if(ov) ov.classList.remove("on"); }
+
+  var ICON='<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 3h8v8H3V3zm2 2v4h4V5H5zm8-2h8v8h-8V3zm2 2v4h4V5h-4zM3 13h8v8H3v-8zm2 2v4h4v-4H5zm8-2h3v3h-3v-3zm5 0h3v3h-3v-3zm-5 5h3v3h-3v-3zm5 0h3v3h-3v-3z"/></svg>';
+  function knopf(){
+    var inline=INLINE && INLINE.charAt(0)!=="_" ? document.querySelector(INLINE) : null;
+    if(inline){
+      var b=document.createElement("button");
+      b.className=(inline.querySelector("button")? inline.querySelector("button").className : "")+" sq-inline";
+      b.type="button"; b.innerHTML=ICON+"<span>Teilen</span>";
+      b.addEventListener("click",auf);
+      inline.appendChild(b);
+      return;
+    }
+    var f=document.createElement("button");
+    f.className="sq-fab"; f.type="button";
+    f.innerHTML=ICON+"<span>Teilen</span>";
+    f.addEventListener("click",auf);
+    document.body.appendChild(f);
+    var sel = ANCHOR && ANCHOR.charAt(0)!=="_" ? ANCHOR : null;
+    function sichtbar(){
+      if(!sel) return true;
+      var els=document.querySelectorAll(sel);
+      for(var i=0;i<els.length;i++){
+        var cs=getComputedStyle(els[i]);
+        if(cs.display!=="none" && cs.visibility!=="hidden" && els[i].getClientRects().length) return true;
+      }
+      return false;
+    }
+    function pruefe(){ f.classList.toggle("on", sichtbar() && !(ov&&ov.classList.contains("on"))); }
+    pruefe();
+    setInterval(pruefe,400);
+  }
+  function start(){ knopf(); }
+  if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",start);
+  else start();
+
+  window.ShareQR={open:auf, close:zu, url:adresse, basis:basis};
+})();
+</script>
+
+</body>
+</html>

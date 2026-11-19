@@ -1,0 +1,1533 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<title>Fumino – Funktions-Domino</title>
+<style>
+  :root{
+    --ink:#20263a; --ink2:#4a5169; --line:#e4e2da; --bg:#f4f1ea; --card:#fffdf7;
+    --gold:#c69b3f; --gold-d:#a67f2b; --tile:#fbf7ec; --tile-edge:#ded7c4;
+    --curve:#2c5fd6; --grid:#e7e9ef; --axis:#9aa1b4; --good:#2e8b5c; --bad:#d1523f;
+    --sel:#c69b3f; --shadow:0 3px 10px rgba(40,34,20,.13);
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; height:100%;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    color:var(--ink); background:var(--bg); overflow:hidden;
+    -webkit-user-select:none; user-select:none; touch-action:manipulation;
+  }
+  .screen{position:fixed; inset:0; display:none; flex-direction:column; padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);}
+  .screen.on{display:flex;}
+
+  /* ---------- Domino-Logo ---------- */
+  .logo{display:inline-flex; align-items:center; gap:.55rem; font-weight:800; letter-spacing:.5px;}
+  .logo .domino{display:inline-flex; width:64px; height:34px; border-radius:7px; background:var(--tile);
+    border:1.5px solid var(--tile-edge); box-shadow:var(--shadow); overflow:hidden;}
+  .logo .domino .h{flex:1; display:flex; align-items:center; justify-content:center;}
+  .logo .domino .h.l{border-right:1.5px solid var(--tile-edge); background:linear-gradient(180deg,#fbedcb,#f3dfa6);}
+  .logo .domino svg{width:26px; height:26px;}
+  .logo .domino .t{font-size:11px; font-weight:800; color:var(--gold-d);}
+  .logo .word{font-size:1.9rem;}
+  .logo .word b{color:var(--gold-d);}
+
+  /* ---------- Startbildschirm ---------- */
+  #start{overflow:auto; align-items:center;}
+  .startwrap{width:100%; max-width:720px; margin:auto; padding:22px 18px 40px;}
+  .startwrap header{text-align:center; margin-bottom:8px;}
+  .tag{color:var(--ink2); font-size:1rem; margin:.35rem 0 1.3rem;}
+  .panel{background:var(--card); border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow);
+    padding:16px 16px 18px; margin-bottom:16px;}
+  .panel h3{margin:.1rem 0 .7rem; font-size:.82rem; text-transform:uppercase; letter-spacing:.09em; color:var(--ink2);}
+  .seg{display:flex; gap:8px; flex-wrap:wrap;}
+  .seg button{flex:1 1 auto; min-width:64px; padding:12px 10px; border-radius:11px; border:1.5px solid var(--line);
+    background:#fff; color:var(--ink); font-size:1rem; font-weight:650; cursor:pointer; transition:.12s;}
+  .seg button.sel{background:var(--gold); border-color:var(--gold-d); color:#3a2c07; box-shadow:0 2px 6px rgba(180,140,40,.35);}
+  .seg button:disabled{opacity:.4; cursor:not-allowed;}
+  .checks{display:grid; gap:9px;}
+  .chk{display:flex; align-items:center; gap:12px; padding:12px 13px; border:1.5px solid var(--line);
+    border-radius:12px; background:#fff; cursor:pointer;}
+  .chk.on{border-color:var(--gold-d); background:#fdf7e8;}
+  .chk .box{width:24px; height:24px; border-radius:7px; border:2px solid var(--tile-edge); flex:0 0 auto;
+    display:flex; align-items:center; justify-content:center; font-size:15px; color:#fff; background:#fff;}
+  .chk.on .box{background:var(--gold); border-color:var(--gold-d);}
+  .chk .meta{display:flex; flex-direction:column;}
+  .chk .meta .name{font-weight:680;}
+  .chk .meta .ex{font-size:.82rem; color:var(--ink2);}
+  .poolinfo{font-size:.9rem; color:var(--ink2); text-align:center; margin-top:2px; min-height:1.2em;}
+  .startbtn{width:100%; padding:16px; font-size:1.2rem; font-weight:800; border:none; border-radius:14px;
+    background:var(--gold); color:#3a2c07; cursor:pointer; box-shadow:0 4px 12px rgba(180,140,40,.4);}
+  .startbtn:disabled{opacity:.45; cursor:not-allowed; box-shadow:none;}
+  .hint{font-size:.86rem; color:var(--bad); text-align:center; margin-top:8px; min-height:1.1em;}
+
+  /* ---------- Spielbildschirm ---------- */
+  #game{background:var(--bg);}
+  .topbar{display:flex; align-items:center; gap:10px; padding:10px 14px; border-bottom:1px solid var(--line);
+    background:var(--card);}
+  .topbar .logo .word{font-size:1.25rem;}
+  .topbar .logo .domino{width:46px; height:26px;}
+  .topbar .logo .domino svg{width:19px; height:19px;}
+  .topbar .logo .domino .t{font-size:8px;}
+  .turnbadge{margin-left:auto; display:flex; align-items:center; gap:8px; font-weight:750; font-size:1rem;
+    padding:6px 12px; border-radius:999px; background:#fff; border:1.5px solid var(--line);}
+  .turnbadge .dot{width:12px; height:12px; border-radius:50%;}
+  .p0{--pc:#2c5fd6;} .p1{--pc:#d98324;} .turnbadge .dot{background:var(--pc,#888);}
+  .iconbtn{padding:9px 13px; border-radius:10px; border:1.5px solid var(--line); background:#fff; font-weight:680;
+    font-size:.95rem; cursor:pointer; color:var(--ink);}
+  .iconbtn.warn{border-color:#e6c3bd; color:var(--bad);}
+
+  .boardwrap{flex:1; display:flex; flex-direction:column; min-height:0;}
+  .endshint{display:flex; justify-content:space-between; padding:8px 16px 2px; gap:10px;}
+  .endshint .pill{font-size:.82rem; color:var(--ink2); background:#fff; border:1px solid var(--line);
+    border-radius:999px; padding:5px 11px;}
+  .board{flex:1; min-height:0; overflow-x:auto; overflow-y:hidden; display:flex; align-items:center;
+    gap:0; padding:14px 16px; scroll-behavior:smooth;}
+  .board .emptyboard{margin:auto; color:var(--ink2); text-align:center; font-size:1.05rem; line-height:1.5;}
+
+  /* ---------- Domino-Stein ---------- */
+  .stone{flex:0 0 auto; display:flex; background:var(--tile); border:1.6px solid var(--tile-edge);
+    border-radius:12px; box-shadow:var(--shadow); overflow:hidden; position:relative;}
+  .stone .cell{position:relative; display:flex; align-items:center; justify-content:center;}
+  .stone .cell.graph{padding:4px; background:#fff;}
+  .stone .cell.term{padding:6px 10px; background:var(--tile); border-left:2px solid var(--tile-edge);}
+  .stone .term-txt{font-size:1.4rem; line-height:1.25; text-align:center; color:var(--ink); white-space:nowrap;}
+  .stone .fg-svg{display:block; width:100%; height:100%; max-width:100%; max-height:100%;}
+  .board .stone{--w:150px;}
+  .stone.board-s{height:240px;}
+  .stone.board-s .cell.graph{width:240px;}
+  .stone.board-s .cell.term{min-width:270px; padding-left:20px; padding-right:20px;}
+  .stone .zoom{position:absolute; top:5px; right:5px; width:30px; height:30px; border-radius:8px;
+    background:rgba(255,255,255,.9); border:1px solid var(--tile-edge); display:flex; align-items:center;
+    justify-content:center; font-size:16px; color:var(--ink2); z-index:3;}
+  .stone .cell.open::after{content:""; position:absolute; inset:0; box-shadow:inset 0 0 0 3px var(--gold);
+    border-radius:8px; animation:pulse 1.3s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:.35;}50%{opacity:1;}}
+
+  /* Drop-Ziele an den Enden */
+  .droptarget{flex:0 0 auto; width:92px; align-self:center; height:210px; margin:0 8px; border-radius:14px;
+    border:3px dashed transparent; display:flex; align-items:center; justify-content:center; color:var(--gold-d);
+    font-size:.95rem; text-align:center; font-weight:700; opacity:0; transition:.15s; pointer-events:none;}
+  .droptarget.active{opacity:1; border-color:var(--gold); background:#fdf3d8; pointer-events:auto; cursor:pointer;
+    animation:pulse 1.3s ease-in-out infinite;}
+
+  /* ---------- Hand ---------- */
+  .handbar{border-top:1px solid var(--line); background:var(--card);}
+  .handhdr{display:flex; align-items:center; gap:10px; padding:8px 16px 0; font-size:.86rem; color:var(--ink2);}
+  .handhdr .grow{flex:1;}
+  .hand{display:flex; gap:12px; overflow-x:auto; padding:12px 16px 16px; align-items:center; min-height:200px;}
+  .hand .stone{--h:185px; height:185px; cursor:pointer;}
+  .hand .stone .cell.graph{width:185px;}
+  .hand .stone .cell.term{min-width:210px;}
+  .hand .stone.sel{outline:3px solid var(--sel); outline-offset:2px;}
+  .hand .stone.playable{box-shadow:0 0 0 2px var(--good), var(--shadow);}
+  .hand .stone .term-txt{font-size:1.25rem;}
+
+  /* ---------- Overlays ---------- */
+  .overlay{position:fixed; inset:0; background:rgba(28,24,16,.78); display:none; align-items:center;
+    justify-content:center; z-index:50; padding:20px;}
+  .overlay.on{display:flex;}
+  .card2{background:var(--card); border-radius:20px; box-shadow:0 20px 50px rgba(0,0,0,.35); padding:26px 24px;
+    max-width:460px; width:100%; text-align:center;}
+  .card2 h2{margin:.1rem 0 .5rem; font-size:1.6rem;}
+  .card2 p{color:var(--ink2); margin:.3rem 0 1.2rem; font-size:1.05rem;}
+  .card2 .big{padding:15px 20px; font-size:1.15rem; font-weight:800; border:none; border-radius:13px;
+    background:var(--gold); color:#3a2c07; cursor:pointer; width:100%;}
+  .card2 .ghost{margin-top:10px; background:#fff; border:1.5px solid var(--line); color:var(--ink);}
+
+  #zoom .zbox{background:#fff; border-radius:18px; padding:16px; max-width:92vw; max-height:88vh; overflow:auto;}
+  #zoom .stone{height:min(52vh,340px);}
+  #zoom .stone .cell.graph{width:min(52vh,340px);}
+  #zoom .stone .cell.term{min-width:min(60vw,380px);}
+  #zoom .stone .term-txt{font-size:1.5rem; white-space:normal;}
+  #zoom .close{margin-top:14px; width:100%;}
+
+  /* Toast */
+  #toast{position:fixed; left:50%; bottom:150px; transform:translateX(-50%) translateY(20px); z-index:60;
+    background:var(--ink); color:#fff; padding:12px 18px; border-radius:12px; font-weight:650; font-size:1rem;
+    opacity:0; transition:.2s; pointer-events:none; max-width:88vw; text-align:center;}
+  #toast.on{opacity:1; transform:translateX(-50%) translateY(0);}
+  #toast.bad{background:var(--bad);} #toast.good{background:var(--good);}
+
+  /* Bruch im Term */
+  .frac{display:inline-flex; flex-direction:column; vertical-align:middle; text-align:center; line-height:1;
+    margin:0 2px; transform:translateY(-1px);}
+  .frac .fnum{padding:0 4px; border-bottom:1.6px solid currentColor;}
+  .frac .fden{padding:1px 4px 0;}
+  sup{font-size:.72em;}
+
+  /* Graph-Stil (SVG) */
+  .fg-svg .fg-grid{stroke:var(--grid); stroke-width:1;}
+  .fg-svg .fg-axis{stroke:var(--axis); stroke-width:1.4;}
+  .fg-svg .fg-curve{fill:none; stroke:var(--curve); stroke-width:2.6; stroke-linecap:round; stroke-linejoin:round;}
+  .fg-svg .fg-lab{fill:#b9bccb; font-size:8px; text-anchor:middle; font-family:inherit;}
+  .fg-svg .fg-zero{fill:#e03131; stroke:#fff; stroke-width:1.5;}
+
+  @media (max-width:520px){
+    .logo .word{font-size:1.55rem;}
+    .board .stone.board-s{height:190px;}
+    .board .stone.board-s .cell.graph{width:190px;} .board .stone.board-s .cell.term{min-width:200px;}
+    .hand .stone{height:150px;} .hand .stone .cell.graph{width:150px;} .hand .stone .cell.term{min-width:170px;}
+  }
+</style>
+<script>
+/* Scharfe Kante unter der iPadOS-Statusleiste (iPadOS 26/27).
+   WebKit legt in Web-Apps vom Homebildschirm am oberen Rand sonst einen
+   weichen Verlauf ueber den Inhalt. Er entfaellt, wenn dort eine deckende
+   Leiste liegt - ein bildschirmfuellender Kasten genuegt nicht (am
+   13.10.2026 auf iPadOS 27 geprueft). Das Skript legt deshalb einen 16 px
+   hohen, deckenden Streifen an den oberen Rand und rueckt alles, was in
+   diese 16 px hineinragt, um 16 px nach unten. Laeuft nur in der App vom
+   Homebildschirm, nicht in Safari und nicht in einem Rahmen; mit #kante in
+   der Adresse laesst es sich zum Pruefen erzwingen. */
+(function(){
+  if(window.top!==window) return;
+  var pruef=/kante/i.test(location.hash||'');
+  var alsApp=(navigator.standalone===true) ||
+             (window.matchMedia && matchMedia('(display-mode: standalone)').matches);
+  if(!alsApp && !pruef) return;
+
+  var HOCH=16;
+  function leer(f){ return !f || f==='transparent' || f.replace(/\s/g,'')==='rgba(0,0,0,0)'; }
+  function seite(){
+    var s=getComputedStyle(document.body), f=s.backgroundColor, b=s.backgroundImage;
+    if(leer(f) && (!b || b==='none')){
+      s=getComputedStyle(document.documentElement); f=s.backgroundColor; b=s.backgroundImage;
+    }
+    return { farbe: leer(f) ? '#ffffff' : f, bild: (b && b!=='none') ? b : '' };
+  }
+  /* Faerbt dieses Element am oberen Rand etwas sichtbar ein? */
+  function tinte(n){
+    var r=n.getBoundingClientRect();
+    if(r.top>=HOCH || r.bottom<=0 || r.width<=0) return false;
+    var s=getComputedStyle(n);
+    if(s.display==='none' || s.visibility==='hidden' || s.opacity==='0') return false;
+    if(n.id==='randKante') return false;
+    var t=n.tagName.toLowerCase();
+    if(t==='img'||t==='svg'||t==='canvas'||t==='video') return true;
+    if(!leer(s.backgroundColor) || s.backgroundImage!=='none') return true;
+    if(parseFloat(s.borderTopWidth)>0) return true;
+    var kn=n.childNodes;
+    for(var j=0;j<kn.length;j++)
+      if(kn[j].nodeType===3 && kn[j].nodeValue.replace(/\s/g,'')) return true;
+    for(var i=0;i<n.children.length;i++) if(tinte(n.children[i])) return true;
+    return false;
+  }
+  function ragtRein(z){
+    for(var i=0;i<z.children.length;i++) if(tinte(z.children[i])) return true;
+    return false;
+  }
+  function luft(z){
+    if(z.dataset.kanteLuft) return;
+    if(!ragtRein(z) && !tinte(z)) return;    /* noch nichts oben - spaeter nochmal */
+    z.dataset.kanteLuft='1';
+    var p=parseFloat(getComputedStyle(z).paddingTop)||0;
+    if(p>=HOCH) return;
+    z.style.paddingTop=(p+HOCH)+'px';
+  }
+  function sichtbar(n,s){
+    return s.display!=='none' && s.visibility!=='hidden' && n.id!=='randKante';
+  }
+  /* bildschirmfuellende fixierte Kaesten */
+  function kaesten(){
+    var alle=document.querySelectorAll('body > *, body > * > *'), raus=[];
+    for(var i=0;i<alle.length;i++){
+      var n=alle[i], s=getComputedStyle(n);
+      if(s.position!=='fixed' || !sichtbar(n,s)) continue;
+      /* Deko-Ebenen wie Konfetti liegen durchsichtig ueber allem und duerfen
+         niemals angefasst werden - sie wuerden sonst das Spiel verdecken. */
+      if(s.pointerEvents==='none') continue;
+      var r=n.getBoundingClientRect();
+      if(r.top<=4 && r.width>=innerWidth*0.9 && r.height>=innerHeight*0.9) raus.push(n);
+    }
+    return raus;
+  }
+  /* Leisten am oberen Rand (fixiert oder klebend, aber kein Vollbildkasten) */
+  function leisten(){
+    var alle=document.querySelectorAll('body > *, body > * > *'), raus=[];
+    for(var i=0;i<alle.length;i++){
+      var n=alle[i], s=getComputedStyle(n);
+      if((s.position!=='fixed' && s.position!=='sticky') || !sichtbar(n,s)) continue;
+      var r=n.getBoundingClientRect();
+      if(r.top<=4 && r.width>=innerWidth*0.8 && r.height>=6 && r.height<=innerHeight*0.6) raus.push(n);
+    }
+    return raus;
+  }
+  /* Liegt oben schon eine deckende Leiste, ist nichts zu tun. */
+  function schonGut(){
+    var st=document.elementsFromPoint ? document.elementsFromPoint(Math.round(innerWidth/2),2) : [];
+    for(var i=0;i<st.length;i++){
+      var n=st[i];
+      if(n.id==='randKante') continue;
+      if(n===document.body || n===document.documentElement) return false;
+      var s=getComputedStyle(n), r=n.getBoundingClientRect();
+      return (s.position==='fixed'||s.position==='sticky') && r.top<=4 &&
+             r.width>=innerWidth*0.8 && r.height>=6 && r.height<=innerHeight*0.6 &&
+             !leer(s.backgroundColor);
+    }
+    return false;
+  }
+  var band=null;
+  function streifen(farbe){
+    if(!band){
+      band=document.createElement('div');
+      band.id='randKante'; band.setAttribute('aria-hidden','true');
+      band.style.cssText='position:fixed;left:0;top:0;width:100%;height:'+HOCH+'px;'+
+        'z-index:2147483646;pointer-events:none';
+      document.body.appendChild(band);
+    }
+    band.style.display='block';
+    if(farbe){
+      band.style.backgroundColor=farbe;
+      band.style.backgroundImage='none';
+      return;
+    }
+    var s=getComputedStyle(document.body), h=seite();
+    band.style.backgroundColor=h.farbe;
+    band.style.backgroundImage=h.bild||'none';
+    band.style.backgroundAttachment='fixed';
+    if(h.bild && s.backgroundAttachment!=='fixed')
+      band.style.backgroundSize='100% '+Math.max(innerHeight,document.body.scrollHeight)+'px';
+  }
+  var schild=null;
+  function zeigen(txt){
+    if(!pruef) return;
+    if(!schild){
+      schild=document.createElement('div');
+      schild.style.cssText='position:fixed;left:6px;bottom:52px;z-index:2147483647;max-width:92%;'+
+        'padding:6px 9px;border-radius:8px;background:#ffe600;color:#000;'+
+        'font:600 12px/1.35 -apple-system,sans-serif;white-space:pre-wrap;pointer-events:none';
+      document.body.appendChild(schild);
+    }
+    schild.textContent='Kante K6 · '+innerWidth+'x'+innerHeight+'\n'+txt;
+  }
+  function name(n){
+    if(n.id) return '#'+n.id;
+    var c=(typeof n.className==='string'&&n.className.trim())?'.'+n.className.trim().split(/\s+/)[0]:'';
+    return n.tagName.toLowerCase()+c;
+  }
+  function malen(){
+    var b=document.body; if(!b) return;
+    if(schonGut()){
+      if(band) band.style.display='none';
+      zeigen('oben liegt schon eine deckende Leiste');
+      return;
+    }
+    var k=kaesten(), l=leisten(), farbe=null, text=[];
+    /* Die Kaesten werden nur noch nach unten gerueckt, nicht mehr eingefaerbt:
+       ein bildschirmfuellender Kasten haelt den Verlauf ohnehin nicht ab
+       (am 13.10.2026 auf iPadOS 27 gemessen), das Einfaerben hat dagegen
+       durchsichtige Ebenen deckend gemacht. */
+    for(var i=0;i<k.length;i++){
+      var z=k[i];
+      luft(z);
+      text.push(name(z));
+    }
+    for(var j=0;j<l.length;j++){
+      var le=l[j], sl=getComputedStyle(le);
+      if(!tinte(le) && !ragtRein(le)) continue;
+      if(!farbe && !leer(sl.backgroundColor)) farbe=sl.backgroundColor;
+      luft(le);
+      text.push('Leiste '+name(le)+' bg='+sl.backgroundColor);
+    }
+    if(!k.length && !l.length){ luft(b); text.push('kein Kasten, nur Streifen'); }
+    streifen(farbe);
+    zeigen(text.join('\n'));
+  }
+  var warte=null;
+  function spaeter(){
+    if(warte) return;
+    warte=setTimeout(function(){ warte=null; malen(); },200);
+  }
+  try{
+    new MutationObserver(spaeter).observe(document.documentElement,
+      {childList:true, subtree:true, attributes:true, attributeFilter:['class','style','hidden']});
+  }catch(e){}
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',malen);
+  else malen();
+  addEventListener('load',spaeter);
+  addEventListener('resize',spaeter);
+  addEventListener('orientationchange',spaeter);
+})();
+</script>
+</head>
+<body>
+
+<!-- ================= START ================= -->
+<section id="start" class="screen on">
+  <div class="startwrap">
+    <header>
+      <div class="logo">
+        <span class="domino"><span class="h l" id="logoGraph"></span><span class="h"><span class="t">f(x)</span></span></span>
+        <span class="word">Fu<b>mino</b></span>
+      </div>
+      <div class="tag">Funktions-Domino &middot; Term und passenden Graphen anlegen</div>
+    </header>
+
+    <div class="panel">
+      <h3>Jahrgangsstufe</h3>
+      <div class="seg" id="segGrade">
+        <button data-v="8" class="sel">8. Klasse</button>
+        <button data-v="9">9. Klasse</button>
+        <button data-v="10">10. Klasse</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>Funktionsarten</h3>
+      <div class="checks" id="typeChecks"></div>
+    </div>
+
+    <div class="panel">
+      <h3>Modus</h3>
+      <div class="seg" id="segMode">
+        <button data-v="vs" class="sel">Gegeneinander</button>
+        <button data-v="coop">Kooperativ</button>
+      </div>
+      <h3 style="margin-top:16px;">Schwierigkeit</h3>
+      <div class="seg" id="segDiff">
+        <button data-v="1" class="sel">Stufe 1</button>
+        <button data-v="2">Stufe 2</button>
+      </div>
+      <h3 style="margin-top:16px;">Umfang</h3>
+      <div class="seg" id="segCount">
+        <button data-v="8" class="sel">8 Steine</button>
+        <button data-v="12">12 Steine</button>
+        <button data-v="16">16 Steine</button>
+      </div>
+      <div class="poolinfo" id="poolInfo"></div>
+    </div>
+
+    <button class="startbtn" id="startBtn">Spiel starten</button>
+    <div class="hint" id="startHint"></div>
+  </div>
+</section>
+
+<!-- ================= SPIEL ================= -->
+<section id="game" class="screen">
+  <div class="topbar">
+    <div class="logo">
+      <span class="domino"><span class="h l" id="logoGraph2"></span><span class="h"><span class="t">f(x)</span></span></span>
+      <span class="word">Fu<b>mino</b></span>
+    </div>
+    <div class="turnbadge" id="turnBadge"><span class="dot"></span><span id="turnText">Kooperativ</span></div>
+    <button class="iconbtn" id="hintBtn">Tipp</button>
+    <button class="iconbtn warn" id="passBtn">Passen</button>
+    <button class="iconbtn" id="newsetBtn" title="Neues Funktionenset">&#127922;&#8202;Neues Set</button>
+    <button class="iconbtn" id="menuBtn">Menü</button>
+  </div>
+
+  <div class="boardwrap">
+    <div class="endshint">
+      <span class="pill" id="pillLeft">Linkes Ende</span>
+      <span class="pill" id="pillRight">Rechtes Ende</span>
+    </div>
+    <div class="board" id="board"></div>
+  </div>
+
+  <div class="handbar">
+    <div class="handhdr">
+      <span id="handLabel">Deine Steine</span>
+      <span class="grow"></span>
+      <span id="handCount"></span>
+    </div>
+    <div class="hand" id="hand"></div>
+  </div>
+</section>
+
+<!-- ================= WEITERGEBEN ================= -->
+<div class="overlay" id="pass">
+  <div class="card2">
+    <h2 id="passTitle">Weitergeben</h2>
+    <p id="passSub">Gib das iPad an den nächsten Spieler.</p>
+    <button class="big" id="passReady">Bereit</button>
+  </div>
+</div>
+
+<!-- ================= GEWONNEN ================= -->
+<div class="overlay" id="win">
+  <div class="card2">
+    <h2 id="winTitle">Geschafft!</h2>
+    <p id="winSub"></p>
+    <button class="big" id="winAgain">Nochmal</button>
+    <button class="big ghost" id="winMenu">Einstellungen</button>
+  </div>
+</div>
+
+<!-- ================= ZOOM ================= -->
+<div class="overlay" id="zoom">
+  <div class="zbox">
+    <div id="zoomStone"></div>
+    <button class="big close" id="zoomClose">Schließen</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* =========================================================================
+   FUMINO – Kernlogik (Funktions-Domino)
+   Reine, testbare Funktionen: RNG, Funktionsfamilien, Term-/Graph-Rendering,
+   Aufbau eines eindeutig lösbaren Rings.
+   ========================================================================= */
+(function (root) {
+  "use strict";
+
+  /* ---------------------------- RNG & Helfer ---------------------------- */
+  function mulberry32(a) {
+    return function () {
+      a |= 0; a = (a + 0x6D2B79F5) | 0;
+      let t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  function makeRng(seed) { return mulberry32(seed >>> 0); }
+  function shuffle(arr, rnd) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(rnd() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+  function sampleDistinct(pool, n, rnd) {
+    return shuffle(pool, rnd).slice(0, n);
+  }
+
+  /* --------------------------- Zahlformatierung ------------------------- */
+  const MINUS = "\u2212"; // echtes Minus −
+  const MID = "\u00B7";   // Malpunkt ·
+  function num(v) {
+    let s = (Math.round(v * 10000) / 10000).toString();
+    s = s.replace(".", ",").replace("-", MINUS);
+    return s;
+  }
+  function signTerm(t) {
+    if (Math.abs(t) < 1e-9) return "";
+    return t > 0 ? " + " + num(t) : " " + MINUS + " " + num(-t);
+  }
+
+  /* --------------------------- Term-Rendering --------------------------- */
+  // factor vor einem Ausdruck: 1->"", -1->"−", sonst num(a) (+MID falls sep)
+  function factor(a, sep) {
+    if (a === 1) return "";
+    if (a === -1) return MINUS;
+    return num(a) + (sep ? MID : "");
+  }
+  function coefX(m) {
+    if (m === 1) return "x";
+    if (m === -1) return MINUS + "x";
+    return num(m) + "x";
+  }
+  // Linearfaktor (x − r): r=0 -> "x", sonst "(x − n)" / "(x + n)"
+  function rootFactor(r) {
+    if (r === 0) return "x";
+    return "(x " + (r > 0 ? MINUS + " " + num(r) : "+ " + num(-r)) + ")";
+  }
+  function powFactor(r, m) {
+    const b = rootFactor(r);
+    if (m <= 1) return b;
+    return (b === "x" ? "x" : b) + "<sup>" + m + "</sup>";
+  }
+
+  function termHTML(fam, p) {
+    switch (fam) {
+      case "linear":
+        return "f(x) = " + coefX(p.m) + signTerm(p.t);
+      case "hyperbola": {
+        let den = "x";
+        if (p.b > 0) den += " + " + num(p.b);
+        else if (p.b < 0) den += " " + MINUS + " " + num(-p.b);
+        const fr = '<span class="frac"><span class="fnum">' + num(p.a) +
+          '</span><span class="fden">' + den + "</span></span>";
+        return "f(x) = " + fr + signTerm(p.c);
+      }
+      case "quadratic":
+        if (p.form === "normal") {
+          let s = "f(x) = ";
+          s += (p.a === 1 ? "x<sup>2</sup>" : p.a === -1 ? MINUS + "x<sup>2</sup>" : num(p.a) + "x<sup>2</sup>");
+          if (Math.abs(p.b) > 1e-9) {
+            s += (p.b > 0 ? " + " : " " + MINUS + " ");
+            s += (Math.abs(p.b) === 1 ? "x" : num(Math.abs(p.b)) + "x");
+          }
+          s += signTerm(p.c);
+          return s;
+        } else if (p.form === "nullstellen") {
+          if (p.x1 === p.x2) return "f(x) = " + factor(p.a, false) + powFactor(p.x1, 2);
+          return "f(x) = " + factor(p.a, false) + rootFactor(p.x1) + rootFactor(p.x2);
+        } else {
+          let base;
+          if (p.d === 0) base = "x<sup>2</sup>";
+          else base = "(x " + (p.d > 0 ? MINUS + " " + num(p.d) : "+ " + num(-p.d)) + ")<sup>2</sup>";
+          return "f(x) = " + factor(p.a, false) + base + signTerm(p.e);
+        }
+      case "power": {
+        if (p.root) return "f(x) = " + factor(p.a, false) + "\u221Ax";
+        const exp = p.n < 0 ? MINUS + Math.abs(p.n) : "" + p.n;
+        return "f(x) = " + factor(p.a, false) + "x<sup>" + exp + "</sup>";
+      }
+      case "exp": {
+        const base = num(p.b) + "<sup>x</sup>";
+        return "f(x) = " + factor(p.a, true) + base;
+      }
+      case "trig": {
+        const inner = (p.bb === 1 ? "x" : num(p.bb) + "x");
+        return "f(x) = " + factor(p.a, true) + p.fn + "(" + inner + ")" + signTerm(p.c);
+      }
+      case "poly": {
+        const prod = p.roots.map((f) => powFactor(f.r, f.m)).join("");
+        return "f(x) = " + factor(p.a, true) + prod;
+      }
+    }
+    return "f(x) = ?";
+  }
+
+  // Klartext-Term (für Tests / Vorschau)
+  function termText(fam, p) {
+    return termHTML(fam, p)
+      .replace(/<sup>/g, "^").replace(/<\/sup>/g, "")
+      .replace(/<span class="frac"><span class="fnum">/g, "(")
+      .replace(/<\/span><span class="fden">/g, ")/(")
+      .replace(/<\/span><\/span>/g, ")")
+      .replace(/<[^>]+>/g, "");
+  }
+
+  /* ---------------------- Evaluator & Singularitäten -------------------- */
+  function evaluator(fam, p) {
+    switch (fam) {
+      case "linear": return (x) => p.m * x + p.t;
+      case "hyperbola": return (x) => p.a / (x + p.b) + p.c;
+      case "quadratic": return (x) => p.a * (x - p.d) * (x - p.d) + p.e;
+      case "power":
+        if (p.root) return (x) => (x >= 0 ? p.a * Math.sqrt(x) : NaN);
+        return (x) => p.a * Math.pow(x, p.n);
+      case "exp": return (x) => p.a * Math.pow(p.b, x);
+      case "trig": return (x) => p.a * (p.fn === "sin" ? Math.sin(p.bb * x) : Math.cos(p.bb * x)) + p.c;
+      case "poly": return (x) => { let y = p.a; for (const f of p.roots) y *= Math.pow(x - f.r, f.m); return y; };
+    }
+    return () => NaN;
+  }
+  function singularities(fam, p) {
+    if (fam === "hyperbola") return [-p.b];
+    if (fam === "power" && !p.root && p.n < 0) return [0];
+    return [];
+  }
+  function domainOf(fam, p) {
+    if (fam === "power" && p.root) return [0, Infinity];
+    return null;
+  }
+
+  /* --------------------------- Funktionsobjekt -------------------------- */
+  function keyOf(fam, p) {
+    // Schlüssel unabhängig von Anzeigeform (Graph-Identität)
+    switch (fam) {
+      case "linear": return "lin:" + p.m + ":" + p.t;
+      case "hyperbola": return "hyp:" + p.a + ":" + p.b + ":" + p.c;
+      case "quadratic": return "qua:" + p.a + ":" + p.d + ":" + p.e;
+      case "power": return "pow:" + (p.root ? "r" : p.n) + ":" + p.a;
+      case "exp": return "exp:" + p.a + ":" + p.b;
+      case "trig": return "tri:" + p.fn + ":" + p.a + ":" + p.bb + ":" + p.c;
+      case "poly": return "poly:" + p.a + ":" + p.roots.slice().sort((A, B) => A.r - B.r || A.m - B.m).map((f) => f.r + "^" + f.m).join(",");
+    }
+    return "?";
+  }
+  function makeFunc(fam, p) {
+    return {
+      family: fam, p: p,
+      f: evaluator(fam, p),
+      sing: singularities(fam, p),
+      domain: domainOf(fam, p),
+      key: keyOf(fam, p),
+      termHTML: termHTML(fam, p),
+      termText: termText(fam, p),
+    };
+  }
+
+  /* ----------------------------- Ansichtsfenster ------------------------ */
+  const VIEW = { X0: -5, X1: 5, Y0: -5, Y1: 5 };
+
+  /* --------------------- Graph -> Polyliniensegmente -------------------- */
+  // Liefert Segmente in DATEN-Koordinaten (Arrays von [x,y]), an Polstellen
+  // und Definitionslücken getrennt. y wird begrenzt (endlich), Ausreißer
+  // werden per Clipping (im SVG) abgeschnitten.
+  function plotSegments(func) {
+    const { X0, X1 } = VIEW;
+    const CLAMP = 1000;
+    const N = 360;
+    const step = (X1 - X0) / N;
+    const eps = step * 0.5;
+
+    // Teilintervalle: Fenster ∩ Definitionsbereich, ohne ε-Umgebung der Pole
+    let intervals = [[X0, X1]];
+    if (func.domain) {
+      const [lo, hi] = func.domain;
+      intervals = intervals.map(([a, b]) => [Math.max(a, lo), Math.min(b, hi)]).filter(([a, b]) => b - a > 1e-9);
+    }
+    for (const s of func.sing) {
+      const next = [];
+      for (const [a, b] of intervals) {
+        if (s > a + eps && s < b - eps) { next.push([a, s - eps], [s + eps, b]); }
+        else if (s <= a + eps && s >= a - 1) { next.push([Math.max(a, s + eps), b]); }
+        else if (s >= b - eps && s <= b + 1) { next.push([a, Math.min(b, s - eps)]); }
+        else next.push([a, b]);
+      }
+      intervals = next.filter(([a, b]) => b - a > 1e-9);
+    }
+
+    const segs = [];
+    for (const [a, b] of intervals) {
+      let cur = [];
+      const m = Math.max(2, Math.round((b - a) / step));
+      for (let i = 0; i <= m; i++) {
+        const x = a + (b - a) * (i / m);
+        let y = func.f(x);
+        if (!isFinite(y)) { if (cur.length > 1) segs.push(cur); cur = []; continue; }
+        if (y > CLAMP) y = CLAMP; if (y < -CLAMP) y = -CLAMP;
+        cur.push([x, y]);
+      }
+      if (cur.length > 1) segs.push(cur);
+    }
+    return segs;
+  }
+
+  /* --------------------------- Graph -> SVG ----------------------------- */
+  function graphSVG(func, opts) {
+    opts = opts || {};
+    const S = opts.size || 120;
+    const suffix = opts.id || Math.random().toString(36).slice(2, 8);
+    const m = 7;
+    const { X0, X1, Y0, Y1 } = VIEW;
+    const mapX = (x) => m + (x - X0) / (X1 - X0) * (S - 2 * m);
+    const mapY = (y) => m + (Y1 - y) / (Y1 - Y0) * (S - 2 * m);
+
+    let grid = "";
+    for (let i = Math.ceil(X0); i <= Math.floor(X1); i++) {
+      grid += `<line x1="${mapX(i).toFixed(1)}" y1="${mapY(Y1).toFixed(1)}" x2="${mapX(i).toFixed(1)}" y2="${mapY(Y0).toFixed(1)}" class="fg-grid"/>`;
+    }
+    for (let j = Math.ceil(Y0); j <= Math.floor(Y1); j++) {
+      grid += `<line x1="${mapX(X0).toFixed(1)}" y1="${mapY(j).toFixed(1)}" x2="${mapX(X1).toFixed(1)}" y2="${mapY(j).toFixed(1)}" class="fg-grid"/>`;
+    }
+    // Achsen
+    const ax = `<line x1="${mapX(X0).toFixed(1)}" y1="${mapY(0).toFixed(1)}" x2="${mapX(X1).toFixed(1)}" y2="${mapY(0).toFixed(1)}" class="fg-axis"/>` +
+      `<line x1="${mapX(0).toFixed(1)}" y1="${mapY(Y0).toFixed(1)}" x2="${mapX(0).toFixed(1)}" y2="${mapY(Y1).toFixed(1)}" class="fg-axis"/>`;
+    // kleine Achsenbeschriftung
+    let labels = "";
+    [-4, -2, 2, 4].forEach((v) => {
+      labels += `<text x="${mapX(v).toFixed(1)}" y="${(mapY(0) + 8).toFixed(1)}" class="fg-lab">${Math.abs(v)}</text>`;
+      labels += `<text x="${(mapX(0) - 8).toFixed(1)}" y="${(mapY(v) + 3).toFixed(1)}" class="fg-lab">${Math.abs(v)}</text>`;
+    });
+
+    let path = "";
+    for (const seg of plotSegments(func)) {
+      let d = "";
+      seg.forEach(([x, y], i) => { d += (i ? "L" : "M") + mapX(x).toFixed(1) + " " + mapY(y).toFixed(1) + " "; });
+      path += `<path d="${d.trim()}" class="fg-curve"/>`;
+    }
+
+    // Nullstellen-Markierungen (nur ganzrationale Funktionen)
+    let marks = "";
+    if (func.family === "poly" && func.p && func.p.roots) {
+      const rr = Math.max(3, Math.min(7, S * 0.033));
+      const seen = {};
+      func.p.roots.forEach((f) => {
+        if (f.r < X0 || f.r > X1 || seen[f.r]) return; seen[f.r] = 1;
+        marks += `<circle cx="${mapX(f.r).toFixed(1)}" cy="${mapY(0).toFixed(1)}" r="${rr.toFixed(1)}" class="fg-zero"/>`;
+      });
+    }
+
+    const clip = "clip" + suffix;
+    return `<svg width="${S}" height="${S}" viewBox="0 0 ${S} ${S}" class="fg-svg" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">` +
+      `<defs><clipPath id="${clip}"><rect x="0" y="0" width="${S}" height="${S}"/></clipPath></defs>` +
+      `<g clip-path="url(#${clip})">${grid}${ax}<g>${path}</g></g>${labels}${marks}</svg>`;
+  }
+
+  /* --------------------------- Kandidatenpools -------------------------- */
+  // Grade 8: linear + hyperbola ; Grade 9: quadratic ; Grade 10: power/exp/trig/poly
+  function combos(arr, k) {
+    const res = [], n = arr.length;
+    (function rec(start, cur) {
+      if (cur.length === k) { res.push(cur.slice()); return; }
+      for (let i = start; i < n; i++) { cur.push(arr[i]); rec(i + 1, cur); cur.pop(); }
+    })(0, []);
+    return res;
+  }
+  function distinctPerms(a) {
+    const res = [], seen = new Set();
+    (function perm(arr, cur) {
+      if (!arr.length) { const k = cur.join(","); if (!seen.has(k)) { seen.add(k); res.push(cur.slice()); } return; }
+      for (let i = 0; i < arr.length; i++) { const rest = arr.slice(0, i).concat(arr.slice(i + 1)); cur.push(arr[i]); perm(rest, cur); cur.pop(); }
+    })(a, []);
+    return res;
+  }
+  // nettes führendes a wählen: der Bereich um die Nullstellen soll gut sichtbar
+  // gestreckt sein (am kleinsten Bogen orientiert). Was außen passiert, darf
+  // ruhig aus dem Fenster laufen – dort zählt nur das Vorzeichen von a.
+  function snapNice(v) {
+    const NICE = [0.05, 0.1, 0.2, 0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4, 6, 8, 10, 12];
+    let best = NICE[0], bd = Infinity;
+    for (const c of NICE) { const d = Math.abs(Math.log(c / v)); if (d < bd) { bd = d; best = c; } }
+    return best;
+  }
+  function fitLeadA(roots, sign) {
+    const f0 = (x) => { let y = 1; for (const f of roots) y *= Math.pow(x - f.r, f.m); return y; };
+    const rs = roots.map((o) => o.r);
+    const distinct = Array.from(new Set(rs)).sort((p, q) => p - q);
+    const lobes = [];
+    for (let i = 0; i < distinct.length - 1; i++) {
+      const mid = (distinct[i] + distinct[i + 1]) / 2;
+      lobes.push(Math.abs(f0(mid))); // Höhe des Bogens zwischen zwei Nullstellen
+    }
+    if (!lobes.length) { const r0 = distinct[0]; lobes.push(Math.abs(f0(r0 + 0.7)), Math.abs(f0(r0 - 0.7))); }
+    let ref = Math.min.apply(null, lobes);
+    ref = Math.max(ref, 1e-3);
+    let raw = 3.5 / ref;                 // kleinster Bogen soll ~3,5 hoch werden
+    raw = Math.max(0.05, Math.min(12, raw));
+    return sign * snapNice(raw);
+  }
+  // Ganzrationale Funktionen in Nullstellenform: Grad ≤6, Vielfachheit ≤3
+  function polyCombos(diff) {
+    const partitions = {
+      3: [[1, 1, 1], [2, 1], [3]],
+      4: [[1, 1, 1, 1], [2, 1, 1], [2, 2], [3, 1]],
+      5: [[2, 1, 1, 1], [2, 2, 1], [3, 1, 1], [3, 2]],
+      6: [[2, 2, 1, 1], [2, 2, 2], [3, 1, 1, 1], [3, 2, 1], [3, 3]],
+    };
+    const degrees = diff === 1 ? [3, 4] : [3, 4, 5, 6];
+    const rootRange = { 3: [-3, -2, -1, 0, 1, 2, 3], 4: [-2, -1, 0, 1, 2, 3], 5: [-2, -1, 0, 1, 2], 6: [-2, -1, 0, 1, 2] };
+    const out = [], seen = new Set();
+    for (const d of degrees) {
+      let made = 0;
+      for (const mults of partitions[d]) {
+        const R = rootRange[d];
+        for (const rootset of combos(R, mults.length)) {
+          for (const mp of distinctPerms(mults)) {
+            const rm = rootset.map((r, i) => ({ r, m: mp[i] }));
+            for (const sign of [1, -1]) {
+              const key = sign + "|" + rm.slice().sort((A, B) => A.r - B.r).map((f) => f.r + "^" + f.m).join(",");
+              if (seen.has(key)) continue; seen.add(key);
+              out.push({ roots: rm, sign });
+              made++;
+            }
+          }
+          if (made > 140) break;
+        }
+        if (made > 140) break;
+      }
+    }
+    return out;
+  }
+
+  function pool(grade, opts, diff) {
+    const P = [];
+    const add = (fam, p) => P.push(makeFunc(fam, p));
+
+    if (grade === 8) {
+      if (opts.linear !== false) {
+        const ms = diff === 1 ? [-2, -1, -0.5, 0.5, 1, 2] : [-2, -1.5, -1, -0.5, 0.5, 1, 1.5, 2];
+        const ts = diff === 1 ? [-3, -2, -1, 1, 2, 3] : [-4, -3, -2, -1, 0, 1, 2, 3, 4];
+        ms.forEach((m) => ts.forEach((t) => add("linear", { m, t })));
+      }
+      if (opts.hyperbola !== false) {
+        const as = diff === 1 ? [-2, -1, 1, 2] : [-2, -1, 1, 2];
+        const bs = diff === 1 ? [-1, 0, 1] : [-2, -1, 0, 1, 2];
+        const cs = diff === 1 ? [-1, 0, 1] : [-2, -1, 0, 1, 2];
+        as.forEach((a) => bs.forEach((b) => cs.forEach((c) => add("hyperbola", { a, b, c }))));
+      }
+    } else if (grade === 9) {
+      const as = diff === 1 ? [-1, -0.5, 0.5, 1, 2] : [-2, -1, -0.5, 0.5, 1, 2];
+      const roots = diff === 1 ? [-2, -1, 0, 1, 2] : [-3, -2, -1, 0, 1, 2, 3];
+      const forms = [];
+      if (opts.scheitel !== false) forms.push("scheitel");
+      if (opts.normal === true) forms.push("normal");
+      if (opts.nullstellen === true) forms.push("nullstellen");
+      if (!forms.length) forms.push("scheitel");
+      const pick = (list, h) => list[((Math.round(h) % list.length) + list.length) % list.length];
+      // (1) Parabeln mit ganzzahligen Nullstellen – in jeder Form darstellbar
+      as.forEach((a) => {
+        for (let i = 0; i < roots.length; i++) {
+          for (let j = i; j < roots.length; j++) {
+            const x1 = roots[i], x2 = roots[j];
+            const d = (x1 + x2) / 2, e = -a * ((x2 - x1) * (x2 - x1)) / 4;
+            const b = -2 * a * d, c = a * d * d + e;
+            const form = pick(forms, a * 7 + d * 13 + (x2 - x1) * 5);
+            add("quadratic", { a, d, e, b, c, form, x1, x2 });
+          }
+        }
+      });
+      // (2) Parabeln ohne reelle Nullstellen – nur Scheitel-/Normalform
+      const nonNull = forms.filter((f) => f !== "nullstellen");
+      if (nonNull.length) {
+        const ds = diff === 1 ? [-2, -1, 0, 1, 2] : [-3, -2, -1, 0, 1, 2, 3];
+        const es = diff === 1 ? [1, 2] : [1, 2, 3];
+        as.forEach((a) => ds.forEach((d) => es.forEach((eMag) => {
+          const e = a > 0 ? eMag : -eMag; // gleiche Öffnungsrichtung → kein reeller Schnittpunkt
+          const b = -2 * a * d, c = a * d * d + e;
+          const form = pick(nonNull, a * 3 + d * 7 + eMag * 11);
+          add("quadratic", { a, d, e, b, c, form });
+        })));
+      }
+    } else if (grade === 10) {
+      if (opts.power !== false) {
+        const as = diff === 1 ? [1, -1, 2, -2, 0.5] : [1, -1, 2, -2, 0.5, -0.5];
+        const ns = diff === 1 ? [2, 3, 4, -1, -2] : [2, 3, 4, 5, -1, -2];
+        as.forEach((a) => ns.forEach((n) => add("power", { a, n, root: false })));
+        as.slice(0, 2).forEach((a) => add("power", { a, root: true }));
+      }
+      if (opts.exp !== false) {
+        const bs = diff === 1 ? [2, 3, 4, 0.5, 0.25] : [2, 3, 4, 10, 1.5, 0.5, 0.25];
+        const as = diff === 1 ? [1, 2] : [1, 2, 0.5, -1];
+        as.forEach((a) => bs.forEach((b) => add("exp", { a, b })));
+      }
+      if (opts.trig !== false) {
+        const fns = ["sin", "cos"];
+        const as = diff === 1 ? [1, 2] : [1, 2, 0.5];
+        const bbs = diff === 1 ? [1, 2] : [1, 2];
+        const cs = diff === 1 ? [0] : [0, 1, -1];
+        fns.forEach((fn) => as.forEach((a) => bbs.forEach((bb) => cs.forEach((c) => add("trig", { fn, a, bb, c })))));
+      }
+      if (opts.poly === true) {
+        polyCombos(diff).forEach((pc) => {
+          const a = fitLeadA(pc.roots, pc.sign);
+          add("poly", { a, roots: pc.roots.map((f) => ({ r: f.r, m: f.m })) });
+        });
+      }
+    }
+    // nach Schlüssel eindeutig
+    const seen = new Set(), uniq = [];
+    for (const fn of P) { if (!seen.has(fn.key)) { seen.add(fn.key); uniq.push(fn); } }
+    return uniq;
+  }
+
+  /* ------------------------- Spiel/Ring aufbauen ------------------------ */
+  // Wählt n verschiedene Funktionen und baut n Steine als einen Zyklus:
+  // Stein_k = { termOf: f_k , graphOf: f_{k-1} }  (mod n)  → genau ein Ring.
+  function buildGame(config) {
+    const rnd = makeRng(config.seed || (Date.now() >>> 0));
+    const P = pool(config.grade, config.opts || {}, config.difficulty || 1);
+    const n = config.count || 8;
+    if (P.length < n) return { error: "pool_too_small", available: P.length };
+    const funcs = sampleDistinct(P, n, rnd).map((f, i) => Object.assign({ id: i }, f));
+
+    const stones = [];
+    for (let k = 0; k < n; k++) {
+      const termF = funcs[k];
+      const graphF = funcs[(k - 1 + n) % n];
+      stones.push({ id: k, termOf: termF.id, graphOf: graphF.id });
+    }
+    return { funcs, stones: shuffle(stones, rnd), rndSeed: config.seed || 0, n };
+  }
+
+  /* ------------------------------- Export ------------------------------- */
+  const API = {
+    makeRng, shuffle, sampleDistinct, num, signTerm,
+    termHTML, termText, evaluator, singularities, plotSegments, graphSVG,
+    makeFunc, keyOf, pool, buildGame, VIEW, MINUS, MID,
+  };
+  root.FuminoCore = API;
+  if (typeof module !== "undefined" && module.exports) module.exports = API;
+})(typeof window !== "undefined" ? window : globalThis);
+
+</script>
+<script>
+/* ==========================  FUMINO – App/UI  ========================== */
+(function () {
+  "use strict";
+  const F = window.FuminoCore;
+  const $ = (s, r) => (r || document).querySelector(s);
+  const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+
+  /* ---------- Konfiguration & Funktionsart-Definitionen ---------- */
+  const TYPES = {
+    8: [
+      { key: "linear", name: "Lineare Funktionen", ex: "f(x) = m\u00B7x + t", def: true },
+      { key: "hyperbola", name: "Gebrochenrationale Funktionen", ex: "f(x) = a/(x+b) + c", def: true },
+    ],
+    9: [
+      { key: "scheitel", name: "Scheitelpunktform", ex: "f(x) = a(x\u2212d)\u00B2 + e", def: true },
+      { key: "nullstellen", name: "Nullstellenform", ex: "f(x) = a(x\u2212x\u2081)(x\u2212x\u2082)", def: false },
+      { key: "normal", name: "Normalform", ex: "f(x) = ax\u00B2 + bx + c", def: false },
+    ],
+    10: [
+      { key: "power", name: "Potenzfunktionen", ex: "f(x) = a\u00B7x\u207F, \u221Ax", def: true },
+      { key: "exp", name: "Exponentialfunktionen", ex: "f(x) = a\u00B7b\u02E3 (ohne e)", def: true },
+      { key: "trig", name: "Sinus / Kosinus", ex: "f(x) = a\u00B7sin(bx) + c", def: true },
+      { key: "poly", name: "Ganzrationale Funktionen", ex: "Nullstellenform, bis Grad 6", def: false },
+    ],
+  };
+
+  const cfg = { grade: 8, opts: {}, mode: "vs", diff: 1, count: 8 };
+  let G = null; // aktuelles Spiel
+
+  /* ---------- kleines Graph-Icon fürs Logo ---------- */
+  function logoIcon() {
+    const f = F.makeFunc("quadratic", { a: 1, d: 0, e: -2, form: "scheitel" });
+    return F.graphSVG(f, { size: 40, id: "logo" + Math.random().toString(36).slice(2, 6) });
+  }
+  $("#logoGraph").innerHTML = logoIcon();
+  $("#logoGraph2").innerHTML = logoIcon();
+
+  /* ======================  Startbildschirm  ====================== */
+  function renderTypeChecks() {
+    const wrap = $("#typeChecks");
+    wrap.innerHTML = "";
+    cfg.opts = {};
+    TYPES[cfg.grade].forEach((t) => {
+      cfg.opts[t.key] = t.def;
+      const el = document.createElement("div");
+      el.className = "chk" + (t.def ? " on" : "");
+      el.innerHTML = `<span class="box">\u2713</span><span class="meta"><span class="name">${t.name}</span><span class="ex">${t.ex}</span></span>`;
+      el.addEventListener("click", () => {
+        // mindestens eine Art aktiv lassen
+        const active = Object.values(cfg.opts).filter(Boolean).length;
+        if (cfg.opts[t.key] && active <= 1) { toast("Mindestens eine Funktionsart auswählen.", "bad"); return; }
+        cfg.opts[t.key] = !cfg.opts[t.key];
+        el.classList.toggle("on", cfg.opts[t.key]);
+        updatePool();
+      });
+      wrap.appendChild(el);
+    });
+    updatePool();
+  }
+
+  function segSetup(id, onPick) {
+    $$("#" + id + " button").forEach((b) => {
+      b.addEventListener("click", () => {
+        if (b.disabled) return;
+        $$("#" + id + " button").forEach((x) => x.classList.remove("sel"));
+        b.classList.add("sel");
+        onPick(b.dataset.v);
+      });
+    });
+  }
+  segSetup("segGrade", (v) => { cfg.grade = +v; renderTypeChecks(); });
+  segSetup("segMode", (v) => { cfg.mode = v; });
+  segSetup("segDiff", (v) => { cfg.diff = +v; updatePool(); });
+  segSetup("segCount", (v) => { cfg.count = +v; updatePool(); });
+
+  function currentPoolSize() {
+    return F.pool(cfg.grade, cfg.opts, cfg.diff).length;
+  }
+  function updatePool() {
+    const size = currentPoolSize();
+    // Umfang-Buttons je nach Pool freigeben
+    $$("#segCount button").forEach((b) => {
+      const need = +b.dataset.v;
+      b.disabled = size < need;
+      if (b.disabled && b.classList.contains("sel")) {
+        b.classList.remove("sel");
+      }
+    });
+    // falls aktuelle Auswahl deaktiviert wurde: größte erlaubte wählen
+    if (!$("#segCount button.sel")) {
+      const allowed = $$("#segCount button").filter((b) => !b.disabled);
+      if (allowed.length) { allowed[allowed.length - 1].classList.add("sel"); cfg.count = +allowed[allowed.length - 1].dataset.v; }
+    } else {
+      cfg.count = +$("#segCount button.sel").dataset.v;
+    }
+    $("#poolInfo").textContent = size + " verschiedene Funktionen verfügbar";
+    const okStart = size >= 8;
+    $("#startBtn").disabled = !okStart;
+    $("#startHint").textContent = okStart ? "" : "Zu wenige Funktionen \u2013 weitere Art oder Stufe 2 wählen.";
+  }
+
+  $("#startBtn").addEventListener("click", startGame);
+
+  /* ==========================  Spielaufbau  ========================== */
+  function startGame() {
+    const game = F.buildGame({ grade: cfg.grade, opts: cfg.opts, difficulty: cfg.diff, count: cfg.count, seed: (Math.random() * 1e9) >>> 0 });
+    if (game.error) { toast("Bitte weitere Funktionsarten wählen.", "bad"); return; }
+    const funcById = {}; game.funcs.forEach((f) => (funcById[f.id] = f));
+    const stoneById = {}; game.stones.forEach((s) => (stoneById[s.id] = s));
+
+    G = {
+      funcById, stoneById, mode: cfg.mode,
+      chain: [], leftEnd: null, rightEnd: null,
+      hands: [[], []], pool: [], current: 0, selected: null, passes: 0, finished: false,
+    };
+
+    const ids = game.stones.map((s) => s.id);
+    if (cfg.mode === "coop") {
+      G.pool = ids.slice();
+    } else {
+      const half = Math.ceil(ids.length / 2);
+      G.hands[0] = ids.slice(0, half);
+      G.hands[1] = ids.slice(half);
+    }
+
+    show("game");
+    setupTurnUI();
+    renderAll();
+    if (cfg.mode === "vs") { /* Spieler 0 beginnt direkt */ }
+  }
+
+  function setupTurnUI() {
+    const coop = G.mode === "coop";
+    $("#passBtn").style.display = coop ? "none" : "";
+    $("#turnBadge").className = "turnbadge " + (coop ? "" : "p" + G.current);
+    $("#turnText").textContent = coop ? "Kooperativ" : "Spieler " + (G.current + 1);
+    $("#handLabel").textContent = coop ? "Alle Steine" : "Steine von Spieler " + (G.current + 1);
+  }
+
+  function activeHand() { return G.mode === "coop" ? G.pool : G.hands[G.current]; }
+
+  /* ==========================  Rendering  ========================== */
+  function graphCellSVG(funcId, size) {
+    const f = G.funcById[funcId];
+    return F.graphSVG(f, { size: size || 130, id: "g" + funcId + "_" + Math.random().toString(36).slice(2, 6) });
+  }
+  function stoneEl(stone, opts) {
+    opts = opts || {};
+    const el = document.createElement("div");
+    el.className = "stone " + (opts.cls || "");
+    el.dataset.id = stone.id;
+    const gCell = `<div class="cell graph ${opts.openLeft ? "open" : ""}">${graphCellSVG(stone.graphOf, opts.gsize)}</div>`;
+    const tCell = `<div class="cell term ${opts.openRight ? "open" : ""}"><div class="term-txt">${G.funcById[stone.termOf].termHTML}</div></div>`;
+    el.innerHTML = gCell + tCell + `<div class="zoom">\u26F6</div>`;
+    $(".zoom", el).addEventListener("click", (e) => { e.stopPropagation(); openZoom(stone); });
+    return el;
+  }
+
+  function renderBoard() {
+    const board = $("#board");
+    board.innerHTML = "";
+    if (!G.chain.length) {
+      board.innerHTML = '<div class="emptyboard">Noch kein Stein liegt.<br>W\u00E4hle unten einen Stein und lege ihn an.</div>';
+      updateEndPills();
+      return;
+    }
+    // linkes Drop-Ziel
+    const dl = dropTarget("L");
+    board.appendChild(dl);
+    G.chain.forEach((sid, i) => {
+      const s = G.stoneById[sid];
+      board.appendChild(stoneEl(s, {
+        cls: "board-s",
+        gsize: 130,
+        openLeft: i === 0,
+        openRight: i === G.chain.length - 1,
+      }));
+    });
+    const dr = dropTarget("R");
+    board.appendChild(dr);
+    updateDropTargets();
+    updateEndPills();
+    // ans zuletzt gelegte Ende scrollen
+    setTimeout(() => { if (G._scrollTo === "L") board.scrollLeft = 0; else board.scrollLeft = board.scrollWidth; }, 0);
+  }
+
+  function dropTarget(side) {
+    const d = document.createElement("div");
+    d.className = "droptarget"; d.dataset.side = side;
+    d.textContent = side === "L" ? "\u25C0 hier" : "hier \u25B6";
+    d.addEventListener("click", () => { if (G.selected != null) tryPlace(G.selected, side); });
+    return d;
+  }
+  function updateDropTargets() {
+    const s = G.selected != null ? G.stoneById[G.selected] : null;
+    $$(".droptarget").forEach((d) => {
+      const side = d.dataset.side;
+      const okv = s && (side === "L" ? canLeft(s) : canRight(s));
+      d.classList.toggle("active", !!okv);
+    });
+  }
+
+  function updateEndPills() {
+    if (!G.chain.length) {
+      $("#pillLeft").textContent = "Lege den ersten Stein";
+      $("#pillRight").textContent = "";
+      return;
+    }
+    $("#pillLeft").innerHTML = "Links offen: <b>Graph</b> \u2013 passenden <b>Term</b> anlegen";
+    $("#pillRight").innerHTML = "Rechts offen: <b>Term</b> \u2013 passenden <b>Graphen</b> anlegen";
+  }
+
+  function renderHand() {
+    const hand = $("#hand");
+    hand.innerHTML = "";
+    const ids = activeHand();
+    $("#handCount").textContent = ids.length + " Stein" + (ids.length === 1 ? "" : "e");
+    ids.forEach((sid) => {
+      const s = G.stoneById[sid];
+      const playable = isPlayable(s);
+      const el = stoneEl(s, { cls: "hand-s" + (playable ? " playable" : "") + (G.selected === sid ? " sel" : ""), gsize: 100 });
+      el.addEventListener("click", () => selectStone(sid));
+      hand.appendChild(el);
+    });
+  }
+
+  function renderAll() { renderBoard(); renderHand(); }
+
+  /* ==========================  Spiellogik  ========================== */
+  function canLeft(s) { return G.chain.length > 0 && s.termOf === G.leftEnd.func; }
+  function canRight(s) { return G.chain.length > 0 && s.graphOf === G.rightEnd.func; }
+  function isPlayable(s) {
+    if (!G.chain.length) return true; // Eröffnung
+    return canLeft(s) || canRight(s);
+  }
+
+  function selectStone(sid) {
+    G.selected = (G.selected === sid) ? null : sid;
+    renderHand();
+    if (!G.chain.length) {
+      // Eröffnung: direkt legen erlauben (ein Klick wählt, zweiter … → wir bieten sofort an)
+    }
+    updateDropTargets();
+    // Bei leerer Tafel: nach Auswahl direkt anlegen
+    if (G.selected != null && !G.chain.length) placeOpener(G.selected);
+  }
+
+  function placeOpener(sid) {
+    const s = G.stoneById[sid];
+    G.chain = [sid];
+    G.leftEnd = { func: s.graphOf, rep: "graph" };
+    G.rightEnd = { func: s.termOf, rep: "term" };
+    removeFromHand(sid);
+    G.selected = null; G.passes = 0; G._scrollTo = "R";
+    afterMove();
+  }
+
+  function tryPlace(sid, side) {
+    const s = G.stoneById[sid];
+    if (!G.chain.length) { placeOpener(sid); return; }
+    if (side === "L") {
+      if (!canLeft(s)) return badPlace();
+      G.chain.unshift(sid);
+      G.leftEnd = { func: s.graphOf, rep: "graph" };
+      G._scrollTo = "L";
+    } else {
+      if (!canRight(s)) return badPlace();
+      G.chain.push(sid);
+      G.rightEnd = { func: s.termOf, rep: "term" };
+      G._scrollTo = "R";
+    }
+    removeFromHand(sid);
+    G.selected = null; G.passes = 0;
+    afterMove();
+  }
+
+  function badPlace() {
+    toast("Passt nicht \u2013 Term und Graph geh\u00F6ren zu verschiedenen Funktionen.", "bad");
+  }
+
+  function removeFromHand(sid) {
+    const h = activeHand();
+    const i = h.indexOf(sid);
+    if (i >= 0) h.splice(i, 1);
+  }
+
+  function afterMove() {
+    // Gewonnen?
+    if (G.mode === "coop") {
+      if (G.pool.length === 0) return finish(null);
+      renderAll();
+      return;
+    }
+    // Gegeneinander
+    if (G.hands[G.current].length === 0) return finish(G.current);
+    nextTurn();
+  }
+
+  function nextTurn() {
+    G.current = 1 - G.current;
+    G.selected = null;
+    setupTurnUI();
+    renderBoard(); // Tafel schon zeigen, Hand erst nach Weitergeben
+    // Weitergeben-Bildschirm
+    $("#passTitle").textContent = "Weitergeben";
+    $("#passSub").textContent = "Gib das iPad an Spieler " + (G.current + 1) + ".";
+    $("#hand").innerHTML = "";
+    show("game");
+    $("#pass").classList.add("on");
+  }
+  $("#passReady").addEventListener("click", () => {
+    $("#pass").classList.remove("on");
+    renderHand();
+    // Falls kein Zug möglich → Hinweis
+    const any = activeHand().some((sid) => isPlayable(G.stoneById[sid]));
+    if (!any) toast("Kein passender Stein \u2013 bitte auf \u201EPassen\u201C tippen.", "bad");
+  });
+
+  $("#passBtn").addEventListener("click", () => {
+    if (G.mode !== "vs" || G.finished) return;
+    const any = activeHand().some((sid) => isPlayable(G.stoneById[sid]));
+    if (any) { toast("Du hast noch einen passenden Stein!", "bad"); return; }
+    G.passes++;
+    if (G.passes >= 2) { toast("Beide k\u00F6nnen nicht \u2013 unentschieden.", ""); return finish(-1); }
+    nextTurn();
+  });
+
+  /* Tipp: markiere einen spielbaren Stein */
+  $("#hintBtn").addEventListener("click", () => {
+    if (G.finished) return;
+    const ids = activeHand();
+    const sid = ids.find((s) => isPlayable(G.stoneById[s]));
+    if (sid == null) { toast("Kein passender Stein \u2013 auf \u201EPassen\u201C tippen.", ""); return; }
+    if (!G.chain.length) { toast("Jeder Stein darf er\u00F6ffnen \u2013 tippe einen an.", "good"); return; }
+    G.selected = sid;
+    renderHand();
+    updateDropTargets();
+    const el = $('.hand .stone[data-id="' + sid + '"]');
+    if (el) el.scrollIntoView({ inline: "center", behavior: "smooth" });
+    toast("Dieser Stein passt \u2013 tippe auf ein gl\u00FChendes Ende.", "good");
+  });
+
+  $("#menuBtn").addEventListener("click", () => { if (confirm("Zur\u00FCck zu den Einstellungen?")) show("start"); });
+  $("#newsetBtn").addEventListener("click", () => {
+    const inProgress = G && !G.finished && G.chain && G.chain.length > 0;
+    if (inProgress && !confirm("Neues Funktionenset erzeugen? Das aktuelle Spiel wird beendet.")) return;
+    startGame();
+    toast("Neue Funktionen ausgew\u00FChlt.", "good");
+  });
+
+  /* ==========================  Overlays  ========================== */
+  function finish(winner) {
+    G.finished = true;
+    $("#pass").classList.remove("on");
+    if (G.mode === "coop") {
+      $("#winTitle").textContent = "Geschafft! \uD83C\uDF89";
+      $("#winSub").textContent = "Alle " + G.chain.length + " Steine bilden einen g\u00FCltigen Ring.";
+    } else if (winner === -1) {
+      $("#winTitle").textContent = "Unentschieden";
+      $("#winSub").textContent = "Keiner konnte mehr anlegen.";
+    } else {
+      $("#winTitle").textContent = "Spieler " + (winner + 1) + " gewinnt! \uD83C\uDF89";
+      $("#winSub").textContent = "Alle Steine passend abgelegt.";
+    }
+    $("#win").classList.add("on");
+  }
+  $("#winAgain").addEventListener("click", () => { $("#win").classList.remove("on"); startGame(); });
+  $("#winMenu").addEventListener("click", () => { $("#win").classList.remove("on"); show("start"); });
+
+  function openZoom(stone) {
+    const el = stoneEl(stone, { cls: "zoom-s", gsize: 340 });
+    $(".zoom", el) && $(".zoom", el).remove();
+    $("#zoomStone").innerHTML = "";
+    $("#zoomStone").appendChild(el);
+    $("#zoom").classList.add("on");
+  }
+  $("#zoomClose").addEventListener("click", () => $("#zoom").classList.remove("on"));
+  $("#zoom").addEventListener("click", (e) => { if (e.target.id === "zoom") $("#zoom").classList.remove("on"); });
+
+  /* ==========================  Helfer  ========================== */
+  function show(id) {
+    $$(".screen").forEach((s) => s.classList.remove("on"));
+    $("#" + id).classList.add("on");
+  }
+  let toastTimer = null;
+  function toast(msg, kind) {
+    const t = $("#toast");
+    t.textContent = msg; t.className = "on " + (kind || "");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove("on"), 2600);
+  }
+
+  /* Test-Hook */
+  window.__fumino = {
+    getState: () => G, cfg, startGame, tryPlace, placeOpener, selectStone,
+    canLeft, canRight, isPlayable, activeHand, currentPoolSize, F,
+  };
+
+  // Initial
+  renderTypeChecks();
+})();
+
+</script>
+<!-- ===================== Teilen / QR-Code (gemeinsamer Baustein) ===================== -->
+<style>
+  .sq-fab{position:fixed; left:calc(10px + env(safe-area-inset-left)); bottom:calc(10px + env(safe-area-inset-bottom));
+    z-index:120; display:none; align-items:center; gap:7px; padding:10px 14px; border-radius:999px; border:none;
+    background:rgba(20,20,26,.82); color:#fff; font:inherit; font-size:14.5px; font-weight:700; cursor:pointer;
+    box-shadow:0 4px 14px rgba(0,0,0,.3); -webkit-tap-highlight-color:transparent;}
+  .sq-fab.on{display:inline-flex;}
+  .sq-fab:active{transform:scale(.96);}
+  .sq-fab svg{width:17px; height:17px; display:block;}
+  .sq-inline{display:inline-flex; align-items:center; gap:6px;}
+  .sq-ov{position:fixed; inset:0; z-index:9000; display:none; align-items:center; justify-content:center;
+    background:rgba(12,14,18,.86); padding:16px; -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px);}
+  .sq-ov.on{display:flex;}
+  .sq-card{background:#fff; color:#1b1f24; border-radius:22px; padding:22px 22px 18px; width:100%; max-width:520px;
+    max-height:94vh; overflow:auto; text-align:center; box-shadow:0 24px 60px rgba(0,0,0,.45);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+  .sq-card h2{margin:0 0 2px; font-size:1.4rem; font-weight:800;}
+  .sq-card p.sq-sub{margin:0 0 14px; color:#5b6470; font-size:.95rem;}
+  /* Der weiße Rand um den Code ist Vorschrift: mindestens vier Module Ruhezone,
+     sonst erkennen Kameras den Code nicht. Die Breite setzt das Skript. */
+  .sq-code{display:flex; align-items:center; justify-content:center; margin:0 auto 12px;
+    width:min(74vw,330px); background:#fff; border:1px solid #e4e6ea; border-radius:14px; padding:14px 0;}
+  .sq-code canvas, .sq-code img{width:var(--sq-w,84%); height:auto; display:block; margin:0 auto; image-rendering:pixelated;}
+  .sq-code table{margin:0 auto;}
+  .sq-url{font-size:.86rem; color:#5b6470; word-break:break-all; background:#f3f4f6; border-radius:10px;
+    padding:9px 11px; margin-bottom:14px; line-height:1.4;
+    -webkit-user-select:text; user-select:text;}
+  .sq-row{display:flex; gap:9px; flex-wrap:wrap;}
+  .sq-row button{flex:1 1 130px; border:none; border-radius:12px; padding:13px 14px; font:inherit; font-size:1rem;
+    font-weight:750; cursor:pointer; background:#1b1f24; color:#fff; min-height:48px;}
+  .sq-row button.sq-alt{background:#fff; color:#1b1f24; box-shadow:inset 0 0 0 2px #dfe2e7;}
+  .sq-row button.sq-ok{background:#1f7a46;}
+  .sq-row button:active{transform:scale(.985);}
+  .sq-note{margin-top:11px; font-size:.8rem; color:#8a929c; line-height:1.45;}
+</style>
+<script>/* QR-Code: qrcodejs von David Shim (MIT) – dieselbe Bibliothek wie in der Digitalen Tafel */
+var QRCode;!function(){function a(a){this.mode=c.MODE_8BIT_BYTE,this.data=a,this.parsedData=[];for(var b=[],d=0,e=this.data.length;e>d;d++){var f=this.data.charCodeAt(d);f>65536?(b[0]=240|(1835008&f)>>>18,b[1]=128|(258048&f)>>>12,b[2]=128|(4032&f)>>>6,b[3]=128|63&f):f>2048?(b[0]=224|(61440&f)>>>12,b[1]=128|(4032&f)>>>6,b[2]=128|63&f):f>128?(b[0]=192|(1984&f)>>>6,b[1]=128|63&f):b[0]=f,this.parsedData=this.parsedData.concat(b)}this.parsedData.length!=this.data.length&&(this.parsedData.unshift(191),this.parsedData.unshift(187),this.parsedData.unshift(239))}function b(a,b){this.typeNumber=a,this.errorCorrectLevel=b,this.modules=null,this.moduleCount=0,this.dataCache=null,this.dataList=[]}function i(a,b){if(void 0==a.length)throw new Error(a.length+"/"+b);for(var c=0;c<a.length&&0==a[c];)c++;this.num=new Array(a.length-c+b);for(var d=0;d<a.length-c;d++)this.num[d]=a[d+c]}function j(a,b){this.totalCount=a,this.dataCount=b}function k(){this.buffer=[],this.length=0}function m(){return"undefined"!=typeof CanvasRenderingContext2D}function n(){var a=!1,b=navigator.userAgent;return/android/i.test(b)&&(a=!0,aMat=b.toString().match(/android ([0-9]\.[0-9])/i),aMat&&aMat[1]&&(a=parseFloat(aMat[1]))),a}function r(a,b){for(var c=1,e=s(a),f=0,g=l.length;g>=f;f++){var h=0;switch(b){case d.L:h=l[f][0];break;case d.M:h=l[f][1];break;case d.Q:h=l[f][2];break;case d.H:h=l[f][3]}if(h>=e)break;c++}if(c>l.length)throw new Error("Too long data");return c}function s(a){var b=encodeURI(a).toString().replace(/\%[0-9a-fA-F]{2}/g,"a");return b.length+(b.length!=a?3:0)}a.prototype={getLength:function(){return this.parsedData.length},write:function(a){for(var b=0,c=this.parsedData.length;c>b;b++)a.put(this.parsedData[b],8)}},b.prototype={addData:function(b){var c=new a(b);this.dataList.push(c),this.dataCache=null},isDark:function(a,b){if(0>a||this.moduleCount<=a||0>b||this.moduleCount<=b)throw new Error(a+","+b);return this.modules[a][b]},getModuleCount:function(){return this.moduleCount},make:function(){this.makeImpl(!1,this.getBestMaskPattern())},makeImpl:function(a,c){this.moduleCount=4*this.typeNumber+17,this.modules=new Array(this.moduleCount);for(var d=0;d<this.moduleCount;d++){this.modules[d]=new Array(this.moduleCount);for(var e=0;e<this.moduleCount;e++)this.modules[d][e]=null}this.setupPositionProbePattern(0,0),this.setupPositionProbePattern(this.moduleCount-7,0),this.setupPositionProbePattern(0,this.moduleCount-7),this.setupPositionAdjustPattern(),this.setupTimingPattern(),this.setupTypeInfo(a,c),this.typeNumber>=7&&this.setupTypeNumber(a),null==this.dataCache&&(this.dataCache=b.createData(this.typeNumber,this.errorCorrectLevel,this.dataList)),this.mapData(this.dataCache,c)},setupPositionProbePattern:function(a,b){for(var c=-1;7>=c;c++)if(!(-1>=a+c||this.moduleCount<=a+c))for(var d=-1;7>=d;d++)-1>=b+d||this.moduleCount<=b+d||(this.modules[a+c][b+d]=c>=0&&6>=c&&(0==d||6==d)||d>=0&&6>=d&&(0==c||6==c)||c>=2&&4>=c&&d>=2&&4>=d?!0:!1)},getBestMaskPattern:function(){for(var a=0,b=0,c=0;8>c;c++){this.makeImpl(!0,c);var d=f.getLostPoint(this);(0==c||a>d)&&(a=d,b=c)}return b},createMovieClip:function(a,b,c){var d=a.createEmptyMovieClip(b,c),e=1;this.make();for(var f=0;f<this.modules.length;f++)for(var g=f*e,h=0;h<this.modules[f].length;h++){var i=h*e,j=this.modules[f][h];j&&(d.beginFill(0,100),d.moveTo(i,g),d.lineTo(i+e,g),d.lineTo(i+e,g+e),d.lineTo(i,g+e),d.endFill())}return d},setupTimingPattern:function(){for(var a=8;a<this.moduleCount-8;a++)null==this.modules[a][6]&&(this.modules[a][6]=0==a%2);for(var b=8;b<this.moduleCount-8;b++)null==this.modules[6][b]&&(this.modules[6][b]=0==b%2)},setupPositionAdjustPattern:function(){for(var a=f.getPatternPosition(this.typeNumber),b=0;b<a.length;b++)for(var c=0;c<a.length;c++){var d=a[b],e=a[c];if(null==this.modules[d][e])for(var g=-2;2>=g;g++)for(var h=-2;2>=h;h++)this.modules[d+g][e+h]=-2==g||2==g||-2==h||2==h||0==g&&0==h?!0:!1}},setupTypeNumber:function(a){for(var b=f.getBCHTypeNumber(this.typeNumber),c=0;18>c;c++){var d=!a&&1==(1&b>>c);this.modules[Math.floor(c/3)][c%3+this.moduleCount-8-3]=d}for(var c=0;18>c;c++){var d=!a&&1==(1&b>>c);this.modules[c%3+this.moduleCount-8-3][Math.floor(c/3)]=d}},setupTypeInfo:function(a,b){for(var c=this.errorCorrectLevel<<3|b,d=f.getBCHTypeInfo(c),e=0;15>e;e++){var g=!a&&1==(1&d>>e);6>e?this.modules[e][8]=g:8>e?this.modules[e+1][8]=g:this.modules[this.moduleCount-15+e][8]=g}for(var e=0;15>e;e++){var g=!a&&1==(1&d>>e);8>e?this.modules[8][this.moduleCount-e-1]=g:9>e?this.modules[8][15-e-1+1]=g:this.modules[8][15-e-1]=g}this.modules[this.moduleCount-8][8]=!a},mapData:function(a,b){for(var c=-1,d=this.moduleCount-1,e=7,g=0,h=this.moduleCount-1;h>0;h-=2)for(6==h&&h--;;){for(var i=0;2>i;i++)if(null==this.modules[d][h-i]){var j=!1;g<a.length&&(j=1==(1&a[g]>>>e));var k=f.getMask(b,d,h-i);k&&(j=!j),this.modules[d][h-i]=j,e--,-1==e&&(g++,e=7)}if(d+=c,0>d||this.moduleCount<=d){d-=c,c=-c;break}}}},b.PAD0=236,b.PAD1=17,b.createData=function(a,c,d){for(var e=j.getRSBlocks(a,c),g=new k,h=0;h<d.length;h++){var i=d[h];g.put(i.mode,4),g.put(i.getLength(),f.getLengthInBits(i.mode,a)),i.write(g)}for(var l=0,h=0;h<e.length;h++)l+=e[h].dataCount;if(g.getLengthInBits()>8*l)throw new Error("code length overflow. ("+g.getLengthInBits()+">"+8*l+")");for(g.getLengthInBits()+4<=8*l&&g.put(0,4);0!=g.getLengthInBits()%8;)g.putBit(!1);for(;;){if(g.getLengthInBits()>=8*l)break;if(g.put(b.PAD0,8),g.getLengthInBits()>=8*l)break;g.put(b.PAD1,8)}return b.createBytes(g,e)},b.createBytes=function(a,b){for(var c=0,d=0,e=0,g=new Array(b.length),h=new Array(b.length),j=0;j<b.length;j++){var k=b[j].dataCount,l=b[j].totalCount-k;d=Math.max(d,k),e=Math.max(e,l),g[j]=new Array(k);for(var m=0;m<g[j].length;m++)g[j][m]=255&a.buffer[m+c];c+=k;var n=f.getErrorCorrectPolynomial(l),o=new i(g[j],n.getLength()-1),p=o.mod(n);h[j]=new Array(n.getLength()-1);for(var m=0;m<h[j].length;m++){var q=m+p.getLength()-h[j].length;h[j][m]=q>=0?p.get(q):0}}for(var r=0,m=0;m<b.length;m++)r+=b[m].totalCount;for(var s=new Array(r),t=0,m=0;d>m;m++)for(var j=0;j<b.length;j++)m<g[j].length&&(s[t++]=g[j][m]);for(var m=0;e>m;m++)for(var j=0;j<b.length;j++)m<h[j].length&&(s[t++]=h[j][m]);return s};for(var c={MODE_NUMBER:1,MODE_ALPHA_NUM:2,MODE_8BIT_BYTE:4,MODE_KANJI:8},d={L:1,M:0,Q:3,H:2},e={PATTERN000:0,PATTERN001:1,PATTERN010:2,PATTERN011:3,PATTERN100:4,PATTERN101:5,PATTERN110:6,PATTERN111:7},f={PATTERN_POSITION_TABLE:[[],[6,18],[6,22],[6,26],[6,30],[6,34],[6,22,38],[6,24,42],[6,26,46],[6,28,50],[6,30,54],[6,32,58],[6,34,62],[6,26,46,66],[6,26,48,70],[6,26,50,74],[6,30,54,78],[6,30,56,82],[6,30,58,86],[6,34,62,90],[6,28,50,72,94],[6,26,50,74,98],[6,30,54,78,102],[6,28,54,80,106],[6,32,58,84,110],[6,30,58,86,114],[6,34,62,90,118],[6,26,50,74,98,122],[6,30,54,78,102,126],[6,26,52,78,104,130],[6,30,56,82,108,134],[6,34,60,86,112,138],[6,30,58,86,114,142],[6,34,62,90,118,146],[6,30,54,78,102,126,150],[6,24,50,76,102,128,154],[6,28,54,80,106,132,158],[6,32,58,84,110,136,162],[6,26,54,82,110,138,166],[6,30,58,86,114,142,170]],G15:1335,G18:7973,G15_MASK:21522,getBCHTypeInfo:function(a){for(var b=a<<10;f.getBCHDigit(b)-f.getBCHDigit(f.G15)>=0;)b^=f.G15<<f.getBCHDigit(b)-f.getBCHDigit(f.G15);return(a<<10|b)^f.G15_MASK},getBCHTypeNumber:function(a){for(var b=a<<12;f.getBCHDigit(b)-f.getBCHDigit(f.G18)>=0;)b^=f.G18<<f.getBCHDigit(b)-f.getBCHDigit(f.G18);return a<<12|b},getBCHDigit:function(a){for(var b=0;0!=a;)b++,a>>>=1;return b},getPatternPosition:function(a){return f.PATTERN_POSITION_TABLE[a-1]},getMask:function(a,b,c){switch(a){case e.PATTERN000:return 0==(b+c)%2;case e.PATTERN001:return 0==b%2;case e.PATTERN010:return 0==c%3;case e.PATTERN011:return 0==(b+c)%3;case e.PATTERN100:return 0==(Math.floor(b/2)+Math.floor(c/3))%2;case e.PATTERN101:return 0==b*c%2+b*c%3;case e.PATTERN110:return 0==(b*c%2+b*c%3)%2;case e.PATTERN111:return 0==(b*c%3+(b+c)%2)%2;default:throw new Error("bad maskPattern:"+a)}},getErrorCorrectPolynomial:function(a){for(var b=new i([1],0),c=0;a>c;c++)b=b.multiply(new i([1,g.gexp(c)],0));return b},getLengthInBits:function(a,b){if(b>=1&&10>b)switch(a){case c.MODE_NUMBER:return 10;case c.MODE_ALPHA_NUM:return 9;case c.MODE_8BIT_BYTE:return 8;case c.MODE_KANJI:return 8;default:throw new Error("mode:"+a)}else if(27>b)switch(a){case c.MODE_NUMBER:return 12;case c.MODE_ALPHA_NUM:return 11;case c.MODE_8BIT_BYTE:return 16;case c.MODE_KANJI:return 10;default:throw new Error("mode:"+a)}else{if(!(41>b))throw new Error("type:"+b);switch(a){case c.MODE_NUMBER:return 14;case c.MODE_ALPHA_NUM:return 13;case c.MODE_8BIT_BYTE:return 16;case c.MODE_KANJI:return 12;default:throw new Error("mode:"+a)}}},getLostPoint:function(a){for(var b=a.getModuleCount(),c=0,d=0;b>d;d++)for(var e=0;b>e;e++){for(var f=0,g=a.isDark(d,e),h=-1;1>=h;h++)if(!(0>d+h||d+h>=b))for(var i=-1;1>=i;i++)0>e+i||e+i>=b||(0!=h||0!=i)&&g==a.isDark(d+h,e+i)&&f++;f>5&&(c+=3+f-5)}for(var d=0;b-1>d;d++)for(var e=0;b-1>e;e++){var j=0;a.isDark(d,e)&&j++,a.isDark(d+1,e)&&j++,a.isDark(d,e+1)&&j++,a.isDark(d+1,e+1)&&j++,(0==j||4==j)&&(c+=3)}for(var d=0;b>d;d++)for(var e=0;b-6>e;e++)a.isDark(d,e)&&!a.isDark(d,e+1)&&a.isDark(d,e+2)&&a.isDark(d,e+3)&&a.isDark(d,e+4)&&!a.isDark(d,e+5)&&a.isDark(d,e+6)&&(c+=40);for(var e=0;b>e;e++)for(var d=0;b-6>d;d++)a.isDark(d,e)&&!a.isDark(d+1,e)&&a.isDark(d+2,e)&&a.isDark(d+3,e)&&a.isDark(d+4,e)&&!a.isDark(d+5,e)&&a.isDark(d+6,e)&&(c+=40);for(var k=0,e=0;b>e;e++)for(var d=0;b>d;d++)a.isDark(d,e)&&k++;var l=Math.abs(100*k/b/b-50)/5;return c+=10*l}},g={glog:function(a){if(1>a)throw new Error("glog("+a+")");return g.LOG_TABLE[a]},gexp:function(a){for(;0>a;)a+=255;for(;a>=256;)a-=255;return g.EXP_TABLE[a]},EXP_TABLE:new Array(256),LOG_TABLE:new Array(256)},h=0;8>h;h++)g.EXP_TABLE[h]=1<<h;for(var h=8;256>h;h++)g.EXP_TABLE[h]=g.EXP_TABLE[h-4]^g.EXP_TABLE[h-5]^g.EXP_TABLE[h-6]^g.EXP_TABLE[h-8];for(var h=0;255>h;h++)g.LOG_TABLE[g.EXP_TABLE[h]]=h;i.prototype={get:function(a){return this.num[a]},getLength:function(){return this.num.length},multiply:function(a){for(var b=new Array(this.getLength()+a.getLength()-1),c=0;c<this.getLength();c++)for(var d=0;d<a.getLength();d++)b[c+d]^=g.gexp(g.glog(this.get(c))+g.glog(a.get(d)));return new i(b,0)},mod:function(a){if(this.getLength()-a.getLength()<0)return this;for(var b=g.glog(this.get(0))-g.glog(a.get(0)),c=new Array(this.getLength()),d=0;d<this.getLength();d++)c[d]=this.get(d);for(var d=0;d<a.getLength();d++)c[d]^=g.gexp(g.glog(a.get(d))+b);return new i(c,0).mod(a)}},j.RS_BLOCK_TABLE=[[1,26,19],[1,26,16],[1,26,13],[1,26,9],[1,44,34],[1,44,28],[1,44,22],[1,44,16],[1,70,55],[1,70,44],[2,35,17],[2,35,13],[1,100,80],[2,50,32],[2,50,24],[4,25,9],[1,134,108],[2,67,43],[2,33,15,2,34,16],[2,33,11,2,34,12],[2,86,68],[4,43,27],[4,43,19],[4,43,15],[2,98,78],[4,49,31],[2,32,14,4,33,15],[4,39,13,1,40,14],[2,121,97],[2,60,38,2,61,39],[4,40,18,2,41,19],[4,40,14,2,41,15],[2,146,116],[3,58,36,2,59,37],[4,36,16,4,37,17],[4,36,12,4,37,13],[2,86,68,2,87,69],[4,69,43,1,70,44],[6,43,19,2,44,20],[6,43,15,2,44,16],[4,101,81],[1,80,50,4,81,51],[4,50,22,4,51,23],[3,36,12,8,37,13],[2,116,92,2,117,93],[6,58,36,2,59,37],[4,46,20,6,47,21],[7,42,14,4,43,15],[4,133,107],[8,59,37,1,60,38],[8,44,20,4,45,21],[12,33,11,4,34,12],[3,145,115,1,146,116],[4,64,40,5,65,41],[11,36,16,5,37,17],[11,36,12,5,37,13],[5,109,87,1,110,88],[5,65,41,5,66,42],[5,54,24,7,55,25],[11,36,12],[5,122,98,1,123,99],[7,73,45,3,74,46],[15,43,19,2,44,20],[3,45,15,13,46,16],[1,135,107,5,136,108],[10,74,46,1,75,47],[1,50,22,15,51,23],[2,42,14,17,43,15],[5,150,120,1,151,121],[9,69,43,4,70,44],[17,50,22,1,51,23],[2,42,14,19,43,15],[3,141,113,4,142,114],[3,70,44,11,71,45],[17,47,21,4,48,22],[9,39,13,16,40,14],[3,135,107,5,136,108],[3,67,41,13,68,42],[15,54,24,5,55,25],[15,43,15,10,44,16],[4,144,116,4,145,117],[17,68,42],[17,50,22,6,51,23],[19,46,16,6,47,17],[2,139,111,7,140,112],[17,74,46],[7,54,24,16,55,25],[34,37,13],[4,151,121,5,152,122],[4,75,47,14,76,48],[11,54,24,14,55,25],[16,45,15,14,46,16],[6,147,117,4,148,118],[6,73,45,14,74,46],[11,54,24,16,55,25],[30,46,16,2,47,17],[8,132,106,4,133,107],[8,75,47,13,76,48],[7,54,24,22,55,25],[22,45,15,13,46,16],[10,142,114,2,143,115],[19,74,46,4,75,47],[28,50,22,6,51,23],[33,46,16,4,47,17],[8,152,122,4,153,123],[22,73,45,3,74,46],[8,53,23,26,54,24],[12,45,15,28,46,16],[3,147,117,10,148,118],[3,73,45,23,74,46],[4,54,24,31,55,25],[11,45,15,31,46,16],[7,146,116,7,147,117],[21,73,45,7,74,46],[1,53,23,37,54,24],[19,45,15,26,46,16],[5,145,115,10,146,116],[19,75,47,10,76,48],[15,54,24,25,55,25],[23,45,15,25,46,16],[13,145,115,3,146,116],[2,74,46,29,75,47],[42,54,24,1,55,25],[23,45,15,28,46,16],[17,145,115],[10,74,46,23,75,47],[10,54,24,35,55,25],[19,45,15,35,46,16],[17,145,115,1,146,116],[14,74,46,21,75,47],[29,54,24,19,55,25],[11,45,15,46,46,16],[13,145,115,6,146,116],[14,74,46,23,75,47],[44,54,24,7,55,25],[59,46,16,1,47,17],[12,151,121,7,152,122],[12,75,47,26,76,48],[39,54,24,14,55,25],[22,45,15,41,46,16],[6,151,121,14,152,122],[6,75,47,34,76,48],[46,54,24,10,55,25],[2,45,15,64,46,16],[17,152,122,4,153,123],[29,74,46,14,75,47],[49,54,24,10,55,25],[24,45,15,46,46,16],[4,152,122,18,153,123],[13,74,46,32,75,47],[48,54,24,14,55,25],[42,45,15,32,46,16],[20,147,117,4,148,118],[40,75,47,7,76,48],[43,54,24,22,55,25],[10,45,15,67,46,16],[19,148,118,6,149,119],[18,75,47,31,76,48],[34,54,24,34,55,25],[20,45,15,61,46,16]],j.getRSBlocks=function(a,b){var c=j.getRsBlockTable(a,b);if(void 0==c)throw new Error("bad rs block @ typeNumber:"+a+"/errorCorrectLevel:"+b);for(var d=c.length/3,e=[],f=0;d>f;f++)for(var g=c[3*f+0],h=c[3*f+1],i=c[3*f+2],k=0;g>k;k++)e.push(new j(h,i));return e},j.getRsBlockTable=function(a,b){switch(b){case d.L:return j.RS_BLOCK_TABLE[4*(a-1)+0];case d.M:return j.RS_BLOCK_TABLE[4*(a-1)+1];case d.Q:return j.RS_BLOCK_TABLE[4*(a-1)+2];case d.H:return j.RS_BLOCK_TABLE[4*(a-1)+3];default:return void 0}},k.prototype={get:function(a){var b=Math.floor(a/8);return 1==(1&this.buffer[b]>>>7-a%8)},put:function(a,b){for(var c=0;b>c;c++)this.putBit(1==(1&a>>>b-c-1))},getLengthInBits:function(){return this.length},putBit:function(a){var b=Math.floor(this.length/8);this.buffer.length<=b&&this.buffer.push(0),a&&(this.buffer[b]|=128>>>this.length%8),this.length++}};var l=[[17,14,11,7],[32,26,20,14],[53,42,32,24],[78,62,46,34],[106,84,60,44],[134,106,74,58],[154,122,86,64],[192,152,108,84],[230,180,130,98],[271,213,151,119],[321,251,177,137],[367,287,203,155],[425,331,241,177],[458,362,258,194],[520,412,292,220],[586,450,322,250],[644,504,364,280],[718,560,394,310],[792,624,442,338],[858,666,482,382],[929,711,509,403],[1003,779,565,439],[1091,857,611,461],[1171,911,661,511],[1273,997,715,535],[1367,1059,751,593],[1465,1125,805,625],[1528,1190,868,658],[1628,1264,908,698],[1732,1370,982,742],[1840,1452,1030,790],[1952,1538,1112,842],[2068,1628,1168,898],[2188,1722,1228,958],[2303,1809,1283,983],[2431,1911,1351,1051],[2563,1989,1423,1093],[2699,2099,1499,1139],[2809,2213,1579,1219],[2953,2331,1663,1273]],o=function(){var a=function(a,b){this._el=a,this._htOption=b};return a.prototype.draw=function(a){function g(a,b){var c=document.createElementNS("http://www.w3.org/2000/svg",a);for(var d in b)b.hasOwnProperty(d)&&c.setAttribute(d,b[d]);return c}var b=this._htOption,c=this._el,d=a.getModuleCount();Math.floor(b.width/d),Math.floor(b.height/d),this.clear();var h=g("svg",{viewBox:"0 0 "+String(d)+" "+String(d),width:"100%",height:"100%",fill:b.colorLight});h.setAttributeNS("http://www.w3.org/2000/xmlns/","xmlns:xlink","http://www.w3.org/1999/xlink"),c.appendChild(h),h.appendChild(g("rect",{fill:b.colorDark,width:"1",height:"1",id:"template"}));for(var i=0;d>i;i++)for(var j=0;d>j;j++)if(a.isDark(i,j)){var k=g("use",{x:String(i),y:String(j)});k.setAttributeNS("http://www.w3.org/1999/xlink","href","#template"),h.appendChild(k)}},a.prototype.clear=function(){for(;this._el.hasChildNodes();)this._el.removeChild(this._el.lastChild)},a}(),p="svg"===document.documentElement.tagName.toLowerCase(),q=p?o:m()?function(){function a(){this._elImage.src=this._elCanvas.toDataURL("image/png"),this._elImage.style.display="block",this._elCanvas.style.display="none"}function d(a,b){var c=this;if(c._fFail=b,c._fSuccess=a,null===c._bSupportDataURI){var d=document.createElement("img"),e=function(){c._bSupportDataURI=!1,c._fFail&&_fFail.call(c)},f=function(){c._bSupportDataURI=!0,c._fSuccess&&c._fSuccess.call(c)};return d.onabort=e,d.onerror=e,d.onload=f,d.src="data:image/gif;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg==",void 0}c._bSupportDataURI===!0&&c._fSuccess?c._fSuccess.call(c):c._bSupportDataURI===!1&&c._fFail&&c._fFail.call(c)}if(this._android&&this._android<=2.1){var b=1/window.devicePixelRatio,c=CanvasRenderingContext2D.prototype.drawImage;CanvasRenderingContext2D.prototype.drawImage=function(a,d,e,f,g,h,i,j){if("nodeName"in a&&/img/i.test(a.nodeName))for(var l=arguments.length-1;l>=1;l--)arguments[l]=arguments[l]*b;else"undefined"==typeof j&&(arguments[1]*=b,arguments[2]*=b,arguments[3]*=b,arguments[4]*=b);c.apply(this,arguments)}}var e=function(a,b){this._bIsPainted=!1,this._android=n(),this._htOption=b,this._elCanvas=document.createElement("canvas"),this._elCanvas.width=b.width,this._elCanvas.height=b.height,a.appendChild(this._elCanvas),this._el=a,this._oContext=this._elCanvas.getContext("2d"),this._bIsPainted=!1,this._elImage=document.createElement("img"),this._elImage.style.display="none",this._el.appendChild(this._elImage),this._bSupportDataURI=null};return e.prototype.draw=function(a){var b=this._elImage,c=this._oContext,d=this._htOption,e=a.getModuleCount(),f=d.width/e,g=d.height/e,h=Math.round(f),i=Math.round(g);b.style.display="none",this.clear();for(var j=0;e>j;j++)for(var k=0;e>k;k++){var l=a.isDark(j,k),m=k*f,n=j*g;c.strokeStyle=l?d.colorDark:d.colorLight,c.lineWidth=1,c.fillStyle=l?d.colorDark:d.colorLight,c.fillRect(m,n,f,g),c.strokeRect(Math.floor(m)+.5,Math.floor(n)+.5,h,i),c.strokeRect(Math.ceil(m)-.5,Math.ceil(n)-.5,h,i)}this._bIsPainted=!0},e.prototype.makeImage=function(){this._bIsPainted&&d.call(this,a)},e.prototype.isPainted=function(){return this._bIsPainted},e.prototype.clear=function(){this._oContext.clearRect(0,0,this._elCanvas.width,this._elCanvas.height),this._bIsPainted=!1},e.prototype.round=function(a){return a?Math.floor(1e3*a)/1e3:a},e}():function(){var a=function(a,b){this._el=a,this._htOption=b};return a.prototype.draw=function(a){for(var b=this._htOption,c=this._el,d=a.getModuleCount(),e=Math.floor(b.width/d),f=Math.floor(b.height/d),g=['<table style="border:0;border-collapse:collapse;">'],h=0;d>h;h++){g.push("<tr>");for(var i=0;d>i;i++)g.push('<td style="border:0;border-collapse:collapse;padding:0;margin:0;width:'+e+"px;height:"+f+"px;background-color:"+(a.isDark(h,i)?b.colorDark:b.colorLight)+';"></td>');g.push("</tr>")}g.push("</table>"),c.innerHTML=g.join("");var j=c.childNodes[0],k=(b.width-j.offsetWidth)/2,l=(b.height-j.offsetHeight)/2;k>0&&l>0&&(j.style.margin=l+"px "+k+"px")},a.prototype.clear=function(){this._el.innerHTML=""},a}();QRCode=function(a,b){if(this._htOption={width:256,height:256,typeNumber:4,colorDark:"#000000",colorLight:"#ffffff",correctLevel:d.H},"string"==typeof b&&(b={text:b}),b)for(var c in b)this._htOption[c]=b[c];"string"==typeof a&&(a=document.getElementById(a)),this._android=n(),this._el=a,this._oQRCode=null,this._oDrawing=new q(this._el,this._htOption),this._htOption.text&&this.makeCode(this._htOption.text)},QRCode.prototype.makeCode=function(a){this._oQRCode=new b(r(a,this._htOption.correctLevel),this._htOption.correctLevel),this._oQRCode.addData(a),this._oQRCode.make(),this._el.title=a,this._oDrawing.draw(this._oQRCode),this.makeImage()},QRCode.prototype.makeImage=function(){"function"==typeof this._oDrawing.makeImage&&(!this._android||this._android>=3)&&this._oDrawing.makeImage()},QRCode.prototype.clear=function(){this._oDrawing.clear()},QRCode.CorrectLevel=d}();
+</script>
+<script>
+(function(){
+  "use strict";
+  if(window.ShareQR) return;
+
+  var ANCHOR = "#start";          // Startbildschirm: Knopf nur sichtbar, solange der zu sehen ist
+  var INLINE = "_";          // optional: Leiste, in die der Knopf direkt eingebaut wird
+  var BASE_KEY = "spieleSuite.basis";
+  var BASE_STD = "https://mauthier-bit.github.io/Spiele-Suite/";
+
+  /* ---------------- Adresse bestimmen ---------------- */
+  function basis(){
+    var b=null;
+    try{ b=localStorage.getItem(BASE_KEY); }catch(e){}
+    b=b||BASE_STD;
+    return b.charAt(b.length-1)==="/" ? b : b+"/";
+  }
+  function dateiname(){
+    var p=location.pathname||"";
+    var name=p.substring(p.lastIndexOf("/")+1);
+    try{ name=decodeURIComponent(name); }catch(e){}
+    return /^[\w.%+ -]{1,80}\.html?$/i.test(name) ? name : "index.html";
+  }
+  function adresse(){
+    if(location.protocol==="http:"||location.protocol==="https:") return location.href.split("#")[0];
+    return basis()+encodeURIComponent(dateiname());
+  }
+
+  /* ---------------- QR-Code zeichnen ---------------- */
+  function zeichneCode(host,url){
+    host.innerHTML="";
+    host.style.removeProperty("--sq-w");
+    if(typeof QRCode==="undefined"){
+      host.innerHTML='<div style="padding:18px;color:#8a929c;font-size:.9rem;">QR-Code nicht verfügbar – bitte den Link weitergeben.</div>';
+      return;
+    }
+    try{
+      var q=new QRCode(host,{text:url, width:900, height:900, correctLevel:QRCode.CorrectLevel.M});
+      /* Ruhezone: vier Module weiß ringsum, sonst findet die Kamera den Code nicht */
+      var n=q._oQRCode && q._oQRCode.getModuleCount ? q._oQRCode.getModuleCount() : 0;
+      if(n) host.style.setProperty("--sq-w", (100*n/(n+8)).toFixed(2)+"%");
+    }catch(e){
+      host.innerHTML='<div style="padding:18px;color:#8a929c;font-size:.9rem;">Die Adresse ist zu lang für einen QR-Code – bitte den Link kopieren.</div>';
+    }
+  }
+
+  /* ---------------- Oberfläche ---------------- */
+  var ov=null;
+  function baueOverlay(){
+    ov=document.createElement("div");
+    ov.className="sq-ov";
+    ov.innerHTML='<div class="sq-card">'+
+      '<h2 id="sqTitle">Teilen</h2><p class="sq-sub">Mit der Kamera scannen – das Spiel öffnet sich direkt im Browser.</p>'+
+      '<div class="sq-code" id="sqCode"></div>'+
+      '<div class="sq-url" id="sqUrl"></div>'+
+      '<div class="sq-row">'+
+        '<button class="sq-copy">Link kopieren</button>'+
+        '<button class="sq-alt sq-edit">Adresse ändern</button>'+
+        '<button class="sq-alt sq-close">Schließen</button>'+
+      '</div>'+
+      '<div class="sq-note" id="sqNote"></div>'+
+      '</div>';
+    document.body.appendChild(ov);
+    ov.addEventListener("click",function(e){ if(e.target===ov) zu(); });
+    ov.querySelector(".sq-close").addEventListener("click",zu);
+    ov.querySelector(".sq-copy").addEventListener("click",function(){ kopiereLink(this); });
+    ov.querySelector(".sq-edit").addEventListener("click",function(){
+      var neu=prompt("Internetadresse des Ordners, in dem die Spiele liegen:", basis());
+      if(neu===null) return;
+      neu=neu.trim();
+      try{ if(neu) localStorage.setItem(BASE_KEY,neu); else localStorage.removeItem(BASE_KEY); }catch(e){}
+      fuelle();
+    });
+  }
+  function fuelle(){
+    var url=adresse();
+    var t=(document.title||"").split(/[\u2013\u2014|\u00b7]/)[0].trim();
+    ov.querySelector("#sqTitle").textContent=(t||"Diese Seite")+" teilen";
+    zeichneCode(ov.querySelector("#sqCode"), url);
+    ov.querySelector("#sqUrl").textContent=url;
+    ov.querySelector("#sqNote").innerHTML = (location.protocol==="http:"||location.protocol==="https:")
+      ? "Das ist die Adresse dieser Seite."
+      : "Die Datei liegt lokal auf diesem Gerät. Der Code zeigt deshalb auf die veröffentlichte Fassung – über „Adresse ändern“ anpassbar.";
+  }
+  function kopiereLink(btn){
+    var url=adresse();
+    function melde(ok){
+      btn.textContent = ok ? "Kopiert \u2713" : "Bitte von Hand kopieren";
+      btn.classList.toggle("sq-ok", !!ok);
+      if(!ok){
+        try{
+          var el=ov.querySelector("#sqUrl"), r=document.createRange();
+          r.selectNodeContents(el);
+          var s=window.getSelection(); s.removeAllRanges(); s.addRange(r);
+        }catch(e){}
+      }
+      clearTimeout(btn._t);
+      btn._t=setTimeout(function(){ btn.textContent="Link kopieren"; btn.classList.remove("sq-ok"); },1900);
+    }
+    function altweg(){
+      try{
+        var ta=document.createElement("textarea");
+        ta.value=url; ta.setAttribute("readonly","");
+        ta.style.position="fixed"; ta.style.top="-1000px"; ta.style.opacity="0";
+        document.body.appendChild(ta);
+        ta.select(); ta.setSelectionRange(0,ta.value.length);
+        var ok=document.execCommand("copy");
+        document.body.removeChild(ta);
+        melde(ok);
+      }catch(e){ melde(false); }
+    }
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(url).then(function(){ melde(true); }, altweg);
+    } else altweg();
+  }
+  function auf(){ if(!ov) baueOverlay(); fuelle(); ov.classList.add("on"); }
+  function zu(){ if(ov) ov.classList.remove("on"); }
+
+  var ICON='<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 3h8v8H3V3zm2 2v4h4V5H5zm8-2h8v8h-8V3zm2 2v4h4V5h-4zM3 13h8v8H3v-8zm2 2v4h4v-4H5zm8-2h3v3h-3v-3zm5 0h3v3h-3v-3zm-5 5h3v3h-3v-3zm5 0h3v3h-3v-3z"/></svg>';
+  function knopf(){
+    var inline=INLINE && INLINE.charAt(0)!=="_" ? document.querySelector(INLINE) : null;
+    if(inline){
+      var b=document.createElement("button");
+      b.className=(inline.querySelector("button")? inline.querySelector("button").className : "")+" sq-inline";
+      b.type="button"; b.innerHTML=ICON+"<span>Teilen</span>";
+      b.addEventListener("click",auf);
+      inline.appendChild(b);
+      return;
+    }
+    var f=document.createElement("button");
+    f.className="sq-fab"; f.type="button";
+    f.innerHTML=ICON+"<span>Teilen</span>";
+    f.addEventListener("click",auf);
+    document.body.appendChild(f);
+    var sel = ANCHOR && ANCHOR.charAt(0)!=="_" ? ANCHOR : null;
+    function sichtbar(){
+      if(!sel) return true;
+      var els=document.querySelectorAll(sel);
+      for(var i=0;i<els.length;i++){
+        var cs=getComputedStyle(els[i]);
+        if(cs.display!=="none" && cs.visibility!=="hidden" && els[i].getClientRects().length) return true;
+      }
+      return false;
+    }
+    function pruefe(){ f.classList.toggle("on", sichtbar() && !(ov&&ov.classList.contains("on"))); }
+    pruefe();
+    setInterval(pruefe,400);
+  }
+  function start(){ knopf(); }
+  if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",start);
+  else start();
+
+  window.ShareQR={open:auf, close:zu, url:adresse, basis:basis};
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<title>Spiele-Suite – Mathematik &amp; Physik</title>
+<style>
+  :root{
+    --bg:#f3f0e9; --bg2:#e9e4d8;
+    --card:#fffdf8; --line:#e2dccd; --line2:#cfc7b4;
+    --ink:#22272f; --ink2:#5d6472; --ink3:#8a91a0;
+    --accent:#b8853a; --accent-d:#8f6524;
+    --shadow:0 2px 6px rgba(50,40,20,.06), 0 10px 26px rgba(50,40,20,.09);
+    --shadow-s:0 1px 3px rgba(50,40,20,.08);
+    --radius:18px;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --bg:#16181d; --bg2:#101216;
+      --card:#1f232a; --line:#2e333c; --line2:#3c424d;
+      --ink:#eef0f4; --ink2:#a8b0bd; --ink3:#7e8694;
+      --accent:#e0a94e; --accent-d:#f0c274;
+      --shadow:0 2px 6px rgba(0,0,0,.3), 0 12px 30px rgba(0,0,0,.35);
+      --shadow-s:0 1px 3px rgba(0,0,0,.35);
+    }
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html{-webkit-text-size-adjust:100%;}
+  body{
+    margin:0; min-height:100%; color:var(--ink);
+    background:linear-gradient(180deg,var(--bg) 0%,var(--bg2) 100%);
+    background-attachment:fixed;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    font-size:17px; line-height:1.5;
+    padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+  .wrap{max-width:1180px; margin:0 auto; padding:26px 18px 60px;}
+
+  /* ---------------- Kopf ---------------- */
+  header.top{text-align:center; margin:10px 0 26px;}
+  header.top .kicker{font-size:.8rem; letter-spacing:.16em; text-transform:uppercase; color:var(--ink3); font-weight:700;}
+  header.top h1{margin:.25rem 0 .35rem; font-size:clamp(2rem,5.5vw,2.9rem); letter-spacing:-.02em;}
+  header.top h1 b{color:var(--accent-d);}
+  header.top p{margin:0 auto; max-width:56ch; color:var(--ink2); font-size:1.02rem;}
+
+  /* ---------------- Filter ---------------- */
+  .filters{background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+    box-shadow:var(--shadow-s); padding:14px 16px 16px; margin-bottom:22px;}
+  .frow{display:flex; align-items:flex-start; gap:12px; padding:7px 0; flex-wrap:wrap;}
+  .frow + .frow{border-top:1px solid var(--line); margin-top:2px;}
+  .flabel{flex:0 0 108px; padding-top:8px; font-size:.78rem; font-weight:750; letter-spacing:.08em;
+    text-transform:uppercase; color:var(--ink3);}
+  .chips{display:flex; flex-wrap:wrap; gap:8px; flex:1 1 300px;}
+  .chip{border:1.5px solid var(--line2); background:transparent; color:var(--ink);
+    border-radius:999px; padding:8px 15px; font-size:.95rem; font-weight:600; cursor:pointer;
+    font-family:inherit; transition:.12s; min-height:38px;}
+  .chip:active{transform:scale(.97);}
+  .chip.on{background:var(--accent); border-color:var(--accent); color:#2b1f06;}
+  @media (prefers-color-scheme:dark){ .chip.on{color:#1a1206;} }
+  .searchbox{flex:1 1 220px; display:flex; align-items:center; gap:8px; border:1.5px solid var(--line2);
+    border-radius:12px; padding:0 12px; background:var(--bg); min-height:42px;}
+  .searchbox input{border:none; background:transparent; outline:none; color:var(--ink);
+    font:inherit; font-size:1rem; width:100%; padding:9px 0;}
+  .searchbox span{color:var(--ink3);}
+  .fmeta{display:flex; align-items:center; gap:12px; margin-top:12px; flex-wrap:wrap;}
+  .count{font-size:.92rem; color:var(--ink2);}
+  .reset{border:none; background:transparent; color:var(--accent-d); font:inherit; font-weight:700;
+    cursor:pointer; padding:6px 2px; font-size:.92rem; text-decoration:underline; text-underline-offset:3px;}
+
+  /* ---------------- Karten ---------------- */
+  .grid{display:grid; gap:18px; grid-template-columns:repeat(auto-fill,minmax(310px,1fr));}
+  .game{background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+    box-shadow:var(--shadow); overflow:hidden; display:flex; flex-direction:column;
+    position:relative; transition:transform .14s, box-shadow .14s;}
+  .game::before{content:""; position:absolute; inset:0 0 auto 0; height:5px; background:var(--gc,#999);}
+  .game:hover{transform:translateY(-2px);}
+  .game .head{display:flex; gap:13px; align-items:flex-start; padding:20px 18px 0;}
+  .game .mark{flex:0 0 auto; width:52px; height:52px; border-radius:15px; display:flex;
+    align-items:center; justify-content:center; font-size:26px; line-height:1;
+    background:color-mix(in srgb, var(--gc) 16%, transparent);
+    border:1.5px solid color-mix(in srgb, var(--gc) 42%, transparent);}
+  .game h2{margin:0; font-size:1.3rem; letter-spacing:-.01em;}
+  .game .tagline{margin:2px 0 0; font-size:.93rem; color:var(--gc); font-weight:700;}
+  .game .body{padding:12px 18px 0; flex:1;}
+  .game .desc{margin:0; color:var(--ink2); font-size:.97rem;}
+  .game .facts{list-style:none; margin:14px 0 0; padding:0; display:grid; gap:6px;}
+  .game .facts li{display:flex; gap:9px; font-size:.9rem; color:var(--ink2);}
+  .game .facts b{flex:0 0 78px; color:var(--ink3); font-weight:700; font-size:.78rem;
+    text-transform:uppercase; letter-spacing:.06em; padding-top:2px;}
+  .game .actions{display:flex; gap:9px; padding:16px 18px 18px; margin-top:14px;}
+  .btn{flex:1; display:flex; align-items:center; justify-content:center; gap:7px;
+    border-radius:12px; padding:13px 14px; font:inherit; font-size:1rem; font-weight:750;
+    cursor:pointer; border:1.5px solid transparent; text-decoration:none; min-height:48px; transition:.12s;}
+  .btn:active{transform:scale(.985);}
+  .btn.play{background:var(--gc); color:#fff; border-color:var(--gc);}
+  .btn.info{flex:0 0 auto; background:transparent; color:var(--ink2); border-color:var(--line2); padding:13px 18px;}
+  .empty{grid-column:1/-1; text-align:center; color:var(--ink2); padding:50px 20px;
+    border:2px dashed var(--line2); border-radius:var(--radius);}
+
+  /* ---------------- Detail-Overlay ---------------- */
+  .overlay{position:fixed; inset:0; background:rgba(20,16,10,.62); backdrop-filter:blur(3px);
+    display:none; align-items:center; justify-content:center; padding:18px; z-index:50;}
+  .overlay.on{display:flex;}
+  .sheet{background:var(--card); border-radius:22px; box-shadow:0 24px 60px rgba(0,0,0,.4);
+    width:100%; max-width:600px; max-height:88vh; display:flex; flex-direction:column; overflow:hidden;
+    border:1px solid var(--line);}
+  .sheet .shead{padding:22px 22px 14px; border-bottom:1px solid var(--line); display:flex; gap:13px; align-items:flex-start;}
+  .sheet .shead h2{margin:0; font-size:1.45rem;}
+  .sheet .shead .tagline{margin:2px 0 0; color:var(--gc); font-weight:700; font-size:.95rem;}
+  .sheet .sbody{padding:18px 22px 6px; overflow-y:auto; -webkit-overflow-scrolling:touch;}
+  .sheet .sbody h3{margin:18px 0 6px; font-size:.78rem; letter-spacing:.09em; text-transform:uppercase; color:var(--ink3);}
+  .sheet .sbody h3:first-child{margin-top:0;}
+  .sheet .sbody p{margin:0 0 4px; color:var(--ink2); font-size:1rem;}
+  .sheet .sbody ul{margin:4px 0 0; padding-left:20px; color:var(--ink2); font-size:.98rem;}
+  .sheet .sbody li{margin-bottom:5px;}
+  .sheet .sfoot{padding:14px 22px calc(18px + env(safe-area-inset-bottom)); display:flex; gap:10px;
+    border-top:1px solid var(--line); background:var(--card);}
+  .taglist{display:flex; flex-wrap:wrap; gap:6px; margin-top:12px;}
+  .tag{font-size:.8rem; font-weight:650; color:var(--ink2); background:var(--bg);
+    border:1px solid var(--line2); border-radius:999px; padding:4px 11px;}
+
+  .shareslot{margin-top:15px;}
+  .shareslot .sq-inline{border:1.5px solid var(--line2); background:var(--card); color:var(--ink);
+    border-radius:999px; padding:11px 20px; font:inherit; font-size:.95rem; font-weight:700;
+    cursor:pointer; min-height:44px; box-shadow:var(--shadow-s);}
+  .shareslot .sq-inline:active{transform:scale(.97);}
+  footer.note{margin-top:34px; text-align:center; color:var(--ink3); font-size:.88rem; line-height:1.6;}
+  footer.note code{background:var(--card); border:1px solid var(--line); border-radius:6px; padding:1px 6px; font-size:.85rem;}
+
+  @media (max-width:640px){
+    .flabel{flex:0 0 100%; padding-top:0;}
+    .game .actions{flex-wrap:wrap;}
+  }
+  @media (prefers-reduced-motion:reduce){ *{transition:none!important; animation:none!important;} }
+</style>
+<script>
+/* Scharfe Kante unter der iPadOS-Statusleiste (iPadOS 26/27).
+   WebKit legt in Web-Apps vom Homebildschirm am oberen Rand sonst einen
+   weichen Verlauf ueber den Inhalt. Er entfaellt, wenn dort eine deckende
+   Leiste liegt - ein bildschirmfuellender Kasten genuegt nicht (am
+   13.10.2026 auf iPadOS 27 geprueft). Das Skript legt deshalb einen 16 px
+   hohen, deckenden Streifen an den oberen Rand und rueckt alles, was in
+   diese 16 px hineinragt, um 16 px nach unten. Laeuft nur in der App vom
+   Homebildschirm, nicht in Safari und nicht in einem Rahmen; mit #kante in
+   der Adresse laesst es sich zum Pruefen erzwingen. */
+(function(){
+  if(window.top!==window) return;
+  var pruef=/kante/i.test(location.hash||'');
+  var alsApp=(navigator.standalone===true) ||
+             (window.matchMedia && matchMedia('(display-mode: standalone)').matches);
+  if(!alsApp && !pruef) return;
+
+  var HOCH=16;
+  function leer(f){ return !f || f==='transparent' || f.replace(/\s/g,'')==='rgba(0,0,0,0)'; }
+  function seite(){
+    var s=getComputedStyle(document.body), f=s.backgroundColor, b=s.backgroundImage;
+    if(leer(f) && (!b || b==='none')){
+      s=getComputedStyle(document.documentElement); f=s.backgroundColor; b=s.backgroundImage;
+    }
+    return { farbe: leer(f) ? '#ffffff' : f, bild: (b && b!=='none') ? b : '' };
+  }
+  /* Faerbt dieses Element am oberen Rand etwas sichtbar ein? */
+  function tinte(n){
+    var r=n.getBoundingClientRect();
+    if(r.top>=HOCH || r.bottom<=0 || r.width<=0) return false;
+    var s=getComputedStyle(n);
+    if(s.display==='none' || s.visibility==='hidden' || s.opacity==='0') return false;
+    if(n.id==='randKante') return false;
+    var t=n.tagName.toLowerCase();
+    if(t==='img'||t==='svg'||t==='canvas'||t==='video') return true;
+    if(!leer(s.backgroundColor) || s.backgroundImage!=='none') return true;
+    if(parseFloat(s.borderTopWidth)>0) return true;
+    var kn=n.childNodes;
+    for(var j=0;j<kn.length;j++)
+      if(kn[j].nodeType===3 && kn[j].nodeValue.replace(/\s/g,'')) return true;
+    for(var i=0;i<n.children.length;i++) if(tinte(n.children[i])) return true;
+    return false;
+  }
+  function ragtRein(z){
+    for(var i=0;i<z.children.length;i++) if(tinte(z.children[i])) return true;
+    return false;
+  }
+  function luft(z){
+    if(z.dataset.kanteLuft) return;
+    if(!ragtRein(z) && !tinte(z)) return;    /* noch nichts oben - spaeter nochmal */
+    z.dataset.kanteLuft='1';
+    var p=parseFloat(getComputedStyle(z).paddingTop)||0;
+    if(p>=HOCH) return;
+    z.style.paddingTop=(p+HOCH)+'px';
+  }
+  function sichtbar(n,s){
+    return s.display!=='none' && s.visibility!=='hidden' && n.id!=='randKante';
+  }
+  /* bildschirmfuellende fixierte Kaesten */
+  function kaesten(){
+    var alle=document.querySelectorAll('body > *, body > * > *'), raus=[];
+    for(var i=0;i<alle.length;i++){
+      var n=alle[i], s=getComputedStyle(n);
+      if(s.position!=='fixed' || !sichtbar(n,s)) continue;
+      /* Deko-Ebenen wie Konfetti liegen durchsichtig ueber allem und duerfen
+         niemals angefasst werden - sie wuerden sonst das Spiel verdecken. */
+      if(s.pointerEvents==='none') continue;
+      var r=n.getBoundingClientRect();
+      if(r.top<=4 && r.width>=innerWidth*0.9 && r.height>=innerHeight*0.9) raus.push(n);
+    }
+    return raus;
+  }
+  /* Leisten am oberen Rand (fixiert oder klebend, aber kein Vollbildkasten) */
+  function leisten(){
+    var alle=document.querySelectorAll('body > *, body > * > *'), raus=[];
+    for(var i=0;i<alle.length;i++){
+      var n=alle[i], s=getComputedStyle(n);
+      if((s.position!=='fixed' && s.position!=='sticky') || !sichtbar(n,s)) continue;
+      var r=n.getBoundingClientRect();
+      if(r.top<=4 && r.width>=innerWidth*0.8 && r.height>=6 && r.height<=innerHeight*0.6) raus.push(n);
+    }
+    return raus;
+  }
+  /* Liegt oben schon eine deckende Leiste, ist nichts zu tun. */
+  function schonGut(){
+    var st=document.elementsFromPoint ? document.elementsFromPoint(Math.round(innerWidth/2),2) : [];
+    for(var i=0;i<st.length;i++){
+      var n=st[i];
+      if(n.id==='randKante') continue;
+      if(n===document.body || n===document.documentElement) return false;
+      var s=getComputedStyle(n), r=n.getBoundingClientRect();
+      return (s.position==='fixed'||s.position==='sticky') && r.top<=4 &&
+             r.width>=innerWidth*0.8 && r.height>=6 && r.height<=innerHeight*0.6 &&
+             !leer(s.backgroundColor);
+    }
+    return false;
+  }
+  var band=null;
+  function streifen(farbe){
+    if(!band){
+      band=document.createElement('div');
+      band.id='randKante'; band.setAttribute('aria-hidden','true');
+      band.style.cssText='position:fixed;left:0;top:0;width:100%;height:'+HOCH+'px;'+
+        'z-index:2147483646;pointer-events:none';
+      document.body.appendChild(band);
+    }
+    band.style.display='block';
+    if(farbe){
+      band.style.backgroundColor=farbe;
+      band.style.backgroundImage='none';
+      return;
+    }
+    var s=getComputedStyle(document.body), h=seite();
+    band.style.backgroundColor=h.farbe;
+    band.style.backgroundImage=h.bild||'none';
+    band.style.backgroundAttachment='fixed';
+    if(h.bild && s.backgroundAttachment!=='fixed')
+      band.style.backgroundSize='100% '+Math.max(innerHeight,document.body.scrollHeight)+'px';
+  }
+  var schild=null;
+  function zeigen(txt){
+    if(!pruef) return;
+    if(!schild){
+      schild=document.createElement('div');
+      schild.style.cssText='position:fixed;left:6px;bottom:52px;z-index:2147483647;max-width:92%;'+
+        'padding:6px 9px;border-radius:8px;background:#ffe600;color:#000;'+
+        'font:600 12px/1.35 -apple-system,sans-serif;white-space:pre-wrap;pointer-events:none';
+      document.body.appendChild(schild);
+    }
+    schild.textContent='Kante K6 · '+innerWidth+'x'+innerHeight+'\n'+txt;
+  }
+  function name(n){
+    if(n.id) return '#'+n.id;
+    var c=(typeof n.className==='string'&&n.className.trim())?'.'+n.className.trim().split(/\s+/)[0]:'';
+    return n.tagName.toLowerCase()+c;
+  }
+  function malen(){
+    var b=document.body; if(!b) return;
+    if(schonGut()){
+      if(band) band.style.display='none';
+      zeigen('oben liegt schon eine deckende Leiste');
+      return;
+    }
+    var k=kaesten(), l=leisten(), farbe=null, text=[];
+    /* Die Kaesten werden nur noch nach unten gerueckt, nicht mehr eingefaerbt:
+       ein bildschirmfuellender Kasten haelt den Verlauf ohnehin nicht ab
+       (am 13.10.2026 auf iPadOS 27 gemessen), das Einfaerben hat dagegen
+       durchsichtige Ebenen deckend gemacht. */
+    for(var i=0;i<k.length;i++){
+      var z=k[i];
+      luft(z);
+      text.push(name(z));
+    }
+    for(var j=0;j<l.length;j++){
+      var le=l[j], sl=getComputedStyle(le);
+      if(!tinte(le) && !ragtRein(le)) continue;
+      if(!farbe && !leer(sl.backgroundColor)) farbe=sl.backgroundColor;
+      luft(le);
+      text.push('Leiste '+name(le)+' bg='+sl.backgroundColor);
+    }
+    if(!k.length && !l.length){ luft(b); text.push('kein Kasten, nur Streifen'); }
+    streifen(farbe);
+    zeigen(text.join('\n'));
+  }
+  var warte=null;
+  function spaeter(){
+    if(warte) return;
+    warte=setTimeout(function(){ warte=null; malen(); },200);
+  }
+  try{
+    new MutationObserver(spaeter).observe(document.documentElement,
+      {childList:true, subtree:true, attributes:true, attributeFilter:['class','style','hidden']});
+  }catch(e){}
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',malen);
+  else malen();
+  addEventListener('load',spaeter);
+  addEventListener('resize',spaeter);
+  addEventListener('orientationchange',spaeter);
+})();
+</script>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="kicker">Mathematik &amp; Physik · fürs iPad</div>
+    <h1>Spiele<b>·</b>Suite</h1>
+    <p>Zweiundzwanzig fertige Unterrichtsspiele – bis auf MotionTrace laufen alle offline im Browser, ohne Anmeldung und ohne Installation. Filtern, antippen, loslegen.</p>
+    <div class="shareslot"></div>
+  </header>
+
+  <section class="filters">
+    <div class="frow">
+      <div class="flabel">Fach</div>
+      <div class="chips" id="fFach"></div>
+    </div>
+    <div class="frow">
+      <div class="flabel">Jahrgang</div>
+      <div class="chips" id="fStufe"></div>
+    </div>
+    <div class="frow">
+      <div class="flabel">Spielform</div>
+      <div class="chips" id="fForm"></div>
+    </div>
+    <div class="frow">
+      <div class="flabel">Suche</div>
+      <div class="searchbox"><span>🔎</span><input id="q" type="search" placeholder="Thema, z. B. Brüche, Vektoren, Terme …" autocomplete="off"></div>
+    </div>
+    <div class="fmeta">
+      <span class="count" id="count"></span>
+      <button class="reset" id="reset">Filter zurücksetzen</button>
+    </div>
+  </section>
+
+  <div class="grid" id="grid"></div>
+
+  <footer class="note">
+    Diese Datei erwartet die Spiele im <b>gleichen Ordner</b>.<br>
+    Auf dem iPad am besten über <code>Teilen → Zum Home-Bildschirm</code> ablegen.
+  </footer>
+</div>
+
+<div class="overlay" id="modal">
+  <div class="sheet" id="sheet"></div>
+</div>
+
+<script>
+"use strict";
+
+/* =====================================================================
+   Spieldaten – eine Datei pro Spiel, alle im selben Ordner
+   ===================================================================== */
+const GAMES = [
+  {
+    file:"memory.html", title:"Memory", tagline:"Paare finden – 75 Kartensätze",
+    icon:"🧩", color:"#2f7d4f", fach:["Mathematik","Physik"], form:"Kartenspiel",
+    stufen:[5,6,7,8,9,10,11,12,13], stufenText:"Jahrgangsstufe 5 – 13",
+    sozial:"Allein oder zu zweit bis viert am iPad",
+    thema:"Darstellungen verknüpfen – von Brüchen bis zur Kernphysik",
+    kurz:"Das bekannte Memory mit Lehrplan-Inhalten: Je zwei Karten gehören zusammen – Term und Graph, Bruch und Tortenbild, Kongruenzsatz und Zeichnung, Schaltzeichen und Bauteil.",
+    ziel:"Alle Karten liegen verdeckt. Wer zwei zusammengehörende aufdeckt, bekommt einen Punkt und ist noch einmal dran. Bei jedem Treffer erscheint kurz die <b>Begründung</b> – etwa „3/4 = 6/8 (mit 2 erweitert)“ –, sodass das Spiel nebenbei erklärt.",
+    punkte:[
+      "<b>75 Kartensätze</b> nach LehrplanPLUS, wählbar über Fach, Jahrgangsstufe und Gebiet",
+      "Mathematik 5 – 13: Primfaktoren, Brüche und Prozent, Terme und Gleichungen, Funktionen und ihre Graphen, Wurzeln, Trigonometrie, Ableitungen, Stammfunktionen, Vektoren",
+      "Physik 7 – 11: Schaltzeichen, Optik, Größen und Einheiten, Einheiten umrechnen (Geschwindigkeiten, Dichte, Vorsätze wie mV und kΩ), Energie, Wärmelehre, Elektromagnetismus, Kernphysik, Schwingungen und Wellen",
+      "Viele Sätze werden <b>neu gewürfelt</b> – jede Runde andere Aufgaben, nie dieselbe Partie",
+      "Spielfeld von 12 bis 48 Karten, 1 bis 4 Spieler, Aufdeckzeit einstellbar"
+    ],
+    keywords:"memory paare aufdecken karten zuordnen darstellungen graph term bruch bild begriffe gedächtnis einheiten umrechnen geschwindigkeit dichte vorsätze"
+  },
+  {
+    file:"Bruno.html", title:"Bruno", tagline:"Das Bruch-Spiel",
+    icon:"🍰", color:"#7c5bb8", fach:["Mathematik"], form:"Kartenspiel",
+    stufen:[6,7], stufenText:"Klasse 6 (Wiederholung ab 7)",
+    sozial:"Zu zweit am iPad oder gegen den Computer",
+    thema:"Brüche vergleichen, ordnen und erkennen",
+    kurz:"Brüche der Größe nach ablegen: Solange es aufwärts geht, darf nur eine größere oder gleich große Karte folgen – und derselbe Wert erscheint mal gekürzt, mal erweitert, als Tortenbild, Dezimalzahl oder Rechenaufgabe.",
+    ziel:"Wer zuerst alle Karten abgelegt hat, gewinnt. Gelegt wird <b>der Größe nach</b>: aufwärts nur größer oder gleich. Bei <b>gleichem Wert</b> darf man sofort noch einmal legen – das belohnt, wer erkennt, dass etwa 10/12 und 5/6 dasselbe sind. Die <b>Umkehrkarte</b> dreht die Richtung: Danach geht es abwärts, bis jemand die nächste Umkehrkarte legt.",
+    punkte:[
+      "Modus: zu zweit (mit Übergabe) oder gegen den Computer",
+      "Schwierigkeit einfach (Stammbrüche, kleine Nenner) oder schwer (Achtel, Zwölftel, unechte Brüche)",
+      "Kartenset Standard oder zufällig gewürfelt",
+      "Zuschaltbar: erweiterte Brüche, Tortendarstellungen, Dezimalbrüche, gemischte Zahlen",
+      "Rechenkarten mit +, −, ·, : und Potenzen (Exponent 2, −1, −2), deren Ergebnis den Bruch ergibt",
+      "14 Bruchwerte pro Partie, vor dem Start der Größe nach angezeigt",
+      "Aktionskarten: Umkehr (dreht die Richtung), 2 Ziehen und Joker (danach passt jeder Wert)",
+      "Eine Kachel neben der Ablage zeigt immer Richtung und Bezugswert; Rückmeldungen nennen den Vergleich, z. B. „2/5 ist kleiner als 3/4“"
+    ],
+    keywords:"bruch brüche vergleichen ordnen größer kleiner kürzen erweitern dezimalzahl gemischte zahl tortendiagramm uno karten"
+  },
+  {
+    file:"D-Uno.html", title:"D-Uno", tagline:"Das Distributiv-Spiel",
+    icon:"🟪", color:"#8a5fd0", fach:["Mathematik"], form:"Kartenspiel",
+    stufen:[5,6,7], stufenText:"Klasse 5 – 7",
+    sozial:"Zu zweit am iPad oder gegen den Computer",
+    thema:"Distributivgesetz, Ausklammern und Ausmultiplizieren",
+    kurz:"Dieselbe Idee wie Bruno, aber fürs Distributivgesetz: Jede Karte zeigt ein Produkt a·(b+c) – ausgeklammert, ausmultipliziert oder als Punktmuster.",
+    ziel:"Angelegt werden darf, was den <b>gleichen Faktor</b> oder die <b>gleichen Summanden</b> hat – bewusst nicht der gleiche Ergebniswert. Wer beides trifft (also die vollständige Gegenform desselben Gesetzes), darf sofort noch einmal legen.",
+    punkte:[
+      "Klasse 5: ganze Zahlen, Punktmuster als Darstellung, optional negative Zahlen",
+      "Klasse 6: Brüche und Dezimalzahlen (½ und 0,5 gelten als derselbe Faktor)",
+      "Klasse 7: Terme mit Variablen, ausmultipliziert z. B. 3x + 6",
+      "Minus und drei Summanden sind in allen Jahrgangsstufen möglich",
+      "Schwierigkeit einfach/schwer über die Zahlengröße",
+      "Aktionskarten (2 Ziehen, Joker, Wunschfaktor), Regeln passen sich der Stufe an"
+    ],
+    keywords:"distributivgesetz ausklammern ausmultiplizieren punktmuster terme klammern uno karten"
+  },
+  {
+    file:"Termino.html", title:"Termino", tagline:"Term-Domino",
+    icon:"🁣", color:"#c9902a", fach:["Mathematik"], form:"Domino",
+    stufen:[7,8,9,10], stufenText:"Klasse 7 – 10",
+    sozial:"Zu zweit (verdeckt) oder kooperativ",
+    thema:"Gleichwertige Terme erkennen",
+    kurz:"Domino mit Termen: Zwei Hälften passen zusammen, wenn ihre Terme gleichwertig sind – gleicher Wert, andere Schreibweise. Alle Steine bilden genau einen Ring, der sich schließen lässt.",
+    ziel:"Im Modus <b>Gegeneinander</b> gewinnt, wer zuerst alle eigenen Steine losgeworden ist; zwischen den Zügen kommt ein Übergabe-Bildschirm. Im Modus <b>Kooperativ</b> liegen alle Steine offen und die Gruppe schließt den Ring gemeinsam.",
+    punkte:[
+      "Klasse 7: Summen und Produkte zusammenfassen, Klammern ausmultiplizieren, binomische Formeln",
+      "Klasse 8: Bruchterme kürzen, Potenzgesetze, negative Exponenten, Minus ausklammern",
+      "Klasse 9: Wurzelterme mit Zahlen und Variablen (teilweise radizieren, Beträge)",
+      "Klasse 10: Logarithmusterme mit Zahlen und Variablen",
+      "Schwierigkeit Stufe 1 (Grundformen) oder Stufe 2 (anspruchsvoller)",
+      "Umfang 8, 12 oder 16 Steine; Tipp-Knopf im kooperativen Modus"
+    ],
+    keywords:"terme gleichwertig vereinfachen binomische formeln bruchterme wurzeln logarithmus domino"
+  },
+  {
+    file:"Fumino.html", title:"Fumino", tagline:"Funktions-Domino",
+    icon:"📈", color:"#2c6fd6", fach:["Mathematik"], form:"Domino",
+    stufen:[8,9,10], stufenText:"Klasse 8 – 10",
+    sozial:"Zu zweit (verdeckt) oder kooperativ",
+    thema:"Funktionsterm und Graph zuordnen",
+    kurz:"Jeder Dominostein trägt links einen Graphen und rechts einen Funktionsterm. Angelegt wird immer Term an passenden Graphen – und umgekehrt.",
+    ziel:"Die Steine bilden einen geschlossenen Ring. Wer gegeneinander spielt, will zuerst alle Steine loswerden; kooperativ wird der Ring gemeinsam geschlossen. Jeder Stein lässt sich zum Vergrößern antippen.",
+    punkte:[
+      "Klasse 8: lineare Funktionen und gebrochen-rationale Funktionen a/(x+b) + c",
+      "Klasse 9: Parabeln in Scheitelpunkt-, Nullstellen- oder Normalform (einzeln wählbar)",
+      "Klasse 10: Potenz-, Exponential- und Sinus-/Kosinusfunktionen, dazu ganzrationale Funktionen bis Grad 6",
+      "Schwierigkeit Stufe 1 oder Stufe 2, Umfang 8, 12 oder 16 Steine",
+      "„Neues Set“ würfelt sofort andere Funktionen aus, Tipp-Knopf markiert einen passenden Stein"
+    ],
+    keywords:"funktionen graph term parabel scheitelpunktform exponentialfunktion sinus potenzfunktion domino zuordnen"
+  },
+  {
+    file:"Kopfrechen-Duell.html", title:"Kopfrechen-Duell", tagline:"Zwei Teams, ein Kopf",
+    icon:"⚡", color:"#d2452f", fach:["Mathematik"], form:"Team-Duell",
+    stufen:[5,6,7,8,9,10,11], stufenText:"Jahrgangsstufe 5 – 11",
+    sozial:"Ganze Klasse, zwei Teams – am besten über den Beamer",
+    thema:"Kopfrechnen und Grundwissen auf Zeit",
+    kurz:"Aufgabe erscheint, Team buzzert, Uhr läuft. Richtige Antworten geben Punkte, bis die Zielpunktzahl erreicht ist – mit Rechenweg zum Nachbesprechen.",
+    ziel:"Die Aufgaben werden passend zur Jahrgangsstufe erzeugt; leichte Aufgaben zählen einen, schwere zwei Punkte. Zu jeder Aufgabe lässt sich der Lösungsweg einblenden, sodass Streitfälle sofort geklärt sind.",
+    punkte:[
+      "Drei Spielmodi: <b>Buzzern</b> (wer zuerst drückt), <b>Abwechselnd</b> (reihum) und <b>Puck</b> (nur das Team mit dem Puck punktet)",
+      "Bereiche je Jahrgangsstufe einzeln zuschaltbar – ganze Zahlen, Einheiten umrechnen, Zehnerpotenzen, Brüche, Dezimalbrüche, Potenzen, Wurzeln, Logarithmen; nicht passende Bereiche sind gesperrt",
+      "Schwierigkeit: nur leicht, gemischt oder nur schwer",
+      "Antwortzeit und Zielpunktzahl frei einstellbar, Teamnamen änderbar",
+      "Eingabe über ein großes Ziffernfeld, Töne abschaltbar"
+    ],
+    keywords:"kopfrechnen duell buzzer team wettbewerb punkte zeit grundwissen einheiten umrechnen längen flächen volumen zehnerpotenzen"
+  },
+  {
+    file:"Mattle.html", title:"Mattle", tagline:"Das Mathe-Battle ums Spielfeld",
+    icon:"⬢", color:"#0f8f86", fach:["Mathematik"], form:"Team-Duell",
+    stufen:[5,6,7,8,9,10,11], stufenText:"Jahrgangsstufe 5 – 11",
+    sozial:"Ganze Klasse, zwei Teams – am besten über den Beamer",
+    thema:"Kopfrechnen mit Strategie",
+    kurz:"Kopfrechnen trifft Hex: Wer eine Aufgabe löst, erobert das zugehörige Sechseck. Team A muss links und rechts verbinden, Team B oben und unten.",
+    ziel:"Gerechnet wird wie im Kopfrechen-Duell, gewonnen wird aber über das Spielfeld: Es zählt nicht die Punktzahl, sondern die zusammenhängende Kette eroberter Felder. Dadurch kommt es darauf an, welches Feld man sich vornimmt.",
+    punkte:[
+      "Spielfeldgröße 5×5 bis 11×11 (Empfehlung 7×7) – bestimmt die Spieldauer",
+      "Gleiche Spielmodi wie beim Kopfrechen-Duell: Buzzern, Abwechselnd, Puck",
+      "Aufgabengenerator und Bereiche identisch zum Kopfrechen-Duell, Jahrgangsstufe 5 – 11",
+      "Antwortzeit einstellbar, Lösungsweg jederzeit einblendbar",
+      "Teamnamen änderbar, Töne abschaltbar"
+    ],
+    keywords:"hex spielfeld strategie kopfrechnen battle team sechsecke erobern einheiten umrechnen zehnerpotenzen"
+  },
+  {
+    file:"galgenmaennchen.html", title:"Galgenmännchen", tagline:"Fachbegriffe Buchstabe für Buchstabe",
+    icon:"🔤", color:"#2563eb", fach:["Mathematik","Physik"], form:"Team-Duell",
+    stufen:[5,6,7,8,9,10,11,12,13], stufenText:"Jahrgangsstufe 5 – 13",
+    sozial:"Ganze Klasse – allein oder in zwei Teams",
+    thema:"Fachbegriffe und ihre Bedeutung",
+    kurz:"Das klassische Galgenmännchen mit 475 Fachbegriffen aus dem LehrplanPLUS: Jahrgangsstufe und Themenbereich wählen, dann wird Buchstabe für Buchstabe geraten.",
+    ziel:"Zu jedem Begriff gehört eine kurze Erklärung, die sich auf Knopfdruck als <b>Hinweis</b> einblenden lässt – so wird aus dem Raten nebenbei eine Begriffsklärung. Mit jedem Fehler wächst die Figur; ist sie fertig, wird der Begriff aufgedeckt.",
+    punkte:[
+      "475 Begriffe mit Erklärung: Mathematik 5 – 13 und Physik 7 – 13, nach Lernbereichen geordnet",
+      "Eigene Begriffe lassen sich eintippen – wahlweise mit Hinweis (<b>Begriff = Hinweis</b>)",
+      "<b>Zwei Teams</b>: jeder Treffer ein Punkt, das vollendete Wort drei dazu; nach einem Fehler wechselt das Raterecht",
+      "Erlaubte Fehler von 3 bis 12 einstellbar, Tipp-Knopf deckt einen Buchstaben auf (kostet einen Versuch)",
+      "Umlaute wahlweise als eigene Tasten oder zusammengefasst mit A, O, U und S; Filter für kurze Begriffe"
+    ],
+    keywords:"galgenmännchen hangman begriffe raten buchstaben wörter fachbegriffe lehrplan glossar erklärung"
+  },
+  {
+    file:"mathe-tabu.html", title:"Mathe-Tabu", tagline:"Erklären ohne die verbotenen Wörter",
+    icon:"🤐", color:"#c1462f", fach:["Mathematik"], form:"Erklärspiel",
+    stufen:[5,6,7,8,9,10,11,12,13], stufenText:"Jahrgangsstufe 5 – 13",
+    sozial:"Zwei Teams, ein iPad wandert zum erklärenden Kind",
+    thema:"Fachbegriffe versprachlichen",
+    kurz:"Ein Begriff, darunter die Tabu-Wörter: erklären, ohne sie zu benutzen. Karte nach rechts wischen heißt erraten, nach links heißt Tabu – Punkte fürs Gegenteam.",
+    ziel:"Eine Runde bedeutet, dass jedes Team einmal erklärt. Am Ende jedes Durchgangs erscheint die Liste aller Karten; dort lässt sich jede Wertung per Tippen korrigieren, falls es Streit gab. Über 400 Karten, streng nach LehrplanPLUS zugeordnet.",
+    punkte:[
+      "Jahrgangsstufe 5 – 13, wahlweise mit oder ohne die Begriffe früherer Stufen",
+      "Themen: Geometrie, Terme &amp; Gleichungen, Funktionen, Stochastik – die Chips zeigen die Kartenzahl",
+      "Schwierigkeit über die Anzahl der Tabu-Wörter (sehr leicht 2 bis schwer 5)",
+      "Zeit pro Durchgang 30 s bis 4 min, 1 bis 10 Runden",
+      "Wischen, Buttons oder Pfeiltasten; Überspringen zuschaltbar; Einstellungen werden gespeichert"
+    ],
+    keywords:"tabu begriffe erklären sprache fachbegriffe wortschatz teams wischen"
+  },
+  {
+    file:"physik-tabu.html", title:"Physik-Tabu", tagline:"Fachsprache trainieren",
+    icon:"🔭", color:"#1d8ba0", fach:["Physik"], form:"Erklärspiel",
+    stufen:[7,8,9,10,11,12,13], stufenText:"Jahrgangsstufe 7 – 13",
+    sozial:"Zwei Teams, ein iPad wandert zum erklärenden Kind",
+    thema:"Physikalische Fachbegriffe versprachlichen",
+    kurz:"Der Physik-Ableger von Mathe-Tabu: gleicher Ablauf, eigene Kartensammlung mit rund 470 Begriffen aus allen Teilgebieten.",
+    ziel:"Erklären, ohne die Tabu-Wörter zu benutzen – rechts wischen für erraten, links für Tabu. Die Karten sind streng nach LehrplanPLUS zugeordnet, Jahrgangsstufe 7 enthält nur den Physikteil aus Natur und Technik.",
+    punkte:[
+      "Themen: Optik, Elektrizitätslehre, Mechanik, Energie, Wärmelehre, Atom- &amp; Kernphysik",
+      "Jahrgangsstufe 7 – 13, wahlweise mit oder ohne frühere Stufen",
+      "Themen ohne Karten in der gewählten Stufe sind gesperrt und beschriftet",
+      "Schwierigkeit über die Anzahl der Tabu-Wörter, Zeit und Rundenzahl einstellbar",
+      "Auswertung nach jedem Durchgang mit korrigierbaren Wertungen"
+    ],
+    keywords:"tabu physik begriffe erklären optik elektrizität mechanik energie wärmelehre kernphysik"
+  },
+  {
+    file:"motiontrace.html", title:"MotionTrace", tagline:"Battle vor der Kamera",
+    icon:"🎥", color:"#0891b2", fach:["Mathematik"], form:"Duell zu zweit",
+    stufen:[8,9,10,11,12,13], stufenText:"ab Jahrgangsstufe 8",
+    sozial:"Zwei Personen vor der Kamera, Klasse schaut zu",
+    thema:"Funktionsgraphen mit dem eigenen Körper nachlaufen",
+    kurz:"Die Kamera verfolgt die Bewegung im Raum und zeichnet daraus live einen Graphen. Im Battle laufen zwei Personen gleichzeitig denselben Zielgraphen nach – wer näher dran bleibt, führt.",
+    ziel:"Der Zielgraph wird als Spline oder freihändig gezeichnet. <b>Level 1</b> wertet die Funktion selbst (den Ort), <b>Level 2</b> die Ableitung (die Geschwindigkeit) – damit wird der Zusammenhang zwischen Funktion und Ableitung körperlich erfahrbar. Die Punktestände beider laufen live mit.",
+    punkte:[
+      "Achsen als <b>Funktion</b> und <b>Ableitung</b> beschriftet; für den Physikunterricht auf Ort und Geschwindigkeit umschaltbar",
+      "Drei Reiter: Aufzeichnung, Bewegungsziel (allein üben) und Battle",
+      "Zielpfad per Spline-Punkten oder freihändig, Aufnahmedauer frei oder fest",
+      "Daten als CSV ausgebbar und druckbar",
+      "<b>Braucht Kamera und Internet</b> – die Bewegungserkennung lädt ihr Modell beim Start nach; die Bilder bleiben auf dem Gerät"
+    ],
+    keywords:"motiontrace kamera bewegung funktion ableitung graph nachlaufen battle pose körper"
+  },
+  {
+    file:"bewegungsdiagramme.html", title:"Bewegungsdiagramme", tagline:"Battle: Zielkurve nachfahren",
+    icon:"🏃", color:"#ea580c", fach:["Physik"], form:"Duell zu zweit",
+    stufen:[8,9,10,11,12,13], stufenText:"ab Jahrgangsstufe 8",
+    sozial:"Zu zweit an einem iPad",
+    thema:"Ort, Geschwindigkeit und Beschleunigung",
+    kurz:"Ein Finger fährt auf dem Lineal, daraus entstehen gleichzeitig x(t)-, v(t)- und a(t)-Diagramm. Im Battle bekommen beide Spieler ein eigenes Feld am Bildschirmrand und fahren nach dem Countdown dieselbe Zielkurve nach.",
+    ziel:"Gewertet wird, wie viel Prozent der Zeit die eigene Kurve im Toleranzband um das Ziel liegt. Die Zielkurve lässt sich wahlweise im x(t)-, v(t)- oder a(t)-Diagramm vorgeben – wer die Geschwindigkeit treffen soll, muss den Zusammenhang der drei Diagramme verstanden haben.",
+    punkte:[
+      "Drei Spielarten: freie <b>Aufnahme</b>, <b>Ziel</b> allein nachfahren und <b>Battle</b> zu zweit",
+      "Zielkurve in x(t), v(t) oder a(t) vorgeben, Dauer und Toleranz einstellbar",
+      "Glättung, Tangenten und Flächen unter v(t) und a(t); Stellen und Intervalle ablesbar",
+      "Monotonie-, Krümmungs- und Vorzeichenintervalle als farbige Streifen – die Farbe steht für das Vorzeichen, nicht für die Größe",
+      "Wiedergabe in Zeitlupe bis auf ein Zehntel, im 2D-Modus die Aufteilung ziehbar",
+      "Auch zweidimensionale Bewegungen mit Vektorpfeilen und Stroboskop-Darstellung",
+      "Messwerte als CSV exportierbar"
+    ],
+    keywords:"bewegung diagramm ort geschwindigkeit beschleunigung kinematik battle zielkurve nachfahren tangente monotonie krümmung wendepunkt hochpunkt vorzeichen intervalle"
+  },
+  {
+    file:"Koordinaten-Schatzsuche.html", title:"Koordinaten-Schatzsuche", tagline:"Punkte ablesen und eintragen",
+    icon:"🗺️", color:"#b4813a", fach:["Mathematik"], form:"Rätsel",
+    stufen:[5,6], stufenText:"Klasse 5",
+    sozial:"Allein oder zu zweit am iPad",
+    thema:"Koordinaten im Gitternetz",
+    kurz:"Jeder Hinweis nennt Koordinaten – aber auf der Karte ist noch nichts eingezeichnet. Punkte ablesen, selbst eintragen und so Schritt für Schritt zum Schatz finden.",
+    ziel:"Punkte werden als P(x;y) angegeben. Mit den Werkzeugen lassen sich Punkt, Kreis, Strecke, Gerade, Parallele und Lot einzeichnen; Küste, Fluss und Mauer sind als Linien schon da. Ein Schritt lässt sich zurücknehmen, die Suche jederzeit neu starten.",
+    punkte:[
+      "Werkzeuge: Punkt, Kreis, Strecke, Gerade, Parallele und Lot",
+      "Gefundene Marken werden mit ihren Koordinaten eingetragen – das Ablesen wird mitgeprüft",
+      "Tipp-Knopf für den nächsten Hinweis, Lage-Knopf für die geometrische Hilfe",
+      "Mit dem Lehrercode lassen sich alle Suchen und die Lösungsanzeige freischalten"
+    ],
+    keywords:"schatzsuche koordinaten punkte ablesen eintragen gitternetz karte rätsel geometrie"
+  },
+  {
+    file:"Schatzsuche.html", title:"Geometrische Schatzsuche", tagline:"Mit Zirkel und Lineal zum Schatz",
+    icon:"🧭", color:"#7d5a3c", fach:["Mathematik"], form:"Rätsel",
+    stufen:[7,8], stufenText:"Klasse 7",
+    sozial:"Allein oder zu zweit am iPad",
+    thema:"Konstruktionen und geometrische Örter",
+    kurz:"Die Hinweise beschreiben, wo der Schatz liegt – „gleich weit von zwei Bäumen“, „auf der Winkelhalbierenden“. Wer die passende Konstruktion ausführt, grenzt den Ort immer weiter ein.",
+    ziel:"Werkzeug wählen, die bestimmenden Punkte und Linien antippen – der geometrische Ort wird gezeichnet. Jede Konstruktion wandert ins <b>Logbuch</b>, sodass der Weg zum Schatz nachvollziehbar bleibt.",
+    punkte:[
+      "Werkzeuge: Zirkel, Lineal, Punkt, Mittelsenkrechte, Lot, Winkelhalbierende und Parallele",
+      "Logbuch der Konstruktionen hält jeden Schritt fest",
+      "Tipp-Knopf, wenn ein Hinweis unklar bleibt",
+      "Mit dem Lehrercode lassen sich alle Werkzeuge und die weiteren Schatzsuchen freischalten"
+    ],
+    keywords:"schatzsuche konstruktion zirkel lineal mittelsenkrechte winkelhalbierende lot parallele geometrischer ort rätsel"
+  },
+  {
+    file:"vogt-vermaechtnis.html", title:"Das Vogt-Vermächtnis", tagline:"Sechs Notizen, ein Tresor",
+    icon:"🗄️", color:"#9a7b46", fach:["Mathematik"], form:"Breakout",
+    stufen:[10], stufenText:"Klasse 10",
+    sozial:"Allein, zu zweit oder in Kleingruppen am iPad",
+    thema:"Exponentielles Wachstum, Zerfall und Logarithmus",
+    kurz:"Dr. Vogt ist verschwunden und hinterlässt sechs versiegelte Forschungsnotizen. Jede gibt ihren Teilcode erst heraus, wenn die Rechnung darin stimmt – alle sechs zusammen öffnen den Tresor.",
+    ziel:"Die sechs Notizen zeigen dieselbe Mathematik von sechs Seiten: radioaktiver Zerfall, Zinseszins, Bevölkerungswachstum, Kettennachricht, Laborprotokoll und Ausbreitungskurve. Jede Station fragt erst die Rechnung und dann die Deutung – ein Schritt <b>Einordnen &amp; Beurteilen</b> gehört überall dazu.",
+    punkte:[
+      "Reihenfolge frei wählbar; der Aktenschrank zeigt, welche Notizen schon offen sind",
+      "Die Teilcodes ergeben sich aus den Ergebnissen – falsch gerechnet heißt kein Code",
+      "Die Bonusaufgabe in Notiz 04 schaltet einen Joker frei, der eine Notiz überspringt",
+      "Fortschritt lässt sich als kurze Zeichenfolge sichern und auf einem anderen Gerät laden",
+      "Lehrkraft-Übersicht mit dem Stand aller Notizen, nach Schlüsseleingabe auch mit allen Lösungen"
+    ],
+    keywords:"breakout escape room exponentialfunktion wachstum zerfall halbwertszeit logarithmus zinseszins prognose tresor code vogt"
+  },
+  {
+    file:"operation-datatruth.html", title:"Operation DataTruth", tagline:"Vier Statistiken, vier Denkfehler",
+    icon:"🔍", color:"#d08b1e", fach:["Mathematik"], form:"Breakout",
+    stufen:[11], stufenText:"Klasse 11",
+    sozial:"Allein, zu zweit oder in Kleingruppen am iPad",
+    thema:"Bedingte Wahrscheinlichkeit, Ableitungen und Datenkritik",
+    kurz:"Vier öffentlich kursierende Statistiken sind richtig gerechnet und trotzdem irreführend. Wer den Denkfehler mit Mathematik freilegt, erhält den Codeschlüssel zur nächsten Akte.",
+    ziel:"Die vier Räume zeigen, wo Zahlen täuschen: P(A|B) gegen P(B|A), eine Trendaussage am Wendepunkt geprüft, ein Gruppenunterschied, der sich durch die Altersstruktur erklärt, und eine Umfrage mit 52 % samt Konfidenzintervall. Jeder Raum endet mit einer Bewertung, nicht nur mit einer Zahl.",
+    punkte:[
+      "Raum 1: Vierfeldertafel – die Zahl stimmt, die Schlussfolgerung nicht",
+      "Raum 2: f'(t) und f''(t) prüfen die Behauptung „steigt immer langsamer“",
+      "Raum 3: Konfundierung – der Unterschied schrumpft, sobald man altersbereinigt rechnet",
+      "Raum 4: Konfidenzintervall, Trendableitung und eine Kombinationsaufgabe als Finale",
+      "Gesprochenes Auftakt-Briefing, Spieluhr, Hinweise auf Knopfdruck, Lehrermodus mit allen Lösungen"
+    ],
+    keywords:"breakout escape room bedingte wahrscheinlichkeit bayes vierfeldertafel ableitung wendepunkt konfidenzintervall statistik datenkritik prozentpunkte"
+  },
+  {
+    file:"Breakout_Radioaktivitaet.html", title:"Breakout: Radioaktivität", tagline:"Sieben Stationen, sieben Codes",
+    icon:"☢️", color:"#3f8f5f", fach:["Physik"], form:"Breakout",
+    stufen:[10], stufenText:"Klasse 10",
+    sozial:"Allein, zu zweit oder in Kleingruppen am iPad",
+    thema:"Kernphysik: Strahlung, Zerfallsgesetz, Massendefekt, Dosis",
+    kurz:"Tschernobyl 1986 und Hiroshima 1945 – dieselbe Physik des Atomkerns. Sieben Stationen führen von der Messung mit dem Zählrohr bis zu der Frage, wie man dieses Wissen gesellschaftlich bewertet.",
+    ziel:"Jede Station gibt ihren dreistelligen Code erst her, wenn das Physikalische stimmt: Zählraten in der Sperrzone einordnen, α, β und γ nach Reichweite und Gefahr unterscheiden, das Zerfallsgesetz auf Jod, Cäsium und Uran anwenden, die Halbwertszeit aus einer Messkurve ablesen, den Massendefekt mit E = mc² auswerten und die Dosis in Sievert deuten.",
+    punkte:[
+      "Gesprochene Einführung über die Sprachausgabe des Geräts – oder überspringen",
+      "Station 1 ist ein Messexperiment: das Zählrohr schwankt zufällig, wie es echte Zerfälle tun",
+      "Station 6 verlangt eine schriftliche Beurteilung – Kernenergieausstieg oder Atombombe, begründet mit den Fachbegriffen aus den Stationen",
+      "Lehrer-Modus (Schlüssel oben rechts) zeigt alle Codes, Messwerte und didaktische Hinweise",
+      "Jede Station lässt sich ohne Lösung überspringen, wenn die Zeit knapp wird"
+    ],
+    keywords:"breakout escape room radioaktivität kernphysik zerfallsgesetz halbwertszeit alpha beta gamma massendefekt sievert dosis tschernobyl zählrohr"
+  },
+  {
+    file:"luegen-labor.html", title:"Das Lügen-Labor", tagline:"Teil 1: Diagramm-Tricks entlarven",
+    icon:"🧪", color:"#2a8f98", fach:["Mathematik"], form:"Breakout",
+    stufen:[6], stufenText:"Klasse 6",
+    sozial:"Allein, zu zweit oder in Kleingruppen am iPad",
+    thema:"Diagramme lesen und Verzerrungen erkennen",
+    kurz:"Dr. Schummel hängt in neun Räumen seine besten Werke auf: Diagramme, die winzige Unterschiede riesig wirken lassen. Wer den Trick findet, bekommt einen Buchstaben seines Geheimcodes.",
+    ziel:"Jeder Raum zeigt denselben Datensatz zweimal – so wie Dr. Schummel ihn zeigt und so, wie er ehrlich aussähe. Der Schieberegler macht sichtbar, wie die Täuschung entsteht: abgeschnittene Achse, verdoppelte Fläche, gekipptes Kreisdiagramm, ungleichmäßige Einteilung, umgedrehte Achse, herausgepickter Ausschnitt, absolute statt relative Zahlen.",
+    punkte:[
+      "Drei Ebenen: vier Schauräume, vier Räume im Geheimlabor, dazu der Meister-Raum",
+      "Jeder gelöste Raum liefert einen Buchstaben; vier davon öffnen die nächste Tür",
+      "Im Finale ein Zahlenschloss – und der gemeinste Trick: Quote gegen absolute Trefferzahl",
+      "Abgefangene Nachrichten als Tipp, wenn eine Gruppe feststeckt",
+      "Uhr läuft mit; Teil 2 ist die <b>Diagramm-Werkstatt</b>, in der die Klasse selbst täuscht"
+    ],
+    keywords:"lügen labor diagramme täuschung manipulation achse abgeschnitten 3d kreisdiagramm ausschnitt daten breakout escape room prozent statistik werkstatt teil 1"
+  },
+  {
+    file:"luegen-werkstatt.html", title:"Die Diagramm-Werkstatt", tagline:"Teil 2: selbst täuschen und entlarven",
+    icon:"📊", color:"#0e7c86", fach:["Mathematik"], form:"Werkstatt",
+    stufen:[6], stufenText:"Klasse 6",
+    sozial:"Gruppenarbeit am iPad, danach Vorführung vor der Klasse",
+    thema:"Diagramme gestalten und Verzerrungen durchschauen",
+    kurz:"Jetzt sind die Kinder die Trickser. Zu fünf Datensätzen gibt es je ein Manipulationsziel – ein Eindruck, den das Diagramm erzeugen soll, obwohl die Zahlen etwas anderes sagen.",
+    ziel:"In der Werkstatt stellen die Gruppen Achse, Ausschnitt, Seitenverhältnis und Darstellung so ein, bis die Vorschau den gewünschten falschen Eindruck macht; eine Rückmeldung sagt, ob es schon reicht. In der Präsentation zeigt jede Gruppe ihr Werk, die anderen tippen die benutzten Tricks aus zehn Karten – die Auflösung stellt Lüge und ehrliche Darstellung nebeneinander.",
+    punkte:[
+      "Fünf Datensätze: Sportverein, Schwimmbad-Preis, Lieblingsfach, Bücherei, Mathe-Quiz",
+      "Nicht jeder Trick wirkt überall – ein Kreisdiagramm kann keinen Verlauf zeigen, und zwei Tricks heben sich manchmal gegenseitig auf",
+      "Tipp-Klappe je Datensatz, wenn eine Gruppe nicht weiterkommt",
+      "Die Diagramme bleiben auf dem Gerät gespeichert und stehen in der Vorführung bereit",
+      "Teil 1 ist das <b>Lügen-Labor</b> – dort werden dieselben Tricks erst einmal entlarvt"
+    ],
+    keywords:"diagramm werkstatt täuschen entlarven manipulation achse seitenverhältnis kreisdiagramm quote absolut daten darstellen prozent gruppenarbeit präsentation lügen labor teil 2"
+  },
+  {
+    file:"superhirn.html", title:"Superhirn", tagline:"Mastermind: den Code knacken",
+    icon:"🔐", color:"#4a5fa8", fach:["Mathematik"], form:"Rätsel",
+    stufen:[5,6,7,8,9,10,11,12,13], stufenText:"ab Jahrgangsstufe 5",
+    sozial:"Allein, zu zweit am iPad oder über den Beamer mit der ganzen Klasse",
+    thema:"Logisches Schließen und das Zählprinzip",
+    kurz:"Ein geheimer Code aus Farbsteinen. Nach jedem Versuch sagen schwarze und weiße Stifte, wie viele Steine richtig stehen und wie viele nur die richtige Farbe haben – mehr nicht. Den Rest macht der Kopf.",
+    ziel:"Die Rückmeldung verrät <b>nicht</b>, welcher Stein gemeint ist. Deshalb kommt man nicht durch Probieren weiter, sondern nur durch Ausschließen: Jeder Versuch sollte so gewählt sein, dass er möglichst viele Möglichkeiten beseitigt. Auf Wunsch zeigt das Spiel mit, wie viele Codes nach jedem Versuch noch übrig sind – aus 1296 werden so sichtbar 200, dann 30, dann einer.",
+    punkte:[
+      "Drei Rollen: allein gegen den Computer, zu zweit mit Übergabe oder <b>der Computer rät</b> und du gibst die Stifte",
+      "3 bis 5 Stellen, 4 bis 8 Farben, Wiederholungen zuschaltbar – die Einstellung zeigt laufend, wie viele Codes das ergibt (6<sup>4</sup> = 1296)",
+      "Steine wahlweise als Farbe, als Farbe mit Zeichen oder als Zahlen – das Zeichen hilft, wenn jemand Farben schlecht unterscheidet",
+      "Hilfen zuschaltbar: verbleibende Möglichkeiten zählen und ein Tipp, der zu allen bisherigen Antworten passt",
+      "Wenn der Computer rät, merkt er einen Zählfehler und sagt es – die letzte Antwort lässt sich zurücknehmen"
+    ],
+    keywords:"mastermind superhirn code knacken logik schließen ausschlussverfahren kombinatorik zählprinzip farben raten denkspiel"
+  },
+  {
+    file:"schiffe-versenken-koordinaten.html", title:"Schiffe versenken", tagline:"Im Koordinatensystem",
+    icon:"⚓", color:"#2f6fa8", fach:["Mathematik"], form:"Duell zu zweit",
+    stufen:[5,6], stufenText:"Klasse 5 (auch 6 zur Wiederholung)",
+    sozial:"Zu zweit am iPad mit Übergabe oder gegen den Computer",
+    thema:"Koordinaten setzen und ablesen",
+    kurz:"Die Schiffe liegen auf den Gitterpunkten eines Koordinatensystems. Geschossen wird mit Zahlenpaaren – entweder eingetippt oder durch Antippen und Ablesen.",
+    ziel:"Jeder Schuss ist eine Koordinatenübung: Wer eintippt, muss den Punkt vorher im Kopf bestimmen; wer antippt, muss das Zahlenpaar richtig ablesen. Verlesene Koordinaten werden erkannt – auch vertauschte x- und y-Werte – und rückgemeldet.",
+    punkte:[
+      "Nur positive Achsen (0 bis 4 – 12) oder mit negativen Zahlen (±2 bis ±6)",
+      "Flotte frei zusammenstellbar: Rettungsboot bis Flugzeugträger, dazu ein Balance-Vorschlag",
+      "Schussart: eintippen, antippen &amp; ablesen oder abwechselnd",
+      "Computergegner in drei Stufen; auf Wunsch findet das Kind die Schüsse des Computers selbst im eigenen Meer",
+      "Optionen: Treffer → nochmal, Schiffe dürfen sich nicht berühren, Weg-Animation (erst x, dann y)"
+    ],
+    keywords:"koordinatensystem koordinaten ablesen zahlenpaar gitterpunkte schiffe versenken achsen negative zahlen"
+  },
+  {
+    file:"raumschiffe-versenken.html", title:"Raumschiffe versenken", tagline:"Im räumlichen Koordinatensystem",
+    icon:"🚀", color:"#6a5acd", fach:["Mathematik"], form:"Duell zu zweit",
+    stufen:[11,12,13], stufenText:"Oberstufe (Vektorgeometrie)",
+    sozial:"Zu zweit am iPad mit Übergabe oder gegen den Computer",
+    thema:"Räumliches Koordinatensystem, Punkte und Vektoren",
+    kurz:"Die Oberstufen-Variante im Raum: Schrägbild wie im Heft, zum Drehen und Zoomen. Geschossen wird auf Punkte (x|y|z) oder mit einem Vektor ab einer Sonde.",
+    ziel:"Weil das Schrägbild mehrdeutig ist, wird zuerst eine Ebene z = k gewählt und dann der Punkt bestimmt. Nach einem Fehlschuss meldet das Radar den Abstand zum nächsten Schiffspunkt – exakt als Wurzel, etwa √8 = 2√2 ≈ 2,83.",
+    punkte:[
+      "Eigene 3D-Darstellung ohne Internet: Schrägbild, frei drehbar, Pinch-Zoom",
+      "Raum 0…3 bis 0…6 oder mit negativen Bereichen; Achsen wahlweise x, y, z oder x₁, x₂, x₃",
+      "Schussarten: Punkt eingeben, Punkt ablesen, mit Vektor (Sonde + Richtungsvektor) oder abwechselnd",
+      "Radar-Abstand als exakter Wurzelterm – trainiert den Abstandsbegriff im Raum",
+      "Computergegner leicht/mittel/schwer, Flottenvorschlag mit Balance-Bewertung"
+    ],
+    keywords:"vektoren raum 3d koordinatensystem schrägbild abstand wurzel oberstufe analytische geometrie punkte"
+  }
+];
+
+/* =====================================================================
+   Rendering & Filter
+   ===================================================================== */
+const $ = (s) => document.querySelector(s);
+const STUFEN = [
+  {id:"5-6",  label:"5 – 6",  test:(g)=>g.stufen.some(s=>s<=6)},
+  {id:"7-8",  label:"7 – 8",  test:(g)=>g.stufen.some(s=>s===7||s===8)},
+  {id:"9-10", label:"9 – 10", test:(g)=>g.stufen.some(s=>s===9||s===10)},
+  {id:"11-13",label:"11 – 13",test:(g)=>g.stufen.some(s=>s>=11)}
+];
+const FORMEN = ["Kartenspiel","Domino","Team-Duell","Erklärspiel","Duell zu zweit","Rätsel","Breakout","Werkstatt"];
+const FAECHER = ["Mathematik","Physik"];
+
+const state = {fach:null, stufe:null, form:null, q:""};
+
+function chip(label, active, onClick){
+  const b = document.createElement("button");
+  b.className = "chip" + (active ? " on" : "");
+  b.type = "button";
+  b.textContent = label;
+  b.addEventListener("click", onClick);
+  return b;
+}
+
+function renderFilters(){
+  const fa = $("#fFach"); fa.innerHTML = "";
+  fa.appendChild(chip("Alle", state.fach === null, () => { state.fach = null; render(); }));
+  FAECHER.forEach(f => fa.appendChild(chip(f, state.fach === f, () => { state.fach = (state.fach === f ? null : f); render(); })));
+
+  const st = $("#fStufe"); st.innerHTML = "";
+  st.appendChild(chip("Alle", state.stufe === null, () => { state.stufe = null; render(); }));
+  STUFEN.forEach(s => st.appendChild(chip(s.label, state.stufe === s.id, () => { state.stufe = (state.stufe === s.id ? null : s.id); render(); })));
+
+  const fo = $("#fForm"); fo.innerHTML = "";
+  fo.appendChild(chip("Alle", state.form === null, () => { state.form = null; render(); }));
+  FORMEN.forEach(f => fo.appendChild(chip(f, state.form === f, () => { state.form = (state.form === f ? null : f); render(); })));
+}
+
+function matches(g){
+  if (state.fach && g.fach.indexOf(state.fach) < 0) return false;
+  if (state.form && g.form !== state.form) return false;
+  if (state.stufe){
+    const s = STUFEN.find(x => x.id === state.stufe);
+    if (s && !s.test(g)) return false;
+  }
+  const q = state.q.trim().toLowerCase();
+  if (q){
+    const hay = [g.title, g.tagline, g.thema, g.kurz, g.keywords, g.form, g.stufenText, g.fach.join(" ")]
+      .join(" ").toLowerCase();
+    if (hay.indexOf(q) < 0) return false;
+  }
+  return true;
+}
+
+function card(g){
+  const el = document.createElement("article");
+  el.className = "game";
+  el.style.setProperty("--gc", g.color);
+  el.innerHTML =
+    '<div class="head">' +
+      '<div class="mark">' + g.icon + '</div>' +
+      '<div><h2>' + g.title + '</h2><p class="tagline">' + g.tagline + '</p></div>' +
+    '</div>' +
+    '<div class="body">' +
+      '<p class="desc">' + g.kurz + '</p>' +
+      '<ul class="facts">' +
+        '<li><b>Jahrgang</b><span>' + g.stufenText + '</span></li>' +
+        '<li><b>Thema</b><span>' + g.thema + '</span></li>' +
+        '<li><b>Spielform</b><span>' + g.form + ' · ' + g.sozial + '</span></li>' +
+      '</ul>' +
+    '</div>' +
+    '<div class="actions">' +
+      '<a class="btn play" href="' + encodeURI(g.file) + '" target="_blank" rel="noopener">Spiel öffnen</a>' +
+      '<button class="btn info" type="button">Details</button>' +
+    '</div>';
+  el.querySelector(".btn.info").addEventListener("click", () => openDetails(g));
+  return el;
+}
+
+function render(){
+  renderFilters();
+  const grid = $("#grid");
+  grid.innerHTML = "";
+  const list = GAMES.filter(matches);
+  list.forEach(g => grid.appendChild(card(g)));
+  if (!list.length){
+    const e = document.createElement("div");
+    e.className = "empty";
+    e.textContent = "Kein Spiel passt zu dieser Auswahl.";
+    grid.appendChild(e);
+  }
+  $("#count").textContent = list.length === GAMES.length
+    ? "Alle " + GAMES.length + " Spiele"
+    : list.length + " von " + GAMES.length + " Spielen";
+}
+
+/* ---------------- Detail-Overlay ---------------- */
+function openDetails(g){
+  const sheet = $("#sheet");
+  sheet.style.setProperty("--gc", g.color);
+  sheet.innerHTML =
+    '<div class="shead">' +
+      '<div class="mark" style="width:52px;height:52px;border-radius:15px;display:flex;align-items:center;' +
+        'justify-content:center;font-size:26px;flex:0 0 auto;' +
+        'background:color-mix(in srgb, var(--gc) 16%, transparent);' +
+        'border:1.5px solid color-mix(in srgb, var(--gc) 42%, transparent);">' + g.icon + '</div>' +
+      '<div><h2>' + g.title + '</h2><p class="tagline">' + g.tagline + '</p></div>' +
+    '</div>' +
+    '<div class="sbody">' +
+      '<h3>Worum geht es</h3><p>' + g.kurz + '</p>' +
+      '<h3>So wird gespielt</h3><p>' + g.ziel + '</p>' +
+      '<h3>Einstellungen &amp; Varianten</h3><ul>' + g.punkte.map(p => '<li>' + p + '</li>').join("") + '</ul>' +
+      '<div class="taglist">' +
+        '<span class="tag">' + g.fach.join(" · ") + '</span>' +
+        '<span class="tag">' + g.stufenText + '</span>' +
+        '<span class="tag">' + g.form + '</span>' +
+        '<span class="tag">' + g.sozial + '</span>' +
+        '<span class="tag">' + g.file + '</span>' +
+      '</div>' +
+    '</div>' +
+    '<div class="sfoot">' +
+      '<button class="btn info" type="button" id="mClose" style="flex:0 0 auto;">Schließen</button>' +
+      '<a class="btn play" href="' + encodeURI(g.file) + '" target="_blank" rel="noopener">Spiel öffnen</a>' +
+    '</div>';
+  sheet.querySelector("#mClose").addEventListener("click", closeDetails);
+  $("#modal").classList.add("on");
+}
+function closeDetails(){ $("#modal").classList.remove("on"); }
+$("#modal").addEventListener("click", (e) => { if (e.target.id === "modal") closeDetails(); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeDetails(); });
+
+/* ---------------- Suche & Reset ---------------- */
+$("#q").addEventListener("input", (e) => { state.q = e.target.value; render(); });
+$("#reset").addEventListener("click", () => {
+  state.fach = state.stufe = state.form = null;
+  state.q = ""; $("#q").value = "";
+  render();
+});
+
+render();
+</script>
+<!-- ===================== Teilen / QR-Code (gemeinsamer Baustein) ===================== -->
+<style>
+  .sq-fab{position:fixed; left:calc(10px + env(safe-area-inset-left)); bottom:calc(10px + env(safe-area-inset-bottom));
+    z-index:120; display:none; align-items:center; gap:7px; padding:10px 14px; border-radius:999px; border:none;
+    background:rgba(20,20,26,.82); color:#fff; font:inherit; font-size:14.5px; font-weight:700; cursor:pointer;
+    box-shadow:0 4px 14px rgba(0,0,0,.3); -webkit-tap-highlight-color:transparent;}
+  .sq-fab.on{display:inline-flex;}
+  .sq-fab:active{transform:scale(.96);}
+  .sq-fab svg{width:17px; height:17px; display:block;}
+  .sq-inline{display:inline-flex; align-items:center; gap:6px;}
+  .sq-ov{position:fixed; inset:0; z-index:9000; display:none; align-items:center; justify-content:center;
+    background:rgba(12,14,18,.86); padding:16px; -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px);}
+  .sq-ov.on{display:flex;}
+  .sq-card{background:#fff; color:#1b1f24; border-radius:22px; padding:22px 22px 18px; width:100%; max-width:520px;
+    max-height:94vh; overflow:auto; text-align:center; box-shadow:0 24px 60px rgba(0,0,0,.45);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+  .sq-card h2{margin:0 0 2px; font-size:1.4rem; font-weight:800;}
+  .sq-card p.sq-sub{margin:0 0 14px; color:#5b6470; font-size:.95rem;}
+  /* Der weiße Rand um den Code ist Vorschrift: mindestens vier Module Ruhezone,
+     sonst erkennen Kameras den Code nicht. Die Breite setzt das Skript. */
+  .sq-code{display:flex; align-items:center; justify-content:center; margin:0 auto 12px;
+    width:min(74vw,330px); background:#fff; border:1px solid #e4e6ea; border-radius:14px; padding:14px 0;}
+  .sq-code canvas, .sq-code img{width:var(--sq-w,84%); height:auto; display:block; margin:0 auto; image-rendering:pixelated;}
+  .sq-code table{margin:0 auto;}
+  .sq-url{font-size:.86rem; color:#5b6470; word-break:break-all; background:#f3f4f6; border-radius:10px;
+    padding:9px 11px; margin-bottom:14px; line-height:1.4;
+    -webkit-user-select:text; user-select:text;}
+  .sq-row{display:flex; gap:9px; flex-wrap:wrap;}
+  .sq-row button{flex:1 1 130px; border:none; border-radius:12px; padding:13px 14px; font:inherit; font-size:1rem;
+    font-weight:750; cursor:pointer; background:#1b1f24; color:#fff; min-height:48px;}
+  .sq-row button.sq-alt{background:#fff; color:#1b1f24; box-shadow:inset 0 0 0 2px #dfe2e7;}
+  .sq-row button.sq-ok{background:#1f7a46;}
+  .sq-row button:active{transform:scale(.985);}
+  .sq-note{margin-top:11px; font-size:.8rem; color:#8a929c; line-height:1.45;}
+</style>
+<script>/* QR-Code: qrcodejs von David Shim (MIT) – dieselbe Bibliothek wie in der Digitalen Tafel */
+var QRCode;!function(){function a(a){this.mode=c.MODE_8BIT_BYTE,this.data=a,this.parsedData=[];for(var b=[],d=0,e=this.data.length;e>d;d++){var f=this.data.charCodeAt(d);f>65536?(b[0]=240|(1835008&f)>>>18,b[1]=128|(258048&f)>>>12,b[2]=128|(4032&f)>>>6,b[3]=128|63&f):f>2048?(b[0]=224|(61440&f)>>>12,b[1]=128|(4032&f)>>>6,b[2]=128|63&f):f>128?(b[0]=192|(1984&f)>>>6,b[1]=128|63&f):b[0]=f,this.parsedData=this.parsedData.concat(b)}this.parsedData.length!=this.data.length&&(this.parsedData.unshift(191),this.parsedData.unshift(187),this.parsedData.unshift(239))}function b(a,b){this.typeNumber=a,this.errorCorrectLevel=b,this.modules=null,this.moduleCount=0,this.dataCache=null,this.dataList=[]}function i(a,b){if(void 0==a.length)throw new Error(a.length+"/"+b);for(var c=0;c<a.length&&0==a[c];)c++;this.num=new Array(a.length-c+b);for(var d=0;d<a.length-c;d++)this.num[d]=a[d+c]}function j(a,b){this.totalCount=a,this.dataCount=b}function k(){this.buffer=[],this.length=0}function m(){return"undefined"!=typeof CanvasRenderingContext2D}function n(){var a=!1,b=navigator.userAgent;return/android/i.test(b)&&(a=!0,aMat=b.toString().match(/android ([0-9]\.[0-9])/i),aMat&&aMat[1]&&(a=parseFloat(aMat[1]))),a}function r(a,b){for(var c=1,e=s(a),f=0,g=l.length;g>=f;f++){var h=0;switch(b){case d.L:h=l[f][0];break;case d.M:h=l[f][1];break;case d.Q:h=l[f][2];break;case d.H:h=l[f][3]}if(h>=e)break;c++}if(c>l.length)throw new Error("Too long data");return c}function s(a){var b=encodeURI(a).toString().replace(/\%[0-9a-fA-F]{2}/g,"a");return b.length+(b.length!=a?3:0)}a.prototype={getLength:function(){return this.parsedData.length},write:function(a){for(var b=0,c=this.parsedData.length;c>b;b++)a.put(this.parsedData[b],8)}},b.prototype={addData:function(b){var c=new a(b);this.dataList.push(c),this.dataCache=null},isDark:function(a,b){if(0>a||this.moduleCount<=a||0>b||this.moduleCount<=b)throw new Error(a+","+b);return this.modules[a][b]},getModuleCount:function(){return this.moduleCount},make:function(){this.makeImpl(!1,this.getBestMaskPattern())},makeImpl:function(a,c){this.moduleCount=4*this.typeNumber+17,this.modules=new Array(this.moduleCount);for(var d=0;d<this.moduleCount;d++){this.modules[d]=new Array(this.moduleCount);for(var e=0;e<this.moduleCount;e++)this.modules[d][e]=null}this.setupPositionProbePattern(0,0),this.setupPositionProbePattern(this.moduleCount-7,0),this.setupPositionProbePattern(0,this.moduleCount-7),this.setupPositionAdjustPattern(),this.setupTimingPattern(),this.setupTypeInfo(a,c),this.typeNumber>=7&&this.setupTypeNumber(a),null==this.dataCache&&(this.dataCache=b.createData(this.typeNumber,this.errorCorrectLevel,this.dataList)),this.mapData(this.dataCache,c)},setupPositionProbePattern:function(a,b){for(var c=-1;7>=c;c++)if(!(-1>=a+c||this.moduleCount<=a+c))for(var d=-1;7>=d;d++)-1>=b+d||this.moduleCount<=b+d||(this.modules[a+c][b+d]=c>=0&&6>=c&&(0==d||6==d)||d>=0&&6>=d&&(0==c||6==c)||c>=2&&4>=c&&d>=2&&4>=d?!0:!1)},getBestMaskPattern:function(){for(var a=0,b=0,c=0;8>c;c++){this.makeImpl(!0,c);var d=f.getLostPoint(this);(0==c||a>d)&&(a=d,b=c)}return b},createMovieClip:function(a,b,c){var d=a.createEmptyMovieClip(b,c),e=1;this.make();for(var f=0;f<this.modules.length;f++)for(var g=f*e,h=0;h<this.modules[f].length;h++){var i=h*e,j=this.modules[f][h];j&&(d.beginFill(0,100),d.moveTo(i,g),d.lineTo(i+e,g),d.lineTo(i+e,g+e),d.lineTo(i,g+e),d.endFill())}return d},setupTimingPattern:function(){for(var a=8;a<this.moduleCount-8;a++)null==this.modules[a][6]&&(this.modules[a][6]=0==a%2);for(var b=8;b<this.moduleCount-8;b++)null==this.modules[6][b]&&(this.modules[6][b]=0==b%2)},setupPositionAdjustPattern:function(){for(var a=f.getPatternPosition(this.typeNumber),b=0;b<a.length;b++)for(var c=0;c<a.length;c++){var d=a[b],e=a[c];if(null==this.modules[d][e])for(var g=-2;2>=g;g++)for(var h=-2;2>=h;h++)this.modules[d+g][e+h]=-2==g||2==g||-2==h||2==h||0==g&&0==h?!0:!1}},setupTypeNumber:function(a){for(var b=f.getBCHTypeNumber(this.typeNumber),c=0;18>c;c++){var d=!a&&1==(1&b>>c);this.modules[Math.floor(c/3)][c%3+this.moduleCount-8-3]=d}for(var c=0;18>c;c++){var d=!a&&1==(1&b>>c);this.modules[c%3+this.moduleCount-8-3][Math.floor(c/3)]=d}},setupTypeInfo:function(a,b){for(var c=this.errorCorrectLevel<<3|b,d=f.getBCHTypeInfo(c),e=0;15>e;e++){var g=!a&&1==(1&d>>e);6>e?this.modules[e][8]=g:8>e?this.modules[e+1][8]=g:this.modules[this.moduleCount-15+e][8]=g}for(var e=0;15>e;e++){var g=!a&&1==(1&d>>e);8>e?this.modules[8][this.moduleCount-e-1]=g:9>e?this.modules[8][15-e-1+1]=g:this.modules[8][15-e-1]=g}this.modules[this.moduleCount-8][8]=!a},mapData:function(a,b){for(var c=-1,d=this.moduleCount-1,e=7,g=0,h=this.moduleCount-1;h>0;h-=2)for(6==h&&h--;;){for(var i=0;2>i;i++)if(null==this.modules[d][h-i]){var j=!1;g<a.length&&(j=1==(1&a[g]>>>e));var k=f.getMask(b,d,h-i);k&&(j=!j),this.modules[d][h-i]=j,e--,-1==e&&(g++,e=7)}if(d+=c,0>d||this.moduleCount<=d){d-=c,c=-c;break}}}},b.PAD0=236,b.PAD1=17,b.createData=function(a,c,d){for(var e=j.getRSBlocks(a,c),g=new k,h=0;h<d.length;h++){var i=d[h];g.put(i.mode,4),g.put(i.getLength(),f.getLengthInBits(i.mode,a)),i.write(g)}for(var l=0,h=0;h<e.length;h++)l+=e[h].dataCount;if(g.getLengthInBits()>8*l)throw new Error("code length overflow. ("+g.getLengthInBits()+">"+8*l+")");for(g.getLengthInBits()+4<=8*l&&g.put(0,4);0!=g.getLengthInBits()%8;)g.putBit(!1);for(;;){if(g.getLengthInBits()>=8*l)break;if(g.put(b.PAD0,8),g.getLengthInBits()>=8*l)break;g.put(b.PAD1,8)}return b.createBytes(g,e)},b.createBytes=function(a,b){for(var c=0,d=0,e=0,g=new Array(b.length),h=new Array(b.length),j=0;j<b.length;j++){var k=b[j].dataCount,l=b[j].totalCount-k;d=Math.max(d,k),e=Math.max(e,l),g[j]=new Array(k);for(var m=0;m<g[j].length;m++)g[j][m]=255&a.buffer[m+c];c+=k;var n=f.getErrorCorrectPolynomial(l),o=new i(g[j],n.getLength()-1),p=o.mod(n);h[j]=new Array(n.getLength()-1);for(var m=0;m<h[j].length;m++){var q=m+p.getLength()-h[j].length;h[j][m]=q>=0?p.get(q):0}}for(var r=0,m=0;m<b.length;m++)r+=b[m].totalCount;for(var s=new Array(r),t=0,m=0;d>m;m++)for(var j=0;j<b.length;j++)m<g[j].length&&(s[t++]=g[j][m]);for(var m=0;e>m;m++)for(var j=0;j<b.length;j++)m<h[j].length&&(s[t++]=h[j][m]);return s};for(var c={MODE_NUMBER:1,MODE_ALPHA_NUM:2,MODE_8BIT_BYTE:4,MODE_KANJI:8},d={L:1,M:0,Q:3,H:2},e={PATTERN000:0,PATTERN001:1,PATTERN010:2,PATTERN011:3,PATTERN100:4,PATTERN101:5,PATTERN110:6,PATTERN111:7},f={PATTERN_POSITION_TABLE:[[],[6,18],[6,22],[6,26],[6,30],[6,34],[6,22,38],[6,24,42],[6,26,46],[6,28,50],[6,30,54],[6,32,58],[6,34,62],[6,26,46,66],[6,26,48,70],[6,26,50,74],[6,30,54,78],[6,30,56,82],[6,30,58,86],[6,34,62,90],[6,28,50,72,94],[6,26,50,74,98],[6,30,54,78,102],[6,28,54,80,106],[6,32,58,84,110],[6,30,58,86,114],[6,34,62,90,118],[6,26,50,74,98,122],[6,30,54,78,102,126],[6,26,52,78,104,130],[6,30,56,82,108,134],[6,34,60,86,112,138],[6,30,58,86,114,142],[6,34,62,90,118,146],[6,30,54,78,102,126,150],[6,24,50,76,102,128,154],[6,28,54,80,106,132,158],[6,32,58,84,110,136,162],[6,26,54,82,110,138,166],[6,30,58,86,114,142,170]],G15:1335,G18:7973,G15_MASK:21522,getBCHTypeInfo:function(a){for(var b=a<<10;f.getBCHDigit(b)-f.getBCHDigit(f.G15)>=0;)b^=f.G15<<f.getBCHDigit(b)-f.getBCHDigit(f.G15);return(a<<10|b)^f.G15_MASK},getBCHTypeNumber:function(a){for(var b=a<<12;f.getBCHDigit(b)-f.getBCHDigit(f.G18)>=0;)b^=f.G18<<f.getBCHDigit(b)-f.getBCHDigit(f.G18);return a<<12|b},getBCHDigit:function(a){for(var b=0;0!=a;)b++,a>>>=1;return b},getPatternPosition:function(a){return f.PATTERN_POSITION_TABLE[a-1]},getMask:function(a,b,c){switch(a){case e.PATTERN000:return 0==(b+c)%2;case e.PATTERN001:return 0==b%2;case e.PATTERN010:return 0==c%3;case e.PATTERN011:return 0==(b+c)%3;case e.PATTERN100:return 0==(Math.floor(b/2)+Math.floor(c/3))%2;case e.PATTERN101:return 0==b*c%2+b*c%3;case e.PATTERN110:return 0==(b*c%2+b*c%3)%2;case e.PATTERN111:return 0==(b*c%3+(b+c)%2)%2;default:throw new Error("bad maskPattern:"+a)}},getErrorCorrectPolynomial:function(a){for(var b=new i([1],0),c=0;a>c;c++)b=b.multiply(new i([1,g.gexp(c)],0));return b},getLengthInBits:function(a,b){if(b>=1&&10>b)switch(a){case c.MODE_NUMBER:return 10;case c.MODE_ALPHA_NUM:return 9;case c.MODE_8BIT_BYTE:return 8;case c.MODE_KANJI:return 8;default:throw new Error("mode:"+a)}else if(27>b)switch(a){case c.MODE_NUMBER:return 12;case c.MODE_ALPHA_NUM:return 11;case c.MODE_8BIT_BYTE:return 16;case c.MODE_KANJI:return 10;default:throw new Error("mode:"+a)}else{if(!(41>b))throw new Error("type:"+b);switch(a){case c.MODE_NUMBER:return 14;case c.MODE_ALPHA_NUM:return 13;case c.MODE_8BIT_BYTE:return 16;case c.MODE_KANJI:return 12;default:throw new Error("mode:"+a)}}},getLostPoint:function(a){for(var b=a.getModuleCount(),c=0,d=0;b>d;d++)for(var e=0;b>e;e++){for(var f=0,g=a.isDark(d,e),h=-1;1>=h;h++)if(!(0>d+h||d+h>=b))for(var i=-1;1>=i;i++)0>e+i||e+i>=b||(0!=h||0!=i)&&g==a.isDark(d+h,e+i)&&f++;f>5&&(c+=3+f-5)}for(var d=0;b-1>d;d++)for(var e=0;b-1>e;e++){var j=0;a.isDark(d,e)&&j++,a.isDark(d+1,e)&&j++,a.isDark(d,e+1)&&j++,a.isDark(d+1,e+1)&&j++,(0==j||4==j)&&(c+=3)}for(var d=0;b>d;d++)for(var e=0;b-6>e;e++)a.isDark(d,e)&&!a.isDark(d,e+1)&&a.isDark(d,e+2)&&a.isDark(d,e+3)&&a.isDark(d,e+4)&&!a.isDark(d,e+5)&&a.isDark(d,e+6)&&(c+=40);for(var e=0;b>e;e++)for(var d=0;b-6>d;d++)a.isDark(d,e)&&!a.isDark(d+1,e)&&a.isDark(d+2,e)&&a.isDark(d+3,e)&&a.isDark(d+4,e)&&!a.isDark(d+5,e)&&a.isDark(d+6,e)&&(c+=40);for(var k=0,e=0;b>e;e++)for(var d=0;b>d;d++)a.isDark(d,e)&&k++;var l=Math.abs(100*k/b/b-50)/5;return c+=10*l}},g={glog:function(a){if(1>a)throw new Error("glog("+a+")");return g.LOG_TABLE[a]},gexp:function(a){for(;0>a;)a+=255;for(;a>=256;)a-=255;return g.EXP_TABLE[a]},EXP_TABLE:new Array(256),LOG_TABLE:new Array(256)},h=0;8>h;h++)g.EXP_TABLE[h]=1<<h;for(var h=8;256>h;h++)g.EXP_TABLE[h]=g.EXP_TABLE[h-4]^g.EXP_TABLE[h-5]^g.EXP_TABLE[h-6]^g.EXP_TABLE[h-8];for(var h=0;255>h;h++)g.LOG_TABLE[g.EXP_TABLE[h]]=h;i.prototype={get:function(a){return this.num[a]},getLength:function(){return this.num.length},multiply:function(a){for(var b=new Array(this.getLength()+a.getLength()-1),c=0;c<this.getLength();c++)for(var d=0;d<a.getLength();d++)b[c+d]^=g.gexp(g.glog(this.get(c))+g.glog(a.get(d)));return new i(b,0)},mod:function(a){if(this.getLength()-a.getLength()<0)return this;for(var b=g.glog(this.get(0))-g.glog(a.get(0)),c=new Array(this.getLength()),d=0;d<this.getLength();d++)c[d]=this.get(d);for(var d=0;d<a.getLength();d++)c[d]^=g.gexp(g.glog(a.get(d))+b);return new i(c,0).mod(a)}},j.RS_BLOCK_TABLE=[[1,26,19],[1,26,16],[1,26,13],[1,26,9],[1,44,34],[1,44,28],[1,44,22],[1,44,16],[1,70,55],[1,70,44],[2,35,17],[2,35,13],[1,100,80],[2,50,32],[2,50,24],[4,25,9],[1,134,108],[2,67,43],[2,33,15,2,34,16],[2,33,11,2,34,12],[2,86,68],[4,43,27],[4,43,19],[4,43,15],[2,98,78],[4,49,31],[2,32,14,4,33,15],[4,39,13,1,40,14],[2,121,97],[2,60,38,2,61,39],[4,40,18,2,41,19],[4,40,14,2,41,15],[2,146,116],[3,58,36,2,59,37],[4,36,16,4,37,17],[4,36,12,4,37,13],[2,86,68,2,87,69],[4,69,43,1,70,44],[6,43,19,2,44,20],[6,43,15,2,44,16],[4,101,81],[1,80,50,4,81,51],[4,50,22,4,51,23],[3,36,12,8,37,13],[2,116,92,2,117,93],[6,58,36,2,59,37],[4,46,20,6,47,21],[7,42,14,4,43,15],[4,133,107],[8,59,37,1,60,38],[8,44,20,4,45,21],[12,33,11,4,34,12],[3,145,115,1,146,116],[4,64,40,5,65,41],[11,36,16,5,37,17],[11,36,12,5,37,13],[5,109,87,1,110,88],[5,65,41,5,66,42],[5,54,24,7,55,25],[11,36,12],[5,122,98,1,123,99],[7,73,45,3,74,46],[15,43,19,2,44,20],[3,45,15,13,46,16],[1,135,107,5,136,108],[10,74,46,1,75,47],[1,50,22,15,51,23],[2,42,14,17,43,15],[5,150,120,1,151,121],[9,69,43,4,70,44],[17,50,22,1,51,23],[2,42,14,19,43,15],[3,141,113,4,142,114],[3,70,44,11,71,45],[17,47,21,4,48,22],[9,39,13,16,40,14],[3,135,107,5,136,108],[3,67,41,13,68,42],[15,54,24,5,55,25],[15,43,15,10,44,16],[4,144,116,4,145,117],[17,68,42],[17,50,22,6,51,23],[19,46,16,6,47,17],[2,139,111,7,140,112],[17,74,46],[7,54,24,16,55,25],[34,37,13],[4,151,121,5,152,122],[4,75,47,14,76,48],[11,54,24,14,55,25],[16,45,15,14,46,16],[6,147,117,4,148,118],[6,73,45,14,74,46],[11,54,24,16,55,25],[30,46,16,2,47,17],[8,132,106,4,133,107],[8,75,47,13,76,48],[7,54,24,22,55,25],[22,45,15,13,46,16],[10,142,114,2,143,115],[19,74,46,4,75,47],[28,50,22,6,51,23],[33,46,16,4,47,17],[8,152,122,4,153,123],[22,73,45,3,74,46],[8,53,23,26,54,24],[12,45,15,28,46,16],[3,147,117,10,148,118],[3,73,45,23,74,46],[4,54,24,31,55,25],[11,45,15,31,46,16],[7,146,116,7,147,117],[21,73,45,7,74,46],[1,53,23,37,54,24],[19,45,15,26,46,16],[5,145,115,10,146,116],[19,75,47,10,76,48],[15,54,24,25,55,25],[23,45,15,25,46,16],[13,145,115,3,146,116],[2,74,46,29,75,47],[42,54,24,1,55,25],[23,45,15,28,46,16],[17,145,115],[10,74,46,23,75,47],[10,54,24,35,55,25],[19,45,15,35,46,16],[17,145,115,1,146,116],[14,74,46,21,75,47],[29,54,24,19,55,25],[11,45,15,46,46,16],[13,145,115,6,146,116],[14,74,46,23,75,47],[44,54,24,7,55,25],[59,46,16,1,47,17],[12,151,121,7,152,122],[12,75,47,26,76,48],[39,54,24,14,55,25],[22,45,15,41,46,16],[6,151,121,14,152,122],[6,75,47,34,76,48],[46,54,24,10,55,25],[2,45,15,64,46,16],[17,152,122,4,153,123],[29,74,46,14,75,47],[49,54,24,10,55,25],[24,45,15,46,46,16],[4,152,122,18,153,123],[13,74,46,32,75,47],[48,54,24,14,55,25],[42,45,15,32,46,16],[20,147,117,4,148,118],[40,75,47,7,76,48],[43,54,24,22,55,25],[10,45,15,67,46,16],[19,148,118,6,149,119],[18,75,47,31,76,48],[34,54,24,34,55,25],[20,45,15,61,46,16]],j.getRSBlocks=function(a,b){var c=j.getRsBlockTable(a,b);if(void 0==c)throw new Error("bad rs block @ typeNumber:"+a+"/errorCorrectLevel:"+b);for(var d=c.length/3,e=[],f=0;d>f;f++)for(var g=c[3*f+0],h=c[3*f+1],i=c[3*f+2],k=0;g>k;k++)e.push(new j(h,i));return e},j.getRsBlockTable=function(a,b){switch(b){case d.L:return j.RS_BLOCK_TABLE[4*(a-1)+0];case d.M:return j.RS_BLOCK_TABLE[4*(a-1)+1];case d.Q:return j.RS_BLOCK_TABLE[4*(a-1)+2];case d.H:return j.RS_BLOCK_TABLE[4*(a-1)+3];default:return void 0}},k.prototype={get:function(a){var b=Math.floor(a/8);return 1==(1&this.buffer[b]>>>7-a%8)},put:function(a,b){for(var c=0;b>c;c++)this.putBit(1==(1&a>>>b-c-1))},getLengthInBits:function(){return this.length},putBit:function(a){var b=Math.floor(this.length/8);this.buffer.length<=b&&this.buffer.push(0),a&&(this.buffer[b]|=128>>>this.length%8),this.length++}};var l=[[17,14,11,7],[32,26,20,14],[53,42,32,24],[78,62,46,34],[106,84,60,44],[134,106,74,58],[154,122,86,64],[192,152,108,84],[230,180,130,98],[271,213,151,119],[321,251,177,137],[367,287,203,155],[425,331,241,177],[458,362,258,194],[520,412,292,220],[586,450,322,250],[644,504,364,280],[718,560,394,310],[792,624,442,338],[858,666,482,382],[929,711,509,403],[1003,779,565,439],[1091,857,611,461],[1171,911,661,511],[1273,997,715,535],[1367,1059,751,593],[1465,1125,805,625],[1528,1190,868,658],[1628,1264,908,698],[1732,1370,982,742],[1840,1452,1030,790],[1952,1538,1112,842],[2068,1628,1168,898],[2188,1722,1228,958],[2303,1809,1283,983],[2431,1911,1351,1051],[2563,1989,1423,1093],[2699,2099,1499,1139],[2809,2213,1579,1219],[2953,2331,1663,1273]],o=function(){var a=function(a,b){this._el=a,this._htOption=b};return a.prototype.draw=function(a){function g(a,b){var c=document.createElementNS("http://www.w3.org/2000/svg",a);for(var d in b)b.hasOwnProperty(d)&&c.setAttribute(d,b[d]);return c}var b=this._htOption,c=this._el,d=a.getModuleCount();Math.floor(b.width/d),Math.floor(b.height/d),this.clear();var h=g("svg",{viewBox:"0 0 "+String(d)+" "+String(d),width:"100%",height:"100%",fill:b.colorLight});h.setAttributeNS("http://www.w3.org/2000/xmlns/","xmlns:xlink","http://www.w3.org/1999/xlink"),c.appendChild(h),h.appendChild(g("rect",{fill:b.colorDark,width:"1",height:"1",id:"template"}));for(var i=0;d>i;i++)for(var j=0;d>j;j++)if(a.isDark(i,j)){var k=g("use",{x:String(i),y:String(j)});k.setAttributeNS("http://www.w3.org/1999/xlink","href","#template"),h.appendChild(k)}},a.prototype.clear=function(){for(;this._el.hasChildNodes();)this._el.removeChild(this._el.lastChild)},a}(),p="svg"===document.documentElement.tagName.toLowerCase(),q=p?o:m()?function(){function a(){this._elImage.src=this._elCanvas.toDataURL("image/png"),this._elImage.style.display="block",this._elCanvas.style.display="none"}function d(a,b){var c=this;if(c._fFail=b,c._fSuccess=a,null===c._bSupportDataURI){var d=document.createElement("img"),e=function(){c._bSupportDataURI=!1,c._fFail&&_fFail.call(c)},f=function(){c._bSupportDataURI=!0,c._fSuccess&&c._fSuccess.call(c)};return d.onabort=e,d.onerror=e,d.onload=f,d.src="data:image/gif;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg==",void 0}c._bSupportDataURI===!0&&c._fSuccess?c._fSuccess.call(c):c._bSupportDataURI===!1&&c._fFail&&c._fFail.call(c)}if(this._android&&this._android<=2.1){var b=1/window.devicePixelRatio,c=CanvasRenderingContext2D.prototype.drawImage;CanvasRenderingContext2D.prototype.drawImage=function(a,d,e,f,g,h,i,j){if("nodeName"in a&&/img/i.test(a.nodeName))for(var l=arguments.length-1;l>=1;l--)arguments[l]=arguments[l]*b;else"undefined"==typeof j&&(arguments[1]*=b,arguments[2]*=b,arguments[3]*=b,arguments[4]*=b);c.apply(this,arguments)}}var e=function(a,b){this._bIsPainted=!1,this._android=n(),this._htOption=b,this._elCanvas=document.createElement("canvas"),this._elCanvas.width=b.width,this._elCanvas.height=b.height,a.appendChild(this._elCanvas),this._el=a,this._oContext=this._elCanvas.getContext("2d"),this._bIsPainted=!1,this._elImage=document.createElement("img"),this._elImage.style.display="none",this._el.appendChild(this._elImage),this._bSupportDataURI=null};return e.prototype.draw=function(a){var b=this._elImage,c=this._oContext,d=this._htOption,e=a.getModuleCount(),f=d.width/e,g=d.height/e,h=Math.round(f),i=Math.round(g);b.style.display="none",this.clear();for(var j=0;e>j;j++)for(var k=0;e>k;k++){var l=a.isDark(j,k),m=k*f,n=j*g;c.strokeStyle=l?d.colorDark:d.colorLight,c.lineWidth=1,c.fillStyle=l?d.colorDark:d.colorLight,c.fillRect(m,n,f,g),c.strokeRect(Math.floor(m)+.5,Math.floor(n)+.5,h,i),c.strokeRect(Math.ceil(m)-.5,Math.ceil(n)-.5,h,i)}this._bIsPainted=!0},e.prototype.makeImage=function(){this._bIsPainted&&d.call(this,a)},e.prototype.isPainted=function(){return this._bIsPainted},e.prototype.clear=function(){this._oContext.clearRect(0,0,this._elCanvas.width,this._elCanvas.height),this._bIsPainted=!1},e.prototype.round=function(a){return a?Math.floor(1e3*a)/1e3:a},e}():function(){var a=function(a,b){this._el=a,this._htOption=b};return a.prototype.draw=function(a){for(var b=this._htOption,c=this._el,d=a.getModuleCount(),e=Math.floor(b.width/d),f=Math.floor(b.height/d),g=['<table style="border:0;border-collapse:collapse;">'],h=0;d>h;h++){g.push("<tr>");for(var i=0;d>i;i++)g.push('<td style="border:0;border-collapse:collapse;padding:0;margin:0;width:'+e+"px;height:"+f+"px;background-color:"+(a.isDark(h,i)?b.colorDark:b.colorLight)+';"></td>');g.push("</tr>")}g.push("</table>"),c.innerHTML=g.join("");var j=c.childNodes[0],k=(b.width-j.offsetWidth)/2,l=(b.height-j.offsetHeight)/2;k>0&&l>0&&(j.style.margin=l+"px "+k+"px")},a.prototype.clear=function(){this._el.innerHTML=""},a}();QRCode=function(a,b){if(this._htOption={width:256,height:256,typeNumber:4,colorDark:"#000000",colorLight:"#ffffff",correctLevel:d.H},"string"==typeof b&&(b={text:b}),b)for(var c in b)this._htOption[c]=b[c];"string"==typeof a&&(a=document.getElementById(a)),this._android=n(),this._el=a,this._oQRCode=null,this._oDrawing=new q(this._el,this._htOption),this._htOption.text&&this.makeCode(this._htOption.text)},QRCode.prototype.makeCode=function(a){this._oQRCode=new b(r(a,this._htOption.correctLevel),this._htOption.correctLevel),this._oQRCode.addData(a),this._oQRCode.make(),this._el.title=a,this._oDrawing.draw(this._oQRCode),this.makeImage()},QRCode.prototype.makeImage=function(){"function"==typeof this._oDrawing.makeImage&&(!this._android||this._android>=3)&&this._oDrawing.makeImage()},QRCode.prototype.clear=function(){this._oDrawing.clear()},QRCode.CorrectLevel=d}();
+</script>
+<script>
+(function(){
+  "use strict";
+  if(window.ShareQR) return;
+
+  var ANCHOR = "_";          // Startbildschirm: Knopf nur sichtbar, solange der zu sehen ist
+  var INLINE = ".shareslot";          // optional: Leiste, in die der Knopf direkt eingebaut wird
+  var BASE_KEY = "spieleSuite.basis";
+  var BASE_STD = "https://mauthier-bit.github.io/Spiele-Suite/";
+
+  /* ---------------- Adresse bestimmen ---------------- */
+  function basis(){
+    var b=null;
+    try{ b=localStorage.getItem(BASE_KEY); }catch(e){}
+    b=b||BASE_STD;
+    return b.charAt(b.length-1)==="/" ? b : b+"/";
+  }
+  function dateiname(){
+    var p=location.pathname||"";
+    var name=p.substring(p.lastIndexOf("/")+1);
+    try{ name=decodeURIComponent(name); }catch(e){}
+    return /^[\w.%+ -]{1,80}\.html?$/i.test(name) ? name : "index.html";
+  }
+  function adresse(){
+    if(location.protocol==="http:"||location.protocol==="https:") return location.href.split("#")[0];
+    return basis()+encodeURIComponent(dateiname());
+  }
+
+  /* ---------------- QR-Code zeichnen ---------------- */
+  function zeichneCode(host,url){
+    host.innerHTML="";
+    host.style.removeProperty("--sq-w");
+    if(typeof QRCode==="undefined"){
+      host.innerHTML='<div style="padding:18px;color:#8a929c;font-size:.9rem;">QR-Code nicht verfügbar – bitte den Link weitergeben.</div>';
+      return;
+    }
+    try{
+      var q=new QRCode(host,{text:url, width:900, height:900, correctLevel:QRCode.CorrectLevel.M});
+      /* Ruhezone: vier Module weiß ringsum, sonst findet die Kamera den Code nicht */
+      var n=q._oQRCode && q._oQRCode.getModuleCount ? q._oQRCode.getModuleCount() : 0;
+      if(n) host.style.setProperty("--sq-w", (100*n/(n+8)).toFixed(2)+"%");
+    }catch(e){
+      host.innerHTML='<div style="padding:18px;color:#8a929c;font-size:.9rem;">Die Adresse ist zu lang für einen QR-Code – bitte den Link kopieren.</div>';
+    }
+  }
+
+  /* ---------------- Oberfläche ---------------- */
+  var ov=null;
+  function baueOverlay(){
+    ov=document.createElement("div");
+    ov.className="sq-ov";
+    ov.innerHTML='<div class="sq-card">'+
+      '<h2 id="sqTitle">Teilen</h2><p class="sq-sub">Mit der Kamera scannen – das Spiel öffnet sich direkt im Browser.</p>'+
+      '<div class="sq-code" id="sqCode"></div>'+
+      '<div class="sq-url" id="sqUrl"></div>'+
+      '<div class="sq-row">'+
+        '<button class="sq-copy">Link kopieren</button>'+
+        '<button class="sq-alt sq-edit">Adresse ändern</button>'+
+        '<button class="sq-alt sq-close">Schließen</button>'+
+      '</div>'+
+      '<div class="sq-note" id="sqNote"></div>'+
+      '</div>';
+    document.body.appendChild(ov);
+    ov.addEventListener("click",function(e){ if(e.target===ov) zu(); });
+    ov.querySelector(".sq-close").addEventListener("click",zu);
+    ov.querySelector(".sq-copy").addEventListener("click",function(){ kopiereLink(this); });
+    ov.querySelector(".sq-edit").addEventListener("click",function(){
+      var neu=prompt("Internetadresse des Ordners, in dem die Spiele liegen:", basis());
+      if(neu===null) return;
+      neu=neu.trim();
+      try{ if(neu) localStorage.setItem(BASE_KEY,neu); else localStorage.removeItem(BASE_KEY); }catch(e){}
+      fuelle();
+    });
+  }
+  function fuelle(){
+    var url=adresse();
+    var t=(document.title||"").split(/[\u2013\u2014|\u00b7]/)[0].trim();
+    ov.querySelector("#sqTitle").textContent=(t||"Diese Seite")+" teilen";
+    zeichneCode(ov.querySelector("#sqCode"), url);
+    ov.querySelector("#sqUrl").textContent=url;
+    ov.querySelector("#sqNote").innerHTML = (location.protocol==="http:"||location.protocol==="https:")
+      ? "Das ist die Adresse dieser Seite."
+      : "Die Datei liegt lokal auf diesem Gerät. Der Code zeigt deshalb auf die veröffentlichte Fassung – über „Adresse ändern“ anpassbar.";
+  }
+  function kopiereLink(btn){
+    var url=adresse();
+    function melde(ok){
+      btn.textContent = ok ? "Kopiert \u2713" : "Bitte von Hand kopieren";
+      btn.classList.toggle("sq-ok", !!ok);
+      if(!ok){
+        try{
+          var el=ov.querySelector("#sqUrl"), r=document.createRange();
+          r.selectNodeContents(el);
+          var s=window.getSelection(); s.removeAllRanges(); s.addRange(r);
+        }catch(e){}
+      }
+      clearTimeout(btn._t);
+      btn._t=setTimeout(function(){ btn.textContent="Link kopieren"; btn.classList.remove("sq-ok"); },1900);
+    }
+    function altweg(){
+      try{
+        var ta=document.createElement("textarea");
+        ta.value=url; ta.setAttribute("readonly","");
+        ta.style.position="fixed"; ta.style.top="-1000px"; ta.style.opacity="0";
+        document.body.appendChild(ta);
+        ta.select(); ta.setSelectionRange(0,ta.value.length);
+        var ok=document.execCommand("copy");
+        document.body.removeChild(ta);
+        melde(ok);
+      }catch(e){ melde(false); }
+    }
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(url).then(function(){ melde(true); }, altweg);
+    } else altweg();
+  }
+  function auf(){ if(!ov) baueOverlay(); fuelle(); ov.classList.add("on"); }
+  function zu(){ if(ov) ov.classList.remove("on"); }
+
+  var ICON='<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 3h8v8H3V3zm2 2v4h4V5H5zm8-2h8v8h-8V3zm2 2v4h4V5h-4zM3 13h8v8H3v-8zm2 2v4h4v-4H5zm8-2h3v3h-3v-3zm5 0h3v3h-3v-3zm-5 5h3v3h-3v-3zm5 0h3v3h-3v-3z"/></svg>';
+  function knopf(){
+    var inline=INLINE && INLINE.charAt(0)!=="_" ? document.querySelector(INLINE) : null;
+    if(inline){
+      var b=document.createElement("button");
+      b.className=(inline.querySelector("button")? inline.querySelector("button").className : "")+" sq-inline";
+      b.type="button"; b.innerHTML=ICON+"<span>Teilen</span>";
+      b.addEventListener("click",auf);
+      inline.appendChild(b);
+      return;
+    }
+    var f=document.createElement("button");
+    f.className="sq-fab"; f.type="button";
+    f.innerHTML=ICON+"<span>Teilen</span>";
+    f.addEventListener("click",auf);
+    document.body.appendChild(f);
+    var sel = ANCHOR && ANCHOR.charAt(0)!=="_" ? ANCHOR : null;
+    function sichtbar(){
+      if(!sel) return true;
+      var els=document.querySelectorAll(sel);
+      for(var i=0;i<els.length;i++){
+        var cs=getComputedStyle(els[i]);
+        if(cs.display!=="none" && cs.visibility!=="hidden" && els[i].getClientRects().length) return true;
+      }
+      return false;
+    }
+    function pruefe(){ f.classList.toggle("on", sichtbar() && !(ov&&ov.classList.contains("on"))); }
+    pruefe();
+    setInterval(pruefe,400);
+  }
+  function start(){ knopf(); }
+  if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",start);
+  else start();
+
+  window.ShareQR={open:auf, close:zu, url:adresse, basis:basis};
+})();
+</script>
+
+</body>
+</html>

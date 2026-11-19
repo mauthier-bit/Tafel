@@ -1,6 +1,36 @@
 /* Service Worker – macht die Tafel offline-fähig (App-Shell + Bibliotheken cachen). */
-const CACHE = 'tafel-v802';
+const CACHE = 'tafel-v803';
 const H5P_CACHE = 'tafel-h5p';   // entpackte .h5p-Inhalte (bleiben über App-Updates hinweg erhalten)
+/* Die Spiele-Suite ist gross (rund 4 MB) und aendert sich selten: sie bekommt einen eigenen
+   Vorrat, der ein Tafel-Update ueberlebt. Erst wenn SPIELE_V hochgezaehlt wird (also wenn neue
+   Spielstaende hereinkopiert wurden), wird er geleert und neu gefuellt. */
+const SPIELE_CACHE = 'tafel-spiele';
+const SPIELE_V = 's1';
+const SPIELE = [
+  'spiele/Breakout_Radioaktivitaet.html',
+  'spiele/Bruno.html',
+  'spiele/D-Uno.html',
+  'spiele/Fumino.html',
+  'spiele/Koordinaten-Schatzsuche.html',
+  'spiele/Kopfrechen-Duell.html',
+  'spiele/Mattle.html',
+  'spiele/Schatzsuche.html',
+  'spiele/Termino.html',
+  'spiele/bewegungsdiagramme.html',
+  'spiele/galgenmaennchen.html',
+  'spiele/index.html',
+  'spiele/luegen-labor.html',
+  'spiele/luegen-werkstatt.html',
+  'spiele/mathe-tabu.html',
+  'spiele/memory.html',
+  'spiele/motiontrace.html',
+  'spiele/operation-datatruth.html',
+  'spiele/physik-tabu.html',
+  'spiele/raumschiffe-versenken.html',
+  'spiele/schiffe-versenken-koordinaten.html',
+  'spiele/superhirn.html',
+  'spiele/vogt-vermaechtnis.html'
+];
 const ASSETS = [
   './',
   'index.html',
@@ -97,10 +127,32 @@ self.addEventListener('install', e => {
     await Promise.all(ASSETS.map(async u => {
       try { const res = await fetch(u, {cache: 'reload'}); if (res.ok) await c.put(u, res); } catch (err) {}
     }));
-  }).then(() => self.skipWaiting()));
+  }).then(spieleVorrat).then(() => self.skipWaiting()));
 });
+/* Spiele nachladen, aber nur was fehlt – ein Tafel-Update soll die 4 MB nicht jedes Mal holen */
+async function spieleVorrat(){
+  try{
+    const c = await caches.open(SPIELE_CACHE);
+    const marke = await c.match('spiele-version');
+    if (!marke || (await marke.text()) !== SPIELE_V) {
+      await caches.delete(SPIELE_CACHE);
+      return spieleNeu();
+    }
+    await Promise.all(SPIELE.map(async u => {
+      if (await c.match(u)) return;
+      try { const r = await fetch(u, {cache: 'reload'}); if (r.ok) await c.put(u, r); } catch (err) {}
+    }));
+  }catch(err){}
+}
+async function spieleNeu(){
+  const c = await caches.open(SPIELE_CACHE);
+  await Promise.all(SPIELE.map(async u => {
+    try { const r = await fetch(u, {cache: 'reload'}); if (r.ok) await c.put(u, r); } catch (err) {}
+  }));
+  await c.put('spiele-version', new Response(SPIELE_V));
+}
 self.addEventListener('activate', e => {
-  e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE && k !== H5P_CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim()));
+  e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE && k !== H5P_CACHE && k !== SPIELE_CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim()));
 });
 self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
@@ -111,6 +163,15 @@ self.addEventListener('fetch', e => {
     e.respondWith(caches.open(H5P_CACHE)
       .then(c => c.match(url.origin + url.pathname, {ignoreSearch: true, ignoreVary: true}))
       .then(hit => hit || new Response('', {status: 404})));
+    return;
+  }
+  if (url.pathname.includes('/spiele/')) {            // Spiele-Suite aus ihrem eigenen Vorrat
+    e.respondWith(caches.open(SPIELE_CACHE).then(c =>
+      c.match(url.origin + url.pathname, {ignoreSearch: true}).then(hit => hit ||
+        fetch(e.request).then(res => {
+          if (e.request.method === 'GET' && res.ok) c.put(url.origin + url.pathname, res.clone());
+          return res;
+        }).catch(() => caches.match(e.request, {ignoreSearch: true})))));
     return;
   }
   e.respondWith(

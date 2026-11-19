@@ -1,0 +1,2757 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Das Vogt-Vermächtnis — Forschungsarchiv</title>
+<style>
+
+/* ============================================================
+   DESIGN TOKENS
+   Konzept: "Das verlassene Forschungsarchiv"
+   Farben: Tintenblau-Archiv, Pergament/Messing-Akzent, Siegel-Rot
+   ============================================================ */
+:root{
+  --ink-950: #0f1620;
+  --ink-900: #141d2b;
+  --ink-800: #1a2332;
+  --ink-700: #243049;
+  --ink-600: #324361;
+  --ink-500: #46577a;
+  --parchment: #e8e4d8;
+  --parchment-dim: #b9b4a4;
+  --brass: #c9a876;
+  --brass-bright: #e0c08f;
+  --brass-dim: #8a7456;
+  --seal-red: #c84630;
+  --seal-red-bright: #e0593f;
+  --moss: #6b8f6b;
+  --moss-bright: #8fb88f;
+
+  --font-display: 'Courier Prime', 'Courier New', monospace;
+  --font-body: 'Lora', Georgia, serif;
+  --font-ui: 'IBM Plex Mono', 'Courier New', monospace;
+
+  --radius-card: 3px;
+  --shadow-deep: 0 18px 50px -12px rgba(0,0,0,0.65);
+  --shadow-soft: 0 6px 18px -6px rgba(0,0,0,0.45);
+}
+
+@font-face{
+  font-family:'Courier Prime';
+  src: local('Courier Prime');
+}
+
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background: radial-gradient(ellipse at 20% 0%, #1c2940 0%, var(--ink-950) 55%, #0a0e15 100%);
+  /* zusaetzlich als Farbe, damit der Streifen unter der iPadOS-Statusleiste
+     nicht auf Weiss zurueckfaellt (ein Verlauf allein liefert keine Farbe) */
+  background-color: var(--ink-950);
+  color: var(--parchment);
+  font-family: var(--font-body);
+  min-height:100vh;
+  -webkit-font-smoothing: antialiased;
+  overflow-x:hidden;
+}
+
+/* subtle paper-grain / vignette texture overlay */
+body::before{
+  content:"";
+  position:fixed; inset:0;
+  background-image:
+    radial-gradient(circle at 50% 50%, transparent 40%, rgba(0,0,0,0.35) 100%),
+    repeating-linear-gradient(0deg, rgba(255,255,255,0.012) 0px, transparent 1px, transparent 2px);
+  pointer-events:none;
+  z-index:0;
+}
+
+button{font-family:inherit; cursor:pointer;}
+button:focus-visible, input:focus-visible, [tabindex]:focus-visible{
+  outline:2px solid var(--brass-bright);
+  outline-offset:2px;
+}
+
+@media (prefers-reduced-motion: reduce){
+  *{animation-duration:0.001ms !important; transition-duration:0.001ms !important;}
+}
+
+/* ============================================================
+   APP SHELL
+   ============================================================ */
+#app{position:relative; z-index:1; min-height:100vh;}
+
+.screen{display:none; min-height:100vh;}
+.screen.active{display:block;}
+
+/* ---- Top bar ---- */
+.topbar{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:14px 22px;
+  border-bottom:1px solid var(--ink-600);
+  background: linear-gradient(180deg, rgba(20,29,43,0.9), rgba(20,29,43,0.4));
+  backdrop-filter: blur(6px);
+  position:sticky; top:0; z-index:50;
+}
+.topbar-left{display:flex; align-items:center; gap:12px;}
+.case-stamp{
+  font-family:var(--font-ui);
+  font-size:10px; letter-spacing:0.12em;
+  color: var(--brass-dim);
+  border:1px solid var(--brass-dim);
+  padding:3px 7px;
+  border-radius:2px;
+  text-transform:uppercase;
+}
+.topbar-title{
+  font-family:var(--font-display);
+  font-size:15px; letter-spacing:0.02em;
+  color: var(--parchment);
+}
+.topbar-title b{color:var(--brass-bright); font-weight:700;}
+.topbar-right{display:flex; gap:8px;}
+
+.btn-ghost{
+  background:transparent; border:1px solid var(--ink-500);
+  color:var(--parchment-dim); font-family:var(--font-ui);
+  font-size:11px; letter-spacing:0.04em; text-transform:uppercase;
+  padding:7px 12px; border-radius:2px;
+  transition:border-color .15s, color .15s;
+}
+.btn-ghost:hover{border-color:var(--brass); color:var(--brass-bright);}
+
+/* ============================================================
+   HUB / AKTENSCHRANK VIEW
+   ============================================================ */
+.hub-wrap{
+  max-width:1180px; margin:0 auto; padding:36px 20px 80px;
+}
+.hub-intro{
+  text-align:center; max-width:680px; margin:0 auto 40px;
+}
+.hub-eyebrow{
+  font-family:var(--font-ui); font-size:11px; letter-spacing:0.18em;
+  text-transform:uppercase; color:var(--brass-dim); margin-bottom:10px;
+}
+.hub-title{
+  font-family:var(--font-display); font-size:clamp(26px,4vw,38px);
+  color:var(--parchment); margin:0 0 14px; line-height:1.25;
+}
+.hub-title b{color:var(--brass-bright);}
+.hub-desc{
+  font-size:15.5px; line-height:1.65; color:var(--parchment-dim);
+}
+
+.case-progress{
+  display:flex; align-items:center; justify-content:center; gap:10px;
+  margin:26px auto 0; max-width:480px;
+}
+.case-progress-track{
+  flex:1; height:6px; background:var(--ink-700); border-radius:4px; overflow:hidden;
+  border:1px solid var(--ink-600);
+}
+.case-progress-fill{
+  height:100%; background:linear-gradient(90deg, var(--brass-dim), var(--brass-bright));
+  width:0%; transition:width .5s ease;
+}
+.case-progress-label{
+  font-family:var(--font-ui); font-size:12px; color:var(--brass); white-space:nowrap;
+}
+
+/* grid of station "folders" */
+.folder-grid{
+  display:grid; grid-template-columns:repeat(3, 1fr); gap:18px;
+  margin-top:34px;
+}
+@media (max-width:880px){ .folder-grid{grid-template-columns:repeat(2,1fr);} }
+@media (max-width:560px){ .folder-grid{grid-template-columns:1fr;} }
+
+.folder-card{
+  position:relative;
+  background: linear-gradient(165deg, var(--ink-800) 0%, var(--ink-900) 100%);
+  border:1px solid var(--ink-600);
+  border-radius: var(--radius-card);
+  padding:20px 18px 18px;
+  text-align:left;
+  color:inherit;
+  box-shadow: var(--shadow-soft);
+  transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+  display:flex; flex-direction:column; gap:10px;
+  min-height:178px;
+}
+.folder-card:hover{
+  transform: translateY(-3px);
+  border-color: var(--brass-dim);
+  box-shadow: var(--shadow-deep);
+}
+.folder-card.is-solved{
+  border-color: var(--moss);
+}
+.folder-card.is-solved::after{
+  content:"GELÖST";
+  position:absolute; top:14px; right:14px;
+  font-family:var(--font-ui); font-size:10px; letter-spacing:0.12em;
+  color: var(--moss-bright);
+  border:1px solid var(--moss); border-radius:2px;
+  padding:2px 6px;
+  transform:rotate(6deg);
+}
+.folder-num{
+  font-family:var(--font-ui); font-size:11px; color:var(--brass-dim); letter-spacing:0.1em;
+}
+.folder-title{
+  font-family:var(--font-display); font-size:17px; color:var(--parchment);
+  line-height:1.3;
+}
+.folder-sub{
+  font-size:13.5px; color:var(--parchment-dim); line-height:1.5; flex:1;
+}
+.folder-code-slot{
+  font-family:var(--font-ui); font-size:12px; color:var(--ink-500);
+  border-top:1px dashed var(--ink-600); padding-top:8px; margin-top:auto;
+  display:flex; justify-content:space-between; align-items:center;
+}
+.folder-code-slot .code-val{color:var(--brass-bright); letter-spacing:0.08em;}
+
+/* ---- joker card ---- */
+.joker-card{
+  margin-top:28px;
+  background: linear-gradient(165deg, #2a2415 0%, var(--ink-900) 70%);
+  border:1px solid var(--brass);
+  border-radius: var(--radius-card);
+  padding:22px 24px;
+  text-align:center;
+}
+.joker-title{
+  font-family:var(--font-display); font-size:17px; color:var(--brass-bright); margin-bottom:8px;
+}
+.joker-desc{font-size:13.5px; color:var(--parchment-dim); margin-bottom:14px; line-height:1.55;}
+.joker-input-row{display:flex; gap:8px; justify-content:center; flex-wrap:wrap;}
+
+/* ---- final vault section ---- */
+.vault-card{
+  margin-top:34px;
+  background: linear-gradient(165deg, #201515 0%, var(--ink-900) 70%);
+  border:1px solid var(--seal-red);
+  border-radius: var(--radius-card);
+  padding:26px 24px;
+  text-align:center;
+}
+.vault-card.unlocked{border-color:var(--moss);}
+.vault-title{
+  font-family:var(--font-display); font-size:18px; color:var(--brass-bright); margin-bottom:8px;
+}
+.vault-desc{font-size:14px; color:var(--parchment-dim); margin-bottom:16px;}
+.vault-input-row{display:flex; gap:8px; justify-content:center; flex-wrap:wrap;}
+.vault-input{
+  font-family:var(--font-ui); font-size:16px; letter-spacing:0.15em;
+  background:var(--ink-800); border:1px solid var(--ink-500); color:var(--parchment);
+  padding:10px 14px; border-radius:2px; width:220px; text-align:center;
+}
+.btn-primary{
+  background:linear-gradient(160deg, var(--brass-bright), var(--brass));
+  color:var(--ink-950); border:none; font-family:var(--font-ui);
+  font-size:13px; letter-spacing:0.06em; text-transform:uppercase; font-weight:700;
+  padding:10px 20px; border-radius:2px; transition:filter .15s, transform .15s;
+}
+.btn-primary:hover{filter:brightness(1.08); transform:translateY(-1px);}
+.btn-primary:disabled{opacity:0.4; cursor:not-allowed; transform:none;}
+
+.vault-feedback{margin-top:10px; font-family:var(--font-ui); font-size:12.5px; min-height:18px;}
+.vault-feedback.err{color:var(--seal-red-bright);}
+.vault-feedback.ok{color:var(--moss-bright);}
+
+/* ============================================================
+   STATION VIEW (shared shell — content injected per station)
+   ============================================================ */
+.station-wrap{
+  max-width:880px; margin:0 auto; padding:28px 20px 100px;
+}
+.station-head{margin-bottom:24px;}
+.station-eyebrow{
+  font-family:var(--font-ui); font-size:11px; letter-spacing:0.16em; text-transform:uppercase;
+  color:var(--brass-dim); margin-bottom:8px;
+}
+.station-title{
+  font-family:var(--font-display); font-size:clamp(22px,3.4vw,30px); color:var(--parchment);
+  margin:0 0 10px; line-height:1.3;
+}
+.station-lede{font-size:15.5px; line-height:1.65; color:var(--parchment-dim);}
+
+.note-card{
+  background:linear-gradient(165deg, var(--ink-800), var(--ink-900));
+  border:1px solid var(--ink-600); border-radius:var(--radius-card);
+  padding:22px 22px; margin:18px 0;
+  box-shadow:var(--shadow-soft);
+}
+.note-card h3{
+  font-family:var(--font-display); font-size:16px; color:var(--brass-bright);
+  margin:0 0 10px; display:flex; align-items:center; gap:8px;
+}
+.note-card h3 .step-num{
+  font-family:var(--font-ui); font-size:11px; background:var(--ink-700);
+  color:var(--brass); border-radius:50%; width:22px; height:22px;
+  display:inline-flex; align-items:center; justify-content:center; flex-shrink:0;
+}
+.note-card h3 .step-num.bonus{background:var(--brass-dim); color:var(--ink-950);}
+.note-card.bonus-card{border-color:var(--brass-dim); background:linear-gradient(165deg, #261f12, var(--ink-900));}
+.joker-won{
+  margin-top:10px; padding:10px 14px; border-radius:2px;
+  background:rgba(201,168,118,0.15); border:1px solid var(--brass);
+  color:var(--brass-bright); font-family:var(--font-ui); font-size:13px; text-align:center;
+}
+.note-card p{font-size:14.5px; line-height:1.65; color:var(--parchment);}
+.note-card .hint{font-size:13px; color:var(--parchment-dim); font-style:italic;}
+
+/* ---- hint toggle component ---- */
+.hint-toggle-wrap{margin:10px 0;}
+.hint-toggle-btn{
+  background:none; border:1px solid var(--ink-500); color:var(--parchment-dim);
+  font-family:var(--font-ui); font-size:11.5px; letter-spacing:0.04em;
+  padding:6px 12px; border-radius:2px; transition:border-color .15s, color .15s;
+  display:inline-flex; align-items:center; gap:6px;
+}
+.hint-toggle-btn:hover{border-color:var(--brass-dim); color:var(--brass-bright);}
+.hint-toggle-btn .chevron{transition:transform .15s; font-size:10px;}
+.hint-toggle-btn.is-open .chevron{transform:rotate(90deg);}
+.hint-toggle-body{
+  display:none; font-size:13px; font-style:italic; color:var(--parchment-dim);
+  padding:8px 12px; margin-top:6px; border-left:3px solid var(--ink-600);
+}
+.hint-toggle-body.is-open{display:block;}
+
+.term-box{
+  background:var(--ink-700); border-left:3px solid var(--brass-dim);
+  padding:10px 14px; margin:10px 0; font-size:13.5px; line-height:1.55;
+  border-radius:0 2px 2px 0;
+}
+.term-box b{color:var(--brass-bright);}
+
+.field-row{display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin:12px 0;}
+.field-row label{font-size:14px; color:var(--parchment-dim); min-width:fit-content;}
+.text-input, .num-input{
+  font-family:var(--font-ui); font-size:15px;
+  background:var(--ink-900); border:1px solid var(--ink-500); color:var(--parchment);
+  padding:9px 12px; border-radius:2px; min-width:90px;
+}
+.text-input{min-width:200px;}
+.text-input:focus, .num-input:focus{border-color:var(--brass);}
+
+.check-btn{
+  background:var(--ink-700); border:1px solid var(--brass-dim); color:var(--brass-bright);
+  font-family:var(--font-ui); font-size:12.5px; letter-spacing:0.05em; text-transform:uppercase;
+  padding:9px 16px; border-radius:2px; transition:background .15s, border-color .15s;
+}
+.check-btn:hover{background:var(--ink-600); border-color:var(--brass);}
+
+.feedback-msg{
+  font-size:13.5px; margin-top:8px; padding:8px 12px; border-radius:2px;
+  display:none;
+}
+.feedback-msg.show{display:block;}
+.feedback-msg.ok{background:rgba(107,143,107,0.15); border:1px solid var(--moss); color:var(--moss-bright);}
+.feedback-msg.err{background:rgba(200,70,48,0.15); border:1px solid var(--seal-red); color:var(--seal-red-bright);}
+
+.station-code-reveal{
+  margin-top:26px; padding:20px; text-align:center;
+  background:linear-gradient(165deg, #1c2818, var(--ink-900));
+  border:1px solid var(--moss); border-radius:var(--radius-card);
+  display:none;
+}
+.station-code-reveal.show{display:block;}
+.station-code-reveal .label{font-family:var(--font-ui); font-size:11px; letter-spacing:0.1em; color:var(--moss-bright); text-transform:uppercase;}
+.station-code-reveal .code{font-family:var(--font-display); font-size:28px; color:var(--brass-bright); letter-spacing:0.1em; margin-top:6px;}
+
+.back-link{
+  display:inline-flex; align-items:center; gap:6px; margin-bottom:18px;
+  font-family:var(--font-ui); font-size:12px; color:var(--parchment-dim);
+  background:none; border:none; text-decoration:none;
+}
+.back-link:hover{color:var(--brass-bright);}
+.back-link.back-link-bottom{
+  margin-top:30px; margin-bottom:10px; padding:10px 16px;
+  border:1px solid var(--ink-500); border-radius:2px; font-size:13px;
+}
+.back-link.back-link-bottom:hover{border-color:var(--brass-dim);}
+
+/* generic small utility classes used across stations */
+.flex-col{display:flex; flex-direction:column; gap:10px;}
+.grid-2{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+@media (max-width:600px){.grid-2{grid-template-columns:1fr;}}
+.muted{color:var(--parchment-dim);}
+.mono{font-family:var(--font-ui);}
+.brass{color:var(--brass-bright);}
+table.data-table{width:100%; border-collapse:collapse; font-size:14px; margin:10px 0;}
+table.data-table th, table.data-table td{
+  border:1px solid var(--ink-600); padding:7px 10px; text-align:center;
+}
+table.data-table th{background:var(--ink-700); color:var(--brass-bright); font-family:var(--font-ui); font-size:12px;}
+table.data-table td{color:var(--parchment);}
+
+canvas{max-width:100%; touch-action:none;}
+
+.slider-block{margin:14px 0;}
+.slider-block .slider-label{
+  display:flex; justify-content:space-between; font-size:13.5px; color:var(--parchment-dim);
+  margin-bottom:4px; font-family:var(--font-ui);
+}
+.slider-block .slider-label .val{color:var(--brass-bright);}
+input[type=range]{
+  width:100%; -webkit-appearance:none; appearance:none;
+  height:6px; background:var(--ink-700); border-radius:4px; outline:none;
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none; width:20px; height:20px; border-radius:50%;
+  background:var(--brass-bright); border:2px solid var(--ink-900); cursor:pointer;
+  box-shadow:0 2px 6px rgba(0,0,0,0.4);
+}
+input[type=range]::-moz-range-thumb{
+  width:20px; height:20px; border-radius:50%;
+  background:var(--brass-bright); border:2px solid var(--ink-900); cursor:pointer;
+}
+
+/* ============================================================
+   CHOICE QUESTION COMPONENT
+   ============================================================ */
+.choice-question{margin-top:14px;}
+.choice-q-text{font-size:14.5px; line-height:1.6; color:var(--parchment); margin-bottom:12px;}
+.choice-options{display:flex; flex-direction:column; gap:8px; margin-bottom:14px;}
+.choice-option{
+  display:flex; align-items:flex-start; gap:10px;
+  background:var(--ink-700); border:1px solid var(--ink-600); border-radius:2px;
+  padding:10px 12px; cursor:pointer; transition:border-color .15s, background .15s;
+  font-size:14px; line-height:1.5; color:var(--parchment);
+}
+.choice-option:hover{border-color:var(--brass-dim);}
+.choice-option input{margin-top:3px; accent-color:var(--brass-bright); flex-shrink:0; cursor:pointer;}
+.choice-question.choice-solved .choice-option{cursor:default;}
+.choice-question.choice-solved .choice-option:hover{border-color:var(--ink-600);}
+.choice-feedback div{margin-bottom:4px;}
+.choice-feedback div:last-child{margin-bottom:0;}
+
+/* ============================================================
+   TEACHER PANEL (modal overlay)
+   ============================================================ */
+.modal-overlay{
+  position:fixed; inset:0; background:rgba(8,11,16,0.78);
+  display:none; align-items:center; justify-content:center; z-index:200; padding:20px;
+}
+.modal-overlay.show{display:flex;}
+.modal-box{
+  background:linear-gradient(165deg, var(--ink-800), var(--ink-900));
+  border:1px solid var(--brass-dim); border-radius:var(--radius-card);
+  max-width:520px; width:100%; max-height:84vh; overflow-y:auto;
+  padding:24px; box-shadow:var(--shadow-deep);
+}
+.modal-box h2{
+  font-family:var(--font-display); font-size:18px; color:var(--brass-bright); margin:0 0 14px;
+}
+.modal-close{
+  float:right; background:none; border:none; color:var(--parchment-dim); font-size:18px;
+}
+.teacher-row{
+  display:flex; justify-content:space-between; align-items:center;
+  padding:8px 0; border-bottom:1px solid var(--ink-700); font-size:13.5px;
+}
+.teacher-row .tstat{font-family:var(--font-ui); font-size:11px; padding:2px 8px; border-radius:2px;}
+.tstat.solved{background:rgba(107,143,107,0.2); color:var(--moss-bright); border:1px solid var(--moss);}
+.tstat.open{background:rgba(70,87,122,0.2); color:var(--parchment-dim); border:1px solid var(--ink-500);}
+
+.teacher-unlock-row{
+  display:flex; gap:8px; margin-top:20px; padding-top:16px;
+  border-top:1px dashed var(--ink-600);
+}
+#teacher-solutions{margin-top:14px;}
+.solution-block{
+  background:var(--ink-700); border:1px solid var(--ink-600); border-radius:2px;
+  padding:10px 12px; margin-bottom:8px;
+}
+.solution-block .sol-title{
+  font-family:var(--font-display); font-size:13.5px; color:var(--brass-bright); margin-bottom:6px;
+}
+.solution-block .sol-row{
+  display:flex; justify-content:space-between; gap:10px; font-size:12.5px;
+  padding:3px 0; color:var(--parchment-dim);
+}
+.solution-block .sol-row .sol-val{color:var(--parchment); font-family:var(--font-ui); text-align:right;}
+
+</style>
+<script>
+/* Scharfe Kante unter der iPadOS-Statusleiste (iPadOS 26/27).
+   WebKit legt in Web-Apps vom Homebildschirm am oberen Rand sonst einen
+   weichen Verlauf ueber den Inhalt. Er entfaellt, wenn dort eine deckende
+   Leiste liegt - ein bildschirmfuellender Kasten genuegt nicht (am
+   13.10.2026 auf iPadOS 27 geprueft). Das Skript legt deshalb einen 16 px
+   hohen, deckenden Streifen an den oberen Rand und rueckt alles, was in
+   diese 16 px hineinragt, um 16 px nach unten. Laeuft nur in der App vom
+   Homebildschirm, nicht in Safari und nicht in einem Rahmen; mit #kante in
+   der Adresse laesst es sich zum Pruefen erzwingen. */
+(function(){
+  if(window.top!==window) return;
+  var pruef=/kante/i.test(location.hash||'');
+  var alsApp=(navigator.standalone===true) ||
+             (window.matchMedia && matchMedia('(display-mode: standalone)').matches);
+  if(!alsApp && !pruef) return;
+
+  var HOCH=16;
+  function leer(f){ return !f || f==='transparent' || f.replace(/\s/g,'')==='rgba(0,0,0,0)'; }
+  function seite(){
+    var s=getComputedStyle(document.body), f=s.backgroundColor, b=s.backgroundImage;
+    if(leer(f) && (!b || b==='none')){
+      s=getComputedStyle(document.documentElement); f=s.backgroundColor; b=s.backgroundImage;
+    }
+    return { farbe: leer(f) ? '#ffffff' : f, bild: (b && b!=='none') ? b : '' };
+  }
+  /* Faerbt dieses Element am oberen Rand etwas sichtbar ein? */
+  function tinte(n){
+    var r=n.getBoundingClientRect();
+    if(r.top>=HOCH || r.bottom<=0 || r.width<=0) return false;
+    var s=getComputedStyle(n);
+    if(s.display==='none' || s.visibility==='hidden' || s.opacity==='0') return false;
+    if(n.id==='randKante') return false;
+    var t=n.tagName.toLowerCase();
+    if(t==='img'||t==='svg'||t==='canvas'||t==='video') return true;
+    if(!leer(s.backgroundColor) || s.backgroundImage!=='none') return true;
+    if(parseFloat(s.borderTopWidth)>0) return true;
+    var kn=n.childNodes;
+    for(var j=0;j<kn.length;j++)
+      if(kn[j].nodeType===3 && kn[j].nodeValue.replace(/\s/g,'')) return true;
+    for(var i=0;i<n.children.length;i++) if(tinte(n.children[i])) return true;
+    return false;
+  }
+  function ragtRein(z){
+    for(var i=0;i<z.children.length;i++) if(tinte(z.children[i])) return true;
+    return false;
+  }
+  function luft(z){
+    if(z.dataset.kanteLuft) return;
+    if(!ragtRein(z) && !tinte(z)) return;    /* noch nichts oben - spaeter nochmal */
+    z.dataset.kanteLuft='1';
+    var p=parseFloat(getComputedStyle(z).paddingTop)||0;
+    if(p>=HOCH) return;
+    z.style.paddingTop=(p+HOCH)+'px';
+  }
+  function sichtbar(n,s){
+    return s.display!=='none' && s.visibility!=='hidden' && n.id!=='randKante';
+  }
+  /* bildschirmfuellende fixierte Kaesten */
+  function kaesten(){
+    var alle=document.querySelectorAll('body > *, body > * > *'), raus=[];
+    for(var i=0;i<alle.length;i++){
+      var n=alle[i], s=getComputedStyle(n);
+      if(s.position!=='fixed' || !sichtbar(n,s)) continue;
+      /* Deko-Ebenen wie Konfetti liegen durchsichtig ueber allem und duerfen
+         niemals angefasst werden - sie wuerden sonst das Spiel verdecken. */
+      if(s.pointerEvents==='none') continue;
+      var r=n.getBoundingClientRect();
+      if(r.top<=4 && r.width>=innerWidth*0.9 && r.height>=innerHeight*0.9) raus.push(n);
+    }
+    return raus;
+  }
+  /* Leisten am oberen Rand (fixiert oder klebend, aber kein Vollbildkasten) */
+  function leisten(){
+    var alle=document.querySelectorAll('body > *, body > * > *'), raus=[];
+    for(var i=0;i<alle.length;i++){
+      var n=alle[i], s=getComputedStyle(n);
+      if((s.position!=='fixed' && s.position!=='sticky') || !sichtbar(n,s)) continue;
+      var r=n.getBoundingClientRect();
+      if(r.top<=4 && r.width>=innerWidth*0.8 && r.height>=6 && r.height<=innerHeight*0.6) raus.push(n);
+    }
+    return raus;
+  }
+  /* Liegt oben schon eine deckende Leiste, ist nichts zu tun. */
+  function schonGut(){
+    var st=document.elementsFromPoint ? document.elementsFromPoint(Math.round(innerWidth/2),2) : [];
+    for(var i=0;i<st.length;i++){
+      var n=st[i];
+      if(n.id==='randKante') continue;
+      if(n===document.body || n===document.documentElement) return false;
+      var s=getComputedStyle(n), r=n.getBoundingClientRect();
+      return (s.position==='fixed'||s.position==='sticky') && r.top<=4 &&
+             r.width>=innerWidth*0.8 && r.height>=6 && r.height<=innerHeight*0.6 &&
+             !leer(s.backgroundColor);
+    }
+    return false;
+  }
+  var band=null;
+  function streifen(farbe){
+    if(!band){
+      band=document.createElement('div');
+      band.id='randKante'; band.setAttribute('aria-hidden','true');
+      band.style.cssText='position:fixed;left:0;top:0;width:100%;height:'+HOCH+'px;'+
+        'z-index:2147483646;pointer-events:none';
+      document.body.appendChild(band);
+    }
+    band.style.display='block';
+    if(farbe){
+      band.style.backgroundColor=farbe;
+      band.style.backgroundImage='none';
+      return;
+    }
+    var s=getComputedStyle(document.body), h=seite();
+    band.style.backgroundColor=h.farbe;
+    band.style.backgroundImage=h.bild||'none';
+    band.style.backgroundAttachment='fixed';
+    if(h.bild && s.backgroundAttachment!=='fixed')
+      band.style.backgroundSize='100% '+Math.max(innerHeight,document.body.scrollHeight)+'px';
+  }
+  var schild=null;
+  function zeigen(txt){
+    if(!pruef) return;
+    if(!schild){
+      schild=document.createElement('div');
+      schild.style.cssText='position:fixed;left:6px;bottom:52px;z-index:2147483647;max-width:92%;'+
+        'padding:6px 9px;border-radius:8px;background:#ffe600;color:#000;'+
+        'font:600 12px/1.35 -apple-system,sans-serif;white-space:pre-wrap;pointer-events:none';
+      document.body.appendChild(schild);
+    }
+    schild.textContent='Kante K6 · '+innerWidth+'x'+innerHeight+'\n'+txt;
+  }
+  function name(n){
+    if(n.id) return '#'+n.id;
+    var c=(typeof n.className==='string'&&n.className.trim())?'.'+n.className.trim().split(/\s+/)[0]:'';
+    return n.tagName.toLowerCase()+c;
+  }
+  function malen(){
+    var b=document.body; if(!b) return;
+    if(schonGut()){
+      if(band) band.style.display='none';
+      zeigen('oben liegt schon eine deckende Leiste');
+      return;
+    }
+    var k=kaesten(), l=leisten(), farbe=null, text=[];
+    /* Die Kaesten werden nur noch nach unten gerueckt, nicht mehr eingefaerbt:
+       ein bildschirmfuellender Kasten haelt den Verlauf ohnehin nicht ab
+       (am 13.10.2026 auf iPadOS 27 gemessen), das Einfaerben hat dagegen
+       durchsichtige Ebenen deckend gemacht. */
+    for(var i=0;i<k.length;i++){
+      var z=k[i];
+      luft(z);
+      text.push(name(z));
+    }
+    for(var j=0;j<l.length;j++){
+      var le=l[j], sl=getComputedStyle(le);
+      if(!tinte(le) && !ragtRein(le)) continue;
+      if(!farbe && !leer(sl.backgroundColor)) farbe=sl.backgroundColor;
+      luft(le);
+      text.push('Leiste '+name(le)+' bg='+sl.backgroundColor);
+    }
+    if(!k.length && !l.length){ luft(b); text.push('kein Kasten, nur Streifen'); }
+    streifen(farbe);
+    zeigen(text.join('\n'));
+  }
+  var warte=null;
+  function spaeter(){
+    if(warte) return;
+    warte=setTimeout(function(){ warte=null; malen(); },200);
+  }
+  try{
+    new MutationObserver(spaeter).observe(document.documentElement,
+      {childList:true, subtree:true, attributes:true, attributeFilter:['class','style','hidden']});
+  }catch(e){}
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',malen);
+  else malen();
+  addEventListener('load',spaeter);
+  addEventListener('resize',spaeter);
+  addEventListener('orientationchange',spaeter);
+})();
+</script>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ============ TOP BAR ============ -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <span class="case-stamp">Akte #VOGT-10</span>
+      <span class="topbar-title">Das <b>Vogt</b>-Vermächtnis</span>
+    </div>
+    <div class="topbar-right">
+      <button class="btn-ghost" id="btn-save-code" type="button">Fortschritt sichern</button>
+      <button class="btn-ghost" id="btn-load-code" type="button">Fortschritt laden</button>
+      <button class="btn-ghost" id="btn-teacher" type="button">Lehrkraft</button>
+    </div>
+  </div>
+
+  <!-- ============ HUB SCREEN ============ -->
+  <section class="screen active" id="screen-hub">
+    <div class="hub-wrap">
+      <div class="hub-intro">
+        <div class="hub-eyebrow">Fall eröffnet · Status: ungeklärt</div>
+        <h1 class="hub-title">Sechs Notizen. Ein <b>verschwundener</b> Forscher.</h1>
+        <p class="hub-desc" id="intro-text">Lade Fallakte…</p>
+        <div class="case-progress">
+          <div class="case-progress-track"><div class="case-progress-fill" id="progress-fill"></div></div>
+          <div class="case-progress-label" id="progress-label">0 / 6 entschlüsselt</div>
+        </div>
+      </div>
+
+      <div class="folder-grid" id="folder-grid"><!-- injected by JS --></div>
+
+      <div class="joker-card" id="joker-card" style="display:none;">
+        <div class="joker-title">🃏 Joker verfügbar</div>
+        <div class="joker-desc">Die Bonusaufgabe in Notiz 04 ist gelöst. Wählt eine noch ungelöste Notiz —
+        ihr erhaltet deren korrekten Teilcode ohne die Aufgabe zu lösen. Der Joker kann nur einmal genutzt werden.</div>
+        <div class="joker-input-row">
+          <select class="num-input" id="joker-select" style="min-width:220px;"></select>
+          <button class="btn-primary" id="joker-redeem-btn" type="button">Joker einlösen</button>
+        </div>
+        <div class="vault-feedback" id="joker-feedback"></div>
+      </div>
+
+      <div class="vault-card" id="vault-card">
+        <div class="vault-title">Der letzte Tresor</div>
+        <div class="vault-desc" id="vault-desc">Sammle alle sechs Teilcodes, um Dr. Vogts letzte Nachricht zu entsiegeln.</div>
+        <div class="vault-input-row">
+          <input type="text" class="vault-input" id="vault-input" placeholder="Gesamtcode" disabled>
+          <button class="btn-primary" id="vault-submit" disabled type="button">Tresor öffnen</button>
+        </div>
+        <div class="vault-feedback" id="vault-feedback"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ STATION SCREEN (shared shell) ============ -->
+  <section class="screen" id="screen-station">
+    <div class="station-wrap" id="station-content"><!-- injected by JS --></div>
+  </section>
+
+  <!-- ============ FINALE SCREEN ============ -->
+  <section class="screen" id="screen-finale">
+    <div class="station-wrap" id="finale-content"><!-- injected by JS --></div>
+  </section>
+
+</div>
+
+<!-- ============ TEACHER MODAL ============ -->
+<div class="modal-overlay" id="teacher-modal">
+  <div class="modal-box">
+    <button class="modal-close" id="teacher-close" type="button">✕</button>
+    <h2>Lehrkraft-Übersicht</h2>
+    <div id="teacher-content"></div>
+    <div style="margin-top:18px; display:flex; gap:10px; flex-wrap:wrap;">
+      <button class="btn-ghost" id="btn-reset-all" type="button">Gesamten Fortschritt zurücksetzen</button>
+    </div>
+
+    <div class="teacher-unlock-row" id="teacher-unlock-row">
+      <input type="password" class="num-input" id="teacher-key-input" placeholder="Schlüssel für Lösungsansicht" style="flex:1; min-width:160px;">
+      <button class="check-btn" id="teacher-unlock-btn" type="button">Entsperren</button>
+    </div>
+    <div class="feedback-msg" id="teacher-key-fb"></div>
+
+    <div id="teacher-solutions" style="display:none;"></div>
+  </div>
+</div>
+
+<!-- ============ SAVE/LOAD CODE MODAL ============ -->
+<div class="modal-overlay" id="code-modal">
+  <div class="modal-box">
+    <button class="modal-close" id="code-close" type="button">✕</button>
+
+    <h2 id="code-modal-title">Fortschritt</h2>
+    <div id="code-modal-content"></div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   CORE STATE
+   ============================================================ */
+const STATIONS = [
+  {id:'zerfall',     num:1, title:'Die Strahlende Probe',      sub:'Radioaktiver Zerfall & Altersbestimmung'},
+  {id:'zins',        num:2, title:'Das Bankbuch',              sub:'Zinseszins & exponentielles Wachstum'},
+  {id:'bevoelkerung',num:3, title:'Die Volkszählung',          sub:'Bevölkerungswachstum & Modellgrenzen'},
+  {id:'schneeball',  num:4, title:'Die Kettennachricht',       sub:'Schneeballsysteme in sozialen Medien'},
+  {id:'bierschaum',  num:5, title:'Das Laborprotokoll',        sub:'Bierschaum-Zerfall & Güteklasse'},
+  {id:'infektion',   num:6, title:'Die Ausbruchskurve',        sub:'Infektionsverbreitung & Prognose'},
+];
+
+const state = {
+  solved: {},   // id -> true
+  codes: {},    // id -> string code
+  jokerAvailable: false,  // wird true, wenn die Bonusaufgabe in Notiz 04 gelöst wurde
+  jokerUsed: false,
+};
+
+function isAllSolved(){
+  return STATIONS.every(s => state.solved[s.id]);
+}
+function solvedCount(){
+  return STATIONS.filter(s => state.solved[s.id]).length;
+}
+function markSolved(stationId, code){
+  state.solved[stationId] = true;
+  state.codes[stationId] = code;
+  renderHub();
+}
+function grantJoker(){
+  state.jokerAvailable = true;
+  renderHub();
+}
+// Joker einlösen: markiert eine beliebige, noch offene Station als gelöst
+// mit ihrem ECHTEN korrekten Teilcode (kein Platzhalter) — der Code wird
+// über die jeweilige Stationslogik (STATION_CODE_GETTERS) bestimmt.
+const STATION_CODE_GETTERS = {}; // stationId -> function() => correctCode (string)
+// Für die Lehrkraft-Lösungsansicht: stationId -> function() => Array von {label, value} Endergebnissen
+const STATION_SOLUTION_GETTERS = {};
+function redeemJoker(stationId){
+  if(state.jokerUsed || !state.jokerAvailable) return false;
+  const getter = STATION_CODE_GETTERS[stationId];
+  if(!getter) return false;
+  const correctCode = getter();
+  state.solved[stationId] = true;
+  state.codes[stationId] = correctCode;
+  state.jokerUsed = true;
+  renderHub();
+  return true;
+}
+
+/* ---- navigation ---- */
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+function goHub(){ renderHub(); showScreen('screen-hub'); }
+function goStation(stationId){
+  renderStation(stationId);
+  showScreen('screen-station');
+}
+
+/* ============================================================
+   HUB RENDERING
+   ============================================================ */
+function renderHub(){
+  document.getElementById('intro-text').textContent =
+    'Dr. Elias Vogt, Mathematiker und Physiker, ist vor drei Wochen ohne Spur verschwunden. ' +
+    'In seinem Archiv finden sich sechs versiegelte Forschungsnotizen — jede gesichert mit einem Zahlencode, ' +
+    'der sich nur durch das Lösen seiner letzten Berechnungen ergibt. Öffne die Notizen in beliebiger Reihenfolge.';
+
+  const grid = document.getElementById('folder-grid');
+  grid.innerHTML = '';
+  STATIONS.forEach(s => {
+    const solved = !!state.solved[s.id];
+    const card = document.createElement('button');
+    card.type = 'button';
+    card.className = 'folder-card' + (solved ? ' is-solved' : '');
+    card.innerHTML = `
+      <div class="folder-num">NOTIZ ${String(s.num).padStart(2,'0')}</div>
+      <div class="folder-title">${s.title}</div>
+      <div class="folder-sub">${s.sub}</div>
+      <div class="folder-code-slot">
+        <span>Teilcode</span>
+        <span class="code-val">${solved ? state.codes[s.id] : '— — —'}</span>
+      </div>
+    `;
+    card.addEventListener('click', () => goStation(s.id));
+    grid.appendChild(card);
+  });
+
+  const n = solvedCount();
+  document.getElementById('progress-fill').style.width = (n/STATIONS.length*100) + '%';
+  document.getElementById('progress-label').textContent = `${n} / ${STATIONS.length} entschlüsselt`;
+
+  // ---- Joker-Karte ----
+  const jokerCard = document.getElementById('joker-card');
+  const openStations = STATIONS.filter(s => !state.solved[s.id]);
+  if(state.jokerAvailable && !state.jokerUsed && openStations.length > 0){
+    jokerCard.style.display = 'block';
+    const select = document.getElementById('joker-select');
+    select.innerHTML = openStations.map(s => `<option value="${s.id}">Notiz ${String(s.num).padStart(2,'0')} — ${s.title}</option>`).join('');
+  } else if(state.jokerUsed){
+    jokerCard.style.display = 'block';
+    document.getElementById('joker-card').innerHTML = `
+      <div class="joker-title">🃏 Joker bereits verwendet</div>
+      <div class="joker-desc">Ihr habt euren Joker bereits eingelöst. Die restlichen Notizen müssen regulär gelöst werden.</div>
+    `;
+  } else {
+    jokerCard.style.display = 'none';
+  }
+
+  const vaultInput = document.getElementById('vault-input');
+  const vaultSubmit = document.getElementById('vault-submit');
+  const vaultCard = document.getElementById('vault-card');
+  if(isAllSolved()){
+    vaultInput.disabled = false;
+    vaultSubmit.disabled = false;
+    vaultCard.classList.add('unlocked');
+    document.getElementById('vault-desc').textContent =
+      'Alle sechs Notizen sind entschlüsselt. Setze die Teilcodes in der Reihenfolge NOTIZ 01–06 zusammen.';
+  } else {
+    vaultInput.disabled = true;
+    vaultSubmit.disabled = true;
+    vaultCard.classList.remove('unlocked');
+  }
+}
+
+document.getElementById('vault-submit').addEventListener('click', () => {
+  const expected = STATIONS.map(s => state.codes[s.id]).join('');
+  const given = document.getElementById('vault-input').value.replace(/\s+/g,'');
+  const fb = document.getElementById('vault-feedback');
+  if(given === expected){
+    fb.textContent = 'Der Tresor öffnet sich…';
+    fb.className = 'vault-feedback ok';
+    setTimeout(() => { renderFinale(); showScreen('screen-finale'); }, 700);
+  } else {
+    fb.textContent = 'Falscher Code. Prüft die Reihenfolge eurer Teilcodes.';
+    fb.className = 'vault-feedback err';
+  }
+});
+
+// delegierter Listener, da der Joker-Button-Inhalt dynamisch neu gerendert wird
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('#joker-redeem-btn');
+  if(!btn) return;
+  const select = document.getElementById('joker-select');
+  if(!select || !select.value) return;
+  const ok = redeemJoker(select.value);
+  if(ok){
+    // renderHub() wurde bereits durch redeemJoker() aufgerufen, daher hier nichts weiter nötig
+  }
+});
+
+/* ============================================================
+   STATION DISPATCH  (filled in by individual station modules)
+   ============================================================ */
+const STATION_RENDERERS = {};
+
+/* ============================================================
+   REUSABLE COMPONENT: choice question (single oder multiple)
+   Wird in allen Stationen für Bewertungs-/Beurteilungsaufgaben genutzt.
+
+   config = {
+     mode: 'single' | 'multi',
+     question: string (HTML erlaubt),
+     options: [
+       { text: string, correct: boolean, feedback: string }
+     ],
+     onSolved: function() // wird aufgerufen sobald korrekt vollständig beantwortet
+   }
+   Rendert in containerEl. Gibt KEIN DOM-Element zurück, mutiert containerEl direkt.
+   ============================================================ */
+function renderChoiceQuestion(containerEl, config){
+  const isMulti = config.mode === 'multi';
+  const wrap = document.createElement('div');
+  wrap.className = 'choice-question';
+  wrap.innerHTML = `
+    <p class="choice-q-text">${config.question}</p>
+    <div class="choice-options"></div>
+    <button class="check-btn choice-submit" type="button">${isMulti ? 'Auswahl prüfen' : 'Antwort prüfen'}</button>
+    <div class="feedback-msg choice-feedback"></div>
+  `;
+  const optionsEl = wrap.querySelector('.choice-options');
+
+  config.options.forEach((opt, idx) => {
+    const optEl = document.createElement('label');
+    optEl.className = 'choice-option';
+    optEl.innerHTML = `
+      <input type="${isMulti ? 'checkbox' : 'radio'}" name="choice-${Math.random().toString(36).slice(2)}-${idx}" data-idx="${idx}">
+      <span class="choice-option-text">${opt.text}</span>
+    `;
+    optionsEl.appendChild(optEl);
+  });
+  // single-choice: alle radios müssen gleichen name haben, damit nur eine Auswahl möglich ist
+  if(!isMulti){
+    const sharedName = 'sc-' + Math.random().toString(36).slice(2);
+    wrap.querySelectorAll('input[type=radio]').forEach(r => r.name = sharedName);
+  }
+
+  const submitBtn = wrap.querySelector('.choice-submit');
+  const fb = wrap.querySelector('.choice-feedback');
+  let solved = false;
+
+  submitBtn.addEventListener('click', () => {
+    const inputs = [...wrap.querySelectorAll('input')];
+    const checked = inputs.filter(i => i.checked).map(i => parseInt(i.dataset.idx));
+    if(checked.length === 0){
+      fb.className = 'feedback-msg choice-feedback show err';
+      fb.textContent = 'Wählt zuerst eine Antwort aus.';
+      return;
+    }
+    const correctIdxs = config.options.map((o,i) => o.correct ? i : -1).filter(i => i>=0);
+    const isFullyCorrect = checked.length === correctIdxs.length &&
+      checked.every(i => correctIdxs.includes(i));
+
+    // individuelles Feedback je gewählter Option sammeln
+    const feedbackLines = checked.map(i => config.options[i].feedback).filter(Boolean);
+    fb.className = 'feedback-msg choice-feedback show ' + (isFullyCorrect ? 'ok' : 'err');
+    fb.innerHTML = feedbackLines.map(t => '<div>' + t + '</div>').join('');
+
+    if(isFullyCorrect && !solved){
+      solved = true;
+      wrap.classList.add('choice-solved');
+      inputs.forEach(i => i.disabled = true);
+      submitBtn.disabled = true;
+      if(typeof config.onSolved === 'function') config.onSolved();
+    }
+  });
+
+  // falls extern als "bereits gelöst" markiert (z.B. nach Reload via Code), gleich anzeigen
+  if(config.preSolved){
+    solved = true;
+    wrap.classList.add('choice-solved');
+    const inputs = [...wrap.querySelectorAll('input')];
+    inputs.forEach((inp, i) => { if(config.options[i].correct) inp.checked = true; inp.disabled = true; });
+    submitBtn.disabled = true;
+    fb.className = 'feedback-msg choice-feedback show ok';
+    fb.innerHTML = config.options.filter(o=>o.correct).map(o => '<div>'+o.feedback+'</div>').join('');
+  }
+
+  containerEl.appendChild(wrap);
+  return { isSolved: () => solved };
+}
+
+/* ============================================================
+   REUSABLE COMPONENT: hint toggle
+   Gibt HTML-String zurück, der einen "Tipp anzeigen"-Button plus
+   versteckten Tipp-Text enthält. Klick-Verhalten wird über eine
+   globale, delegierte Event-Listener-Funktion (siehe initHintToggles)
+   abgedeckt — daher genügt es, dieses Markup per Template-String
+   in eine note-card einzufügen, ohne weitere JS-Verdrahtung.
+   ============================================================ */
+function hintHtml(text){
+  return `
+    <div class="hint-toggle-wrap">
+      <button type="button" class="hint-toggle-btn"><span class="chevron">▸</span> Tipp anzeigen</button>
+      <div class="hint-toggle-body">${text}</div>
+    </div>
+  `;
+}
+// Globale, delegierte Klick-Behandlung — funktioniert für alle aktuellen und künftig
+// per innerHTML eingefügten Hint-Buttons, ohne dass jede Station eigene Listener braucht.
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('.hint-toggle-btn');
+  if(!btn) return;
+  const body = btn.parentElement.querySelector('.hint-toggle-body');
+  const nowOpen = !body.classList.contains('is-open');
+  body.classList.toggle('is-open', nowOpen);
+  btn.classList.toggle('is-open', nowOpen);
+  btn.innerHTML = `<span class="chevron">▸</span> ${nowOpen ? 'Tipp ausblenden' : 'Tipp anzeigen'}`;
+});
+
+
+function renderStation(stationId){
+  const container = document.getElementById('station-content');
+  const meta = STATIONS.find(s => s.id === stationId);
+  const renderer = STATION_RENDERERS[stationId];
+  if(!renderer){
+    container.innerHTML = `
+      <button class="back-link" onclick="goHub()">← Zurück zur Übersicht</button>
+      <div class="station-head">
+        <div class="station-eyebrow">Notiz ${String(meta.num).padStart(2,'0')} · in Bearbeitung</div>
+        <h1 class="station-title">${meta.title}</h1>
+        <p class="station-lede">Diese Forschungsnotiz wird noch entschlüsselt…</p>
+      </div>`;
+    return;
+  }
+  container.innerHTML = '';
+  const backBtn = document.createElement('button');
+  backBtn.className = 'back-link';
+  backBtn.type = 'button';
+  backBtn.textContent = '← Zurück zur Übersicht';
+  backBtn.addEventListener('click', goHub);
+  container.appendChild(backBtn);
+  renderer(container, meta);
+
+  // zweiter Rücksprung-Button am Ende, damit man bei langen Stationen nicht zurückscrollen muss
+  const backBtnBottom = document.createElement('button');
+  backBtnBottom.className = 'back-link back-link-bottom';
+  backBtnBottom.type = 'button';
+  backBtnBottom.textContent = '← Zurück zur Übersicht';
+  backBtnBottom.addEventListener('click', goHub);
+  container.appendChild(backBtnBottom);
+}
+
+/* ============================================================
+   FINALE
+   ============================================================ */
+function renderFinale(){
+  document.getElementById('finale-content').innerHTML = `
+    <button class="back-link" onclick="goHub()">← Zurück zur Übersicht</button>
+    <div class="station-head">
+      <div class="station-eyebrow">Tresor geöffnet</div>
+      <h1 class="station-title">Dr. Vogts letzte Notiz</h1>
+    </div>
+    <div class="note-card">
+      <p>„Wer bis hierhin gelangt ist, hat verstanden, was die meisten übersehen: Exponentialfunktionen
+      beschreiben nicht nur Kurven — sie beschreiben Risiken, Chancen und Kipppunkte unserer Welt.
+      Zerfall, Zins, Wachstum, Täuschung, Schaum und Ausbreitung — sechs Gesichter derselben Mathematik.
+      Nutzt sie, um zu verstehen. Und nutzt das Verstehen, um zu urteilen. — E.V.“</p>
+    </div>
+  `;
+}
+
+/* ============================================================
+   STATION 1: RADIOAKTIVER ZERFALL — "Die Strahlende Probe"
+   ============================================================ */
+(function(){
+  const STATION_ID = 'zerfall';
+
+  // Fiktives Isotop "Vogtium-238" — Messreihe (t in Tagen, N in % der Ausgangsmenge)
+  // Wahre Werte: N0=100, T_half=12 Tage -> dient als Grundlage der Messpunkte
+  const TRUE_N0 = 100;
+  const TRUE_THALF = 12;
+  function trueN(t){ return TRUE_N0 * Math.pow(0.5, t/TRUE_THALF); }
+  const MESSPUNKTE_T = [0, 4, 9, 16, 22, 28, 34];
+  const MESSPUNKTE_N = MESSPUNKTE_T.map(t => Math.round(trueN(t)*10)/10);
+
+  // Teil B: Altersbestimmung — ein Fund mit Restanteil
+  const FUND_RESTANTEIL = 0.18; // 18% der Ausgangsmenge noch vorhanden
+  // -> Alter = T_half * log0.5(restanteil) = T_half * ln(restanteil)/ln(0.5)
+  function computeFundAge(thalf){
+    return thalf * Math.log(FUND_RESTANTEIL) / Math.log(0.5);
+  }
+
+  let sliderN0 = 80;
+  let sliderThalf = 8;
+  let partAOk = false;
+  let partBOk = false;
+  let partCOk = false;
+
+  function code(){
+    // Code aus wahrer Halbwertszeit (2-stellig) + gerundetem Alter (2-stellig)
+    const age = Math.round(computeFundAge(TRUE_THALF));
+    return String(TRUE_THALF).padStart(2,'0') + String(age).padStart(2,'0');
+  }
+  STATION_CODE_GETTERS[STATION_ID] = code;
+  STATION_SOLUTION_GETTERS[STATION_ID] = () => [
+    {label: 'A: Halbwertszeit T₁/₂', value: TRUE_THALF + ' Tage'},
+    {label: 'B: Alter der Probe', value: Math.round(computeFundAge(TRUE_THALF)) + ' Tage'},
+  ];
+
+  function drawChart(canvas){
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+    const padL = 46, padB = 36, padT = 16, padR = 14;
+    const plotW = W - padL - padR, plotH = H - padT - padB;
+    const tMax = 40, nMax = 105;
+
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle = '#141d2b';
+    ctx.fillRect(0,0,W,H);
+
+    function xPix(t){ return padL + (t/tMax)*plotW; }
+    function yPix(n){ return padT + (1 - n/nMax)*plotH; }
+
+    // grid
+    ctx.strokeStyle = 'rgba(180,180,160,0.12)';
+    ctx.lineWidth = 1;
+    ctx.font = '11px IBM Plex Mono, monospace';
+    ctx.fillStyle = '#b9b4a4';
+    for(let t=0; t<=tMax; t+=10){
+      ctx.beginPath(); ctx.moveTo(xPix(t), padT); ctx.lineTo(xPix(t), H-padB); ctx.stroke();
+      ctx.fillText(t+'d', xPix(t)-8, H-padB+16);
+    }
+    for(let n=0; n<=100; n+=20){
+      ctx.beginPath(); ctx.moveTo(padL, yPix(n)); ctx.lineTo(W-padR, yPix(n)); ctx.stroke();
+      ctx.fillText(n+'%', 6, yPix(n)+4);
+    }
+
+    // axes
+    ctx.strokeStyle = '#46577a';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(padL, padT); ctx.lineTo(padL, H-padB); ctx.lineTo(W-padR, H-padB); ctx.stroke();
+
+    // fitted curve N(t) = sliderN0 * 0.5^(t/sliderThalf)
+    ctx.strokeStyle = '#e0c08f';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    for(let t=0; t<=tMax; t+=0.5){
+      const n = sliderN0 * Math.pow(0.5, t/sliderThalf);
+      const x = xPix(t), y = yPix(Math.min(n,nMax));
+      if(t===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    }
+    ctx.stroke();
+
+    // measured points
+    MESSPUNKTE_T.forEach((t,i) => {
+      const n = MESSPUNKTE_N[i];
+      ctx.beginPath();
+      ctx.arc(xPix(t), yPix(n), 5, 0, Math.PI*2);
+      ctx.fillStyle = '#c84630';
+      ctx.fill();
+      ctx.strokeStyle = '#0f1620';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    });
+
+    // legend
+    ctx.fillStyle = '#e0c08f';
+    ctx.fillRect(W-150, padT+2, 12, 3);
+    ctx.fillStyle = '#e8e4d8';
+    ctx.fillText('Modellkurve', W-132, padT+8);
+    ctx.beginPath(); ctx.arc(W-150+6, padT+22, 4, 0, Math.PI*2); ctx.fillStyle='#c84630'; ctx.fill();
+    ctx.fillStyle = '#e8e4d8';
+    ctx.fillText('Messwerte', W-132, padT+26);
+  }
+
+  function checkFit(){
+    // toleranz: max abweichung an den messpunkten < 2.5 Prozentpunkte
+    let maxDev = 0;
+    MESSPUNKTE_T.forEach((t,i) => {
+      const modelN = sliderN0 * Math.pow(0.5, t/sliderThalf);
+      maxDev = Math.max(maxDev, Math.abs(modelN - MESSPUNKTE_N[i]));
+    });
+    return maxDev < 2.5;
+  }
+
+  function render(container, meta){
+    const html = document.createElement('div');
+    html.innerHTML = `
+      <div class="station-head">
+        <div class="station-eyebrow">Notiz 01 · Radioaktiver Zerfall</div>
+        <h1 class="station-title">Die Strahlende Probe</h1>
+        <p class="station-lede">Im Kühlschrank seines Labors fand sich eine Probe des fiktiven Isotops
+        <b>Vogtium-238</b> samt Messprotokoll. Vogts Notiz: „Wer die Zerfallskurve trifft, kennt ihr Alter.“</p>
+      </div>
+
+      <div class="term-box">
+        <b>Halbwertszeit (T₁/₂):</b> Die Zeit, nach der genau die Hälfte der ursprünglichen radioaktiven
+        Atomkerne zerfallen ist. Sie ist für ein Isotop konstant — unabhängig von der Ausgangsmenge.
+      </div>
+
+      <div class="note-card">
+        <h3><span class="step-num">A</span> Zerfallskurve anpassen</h3>
+        <p>Die Messreihe zeigt den Anteil <span class="mono">N</span> der Probe (in % von N₀) zu verschiedenen
+        Zeitpunkten <span class="mono">t</span> (in Tagen). Passt mit den Schiebereglern die Modellkurve
+        <span class="mono">N(t) = N₀ · (½)^(t / T₁/₂)</span> an die rot markierten Messpunkte an.</p>
+
+        <table class="data-table" style="max-width:420px;">
+          <tr><th>t (Tage)</th>${MESSPUNKTE_T.map(t=>`<td>${t}</td>`).join('')}</tr>
+          <tr><th>N (%)</th>${MESSPUNKTE_N.map(n=>`<td>${n}</td>`).join('')}</tr>
+        </table>
+
+        <canvas id="zerfall-canvas" width="640" height="320" style="width:100%; height:auto; border-radius:3px; margin-top:8px;"></canvas>
+
+        <div class="slider-block">
+          <div class="slider-label"><span>Ausgangsmenge N₀</span><span class="val" id="n0-val">${sliderN0} %</span></div>
+          <input type="range" id="slider-n0" min="40" max="120" step="1" value="${sliderN0}">
+        </div>
+        <div class="slider-block">
+          <div class="slider-label"><span>Halbwertszeit T₁/₂</span><span class="val" id="thalf-val">${sliderThalf} Tage</span></div>
+          <input type="range" id="slider-thalf" min="2" max="30" step="0.5" value="${sliderThalf}">
+        </div>
+
+        <button class="check-btn" id="check-a-btn" type="button">Anpassung prüfen</button>
+        <div class="feedback-msg" id="feedback-a"></div>
+      </div>
+
+      <div class="note-card">
+        <h3><span class="step-num">B</span> Altersbestimmung</h3>
+        <p>Im Labor von Dr. Vogt liegt zusätzlich eine Bodenprobe. Eine Analyse ergibt: Sie enthält noch
+        <b>${(FUND_RESTANTEIL*100).toFixed(0)} %</b> der ursprünglichen Vogtium-238-Menge.
+        Berechnet mit der nun bekannten Halbwertszeit, wie alt die Probe ist (in Tagen, auf ganze Tage runden).</p>
+        ${hintHtml('Stellt N(t) = N₀ · (½)^(t/T₁/₂) nach t um, mit N/N₀ = ' + FUND_RESTANTEIL + '.')}
+        <div class="field-row">
+          <label for="alter-input">Alter der Probe (Tage):</label>
+          <input type="number" class="num-input" id="alter-input" placeholder="t = ?">
+          <button class="check-btn" id="check-b-btn" type="button">Prüfen</button>
+        </div>
+        <div class="feedback-msg" id="feedback-b"></div>
+      </div>
+
+      <div class="note-card">
+        <h3><span class="step-num">C</span> Einordnen &amp; Beurteilen</h3>
+        <p>Radioaktive Datierungsmethoden (z.B. die Radiokarbonmethode mit echtem Kohlenstoff-14) werden in
+        Archäologie und Geologie genutzt, um das Alter von Funden zu bestimmen.</p>
+        <p><b>Beurteilt:</b> Welche der folgenden Aussagen zur Verlässlichkeit der Methode sind korrekt?
+        (Mehrfachauswahl möglich)</p>
+        <div id="choice-c-mount"></div>
+      </div>
+
+      <div class="station-code-reveal" id="code-reveal-${STATION_ID}">
+        <div class="label">Teilcode entschlüsselt</div>
+        <div class="code">${code()}</div>
+      </div>
+    `;
+    container.appendChild(html);
+
+    renderChoiceQuestion(document.getElementById('choice-c-mount'), {
+      mode: 'multi',
+      question: '',
+      preSolved: state.solved[STATION_ID],
+      options: [
+        {
+          text: 'Bei sehr jungen Proben (wenige Tage) ist der bisher zerfallene Anteil noch sehr klein — kleine Messunsicherheiten wirken sich dadurch relativ stark auf das berechnete Alter aus.',
+          correct: true,
+          feedback: 'Richtig: Bei kurzer Zerfallszeit ist die Veränderung gegenüber N₀ gering, weshalb Messfehler die Altersangabe stärker verzerren.'
+        },
+        {
+          text: 'Bei sehr alten Proben (viele Halbwertszeiten zurückliegend) ist kaum noch radioaktives Material vorhanden, wodurch die Messung selbst ungenau wird.',
+          correct: true,
+          feedback: 'Richtig: Ist fast die gesamte Ausgangsmenge zerfallen, lässt sich der minimale Rest nur noch schwer präzise messen.'
+        },
+        {
+          text: 'Die Methode liefert unabhängig vom Probenalter immer ein exakt richtiges Ergebnis, da die Halbwertszeit eine Naturkonstante ist.',
+          correct: false,
+          feedback: 'Nicht ganz: Die Halbwertszeit selbst ist konstant, aber die Messgenauigkeit der Restmenge hängt vom Probenalter ab — daher schwankt die Verlässlichkeit der Altersangabe.'
+        },
+        {
+          text: 'Voraussetzung ist, dass die ursprüngliche Menge N₀ zum Zeitpunkt t=0 bekannt oder zuverlässig abschätzbar ist.',
+          correct: true,
+          feedback: 'Richtig: Ohne eine begründete Annahme über N₀ lässt sich kein Alter berechnen — bei C-14-Datierung nutzt man dafür z.B. den bekannten atmosphärischen Anteil.'
+        }
+      ],
+      onSolved: () => { partCOk = true; maybeReveal(); }
+    });
+
+    const canvas = document.getElementById('zerfall-canvas');
+    drawChart(canvas);
+
+    const n0Slider = document.getElementById('slider-n0');
+    const thalfSlider = document.getElementById('slider-thalf');
+    n0Slider.addEventListener('input', () => {
+      sliderN0 = parseFloat(n0Slider.value);
+      document.getElementById('n0-val').textContent = sliderN0 + ' %';
+      drawChart(canvas);
+    });
+    thalfSlider.addEventListener('input', () => {
+      sliderThalf = parseFloat(thalfSlider.value);
+      document.getElementById('thalf-val').textContent = sliderThalf + ' Tage';
+      drawChart(canvas);
+    });
+
+    document.getElementById('check-a-btn').addEventListener('click', () => {
+      const fb = document.getElementById('feedback-a');
+      fb.classList.add('show');
+      if(checkFit()){
+        partAOk = true;
+        fb.className = 'feedback-msg show ok';
+        fb.textContent = `Sehr gut getroffen! Eure Halbwertszeit liegt bei ≈ ${sliderThalf} Tagen — das deckt sich mit der tatsächlichen Zerfallsrate der Probe.`;
+      } else {
+        fb.className = 'feedback-msg show err';
+        fb.textContent = 'Die Kurve trifft die Messpunkte noch nicht genau genug. Variiert N₀ und T₁/₂ weiter.';
+      }
+      maybeReveal();
+    });
+
+    document.getElementById('check-b-btn').addEventListener('click', () => {
+      const fb = document.getElementById('feedback-b');
+      fb.classList.add('show');
+      const val = parseFloat(document.getElementById('alter-input').value);
+      const correctAge = Math.round(computeFundAge(TRUE_THALF));
+      if(!partAOk){
+        fb.className = 'feedback-msg show err';
+        fb.textContent = 'Löst zuerst Teil A, um die korrekte Halbwertszeit zu bestätigen.';
+        return;
+      }
+      if(Math.abs(val - correctAge) <= 1){
+        partBOk = true;
+        fb.className = 'feedback-msg show ok';
+        fb.textContent = `Richtig: ${correctAge} Tage.`;
+      } else {
+        fb.className = 'feedback-msg show err';
+        fb.textContent = 'Noch nicht korrekt. Prüft die Umformung von N(t) = N₀·(½)^(t/T₁/₂) nach t.';
+      }
+      maybeReveal();
+    });
+
+    function maybeReveal(){
+      if(partAOk && partBOk && partCOk){
+        document.getElementById('code-reveal-' + STATION_ID).classList.add('show');
+        markSolved(STATION_ID, code());
+      }
+    }
+
+    // falls Station bereits zuvor gelöst wurde, sofort anzeigen
+    if(state.solved[STATION_ID]){
+      partAOk = partBOk = partCOk = true;
+      document.getElementById('code-reveal-' + STATION_ID).classList.add('show');
+    }
+  }
+
+  STATION_RENDERERS[STATION_ID] = render;
+})();
+
+/* ============================================================
+   STATION 2: ZINSRECHNUNG — "Das Bankbuch"
+   Lineares vs. exponentielles Wachstum im Vergleich
+   ============================================================ */
+(function(){
+  const STATION_ID = 'zins';
+  const K0 = 4000;            // Startkapital beider Angebote
+  const BETRAG_LIN = 290;     // Angebot A: fester Betrag pro Jahr
+  const P_EXP = 6;            // Angebot B: Zinssatz in %
+  const Q_EXP = 1 + P_EXP/100;
+  const N_A = 3;               // Teil A: Vergleichsjahr (linear überlegen)
+  const N_B = 15;               // Teil B: Vergleichsjahr (exponentiell überlegen)
+  const ZIEL_C = 10000;        // Teil C: Zielkapital für Laufzeitvergleich
+
+  function kLin(n){ return K0 + n*BETRAG_LIN; }
+  function kExp(n){ return K0 * Math.pow(Q_EXP, n); }
+  function laufzeitLinC(){ return Math.ceil((ZIEL_C - K0) / BETRAG_LIN); }
+  function laufzeitExpC(){ return Math.ceil(Math.log(ZIEL_C/K0) / Math.log(Q_EXP)); }
+
+  let partAOk = false, partBOk = false, partCOk = false, partDOk = false;
+
+  function code(){
+    const a = Math.round(kLin(N_A));          // 4870
+    const b = Math.round(kExp(N_B));          // 9586
+    return String(a).slice(-2) + String(b).slice(-2);
+  }
+  STATION_CODE_GETTERS[STATION_ID] = code;
+  STATION_SOLUTION_GETTERS[STATION_ID] = () => [
+    {label: 'A: Kapital nach ' + N_A + ' Jahren (linear)', value: Math.round(kLin(N_A)).toLocaleString('de-DE') + ' €'},
+    {label: 'A: Kapital nach ' + N_A + ' Jahren (exponentiell)', value: Math.round(kExp(N_A)).toLocaleString('de-DE') + ' €'},
+    {label: 'B: Kapital nach ' + N_B + ' Jahren (linear)', value: Math.round(kLin(N_B)).toLocaleString('de-DE') + ' €'},
+    {label: 'B: Kapital nach ' + N_B + ' Jahren (exponentiell)', value: Math.round(kExp(N_B)).toLocaleString('de-DE') + ' €'},
+    {label: 'C: Laufzeit linear bis ' + ZIEL_C + '€', value: laufzeitLinC() + ' Jahre'},
+    {label: 'C: Laufzeit exponentiell bis ' + ZIEL_C + '€', value: laufzeitExpC() + ' Jahre'},
+  ];
+
+  function maybeReveal(container){
+    if(partAOk && partBOk && partCOk && partDOk){
+      container.querySelector('.station-code-reveal').classList.add('show');
+      markSolved(STATION_ID, code());
+    }
+  }
+
+  function render(container, meta){
+    const wrap = document.createElement('div');
+    wrap.innerHTML = `
+      <div class="station-head">
+        <div class="station-eyebrow">Notiz 02 · Lineares vs. exponentielles Wachstum</div>
+        <h1 class="station-title">Das Bankbuch</h1>
+        <p class="station-lede">In einer verschlossenen Schublade liegt ein altes Bankbuch: Vogt hat zwei
+        Geldanlagen miteinander verglichen, die zu Beginn beide mit <b>${K0.toLocaleString('de-DE')} €</b>
+        starten, aber völlig unterschiedlich wachsen.</p>
+      </div>
+
+      <div class="term-box">
+        <b>Angebot A — linear:</b> Jedes Jahr wird ein <b>fester Betrag</b> von ${BETRAG_LIN} € gutgeschrieben,
+        unabhängig vom aktuellen Kontostand. Modell: <span class="mono">K(n) = K₀ + n · ${BETRAG_LIN}</span><br><br>
+        <b>Angebot B — exponentiell:</b> Das Kapital wird jährlich mit <b>${P_EXP} % Zinseszins</b> verzinst.
+        Modell: <span class="mono">K(n) = K₀ · qⁿ</span> mit <span class="mono">q = 1 + ${P_EXP}/100</span>.
+      </div>
+
+      <div class="note-card">
+        <h3><span class="step-num">A</span> Vergleich nach ${N_A} Jahren</h3>
+        <p>Berechnet das Kapital beider Angebote nach <b>${N_A} Jahren</b> (auf volle Euro runden) und gebt an,
+        welches Angebot zu diesem Zeitpunkt überlegen ist.</p>
+        <div class="field-row">
+          <label for="zins-a-lin">Angebot A (linear) nach ${N_A} Jahren:</label>
+          <input type="number" class="num-input" id="zins-a-lin">
+        </div>
+        <div class="field-row">
+          <label for="zins-a-exp">Angebot B (exponentiell) nach ${N_A} Jahren:</label>
+          <input type="number" class="num-input" id="zins-a-exp">
+        </div>
+        <div class="field-row">
+          <label>Welches Angebot ist nach ${N_A} Jahren überlegen?</label>
+        </div>
+        <div id="zins-a-choice-mount"></div>
+        <button class="check-btn" id="zins-a-btn" type="button" style="margin-top:8px;">Werte prüfen</button>
+        <div class="feedback-msg" id="zins-a-fb"></div>
+      </div>
+
+      <div class="note-card">
+        <h3><span class="step-num">B</span> Vergleich nach ${N_B} Jahren</h3>
+        <p>Wiederholt die Rechnung für <b>${N_B} Jahre</b>. Hat sich am Ergebnis etwas geändert?</p>
+        <div class="field-row">
+          <label for="zins-b-lin">Angebot A (linear) nach ${N_B} Jahren:</label>
+          <input type="number" class="num-input" id="zins-b-lin">
+        </div>
+        <div class="field-row">
+          <label for="zins-b-exp">Angebot B (exponentiell) nach ${N_B} Jahren:</label>
+          <input type="number" class="num-input" id="zins-b-exp">
+        </div>
+        <div class="field-row">
+          <label>Welches Angebot ist nach ${N_B} Jahren überlegen?</label>
+        </div>
+        <div id="zins-b-choice-mount"></div>
+        <button class="check-btn" id="zins-b-btn" type="button" style="margin-top:8px;">Werte prüfen</button>
+        <div class="feedback-msg" id="zins-b-fb"></div>
+      </div>
+
+      <div class="note-card">
+        <h3><span class="step-num">C</span> Laufzeit bis zum Ziel</h3>
+        <p>Ab wie vielen <b>vollen Jahren</b> hat jedes der beiden Angebote erstmals
+        <b>${ZIEL_C.toLocaleString('de-DE')} €</b> überschritten?</p>
+        ${hintHtml('Linear: K₀ + n·' + BETRAG_LIN + ' ≥ ' + ZIEL_C + ' nach n auflösen. Exponentiell: K₀·qⁿ ≥ ' + ZIEL_C + ' nach n auflösen — dabei hilft der Logarithmus. Bei beiden auf den ersten vollen Jahreswert aufrunden, der das Ziel bereits überschreitet.')}
+        <div class="field-row">
+          <label for="zins-c-lin">Angebot A (linear) — volle Jahre:</label>
+          <input type="number" class="num-input" id="zins-c-lin">
+        </div>
+        <div class="field-row">
+          <label for="zins-c-exp">Angebot B (exponentiell) — volle Jahre:</label>
+          <input type="number" class="num-input" id="zins-c-exp">
+          <button class="check-btn" id="zins-c-btn" type="button">Prüfen</button>
+        </div>
+        <div class="feedback-msg" id="zins-c-fb"></div>
+      </div>
+
+      <div class="note-card">
+        <h3><span class="step-num">D</span> Einordnen &amp; Beurteilen</h3>
+        <p><b>Beurteilt:</b> Welche der folgenden Aussagen zum Vergleich beider Angebote sind korrekt?
+        (Mehrfachauswahl möglich)</p>
+        <div id="zins-d-choice-mount"></div>
+      </div>
+
+      <div class="station-code-reveal">
+        <div class="label">Teilcode entschlüsselt</div>
+        <div class="code">${code()}</div>
+      </div>
+    `;
+    container.appendChild(wrap);
+
+    // ---- Teil A ----
+    renderChoiceQuestion(document.getElementById('zins-a-choice-mount'), {
+      mode: 'single',
+      question: '',
+      preSolved: state.solved[STATION_ID],
+      options: [
+        {text: 'Angebot A (linear) ist überlegen.', correct: true, feedback: 'Richtig: In den ersten Jahren liegt das lineare Angebot vorn, da der feste Jahresbetrag zu Beginn größer ist als die noch kleinen Zinserträge.'},
+        {text: 'Angebot B (exponentiell) ist überlegen.', correct: false, feedback: 'Noch nicht — in den ersten Jahren ist der feste Betrag des linearen Angebots größer als die Zinserträge.'},
+        {text: 'Beide Angebote sind nach ' + N_A + ' Jahren exakt gleich.', correct: false, feedback: 'Nicht ganz — schaut euch die berechneten Werte genauer an, sie unterscheiden sich bereits deutlich.'},
+      ],
+      onSolved: () => {}
+    });
+    document.getElementById('zins-a-btn').addEventListener('click', () => {
+      const fb = document.getElementById('zins-a-fb');
+      fb.classList.add('show');
+      const lin = parseFloat(document.getElementById('zins-a-lin').value);
+      const exp = parseFloat(document.getElementById('zins-a-exp').value);
+      const linOk = Math.abs(lin - kLin(N_A)) <= 1;
+      const expOk = Math.abs(exp - kExp(N_A)) <= 1;
+      const choiceOk = document.getElementById('zins-a-choice-mount').querySelector('.choice-question').classList.contains('choice-solved');
+      if(linOk && expOk && choiceOk){
+        partAOk = true;
+        fb.className = 'feedback-msg show ok';
+        fb.textContent = `Richtig: ${Math.round(kLin(N_A))} € (linear) vs. ${Math.round(kExp(N_A))} € (exponentiell).`;
+      } else if(!choiceOk){
+        fb.className = 'feedback-msg show err';
+        fb.textContent = 'Beantwortet zuerst oben die Frage, welches Angebot überlegen ist.';
+      } else {
+        fb.className = 'feedback-msg show err';
+        fb.textContent = 'Eure Werte stimmen noch nicht genau. Prüft beide Formeln erneut.';
+      }
+      maybeReveal(wrap);
+    });
+
+    // ---- Teil B ----
+    renderChoiceQuestion(document.getElementById('zins-b-choice-mount'), {
+      mode: 'single',
+      question: '',
+      preSolved: state.solved[STATION_ID],
+      options: [
+        {text: 'Angebot A (linear) ist überlegen.', correct: false, feedback: 'Nicht mehr — nach so langer Zeit hat das exponentielle Wachstum das lineare bereits überholt.'},
+        {text: 'Angebot B (exponentiell) ist überlegen.', correct: true, feedback: 'Richtig: Nach einigen Jahren überholt das exponentielle Wachstum das lineare endgültig und zieht danach immer weiter davon.'},
+        {text: 'Beide Angebote sind nach ' + N_B + ' Jahren exakt gleich.', correct: false, feedback: 'Nicht ganz — die Werte liegen inzwischen deutlich auseinander.'},
+      ],
+      onSolved: () => {}
+    });
+    document.getElementById('zins-b-btn').addEventListener('click', () => {
+      const fb = document.getElementById('zins-b-fb');
+      fb.classList.add('show');
+      const lin = parseFloat(document.getElementById('zins-b-lin').value);
+      const exp = parseFloat(document.getElementById('zins-b-exp').value);
+      const linOk = Math.abs(lin - kLin(N_B)) <= 1;
+      const expOk = Math.abs(exp - kExp(N_B)) <= 1;
+      const choiceOk = document.getElementById('zins-b-choice-mount').querySelector('.choice-question').classList.contains('choice-solved');
+      if(linOk && expOk && choiceOk){
+        partBOk = true;
+        fb.className = 'feedback-msg show ok';
+        fb.textContent = `Richtig: ${Math.round(kLin(N_B)).toLocaleString('de-DE')} € (linear) vs. ${Math.round(kExp(N_B)).toLocaleString('de-DE')} € (exponentiell) — das Bild hat sich gedreht!`;
+      } else if(!choiceOk){
+        fb.className = 'feedback-msg show err';
+        fb.textContent = 'Beantwortet zuerst oben die Frage, welches Angebot überlegen ist.';
+      } else {
+        fb.className = 'feedback-msg show err';
+        fb.textContent = 'Eure Werte stimmen noch nicht genau. Prüft beide Formeln erneut.';
+      }
+      maybeReveal(wrap);
+    });
+
+    // ---- Teil C ----
+    document.getElementById('zins-c-btn').addEventListener('click', () => {
+      const fb = document.getElementById('zins-c-fb');
+      fb.classList.add('show');
+      const lin = parseInt(document.getElementById('zins-c-lin').value);
+      const exp = parseInt(document.getElementById('zins-c-exp').value);
+      const linOk = lin === laufzeitLinC();
+      const expOk = exp === laufzeitExpC();
+      if(linOk && expOk){
+        partCOk = true;
+        fb.className = 'feedback-msg show ok';
+        fb.textContent = `Richtig: Angebot A braucht ${laufzeitLinC()} Jahre, Angebot B nur ${laufzeitExpC()} Jahre.`;
+      } else {
+        fb.className = 'feedback-msg show err';
+        fb.textContent = 'Noch nicht korrekt. Prüft beide Umformungen — beim linearen Angebot reicht eine einfache Gleichung, beim exponentiellen braucht ihr den Logarithmus.';
+      }
+      maybeReveal(wrap);
+    });
+
+    // ---- Teil D ----
+    renderChoiceQuestion(document.getElementById('zins-d-choice-mount'), {
+      mode: 'multi',
+      question: '',
+      preSolved: state.solved[STATION_ID],
+      options: [
+        {
+          text: 'Welches Angebot kurzfristig besser ist, hängt von den konkreten Konditionen ab — pauschal ist exponentielles Wachstum nicht immer überlegen.',
+          correct: true,
+          feedback: 'Richtig: Auf kurze Sicht kann ein attraktives lineares Angebot ein exponentielles mit niedrigerem Zinssatz durchaus übertreffen.'
+        },
+        {
+          text: 'Langfristig überholt exponentielles Wachstum lineares Wachstum immer, sofern der Wachstumsfaktor q > 1 konstant bleibt.',
+          correct: true,
+          feedback: 'Richtig: Exponentielles Wachstum wächst überproportional, lineares Wachstum nur um einen konstanten Betrag — auf lange Sicht gewinnt das Exponentielle daher immer.'
+        },
+        {
+          text: 'Da Angebot A in den ersten Jahren vorne liegt, ist es für jede Anlagedauer die bessere Wahl.',
+          correct: false,
+          feedback: 'Nicht korrekt: Genau das Gegenteil zeigt der Vergleich nach ' + N_B + ' Jahren — die kurzfristige Überlegenheit kehrt sich auf lange Sicht um.'
+        },
+        {
+          text: 'Bei einer Anlageentscheidung ist daher nicht nur die Höhe der Rendite, sondern auch die geplante Anlagedauer entscheidend.',
+          correct: true,
+          feedback: 'Richtig: Welches Angebot vorteilhafter ist, hängt entscheidend vom Anlagehorizont ab — kurzfristig orientierte und langfristig orientierte Sparer würden hier unterschiedlich wählen.'
+        }
+      ],
+      onSolved: () => { partDOk = true; maybeReveal(wrap); }
+    });
+
+    if(state.solved[STATION_ID]){ partAOk = partBOk = partCOk = partDOk = true; wrap.querySelector('.station-code-reveal').classList.add('show'); }
+  }
+
+  STATION_RENDERERS[STATION_ID] = render;
+})();
+
+/* ============================================================
+   STATION 3: BEVÖLKERUNGSWACHSTUM — "Die Volkszählung"
+   ============================================================ */
+(function(){
+  const STATION_ID = 'bevoelkerung';
+  const JAHRE = [2000, 2005, 2010, 2015, 2020];
+  const B0 = 8200, Q_TRUE = 1.018;
+  const BEVOELKERUNG = JAHRE.map(y => Math.round(B0 * Math.pow(Q_TRUE, y-2000)));
+  const PROGNOSE_JAHR = 2035;
+
+  function qFromPoints(){
+    const B_start = BEVOELKERUNG[0], B_end = BEVOELKERUNG[BEVOELKERUNG.length-1];
+    const dt = JAHRE[JAHRE.length-1] - JAHRE[0];
+    return Math.pow(B_end/B_start, 1/dt);
+  }
+  // Referenzwerte basieren auf den Eckpunkten, dienen aber nur als Vergleichsgröße für die Toleranzprüfung —
+  // da die Tabellendaten exakt exponentiell erzeugt sind, liefert jedes beliebige Punktepaar (bis auf
+  // Rundungsschwankungen aus der ganzzahligen Tabellenangabe) praktisch denselben Wert.
+  const RATE_PCT_REF = (qFromPoints()-1)*100;
+  function prognose(){
+    const q = qFromPoints();
+    const dt = PROGNOSE_JAHR - JAHRE[0];
+    return B0 * Math.pow(q, dt);
+  }
+  const PROGNOSE_REF = prognose();
+  const TOL_REL = 0.04; // 4% relative Toleranz - moderat, deckt Rundungen & beliebige Punktepaare ab
+
+  let partAOk = false, partBOk = false, partCOk = false;
+
+  function code(){
+    const rateTimes10 = Math.round(RATE_PCT_REF*10); // z.B. 18 (steht für 1,8%)
+    const progRounded = Math.round(PROGNOSE_REF);
+    return String(rateTimes10).padStart(2,'0') + String(progRounded).slice(-2);
+  }
+  STATION_CODE_GETTERS[STATION_ID] = code;
+  STATION_SOLUTION_GETTERS[STATION_ID] = () => [
+    {label: 'A: Jährliche Wachstumsrate', value: RATE_PCT_REF.toFixed(1) + ' %'},
+    {label: 'B: Prognose ' + PROGNOSE_JAHR, value: Math.round(PROGNOSE_REF).toLocaleString('de-DE') + ' Einwohner'},
+  ];
+
+  function maybeReveal(container){
+    if(partAOk && partBOk && partCOk){
+      container.querySelector('.station-code-reveal').classList.add('show');
+      markSolved(STATION_ID, code());
+    }
+  }
+
+  function render(container, meta){
+    const wrap = document.createElement('div');
+    wrap.innerHTML = `
+      <div class="station-head">
+        <div class="station-eyebrow">Notiz 03 · Bevölkerungswachstum</div>
+        <h1 class="station-title">Die Volkszählung</h1>
+        <p class="station-lede">Eine Tabelle mit Einwohnerzahlen der fiktiven Stadt <b>Vogtheim</b> liegt im Archiv —
+        offenbar Teil einer Modellrechnung, die Dr. Vogt nie fertigstellte.</p>
+      </div>
+
+      <div class="note-card">
+        <h3><span class="step-num">A</span> Wachstumsmodell bestimmen</h3>
+        <p>Wählt <b>zwei beliebige</b> Datenpunkte aus der Tabelle und bestimmt damit den jährlichen
+        Wachstumsfaktor <span class="mono">q</span> für ein exponentielles Modell
+        <span class="mono">B(t) = B₀ · qᵗ</span> (t in Jahren seit ${JAHRE[0]}).</p>
+        <table class="data-table">
+          <tr><th>Jahr</th>${JAHRE.map(y=>`<td>${y}</td>`).join('')}</tr>
+          <tr><th>Einwohner</th>${BEVOELKERUNG.map(b=>`<td>${b.toLocaleString('de-DE')}</td>`).join('')}</tr>
+        </table>
+        ${hintHtml('Für zwei gewählte Jahre y₁, y₂ mit Einwohnerzahlen B₁, B₂ gilt q = (B₂/B₁)^(1/(y₂−y₁)). Es ist egal, welches Punktepaar ihr wählt — bei einem guten Modell ergibt sich (bis auf Rundung) immer derselbe Wachstumsfaktor.')}
+        <div class="field-row">
+          <label for="bev-a-input">Jährliche Wachstumsrate in % (1 Nachkommastelle):</label>
+          <input type="number" step="0.1" class="num-input" id="bev-a-input">
+          <button class="check-btn" id="bev-a-btn" type="button">Prüfen</button>
+        </div>
+        <div class="feedback-msg" id="bev-a-fb"></div>
+      </div>
+
+      <div class="note-card">
+        <h3><span class="step-num">B</span> Prognose erstellen</h3>
+        <p>Verwendet euer Modell, um die Einwohnerzahl von Vogtheim im Jahr <b>${PROGNOSE_JAHR}</b> vorherzusagen
+        (auf ganze Personen runden).</p>
+        <div class="field-row">
+          <label for="bev-b-input">Prognose ${PROGNOSE_JAHR}:</label>
+          <input type="number" class="num-input" id="bev-b-input">
+          <button class="check-btn" id="bev-b-btn" type="button">Prüfen</button>
+        </div>
+        <div class="feedback-msg" id="bev-b-fb"></div>
+      </div>
+
+      <div class="note-card">
+        <h3><span class="step-num">C</span> Modellgrenzen beurteilen</h3>
+        <p><b>Beurteilt:</b> Welche der folgenden Aussagen zu den Grenzen eines rein exponentiellen
+        Bevölkerungsmodells sind korrekt? (Mehrfachauswahl möglich)</p>
+        <div id="bev-choice-mount"></div>
+      </div>
+
+      <div class="station-code-reveal">
+        <div class="label">Teilcode entschlüsselt</div>
+        <div class="code">${code()}</div>
+      </div>
+    `;
+    container.appendChild(wrap);
+
+    document.getElementById('bev-a-btn').addEventListener('click', () => {
+      const fb = document.getElementById('bev-a-fb');
+      fb.classList.add('show');
+      const val = parseFloat(document.getElementById('bev-a-input').value);
+      if(Math.abs(val - RATE_PCT_REF) <= Math.max(RATE_PCT_REF*TOL_REL, 0.1)){
+        partAOk = true;
+        fb.className = 'feedback-msg show ok';
+        fb.textContent = `Richtig: ungefähr ${RATE_PCT_REF.toFixed(1)} % pro Jahr.`;
+      } else {
+        fb.className = 'feedback-msg show err';
+        fb.textContent = 'Noch nicht korrekt. Prüft die Formel für q aus zwei Datenpunkten und rechnet die Wachstumsrate in Prozent um.';
+      }
+      maybeReveal(wrap);
+    });
+
+    document.getElementById('bev-b-btn').addEventListener('click', () => {
+      const fb = document.getElementById('bev-b-fb');
+      fb.classList.add('show');
+      if(!partAOk){
+        fb.className = 'feedback-msg show err';
+        fb.textContent = 'Löst zuerst Teil A, um den Wachstumsfaktor zu bestätigen.';
+        return;
+      }
+      const val = parseFloat(document.getElementById('bev-b-input').value);
+      if(Math.abs(val - PROGNOSE_REF) <= PROGNOSE_REF*TOL_REL){
+        partBOk = true;
+        fb.className = 'feedback-msg show ok';
+        fb.textContent = `Richtig: ca. ${Math.round(PROGNOSE_REF).toLocaleString('de-DE')} Einwohner.`;
+      } else {
+        fb.className = 'feedback-msg show err';
+        fb.textContent = 'Noch nicht korrekt. Verwendet B(t) = B₀ · qᵗ mit eurem berechneten q und t = ' + (PROGNOSE_JAHR-JAHRE[0]) + '.';
+      }
+      maybeReveal(wrap);
+    });
+
+    renderChoiceQuestion(document.getElementById('bev-choice-mount'), {
+      mode: 'multi',
+      question: '',
+      preSolved: state.solved[STATION_ID],
+      options: [
+        {
+          text: 'Ein rein exponentielles Modell setzt unbegrenztes Wachstum voraus, das wegen begrenzter Ressourcen (Wohnraum, Fläche, Infrastruktur) langfristig unrealistisch ist.',
+          correct: true,
+          feedback: 'Richtig: Reale Populationen stoßen auf begrenzende Faktoren, die ein unbegrenztes exponentielles Wachstum verhindern.'
+        },
+        {
+          text: 'Da die Daten der letzten 20 Jahre gut zu q passen, gilt das Modell garantiert auch für die nächsten 200 Jahre.',
+          correct: false,
+          feedback: 'Nicht korrekt: Eine gute Anpassung an vergangene Daten sagt nichts über die Gültigkeit weit in der Zukunft aus — Prognosen werden mit wachsendem Zeithorizont unsicherer.'
+        },
+        {
+          text: 'Realistischere Modelle (z. B. mit einer Sättigungsgrenze) lassen das Wachstum bei Annäherung an eine Kapazitätsgrenze abflachen, statt unbegrenzt weiterzusteigen.',
+          correct: true,
+          feedback: 'Richtig: Solche Modelle (z.B. logistisches Wachstum) berücksichtigen, dass Wachstum sich verlangsamt, je näher eine Grenze erreicht wird.'
+        },
+        {
+          text: 'Migration, Geburtenrate und politische Entscheidungen können den tatsächlichen Verlauf beeinflussen und vom mathematischen Modell abweichen lassen.',
+          correct: true,
+          feedback: 'Richtig: Ein mathematisches Modell bildet vergangene Trends ab, kann aber externe gesellschaftliche oder politische Einflüsse nicht vorhersehen.'
+        }
+      ],
+      onSolved: () => { partCOk = true; maybeReveal(wrap); }
+    });
+
+    if(state.solved[STATION_ID]){ partAOk = partBOk = partCOk = true; wrap.querySelector('.station-code-reveal').classList.add('show'); }
+  }
+
+  STATION_RENDERERS[STATION_ID] = render;
+})();
+
+/* ============================================================
+   STATION 4: SCHNEEBALLSYSTEME — "Die Kettennachricht"
+   ============================================================ */
+(function(){
+  const STATION_ID = 'schneeball';
+  const N_WERBUNG = 5;     // jede Person wirbt 5 neue Personen an
+  const RUNDE_A = 6;       // Teil A: konkrete Runde
+  const WELTBEVOELKERUNG = 8200000000; // ca. 8,2 Mrd. (Richtwert)
+  const RUNDE_BONUS = 5;   // Teil D (Bonus): kumulatives Modell
+
+  function neuErreichte(k){ return Math.pow(N_WERBUNG, k); }
+  function rundeWeltbevoelkerung(){
+    return Math.ceil(Math.log(WELTBEVOELKERUNG) / Math.log(N_WERBUNG));
+  }
+  // Kumulierte Gesamtzahl über alle Runden (geometrische Reihe), bei gleicher Annahme wie in Teil A/B:
+  // nur die in der Vorrunde neu hinzugekommenen Personen werben weiter.
+  // Gesamtzahl bis Runde k = Summe_{i=0}^{k} n^i
+  function gesamtKumulativ(k){
+    let sum = 0;
+    for(let i=0; i<=k; i++) sum += Math.pow(N_WERBUNG, i);
+    return sum;
+  }
+
+  let partAOk = false, partBOk = false, partCOk = false, bonusOk = false;
+
+  function code(){
+    const a = neuErreichte(RUNDE_A); // 15625
+    const b = rundeWeltbevoelkerung(); // 15
+    return String(a).slice(-2) + String(b).padStart(2,'0');
+  }
+  STATION_CODE_GETTERS[STATION_ID] = code;
+  STATION_SOLUTION_GETTERS[STATION_ID] = () => [
+    {label: 'A: Neu erreichte in Runde ' + RUNDE_A, value: neuErreichte(RUNDE_A).toLocaleString('de-DE')},
+    {label: 'B: Runde mit Neuzugängen ≥ Weltbevölkerung', value: 'Runde ' + rundeWeltbevoelkerung()},
+    {label: 'Bonus: Kumulativ nach Runde ' + RUNDE_BONUS, value: gesamtKumulativ(RUNDE_BONUS).toLocaleString('de-DE')},
+  ];
+
+  function maybeReveal(container){
+    if(partAOk && partBOk && partCOk){
+      container.querySelector('.station-code-reveal').classList.add('show');
+      markSolved(STATION_ID, code());
+    }
+  }
+
+  function render(container, meta){
+    const wrap = document.createElement('div');
+    wrap.innerHTML = `
+      <div class="station-head">
+        <div class="station-eyebrow">Notiz 04 · Exponentielle Verbreitung</div>
+        <h1 class="station-title">Die Kettennachricht</h1>
+        <p class="station-lede">Auf Vogts altem Smartphone liegt ein Screenshot: eine Kettennachricht, die in
+        sozialen Netzwerken kursierte und die Empfänger aufforderte, sie an genau <b>${N_WERBUNG} weitere
+        Personen</b> weiterzuleiten — ein klassisches Schneeballsystem.</p>
+      </div>
+
+      <div class="term-box">
+        <b>Schneeballsystem:</b> Ein Verbreitungsmodell, bei dem jedes neu hinzugekommene Mitglied die
+        Nachricht an eine feste Anzahl weiterer Personen schickt, die sie zum ersten Mal erhalten. Die Zahl
+        der in einer Runde neu erreichten Personen wächst dadurch exponentiell mit der Rundenzahl.
+      </div>
+
+      <div class="note-card">
+        <h3><span class="step-num">A</span> Wachstum berechnen</h3>
+        <p>In Runde 0 startet eine einzelne Person die Nachricht. In jeder folgenden Runde leitet jede Person,
+        die die Nachricht in der <b>vorherigen</b> Runde zum ersten Mal erhalten hat, sie an genau
+        ${N_WERBUNG} neue Personen weiter, die sie nun ihrerseits zum ersten Mal erhalten.
+        Wie viele Personen erhalten die Nachricht in Runde <b>${RUNDE_A}</b> <i>neu</i>?</p>
+        ${hintHtml('Die Zahl der NEU erreichten Personen in Runde k beträgt: ' + N_WERBUNG + '^k. Setzt k = ' + RUNDE_A + ' ein.')}
+        <div class="field-row">
+          <label for="sb-a-input">Neu erreichte Personen in Runde ${RUNDE_A}:</label>
+          <input type="number" class="num-input" id="sb-a-input">
+          <button class="check-btn" id="sb-a-btn" type="button">Prüfen</button>
+        </div>
+        <div class="feedback-msg" id="sb-a-fb"></div>
+      </div>
+
+      <div class="note-card">
+        <h3><span class="step-num">B</span> Die Grenze der Welt</h3>
+        <p>Die Weltbevölkerung liegt bei etwa <b>${(WELTBEVOELKERUNG/1e9).toFixed(1)} Milliarden</b> Menschen.
+        Ab welcher Runde würde allein die Zahl der in dieser einen Runde <i>neu</i> erreichten Personen
+        rechnerisch die gesamte Weltbevölkerung übersteigen — wenn das System tatsächlich ungebremst
+        weiterliefe?</p>
+        ${hintHtml('Löst ' + N_WERBUNG + '^k ≥ Weltbevölkerung nach k auf (Logarithmus), und rundet auf die nächste volle Runde auf.')}
+        <div class="field-row">
+          <label for="sb-b-input">Runde, ab der die Weltbevölkerung überschritten wäre:</label>
+          <input type="number" class="num-input" id="sb-b-input">
+          <button class="check-btn" id="sb-b-btn" type="button">Prüfen</button>
+        </div>
+        <div class="feedback-msg" id="sb-b-fb"></div>
+      </div>
+
+      <div class="note-card">
+        <h3><span class="step-num">C</span> Einordnen &amp; Beurteilen</h3>
+        <p><b>Beurteilt:</b> Welche der folgenden Aussagen zu Schneeballsystemen sind korrekt?
+        (Mehrfachauswahl möglich)</p>
+        <div id="sb-choice-mount"></div>
+      </div>
+
+      <div class="station-code-reveal">
+        <div class="label">Teilcode entschlüsselt</div>
+        <div class="code">${code()}</div>
+      </div>
+
+      <div class="note-card bonus-card">
+        <h3><span class="step-num bonus">★</span> Bonusaufgabe: Die Gesamtzahl aller Erreichten</h3>
+        <p>Teil A und B betrachten jeweils nur die Personen, die in einer einzelnen Runde <i>neu</i> erreicht
+        werden. Interessanter ist aber oft die <b>Gesamtzahl aller Personen</b>, die die Nachricht bis zu
+        einer bestimmten Runde insgesamt schon einmal erhalten haben — also die Summe der Neuzugänge aus
+        allen Runden von 0 bis ${RUNDE_BONUS}.</p>
+        <p>Wie viele Personen haben die Nachricht bis einschließlich Runde <b>${RUNDE_BONUS}</b>
+        <i>insgesamt</i> (über alle Runden aufsummiert) schon einmal erhalten?</p>
+        ${hintHtml('Die NEUEN Personen pro Runde kennt ihr bereits aus Teil A: ' + N_WERBUNG + '^k. Gesucht ist nun die Summe über alle Runden: ' + N_WERBUNG + '^0 + ' + N_WERBUNG + '^1 + … + ' + N_WERBUNG + '^' + RUNDE_BONUS + ' (eine geometrische Reihe).')}
+        <div class="field-row">
+          <label for="sb-bonus-input">Gesamtzahl bis Runde ${RUNDE_BONUS} (kumulativ):</label>
+          <input type="number" class="num-input" id="sb-bonus-input">
+          <button class="check-btn" id="sb-bonus-btn" type="button">Prüfen</button>
+        </div>
+        <div class="feedback-msg" id="sb-bonus-fb"></div>
+        <div class="joker-won" id="sb-joker-won" style="display:none;">
+          🃏 Joker gewonnen! Geht zurück zur Übersicht, um ihn einzulösen.
+        </div>
+      </div>
+    `;
+    container.appendChild(wrap);
+
+    document.getElementById('sb-a-btn').addEventListener('click', () => {
+      const fb = document.getElementById('sb-a-fb');
+      fb.classList.add('show');
+      const val = parseInt(document.getElementById('sb-a-input').value);
+      const correct = neuErreichte(RUNDE_A);
+      if(val === correct){
+        partAOk = true;
+        fb.className = 'feedback-msg show ok';
+        fb.textContent = `Richtig: ${correct.toLocaleString('de-DE')} neu erreichte Personen in Runde ${RUNDE_A}.`;
+      } else {
+        fb.className = 'feedback-msg show err';
+        fb.textContent = 'Noch nicht korrekt. Prüft die Hochzahl k in ' + N_WERBUNG + '^k.';
+      }
+      maybeReveal(wrap);
+    });
+
+    document.getElementById('sb-b-btn').addEventListener('click', () => {
+      const fb = document.getElementById('sb-b-fb');
+      fb.classList.add('show');
+      const val = parseInt(document.getElementById('sb-b-input').value);
+      const correct = rundeWeltbevoelkerung();
+      if(val === correct){
+        partBOk = true;
+        fb.className = 'feedback-msg show ok';
+        fb.textContent = `Richtig: ab Runde ${correct} — bereits die Zahl der in dieser einen Runde neu erreichten Personen würde die gesamte Weltbevölkerung übersteigen.`;
+      } else {
+        fb.className = 'feedback-msg show err';
+        fb.textContent = 'Noch nicht korrekt. Prüft die Umformung der Exponentialgleichung mit dem Logarithmus.';
+      }
+      maybeReveal(wrap);
+    });
+
+    document.getElementById('sb-bonus-btn').addEventListener('click', () => {
+      const fb = document.getElementById('sb-bonus-fb');
+      fb.classList.add('show');
+      const val = parseInt(document.getElementById('sb-bonus-input').value);
+      const correct = gesamtKumulativ(RUNDE_BONUS);
+      if(val === correct){
+        bonusOk = true;
+        fb.className = 'feedback-msg show ok';
+        fb.textContent = `Richtig: ${correct.toLocaleString('de-DE')} Personen insgesamt (geometrische Reihe).`;
+        if(!state.jokerAvailable){
+          document.getElementById('sb-joker-won').style.display = 'block';
+          grantJoker();
+        }
+      } else {
+        fb.className = 'feedback-msg show err';
+        fb.textContent = 'Noch nicht korrekt. Bedenkt: Die NEUEN Personen pro Runde ändern sich nicht — gesucht ist die Summe über alle Runden von 0 bis ' + RUNDE_BONUS + '.';
+      }
+    });
+
+    renderChoiceQuestion(document.getElementById('sb-choice-mount'), {
+      mode: 'multi',
+      question: '',
+      preSolved: state.solved[STATION_ID],
+      options: [
+        {
+          text: 'Schneeballsysteme müssen zwangsläufig kollabieren, da die Anzahl benötigter neuer Mitglieder schneller wächst, als reale Personen verfügbar sind.',
+          correct: true,
+          feedback: 'Richtig: Exponentielles Wachstum trifft unausweichlich auf die endliche Anzahl an Menschen — das System bricht zusammen, sobald keine neuen Mitglieder mehr gefunden werden.'
+        },
+        {
+          text: 'Da die ersten Mitglieder oft tatsächlich Gewinne erzielen, sind Schneeballsysteme für alle Beteiligten fair, solange genug neue Mitglieder werben.',
+          correct: false,
+          feedback: 'Nicht korrekt: Strukturell verlieren immer die später eingestiegenen Mitglieder, da für sie keine ausreichende Zahl an Nachfolgern mehr gefunden werden kann — das System ist nicht für alle gleichermaßen tragbar.'
+        },
+        {
+          text: 'In vielen Ländern sind Schneeball- bzw. Pyramidensysteme aus genau diesem Grund gesetzlich verboten oder stark eingeschränkt.',
+          correct: true,
+          feedback: 'Richtig: Wegen des unausweichlichen Kollapses und der daraus resultierenden finanziellen Schäden für die Mehrheit der Teilnehmer sind solche Systeme rechtlich reguliert.'
+        },
+        {
+          text: 'Mathematisch betrachtet ist eine Kettennachricht mit fester Weiterleitungsanzahl im Kern dieselbe Struktur wie radioaktiver Zerfall — nur mit wachsendem statt fallendem Exponentialfaktor.',
+          correct: true,
+          feedback: 'Richtig: Beide folgen dem Muster N(k) = N₀ · qᵏ — beim Zerfall mit q<1, bei der Verbreitung mit q>1. Die Mathematik ist dieselbe, nur das Vorzeichen der Wirkung unterscheidet sich.'
+        }
+      ],
+      onSolved: () => { partCOk = true; maybeReveal(wrap); }
+    });
+
+    if(state.solved[STATION_ID]){ partAOk = partBOk = partCOk = true; wrap.querySelector('.station-code-reveal').classList.add('show'); }
+  }
+
+  STATION_RENDERERS[STATION_ID] = render;
+})();
+
+/* ============================================================
+   STATION 5: BIERSCHAUM-ZERFALL — "Das Laborprotokoll"
+   Vorgegebene Messwertetabelle statt Animation
+   ============================================================ */
+(function(){
+  const STATION_ID = 'bierschaum';
+
+  // Feste Messwertetabelle: H(t) = H0 * a^i, zeitlich äquidistant (dt Sekunden pro Schritt)
+  const H0 = 42;
+  const A_TRUE = 0.8;
+  const DT = 15; // Sekunden zwischen den Messungen
+  const N_POINTS = 6;
+  const T_VALUES = Array.from({length: N_POINTS}, (_, i) => i*DT);
+  const H_VALUES = Array.from({length: N_POINTS}, (_, i) => Math.round(H0 * Math.pow(A_TRUE, i) * 10) / 10);
+
+  // Güteklassen-Tabelle (didaktisches Modell für dieses Spiel, keine reale Norm)
+  const GUETEKLASSEN = [
+    {min: 60, max: Infinity, klasse: 'I',   label: 'sehr stabil'},
+    {min: 40, max: 60,       klasse: 'II',  label: 'stabil'},
+    {min: 25, max: 40,       klasse: 'III', label: 'mäßig stabil'},
+    {min: 0,  max: 25,       klasse: 'IV',  label: 'instabil'},
+  ];
+  function klasseFor(thalfSec){
+    return GUETEKLASSEN.find(k => thalfSec >= k.min && thalfSec < k.max) || GUETEKLASSEN[GUETEKLASSEN.length-1];
+  }
+
+  // Teil B nutzt zwei Punkte AUS der Tabelle (erster und letzter Messwert)
+  const IDX_1 = 0, IDX_2 = N_POINTS-1;
+  const T1 = T_VALUES[IDX_1], T2 = T_VALUES[IDX_2];
+  const H1 = H_VALUES[IDX_1], H2 = H_VALUES[IDX_2];
+  function aCalcFromPoints(){ return Math.pow(H2/H1, 1/((T2-T1)/DT)); }
+  function thalfSecFromPoints(){ return (Math.log(0.5)/Math.log(aCalcFromPoints())) * DT; }
+  const TRUE_THALF_SEC = thalfSecFromPoints();
+  const TRUE_KLASSE = klasseFor(TRUE_THALF_SEC);
+
+  let partAOk = false, partBOk = false, partCOk = false;
+
+  function code(){
+    const thalfRounded = Math.round(TRUE_THALF_SEC);
+    const klasseNum = GUETEKLASSEN.findIndex(k => k.klasse === TRUE_KLASSE.klasse) + 1;
+    return String(thalfRounded).padStart(2,'0') + '0' + String(klasseNum);
+  }
+  STATION_CODE_GETTERS[STATION_ID] = code;
+  STATION_SOLUTION_GETTERS[STATION_ID] = () => [
+    {label: 'A: Zerfallsfaktor (Quotient H(n+1)/H(n))', value: '≈ ' + A_TRUE},
+    {label: 'B: Halbwertszeit', value: Math.round(TRUE_THALF_SEC) + ' s'},
+    {label: 'B: Güteklasse', value: TRUE_KLASSE.klasse + ' (' + TRUE_KLASSE.label + ')'},
+  ];
+
+  function maybeReveal(container){
+    if(partAOk && partBOk && partCOk){
+      container.querySelector('.station-code-reveal').classList.add('show');
+      markSolved(STATION_ID, code());
+    }
+  }
+
+  function render(container, meta){
+    const wrap = document.createElement('div');
+    wrap.innerHTML = `
+      <div class="station-head">
+        <div class="station-eyebrow">Notiz 05 · Exponentieller Zerfall (Messreihe)</div>
+        <h1 class="station-title">Das Laborprotokoll</h1>
+        <p class="station-lede">Ein handschriftliches Versuchsprotokoll: Vogt hat die Höhe der Schaumkrone
+        eines frisch eingeschenkten Bieres in gleichen Zeitabständen gemessen.</p>
+      </div>
+
+      <div class="term-box">
+        <b>Zerfallsfaktor a:</b> Bei einem Modell H(t) = H₀ · aᵗ mit 0 &lt; a &lt; 1 beschreibt a, welcher Anteil
+        der Schaumhöhe nach einer Zeiteinheit noch übrig ist. Ist der Zerfall exponentiell, so ist der Quotient
+        aus je zwei benachbarten, gleich weit entfernten Messwerten (näherungsweise) konstant.
+      </div>
+
+      <div class="note-card">
+        <h3><span class="step-num">A</span> Ist der Zerfall exponentiell?</h3>
+        <p>Das Versuchsprotokoll zeigt die Schaumhöhe zu sechs zeitlich gleich weit entfernten Messzeitpunkten
+        (Abstand jeweils ${DT} Sekunden):</p>
+        <table class="data-table" style="max-width:560px;">
+          <tr><th>t (s)</th>${T_VALUES.map(t=>`<td>${t}</td>`).join('')}</tr>
+          <tr><th>H (mm)</th>${H_VALUES.map(h=>`<td>${h}</td>`).join('')}</tr>
+        </table>
+        <p>Berechnet für <b>jedes Paar benachbarter Messwerte</b> den Quotienten
+        <span class="mono">H(n+1) / H(n)</span> und tragt die fünf Werte ein:</p>
+        <table class="data-table" id="bs-quot-table" style="max-width:560px;"></table>
+        ${hintHtml('Teilt jeweils den späteren durch den früheren Messwert, z.B. H(15s)/H(0s). Wiederholt das für alle fünf benachbarten Paare.')}
+        <button class="check-btn" id="bs-check-a-btn" type="button" style="margin-top:10px;">Quotienten prüfen</button>
+        <div class="feedback-msg" id="bs-fb-a"></div>
+        <div class="field-row" style="margin-top:14px;">
+          <label>Verläuft der Zerfall demnach exponentiell?</label>
+        </div>
+        <div id="bs-choice-exp-mount"></div>
+      </div>
+
+      <div class="note-card">
+        <h3><span class="step-num">B</span> Halbwertszeit &amp; Güteklasse</h3>
+        <p>Berechnet die <b>Halbwertszeit</b> des Schaums in Sekunden (auf ganze Sekunden runden) und ordnet
+        das Bier mithilfe der Tabelle einer Güteklasse zu. Nutzt dafür die Messreihe aus Teil A —
+        den Lösungsweg könnt ihr frei wählen.</p>
+        <table class="data-table" style="max-width:480px;">
+          <tr><th>Halbwertszeit</th><th>Klasse</th><th>Bewertung</th></tr>
+          ${GUETEKLASSEN.map(k => `<tr><td>${k.max===Infinity ? '≥ '+k.min+' s' : k.min+'–'+k.max+' s'}</td><td>${k.klasse}</td><td>${k.label}</td></tr>`).join('')}
+        </table>
+        <div class="field-row">
+          <label for="bs-thalf-input">Halbwertszeit (Sekunden):</label>
+          <input type="number" class="num-input" id="bs-thalf-input">
+        </div>
+        <div class="field-row">
+          <label for="bs-klasse-select">Güteklasse:</label>
+          <select class="num-input" id="bs-klasse-select" style="min-width:80px;">
+            <option value="">–</option>
+            ${GUETEKLASSEN.map(k => `<option value="${k.klasse}">${k.klasse}</option>`).join('')}
+          </select>
+          <button class="check-btn" id="bs-check-b-btn" type="button">Prüfen</button>
+        </div>
+        <div class="feedback-msg" id="bs-fb-b"></div>
+      </div>
+
+      <div class="note-card">
+        <h3><span class="step-num">C</span> Einordnen &amp; Beurteilen</h3>
+        <p><b>Beurteilt:</b> Welche Aussage zur Aussagekraft dieses Tests ist korrekt?</p>
+        <div id="bs-choice-mount"></div>
+      </div>
+
+      <div class="station-code-reveal">
+        <div class="label">Teilcode entschlüsselt</div>
+        <div class="code">${code()}</div>
+      </div>
+    `;
+    container.appendChild(wrap);
+
+    // ---- Eingabetabelle für die 5 Quotienten aufbauen ----
+    const quotTable = document.getElementById('bs-quot-table');
+    let headerRow = '<tr><th></th>';
+    for(let i=0; i<N_POINTS-1; i++){
+      headerRow += `<th>H(${T_VALUES[i+1]}s)/H(${T_VALUES[i]}s)</th>`;
+    }
+    headerRow += '</tr>';
+    let inputRow = '<tr><th>Quotient</th>';
+    for(let i=0; i<N_POINTS-1; i++){
+      inputRow += `<td><input type="number" step="0.01" class="num-input" style="width:64px;" id="bs-quot-${i}"></td>`;
+    }
+    inputRow += '</tr>';
+    quotTable.innerHTML = headerRow + inputRow;
+
+    document.getElementById('bs-check-a-btn').addEventListener('click', () => {
+      const fb = document.getElementById('bs-fb-a');
+      fb.classList.add('show');
+      let allOk = true;
+      for(let i=0; i<N_POINTS-1; i++){
+        const val = parseFloat(document.getElementById('bs-quot-' + i).value);
+        const correct = H_VALUES[i+1] / H_VALUES[i];
+        if(isNaN(val) || Math.abs(val - correct) > 0.03){ allOk = false; }
+      }
+      if(allOk){
+        fb.className = 'feedback-msg show ok';
+        fb.textContent = 'Richtig: Alle fünf Quotienten liegen nah bei ' + A_TRUE + '.';
+      } else {
+        fb.className = 'feedback-msg show err';
+        fb.textContent = 'Noch nicht alle Quotienten korrekt. Prüft eure Divisionen erneut (später durch früher).';
+      }
+      maybeReveal(wrap);
+      checkPartA();
+    });
+
+    let quotChoiceOk = false;
+    function checkPartA(){
+      let allOk = true;
+      for(let i=0; i<N_POINTS-1; i++){
+        const val = parseFloat(document.getElementById('bs-quot-' + i).value);
+        const correct = H_VALUES[i+1] / H_VALUES[i];
+        if(isNaN(val) || Math.abs(val - correct) > 0.03){ allOk = false; }
+      }
+      partAOk = allOk && quotChoiceOk;
+    }
+
+    renderChoiceQuestion(document.getElementById('bs-choice-exp-mount'), {
+      mode: 'single',
+      question: '',
+      preSolved: state.solved[STATION_ID],
+      options: [
+        {
+          text: 'Ja — die Quotienten liegen alle nah beieinander, der Zerfall ist (näherungsweise) exponentiell.',
+          correct: true,
+          feedback: 'Richtig: Ein nahezu konstanter Quotient zwischen benachbarten, gleich weit entfernten Messpunkten ist genau das Kennzeichen exponentiellen Zerfalls.'
+        },
+        {
+          text: 'Nein — die Quotienten unterscheiden sich stark, der Zerfall verläuft eher linear.',
+          correct: false,
+          feedback: 'Prüft eure Rechnung noch einmal: Die Quotienten sollten alle nah bei einem festen Wert liegen — kleine Abweichungen durch Rundung in der Tabelle sind normal.'
+        },
+        {
+          text: 'Das lässt sich aus den Daten allein nicht entscheiden.',
+          correct: false,
+          feedback: 'Mit fünf berechneten Quotienten lässt sich exponentieller von linearem oder anderem Verlauf gut unterscheiden — die Daten reichen dafür aus.'
+        }
+      ],
+      onSolved: () => { quotChoiceOk = true; checkPartA(); maybeReveal(wrap); }
+    });
+
+    document.getElementById('bs-check-b-btn').addEventListener('click', () => {
+      const fb = document.getElementById('bs-fb-b');
+      fb.classList.add('show');
+      const thalfVal = parseFloat(document.getElementById('bs-thalf-input').value);
+      const klasseVal = document.getElementById('bs-klasse-select').value;
+      const thalfOk = Math.abs(thalfVal - TRUE_THALF_SEC) <= TRUE_THALF_SEC*0.05;
+      const klasseOk = klasseVal === TRUE_KLASSE.klasse;
+      if(thalfOk && klasseOk){
+        partBOk = true;
+        fb.className = 'feedback-msg show ok';
+        fb.textContent = `Richtig: Halbwertszeit ≈ ${Math.round(TRUE_THALF_SEC)} s, Güteklasse ${TRUE_KLASSE.klasse} (${TRUE_KLASSE.label}).`;
+      } else if(thalfOk && !klasseOk){
+        fb.className = 'feedback-msg show err';
+        fb.textContent = 'Die Halbwertszeit passt, aber die Güteklasse noch nicht — prüft die Tabelle erneut.';
+      } else {
+        fb.className = 'feedback-msg show err';
+        fb.textContent = 'Noch nicht korrekt. Prüft zuerst die Berechnung von a aus den beiden Messwerten, dann die Formel t₁/₂ = log(0,5)/log(a).';
+      }
+      maybeReveal(wrap);
+    });
+
+    renderChoiceQuestion(document.getElementById('bs-choice-mount'), {
+      mode: 'single',
+      question: '',
+      preSolved: state.solved[STATION_ID],
+      options: [
+        {
+          text: 'Da sich der Zerfall sauber exponentiell modellieren ließ, ist die Schaumstabilität ein vollständig zuverlässiges Maß für die allgemeine Qualität eines Bieres.',
+          correct: false,
+          feedback: 'Nicht korrekt: Schaumstabilität ist nur eines von vielen Qualitätsmerkmalen (z.B. Geschmack, Reinheit, Herstellung) und wird zudem von äußeren Faktoren wie Glassauberkeit und Temperatur beeinflusst.'
+        },
+        {
+          text: 'Die Methode liefert ein objektives, leicht reproduzierbares Maß für einen Teilaspekt der Bierqualität, ersetzt aber keine umfassende Qualitätsbeurteilung.',
+          correct: true,
+          feedback: 'Richtig: Das Modell beschreibt einen einzelnen physikalischen Aspekt (Schaumstabilität) gut, sagt aber nichts über Geschmack oder andere Qualitätsmerkmale aus.'
+        },
+        {
+          text: 'Weil das Modell H(t)=H₀·aᵗ mathematisch exakt ist, kann das Experiment beliebig oft wiederholt werden und liefert garantiert immer exakt denselben Zerfallsfaktor.',
+          correct: false,
+          feedback: 'Nicht korrekt: Das mathematische Modell beschreibt den Trend gut, aber reale Messungen unterliegen Schwankungen (Temperatur, Einschenktechnik, Glas) — der gemessene Faktor variiert daher von Versuch zu Versuch.'
+        }
+      ],
+      onSolved: () => { partCOk = true; maybeReveal(wrap); }
+    });
+
+    if(state.solved[STATION_ID]){ partAOk = partBOk = partCOk = true; wrap.querySelector('.station-code-reveal').classList.add('show'); }
+  }
+
+  STATION_RENDERERS[STATION_ID] = render;
+})();
+
+/* ============================================================
+   STATION 6: INFEKTIONSVERBREITUNG — "Die Ausbruchskurve"
+   ============================================================ */
+(function(){
+  const STATION_ID = 'infektion';
+  const I0 = 12;            // Anfangsinfizierte
+  const RATE = 0.22;        // 22% tägliches Wachstum
+  const Q = 1 + RATE;
+  const N_A = 10;           // Teil A: konkreter Tag
+  const SCHWELLE = 5000;    // Kapazitätsgrenze des Gesundheitssystems
+
+  function infizierte(t){ return I0 * Math.pow(Q, t); }
+  function tagSchwelle(){
+    return Math.ceil(Math.log(SCHWELLE/I0) / Math.log(Q));
+  }
+
+  let partAOk = false, partBOk = false, partCOk = false;
+
+  function code(){
+    const a = Math.round(infizierte(N_A)); // 88
+    const b = tagSchwelle();               // 31
+    return String(a).padStart(2,'0').slice(-2) + String(b).padStart(2,'0');
+  }
+  STATION_CODE_GETTERS[STATION_ID] = code;
+  STATION_SOLUTION_GETTERS[STATION_ID] = () => [
+    {label: 'A: Infizierte nach ' + N_A + ' Tagen', value: Math.round(infizierte(N_A)).toLocaleString('de-DE')},
+    {label: 'B: Tag ≥ Kapazitätsgrenze', value: 'Tag ' + tagSchwelle()},
+  ];
+
+  function maybeReveal(container){
+    if(partAOk && partBOk && partCOk){
+      container.querySelector('.station-code-reveal').classList.add('show');
+      markSolved(STATION_ID, code());
+    }
+  }
+
+  function render(container, meta){
+    const wrap = document.createElement('div');
+    wrap.innerHTML = `
+      <div class="station-head">
+        <div class="station-eyebrow">Notiz 06 · Exponentielle Verbreitung</div>
+        <h1 class="station-title">Die Ausbruchskurve</h1>
+        <p class="station-lede">Die letzte Notiz: ein epidemiologisches Modell, an dem Vogt offenbar zuletzt
+        gearbeitet hat — eine fiktive Atemwegsinfektion mit konstanter täglicher Verbreitungsrate.</p>
+      </div>
+
+      <div class="term-box">
+        <b>Verbreitungsrate:</b> Der Anteil, um den sich die Zahl der Infizierten von einem Tag zum nächsten
+        erhöht. Bei konstanter Rate <span class="mono">r</span> gilt für den Wachstumsfaktor
+        <span class="mono">q = 1 + r</span> und das Modell <span class="mono">I(t) = I₀ · qᵗ</span>.
+      </div>
+
+      <div class="note-card">
+        <h3><span class="step-num">A</span> Verbreitung berechnen</h3>
+        <p>Am Tag 0 sind <b>${I0} Personen</b> infiziert. Die tägliche Verbreitungsrate beträgt konstant
+        <b>${(RATE*100).toFixed(0)} %</b>. Wie viele Personen sind nach <b>${N_A} Tagen</b> infiziert
+        (auf ganze Personen runden)?</p>
+        ${hintHtml('Setzt t = ' + N_A + ' in I(t) = I₀ · qᵗ ein, mit q = 1 + ' + RATE + '.')}
+        <div class="field-row">
+          <label for="inf-a-input">Infizierte nach ${N_A} Tagen:</label>
+          <input type="number" class="num-input" id="inf-a-input">
+          <button class="check-btn" id="inf-a-btn" type="button">Prüfen</button>
+        </div>
+        <div class="feedback-msg" id="inf-a-fb"></div>
+      </div>
+
+      <div class="note-card">
+        <h3><span class="step-num">B</span> Kritische Schwelle</h3>
+        <p>Das regionale Gesundheitssystem kann höchstens <b>${SCHWELLE.toLocaleString('de-DE')} gleichzeitig
+        Infizierte</b> versorgen. Ab welchem <b>vollen Tag</b> würde diese Schwelle bei unverändertem
+        exponentiellem Verlauf erstmals überschritten?</p>
+        ${hintHtml('Löst I₀ · qᵗ ≥ Schwelle nach t auf (Logarithmus) und rundet auf den nächsten vollen Tag auf.')}
+        <div class="field-row">
+          <label for="inf-b-input">Tag, ab dem die Schwelle überschritten wäre:</label>
+          <input type="number" class="num-input" id="inf-b-input">
+          <button class="check-btn" id="inf-b-btn" type="button">Prüfen</button>
+        </div>
+        <div class="feedback-msg" id="inf-b-fb"></div>
+      </div>
+
+      <div class="note-card">
+        <h3><span class="step-num">C</span> Einordnen &amp; Beurteilen</h3>
+        <p><b>Beurteilt:</b> Welche der folgenden Aussagen zu den Grenzen dieses Infektionsmodells sind
+        korrekt? (Mehrfachauswahl möglich)</p>
+        <div id="inf-choice-mount"></div>
+      </div>
+
+      <div class="station-code-reveal">
+        <div class="label">Teilcode entschlüsselt</div>
+        <div class="code">${code()}</div>
+      </div>
+    `;
+    container.appendChild(wrap);
+
+    document.getElementById('inf-a-btn').addEventListener('click', () => {
+      const fb = document.getElementById('inf-a-fb');
+      fb.classList.add('show');
+      const val = parseFloat(document.getElementById('inf-a-input').value);
+      const correct = Math.round(infizierte(N_A));
+      if(Math.abs(val - correct) <= 1){
+        partAOk = true;
+        fb.className = 'feedback-msg show ok';
+        fb.textContent = `Richtig: ${correct.toLocaleString('de-DE')} Infizierte.`;
+      } else {
+        fb.className = 'feedback-msg show err';
+        fb.textContent = 'Noch nicht korrekt. Prüft den Wachstumsfaktor q und den Exponenten t.';
+      }
+      maybeReveal(wrap);
+    });
+
+    document.getElementById('inf-b-btn').addEventListener('click', () => {
+      const fb = document.getElementById('inf-b-fb');
+      fb.classList.add('show');
+      const val = parseInt(document.getElementById('inf-b-input').value);
+      const correct = tagSchwelle();
+      if(val === correct){
+        partBOk = true;
+        fb.className = 'feedback-msg show ok';
+        fb.textContent = `Richtig: ab Tag ${correct} wäre die Kapazitätsgrenze überschritten.`;
+      } else {
+        fb.className = 'feedback-msg show err';
+        fb.textContent = 'Noch nicht korrekt. Prüft die Umformung mit dem Logarithmus und das Aufrunden auf den ersten vollen Tag, an dem die Schwelle bereits überschritten ist.';
+      }
+      maybeReveal(wrap);
+    });
+
+    renderChoiceQuestion(document.getElementById('inf-choice-mount'), {
+      mode: 'multi',
+      question: '',
+      preSolved: state.solved[STATION_ID],
+      options: [
+        {
+          text: 'In der Realität sinkt die Verbreitungsrate meist mit der Zeit, z.B. durch Immunität, Verhaltensänderungen oder Gegenmaßnahmen — das reine Exponentialmodell gilt daher nur für eine begrenzte Anfangsphase.',
+          correct: true,
+          feedback: 'Richtig: Anders als bei einem unveränderlichen Zerfallsprozess passen sich menschliches Verhalten und Immunität im Lauf eines Ausbruchs an, wodurch reale Verläufe von der reinen Exponentialfunktion abweichen.'
+        },
+        {
+          text: 'Da auch die Weltbevölkerung endlich ist, muss die Zahl der Infizierten irgendwann abflachen — das exponentielle Modell kann diesen Sättigungseffekt nicht von selbst abbilden.',
+          correct: true,
+          feedback: 'Richtig: Ein reines Exponentialmodell wächst unbegrenzt weiter; reale Ausbrüche flachen ab, sobald ein großer Teil der erreichbaren Bevölkerung bereits infiziert oder immun ist.'
+        },
+        {
+          text: 'Das Infektionsmodell und das Schneeballsystem aus Notiz 04 unterscheiden sich grundlegend in der mathematischen Struktur, weshalb ihre Ergebnisse nicht vergleichbar sind.',
+          correct: false,
+          feedback: 'Nicht korrekt: Beide folgen demselben Muster I(t)=I₀·qᵗ mit q>1 — genau wie beim Schneeballsystem führt das zwangsläufig zu einer Grenze, an der das Modell an der Realität (endliche Bevölkerung, Gegenmaßnahmen) scheitert.'
+        },
+        {
+          text: 'Eine Prognose, die nur auf den ersten Tagen eines Ausbruchs beruht, sollte mit wachsendem Zeithorizont vorsichtiger interpretiert werden, da kleine Fehler in der Rate sich exponentiell verstärken.',
+          correct: true,
+          feedback: 'Richtig: Da der Fehler exponentiell mitwächst, führt eine kleine Unsicherheit in der geschätzten Rate bei langen Prognosezeiträumen zu großen Abweichungen.'
+        }
+      ],
+      onSolved: () => { partCOk = true; maybeReveal(wrap); }
+    });
+
+    if(state.solved[STATION_ID]){ partAOk = partBOk = partCOk = true; wrap.querySelector('.station-code-reveal').classList.add('show'); }
+  }
+
+  STATION_RENDERERS[STATION_ID] = render;
+})();
+document.getElementById('btn-teacher').addEventListener('click', () => {
+  const content = document.getElementById('teacher-content');
+  content.innerHTML = STATIONS.map(s => `
+    <div class="teacher-row">
+      <span>${String(s.num).padStart(2,'0')} — ${s.title}</span>
+      <span class="tstat ${state.solved[s.id] ? 'solved' : 'open'}">
+        ${state.solved[s.id] ? 'Code ' + state.codes[s.id] : 'offen'}
+      </span>
+    </div>
+  `).join('') + `
+    <div class="teacher-row" style="border-bottom:none; margin-top:6px;">
+      <span><b>Gesamtcode</b></span>
+      <span class="mono brass">${isAllSolved() ? STATIONS.map(s=>state.codes[s.id]).join('') : '— erst nach Lösung aller Notizen —'}</span>
+    </div>
+  `;
+  // Schlüsselfeld + Lösungsansicht bei jedem Öffnen zurücksetzen
+  document.getElementById('teacher-key-input').value = '';
+  document.getElementById('teacher-key-fb').textContent = '';
+  document.getElementById('teacher-key-fb').className = 'feedback-msg';
+  document.getElementById('teacher-solutions').style.display = 'none';
+  document.getElementById('teacher-solutions').innerHTML = '';
+  document.getElementById('teacher-unlock-row').style.display = 'flex';
+
+  document.getElementById('teacher-modal').classList.add('show');
+});
+document.getElementById('teacher-close').addEventListener('click', () => {
+  document.getElementById('teacher-modal').classList.remove('show');
+});
+document.getElementById('btn-reset-all').addEventListener('click', () => {
+  if(confirm('Wirklich den gesamten Fortschritt zurücksetzen?')){
+    state.solved = {}; state.codes = {};
+    document.getElementById('teacher-modal').classList.remove('show');
+    goHub();
+  }
+});
+
+// ---- Lösungsansicht für Lehrkräfte: per Schlüssel freischaltbar ----
+const TEACHER_KEY = 'vogt1985';
+function unlockTeacherSolutions(){
+  const solutionsEl = document.getElementById('teacher-solutions');
+  solutionsEl.innerHTML = STATIONS.map(s => {
+    const getter = STATION_SOLUTION_GETTERS[s.id];
+    const code = STATION_CODE_GETTERS[s.id] ? STATION_CODE_GETTERS[s.id]() : '—';
+    const rows = getter ? getter() : [];
+    return `
+      <div class="solution-block">
+        <div class="sol-title">Notiz ${String(s.num).padStart(2,'0')} — ${s.title}</div>
+        ${rows.map(r => `<div class="sol-row"><span>${r.label}</span><span class="sol-val">${r.value}</span></div>`).join('')}
+        <div class="sol-row"><span><b>Teilcode</b></span><span class="sol-val brass">${code}</span></div>
+      </div>
+    `;
+  }).join('') + `
+    <div class="solution-block" style="border-color:var(--brass);">
+      <div class="sol-title">Gesamtcode (Tresor)</div>
+      <div class="sol-row"><span>Reihenfolge Notiz 01–06</span>
+      <span class="sol-val brass">${STATIONS.map(s => STATION_CODE_GETTERS[s.id] ? STATION_CODE_GETTERS[s.id]() : '----').join('')}</span></div>
+    </div>
+  `;
+  solutionsEl.style.display = 'block';
+  document.getElementById('teacher-unlock-row').style.display = 'none';
+  document.getElementById('teacher-key-fb').textContent = '';
+}
+document.getElementById('teacher-unlock-btn').addEventListener('click', () => {
+  const val = document.getElementById('teacher-key-input').value;
+  const fb = document.getElementById('teacher-key-fb');
+  if(val === TEACHER_KEY){
+    unlockTeacherSolutions();
+  } else {
+    fb.className = 'feedback-msg show err';
+    fb.textContent = 'Falscher Schlüssel.';
+  }
+});
+document.getElementById('teacher-key-input').addEventListener('keydown', (e) => {
+  if(e.key === 'Enter') document.getElementById('teacher-unlock-btn').click();
+});
+
+/* ============================================================
+   SAVE / LOAD PROGRESS CODE
+   (encodes solved + codes as a short string; no localStorage)
+   ============================================================ */
+function encodeProgress(){
+  // format: stationId:code pairs, base64-ish via encodeURIComponent + btoa
+  const payload = STATIONS.map(s => state.solved[s.id] ? state.codes[s.id] : '----').join('.');
+  try{
+    return btoa(unescape(encodeURIComponent(payload)));
+  }catch(e){ return ''; }
+}
+function decodeProgress(str){
+  try{
+    const payload = decodeURIComponent(escape(atob(str.trim())));
+    const parts = payload.split('.');
+    if(parts.length !== STATIONS.length) return false;
+    parts.forEach((code, i) => {
+      const s = STATIONS[i];
+      if(code !== '----'){
+        state.solved[s.id] = true;
+        state.codes[s.id] = code;
+      }
+    });
+    return true;
+  }catch(e){ return false; }
+}
+
+document.getElementById('btn-save-code').addEventListener('click', () => {
+  const code = encodeProgress();
+  document.getElementById('code-modal-title').textContent = 'Fortschritt sichern';
+  document.getElementById('code-modal-content').innerHTML = `
+    <p class="muted" style="font-size:13.5px; line-height:1.6;">
+      Notiert euch diesen Sicherungscode. Mit ihm könnt ihr euren Fortschritt später wiederherstellen,
+      falls die Seite neu geladen wird.
+    </p>
+    <input type="text" class="text-input" style="width:100%; margin-top:8px;" readonly value="${code}" onclick="this.select()">
+  `;
+  document.getElementById('code-modal').classList.add('show');
+});
+document.getElementById('btn-load-code').addEventListener('click', () => {
+  document.getElementById('code-modal-title').textContent = 'Fortschritt laden';
+  document.getElementById('code-modal-content').innerHTML = `
+    <p class="muted" style="font-size:13.5px; line-height:1.6;">Gebt euren Sicherungscode ein:</p>
+    <input type="text" class="text-input" style="width:100%; margin-top:8px;" id="load-code-input" placeholder="Sicherungscode einfügen">
+    <button class="btn-primary" style="margin-top:12px;" id="load-code-submit" type="button">Wiederherstellen</button>
+    <div class="vault-feedback" id="load-code-feedback"></div>
+  `;
+  document.getElementById('code-modal').classList.add('show');
+  document.getElementById('load-code-submit').addEventListener('click', () => {
+    const val = document.getElementById('load-code-input').value;
+    const ok = decodeProgress(val);
+    const fb = document.getElementById('load-code-feedback');
+    if(ok){
+      fb.textContent = 'Fortschritt wiederhergestellt.';
+      fb.className = 'vault-feedback ok';
+      renderHub();
+      setTimeout(() => document.getElementById('code-modal').classList.remove('show'), 800);
+    } else {
+      fb.textContent = 'Ungültiger Code.';
+      fb.className = 'vault-feedback err';
+    }
+  });
+});
+document.getElementById('code-close').addEventListener('click', () => {
+  document.getElementById('code-modal').classList.remove('show');
+});
+
+/* ============================================================
+   INIT
+   ============================================================ */
+renderHub();
+
+</script>
+<!-- ===================== Teilen / QR-Code (gemeinsamer Baustein) ===================== -->
+<style>
+  .sq-fab{position:fixed; left:calc(10px + env(safe-area-inset-left)); bottom:calc(10px + env(safe-area-inset-bottom));
+    z-index:120; display:none; align-items:center; gap:7px; padding:10px 14px; border-radius:999px; border:none;
+    background:rgba(20,20,26,.82); color:#fff; font:inherit; font-size:14.5px; font-weight:700; cursor:pointer;
+    box-shadow:0 4px 14px rgba(0,0,0,.3); -webkit-tap-highlight-color:transparent;}
+  .sq-fab.on{display:inline-flex;}
+  .sq-fab:active{transform:scale(.96);}
+  .sq-fab svg{width:17px; height:17px; display:block;}
+  .sq-inline{display:inline-flex; align-items:center; gap:6px;}
+  .sq-ov{position:fixed; inset:0; z-index:9000; display:none; align-items:center; justify-content:center;
+    background:rgba(12,14,18,.86); padding:16px; -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px);}
+  .sq-ov.on{display:flex;}
+  .sq-card{background:#fff; color:#1b1f24; border-radius:22px; padding:22px 22px 18px; width:100%; max-width:520px;
+    max-height:94vh; overflow:auto; text-align:center; box-shadow:0 24px 60px rgba(0,0,0,.45);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+  .sq-card h2{margin:0 0 2px; font-size:1.4rem; font-weight:800;}
+  .sq-card p.sq-sub{margin:0 0 14px; color:#5b6470; font-size:.95rem;}
+  /* Der weiße Rand um den Code ist Vorschrift: mindestens vier Module Ruhezone,
+     sonst erkennen Kameras den Code nicht. Die Breite setzt das Skript. */
+  .sq-code{display:flex; align-items:center; justify-content:center; margin:0 auto 12px;
+    width:min(74vw,330px); background:#fff; border:1px solid #e4e6ea; border-radius:14px; padding:14px 0;}
+  .sq-code canvas, .sq-code img{width:var(--sq-w,84%); height:auto; display:block; margin:0 auto; image-rendering:pixelated;}
+  .sq-code table{margin:0 auto;}
+  .sq-url{font-size:.86rem; color:#5b6470; word-break:break-all; background:#f3f4f6; border-radius:10px;
+    padding:9px 11px; margin-bottom:14px; line-height:1.4;
+    -webkit-user-select:text; user-select:text;}
+  .sq-row{display:flex; gap:9px; flex-wrap:wrap;}
+  .sq-row button{flex:1 1 130px; border:none; border-radius:12px; padding:13px 14px; font:inherit; font-size:1rem;
+    font-weight:750; cursor:pointer; background:#1b1f24; color:#fff; min-height:48px;}
+  .sq-row button.sq-alt{background:#fff; color:#1b1f24; box-shadow:inset 0 0 0 2px #dfe2e7;}
+  .sq-row button.sq-ok{background:#1f7a46;}
+  .sq-row button:active{transform:scale(.985);}
+  .sq-note{margin-top:11px; font-size:.8rem; color:#8a929c; line-height:1.45;}
+</style>
+<script>/* QR-Code: qrcodejs von David Shim (MIT) – dieselbe Bibliothek wie in der Digitalen Tafel */
+var QRCode;!function(){function a(a){this.mode=c.MODE_8BIT_BYTE,this.data=a,this.parsedData=[];for(var b=[],d=0,e=this.data.length;e>d;d++){var f=this.data.charCodeAt(d);f>65536?(b[0]=240|(1835008&f)>>>18,b[1]=128|(258048&f)>>>12,b[2]=128|(4032&f)>>>6,b[3]=128|63&f):f>2048?(b[0]=224|(61440&f)>>>12,b[1]=128|(4032&f)>>>6,b[2]=128|63&f):f>128?(b[0]=192|(1984&f)>>>6,b[1]=128|63&f):b[0]=f,this.parsedData=this.parsedData.concat(b)}this.parsedData.length!=this.data.length&&(this.parsedData.unshift(191),this.parsedData.unshift(187),this.parsedData.unshift(239))}function b(a,b){this.typeNumber=a,this.errorCorrectLevel=b,this.modules=null,this.moduleCount=0,this.dataCache=null,this.dataList=[]}function i(a,b){if(void 0==a.length)throw new Error(a.length+"/"+b);for(var c=0;c<a.length&&0==a[c];)c++;this.num=new Array(a.length-c+b);for(var d=0;d<a.length-c;d++)this.num[d]=a[d+c]}function j(a,b){this.totalCount=a,this.dataCount=b}function k(){this.buffer=[],this.length=0}function m(){return"undefined"!=typeof CanvasRenderingContext2D}function n(){var a=!1,b=navigator.userAgent;return/android/i.test(b)&&(a=!0,aMat=b.toString().match(/android ([0-9]\.[0-9])/i),aMat&&aMat[1]&&(a=parseFloat(aMat[1]))),a}function r(a,b){for(var c=1,e=s(a),f=0,g=l.length;g>=f;f++){var h=0;switch(b){case d.L:h=l[f][0];break;case d.M:h=l[f][1];break;case d.Q:h=l[f][2];break;case d.H:h=l[f][3]}if(h>=e)break;c++}if(c>l.length)throw new Error("Too long data");return c}function s(a){var b=encodeURI(a).toString().replace(/\%[0-9a-fA-F]{2}/g,"a");return b.length+(b.length!=a?3:0)}a.prototype={getLength:function(){return this.parsedData.length},write:function(a){for(var b=0,c=this.parsedData.length;c>b;b++)a.put(this.parsedData[b],8)}},b.prototype={addData:function(b){var c=new a(b);this.dataList.push(c),this.dataCache=null},isDark:function(a,b){if(0>a||this.moduleCount<=a||0>b||this.moduleCount<=b)throw new Error(a+","+b);return this.modules[a][b]},getModuleCount:function(){return this.moduleCount},make:function(){this.makeImpl(!1,this.getBestMaskPattern())},makeImpl:function(a,c){this.moduleCount=4*this.typeNumber+17,this.modules=new Array(this.moduleCount);for(var d=0;d<this.moduleCount;d++){this.modules[d]=new Array(this.moduleCount);for(var e=0;e<this.moduleCount;e++)this.modules[d][e]=null}this.setupPositionProbePattern(0,0),this.setupPositionProbePattern(this.moduleCount-7,0),this.setupPositionProbePattern(0,this.moduleCount-7),this.setupPositionAdjustPattern(),this.setupTimingPattern(),this.setupTypeInfo(a,c),this.typeNumber>=7&&this.setupTypeNumber(a),null==this.dataCache&&(this.dataCache=b.createData(this.typeNumber,this.errorCorrectLevel,this.dataList)),this.mapData(this.dataCache,c)},setupPositionProbePattern:function(a,b){for(var c=-1;7>=c;c++)if(!(-1>=a+c||this.moduleCount<=a+c))for(var d=-1;7>=d;d++)-1>=b+d||this.moduleCount<=b+d||(this.modules[a+c][b+d]=c>=0&&6>=c&&(0==d||6==d)||d>=0&&6>=d&&(0==c||6==c)||c>=2&&4>=c&&d>=2&&4>=d?!0:!1)},getBestMaskPattern:function(){for(var a=0,b=0,c=0;8>c;c++){this.makeImpl(!0,c);var d=f.getLostPoint(this);(0==c||a>d)&&(a=d,b=c)}return b},createMovieClip:function(a,b,c){var d=a.createEmptyMovieClip(b,c),e=1;this.make();for(var f=0;f<this.modules.length;f++)for(var g=f*e,h=0;h<this.modules[f].length;h++){var i=h*e,j=this.modules[f][h];j&&(d.beginFill(0,100),d.moveTo(i,g),d.lineTo(i+e,g),d.lineTo(i+e,g+e),d.lineTo(i,g+e),d.endFill())}return d},setupTimingPattern:function(){for(var a=8;a<this.moduleCount-8;a++)null==this.modules[a][6]&&(this.modules[a][6]=0==a%2);for(var b=8;b<this.moduleCount-8;b++)null==this.modules[6][b]&&(this.modules[6][b]=0==b%2)},setupPositionAdjustPattern:function(){for(var a=f.getPatternPosition(this.typeNumber),b=0;b<a.length;b++)for(var c=0;c<a.length;c++){var d=a[b],e=a[c];if(null==this.modules[d][e])for(var g=-2;2>=g;g++)for(var h=-2;2>=h;h++)this.modules[d+g][e+h]=-2==g||2==g||-2==h||2==h||0==g&&0==h?!0:!1}},setupTypeNumber:function(a){for(var b=f.getBCHTypeNumber(this.typeNumber),c=0;18>c;c++){var d=!a&&1==(1&b>>c);this.modules[Math.floor(c/3)][c%3+this.moduleCount-8-3]=d}for(var c=0;18>c;c++){var d=!a&&1==(1&b>>c);this.modules[c%3+this.moduleCount-8-3][Math.floor(c/3)]=d}},setupTypeInfo:function(a,b){for(var c=this.errorCorrectLevel<<3|b,d=f.getBCHTypeInfo(c),e=0;15>e;e++){var g=!a&&1==(1&d>>e);6>e?this.modules[e][8]=g:8>e?this.modules[e+1][8]=g:this.modules[this.moduleCount-15+e][8]=g}for(var e=0;15>e;e++){var g=!a&&1==(1&d>>e);8>e?this.modules[8][this.moduleCount-e-1]=g:9>e?this.modules[8][15-e-1+1]=g:this.modules[8][15-e-1]=g}this.modules[this.moduleCount-8][8]=!a},mapData:function(a,b){for(var c=-1,d=this.moduleCount-1,e=7,g=0,h=this.moduleCount-1;h>0;h-=2)for(6==h&&h--;;){for(var i=0;2>i;i++)if(null==this.modules[d][h-i]){var j=!1;g<a.length&&(j=1==(1&a[g]>>>e));var k=f.getMask(b,d,h-i);k&&(j=!j),this.modules[d][h-i]=j,e--,-1==e&&(g++,e=7)}if(d+=c,0>d||this.moduleCount<=d){d-=c,c=-c;break}}}},b.PAD0=236,b.PAD1=17,b.createData=function(a,c,d){for(var e=j.getRSBlocks(a,c),g=new k,h=0;h<d.length;h++){var i=d[h];g.put(i.mode,4),g.put(i.getLength(),f.getLengthInBits(i.mode,a)),i.write(g)}for(var l=0,h=0;h<e.length;h++)l+=e[h].dataCount;if(g.getLengthInBits()>8*l)throw new Error("code length overflow. ("+g.getLengthInBits()+">"+8*l+")");for(g.getLengthInBits()+4<=8*l&&g.put(0,4);0!=g.getLengthInBits()%8;)g.putBit(!1);for(;;){if(g.getLengthInBits()>=8*l)break;if(g.put(b.PAD0,8),g.getLengthInBits()>=8*l)break;g.put(b.PAD1,8)}return b.createBytes(g,e)},b.createBytes=function(a,b){for(var c=0,d=0,e=0,g=new Array(b.length),h=new Array(b.length),j=0;j<b.length;j++){var k=b[j].dataCount,l=b[j].totalCount-k;d=Math.max(d,k),e=Math.max(e,l),g[j]=new Array(k);for(var m=0;m<g[j].length;m++)g[j][m]=255&a.buffer[m+c];c+=k;var n=f.getErrorCorrectPolynomial(l),o=new i(g[j],n.getLength()-1),p=o.mod(n);h[j]=new Array(n.getLength()-1);for(var m=0;m<h[j].length;m++){var q=m+p.getLength()-h[j].length;h[j][m]=q>=0?p.get(q):0}}for(var r=0,m=0;m<b.length;m++)r+=b[m].totalCount;for(var s=new Array(r),t=0,m=0;d>m;m++)for(var j=0;j<b.length;j++)m<g[j].length&&(s[t++]=g[j][m]);for(var m=0;e>m;m++)for(var j=0;j<b.length;j++)m<h[j].length&&(s[t++]=h[j][m]);return s};for(var c={MODE_NUMBER:1,MODE_ALPHA_NUM:2,MODE_8BIT_BYTE:4,MODE_KANJI:8},d={L:1,M:0,Q:3,H:2},e={PATTERN000:0,PATTERN001:1,PATTERN010:2,PATTERN011:3,PATTERN100:4,PATTERN101:5,PATTERN110:6,PATTERN111:7},f={PATTERN_POSITION_TABLE:[[],[6,18],[6,22],[6,26],[6,30],[6,34],[6,22,38],[6,24,42],[6,26,46],[6,28,50],[6,30,54],[6,32,58],[6,34,62],[6,26,46,66],[6,26,48,70],[6,26,50,74],[6,30,54,78],[6,30,56,82],[6,30,58,86],[6,34,62,90],[6,28,50,72,94],[6,26,50,74,98],[6,30,54,78,102],[6,28,54,80,106],[6,32,58,84,110],[6,30,58,86,114],[6,34,62,90,118],[6,26,50,74,98,122],[6,30,54,78,102,126],[6,26,52,78,104,130],[6,30,56,82,108,134],[6,34,60,86,112,138],[6,30,58,86,114,142],[6,34,62,90,118,146],[6,30,54,78,102,126,150],[6,24,50,76,102,128,154],[6,28,54,80,106,132,158],[6,32,58,84,110,136,162],[6,26,54,82,110,138,166],[6,30,58,86,114,142,170]],G15:1335,G18:7973,G15_MASK:21522,getBCHTypeInfo:function(a){for(var b=a<<10;f.getBCHDigit(b)-f.getBCHDigit(f.G15)>=0;)b^=f.G15<<f.getBCHDigit(b)-f.getBCHDigit(f.G15);return(a<<10|b)^f.G15_MASK},getBCHTypeNumber:function(a){for(var b=a<<12;f.getBCHDigit(b)-f.getBCHDigit(f.G18)>=0;)b^=f.G18<<f.getBCHDigit(b)-f.getBCHDigit(f.G18);return a<<12|b},getBCHDigit:function(a){for(var b=0;0!=a;)b++,a>>>=1;return b},getPatternPosition:function(a){return f.PATTERN_POSITION_TABLE[a-1]},getMask:function(a,b,c){switch(a){case e.PATTERN000:return 0==(b+c)%2;case e.PATTERN001:return 0==b%2;case e.PATTERN010:return 0==c%3;case e.PATTERN011:return 0==(b+c)%3;case e.PATTERN100:return 0==(Math.floor(b/2)+Math.floor(c/3))%2;case e.PATTERN101:return 0==b*c%2+b*c%3;case e.PATTERN110:return 0==(b*c%2+b*c%3)%2;case e.PATTERN111:return 0==(b*c%3+(b+c)%2)%2;default:throw new Error("bad maskPattern:"+a)}},getErrorCorrectPolynomial:function(a){for(var b=new i([1],0),c=0;a>c;c++)b=b.multiply(new i([1,g.gexp(c)],0));return b},getLengthInBits:function(a,b){if(b>=1&&10>b)switch(a){case c.MODE_NUMBER:return 10;case c.MODE_ALPHA_NUM:return 9;case c.MODE_8BIT_BYTE:return 8;case c.MODE_KANJI:return 8;default:throw new Error("mode:"+a)}else if(27>b)switch(a){case c.MODE_NUMBER:return 12;case c.MODE_ALPHA_NUM:return 11;case c.MODE_8BIT_BYTE:return 16;case c.MODE_KANJI:return 10;default:throw new Error("mode:"+a)}else{if(!(41>b))throw new Error("type:"+b);switch(a){case c.MODE_NUMBER:return 14;case c.MODE_ALPHA_NUM:return 13;case c.MODE_8BIT_BYTE:return 16;case c.MODE_KANJI:return 12;default:throw new Error("mode:"+a)}}},getLostPoint:function(a){for(var b=a.getModuleCount(),c=0,d=0;b>d;d++)for(var e=0;b>e;e++){for(var f=0,g=a.isDark(d,e),h=-1;1>=h;h++)if(!(0>d+h||d+h>=b))for(var i=-1;1>=i;i++)0>e+i||e+i>=b||(0!=h||0!=i)&&g==a.isDark(d+h,e+i)&&f++;f>5&&(c+=3+f-5)}for(var d=0;b-1>d;d++)for(var e=0;b-1>e;e++){var j=0;a.isDark(d,e)&&j++,a.isDark(d+1,e)&&j++,a.isDark(d,e+1)&&j++,a.isDark(d+1,e+1)&&j++,(0==j||4==j)&&(c+=3)}for(var d=0;b>d;d++)for(var e=0;b-6>e;e++)a.isDark(d,e)&&!a.isDark(d,e+1)&&a.isDark(d,e+2)&&a.isDark(d,e+3)&&a.isDark(d,e+4)&&!a.isDark(d,e+5)&&a.isDark(d,e+6)&&(c+=40);for(var e=0;b>e;e++)for(var d=0;b-6>d;d++)a.isDark(d,e)&&!a.isDark(d+1,e)&&a.isDark(d+2,e)&&a.isDark(d+3,e)&&a.isDark(d+4,e)&&!a.isDark(d+5,e)&&a.isDark(d+6,e)&&(c+=40);for(var k=0,e=0;b>e;e++)for(var d=0;b>d;d++)a.isDark(d,e)&&k++;var l=Math.abs(100*k/b/b-50)/5;return c+=10*l}},g={glog:function(a){if(1>a)throw new Error("glog("+a+")");return g.LOG_TABLE[a]},gexp:function(a){for(;0>a;)a+=255;for(;a>=256;)a-=255;return g.EXP_TABLE[a]},EXP_TABLE:new Array(256),LOG_TABLE:new Array(256)},h=0;8>h;h++)g.EXP_TABLE[h]=1<<h;for(var h=8;256>h;h++)g.EXP_TABLE[h]=g.EXP_TABLE[h-4]^g.EXP_TABLE[h-5]^g.EXP_TABLE[h-6]^g.EXP_TABLE[h-8];for(var h=0;255>h;h++)g.LOG_TABLE[g.EXP_TABLE[h]]=h;i.prototype={get:function(a){return this.num[a]},getLength:function(){return this.num.length},multiply:function(a){for(var b=new Array(this.getLength()+a.getLength()-1),c=0;c<this.getLength();c++)for(var d=0;d<a.getLength();d++)b[c+d]^=g.gexp(g.glog(this.get(c))+g.glog(a.get(d)));return new i(b,0)},mod:function(a){if(this.getLength()-a.getLength()<0)return this;for(var b=g.glog(this.get(0))-g.glog(a.get(0)),c=new Array(this.getLength()),d=0;d<this.getLength();d++)c[d]=this.get(d);for(var d=0;d<a.getLength();d++)c[d]^=g.gexp(g.glog(a.get(d))+b);return new i(c,0).mod(a)}},j.RS_BLOCK_TABLE=[[1,26,19],[1,26,16],[1,26,13],[1,26,9],[1,44,34],[1,44,28],[1,44,22],[1,44,16],[1,70,55],[1,70,44],[2,35,17],[2,35,13],[1,100,80],[2,50,32],[2,50,24],[4,25,9],[1,134,108],[2,67,43],[2,33,15,2,34,16],[2,33,11,2,34,12],[2,86,68],[4,43,27],[4,43,19],[4,43,15],[2,98,78],[4,49,31],[2,32,14,4,33,15],[4,39,13,1,40,14],[2,121,97],[2,60,38,2,61,39],[4,40,18,2,41,19],[4,40,14,2,41,15],[2,146,116],[3,58,36,2,59,37],[4,36,16,4,37,17],[4,36,12,4,37,13],[2,86,68,2,87,69],[4,69,43,1,70,44],[6,43,19,2,44,20],[6,43,15,2,44,16],[4,101,81],[1,80,50,4,81,51],[4,50,22,4,51,23],[3,36,12,8,37,13],[2,116,92,2,117,93],[6,58,36,2,59,37],[4,46,20,6,47,21],[7,42,14,4,43,15],[4,133,107],[8,59,37,1,60,38],[8,44,20,4,45,21],[12,33,11,4,34,12],[3,145,115,1,146,116],[4,64,40,5,65,41],[11,36,16,5,37,17],[11,36,12,5,37,13],[5,109,87,1,110,88],[5,65,41,5,66,42],[5,54,24,7,55,25],[11,36,12],[5,122,98,1,123,99],[7,73,45,3,74,46],[15,43,19,2,44,20],[3,45,15,13,46,16],[1,135,107,5,136,108],[10,74,46,1,75,47],[1,50,22,15,51,23],[2,42,14,17,43,15],[5,150,120,1,151,121],[9,69,43,4,70,44],[17,50,22,1,51,23],[2,42,14,19,43,15],[3,141,113,4,142,114],[3,70,44,11,71,45],[17,47,21,4,48,22],[9,39,13,16,40,14],[3,135,107,5,136,108],[3,67,41,13,68,42],[15,54,24,5,55,25],[15,43,15,10,44,16],[4,144,116,4,145,117],[17,68,42],[17,50,22,6,51,23],[19,46,16,6,47,17],[2,139,111,7,140,112],[17,74,46],[7,54,24,16,55,25],[34,37,13],[4,151,121,5,152,122],[4,75,47,14,76,48],[11,54,24,14,55,25],[16,45,15,14,46,16],[6,147,117,4,148,118],[6,73,45,14,74,46],[11,54,24,16,55,25],[30,46,16,2,47,17],[8,132,106,4,133,107],[8,75,47,13,76,48],[7,54,24,22,55,25],[22,45,15,13,46,16],[10,142,114,2,143,115],[19,74,46,4,75,47],[28,50,22,6,51,23],[33,46,16,4,47,17],[8,152,122,4,153,123],[22,73,45,3,74,46],[8,53,23,26,54,24],[12,45,15,28,46,16],[3,147,117,10,148,118],[3,73,45,23,74,46],[4,54,24,31,55,25],[11,45,15,31,46,16],[7,146,116,7,147,117],[21,73,45,7,74,46],[1,53,23,37,54,24],[19,45,15,26,46,16],[5,145,115,10,146,116],[19,75,47,10,76,48],[15,54,24,25,55,25],[23,45,15,25,46,16],[13,145,115,3,146,116],[2,74,46,29,75,47],[42,54,24,1,55,25],[23,45,15,28,46,16],[17,145,115],[10,74,46,23,75,47],[10,54,24,35,55,25],[19,45,15,35,46,16],[17,145,115,1,146,116],[14,74,46,21,75,47],[29,54,24,19,55,25],[11,45,15,46,46,16],[13,145,115,6,146,116],[14,74,46,23,75,47],[44,54,24,7,55,25],[59,46,16,1,47,17],[12,151,121,7,152,122],[12,75,47,26,76,48],[39,54,24,14,55,25],[22,45,15,41,46,16],[6,151,121,14,152,122],[6,75,47,34,76,48],[46,54,24,10,55,25],[2,45,15,64,46,16],[17,152,122,4,153,123],[29,74,46,14,75,47],[49,54,24,10,55,25],[24,45,15,46,46,16],[4,152,122,18,153,123],[13,74,46,32,75,47],[48,54,24,14,55,25],[42,45,15,32,46,16],[20,147,117,4,148,118],[40,75,47,7,76,48],[43,54,24,22,55,25],[10,45,15,67,46,16],[19,148,118,6,149,119],[18,75,47,31,76,48],[34,54,24,34,55,25],[20,45,15,61,46,16]],j.getRSBlocks=function(a,b){var c=j.getRsBlockTable(a,b);if(void 0==c)throw new Error("bad rs block @ typeNumber:"+a+"/errorCorrectLevel:"+b);for(var d=c.length/3,e=[],f=0;d>f;f++)for(var g=c[3*f+0],h=c[3*f+1],i=c[3*f+2],k=0;g>k;k++)e.push(new j(h,i));return e},j.getRsBlockTable=function(a,b){switch(b){case d.L:return j.RS_BLOCK_TABLE[4*(a-1)+0];case d.M:return j.RS_BLOCK_TABLE[4*(a-1)+1];case d.Q:return j.RS_BLOCK_TABLE[4*(a-1)+2];case d.H:return j.RS_BLOCK_TABLE[4*(a-1)+3];default:return void 0}},k.prototype={get:function(a){var b=Math.floor(a/8);return 1==(1&this.buffer[b]>>>7-a%8)},put:function(a,b){for(var c=0;b>c;c++)this.putBit(1==(1&a>>>b-c-1))},getLengthInBits:function(){return this.length},putBit:function(a){var b=Math.floor(this.length/8);this.buffer.length<=b&&this.buffer.push(0),a&&(this.buffer[b]|=128>>>this.length%8),this.length++}};var l=[[17,14,11,7],[32,26,20,14],[53,42,32,24],[78,62,46,34],[106,84,60,44],[134,106,74,58],[154,122,86,64],[192,152,108,84],[230,180,130,98],[271,213,151,119],[321,251,177,137],[367,287,203,155],[425,331,241,177],[458,362,258,194],[520,412,292,220],[586,450,322,250],[644,504,364,280],[718,560,394,310],[792,624,442,338],[858,666,482,382],[929,711,509,403],[1003,779,565,439],[1091,857,611,461],[1171,911,661,511],[1273,997,715,535],[1367,1059,751,593],[1465,1125,805,625],[1528,1190,868,658],[1628,1264,908,698],[1732,1370,982,742],[1840,1452,1030,790],[1952,1538,1112,842],[2068,1628,1168,898],[2188,1722,1228,958],[2303,1809,1283,983],[2431,1911,1351,1051],[2563,1989,1423,1093],[2699,2099,1499,1139],[2809,2213,1579,1219],[2953,2331,1663,1273]],o=function(){var a=function(a,b){this._el=a,this._htOption=b};return a.prototype.draw=function(a){function g(a,b){var c=document.createElementNS("http://www.w3.org/2000/svg",a);for(var d in b)b.hasOwnProperty(d)&&c.setAttribute(d,b[d]);return c}var b=this._htOption,c=this._el,d=a.getModuleCount();Math.floor(b.width/d),Math.floor(b.height/d),this.clear();var h=g("svg",{viewBox:"0 0 "+String(d)+" "+String(d),width:"100%",height:"100%",fill:b.colorLight});h.setAttributeNS("http://www.w3.org/2000/xmlns/","xmlns:xlink","http://www.w3.org/1999/xlink"),c.appendChild(h),h.appendChild(g("rect",{fill:b.colorDark,width:"1",height:"1",id:"template"}));for(var i=0;d>i;i++)for(var j=0;d>j;j++)if(a.isDark(i,j)){var k=g("use",{x:String(i),y:String(j)});k.setAttributeNS("http://www.w3.org/1999/xlink","href","#template"),h.appendChild(k)}},a.prototype.clear=function(){for(;this._el.hasChildNodes();)this._el.removeChild(this._el.lastChild)},a}(),p="svg"===document.documentElement.tagName.toLowerCase(),q=p?o:m()?function(){function a(){this._elImage.src=this._elCanvas.toDataURL("image/png"),this._elImage.style.display="block",this._elCanvas.style.display="none"}function d(a,b){var c=this;if(c._fFail=b,c._fSuccess=a,null===c._bSupportDataURI){var d=document.createElement("img"),e=function(){c._bSupportDataURI=!1,c._fFail&&_fFail.call(c)},f=function(){c._bSupportDataURI=!0,c._fSuccess&&c._fSuccess.call(c)};return d.onabort=e,d.onerror=e,d.onload=f,d.src="data:image/gif;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg==",void 0}c._bSupportDataURI===!0&&c._fSuccess?c._fSuccess.call(c):c._bSupportDataURI===!1&&c._fFail&&c._fFail.call(c)}if(this._android&&this._android<=2.1){var b=1/window.devicePixelRatio,c=CanvasRenderingContext2D.prototype.drawImage;CanvasRenderingContext2D.prototype.drawImage=function(a,d,e,f,g,h,i,j){if("nodeName"in a&&/img/i.test(a.nodeName))for(var l=arguments.length-1;l>=1;l--)arguments[l]=arguments[l]*b;else"undefined"==typeof j&&(arguments[1]*=b,arguments[2]*=b,arguments[3]*=b,arguments[4]*=b);c.apply(this,arguments)}}var e=function(a,b){this._bIsPainted=!1,this._android=n(),this._htOption=b,this._elCanvas=document.createElement("canvas"),this._elCanvas.width=b.width,this._elCanvas.height=b.height,a.appendChild(this._elCanvas),this._el=a,this._oContext=this._elCanvas.getContext("2d"),this._bIsPainted=!1,this._elImage=document.createElement("img"),this._elImage.style.display="none",this._el.appendChild(this._elImage),this._bSupportDataURI=null};return e.prototype.draw=function(a){var b=this._elImage,c=this._oContext,d=this._htOption,e=a.getModuleCount(),f=d.width/e,g=d.height/e,h=Math.round(f),i=Math.round(g);b.style.display="none",this.clear();for(var j=0;e>j;j++)for(var k=0;e>k;k++){var l=a.isDark(j,k),m=k*f,n=j*g;c.strokeStyle=l?d.colorDark:d.colorLight,c.lineWidth=1,c.fillStyle=l?d.colorDark:d.colorLight,c.fillRect(m,n,f,g),c.strokeRect(Math.floor(m)+.5,Math.floor(n)+.5,h,i),c.strokeRect(Math.ceil(m)-.5,Math.ceil(n)-.5,h,i)}this._bIsPainted=!0},e.prototype.makeImage=function(){this._bIsPainted&&d.call(this,a)},e.prototype.isPainted=function(){return this._bIsPainted},e.prototype.clear=function(){this._oContext.clearRect(0,0,this._elCanvas.width,this._elCanvas.height),this._bIsPainted=!1},e.prototype.round=function(a){return a?Math.floor(1e3*a)/1e3:a},e}():function(){var a=function(a,b){this._el=a,this._htOption=b};return a.prototype.draw=function(a){for(var b=this._htOption,c=this._el,d=a.getModuleCount(),e=Math.floor(b.width/d),f=Math.floor(b.height/d),g=['<table style="border:0;border-collapse:collapse;">'],h=0;d>h;h++){g.push("<tr>");for(var i=0;d>i;i++)g.push('<td style="border:0;border-collapse:collapse;padding:0;margin:0;width:'+e+"px;height:"+f+"px;background-color:"+(a.isDark(h,i)?b.colorDark:b.colorLight)+';"></td>');g.push("</tr>")}g.push("</table>"),c.innerHTML=g.join("");var j=c.childNodes[0],k=(b.width-j.offsetWidth)/2,l=(b.height-j.offsetHeight)/2;k>0&&l>0&&(j.style.margin=l+"px "+k+"px")},a.prototype.clear=function(){this._el.innerHTML=""},a}();QRCode=function(a,b){if(this._htOption={width:256,height:256,typeNumber:4,colorDark:"#000000",colorLight:"#ffffff",correctLevel:d.H},"string"==typeof b&&(b={text:b}),b)for(var c in b)this._htOption[c]=b[c];"string"==typeof a&&(a=document.getElementById(a)),this._android=n(),this._el=a,this._oQRCode=null,this._oDrawing=new q(this._el,this._htOption),this._htOption.text&&this.makeCode(this._htOption.text)},QRCode.prototype.makeCode=function(a){this._oQRCode=new b(r(a,this._htOption.correctLevel),this._htOption.correctLevel),this._oQRCode.addData(a),this._oQRCode.make(),this._el.title=a,this._oDrawing.draw(this._oQRCode),this.makeImage()},QRCode.prototype.makeImage=function(){"function"==typeof this._oDrawing.makeImage&&(!this._android||this._android>=3)&&this._oDrawing.makeImage()},QRCode.prototype.clear=function(){this._oDrawing.clear()},QRCode.CorrectLevel=d}();
+</script>
+<script>
+(function(){
+  "use strict";
+  if(window.ShareQR) return;
+
+  var ANCHOR = "_";          // Startbildschirm: Knopf nur sichtbar, solange der zu sehen ist
+  var INLINE = ".topbar-right";          // optional: Leiste, in die der Knopf direkt eingebaut wird
+  var BASE_KEY = "spieleSuite.basis";
+  var BASE_STD = "https://mauthier-bit.github.io/Spiele-Suite/";
+
+  /* ---------------- Adresse bestimmen ---------------- */
+  function basis(){
+    var b=null;
+    try{ b=localStorage.getItem(BASE_KEY); }catch(e){}
+    b=b||BASE_STD;
+    return b.charAt(b.length-1)==="/" ? b : b+"/";
+  }
+  function dateiname(){
+    var p=location.pathname||"";
+    var name=p.substring(p.lastIndexOf("/")+1);
+    try{ name=decodeURIComponent(name); }catch(e){}
+    return /^[\w.%+ -]{1,80}\.html?$/i.test(name) ? name : "index.html";
+  }
+  function adresse(){
+    if(location.protocol==="http:"||location.protocol==="https:") return location.href.split("#")[0];
+    return basis()+encodeURIComponent(dateiname());
+  }
+
+  /* ---------------- QR-Code zeichnen ---------------- */
+  function zeichneCode(host,url){
+    host.innerHTML="";
+    host.style.removeProperty("--sq-w");
+    if(typeof QRCode==="undefined"){
+      host.innerHTML='<div style="padding:18px;color:#8a929c;font-size:.9rem;">QR-Code nicht verfügbar – bitte den Link weitergeben.</div>';
+      return;
+    }
+    try{
+      var q=new QRCode(host,{text:url, width:900, height:900, correctLevel:QRCode.CorrectLevel.M});
+      /* Ruhezone: vier Module weiß ringsum, sonst findet die Kamera den Code nicht */
+      var n=q._oQRCode && q._oQRCode.getModuleCount ? q._oQRCode.getModuleCount() : 0;
+      if(n) host.style.setProperty("--sq-w", (100*n/(n+8)).toFixed(2)+"%");
+    }catch(e){
+      host.innerHTML='<div style="padding:18px;color:#8a929c;font-size:.9rem;">Die Adresse ist zu lang für einen QR-Code – bitte den Link kopieren.</div>';
+    }
+  }
+
+  /* ---------------- Oberfläche ---------------- */
+  var ov=null;
+  function baueOverlay(){
+    ov=document.createElement("div");
+    ov.className="sq-ov";
+    ov.innerHTML='<div class="sq-card">'+
+      '<h2 id="sqTitle">Teilen</h2><p class="sq-sub">Mit der Kamera scannen – das Spiel öffnet sich direkt im Browser.</p>'+
+      '<div class="sq-code" id="sqCode"></div>'+
+      '<div class="sq-url" id="sqUrl"></div>'+
+      '<div class="sq-row">'+
+        '<button class="sq-copy">Link kopieren</button>'+
+        '<button class="sq-alt sq-edit">Adresse ändern</button>'+
+        '<button class="sq-alt sq-close">Schließen</button>'+
+      '</div>'+
+      '<div class="sq-note" id="sqNote"></div>'+
+      '</div>';
+    document.body.appendChild(ov);
+    ov.addEventListener("click",function(e){ if(e.target===ov) zu(); });
+    ov.querySelector(".sq-close").addEventListener("click",zu);
+    ov.querySelector(".sq-copy").addEventListener("click",function(){ kopiereLink(this); });
+    ov.querySelector(".sq-edit").addEventListener("click",function(){
+      var neu=prompt("Internetadresse des Ordners, in dem die Spiele liegen:", basis());
+      if(neu===null) return;
+      neu=neu.trim();
+      try{ if(neu) localStorage.setItem(BASE_KEY,neu); else localStorage.removeItem(BASE_KEY); }catch(e){}
+      fuelle();
+    });
+  }
+  function fuelle(){
+    var url=adresse();
+    var t=(document.title||"").split(/[\u2013\u2014|\u00b7]/)[0].trim();
+    ov.querySelector("#sqTitle").textContent=(t||"Diese Seite")+" teilen";
+    zeichneCode(ov.querySelector("#sqCode"), url);
+    ov.querySelector("#sqUrl").textContent=url;
+    ov.querySelector("#sqNote").innerHTML = (location.protocol==="http:"||location.protocol==="https:")
+      ? "Das ist die Adresse dieser Seite."
+      : "Die Datei liegt lokal auf diesem Gerät. Der Code zeigt deshalb auf die veröffentlichte Fassung – über „Adresse ändern“ anpassbar.";
+  }
+  function kopiereLink(btn){
+    var url=adresse();
+    function melde(ok){
+      btn.textContent = ok ? "Kopiert \u2713" : "Bitte von Hand kopieren";
+      btn.classList.toggle("sq-ok", !!ok);
+      if(!ok){
+        try{
+          var el=ov.querySelector("#sqUrl"), r=document.createRange();
+          r.selectNodeContents(el);
+          var s=window.getSelection(); s.removeAllRanges(); s.addRange(r);
+        }catch(e){}
+      }
+      clearTimeout(btn._t);
+      btn._t=setTimeout(function(){ btn.textContent="Link kopieren"; btn.classList.remove("sq-ok"); },1900);
+    }
+    function altweg(){
+      try{
+        var ta=document.createElement("textarea");
+        ta.value=url; ta.setAttribute("readonly","");
+        ta.style.position="fixed"; ta.style.top="-1000px"; ta.style.opacity="0";
+        document.body.appendChild(ta);
+        ta.select(); ta.setSelectionRange(0,ta.value.length);
+        var ok=document.execCommand("copy");
+        document.body.removeChild(ta);
+        melde(ok);
+      }catch(e){ melde(false); }
+    }
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(url).then(function(){ melde(true); }, altweg);
+    } else altweg();
+  }
+  function auf(){ if(!ov) baueOverlay(); fuelle(); ov.classList.add("on"); }
+  function zu(){ if(ov) ov.classList.remove("on"); }
+
+  var ICON='<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 3h8v8H3V3zm2 2v4h4V5H5zm8-2h8v8h-8V3zm2 2v4h4V5h-4zM3 13h8v8H3v-8zm2 2v4h4v-4H5zm8-2h3v3h-3v-3zm5 0h3v3h-3v-3zm-5 5h3v3h-3v-3zm5 0h3v3h-3v-3z"/></svg>';
+  function knopf(){
+    var inline=INLINE && INLINE.charAt(0)!=="_" ? document.querySelector(INLINE) : null;
+    if(inline){
+      var b=document.createElement("button");
+      b.className=(inline.querySelector("button")? inline.querySelector("button").className : "")+" sq-inline";
+      b.type="button"; b.innerHTML=ICON+"<span>Teilen</span>";
+      b.addEventListener("click",auf);
+      inline.appendChild(b);
+      return;
+    }
+    var f=document.createElement("button");
+    f.className="sq-fab"; f.type="button";
+    f.innerHTML=ICON+"<span>Teilen</span>";
+    f.addEventListener("click",auf);
+    document.body.appendChild(f);
+    var sel = ANCHOR && ANCHOR.charAt(0)!=="_" ? ANCHOR : null;
+    function sichtbar(){
+      if(!sel) return true;
+      var els=document.querySelectorAll(sel);
+      for(var i=0;i<els.length;i++){
+        var cs=getComputedStyle(els[i]);
+        if(cs.display!=="none" && cs.visibility!=="hidden" && els[i].getClientRects().length) return true;
+      }
+      return false;
+    }
+    function pruefe(){ f.classList.toggle("on", sichtbar() && !(ov&&ov.classList.contains("on"))); }
+    pruefe();
+    setInterval(pruefe,400);
+  }
+  function start(){ knopf(); }
+  if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",start);
+  else start();
+
+  window.ShareQR={open:auf, close:zu, url:adresse, basis:basis};
+})();
+</script>
+
+</body>
+</html>

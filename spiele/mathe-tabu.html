@@ -1,0 +1,1589 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Mathe-Tabu">
+<meta name="theme-color" content="#141a33">
+<title>Mathe-Tabu</title>
+<style>
+:root{
+  --bg:#141a33; --bg2:#1d2547; --panel:#232c55; --line:#34407a;
+  --ink:#f3f5ff; --muted:#a9b1d6;
+  --teamA:#3da5ff; --teamB:#ffb020;
+  --ok:#22c55e; --tabu:#ef4444; --skip:#94a3b8;
+  --card:#fffdf7; --cardInk:#1b1f3a;
+  --r:18px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Rounded","Segoe UI",Roboto,sans-serif;
+  -webkit-user-select:none;user-select:none;touch-action:manipulation;overscroll-behavior:none}
+body{background:radial-gradient(1200px 800px at 50% -10%,#2a3572 0%,var(--bg) 60%) fixed}
+button{font:inherit;color:inherit;border:0;cursor:pointer;background:none}
+input{font:inherit}
+.screen{position:fixed;inset:0;display:none;flex-direction:column;
+  padding:max(16px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(16px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left))}
+.screen.active{display:flex}
+.scroll{overflow-y:auto;-webkit-overflow-scrolling:touch}
+
+/* ---------- Buttons ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.5em;
+  padding:14px 24px;border-radius:14px;background:var(--panel);border:2px solid var(--line);
+  font-weight:700;font-size:1.05rem;transition:transform .08s,background .15s}
+.btn:active{transform:scale(.96)}
+.btn.primary{background:linear-gradient(180deg,#ff5a7a,#e0335a);border-color:#ff7b95;color:#fff;
+  box-shadow:0 6px 20px rgba(224,51,90,.35)}
+.btn.big{font-size:1.4rem;padding:18px 40px;border-radius:18px}
+.btn:disabled{opacity:.4;pointer-events:none}
+.iconbtn{width:48px;height:48px;border-radius:14px;background:var(--panel);border:2px solid var(--line);
+  display:inline-flex;align-items:center;justify-content:center;font-size:1.3rem}
+
+/* ---------- Setup ---------- */
+#setup .wrap{max-width:860px;width:100%;margin:0 auto;padding-bottom:30px}
+.logo{text-align:center;margin:10px 0 18px}
+.logo h1{margin:0;font-size:clamp(2.4rem,6vw,3.6rem);letter-spacing:.02em;font-weight:900}
+.logo h1 span{color:#ff5a7a}
+.logo p{margin:4px 0 0;color:var(--muted)}
+.panel{background:rgba(35,44,85,.85);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;margin-bottom:14px}
+.panel h2{margin:0 0 12px;font-size:.85rem;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);font-weight:700}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:640px){.grid2{grid-template-columns:1fr}}
+.teamIn{display:flex;align-items:center;gap:10px;background:var(--bg2);border-radius:14px;padding:6px 6px 6px 14px;border:2px solid var(--line)}
+.teamIn .dot{width:18px;height:18px;border-radius:50%;flex:none}
+.teamIn input{flex:1;min-width:0;background:none;border:0;color:var(--ink);font-size:1.15rem;font-weight:700;padding:10px 4px;outline:none;-webkit-user-select:text;user-select:text}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{padding:11px 16px;border-radius:999px;background:var(--bg2);border:2px solid var(--line);font-weight:700;font-size:1rem;transition:all .15s}
+.chip.on{background:#fff;color:var(--cardInk);border-color:#fff}
+.chip.grade{min-width:54px;text-align:center}
+.chip .ico{margin-right:6px}
+.topic.on{color:#fff;border-color:transparent}
+.chip .cnt{margin-left:8px;font-size:.78rem;font-weight:800;padding:2px 7px;border-radius:999px;background:rgba(255,255,255,.18)}
+.chip:not(.on) .cnt{background:rgba(255,255,255,.08);color:var(--muted)}
+.topic.empty{opacity:.4;pointer-events:none;border-style:dashed}
+.gradeHint{margin:10px 0 0;color:var(--muted);font-size:.85rem}
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:6px 0}
+.row+.row{border-top:1px solid rgba(255,255,255,.07)}
+.row label{font-weight:600}
+.row small{display:block;color:var(--muted);font-weight:400;font-size:.85rem}
+.stepper{display:flex;align-items:center;gap:6px}
+.stepper button{width:46px;height:46px;border-radius:12px;background:var(--bg2);border:2px solid var(--line);font-size:1.4rem;font-weight:800}
+.stepper output{min-width:92px;text-align:center;font-size:1.2rem;font-weight:800}
+.switch{position:relative;width:62px;height:36px;border-radius:999px;background:var(--bg2);border:2px solid var(--line);flex:none;transition:background .15s}
+.switch::after{content:"";position:absolute;top:3px;left:3px;width:26px;height:26px;border-radius:50%;background:#cbd2f5;transition:transform .18s}
+.switch.on{background:var(--ok);border-color:var(--ok)}
+.switch.on::after{transform:translateX(26px);background:#fff}
+.chip.level{display:flex;flex-direction:column;align-items:center;min-width:120px;padding:10px 16px;border-radius:16px}
+.chip.level small{font-weight:600;font-size:.8rem;opacity:.75;margin-top:2px}
+.levelPreview{margin-top:12px;color:var(--muted);font-size:.95rem}
+.levelPreview b{color:var(--ink)}
+.levelPreview s{color:#ff8a8a;text-decoration:none;font-weight:700}
+.startbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:6px}
+#deckInfo{color:var(--muted);font-weight:600}
+#deckInfo.warn{color:#ff8a8a}
+
+/* ---------- Scoreboard ---------- */
+.scores{display:flex;gap:10px;align-items:stretch}
+.score{flex:1;display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:8px 14px;border-radius:14px;background:var(--bg2);border:3px solid transparent;min-width:0}
+.score .nm{font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.score .pt{font-size:1.7rem;font-weight:900;font-variant-numeric:tabular-nums}
+.score.A .pt{color:var(--teamA)} .score.B .pt{color:var(--teamB)}
+.score.A.cur{border-color:var(--teamA);background:rgba(61,165,255,.14)}
+.score.B.cur{border-color:var(--teamB);background:rgba(255,176,32,.14)}
+
+/* ---------- Handover ---------- */
+#handover{align-items:center;justify-content:center;text-align:center;gap:18px}
+#handover .rnd{color:var(--muted);font-weight:700;letter-spacing:.1em;text-transform:uppercase}
+#handover .who{font-size:clamp(2.6rem,8vw,5rem);font-weight:900;line-height:1.05}
+#handover .info{max-width:640px;font-size:1.15rem;line-height:1.5;color:#dfe3ff}
+#handover .info b.A{color:var(--teamA)} #handover .info b.B{color:var(--teamB)}
+#handover .scores{width:min(560px,100%)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;justify-content:center}
+.legend div{padding:10px 14px;border-radius:12px;background:var(--bg2);font-weight:700}
+.legend .l{border-left:6px solid var(--tabu)} .legend .r{border-right:6px solid var(--ok)}
+#countdown{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(10,14,32,.85);z-index:50;
+  font-size:min(40vw,40vh);font-weight:900}
+#countdown.show{display:flex}
+#countdown span{animation:pop .9s ease-out}
+@keyframes pop{0%{transform:scale(1.6);opacity:0}30%{opacity:1}100%{transform:scale(.9);opacity:.9}}
+
+/* ---------- Play ---------- */
+#play{gap:12px}
+.topbar{display:flex;align-items:center;gap:10px}
+.topbar .scores{flex:1}
+.timer{position:relative;width:78px;height:78px;flex:none}
+.timer svg{width:100%;height:100%;transform:rotate(-90deg)}
+.timer circle{fill:none;stroke-width:8}
+.timer .trk{stroke:rgba(255,255,255,.12)}
+.timer .bar{stroke:var(--ok);stroke-linecap:round;transition:stroke .3s}
+.timer .num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:1.6rem;font-weight:900;font-variant-numeric:tabular-nums}
+.timer.low .bar{stroke:var(--tabu)} .timer.low .num{color:#ff8a8a;animation:pulse 1s infinite}
+@keyframes pulse{50%{transform:scale(1.15)}}
+.subbar{display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-weight:700;gap:10px}
+.subbar .turnpts b{color:var(--ink)}
+.arena{flex:1;position:relative;display:flex;align-items:center;justify-content:center;min-height:0}
+.side{position:absolute;top:0;bottom:0;width:22%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
+  font-weight:900;text-align:center;opacity:.45;transition:opacity .15s,transform .15s;pointer-events:none;font-size:1.05rem;line-height:1.2}
+.side .arr{font-size:2.6rem}
+.side.left{left:0;color:#ff8a8a} .side.right{right:0;color:#6ee79a}
+.side small{display:block;font-weight:700;font-size:.85rem;color:var(--muted)}
+.side.hot{opacity:1;transform:scale(1.12)}
+.card{position:relative;width:min(56vw,440px,62vh);aspect-ratio:3/4.1;border-radius:26px;background:var(--card);color:var(--cardInk);
+  box-shadow:0 20px 50px rgba(0,0,0,.45);display:flex;flex-direction:column;overflow:hidden;touch-action:none;will-change:transform}
+@media (orientation:portrait){.card{width:min(74vw,460px)}.side{width:13%;font-size:.8rem}.side .arr{font-size:2rem}}
+.card.enter{animation:enter .28s cubic-bezier(.2,.9,.3,1.2)}
+@keyframes enter{from{transform:scale(.8) translateY(30px);opacity:0}to{transform:none;opacity:1}}
+.card .head{padding:22px 18px 20px;text-align:center;color:#fff;position:relative}
+.card .tag{display:inline-block;font-size:.78rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;background:rgba(255,255,255,.22);padding:4px 10px;border-radius:999px}
+.card .word{font-size:clamp(1.7rem,4.6vw,2.6rem);font-weight:900;margin-top:10px;line-height:1.1;word-break:break-word;hyphens:auto}
+.card .tabus{flex:1;display:flex;flex-direction:column;justify-content:space-evenly;padding:10px 22px 18px}
+.card .tabus div{text-align:center;font-size:clamp(1.15rem,3.2vw,1.6rem);font-weight:700;padding:8px 0;border-bottom:2px dashed #e5e0d0}
+.card .tabus div:last-child{border-bottom:0}
+.card .no{position:absolute;right:14px;top:12px;font-size:.75rem;font-weight:800;opacity:.7}
+.stamp{position:absolute;top:40%;left:50%;padding:8px 18px;border:6px solid;border-radius:14px;font-size:2.4rem;font-weight:900;
+  transform:translate(-50%,-50%) rotate(-14deg);opacity:0;pointer-events:none;background:rgba(255,255,255,.85)}
+.stamp.ok{color:var(--ok);border-color:var(--ok)} .stamp.tabu{color:var(--tabu);border-color:var(--tabu);transform:translate(-50%,-50%) rotate(14deg)}
+.stamp.skip{color:#64748b;border-color:#64748b;transform:translate(-50%,-50%)}
+.actions{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.actions .btn{min-width:0}
+.btn.tabu{background:rgba(239,68,68,.18);border-color:var(--tabu)}
+.btn.ok{background:rgba(34,197,94,.18);border-color:var(--ok)}
+.actions .mid{display:flex;gap:10px}
+#pauseOv{position:fixed;inset:0;background:rgba(10,14,32,.94);z-index:40;display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center}
+#pauseOv.show{display:flex}
+#pauseOv h2{font-size:3rem;margin:0}
+
+/* ---------- Summary / Final ---------- */
+#summary .wrap,#final .wrap{max-width:760px;width:100%;margin:0 auto;display:flex;flex-direction:column;gap:14px;min-height:0;flex:1}
+.sumhead{text-align:center}
+.sumhead h2{margin:0;font-size:clamp(2rem,5vw,2.8rem);font-weight:900}
+.sumhead p{margin:6px 0 0;color:var(--muted)}
+.reslist{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding:2px}
+.res{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:14px;background:var(--bg2);border:2px solid var(--line);text-align:left;width:100%}
+.res .w{flex:1;font-weight:800;font-size:1.1rem}
+.res .badge{padding:6px 12px;border-radius:999px;font-weight:800;font-size:.9rem;white-space:nowrap}
+.res.ok .badge{background:var(--ok);color:#06240f} .res.tabu .badge{background:var(--tabu);color:#fff}
+.res.skip .badge{background:#475569;color:#e2e8f0} .res.none .badge{background:#334155;color:#cbd5e1}
+.hint{color:var(--muted);text-align:center;font-size:.92rem}
+.btnrow{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+#final{align-items:center;justify-content:center;text-align:center}
+.trophy{font-size:5rem;line-height:1}
+.winner{font-size:clamp(2.4rem,7vw,4.4rem);font-weight:900;line-height:1.05;margin:6px 0}
+.bigscores{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin:10px 0}
+.bigscores div{min-width:180px;padding:16px 22px;border-radius:18px;background:var(--bg2);border:3px solid var(--line)}
+.bigscores .n{font-weight:800} .bigscores .p{font-size:3.2rem;font-weight:900}
+.bigscores .A{border-color:var(--teamA)} .bigscores .A .p{color:var(--teamA)}
+.bigscores .B{border-color:var(--teamB)} .bigscores .B .p{color:var(--teamB)}
+
+/* ---------- Modal ---------- */
+.modal{position:fixed;inset:0;background:rgba(8,10,25,.75);z-index:60;display:none;align-items:center;justify-content:center;padding:20px}
+.modal.show{display:flex}
+.modal .box{background:var(--panel);border:1px solid var(--line);border-radius:22px;max-width:640px;width:100%;max-height:90vh;overflow-y:auto;padding:22px 24px}
+.modal h2{margin:0 0 10px}
+.modal ol{padding-left:1.3em;line-height:1.55;margin:0 0 14px}
+.modal li{margin-bottom:6px}
+.modal .ok{color:#6ee79a;font-weight:800} .modal .no{color:#ff8a8a;font-weight:800}
+</style>
+<script>
+/* Scharfe Kante unter der iPadOS-Statusleiste (iPadOS 26/27).
+   WebKit legt in Web-Apps vom Homebildschirm am oberen Rand sonst einen
+   weichen Verlauf ueber den Inhalt. Er entfaellt, wenn dort eine deckende
+   Leiste liegt - ein bildschirmfuellender Kasten genuegt nicht (am
+   13.10.2026 auf iPadOS 27 geprueft). Das Skript legt deshalb einen 16 px
+   hohen, deckenden Streifen an den oberen Rand und rueckt alles, was in
+   diese 16 px hineinragt, um 16 px nach unten. Laeuft nur in der App vom
+   Homebildschirm, nicht in Safari und nicht in einem Rahmen; mit #kante in
+   der Adresse laesst es sich zum Pruefen erzwingen. */
+(function(){
+  if(window.top!==window) return;
+  var pruef=/kante/i.test(location.hash||'');
+  var alsApp=(navigator.standalone===true) ||
+             (window.matchMedia && matchMedia('(display-mode: standalone)').matches);
+  if(!alsApp && !pruef) return;
+
+  var HOCH=16;
+  function leer(f){ return !f || f==='transparent' || f.replace(/\s/g,'')==='rgba(0,0,0,0)'; }
+  function seite(){
+    var s=getComputedStyle(document.body), f=s.backgroundColor, b=s.backgroundImage;
+    if(leer(f) && (!b || b==='none')){
+      s=getComputedStyle(document.documentElement); f=s.backgroundColor; b=s.backgroundImage;
+    }
+    return { farbe: leer(f) ? '#ffffff' : f, bild: (b && b!=='none') ? b : '' };
+  }
+  /* Faerbt dieses Element am oberen Rand etwas sichtbar ein? */
+  function tinte(n){
+    var r=n.getBoundingClientRect();
+    if(r.top>=HOCH || r.bottom<=0 || r.width<=0) return false;
+    var s=getComputedStyle(n);
+    if(s.display==='none' || s.visibility==='hidden' || s.opacity==='0') return false;
+    if(n.id==='randKante') return false;
+    var t=n.tagName.toLowerCase();
+    if(t==='img'||t==='svg'||t==='canvas'||t==='video') return true;
+    if(!leer(s.backgroundColor) || s.backgroundImage!=='none') return true;
+    if(parseFloat(s.borderTopWidth)>0) return true;
+    var kn=n.childNodes;
+    for(var j=0;j<kn.length;j++)
+      if(kn[j].nodeType===3 && kn[j].nodeValue.replace(/\s/g,'')) return true;
+    for(var i=0;i<n.children.length;i++) if(tinte(n.children[i])) return true;
+    return false;
+  }
+  function ragtRein(z){
+    for(var i=0;i<z.children.length;i++) if(tinte(z.children[i])) return true;
+    return false;
+  }
+  function luft(z){
+    if(z.dataset.kanteLuft) return;
+    if(!ragtRein(z) && !tinte(z)) return;    /* noch nichts oben - spaeter nochmal */
+    z.dataset.kanteLuft='1';
+    var p=parseFloat(getComputedStyle(z).paddingTop)||0;
+    if(p>=HOCH) return;
+    z.style.paddingTop=(p+HOCH)+'px';
+  }
+  function sichtbar(n,s){
+    return s.display!=='none' && s.visibility!=='hidden' && n.id!=='randKante';
+  }
+  /* bildschirmfuellende fixierte Kaesten */
+  function kaesten(){
+    var alle=document.querySelectorAll('body > *, body > * > *'), raus=[];
+    for(var i=0;i<alle.length;i++){
+      var n=alle[i], s=getComputedStyle(n);
+      if(s.position!=='fixed' || !sichtbar(n,s)) continue;
+      /* Deko-Ebenen wie Konfetti liegen durchsichtig ueber allem und duerfen
+         niemals angefasst werden - sie wuerden sonst das Spiel verdecken. */
+      if(s.pointerEvents==='none') continue;
+      var r=n.getBoundingClientRect();
+      if(r.top<=4 && r.width>=innerWidth*0.9 && r.height>=innerHeight*0.9) raus.push(n);
+    }
+    return raus;
+  }
+  /* Leisten am oberen Rand (fixiert oder klebend, aber kein Vollbildkasten) */
+  function leisten(){
+    var alle=document.querySelectorAll('body > *, body > * > *'), raus=[];
+    for(var i=0;i<alle.length;i++){
+      var n=alle[i], s=getComputedStyle(n);
+      if((s.position!=='fixed' && s.position!=='sticky') || !sichtbar(n,s)) continue;
+      var r=n.getBoundingClientRect();
+      if(r.top<=4 && r.width>=innerWidth*0.8 && r.height>=6 && r.height<=innerHeight*0.6) raus.push(n);
+    }
+    return raus;
+  }
+  /* Liegt oben schon eine deckende Leiste, ist nichts zu tun. */
+  function schonGut(){
+    var st=document.elementsFromPoint ? document.elementsFromPoint(Math.round(innerWidth/2),2) : [];
+    for(var i=0;i<st.length;i++){
+      var n=st[i];
+      if(n.id==='randKante') continue;
+      if(n===document.body || n===document.documentElement) return false;
+      var s=getComputedStyle(n), r=n.getBoundingClientRect();
+      return (s.position==='fixed'||s.position==='sticky') && r.top<=4 &&
+             r.width>=innerWidth*0.8 && r.height>=6 && r.height<=innerHeight*0.6 &&
+             !leer(s.backgroundColor);
+    }
+    return false;
+  }
+  var band=null;
+  function streifen(farbe){
+    if(!band){
+      band=document.createElement('div');
+      band.id='randKante'; band.setAttribute('aria-hidden','true');
+      band.style.cssText='position:fixed;left:0;top:0;width:100%;height:'+HOCH+'px;'+
+        'z-index:2147483646;pointer-events:none';
+      document.body.appendChild(band);
+    }
+    band.style.display='block';
+    if(farbe){
+      band.style.backgroundColor=farbe;
+      band.style.backgroundImage='none';
+      return;
+    }
+    var s=getComputedStyle(document.body), h=seite();
+    band.style.backgroundColor=h.farbe;
+    band.style.backgroundImage=h.bild||'none';
+    band.style.backgroundAttachment='fixed';
+    if(h.bild && s.backgroundAttachment!=='fixed')
+      band.style.backgroundSize='100% '+Math.max(innerHeight,document.body.scrollHeight)+'px';
+  }
+  var schild=null;
+  function zeigen(txt){
+    if(!pruef) return;
+    if(!schild){
+      schild=document.createElement('div');
+      schild.style.cssText='position:fixed;left:6px;bottom:52px;z-index:2147483647;max-width:92%;'+
+        'padding:6px 9px;border-radius:8px;background:#ffe600;color:#000;'+
+        'font:600 12px/1.35 -apple-system,sans-serif;white-space:pre-wrap;pointer-events:none';
+      document.body.appendChild(schild);
+    }
+    schild.textContent='Kante K6 · '+innerWidth+'x'+innerHeight+'\n'+txt;
+  }
+  function name(n){
+    if(n.id) return '#'+n.id;
+    var c=(typeof n.className==='string'&&n.className.trim())?'.'+n.className.trim().split(/\s+/)[0]:'';
+    return n.tagName.toLowerCase()+c;
+  }
+  function malen(){
+    var b=document.body; if(!b) return;
+    if(schonGut()){
+      if(band) band.style.display='none';
+      zeigen('oben liegt schon eine deckende Leiste');
+      return;
+    }
+    var k=kaesten(), l=leisten(), farbe=null, text=[];
+    /* Die Kaesten werden nur noch nach unten gerueckt, nicht mehr eingefaerbt:
+       ein bildschirmfuellender Kasten haelt den Verlauf ohnehin nicht ab
+       (am 13.10.2026 auf iPadOS 27 gemessen), das Einfaerben hat dagegen
+       durchsichtige Ebenen deckend gemacht. */
+    for(var i=0;i<k.length;i++){
+      var z=k[i];
+      luft(z);
+      text.push(name(z));
+    }
+    for(var j=0;j<l.length;j++){
+      var le=l[j], sl=getComputedStyle(le);
+      if(!tinte(le) && !ragtRein(le)) continue;
+      if(!farbe && !leer(sl.backgroundColor)) farbe=sl.backgroundColor;
+      luft(le);
+      text.push('Leiste '+name(le)+' bg='+sl.backgroundColor);
+    }
+    if(!k.length && !l.length){ luft(b); text.push('kein Kasten, nur Streifen'); }
+    streifen(farbe);
+    zeigen(text.join('\n'));
+  }
+  var warte=null;
+  function spaeter(){
+    if(warte) return;
+    warte=setTimeout(function(){ warte=null; malen(); },200);
+  }
+  try{
+    new MutationObserver(spaeter).observe(document.documentElement,
+      {childList:true, subtree:true, attributes:true, attributeFilter:['class','style','hidden']});
+  }catch(e){}
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',malen);
+  else malen();
+  addEventListener('load',spaeter);
+  addEventListener('resize',spaeter);
+  addEventListener('orientationchange',spaeter);
+})();
+</script>
+</head>
+<body>
+
+<!-- ============ EINSTELLUNGEN ============ -->
+<section id="setup" class="screen active scroll">
+  <div class="wrap">
+    <div class="logo">
+      <h1>Mathe-<span>Tabu</span></h1>
+      <p>Erkläre Fachbegriffe – ohne die verbotenen Wörter!</p>
+    </div>
+
+    <div class="panel">
+      <h2>Teams</h2>
+      <div class="grid2">
+        <div class="teamIn"><span class="dot" style="background:var(--teamA)"></span><input id="nameA" maxlength="18" value="Team Blau" autocomplete="off"></div>
+        <div class="teamIn"><span class="dot" style="background:var(--teamB)"></span><input id="nameB" maxlength="18" value="Team Gelb" autocomplete="off"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Jahrgangsstufe</h2>
+      <div class="chips" id="grades"></div>
+      <p class="gradeHint">Zuordnung nach LehrplanPLUS Gymnasium Bayern (G9)</p>
+      <div class="row" style="margin-top:8px">
+        <label>Begriffe früherer Jahrgangsstufen mitnehmen<small>Aus: nur Begriffe genau dieser Stufe</small></label>
+        <button class="switch on" id="swEarlier" aria-label="frühere Jahrgangsstufen"></button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Themen</h2>
+      <div class="chips" id="topics"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Schwierigkeit</h2>
+      <div class="chips" id="levels"></div>
+      <div class="levelPreview" id="levelPreview"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Spielablauf</h2>
+      <div class="row"><label>Zeit pro Durchgang</label>
+        <div class="stepper"><button data-step="time" data-d="-1">−</button><output id="outTime"></output><button data-step="time" data-d="1">+</button></div></div>
+      <div class="row"><label>Anzahl Runden<small>In jeder Runde erklärt jedes Team einmal.</small></label>
+        <div class="stepper"><button data-step="rounds" data-d="-1">−</button><output id="outRounds"></output><button data-step="rounds" data-d="1">+</button></div></div>
+      <div class="row"><label>Überspringen erlaubt<small>Karte ohne Punkt weglegen (nach oben wischen)</small></label>
+        <button class="switch" id="swSkip" aria-label="Überspringen"></button></div>
+      <div class="row"><label>Töne</label>
+        <button class="switch on" id="swSound" aria-label="Töne"></button></div>
+    </div>
+
+    <div class="startbar">
+      <button class="btn" id="btnRules">📖 Spielregeln</button>
+      <span id="deckInfo"></span>
+      <button class="btn primary big" id="btnStart">Spiel starten ▶</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============ ÜBERGABE ============ -->
+<section id="handover" class="screen">
+  <div class="rnd" id="hoRound"></div>
+  <div class="who" id="hoWho"></div>
+  <div class="info" id="hoInfo"></div>
+  <div class="legend">
+    <div class="l">← wischen: <b>Tabu!</b> Punkt für die Gegner</div>
+    <div class="r">wischen →: <b>Erraten!</b> Punkt fürs eigene Team</div>
+  </div>
+  <div class="scores" id="hoScores"></div>
+  <div class="btnrow">
+    <button class="btn" id="hoQuit">✕ Spiel beenden</button>
+    <button class="btn primary big" id="hoGo">Los geht's!</button>
+  </div>
+</section>
+<div id="countdown"></div>
+
+<!-- ============ SPIEL ============ -->
+<section id="play" class="screen">
+  <div class="topbar">
+    <button class="iconbtn" id="btnPause" aria-label="Pause">⏸</button>
+    <div class="scores" id="plScores"></div>
+    <div class="timer" id="timer">
+      <svg viewBox="0 0 80 80"><circle class="trk" cx="40" cy="40" r="34"/><circle class="bar" id="timerBar" cx="40" cy="40" r="34"/></svg>
+      <div class="num" id="timerNum"></div>
+    </div>
+  </div>
+  <div class="subbar">
+    <span id="plRound"></span>
+    <span class="turnpts" id="plTurn"></span>
+  </div>
+  <div class="arena" id="arena">
+    <div class="side left" id="sideL"><div class="arr">←</div>TABU!<small id="sideLTeam"></small></div>
+    <div class="side right" id="sideR"><div class="arr">→</div>ERRATEN!<small id="sideRTeam"></small></div>
+    <div class="card" id="card"></div>
+  </div>
+  <div class="actions">
+    <button class="btn tabu" id="btnTabu">✗ Tabu</button>
+    <div class="mid"><button class="btn" id="btnSkip">⤴ Überspringen</button></div>
+    <button class="btn ok" id="btnOk">Erraten ✓</button>
+  </div>
+</section>
+<div id="pauseOv">
+  <h2>⏸ Pause</h2>
+  <p style="color:var(--muted)">Die Karte ist verdeckt. Die Zeit ist angehalten.</p>
+  <div class="btnrow">
+    <button class="btn" id="pvEnd">Durchgang beenden</button>
+    <button class="btn primary big" id="pvGo">Weiter ▶</button>
+  </div>
+</div>
+
+<!-- ============ AUSWERTUNG DURCHGANG ============ -->
+<section id="summary" class="screen">
+  <div class="wrap">
+    <div class="sumhead"><h2 id="suTitle">⏰ Zeit abgelaufen!</h2><p id="suSub"></p></div>
+    <div class="scores" id="suScores"></div>
+    <div class="reslist" id="suList"></div>
+    <div class="hint">Streitfall? Tippe auf eine Karte, um die Wertung zu ändern.</div>
+    <div class="btnrow"><button class="btn primary big" id="suNext">Weiter ▶</button></div>
+  </div>
+</section>
+
+<!-- ============ ENDE ============ -->
+<section id="final" class="screen">
+  <div class="trophy" id="fiIcon">🏆</div>
+  <div class="winner" id="fiWinner"></div>
+  <div class="bigscores" id="fiScores"></div>
+  <p id="fiStats" style="color:var(--muted)"></p>
+  <div class="btnrow">
+    <button class="btn" id="fiSetup">⚙ Einstellungen</button>
+    <button class="btn primary big" id="fiAgain">Nochmal spielen ↻</button>
+  </div>
+</section>
+
+<!-- ============ MODALS ============ -->
+<div class="modal" id="rulesModal"><div class="box">
+  <h2>📖 Spielregeln</h2>
+  <ol>
+    <li>Zwei Teams spielen gegeneinander. Pro Durchgang erklärt <b>ein Mitglied</b> seinem eigenen Team die Begriffe auf den Karten.</li>
+    <li>Die Wörter unter dem Begriff (je nach Schwierigkeit 2 bis 5) sind <span class="no">tabu</span>: Sie dürfen – auch als Wortteil – nicht gesagt werden. Ebenso tabu: der Begriff selbst, Gesten, Zeichnen, Übersetzungen.</li>
+    <li>Das <b>gegnerische Team</b> schaut mit auf die Karte und passt auf.</li>
+    <li>Begriff erraten → der/die Erklärende wischt die Karte <span class="ok">nach rechts →</span>: <b>+1 Punkt fürs eigene Team</b>.</li>
+    <li>Tabu-Wort benutzt → die Gegner wischen die Karte <span class="no">← nach links</span>: <b>+1 Punkt für die Gegner</b>.</li>
+    <li>Falls erlaubt: Nach oben wischen legt die Karte ohne Punkt weg.</li>
+    <li>Ist die Zeit abgelaufen, sind die Gegner dran. In jeder Runde erklärt jedes Team einmal.</li>
+    <li>Nach der letzten Runde gewinnt das Team mit den meisten Punkten.</li>
+  </ol>
+  <div class="btnrow"><button class="btn primary" data-close>Alles klar!</button></div>
+</div></div>
+
+<div class="modal" id="confirmModal"><div class="box" style="max-width:440px;text-align:center">
+  <h2 id="cfText">Spiel wirklich beenden?</h2>
+  <p style="color:var(--muted)">Der Spielstand geht verloren.</p>
+  <div class="btnrow"><button class="btn" data-close>Abbrechen</button><button class="btn primary" id="cfYes">Beenden</button></div>
+</div></div>
+
+<script>
+/* =====================================================================
+   BEGRIFFSKARTEN
+   Format je Zeile:  Begriff | Tabu1, Tabu2, Tabu3, Tabu4, Tabu5
+   (Komma + Leerzeichen trennt; die wichtigsten Tabu-Wörter zuerst – bei leichter
+    Schwierigkeit werden nur die ersten 2–4 angezeigt)
+   Gruppiert nach Thema und Jahrgangsstufe gemäß LehrplanPLUS Gymnasium Bayern (G9),
+   für 12/13 nach dem Fachlehrplan der Qualifikationsphase.
+   ===================================================================== */
+const RAW = {
+geo: {
+5: `
+Punkt | Kreuz, Stelle, Koordinate, klein, Linie
+Strecke | Gerade, Anfangspunkt, Endpunkt, Linie, Länge
+Gerade | Linie, unendlich, Strecke, Punkt, lang
+Kreis | rund, Radius, Mittelpunkt, Zirkel, Durchmesser
+Radius | Kreis, Mittelpunkt, Durchmesser, Halbmesser, Zirkel
+Durchmesser | Kreis, Radius, doppelt, Mittelpunkt, Linie
+Koordinatensystem | Achse, x, y, Punkt, Ursprung
+Koordinaten | x, y, Punkt, Klammer, Zahlenpaar
+Abstand | Entfernung, kürzeste, Lot, messen, zwischen
+Parallel | Geraden, schneiden, Abstand, gleich, nebeneinander
+Senkrecht | rechter Winkel, 90, orthogonal, Gerade, Lot
+Lot | senkrecht, Gerade, Punkt, fällen, rechter Winkel
+Tangente | berühren, Kreis, Gerade, Punkt, Radius
+Winkel | Grad, Schenkel, Scheitel, Geodreieck, messen
+Geodreieck | Lineal, Winkel, Dreieck, messen, zeichnen
+Rechter Winkel | 90, Grad, senkrecht, Ecke, Winkel
+Spitzer Winkel | Grad, klein, 90, stumpf, Winkel
+Stumpfer Winkel | Grad, 90, 180, spitz, Winkel
+Quadrat | Rechteck, Seiten, gleich lang, vier, Ecken
+Rechteck | Quadrat, Ecken, Seiten, rechter Winkel, vier
+Parallelogramm | parallel, Viereck, Seiten, Rechteck, schief
+Raute | Rhombus, Seiten, gleich lang, Viereck, Diagonale
+Drachenviereck | Drachen, Diagonale, symmetrisch, Viereck, Seiten
+Trapez | parallel, Viereck, Seiten, zwei, Grundseite
+Umfang | Rand, außen, Länge, Seiten, addieren
+Flächeninhalt | Fläche, Quadratzentimeter, Länge, Breite, innen
+Würfel | Quadrat, Spielwürfel, Seiten, Körper, sechs
+Quader | Würfel, Rechteck, Schachtel, Körper, Kanten
+Kante | Ecke, Körper, Würfel, Linie, Seite
+Netz | Würfel, aufklappen, Körper, falten, Karton
+Schrägbild | Körper, zeichnen, räumlich, schräg, Bild
+Oberflächeninhalt | außen, Fläche, Körper, Netz, Summe
+`,
+6: `
+Höhe | Lot, senkrecht, Dreieck, Grundseite, hoch
+Grundseite | unten, Höhe, Dreieck, Seite, Formel
+Flächeninhalt eines Dreiecks | Grundseite, Höhe, halb, Dreieck, Formel
+Zerlegen und Ergänzen | Figur, Teile, Rechteck, Fläche, umformen
+Volumen | Rauminhalt, Kubikzentimeter, Liter, Körper, Würfel
+Liter | Volumen, Milliliter, Flasche, Einheit, Hohlmaß
+Einheitswürfel | Kubikzentimeter, Volumen, auslegen, klein, Würfel
+`,
+7: `
+Achsensymmetrie | Spiegel, Achse, Faltlinie, gleich, Symmetrie
+Punktsymmetrie | Punkt, Zentrum, drehen, 180, Symmetrie
+Symmetrieachse | Spiegelachse, falten, Achsensymmetrie, Gerade, Symmetrie
+Symmetriezentrum | Punkt, Mitte, Punktsymmetrie, drehen, Zentrum
+Mittelsenkrechte | Mitte, senkrecht, Strecke, Gerade, Umkreis
+Winkelhalbierende | Winkel, halbieren, Hälfte, Gerade, Inkreis
+Zirkel | Kreis, Spitze, zeichnen, Radius, Mine
+Scheitelwinkel | Scheitel, gegenüber, gleich groß, Winkel, Geraden
+Nebenwinkel | 180, nebeneinander, Winkel, ergänzen, Gerade
+Stufenwinkel | parallel, Geraden, gleich groß, Winkel, F
+Wechselwinkel | parallel, Z, gleich groß, Winkel, Geraden
+Innenwinkelsumme | 180, Dreieck, Winkel, addieren, innen
+Dreieck | drei, Ecken, Seiten, Winkel, Figur
+Gleichschenkliges Dreieck | Schenkel, gleich lang, Basis, Dreieck, zwei
+Gleichseitiges Dreieck | Seiten, gleich, drei, 60, Dreieck
+Rechtwinkliges Dreieck | 90, Hypotenuse, Kathete, rechter Winkel, Dreieck
+Kongruent | deckungsgleich, gleich, Form, Größe, übereinander
+Kongruenzsätze | SSS, SWS, WSW, Dreieck, deckungsgleich
+Dreieckskonstruktion | Zirkel, Lineal, zeichnen, Bestimmungsstücke, Dreieck
+Umkreis | Kreis, Mittelsenkrechte, Ecken, Dreieck, außen
+Inkreis | Kreis, Winkelhalbierende, innen, berühren, Dreieck
+Satz des Thales | Halbkreis, rechter Winkel, Durchmesser, Thales, Kreis
+Umkehrung eines Satzes | Kehrsatz, Voraussetzung, Behauptung, vertauschen, Satz
+Diagonale | Ecken, verbinden, Viereck, schräg, Linie
+`,
+8: `
+Kreiszahl Pi | 3,14, Kreis, Umfang, Durchmesser, griechisch
+Kreisumfang | Kreis, Pi, Radius, Rand, Länge
+Kreisfläche | Kreis, Pi, Radius, Quadrat, Flächeninhalt
+Kreissektor | Kuchenstück, Kreis, Mittelpunktswinkel, Bogen, Teil
+Prisma | Grundfläche, Körper, parallel, Dreieck, Höhe
+Zylinder | Dose, Kreis, rund, Körper, Grundfläche
+Mantelfläche | außen, Rolle, Zylinder, Rechteck, Netz
+Grundfläche | unten, Körper, Prisma, Fläche, Höhe
+`,
+9: `
+Ähnlichkeit | ähnlich, Form, Winkel, gleich, vergrößern
+Strahlensatz | Strahlen, parallel, Verhältnis, Zentrum, Geraden
+Maßstäbliche Vergrößerung | vergrößern, Faktor, ähnlich, Maßstab, Modell
+Satz des Pythagoras | a², c², Hypotenuse, Kathete, rechtwinklig
+Hypotenuse | längste, Seite, rechter Winkel, gegenüber, Kathete
+Kathete | Seite, rechter Winkel, Hypotenuse, anliegen, Dreieck
+Gegenkathete | gegenüber, Winkel, Seite, Ankathete, Sinus
+Ankathete | anliegen, Winkel, Seite, Gegenkathete, Kosinus
+Sinus | Gegenkathete, Hypotenuse, Winkel, Kosinus, sin
+Kosinus | Ankathete, Hypotenuse, Winkel, Sinus, cos
+Tangens | Gegenkathete, Ankathete, Winkel, tan, Steigung
+Einheitskreis | Radius, eins, Kreis, Sinus, Kosinus
+Sinussatz | Sinus, Dreieck, Seite, Winkel, Verhältnis
+Kosinussatz | Kosinus, Pythagoras, Dreieck, Seite, Winkel
+`,
+10: `
+Pyramide | Spitze, Ägypten, Grundfläche, Körper, Dreieck
+Kegel | Spitze, Kreis, Eis, Waffel, Körper
+Kugel | rund, Ball, Radius, Körper, Mittelpunkt
+Rotationskörper | drehen, Achse, Kreis, Körper, Töpferscheibe
+Prinzip von Cavalieri | Scheiben, Volumen, schief, gleich, Cavalieri
+Schiefes Prisma | schief, geneigt, Volumen, Grundfläche, Prisma
+`,
+12: `
+Räumliches Koordinatensystem | Raum, drei, Achsen, x3, dreidimensional
+Vektor | Pfeil, Richtung, Länge, Koordinaten, Verschiebung
+Ortsvektor | Ursprung, Punkt, Pfeil, Vektor, Koordinaten
+Verbindungsvektor | zwei Punkte, Spitze minus Fuß, Pfeil, von A nach B, Vektor
+Gegenvektor | umgekehrt, Richtung, minus, gleich lang, Vektor
+Betrag eines Vektors | Länge, Wurzel, Pythagoras, Pfeil, Vektor
+Skalarprodukt | Vektoren, multiplizieren, orthogonal, Zahl, Winkel
+Orthogonal | senkrecht, rechter Winkel, Skalarprodukt, null, 90
+Vektorprodukt | Kreuzprodukt, orthogonal, Fläche, senkrecht, Vektor
+Winkel zwischen Vektoren | Skalarprodukt, Kosinus, Betrag, Vektoren, Winkel
+Spatprodukt | Volumen, Kreuzprodukt, Skalarprodukt, drei Vektoren, Spat
+`,
+13: `
+Geradengleichung | Stützvektor, Richtungsvektor, Parameter, Gerade, Vektor
+Stützvektor | Ortsvektor, Aufpunkt, Gerade, Anfang, Punkt
+Richtungsvektor | Richtung, Gerade, Pfeil, Stützvektor, Vektor
+Parameterform | Stützvektor, Richtungsvektor, Spannvektor, Parameter, Ebene
+Ebene | Fläche, Normalenvektor, Koordinatenform, eben, Raum
+Normalenform | Normalenvektor, Skalarprodukt, null, senkrecht, Ebene
+Koordinatenform | Ebene, Gleichung, x1, Normalenvektor, Koordinaten
+Normalenvektor | senkrecht, orthogonal, Ebene, Normale, Vektor
+Linearkombination | Vektoren, Summe, Vielfache, kombinieren, Skalar
+Lineare Unabhängigkeit | Vielfaches, Vektoren, Linearkombination, null, abhängig
+Lagebeziehung | parallel, schneiden, windschief, identisch, Lage
+Windschief | Geraden, parallel, schneiden, Raum, Lage
+Schnittgerade | Ebenen, schneiden, Gerade, zwei, Schnitt
+Schnittwinkel | Winkel, schneiden, Kosinus, Skalarprodukt, Geraden
+Abstand Punkt–Ebene | Lot, Hessesche Normalform, Entfernung, senkrecht, kürzeste
+Hessesche Normalform | Abstand, Normalenvektor, Länge eins, Hesse, Ebene
+Lotfußpunkt | Lot, senkrecht, Fuß, Punkt, Abstand
+Kugelgleichung | Kugel, Radius, Mittelpunkt, Quadrat, Gleichung
+`
+},
+ter: {
+5: `
+Natürliche Zahlen | zählen, positiv, ganz, null, Menge
+Ganze Zahlen | negativ, positiv, null, Menge, Zahlen
+Negative Zahl | minus, kleiner, null, Vorzeichen, Temperatur
+Betrag | Abstand, null, positiv, Vorzeichen, Strich
+Zahlenstrahl | Linie, Zahlen, Pfeil, Null, Strich
+Stellenwertsystem | Zehner, Einer, Stelle, Ziffer, Wert
+Runden | aufrunden, abrunden, fünf, Stelle, ungefähr
+Überschlag | ungefähr, runden, schätzen, Ergebnis, Kontrolle
+Summe | plus, addieren, Summand, Ergebnis, zusammenzählen
+Summand | plus, Summe, addieren, Zahl, Teil
+Differenz | minus, subtrahieren, abziehen, Ergebnis, Unterschied
+Produkt | mal, multiplizieren, Faktor, Ergebnis, Malaufgabe
+Faktor | mal, Produkt, multiplizieren, Zahl, Teil
+Quotient | geteilt, dividieren, Division, Ergebnis, Bruch
+Teiler | teilbar, Division, Rest, Vielfaches, geteilt
+Vielfaches | mal, Einmaleins, Teiler, multiplizieren, Reihe
+Teilbarkeitsregel | Quersumme, teilbar, Endziffer, Regel, Rest
+Primzahl | teilbar, eins, selbst, zwei, Teiler
+Primfaktorzerlegung | Primzahlen, Produkt, zerlegen, Faktoren, eindeutig
+Potenz | hoch, Basis, Exponent, mal, Hochzahl
+Quadratzahl | hoch zwei, mal sich selbst, Quadrat, 4, 9
+Zehnerpotenz | zehn, hoch, Null, Potenz, Exponent
+Klammer | zuerst, rechnen, rund, Term, Punkt vor Strich
+Punkt vor Strich | mal, plus, zuerst, Regel, Reihenfolge
+Kommutativgesetz | vertauschen, Reihenfolge, plus, mal, Gesetz
+Assoziativgesetz | Klammer, verbinden, Reihenfolge, Gesetz, plus
+Distributivgesetz | ausmultiplizieren, Klammer, verteilen, ausklammern, Gesetz
+Vorzeichenregel | minus mal minus, plus, Ergebnis, Regel, Vorzeichen
+Größe | Einheit, Maßzahl, messen, Meter, Kilogramm
+Umrechnen von Einheiten | Meter, Zentimeter, umwandeln, Tabelle, Größe
+Maßstab | Karte, verkleinern, Verhältnis, 1 zu, Plan
+Dreisatz | drei, Schritte, Schlussrechnung, Verhältnis, Rechnung
+`,
+6: `
+Bruch | Zähler, Nenner, Bruchstrich, Teil, Pizza
+Zähler | Bruch, oben, Nenner, zählen, Bruchstrich
+Nenner | Bruch, unten, Zähler, Bruchstrich, Hauptnenner
+Bruchteil | Anteil, Ganzes, Bruch, Teil, Stück
+Kürzen | Bruch, teilen, Zähler, Nenner, kleiner
+Erweitern | Bruch, multiplizieren, Zähler, Nenner, größer
+Hauptnenner | Nenner, gemeinsam, kleinste, Bruch, gleichnamig
+Kehrwert | Bruch, umdrehen, Zähler, Nenner, dividieren
+Gemischte Zahl | Bruch, ganze Zahl, unecht, zusammen, Ganze
+Dezimalbruch | Komma, Nachkommastelle, Bruch, Zehntel, Kommazahl
+Stellenwerttafel | Zehntel, Hundertstel, Komma, Stelle, Tabelle
+Periodischer Dezimalbruch | Periode, Komma, unendlich, wiederholen, Strich
+Rationale Zahlen | Bruch, Q, Zahlen, ganze, Dezimalbruch
+Potenz mit negativem Exponenten | Kehrwert, minus, Bruch, hoch, Potenz
+Prozent | Hundertstel, Anteil, Zeichen, von Hundert, Rabatt
+Prozentsatz | Prozent, Grundwert, Prozentwert, Anteil, von Hundert
+Grundwert | Prozent, Ganze, hundert, Prozentwert, Prozentsatz
+Prozentwert | Anteil, Grundwert, Prozentsatz, Teil, Prozent
+Rabatt | Prozent, Preis, billiger, Nachlass, Angebot
+Zinsen | Bank, Prozent, Kapital, Geld, Jahr
+`,
+7: `
+Term | Rechenausdruck, Variable, Zahl, Rechenzeichen, x
+Variable | x, Platzhalter, Buchstabe, Zahl, Unbekannte
+Termwert | einsetzen, Zahl, Ergebnis, Variable, berechnen
+Wertetabelle | Tabelle, x, y, Werte, einsetzen
+Koeffizient | Zahl, vor, Variable, Faktor, x
+Gleichartige Terme | gleich, Variable, zusammenfassen, x, Summand
+Ausmultiplizieren | Klammer, auflösen, mal, Distributivgesetz, Produkt
+Ausklammern | Klammer, Faktor, gemeinsam, Distributivgesetz, herausziehen
+Faktorisieren | Produkt, Faktoren, ausklammern, zerlegen, Summe
+Binomische Formel | a², Quadrat, Klammer, plus, hoch zwei
+Potenzgesetze | hoch, Exponent, Basis, addieren, multiplizieren
+Äquivalente Terme | gleichwertig, Wert, umformen, gleich, Term
+`,
+8: `
+Bruchterm | Bruch, Variable, Nenner, Term, x
+Formel umstellen | auflösen, Variable, Gleichung, umformen, Physik
+`,
+9: `
+Quadratwurzel | Wurzel, Quadrat, hoch zwei, Zeichen, Radikand
+Radikand | Wurzel, unter, Zahl, Zeichen, Quadratwurzel
+Irrationale Zahl | Bruch, Wurzel, Pi, unendlich, Komma
+Reelle Zahlen | R, Zahlen, rational, irrational, Zahlenstrahl
+Teilweises Radizieren | Wurzel, Quadratzahl, Faktor, vereinfachen, ziehen
+Nenner rational machen | Wurzel, Nenner, erweitern, Bruch, verschwinden
+Heron-Verfahren | Näherung, Wurzel, Mittelwert, Iteration, Heron
+Indirekter Beweis | Widerspruch, Annahme, Gegenteil, Wurzel zwei, Beweis
+n-te Wurzel | Wurzel, hoch, Exponent, Potenz, Radikand
+Potenz mit rationalem Exponenten | Wurzel, Bruch, Exponent, hoch, Schreibweise
+`,
+10: `
+Logarithmus | log, Exponent, Basis, hoch, umkehren
+Logarithmusgesetz | log, Exponent, Faktor, Regel, herunterziehen
+`
+},
+gle: {
+5: `
+Gleichung | Gleichheitszeichen, links, rechts, lösen, gleich
+Umkehraufgabe | rückwärts, umgekehrt, Probe, Rechnung, Gegenteil
+Systematisches Probieren | ausprobieren, einsetzen, Tabelle, Lösung, versuchen
+`,
+7: `
+Lineare Gleichung | x, ersten Grades, lösen, Term, Gleichung
+Äquivalenzumformung | umformen, beide Seiten, gleich, Waage, Gleichung
+Waagemodell | Waage, Gleichgewicht, beide Seiten, Gewicht, Gleichung
+Lösung | Ergebnis, x, lösen, Gleichung, richtig
+Lösungsmenge | L, Menge, Lösung, geschweifte Klammer, Gleichung
+Probe | überprüfen, einsetzen, richtig, Kontrolle, Ergebnis
+Allgemeingültig | immer, alle, Lösung, wahr, Gleichung
+Unlösbar | keine, Lösung, leer, Gleichung, falsch
+Leere Menge | leer, nichts, Lösung, geschweifte Klammer, Menge
+Grundmenge | Menge, Zahlen, erlaubt, G, einsetzen
+Textaufgabe | Text, Sachaufgabe, Antwortsatz, Lesen, Rechnung
+`,
+8: `
+Bruchgleichung | Bruch, Nenner, x, Hauptnenner, Gleichung
+Lineares Gleichungssystem | zwei, Gleichungen, Variablen, Schnittpunkt, lösen
+Einsetzungsverfahren | einsetzen, Gleichung, Variable, auflösen, Verfahren
+Gleichsetzungsverfahren | gleichsetzen, Gleichung, Variable, gleich, Verfahren
+Additionsverfahren | addieren, Gleichung, Variable, wegfallen, Verfahren
+Lineare Ungleichung | größer, kleiner, Zeichen, Lösung, Gleichung
+Intervall | Klammer, Bereich, von bis, Zahlen, Grenzen
+Lösungsvielfalt | eine, keine, unendlich, Lösungen, Anzahl
+`,
+9: `
+Quadratische Gleichung | x², hoch zwei, Mitternachtsformel, Parabel, Gleichung
+Mitternachtsformel | abc-Formel, Wurzel, Diskriminante, quadratisch, Lösungsformel
+Diskriminante | Wurzel, b², Lösungen, Mitternachtsformel, D
+Satz vom Nullprodukt | null, Produkt, Faktor, gleich, Gleichung
+Quadratische Ergänzung | Quadrat, binomische Formel, ergänzen, Scheitel, addieren
+Gleichungssystem mit drei Unbekannten | drei, Gleichungen, Variablen, einsetzen, lösen
+Extremwertproblem | maximal, minimal, größte, Nebenbedingung, optimieren
+`,
+10: `
+Exponentialgleichung | Exponent, Logarithmus, hoch, x, Gleichung
+Logarithmieren | Logarithmus, beide Seiten, Exponent, anwenden, Gleichung
+`
+},
+fun: {
+8: `
+Funktion | Zuordnung, x, y, eindeutig, Graph
+Zuordnung | zuordnen, x, y, Tabelle, Pfeil
+Funktionsterm | f(x), Term, Vorschrift, Funktion, x
+Graph | Kurve, zeichnen, Koordinatensystem, Funktion, Linie
+Definitionsmenge | x, erlaubt, einsetzen, D, Werte
+Wertemenge | y, Werte, W, Funktion, annehmen
+Nullstelle | null, x-Achse, schneiden, Funktion, Schnittpunkt
+Schnittpunkt | schneiden, Graphen, Punkt, gleichsetzen, kreuzen
+Lineare Funktion | Gerade, Steigung, y-Achsenabschnitt, mx+t, Graph
+Steigung | steil, m, Steigungsdreieck, Gerade, bergauf
+Steigungsdreieck | Steigung, Dreieck, rechts, hoch, Gerade
+y-Achsenabschnitt | schneiden, y-Achse, t, Gerade, Schnittpunkt
+Direkte Proportionalität | doppelt, Quotient, gleich, Ursprungsgerade, proportional
+Ursprungsgerade | Ursprung, Gerade, null, proportional, durch
+Indirekte Proportionalität | umgekehrt, Produkt, doppelt, halb, Hyperbel
+Gebrochen-rationale Funktion | Bruch, Nenner, Variable, Hyperbel, Funktion
+Hyperbel | indirekt proportional, Kurve, Asymptote, zwei Äste, Graph
+Asymptote | annähern, berühren, Gerade, unendlich, nie
+`,
+9: `
+Quadratische Funktion | Parabel, x², Scheitel, hoch zwei, Funktion
+Parabel | quadratisch, x², Scheitel, Kurve, U
+Normalparabel | x², Parabel, Scheitel, Ursprung, Standard
+Scheitelpunkt | Parabel, Hochpunkt, Tiefpunkt, Spitze, Scheitelform
+Scheitelform | Scheitel, Klammer, Parabel, quadratisch, Verschiebung
+Nullstellenform | Nullstellen, Produkt, Klammer, faktorisiert, Parabel
+Streckfaktor | strecken, stauchen, a, Faktor, breit
+Öffnung | Parabel, oben, unten, breit, schmal
+Potenzfunktion | hoch, x hoch n, Exponent, Parabel, Graph
+`,
+10: `
+Exponentialfunktion | hoch x, Wachstum, Basis, e, exponentiell
+Exponentielles Wachstum | Wachstumsfaktor, verdoppeln, Prozent, schnell, exponentiell
+Exponentielle Abnahme | abnehmen, Zerfall, Faktor, kleiner, exponentiell
+Wachstumsfaktor | Faktor, Prozent, multiplizieren, Wachstum, Basis
+Halbwertszeit | halb, Zerfall, Zeit, radioaktiv, Hälfte
+Sinusfunktion | Welle, Sinus, periodisch, Periode, Amplitude
+Kosinusfunktion | Sinus, verschoben, Welle, periodisch, Kosinus
+Periode | wiederholen, Abstand, Sinus, periodisch, Länge
+Amplitude | Höhe, Ausschlag, Sinus, Welle, maximal
+Bogenmaß | Pi, Radiant, Winkel, Grad, Kreis
+Periodizität | wiederholen, Periode, regelmäßig, Sinus, immer
+Ganzrationale Funktion | Polynom, Grad, x hoch, Summe, Koeffizient
+Grad einer Funktion | höchste, Exponent, Polynom, Zahl, ganzrational
+Achsensymmetrie zur y-Achse | gerade, y-Achse, spiegeln, Exponent, Symmetrie
+Punktsymmetrie zum Ursprung | ungerade, Ursprung, drehen, minus, Symmetrie
+Verhalten an den Rändern | unendlich, groß, Rand, Graph, Grenzverhalten
+`,
+11: `
+Grenzwert | lim, annähern, unendlich, Limes, Wert
+Konvergenz | Grenzwert, annähern, divergent, streben, konvergieren
+Divergenz | Grenzwert, konvergent, unendlich, kein, streben
+Stetigkeit | Sprung, durchgehend, Stift, absetzen, Lücke
+Verschiebung | verschieben, links, rechts, oben, unten
+Streckung | strecken, stauchen, Faktor, breiter, schmaler
+Spiegelung | spiegeln, Achse, Vorzeichen, gespiegelt, Graph
+Polstelle | Nenner, null, Asymptote, senkrecht, unendlich
+Senkrechte Asymptote | Polstelle, senkrecht, Gerade, nähern, Nenner
+Waagrechte Asymptote | unendlich, waagrecht, Grenzwert, nähern, Gerade
+Betragsfunktion | Betrag, Knick, V, positiv, Funktion
+Sekante | Gerade, zwei Punkte, schneiden, Kurve, Steigung
+Differenzenquotient | Sekante, mittlere, Steigung, Änderungsrate, Quotient
+Mittlere Änderungsrate | Sekante, Differenzenquotient, Durchschnitt, Steigung, Intervall
+Differentialquotient | Ableitung, Grenzwert, Tangente, lokal, Steigung
+Lokale Änderungsrate | Ableitung, Moment, Tangente, Steigung, Zeitpunkt
+Momentangeschwindigkeit | Augenblick, Tacho, Ableitung, Geschwindigkeit, Moment
+Tangentensteigung | Ableitung, Berührpunkt, Steigung, Tangente, Graph
+Steigungswinkel | Tangens, Steigung, Winkel, Gerade, Grad
+Ableitung | f Strich, Steigung, Tangente, differenzieren, Änderungsrate
+Ableitungsfunktion | f Strich, Ableitung, Steigung, Funktion, Graph
+Differenzierbarkeit | Ableitung, Knick, glatt, Tangente, möglich
+Faktorregel | Faktor, Konstante, Ableitung, stehen bleiben, Regel
+Summenregel | Summe, einzeln, ableiten, Regel, Summand
+Monotonie | steigend, fallend, Ableitung, Intervall, Graph
+Extremstelle | Hochpunkt, Tiefpunkt, Maximum, Minimum, Ableitung
+Hochpunkt | Maximum, Extremum, oben, Ableitung, Berg
+Tiefpunkt | Minimum, Extremum, unten, Ableitung, Tal
+Krümmung | Kurve, Linkskurve, Rechtskurve, zweite Ableitung, Bogen
+Wendepunkt | Krümmung, zweite Ableitung, Wechsel, Kurve, Wende
+Zweite Ableitung | Krümmung, zweimal, f zwei Strich, ableiten, Wendepunkt
+Notwendige Bedingung | Ableitung, null, Extremstelle, hinreichend, Bedingung
+Hinreichende Bedingung | zweite Ableitung, Vorzeichenwechsel, notwendig, Extremum, Bedingung
+Newton-Verfahren | Tangente, Näherung, Nullstelle, Iteration, Ableitung
+`,
+12: `
+Stammfunktion | F, ableiten, Integral, groß, umgekehrt
+Natürliche Exponentialfunktion | e, Ableitung, gleich, exponentiell, Funktion
+Eulersche Zahl | e, 2,718, Euler, Exponentialfunktion, Konstante
+Produktregel | Produkt, Ableitung, u mal v, Regel, Faktor
+Kettenregel | innere, äußere, Ableitung, nachdifferenzieren, verkettet
+Quotientenregel | Bruch, Nenner, Quadrat, Ableitung, Regel
+Verkettung | innere, äußere, Funktion, einsetzen, Kettenregel
+Umkehrfunktion | umkehren, spiegeln, Winkelhalbierende, x und y, tauschen
+Wurzelfunktion | Wurzel, Graph, Umkehrfunktion, Parabel, halb
+Natürlicher Logarithmus | ln, e, Logarithmus, Umkehrfunktion, Basis
+Funktionenschar | Parameter, Schar, viele, Graphen, k
+Parameter | Schar, Variable, Buchstabe, a, konstant
+Ableitung der Sinusfunktion | Kosinus, Sinus, ableiten, Regel, trigonometrisch
+`,
+13: `
+Bestimmtes Integral | Grenzen, Fläche, Zahl, Integral, unbestimmt
+Integralfunktion | Integral, obere Grenze, variabel, Funktion, Stammfunktion
+Hauptsatz | Integral, Stammfunktion, Ableitung, Differential, Fundamental
+Integrand | innen, Integral, Funktion, Zeichen, integrieren
+Flächenbilanz | oberhalb, unterhalb, Vorzeichen, Integral, Fläche
+Integrationsgrenzen | oben, unten, Integral, Intervall, Grenze
+Uneigentliches Integral | unendlich, Grenze, Fläche, Integral, Grenzwert
+Fläche zwischen zwei Graphen | Differenz, Integral, Schnittstellen, oben, unten
+Rotationsvolumen | drehen, x-Achse, Integral, Volumen, Körper
+Gesamtänderung | Änderungsrate, Integral, Bestand, Zunahme, gesamt
+Integrationsregel | Stammfunktion, Regel, aufleiten, Potenz, Integral
+`
+},
+sto: {
+5: `
+Zählprinzip | multiplizieren, Möglichkeiten, Stufen, Anzahl, zählen
+Baumdiagramm | Baum, Äste, Pfad, Stufen, Verzweigung
+`,
+6: `
+Absolute Häufigkeit | Anzahl, wie oft, zählen, relativ, Strichliste
+Relative Häufigkeit | Anteil, Prozent, Bruch, absolut, Gesamt
+Strichliste | Striche, zählen, fünf, Tabelle, Häufigkeit
+Säulendiagramm | Säulen, Balken, hoch, Diagramm, Rechteck
+Balkendiagramm | Balken, waagrecht, Säulen, Diagramm, lang
+Kreisdiagramm | Kreis, Tortenstück, Winkel, Anteil, Diagramm
+Diagramm | Bild, Daten, darstellen, Säulen, Grafik
+Statistische Erhebung | Umfrage, Daten, sammeln, fragen, Statistik
+Arithmetisches Mittel | Durchschnitt, Mittelwert, addieren, teilen, Anzahl
+`,
+7: `
+Median | Zentralwert, Mitte, sortieren, mittlere, Daten
+Spannweite | Maximum, Minimum, Differenz, Abstand, Daten
+Quartil | Viertel, Median, Boxplot, 25, Daten
+Boxplot | Box, Median, Quartil, Antennen, Kasten
+Maximum | größte, höchste, Wert, Minimum, meiste
+Minimum | kleinste, niedrigste, Wert, Maximum, wenigste
+Kenngröße | Median, Mittelwert, beschreiben, Daten, Zahl
+`,
+8: `
+Zufallsexperiment | Zufall, Würfel, Ergebnis, Münze, vorhersagen
+Ergebnis | Ausgang, Zufallsexperiment, Würfel, herauskommen, Ereignis
+Ergebnismenge | Omega, alle, Ergebnisse, Menge, Zufallsexperiment
+Ereignis | Ergebnis, Menge, Zufallsexperiment, eintreten, E
+Gegenereignis | Gegenteil, nicht, Ereignis, Strich, komplementär
+Wahrscheinlichkeit | Zufall, Chance, Prozent, P, wahrscheinlich
+Laplace-Experiment | gleich wahrscheinlich, Würfel, Münze, Laplace, fair
+Laplace-Wahrscheinlichkeit | günstige, mögliche, Anzahl, Bruch, Laplace
+Empirisches Gesetz der großen Zahlen | viele, oft, relative Häufigkeit, nähern, Versuche
+Sicheres Ereignis | immer, eins, sicher, 100 Prozent, Ereignis
+Unmögliches Ereignis | nie, null, unmöglich, Ereignis, leer
+`,
+9: `
+Schnittmenge | und, beide, gemeinsam, schneiden, Menge
+Vereinigungsmenge | oder, zusammen, beide, vereinigt, Menge
+Vierfeldertafel | vier, Felder, Tabelle, Häufigkeiten, Summe
+Mengendiagramm | Kreise, Venn, Menge, überlappen, Diagramm
+Additionssatz | oder, addieren, Schnitt, abziehen, Wahrscheinlichkeit
+`,
+10: `
+Mehrstufiges Zufallsexperiment | Baumdiagramm, Stufen, nacheinander, mehrere, Pfad
+Pfadregel | Pfad, multiplizieren, addieren, Baumdiagramm, Regel
+Urnenmodell | Urne, Kugeln, ziehen, zurücklegen, Modell
+Mit Zurücklegen | Urne, Kugel, zurück, ziehen, wieder
+Ohne Zurücklegen | Urne, Kugel, weg, ziehen, draußen
+Simulation | nachspielen, Zufallszahlen, Computer, Experiment, wiederholen
+Monte-Carlo-Methode | Zufall, Simulation, Näherung, Pi, Casino
+`,
+11: `
+Bedingte Wahrscheinlichkeit | Bedingung, unter, P, Vierfeldertafel, Strich
+Satz von Bayes | Bayes, bedingt, umkehren, Formel, Wahrscheinlichkeit
+Stochastische Unabhängigkeit | abhängig, Produkt, Wahrscheinlichkeit, beeinflussen, unabhängig
+Stichprobe | Auswahl, Teil, Umfang, zufällig, Befragung
+Medizinischer Test | Diagnose, positiv, krank, Wahrscheinlichkeit, Test
+`,
+12: `
+Zufallsgröße | X, Zufall, Wert, Variable, zuordnen
+Wahrscheinlichkeitsverteilung | Verteilung, Tabelle, Zufallsgröße, Wahrscheinlichkeit, Summe eins
+Kumulative Verteilung | aufsummieren, höchstens, kumuliert, Tabelle, Verteilung
+Histogramm | Säulen, Balken, Verteilung, Diagramm, Rechtecke
+Erwartungswert | erwarten, Durchschnitt, Mittelwert, E, langfristig
+Standardabweichung | Streuung, Sigma, Abweichung, Wurzel, Mittelwert
+Binomialverteilung | Bernoulli, Treffer, n, p, Kette
+Bernoulli-Kette | Treffer, Niete, unabhängig, wiederholen, Bernoulli
+Trefferwahrscheinlichkeit | Treffer, p, Wahrscheinlichkeit, Erfolg, Bernoulli
+Binomialkoeffizient | n über k, Pascal, Dreieck, Fakultät, Kombinatorik
+Fakultät | Ausrufezeichen, multiplizieren, n, bis eins, Produkt
+Axiome von Kolmogorow | Axiome, Grundregeln, Wahrscheinlichkeit, eins, Kolmogorow
+Signifikanztest | Hypothese, Stichprobe, ablehnen, testen, Signifikanz
+Nullhypothese | H0, Hypothese, Alternative, ablehnen, Test
+Gegenhypothese | Alternative, H1, Nullhypothese, Gegenteil, Hypothese
+Ablehnungsbereich | ablehnen, Bereich, Nullhypothese, Test, verwerfen
+Annahmebereich | annehmen, Bereich, Nullhypothese, Test, beibehalten
+Signifikanzniveau | Alpha, Fehler, Prozent, Test, Irrtum
+Fehler erster Art | Alpha, Nullhypothese, ablehnen, falsch, Irrtum
+Fehler zweiter Art | Beta, Nullhypothese, beibehalten, falsch, Irrtum
+`,
+13: `
+Normalverteilung | Glockenkurve, Gauß, Sigma, Mittelwert, Kurve
+Glockenkurve | Glocke, Normalverteilung, Gauß, symmetrisch, Kurve
+Stetige Zufallsgröße | stetig, Dichte, Intervall, kontinuierlich, diskret
+Diskrete Zufallsgröße | abzählbar, einzeln, stetig, Werte, Zufallsgröße
+Dichtefunktion | Dichte, Fläche, Integral, stetig, Wahrscheinlichkeit
+Verteilungsfunktion | kumulativ, höchstens, Graph, Wahrscheinlichkeit, Funktion
+Sigma-Umgebung | Sigma, Erwartungswert, Intervall, symmetrisch, Umgebung
+`
+}
+};
+
+const TOPICS = [
+  {id:'geo', name:'Geometrie', ico:'📐', color:'#8b5cf6'},
+  {id:'ter', name:'Terme & Zahlen', ico:'🔢', color:'#0ea5e9'},
+  {id:'gle', name:'Gleichungen', ico:'⚖️', color:'#10b981'},
+  {id:'fun', name:'Funktionen', ico:'📈', color:'#f97316'},
+  {id:'sto', name:'Wahrscheinlichkeit & Statistik', ico:'🎲', color:'#ec4899'}
+];
+const GRADES = [5,6,7,8,9,10,11,12,13];
+/* Schwierigkeit = Anzahl der angezeigten Tabu-Wörter (die ersten n der Liste – daher dort die naheliegendsten zuerst) */
+const LEVELS = [
+  {n:2, name:'Sehr leicht'},
+  {n:3, name:'Leicht'},
+  {n:4, name:'Mittel'},
+  {n:5, name:'Schwer'}
+];
+
+/* Rohdaten in Kartenobjekte umwandeln */
+const CARDS = [];
+for (const t in RAW) for (const g in RAW[t]) {
+  RAW[t][g].split('\n').map(s => s.trim()).filter(Boolean).forEach(line => {
+    const [w, rest] = line.split('|').map(s => s.trim());
+    CARDS.push({ id: t + ':' + w, w, taboo: rest.split(/,\s+/).map(s => s.trim()), topic: t, grade: +g });
+  });
+}
+
+/* =====================================================================
+   EINSTELLUNGEN
+   ===================================================================== */
+const TIMES = [30,45,60,75,90,120,150,180,240];
+const $ = id => document.getElementById(id);
+const store = {
+  get(k, d){ try { const v = localStorage.getItem('matheTabu.' + k); return v == null ? d : JSON.parse(v); } catch(e){ return d; } },
+  set(k, v){ try { localStorage.setItem('matheTabu.' + k, JSON.stringify(v)); } catch(e){} }
+};
+const S = Object.assign({
+  nameA:'Team Blau', nameB:'Team Gelb', grade:8, earlier:true,
+  topics:['geo','ter','gle','fun','sto'], taboo:5, timeIdx:2, rounds:3, skip:false, sound:true
+}, store.get('settings', {}));
+function save(){ store.set('settings', S); }
+
+/* Karten passend zur Stufe – ohne „frühere Stufen" nur Begriffe, die laut Lehrplan genau in dieser Stufe vorkommen */
+function gradeFits(c){ return S.earlier ? c.grade <= S.grade : c.grade === S.grade; }
+function filteredCards(){ return CARDS.filter(c => S.topics.includes(c.topic) && gradeFits(c)); }
+
+function renderSetup(){
+  $('nameA').value = S.nameA; $('nameB').value = S.nameB;
+  $('grades').innerHTML = GRADES.map(g =>
+    `<button class="chip grade ${g===S.grade?'on':''}" data-grade="${g}">${g}</button>`).join('');
+  $('topics').innerHTML = TOPICS.map(t => {
+    const n = CARDS.filter(c => c.topic === t.id && gradeFits(c)).length;
+    const on = n > 0 && S.topics.includes(t.id);
+    /* Themen, die in dieser Stufe (laut Lehrplan) nicht vorkommen, sind gesperrt */
+    const from = Math.min(...CARDS.filter(c => c.topic === t.id).map(c => c.grade));
+    const note = n ? n : (S.grade < from ? `ab Stufe ${from}` : `nicht in Stufe ${S.grade}`);
+    return `<button class="chip topic ${on?'on':''} ${n?'':'empty'}" data-topic="${t.id}" ${n?'':'disabled'} style="${on?'background:'+t.color:''}"><span class="ico">${t.ico}</span>${t.name}<span class="cnt">${note}</span></button>`;
+  }).join('');
+  $('levels').innerHTML = LEVELS.map(l =>
+    `<button class="chip level ${l.n===S.taboo?'on':''}" data-level="${l.n}">${l.name}<small>${l.n} Tabu-Wörter</small></button>`).join('');
+  const ex = CARDS.find(c => c.w === 'Rechteck');
+  $('levelPreview').innerHTML = `Beispiel: <b>${ex.w}</b> – verboten sind ` + shownTaboo(ex).map(x => `<s>${x}</s>`).join(', ');
+  $('swEarlier').classList.toggle('on', S.earlier);
+  $('swSkip').classList.toggle('on', S.skip);
+  $('swSound').classList.toggle('on', S.sound);
+  $('outTime').textContent = fmtTime(TIMES[S.timeIdx]);
+  $('outRounds').textContent = S.rounds + (S.rounds === 1 ? ' Runde' : ' Runden');
+  const n = filteredCards().length;
+  const needed = S.rounds * 2 * Math.ceil(TIMES[S.timeIdx] / 8);
+  const di = $('deckInfo');
+  di.textContent = n === 0 ? 'Keine Karten – bitte Themen wählen' : `${n} Karten verfügbar` + (n < needed ? ' (Karten können sich wiederholen)' : '');
+  di.classList.toggle('warn', n === 0 || n < needed);
+  $('btnStart').disabled = n === 0;
+}
+function fmtTime(s){ return s < 60 ? s + ' s' : Math.floor(s/60) + ':' + String(s%60).padStart(2,'0') + ' min'; }
+
+$('grades').addEventListener('click', e => { const b = e.target.closest('[data-grade]'); if(!b) return; S.grade = +b.dataset.grade; save(); renderSetup(); });
+$('levels').addEventListener('click', e => { const b = e.target.closest('[data-level]'); if(!b) return; S.taboo = +b.dataset.level; save(); renderSetup(); });
+$('topics').addEventListener('click', e => {
+  const b = e.target.closest('[data-topic]'); if(!b || b.disabled) return;
+  const t = b.dataset.topic;
+  S.topics = S.topics.includes(t) ? S.topics.filter(x => x !== t) : [...S.topics, t];
+  save(); renderSetup();
+});
+document.querySelectorAll('[data-step]').forEach(b => b.addEventListener('click', () => {
+  const d = +b.dataset.d;
+  if (b.dataset.step === 'time') S.timeIdx = Math.max(0, Math.min(TIMES.length-1, S.timeIdx + d));
+  else S.rounds = Math.max(1, Math.min(10, S.rounds + d));
+  save(); renderSetup();
+}));
+[['swEarlier','earlier'],['swSkip','skip'],['swSound','sound']].forEach(([id,k]) =>
+  $(id).addEventListener('click', () => { S[k] = !S[k]; save(); renderSetup(); }));
+['nameA','nameB'].forEach(id => $(id).addEventListener('input', e => { S[id] = e.target.value.trim() || (id==='nameA'?'Team Blau':'Team Gelb'); save(); }));
+$('nameA').addEventListener('blur', () => renderSetup()); $('nameB').addEventListener('blur', () => renderSetup());
+
+/* =====================================================================
+   TÖNE
+   ===================================================================== */
+let actx = null;
+function beep(freq, dur = .12, type = 'sine', vol = .25, delay = 0){
+  if (!S.sound) return;
+  try {
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    if (actx.state === 'suspended') actx.resume();
+    const t0 = actx.currentTime + delay, o = actx.createOscillator(), g = actx.createGain();
+    o.type = type; o.frequency.value = freq;
+    g.gain.setValueAtTime(vol, t0); g.gain.exponentialRampToValueAtTime(.001, t0 + dur);
+    o.connect(g).connect(actx.destination); o.start(t0); o.stop(t0 + dur + .02);
+  } catch(e){}
+}
+const sfx = {
+  ok(){ beep(660,.1,'triangle'); beep(990,.16,'triangle',.25,.08); },
+  tabu(){ beep(220,.28,'sawtooth',.18); },
+  skip(){ beep(440,.08,'sine',.15); },
+  tick(){ beep(880,.05,'square',.08); },
+  end(){ beep(523,.2,'square',.15); beep(392,.2,'square',.15,.2); beep(262,.45,'square',.15,.4); },
+  go(){ beep(784,.25,'triangle',.25); }
+};
+
+/* =====================================================================
+   SPIELZUSTAND
+   ===================================================================== */
+let G = null;   // aktuelles Spiel
+function shuffle(a){ for (let i = a.length-1; i > 0; i--){ const j = Math.floor(Math.random()*(i+1)); [a[i],a[j]] = [a[j],a[i]]; } return a; }
+
+function newGame(){
+  G = { rounds:S.rounds, time:TIMES[S.timeIdx], round:1, team:'A', turns:[], pool:shuffle(filteredCards()) };
+  showHandover();
+}
+function other(t){ return t === 'A' ? 'B' : 'A'; }
+function tname(t){ return t === 'A' ? S.nameA : S.nameB; }
+function drawCard(){
+  if (!G.pool.length){                       // Stapel leer → neu mischen (ohne direkt gerade gesehene)
+    G.pool = shuffle(filteredCards());
+  }
+  return G.pool.pop();
+}
+function scoreOf(t){
+  let p = 0;
+  for (const tr of G.turns) for (const r of tr.results){
+    if (tr.team === t && r.r === 'ok') p++;
+    if (tr.team !== t && r.r === 'tabu') p++;
+  }
+  return p;
+}
+function scoresHTML(cur){
+  return ['A','B'].map(t => `<div class="score ${t} ${t===cur?'cur':''}"><span class="nm">${esc(tname(t))}</span><span class="pt">${scoreOf(t)}</span></div>`).join('');
+}
+function esc(s){ return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+function show(id){
+  document.querySelectorAll('.screen').forEach(s => s.classList.toggle('active', s.id === id));
+}
+
+/* ---------- Übergabe ---------- */
+function showHandover(){
+  const t = G.team, o = other(t);
+  $('hoRound').textContent = `Runde ${G.round} von ${G.rounds}`;
+  $('hoWho').innerHTML = `<span style="color:var(--team${t})">${esc(tname(t))}</span> ist dran!`;
+  $('hoInfo').innerHTML = `Ein Mitglied von <b class="${t}">${esc(tname(t))}</b> nimmt das iPad und erklärt.<br>` +
+    `<b class="${o}">${esc(tname(o))}</b> schaut mit auf die Karte und achtet auf die Tabu-Wörter.`;
+  $('hoScores').innerHTML = scoresHTML(t);
+  show('handover');
+}
+$('hoGo').addEventListener('click', () => {
+  beep(1,.01,'sine',.001);                     // Audio auf iOS per Nutzergeste freischalten
+  const cd = $('countdown'); let n = 3;
+  cd.classList.add('show');
+  const step = () => {
+    if (n === 0){ cd.classList.remove('show'); cd.innerHTML = ''; sfx.go(); startTurn(); return; }
+    cd.innerHTML = `<span>${n}</span>`; sfx.tick(); n--; setTimeout(step, 800);
+  };
+  step();
+});
+
+/* ---------- Durchgang ---------- */
+let T = null;   // laufender Durchgang
+const CIRC = 2 * Math.PI * 34;
+
+function startTurn(){
+  T = { team:G.team, results:[], card:null, left:G.time, last:performance.now(), timer:null, paused:false, busy:false };
+  G.turns.push({ team:T.team, results:T.results });
+  $('sideLTeam').textContent = '+1 ' + tname(other(T.team));
+  $('sideRTeam').textContent = '+1 ' + tname(T.team);
+  $('btnSkip').style.visibility = S.skip ? 'visible' : 'hidden';
+  $('plRound').textContent = `Runde ${G.round}/${G.rounds}`;
+  $('timerBar').style.strokeDasharray = CIRC;
+  show('play');
+  updatePlayHeader();
+  nextCard();
+  T.last = performance.now();
+  T.timer = setInterval(tick, 100);
+  updateTimer();
+}
+function tick(){
+  if (!T || T.paused) return;
+  const now = performance.now(), before = Math.ceil(T.left);
+  T.left -= (now - T.last) / 1000; T.last = now;
+  const after = Math.ceil(T.left);
+  if (after !== before && after <= 5 && after > 0) sfx.tick();
+  if (T.left <= 0){ T.left = 0; updateTimer(); endTurn(); return; }
+  updateTimer();
+}
+function updateTimer(){
+  const s = Math.ceil(T.left);
+  $('timerNum').textContent = s;
+  $('timerBar').style.strokeDashoffset = CIRC * (1 - T.left / G.time);
+  $('timer').classList.toggle('low', s <= 10);
+}
+function updatePlayHeader(){
+  $('plScores').innerHTML = scoresHTML(T.team);
+  const ok = T.results.filter(r => r.r === 'ok').length, tb = T.results.filter(r => r.r === 'tabu').length;
+  $('plTurn').innerHTML = `Dieser Durchgang: <b style="color:#6ee79a">✓ ${ok}</b> &nbsp; <b style="color:#ff8a8a">✗ ${tb}</b>`;
+}
+
+/* Tabu-Wörter, die ohnehin im Begriff selbst stecken (z. B. „Winkel" bei „Rechter Winkel"),
+   rücken nach hinten – so bleiben bei wenigen Tabu-Wörtern die wirklich hilfreichen übrig. */
+function shownTaboo(c){
+  const w = c.w.toLowerCase();
+  const inTerm = x => { x = x.toLowerCase(); return (x.length >= 3 && w.includes(x)) || x.includes(w); };
+  return [...c.taboo.filter(x => !inTerm(x)), ...c.taboo.filter(inTerm)].slice(0, S.taboo);
+}
+const cardEl = $('card');
+function nextCard(){
+  const c = drawCard(); T.card = c;
+  const tp = TOPICS.find(x => x.id === c.topic);
+  cardEl.style.transition = 'none'; cardEl.style.transform = ''; cardEl.style.opacity = 1;
+  cardEl.innerHTML =
+    `<div class="head" style="background:${tp.color}"><span class="tag">${tp.ico} ${tp.name}</span>` +
+    `<div class="word">${esc(c.w)}</div></div>` +
+    `<div class="tabus">${shownTaboo(c).map(x => `<div>${esc(x)}</div>`).join('')}</div>` +
+    `<div class="stamp ok">ERRATEN</div><div class="stamp tabu">TABU!</div><div class="stamp skip">WEG</div>`;
+  cardEl.classList.remove('enter'); void cardEl.offsetWidth; cardEl.classList.add('enter');
+}
+
+/* Karte wegwischen: dir = 'ok' (rechts) | 'tabu' (links) | 'skip' (oben) */
+function resolve(dir){
+  if (!T || T.busy || T.paused || !T.card) return;
+  if (dir === 'skip' && !S.skip) return;
+  T.busy = true;
+  T.results.push({ w:T.card.w, r:dir });
+  sfx[dir]();
+  const W = window.innerWidth, H = window.innerHeight;
+  const to = dir === 'ok' ? `translate(${W}px,60px) rotate(30deg)` : dir === 'tabu' ? `translate(${-W}px,60px) rotate(-30deg)` : `translate(0,${-H}px)`;
+  cardEl.querySelector('.stamp.' + dir).style.opacity = 1;
+  cardEl.style.transition = 'transform .3s ease-in, opacity .3s ease-in';
+  cardEl.style.transform = to; cardEl.style.opacity = .2;
+  setSides(0, 0);
+  updatePlayHeader();
+  const cur = T;
+  setTimeout(() => { if (T !== cur) return; T.busy = false; if (T.left > 0) nextCard(); }, 300);
+}
+
+/* ---------- Wischgesten ---------- */
+let drag = null;
+function setSides(dx, dy){
+  $('sideL').classList.toggle('hot', dx < -60);
+  $('sideR').classList.toggle('hot', dx > 60);
+  if (!cardEl.firstChild) return;
+  const ok = cardEl.querySelector('.stamp.ok'), tb = cardEl.querySelector('.stamp.tabu'), sk = cardEl.querySelector('.stamp.skip');
+  if (!ok) return;
+  ok.style.opacity = Math.max(0, Math.min(1, (dx - 30) / 110));
+  tb.style.opacity = Math.max(0, Math.min(1, (-dx - 30) / 110));
+  sk.style.opacity = S.skip && Math.abs(dx) < 60 ? Math.max(0, Math.min(1, (-dy - 30) / 110)) : 0;
+}
+cardEl.addEventListener('pointerdown', e => {
+  if (!T || T.busy || T.paused) return;
+  try { cardEl.setPointerCapture(e.pointerId); } catch(err){}
+  drag = { id:e.pointerId, x:e.clientX, y:e.clientY, t:performance.now(), dx:0, dy:0 };
+  cardEl.style.transition = 'none';
+});
+cardEl.addEventListener('pointermove', e => {
+  if (!drag || e.pointerId !== drag.id) return;
+  drag.dx = e.clientX - drag.x; drag.dy = e.clientY - drag.y;
+  const dy = S.skip ? drag.dy : drag.dy * .25;
+  cardEl.style.transform = `translate(${drag.dx}px,${dy}px) rotate(${drag.dx / 18}deg)`;
+  setSides(drag.dx, drag.dy);
+});
+function endDrag(e){
+  if (!drag || e.pointerId !== drag.id) return;
+  const { dx, dy, t } = drag; drag = null;
+  const dt = Math.max(1, performance.now() - t), vx = dx / dt, vy = dy / dt;
+  const thr = Math.min(140, cardEl.offsetWidth * .35);
+  if (dx > thr || (vx > .6 && dx > 40)) return resolve('ok');
+  if (dx < -thr || (vx < -.6 && dx < -40)) return resolve('tabu');
+  if (S.skip && Math.abs(dx) < thr && (dy < -thr || (vy < -.6 && dy < -40))) return resolve('skip');
+  cardEl.style.transition = 'transform .25s cubic-bezier(.2,.9,.3,1.3)';
+  cardEl.style.transform = '';
+  setSides(0, 0);
+}
+cardEl.addEventListener('pointerup', endDrag);
+cardEl.addEventListener('pointercancel', endDrag);
+
+$('btnOk').addEventListener('click', () => resolve('ok'));
+$('btnTabu').addEventListener('click', () => resolve('tabu'));
+$('btnSkip').addEventListener('click', () => resolve('skip'));
+document.addEventListener('keydown', e => {
+  if (!$('play').classList.contains('active')) return;
+  if (e.key === 'ArrowRight') resolve('ok');
+  if (e.key === 'ArrowLeft') resolve('tabu');
+  if (e.key === 'ArrowUp') resolve('skip');
+  if (e.key === ' ') { e.preventDefault(); T && (T.paused ? resume() : pause()); }
+});
+
+/* ---------- Pause ---------- */
+function pause(){ if (!T || T.paused) return; T.paused = true; $('pauseOv').classList.add('show'); }
+function resume(){ if (!T) return; T.paused = false; T.last = performance.now(); $('pauseOv').classList.remove('show'); }
+$('btnPause').addEventListener('click', pause);
+$('pvGo').addEventListener('click', resume);
+$('pvEnd').addEventListener('click', () => { $('pauseOv').classList.remove('show'); T.paused = false; T.left = 0; endTurn(); });
+document.addEventListener('visibilitychange', () => { if (document.hidden && $('play').classList.contains('active')) pause(); });
+
+/* ---------- Ende des Durchgangs ---------- */
+function endTurn(){
+  if (!T) return;
+  clearInterval(T.timer);
+  sfx.end();
+  if (T.card && !T.busy) T.results.push({ w:T.card.w, r:'none' });   // letzte, nicht gewertete Karte
+  const turn = G.turns[G.turns.length - 1];
+  T = null;
+  renderSummary(turn);
+  show('summary');
+}
+const RES_LABEL = { ok:'✓ Erraten', tabu:'✗ Tabu', skip:'⤴ Übersprungen', none:'– nicht gewertet' };
+const RES_CYCLE = ['ok','tabu','none'];
+function renderSummary(turn){
+  const t = turn.team, o = other(t);
+  const ok = turn.results.filter(r => r.r === 'ok').length, tb = turn.results.filter(r => r.r === 'tabu').length;
+  $('suTitle').textContent = '⏰ Zeit abgelaufen!';
+  $('suSub').innerHTML = `<span style="color:var(--team${t})">${esc(tname(t))}</span>: +${ok} &nbsp;·&nbsp; ` +
+                         `<span style="color:var(--team${o})">${esc(tname(o))}</span>: +${tb} (Tabu)`;
+  $('suScores').innerHTML = scoresHTML(null);
+  $('suList').innerHTML = turn.results.length
+    ? turn.results.map((r, i) => `<button class="res ${r.r}" data-i="${i}"><span class="w">${esc(r.w)}</span><span class="badge">${RES_LABEL[r.r]}</span></button>`).join('')
+    : '<p class="hint">Keine Karten in diesem Durchgang.</p>';
+  $('suList').onclick = e => {
+    const b = e.target.closest('[data-i]'); if (!b) return;
+    const r = turn.results[+b.dataset.i];
+    const cyc = S.skip ? ['ok','tabu','skip','none'] : RES_CYCLE;
+    r.r = cyc[(cyc.indexOf(r.r) + 1) % cyc.length];
+    renderSummary(turn);
+  };
+}
+$('suNext').addEventListener('click', () => {
+  if (G.team === 'A'){ G.team = 'B'; return showHandover(); }
+  if (G.round < G.rounds){ G.round++; G.team = 'A'; return showHandover(); }
+  showFinal();
+});
+
+/* ---------- Spielende ---------- */
+function showFinal(){
+  const a = scoreOf('A'), b = scoreOf('B');
+  $('fiIcon').textContent = a === b ? '🤝' : '🏆';
+  $('fiWinner').innerHTML = a === b ? 'Unentschieden!'
+    : `<span style="color:var(--team${a>b?'A':'B'})">${esc(tname(a>b?'A':'B'))}</span> gewinnt!`;
+  $('fiScores').innerHTML = ['A','B'].map(t => `<div class="${t}"><div class="n">${esc(tname(t))}</div><div class="p">${scoreOf(t)}</div></div>`).join('');
+  const all = G.turns.flatMap(x => x.results);
+  $('fiStats').textContent = `${all.filter(r => r.r === 'ok').length} Begriffe erraten · ${all.filter(r => r.r === 'tabu').length}× Tabu`;
+  show('final');
+  if (a !== b){ beep(523,.15,'triangle'); beep(659,.15,'triangle',.25,.15); beep(784,.15,'triangle',.25,.3); beep(1047,.4,'triangle',.25,.45); }
+}
+$('fiAgain').addEventListener('click', newGame);
+$('fiSetup').addEventListener('click', () => { renderSetup(); show('setup'); });
+
+/* ---------- Start, Regeln, Abbrechen ---------- */
+$('btnStart').addEventListener('click', newGame);
+$('btnRules').addEventListener('click', () => $('rulesModal').classList.add('show'));
+$('hoQuit').addEventListener('click', () => $('confirmModal').classList.add('show'));
+$('cfYes').addEventListener('click', () => { $('confirmModal').classList.remove('show'); G = null; renderSetup(); show('setup'); });
+document.querySelectorAll('.modal').forEach(m => m.addEventListener('click', e => {
+  if (e.target === m || e.target.hasAttribute('data-close')) m.classList.remove('show');
+}));
+document.addEventListener('gesturestart', e => e.preventDefault());   // Pinch-Zoom auf iOS verhindern
+
+renderSetup();
+</script>
+<!-- ===================== Teilen / QR-Code (gemeinsamer Baustein) ===================== -->
+<style>
+  .sq-fab{position:fixed; left:calc(10px + env(safe-area-inset-left)); bottom:calc(10px + env(safe-area-inset-bottom));
+    z-index:120; display:none; align-items:center; gap:7px; padding:10px 14px; border-radius:999px; border:none;
+    background:rgba(20,20,26,.82); color:#fff; font:inherit; font-size:14.5px; font-weight:700; cursor:pointer;
+    box-shadow:0 4px 14px rgba(0,0,0,.3); -webkit-tap-highlight-color:transparent;}
+  .sq-fab.on{display:inline-flex;}
+  .sq-fab:active{transform:scale(.96);}
+  .sq-fab svg{width:17px; height:17px; display:block;}
+  .sq-inline{display:inline-flex; align-items:center; gap:6px;}
+  .sq-ov{position:fixed; inset:0; z-index:9000; display:none; align-items:center; justify-content:center;
+    background:rgba(12,14,18,.86); padding:16px; -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px);}
+  .sq-ov.on{display:flex;}
+  .sq-card{background:#fff; color:#1b1f24; border-radius:22px; padding:22px 22px 18px; width:100%; max-width:520px;
+    max-height:94vh; overflow:auto; text-align:center; box-shadow:0 24px 60px rgba(0,0,0,.45);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+  .sq-card h2{margin:0 0 2px; font-size:1.4rem; font-weight:800;}
+  .sq-card p.sq-sub{margin:0 0 14px; color:#5b6470; font-size:.95rem;}
+  /* Der weiße Rand um den Code ist Vorschrift: mindestens vier Module Ruhezone,
+     sonst erkennen Kameras den Code nicht. Die Breite setzt das Skript. */
+  .sq-code{display:flex; align-items:center; justify-content:center; margin:0 auto 12px;
+    width:min(74vw,330px); background:#fff; border:1px solid #e4e6ea; border-radius:14px; padding:14px 0;}
+  .sq-code canvas, .sq-code img{width:var(--sq-w,84%); height:auto; display:block; margin:0 auto; image-rendering:pixelated;}
+  .sq-code table{margin:0 auto;}
+  .sq-url{font-size:.86rem; color:#5b6470; word-break:break-all; background:#f3f4f6; border-radius:10px;
+    padding:9px 11px; margin-bottom:14px; line-height:1.4;
+    -webkit-user-select:text; user-select:text;}
+  .sq-row{display:flex; gap:9px; flex-wrap:wrap;}
+  .sq-row button{flex:1 1 130px; border:none; border-radius:12px; padding:13px 14px; font:inherit; font-size:1rem;
+    font-weight:750; cursor:pointer; background:#1b1f24; color:#fff; min-height:48px;}
+  .sq-row button.sq-alt{background:#fff; color:#1b1f24; box-shadow:inset 0 0 0 2px #dfe2e7;}
+  .sq-row button.sq-ok{background:#1f7a46;}
+  .sq-row button:active{transform:scale(.985);}
+  .sq-note{margin-top:11px; font-size:.8rem; color:#8a929c; line-height:1.45;}
+</style>
+<script>/* QR-Code: qrcodejs von David Shim (MIT) – dieselbe Bibliothek wie in der Digitalen Tafel */
+var QRCode;!function(){function a(a){this.mode=c.MODE_8BIT_BYTE,this.data=a,this.parsedData=[];for(var b=[],d=0,e=this.data.length;e>d;d++){var f=this.data.charCodeAt(d);f>65536?(b[0]=240|(1835008&f)>>>18,b[1]=128|(258048&f)>>>12,b[2]=128|(4032&f)>>>6,b[3]=128|63&f):f>2048?(b[0]=224|(61440&f)>>>12,b[1]=128|(4032&f)>>>6,b[2]=128|63&f):f>128?(b[0]=192|(1984&f)>>>6,b[1]=128|63&f):b[0]=f,this.parsedData=this.parsedData.concat(b)}this.parsedData.length!=this.data.length&&(this.parsedData.unshift(191),this.parsedData.unshift(187),this.parsedData.unshift(239))}function b(a,b){this.typeNumber=a,this.errorCorrectLevel=b,this.modules=null,this.moduleCount=0,this.dataCache=null,this.dataList=[]}function i(a,b){if(void 0==a.length)throw new Error(a.length+"/"+b);for(var c=0;c<a.length&&0==a[c];)c++;this.num=new Array(a.length-c+b);for(var d=0;d<a.length-c;d++)this.num[d]=a[d+c]}function j(a,b){this.totalCount=a,this.dataCount=b}function k(){this.buffer=[],this.length=0}function m(){return"undefined"!=typeof CanvasRenderingContext2D}function n(){var a=!1,b=navigator.userAgent;return/android/i.test(b)&&(a=!0,aMat=b.toString().match(/android ([0-9]\.[0-9])/i),aMat&&aMat[1]&&(a=parseFloat(aMat[1]))),a}function r(a,b){for(var c=1,e=s(a),f=0,g=l.length;g>=f;f++){var h=0;switch(b){case d.L:h=l[f][0];break;case d.M:h=l[f][1];break;case d.Q:h=l[f][2];break;case d.H:h=l[f][3]}if(h>=e)break;c++}if(c>l.length)throw new Error("Too long data");return c}function s(a){var b=encodeURI(a).toString().replace(/\%[0-9a-fA-F]{2}/g,"a");return b.length+(b.length!=a?3:0)}a.prototype={getLength:function(){return this.parsedData.length},write:function(a){for(var b=0,c=this.parsedData.length;c>b;b++)a.put(this.parsedData[b],8)}},b.prototype={addData:function(b){var c=new a(b);this.dataList.push(c),this.dataCache=null},isDark:function(a,b){if(0>a||this.moduleCount<=a||0>b||this.moduleCount<=b)throw new Error(a+","+b);return this.modules[a][b]},getModuleCount:function(){return this.moduleCount},make:function(){this.makeImpl(!1,this.getBestMaskPattern())},makeImpl:function(a,c){this.moduleCount=4*this.typeNumber+17,this.modules=new Array(this.moduleCount);for(var d=0;d<this.moduleCount;d++){this.modules[d]=new Array(this.moduleCount);for(var e=0;e<this.moduleCount;e++)this.modules[d][e]=null}this.setupPositionProbePattern(0,0),this.setupPositionProbePattern(this.moduleCount-7,0),this.setupPositionProbePattern(0,this.moduleCount-7),this.setupPositionAdjustPattern(),this.setupTimingPattern(),this.setupTypeInfo(a,c),this.typeNumber>=7&&this.setupTypeNumber(a),null==this.dataCache&&(this.dataCache=b.createData(this.typeNumber,this.errorCorrectLevel,this.dataList)),this.mapData(this.dataCache,c)},setupPositionProbePattern:function(a,b){for(var c=-1;7>=c;c++)if(!(-1>=a+c||this.moduleCount<=a+c))for(var d=-1;7>=d;d++)-1>=b+d||this.moduleCount<=b+d||(this.modules[a+c][b+d]=c>=0&&6>=c&&(0==d||6==d)||d>=0&&6>=d&&(0==c||6==c)||c>=2&&4>=c&&d>=2&&4>=d?!0:!1)},getBestMaskPattern:function(){for(var a=0,b=0,c=0;8>c;c++){this.makeImpl(!0,c);var d=f.getLostPoint(this);(0==c||a>d)&&(a=d,b=c)}return b},createMovieClip:function(a,b,c){var d=a.createEmptyMovieClip(b,c),e=1;this.make();for(var f=0;f<this.modules.length;f++)for(var g=f*e,h=0;h<this.modules[f].length;h++){var i=h*e,j=this.modules[f][h];j&&(d.beginFill(0,100),d.moveTo(i,g),d.lineTo(i+e,g),d.lineTo(i+e,g+e),d.lineTo(i,g+e),d.endFill())}return d},setupTimingPattern:function(){for(var a=8;a<this.moduleCount-8;a++)null==this.modules[a][6]&&(this.modules[a][6]=0==a%2);for(var b=8;b<this.moduleCount-8;b++)null==this.modules[6][b]&&(this.modules[6][b]=0==b%2)},setupPositionAdjustPattern:function(){for(var a=f.getPatternPosition(this.typeNumber),b=0;b<a.length;b++)for(var c=0;c<a.length;c++){var d=a[b],e=a[c];if(null==this.modules[d][e])for(var g=-2;2>=g;g++)for(var h=-2;2>=h;h++)this.modules[d+g][e+h]=-2==g||2==g||-2==h||2==h||0==g&&0==h?!0:!1}},setupTypeNumber:function(a){for(var b=f.getBCHTypeNumber(this.typeNumber),c=0;18>c;c++){var d=!a&&1==(1&b>>c);this.modules[Math.floor(c/3)][c%3+this.moduleCount-8-3]=d}for(var c=0;18>c;c++){var d=!a&&1==(1&b>>c);this.modules[c%3+this.moduleCount-8-3][Math.floor(c/3)]=d}},setupTypeInfo:function(a,b){for(var c=this.errorCorrectLevel<<3|b,d=f.getBCHTypeInfo(c),e=0;15>e;e++){var g=!a&&1==(1&d>>e);6>e?this.modules[e][8]=g:8>e?this.modules[e+1][8]=g:this.modules[this.moduleCount-15+e][8]=g}for(var e=0;15>e;e++){var g=!a&&1==(1&d>>e);8>e?this.modules[8][this.moduleCount-e-1]=g:9>e?this.modules[8][15-e-1+1]=g:this.modules[8][15-e-1]=g}this.modules[this.moduleCount-8][8]=!a},mapData:function(a,b){for(var c=-1,d=this.moduleCount-1,e=7,g=0,h=this.moduleCount-1;h>0;h-=2)for(6==h&&h--;;){for(var i=0;2>i;i++)if(null==this.modules[d][h-i]){var j=!1;g<a.length&&(j=1==(1&a[g]>>>e));var k=f.getMask(b,d,h-i);k&&(j=!j),this.modules[d][h-i]=j,e--,-1==e&&(g++,e=7)}if(d+=c,0>d||this.moduleCount<=d){d-=c,c=-c;break}}}},b.PAD0=236,b.PAD1=17,b.createData=function(a,c,d){for(var e=j.getRSBlocks(a,c),g=new k,h=0;h<d.length;h++){var i=d[h];g.put(i.mode,4),g.put(i.getLength(),f.getLengthInBits(i.mode,a)),i.write(g)}for(var l=0,h=0;h<e.length;h++)l+=e[h].dataCount;if(g.getLengthInBits()>8*l)throw new Error("code length overflow. ("+g.getLengthInBits()+">"+8*l+")");for(g.getLengthInBits()+4<=8*l&&g.put(0,4);0!=g.getLengthInBits()%8;)g.putBit(!1);for(;;){if(g.getLengthInBits()>=8*l)break;if(g.put(b.PAD0,8),g.getLengthInBits()>=8*l)break;g.put(b.PAD1,8)}return b.createBytes(g,e)},b.createBytes=function(a,b){for(var c=0,d=0,e=0,g=new Array(b.length),h=new Array(b.length),j=0;j<b.length;j++){var k=b[j].dataCount,l=b[j].totalCount-k;d=Math.max(d,k),e=Math.max(e,l),g[j]=new Array(k);for(var m=0;m<g[j].length;m++)g[j][m]=255&a.buffer[m+c];c+=k;var n=f.getErrorCorrectPolynomial(l),o=new i(g[j],n.getLength()-1),p=o.mod(n);h[j]=new Array(n.getLength()-1);for(var m=0;m<h[j].length;m++){var q=m+p.getLength()-h[j].length;h[j][m]=q>=0?p.get(q):0}}for(var r=0,m=0;m<b.length;m++)r+=b[m].totalCount;for(var s=new Array(r),t=0,m=0;d>m;m++)for(var j=0;j<b.length;j++)m<g[j].length&&(s[t++]=g[j][m]);for(var m=0;e>m;m++)for(var j=0;j<b.length;j++)m<h[j].length&&(s[t++]=h[j][m]);return s};for(var c={MODE_NUMBER:1,MODE_ALPHA_NUM:2,MODE_8BIT_BYTE:4,MODE_KANJI:8},d={L:1,M:0,Q:3,H:2},e={PATTERN000:0,PATTERN001:1,PATTERN010:2,PATTERN011:3,PATTERN100:4,PATTERN101:5,PATTERN110:6,PATTERN111:7},f={PATTERN_POSITION_TABLE:[[],[6,18],[6,22],[6,26],[6,30],[6,34],[6,22,38],[6,24,42],[6,26,46],[6,28,50],[6,30,54],[6,32,58],[6,34,62],[6,26,46,66],[6,26,48,70],[6,26,50,74],[6,30,54,78],[6,30,56,82],[6,30,58,86],[6,34,62,90],[6,28,50,72,94],[6,26,50,74,98],[6,30,54,78,102],[6,28,54,80,106],[6,32,58,84,110],[6,30,58,86,114],[6,34,62,90,118],[6,26,50,74,98,122],[6,30,54,78,102,126],[6,26,52,78,104,130],[6,30,56,82,108,134],[6,34,60,86,112,138],[6,30,58,86,114,142],[6,34,62,90,118,146],[6,30,54,78,102,126,150],[6,24,50,76,102,128,154],[6,28,54,80,106,132,158],[6,32,58,84,110,136,162],[6,26,54,82,110,138,166],[6,30,58,86,114,142,170]],G15:1335,G18:7973,G15_MASK:21522,getBCHTypeInfo:function(a){for(var b=a<<10;f.getBCHDigit(b)-f.getBCHDigit(f.G15)>=0;)b^=f.G15<<f.getBCHDigit(b)-f.getBCHDigit(f.G15);return(a<<10|b)^f.G15_MASK},getBCHTypeNumber:function(a){for(var b=a<<12;f.getBCHDigit(b)-f.getBCHDigit(f.G18)>=0;)b^=f.G18<<f.getBCHDigit(b)-f.getBCHDigit(f.G18);return a<<12|b},getBCHDigit:function(a){for(var b=0;0!=a;)b++,a>>>=1;return b},getPatternPosition:function(a){return f.PATTERN_POSITION_TABLE[a-1]},getMask:function(a,b,c){switch(a){case e.PATTERN000:return 0==(b+c)%2;case e.PATTERN001:return 0==b%2;case e.PATTERN010:return 0==c%3;case e.PATTERN011:return 0==(b+c)%3;case e.PATTERN100:return 0==(Math.floor(b/2)+Math.floor(c/3))%2;case e.PATTERN101:return 0==b*c%2+b*c%3;case e.PATTERN110:return 0==(b*c%2+b*c%3)%2;case e.PATTERN111:return 0==(b*c%3+(b+c)%2)%2;default:throw new Error("bad maskPattern:"+a)}},getErrorCorrectPolynomial:function(a){for(var b=new i([1],0),c=0;a>c;c++)b=b.multiply(new i([1,g.gexp(c)],0));return b},getLengthInBits:function(a,b){if(b>=1&&10>b)switch(a){case c.MODE_NUMBER:return 10;case c.MODE_ALPHA_NUM:return 9;case c.MODE_8BIT_BYTE:return 8;case c.MODE_KANJI:return 8;default:throw new Error("mode:"+a)}else if(27>b)switch(a){case c.MODE_NUMBER:return 12;case c.MODE_ALPHA_NUM:return 11;case c.MODE_8BIT_BYTE:return 16;case c.MODE_KANJI:return 10;default:throw new Error("mode:"+a)}else{if(!(41>b))throw new Error("type:"+b);switch(a){case c.MODE_NUMBER:return 14;case c.MODE_ALPHA_NUM:return 13;case c.MODE_8BIT_BYTE:return 16;case c.MODE_KANJI:return 12;default:throw new Error("mode:"+a)}}},getLostPoint:function(a){for(var b=a.getModuleCount(),c=0,d=0;b>d;d++)for(var e=0;b>e;e++){for(var f=0,g=a.isDark(d,e),h=-1;1>=h;h++)if(!(0>d+h||d+h>=b))for(var i=-1;1>=i;i++)0>e+i||e+i>=b||(0!=h||0!=i)&&g==a.isDark(d+h,e+i)&&f++;f>5&&(c+=3+f-5)}for(var d=0;b-1>d;d++)for(var e=0;b-1>e;e++){var j=0;a.isDark(d,e)&&j++,a.isDark(d+1,e)&&j++,a.isDark(d,e+1)&&j++,a.isDark(d+1,e+1)&&j++,(0==j||4==j)&&(c+=3)}for(var d=0;b>d;d++)for(var e=0;b-6>e;e++)a.isDark(d,e)&&!a.isDark(d,e+1)&&a.isDark(d,e+2)&&a.isDark(d,e+3)&&a.isDark(d,e+4)&&!a.isDark(d,e+5)&&a.isDark(d,e+6)&&(c+=40);for(var e=0;b>e;e++)for(var d=0;b-6>d;d++)a.isDark(d,e)&&!a.isDark(d+1,e)&&a.isDark(d+2,e)&&a.isDark(d+3,e)&&a.isDark(d+4,e)&&!a.isDark(d+5,e)&&a.isDark(d+6,e)&&(c+=40);for(var k=0,e=0;b>e;e++)for(var d=0;b>d;d++)a.isDark(d,e)&&k++;var l=Math.abs(100*k/b/b-50)/5;return c+=10*l}},g={glog:function(a){if(1>a)throw new Error("glog("+a+")");return g.LOG_TABLE[a]},gexp:function(a){for(;0>a;)a+=255;for(;a>=256;)a-=255;return g.EXP_TABLE[a]},EXP_TABLE:new Array(256),LOG_TABLE:new Array(256)},h=0;8>h;h++)g.EXP_TABLE[h]=1<<h;for(var h=8;256>h;h++)g.EXP_TABLE[h]=g.EXP_TABLE[h-4]^g.EXP_TABLE[h-5]^g.EXP_TABLE[h-6]^g.EXP_TABLE[h-8];for(var h=0;255>h;h++)g.LOG_TABLE[g.EXP_TABLE[h]]=h;i.prototype={get:function(a){return this.num[a]},getLength:function(){return this.num.length},multiply:function(a){for(var b=new Array(this.getLength()+a.getLength()-1),c=0;c<this.getLength();c++)for(var d=0;d<a.getLength();d++)b[c+d]^=g.gexp(g.glog(this.get(c))+g.glog(a.get(d)));return new i(b,0)},mod:function(a){if(this.getLength()-a.getLength()<0)return this;for(var b=g.glog(this.get(0))-g.glog(a.get(0)),c=new Array(this.getLength()),d=0;d<this.getLength();d++)c[d]=this.get(d);for(var d=0;d<a.getLength();d++)c[d]^=g.gexp(g.glog(a.get(d))+b);return new i(c,0).mod(a)}},j.RS_BLOCK_TABLE=[[1,26,19],[1,26,16],[1,26,13],[1,26,9],[1,44,34],[1,44,28],[1,44,22],[1,44,16],[1,70,55],[1,70,44],[2,35,17],[2,35,13],[1,100,80],[2,50,32],[2,50,24],[4,25,9],[1,134,108],[2,67,43],[2,33,15,2,34,16],[2,33,11,2,34,12],[2,86,68],[4,43,27],[4,43,19],[4,43,15],[2,98,78],[4,49,31],[2,32,14,4,33,15],[4,39,13,1,40,14],[2,121,97],[2,60,38,2,61,39],[4,40,18,2,41,19],[4,40,14,2,41,15],[2,146,116],[3,58,36,2,59,37],[4,36,16,4,37,17],[4,36,12,4,37,13],[2,86,68,2,87,69],[4,69,43,1,70,44],[6,43,19,2,44,20],[6,43,15,2,44,16],[4,101,81],[1,80,50,4,81,51],[4,50,22,4,51,23],[3,36,12,8,37,13],[2,116,92,2,117,93],[6,58,36,2,59,37],[4,46,20,6,47,21],[7,42,14,4,43,15],[4,133,107],[8,59,37,1,60,38],[8,44,20,4,45,21],[12,33,11,4,34,12],[3,145,115,1,146,116],[4,64,40,5,65,41],[11,36,16,5,37,17],[11,36,12,5,37,13],[5,109,87,1,110,88],[5,65,41,5,66,42],[5,54,24,7,55,25],[11,36,12],[5,122,98,1,123,99],[7,73,45,3,74,46],[15,43,19,2,44,20],[3,45,15,13,46,16],[1,135,107,5,136,108],[10,74,46,1,75,47],[1,50,22,15,51,23],[2,42,14,17,43,15],[5,150,120,1,151,121],[9,69,43,4,70,44],[17,50,22,1,51,23],[2,42,14,19,43,15],[3,141,113,4,142,114],[3,70,44,11,71,45],[17,47,21,4,48,22],[9,39,13,16,40,14],[3,135,107,5,136,108],[3,67,41,13,68,42],[15,54,24,5,55,25],[15,43,15,10,44,16],[4,144,116,4,145,117],[17,68,42],[17,50,22,6,51,23],[19,46,16,6,47,17],[2,139,111,7,140,112],[17,74,46],[7,54,24,16,55,25],[34,37,13],[4,151,121,5,152,122],[4,75,47,14,76,48],[11,54,24,14,55,25],[16,45,15,14,46,16],[6,147,117,4,148,118],[6,73,45,14,74,46],[11,54,24,16,55,25],[30,46,16,2,47,17],[8,132,106,4,133,107],[8,75,47,13,76,48],[7,54,24,22,55,25],[22,45,15,13,46,16],[10,142,114,2,143,115],[19,74,46,4,75,47],[28,50,22,6,51,23],[33,46,16,4,47,17],[8,152,122,4,153,123],[22,73,45,3,74,46],[8,53,23,26,54,24],[12,45,15,28,46,16],[3,147,117,10,148,118],[3,73,45,23,74,46],[4,54,24,31,55,25],[11,45,15,31,46,16],[7,146,116,7,147,117],[21,73,45,7,74,46],[1,53,23,37,54,24],[19,45,15,26,46,16],[5,145,115,10,146,116],[19,75,47,10,76,48],[15,54,24,25,55,25],[23,45,15,25,46,16],[13,145,115,3,146,116],[2,74,46,29,75,47],[42,54,24,1,55,25],[23,45,15,28,46,16],[17,145,115],[10,74,46,23,75,47],[10,54,24,35,55,25],[19,45,15,35,46,16],[17,145,115,1,146,116],[14,74,46,21,75,47],[29,54,24,19,55,25],[11,45,15,46,46,16],[13,145,115,6,146,116],[14,74,46,23,75,47],[44,54,24,7,55,25],[59,46,16,1,47,17],[12,151,121,7,152,122],[12,75,47,26,76,48],[39,54,24,14,55,25],[22,45,15,41,46,16],[6,151,121,14,152,122],[6,75,47,34,76,48],[46,54,24,10,55,25],[2,45,15,64,46,16],[17,152,122,4,153,123],[29,74,46,14,75,47],[49,54,24,10,55,25],[24,45,15,46,46,16],[4,152,122,18,153,123],[13,74,46,32,75,47],[48,54,24,14,55,25],[42,45,15,32,46,16],[20,147,117,4,148,118],[40,75,47,7,76,48],[43,54,24,22,55,25],[10,45,15,67,46,16],[19,148,118,6,149,119],[18,75,47,31,76,48],[34,54,24,34,55,25],[20,45,15,61,46,16]],j.getRSBlocks=function(a,b){var c=j.getRsBlockTable(a,b);if(void 0==c)throw new Error("bad rs block @ typeNumber:"+a+"/errorCorrectLevel:"+b);for(var d=c.length/3,e=[],f=0;d>f;f++)for(var g=c[3*f+0],h=c[3*f+1],i=c[3*f+2],k=0;g>k;k++)e.push(new j(h,i));return e},j.getRsBlockTable=function(a,b){switch(b){case d.L:return j.RS_BLOCK_TABLE[4*(a-1)+0];case d.M:return j.RS_BLOCK_TABLE[4*(a-1)+1];case d.Q:return j.RS_BLOCK_TABLE[4*(a-1)+2];case d.H:return j.RS_BLOCK_TABLE[4*(a-1)+3];default:return void 0}},k.prototype={get:function(a){var b=Math.floor(a/8);return 1==(1&this.buffer[b]>>>7-a%8)},put:function(a,b){for(var c=0;b>c;c++)this.putBit(1==(1&a>>>b-c-1))},getLengthInBits:function(){return this.length},putBit:function(a){var b=Math.floor(this.length/8);this.buffer.length<=b&&this.buffer.push(0),a&&(this.buffer[b]|=128>>>this.length%8),this.length++}};var l=[[17,14,11,7],[32,26,20,14],[53,42,32,24],[78,62,46,34],[106,84,60,44],[134,106,74,58],[154,122,86,64],[192,152,108,84],[230,180,130,98],[271,213,151,119],[321,251,177,137],[367,287,203,155],[425,331,241,177],[458,362,258,194],[520,412,292,220],[586,450,322,250],[644,504,364,280],[718,560,394,310],[792,624,442,338],[858,666,482,382],[929,711,509,403],[1003,779,565,439],[1091,857,611,461],[1171,911,661,511],[1273,997,715,535],[1367,1059,751,593],[1465,1125,805,625],[1528,1190,868,658],[1628,1264,908,698],[1732,1370,982,742],[1840,1452,1030,790],[1952,1538,1112,842],[2068,1628,1168,898],[2188,1722,1228,958],[2303,1809,1283,983],[2431,1911,1351,1051],[2563,1989,1423,1093],[2699,2099,1499,1139],[2809,2213,1579,1219],[2953,2331,1663,1273]],o=function(){var a=function(a,b){this._el=a,this._htOption=b};return a.prototype.draw=function(a){function g(a,b){var c=document.createElementNS("http://www.w3.org/2000/svg",a);for(var d in b)b.hasOwnProperty(d)&&c.setAttribute(d,b[d]);return c}var b=this._htOption,c=this._el,d=a.getModuleCount();Math.floor(b.width/d),Math.floor(b.height/d),this.clear();var h=g("svg",{viewBox:"0 0 "+String(d)+" "+String(d),width:"100%",height:"100%",fill:b.colorLight});h.setAttributeNS("http://www.w3.org/2000/xmlns/","xmlns:xlink","http://www.w3.org/1999/xlink"),c.appendChild(h),h.appendChild(g("rect",{fill:b.colorDark,width:"1",height:"1",id:"template"}));for(var i=0;d>i;i++)for(var j=0;d>j;j++)if(a.isDark(i,j)){var k=g("use",{x:String(i),y:String(j)});k.setAttributeNS("http://www.w3.org/1999/xlink","href","#template"),h.appendChild(k)}},a.prototype.clear=function(){for(;this._el.hasChildNodes();)this._el.removeChild(this._el.lastChild)},a}(),p="svg"===document.documentElement.tagName.toLowerCase(),q=p?o:m()?function(){function a(){this._elImage.src=this._elCanvas.toDataURL("image/png"),this._elImage.style.display="block",this._elCanvas.style.display="none"}function d(a,b){var c=this;if(c._fFail=b,c._fSuccess=a,null===c._bSupportDataURI){var d=document.createElement("img"),e=function(){c._bSupportDataURI=!1,c._fFail&&_fFail.call(c)},f=function(){c._bSupportDataURI=!0,c._fSuccess&&c._fSuccess.call(c)};return d.onabort=e,d.onerror=e,d.onload=f,d.src="data:image/gif;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg==",void 0}c._bSupportDataURI===!0&&c._fSuccess?c._fSuccess.call(c):c._bSupportDataURI===!1&&c._fFail&&c._fFail.call(c)}if(this._android&&this._android<=2.1){var b=1/window.devicePixelRatio,c=CanvasRenderingContext2D.prototype.drawImage;CanvasRenderingContext2D.prototype.drawImage=function(a,d,e,f,g,h,i,j){if("nodeName"in a&&/img/i.test(a.nodeName))for(var l=arguments.length-1;l>=1;l--)arguments[l]=arguments[l]*b;else"undefined"==typeof j&&(arguments[1]*=b,arguments[2]*=b,arguments[3]*=b,arguments[4]*=b);c.apply(this,arguments)}}var e=function(a,b){this._bIsPainted=!1,this._android=n(),this._htOption=b,this._elCanvas=document.createElement("canvas"),this._elCanvas.width=b.width,this._elCanvas.height=b.height,a.appendChild(this._elCanvas),this._el=a,this._oContext=this._elCanvas.getContext("2d"),this._bIsPainted=!1,this._elImage=document.createElement("img"),this._elImage.style.display="none",this._el.appendChild(this._elImage),this._bSupportDataURI=null};return e.prototype.draw=function(a){var b=this._elImage,c=this._oContext,d=this._htOption,e=a.getModuleCount(),f=d.width/e,g=d.height/e,h=Math.round(f),i=Math.round(g);b.style.display="none",this.clear();for(var j=0;e>j;j++)for(var k=0;e>k;k++){var l=a.isDark(j,k),m=k*f,n=j*g;c.strokeStyle=l?d.colorDark:d.colorLight,c.lineWidth=1,c.fillStyle=l?d.colorDark:d.colorLight,c.fillRect(m,n,f,g),c.strokeRect(Math.floor(m)+.5,Math.floor(n)+.5,h,i),c.strokeRect(Math.ceil(m)-.5,Math.ceil(n)-.5,h,i)}this._bIsPainted=!0},e.prototype.makeImage=function(){this._bIsPainted&&d.call(this,a)},e.prototype.isPainted=function(){return this._bIsPainted},e.prototype.clear=function(){this._oContext.clearRect(0,0,this._elCanvas.width,this._elCanvas.height),this._bIsPainted=!1},e.prototype.round=function(a){return a?Math.floor(1e3*a)/1e3:a},e}():function(){var a=function(a,b){this._el=a,this._htOption=b};return a.prototype.draw=function(a){for(var b=this._htOption,c=this._el,d=a.getModuleCount(),e=Math.floor(b.width/d),f=Math.floor(b.height/d),g=['<table style="border:0;border-collapse:collapse;">'],h=0;d>h;h++){g.push("<tr>");for(var i=0;d>i;i++)g.push('<td style="border:0;border-collapse:collapse;padding:0;margin:0;width:'+e+"px;height:"+f+"px;background-color:"+(a.isDark(h,i)?b.colorDark:b.colorLight)+';"></td>');g.push("</tr>")}g.push("</table>"),c.innerHTML=g.join("");var j=c.childNodes[0],k=(b.width-j.offsetWidth)/2,l=(b.height-j.offsetHeight)/2;k>0&&l>0&&(j.style.margin=l+"px "+k+"px")},a.prototype.clear=function(){this._el.innerHTML=""},a}();QRCode=function(a,b){if(this._htOption={width:256,height:256,typeNumber:4,colorDark:"#000000",colorLight:"#ffffff",correctLevel:d.H},"string"==typeof b&&(b={text:b}),b)for(var c in b)this._htOption[c]=b[c];"string"==typeof a&&(a=document.getElementById(a)),this._android=n(),this._el=a,this._oQRCode=null,this._oDrawing=new q(this._el,this._htOption),this._htOption.text&&this.makeCode(this._htOption.text)},QRCode.prototype.makeCode=function(a){this._oQRCode=new b(r(a,this._htOption.correctLevel),this._htOption.correctLevel),this._oQRCode.addData(a),this._oQRCode.make(),this._el.title=a,this._oDrawing.draw(this._oQRCode),this.makeImage()},QRCode.prototype.makeImage=function(){"function"==typeof this._oDrawing.makeImage&&(!this._android||this._android>=3)&&this._oDrawing.makeImage()},QRCode.prototype.clear=function(){this._oDrawing.clear()},QRCode.CorrectLevel=d}();
+</script>
+<script>
+(function(){
+  "use strict";
+  if(window.ShareQR) return;
+
+  var ANCHOR = "#setup";          // Startbildschirm: Knopf nur sichtbar, solange der zu sehen ist
+  var INLINE = "_";          // optional: Leiste, in die der Knopf direkt eingebaut wird
+  var BASE_KEY = "spieleSuite.basis";
+  var BASE_STD = "https://mauthier-bit.github.io/Spiele-Suite/";
+
+  /* ---------------- Adresse bestimmen ---------------- */
+  function basis(){
+    var b=null;
+    try{ b=localStorage.getItem(BASE_KEY); }catch(e){}
+    b=b||BASE_STD;
+    return b.charAt(b.length-1)==="/" ? b : b+"/";
+  }
+  function dateiname(){
+    var p=location.pathname||"";
+    var name=p.substring(p.lastIndexOf("/")+1);
+    try{ name=decodeURIComponent(name); }catch(e){}
+    return /^[\w.%+ -]{1,80}\.html?$/i.test(name) ? name : "index.html";
+  }
+  function adresse(){
+    if(location.protocol==="http:"||location.protocol==="https:") return location.href.split("#")[0];
+    return basis()+encodeURIComponent(dateiname());
+  }
+
+  /* ---------------- QR-Code zeichnen ---------------- */
+  function zeichneCode(host,url){
+    host.innerHTML="";
+    host.style.removeProperty("--sq-w");
+    if(typeof QRCode==="undefined"){
+      host.innerHTML='<div style="padding:18px;color:#8a929c;font-size:.9rem;">QR-Code nicht verfügbar – bitte den Link weitergeben.</div>';
+      return;
+    }
+    try{
+      var q=new QRCode(host,{text:url, width:900, height:900, correctLevel:QRCode.CorrectLevel.M});
+      /* Ruhezone: vier Module weiß ringsum, sonst findet die Kamera den Code nicht */
+      var n=q._oQRCode && q._oQRCode.getModuleCount ? q._oQRCode.getModuleCount() : 0;
+      if(n) host.style.setProperty("--sq-w", (100*n/(n+8)).toFixed(2)+"%");
+    }catch(e){
+      host.innerHTML='<div style="padding:18px;color:#8a929c;font-size:.9rem;">Die Adresse ist zu lang für einen QR-Code – bitte den Link kopieren.</div>';
+    }
+  }
+
+  /* ---------------- Oberfläche ---------------- */
+  var ov=null;
+  function baueOverlay(){
+    ov=document.createElement("div");
+    ov.className="sq-ov";
+    ov.innerHTML='<div class="sq-card">'+
+      '<h2 id="sqTitle">Teilen</h2><p class="sq-sub">Mit der Kamera scannen – das Spiel öffnet sich direkt im Browser.</p>'+
+      '<div class="sq-code" id="sqCode"></div>'+
+      '<div class="sq-url" id="sqUrl"></div>'+
+      '<div class="sq-row">'+
+        '<button class="sq-copy">Link kopieren</button>'+
+        '<button class="sq-alt sq-edit">Adresse ändern</button>'+
+        '<button class="sq-alt sq-close">Schließen</button>'+
+      '</div>'+
+      '<div class="sq-note" id="sqNote"></div>'+
+      '</div>';
+    document.body.appendChild(ov);
+    ov.addEventListener("click",function(e){ if(e.target===ov) zu(); });
+    ov.querySelector(".sq-close").addEventListener("click",zu);
+    ov.querySelector(".sq-copy").addEventListener("click",function(){ kopiereLink(this); });
+    ov.querySelector(".sq-edit").addEventListener("click",function(){
+      var neu=prompt("Internetadresse des Ordners, in dem die Spiele liegen:", basis());
+      if(neu===null) return;
+      neu=neu.trim();
+      try{ if(neu) localStorage.setItem(BASE_KEY,neu); else localStorage.removeItem(BASE_KEY); }catch(e){}
+      fuelle();
+    });
+  }
+  function fuelle(){
+    var url=adresse();
+    var t=(document.title||"").split(/[\u2013\u2014|\u00b7]/)[0].trim();
+    ov.querySelector("#sqTitle").textContent=(t||"Diese Seite")+" teilen";
+    zeichneCode(ov.querySelector("#sqCode"), url);
+    ov.querySelector("#sqUrl").textContent=url;
+    ov.querySelector("#sqNote").innerHTML = (location.protocol==="http:"||location.protocol==="https:")
+      ? "Das ist die Adresse dieser Seite."
+      : "Die Datei liegt lokal auf diesem Gerät. Der Code zeigt deshalb auf die veröffentlichte Fassung – über „Adresse ändern“ anpassbar.";
+  }
+  function kopiereLink(btn){
+    var url=adresse();
+    function melde(ok){
+      btn.textContent = ok ? "Kopiert \u2713" : "Bitte von Hand kopieren";
+      btn.classList.toggle("sq-ok", !!ok);
+      if(!ok){
+        try{
+          var el=ov.querySelector("#sqUrl"), r=document.createRange();
+          r.selectNodeContents(el);
+          var s=window.getSelection(); s.removeAllRanges(); s.addRange(r);
+        }catch(e){}
+      }
+      clearTimeout(btn._t);
+      btn._t=setTimeout(function(){ btn.textContent="Link kopieren"; btn.classList.remove("sq-ok"); },1900);
+    }
+    function altweg(){
+      try{
+        var ta=document.createElement("textarea");
+        ta.value=url; ta.setAttribute("readonly","");
+        ta.style.position="fixed"; ta.style.top="-1000px"; ta.style.opacity="0";
+        document.body.appendChild(ta);
+        ta.select(); ta.setSelectionRange(0,ta.value.length);
+        var ok=document.execCommand("copy");
+        document.body.removeChild(ta);
+        melde(ok);
+      }catch(e){ melde(false); }
+    }
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(url).then(function(){ melde(true); }, altweg);
+    } else altweg();
+  }
+  function auf(){ if(!ov) baueOverlay(); fuelle(); ov.classList.add("on"); }
+  function zu(){ if(ov) ov.classList.remove("on"); }
+
+  var ICON='<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 3h8v8H3V3zm2 2v4h4V5H5zm8-2h8v8h-8V3zm2 2v4h4V5h-4zM3 13h8v8H3v-8zm2 2v4h4v-4H5zm8-2h3v3h-3v-3zm5 0h3v3h-3v-3zm-5 5h3v3h-3v-3zm5 0h3v3h-3v-3z"/></svg>';
+  function knopf(){
+    var inline=INLINE && INLINE.charAt(0)!=="_" ? document.querySelector(INLINE) : null;
+    if(inline){
+      var b=document.createElement("button");
+      b.className=(inline.querySelector("button")? inline.querySelector("button").className : "")+" sq-inline";
+      b.type="button"; b.innerHTML=ICON+"<span>Teilen</span>";
+      b.addEventListener("click",auf);
+      inline.appendChild(b);
+      return;
+    }
+    var f=document.createElement("button");
+    f.className="sq-fab"; f.type="button";
+    f.innerHTML=ICON+"<span>Teilen</span>";
+    f.addEventListener("click",auf);
+    document.body.appendChild(f);
+    var sel = ANCHOR && ANCHOR.charAt(0)!=="_" ? ANCHOR : null;
+    function sichtbar(){
+      if(!sel) return true;
+      var els=document.querySelectorAll(sel);
+      for(var i=0;i<els.length;i++){
+        var cs=getComputedStyle(els[i]);
+        if(cs.display!=="none" && cs.visibility!=="hidden" && els[i].getClientRects().length) return true;
+      }
+      return false;
+    }
+    function pruefe(){ f.classList.toggle("on", sichtbar() && !(ov&&ov.classList.contains("on"))); }
+    pruefe();
+    setInterval(pruefe,400);
+  }
+  function start(){ knopf(); }
+  if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",start);
+  else start();
+
+  window.ShareQR={open:auf, close:zu, url:adresse, basis:basis};
+})();
+</script>
+
+</body>
+</html>

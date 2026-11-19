@@ -1,0 +1,2740 @@
+<!DOCTYPE html><html lang="de"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<title>Bewegungsdiagramme</title>
+<style>
+/* Layout: Werkzeugleiste oben; 1D = Messstreifen über voller Breite + Diagramme darunter; 2D = Messfeld links, Diagramme rechts (Hochformat: untereinander). */
+:root {
+  --bg: #eef1f4;
+  --surface: #ffffff;
+  --ink: #18212c;
+  --muted: #5b6878;
+  --line: #cfd6de;
+  --grid: #e7ebef;
+  --qx: #2a5bd7;   /* Ort */
+  --qv: #0f8458;   /* Geschwindigkeit */
+  --qa: #cc5a14;   /* Beschleunigung */
+  /* Intervallstreifen: Hier zaehlt nicht, welche Groesse abgelesen wird, sondern welches
+     Vorzeichen sie hat. Aus v abgelesen (Monotonie von x, Vorzeichen von v): blau vorwaerts
+     bzw. steigend, orange rueckwaerts bzw. fallend. Aus a abgelesen (Kruemmung von x,
+     Monotonie von v, Vorzeichen von a): gruen und rot. */
+  --iv1plus: #1f55d0;  --iv1minus: #d2690a;
+  --iv2plus: #0c8a4e;  --iv2minus: #c7182e;
+  --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --font-data: ui-monospace, Menlo, Consolas, monospace;
+}
+/* Ohne diese Zeile bleiben Elemente mit „hidden" sichtbar, weil Regeln wie .seg{display:inline-flex} staerker sind. */
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px;
+  padding-left: max(10px, env(safe-area-inset-left, 0px));
+  padding-right: max(10px, env(safe-area-inset-right, 0px));
+  box-sizing: border-box; overflow: hidden;
+  -webkit-text-size-adjust: 100%;
+}
+.app { height: 100%; display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 8px; padding-block: 8px; box-sizing: border-box; }
+
+/* Werkzeugleiste */
+.bar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+/* Allein geoeffnet liegt oben rechts der Knopf „Bearbeiten“ der Tafel - dort bleibt Platz. */
+body:not(.imRahmen) .bar { padding-right: 128px; }
+.brand { display: flex; align-items: baseline; gap: 10px; margin-right: auto; min-width: 0; }
+h1 { font-size: 1.1rem; margin: 0; letter-spacing: -0.01em; text-wrap: balance; }
+/* Die Knoepfe der Tafel (Bild, Teilen) sehen aus wie die uebrigen Knoepfe des Werkzeugs. */
+#shotBtns button, #teilenBtn button { font-size: 0.87rem; }
+#teilenBtn button { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+/* Kurze Rueckmeldung am unteren Rand - in der Tafel macht das TafelShot.toast. */
+#hinweisBalken { position: fixed; left: 50%; bottom: calc(16px + env(safe-area-inset-bottom));
+  transform: translateX(-50%) translateY(14px); background: #1f2937; color: #fff; border-radius: 12px;
+  padding: 11px 18px; font-size: 1rem; font-weight: 650; z-index: 9100; opacity: 0;
+  transition: .2s; pointer-events: none; max-width: 90vw; text-align: center; }
+#hinweisBalken.an { opacity: 1; transform: translateX(-50%) translateY(0); }
+.status { color: var(--muted); font-size: 0.85rem; font-family: var(--font-data); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.status.sample { color: var(--qa); }
+.group { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.group-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+button, select, input { font: inherit; color: inherit; }
+button, select {
+  touch-action: manipulation; background: var(--surface); border: 1px solid var(--line); border-radius: 8px;
+  padding: 5px 9px; min-height: 32px; cursor: pointer; font-size: 0.87rem;
+}
+/* Die Leiste gehoert den Knoepfen: Der Name steht schon in der Fensterleiste der Tafel, und die
+   Statuszeile drueckte die Knoepfe in eine zweite Zeile – beides steht nicht mehr in der Leiste.
+   #status bleibt als unsichtbarer Text erhalten (Vorlesefunktion, Aufnahmestand). */
+body.imRahmen .brand { display: none; }
+.status { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+button:hover { border-color: var(--muted); }
+button:focus-visible, select:focus-visible, input:focus-visible, summary:focus-visible { outline: 2px solid var(--qx); outline-offset: 2px; }
+button:disabled { opacity: 0.45; cursor: default; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--surface); }
+.seg button { border: 0; border-radius: 0; border-right: 1px solid var(--line); }
+.seg button:last-child { border-right: 0; }
+.seg button[aria-pressed="true"], .chip[aria-pressed="true"],
+#zielMal[aria-pressed="true"] { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+.chip { display: inline-flex; align-items: center; gap: 6px; }
+.chip .sw { width: 10px; height: 10px; border-radius: 50%; background: currentColor; opacity: 0.35; }
+.chip[aria-pressed="true"] .sw { opacity: 1; }
+.primary { background: var(--qx); color: #fff; border-color: var(--qx); }
+.slider { display: flex; align-items: center; gap: 8px; font-size: 0.92rem; }
+.slider input { width: 108px; accent-color: var(--qx); }
+.slider output { font-family: var(--font-data); font-size: 0.85rem; min-width: 4.5em; font-variant-numeric: tabular-nums; }
+details.settings { position: relative; }
+details.settings summary { list-style: none; cursor: pointer; border: 1px solid var(--line); border-radius: 8px; padding: 5px 9px; min-height: 32px; box-sizing: border-box; display: flex; align-items: center; background: var(--surface); font-size: 0.87rem; }
+details.settings summary::-webkit-details-marker { display: none; }
+/* Das Einstellungsfeld haengt nicht mehr starr am Zahnrad: Es steht fest im Fenster und
+   wird beim Oeffnen eingepasst (siehe panelSetzen) - sonst ragte es nach links hinaus, weil
+   das Zahnrad weit am linken Rand sitzt. Die Werte hier gelten, bis es geoeffnet wird. */
+.settings .panel {
+  position: fixed; left: 10px; top: 96px; z-index: 20; width: min(320px, calc(100vw - 20px));
+  max-height: calc(100vh - 110px); box-sizing: border-box;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+  display: grid; grid-template-rows: auto minmax(0, 1fr); box-shadow: 0 10px 30px rgba(0,0,0,0.18);
+}
+/* Kopfleiste mit Schliessen-Kreuz bleibt stehen, der Inhalt darunter scrollt. */
+.settings .panelKopf { display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 8px 8px 8px 14px; border-bottom: 1px solid var(--line); font-weight: 700; font-size: 0.95rem;
+  user-select: none; -webkit-user-select: none; }
+.settings .panelBody { padding: 14px; display: grid; gap: 10px; overflow-y: auto; overscroll-behavior: contain; }
+.settings label { display: grid; gap: 4px; font-size: 0.9rem; }
+.settings input[type=number] { border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; background: var(--bg); font-family: var(--font-data); }
+.settings p { margin: 0; font-size: 0.8rem; color: var(--muted); line-height: 1.4; }
+
+/* Bühne */
+.stage { display: grid; gap: 10px; min-height: 0; }
+/* Das waagerechte Lineal liegt oben am Rand und unter ihm steht nichts mehr, darum darf
+   das Aufnahmefeld flach sein - der gewonnene Platz gehoert den Diagrammen. */
+.mode-1d .stage { grid-template-rows: minmax(120px, 18%) minmax(0, 1fr); }
+.mode-1d.lane .stage { grid-template-rows: minmax(260px, 50%) minmax(0, 1fr); }
+/* 2D: Zwischen Zeichenflaeche und Diagrammen liegt ein Balken, den man ziehen kann;
+   --split sagt, wie viel Platz die Zeichenflaeche bekommt. */
+.mode-2d .stage { grid-template-columns: minmax(90px, var(--split, 44%)) 6px minmax(90px, 1fr); gap: 10px 4px; }
+.split { display: none; }
+.mode-2d .split { display: block; position: relative; cursor: col-resize; touch-action: none; }
+.mode-2d .split::before { content: ""; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  width: 3px; height: 44px; border-radius: 2px; background: var(--line); }
+/* der Balken ist schmal, die Trefferflaeche fuer den Finger bleibt breit */
+.mode-2d .split::after { content: ""; position: absolute; inset: 0 -9px; }
+.mode-2d .split:hover::before, .mode-2d .split.zieht::before { background: var(--muted); }
+/* y-Aufnahme: Das Aufnahmefeld steht senkrecht links neben den Diagrammen. */
+.mode-1d.senk .stage { grid-template-columns: minmax(104px, 15%) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }
+.mode-1d.senk.lane .stage { grid-template-columns: minmax(146px, 22%) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }
+/* Wo das Aufnahmefeld liegt, sagt die Einstellung (state.padPos): "hinter den Diagrammen"
+   heisst unten (waagerechte Aufnahme) bzw. rechts (senkrechte Aufnahme und 2D). Von Haus aus
+   liegt es davor; im Ziel-Modus rueckt es automatisch dahinter, damit die Hand nicht auf der
+   Zielkurve liegt, die gerade nachgefahren wird. Im Battle gilt das nicht - dort stehen
+   ohnehin beide Felder an den Fensterraendern. */
+/* Die Reihenfolge muss vollstaendig sein: In 2D liegt zwischen beiden noch der Teiler,
+   sonst rutschte er in die Spur des Aufnahmefeldes. */
+.padHinten .plotWrap { order: 1; } .padHinten .split { order: 2; } .padHinten .padWrap { order: 3; }
+.mode-1d.padHinten:not(.senk) .stage { grid-template-rows: minmax(0, 1fr) minmax(120px, 18%); }
+.mode-1d.padHinten.lane:not(.senk) .stage { grid-template-rows: minmax(0, 1fr) minmax(260px, 50%); }
+.mode-1d.padHinten.senk .stage { grid-template-columns: minmax(0, 1fr) minmax(104px, 15%); }
+.mode-1d.padHinten.senk.lane .stage { grid-template-columns: minmax(0, 1fr) minmax(146px, 22%); }
+.mode-2d.padHinten .stage { grid-template-columns: minmax(90px, 1fr) 6px minmax(90px, var(--split, 44%)); }
+/* Battle: je ein Aufnahmefeld am linken und am rechten Fensterrand, Diagramme dazwischen */
+.mode-1d.battle .stage { grid-template-columns: minmax(104px, 14%) minmax(0, 1fr) minmax(104px, 14%); grid-template-rows: minmax(0, 1fr); }
+.mode-1d.battle .padWrap { display: none; }
+.btPad { position: relative; min-height: 0; min-width: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.btPad[hidden] { display: none; }
+.btPad canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+/* im Spielmodus (Ziel/Battle) gehoeren Stellen, Intervall und Vektoren nicht zur Aufgabe */
+.app.spiel .nurAufnahme { display: none; }
+@media (orientation: portrait) {
+  .mode-2d .stage { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(120px, var(--split, 40%)) 6px minmax(0, 1fr); gap: 4px 10px; }
+  /* im Hochformat liegen sie uebereinander - "hinter den Diagrammen" heisst dann unten */
+  .mode-2d.padHinten .stage { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) 6px minmax(120px, var(--split, 40%)); }
+  .mode-2d .split { cursor: row-resize; }
+  .mode-2d .split::before { width: 44px; height: 3px; }
+  .mode-2d .split::after { inset: -9px 0; }
+}
+.padWrap { position: relative; min-height: 0; min-width: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+#pad { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.hint { position: absolute; left: 14px; top: 10px; right: 14px; margin: 0; font-size: 0.85rem; color: var(--muted); pointer-events: none; line-height: 1.35; }
+/* in der schmalen, senkrechten Spalte bleibt fuer den Hinweis nur wenig Platz */
+.mode-1d.senk .hint { left: 8px; right: 8px; font-size: 0.76rem; line-height: 1.25; }
+/* 1D waagerecht: Das Lineal liegt oben - der Hinweis rutscht an den unteren Rand. */
+.mode-1d:not(.senk) .hint { top: auto; bottom: 7px; }
+.plotWrap { display: grid; grid-template-rows: minmax(0, 1fr) auto; gap: 8px; min-height: 0; min-width: 0; }
+.plotBox { position: relative; min-height: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+#plots { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; user-select: none; -webkit-user-select: none; }
+/* Rechts an jedem Diagramm steht, was dort zu sehen sein soll - sonst gilt ein Schalter
+   oben fuer alle drei Diagramme und das Bild wird unuebersichtlich. Die Knoepfe fuer Tangente
+   und Flaeche tragen die Farbe der Groesse, die sie sichtbar machen (Tangente in x(t) -> v,
+   Flaeche unter v(t) -> x). Die Knoepfe fuer die Intervalle tragen beide Farben ihres
+   Streifens, denn dort steht die Farbe fuer das Vorzeichen, nicht fuer die Groesse. */
+.diaCtl { position: absolute; inset: 0; pointer-events: none; }
+.diaCtl[hidden] { display: none; }
+.diaCtl .grp { position: absolute; display: flex; flex-direction: column; gap: 4px; pointer-events: auto; }
+.diaCtl .grp[hidden] { display: none; }
+.diaCtl button {
+  width: 100%; box-sizing: border-box; min-height: 0; height: calc(26px * var(--fs, 1)); padding: 0 3px;
+  border-radius: 7px; background: var(--surface); color: var(--muted);
+  font-family: var(--font-body); font-weight: 700; font-size: calc(0.68rem * var(--fs, 1)); line-height: 1.1;
+}
+.diaCtl button[aria-pressed="true"] { color: #fff; }
+.diaCtl .bgX[aria-pressed="true"] { background: var(--qx); border-color: var(--qx); }
+.diaCtl .bgV[aria-pressed="true"] { background: var(--qv); border-color: var(--qv); }
+.diaCtl .bgA[aria-pressed="true"] { background: var(--qa); border-color: var(--qa); }
+.diaCtl .bgD1[aria-pressed="true"] { background: linear-gradient(90deg, var(--iv1plus) 50%, var(--iv1minus) 50%); border-color: var(--iv1minus); }
+.diaCtl .bgD2[aria-pressed="true"] { background: linear-gradient(90deg, var(--iv2plus) 50%, var(--iv2minus) 50%); border-color: var(--iv2minus); }
+/* Knoepfe, die nur ihr Zeichen tragen: Was sie tun, steht im Titel und im aria-label. */
+button.ic, details.settings summary.ic { min-width: 38px; padding: 0 8px; text-align: center; justify-content: center; font-size: 1.02rem; line-height: 1; }
+/* das Zahnrad ist in der Schrift ein kleines Zeichen und braucht etwas mehr */
+details.settings summary.ic { font-size: 1.2rem; }
+/* Die Tabelle nimmt hoechstens vier Zeilen ein, alles weitere wird gescrollt - sonst
+   schrumpfen die Diagramme, sobald mehrere Stellen gemerkt sind. Die Hoehe rechnet
+   readoutHoehe() aus, weil die Zeilen mit A- / A+ wachsen. */
+.readout { overflow-x: auto; max-height: 30vh; overflow-y: auto; overscroll-behavior: contain; }
+.readout thead th { position: sticky; top: 0; z-index: 1; background: var(--bg); }
+.readout table { border-collapse: collapse; font-family: var(--font-data); font-size: calc(0.82rem * var(--fs, 1)); font-variant-numeric: tabular-nums; width: 100%; }
+.readout th, .readout td { padding: 4px 8px; text-align: right; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.readout th { font-family: var(--font-body); font-weight: 700; color: var(--muted); font-size: calc(0.78rem * var(--fs, 1)); }
+.readout th:first-child, .readout td:first-child { text-align: left; }
+.readout td.del { width: 1%; }
+.readout td.del button { min-height: 28px; padding: 2px 8px; }
+.readout .iv td { color: var(--ink); }
+.readout .note { color: var(--muted); font-family: var(--font-body); font-size: calc(0.8rem * var(--fs, 1)); padding: 6px 2px; }
+/* Ergebniszeile von Ziel und Battle - sie steht dort, wo sonst die Ablesetabelle steht */
+.erg { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 18px; padding: 6px 2px;
+  font-family: var(--font-body); font-size: calc(0.9rem * var(--fs, 1)); color: var(--muted); }
+.erg b { font-size: calc(1.2rem * var(--fs, 1)); }
+.erg .sp { display: inline-flex; align-items: baseline; gap: 6px; color: var(--ink); }
+.erg .pt { width: 11px; height: 11px; border-radius: 3px; align-self: center; }
+.erg .sieg { font-weight: 700; color: var(--ink); }
+.cx { color: var(--qx); } .cv { color: var(--qv); } .ca { color: var(--qa); }
+.badge { display: inline-block; min-width: 1.4em; text-align: center; border-radius: 4px; background: var(--ink); color: var(--surface); padding: 0 4px; }
+/* Das Zeichen der Intervallzeile traegt selbst die beiden Farben - kein dunkler Grund. */
+.badge.iv2 { background: none; padding: 0; font-weight: 700; letter-spacing: 1px; }
+
+@media (max-width: 640px) {
+  body { overflow: auto; }
+  .app { height: auto; min-height: 100%; }
+  .mode-1d .stage, .mode-2d .stage { grid-template-columns: minmax(0, 1fr); grid-template-rows: 200px 560px; }
+  .mode-1d.senk .stage { grid-template-columns: minmax(96px, 24%) minmax(0, 1fr); grid-template-rows: 560px; }
+  .mode-1d.battle .stage { grid-template-columns: minmax(84px, 1fr) minmax(0, 1.8fr) minmax(84px, 1fr); grid-template-rows: 560px; }
+  .mode-1d.senk.lane .stage { grid-template-columns: minmax(130px, 32%) minmax(0, 1fr); grid-template-rows: 560px; }
+  .mode-1d.padHinten:not(.senk) .stage { grid-template-columns: minmax(0, 1fr); grid-template-rows: 560px 200px; }
+  .mode-1d.padHinten.senk .stage { grid-template-columns: minmax(0, 1fr) minmax(96px, 24%); }
+  .mode-1d.padHinten.senk.lane .stage { grid-template-columns: minmax(0, 1fr) minmax(130px, 32%); }
+  /* schmales Fenster: alles untereinander mit fester Hoehe - da gibt es nichts zu teilen */
+  .mode-2d .stage { grid-template-rows: 300px 560px; }
+  .mode-2d.padHinten .stage { grid-template-columns: minmax(0, 1fr); grid-template-rows: 560px 300px; }
+  .mode-2d .split { display: none; }
+  .slider input { width: 100px; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+<script>
+/* Scharfe Kante unter der iPadOS-Statusleiste (iPadOS 26/27).
+   WebKit legt in Web-Apps vom Homebildschirm am oberen Rand sonst einen
+   weichen Verlauf ueber den Inhalt. Er entfaellt, wenn dort eine deckende
+   Leiste liegt - ein bildschirmfuellender Kasten genuegt nicht (am
+   13.10.2026 auf iPadOS 27 geprueft). Das Skript legt deshalb einen 16 px
+   hohen, deckenden Streifen an den oberen Rand und rueckt alles, was in
+   diese 16 px hineinragt, um 16 px nach unten. Laeuft nur in der App vom
+   Homebildschirm, nicht in Safari und nicht in einem Rahmen; mit #kante in
+   der Adresse laesst es sich zum Pruefen erzwingen. */
+(function(){
+  if(window.top!==window) return;
+  var pruef=/kante/i.test(location.hash||'');
+  var alsApp=(navigator.standalone===true) ||
+             (window.matchMedia && matchMedia('(display-mode: standalone)').matches);
+  if(!alsApp && !pruef) return;
+
+  var HOCH=16;
+  function leer(f){ return !f || f==='transparent' || f.replace(/\s/g,'')==='rgba(0,0,0,0)'; }
+  function seite(){
+    var s=getComputedStyle(document.body), f=s.backgroundColor, b=s.backgroundImage;
+    if(leer(f) && (!b || b==='none')){
+      s=getComputedStyle(document.documentElement); f=s.backgroundColor; b=s.backgroundImage;
+    }
+    return { farbe: leer(f) ? '#ffffff' : f, bild: (b && b!=='none') ? b : '' };
+  }
+  /* Faerbt dieses Element am oberen Rand etwas sichtbar ein? */
+  function tinte(n){
+    var r=n.getBoundingClientRect();
+    if(r.top>=HOCH || r.bottom<=0 || r.width<=0) return false;
+    var s=getComputedStyle(n);
+    if(s.display==='none' || s.visibility==='hidden' || s.opacity==='0') return false;
+    if(n.id==='randKante') return false;
+    var t=n.tagName.toLowerCase();
+    if(t==='img'||t==='svg'||t==='canvas'||t==='video') return true;
+    if(!leer(s.backgroundColor) || s.backgroundImage!=='none') return true;
+    if(parseFloat(s.borderTopWidth)>0) return true;
+    var kn=n.childNodes;
+    for(var j=0;j<kn.length;j++)
+      if(kn[j].nodeType===3 && kn[j].nodeValue.replace(/\s/g,'')) return true;
+    for(var i=0;i<n.children.length;i++) if(tinte(n.children[i])) return true;
+    return false;
+  }
+  function ragtRein(z){
+    for(var i=0;i<z.children.length;i++) if(tinte(z.children[i])) return true;
+    return false;
+  }
+  function luft(z){
+    if(z.dataset.kanteLuft) return;
+    if(!ragtRein(z) && !tinte(z)) return;    /* noch nichts oben - spaeter nochmal */
+    z.dataset.kanteLuft='1';
+    var p=parseFloat(getComputedStyle(z).paddingTop)||0;
+    if(p>=HOCH) return;
+    z.style.paddingTop=(p+HOCH)+'px';
+  }
+  function sichtbar(n,s){
+    return s.display!=='none' && s.visibility!=='hidden' && n.id!=='randKante';
+  }
+  /* bildschirmfuellende fixierte Kaesten */
+  function kaesten(){
+    var alle=document.querySelectorAll('body > *, body > * > *'), raus=[];
+    for(var i=0;i<alle.length;i++){
+      var n=alle[i], s=getComputedStyle(n);
+      if(s.position!=='fixed' || !sichtbar(n,s)) continue;
+      /* Deko-Ebenen wie Konfetti liegen durchsichtig ueber allem und duerfen
+         niemals angefasst werden - sie wuerden sonst das Spiel verdecken. */
+      if(s.pointerEvents==='none') continue;
+      var r=n.getBoundingClientRect();
+      if(r.top<=4 && r.width>=innerWidth*0.9 && r.height>=innerHeight*0.9) raus.push(n);
+    }
+    return raus;
+  }
+  /* Leisten am oberen Rand (fixiert oder klebend, aber kein Vollbildkasten) */
+  function leisten(){
+    var alle=document.querySelectorAll('body > *, body > * > *'), raus=[];
+    for(var i=0;i<alle.length;i++){
+      var n=alle[i], s=getComputedStyle(n);
+      if((s.position!=='fixed' && s.position!=='sticky') || !sichtbar(n,s)) continue;
+      var r=n.getBoundingClientRect();
+      if(r.top<=4 && r.width>=innerWidth*0.8 && r.height>=6 && r.height<=innerHeight*0.6) raus.push(n);
+    }
+    return raus;
+  }
+  /* Liegt oben schon eine deckende Leiste, ist nichts zu tun. */
+  function schonGut(){
+    var st=document.elementsFromPoint ? document.elementsFromPoint(Math.round(innerWidth/2),2) : [];
+    for(var i=0;i<st.length;i++){
+      var n=st[i];
+      if(n.id==='randKante') continue;
+      if(n===document.body || n===document.documentElement) return false;
+      var s=getComputedStyle(n), r=n.getBoundingClientRect();
+      return (s.position==='fixed'||s.position==='sticky') && r.top<=4 &&
+             r.width>=innerWidth*0.8 && r.height>=6 && r.height<=innerHeight*0.6 &&
+             !leer(s.backgroundColor);
+    }
+    return false;
+  }
+  var band=null;
+  function streifen(farbe){
+    if(!band){
+      band=document.createElement('div');
+      band.id='randKante'; band.setAttribute('aria-hidden','true');
+      band.style.cssText='position:fixed;left:0;top:0;width:100%;height:'+HOCH+'px;'+
+        'z-index:2147483646;pointer-events:none';
+      document.body.appendChild(band);
+    }
+    band.style.display='block';
+    if(farbe){
+      band.style.backgroundColor=farbe;
+      band.style.backgroundImage='none';
+      return;
+    }
+    var s=getComputedStyle(document.body), h=seite();
+    band.style.backgroundColor=h.farbe;
+    band.style.backgroundImage=h.bild||'none';
+    band.style.backgroundAttachment='fixed';
+    if(h.bild && s.backgroundAttachment!=='fixed')
+      band.style.backgroundSize='100% '+Math.max(innerHeight,document.body.scrollHeight)+'px';
+  }
+  var schild=null;
+  function zeigen(txt){
+    if(!pruef) return;
+    if(!schild){
+      schild=document.createElement('div');
+      schild.style.cssText='position:fixed;left:6px;bottom:52px;z-index:2147483647;max-width:92%;'+
+        'padding:6px 9px;border-radius:8px;background:#ffe600;color:#000;'+
+        'font:600 12px/1.35 -apple-system,sans-serif;white-space:pre-wrap;pointer-events:none';
+      document.body.appendChild(schild);
+    }
+    schild.textContent='Kante K6 · '+innerWidth+'x'+innerHeight+'\n'+txt;
+  }
+  function name(n){
+    if(n.id) return '#'+n.id;
+    var c=(typeof n.className==='string'&&n.className.trim())?'.'+n.className.trim().split(/\s+/)[0]:'';
+    return n.tagName.toLowerCase()+c;
+  }
+  function malen(){
+    var b=document.body; if(!b) return;
+    if(schonGut()){
+      if(band) band.style.display='none';
+      zeigen('oben liegt schon eine deckende Leiste');
+      return;
+    }
+    var k=kaesten(), l=leisten(), farbe=null, text=[];
+    /* Die Kaesten werden nur noch nach unten gerueckt, nicht mehr eingefaerbt:
+       ein bildschirmfuellender Kasten haelt den Verlauf ohnehin nicht ab
+       (am 13.10.2026 auf iPadOS 27 gemessen), das Einfaerben hat dagegen
+       durchsichtige Ebenen deckend gemacht. */
+    for(var i=0;i<k.length;i++){
+      var z=k[i];
+      luft(z);
+      text.push(name(z));
+    }
+    for(var j=0;j<l.length;j++){
+      var le=l[j], sl=getComputedStyle(le);
+      if(!tinte(le) && !ragtRein(le)) continue;
+      if(!farbe && !leer(sl.backgroundColor)) farbe=sl.backgroundColor;
+      luft(le);
+      text.push('Leiste '+name(le)+' bg='+sl.backgroundColor);
+    }
+    if(!k.length && !l.length){ luft(b); text.push('kein Kasten, nur Streifen'); }
+    streifen(farbe);
+    zeigen(text.join('\n'));
+  }
+  var warte=null;
+  function spaeter(){
+    if(warte) return;
+    warte=setTimeout(function(){ warte=null; malen(); },200);
+  }
+  try{
+    new MutationObserver(spaeter).observe(document.documentElement,
+      {childList:true, subtree:true, attributes:true, attributeFilter:['class','style','hidden']});
+  }catch(e){}
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',malen);
+  else malen();
+  addEventListener('load',spaeter);
+  addEventListener('resize',spaeter);
+  addEventListener('orientationchange',spaeter);
+})();
+</script>
+</head><body>
+<div class="app mode-1d" id="app">
+  <header class="bar">
+    <div class="brand">
+      <h1>Bewegungsdiagramme</h1>
+      <span class="status sample" id="status">Beispielaufnahme</span>
+    </div>
+
+    <div class="group">
+      <div class="seg" role="group" aria-label="Bewegungsart">
+        <button id="m1d" aria-pressed="true">1D</button>
+        <button id="m2d" aria-pressed="false">2D</button>
+      </div>
+      <div class="seg" role="group" aria-label="Richtung der Aufnahme" id="achsSeg">
+        <button data-ach="x" aria-pressed="true" title="Waagerechte Bewegung: das Lineal liegt über den Diagrammen">x →</button>
+        <button data-ach="y" aria-pressed="false" title="Senkrechte Bewegung: das Lineal steht links neben den Diagrammen">y ↑</button>
+      </div>
+      <div class="seg" role="group" aria-label="Spielart" id="spielSeg">
+        <button data-sp="aus" aria-pressed="true" title="Bewegung aufnehmen und auswerten">Aufnahme</button>
+        <button data-sp="ziel" aria-pressed="false" title="Eine Zielkurve vorgeben und mit dem Finger nachfahren">Ziel</button>
+        <button data-sp="battle" aria-pressed="false" title="Zwei Felder, ein Ziel: nach dem Countdown fahren beide gleichzeitig nach">Battle</button>
+      </div>
+      <div class="seg" role="group" aria-label="Komponente" id="compSeg" hidden>
+        <button data-comp="x" aria-pressed="false">x</button>
+        <button data-comp="y" aria-pressed="false">y</button>
+        <button data-comp="xy" aria-pressed="true">x + y</button>
+      </div>
+    </div>
+
+    <div class="group" id="zielBox" hidden>
+      <span class="group-label">Ziel</span>
+      <div class="seg" role="group" aria-label="Welches Diagramm vorgegeben wird" id="zielTypSeg">
+        <button data-zt="x" aria-pressed="true">x(t)</button>
+        <button data-zt="v" aria-pressed="false">v(t)</button>
+        <button data-zt="a" aria-pressed="false">a(t)</button>
+      </div>
+      <select id="zielT" aria-label="Dauer der Zielkurve" title="Wie lange die Zielkurve dauert">
+        <option value="5" selected>5 s</option>
+        <option value="8">8 s</option>
+        <option value="10">10 s</option>
+        <option value="15">15 s</option>
+        <option value="20">20 s</option>
+        <option value="30">30 s</option>
+        <option value="frei">frei …</option>
+      </select>
+      <input type="number" id="zielTFrei" min="1" max="300" step="1" value="5" hidden
+             style="width: 5em" aria-label="Dauer in Sekunden" title="Dauer der Zielkurve in Sekunden">
+      <button id="zielMal" aria-pressed="false" title="Die Zielkurve mit dem Finger in das Diagramm ziehen">✎ zeichnen</button>
+      <button id="zielWeg" title="Die Zielkurve entfernen">Ziel weg</button>
+      <button id="btStart" class="primary" hidden title="Countdown – danach nehmen beide Felder gleichzeitig auf">▶ Countdown</button>
+    </div>
+
+    <label class="slider" for="smooth">Glättung
+      <input type="range" id="smooth" min="0" max="200" step="5" value="60">
+      <output id="smoothOut" for="smooth">60 ms</output>
+    </label>
+
+    <div class="group" role="group" aria-label="Diagramme">
+      <span class="group-label">Diagramme</span>
+      <button class="chip" id="dX" aria-pressed="true" title="Ort über der Zeit"><span class="sw cx"></span>x(t)</button>
+      <button class="chip" id="dV" aria-pressed="true" title="Geschwindigkeit über der Zeit"><span class="sw cv"></span>v(t)</button>
+      <button class="chip" id="dA" aria-pressed="true" title="Beschleunigung über der Zeit"><span class="sw ca"></span>a(t)</button>
+    </div>
+
+    <div class="group nurAufnahme" role="group" aria-label="Einblenden">
+      <button class="chip" id="tStellen" aria-pressed="true"><span class="sw"></span>Stellen</button>
+      <button class="chip" id="tVec" aria-pressed="false" title="An jedem Messpunkt die Pfeile für v und a"><span class="sw ca"></span>Vektoren</button>
+      <button class="chip" id="tTab" aria-pressed="false" title="Die Ablesetabelle unter den Diagrammen zeigen"><span class="sw"></span>Tabelle</button>
+    </div>
+
+    <div class="group nurAufnahme">
+      <div class="seg" role="group" aria-label="Werkzeug im Diagramm" title="Antippen im Diagramm setzt eine Stelle oder ein Intervall">
+        <button id="toolStelle" aria-pressed="true">Stelle</button>
+        <button id="toolIv" aria-pressed="false">Intervall</button>
+      </div>
+      <button id="pin">Stelle merken</button>
+    </div>
+
+    <div class="group">
+      <button id="play" class="primary ic" title="Abspielen: die Bewegung noch einmal ablaufen lassen" aria-label="Abspielen">▶</button>
+      <select id="speed" aria-label="Abspielgeschwindigkeit">
+        <option value="1">1×</option>
+        <option value="0.5">0,5×</option>
+        <option value="0.25">0,25×</option>
+        <option value="0.1">0,1×</option>
+      </select>
+      <button id="undo" class="ic" disabled title="Vorherige Aufnahme zurückholen" aria-label="Vorherige Aufnahme">↺</button>
+      <button id="reset" class="ic" title="Zurücksetzen: Aufnahme und Zielkurve verwerfen" aria-label="Zurücksetzen">🗑</button>
+      <details class="settings tafelEdit">
+        <summary class="ic" title="Einstellungen" aria-label="Einstellungen">⚙</summary>
+        <div class="panel">
+          <div class="panelKopf">Einstellungen
+            <button type="button" class="ic" id="setZu" title="Einstellungen schließen" aria-label="Einstellungen schließen">✕</button>
+          </div>
+          <div class="panelBody">
+          <label for="ppc">Maßstab: Pixel pro Zentimeter
+            <input type="number" id="ppc" min="10" max="200" step="0.1" value="52">
+          </label>
+          <p>iPad: ca. 52 px/cm (iPad mini ca. 64). Prüfe mit einem Lineal, ob die Skala im Aufnahmefeld echte Zentimeter zeigt, und passe den Wert an.</p>
+          <label for="padPos">Wo das Aufnahmefeld liegt
+            <select id="padPos">
+              <option value="auto">automatisch</option>
+              <option value="vor">oben bzw. links</option>
+              <option value="hinter">unten bzw. rechts</option>
+            </select>
+          </label>
+          <p>Bei <b>x →</b> liegt das Feld über oder unter den Diagrammen, bei <b>y ↑</b> und in <b>2D</b> links oder rechts daneben (im Hochformat darüber oder darunter). <b>Automatisch</b> heißt: bei <b>Aufnahme</b> davor, im <b>Ziel</b>-Modus dahinter – dort liegt die Hand sonst auf der Zielkurve. Im <b>Battle</b> stehen die beiden Felder immer an den Fensterrändern.</p>
+          <label for="strobe">Zeitabstand der Messpunkte im Aufnahmefeld
+            <select id="strobe">
+              <option value="0.02">0,02 s</option>
+              <option value="0.05">0,05 s</option>
+              <option value="0.1" selected>0,1 s</option>
+              <option value="0.2">0,2 s</option>
+              <option value="0.25">0,25 s</option>
+              <option value="0.5">0,5 s</option>
+              <option value="1">1 s</option>
+            </select>
+          </label>
+          <label for="vecSel">Vektoren an den Messpunkten
+            <select id="vecSel">
+              <option value="va">v und a</option>
+              <option value="v">nur v</option>
+              <option value="a">nur a</option>
+            </select>
+          </label>
+          <label for="vecScale">Pfeillänge
+            <select id="vecScale">
+              <option value="0.5">0,5×</option>
+              <option value="1" selected>1×</option>
+              <option value="2">2×</option>
+              <option value="4">4×</option>
+            </select>
+          </label>
+          <p>„Alle Vektoren“ zeichnet an jedem Messpunkt die Pfeile für v und a. In 1D werden die Punkte dafür nach unten zeitlich versetzt, damit sich die Pfeile nicht überdecken.</p>
+          <button id="copyCsv">Messwerte als CSV kopieren</button>
+          <p id="copyMsg">Spalten: t; x; y; vx; vy; ax; ay (Semikolon, Dezimalkomma – passt für Excel).</p>
+          <textarea id="csvFallback" rows="4" hidden aria-label="CSV-Daten" style="width:100%;box-sizing:border-box;font-family:var(--font-data);font-size:11px;background:var(--bg);border:1px solid var(--line);border-radius:6px"></textarea>
+          </div>
+        </div>
+      </details>
+      <button id="expCsv" class="tafelEdit" title="Die Messwerte als CSV-Datei sichern">Export</button>
+      <div class="seg tafelEdit" role="group" aria-label="Schriftgröße">
+        <button id="fsM" title="Schrift in den Diagrammen kleiner">A−</button>
+        <button id="fsP" title="Schrift in den Diagrammen größer">A+</button>
+      </div>
+      <span id="shotBtns" class="tafelEdit" style="display:inline-flex;gap:6px"></span>
+      <span id="teilenBtn" style="display:inline-flex"></span>
+    </div>
+  </header>
+
+  <main class="stage">
+    <section class="padWrap" aria-label="Aufnahmefeld">
+      <canvas id="pad"></canvas>
+      <p class="hint" id="hint">Finger auflegen und waagerecht bewegen – aufgezeichnet wird, solange er aufliegt.</p>
+    </section>
+    <section class="btPad" id="btPadL" aria-label="Aufnahmefeld links" hidden><canvas id="padL"></canvas></section>
+    <div class="split" id="split" role="separator" aria-label="Aufteilung zwischen Zeichenfläche und Diagrammen – ziehen"></div>
+    <section class="plotWrap">
+      <div class="plotBox">
+        <canvas id="plots" aria-label="Diagramme: Ort, Geschwindigkeit und Beschleunigung über der Zeit"></canvas>
+        <div class="diaCtl" id="diaCtl" role="group" aria-label="Was in den Diagrammen zu sehen ist" hidden>
+          <div class="grp" data-d="x" hidden>
+            <button class="bgV" data-s="tang" data-d="x" aria-pressed="true" title="Tangente in x(t): Ihre Steigung ist die Geschwindigkeit v">Tangente</button>
+            <button class="bgD1" data-s="mon" data-d="x" aria-pressed="false" title="Monotonieintervalle von x(t): x steigt, wo v &gt; 0 ist, und fällt, wo v &lt; 0 ist. An den Grenzen liegen Hoch- und Tiefpunkte.">Monotonie</button>
+            <button class="bgD2" data-s="kru" data-d="x" aria-pressed="false" title="Krümmungsintervalle von x(t): x ist linksgekrümmt (∪), wo a &gt; 0 ist, und rechtsgekrümmt (∩), wo a &lt; 0 ist. An den Grenzen liegen Wendepunkte.">Krümmung</button>
+          </div>
+          <div class="grp" data-d="v" hidden>
+            <button class="bgA" data-s="tang" data-d="v" aria-pressed="false" title="Tangente in v(t): Ihre Steigung ist die Beschleunigung a">Tangente</button>
+            <button class="bgX" data-s="fl" data-d="v" aria-pressed="false" title="Fläche unter v(t) von t₁ bis t₂: Sie ist die Ortsänderung Δx">Fläche</button>
+            <button class="bgD1" data-s="vz" data-d="v" aria-pressed="false" title="Vorzeichenintervalle von v(t): Wo v &gt; 0 ist, läuft die Bewegung vorwärts – genau dort steigt x(t).">Vorzeichen</button>
+            <button class="bgD2" data-s="mon" data-d="v" aria-pressed="false" title="Monotonieintervalle von v(t): v steigt, wo a &gt; 0 ist, und fällt, wo a &lt; 0 ist.">Monotonie</button>
+          </div>
+          <div class="grp" data-d="a" hidden>
+            <button class="bgV" data-s="fl" data-d="a" aria-pressed="false" title="Fläche unter a(t) von t₁ bis t₂: Sie ist die Geschwindigkeitsänderung Δv">Fläche</button>
+            <button class="bgD2" data-s="vz" data-d="a" aria-pressed="false" title="Vorzeichenintervalle von a(t): Wo a &gt; 0 ist, wird die Bewegung schneller in +Richtung – genau dort steigt v(t).">Vorzeichen</button>
+          </div>
+        </div>
+      </div>
+      <div class="readout" id="readout"></div>
+    </section>
+    <section class="btPad" id="btPadR" aria-label="Aufnahmefeld rechts" hidden><canvas id="padR"></canvas></section>
+  </main>
+</div>
+
+<script>
+(() => {
+"use strict";
+const $ = id => document.getElementById(id);
+const pad = $("pad"), plots = $("plots"), app = $("app");
+const DT = 0.01;            // Abtastraster nach dem Resampling (s)
+const PAD_M = 24;           // Rand im Aufnahmefeld (px)
+const SENK_OBEN = 60;       // oberer Rand des senkrechten Lineals (Platz fuer den Hinweis)
+/* Unter dem senkrechten Lineal steht nur noch die Null. Legende und Fusszeile gibt es dort
+   nur mit den Vektoren - dann faengt das Lineal entsprechend hoeher an. */
+const senkUnten = () => state.allVec ? 58 : 18;
+
+if (window.parent !== window) document.body.classList.add("imRahmen");
+const isIPad = /iPad/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+let savedPpc = null, savedPadPos = null;
+try { savedPpc = parseFloat(localStorage.getItem("bwd-ppc")); } catch (e) {}
+/* Wo das Aufnahmefeld liegt, ist Geschmack und haengt am Geraet - darum merkt es sich der
+   Browser, wie den Massstab. */
+try { savedPadPos = localStorage.getItem("bwd-padpos"); } catch (e) {}
+
+const PADPOS = ["auto", "vor", "hinter"];
+/* Kurze Rueckmeldung am unteren Rand (ersetzt TafelShot.toast). */
+let hinweisT = 0;
+function hinweis(text) {
+  let el = document.getElementById("hinweisBalken");
+  if (!el) { el = document.createElement("div"); el.id = "hinweisBalken"; document.body.appendChild(el); }
+  el.textContent = text; el.classList.add("an");
+  clearTimeout(hinweisT); hinweisT = setTimeout(() => el.classList.remove("an"), 2200);
+}
+
+const state = {
+  mode: "1d", comp: "xy", sigma: 60,
+  achse: "x",           // 1D: waagerechte (x) oder senkrechte (y) Aufnahme
+  /* fuer jedes Diagramm einzeln: Tangente in x(t) bzw. v(t), Flaeche unter v(t) bzw. a(t),
+     dazu die abgelesenen Intervalle - Monotonie (mon), Kruemmung (kru), Vorzeichen (vz) */
+  show: { stellen: true, tang: { x: true, v: false }, fl: { v: false, a: false },
+          mon: { x: false, v: false }, kru: { x: false }, vz: { v: false, a: false } },
+  dia: { x: true, v: true, a: true },      // welche der drei Diagramme gezeichnet werden
+  tool: "stelle",
+  raw: [],              // {t (s), x (px, rechts +), y (px, oben +)} relativ zum Ursprung
+  sample: true, prev: null,
+  cursor: null, pins: [], interval: null,
+  ppc: savedPpc && savedPpc > 5 ? savedPpc : (isIPad ? 52 : 37.8),
+  recording: false, recId: null, t0: 0, tOff: 0,
+  playing: false, speed: 1,
+  strobe: 0.1, allVec: false, vecSel: "va", vecScale: 1,
+  tab: false,                 // Ablesetabelle unter den Diagrammen - sie kostet Platz und ist selten noetig
+  /* Spiele (nur 1D): "aus" = normale Aufnahme, "ziel" = Zielkurve nachfahren,
+     "battle" = zwei Felder an den Fensterraendern, Start per Countdown */
+  spiel: "aus", zielTyp: "x", zielT: 5, zielFrei: false, ziel: null, zeichnen: false, zielNote: "",
+  split: 44,            // 2D: wie viel Prozent der Buehne die Zeichenflaeche bekommt
+  /* Platz des Aufnahmefeldes: "vor" den Diagrammen (oben bzw. links), "hinter" ihnen
+     (unten bzw. rechts) oder "auto" - dann rueckt es im Ziel-Modus von selbst dahinter. */
+  padPos: PADPOS.indexOf(savedPadPos) >= 0 ? savedPadPos : "auto",
+  fs: 1,                // Schriftgröße in den Diagrammen (A− / A+)
+};
+$("ppc").value = state.ppc;
+$("padPos").value = state.padPos;
+let D = null;
+
+// ---------- Hilfen ----------
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+/* Alle Schriftgrößen in den Diagrammen laufen über fs(): so zieht A− / A+ überall mit.
+   Die Ränder der Diagramme (Platz für die Achsenbeschriftung) wachsen mit. */
+const fs = v => Math.round(v * state.fs * 10) / 10;
+/* verkleinert die Schrift so weit, dass der Text in die Breite passt - im schmalen,
+   senkrechten Aufnahmefeld wuerden Legende und Fusszeile sonst abgeschnitten. */
+function passend(ctx, txt, breite, gross, schrift) {
+  ctx.font = `${gross}px ${schrift}`;
+  const b = ctx.measureText(txt).width;
+  return b <= breite ? gross : Math.max(7, Math.round(gross * breite / b * 10) / 10);
+}
+/* 1D laeuft entweder waagerecht (x, Lineal ueber den Diagrammen) oder senkrecht
+   (y, Lineal links daneben). Aufgezeichnet wird in beiden Faellen in state.raw[].x -
+   nur die Beschriftung und die Lage im Aufnahmefeld aendern sich. */
+const istSenk = () => state.mode === "1d" && state.achse === "y";
+/* Auch alle drei Diagramme duerfen aus sein: Dann sieht man nur die Bewegung und sagt
+   das Diagramm erst vorher, bevor man es aufdeckt. */
+const diaAus = () => !state.dia.x && !state.dia.v && !state.dia.a;
+const sym1d = () => state.achse === "y" ? "y" : "x";
+const fmt = (v, d = 1) => (Math.abs(v) < 0.5 * Math.pow(10, -d) ? 0 : v).toLocaleString("de-DE", { minimumFractionDigits: d, maximumFractionDigits: d });
+function css(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+function alpha(hex, a) {
+  const h = hex.replace("#", "");
+  const n = parseInt(h.length === 3 ? h.split("").map(c => c + c).join("") : h, 16);
+  return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
+}
+function colors() {
+  return { bg: css("--bg"), surface: css("--surface"), ink: css("--ink"), muted: css("--muted"), line: css("--line"),
+    grid: css("--grid"), qx: css("--qx"), qv: css("--qv"), qa: css("--qa"),
+    iv1p: css("--iv1plus"), iv1m: css("--iv1minus"), iv2p: css("--iv2plus"), iv2m: css("--iv2minus") };
+}
+function setup(cv) {
+  const r = cv.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  const W = Math.max(1, Math.round(r.width * dpr)), H = Math.max(1, Math.round(r.height * dpr));
+  if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
+  const ctx = cv.getContext("2d");
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, r.width, r.height);
+  return { ctx, w: r.width, h: r.height };
+}
+function niceStep(range, n) {
+  const raw = range / Math.max(1, n);
+  const p = Math.pow(10, Math.floor(Math.log10(raw)));
+  const f = raw / p;
+  return (f < 1.5 ? 1 : f < 3 ? 2 : f < 7 ? 5 : 10) * p;
+}
+const decFor = step => Math.max(0, -Math.floor(Math.log10(step) + 1e-9));
+
+// ---------- Auswertung ----------
+function smooth(arr, s) {
+  const N = arr.length, out = new Float64Array(N);
+  if (s < 0.5) { out.set(arr); return out; }
+  const R = Math.ceil(3 * s), w = new Float64Array(2 * R + 1);
+  let ws = 0;
+  for (let k = -R; k <= R; k++) { w[k + R] = Math.exp(-(k * k) / (2 * s * s)); ws += w[k + R]; }
+  const at = i => {
+    // ungerade Spiegelung an den Rändern: erhält lineare Trends
+    if (i < 0) { const j = Math.min(N - 1, -i); return 2 * arr[0] - arr[j]; }
+    if (i >= N) { const j = Math.max(0, 2 * (N - 1) - i); return 2 * arr[N - 1] - arr[j]; }
+    return arr[i];
+  };
+  for (let i = 0; i < N; i++) {
+    let s2 = 0;
+    for (let k = -R; k <= R; k++) s2 += w[k + R] * at(i + k);
+    out[i] = s2 / ws;
+  }
+  return out;
+}
+function deriv(a) {
+  const N = a.length, out = new Float64Array(N);
+  if (N < 2) return out;
+  for (let i = 1; i < N - 1; i++) out[i] = (a[i + 1] - a[i - 1]) / (2 * DT);
+  out[0] = (a[1] - a[0]) / DT;
+  out[N - 1] = (a[N - 1] - a[N - 2]) / DT;
+  return out;
+}
+function range(arr, robust) {
+  if (!robust) { let lo = Infinity, hi = -Infinity; for (const v of arr) { if (v < lo) lo = v; if (v > hi) hi = v; } return [lo, hi]; }
+  const s = Array.from(arr).sort((a, b) => a - b);
+  const q = p => s[clamp(Math.round(p * (s.length - 1)), 0, s.length - 1)];
+  return [q(0.005), q(0.995)];
+}
+function process() { D = baue(state.raw); }
+/* Aus Rohpunkten {t, x, y} (Pixel) die ausgewerteten Reihen machen. Jede Aufnahme laeuft
+   hierdurch - auch die beiden Spieler im Battle, die ihre eigenen Reihen bekommen. */
+function baue(raw) {
+  if (!raw || raw.length < 2) return null;
+  const T = raw[raw.length - 1].t;
+  const N = Math.max(3, Math.floor(T / DT) + 1);
+  const t = new Float64Array(N), xr = new Float64Array(N), yr = new Float64Array(N);
+  let j = 0;
+  for (let i = 0; i < N; i++) {
+    const ti = i * DT; t[i] = ti;
+    while (j < raw.length - 2 && raw[j + 1].t < ti) j++;
+    const a = raw[j], b = raw[j + 1];
+    const f = b.t > a.t ? clamp((ti - a.t) / (b.t - a.t), 0, 1) : 0;
+    xr[i] = (a.x + f * (b.x - a.x)) / state.ppc;
+    yr[i] = (a.y + f * (b.y - a.y)) / state.ppc;
+  }
+  const s = state.sigma / 1000 / DT;
+  const x = smooth(xr, s), y = smooth(yr, s);
+  const vx = deriv(x), vy = deriv(y), ax = deriv(vx), ay = deriv(vy);
+  const d = { N, T: (N - 1) * DT, t, x, y, vx, vy, ax, ay, rng: {} };
+  for (const k of ["x", "y"]) d.rng[k] = range(d[k], false);
+  for (const k of ["vx", "vy", "ax", "ay"]) d.rng[k] = range(d[k], true);
+  return d;
+}
+function val(arr, t) {
+  const f = clamp(t / DT, 0, arr.length - 1);
+  const i = Math.min(arr.length - 2, Math.floor(f)), r = f - i;
+  return arr[i] * (1 - r) + arr[i + 1] * r;
+}
+function integral(arr, t1, t2) {
+  if (t2 < t1) return -integral(arr, t2, t1);
+  const n = Math.max(1, Math.ceil((t2 - t1) / DT * 2));
+  const h = (t2 - t1) / n;
+  let s = 0;
+  for (let i = 0; i < n; i++) s += (val(arr, t1 + i * h) + val(arr, t1 + (i + 1) * h)) * h / 2;
+  return s;
+}
+
+// ---------- Beispieldaten ----------
+function makeSample() {
+  const r = pad.getBoundingClientRect();
+  const wpx = Math.max(200, r.width - 2 * PAD_M), hpx = Math.max(140, r.height - 2 * PAD_M);
+  const raw = [];
+  let seed = 7; const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647 - 0.5);
+  const noise = 0.6;
+  if (state.mode === "1d") {
+    const span = istSenk() ? Math.max(140, r.height - SENK_OBEN - senkUnten()) : wpx;
+    const A = 0.68 * span, x0 = 0.1 * span, B = 0.4 * A;
+    const T1 = 2.4, P = 0.5, T2 = 1.6, T = T1 + P + T2;
+    for (let t = 0; t <= T + 1e-9; t += 1 / 60) {
+      let x;
+      if (t <= T1) { const u = t / T1; x = x0 + A * (u - Math.sin(2 * Math.PI * u) / (2 * Math.PI)); }
+      else if (t <= T1 + P) x = x0 + A;
+      else { const u = (t - T1 - P) / T2; x = x0 + A - B * (u - Math.sin(2 * Math.PI * u) / (2 * Math.PI)); }
+      raw.push({ t: t + rnd() * 0.002, x: x + rnd() * noise, y: 0 });
+    }
+  } else {
+    const cx = wpx * 0.5, cy = hpx * 0.5, rx = 0.38 * wpx, ry = 0.36 * hpx, T = 4.5;
+    for (let t = 0; t <= T + 1e-9; t += 1 / 60) {
+      const u = t / T, phi = 2 * Math.PI * (u - 0.13 * Math.sin(2 * Math.PI * u)) - Math.PI / 2;
+      raw.push({ t: t + rnd() * 0.002, x: cx + rx * Math.cos(phi) + rnd() * noise, y: cy + ry * Math.sin(phi) + rnd() * noise });
+    }
+  }
+  raw.sort((a, b) => a.t - b.t);
+  raw[0].t = 0;
+  state.raw = raw; state.sample = true;
+  process();
+  defaults();
+}
+function defaults() {
+  if (!D) return;
+  state.cursor = +(D.T * 0.3).toFixed(2);
+  state.pins = [];
+  state.interval = [+(D.T * 0.15).toFixed(2), +(D.T * 0.5).toFixed(2)];
+}
+
+// ---------- Aufnahme ----------
+function padOrigin(w, h) {
+  if (state.mode !== "1d") return { x: PAD_M + 6, y: h - PAD_M - 6 };
+  /* senkrecht: Lineal links, die Null unten - oben bleibt Platz fuer den Hinweis,
+     unten nur fuer die Null, mit Vektoren auch fuer die Legende (SENK_OBEN / senkUnten). */
+  if (istSenk()) return { x: 40, y: h - senkUnten() };
+  /* waagerecht: Das Lineal liegt oben am Rand. So verdeckt der streichende Finger es nicht,
+     und es bleibt waehrend der Aufnahme zu sehen. Punkte, Pfeile und Koerper haengen
+     darunter, der Hinweis steht am unteren Rand. */
+  return { x: PAD_M, y: Math.round(fs(34)) };
+}
+function addSample(ev) {
+  const r = pad.getBoundingClientRect();
+  const o = padOrigin(r.width, r.height);
+  const t = (ev.timeStamp - state.t0) / 1000;
+  const p = istSenk()
+    ? { t, x: o.y - (ev.clientY - r.top), y: 0 }     // senkrecht: die Hoehe ist die Groesse
+    : { t, x: ev.clientX - r.left - o.x, y: o.y - (ev.clientY - r.top) };
+  if (state.mode === "1d") p.y = 0;
+  /* Punkte, die die Ruheschleife an der letzten Stelle angehaengt hat, weichen einer
+     echten Messung - sonst verwirft die Zeitpruefung darunter die erste Bewegung danach. */
+  while (state.raw.length > 1 && state.raw[state.raw.length - 1].ruht
+         && state.raw[state.raw.length - 1].t > t) state.raw.pop();
+  const last = state.raw[state.raw.length - 1];
+  if (last && t < last.t) return;
+  if (last && t - last.t < 0.0005) { last.x = p.x; last.y = p.y; last.ruht = false; return; }
+  state.raw.push(p);
+}
+/* Der Finger darf ruhen - dann kommt kein pointermove mehr, die Zeit laeuft aber weiter.
+   Diese Schleife haengt deshalb waehrend der Aufnahme selbst Punkte an der letzten Stelle
+   an: x(t) laeuft waagerecht weiter, v(t) liegt auf der Achse. Zieht der Finger wieder,
+   uebernehmen die echten Messungen (siehe addSample). */
+const RUHE = 0.05;                 // nach dieser Pause ohne Bewegung selbst messen (s)
+let rafRuhe = 0;
+function ruheLoop() {
+  rafRuhe = 0;
+  if (!state.recording) return;
+  rafRuhe = requestAnimationFrame(ruheLoop);
+  const last = state.raw[state.raw.length - 1];
+  if (!last) return;
+  const t = (performance.now() - state.tOff - state.t0) / 1000;
+  if (t - last.t < RUHE) return;
+  state.raw.push({ t, x: last.x, y: last.y, ruht: true });
+  process(); updateStatus(); requestDraw();
+}
+const ruheStart = () => { if (!rafRuhe) rafRuhe = requestAnimationFrame(ruheLoop); };
+const ruheStopp = () => { cancelAnimationFrame(rafRuhe); rafRuhe = 0; };
+pad.addEventListener("pointerdown", e => {
+  if (state.recording) return;
+  e.preventDefault();
+  stopPlay();
+  try { pad.setPointerCapture(e.pointerId); } catch (err) {}
+  state.prev = { raw: state.raw, sample: state.sample, cursor: state.cursor, pins: state.pins, interval: state.interval, mode: state.mode };
+  state.raw = []; state.recording = true; state.recId = e.pointerId; state.t0 = e.timeStamp;
+  /* Die Ruheschleife misst die Zeit mit performance.now(); zaehlt e.timeStamp im Browser
+     von einem anderen Nullpunkt, steht der Abstand hier. */
+  state.tOff = performance.now() - e.timeStamp;
+  state.cursor = null; state.pins = [];
+  addSample(e);
+  ruheStart();
+  $("hint").hidden = true;
+  updateStatus(); requestDraw();
+});
+pad.addEventListener("pointermove", e => {
+  if (!state.recording || e.pointerId !== state.recId) return;
+  e.preventDefault();
+  const evs = e.getCoalescedEvents ? e.getCoalescedEvents() : [];
+  (evs.length ? evs : [e]).forEach(addSample);
+  process(); updateStatus(); requestDraw();
+});
+function endRec(e) {
+  if (!state.recording || e.pointerId !== state.recId) return;
+  addSample(e);
+  state.recording = false; ruheStopp();
+  const T = state.raw.length ? state.raw[state.raw.length - 1].t : 0;
+  if (T < 0.2 || state.raw.length < 4) {
+    // nur angetippt: alte Aufnahme behalten
+    const p = state.prev; state.prev = null;
+    state.raw = p.raw; state.sample = p.sample; state.cursor = p.cursor; state.pins = p.pins; state.interval = p.interval;
+  } else {
+    state.sample = false;
+  }
+  process();
+  if (!state.sample && T >= 0.2) defaults();
+  $("hint").hidden = false;
+  updateUI(); requestDraw();
+}
+pad.addEventListener("pointerup", endRec);
+pad.addEventListener("pointercancel", endRec);
+document.addEventListener("gesturestart", e => e.preventDefault());
+
+// ---------- Zeichnen: Aufnahmefeld ----------
+function arrow(ctx, x1, y1, x2, y2, color, width = 2.5, head = 8) {
+  const dx = x2 - x1, dy = y2 - y1, len = Math.hypot(dx, dy);
+  if (len < 2) return;
+  const ux = dx / len, uy = dy / len, hh = Math.min(head, len * 0.6);
+  ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = width;
+  ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2 - ux * hh * 0.7, y2 - uy * hh * 0.7); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x2, y2);
+  ctx.lineTo(x2 - ux * hh - uy * hh * 0.5, y2 - uy * hh + ux * hh * 0.5);
+  ctx.lineTo(x2 - ux * hh + uy * hh * 0.5, y2 - uy * hh - ux * hh * 0.5);
+  ctx.closePath(); ctx.fill();
+}
+function drawPad() {
+  const { ctx, w, h } = setup(pad);
+  const C = colors(), ppc = state.ppc, o = padOrigin(w, h);
+  const X = cm => o.x + cm * ppc, Y = cm => o.y - cm * ppc;
+  ctx.font = `${fs(11)}px ${css("--font-data")}`;
+  ctx.textBaseline = "top";
+  const senk = istSenk();
+  if (state.mode === "1d") {
+    // Lineal: waagerecht unter der Spur oder senkrecht am linken Rand
+    const mm = ppc >= 30;
+    ctx.strokeStyle = C.muted; ctx.lineWidth = 1.5; ctx.fillStyle = C.muted;
+    if (senk) {
+      const ymin = SENK_OBEN;
+      ctx.beginPath(); ctx.moveTo(o.x, o.y); ctx.lineTo(o.x, ymin); ctx.stroke();
+      ctx.textAlign = "right"; ctx.textBaseline = "middle";
+      let lastLabel = o.y;
+      for (let k = 0; Y(k / (mm ? 10 : 1)) >= ymin - 0.1; k++) {
+        const cm = mm ? k / 10 : k, py = Y(cm);
+        const isCm = mm ? k % 10 === 0 : true, is5 = isCm && Math.round(cm) % 5 === 0;
+        const len = is5 ? 14 : isCm ? 9 : 4;
+        ctx.lineWidth = is5 ? 1.5 : 1;
+        ctx.beginPath(); ctx.moveTo(o.x, py); ctx.lineTo(o.x - len, py); ctx.stroke();
+        if (is5) { ctx.fillText(String(Math.round(cm)), o.x - 17, py); lastLabel = py; }
+      }
+      ctx.textBaseline = "bottom"; ctx.fillText("cm", o.x - 4, Math.max(lastLabel - 12, 14));
+      ctx.textBaseline = "top";
+    } else {
+    /* Striche und Zahlen zeigen nach oben, die Messkante nach unten ins Feld. */
+    const xmax = w - PAD_M;
+    ctx.textAlign = "center"; ctx.textBaseline = "bottom";
+    let lastLabel = 0;
+    for (let k = 0; X(k / (mm ? 10 : 1)) <= xmax + 0.1; k++) {
+      const cm = mm ? k / 10 : k, px = X(cm);
+      const isCm = mm ? k % 10 === 0 : true, is5 = isCm && Math.round(cm) % 5 === 0;
+      const len = is5 ? 14 : isCm ? 9 : 4;
+      ctx.lineWidth = is5 ? 1.5 : 1;
+      ctx.beginPath(); ctx.moveTo(px, o.y); ctx.lineTo(px, o.y - len); ctx.stroke();
+      if (is5) { ctx.fillText(String(Math.round(cm)), px, o.y - 16); lastLabel = px; }
+    }
+    ctx.beginPath(); ctx.moveTo(o.x, o.y); ctx.lineTo(xmax, o.y); ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.textAlign = "left"; ctx.fillText("cm", Math.min(lastLabel + 12, w - 22), o.y - 16);
+    ctx.textBaseline = "top";
+    }
+  } else {
+    // Karopapier
+    for (let k = 0; X(k) <= w; k++) {
+      ctx.strokeStyle = k % 5 === 0 ? C.line : C.grid; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(X(k), 0); ctx.lineTo(X(k), h); ctx.stroke();
+    }
+    for (let k = 0; Y(k) >= 0; k++) {
+      ctx.strokeStyle = k % 5 === 0 ? C.line : C.grid;
+      ctx.beginPath(); ctx.moveTo(0, Y(k)); ctx.lineTo(w, Y(k)); ctx.stroke();
+    }
+    ctx.strokeStyle = C.muted; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(o.x, 0); ctx.lineTo(o.x, o.y); ctx.lineTo(w, o.y); ctx.stroke();
+    ctx.fillStyle = C.muted; ctx.textAlign = "center";
+    for (let k = 5; X(k) < w - 20; k += 5) ctx.fillText(String(k), X(k), o.y + 4);
+    ctx.textAlign = "right"; ctx.textBaseline = "middle";
+    for (let k = 5; Y(k) > 40; k += 5) ctx.fillText(String(k), o.x - 4, Y(k));
+    ctx.textAlign = "left"; ctx.textBaseline = "top";
+    ctx.fillText("x in cm", w - 60, o.y + 4);
+    ctx.fillText("y in cm", o.x + 6, Math.max(44, Y(Math.floor((o.y - 40) / ppc / 5) * 5) - 6));
+  }
+  if (!D) return;
+
+  if (state.recording) {
+    // Rohspur live
+    const r = state.raw;
+    ctx.strokeStyle = C.qx; ctx.lineWidth = 2;
+    if (state.mode === "2d") {
+      ctx.beginPath(); r.forEach((p, i) => { const px = o.x + p.x, py = o.y - p.y; i ? ctx.lineTo(px, py) : ctx.moveTo(px, py); }); ctx.stroke();
+    }
+    const p = r[r.length - 1];
+    if (p) {
+      ctx.strokeStyle = alpha(C.qx, 0.5); ctx.lineWidth = 1;
+      if (state.mode === "1d") {
+        ctx.beginPath();
+        if (senk) { ctx.moveTo(0, o.y - p.x); ctx.lineTo(w, o.y - p.x); }
+        else { ctx.moveTo(o.x + p.x, 0); ctx.lineTo(o.x + p.x, h); }
+        ctx.stroke();
+      }
+      const cx = senk ? o.x : o.x + p.x, cy = senk ? o.y - p.x : (state.mode === "1d" ? o.y : o.y - p.y);
+      ctx.fillStyle = C.qx; ctx.beginPath(); ctx.arc(cx, cy, 7, 0, 7); ctx.fill();
+      ctx.font = `600 ${fs(15)}px ${css("--font-data")}`; ctx.textAlign = "right"; ctx.fillStyle = C.ink;
+      ctx.fillText(`t = ${fmt(p.t, 2)} s`, w - 14, 12);
+    }
+    return;
+  }
+
+  // Messpunkte im eingestellten Zeitabstand
+  const step = Math.max(1, Math.round(state.strobe / DT));
+  const one = state.mode === "1d";
+  const lane = one && state.allVec;              // 1D: Punkte zeitlich versetzt nebeneinander
+  /* 1D waagerecht: Unten steht der Hinweis, Legende und Fusszeile rutschen eine Zeile hoch. */
+  const hoch1d = one && !senk;
+  /* In 1D liegt die Bewegung auf dem Lineal; quer dazu stehen die Punkte und Pfeile -
+     bei der waagerechten Aufnahme darunter, bei der senkrechten rechts davon. d ist
+     dieser Abstand vom Lineal, so gilt derselbe Code fuer beide Richtungen. In 2D zaehlt
+     d nach oben, dort ist es die y-Koordinate. */
+  const Pp = (cm, d) => senk ? [o.x + d, o.y - cm * ppc] : [o.x + cm * ppc, one ? o.y + d : o.y - d];
+  const dNah = senk ? 30 : 26;                   // Anfang der Zeitspur, dicht am Lineal
+  const dFern = senk ? w - o.x - 26 : h - o.y - 56;   // ihr Ende, am weitesten weg
+  const dOf = t => !lane ? 20 : dNah + (t / Math.max(D.T, 0.01)) * (dFern - dNah);
+  const ptOf = i => one ? Pp(D.x[i], dOf(D.t[i])) : [X(D.x[i]), Y(D.y[i])];
+  const vs = 0.25 * ppc * state.vecScale, as = 0.04 * ppc * state.vecScale; // Pfeil: v · 0,25 s bzw. a · 0,04 s²
+  const capF = (dx, dy) => { const l = Math.hypot(dx, dy), m = Math.max(w, h); return l > m ? m / l : 1; };
+  const showV = state.vecSel !== "a", showA = state.vecSel !== "v";
+  // ein Pfeil laengs der Bewegungsrichtung (in 2D mit beiden Komponenten)
+  const pfeil = (px, py, gx, gy, f, col, br, kopf) => senk
+    ? arrow(ctx, px, py, px, py - gx * f, col, br, kopf)
+    : arrow(ctx, px, py, px + gx * f, py - gy * f, col, br, kopf);
+  if (!one) {
+    ctx.strokeStyle = alpha(C.qx, 0.55); ctx.lineWidth = 2;
+    ctx.beginPath(); for (let i = 0; i < D.N; i++) { const px = X(D.x[i]), py = Y(D.y[i]); i ? ctx.lineTo(px, py) : ctx.moveTo(px, py); } ctx.stroke();
+  }
+  if (state.allVec) {
+    const thin = step * DT * ppc < 14 ? 1.3 : 1.8, head = thin < 1.5 ? 5 : 7;
+    for (let i = 0; i < D.N; i += step) {
+      const [px, py] = ptOf(i);
+      const vx = D.vx[i], vy = one ? 0 : D.vy[i], ax = D.ax[i], ay = one ? 0 : D.ay[i];
+      // in 1D sitzt der a-Pfeil leicht neben dem v-Pfeil
+      const nx = lane && showV && senk ? 3 : 0, ny = lane && showV && !senk ? 3 : 0;
+      if (showA) pfeil(px + nx, py + ny, ax * as, ay * as, capF(ax * as, ay * as), alpha(C.qa, 0.9), thin, head);
+      if (showV) pfeil(px, py, vx * vs, vy * vs, capF(vx * vs, vy * vs), alpha(C.qv, 0.9), thin, head);
+    }
+  }
+  ctx.fillStyle = alpha(C.qx, one && !lane ? 0.45 : 0.85);
+  for (let i = 0; i < D.N; i += step) { const [px, py] = ptOf(i); ctx.beginPath(); ctx.arc(px, py, step * DT * ppc < 10 ? 2.4 : 3.2, 0, 7); ctx.fill(); }
+  /* Unter dem waagerechten Lineal in 1D steht nichts mehr: Der Zeitabstand steht in den
+     Einstellungen, der Pfeilmassstab wird nur mit der Spur gebraucht. */
+  const fussAn = !one || lane;
+  if (fussAn) {
+  ctx.font = `${fs(11)}px ${css("--font-body")}`; ctx.fillStyle = C.muted; ctx.textAlign = "right"; ctx.textBaseline = "bottom";
+  /* im schmalen, senkrechten Feld muss die Zeile kurz bleiben */
+  const dt = fmt(state.strobe, state.strobe < 0.1 ? 2 : state.strobe < 1 ? (state.strobe * 10 % 1 ? 2 : 1) : 0);
+  const fuss = senk ? `${dt} s je Punkt` + (lane ? ", Zeit nach rechts" : "")
+                    : `Punkte im Abstand von ${dt} s` + (lane ? ", Zeit läuft nach unten" : "");
+  if (senk) ctx.font = `${passend(ctx, fuss, w - 18, fs(11), css("--font-body"))}px ${css("--font-body")}`;
+  ctx.fillText(fuss, w - 12, senk ? h - 44 : hoch1d ? h - 26 : h - 8);
+  }
+
+  // Körper zum Zeitpunkt des Cursors
+  if (state.cursor != null) {
+    const t = state.cursor, xt = val(D.x, t);
+    const [px, py] = one ? Pp(xt, 0) : [X(xt), Y(val(D.y, t))];
+    const vx = val(D.vx, t), vy = one ? 0 : val(D.vy, t);
+    const ax = val(D.ax, t), ay = one ? 0 : val(D.ay, t);
+    const fv = capF(vx * vs, vy * vs), fa = capF(ax * as, ay * as);
+    if (lane) {
+      // Cursor auf der versetzten Spur markieren
+      const [sx, sy] = Pp(xt, dOf(t));
+      ctx.strokeStyle = alpha(C.ink, 0.35); ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+      ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(px, py); ctx.stroke(); ctx.setLineDash([]);
+      ctx.strokeStyle = C.ink; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(sx, sy, 6, 0, 7); ctx.stroke();
+    } else {
+      // die beiden Pfeile stehen neben dem Koerper, in 2D in ihm
+      const [vpx, vpy] = one ? Pp(xt, 40) : [px, py], [apx, apy] = one ? Pp(xt, 58) : [px, py];
+      if (one) {
+        const [ex, ey] = Pp(xt, 64);
+        ctx.strokeStyle = alpha(C.ink, 0.35); ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+        ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(ex, ey); ctx.stroke(); ctx.setLineDash([]);
+      }
+      pfeil(vpx, vpy, vx * vs, vy * vs, fv, C.qv, 3, 10);
+      pfeil(apx, apy, ax * as, ay * as, fa, C.qa, 3, 10);
+    }
+    ctx.fillStyle = C.ink; ctx.strokeStyle = C.surface; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(px, py, 8, 0, 7); ctx.fill(); ctx.stroke();
+  }
+  // Legende mit Pfeilmaßstab - im schmalen, senkrechten Feld untereinander
+  if (!fussAn) return;
+  ctx.textBaseline = "bottom"; ctx.textAlign = "left";
+  const lyV = (senk || hoch1d) ? h - 26 : h - 8, lyA = hoch1d ? h - 26 : h - 8;
+  const vTxt = `1 cm ≙ ${fmt(4 / state.vecScale, state.vecScale > 1 ? 1 : 0)} cm/s`;
+  const aTxt = `1 cm ≙ ${fmt(25 / state.vecScale, state.vecScale > 2 ? 2 : state.vecScale > 1 ? 1 : 0)} cm/s²`;
+  // im schmalen Feld richtet sich die Schriftgroesse nach der laengeren der beiden Zeilen
+  const lg = senk ? Math.min(passend(ctx, vTxt, w - 32, fs(11), css("--font-data")),
+                             passend(ctx, aTxt, w - 32, fs(11), css("--font-data"))) : fs(11);
+  const lix = senk ? Math.round(lg) + 4 : 24;
+  ctx.font = `700 ${lg + 1}px ${css("--font-body")}`; ctx.fillStyle = C.qv; ctx.fillText("v", senk ? 6 : 14, lyV);
+  ctx.font = `${lg}px ${css("--font-data")}`; ctx.fillStyle = C.muted;
+  ctx.fillText(vTxt, lix, lyV);
+  const lx = senk ? 6 : 24 + ctx.measureText(vTxt).width + 14;
+  ctx.font = `700 ${lg + 1}px ${css("--font-body")}`; ctx.fillStyle = C.qa; ctx.fillText("a", lx, lyA);
+  ctx.font = `${lg}px ${css("--font-data")}`; ctx.fillStyle = C.muted;
+  ctx.fillText(aTxt, senk ? lix : lx + 10, lyA);
+}
+
+
+/* ---------- Teiler im 2D-Modus: Zeichenflaeche und Diagramme teilen sich den Platz ---------- */
+function splitSetzen(v) {
+  state.split = clamp(Math.round(v * 10) / 10, 15, 85);
+  document.documentElement.style.setProperty("--split", state.split + "%");
+}
+(() => {
+  const el = $("split"), stage = document.querySelector(".stage");
+  let zieh = null;
+  el.addEventListener("pointerdown", e => {
+    e.preventDefault();
+    try { el.setPointerCapture(e.pointerId); } catch (err) {}
+    /* Liegen Zeichenflaeche und Diagramme nebeneinander oder uebereinander? Der Balken
+       selbst sagt es: nebeneinander ist er hoch und schmal. Und liegt die Zeichenflaeche
+       hinten, zaehlt der Abstand vom anderen Rand. */
+    const b = el.getBoundingClientRect();
+    zieh = { id: e.pointerId, r: stage.getBoundingClientRect(), waag: b.height > b.width,
+             hinten: app.classList.contains("padHinten") };
+    el.classList.add("zieht");
+  });
+  el.addEventListener("pointermove", e => {
+    if (!zieh || zieh.id !== e.pointerId) return;
+    e.preventDefault();
+    const r = zieh.r;
+    const anteil = zieh.waag
+      ? (zieh.hinten ? r.right - e.clientX : e.clientX - r.left) / r.width
+      : (zieh.hinten ? r.bottom - e.clientY : e.clientY - r.top) / r.height;
+    splitSetzen(anteil * 100);
+    requestDraw();
+  });
+  const los = e => {
+    if (!zieh || zieh.id !== e.pointerId) return;
+    zieh = null; el.classList.remove("zieht");
+    sync(); requestDraw();
+  };
+  el.addEventListener("pointerup", los);
+  el.addEventListener("pointercancel", los);
+  el.addEventListener("dblclick", () => { splitSetzen(44); sync(); requestDraw(); });
+})();
+
+/* ---------- Ziel und Battle (nur 1D) ----------
+   Ziel: Eine Kurve wird mit dem Finger in eines der drei Diagramme gezeichnet; danach
+   versucht man, sie im Aufnahmefeld nachzufahren. Gewertet wird, wie viel Prozent der
+   Zeit die eigene Kurve im Band um das Ziel liegt.
+   Battle: dasselbe Ziel, aber zwei Felder an den Fensterraendern (senkrecht, damit sich
+   zwei Finger nicht in die Quere kommen). Nach einem Countdown nehmen beide gleichzeitig
+   auf, am Ende stehen beide Kurven und beide Trefferquoten nebeneinander. */
+const SPIEL_F = { L: "#7c3aed", R: "#ea580c" };     // Farbe der beiden Spieler
+const BT_OBEN = 52, BT_UNTEN = 34;                  // Raender des Lineals im Battle-Feld
+const ZIEL_KLEIN = { x: 0.4, v: 1.5, a: 5 };        // kleinstes Trefferband je Groesse
+const EINH = { x: "cm", v: "cm/s", a: "cm/s²" };
+const spielAn = () => state.mode === "1d" && state.spiel !== "aus";
+/* Liegt das Aufnahmefeld hinter den Diagrammen? Im Ziel-Modus von Haus aus ja. */
+const padHinten = () => state.padPos === "hinter"
+  || (state.padPos === "auto" && state.mode === "1d" && state.spiel === "ziel");
+const battleAn = () => state.mode === "1d" && state.spiel === "battle";
+const zielKey = typ => typ === "x" ? "x" : typ === "v" ? "vx" : "ax";
+const zielName = typ => (typ === "x" ? sym1d() : typ) + "(t)";
+const BT = { phase: "aus", zahl: 3, t0: 0, raf: 0, timer: 0,
+             pos: { L: null, R: null }, id: { L: null, R: null },
+             raw: { L: [], R: [] }, D: { L: null, R: null }, erg: null };
+
+/* Wie viele Zentimeter das Aufnahmefeld hoch (bzw. breit) ist - danach richtet sich der
+   Wertebereich des x(t)-Diagramms, solange noch nichts aufgenommen wurde. */
+function padSpanne() {
+  const cv = battleAn() ? $("padL") : pad, r = cv.getBoundingClientRect();
+  const px = (battleAn() || istSenk()) ? r.height - BT_OBEN - BT_UNTEN : r.width - 2 * PAD_M;
+  return Math.max(4, px / state.ppc);
+}
+const VORGABE = { x: () => [0, Math.max(6, Math.round(padSpanne()))], v: () => [-20, 20], a: () => [-60, 60] };
+
+/* Aus den gezogenen Punkten {t, v} eine Kurve auf dem DT-Raster machen. Vor dem ersten
+   und nach dem letzten Punkt laeuft sie waagerecht weiter, damit das Ziel die ganze
+   Dauer abdeckt. */
+function zielAus(pts) {
+  const T = state.zielT, N = Math.round(T / DT) + 1;
+  const q = pts.filter(o => isFinite(o.t) && isFinite(o.v)).sort((a, b) => a.t - b.t);
+  if (q.length < 2) return null;
+  const v = new Float64Array(N);
+  let j = 0;
+  for (let i = 0; i < N; i++) {
+    const t = i * DT;
+    if (t <= q[0].t) v[i] = q[0].v;
+    else if (t >= q[q.length - 1].t) v[i] = q[q.length - 1].v;
+    else {
+      while (j < q.length - 2 && q[j + 1].t < t) j++;
+      const a = q[j], b = q[j + 1];
+      const f = b.t > a.t ? clamp((t - a.t) / (b.t - a.t), 0, 1) : 0;
+      v[i] = a.v + f * (b.v - a.v);
+    }
+  }
+  return zielMasse({ typ: state.zielTyp, T, v });
+}
+/* Zum Teilen reicht die Zielkurve in Zehntelsekunden; beim Einlesen wird wieder auf das
+   Rechenraster aufgefuellt (ein alter Stand ohne dt steht schon darauf). */
+function zielGrob(v) {
+  const k = Math.max(1, Math.round(0.1 / DT)), aus = [];
+  for (let i = 0; i < v.length; i += k) aus.push(Math.round(v[i] * 100) / 100);
+  if ((v.length - 1) % k) aus.push(Math.round(v[v.length - 1] * 100) / 100);
+  return aus;
+}
+function zielFein(roh, dt, T) {
+  const N = Math.round(T / DT) + 1, v = new Float64Array(N);
+  if (!roh.length) return v;
+  for (let i = 0; i < N; i++) {
+    const f = clamp(i * DT / dt, 0, roh.length - 1);
+    const j = Math.min(roh.length - 2, Math.floor(f)), r = f - j;
+    v[i] = roh.length < 2 ? roh[0] : roh[j] * (1 - r) + roh[j + 1] * r;
+  }
+  return v;
+}
+/* Trefferquote: Anteil der Zeit im Band. Zeit ohne Aufnahme zaehlt als weit daneben. */
+function bewerten(dd) {
+  const z = state.ziel;
+  if (!z || !dd) return null;
+  const arr = dd[zielKey(z.typ)], N = z.v.length, weit = z.tol * 5;
+  let innen = 0, summe = 0;
+  for (let i = 0; i < N; i++) {
+    const t = i * DT;
+    const d = t <= dd.T ? Math.abs(val(arr, t) - z.v[i]) : weit;
+    if (d <= z.tol) innen++;
+    summe += Math.min(d, weit);
+  }
+  return { quote: Math.round(innen / N * 100), abw: summe / N };
+}
+/* Welche Strecke braucht man fuer dieses Ziel? Bei v(t) ist es die Flaeche unter der
+   Kurve, bei a(t) kommt die frei waehlbare Anfangsgeschwindigkeit dazu - die darf man
+   sich so aussuchen, dass man mit moeglichst wenig Weg auskommt. */
+function zielWeg(z) {
+  const N = z.v.length;
+  if (z.typ === "x") { let lo = Infinity, hi = -Infinity;
+    for (const q of z.v) { if (q < lo) lo = q; if (q > hi) hi = q; }
+    return hi - lo; }
+  if (z.typ === "v") { let s = 0, lo = 0, hi = 0;
+    for (let i = 1; i < N; i++) { s += (z.v[i - 1] + z.v[i]) / 2 * DT; if (s < lo) lo = s; if (s > hi) hi = s; }
+    return hi - lo; }
+  const w = new Float64Array(N);
+  let v = 0;
+  for (let i = 1; i < N; i++) { v += (z.v[i - 1] + z.v[i]) / 2 * DT; w[i] = w[i - 1] + v * DT; }
+  let best = Infinity;
+  for (let j = -80; j <= 80; j++) {            // Anfangsgeschwindigkeit in Schritten von 0,5 cm/s
+    const v0 = j * 0.5;
+    let lo = Infinity, hi = -Infinity;
+    for (let i = 0; i < N; i += 5) { const q = w[i] + v0 * i * DT; if (q < lo) lo = q; if (q > hi) hi = q; }
+    if (hi - lo < best) best = hi - lo;
+  }
+  return best;
+}
+/* Trefferband und Wertebereich nach jeder Aenderung der Kurve neu bestimmen. Das kleinste
+   Band (ZIEL_KLEIN) faengt fast waagerechte Kurven ab, darf aber nie breiter werden als die
+   halbe Kurve - sonst laege man nach einem starken Verkleinern immer darin. */
+function zielMasse(z) {
+  let lo = Infinity, hi = -Infinity;
+  for (const q of z.v) { if (q < lo) lo = q; if (q > hi) hi = q; }
+  const spanne = hi - lo, mass = Math.max(spanne, Math.abs((lo + hi) / 2));
+  z.tol = Math.max(spanne * 0.09, Math.min(ZIEL_KLEIN[z.typ], mass * 0.5), ZIEL_KLEIN[z.typ] * 0.1);
+  z.rng = [lo - z.tol, hi + z.tol];
+  return z;
+}
+/* Passt das Ziel ins Aufnahmefeld? Sonst wird es so weit verkleinert (bei x(t) notfalls
+   auch verschoben), dass es sich ueberhaupt nachfahren laesst - mit Ansage. */
+function zielPruefen(z) {
+  const S = padSpanne(), nutz = S * 0.95, weg = zielWeg(z);
+  let k = 1, dy = 0;
+  if (weg > nutz && weg > 1e-6) k = nutz / weg;
+  if (z.typ === "x") {
+    let lo = Infinity, hi = -Infinity;
+    for (const q of z.v) { if (q < lo) lo = q; if (q > hi) hi = q; }
+    const lo2 = lo * k, hi2 = hi * k;
+    if (lo2 < 0) dy = -lo2; else if (hi2 > S) dy = S - hi2;
+  }
+  if (k === 1 && !dy) { state.zielNote = ""; return z; }
+  for (let i = 0; i < z.v.length; i++) z.v[i] = z.v[i] * k + dy;
+  zielMasse(z);
+  state.zielNote = k < 1
+    ? `Nicht erreichbar: dafür wären ${fmt(weg, 1)} cm Weg nötig, das Feld hat ${fmt(S, 1)} cm – die Kurve wurde auf ${Math.round(k * 100)} % verkleinert.`
+    : "Die Kurve lag außerhalb des Feldes und wurde hineingeschoben.";
+  hinweis(state.zielNote);
+  return z;
+}
+function spielSetzen(sp) {
+  if (state.spiel === sp || state.mode !== "1d") return;
+  stopPlay(); btStopp();
+  state.spiel = sp;
+  state.cursor = null; state.pins = []; state.interval = null;
+  if (sp === "aus") { state.zeichnen = false; makeSample(); }
+  else { state.raw = []; state.sample = false; D = null; state.zeichnen = !state.ziel; }
+  updateUI();
+  /* die Felder sind in Battle anders lang als in Ziel - also noch einmal nachsehen */
+  if (sp !== "aus" && state.ziel) requestAnimationFrame(() => { zielPruefen(state.ziel); updateUI(); draw(); });
+  requestDraw();
+}
+
+// ---------- Battle: zwei Felder, Countdown, gleichzeitige Aufnahme ----------
+function btStopp() {
+  BT.phase = "aus"; clearTimeout(BT.timer); cancelAnimationFrame(BT.raf);
+  BT.pos = { L: null, R: null }; BT.id = { L: null, R: null };
+}
+function btStart() {
+  if (!state.ziel) { hinweis("Erst eine Zielkurve zeichnen"); return; }
+  btStopp();
+  BT.raw = { L: [], R: [] }; BT.D = { L: null, R: null }; BT.erg = null;
+  D = null; state.raw = []; state.sample = false;
+  BT.phase = "count"; BT.zahl = 3;
+  updateUI(); requestDraw();
+  const tick = () => {
+    if (BT.phase !== "count") return;
+    BT.zahl--;
+    if (BT.zahl > 0) { requestDraw(); BT.timer = setTimeout(tick, 900); return; }
+    BT.phase = "lauf"; BT.t0 = performance.now();
+    updateUI();
+    BT.raf = requestAnimationFrame(btLauf);
+  };
+  BT.timer = setTimeout(tick, 900);
+}
+function btLauf() {
+  if (BT.phase !== "lauf") return;
+  const t = (performance.now() - BT.t0) / 1000;
+  ["L", "R"].forEach(k => { if (BT.pos[k] != null) BT.raw[k].push({ t, x: BT.pos[k], y: 0 }); });
+  if (t >= state.zielT) { btEnde(); return; }
+  btPads();
+  BT.raf = requestAnimationFrame(btLauf);
+}
+function btEnde() {
+  BT.phase = "fertig"; cancelAnimationFrame(BT.raf);
+  ["L", "R"].forEach(k => { BT.D[k] = baue(BT.raw[k]); });
+  D = BT.D.L || BT.D.R;            // Ablesetabelle und Export nehmen die linke Aufnahme
+  BT.erg = { L: bewerten(BT.D.L), R: bewerten(BT.D.R) };
+  updateUI(); draw();
+}
+const btPads = () => { drawBtPad("L"); drawBtPad("R"); };
+function drawBtPad(seite) {
+  const cv = $(seite === "L" ? "padL" : "padR");
+  if (!cv || !cv.getClientRects().length) return;          // Feld gerade nicht sichtbar
+  const { ctx, w, h } = setup(cv);
+  const C = colors(), ppc = state.ppc, col = SPIEL_F[seite];
+  const rx = seite === "L" ? 40 : w - 40;                  // das Lineal steht am Fensterrand
+  const y0 = h - BT_UNTEN, vz = seite === "L" ? -1 : 1, rein = -vz;
+  const Y = cm => y0 - cm * ppc, mm = ppc >= 30;
+  const mitte = seite === "L" ? (rx + w) / 2 : rx / 2;     // Mitte der freien Flaeche neben dem Lineal
+  // Lineal mit Zahlen nach aussen
+  ctx.font = `${fs(11)}px ${css("--font-data")}`;
+  ctx.strokeStyle = C.muted; ctx.fillStyle = C.muted; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(rx, y0); ctx.lineTo(rx, BT_OBEN); ctx.stroke();
+  ctx.textAlign = seite === "L" ? "right" : "left"; ctx.textBaseline = "middle";
+  for (let k = 0; Y(k / (mm ? 10 : 1)) >= BT_OBEN - 0.1; k++) {
+    const cm = mm ? k / 10 : k, py = Y(cm);
+    const isCm = mm ? k % 10 === 0 : true, is5 = isCm && Math.round(cm) % 5 === 0;
+    ctx.lineWidth = is5 ? 1.5 : 1;
+    ctx.beginPath(); ctx.moveTo(rx, py); ctx.lineTo(rx + vz * (is5 ? 14 : isCm ? 9 : 4), py); ctx.stroke();
+    if (is5) ctx.fillText(String(Math.round(cm)), rx + vz * 17, py);
+  }
+  ctx.textAlign = "center"; ctx.textBaseline = "top";
+  ctx.font = `700 ${fs(13)}px ${css("--font-body")}`; ctx.fillStyle = col;
+  ctx.fillText(seite === "L" ? "Links" : "Rechts", mitte, 8);
+  // Spur der Aufnahme - die Zeit laeuft ins Feld hinein
+  const dMax = Math.max(40, (seite === "L" ? w - rx : rx) - 18);
+  const spur = BT.raw[seite];
+  if (spur.length > 1) {
+    ctx.strokeStyle = alpha(col, 0.85); ctx.lineWidth = 2;
+    ctx.beginPath();
+    spur.forEach((o, i) => {
+      const d = 26 + (o.t / Math.max(state.zielT, 0.01)) * (dMax - 26);
+      const px = rx + rein * d, py = y0 - o.x;
+      i ? ctx.lineTo(px, py) : ctx.moveTo(px, py);
+    });
+    ctx.stroke();
+  }
+  // wo der Finger gerade liegt
+  const pos = BT.pos[seite];
+  if (pos != null) {
+    const py = y0 - pos;
+    ctx.strokeStyle = alpha(col, 0.35); ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(0, py); ctx.lineTo(w, py); ctx.stroke();
+    ctx.fillStyle = col; ctx.beginPath(); ctx.arc(rx, py, 8, 0, 7); ctx.fill();
+  }
+  /* Ist der Ort vorgegeben, zeigt ein Ring, wo man gerade sein muesste - bei v(t) und
+     a(t) bleibt das die eigentliche Denkaufgabe. */
+  if (BT.phase === "lauf" && state.ziel && state.ziel.typ === "x") {
+    const i = clamp(Math.round((performance.now() - BT.t0) / 1000 / DT), 0, state.ziel.v.length - 1);
+    ctx.strokeStyle = C.ink; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.arc(rx, Y(state.ziel.v[i]), 11, 0, 7); ctx.stroke();
+  }
+  ctx.textAlign = "center";
+  if (BT.phase === "count") {
+    ctx.fillStyle = C.ink; ctx.textBaseline = "middle";
+    ctx.font = `700 ${Math.round(Math.min(Math.abs(mitte - rx) * 1.6, h, 260) * 0.5)}px ${css("--font-body")}`;
+    ctx.fillText(String(BT.zahl), mitte, h / 2);
+  } else if (BT.phase === "lauf") {
+    const rest = Math.max(0, state.zielT - (performance.now() - BT.t0) / 1000);
+    ctx.fillStyle = alpha(C.ink, 0.55); ctx.textBaseline = "bottom";
+    ctx.font = `700 ${fs(15)}px ${css("--font-data")}`;
+    ctx.fillText(fmt(rest, 1) + " s", mitte, h - 6);
+  } else if (BT.phase === "fertig" && BT.erg && BT.erg[seite]) {
+    ctx.fillStyle = col; ctx.textBaseline = "bottom";
+    ctx.font = `700 ${fs(26)}px ${css("--font-body")}`;
+    ctx.fillText(BT.erg[seite].quote + " %", mitte, h - 8);
+  } else {
+    ctx.fillStyle = C.muted; ctx.textBaseline = "middle";
+    ctx.font = `${passend(ctx, "Finger auflegen", Math.abs(mitte - rx) * 2 - 8, fs(12), css("--font-body"))}px ${css("--font-body")}`;
+    ctx.fillText("Finger auflegen", mitte, h / 2);
+  }
+}
+["L", "R"].forEach(seite => {
+  const cv = $(seite === "L" ? "padL" : "padR");
+  const setz = e => {
+    const r = cv.getBoundingClientRect();
+    BT.pos[seite] = (r.height - BT_UNTEN) - (e.clientY - r.top);
+  };
+  cv.addEventListener("pointerdown", e => {
+    e.preventDefault();
+    try { cv.setPointerCapture(e.pointerId); } catch (err) {}
+    BT.id[seite] = e.pointerId; setz(e); btPads();
+  });
+  cv.addEventListener("pointermove", e => {
+    if (BT.id[seite] !== e.pointerId) return;
+    e.preventDefault(); setz(e);
+    if (BT.phase !== "lauf") btPads();
+  });
+  const ende = e => {
+    if (BT.id[seite] !== e.pointerId) return;
+    BT.id[seite] = null; BT.pos[seite] = null; btPads();
+  };
+  cv.addEventListener("pointerup", ende);
+  cv.addEventListener("pointercancel", ende);
+});
+
+// ---------- Zeichnen: Diagramme ----------
+const SUB = { x: "ₓ", y: "ᵧ" };
+let layout = null;
+function pill(ctx, text, x, y, color, C, align = "left") {
+  ctx.font = `500 ${fs(11.5)}px ${css("--font-data")}`;
+  const tw = ctx.measureText(text).width, pw = tw + 10, ph = fs(18);
+  let bx = align === "right" ? x - pw : align === "center" ? x - pw / 2 : x;
+  bx = clamp(bx, layout.L + 2, layout.w - layout.R - pw - 2);
+  ctx.fillStyle = alpha(C.surface.startsWith("#") ? C.surface : "#ffffff", 0.92);
+  ctx.strokeStyle = alpha(color.startsWith("#") ? color : "#000000", 0.6); ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.roundRect ? ctx.roundRect(bx, y - ph / 2, pw, ph, 4) : ctx.rect(bx, y - ph / 2, pw, ph); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = color; ctx.textAlign = "left"; ctx.textBaseline = "middle";
+  ctx.fillText(text, bx + 5, y + 0.5);
+}
+/* ---------- Monotonie, Kruemmung, Vorzeichen ----------
+   Alle drei Fragen laufen auf dieselbe Rechnung hinaus: Wo hat eine Groesse welches
+   Vorzeichen? x(t) steigt, wo v > 0 ist; x(t) ist linksgekruemmt, wo a > 0 ist;
+   v(t) steigt, wo a > 0 ist. Es wird also immer das Vorzeichen einer Kurve gesucht,
+   die null, ein oder zwei Diagramme tiefer liegt. Die Farbe steht hier fuer das Vorzeichen
+   und nicht fuer die Groesse: aus v abgelesen blau/orange, aus a abgelesen gruen/rot. So
+   springt der Unterschied ins Auge - im Streifen, im Hintergrund des Diagramms und in der
+   Kurve selbst, die abschnittsweise in diesen Farben gezeichnet wird. */
+const IV_ART = {
+  vz:  { tiefer: 0, name: "Vorzeichen",
+         z: { "1": "+", "-1": "−", "0": "0" },
+         wort: { "1": "positiv", "-1": "negativ", "0": "≈ 0" } },
+  mon: { tiefer: 1, name: "Monotonie",
+         z: { "1": "↗", "-1": "↘", "0": "→" },
+         wort: { "1": "steigt", "-1": "fällt", "0": "konstant" } },
+  kru: { tiefer: 2, name: "Krümmung",
+         z: { "1": "∪", "-1": "∩", "0": "–" },
+         wort: { "1": "links", "-1": "rechts", "0": "gerade" } },
+};
+function ivFarbe(o, s, C) {
+  const zw = o.q.id === "a";                 // aus der zweiten Ableitung abgelesen?
+  return s > 0 ? (zw ? C.iv2p : C.iv1p) : s < 0 ? (zw ? C.iv2m : C.iv1m) : C.muted;
+}
+/* Totband: Werte dicht an null zaehlen noch zum laufenden Abschnitt - sonst zerfaellt
+   eine mit dem Finger aufgenommene Kurve in lauter Schnipsel. */
+function ivEps(arr) {
+  let m = 0;
+  for (const v of arr) { const b = Math.abs(v); if (b > m) m = b; }
+  return m * 0.04;
+}
+/* Nullband: Hier geht es nicht um das Zittern dicht an einem Vorzeichenwechsel, sondern
+   um Abschnitte, in denen die Kurve wirklich auf der t-Achse liegt - v = 0 (x konstant)
+   oder a = 0 (v konstant, x eine Gerade). Gemessen wird am gezeichneten Diagramm: Was im
+   Bild nicht von der Achse abhebt - etwa ein Zwanzigstel der Hoehe -, gilt als null.
+   Eine verwackelte Aufnahme, deren a(t) das ganze Diagramm ausfuellt, wird dadurch nicht
+   grau; dort hilft nur mehr Glaettung. */
+const ivNull = q => (q.hi - q.lo) * 0.05;
+/* Die Abschnitte gleichen Vorzeichens einer Kurve. Die Grenze liegt dort, wo die Kurve
+   wirklich durch null geht (Hoch-, Tief- oder Wendepunkt), nicht dort, wo sie das
+   Totband verlaesst. Abschnitte unter "kurz" Sekunden gehoeren zum Nachbarn. */
+function vzStuecke(arr, tArr, eps, kurz, eps0, nullMin) {
+  const n = arr.length;
+  if (n < 2) return [];
+  const sg = new Int8Array(n);
+  let cur = 0;
+  for (let i = 0; i < n; i++) { if (arr[i] > eps) cur = 1; else if (arr[i] < -eps) cur = -1; sg[i] = cur; }
+  let k = 0; while (k < n && !sg[k]) k++;
+  if (k === n) return [{ a: tArr[0], b: tArr[n - 1], s: 0 }];
+  for (let i = 0; i < k; i++) sg[i] = sg[k];
+  /* Bleibt die Kurve lange genug im Nullband, liegt sie dort auf der t-Achse: ein eigener
+     Abschnitt mit Vorzeichen 0, grau gefaerbt. Kurze Durchgaenge bleiben Durchgaenge. */
+  if (eps0 > 0) {
+    const ruhe = new Uint8Array(n);
+    for (let i = 0; i < n; i++) {
+      if (Math.abs(arr[i]) >= eps0) continue;
+      let j = i; while (j + 1 < n && Math.abs(arr[j + 1]) < eps0) j++;
+      if (tArr[j] - tArr[i] >= nullMin) for (let m = i; m <= j; m++) ruhe[m] = 1;
+      i = j;
+    }
+    for (let i = 0; i < n; i++) if (ruhe[i]) sg[i] = 0;
+  }
+  const nulls = i => {                       // Nullstelle zwischen Messpunkt i und i+1
+    const u = arr[i], v = arr[i + 1], r = u === v ? 0.5 : u / (u - v);
+    return tArr[i] + (tArr[i + 1] - tArr[i]) * r;
+  };
+  const grenze = e => {                      // Vorzeichenwechsel bei e: Nullstelle daneben suchen
+    for (let d = 0; d < n; d++) for (const i of [e - 1 - d, e - 1 + d]) {
+      if (i < 0 || i + 1 >= n) continue;
+      if ((arr[i] <= 0 && arr[i + 1] >= 0) || (arr[i] >= 0 && arr[i + 1] <= 0)) return nulls(i);
+    }
+    return tArr[e];
+  };
+  const out = [{ s: sg[0], a: tArr[0], b: tArr[n - 1] }];
+  for (let i = 1; i < n; i++) {
+    if (sg[i] === sg[i - 1]) continue;
+    /* An eine Ruhe grenzt kein Nulldurchgang: dort liegt die Grenze, wo die Kurve das
+       Nullband verlaesst bzw. betritt. */
+    const t = (!sg[i] || !sg[i - 1]) ? (tArr[i - 1] + tArr[i]) / 2 : grenze(i);
+    out[out.length - 1].b = t;
+    out.push({ s: sg[i], a: t, b: tArr[n - 1] });
+  }
+  for (let j = out.length - 1; j >= 0 && out.length > 1; j--) {
+    if (out[j].b - out[j].a >= kurz) continue;
+    if (j) { out[j - 1].b = out[j].b; out.splice(j, 1); }
+    else { out[1].a = out[0].a; out.splice(0, 1); }
+  }
+  for (let j = out.length - 1; j > 0; j--)
+    if (out[j].s === out[j - 1].s) { out[j - 1].b = out[j].b; out.splice(j, 1); }
+  return out;
+}
+/* Was gerade abzulesen ist: je Diagramm und Komponente ein Streifen. "reihe" sagt,
+   der wievielte Streifen von unten es in diesem Diagramm ist. Sind in einem Diagramm zwei
+   Fragen angeschaltet (bei x(t) Monotonie und Kruemmung), faerbt nur die erste - "haupt" -
+   Hintergrund und Kurve; die zweite bleibt ihr Streifen. */
+function ivSammeln(P, comps) {
+  const out = [];
+  if (!D) return out;
+  const kurz = Math.max(0.1, D.T * 0.03), nullMin = Math.max(kurz, 0.3);
+  P.forEach((p, i) => {
+    if (!p.an) return;
+    let reihe = 0; const hat = {};
+    ["vz", "mon", "kru"].forEach(art => {
+      const A = IV_ART[art], q = P[i + A.tiefer];
+      if (!q || !state.show[art] || !state.show[art][p.id]) return;
+      comps.forEach((c, ci) => {
+        const arr = D[q.key(c)], haupt = !hat[c];
+        hat[c] = true;
+        out.push({ p, q, art, c, ci, anz: comps.length, reihe, haupt,
+                   st: vzStuecke(arr, D.t, ivEps(arr), kurz, ivNull(q), nullMin) });
+      });
+      reihe++;
+    });
+  });
+  return out;
+}
+/* "flaeche" legt die ganze Zeichenflaeche des Diagramms abschnittsweise in die Farbe des
+   Vorzeichens (noch unter das Gitter), "band" zeichnet die Streifen mit den Symbolen vor
+   die Kurve, "punkte" setzt danach die Ringe auf die Grenzen - Hoch-, Tief- und
+   Wendepunkte. Die Kurve selbst faerbt drawPlots, siehe ivFarbe. */
+function ivMalen(ctx, liste, tx, C, clip, teil) {
+  if (!liste.length) return;
+  const sh = fs(13);
+  liste.forEach(o => {
+    const p = o.p, A = IV_ART[o.art], zwei = o.anz === 2;
+    const hoch = zwei ? sh / 2 : sh;
+    const y0 = p.top + layout.ph - 4 - (o.reihe + 1) * sh + (zwei ? o.ci * hoch : 0);
+    if (teil === "flaeche") {
+      /* Nur der Hauptstreifen faerbt, und nur wenn eine Komponente gezeigt wird - sonst
+         lagen zwei verschiedene Einteilungen uebereinander. */
+      if (!o.haupt || zwei) return;
+      o.st.forEach(r => {
+        ctx.fillStyle = alpha(ivFarbe(o, r.s, C), r.s ? 0.13 : 0.16);
+        ctx.fillRect(tx(r.a), p.top, Math.max(1, tx(r.b) - tx(r.a)), layout.ph);
+      });
+      return;
+    }
+    if (teil === "punkte") {
+      const arr = D[p.key(o.c)];
+      clip(p, () => o.st.forEach((r, j) => {
+        if (!j) return;
+        ctx.fillStyle = C.surface; ctx.strokeStyle = ivFarbe(o, r.s, C); ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(tx(r.a), p.y(val(arr, r.a)), 4.5, 0, 7); ctx.fill(); ctx.stroke();
+      }));
+      return;
+    }
+    clip(p, () => {
+      ctx.setLineDash([3, 4]); ctx.lineWidth = 1; ctx.strokeStyle = alpha(C.ink, 0.3);
+      o.st.forEach((r, j) => {
+        if (!j) return;
+        ctx.beginPath(); ctx.moveTo(tx(r.a), p.top + 2); ctx.lineTo(tx(r.a), y0); ctx.stroke();
+      });
+      ctx.setLineDash([]);
+      ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.font = `700 ${Math.min(fs(11), hoch - 3)}px ${css("--font-body")}`;
+      o.st.forEach(r => {
+        const x0 = tx(r.a), bw = Math.max(1.5, tx(r.b) - x0), k = String(r.s), col = ivFarbe(o, r.s, C);
+        ctx.fillStyle = alpha(col, r.s ? 0.3 : 0.08);
+        ctx.strokeStyle = alpha(col, 0.8); ctx.lineWidth = 1;
+        ctx.setLineDash(zwei && o.c === "y" ? [5, 4] : []);   /* wie die y-Kurve: gestrichelt */
+        ctx.beginPath();
+        ctx.roundRect ? ctx.roundRect(x0 + 0.5, y0 + 0.5, bw - 1, hoch - 1, 3)
+                      : ctx.rect(x0 + 0.5, y0 + 0.5, bw - 1, hoch - 1);
+        ctx.fill(); ctx.stroke(); ctx.setLineDash([]);
+        const lang = A.z[k] + " " + A.wort[k];
+        const txt = bw > ctx.measureText(lang).width + 10 ? lang
+                  : bw > ctx.measureText(A.z[k]).width + 4 ? A.z[k] : "";
+        if (txt) { ctx.fillStyle = col; ctx.fillText(txt, x0 + bw / 2, y0 + hoch / 2 + 0.5); }
+      });
+    });
+  });
+}
+
+function drawPlots() {
+  const { ctx, w, h } = setup(plots);
+  const C = colors();
+  const L = Math.round(fs(60)), TOP = 8, BOT = Math.round(fs(30)), GAP = 16;
+  const R = (D && !spielAn()) ? Math.round(fs(84)) : 14;   // rechts Platz fuer die Leiste je Diagramm
+  layout = { L, R, TOP, BOT, w, h };
+  if (!D && !spielAn()) {
+    diaCtlStand(null, R, 0);
+    ctx.fillStyle = C.muted; ctx.font = `${fs(14)}px ${css("--font-body")}`; ctx.textAlign = "center";
+    ctx.fillText("Noch keine Aufnahme", w / 2, h / 2); return;
+  }
+  /* Im Spiel gibt die Zielkurve die Zeitachse vor - so passt der Versuch darauf. */
+  const T = spielAn() ? state.zielT : Math.max(D.T, 0.05);
+  // Nur die eingeblendeten Diagramme teilen sich die Höhe.
+  const an = [state.dia.x, state.dia.v, state.dia.a];
+  const nAn = an.filter(Boolean).length;
+  if (!nAn) {
+    diaCtlStand(null, R, 0);
+    ctx.fillStyle = C.muted; ctx.font = `${fs(14)}px ${css("--font-body")}`; ctx.textAlign = "center";
+    const t1 = "Diagramme ausgeblendet", t2 = "Erst vorhersagen – dann mit x(t), v(t) oder a(t) einblenden";
+    ctx.fillText(t1, w / 2, h / 2 - fs(12));
+    ctx.font = `${fs(12.5)}px ${css("--font-body")}`;
+    ctx.fillText(t2, w / 2, h / 2 + fs(10)); return;
+  }
+  const ph = (h - TOP - BOT - (nAn - 1) * GAP) / nAn, pw = w - L - R;
+  const tx = t => L + (t / T) * pw;
+  layout.tx = tx; layout.T = T;
+  const comps = state.mode === "1d" ? ["x"] : state.comp === "xy" ? ["x", "y"] : [state.comp];
+  const Q = [
+    { id: "x", name: "Ort", sym: c => state.mode === "1d" ? sym1d() : c, unit: "cm", key: c => c, color: C.qx },
+    { id: "v", name: "Geschwindigkeit", sym: c => state.mode === "1d" ? "v" : "v" + SUB[c], unit: "cm/s", key: c => "v" + c, color: C.qv },
+    { id: "a", name: "Beschleunigung", sym: c => state.mode === "1d" ? "a" : "a" + SUB[c], unit: "cm/s²", key: c => "a" + c, color: C.qa },
+  ];
+  const P = Q.map((q, i) => {
+    let [lo, hi] = spanneVon(q, comps);
+    if (i > 0) { lo = Math.min(lo, 0); hi = Math.max(hi, 0); }
+    if (hi - lo < 1e-6) { lo -= 1; hi += 1; }
+    const padv = (hi - lo) * 0.08; lo -= padv; hi += padv;
+    const vor = an.slice(0, i).filter(Boolean).length;        // wie viele liegen darüber?
+    const top = an[i] ? TOP + vor * (ph + GAP) : -1e5;        // ausgeblendet: weit weg
+    return { ...q, an: an[i], lo, hi, top, y: v => top + ph - (v - lo) / (hi - lo) * ph };
+  });
+  const sicht = P.filter(p => p.an), letzte = sicht[sicht.length - 1];
+  layout.P = P; layout.ph = ph;
+  diaCtlStand(P, R, ph);
+  const tangAn = p => !!state.show.tang[p.id];      // Tangente in diesem Diagramm?
+  const flAn = p => !!state.show.fl[p.id];          // Flaeche unter dieser Kurve?
+  const clip = (p, fn) => { ctx.save(); ctx.beginPath(); ctx.rect(L, p.top, pw, ph); ctx.clip(); fn(); ctx.restore(); };
+  /* Monotonie-, Kruemmungs- und Vorzeichenintervalle. Sie liegen zuunterst, weil die
+     gefaerbte Zeichenflaeche unter das Gitter gehoert. */
+  const ivL = (!spielAn() && D) ? ivSammeln(P, comps) : [];
+  const ivH = {};                                   // je Diagramm und Komponente der faerbende Streifen
+  ivL.forEach(o => { if (o.haupt) ivH[o.p.id + o.c] = o; });
+
+  // Zeitachse
+  const tStep = niceStep(T, Math.max(2, pw / 70)), tDec = decFor(tStep);
+
+  P.forEach((p, i) => {
+    if (!p.an) return;
+    ctx.fillStyle = alpha(C.bg, 0.45); ctx.fillRect(L, p.top, pw, ph);
+    ivMalen(ctx, ivL.filter(o => o.p === p), tx, C, clip, "flaeche");
+    // Gitter
+    ctx.lineWidth = 1; ctx.strokeStyle = C.grid;
+    for (let t = 0; t <= T + 1e-9; t += tStep) { ctx.beginPath(); ctx.moveTo(tx(t), p.top); ctx.lineTo(tx(t), p.top + ph); ctx.stroke(); }
+    const vStep = niceStep(p.hi - p.lo, Math.max(2, ph / 34)), vDec = decFor(vStep);
+    ctx.font = `${fs(11)}px ${css("--font-data")}`; ctx.fillStyle = C.muted; ctx.textAlign = "right"; ctx.textBaseline = "middle";
+    for (let v = Math.ceil(p.lo / vStep) * vStep; v <= p.hi + 1e-9; v += vStep) {
+      const y = p.y(v);
+      ctx.strokeStyle = Math.abs(v) < vStep * 1e-6 ? C.muted : C.grid;
+      ctx.lineWidth = Math.abs(v) < vStep * 1e-6 ? 1.2 : 1;
+      ctx.beginPath(); ctx.moveTo(L, y); ctx.lineTo(L + pw, y); ctx.stroke();
+      ctx.fillText(fmt(v, vDec), L - 6, y);
+    }
+    ctx.strokeStyle = C.line; ctx.lineWidth = 1; ctx.strokeRect(L + 0.5, p.top + 0.5, pw - 1, ph - 1);
+    // Titel
+    ctx.textAlign = "left"; ctx.textBaseline = "top";
+    ctx.font = `700 ${fs(12.5)}px ${css("--font-body")}`; ctx.fillStyle = p.color;
+    const title = `${p.name}  ${comps.map(c => p.sym(c)).join(", ")} in ${p.unit}`;
+    ctx.fillText(title, L + 8, p.top + 6);
+    if (state.mode === "2d" && comps.length === 2 && i === 0) {
+      const tw = ctx.measureText(title).width;
+      ctx.font = `${fs(11)}px ${css("--font-body")}`; ctx.fillStyle = C.muted;
+      ctx.fillText("x-Komp. durchgezogen, y-Komp. gestrichelt", L + 16 + tw, p.top + 7);
+    }
+  });
+  // t-Beschriftung
+  ctx.font = `${fs(11)}px ${css("--font-data")}`; ctx.fillStyle = C.muted; ctx.textAlign = "center"; ctx.textBaseline = "top";
+  const yb = letzte.top + ph + 5;
+  for (let t = 0; t <= T + 1e-9; t += tStep) if (tx(t) < L + pw - 30) ctx.fillText(fmt(t, tDec), tx(t), yb);
+  ctx.textAlign = "right"; ctx.font = `700 ${fs(11.5)}px ${css("--font-body")}`; ctx.fillText("t in s", L + pw, yb);
+
+  // Zielkurve mit Trefferband, darunter die Versuche der Spieler
+  if (spielAn()) zielMalen(ctx, P, clip, tx, C);
+
+  // Flächen (unter den Kurven)
+  let iv = null;
+  if (!spielAn() && state.interval && P.some(p => p.an && flAn(p))) {
+    const a = clamp(Math.min(...state.interval), 0, T), b = clamp(Math.max(...state.interval), 0, T);
+    iv = [a, b];
+    [1, 2].forEach(pi => {
+      const p = P[pi], fillC = P[pi - 1].color;
+      if (!p.an || !flAn(p)) return;
+      clip(p, () => {
+        comps.forEach(c => {
+          const arr = D[p.key(c)];
+          ctx.beginPath(); ctx.moveTo(tx(a), p.y(0));
+          const n = Math.max(2, Math.ceil((b - a) / DT));
+          for (let k = 0; k <= n; k++) { const t = a + (b - a) * k / n; ctx.lineTo(tx(t), p.y(val(arr, t))); }
+          ctx.lineTo(tx(b), p.y(0)); ctx.closePath();
+          ctx.fillStyle = alpha(fillC, c === "y" ? 0.14 : 0.24); ctx.fill();
+        });
+      });
+    });
+    // Intervallgrenzen
+    ctx.strokeStyle = alpha(C.ink, 0.45); ctx.lineWidth = 1; ctx.setLineDash([2, 4]);
+    [a, b].forEach(t => { ctx.beginPath(); ctx.moveTo(tx(t), TOP); ctx.lineTo(tx(t), letzte.top + ph); ctx.stroke(); });
+    ctx.setLineDash([]);
+    ctx.font = `700 ${fs(11)}px ${css("--font-body")}`; ctx.fillStyle = C.ink; ctx.textAlign = "center"; ctx.textBaseline = "top";
+    ctx.fillText("t₁", tx(a), letzte.top + ph + 16); ctx.fillText("t₂", tx(b), letzte.top + ph + 16);
+  }
+
+  // Streifen mit den Symbolen - vor die Kurve, damit sie obenauf liegt
+  ivMalen(ctx, ivL, tx, C, clip, "band");
+
+  // Kurven - im Battle stattdessen die beiden Spieler in ihren Farben
+  if (battleAn()) ["L", "R"].forEach(k => {
+    const dd = BT.D[k];
+    if (!dd) return;
+    P.forEach(p => p.an && clip(p, () => {
+      const arr = dd[p.key("x")];
+      ctx.strokeStyle = SPIEL_F[k]; ctx.lineWidth = 2.4;
+      ctx.beginPath();
+      for (let i = 0; i < dd.N; i++) { const X = tx(dd.t[i]), Y = p.y(arr[i]); i ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y); }
+      ctx.stroke();
+    }));
+  });
+  else if (D) P.forEach(p => p.an && clip(p, () => {
+    comps.forEach(c => {
+      const arr = D[p.key(c)];
+      ctx.lineWidth = 2.2; ctx.setLineDash(c === "y" && comps.length === 2 ? [7, 5] : []);
+      const bahn = () => {
+        ctx.beginPath();
+        for (let i = 0; i < D.N; i++) { const X = tx(D.t[i]), Y = p.y(arr[i]); i ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y); }
+        ctx.stroke();
+      };
+      const h = ivH[p.id + c];
+      /* Ist ein Intervallstreifen an, traegt die Kurve selbst dessen Farben: Abschnitt fuer
+         Abschnitt wird sie beschnitten gezeichnet, die Grenzen stossen luecklos aneinander. */
+      if (h) h.st.forEach(r => {
+        ctx.save();
+        ctx.beginPath(); ctx.rect(tx(r.a) - 0.6, p.top, tx(r.b) - tx(r.a) + 1.2, ph); ctx.clip();
+        ctx.strokeStyle = ivFarbe(h, r.s, C); bahn();
+        ctx.restore();
+      });
+      else { ctx.strokeStyle = p.color; bahn(); }
+      ctx.setLineDash([]);
+    });
+  }));
+
+  ivMalen(ctx, ivL, tx, C, clip, "punkte");
+
+  // Flächen-Beschriftung und Δ-Pfeile
+  if (iv) {
+    const [a, b] = iv;
+    [0, 1].forEach(pi => {
+      const p = P[pi], under = P[pi + 1];
+      if (!flAn(under)) return;                 // Pfeil und Beschriftung gehoeren zur Flaeche darunter
+      if (!p.an && !under.an) return;
+      comps.forEach((c, ci) => {
+        const arr = D[p.key(c)], y1 = val(arr, a), y2 = val(arr, b);
+        if (p.an) clip(p, () => {
+          ctx.strokeStyle = alpha(p.color, 0.8); ctx.lineWidth = 1.2; ctx.setLineDash([4, 3]);
+          ctx.beginPath(); ctx.moveTo(tx(a), p.y(y1)); ctx.lineTo(tx(b) + 4, p.y(y1)); ctx.stroke(); ctx.setLineDash([]);
+          arrow(ctx, tx(b) + 4, p.y(y1), tx(b) + 4, p.y(y2), p.color, 2.2, 8);
+        });
+        const d = y2 - y1, sym = p.sym(c);
+        if (p.an) pill(ctx, `Δ${sym} = ${fmt(d, 1)} ${p.unit}`, tx(b) + 10, clamp(p.y((y1 + y2) / 2), p.top + 30, p.top + ph - 12) + ci * 20, p.color, C);
+        if (under.an) {
+          const A = integral(D[under.key(c)], a, b);
+          const lx = (tx(a) + tx(b)) / 2;
+          pill(ctx, `Fläche = ${fmt(A, 1)} ${p.unit}  (= Δ${sym})`, lx, under.top + 34 + ci * 21, p.color, C, "center");
+        }
+      });
+    });
+  }
+
+  // Stellen und Tangenten
+  const pts = [];
+  if (!spielAn() && D) {
+    if (state.cursor != null) pts.push({ t: clamp(state.cursor, 0, T), label: "P", main: true });
+    if (state.show.stellen) state.pins.forEach((t, i) => pts.push({ t: clamp(t, 0, T), label: String(i + 1), main: false }));
+  }
+
+  if (state.show.tang.x || state.show.tang.v) {
+    pts.forEach(s => {
+      [0, 1].forEach(pi => {
+        const p = P[pi], slopeQ = P[pi + 1];
+        if (!p.an || !tangAn(p)) return;
+        comps.forEach((c, ci) => {
+          const y0 = val(D[p.key(c)], s.t), m = val(D[slopeQ.key(c)], s.t);
+          const span = T * 0.14;
+          clip(p, () => {
+            ctx.strokeStyle = slopeQ.color; ctx.lineWidth = s.main ? 2.4 : 1.6;
+            ctx.setLineDash(c === "y" && comps.length === 2 ? [7, 5] : []);
+            ctx.beginPath(); ctx.moveTo(tx(s.t - span), p.y(y0 - m * span)); ctx.lineTo(tx(s.t + span), p.y(y0 + m * span)); ctx.stroke();
+            ctx.setLineDash([]);
+            if (s.main) {
+              // Steigungsdreieck
+              const dt = span * 0.75;
+              ctx.strokeStyle = alpha(slopeQ.color, 0.75); ctx.lineWidth = 1.2;
+              ctx.beginPath(); ctx.moveTo(tx(s.t), p.y(y0)); ctx.lineTo(tx(s.t + dt), p.y(y0)); ctx.lineTo(tx(s.t + dt), p.y(y0 + m * dt)); ctx.stroke();
+            }
+          });
+          if (s.main) {
+            const ex = tx(s.t + span), ey = clamp(p.y(y0 + m * span), p.top + 30, p.top + ph - 12);
+            const right = ex + 150 < L + pw;
+            pill(ctx, `Steigung: ${slopeQ.sym(c)} = ${fmt(m, 1)} ${slopeQ.unit}`, right ? ex + 6 : tx(s.t - span) - 6, ey + ci * 20, slopeQ.color, C, right ? "left" : "right");
+          }
+        });
+      });
+      // Wert der Steigung im Diagramm darunter hervorheben
+      [1, 2].forEach(pi => {
+        const p = P[pi];
+        if (!p.an || !tangAn(P[pi - 1])) return;
+        comps.forEach(c => {
+          const v = val(D[p.key(c)], s.t);
+          clip(p, () => {
+            ctx.strokeStyle = alpha(p.color, 0.6); ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+            ctx.beginPath(); ctx.moveTo(L, p.y(v)); ctx.lineTo(tx(s.t), p.y(v)); ctx.stroke(); ctx.setLineDash([]);
+          });
+        });
+      });
+    });
+  }
+
+  if (state.show.stellen || pts.some(s => s.main)) {
+    pts.forEach(s => {
+      const X = tx(s.t);
+      ctx.strokeStyle = alpha(C.ink, s.main ? 0.75 : 0.5); ctx.lineWidth = s.main ? 1.5 : 1.2;
+      ctx.setLineDash(s.main ? [] : [5, 4]);
+      ctx.beginPath(); ctx.moveTo(X, TOP); ctx.lineTo(X, letzte.top + ph); ctx.stroke(); ctx.setLineDash([]);
+      P.forEach(p => p.an && comps.forEach(c => {
+        const v = val(D[p.key(c)], s.t), Y = p.y(v);
+        if (Y < p.top || Y > p.top + ph) return;
+        ctx.fillStyle = p.color; ctx.strokeStyle = C.surface; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(X, Y, s.main ? 5 : 4, 0, 7); ctx.fill(); ctx.stroke();
+      }));
+      // Marke oben
+      ctx.font = `700 ${fs(11)}px ${css("--font-body")}`;
+      const tw = Math.max(fs(16), ctx.measureText(s.label).width + 8), th = fs(16);
+      ctx.fillStyle = C.ink; ctx.beginPath();
+      ctx.roundRect ? ctx.roundRect(X - tw / 2, TOP, tw, th, 4) : ctx.rect(X - tw / 2, TOP, tw, th); ctx.fill();
+      ctx.fillStyle = C.surface; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(s.label, X, TOP + th / 2 + 0.5);
+    });
+  }
+}
+
+/* Wertebereich eines Diagramms: Aufnahme, Zielkurve und - im Battle - beide Spieler.
+   Ohne jede Kurve steht eine Vorgabe, sonst koennte man kein Ziel hineinzeichnen. */
+function spanneVon(q, comps) {
+  let lo = Infinity, hi = -Infinity;
+  const nimm = r => { if (r && isFinite(r[0])) { lo = Math.min(lo, r[0]); hi = Math.max(hi, r[1]); } };
+  if (D) comps.forEach(c => nimm(D.rng[q.key(c)]));
+  if (battleAn()) ["L", "R"].forEach(k => BT.D[k] && nimm(BT.D[k].rng[q.key("x")]));
+  if (spielAn() && state.ziel && state.ziel.typ === q.id) nimm(state.ziel.rng);
+  if (!isFinite(lo)) { const v = VORGABE[q.id](); lo = v[0]; hi = v[1]; }
+  return [lo, hi];
+}
+/* Die Zielkurve: gestrichelt, mit dem Trefferband darum. Waehrend des Zeichnens haengt
+   die Linie direkt am Finger. */
+function zielMalen(ctx, P, clip, tx, C) {
+  const p = P.find(q => q.id === state.zielTyp);
+  if (!p || !p.an) return;
+  if (drag && drag.kind === "ziel") {
+    if (drag.pts.length < 2) return;
+    clip(p, () => {
+      ctx.strokeStyle = C.ink; ctx.lineWidth = 2.6; ctx.setLineDash([8, 5]);
+      ctx.beginPath();
+      drag.pts.forEach((o, i) => { const X = tx(o.t), Y = p.y(o.v); i ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y); });
+      ctx.stroke(); ctx.setLineDash([]);
+    });
+    return;
+  }
+  const z = state.ziel;
+  if (!z || z.typ !== p.id) return;
+  const N = z.v.length;
+  clip(p, () => {
+    ctx.fillStyle = alpha(C.ink, 0.09);
+    ctx.beginPath();
+    for (let i = 0; i < N; i++) { const X = tx(i * DT), Y = p.y(z.v[i] + z.tol); i ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y); }
+    for (let i = N - 1; i >= 0; i--) ctx.lineTo(tx(i * DT), p.y(z.v[i] - z.tol));
+    ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = C.ink; ctx.lineWidth = 2.6; ctx.setLineDash([8, 5]);
+    ctx.beginPath();
+    for (let i = 0; i < N; i++) { const X = tx(i * DT), Y = p.y(z.v[i]); i ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y); }
+    ctx.stroke(); ctx.setLineDash([]);
+  });
+  pill(ctx, "Ziel", tx(z.T) - 6, clamp(p.y(z.v[N - 1]), p.top + 14, p.top + layout.ph - 14), C.ink, C, "right");
+}
+
+/* Die Leiste rechts an den Diagrammen: Die Knoepfe stehen fest im Markup, hier wandern sie
+   nur an den oberen Rand ihres Diagramms und zeigen, was gerade eingeschaltet ist. */
+function diaCtlStand(P, R, ph) {
+  const box = $("diaCtl");
+  box.hidden = !(D && P) || spielAn();
+  if (box.hidden) return;
+  P.forEach(p => {
+    const g = box.querySelector(`.grp[data-d="${p.id}"]`);
+    if (!g) return;
+    g.hidden = !p.an;
+    if (!p.an) return;
+    g.style.top = Math.round(p.top + 5) + "px";
+    g.style.right = "5px";
+    g.style.width = Math.max(44, R - 10) + "px";
+    /* Die Knoepfe bleiben in ihrem Diagramm: bei flachen Diagrammen (drei Stueck, grosse
+       Schrift) werden sie niedriger und die Beschriftung zieht mit. */
+    const kn = [...g.children], frei = Math.max(16, ph - 10 - 4 * (kn.length - 1));
+    const hoch = clamp(frei / kn.length, 15, 28 * state.fs);
+    kn.forEach(b => { b.style.height = Math.round(hoch) + "px";
+      b.style.fontSize = Math.max(8, Math.min(10.9 * state.fs, hoch * 0.6)).toFixed(1) + "px"; });
+  });
+  box.querySelectorAll("button[data-s]").forEach(b =>
+    b.setAttribute("aria-pressed", state.show[b.dataset.s][b.dataset.d] ? "true" : "false"));
+}
+$("diaCtl").addEventListener("click", e => {
+  const b = e.target.closest("button[data-s]");
+  if (!b) return;
+  const s = b.dataset.s, d = b.dataset.d;
+  state.show[s][d] = !state.show[s][d];
+  if (s === "fl" && state.show.fl[d] && !state.interval && D) state.interval = [D.T * 0.15, D.T * 0.5];
+  updateUI(); requestDraw();
+});
+/* Mit dem Intervall-Werkzeug soll gleich eine Flaeche zu sehen sein - eingeschaltet wird sie
+   in dem Diagramm, das sichtbar ist. */
+function flAnSchalten() {
+  if (state.show.fl.v || state.show.fl.a) return;
+  if (state.dia.v) state.show.fl.v = true; else state.show.fl.a = true;
+}
+
+// ---------- Ablesetabelle ----------
+/* Im Spiel steht dort, wo sonst die Ablesetabelle steht, das Ergebnis. */
+function ergebnisText() {
+  const z = state.ziel;
+  if (!z) return `<div class="note">Auf „✎ zeichnen“ tippen und mit dem Finger eine Kurve in das Diagramm `
+    + `${zielName(state.zielTyp)} ziehen – die soll danach nachgefahren werden.</div>`;
+  const e = (name, col, erg) => `<span class="sp"><span class="pt" style="background:${col}"></span>${name}: `
+    + (erg ? `<b>${erg.quote} %</b> im Band · mittlere Abweichung ${fmt(erg.abw, 2)} ${EINH[z.typ]}`
+           : "noch keine Aufnahme") + "</span>";
+  let s = `<div class="erg">`;
+  if (battleAn()) {
+    const L = BT.erg && BT.erg.L, R = BT.erg && BT.erg.R;
+    s += e("Links", SPIEL_F.L, L) + e("Rechts", SPIEL_F.R, R);
+    if (L && R) s += `<span class="sieg">`
+      + (L.quote === R.quote ? "Unentschieden" : (L.quote > R.quote ? "Links" : "Rechts") + " gewinnt") + "</span>";
+  } else {
+    s += e("Dein Versuch", colors()[z.typ === "x" ? "qx" : z.typ === "v" ? "qv" : "qa"], bewerten(D));
+  }
+  s += `<span>Ziel ${zielName(z.typ)} · Band ± ${fmt(z.tol, 1)} ${EINH[z.typ]} · ${fmt(z.T, z.T % 1 ? 1 : 0)} s</span>`;
+  if (state.zielNote) s += `<span style="color:var(--qa)">${state.zielNote}</span>`;
+  return s + "</div>";
+}
+function renderReadout() {
+  const el = $("readout");
+  if (spielAn()) { el.style.maxHeight = ""; el.innerHTML = ergebnisText(); return; }
+  /* Sind die Diagramme verdeckt, duerfen die Zahlen die Vorhersage nicht verraten. */
+  if (diaAus()) { el.style.maxHeight = ""; el.innerHTML = `<div class="note">Die Werte bleiben verdeckt, solange kein Diagramm eingeblendet ist.</div>`; return; }
+  if (!D) { el.innerHTML = ""; return; }
+  const T = D.T;
+  const two = state.mode === "2d";
+  const cols = two
+    ? [["x", "x", "cm", "cx"], ["y", "y", "cm", "cx"], ["vₓ", "vx", "cm/s", "cv"], ["vᵧ", "vy", "cm/s", "cv"], ["aₓ", "ax", "cm/s²", "ca"], ["aᵧ", "ay", "cm/s²", "ca"]]
+    : [[sym1d(), "x", "cm", "cx"], ["v", "vx", "cm/s", "cv"], ["a", "ax", "cm/s²", "ca"]];
+  const rows = [];
+  if (state.cursor != null) rows.push({ label: "P", t: state.cursor, idx: -1 });
+  if (state.show.stellen) state.pins.forEach((t, i) => rows.push({ label: String(i + 1), t, idx: i }));
+  let html = "<table><thead><tr><th>Stelle</th><th>t in s</th>" + cols.map(c => `<th class="${c[3]}">${c[0]} in ${c[2]}</th>`).join("") + "<th></th></tr></thead><tbody>";
+  rows.forEach(r => {
+    const t = clamp(r.t, 0, T);
+    html += `<tr><td><span class="badge">${r.label}</span></td><td>${fmt(t, 2)}</td>` +
+      cols.map(c => `<td class="${c[3]}">${fmt(val(D[c[1]], t), 1)}</td>`).join("") +
+      `<td class="del">${r.idx >= 0 ? `<button data-del="${r.idx}" aria-label="Stelle ${r.label} entfernen">×</button>` : ""}</td></tr>`;
+  });
+  if (state.interval && (state.show.fl.v || state.show.fl.a)) {
+    const a = clamp(Math.min(...state.interval), 0, T), b = clamp(Math.max(...state.interval), 0, T);
+    const comps = two ? ["x", "y"] : ["x"];
+    const sx = c => two ? SUB[c] : "";
+    const cell = comps.map(c => {
+      const pos = c, dx = val(D[pos], b) - val(D[pos], a), Av = integral(D["v" + c], a, b);
+      const dv = val(D["v" + c], b) - val(D["v" + c], a), Aa = integral(D["a" + c], a, b);
+      const ps = two ? c : sym1d();
+      const teile = [];
+      if (state.show.fl.v) teile.push(`<span class="cx">Δ${ps} = ${fmt(dx, 1)} cm</span> · Fläche unter v${sx(c)} = ${fmt(Av, 1)} cm`);
+      if (state.show.fl.a) teile.push(`<span class="cv">Δv${sx(c)} = ${fmt(dv, 1)} cm/s</span> · Fläche unter a${sx(c)} = ${fmt(Aa, 1)} cm/s`);
+      return teile.join(" &nbsp;|&nbsp; ");
+    }).join("<br>");
+    html += `<tr class="iv"><td><span class="badge">t₁–t₂</span></td><td>${fmt(a, 2)} – ${fmt(b, 2)}</td><td colspan="${cols.length + 1}" style="text-align:left;white-space:normal">${cell}</td></tr>`;
+  }
+  /* Die abgelesenen Intervalle auch als Text - so lassen sie sich ins Heft uebernehmen. */
+  const ivL = (layout && layout.P) ? ivSammeln(layout.P, two ? (state.comp === "xy" ? ["x", "y"] : [state.comp]) : ["x"]) : [];
+  const CF = colors();
+  ivL.forEach(o => {
+    const A = IV_ART[o.art];
+    const f = (si, t) => `<span style="color:${ivFarbe(o, si, CF)}">${t}</span>`;   // Farbe wie im Diagramm
+    const txt = o.st.map(r => f(r.s, `${A.z[String(r.s)]} ${fmt(r.a, 2)} – ${fmt(r.b, 2)} s`)).join(" &nbsp;·&nbsp; ");
+    html += `<tr class="iv"><td><span class="badge iv2">${f(1, A.z["1"])}${f(-1, A.z["-1"])}</span></td>`
+      + `<td>${o.p.sym(o.c)}(t)</td>`
+      + `<td colspan="${cols.length + 1}" style="text-align:left;white-space:normal">${A.name}: ${txt}</td></tr>`;
+  });
+  html += "</tbody></table>";
+  if (!rows.length && !ivL.length && !(state.interval && (state.show.fl.v || state.show.fl.a))) html = `<div class="note">Tippe in ein Diagramm, um eine Stelle zu setzen.</div>`;
+  el.innerHTML = html;
+  readoutHoehe();
+}
+function readoutHoehe() {
+  const el = $("readout"), tb = el.querySelector("tbody");
+  el.style.maxHeight = "";
+  if (el.hidden) return;                 // ausgeblendet misst offsetHeight nur Nullen
+  if (!tb || tb.rows.length <= 4) return;
+  let h = (el.querySelector("thead") || { offsetHeight: 0 }).offsetHeight;
+  for (let i = 0; i < 4; i++) h += tb.rows[i].offsetHeight;
+  el.style.maxHeight = Math.ceil(h) + "px";
+}
+$("readout").addEventListener("click", e => {
+  const b = e.target.closest("button[data-del]");
+  if (!b) return;
+  state.pins.splice(+b.dataset.del, 1);
+  updateUI(); requestDraw();
+});
+
+// ---------- Interaktion in den Diagrammen ----------
+let drag = null;
+function tAt(e) {
+  const r = plots.getBoundingClientRect();
+  const px = e.clientX - r.left;
+  return clamp((px - layout.L) / (layout.w - layout.L - layout.R) * layout.T, 0, layout.T);
+}
+/* Das Ziel wird mit dem Finger direkt in sein Diagramm gezogen. */
+function zielZug(e) {
+  const p = (layout.P || []).find(q => q.id === state.zielTyp);
+  if (!p) return;
+  const r = plots.getBoundingClientRect();
+  const w = p.lo + (p.top + layout.ph - (e.clientY - r.top)) / layout.ph * (p.hi - p.lo);
+  drag.pts.push({ t: tAt(e), v: clamp(w, p.lo, p.hi) });
+}
+plots.addEventListener("pointerdown", e => {
+  if (spielAn() && state.zeichnen && layout && layout.tx) {
+    e.preventDefault();
+    try { plots.setPointerCapture(e.pointerId); } catch (err) {}
+    stopPlay();
+    drag = { kind: "ziel", pts: [] };
+    zielZug(e); requestDraw();
+    return;
+  }
+  if (spielAn()) return;                 // im Spiel setzt ein Tipp keine Stelle
+  if (!D || !layout || !layout.tx || state.recording) return;
+  /* der Streifen rechts gehoert der Leiste - ein Tipp daneben soll keine Stelle setzen */
+  if (e.clientX - plots.getBoundingClientRect().left > layout.w - layout.R + 2) return;
+  e.preventDefault();
+  try { plots.setPointerCapture(e.pointerId); } catch (err) {}
+  stopPlay();
+  const t = tAt(e), r = plots.getBoundingClientRect(), px = e.clientX - r.left;
+  if (state.tool === "intervall") {
+    flAnSchalten();
+    state.interval = [t, t];
+    drag = { kind: "iv" };
+  } else {
+    let hit = -1;
+    if (state.show.stellen) state.pins.forEach((p, i) => { if (Math.abs(layout.tx(p) - px) < 14) hit = i; });
+    if (hit >= 0) drag = { kind: "pin", i: hit };
+    else { state.cursor = t; drag = { kind: "cursor" }; }
+  }
+  updateUI(); requestDraw();
+});
+plots.addEventListener("pointermove", e => {
+  if (!drag) return;
+  e.preventDefault();
+  if (drag.kind === "ziel") { zielZug(e); requestDraw(); return; }
+  const t = tAt(e);
+  if (drag.kind === "iv") state.interval[1] = t;
+  else if (drag.kind === "pin") state.pins[drag.i] = t;
+  else state.cursor = t;
+  renderReadout(); requestDraw();
+});
+const endDrag = () => {
+  if (drag && drag.kind === "ziel") {
+    const z = zielAus(drag.pts);
+    drag = null;
+    if (z) { state.ziel = zielPruefen(z); state.zeichnen = false; }
+    updateUI(); requestDraw();
+    return;
+  }
+  if (drag && drag.kind === "iv" && Math.abs(state.interval[1] - state.interval[0]) < 0.02) {
+    // nur angetippt: Intervall um die Stelle herum
+    const t = state.interval[0], half = Math.min(0.3, layout.T * 0.1);
+    state.interval = [clamp(t - half, 0, layout.T), clamp(t + half, 0, layout.T)];
+    updateUI(); requestDraw();
+  }
+  drag = null;
+};
+plots.addEventListener("pointerup", endDrag);
+plots.addEventListener("pointercancel", endDrag);
+
+// ---------- Abspielen ----------
+/* Der Knopf traegt nur sein Zeichen und wird zur Pause, solange es laeuft. */
+function playKnopf(laeuft) {
+  const b = $("play");
+  b.textContent = laeuft ? "⏸" : "▶";
+  b.title = laeuft ? "Pause" : "Abspielen: die Bewegung noch einmal ablaufen lassen";
+  b.setAttribute("aria-label", laeuft ? "Pause" : "Abspielen");
+}
+let playStart = 0, playFrom = 0, rafPlay = 0, playHalt = null;   // playHalt: wo die Pause stehenblieb
+function stopPlay() {
+  if (!state.playing) return;
+  state.playing = false; cancelAnimationFrame(rafPlay);
+  playHalt = state.cursor;
+  playKnopf(false);
+}
+function playLoop(now) {
+  if (!state.playing || !D) return;
+  const t = playFrom + (now - playStart) / 1000 * state.speed;
+  state.cursor = Math.min(t, D.T);
+  renderReadout(); draw();
+  if (t >= D.T) { stopPlay(); updateUI(); return; }
+  rafPlay = requestAnimationFrame(playLoop);
+}
+$("play").addEventListener("click", () => {
+  if (!D) return;
+  if (state.playing) { stopPlay(); updateUI(); return; }      // Pause
+  /* Weiter, wo die Pause stehenblieb. Wurde inzwischen eine Stelle angetippt oder war das
+     Ende erreicht, laeuft es wieder von vorn. */
+  const weiter = playHalt != null && state.cursor === playHalt && playHalt < D.T - 1e-6;
+  playFrom = weiter ? playHalt : 0;
+  state.playing = true; playStart = performance.now();
+  playKnopf(true);
+  rafPlay = requestAnimationFrame(playLoop);
+});
+$("speed").addEventListener("change", e => { state.speed = parseFloat(e.target.value); });
+
+// ---------- Bedienelemente ----------
+function setPressed(id, on) { $(id).setAttribute("aria-pressed", on ? "true" : "false"); }
+function updateStatus() {
+  const s = $("status");
+  s.classList.toggle("sample", state.sample && !state.recording);
+  if (state.recording) s.textContent = "Aufnahme läuft …";
+  else if (state.sample) s.textContent = "Beispielaufnahme · lege einen Finger aufs Feld";
+  else if (D) s.textContent = `Aufnahme ${fmt(D.T, 2)} s · ${state.raw.length} Messpunkte`;
+  else s.textContent = "";
+}
+function updateUI() {
+  setPressed("m1d", state.mode === "1d"); setPressed("m2d", state.mode === "2d");
+  app.classList.toggle("mode-1d", state.mode === "1d"); app.classList.toggle("mode-2d", state.mode === "2d");
+  app.classList.toggle("lane", state.mode === "1d" && state.allVec);
+  document.documentElement.style.setProperty("--split", state.split + "%");
+  app.classList.toggle("senk", istSenk() && !battleAn());
+  app.classList.toggle("battle", battleAn());
+  app.classList.toggle("spiel", spielAn());
+  app.classList.toggle("padHinten", padHinten() && !battleAn());
+  $("achsSeg").hidden = state.mode !== "1d" || battleAn();
+  $("spielSeg").hidden = state.mode !== "1d";
+  document.querySelectorAll("#spielSeg button").forEach(b =>
+    b.setAttribute("aria-pressed", b.dataset.sp === state.spiel ? "true" : "false"));
+  $("zielBox").hidden = !spielAn();
+  $("btPadL").hidden = $("btPadR").hidden = !battleAn();
+  $("btStart").hidden = !battleAn();
+  $("btStart").textContent = (BT.phase === "count" || BT.phase === "lauf") ? "■ Abbrechen" : "▶ Countdown";
+  $("zielMal").setAttribute("aria-pressed", state.zeichnen ? "true" : "false");
+  $("zielWeg").disabled = !state.ziel;
+  const frei = state.zielFrei || ZIELZEITEN.indexOf(state.zielT) < 0;
+  $("zielT").value = frei ? "frei" : String(state.zielT);
+  $("zielTFrei").hidden = !frei;
+  if (document.activeElement !== $("zielTFrei")) $("zielTFrei").value = String(state.zielT);
+  document.querySelectorAll("#zielTypSeg button").forEach(b => {
+    b.setAttribute("aria-pressed", b.dataset.zt === state.zielTyp ? "true" : "false");
+    b.textContent = (b.dataset.zt === "x" ? sym1d() : b.dataset.zt) + "(t)";
+  });
+  document.querySelectorAll("#achsSeg button").forEach(b => b.setAttribute("aria-pressed", b.dataset.ach === state.achse ? "true" : "false"));
+  $("compSeg").hidden = state.mode !== "2d";
+  document.querySelectorAll("#compSeg button").forEach(b => b.setAttribute("aria-pressed", b.dataset.comp === state.comp ? "true" : "false"));
+  setPressed("tStellen", state.show.stellen);
+  setPressed("dX", state.dia.x); setPressed("dV", state.dia.v); setPressed("dA", state.dia.a);
+  setPressed("tVec", state.allVec);
+  setPressed("tTab", state.tab);
+  /* Im Ziel- und Battle-Modus steht an derselben Stelle das Ergebnis - das bleibt immer da. */
+  $("readout").hidden = !state.tab && !spielAn();
+  setPressed("toolStelle", state.tool === "stelle"); setPressed("toolIv", state.tool === "intervall");
+  $("pin").disabled = state.cursor == null || !D || state.pins.length >= 8;
+  $("undo").disabled = !state.prev;
+  $("hint").textContent = spielAn()
+    ? (state.ziel ? "Die gestrichelte Kurve nachfahren." : "Erst eine Zielkurve zeichnen.")
+    : istSenk()
+    ? "Finger senkrecht bewegen."
+    : state.mode === "1d"
+      ? "Finger auflegen und waagerecht bewegen – aufgezeichnet wird, solange er aufliegt."
+      : "Finger auflegen und bewegen. Aufgezeichnet wird, solange der Finger aufliegt.";
+  updateStatus(); renderReadout();
+}
+
+function setMode(m) {
+  if (state.mode === m) return;
+  stopPlay();
+  state.mode = m;
+  updateUI();
+  requestAnimationFrame(() => {
+    if (state.sample) makeSample(); else { process(); }
+    updateUI(); draw();
+  });
+}
+/* Richtung der 1D-Aufnahme: Die Werte bleiben stehen, nur Feld und Beschriftung drehen sich;
+   die Beispielaufnahme wird neu gebaut, weil sie sich nach der Laenge des Feldes richtet. */
+function setAchse(a) {
+  if (state.achse === a || state.mode !== "1d") return;
+  stopPlay();
+  state.achse = a;
+  updateUI();
+  requestAnimationFrame(() => {
+    if (state.sample) makeSample(); else process();
+    updateUI(); draw();
+  });
+}
+document.querySelectorAll("#achsSeg button").forEach(b => b.addEventListener("click", () => setAchse(b.dataset.ach)));
+document.querySelectorAll("#spielSeg button").forEach(b => b.addEventListener("click", () => spielSetzen(b.dataset.sp)));
+document.querySelectorAll("#zielTypSeg button").forEach(b => b.addEventListener("click", () => {
+  if (state.zielTyp === b.dataset.zt) return;
+  state.zielTyp = b.dataset.zt;
+  state.ziel = null; state.zielNote = ""; state.zeichnen = true;   // ein Ziel gilt fuer ein Diagramm
+  if (!state.dia[state.zielTyp]) state.dia[state.zielTyp] = true;
+  updateUI(); requestDraw();
+}));
+const ZIELZEITEN = [5, 8, 10, 15, 20, 30];
+/* Die Zielkurve haengt an der Dauer - wird sie geaendert, faengt man neu an. */
+function zielDauer(v) {
+  state.zielT = clamp(Math.round(v * 10) / 10, 1, 300);
+  state.ziel = null; state.zielNote = ""; state.zeichnen = true;
+  updateUI(); requestDraw();
+}
+$("zielT").addEventListener("change", e => {
+  if (e.target.value === "frei") { state.zielFrei = true; zielDauer(state.zielT); return; }
+  state.zielFrei = false; zielDauer(parseFloat(e.target.value));
+});
+$("zielTFrei").addEventListener("change", e => {
+  const v = parseFloat(String(e.target.value).replace(",", "."));
+  if (!(v >= 1 && v <= 300)) { e.target.value = String(state.zielT); return; }
+  state.zielFrei = true; zielDauer(v);
+});
+$("zielMal").addEventListener("click", () => {
+  state.zeichnen = !state.zeichnen;
+  if (state.zeichnen) { state.ziel = null; state.zielNote = ""; btStopp(); }
+  updateUI(); requestDraw();
+});
+$("zielWeg").addEventListener("click", () => {
+  state.ziel = null; state.zielNote = ""; state.zeichnen = true; BT.erg = null;
+  updateUI(); requestDraw();
+});
+/* Alles leeren: Aufnahme und Zielkurve. Die vorherige Aufnahme bleibt unter
+   "Vorherige" erreichbar, falls der Knopf aus Versehen getroffen wurde. */
+$("reset").addEventListener("click", () => {
+  stopPlay(); btStopp();
+  state.prev = { raw: state.raw, sample: state.sample, cursor: state.cursor,
+                 pins: state.pins, interval: state.interval, mode: state.mode };
+  state.raw = []; state.sample = false; D = null;
+  state.cursor = null; state.pins = []; state.interval = null;
+  state.ziel = null; state.zielNote = ""; state.zeichnen = spielAn();
+  BT.raw = { L: [], R: [] }; BT.D = { L: null, R: null }; BT.erg = null;
+  $("hint").hidden = false;
+  updateUI(); requestDraw();
+});
+$("btStart").addEventListener("click", () => {
+  if (BT.phase === "count" || BT.phase === "lauf") { btStopp(); updateUI(); requestDraw(); return; }
+  btStart();
+});
+$("m1d").addEventListener("click", () => setMode("1d"));
+$("m2d").addEventListener("click", () => setMode("2d"));
+document.querySelectorAll("#compSeg button").forEach(b => b.addEventListener("click", () => { state.comp = b.dataset.comp; updateUI(); requestDraw(); }));
+$("smooth").addEventListener("input", e => {
+  state.sigma = +e.target.value;
+  $("smoothOut").textContent = state.sigma === 0 ? "aus" : `${state.sigma} ms`;
+  process(); renderReadout(); requestDraw();
+});
+[["dX", "x"], ["dV", "v"], ["dA", "a"]].forEach(([id, k]) => $(id).addEventListener("click", () => {
+  state.dia[k] = !state.dia[k];
+  updateUI(); requestDraw();
+}));
+$("tStellen").addEventListener("click", () => { state.show.stellen = !state.show.stellen; updateUI(); requestDraw(); });
+$("tVec").addEventListener("click", () => { state.allVec = !state.allVec; updateUI(); requestDraw(); });
+$("tTab").addEventListener("click", () => { state.tab = !state.tab; updateUI(); requestDraw(); });
+$("strobe").addEventListener("change", e => { state.strobe = parseFloat(e.target.value); requestDraw(); });
+$("vecSel").addEventListener("change", e => { state.vecSel = e.target.value; if (!state.allVec) state.allVec = true; updateUI(); requestDraw(); });
+$("vecScale").addEventListener("change", e => { state.vecScale = parseFloat(e.target.value); requestDraw(); });
+$("toolStelle").addEventListener("click", () => { state.tool = "stelle"; updateUI(); });
+$("toolIv").addEventListener("click", () => {
+  state.tool = "intervall"; flAnSchalten();
+  if (!state.interval && D) state.interval = [D.T * 0.15, D.T * 0.5];
+  updateUI(); requestDraw();
+});
+$("pin").addEventListener("click", () => {
+  if (state.cursor == null) return;
+  state.pins.push(state.cursor); state.show.stellen = true;
+  updateUI(); requestDraw();
+});
+$("undo").addEventListener("click", () => {
+  if (!state.prev) return;
+  stopPlay();
+  const cur = { raw: state.raw, sample: state.sample, cursor: state.cursor, pins: state.pins, interval: state.interval, mode: state.mode };
+  const p = state.prev;
+  state.raw = p.raw; state.sample = p.sample; state.cursor = p.cursor; state.pins = p.pins; state.interval = p.interval;
+  state.prev = cur;
+  process(); updateUI(); requestDraw();
+});
+/* Das Einstellungsfeld unter das Zahnrad legen - aber nie ueber den Fensterrand hinaus,
+   und nur so hoch, wie darunter Platz ist; der Rest wird gescrollt. */
+(() => {
+  const det = document.querySelector("details.settings"), panel = det.querySelector(".panel"), M = 8;
+  function panelSetzen() {
+    if (!det.open) return;
+    const r = det.getBoundingClientRect();
+    const w = Math.min(320, innerWidth - 2 * M);
+    panel.style.width = w + "px";
+    panel.style.left = Math.round(clamp(r.left, M, Math.max(M, innerWidth - w - M))) + "px";
+    panel.style.top = Math.round(r.bottom + 6) + "px";
+    panel.style.maxHeight = Math.max(120, Math.round(innerHeight - r.bottom - 6 - M)) + "px";
+  }
+  det.addEventListener("toggle", panelSetzen);
+  addEventListener("resize", panelSetzen);
+  $("setZu").addEventListener("click", () => { det.open = false; });
+})();
+
+/* Das Feld wechselt die Seite: Die Buehne muss erst umbrechen, danach misst die
+   Beispielaufnahme neu - sie richtet sich nach der Laenge des Feldes. */
+$("padPos").addEventListener("change", e => {
+  const v = e.target.value;
+  if (PADPOS.indexOf(v) < 0) { e.target.value = state.padPos; return; }
+  state.padPos = v;
+  try { localStorage.setItem("bwd-padpos", v); } catch (err) {}
+  updateUI();
+  requestAnimationFrame(() => {
+    if (state.sample) makeSample(); else process();
+    updateUI(); draw();
+  });
+});
+$("ppc").addEventListener("change", e => {
+  const v = parseFloat(String(e.target.value).replace(",", "."));
+  if (!(v > 5 && v < 400)) { e.target.value = state.ppc; return; }
+  state.ppc = v;
+  try { localStorage.setItem("bwd-ppc", String(v)); } catch (err) {}
+  if (state.sample) makeSample(); else process();
+  updateUI(); requestDraw();
+});
+function csvText() {
+  if (!D) return "";
+  const f = v => v.toFixed(4).replace(".", ",");
+  /* In 1D steht nur die aufgenommene Richtung in der Datei - x oder y, je nach Umschalter. */
+  if (state.mode === "1d") {
+    const q = sym1d();
+    let csv = `t in s;${q} in cm;v${q} in cm/s;a${q} in cm/s²\n`;
+    for (let i = 0; i < D.N; i++) csv += [D.t[i], D.x[i], D.vx[i], D.ax[i]].map(f).join(";") + "\n";
+    return csv;
+  }
+  let csv = "t in s;x in cm;y in cm;vx in cm/s;vy in cm/s;ax in cm/s²;ay in cm/s²\n";
+  for (let i = 0; i < D.N; i++) csv += [D.t[i], D.x[i], D.y[i], D.vx[i], D.vy[i], D.ax[i], D.ay[i]].map(f).join(";") + "\n";
+  return csv;
+}
+/* Export: dieselben Spalten als Datei. Das BOM davor, damit Excel die Umlaute
+   und das Dezimalkomma richtig liest. */
+$("expCsv").addEventListener("click", () => {
+  if (!D) { hinweis("Noch keine Aufnahme"); return; }
+  const name = "bewegung-" + new Date().toISOString().slice(0, 16).replace(/[:T]/g, "-") + ".csv";
+  const blob = new Blob(["\ufeff" + csvText()], { type: "text/csv;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
+  hinweis(D.N + " Zeilen gesichert: " + name);
+});
+function setzeFs(v) {
+  state.fs = Math.round(clamp(v, 0.8, 2) * 10) / 10;
+  document.documentElement.style.setProperty("--fs", String(state.fs));   /* die Ablesetabelle waechst mit */
+  requestDraw(); renderReadout();
+}
+for (const [id, d] of [["fsM", -0.1], ["fsP", 0.1]])
+  $(id).addEventListener("click", () => { setzeFs(state.fs + d); sync(); });
+$("copyCsv").addEventListener("click", () => {
+  if (!D) return;
+  const csv = csvText();
+  const msg = $("copyMsg"), ta = $("csvFallback");
+  const fallback = () => { ta.hidden = false; ta.value = csv; ta.focus(); ta.select(); msg.textContent = "Kopieren war nicht möglich. Die Daten sind unten markiert – kopiere sie mit „Kopieren“."; };
+  try {
+    navigator.clipboard.writeText(csv).then(() => { msg.textContent = `${D.N} Zeilen kopiert (Raster 0,01 s, geglättet).`; ta.hidden = true; }, fallback);
+  } catch (err) { fallback(); }
+});
+
+// ---------- Neuzeichnen ----------
+let rafDraw = 0;
+function draw() { rafDraw = 0; if (battleAn()) btPads(); else drawPad(); drawPlots(); }
+function requestDraw() { if (!rafDraw) rafDraw = requestAnimationFrame(draw); }
+new ResizeObserver(() => requestDraw()).observe(pad);
+new ResizeObserver(() => requestDraw()).observe(plots);
+new ResizeObserver(() => requestDraw()).observe($("btPadL"));
+new ResizeObserver(() => requestDraw()).observe($("btPadR"));
+window.matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change", requestDraw);
+new MutationObserver(requestDraw).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(requestDraw);
+
+// ---------- Anbindung an die Tafel ----------
+/* Der ganze Zustand - auch die Rohpunkte der Aufnahme - geht als "embed-data" an die Tafel.
+   So bleibt eine aufgenommene Bewegung im Projekt gespeichert und laesst sich teilen. */
+function zustand() {
+  const r3 = v => Math.round(v * 1000) / 1000;
+  return {
+    mode: state.mode, comp: state.comp, achse: state.achse, sigma: state.sigma,
+    show: { stellen: state.show.stellen, tang: { x: state.show.tang.x, v: state.show.tang.v }, fl: { v: state.show.fl.v, a: state.show.fl.a },
+            mon: { x: state.show.mon.x, v: state.show.mon.v }, kru: { x: state.show.kru.x }, vz: { v: state.show.vz.v, a: state.show.vz.a } },
+    dia: { x: state.dia.x, v: state.dia.v, a: state.dia.a },
+    tool: state.tool, sample: state.sample,
+    raw: state.raw.map(p => ({ t: r3(p.t), x: r3(p.x), y: r3(p.y) })),
+    cursor: state.cursor, pins: state.pins.slice(),
+    interval: state.interval ? state.interval.slice() : null,
+    ppc: state.ppc, strobe: state.strobe, allVec: state.allVec, tab: state.tab,
+    vecSel: state.vecSel, vecScale: state.vecScale, fs: state.fs,
+    spiel: state.spiel, zielTyp: state.zielTyp, zielT: state.zielT, zielFrei: !!state.zielFrei,
+    split: state.split, padPos: state.padPos,
+    /* die Zielkurve nur in Zehntelsekunden: auf dem Rechenraster waeren es bei 30 s
+       dreitausend Zahlen - zu viel fuer den QR-Code beim Teilen */
+    ziel: state.ziel ? { typ: state.ziel.typ, T: state.ziel.T, tol: r3(state.ziel.tol), dt: 0.1,
+                         v: zielGrob(state.ziel.v) } : null,
+  };
+}
+let syncT = 0, letzter = "";
+function post() {
+  syncT = 0;
+  if (window.parent === window) return;
+  const z = zustand(); letzter = JSON.stringify(z);
+  try { parent.postMessage({ type: "embed-data", data: z }, "*"); } catch (e) {}
+}
+/* gesammelt schicken: waehrend einer Aufnahme aendert sich der Zustand sonst 60-mal je Sekunde */
+function sync() { if (!syncT) syncT = setTimeout(post, 250); }
+["click", "change", "input", "pointerup", "pointercancel"].forEach(ev =>
+  document.addEventListener(ev, sync, true));
+
+function uebernimm(d) {
+  if (!d || typeof d !== "object") return;
+  if (d.mode === "1d" || d.mode === "2d") state.mode = d.mode;
+  if (d.comp) state.comp = d.comp;
+  if (d.achse === "x" || d.achse === "y") state.achse = d.achse;
+  if (typeof d.sigma === "number") state.sigma = clamp(d.sigma, 0, 200);
+  if (d.show) {
+    const s = d.show;        /* aeltere Staende kannten nur einen Schalter fuer alle Diagramme */
+    state.show = {
+      stellen: s.stellen !== false,
+      tang: s.tang ? { x: !!s.tang.x, v: !!s.tang.v } : { x: s.tangenten !== false, v: s.tangenten !== false },
+      fl: s.fl ? { v: !!s.fl.v, a: !!s.fl.a } : { v: !!s.flaechen, a: !!s.flaechen },
+      mon: { x: !!(s.mon && s.mon.x), v: !!(s.mon && s.mon.v) },
+      kru: { x: !!(s.kru && s.kru.x) },
+      vz: { v: !!(s.vz && s.vz.v), a: !!(s.vz && s.vz.a) },
+    };
+  }
+  if (d.dia) state.dia = { x: !!d.dia.x, v: !!d.dia.v, a: !!d.dia.a };   /* auch alle aus ist erlaubt */
+  if (d.tool) state.tool = d.tool;
+  if (d.spiel === "aus" || d.spiel === "ziel" || d.spiel === "battle") state.spiel = d.spiel;
+  if (d.zielTyp === "x" || d.zielTyp === "v" || d.zielTyp === "a") state.zielTyp = d.zielTyp;
+  if (typeof d.zielT === "number" && d.zielT > 0) state.zielT = d.zielT;
+  state.zielFrei = !!d.zielFrei;
+  if (typeof d.split === "number" && d.split >= 15 && d.split <= 85) state.split = d.split;
+  if (PADPOS.indexOf(d.padPos) >= 0) state.padPos = d.padPos;
+  if (d.ziel && Array.isArray(d.ziel.v) && d.ziel.v.length > 2) {
+    const typ = d.ziel.typ || "x", T = +d.ziel.T || state.zielT;
+    const v = zielFein(d.ziel.v.map(Number), +d.ziel.dt || DT, T);
+    let lo = Infinity, hi = -Infinity;
+    for (const q of v) { if (q < lo) lo = q; if (q > hi) hi = q; }
+    const tol = +d.ziel.tol || Math.max((hi - lo) * 0.09, ZIEL_KLEIN[typ] || 0.4);
+    state.ziel = { typ, T, v, tol, rng: [lo - tol, hi + tol] };
+    state.zeichnen = false;
+  }
+  if (typeof d.ppc === "number" && d.ppc > 5 && d.ppc < 400) state.ppc = d.ppc;
+  if (typeof d.strobe === "number") state.strobe = d.strobe;
+  if (d.vecSel) state.vecSel = d.vecSel;
+  if (typeof d.vecScale === "number") state.vecScale = d.vecScale;
+  if (typeof d.fs === "number") setzeFs(d.fs);
+  state.allVec = !!d.allVec;
+  state.tab = !!d.tab;
+  if (Array.isArray(d.raw) && d.raw.length > 1) {
+    state.raw = d.raw.map(p => ({ t: +p.t || 0, x: +p.x || 0, y: +p.y || 0 }));
+    state.sample = !!d.sample;
+    state.cursor = (typeof d.cursor === "number") ? d.cursor : null;
+    state.pins = Array.isArray(d.pins) ? d.pins.filter(v => typeof v === "number") : [];
+    state.interval = (Array.isArray(d.interval) && d.interval.length === 2) ? d.interval.slice() : null;
+    state.prev = null;
+    process();
+  }
+  // die Bedienelemente nachziehen, die ihren Wert selbst halten
+  $("smooth").value = state.sigma;
+  $("smoothOut").textContent = state.sigma === 0 ? "aus" : state.sigma + " ms";
+  $("ppc").value = state.ppc;
+  $("padPos").value = state.padPos;
+  $("strobe").value = String(state.strobe);
+  $("vecSel").value = state.vecSel;
+  $("vecScale").value = String(state.vecScale);
+  $("speed").value = String(state.speed);
+  updateUI(); requestDraw();
+}
+addEventListener("message", e => {
+  if (e.source !== window && (window.parent === window || e.source !== window.parent)) return;
+  const m = e.data;
+  if (!(m && m.type === "embed-data" && m.data)) return;
+  if (JSON.stringify(m.data) === letzter) return;      /* unser eigener Stand kommt zurueck */
+  letzter = JSON.stringify(m.data);
+  uebernimm(m.data);
+  if (window.TafelModus) TafelModus.refresh();
+});
+
+const bild = () => TafelShot.rasterize(document.querySelector(".stage"), { pad: 8, bg: css("--bg") || "#eef1f4", exclude: "#diaCtl" });
+if (window.TafelShot) TafelShot.buttons($("shotBtns"), bild, "");
+if (window.TafelTeilen && !TafelTeilen.istGeteilt())
+  TafelTeilen.knopf($("teilenBtn"), "bewegung.html", () => ({ w: "bwd", d: zustand() }), { cls: "" });
+/* Umschalter "Benutzen / Bearbeiten": die Tafel schickt den Modus mit, allein geoeffnet
+   steht der Knopf oben rechts. Im Benutzen-Modus bleiben die Einstellungen weg. */
+if (window.TafelModus && TafelModus.anTafel && !(window.TafelTeilen && TafelTeilen.istGeteilt()))
+  TafelModus.anTafel({ button: window.parent === window, after: () => requestDraw() });
+
+// Start mit Beispielaufnahme
+requestAnimationFrame(() => {
+  makeSample(); updateUI(); draw();
+  if (window.TafelTeilen && TafelTeilen.istGeteilt()) {
+    TafelTeilen.nurBenutzen();
+    TafelTeilen.empfangen().then(p => { if (p && p.w === "bwd" && p.d) TafelTeilen.einspielen(p.d); }).catch(() => {});
+    return;
+  }
+  try { parent.postMessage({ type: "embed-ready" }, "*"); } catch (e) {}
+});
+})();
+</script>
+<!-- ===================== Teilen / QR-Code (gemeinsamer Baustein) ===================== -->
+<style>
+  .sq-fab{position:fixed; left:calc(10px + env(safe-area-inset-left)); bottom:calc(10px + env(safe-area-inset-bottom));
+    z-index:120; display:none; align-items:center; gap:7px; padding:10px 14px; border-radius:999px; border:none;
+    background:rgba(20,20,26,.82); color:#fff; font:inherit; font-size:14.5px; font-weight:700; cursor:pointer;
+    box-shadow:0 4px 14px rgba(0,0,0,.3); -webkit-tap-highlight-color:transparent;}
+  .sq-fab.on{display:inline-flex;}
+  .sq-fab:active{transform:scale(.96);}
+  .sq-fab svg{width:17px; height:17px; display:block;}
+  .sq-inline{display:inline-flex; align-items:center; gap:6px;}
+  .sq-ov{position:fixed; inset:0; z-index:9000; display:none; align-items:center; justify-content:center;
+    background:rgba(12,14,18,.86); padding:16px; -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px);}
+  .sq-ov.on{display:flex;}
+  .sq-card{background:#fff; color:#1b1f24; border-radius:22px; padding:22px 22px 18px; width:100%; max-width:520px;
+    max-height:94vh; overflow:auto; text-align:center; box-shadow:0 24px 60px rgba(0,0,0,.45);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+  .sq-card h2{margin:0 0 2px; font-size:1.4rem; font-weight:800;}
+  .sq-card p.sq-sub{margin:0 0 14px; color:#5b6470; font-size:.95rem;}
+  /* Der weiße Rand um den Code ist Vorschrift: mindestens vier Module Ruhezone,
+     sonst erkennen Kameras den Code nicht. Die Breite setzt das Skript. */
+  .sq-code{display:flex; align-items:center; justify-content:center; margin:0 auto 12px;
+    width:min(74vw,330px); background:#fff; border:1px solid #e4e6ea; border-radius:14px; padding:14px 0;}
+  .sq-code canvas, .sq-code img{width:var(--sq-w,84%); height:auto; display:block; margin:0 auto; image-rendering:pixelated;}
+  .sq-code table{margin:0 auto;}
+  .sq-url{font-size:.86rem; color:#5b6470; word-break:break-all; background:#f3f4f6; border-radius:10px;
+    padding:9px 11px; margin-bottom:14px; line-height:1.4;
+    -webkit-user-select:text; user-select:text;}
+  .sq-row{display:flex; gap:9px; flex-wrap:wrap;}
+  .sq-row button{flex:1 1 130px; border:none; border-radius:12px; padding:13px 14px; font:inherit; font-size:1rem;
+    font-weight:750; cursor:pointer; background:#1b1f24; color:#fff; min-height:48px;}
+  .sq-row button.sq-alt{background:#fff; color:#1b1f24; box-shadow:inset 0 0 0 2px #dfe2e7;}
+  .sq-row button.sq-ok{background:#1f7a46;}
+  .sq-row button:active{transform:scale(.985);}
+  .sq-note{margin-top:11px; font-size:.8rem; color:#8a929c; line-height:1.45;}
+</style>
+<script>/* QR-Code: qrcodejs von David Shim (MIT) – dieselbe Bibliothek wie in der Digitalen Tafel */
+var QRCode;!function(){function a(a){this.mode=c.MODE_8BIT_BYTE,this.data=a,this.parsedData=[];for(var b=[],d=0,e=this.data.length;e>d;d++){var f=this.data.charCodeAt(d);f>65536?(b[0]=240|(1835008&f)>>>18,b[1]=128|(258048&f)>>>12,b[2]=128|(4032&f)>>>6,b[3]=128|63&f):f>2048?(b[0]=224|(61440&f)>>>12,b[1]=128|(4032&f)>>>6,b[2]=128|63&f):f>128?(b[0]=192|(1984&f)>>>6,b[1]=128|63&f):b[0]=f,this.parsedData=this.parsedData.concat(b)}this.parsedData.length!=this.data.length&&(this.parsedData.unshift(191),this.parsedData.unshift(187),this.parsedData.unshift(239))}function b(a,b){this.typeNumber=a,this.errorCorrectLevel=b,this.modules=null,this.moduleCount=0,this.dataCache=null,this.dataList=[]}function i(a,b){if(void 0==a.length)throw new Error(a.length+"/"+b);for(var c=0;c<a.length&&0==a[c];)c++;this.num=new Array(a.length-c+b);for(var d=0;d<a.length-c;d++)this.num[d]=a[d+c]}function j(a,b){this.totalCount=a,this.dataCount=b}function k(){this.buffer=[],this.length=0}function m(){return"undefined"!=typeof CanvasRenderingContext2D}function n(){var a=!1,b=navigator.userAgent;return/android/i.test(b)&&(a=!0,aMat=b.toString().match(/android ([0-9]\.[0-9])/i),aMat&&aMat[1]&&(a=parseFloat(aMat[1]))),a}function r(a,b){for(var c=1,e=s(a),f=0,g=l.length;g>=f;f++){var h=0;switch(b){case d.L:h=l[f][0];break;case d.M:h=l[f][1];break;case d.Q:h=l[f][2];break;case d.H:h=l[f][3]}if(h>=e)break;c++}if(c>l.length)throw new Error("Too long data");return c}function s(a){var b=encodeURI(a).toString().replace(/\%[0-9a-fA-F]{2}/g,"a");return b.length+(b.length!=a?3:0)}a.prototype={getLength:function(){return this.parsedData.length},write:function(a){for(var b=0,c=this.parsedData.length;c>b;b++)a.put(this.parsedData[b],8)}},b.prototype={addData:function(b){var c=new a(b);this.dataList.push(c),this.dataCache=null},isDark:function(a,b){if(0>a||this.moduleCount<=a||0>b||this.moduleCount<=b)throw new Error(a+","+b);return this.modules[a][b]},getModuleCount:function(){return this.moduleCount},make:function(){this.makeImpl(!1,this.getBestMaskPattern())},makeImpl:function(a,c){this.moduleCount=4*this.typeNumber+17,this.modules=new Array(this.moduleCount);for(var d=0;d<this.moduleCount;d++){this.modules[d]=new Array(this.moduleCount);for(var e=0;e<this.moduleCount;e++)this.modules[d][e]=null}this.setupPositionProbePattern(0,0),this.setupPositionProbePattern(this.moduleCount-7,0),this.setupPositionProbePattern(0,this.moduleCount-7),this.setupPositionAdjustPattern(),this.setupTimingPattern(),this.setupTypeInfo(a,c),this.typeNumber>=7&&this.setupTypeNumber(a),null==this.dataCache&&(this.dataCache=b.createData(this.typeNumber,this.errorCorrectLevel,this.dataList)),this.mapData(this.dataCache,c)},setupPositionProbePattern:function(a,b){for(var c=-1;7>=c;c++)if(!(-1>=a+c||this.moduleCount<=a+c))for(var d=-1;7>=d;d++)-1>=b+d||this.moduleCount<=b+d||(this.modules[a+c][b+d]=c>=0&&6>=c&&(0==d||6==d)||d>=0&&6>=d&&(0==c||6==c)||c>=2&&4>=c&&d>=2&&4>=d?!0:!1)},getBestMaskPattern:function(){for(var a=0,b=0,c=0;8>c;c++){this.makeImpl(!0,c);var d=f.getLostPoint(this);(0==c||a>d)&&(a=d,b=c)}return b},createMovieClip:function(a,b,c){var d=a.createEmptyMovieClip(b,c),e=1;this.make();for(var f=0;f<this.modules.length;f++)for(var g=f*e,h=0;h<this.modules[f].length;h++){var i=h*e,j=this.modules[f][h];j&&(d.beginFill(0,100),d.moveTo(i,g),d.lineTo(i+e,g),d.lineTo(i+e,g+e),d.lineTo(i,g+e),d.endFill())}return d},setupTimingPattern:function(){for(var a=8;a<this.moduleCount-8;a++)null==this.modules[a][6]&&(this.modules[a][6]=0==a%2);for(var b=8;b<this.moduleCount-8;b++)null==this.modules[6][b]&&(this.modules[6][b]=0==b%2)},setupPositionAdjustPattern:function(){for(var a=f.getPatternPosition(this.typeNumber),b=0;b<a.length;b++)for(var c=0;c<a.length;c++){var d=a[b],e=a[c];if(null==this.modules[d][e])for(var g=-2;2>=g;g++)for(var h=-2;2>=h;h++)this.modules[d+g][e+h]=-2==g||2==g||-2==h||2==h||0==g&&0==h?!0:!1}},setupTypeNumber:function(a){for(var b=f.getBCHTypeNumber(this.typeNumber),c=0;18>c;c++){var d=!a&&1==(1&b>>c);this.modules[Math.floor(c/3)][c%3+this.moduleCount-8-3]=d}for(var c=0;18>c;c++){var d=!a&&1==(1&b>>c);this.modules[c%3+this.moduleCount-8-3][Math.floor(c/3)]=d}},setupTypeInfo:function(a,b){for(var c=this.errorCorrectLevel<<3|b,d=f.getBCHTypeInfo(c),e=0;15>e;e++){var g=!a&&1==(1&d>>e);6>e?this.modules[e][8]=g:8>e?this.modules[e+1][8]=g:this.modules[this.moduleCount-15+e][8]=g}for(var e=0;15>e;e++){var g=!a&&1==(1&d>>e);8>e?this.modules[8][this.moduleCount-e-1]=g:9>e?this.modules[8][15-e-1+1]=g:this.modules[8][15-e-1]=g}this.modules[this.moduleCount-8][8]=!a},mapData:function(a,b){for(var c=-1,d=this.moduleCount-1,e=7,g=0,h=this.moduleCount-1;h>0;h-=2)for(6==h&&h--;;){for(var i=0;2>i;i++)if(null==this.modules[d][h-i]){var j=!1;g<a.length&&(j=1==(1&a[g]>>>e));var k=f.getMask(b,d,h-i);k&&(j=!j),this.modules[d][h-i]=j,e--,-1==e&&(g++,e=7)}if(d+=c,0>d||this.moduleCount<=d){d-=c,c=-c;break}}}},b.PAD0=236,b.PAD1=17,b.createData=function(a,c,d){for(var e=j.getRSBlocks(a,c),g=new k,h=0;h<d.length;h++){var i=d[h];g.put(i.mode,4),g.put(i.getLength(),f.getLengthInBits(i.mode,a)),i.write(g)}for(var l=0,h=0;h<e.length;h++)l+=e[h].dataCount;if(g.getLengthInBits()>8*l)throw new Error("code length overflow. ("+g.getLengthInBits()+">"+8*l+")");for(g.getLengthInBits()+4<=8*l&&g.put(0,4);0!=g.getLengthInBits()%8;)g.putBit(!1);for(;;){if(g.getLengthInBits()>=8*l)break;if(g.put(b.PAD0,8),g.getLengthInBits()>=8*l)break;g.put(b.PAD1,8)}return b.createBytes(g,e)},b.createBytes=function(a,b){for(var c=0,d=0,e=0,g=new Array(b.length),h=new Array(b.length),j=0;j<b.length;j++){var k=b[j].dataCount,l=b[j].totalCount-k;d=Math.max(d,k),e=Math.max(e,l),g[j]=new Array(k);for(var m=0;m<g[j].length;m++)g[j][m]=255&a.buffer[m+c];c+=k;var n=f.getErrorCorrectPolynomial(l),o=new i(g[j],n.getLength()-1),p=o.mod(n);h[j]=new Array(n.getLength()-1);for(var m=0;m<h[j].length;m++){var q=m+p.getLength()-h[j].length;h[j][m]=q>=0?p.get(q):0}}for(var r=0,m=0;m<b.length;m++)r+=b[m].totalCount;for(var s=new Array(r),t=0,m=0;d>m;m++)for(var j=0;j<b.length;j++)m<g[j].length&&(s[t++]=g[j][m]);for(var m=0;e>m;m++)for(var j=0;j<b.length;j++)m<h[j].length&&(s[t++]=h[j][m]);return s};for(var c={MODE_NUMBER:1,MODE_ALPHA_NUM:2,MODE_8BIT_BYTE:4,MODE_KANJI:8},d={L:1,M:0,Q:3,H:2},e={PATTERN000:0,PATTERN001:1,PATTERN010:2,PATTERN011:3,PATTERN100:4,PATTERN101:5,PATTERN110:6,PATTERN111:7},f={PATTERN_POSITION_TABLE:[[],[6,18],[6,22],[6,26],[6,30],[6,34],[6,22,38],[6,24,42],[6,26,46],[6,28,50],[6,30,54],[6,32,58],[6,34,62],[6,26,46,66],[6,26,48,70],[6,26,50,74],[6,30,54,78],[6,30,56,82],[6,30,58,86],[6,34,62,90],[6,28,50,72,94],[6,26,50,74,98],[6,30,54,78,102],[6,28,54,80,106],[6,32,58,84,110],[6,30,58,86,114],[6,34,62,90,118],[6,26,50,74,98,122],[6,30,54,78,102,126],[6,26,52,78,104,130],[6,30,56,82,108,134],[6,34,60,86,112,138],[6,30,58,86,114,142],[6,34,62,90,118,146],[6,30,54,78,102,126,150],[6,24,50,76,102,128,154],[6,28,54,80,106,132,158],[6,32,58,84,110,136,162],[6,26,54,82,110,138,166],[6,30,58,86,114,142,170]],G15:1335,G18:7973,G15_MASK:21522,getBCHTypeInfo:function(a){for(var b=a<<10;f.getBCHDigit(b)-f.getBCHDigit(f.G15)>=0;)b^=f.G15<<f.getBCHDigit(b)-f.getBCHDigit(f.G15);return(a<<10|b)^f.G15_MASK},getBCHTypeNumber:function(a){for(var b=a<<12;f.getBCHDigit(b)-f.getBCHDigit(f.G18)>=0;)b^=f.G18<<f.getBCHDigit(b)-f.getBCHDigit(f.G18);return a<<12|b},getBCHDigit:function(a){for(var b=0;0!=a;)b++,a>>>=1;return b},getPatternPosition:function(a){return f.PATTERN_POSITION_TABLE[a-1]},getMask:function(a,b,c){switch(a){case e.PATTERN000:return 0==(b+c)%2;case e.PATTERN001:return 0==b%2;case e.PATTERN010:return 0==c%3;case e.PATTERN011:return 0==(b+c)%3;case e.PATTERN100:return 0==(Math.floor(b/2)+Math.floor(c/3))%2;case e.PATTERN101:return 0==b*c%2+b*c%3;case e.PATTERN110:return 0==(b*c%2+b*c%3)%2;case e.PATTERN111:return 0==(b*c%3+(b+c)%2)%2;default:throw new Error("bad maskPattern:"+a)}},getErrorCorrectPolynomial:function(a){for(var b=new i([1],0),c=0;a>c;c++)b=b.multiply(new i([1,g.gexp(c)],0));return b},getLengthInBits:function(a,b){if(b>=1&&10>b)switch(a){case c.MODE_NUMBER:return 10;case c.MODE_ALPHA_NUM:return 9;case c.MODE_8BIT_BYTE:return 8;case c.MODE_KANJI:return 8;default:throw new Error("mode:"+a)}else if(27>b)switch(a){case c.MODE_NUMBER:return 12;case c.MODE_ALPHA_NUM:return 11;case c.MODE_8BIT_BYTE:return 16;case c.MODE_KANJI:return 10;default:throw new Error("mode:"+a)}else{if(!(41>b))throw new Error("type:"+b);switch(a){case c.MODE_NUMBER:return 14;case c.MODE_ALPHA_NUM:return 13;case c.MODE_8BIT_BYTE:return 16;case c.MODE_KANJI:return 12;default:throw new Error("mode:"+a)}}},getLostPoint:function(a){for(var b=a.getModuleCount(),c=0,d=0;b>d;d++)for(var e=0;b>e;e++){for(var f=0,g=a.isDark(d,e),h=-1;1>=h;h++)if(!(0>d+h||d+h>=b))for(var i=-1;1>=i;i++)0>e+i||e+i>=b||(0!=h||0!=i)&&g==a.isDark(d+h,e+i)&&f++;f>5&&(c+=3+f-5)}for(var d=0;b-1>d;d++)for(var e=0;b-1>e;e++){var j=0;a.isDark(d,e)&&j++,a.isDark(d+1,e)&&j++,a.isDark(d,e+1)&&j++,a.isDark(d+1,e+1)&&j++,(0==j||4==j)&&(c+=3)}for(var d=0;b>d;d++)for(var e=0;b-6>e;e++)a.isDark(d,e)&&!a.isDark(d,e+1)&&a.isDark(d,e+2)&&a.isDark(d,e+3)&&a.isDark(d,e+4)&&!a.isDark(d,e+5)&&a.isDark(d,e+6)&&(c+=40);for(var e=0;b>e;e++)for(var d=0;b-6>d;d++)a.isDark(d,e)&&!a.isDark(d+1,e)&&a.isDark(d+2,e)&&a.isDark(d+3,e)&&a.isDark(d+4,e)&&!a.isDark(d+5,e)&&a.isDark(d+6,e)&&(c+=40);for(var k=0,e=0;b>e;e++)for(var d=0;b>d;d++)a.isDark(d,e)&&k++;var l=Math.abs(100*k/b/b-50)/5;return c+=10*l}},g={glog:function(a){if(1>a)throw new Error("glog("+a+")");return g.LOG_TABLE[a]},gexp:function(a){for(;0>a;)a+=255;for(;a>=256;)a-=255;return g.EXP_TABLE[a]},EXP_TABLE:new Array(256),LOG_TABLE:new Array(256)},h=0;8>h;h++)g.EXP_TABLE[h]=1<<h;for(var h=8;256>h;h++)g.EXP_TABLE[h]=g.EXP_TABLE[h-4]^g.EXP_TABLE[h-5]^g.EXP_TABLE[h-6]^g.EXP_TABLE[h-8];for(var h=0;255>h;h++)g.LOG_TABLE[g.EXP_TABLE[h]]=h;i.prototype={get:function(a){return this.num[a]},getLength:function(){return this.num.length},multiply:function(a){for(var b=new Array(this.getLength()+a.getLength()-1),c=0;c<this.getLength();c++)for(var d=0;d<a.getLength();d++)b[c+d]^=g.gexp(g.glog(this.get(c))+g.glog(a.get(d)));return new i(b,0)},mod:function(a){if(this.getLength()-a.getLength()<0)return this;for(var b=g.glog(this.get(0))-g.glog(a.get(0)),c=new Array(this.getLength()),d=0;d<this.getLength();d++)c[d]=this.get(d);for(var d=0;d<a.getLength();d++)c[d]^=g.gexp(g.glog(a.get(d))+b);return new i(c,0).mod(a)}},j.RS_BLOCK_TABLE=[[1,26,19],[1,26,16],[1,26,13],[1,26,9],[1,44,34],[1,44,28],[1,44,22],[1,44,16],[1,70,55],[1,70,44],[2,35,17],[2,35,13],[1,100,80],[2,50,32],[2,50,24],[4,25,9],[1,134,108],[2,67,43],[2,33,15,2,34,16],[2,33,11,2,34,12],[2,86,68],[4,43,27],[4,43,19],[4,43,15],[2,98,78],[4,49,31],[2,32,14,4,33,15],[4,39,13,1,40,14],[2,121,97],[2,60,38,2,61,39],[4,40,18,2,41,19],[4,40,14,2,41,15],[2,146,116],[3,58,36,2,59,37],[4,36,16,4,37,17],[4,36,12,4,37,13],[2,86,68,2,87,69],[4,69,43,1,70,44],[6,43,19,2,44,20],[6,43,15,2,44,16],[4,101,81],[1,80,50,4,81,51],[4,50,22,4,51,23],[3,36,12,8,37,13],[2,116,92,2,117,93],[6,58,36,2,59,37],[4,46,20,6,47,21],[7,42,14,4,43,15],[4,133,107],[8,59,37,1,60,38],[8,44,20,4,45,21],[12,33,11,4,34,12],[3,145,115,1,146,116],[4,64,40,5,65,41],[11,36,16,5,37,17],[11,36,12,5,37,13],[5,109,87,1,110,88],[5,65,41,5,66,42],[5,54,24,7,55,25],[11,36,12],[5,122,98,1,123,99],[7,73,45,3,74,46],[15,43,19,2,44,20],[3,45,15,13,46,16],[1,135,107,5,136,108],[10,74,46,1,75,47],[1,50,22,15,51,23],[2,42,14,17,43,15],[5,150,120,1,151,121],[9,69,43,4,70,44],[17,50,22,1,51,23],[2,42,14,19,43,15],[3,141,113,4,142,114],[3,70,44,11,71,45],[17,47,21,4,48,22],[9,39,13,16,40,14],[3,135,107,5,136,108],[3,67,41,13,68,42],[15,54,24,5,55,25],[15,43,15,10,44,16],[4,144,116,4,145,117],[17,68,42],[17,50,22,6,51,23],[19,46,16,6,47,17],[2,139,111,7,140,112],[17,74,46],[7,54,24,16,55,25],[34,37,13],[4,151,121,5,152,122],[4,75,47,14,76,48],[11,54,24,14,55,25],[16,45,15,14,46,16],[6,147,117,4,148,118],[6,73,45,14,74,46],[11,54,24,16,55,25],[30,46,16,2,47,17],[8,132,106,4,133,107],[8,75,47,13,76,48],[7,54,24,22,55,25],[22,45,15,13,46,16],[10,142,114,2,143,115],[19,74,46,4,75,47],[28,50,22,6,51,23],[33,46,16,4,47,17],[8,152,122,4,153,123],[22,73,45,3,74,46],[8,53,23,26,54,24],[12,45,15,28,46,16],[3,147,117,10,148,118],[3,73,45,23,74,46],[4,54,24,31,55,25],[11,45,15,31,46,16],[7,146,116,7,147,117],[21,73,45,7,74,46],[1,53,23,37,54,24],[19,45,15,26,46,16],[5,145,115,10,146,116],[19,75,47,10,76,48],[15,54,24,25,55,25],[23,45,15,25,46,16],[13,145,115,3,146,116],[2,74,46,29,75,47],[42,54,24,1,55,25],[23,45,15,28,46,16],[17,145,115],[10,74,46,23,75,47],[10,54,24,35,55,25],[19,45,15,35,46,16],[17,145,115,1,146,116],[14,74,46,21,75,47],[29,54,24,19,55,25],[11,45,15,46,46,16],[13,145,115,6,146,116],[14,74,46,23,75,47],[44,54,24,7,55,25],[59,46,16,1,47,17],[12,151,121,7,152,122],[12,75,47,26,76,48],[39,54,24,14,55,25],[22,45,15,41,46,16],[6,151,121,14,152,122],[6,75,47,34,76,48],[46,54,24,10,55,25],[2,45,15,64,46,16],[17,152,122,4,153,123],[29,74,46,14,75,47],[49,54,24,10,55,25],[24,45,15,46,46,16],[4,152,122,18,153,123],[13,74,46,32,75,47],[48,54,24,14,55,25],[42,45,15,32,46,16],[20,147,117,4,148,118],[40,75,47,7,76,48],[43,54,24,22,55,25],[10,45,15,67,46,16],[19,148,118,6,149,119],[18,75,47,31,76,48],[34,54,24,34,55,25],[20,45,15,61,46,16]],j.getRSBlocks=function(a,b){var c=j.getRsBlockTable(a,b);if(void 0==c)throw new Error("bad rs block @ typeNumber:"+a+"/errorCorrectLevel:"+b);for(var d=c.length/3,e=[],f=0;d>f;f++)for(var g=c[3*f+0],h=c[3*f+1],i=c[3*f+2],k=0;g>k;k++)e.push(new j(h,i));return e},j.getRsBlockTable=function(a,b){switch(b){case d.L:return j.RS_BLOCK_TABLE[4*(a-1)+0];case d.M:return j.RS_BLOCK_TABLE[4*(a-1)+1];case d.Q:return j.RS_BLOCK_TABLE[4*(a-1)+2];case d.H:return j.RS_BLOCK_TABLE[4*(a-1)+3];default:return void 0}},k.prototype={get:function(a){var b=Math.floor(a/8);return 1==(1&this.buffer[b]>>>7-a%8)},put:function(a,b){for(var c=0;b>c;c++)this.putBit(1==(1&a>>>b-c-1))},getLengthInBits:function(){return this.length},putBit:function(a){var b=Math.floor(this.length/8);this.buffer.length<=b&&this.buffer.push(0),a&&(this.buffer[b]|=128>>>this.length%8),this.length++}};var l=[[17,14,11,7],[32,26,20,14],[53,42,32,24],[78,62,46,34],[106,84,60,44],[134,106,74,58],[154,122,86,64],[192,152,108,84],[230,180,130,98],[271,213,151,119],[321,251,177,137],[367,287,203,155],[425,331,241,177],[458,362,258,194],[520,412,292,220],[586,450,322,250],[644,504,364,280],[718,560,394,310],[792,624,442,338],[858,666,482,382],[929,711,509,403],[1003,779,565,439],[1091,857,611,461],[1171,911,661,511],[1273,997,715,535],[1367,1059,751,593],[1465,1125,805,625],[1528,1190,868,658],[1628,1264,908,698],[1732,1370,982,742],[1840,1452,1030,790],[1952,1538,1112,842],[2068,1628,1168,898],[2188,1722,1228,958],[2303,1809,1283,983],[2431,1911,1351,1051],[2563,1989,1423,1093],[2699,2099,1499,1139],[2809,2213,1579,1219],[2953,2331,1663,1273]],o=function(){var a=function(a,b){this._el=a,this._htOption=b};return a.prototype.draw=function(a){function g(a,b){var c=document.createElementNS("http://www.w3.org/2000/svg",a);for(var d in b)b.hasOwnProperty(d)&&c.setAttribute(d,b[d]);return c}var b=this._htOption,c=this._el,d=a.getModuleCount();Math.floor(b.width/d),Math.floor(b.height/d),this.clear();var h=g("svg",{viewBox:"0 0 "+String(d)+" "+String(d),width:"100%",height:"100%",fill:b.colorLight});h.setAttributeNS("http://www.w3.org/2000/xmlns/","xmlns:xlink","http://www.w3.org/1999/xlink"),c.appendChild(h),h.appendChild(g("rect",{fill:b.colorDark,width:"1",height:"1",id:"template"}));for(var i=0;d>i;i++)for(var j=0;d>j;j++)if(a.isDark(i,j)){var k=g("use",{x:String(i),y:String(j)});k.setAttributeNS("http://www.w3.org/1999/xlink","href","#template"),h.appendChild(k)}},a.prototype.clear=function(){for(;this._el.hasChildNodes();)this._el.removeChild(this._el.lastChild)},a}(),p="svg"===document.documentElement.tagName.toLowerCase(),q=p?o:m()?function(){function a(){this._elImage.src=this._elCanvas.toDataURL("image/png"),this._elImage.style.display="block",this._elCanvas.style.display="none"}function d(a,b){var c=this;if(c._fFail=b,c._fSuccess=a,null===c._bSupportDataURI){var d=document.createElement("img"),e=function(){c._bSupportDataURI=!1,c._fFail&&_fFail.call(c)},f=function(){c._bSupportDataURI=!0,c._fSuccess&&c._fSuccess.call(c)};return d.onabort=e,d.onerror=e,d.onload=f,d.src="data:image/gif;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg==",void 0}c._bSupportDataURI===!0&&c._fSuccess?c._fSuccess.call(c):c._bSupportDataURI===!1&&c._fFail&&c._fFail.call(c)}if(this._android&&this._android<=2.1){var b=1/window.devicePixelRatio,c=CanvasRenderingContext2D.prototype.drawImage;CanvasRenderingContext2D.prototype.drawImage=function(a,d,e,f,g,h,i,j){if("nodeName"in a&&/img/i.test(a.nodeName))for(var l=arguments.length-1;l>=1;l--)arguments[l]=arguments[l]*b;else"undefined"==typeof j&&(arguments[1]*=b,arguments[2]*=b,arguments[3]*=b,arguments[4]*=b);c.apply(this,arguments)}}var e=function(a,b){this._bIsPainted=!1,this._android=n(),this._htOption=b,this._elCanvas=document.createElement("canvas"),this._elCanvas.width=b.width,this._elCanvas.height=b.height,a.appendChild(this._elCanvas),this._el=a,this._oContext=this._elCanvas.getContext("2d"),this._bIsPainted=!1,this._elImage=document.createElement("img"),this._elImage.style.display="none",this._el.appendChild(this._elImage),this._bSupportDataURI=null};return e.prototype.draw=function(a){var b=this._elImage,c=this._oContext,d=this._htOption,e=a.getModuleCount(),f=d.width/e,g=d.height/e,h=Math.round(f),i=Math.round(g);b.style.display="none",this.clear();for(var j=0;e>j;j++)for(var k=0;e>k;k++){var l=a.isDark(j,k),m=k*f,n=j*g;c.strokeStyle=l?d.colorDark:d.colorLight,c.lineWidth=1,c.fillStyle=l?d.colorDark:d.colorLight,c.fillRect(m,n,f,g),c.strokeRect(Math.floor(m)+.5,Math.floor(n)+.5,h,i),c.strokeRect(Math.ceil(m)-.5,Math.ceil(n)-.5,h,i)}this._bIsPainted=!0},e.prototype.makeImage=function(){this._bIsPainted&&d.call(this,a)},e.prototype.isPainted=function(){return this._bIsPainted},e.prototype.clear=function(){this._oContext.clearRect(0,0,this._elCanvas.width,this._elCanvas.height),this._bIsPainted=!1},e.prototype.round=function(a){return a?Math.floor(1e3*a)/1e3:a},e}():function(){var a=function(a,b){this._el=a,this._htOption=b};return a.prototype.draw=function(a){for(var b=this._htOption,c=this._el,d=a.getModuleCount(),e=Math.floor(b.width/d),f=Math.floor(b.height/d),g=['<table style="border:0;border-collapse:collapse;">'],h=0;d>h;h++){g.push("<tr>");for(var i=0;d>i;i++)g.push('<td style="border:0;border-collapse:collapse;padding:0;margin:0;width:'+e+"px;height:"+f+"px;background-color:"+(a.isDark(h,i)?b.colorDark:b.colorLight)+';"></td>');g.push("</tr>")}g.push("</table>"),c.innerHTML=g.join("");var j=c.childNodes[0],k=(b.width-j.offsetWidth)/2,l=(b.height-j.offsetHeight)/2;k>0&&l>0&&(j.style.margin=l+"px "+k+"px")},a.prototype.clear=function(){this._el.innerHTML=""},a}();QRCode=function(a,b){if(this._htOption={width:256,height:256,typeNumber:4,colorDark:"#000000",colorLight:"#ffffff",correctLevel:d.H},"string"==typeof b&&(b={text:b}),b)for(var c in b)this._htOption[c]=b[c];"string"==typeof a&&(a=document.getElementById(a)),this._android=n(),this._el=a,this._oQRCode=null,this._oDrawing=new q(this._el,this._htOption),this._htOption.text&&this.makeCode(this._htOption.text)},QRCode.prototype.makeCode=function(a){this._oQRCode=new b(r(a,this._htOption.correctLevel),this._htOption.correctLevel),this._oQRCode.addData(a),this._oQRCode.make(),this._el.title=a,this._oDrawing.draw(this._oQRCode),this.makeImage()},QRCode.prototype.makeImage=function(){"function"==typeof this._oDrawing.makeImage&&(!this._android||this._android>=3)&&this._oDrawing.makeImage()},QRCode.prototype.clear=function(){this._oDrawing.clear()},QRCode.CorrectLevel=d}();
+</script>
+<script>
+(function(){
+  "use strict";
+  if(window.ShareQR) return;
+
+  var ANCHOR = "_";          // Startbildschirm: Knopf nur sichtbar, solange der zu sehen ist
+  var INLINE = "#teilenBtn";          // optional: Leiste, in die der Knopf direkt eingebaut wird
+  var BASE_KEY = "spieleSuite.basis";
+  var BASE_STD = "https://mauthier-bit.github.io/Spiele-Suite/";
+
+  /* ---------------- Adresse bestimmen ---------------- */
+  function basis(){
+    var b=null;
+    try{ b=localStorage.getItem(BASE_KEY); }catch(e){}
+    b=b||BASE_STD;
+    return b.charAt(b.length-1)==="/" ? b : b+"/";
+  }
+  function dateiname(){
+    var p=location.pathname||"";
+    var name=p.substring(p.lastIndexOf("/")+1);
+    try{ name=decodeURIComponent(name); }catch(e){}
+    return /^[\w.%+ -]{1,80}\.html?$/i.test(name) ? name : "index.html";
+  }
+  function adresse(){
+    if(location.protocol==="http:"||location.protocol==="https:") return location.href.split("#")[0];
+    return basis()+encodeURIComponent(dateiname());
+  }
+
+  /* ---------------- QR-Code zeichnen ---------------- */
+  function zeichneCode(host,url){
+    host.innerHTML="";
+    host.style.removeProperty("--sq-w");
+    if(typeof QRCode==="undefined"){
+      host.innerHTML='<div style="padding:18px;color:#8a929c;font-size:.9rem;">QR-Code nicht verfügbar – bitte den Link weitergeben.</div>';
+      return;
+    }
+    try{
+      var q=new QRCode(host,{text:url, width:900, height:900, correctLevel:QRCode.CorrectLevel.M});
+      /* Ruhezone: vier Module weiß ringsum, sonst findet die Kamera den Code nicht */
+      var n=q._oQRCode && q._oQRCode.getModuleCount ? q._oQRCode.getModuleCount() : 0;
+      if(n) host.style.setProperty("--sq-w", (100*n/(n+8)).toFixed(2)+"%");
+    }catch(e){
+      host.innerHTML='<div style="padding:18px;color:#8a929c;font-size:.9rem;">Die Adresse ist zu lang für einen QR-Code – bitte den Link kopieren.</div>';
+    }
+  }
+
+  /* ---------------- Oberfläche ---------------- */
+  var ov=null;
+  function baueOverlay(){
+    ov=document.createElement("div");
+    ov.className="sq-ov";
+    ov.innerHTML='<div class="sq-card">'+
+      '<h2 id="sqTitle">Teilen</h2><p class="sq-sub">Mit der Kamera scannen – das Spiel öffnet sich direkt im Browser.</p>'+
+      '<div class="sq-code" id="sqCode"></div>'+
+      '<div class="sq-url" id="sqUrl"></div>'+
+      '<div class="sq-row">'+
+        '<button class="sq-copy">Link kopieren</button>'+
+        '<button class="sq-alt sq-edit">Adresse ändern</button>'+
+        '<button class="sq-alt sq-close">Schließen</button>'+
+      '</div>'+
+      '<div class="sq-note" id="sqNote"></div>'+
+      '</div>';
+    document.body.appendChild(ov);
+    ov.addEventListener("click",function(e){ if(e.target===ov) zu(); });
+    ov.querySelector(".sq-close").addEventListener("click",zu);
+    ov.querySelector(".sq-copy").addEventListener("click",function(){ kopiereLink(this); });
+    ov.querySelector(".sq-edit").addEventListener("click",function(){
+      var neu=prompt("Internetadresse des Ordners, in dem die Spiele liegen:", basis());
+      if(neu===null) return;
+      neu=neu.trim();
+      try{ if(neu) localStorage.setItem(BASE_KEY,neu); else localStorage.removeItem(BASE_KEY); }catch(e){}
+      fuelle();
+    });
+  }
+  function fuelle(){
+    var url=adresse();
+    var t=(document.title||"").split(/[\u2013\u2014|\u00b7]/)[0].trim();
+    ov.querySelector("#sqTitle").textContent=(t||"Diese Seite")+" teilen";
+    zeichneCode(ov.querySelector("#sqCode"), url);
+    ov.querySelector("#sqUrl").textContent=url;
+    ov.querySelector("#sqNote").innerHTML = (location.protocol==="http:"||location.protocol==="https:")
+      ? "Das ist die Adresse dieser Seite."
+      : "Die Datei liegt lokal auf diesem Gerät. Der Code zeigt deshalb auf die veröffentlichte Fassung – über „Adresse ändern“ anpassbar.";
+  }
+  function kopiereLink(btn){
+    var url=adresse();
+    function melde(ok){
+      btn.textContent = ok ? "Kopiert \u2713" : "Bitte von Hand kopieren";
+      btn.classList.toggle("sq-ok", !!ok);
+      if(!ok){
+        try{
+          var el=ov.querySelector("#sqUrl"), r=document.createRange();
+          r.selectNodeContents(el);
+          var s=window.getSelection(); s.removeAllRanges(); s.addRange(r);
+        }catch(e){}
+      }
+      clearTimeout(btn._t);
+      btn._t=setTimeout(function(){ btn.textContent="Link kopieren"; btn.classList.remove("sq-ok"); },1900);
+    }
+    function altweg(){
+      try{
+        var ta=document.createElement("textarea");
+        ta.value=url; ta.setAttribute("readonly","");
+        ta.style.position="fixed"; ta.style.top="-1000px"; ta.style.opacity="0";
+        document.body.appendChild(ta);
+        ta.select(); ta.setSelectionRange(0,ta.value.length);
+        var ok=document.execCommand("copy");
+        document.body.removeChild(ta);
+        melde(ok);
+      }catch(e){ melde(false); }
+    }
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(url).then(function(){ melde(true); }, altweg);
+    } else altweg();
+  }
+  function auf(){ if(!ov) baueOverlay(); fuelle(); ov.classList.add("on"); }
+  function zu(){ if(ov) ov.classList.remove("on"); }
+
+  var ICON='<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 3h8v8H3V3zm2 2v4h4V5H5zm8-2h8v8h-8V3zm2 2v4h4V5h-4zM3 13h8v8H3v-8zm2 2v4h4v-4H5zm8-2h3v3h-3v-3zm5 0h3v3h-3v-3zm-5 5h3v3h-3v-3zm5 0h3v3h-3v-3z"/></svg>';
+  function knopf(){
+    var inline=INLINE && INLINE.charAt(0)!=="_" ? document.querySelector(INLINE) : null;
+    if(inline){
+      var b=document.createElement("button");
+      b.className=(inline.querySelector("button")? inline.querySelector("button").className : "")+" sq-inline";
+      b.type="button"; b.innerHTML=ICON+"<span>Teilen</span>";
+      b.addEventListener("click",auf);
+      inline.appendChild(b);
+      return;
+    }
+    var f=document.createElement("button");
+    f.className="sq-fab"; f.type="button";
+    f.innerHTML=ICON+"<span>Teilen</span>";
+    f.addEventListener("click",auf);
+    document.body.appendChild(f);
+    var sel = ANCHOR && ANCHOR.charAt(0)!=="_" ? ANCHOR : null;
+    function sichtbar(){
+      if(!sel) return true;
+      var els=document.querySelectorAll(sel);
+      for(var i=0;i<els.length;i++){
+        var cs=getComputedStyle(els[i]);
+        if(cs.display!=="none" && cs.visibility!=="hidden" && els[i].getClientRects().length) return true;
+      }
+      return false;
+    }
+    function pruefe(){ f.classList.toggle("on", sichtbar() && !(ov&&ov.classList.contains("on"))); }
+    pruefe();
+    setInterval(pruefe,400);
+  }
+  function start(){ knopf(); }
+  if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",start);
+  else start();
+
+  window.ShareQR={open:auf, close:zu, url:adresse, basis:basis};
+})();
+</script>
+
+</body></html>

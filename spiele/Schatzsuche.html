@@ -1,0 +1,2118 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Geometrische Schatzsuche</title>
+<style>
+  :root{
+    --paper:#efe2c6; --paper-2:#e6d4b0;
+    --ink:#33291b; --ink-soft:#5c4a32; --sepia:#7a5630;
+    --sea:#a9c5bf; --sea-line:#5f8a83;
+    --leather:#3a2c1c; --oxblood:#9a2f22; --vermilion:#c2451f;
+    --indigo:#2f4a6b; --gold:#c79a31; --good:#3f7d4e; --bad:#a63327;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;height:100%;overflow:hidden;}
+  body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink);
+    background:#241a10;user-select:none;-webkit-user-select:none;touch-action:manipulation;}
+  .display{font-family:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,serif;}
+  #app{display:flex;flex-direction:column;height:100%;width:100%;}
+
+  /* Top hint bar */
+  #topbar{display:flex;align-items:stretch;gap:10px;padding:8px 12px;
+    background:linear-gradient(180deg,#4d3a24,#3a2c1c);color:#f1e4c8;
+    border-bottom:3px solid #221913;flex:0 0 auto;}
+  #huntpicker{display:flex;gap:6px;align-items:center;}
+  .hbtn{width:34px;height:34px;border-radius:50%;border:2px solid #6b5436;background:#2c2114;
+    color:#e9d9b6;font-weight:700;font-size:15px;display:flex;align-items:center;justify-content:center;
+    cursor:pointer;position:relative;}
+  .hbtn.active{background:var(--oxblood);border-color:#e7c98a;color:#fff;}
+  .hbtn.done::after{content:"✓";position:absolute;right:-4px;top:-6px;font-size:10px;background:var(--good);
+    color:#fff;border-radius:50%;width:15px;height:15px;line-height:15px;text-align:center;}
+  #hintwrap{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;}
+  #huntmeta{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;}
+  #hunttitle{font-size:18px;letter-spacing:.5px;}
+  #stepmeta{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#d8b977;}
+  #hintbtn{font:inherit;font-size:11.5px;font-weight:600;color:#1c140a;background:var(--gold,#c79a31);
+    border:none;border-radius:8px;padding:3px 9px;cursor:pointer;line-height:1.1;}
+  #hintbtn:active{transform:scale(.96);}
+  #hintbtn.on{background:#2c2114;color:var(--gold,#c79a31);box-shadow:inset 0 0 0 1.5px var(--gold,#c79a31);}
+  #cluehelp.hide{display:none;}
+  #steps{display:flex;gap:5px;margin-left:auto;}
+  .pip{width:22px;height:5px;border-radius:3px;background:#6b5436;}
+  .pip.cur{background:var(--vermilion);}
+  .pip.ok{background:var(--gold);}
+  #hinttext{font-size:14.5px;line-height:1.35;margin-top:3px;color:#f3e7cd;max-width:74ch;}
+  #hinttext .dh{margin-bottom:5px;}
+  #hinttext .clue{display:flex;align-items:baseline;gap:6px;font-size:13px;color:#e3d2ad;
+    padding:2px 0;opacity:.92;}
+  #hinttext .clue.ok{color:var(--good,#7bbf6a);}
+  #hinttext .clue.ok::before{content:"✓ ";font-weight:700;}
+  #hinttext .clue .ck{font-size:10.5px;color:#caa15a;border:1px solid #6b5436;border-radius:6px;
+    padding:0 5px;margin-left:auto;white-space:nowrap;}
+  #hinttext .pickrow{margin-top:5px;font-size:13px;color:#e7c98a;}
+  #hinttext .ctip{font-size:11.5px;font-style:italic;color:#caa15a;margin:-1px 0 3px 18px;}
+  .tool.locked{opacity:.34;filter:grayscale(.7);pointer-events:auto;}
+  .tool.locked::after{content:"🔒";position:absolute;right:3px;top:2px;font-size:10px;}
+  .tool{position:relative;}
+  .hbtn.locked{background:#241b10;border-color:#4a3a22;color:#7a6442;font-size:13px;}
+
+  /* Main layout */
+  #main{flex:1;display:flex;min-height:0;}
+  #toolbar{flex:0 0 94px;background:linear-gradient(180deg,#4d3a24,#34271a);
+    border-right:3px solid #221913;display:flex;flex-direction:column;padding:8px 6px;gap:6px;overflow-y:auto;}
+  .tool{border:2px solid #6b5436;border-radius:10px;background:#efe2c6;color:var(--ink);
+    padding:5px 3px 4px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;}
+  .tool:active{transform:scale(.96);}
+  .tool svg{width:36px;height:30px;display:block;}
+  .tool .tname{font-size:9.5px;line-height:1.05;text-align:center;font-weight:600;}
+  .tool .ink{stroke:var(--ink);stroke-width:2;fill:none;stroke-linecap:round;}
+  .tool .ink.dash{stroke-dasharray:3 3;}
+  .tool .dot{fill:var(--oxblood);}
+  .tool.active{background:var(--oxblood);border-color:var(--gold);color:#fff;}
+  .tool.active .ink{stroke:#fff;} .tool.active .dot{fill:#fff;}
+  .tool.suggest{box-shadow:0 0 0 2px var(--gold);}
+  .sep{height:1px;background:#6b5436;margin:2px 4px;opacity:.6;}
+  .util{border:2px solid #6b5436;border-radius:10px;background:#2c2114;color:#e9d9b6;
+    padding:7px 2px;font-size:10px;font-weight:600;cursor:pointer;text-align:center;line-height:1.1;}
+  .util:active{transform:scale(.96);}
+  .util.on{background:var(--indigo);border-color:#9ab4d6;color:#fff;}
+
+  /* Map */
+  #stage{flex:1;position:relative;background:#241a10;display:flex;min-width:0;}
+  #mapframe{flex:1;margin:10px;border-radius:6px;position:relative;overflow:hidden;
+    border:3px solid #6b5436;box-shadow:0 0 0 6px #2c2114, 0 10px 30px rgba(0,0,0,.5);}
+  svg#map{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;background:var(--paper);}
+
+  /* Prompt + feedback */
+  #prompt{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);
+    background:rgba(44,33,20,.92);color:#f3e7cd;padding:8px 16px;border-radius:20px;
+    font-size:14px;max-width:90%;text-align:center;border:1px solid #6b5436;
+    pointer-events:none;transition:opacity .2s;z-index:5;}
+  #prompt.hide{opacity:0;}
+  #zoomrow{display:flex;gap:4px;justify-content:center;}
+  .zbtn{flex:1;min-width:0;height:34px;border-radius:9px;border:1px solid #6b5436;background:#2c2114;
+    color:#f3e7cd;font-size:18px;line-height:1;font-weight:700;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;}
+  .zbtn:active{transform:scale(.94);background:var(--indigo,#2f4a6b);}
+  #toast{position:absolute;left:50%;top:14px;transform:translateX(-50%) translateY(-12px);
+    padding:10px 18px;border-radius:12px;font-size:15px;font-weight:600;color:#fff;
+    opacity:0;transition:opacity .25s,transform .25s;pointer-events:none;z-index:6;max-width:92%;text-align:center;
+    box-shadow:0 6px 20px rgba(0,0,0,.4);}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  #toast.good{background:linear-gradient(180deg,#4d9a60,#3f7d4e);}
+  #toast.bad{background:linear-gradient(180deg,#c0493a,#a63327);}
+  #toast.info{background:linear-gradient(180deg,#3f6090,#2f4a6b);}
+
+  /* Win overlay */
+  #win{position:absolute;inset:0;display:none;align-items:center;justify-content:center;
+    background:rgba(20,14,6,.55);z-index:10;}
+  #win.show{display:flex;}
+  #wincard{background:var(--paper);border:3px solid var(--gold);border-radius:14px;padding:24px 26px;
+    max-width:380px;text-align:center;box-shadow:0 18px 50px rgba(0,0,0,.5);}
+  #wincard .big{font-size:46px;}
+  #wincard h2{margin:6px 0 4px;font-size:24px;color:var(--oxblood);}
+  #wincard p{margin:4px 0 16px;font-size:15px;color:var(--ink-soft);line-height:1.4;}
+  .cta{display:inline-block;background:var(--oxblood);color:#fff;border:none;border-radius:24px;
+    padding:11px 22px;font-size:15px;font-weight:700;cursor:pointer;}
+  .cta:active{transform:scale(.97);}
+  .cta.ghost{background:transparent;color:var(--ink);border:2px solid var(--sepia);margin-left:8px;}
+
+  /* Help overlay */
+  #help{position:absolute;inset:0;background:rgba(20,14,6,.6);z-index:11;display:none;
+    align-items:center;justify-content:center;padding:16px;}
+  #help.show{display:flex;}
+  #helpcard{background:var(--paper);border:3px solid var(--sepia);border-radius:14px;
+    max-width:560px;max-height:86%;overflow:auto;padding:22px 24px;}
+  #helpcard h2{margin:0 0 8px;color:var(--oxblood);}
+  #helpcard h3{margin:14px 0 4px;font-size:15px;}
+  #helpcard p,#helpcard li{font-size:14px;line-height:1.45;color:var(--ink-soft);}
+  #helpcard ul{margin:4px 0 4px 18px;padding:0;}
+  #helpcard .closex{float:right;cursor:pointer;font-size:20px;border:none;background:none;color:var(--ink);}
+  #teacher{position:absolute;inset:0;background:rgba(20,14,6,.6);z-index:12;display:none;
+    align-items:center;justify-content:center;padding:16px;}
+  #teacher.show{display:flex;}
+  #teachercard{background:var(--paper);border:3px solid var(--sepia);border-radius:14px;
+    max-width:360px;width:100%;padding:22px 24px;text-align:center;}
+  #teachercard h2{margin:0 0 8px;color:var(--oxblood);}
+  #teachercard p{font-size:14px;line-height:1.45;color:var(--ink-soft);}
+  #teachercard .closex{float:right;cursor:pointer;font-size:20px;border:none;background:none;color:var(--ink);}
+  #teachercode{width:100%;box-sizing:border-box;font-size:20px;text-align:center;letter-spacing:4px;
+    padding:10px;border:2px solid var(--sepia);border-radius:10px;margin:6px 0;background:#fff;color:var(--ink);}
+  #teachererr{color:var(--oxblood);font-size:13px;min-height:18px;margin-bottom:6px;}
+
+  @media (max-width:760px){
+    #toolbar{flex-basis:78px;} .tool svg{width:30px;height:26px;} .tool .tname{font-size:8.8px;}
+    #hunttitle{font-size:16px;} #hinttext{font-size:13px;}
+  }
+  @media (max-height:520px){ #hinttext{display:none;} }
+/* Teilen-Knopf wie der Tipp-Knopf aussehen lassen */
+#huntmeta .sq-inline{font:inherit;font-size:11.5px;font-weight:600;color:#1c140a;
+    background:var(--gold,#c79a31);border:none;border-radius:8px;padding:3px 9px;cursor:pointer;line-height:1.1;}
+</style>
+<script>
+/* Scharfe Kante unter der iPadOS-Statusleiste (iPadOS 26/27).
+   WebKit legt in Web-Apps vom Homebildschirm am oberen Rand sonst einen
+   weichen Verlauf ueber den Inhalt. Er entfaellt, wenn dort eine deckende
+   Leiste liegt - ein bildschirmfuellender Kasten genuegt nicht (am
+   13.10.2026 auf iPadOS 27 geprueft). Das Skript legt deshalb einen 16 px
+   hohen, deckenden Streifen an den oberen Rand und rueckt alles, was in
+   diese 16 px hineinragt, um 16 px nach unten. Laeuft nur in der App vom
+   Homebildschirm, nicht in Safari und nicht in einem Rahmen; mit #kante in
+   der Adresse laesst es sich zum Pruefen erzwingen. */
+(function(){
+  if(window.top!==window) return;
+  var pruef=/kante/i.test(location.hash||'');
+  var alsApp=(navigator.standalone===true) ||
+             (window.matchMedia && matchMedia('(display-mode: standalone)').matches);
+  if(!alsApp && !pruef) return;
+
+  var HOCH=16;
+  function leer(f){ return !f || f==='transparent' || f.replace(/\s/g,'')==='rgba(0,0,0,0)'; }
+  function seite(){
+    var s=getComputedStyle(document.body), f=s.backgroundColor, b=s.backgroundImage;
+    if(leer(f) && (!b || b==='none')){
+      s=getComputedStyle(document.documentElement); f=s.backgroundColor; b=s.backgroundImage;
+    }
+    return { farbe: leer(f) ? '#ffffff' : f, bild: (b && b!=='none') ? b : '' };
+  }
+  /* Faerbt dieses Element am oberen Rand etwas sichtbar ein? */
+  function tinte(n){
+    var r=n.getBoundingClientRect();
+    if(r.top>=HOCH || r.bottom<=0 || r.width<=0) return false;
+    var s=getComputedStyle(n);
+    if(s.display==='none' || s.visibility==='hidden' || s.opacity==='0') return false;
+    if(n.id==='randKante') return false;
+    var t=n.tagName.toLowerCase();
+    if(t==='img'||t==='svg'||t==='canvas'||t==='video') return true;
+    if(!leer(s.backgroundColor) || s.backgroundImage!=='none') return true;
+    if(parseFloat(s.borderTopWidth)>0) return true;
+    var kn=n.childNodes;
+    for(var j=0;j<kn.length;j++)
+      if(kn[j].nodeType===3 && kn[j].nodeValue.replace(/\s/g,'')) return true;
+    for(var i=0;i<n.children.length;i++) if(tinte(n.children[i])) return true;
+    return false;
+  }
+  function ragtRein(z){
+    for(var i=0;i<z.children.length;i++) if(tinte(z.children[i])) return true;
+    return false;
+  }
+  function luft(z){
+    if(z.dataset.kanteLuft) return;
+    if(!ragtRein(z) && !tinte(z)) return;    /* noch nichts oben - spaeter nochmal */
+    z.dataset.kanteLuft='1';
+    var p=parseFloat(getComputedStyle(z).paddingTop)||0;
+    if(p>=HOCH) return;
+    z.style.paddingTop=(p+HOCH)+'px';
+  }
+  function sichtbar(n,s){
+    return s.display!=='none' && s.visibility!=='hidden' && n.id!=='randKante';
+  }
+  /* bildschirmfuellende fixierte Kaesten */
+  function kaesten(){
+    var alle=document.querySelectorAll('body > *, body > * > *'), raus=[];
+    for(var i=0;i<alle.length;i++){
+      var n=alle[i], s=getComputedStyle(n);
+      if(s.position!=='fixed' || !sichtbar(n,s)) continue;
+      /* Deko-Ebenen wie Konfetti liegen durchsichtig ueber allem und duerfen
+         niemals angefasst werden - sie wuerden sonst das Spiel verdecken. */
+      if(s.pointerEvents==='none') continue;
+      var r=n.getBoundingClientRect();
+      if(r.top<=4 && r.width>=innerWidth*0.9 && r.height>=innerHeight*0.9) raus.push(n);
+    }
+    return raus;
+  }
+  /* Leisten am oberen Rand (fixiert oder klebend, aber kein Vollbildkasten) */
+  function leisten(){
+    var alle=document.querySelectorAll('body > *, body > * > *'), raus=[];
+    for(var i=0;i<alle.length;i++){
+      var n=alle[i], s=getComputedStyle(n);
+      if((s.position!=='fixed' && s.position!=='sticky') || !sichtbar(n,s)) continue;
+      var r=n.getBoundingClientRect();
+      if(r.top<=4 && r.width>=innerWidth*0.8 && r.height>=6 && r.height<=innerHeight*0.6) raus.push(n);
+    }
+    return raus;
+  }
+  /* Liegt oben schon eine deckende Leiste, ist nichts zu tun. */
+  function schonGut(){
+    var st=document.elementsFromPoint ? document.elementsFromPoint(Math.round(innerWidth/2),2) : [];
+    for(var i=0;i<st.length;i++){
+      var n=st[i];
+      if(n.id==='randKante') continue;
+      if(n===document.body || n===document.documentElement) return false;
+      var s=getComputedStyle(n), r=n.getBoundingClientRect();
+      return (s.position==='fixed'||s.position==='sticky') && r.top<=4 &&
+             r.width>=innerWidth*0.8 && r.height>=6 && r.height<=innerHeight*0.6 &&
+             !leer(s.backgroundColor);
+    }
+    return false;
+  }
+  var band=null;
+  function streifen(farbe){
+    if(!band){
+      band=document.createElement('div');
+      band.id='randKante'; band.setAttribute('aria-hidden','true');
+      band.style.cssText='position:fixed;left:0;top:0;width:100%;height:'+HOCH+'px;'+
+        'z-index:2147483646;pointer-events:none';
+      document.body.appendChild(band);
+    }
+    band.style.display='block';
+    if(farbe){
+      band.style.backgroundColor=farbe;
+      band.style.backgroundImage='none';
+      return;
+    }
+    var s=getComputedStyle(document.body), h=seite();
+    band.style.backgroundColor=h.farbe;
+    band.style.backgroundImage=h.bild||'none';
+    band.style.backgroundAttachment='fixed';
+    if(h.bild && s.backgroundAttachment!=='fixed')
+      band.style.backgroundSize='100% '+Math.max(innerHeight,document.body.scrollHeight)+'px';
+  }
+  var schild=null;
+  function zeigen(txt){
+    if(!pruef) return;
+    if(!schild){
+      schild=document.createElement('div');
+      schild.style.cssText='position:fixed;left:6px;bottom:52px;z-index:2147483647;max-width:92%;'+
+        'padding:6px 9px;border-radius:8px;background:#ffe600;color:#000;'+
+        'font:600 12px/1.35 -apple-system,sans-serif;white-space:pre-wrap;pointer-events:none';
+      document.body.appendChild(schild);
+    }
+    schild.textContent='Kante K6 · '+innerWidth+'x'+innerHeight+'\n'+txt;
+  }
+  function name(n){
+    if(n.id) return '#'+n.id;
+    var c=(typeof n.className==='string'&&n.className.trim())?'.'+n.className.trim().split(/\s+/)[0]:'';
+    return n.tagName.toLowerCase()+c;
+  }
+  function malen(){
+    var b=document.body; if(!b) return;
+    if(schonGut()){
+      if(band) band.style.display='none';
+      zeigen('oben liegt schon eine deckende Leiste');
+      return;
+    }
+    var k=kaesten(), l=leisten(), farbe=null, text=[];
+    /* Die Kaesten werden nur noch nach unten gerueckt, nicht mehr eingefaerbt:
+       ein bildschirmfuellender Kasten haelt den Verlauf ohnehin nicht ab
+       (am 13.10.2026 auf iPadOS 27 gemessen), das Einfaerben hat dagegen
+       durchsichtige Ebenen deckend gemacht. */
+    for(var i=0;i<k.length;i++){
+      var z=k[i];
+      luft(z);
+      text.push(name(z));
+    }
+    for(var j=0;j<l.length;j++){
+      var le=l[j], sl=getComputedStyle(le);
+      if(!tinte(le) && !ragtRein(le)) continue;
+      if(!farbe && !leer(sl.backgroundColor)) farbe=sl.backgroundColor;
+      luft(le);
+      text.push('Leiste '+name(le)+' bg='+sl.backgroundColor);
+    }
+    if(!k.length && !l.length){ luft(b); text.push('kein Kasten, nur Streifen'); }
+    streifen(farbe);
+    zeigen(text.join('\n'));
+  }
+  var warte=null;
+  function spaeter(){
+    if(warte) return;
+    warte=setTimeout(function(){ warte=null; malen(); },200);
+  }
+  try{
+    new MutationObserver(spaeter).observe(document.documentElement,
+      {childList:true, subtree:true, attributes:true, attributeFilter:['class','style','hidden']});
+  }catch(e){}
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',malen);
+  else malen();
+  addEventListener('load',spaeter);
+  addEventListener('resize',spaeter);
+  addEventListener('orientationchange',spaeter);
+})();
+</script>
+</head>
+<body>
+<div id="app">
+  <div id="topbar">
+    <div id="huntpicker"></div>
+    <div id="hintwrap">
+      <div id="huntmeta">
+        <span id="hunttitle" class="display">Schatzsuche</span>
+        <span id="stepmeta"></span>
+        <button id="hintbtn" type="button">💡 Tipp</button>
+        <div id="steps"></div>
+      </div>
+      <div id="hinttext">Wähle eine Schatzsuche.</div>
+    </div>
+  </div>
+
+  <div id="main">
+    <div id="toolbar">
+      <div class="tool" data-tool="zirkel" title="Zirkel (Kreis schlagen)">
+        <svg viewBox="0 0 40 32"><path class="ink" d="M20 5 L11 27 M20 5 L29 27"/>
+          <circle class="dot" cx="20" cy="5" r="2.5"/>
+          <path class="ink dash" d="M11 27 A 12 12 0 0 0 29 27"/></svg>
+        <span class="tname">Zirkel</span></div>
+
+      <div class="tool" data-tool="lineal" title="Lineal (Gerade durch zwei Punkte)">
+        <svg viewBox="0 0 40 32"><line class="ink" x1="5" y1="22" x2="35" y2="10"/>
+          <circle class="dot" cx="9" cy="20.4" r="2.5"/><circle class="dot" cx="31" cy="11.6" r="2.5"/></svg>
+        <span class="tname">Lineal</span></div>
+
+      <div class="tool" data-tool="punkt" title="Schnittpunkt markieren">
+        <svg viewBox="0 0 40 32"><path class="ink" d="M8 8 L32 24 M32 8 L8 24"/>
+          <circle class="dot" cx="20" cy="16" r="4"/></svg>
+        <span class="tname">Schnitt&shy;punkt</span></div>
+
+      <div class="sep"></div>
+
+      <div class="tool" data-tool="mittelsenkrechte" title="Mittelsenkrechte">
+        <svg viewBox="0 0 40 32"><line class="ink" x1="6" y1="24" x2="34" y2="24"/>
+          <circle class="dot" cx="6" cy="24" r="3"/><circle class="dot" cx="34" cy="24" r="3"/>
+          <line class="ink dash" x1="20" y1="4" x2="20" y2="30"/></svg>
+        <span class="tname">Mittel&shy;senkrechte</span></div>
+
+      <div class="tool" data-tool="lot" title="Lot">
+        <svg viewBox="0 0 40 32"><line class="ink" x1="4" y1="26" x2="36" y2="26"/>
+          <line class="ink dash" x1="22" y1="4" x2="22" y2="26"/><circle class="dot" cx="22" cy="6" r="3"/>
+          <path class="ink" d="M22 20 L28 20 L28 26"/></svg>
+        <span class="tname">Lot</span></div>
+
+      <div class="tool" data-tool="winkelhalbierende" title="Winkelhalbierende">
+        <svg viewBox="0 0 40 32"><path class="ink" d="M6 28 L34 6 M6 28 L34 22"/>
+          <line class="ink dash" x1="6" y1="28" x2="36" y2="14"/><circle class="dot" cx="6" cy="28" r="3"/></svg>
+        <span class="tname">Winkel&shy;halbierende</span></div>
+
+      <div class="tool" data-tool="parallele" title="Parallele durch einen Punkt">
+        <svg viewBox="0 0 40 32"><line class="ink" x1="5" y1="28" x2="35" y2="16"/>
+          <line class="ink" x1="5" y1="18" x2="35" y2="6"/><circle class="dot" cx="14" cy="14.8" r="3"/></svg>
+        <span class="tname">Parallele</span></div>
+
+      <div class="sep"></div>
+      <div id="zoomrow">
+        <button class="zbtn" data-zoom="in" title="Vergrößern">＋</button>
+        <button class="zbtn" data-zoom="out" title="Verkleinern">－</button>
+        <button class="zbtn" data-zoom="fit" title="Ganze Karte">⤢</button>
+      </div>
+
+      <div class="sep"></div>
+      <div class="util" data-util="undo">↩︎ Zurück</div>
+      <div class="util" data-util="reset">⟲ Neu</div>
+      <div class="util" data-util="traces">Spuren</div>
+      <div class="util" data-util="solution" id="solbtn" style="display:none">Lösung</div>
+      <div class="util" data-util="help">? Hilfe</div>
+      <div class="util" data-util="teacher">🔑 Lehrer</div>
+    </div>
+
+    <div id="stage">
+      <div id="mapframe">
+        <svg id="map" viewBox="0 0 1000 750" preserveAspectRatio="xMidYMid meet"></svg>
+        <div id="prompt">Wähle ein Werkzeug.</div>
+        <div id="toast"></div>
+        <div id="win"><div id="wincard">
+          <div class="big">🏴‍☠️</div><h2 class="display">Schatz gehoben!</h2>
+          <p id="wintext"></p>
+          <button class="cta" id="winnext">Nächste Schatzsuche</button>
+          <button class="cta ghost" id="winstay">Hier bleiben</button>
+        </div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="help"><div id="helpcard">
+  <button class="closex" id="helpclose">✕</button>
+  <h2 class="display">Logbuch der Konstruktionen</h2>
+  <p>Jede Schatzsuche besteht aus einem oder mehreren <b>Hinweisen</b>. Ein Hinweis nennt
+     zwei Bedingungen; ihr <b>Schnittpunkt</b> legt eine Stelle fest. Tippe sie an – bei mehrstufigen Suchen
+     erscheint dann der nächste Hinweis, sonst ist der Schatz gehoben. Mit <b>💡 Tipp</b> blendest du ein,
+     welche Konstruktionen gemeint sind.</p>
+  <p><b>Zoom:</b> Mit zwei Fingern auseinander-/zusammenziehen oder den Tasten ＋ － ⤢ rechts unten kannst du
+     die Karte vergrößern und verschieben – nützlich, wenn ein Schnittpunkt bei großen Kreisen außerhalb liegt.</p>
+  <h3>Die ersten drei Suchen (Grundkonstruktionen)</h3>
+  <p>In der Werkzeugleiste sind <b>alle</b> Werkzeuge zu sehen, aber zu Beginn nur <b>Zirkel, Lineal und
+     Schnittpunkt</b> nutzbar – die fertigen Orte-Werkzeuge sind ausgegraut 🔒. Hast du die ersten drei
+     Suchen gemeistert, werden Mittelsenkrechte, Lot und Winkelhalbierende freigeschaltet.</p>
+  <ul><li><b>Zirkel:</b> Finger auf einen Punkt setzen und ziehen – der Radius wird festgelegt
+          (ziehst du bis zu einem anderen Punkt, ist der Abstand exakt).</li>
+      <li><b>Lineal:</b> von einem Punkt zu einem anderen wischen – die Gerade durch beide.</li>
+      <li><b>Schnittpunkt:</b> auf einen Schnittpunkt tippen, um ihn zu markieren.</li></ul>
+  <p>Schlägst du einen zweiten Kreis, dessen Radius einem vorhandenen nahekommt, rastet er auf
+     <b>denselben Radius</b> ein – die Vorschau wird grün und zeigt „= r"; gleich große Kreise erhalten
+     <b>grüne Kongruenz-Häkchen</b>. Beispiel Mittelsenkrechte: gleich große Kreise um beide Punkte schlagen,
+     dann die zwei Schnittpunkte mit dem Lineal verbinden.</p>
+  <h3>Die freigeschalteten Orte-Werkzeuge</h3>
+  <p>Sind sie frei, geht es schneller: Werkzeug wählen und die definierenden Punkte/Linien antippen,
+     der Ort wird direkt gezeichnet.</p>
+  <ul><li><b>Mittelsenkrechte:</b> zwei Punkte. <b>Lot:</b> erst der Punkt, dann die Linie (Fluss …).</li>
+      <li><b>Winkelhalbierende:</b> Scheitel, dann je ein Punkt auf beiden Schenkeln.</li>
+      <li><b>Parallele:</b> erst der Punkt, dann die Gerade – wird in der Parallelen-Aufgabe freigeschaltet.</li></ul>
+  <h3>Zoom &amp; Hilfsmittel</h3>
+  <ul><li><b>Zoom:</b> zwei Finger spreizen/zusammenziehen oder die Tasten ＋ － ⤢ in der Leiste – nützlich,
+          wenn ein Schnittpunkt bei großen Kreisen außerhalb liegt.</li>
+      <li><b>Zurück</b> nimmt den letzten Schritt zurück (zuerst die letzte Hilfslinie), <b>Neu</b> startet die Suche neu.</li>
+      <li><b>Spuren</b> zeigt/versteckt Konstruktionsmarken und Radius-Häkchen, <b>Lösung</b> blendet die
+          gesuchten Orte blass in Gold ein (für die Lehrkraft).</li></ul>
+</div></div>
+<div id="teacher"><div id="teachercard">
+  <button class="closex" id="teacherclose">✕</button>
+  <h2 class="display">Lehrer-Freischaltung</h2>
+  <p>Code eingeben, um alle Werkzeuge und die weiteren Schatzsuchen freizuschalten.</p>
+  <input id="teachercode" type="password" inputmode="numeric" autocomplete="off" placeholder="Code" />
+  <div id="teachererr"></div>
+  <button class="cta" id="teacherok">Freischalten</button>
+</div></div>
+<script>
+"use strict";
+(function(){
+/* =========================================================
+   Geometrie
+========================================================= */
+const W=1000, H=750;
+const TOL_ANGLE = 7*Math.PI/180;   // Richtungstoleranz
+const TOL_LINE  = 22;              // Abstandstoleranz Geraden
+const TOL_POINT = 30;              // Toleranz Spiegelpunkte
+const TOL_TREAS = 40;              // Toleranz Schatz-Tipp
+const SNAP_PT   = 48;              // Fangradius Punkte
+const SNAP_LN   = 34;              // Fangradius Linien
+const RAD_SNAP  = 12;              // Einrasten auf gleichen Zirkelradius
+const MILE      = 40;              // Pixel pro Meile (passt zum Maßstabsbalken)
+const PAD_SNAP  = 500;             // Schnittpunkte auch außerhalb der Karte fangen (Zoom nötig)
+const MOVE_THRESH = 12;
+
+const sub=(a,b)=>({x:a.x-b.x,y:a.y-b.y});
+const add=(a,b)=>({x:a.x+b.x,y:a.y+b.y});
+const mul=(a,s)=>({x:a.x*s,y:a.y*s});
+const dot=(a,b)=>a.x*b.x+a.y*b.y;
+const cross=(a,b)=>a.x*b.y-a.y*b.x;
+const len=a=>Math.hypot(a.x,a.y);
+const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
+const norm=a=>{const l=len(a)||1;return {x:a.x/l,y:a.y/l};};
+const perp=a=>({x:-a.y,y:a.x});
+const mid=(a,b)=>({x:(a.x+b.x)/2,y:(a.y+b.y)/2});
+
+// Gerade: {p:Punkt, d:Einheitsrichtung}
+function lineFromPts(a,b){return {p:{x:a.x,y:a.y}, d:norm(sub(b,a))};}
+function perpBisector(a,b){return {p:mid(a,b), d:norm(perp(sub(b,a)))};}
+function angleBisector(v,a,b){
+  const ua=norm(sub(a,v)), ub=norm(sub(b,v));
+  let d=add(ua,ub);
+  if(len(d)<1e-6) d=perp(ua);
+  return {p:{x:v.x,y:v.y}, d:norm(d)};
+}
+function perpThrough(line,P){ return {p:{x:P.x,y:P.y}, d:norm(perp(line.d))}; }
+function foot(P,line){ const t=dot(sub(P,line.p),line.d); return add(line.p, mul(line.d,t)); }
+function reflectPt(P,line){ const F=foot(P,line); return {x:2*F.x-P.x, y:2*F.y-P.y}; }
+function distPtLine(P,line){ return Math.abs(cross(sub(P,line.p), line.d)); }
+function lineIntersect(l1,l2){
+  const den=cross(l1.d,l2.d);
+  if(Math.abs(den)<1e-9) return null;
+  const t=cross(sub(l2.p,l1.p), l2.d)/den;
+  return add(l1.p, mul(l1.d,t));
+}
+function angleBetween(l1,l2){
+  let c=Math.abs(dot(l1.d,l2.d)); if(c>1)c=1;
+  return Math.acos(c);
+}
+function clipLine(line){
+  const cand=[]; const {p,d}=line;
+  if(Math.abs(d.x)>1e-9){ for(const X of [0,W]){const t=(X-p.x)/d.x;const y=p.y+t*d.y;
+    if(y>=-0.5&&y<=H+0.5) cand.push({x:X,y});} }
+  if(Math.abs(d.y)>1e-9){ for(const Y of [0,H]){const t=(Y-p.y)/d.y;const x=p.x+t*d.x;
+    if(x>=-0.5&&x<=W+0.5) cand.push({x,y:Y});} }
+  if(cand.length<2) return [p, add(p,mul(d,10))];
+  let best=[cand[0],cand[1]], bd=dist(cand[0],cand[1]);
+  for(let i=0;i<cand.length;i++)for(let j=i+1;j<cand.length;j++){
+    const dd=dist(cand[i],cand[j]); if(dd>bd){bd=dd;best=[cand[i],cand[j]];}}
+  return best;
+}
+function lineMatch(stud,exp){
+  const [E1,E2]=clipLine(exp);
+  return angleBetween(stud,exp)<TOL_ANGLE &&
+         distPtLine(E1,stud)<TOL_LINE && distPtLine(E2,stud)<TOL_LINE;
+}
+function pointMatch(P,E){ return dist(P,E)<TOL_POINT; }
+// Kreis {c:Mittelpunkt, r:Radius}
+function circleCircle(k1,k2){
+  const d=dist(k1.c,k2.c);
+  if(d<1e-6) return [];
+  if(d>k1.r+k2.r+1e-6) return [];
+  if(d<Math.abs(k1.r-k2.r)-1e-6) return [];
+  const a=(k1.r*k1.r-k2.r*k2.r+d*d)/(2*d);
+  let h2=k1.r*k1.r-a*a; const h=h2>0?Math.sqrt(h2):0;
+  const ux=(k2.c.x-k1.c.x)/d, uy=(k2.c.y-k1.c.y)/d;
+  const mx=k1.c.x+a*ux, my=k1.c.y+a*uy;
+  if(h<1e-6) return [{x:mx,y:my}];
+  return [{x:mx-h*uy,y:my+h*ux},{x:mx+h*uy,y:my-h*ux}];
+}
+function circleLine(k,line){ // Gerade {p,d} (unendlich)
+  const f=sub(line.p,k.c);
+  const b=2*dot(f,line.d), cc=dot(f,f)-k.r*k.r;
+  let disc=b*b-4*cc; if(disc<-1e-6) return []; if(disc<0) disc=0;
+  const sq=Math.sqrt(disc);
+  const out=[add(line.p,mul(line.d,(-b+sq)/2))];
+  if(sq>1e-6) out.push(add(line.p,mul(line.d,(-b-sq)/2)));
+  return out;
+}
+
+/* =========================================================
+   Daten: 10 Schatzsuchen in Stufen
+   hunt: {id,title,tier,intro, marks[], features[], stages[]}
+   stage (Doppelhinweis): {narrative, label, clues:[clue,clue], pick?}
+   clue: {kind, ...ids/r, text}
+     mittelsenkrechte:{a,b}  lot:{p,ref:{feature}}  winkelhalbierende:{v,a,b}
+     gerade:{a,b}            kreis:{c,r}
+   Zielpunkt einer Stufe = Schnittpunkt der beiden Hinweis-Orte.
+========================================================= */
+const HUNTS=[
+{
+  id:1, tier:1, title:"Die Bucht der zwei Türme",
+  intro:"Zwei Hinweise, zwei Linien – ihr Schnittpunkt birgt den Schatz. Konstruiere mit Zirkel und Lineal.",
+  marks:[
+    {id:"nordturm", x:360,y:250, icon:"🗼", label:"Nordturm"},
+    {id:"suedturm", x:760,y:250, icon:"🗼", label:"Südturm"},
+    {id:"felsbank", x:820,y:430, icon:"🪨", label:"Felsbank"},
+  ],
+  features:[
+    {id:"fluss", kind:"fluss", a:{x:300,y:120}, b:{x:340,y:700}, selectable:true, label:"Fluss"},
+  ],
+  stages:[
+    { label:"Schatz",
+      narrative:"Der Schatz liegt genau gleich weit vom Nordturm und vom Südturm entfernt. Außerdem liegt er auf dem kürzesten, geraden Weg von der Felsbank zum Fluss.",
+      clues:[
+        {kind:"mittelsenkrechte", a:"nordturm", b:"suedturm", text:"gleich weit vom Nordturm und vom Südturm"},
+        {kind:"lot", p:"felsbank", ref:{feature:"fluss"}, text:"kürzester, gerader Weg von der Felsbank zum Fluss"},
+      ] },
+  ],
+},
+{
+  id:2, tier:1, title:"Das Kap der Winde",
+  intro:"Gleich weit und genau dazwischen – wo beides zutrifft, wartet der Schatz.",
+  marks:[
+    {id:"moewenfels",  x:540,y:150, icon:"🪨", label:"Möwenfels"},
+    {id:"seehundbank", x:540,y:570, icon:"🦭", label:"Seehundbank"},
+    {id:"hafen",       x:180,y:660, icon:"⚓", label:"Hafen"},
+    {id:"leuchtfeuer", x:426,y:202, icon:"🔥", label:"Leuchtfeuer"},
+    {id:"klippe",      x:770,y:470, icon:"⛰️", label:"Klippe"},
+  ],
+  features:[
+    {id:"weg1", kind:"strasse", a:{x:180,y:660}, b:{x:426,y:202}, selectable:false},
+    {id:"weg2", kind:"strasse", a:{x:180,y:660}, b:{x:770,y:470}, selectable:false},
+  ],
+  stages:[
+    { label:"Schatz",
+      narrative:"Der Schatz ist gleich weit vom Möwenfels und von der Seehundbank entfernt. Er liegt genau in der Mitte zwischen den beiden Wegen, die am Hafen zusammenlaufen.",
+      clues:[
+        {kind:"mittelsenkrechte", a:"moewenfels", b:"seehundbank", text:"gleich weit vom Möwenfels und von der Seehundbank"},
+        {kind:"winkelhalbierende", v:"hafen", a:"leuchtfeuer", b:"klippe", text:"genau in der Mitte zwischen den beiden Wegen am Hafen"},
+      ] },
+  ],
+},
+{
+  id:3, tier:1, title:"Die Klippe des Kompasses",
+  intro:"Genau zwischen den Wegen und senkrecht zum Riff – dort liegt das Gold.",
+  marks:[
+    {id:"wachfeuer", x:860,y:640, icon:"🔥", label:"Wachfeuer"},
+    {id:"felszacke", x:741,y:180, icon:"🪨", label:"Felszacke"},
+    {id:"steg",      x:288,y:459, icon:"🪵", label:"Steg"},
+    {id:"duene",     x:538,y:134, icon:"🏜️", label:"Düne"},
+  ],
+  features:[
+    {id:"riff", kind:"fluss", a:{x:232,y:423}, b:{x:648,y:737}, selectable:true, label:"Riff"},
+    {id:"pfad1", kind:"strasse", a:{x:860,y:640}, b:{x:288,y:459}, selectable:false},
+    {id:"pfad2", kind:"strasse", a:{x:860,y:640}, b:{x:538,y:134}, selectable:false},
+  ],
+  stages:[
+    { label:"Schatz",
+      narrative:"Der Schatz liegt genau zwischen den beiden Wegen, die sich am Wachfeuer treffen. Zugleich liegt er auf dem kürzesten, geraden Weg von der Felszacke zum Riff.",
+      clues:[
+        {kind:"winkelhalbierende", v:"wachfeuer", a:"steg", b:"duene", text:"genau zwischen den beiden Wegen am Wachfeuer"},
+        {kind:"lot", p:"felszacke", ref:{feature:"riff"}, text:"kürzester, gerader Weg von der Felszacke zum Riff"},
+      ] },
+  ],
+},
+{
+  id:4, tier:2, title:"Die Schmugglerbucht",
+  intro:"Die Schmuggler haben ihr Gold in zwei Schritten versteckt. Finde erst die nächste Marke, dann den Schatz.",
+  marks:[
+    {id:"leuchtturm",      x:161,y:207, icon:"🗼", label:"Leuchtturm",      st:0},
+    {id:"schmugglerfelsen",x:559,y:393, icon:"🪨", label:"Schmugglerfelsen",st:0},
+    {id:"hafen",           x:532,y:546, icon:"⚓", label:"Hafen",           st:0},
+    {id:"mole",            x:252,y:391, icon:"🪵", label:"Mole",            st:0},
+    {id:"werft",           x:482,y:230, icon:"🛠️", label:"Werft",           st:0},
+    {id:"felsnadel",       x:916,y:529, icon:"🪨", label:"Felsnadel",       st:1},
+    {id:"wrack",           x:503,y:485, icon:"🚢", label:"Wrack",           st:1},
+    {id:"boje",            x:897,y:415, icon:"🛟", label:"Boje",            st:1},
+  ],
+  features:[
+    {id:"wegM", kind:"strasse", a:{x:532,y:546}, b:{x:252,y:391}, selectable:false, st:0},
+    {id:"wegW", kind:"strasse", a:{x:532,y:546}, b:{x:482,y:230}, selectable:false, st:0},
+    {id:"sund", kind:"fluss", a:{x:438,y:674}, b:{x:643,y:110}, selectable:true, label:"Schmugglersund", st:1},
+  ],
+  stages:[
+    { label:"nächste Marke",
+      narrative:"Die nächste Marke liegt gleich weit vom Leuchtturm und vom Schmugglerfelsen entfernt. Sie liegt zugleich genau in der Mitte zwischen den beiden Wegen, die am Hafen zusammenlaufen.",
+      clues:[
+        {kind:"mittelsenkrechte", a:"leuchtturm", b:"schmugglerfelsen", text:"gleich weit vom Leuchtturm und vom Schmugglerfelsen"},
+        {kind:"winkelhalbierende", v:"hafen", a:"mole", b:"werft", text:"genau zwischen den beiden Wegen am Hafen"},
+      ] },
+    { label:"Schatz",
+      narrative:"Der Schatz liegt auf dem kürzesten, geraden Weg von der Felsnadel zum Schmugglersund. Außerdem ist er gleich weit vom Wrack und von der Boje entfernt.",
+      clues:[
+        {kind:"lot", p:"felsnadel", ref:{feature:"sund"}, text:"kürzester, gerader Weg von der Felsnadel zum Schmugglersund"},
+        {kind:"mittelsenkrechte", a:"wrack", b:"boje", text:"gleich weit vom Wrack und von der Boje"},
+      ] },
+  ],
+},
+{
+  id:5, tier:2, title:"Der Nebelsund",
+  intro:"Im Nebel führen zwei Hinweisketten zum Schatz – Schritt für Schritt.",
+  marks:[
+    {id:"klippe",    x:487,y:483, icon:"⛰️", label:"Klippe",    st:0},
+    {id:"wachfeuer", x:749,y:355, icon:"🔥", label:"Wachfeuer", st:0},
+    {id:"riffturm",  x:421,y:396, icon:"🗼", label:"Riffturm",  st:0},
+    {id:"steinmal",  x:485,y:157, icon:"🗿", label:"Steinmal",  st:0},
+    {id:"anker",     x:527,y:657, icon:"⚓", label:"Anker",     st:1},
+    {id:"moewenstein",x:593,y:283, icon:"🪨", label:"Möwenstein",st:1},
+    {id:"duene",     x:632,y:667, icon:"🏜️", label:"Düne",      st:1},
+  ],
+  features:[
+    {id:"nebelsund", kind:"fluss", a:{x:116,y:178}, b:{x:656,y:33}, selectable:true, label:"Nebelsund", st:0},
+    {id:"wegR", kind:"strasse", a:{x:749,y:355}, b:{x:421,y:396}, selectable:false, st:0},
+    {id:"wegS", kind:"strasse", a:{x:749,y:355}, b:{x:485,y:157}, selectable:false, st:0},
+    {id:"rinne", kind:"fluss", a:{x:261,y:409}, b:{x:750,y:231}, selectable:true, label:"Gezeitenrinne", st:1},
+  ],
+  stages:[
+    { label:"nächste Marke",
+      narrative:"Die nächste Marke liegt auf dem kürzesten, geraden Weg von der Klippe zum Nebelsund. Sie liegt außerdem genau zwischen den beiden Wegen, die sich am Wachfeuer treffen.",
+      clues:[
+        {kind:"lot", p:"klippe", ref:{feature:"nebelsund"}, text:"kürzester, gerader Weg von der Klippe zum Nebelsund"},
+        {kind:"winkelhalbierende", v:"wachfeuer", a:"riffturm", b:"steinmal", text:"genau zwischen den beiden Wegen am Wachfeuer"},
+      ] },
+    { label:"Schatz",
+      narrative:"Der Schatz ist gleich weit vom Anker und vom Möwenstein entfernt. Er liegt zugleich auf dem kürzesten, geraden Weg von der Düne zur Gezeitenrinne.",
+      clues:[
+        {kind:"mittelsenkrechte", a:"anker", b:"moewenstein", text:"gleich weit vom Anker und vom Möwenstein"},
+        {kind:"lot", p:"duene", ref:{feature:"rinne"}, text:"kürzester, gerader Weg von der Düne zur Gezeitenrinne"},
+      ] },
+  ],
+},
+{
+  id:6, tier:2, title:"Die Drei-Wege-Insel",
+  intro:"Drei Wege, zwei Hinweise je Marke – und am Ende das Gold.",
+  marks:[
+    {id:"wegkreuz",   x:510,y:580, icon:"🚩", label:"Wegkreuz",   st:0},
+    {id:"palme",      x:383,y:265, icon:"🌴", label:"Palme",      st:0},
+    {id:"goetze",     x:659,y:274, icon:"🗿", label:"Götze",      st:0},
+    {id:"brunnen",    x:410,y:491, icon:"⛲", label:"Brunnen",    st:0},
+    {id:"adlerhorst", x:630,y:109, icon:"🦅", label:"Adlerhorst", st:0},
+    {id:"leuchtfeuer",x:154,y:322, icon:"🔥", label:"Leuchtfeuer",st:1},
+    {id:"steg",       x:464,y:435, icon:"🪵", label:"Steg",       st:1},
+    {id:"grotte",     x:319,y:608, icon:"🕳️", label:"Grotte",     st:1},
+    {id:"wrack6",     x:276,y:673, icon:"🚢", label:"Wrack",      st:1},
+  ],
+  features:[
+    {id:"wegP", kind:"strasse", a:{x:510,y:580}, b:{x:383,y:265}, selectable:false, st:0},
+    {id:"wegG", kind:"strasse", a:{x:510,y:580}, b:{x:659,y:274}, selectable:false, st:0},
+    {id:"wegL", kind:"strasse", a:{x:154,y:322}, b:{x:464,y:435}, selectable:false, st:1},
+    {id:"wegC", kind:"strasse", a:{x:154,y:322}, b:{x:319,y:608}, selectable:false, st:1},
+    {id:"stroemung", kind:"fluss", a:{x:101,y:243}, b:{x:642,y:388}, selectable:true, label:"Strömung", st:1},
+  ],
+  stages:[
+    { label:"nächste Marke",
+      narrative:"Die nächste Marke liegt genau zwischen den beiden Wegen, die am Wegkreuz zusammentreffen. Sie ist außerdem gleich weit vom Brunnen und vom Adlerhorst entfernt.",
+      clues:[
+        {kind:"winkelhalbierende", v:"wegkreuz", a:"palme", b:"goetze", text:"genau zwischen den beiden Wegen am Wegkreuz"},
+        {kind:"mittelsenkrechte", a:"brunnen", b:"adlerhorst", text:"gleich weit vom Brunnen und vom Adlerhorst"},
+      ] },
+    { label:"Schatz",
+      narrative:"Der Schatz liegt genau zwischen den beiden Wegen, die sich am Leuchtfeuer treffen. Er liegt zugleich auf dem kürzesten, geraden Weg vom Wrack zur Strömung.",
+      clues:[
+        {kind:"winkelhalbierende", v:"leuchtfeuer", a:"steg", b:"grotte", text:"genau zwischen den beiden Wegen am Leuchtfeuer"},
+        {kind:"lot", p:"wrack6", ref:{feature:"stroemung"}, text:"kürzester, gerader Weg vom Wrack zur Strömung"},
+      ] },
+  ],
+},
+{
+  id:7, tier:3, title:"Die Parallele der Baumeister", unlocksTool:"parallele",
+  intro:"Eine neue Kunst: die Parallele. Hier baust du sie aus zwei Loten – danach gehört dir das Werkzeug Parallele.",
+  marks:[
+    {id:"turm",     x:300,y:200, icon:"🗼", label:"Turm"},
+    {id:"wachturm", x:449,y:300, icon:"🏰", label:"Wachturm"},
+    {id:"ostturm",  x:749,y:300, icon:"🗼", label:"Ostturm"},
+  ],
+  features:[
+    {id:"stadtmauer", kind:"mauer", a:{x:120,y:560}, b:{x:880,y:500}, selectable:true, label:"Stadtmauer"},
+  ],
+  stages:[
+    { label:"Schatz",
+      narrative:"Der Schatz liegt auf der Parallelen zur Stadtmauer durch den Turm. Er ist außerdem gleich weit vom Wachturm und vom Ostturm entfernt.",
+      clues:[
+        {kind:"parallele", through:"turm", ref:{feature:"stadtmauer"},
+          text:"auf der Parallelen zur Stadtmauer durch den Turm",
+          tip:"Noch ohne Parallelen-Werkzeug: Fälle das Lot vom Turm auf die Stadtmauer und dann das Lot auf dieses Lot durch den Turm."},
+        {kind:"mittelsenkrechte", a:"wachturm", b:"ostturm", text:"gleich weit vom Wachturm und vom Ostturm"},
+      ] },
+  ],
+},
+{
+  id:8, tier:3, title:"Das Riff der Zahlen",
+  intro:"Jetzt zählt Genauigkeit: Kreise und Geraden. Manchmal gibt es zwei mögliche Stellen – nur eine stimmt.",
+  marks:[
+    {id:"leuchtfeuer", x:481,y:491, icon:"🔥", label:"Leuchtfeuer", st:0},
+    {id:"steinmal",    x:305,y:267, icon:"🗿", label:"Steinmal",    st:0},
+    {id:"wrack8",      x:747,y:393, icon:"🚢", label:"Wrack",       st:0},
+    {id:"anker",       x:579,y:611, icon:"⚓", label:"Anker",       st:1},
+    {id:"moewenstein", x:681,y:329, icon:"🪨", label:"Möwenstein",  st:1},
+    {id:"kompassrose", x:643,y:321, icon:"🧭", label:"Kompassrose", st:1},
+    {id:"duene8",      x:617,y:619, icon:"🏜️", label:"Düne",        st:1},
+  ],
+  features:[],
+  stages:[
+    { label:"nächste Marke", pick:"west",
+      narrative:"Die nächste Marke ist 5 Meilen vom Leuchtfeuer entfernt und liegt auf der Geraden durch Steinmal und Wrack. Es kommen zwei Stellen in Frage – nimm die westliche.",
+      clues:[
+        {kind:"kreis", c:"leuchtfeuer", r:5, text:"5 Meilen vom Leuchtfeuer entfernt"},
+        {kind:"gerade", a:"steinmal", b:"wrack8", text:"auf der Geraden durch Steinmal und Wrack"},
+      ] },
+    { label:"Schatz",
+      narrative:"Der Schatz ist gleich weit vom Anker und vom Möwenstein entfernt. Er liegt zugleich auf der Geraden durch Kompassrose und Düne.",
+      clues:[
+        {kind:"mittelsenkrechte", a:"anker", b:"moewenstein", text:"gleich weit vom Anker und vom Möwenstein"},
+        {kind:"gerade", a:"kompassrose", b:"duene8", text:"auf der Geraden durch Kompassrose und Düne"},
+      ] },
+  ],
+},
+{
+  id:9, tier:3, title:"Die Kreisgrotte",
+  intro:"Zwei Kreise schneiden sich zweimal. Lies die Hinweise genau, um die richtige Stelle zu wählen.",
+  marks:[
+    {id:"wachturm9", x:400,y:130, icon:"🗼", label:"Wachturm",  st:0},
+    {id:"klippe9",   x:547,y:424, icon:"⛰️", label:"Klippe",    st:0},
+    {id:"felsnadel9",x:413,y:156, icon:"🪨", label:"Felsnadel", st:0},
+    {id:"grotte",    x:427,y:321, icon:"🕳️", label:"Grotte",    st:1},
+    {id:"boje9",     x:543,y:669, icon:"🛟", label:"Boje",      st:1},
+  ],
+  features:[],
+  stages:[
+    { label:"nächste Marke", pick:"süd",
+      narrative:"Die nächste Marke ist 5 Meilen vom Wachturm entfernt und gleich weit von Klippe und Felsnadel. Zwei Stellen passen – nimm die südliche.",
+      clues:[
+        {kind:"kreis", c:"wachturm9", r:5, text:"5 Meilen vom Wachturm entfernt"},
+        {kind:"mittelsenkrechte", a:"klippe9", b:"felsnadel9", text:"gleich weit von Klippe und Felsnadel"},
+      ] },
+    { label:"Schatz", pick:"ost",
+      narrative:"Der Schatz ist 5 Meilen von der Grotte und 5 Meilen von der Boje entfernt. Zwei Stellen kommen in Frage – nimm die östliche.",
+      clues:[
+        {kind:"kreis", c:"grotte", r:5, text:"5 Meilen von der Grotte entfernt"},
+        {kind:"kreis", c:"boje9", r:5, text:"5 Meilen von der Boje entfernt"},
+      ] },
+  ],
+},
+{
+  id:10, tier:3, title:"Der Zirkel der Gezeiten",
+  intro:"Jetzt kommt die Parallele zum Einsatz – und noch einmal die zwei Lösungen eines Kreises.",
+  marks:[
+    {id:"findling",  x:250,y:360, icon:"🪨", label:"Findling",   st:0},
+    {id:"leuchtturm10",x:469,y:219, icon:"🗼", label:"Leuchtturm", st:0},
+    {id:"hafen10",   x:571,y:501, icon:"⚓", label:"Hafen",      st:0},
+    {id:"mole10",    x:567,y:616, icon:"🪵", label:"Mole",       st:1},
+    {id:"steg10",    x:312,y:492, icon:"🪵", label:"Steg",       st:1},
+    {id:"riff10",    x:758,y:408, icon:"🪨", label:"Riff",       st:1},
+  ],
+  features:[
+    {id:"kueste", kind:"fluss", a:{x:140,y:560}, b:{x:860,y:560}, selectable:true, label:"Küste", st:0},
+  ],
+  stages:[
+    { label:"nächste Marke",
+      narrative:"Die nächste Marke liegt auf der Parallelen zur Küste durch den Findling. Sie liegt zugleich auf der Geraden durch Leuchtturm und Hafen.",
+      clues:[
+        {kind:"parallele", through:"findling", ref:{feature:"kueste"}, text:"auf der Parallelen zur Küste durch den Findling"},
+        {kind:"gerade", a:"leuchtturm10", b:"hafen10", text:"auf der Geraden durch Leuchtturm und Hafen"},
+      ] },
+    { label:"Schatz", pick:"west",
+      narrative:"Der Schatz ist 5 Meilen von der Mole entfernt und liegt auf der Geraden durch Steg und Riff. Zwei Stellen passen – nimm die westliche.",
+      clues:[
+        {kind:"kreis", c:"mole10", r:5, text:"5 Meilen von der Mole entfernt"},
+        {kind:"gerade", a:"steg10", b:"riff10", text:"auf der Geraden durch Steg und Riff"},
+      ] },
+  ],
+},
+{
+  id:11, tier:4, title:"Das Vermächtnis des Navigators",
+  intro:"Das große Finale: Fünf Hinweise und jede Konstruktion einmal – Schritt für Schritt zum Vermächtnis.",
+  marks:[
+    {id:"f0_turmN", x:187,y:386, icon:"🗼", label:"Nordturm",  st:0},
+    {id:"f0_turmS", x:313,y:114, icon:"🗼", label:"Südturm",   st:0},
+    {id:"f0_stein", x:222,y:408, icon:"🗿", label:"Steinmal",  st:0},
+    {id:"f0_riff",  x:278,y:92,  icon:"🪨", label:"Klippe",    st:0},
+    {id:"f1_felsnadel", x:489,y:342, icon:"🪨", label:"Felsnadel", st:1},
+    {id:"f1_findling",  x:621,y:292, icon:"🪨", label:"Findling",  st:1},
+    {id:"f2_scheitel",  x:560,y:440, icon:"🪧", label:"Kreuzbake", st:2},
+    {id:"f2_palme",     x:744,y:459, icon:"🌴", label:"Palme",     st:2},
+    {id:"f2_goetze",    x:646,y:276, icon:"🗿", label:"Götze",     st:2},
+    {id:"f2_leuchtfeuer",x:741,y:529,icon:"🔥", label:"Leuchtfeuer",st:2},
+    {id:"f3_anker",  x:430,y:572, icon:"⚓", label:"Anker",  st:3},
+    {id:"f3_steg",   x:606,y:663, icon:"🪵", label:"Steg",   st:3},
+    {id:"f3_grotte", x:514,y:377, icon:"🕳️", label:"Grotte", st:3},
+    {id:"f4_wrack",     x:379,y:297, icon:"🚢", label:"Wrack",     st:4},
+    {id:"f4_brunnen",   x:249,y:399, icon:"⛲", label:"Brunnen",   st:4},
+    {id:"f4_adlerhorst",x:351,y:681, icon:"🦅", label:"Adlerhorst",st:4},
+  ],
+  features:[
+    {id:"f1_sund",      kind:"fluss", a:{x:302,y:404}, b:{x:634,y:475}, selectable:true, label:"Sund",      st:1},
+    {id:"f1_riffkante", kind:"mauer", a:{x:266,y:242}, b:{x:482,y:450}, selectable:true, label:"Riffkante", st:1},
+    {id:"f3_kueste",    kind:"fluss", a:{x:624,y:278}, b:{x:346,y:391}, selectable:true, label:"Küste",     st:3},
+    {id:"f4_stroemung", kind:"fluss", a:{x:194,y:348}, b:{x:499,y:447}, selectable:true, label:"Strömung",  st:4},
+  ],
+  stages:[
+    { label:"1. Marke",
+      narrative:"Erster Hinweis: gleich weit vom Nordturm und vom Südturm, und auf der Geraden durch Steinmal und Klippe.",
+      clues:[
+        {kind:"mittelsenkrechte", a:"f0_turmN", b:"f0_turmS", text:"gleich weit vom Nordturm und vom Südturm"},
+        {kind:"gerade", a:"f0_stein", b:"f0_riff", text:"auf der Geraden durch Steinmal und Klippe"},
+      ] },
+    { label:"2. Marke",
+      narrative:"Zweiter Hinweis: das Lot von der Felsnadel auf den Sund – und die Parallele zur Riffkante durch den Findling.",
+      clues:[
+        {kind:"lot", p:"f1_felsnadel", ref:{feature:"f1_sund"}, text:"das Lot von der Felsnadel auf den Sund"},
+        {kind:"parallele", through:"f1_findling", ref:{feature:"f1_riffkante"}, text:"auf der Parallelen zur Riffkante durch den Findling"},
+      ] },
+    { label:"3. Marke", pick:"ost",
+      narrative:"Dritter Hinweis: auf der Winkelhalbierenden bei der Kreuzbake (zwischen Palme und Götze) und 5 Meilen vom Leuchtfeuer. Zwei Stellen passen – nimm die östliche.",
+      clues:[
+        {kind:"winkelhalbierende", v:"f2_scheitel", a:"f2_palme", b:"f2_goetze", text:"auf der Winkelhalbierenden zwischen Palme und Götze"},
+        {kind:"kreis", c:"f2_leuchtfeuer", r:5, text:"5 Meilen vom Leuchtfeuer entfernt"},
+      ] },
+    { label:"4. Marke",
+      narrative:"Vierter Hinweis: auf der Parallelen zur Küste durch den Anker, und auf der Geraden durch Steg und Grotte.",
+      clues:[
+        {kind:"parallele", through:"f3_anker", ref:{feature:"f3_kueste"}, text:"auf der Parallelen zur Küste durch den Anker"},
+        {kind:"gerade", a:"f3_steg", b:"f3_grotte", text:"auf der Geraden durch Steg und Grotte"},
+      ] },
+    { label:"Schatz",
+      narrative:"Letzter Hinweis: das Lot vom Wrack auf die Strömung – und gleich weit vom Brunnen und vom Adlerhorst. Hier ruht das Vermächtnis.",
+      clues:[
+        {kind:"lot", p:"f4_wrack", ref:{feature:"f4_stroemung"}, text:"das Lot vom Wrack auf die Strömung"},
+        {kind:"mittelsenkrechte", a:"f4_brunnen", b:"f4_adlerhorst", text:"gleich weit vom Brunnen und vom Adlerhorst"},
+      ] },
+  ],
+},
+];
+/* =========================================================
+   Zustand
+========================================================= */
+const SVGNS="http://www.w3.org/2000/svg";
+const svg=document.getElementById("map");
+let groups={};
+const state={
+  hi:0,            // hunt index
+  stage:0,         // aktuelle Stufe
+  clueSolved:[],   // pro Hinweis der aktuellen Stufe gelöst?
+  phase:"construct", // construct | pick | won
+  tool:null,       // aktives Werkzeug (alle Werkzeuge gemeinsam)
+  buffer:[],       // gesammelte Auswahl (Orte-Werkzeuge)
+  constructions:[],// gelöste Orte der aktuellen Stufe (Linien/Kreise)
+  cidx:0,
+  found:[],        // Punkte gelöster Stufen (Hinweis-Marker) der aktuellen Suche
+  done:{},         // hunt.id -> true
+  unlocked:false,  // Orte-Grundwerkzeuge & Aufbaustufen frei?
+  parallelUnlocked:false, // Werkzeug "Parallele" frei?
+  showTraces:true,
+  showSolution:false,
+  teacher:false,
+  showClueHelp:false,
+  zl:{aux:[], marked:[], mcount:0, _center:null, _start:null},
+};
+
+const ZL_TOOLS=["zirkel","lineal","punkt"];
+function toolFamily(t){ return ZL_TOOLS.indexOf(t)>=0 ? "zl" : "orte"; }
+function toolEnabled(t){
+  if(ZL_TOOLS.indexOf(t)>=0) return true;     // Zirkel/Lineal/Schnittpunkt immer
+  if(t==="parallele") return state.parallelUnlocked;
+  return state.unlocked;                        // Mittelsenkrechte/Lot/Winkelhalbierende
+}
+
+const hunt=()=>HUNTS[state.hi];
+function stMarks(){ return hunt().marks.filter(m=>m.st==null||m.st===state.stage); }
+function stFeatures(){ return hunt().features.filter(f=>f.st==null||f.st===state.stage); }
+function markById(id){ return hunt().marks.find(m=>m.id===id); }
+function coord(id){
+  const m=markById(id); if(m) return {x:m.x,y:m.y};
+  const c=state.constructions.find(c=>c.geomType==="point"&&c.outId===id);
+  if(c) return c.point;
+  return null;
+}
+function featureById(id){ return hunt().features.find(f=>f.id===id); }
+function featLine(f){ return lineFromPts(f.a,f.b); }
+
+function selectableLines(){
+  const out=[];
+  for(const f of stFeatures()){ if(f.selectable) out.push({srcId:f.id,geom:featLine(f),label:f.label}); }
+  for(const c of state.constructions){ if(c.geomType==="line"&&c.settled) out.push({srcId:c.id,geom:c.line,label:"Konstruktion"}); }
+  return out;
+}
+function refLineGeom(ref){
+  if(!ref) return null;
+  if(ref.feature){ const f=featureById(ref.feature); return f?featLine(f):null; }
+  return null;
+}
+// Ein Hinweis (clue) -> geometrischer Ort {kind:'line',line} | {kind:'circle',c,r}
+function clueLine(h, clue){
+  const C=id=>{ const m=h.marks.find(m=>m.id===id); return {x:m.x,y:m.y}; };
+  const refLine=ref=>{ if(ref.feature){ const f=h.features.find(f=>f.id===ref.feature); return featLine(f); } return lineFromPts(C(ref.a),C(ref.b)); };
+  if(clue.kind==="mittelsenkrechte") return perpBisector(C(clue.a),C(clue.b));
+  if(clue.kind==="winkelhalbierende") return angleBisector(C(clue.v),C(clue.a),C(clue.b));
+  if(clue.kind==="gerade")           return lineFromPts(C(clue.a),C(clue.b));
+  if(clue.kind==="lot"){ const g=refLine(clue.ref); return perpThrough(g,C(clue.p)); }
+  if(clue.kind==="parallele"){ const g=refLine(clue.ref); return {p:C(clue.through), d:g.d}; }
+  return null;
+}
+function clueLocus(h, clue){
+  if(clue.kind==="kreis"){ const m=h.marks.find(m=>m.id===clue.c); return {kind:"circle", c:{x:m.x,y:m.y}, r:clue.r*MILE}; }
+  return {kind:"line", line:clueLine(h,clue)};
+}
+const CLUEKIND={mittelsenkrechte:"Mittelsenkrechte", lot:"Lot", winkelhalbierende:"Winkelhalbierende",
+  gerade:"Gerade durch zwei Punkte", kreis:"Kreis um einen Punkt", parallele:"Parallele"};
+function curStage(){ return hunt().stages[state.stage]; }
+function intersectLoci(L1,L2){
+  if(L1.kind==="line"&&L2.kind==="line"){ const p=lineIntersect(L1.line,L2.line); return p?[p]:[]; }
+  if(L1.kind==="circle"&&L2.kind==="line") return circleLine({c:L1.c,r:L1.r},L2.line);
+  if(L1.kind==="line"&&L2.kind==="circle") return circleLine({c:L2.c,r:L2.r},L1.line);
+  return circleCircle({c:L1.c,r:L1.r},{c:L2.c,r:L2.r});
+}
+function stageCandidates(h, si){
+  const st=h.stages[si];
+  const L1=clueLocus(h,st.clues[0]), L2=clueLocus(h,st.clues[1]);
+  return intersectLoci(L1,L2).filter(p=>p.x>=-2&&p.x<=W+2&&p.y>=-2&&p.y<=H+2);
+}
+function stageTarget(h, si){
+  const cs=stageCandidates(h,si); if(!cs.length) return null;
+  const st=h.stages[si];
+  if(st.pick!=null && cs.length>1){
+    if(typeof st.pick==="string"){
+      const key={west:p=>-p.x, ost:p=>p.x, nord:p=>-p.y, sued:p=>p.y, "süd":p=>p.y}[st.pick];
+      if(key) return cs.slice().sort((a,b)=>key(b)-key(a))[0];
+    }
+    return cs[Math.min(st.pick,cs.length-1)];
+  }
+  return cs[0];
+}
+function locusMatchesClue(locus, clue){
+  const cl=clueLocus(hunt(),clue);
+  if(locus.kind!==cl.kind) return false;
+  if(locus.kind==="line")  return lineMatch(locus.line, cl.line);
+  return dist(locus.c,cl.c)<TOL_POINT && Math.abs(locus.r-cl.r)<22;
+}
+function allTier1Done(){ return HUNTS.filter(h=>h.tier===1).every(h=>state.done[h.id]); }
+
+/* =========================================================
+   SVG-Helfer
+========================================================= */
+function el(tag,attrs,parent){
+  const e=document.createElementNS(SVGNS,tag);
+  for(const k in attrs) e.setAttribute(k,attrs[k]);
+  if(parent) parent.appendChild(e);
+  return e;
+}
+function clearGroup(g){ while(g.firstChild) g.removeChild(g.firstChild); }
+function labelChip(x,y,text,parent,size){
+  size=size||13;
+  const g=el("g",{},parent);
+  const t=el("text",{x:x,y:y,"text-anchor":"middle","dominant-baseline":"middle",
+    "font-family":'"Iowan Old Style",Palatino,Georgia,serif',"font-style":"italic",
+    "font-size":size,fill:"#33291b"},g);
+  t.textContent=text;
+  // Maßband-Chip hinterlegen
+  const w=text.length*size*0.56+10, h=size+6;
+  const r=el("rect",{x:x-w/2,y:y-h/2,width:w,height:h,rx:4,fill:"rgba(239,226,198,.82)",
+    stroke:"#b79b6a","stroke-width":.6},g);
+  g.insertBefore(r,t);
+  return g;
+}
+
+/* =========================================================
+   Karte zeichnen (statisch pro Suche)
+========================================================= */
+function buildGroups(){
+  clearGroup(svg);
+  // Hintergrundtönung Papier
+  el("rect",{x:0,y:0,width:W,height:H,fill:"#efe2c6"},svg);
+  const order=["decor","features","solution","aux","constr","marks","found","select","preview","treasure"];
+  groups={};
+  for(const n of order){ groups[n]=el("g",{id:"g-"+n},svg); }
+}
+function drawDecor(){
+  const g=groups.decor; clearGroup(g);
+  // Rahmen
+  el("rect",{x:10,y:10,width:W-20,height:H-20,fill:"none",stroke:"#7a5630",
+    "stroke-width":2,rx:4},g);
+  el("rect",{x:18,y:18,width:W-36,height:H-36,fill:"none",stroke:"#b79b6a",
+    "stroke-width":1,rx:3},g);
+  // Rhumblinien (sehr blass) von der Kompassrose
+  const cx=872,cy=120;
+  for(let k=0;k<16;k++){
+    const a=k*Math.PI/8;
+    el("line",{x1:cx,y1:cy,x2:cx+Math.cos(a)*1400,y2:cy+Math.sin(a)*1400,
+      stroke:"#7a5630","stroke-width":.6,opacity:.08},g);
+  }
+  // Kompassrose
+  const rose=el("g",{},g);
+  el("circle",{cx:cx,cy:cy,r:34,fill:"rgba(239,226,198,.6)",stroke:"#7a5630","stroke-width":1},rose);
+  el("circle",{cx:cx,cy:cy,r:24,fill:"none",stroke:"#7a5630","stroke-width":.7},rose);
+  for(const [dx,dy,big] of [[0,-1,1],[1,0,0],[0,1,0],[-1,0,0]]){
+    el("path",{d:`M${cx} ${cy} L${cx+dx*8-dy*6} ${cy+dy*8+dx*6} L${cx+dx*(big?32:26)} ${cy+dy*(big?32:26)} L${cx+dx*8+dy*6} ${cy+dy*8-dx*6} Z`,
+      fill:big?"#9a2f22":"#7a5630",opacity:.85},rose);
+  }
+  const n=el("text",{x:cx,y:cy-40,"text-anchor":"middle","font-size":16,
+    "font-family":'Georgia,serif',fill:"#9a2f22","font-weight":"700"},rose); n.textContent="N";
+  // Maßstabsbalken
+  const bx=60,by=H-46;
+  el("rect",{x:bx,y:by,width:160,height:8,fill:"none",stroke:"#7a5630","stroke-width":1},g);
+  for(let i=0;i<4;i++) el("rect",{x:bx+i*40,y:by,width:40,height:8,
+    fill:i%2?"#7a5630":"none",opacity:.7},g);
+  const sc=el("text",{x:bx,y:by-6,"font-size":11,"font-family":'Georgia,serif',
+    fill:"#5c4a32"},g); sc.textContent="0          Meilen          4";
+}
+function drawFeatures(){
+  const g=groups.features; clearGroup(g);
+  for(const f of stFeatures()){
+    if(f.kind==="see"){
+      el("ellipse",{cx:f.cx,cy:f.cy,rx:f.rx,ry:f.ry,fill:"rgba(95,138,131,.20)",
+        stroke:"#5f8a83","stroke-width":1.2,opacity:.8},g);
+      for(let i=0;i<26;i++){ const a=Math.random()*6.28,rr=Math.random();
+        el("circle",{cx:f.cx+Math.cos(a)*f.rx*rr,cy:f.cy+Math.sin(a)*f.ry*rr,r:1.4,
+          fill:"#5f8a83",opacity:.3},g); }
+      continue;
+    }
+    if(f.kind==="strasse"){
+      el("line",{x1:f.a.x,y1:f.a.y,x2:f.b.x,y2:f.b.y,stroke:"#c2a06a","stroke-width":11,
+        "stroke-linecap":"round",opacity:.85},g);
+      el("line",{x1:f.a.x,y1:f.a.y,x2:f.b.x,y2:f.b.y,stroke:"#8a6a3a","stroke-width":2,
+        "stroke-dasharray":"2 10","stroke-linecap":"round",opacity:.8},g);
+    } else if(f.kind==="fluss"){
+      el("line",{x1:f.a.x,y1:f.a.y,x2:f.b.x,y2:f.b.y,stroke:"#7fa9a2","stroke-width":13,
+        "stroke-linecap":"round",opacity:.85},g);
+      el("line",{x1:f.a.x,y1:f.a.y,x2:f.b.x,y2:f.b.y,stroke:"#c7ddd8","stroke-width":4,
+        "stroke-linecap":"round",opacity:.8},g);
+    } else if(f.kind==="mauer"){
+      el("line",{x1:f.a.x,y1:f.a.y,x2:f.b.x,y2:f.b.y,stroke:"#6b5a44","stroke-width":9,
+        "stroke-linecap":"round"},g);
+      const d=norm(sub(f.b,f.a)), p=perp(d), L=dist(f.a,f.b);
+      for(let s=8;s<L;s+=18){ const c=add(f.a,mul(d,s));
+        el("line",{x1:c.x-p.x*6,y1:c.y-p.y*6,x2:c.x+p.x*6,y2:c.y+p.y*6,
+          stroke:"#4d3e2c","stroke-width":2},g); }
+    }
+    if(f.label){
+      const m=mid(f.a,f.b);
+      labelChip(m.x,m.y- ( f.kind==="fluss"?22:18 ),f.label,g,12);
+    }
+  }
+  // Winkel-Schenkel sichtbar als Strahlen (der Zirkel schneidet sie direkt)
+  const rayEnd=(o,d)=>{ let t=1e9;
+    if(d.x>1e-6)t=Math.min(t,(W-o.x)/d.x); else if(d.x<-1e-6)t=Math.min(t,(0-o.x)/d.x);
+    if(d.y>1e-6)t=Math.min(t,(H-o.y)/d.y); else if(d.y<-1e-6)t=Math.min(t,(0-o.y)/d.y);
+    return add(o,mul(d,Math.max(0,t))); };
+  for(const r of stageRays()){ const e=rayEnd(r.o,r.d);
+    el("line",{x1:r.o.x,y1:r.o.y,x2:e.x,y2:e.y,stroke:"#2f4a6b","stroke-width":2.4,
+      opacity:.42,"stroke-linecap":"round"},g);
+  }
+}
+function drawMarks(){
+  const g=groups.marks; clearGroup(g);
+  for(const m of stMarks()){
+    const t=el("text",{x:m.x,y:m.y-3,"text-anchor":"middle","dominant-baseline":"central",
+      "font-size":30},g); t.textContent=m.icon;
+    el("circle",{cx:m.x,cy:m.y,r:3,fill:"#9a2f22"},g);
+    labelChip(m.x,m.y+22,m.label,g,12.5);
+  }
+}
+/* =========================================================
+   Konstruktionen + Marken zeichnen
+========================================================= */
+const CCOL=["#2f4a6b","#9a4a1f","#3f6b46"]; // bis zu 3 Konstruktionen
+function rightAngle(F,u,v,size,parent,col){
+  const a=add(F,mul(u,size)), b=add(add(F,mul(u,size)),mul(v,size)), c=add(F,mul(v,size));
+  el("path",{d:`M${a.x} ${a.y} L${b.x} ${b.y} L${c.x} ${c.y}`,fill:"none",
+    stroke:col,"stroke-width":1.4,opacity:.85},parent);
+}
+function tick(center,dir,half,parent,col){
+  el("line",{x1:center.x-dir.x*half,y1:center.y-dir.y*half,
+    x2:center.x+dir.x*half,y2:center.y+dir.y*half,stroke:col,"stroke-width":1.8,opacity:.9},parent);
+}
+function drawLineObj(line,col,label,parent,opts){
+  opts=opts||{};
+  const [P1,P2]=clipLine(line);
+  el("line",{x1:P1.x,y1:P1.y,x2:P2.x,y2:P2.y,stroke:"#efe2c6","stroke-width":5.5,
+    opacity:.55,"stroke-linecap":"round"},parent);
+  el("line",{x1:P1.x,y1:P1.y,x2:P2.x,y2:P2.y,stroke:col,"stroke-width":opts.w||2.4,
+    "stroke-linecap":"round",opacity:opts.op||1, "stroke-dasharray":opts.dash||"none"},parent);
+  if(label){
+    const at=dist(P1,{x:500,y:60})<dist(P2,{x:500,y:60})?P1:P2;
+    const tx=el("text",{x:at.x+ (at.x<500?14:-14),y:at.y+(at.y<400?20:-12),
+      "font-size":15,"font-family":'Georgia,serif',"font-style":"italic",
+      "text-anchor":at.x<500?"start":"end",fill:col,"font-weight":"600"},parent);
+    tx.textContent=label;
+  }
+}
+function pointMarker(P,col,label,parent){
+  el("circle",{cx:P.x,cy:P.y,r:6,fill:"#efe2c6",stroke:col,"stroke-width":2},parent);
+  el("circle",{cx:P.x,cy:P.y,r:2.5,fill:col},parent);
+  if(label){ const t=el("text",{x:P.x+10,y:P.y-9,"font-size":15,"font-family":'Georgia,serif',
+    "font-style":"italic",fill:col,"font-weight":"600"},parent); t.textContent=label; }
+}
+function drawConstrMarks(c,col,g){
+  if(!state.showTraces || !c.src) return;
+  if(c.tool==="mittelsenkrechte"||c.tool==="symmetrieachse"){
+    const A=c.src.A,B=c.src.B,M=mid(A,B),d=norm(sub(B,A)),p=perp(d);
+    el("line",{x1:A.x,y1:A.y,x2:B.x,y2:B.y,stroke:col,"stroke-width":1,
+      "stroke-dasharray":"4 4",opacity:.5},g);
+    tick(mid(A,M),p,5,g,col); tick(mid(M,B),p,5,g,col);
+    rightAngle(M,d,p,9,g,col);
+  } else if(c.tool==="winkelhalbierende"){
+    const V=c.src.V,A=c.src.A,B=c.src.B,uA=norm(sub(A,V)),uB=norm(sub(B,V));
+    const r=46;
+    el("line",{x1:V.x,y1:V.y,x2:V.x+uA.x*r*1.4,y2:V.y+uA.y*r*1.4,stroke:col,
+      "stroke-width":1,"stroke-dasharray":"4 4",opacity:.45},g);
+    el("line",{x1:V.x,y1:V.y,x2:V.x+uB.x*r*1.4,y2:V.y+uB.y*r*1.4,stroke:col,
+      "stroke-width":1,"stroke-dasharray":"4 4",opacity:.45},g);
+    const aA=Math.atan2(uA.y,uA.x), aB=Math.atan2(uB.y,uB.x);
+    const large=Math.abs(((aB-aA+Math.PI*3)%(2*Math.PI))-Math.PI)<Math.PI?0:0;
+    el("path",{d:`M${V.x+Math.cos(aA)*r} ${V.y+Math.sin(aA)*r} A ${r} ${r} 0 0 ${((aB-aA+2*Math.PI)%(2*Math.PI))>Math.PI?0:1} ${V.x+Math.cos(aB)*r} ${V.y+Math.sin(aB)*r}`,
+      fill:"none",stroke:col,"stroke-width":1.4,opacity:.7},g);
+  } else if(c.tool==="lot"){
+    const F=foot(c.src.P,c.src.refLine);
+    const u=c.src.refLine.d, v=norm(sub(c.src.P,F));
+    rightAngle(F,u,v,12,g,col);
+    el("circle",{cx:F.x,cy:F.y,r:3,fill:col,opacity:.8},g);
+  }
+}
+function drawCircleObj(circ,col,label,parent){
+  el("circle",{cx:circ.c.x,cy:circ.c.y,r:circ.r,fill:"none",stroke:"#efe2c6","stroke-width":5,opacity:.5},parent);
+  el("circle",{cx:circ.c.x,cy:circ.c.y,r:circ.r,fill:"none",stroke:col,"stroke-width":2.4},parent);
+  el("circle",{cx:circ.c.x,cy:circ.c.y,r:3,fill:col},parent);
+  if(label){ const t=el("text",{x:circ.c.x+circ.r*0.7,y:circ.c.y-circ.r*0.7,"font-size":15,
+    "font-family":'Georgia,serif',"font-style":"italic",fill:col,"font-weight":"600"},parent); t.textContent=label; }
+}
+function drawConstructions(){
+  const g=groups.constr; clearGroup(g);
+  state.constructions.forEach((c)=>{
+    if(c.helper){
+      if(c.geomType==="line"){ const [P1,P2]=clipLine(c.line);
+        el("line",{x1:P1.x,y1:P1.y,x2:P2.x,y2:P2.y,stroke:"#7a5630","stroke-width":1.6,
+          "stroke-dasharray":"7 5",opacity:.75,"stroke-linecap":"round"},g);
+      } else if(c.geomType==="circle"){
+        el("circle",{cx:c.circle.c.x,cy:c.circle.c.y,r:c.circle.r,fill:"none",
+          stroke:"#7a5630","stroke-width":1.4,"stroke-dasharray":"7 5",opacity:.7},g);
+      }
+      return;
+    }
+    const col=CCOL[c.colIdx%3];
+    if(c.geomType==="line"){ drawConstrMarks(c,col,g); drawLineObj(c.line,col,c.label,g); }
+    else if(c.geomType==="circle"){ drawCircleObj(c.circle,col,c.label,g); }
+    else { drawConstrMarks(c,col,g); pointMarker(c.point,col,c.label,g); }
+  });
+}
+function drawFound(){
+  const g=groups.found; if(!g) return; clearGroup(g);
+  for(const p of state.found){
+    el("text",{x:p.x,y:p.y,"text-anchor":"middle","dominant-baseline":"central","font-size":23},g).textContent="📜";
+    el("circle",{cx:p.x,cy:p.y,r:3,fill:"#9a2f22"},g);
+  }
+}
+function drawPickCandidates(){
+  const g=groups.treasure; clearGroup(g);
+  if(state.phase!=="pick") return;
+  for(const p of stageCandidates(hunt(),state.stage)){
+    el("circle",{cx:p.x,cy:p.y,r:14,fill:"rgba(199,154,49,.16)",stroke:"#c79a31","stroke-width":2.4},g);
+    el("circle",{cx:p.x,cy:p.y,r:4,fill:"#c79a31"},g);
+  }
+}
+/* Auswahl + Vorschau */
+function drawSelection(){
+  const g=groups.select; clearGroup(g);
+  state.buffer.forEach((b,i)=>{
+    if(b.kind==="point"){
+      el("circle",{cx:b.pt.x,cy:b.pt.y,r:13,fill:"none",stroke:"#c2451f","stroke-width":3},g);
+      const t=el("text",{x:b.pt.x,y:b.pt.y-20,"text-anchor":"middle","font-size":14,
+        fill:"#c2451f","font-weight":"700"},g); t.textContent=(i+1);
+    } else if(b.kind==="line"){
+      const [P1,P2]=clipLine(b.geom);
+      el("line",{x1:P1.x,y1:P1.y,x2:P2.x,y2:P2.y,stroke:"#c2451f","stroke-width":5,
+        opacity:.5,"stroke-linecap":"round"},g);
+    }
+  });
+}
+let previewEl=null;
+function showPreview(a,b){
+  clearGroup(groups.preview);
+  el("line",{x1:a.x,y1:a.y,x2:b.x,y2:b.y,stroke:"#c2451f","stroke-width":2,
+    "stroke-dasharray":"6 6",opacity:.8,"stroke-linecap":"round"},groups.preview);
+  el("circle",{cx:a.x,cy:a.y,r:6,fill:"#c2451f"},groups.preview);
+}
+function clearPreview(){ clearGroup(groups.preview); }
+
+/* Lösung (Lehrermodus) */
+function drawSolution(){
+  const g=groups.solution; clearGroup(g);
+  if(!state.teacher || !state.showSolution || state.phase==="won") return;
+  const st=curStage(); if(!st) return;
+  st.clues.forEach((clue,i)=>{
+    if(state.clueSolved[i]) return;
+    const L=clueLocus(hunt(),clue);
+    if(L.kind==="line"){ const [P1,P2]=clipLine(L.line);
+      el("line",{x1:P1.x,y1:P1.y,x2:P2.x,y2:P2.y,stroke:"#c79a31","stroke-width":3,
+        "stroke-dasharray":"2 9",opacity:.85,"stroke-linecap":"round"},g);
+    } else {
+      el("circle",{cx:L.c.x,cy:L.c.y,r:L.r,fill:"none",stroke:"#c79a31","stroke-width":3,
+        "stroke-dasharray":"2 9",opacity:.85},g);
+    }
+  });
+  if(state.phase==="pick"){ const T=stageTarget(hunt(),state.stage);
+    if(T) el("circle",{cx:T.x,cy:T.y,r:11,fill:"none",stroke:"#c79a31","stroke-width":3,"stroke-dasharray":"3 4"},g); }
+}
+/* Schatz-Reveal */
+function revealTreasure(pt){
+  const g=groups.treasure; clearGroup(g);
+  for(let k=0;k<12;k++){ const a=k*Math.PI/6;
+    el("line",{x1:pt.x,y1:pt.y,x2:pt.x+Math.cos(a)*40,y2:pt.y+Math.sin(a)*40,
+      stroke:"#c79a31","stroke-width":2,opacity:.7},g); }
+  el("text",{x:pt.x,y:pt.y+2,"text-anchor":"middle","dominant-baseline":"central",
+    "font-size":17,fill:"#9a2f22","font-weight":"900"},g).textContent="✕";
+  const t=el("text",{x:pt.x,y:pt.y-34,"text-anchor":"middle","dominant-baseline":"central",
+    "font-size":34},g); t.textContent="💰";
+}
+/* =========================================================
+   Zirkel & Lineal: Objekte, Schnittpunkte, Zeichnen, Eingabe
+========================================================= */
+function stageRays(){
+  const out=[]; const st=curStage(); if(!st) return out;
+  const h=hunt(); const C=id=>{ const m=h.marks.find(m=>m.id===id); return {x:m.x,y:m.y}; };
+  for(const c of st.clues){
+    if(c.kind==="winkelhalbierende"){
+      const V=C(c.v);
+      out.push({o:V, far:C(c.a), d:norm(sub(C(c.a),V))});
+      out.push({o:V, far:C(c.b), d:norm(sub(C(c.b),V))});
+    }
+  }
+  return out;
+}
+function zlGivenLines(){
+  const out=[];
+  for(const f of stFeatures()){ if(f.selectable) out.push(featLine(f)); }
+  for(const c of state.constructions){ if(c.geomType==="line") out.push(c.line); }
+  return out;
+}
+function zlObjects(){
+  const circles=[], lines=[];
+  for(const o of state.zl.aux){ if(o.type==="circle") circles.push(o); else lines.push(o.line); }
+  for(const l of zlGivenLines()) lines.push(l);
+  return {circles,lines,rays:stageRays()};
+}
+function inMap(p){ return p && p.x>=-2 && p.x<=W+2 && p.y>=-2 && p.y<=H+2; }
+function zlIntersections(){
+  const {circles,lines,rays}=zlObjects(); const pts=[];
+  const push=p=>{ if(p && p.x>=-PAD_SNAP && p.x<=W+PAD_SNAP && p.y>=-PAD_SNAP && p.y<=H+PAD_SNAP) pts.push(p); };
+  const onRay=(p,r)=>dot(sub(p,r.o),r.d)>=-2;
+  const rl=r=>({p:r.o,d:r.d});
+  for(let i=0;i<circles.length;i++){
+    for(let j=i+1;j<circles.length;j++) circleCircle(circles[i],circles[j]).forEach(push);
+    for(const l of lines) circleLine(circles[i],l).forEach(push);
+    for(const r of rays) circleLine(circles[i],rl(r)).forEach(p=>{ if(onRay(p,r)) push(p); });
+  }
+  for(let i=0;i<lines.length;i++)for(let j=i+1;j<lines.length;j++){ const p=lineIntersect(lines[i],lines[j]); if(p) push(p); }
+  const auxLines=state.zl.aux.filter(o=>o.type==="line").map(o=>o.line);
+  for(const l of auxLines)for(const r of rays){ const p=lineIntersect(l,rl(r)); if(p&&onRay(p,r)) push(p); }
+  const uniq=[];
+  for(const p of pts){ if(!uniq.some(q=>dist(p,q)<3)) uniq.push(p); }
+  return uniq;
+}
+function zlSnapPoints(){
+  const out=stMarks().map(m=>({pt:{x:m.x,y:m.y}}));
+  for(const p of state.zl.marked) out.push({pt:p});
+  for(const p of zlIntersections()) out.push({pt:p});
+  return out;
+}
+function zlSnap(pt){
+  let best=null,bd=SNAP_PT;
+  for(const s of zlSnapPoints()){ const d=dist(pt,s.pt); if(d<bd){bd=d;best=s;} }
+  return best;
+}
+// Nächstgelegener vorhandener Zirkelradius (für „gleiche Radien")
+function matchRadius(r,tol){
+  tol=tol||RAD_SNAP; let best=null,bd=tol;
+  for(const o of state.zl.aux){ if(o.type!=="circle") continue;
+    const d=Math.abs(o.r-r); if(d<bd){ bd=d; best=o; } }
+  return best;
+}
+function drawAux(){
+  const g=groups.aux; if(!g) return; clearGroup(g);
+  for(const p of zlIntersections())
+    el("circle",{cx:p.x,cy:p.y,r:3,fill:"none",stroke:"#7a5630","stroke-width":1,opacity:.5},g);
+  for(const o of state.zl.aux){
+    if(o.type==="circle"){
+      el("circle",{cx:o.c.x,cy:o.c.y,r:o.r,fill:"none",stroke:"#9a2f22","stroke-width":1.4,opacity:.8},g);
+      el("circle",{cx:o.c.x,cy:o.c.y,r:2.5,fill:"#9a2f22",opacity:.85},g);
+    } else {
+      const [P1,P2]=clipLine(o.line);
+      el("line",{x1:P1.x,y1:P1.y,x2:P2.x,y2:P2.y,stroke:"#7a5630","stroke-width":1.4,
+        "stroke-dasharray":"7 5",opacity:.7},g);
+    }
+  }
+  // gleiche Radien mit Kongruenz-Häkchen kennzeichnen (wie bei gleich langen Strecken)
+  if(state.showTraces){
+    const circles=state.zl.aux.filter(o=>o.type==="circle");
+    const grp=[];
+    for(const o of circles){ let G=grp.find(G=>Math.abs(G.r-o.r)<RAD_SNAP);
+      if(!G){ G={r:o.r,members:[]}; grp.push(G); } G.members.push(o); }
+    let gi=0;
+    for(const G of grp){ if(G.members.length<2) continue; gi++;
+      for(const o of G.members) drawRadiusTicks(o,gi,g); }
+  }
+  for(const p of state.zl.marked)
+    el("circle",{cx:p.x,cy:p.y,r:5,fill:"#2f4a6b",stroke:"#efe2c6","stroke-width":1.5},g);
+}
+function drawRadiusTicks(o,count,g){
+  const ang=-Math.PI/3;                       // Häkchen oben-rechts auf dem Bogen
+  const cx=o.c.x+Math.cos(ang)*o.r, cy=o.c.y+Math.sin(ang)*o.r;
+  const rad={x:Math.cos(ang),y:Math.sin(ang)}; // radial
+  const tan={x:-rad.y,y:rad.x};                // entlang des Bogens
+  for(let k=0;k<count;k++){
+    const off=(k-(count-1)/2)*4.5;
+    const bx=cx+tan.x*off, by=cy+tan.y*off;
+    el("line",{x1:bx-rad.x*5,y1:by-rad.y*5,x2:bx+rad.x*5,y2:by+rad.y*5,
+      stroke:"#3f6b46","stroke-width":1.9,opacity:.95},g);
+  }
+}
+function zlBadge(g,x,y,text,col){
+  const t=el("text",{x:x,y:y,"text-anchor":"middle","dominant-baseline":"middle",
+    "font-family":'Georgia,serif',"font-style":"italic","font-size":13,fill:col,"font-weight":"700"},g);
+  t.textContent=text;
+  const w=text.length*7.4+12,h=18;
+  const r=el("rect",{x:x-w/2,y:y-h/2,width:w,height:h,rx:5,fill:"rgba(239,226,198,.92)",
+    stroke:col,"stroke-width":1},g);
+  g.insertBefore(r,t);
+}
+function zlSnapHint(p){
+  clearGroup(groups.preview);
+  if(p) el("circle",{cx:p.x,cy:p.y,r:10,fill:"none",stroke:"#c2451f","stroke-width":2,opacity:.9},groups.preview);
+}
+function showCompassPreview(center,r,endSnap,matchC){
+  const g=groups.preview; clearGroup(g);
+  const eq=!!matchC, col=eq?"#3f6b46":"#c2451f";
+  if(eq) el("circle",{cx:matchC.c.x,cy:matchC.c.y,r:matchC.r,fill:"none",stroke:"#3f6b46",
+    "stroke-width":2.2,opacity:.55,"stroke-dasharray":"2 6"},g);
+  el("circle",{cx:center.x,cy:center.y,r:Math.max(r,0.5),fill:"none",stroke:col,"stroke-width":1.7,
+    "stroke-dasharray":"6 5",opacity:.95},g);
+  el("circle",{cx:center.x,cy:center.y,r:3,fill:col},g);
+  if(endSnap) el("circle",{cx:endSnap.x,cy:endSnap.y,r:9,fill:"none",stroke:col,"stroke-width":2},g);
+  const ang=-Math.PI/4, lx=center.x+Math.cos(ang)*r, ly=center.y+Math.sin(ang)*r;
+  zlBadge(g,lx,ly, eq?"= r":("r ≈ "+(r/MILE).toFixed(1).replace(".",",")+" Meilen"), col);
+}
+function showLinePreview(a,b,bsnap){
+  const g=groups.preview; clearGroup(g);
+  el("line",{x1:a.x,y1:a.y,x2:b.x,y2:b.y,stroke:"#c2451f","stroke-width":2,"stroke-dasharray":"6 6",opacity:.85},g);
+  el("circle",{cx:a.x,cy:a.y,r:6,fill:"#c2451f"},g);
+  if(bsnap) el("circle",{cx:b.x,cy:b.y,r:9,fill:"none",stroke:"#c2451f","stroke-width":2},g);
+}
+function zlPointerMove(start,cur){
+  const t=state.tool;
+  if(t==="zirkel"){
+    const c=state.zl._center;
+    if(!c){ const s=zlSnap(start); zlSnapHint(s?s.pt:null); return; }
+    const es=zlSnap(cur); let end=es?es.pt:cur;
+    let r=dist(c,end);
+    let m=matchRadius(r);
+    if(!es && m){ r=m.r; }          // auf gleichen Radius einrasten (Endpunkt frei)
+    else { m=matchRadius(r); }      // sonst nur prüfen, ob er einem gleicht
+    showCompassPreview(c, r, es?es.pt:null, m);
+  } else if(t==="lineal"){
+    const as=state.zl._start;
+    if(!as){ const s=zlSnap(start); zlSnapHint(s?s.pt:null); return; }
+    const bs=zlSnap(cur); showLinePreview(as, bs?bs.pt:cur, bs?bs.pt:null);
+  } else {
+    const s=zlSnap(cur); zlSnapHint(s?s.pt:null);
+  }
+}
+function zlPointerUp(start,end,moved){
+  clearPreview();
+  if(state.phase==="pick"){ pickTap(moved?end:start); return; }
+  const t=state.tool;
+  if(!t){ toast("Wähle Zirkel, Lineal oder Schnittpunkt.","info"); return; }
+  if(t==="zirkel"){
+    const cs=zlSnap(start);
+    if(!cs){ toast("Setze den Zirkel auf einen Punkt.","info"); return; }
+    if(!moved){ toast("Ziehe, um den Radius festzulegen.","info"); return; }
+    const es=zlSnap(end); const endpt=es?es.pt:end;
+    let r=dist(cs.pt,endpt);
+    if(r<14){ toast("Radius zu klein.","info"); return; }
+    let m=matchRadius(r);
+    if(!es && m){ r=m.r; }
+    else if(es){ m=matchRadius(r); }
+    // Kreis als Hinweis-Ort? (z. B. „3 Meilen von …")
+    if(submitLocus({kind:"circle",c:{x:cs.pt.x,y:cs.pt.y},r:r})) return;
+    state.zl.aux.push({type:"circle",c:{x:cs.pt.x,y:cs.pt.y},r:r});
+    drawAux();
+    toast(m? "Kreis mit gleichem Radius geschlagen." : "Kreis geschlagen.", m?"good":"info");
+  } else if(t==="lineal"){
+    const as=zlSnap(start), bs=zlSnap(end);
+    if(!as||!bs||dist(as.pt,bs.pt)<8){ toast("Wische von einem Punkt zu einem anderen.","info"); return; }
+    const line=lineFromPts(as.pt,bs.pt);
+    if(submitLocus({kind:"line",line:line})) return;
+    state.zl.aux.push({type:"line",line:line}); drawAux(); toast("Gerade gezogen.","info");
+  } else if(t==="punkt"){
+    const s=zlSnap(moved?end:start);
+    if(!s){ toast("Tippe auf einen Schnittpunkt.","info"); return; }
+    if(!state.zl.marked.some(p=>dist(p,s.pt)<6)){
+      state.zl.marked.push({x:s.pt.x,y:s.pt.y}); drawAux(); toast("Punkt markiert.","info"); }
+  }
+}
+/* =========================================================
+   Werkzeuge & Eingabe
+========================================================= */
+const TOOLDEF={
+  mittelsenkrechte:{steps:["point","point"],twoPoint:true,
+    prompts:["Tippe auf den 1. Punkt","Tippe auf den 2. Punkt"]},
+  winkelhalbierende:{steps:["point","point","point"],twoPoint:false,
+    prompts:["Tippe auf den Scheitel","Punkt auf dem 1. Schenkel","Punkt auf dem 2. Schenkel"]},
+  lot:{steps:["point","line"],twoPoint:false,
+    prompts:["Tippe auf den Punkt","Tippe auf die Linie (Achse)"]},
+  parallele:{steps:["point","line"],twoPoint:false,
+    prompts:["Tippe auf den Punkt","Tippe auf die Gerade"]},
+};
+const PRAISE=["Gut konstruiert!","Treffer!","Sauber gemacht!","Genau richtig!","Hinweis gelöst!"];
+const ZLRECIPE={
+  mittelsenkrechte:"Schlage um beide Punkte zwei gleich große Kreise und verbinde ihre Schnittpunkte mit dem Lineal.",
+  winkelhalbierende:"Schlage einen Kreis um den Scheitel – er schneidet beide Schenkel. Schlage um diese zwei Schnittpunkte gleich große Kreise und verbinde den Scheitel mit deren Schnittpunkt.",
+  lot:"Ein Kreis um den Punkt schneidet die Gerade zweimal. Schlage um diese Schnittpunkte zwei gleiche Kreise und verbinde deren Schnittpunkte.",
+};
+
+function clientToSvg(e){
+  const ctm=svg.getScreenCTM(); if(!ctm) return null;
+  const sp=svg.createSVGPoint(); sp.x=e.clientX; sp.y=e.clientY;
+  const r=sp.matrixTransform(ctm.inverse()); return {x:r.x,y:r.y};
+}
+function selectablePoints(){
+  const out=stMarks().map(m=>({id:m.id,pt:{x:m.x,y:m.y}}));
+  for(const c of state.constructions) if(c.geomType==="point")
+    out.push({id:c.outId,pt:c.point});
+  return out;
+}
+function nearestPoint(pt){
+  let best=null,bd=SNAP_PT;
+  for(const s of selectablePoints()){ const d=dist(pt,s.pt); if(d<bd){bd=d;best=s;} }
+  return best;
+}
+function nearestLine(pt){
+  let best=null,bd=SNAP_LN;
+  for(const s of selectableLines()){ const d=distPtLine(pt,s.geom); if(d<bd){bd=d;best=s;} }
+  return best;
+}
+
+/* ---- Ansicht: Zoom & Pan ---- */
+const view={x:0,y:0,w:W,h:H};
+const MINW=320, MAXW=1700;
+function applyView(){ svg.setAttribute("viewBox", view.x+" "+view.y+" "+view.w+" "+view.h); }
+function fitView(){ view.x=0;view.y=0;view.w=W;view.h=H; applyView(); }
+function svgFromClient(cx,cy){
+  const ctm=svg.getScreenCTM(); if(!ctm) return {x:0,y:0};
+  const sp=svg.createSVGPoint(); sp.x=cx; sp.y=cy;
+  const r=sp.matrixTransform(ctm.inverse()); return {x:r.x,y:r.y};
+}
+function setViewSize(neww, anchorS, fx, fy){
+  neww=Math.max(MINW,Math.min(MAXW,neww));
+  const newh=neww*(H/W);          // Höhe streng proportional -> gleicher Zoom in x und y
+  view.w=neww; view.h=newh;
+  view.x=anchorS.x - fx*neww;
+  view.y=anchorS.y - fy*newh;
+  applyView();
+}
+function zoomBy(f){
+  const cx=view.x+view.w/2, cy=view.y+view.h/2;
+  setViewSize(view.w*f, {x:cx,y:cy}, 0.5, 0.5);
+}
+
+/* ---- Zeiger / Mehrfinger ---- */
+const pointers=new Map();
+let gesture=null, down=null;
+function startGesture(){
+  const p=[...pointers.values()]; if(p.length<2) return;
+  const a=p[0], b=p[1], midC={x:(a.x+b.x)/2,y:(a.y+b.y)/2};
+  gesture={ d0:Math.hypot(a.x-b.x,a.y-b.y), w0:view.w, anchorS:svgFromClient(midC.x,midC.y) };
+}
+function updateGesture(){
+  const p=[...pointers.values()]; if(p.length<2||!gesture) return;
+  const a=p[0], b=p[1], midC={x:(a.x+b.x)/2,y:(a.y+b.y)/2};
+  const d=Math.max(1,Math.hypot(a.x-b.x,a.y-b.y));
+  const rect=svg.getBoundingClientRect();
+  const fx=(midC.x-rect.left)/rect.width, fy=(midC.y-rect.top)/rect.height;
+  setViewSize(gesture.w0*(gesture.d0/d), gesture.anchorS, fx, fy);
+}
+function endPointer(e){ pointers.delete(e.pointerId); if(pointers.size<2) gesture=null; }
+function onDown(e){
+  e.preventDefault();
+  pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(pointers.size>=2){ down=null; clearPreview(); state.zl._center=null; state.zl._start=null; startGesture(); return; }
+  const p=clientToSvg(e); if(!p) return;
+  try{ svg.setPointerCapture(e.pointerId); }catch(_){}
+  down={start:p,moved:false,id:e.pointerId};
+  if(state.phase==="construct"){
+    if(state.tool==="zirkel"){ const s=zlSnap(p); state.zl._center=s?s.pt:null; }
+    else if(state.tool==="lineal"){ const s=zlSnap(p); state.zl._start=s?s.pt:null; }
+  }
+}
+function onMove(e){
+  if(pointers.has(e.pointerId)) pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(gesture && pointers.size>=2){ updateGesture(); return; }
+  if(!down||e.pointerId!==down.id) return;
+  const p=clientToSvg(e); if(!p) return;
+  if(dist(p,down.start)>MOVE_THRESH) down.moved=true;
+  if(state.phase!=="construct" || !state.tool) return;
+  if(toolFamily(state.tool)==="zl"){ zlPointerMove(down.start,p); }
+  else if(down.moved && TOOLDEF[state.tool].twoPoint){
+    const a=nearestPoint(down.start), b=nearestPoint(p);
+    showPreview(a?a.pt:down.start, b?b.pt:p);
+  }
+}
+function onUp(e){
+  const wasGesture = gesture && pointers.size>=2;
+  endPointer(e);
+  if(wasGesture) return;
+  if(!down||e.pointerId!==down.id) return;
+  const p=clientToSvg(e)||down.start;
+  clearPreview();
+  if(state.phase==="pick"){ pickTap(down.moved?p:down.start); }
+  else if(state.phase==="construct"){
+    if(!state.tool){ if(!down.moved) toast("Wähle ein Werkzeug für einen der beiden Hinweise.","info"); }
+    else if(toolFamily(state.tool)==="zl"){ zlPointerUp(down.start,p,down.moved); }
+    else {
+      if(!down.moved) handleTap(down.start);
+      else if(TOOLDEF[state.tool].twoPoint) handleSwipe(down.start,p);
+      else handleTap(p);
+    }
+  }
+  state.zl._center=null; state.zl._start=null; down=null;
+}
+svg.addEventListener("pointerdown",onDown,{passive:false});
+svg.addEventListener("pointermove",onMove,{passive:false});
+svg.addEventListener("pointerup",onUp,{passive:false});
+svg.addEventListener("pointercancel",(e)=>{clearPreview();state.zl._center=null;state.zl._start=null;down=null;pointers.delete(e.pointerId);if(pointers.size<2)gesture=null;});
+
+function handleTap(pt){
+  if(state.phase!=="construct") return;
+  if(!state.tool){ toast("Wähle ein Werkzeug für einen der beiden Hinweise.","info"); return; }
+  const def=TOOLDEF[state.tool], need=def.steps[state.buffer.length];
+  if(need==="point"){
+    const np=nearestPoint(pt);
+    if(!np){ toast("Tippe genau auf einen Punkt.","info"); return; }
+    if(state.buffer.some(b=>b.kind==="point"&&b.id===np.id)){ toast("Punkt schon gewählt.","info"); return; }
+    state.buffer.push({kind:"point",id:np.id,pt:np.pt});
+  } else {
+    const nl=nearestLine(pt);
+    if(!nl){ toast("Tippe auf eine Linie (Achse).","info"); return; }
+    state.buffer.push({kind:"line",srcId:nl.srcId,geom:nl.geom});
+  }
+  drawSelection(); updatePrompt();
+  if(state.buffer.length===def.steps.length) completeConstruction();
+}
+function handleSwipe(a,b){
+  if(!state.tool||!TOOLDEF[state.tool].twoPoint){ handleTap(b); return; }
+  const pa=nearestPoint(a), pb=nearestPoint(b);
+  if(!pa||!pb||pa.id===pb.id){ toast("Wische von einem Punkt zu einem anderen.","info"); return; }
+  state.buffer=[{kind:"point",id:pa.id,pt:pa.pt},{kind:"point",id:pb.id,pt:pb.pt}];
+  drawSelection(); completeConstruction();
+}
+
+function buildResult(){
+  const tool=state.tool, B=state.buffer;
+  if(tool==="mittelsenkrechte")
+    return {geomType:"line",line:perpBisector(B[0].pt,B[1].pt),src:{A:B[0].pt,B:B[1].pt}};
+  if(tool==="winkelhalbierende")
+    return {geomType:"line",line:angleBisector(B[0].pt,B[1].pt,B[2].pt),
+            src:{V:B[0].pt,A:B[1].pt,B:B[2].pt}};
+  if(tool==="lot")
+    return {geomType:"line",line:perpThrough(B[1].geom,B[0].pt),src:{P:B[0].pt,refLine:B[1].geom}};
+  if(tool==="parallele")
+    return {geomType:"line",line:{p:{x:B[0].pt.x,y:B[0].pt.y},d:B[1].geom.d},src:{P:B[0].pt,refLine:B[1].geom}};
+}
+function makeConstruction(geomType, geom, opts){
+  opts=opts||{};
+  const colIdx = opts.helper ? -1 : state.constructions.filter(c=>!c.helper).length;
+  const c={id:"c"+(state.cidx++),geomType:geomType,colIdx:colIdx,settled:true};
+  if(opts.helper) c.helper=true;
+  if(opts.clueIdx!=null) c.clueIdx=opts.clueIdx;
+  const sub=["₁","₂","₃","₄"][colIdx]||"";
+  if(geomType==="line"){ c.line=geom; c.label=opts.helper?"":(opts.label||("g"+sub)); }
+  else if(geomType==="circle"){ c.circle=geom; c.label=opts.helper?"":(opts.label||("k"+sub)); }
+  else { c.point=geom; c.label=opts.label||"P′"; c.outId="pt_"+c.id; }
+  if(opts.src) c.src=opts.src;
+  if(opts.tool) c.tool=opts.tool;
+  state.constructions.push(c);
+  return c;
+}
+
+/* ---- Stufen-Ablauf (Doppelhinweise) ---- */
+function startStage(){
+  const st=curStage();
+  state.phase="construct";
+  state.clueSolved = st ? st.clues.map(()=>false) : [];
+  state.constructions=[]; clearGroup(groups.constr);
+  state.buffer=[]; clearGroup(groups.select);
+  state.zl.aux=[]; state.zl.marked=[]; state.zl._center=null; state.zl._start=null;
+  state.tool=null;
+  clearGroup(groups.treasure);
+  drawFeatures(); drawMarks();
+  drawAux(); drawConstructions(); drawFound(); drawSolution(); updateUI();
+}
+function submitLocus(locus, opts){
+  opts=opts||{};
+  if(state.phase!=="construct") return false;
+  const st=curStage(); if(!st) return false;
+  for(let i=0;i<st.clues.length;i++){
+    if(state.clueSolved[i]) continue;
+    if(locusMatchesClue(locus, st.clues[i])){
+      state.clueSolved[i]=true;
+      const gt = locus.kind==="line" ? "line" : "circle";
+      const geom = locus.kind==="line" ? locus.line : {c:locus.c, r:locus.r};
+      makeConstruction(gt, geom, {src:opts.src, tool:opts.tool, clueIdx:i});
+      state.buffer=[]; clearGroup(groups.select);
+      state.zl.aux=[]; state.zl.marked=[]; drawAux();
+      drawConstructions();
+      toast(PRAISE[Math.floor(Math.random()*PRAISE.length)],"good");
+      if(state.clueSolved.every(Boolean)) enterPick();
+      else { updateUI(); drawSolution(); }
+      return true;
+    }
+  }
+  return false;
+}
+function enterPick(){
+  state.phase="pick"; state.tool=null;
+  drawPickCandidates(); updateUI(); drawSolution();
+}
+function pickTap(pt){
+  const cands=stageCandidates(hunt(),state.stage);
+  let best=null,bd=TOL_POINT+12;
+  for(const c of cands){ const d=dist(pt,c); if(d<bd){bd=d;best=c;} }
+  const T=stageTarget(hunt(),state.stage);
+  if(best && T && dist(best,T)<1){ stageSolved(T); return; }
+  if(best){ toast("Das ist die andere mögliche Stelle – probiere den anderen Schnittpunkt.","bad"); return; }
+  toast("Tippe genau auf den Schnittpunkt der beiden Linien.","info");
+}
+function stageSolved(T){
+  const last = state.stage >= hunt().stages.length-1;
+  if(last){ winHunt(T); return; }
+  state.found.push({x:T.x,y:T.y});
+  toast("Stelle gefunden! Der nächste Hinweis erscheint.","good");
+  state.stage++;
+  startStage();
+}
+function completeConstruction(){
+  const res=buildResult();
+  if(submitLocus({kind:"line",line:res.line},{src:res.src,tool:state.tool})){ updatePrompt(); return; }
+  // Passt (noch) zu keinem Hinweis -> als Hilfslinie behalten (z. B. Lot, auf das ein zweites Lot folgt)
+  makeConstruction("line", res.line, {src:res.src, tool:state.tool, helper:true});
+  state.buffer=[]; clearGroup(groups.select);
+  drawConstructions(); updateUI();
+  toast("Hilfslinie gezogen.","info");
+}
+function winHunt(T){
+  state.phase="won"; state.tool=null;
+  state.treasurePt=T; revealTreasure(T);
+  state.done[hunt().id]=true;
+  clearGroup(groups.solution);
+  const justUnlocked = !state.unlocked && allTier1Done();
+  if(justUnlocked) state.unlocked=true;
+  const unlocksParallele = hunt().unlocksTool==="parallele" && !state.parallelUnlocked;
+  if(unlocksParallele) state.parallelUnlocked=true;
+  updateUI(); renderHuntPicker();
+  const wt=document.getElementById("wintext");
+  if(justUnlocked){
+    wt.innerHTML="Du hast die drei Grundsuchen gemeistert und beweist: Lot, Mittelsenkrechte und Winkelhalbierende sitzen. <b>Alle Werkzeuge und die Aufbaustufen sind jetzt freigeschaltet!</b>";
+  } else if(unlocksParallele){
+    wt.innerHTML="Du hast eine Parallele aus zwei Loten konstruiert. <b>Das Werkzeug „Parallele“ ist jetzt freigeschaltet!</b>";
+  } else {
+    wt.innerHTML="Du hast den Schatz von <b>„"+hunt().title+"“</b> gehoben – mit Zirkel und Lineal statt Spaten.";
+  }
+  document.getElementById("win").classList.add("show");
+}
+
+/* =========================================================
+   Oberfläche
+========================================================= */
+function toast(msg,kind){
+  const t=document.getElementById("toast");
+  t.textContent=msg; t.className="info";
+  void t.offsetWidth; t.classList.add(kind||"info","show");
+  clearTimeout(toast._t);
+  toast._t=setTimeout(()=>t.classList.remove("show"), kind==="bad"?3200:1700);
+}
+function updatePrompt(){
+  const el2=document.getElementById("prompt");
+  let msg;
+  if(state.phase==="won") msg="Schatz gehoben! 🏴‍☠️";
+  else if(state.phase==="pick") msg="Tippe auf den Schnittpunkt der beiden Linien.";
+  else if(!state.tool) msg="Wähle ein Werkzeug für einen der beiden Hinweise.";
+  else if(state.tool==="zirkel") msg="Finger auf einen Punkt setzen, ziehen für den Radius.";
+  else if(state.tool==="lineal") msg="Wische von einem Punkt zu einem anderen.";
+  else if(state.tool==="punkt") msg="Tippe auf einen Schnittpunkt, um ihn zu markieren.";
+  else msg=TOOLDEF[state.tool].prompts[state.buffer.length] || "…";
+  el2.textContent=msg; el2.classList.remove("hide");
+}
+function updateUI(){
+  const h=hunt();
+  document.getElementById("hunttitle").textContent=h.title;
+  const sm=document.getElementById("stepmeta");
+  const ht=document.getElementById("hinttext");
+  const hb=document.getElementById("hintbtn");
+  const nStages=h.stages.length;
+  if(state.phase==="won"){ sm.textContent="Geschafft"; ht.innerHTML=h.intro; hb.style.display="none"; }
+  else {
+    const st=curStage();
+    sm.textContent = nStages>1 ? ("Hinweis "+(state.stage+1)+" von "+nStages) : "";
+    hb.style.display="";
+    hb.classList.toggle("on", state.showClueHelp);
+    let html='<div class="dh">'+st.narrative+'</div>';
+    html+='<div id="cluehelp" class="'+(state.showClueHelp?"":"hide")+'">';
+    st.clues.forEach((c,i)=>{
+      const ok=state.clueSolved[i];
+      const num=["①","②","③","④"][i]||("("+(i+1)+")");
+      html+='<div class="clue'+(ok?" ok":"")+'">'+num+' '+c.text+
+            ' <span class="ck">'+CLUEKIND[c.kind]+'</span></div>';
+      if(c.tip) html+='<div class="ctip">'+c.tip+'</div>';
+    });
+    html+='</div>';
+    if(state.phase==="pick") html+='<div class="pickrow">Beide Stellen stehen — tippe nun auf ihren <b>Schnittpunkt</b>.</div>';
+    ht.innerHTML=html;
+  }
+  const ps=document.getElementById("steps"); ps.innerHTML="";
+  const cl=state.clueSolved||[];
+  for(let i=0;i<cl.length;i++){ const d=document.createElement("div"); d.className="pip";
+    if(cl[i]) d.classList.add("ok"); else if(state.phase==="construct") d.classList.add("cur");
+    ps.appendChild(d); }
+  document.querySelectorAll('#toolbar .tool').forEach(b=>{
+    const t=b.dataset.tool;
+    b.classList.toggle("active", t===state.tool);
+    b.classList.toggle("locked", !toolEnabled(t));
+  });
+  updatePrompt();
+}
+function setTool(name){
+  if(!toolEnabled(name)){
+    toast(name==="parallele"
+      ? "Die Parallele schaltest du in der Parallelen-Aufgabe frei."
+      : "Dieses Werkzeug ist noch gesperrt — meistere zuerst die Suchen 1–3.","info");
+    return;
+  }
+  if(state.phase!=="construct"){ toast("Gerade ist kein Hinweis zu konstruieren.","info"); return; }
+  state.tool = (state.tool===name? null : name);
+  state.buffer=[]; clearGroup(groups.select);
+  state.zl._center=null; state.zl._start=null; clearPreview();
+  updateUI();
+}
+function renderHuntPicker(){
+  const wrap=document.getElementById("huntpicker"); wrap.innerHTML="";
+  HUNTS.forEach((h,i)=>{
+    const locked = h.tier>1 && !state.unlocked;
+    const b=document.createElement("div");
+    b.className="hbtn"+(i===state.hi?" active":"")+(state.done[h.id]?" done":"")+(locked?" locked":"");
+    b.textContent = locked ? "🔒" : h.id;
+    b.title = h.title + (locked?" (gesperrt)":"");
+    b.onclick=()=>{
+      if(locked){ toast("Diese Suche ist noch gesperrt. Meistere zuerst die Suchen 1–3.","info"); return; }
+      if(h.wip){ toast("„"+h.title+"“ kommt im nächsten Bauabschnitt.","info"); return; }
+      loadHunt(i);
+    };
+    wrap.appendChild(b);
+  });
+}
+function loadHunt(i){
+  state.hi=i; state.stage=0; state.tool=null; state.buffer=[];
+  state.constructions=[]; state.cidx=0; state.found=[];
+  state.zl={aux:[], marked:[], mcount:0, _center:null, _start:null};
+  buildGroups(); drawDecor(); drawFeatures(); drawMarks();
+  fitView();
+  document.getElementById("win").classList.remove("show");
+  renderHuntPicker();
+  startStage();
+}
+
+/* Hilfsschaltflächen */
+function doUndo(){
+  if(state.phase==="won") return;
+  if(state.phase==="pick"){
+    const c=state.constructions.pop();
+    if(c && c.clueIdx!=null) state.clueSolved[c.clueIdx]=false;
+    state.phase="construct"; clearGroup(groups.treasure);
+    drawConstructions(); drawAux(); updateUI(); drawSolution(); return;
+  }
+  if(state.zl.marked.length){ state.zl.marked.pop(); drawAux(); return; }
+  if(state.zl.aux.length){ state.zl.aux.pop(); drawAux(); return; }
+  if(state.buffer.length){ state.buffer=[]; clearGroup(groups.select); updatePrompt(); return; }
+  if(state.constructions.length){
+    const c=state.constructions.pop();
+    if(c && c.clueIdx!=null) state.clueSolved[c.clueIdx]=false;
+    clearGroup(groups.treasure); drawAux();
+    drawConstructions(); updateUI(); drawSolution();
+  }
+}
+document.querySelectorAll('#toolbar .tool').forEach(b=> b.addEventListener("click",()=>setTool(b.dataset.tool)) );
+document.querySelectorAll(".util").forEach(b=> b.addEventListener("click",()=>{
+  const u=b.dataset.util;
+  if(u==="undo") doUndo();
+  else if(u==="reset") loadHunt(state.hi);
+  else if(u==="traces"){ state.showTraces=!state.showTraces; b.classList.toggle("on",state.showTraces); drawConstructions(); drawAux(); }
+  else if(u==="solution"){ if(!state.teacher) return; state.showSolution=!state.showSolution; b.classList.toggle("on",state.showSolution); drawSolution(); }
+  else if(u==="help"){ document.getElementById("help").classList.add("show"); }
+  else if(u==="teacher"){ openTeacher(); }
+}));
+// "Spuren" standardmäßig aktiv markieren
+document.querySelector('.util[data-util="traces"]').classList.add("on");
+
+document.getElementById("helpclose").onclick=()=>document.getElementById("help").classList.remove("show");
+document.getElementById("hintbtn").onclick=()=>{ state.showClueHelp=!state.showClueHelp; updateUI(); };
+document.querySelectorAll(".zbtn").forEach(b=> b.addEventListener("click",()=>{
+  const z=b.dataset.zoom;
+  if(z==="in") zoomBy(0.8); else if(z==="out") zoomBy(1.25); else fitView();
+}));
+
+/* Lehrer-Freischaltung (Code hier änderbar) */
+const TEACHER_CODE="1234";
+function openTeacher(){
+  const t=document.getElementById("teacher");
+  document.getElementById("teachercode").value="";
+  document.getElementById("teachererr").textContent="";
+  t.classList.add("show");
+  setTimeout(()=>document.getElementById("teachercode").focus(),50);
+}
+function closeTeacher(){ document.getElementById("teacher").classList.remove("show"); }
+function tryTeacher(){
+  const v=document.getElementById("teachercode").value.trim();
+  if(v===TEACHER_CODE){
+    state.unlocked=true; state.parallelUnlocked=true; state.teacher=true;
+    const sb=document.getElementById("solbtn"); if(sb) sb.style.display="";
+    closeTeacher(); renderHuntPicker(); updateUI();
+    toast("Freigeschaltet: alle Werkzeuge und Schatzsuchen.","good");
+  } else {
+    document.getElementById("teachererr").textContent="Falscher Code.";
+    document.getElementById("teachercode").value="";
+  }
+}
+document.getElementById("teacherok").onclick=tryTeacher;
+document.getElementById("teacherclose").onclick=closeTeacher;
+document.getElementById("teacher").onclick=(e)=>{ if(e.target.id==="teacher") closeTeacher(); };
+document.getElementById("teachercode").addEventListener("keydown",(e)=>{ if(e.key==="Enter") tryTeacher(); });
+document.getElementById("help").onclick=(e)=>{ if(e.target.id==="help") document.getElementById("help").classList.remove("show"); };
+document.getElementById("winnext").onclick=()=>{
+  let n=state.hi;
+  for(let k=0;k<HUNTS.length;k++){
+    n=(n+1)%HUNTS.length; const h=HUNTS[n];
+    const locked=h.tier>1 && !state.unlocked;
+    if(!locked && !h.wip){ loadHunt(n); return; }
+  }
+  document.getElementById("win").classList.remove("show");
+};
+document.getElementById("winstay").onclick=()=>document.getElementById("win").classList.remove("show");
+
+/* Start */
+loadHunt(0);
+
+})();
+</script>
+<!-- ===================== Teilen / QR-Code (gemeinsamer Baustein) ===================== -->
+<style>
+  .sq-fab{position:fixed; left:calc(10px + env(safe-area-inset-left)); bottom:calc(10px + env(safe-area-inset-bottom));
+    z-index:120; display:none; align-items:center; gap:7px; padding:10px 14px; border-radius:999px; border:none;
+    background:rgba(20,20,26,.82); color:#fff; font:inherit; font-size:14.5px; font-weight:700; cursor:pointer;
+    box-shadow:0 4px 14px rgba(0,0,0,.3); -webkit-tap-highlight-color:transparent;}
+  .sq-fab.on{display:inline-flex;}
+  .sq-fab:active{transform:scale(.96);}
+  .sq-fab svg{width:17px; height:17px; display:block;}
+  .sq-inline{display:inline-flex; align-items:center; gap:6px;}
+  .sq-ov{position:fixed; inset:0; z-index:9000; display:none; align-items:center; justify-content:center;
+    background:rgba(12,14,18,.86); padding:16px; -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px);}
+  .sq-ov.on{display:flex;}
+  .sq-card{background:#fff; color:#1b1f24; border-radius:22px; padding:22px 22px 18px; width:100%; max-width:520px;
+    max-height:94vh; overflow:auto; text-align:center; box-shadow:0 24px 60px rgba(0,0,0,.45);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+  .sq-card h2{margin:0 0 2px; font-size:1.4rem; font-weight:800;}
+  .sq-card p.sq-sub{margin:0 0 14px; color:#5b6470; font-size:.95rem;}
+  /* Der weiße Rand um den Code ist Vorschrift: mindestens vier Module Ruhezone,
+     sonst erkennen Kameras den Code nicht. Die Breite setzt das Skript. */
+  .sq-code{display:flex; align-items:center; justify-content:center; margin:0 auto 12px;
+    width:min(74vw,330px); background:#fff; border:1px solid #e4e6ea; border-radius:14px; padding:14px 0;}
+  .sq-code canvas, .sq-code img{width:var(--sq-w,84%); height:auto; display:block; margin:0 auto; image-rendering:pixelated;}
+  .sq-code table{margin:0 auto;}
+  .sq-url{font-size:.86rem; color:#5b6470; word-break:break-all; background:#f3f4f6; border-radius:10px;
+    padding:9px 11px; margin-bottom:14px; line-height:1.4;
+    -webkit-user-select:text; user-select:text;}
+  .sq-row{display:flex; gap:9px; flex-wrap:wrap;}
+  .sq-row button{flex:1 1 130px; border:none; border-radius:12px; padding:13px 14px; font:inherit; font-size:1rem;
+    font-weight:750; cursor:pointer; background:#1b1f24; color:#fff; min-height:48px;}
+  .sq-row button.sq-alt{background:#fff; color:#1b1f24; box-shadow:inset 0 0 0 2px #dfe2e7;}
+  .sq-row button.sq-ok{background:#1f7a46;}
+  .sq-row button:active{transform:scale(.985);}
+  .sq-note{margin-top:11px; font-size:.8rem; color:#8a929c; line-height:1.45;}
+</style>
+<script>/* QR-Code: qrcodejs von David Shim (MIT) – dieselbe Bibliothek wie in der Digitalen Tafel */
+var QRCode;!function(){function a(a){this.mode=c.MODE_8BIT_BYTE,this.data=a,this.parsedData=[];for(var b=[],d=0,e=this.data.length;e>d;d++){var f=this.data.charCodeAt(d);f>65536?(b[0]=240|(1835008&f)>>>18,b[1]=128|(258048&f)>>>12,b[2]=128|(4032&f)>>>6,b[3]=128|63&f):f>2048?(b[0]=224|(61440&f)>>>12,b[1]=128|(4032&f)>>>6,b[2]=128|63&f):f>128?(b[0]=192|(1984&f)>>>6,b[1]=128|63&f):b[0]=f,this.parsedData=this.parsedData.concat(b)}this.parsedData.length!=this.data.length&&(this.parsedData.unshift(191),this.parsedData.unshift(187),this.parsedData.unshift(239))}function b(a,b){this.typeNumber=a,this.errorCorrectLevel=b,this.modules=null,this.moduleCount=0,this.dataCache=null,this.dataList=[]}function i(a,b){if(void 0==a.length)throw new Error(a.length+"/"+b);for(var c=0;c<a.length&&0==a[c];)c++;this.num=new Array(a.length-c+b);for(var d=0;d<a.length-c;d++)this.num[d]=a[d+c]}function j(a,b){this.totalCount=a,this.dataCount=b}function k(){this.buffer=[],this.length=0}function m(){return"undefined"!=typeof CanvasRenderingContext2D}function n(){var a=!1,b=navigator.userAgent;return/android/i.test(b)&&(a=!0,aMat=b.toString().match(/android ([0-9]\.[0-9])/i),aMat&&aMat[1]&&(a=parseFloat(aMat[1]))),a}function r(a,b){for(var c=1,e=s(a),f=0,g=l.length;g>=f;f++){var h=0;switch(b){case d.L:h=l[f][0];break;case d.M:h=l[f][1];break;case d.Q:h=l[f][2];break;case d.H:h=l[f][3]}if(h>=e)break;c++}if(c>l.length)throw new Error("Too long data");return c}function s(a){var b=encodeURI(a).toString().replace(/\%[0-9a-fA-F]{2}/g,"a");return b.length+(b.length!=a?3:0)}a.prototype={getLength:function(){return this.parsedData.length},write:function(a){for(var b=0,c=this.parsedData.length;c>b;b++)a.put(this.parsedData[b],8)}},b.prototype={addData:function(b){var c=new a(b);this.dataList.push(c),this.dataCache=null},isDark:function(a,b){if(0>a||this.moduleCount<=a||0>b||this.moduleCount<=b)throw new Error(a+","+b);return this.modules[a][b]},getModuleCount:function(){return this.moduleCount},make:function(){this.makeImpl(!1,this.getBestMaskPattern())},makeImpl:function(a,c){this.moduleCount=4*this.typeNumber+17,this.modules=new Array(this.moduleCount);for(var d=0;d<this.moduleCount;d++){this.modules[d]=new Array(this.moduleCount);for(var e=0;e<this.moduleCount;e++)this.modules[d][e]=null}this.setupPositionProbePattern(0,0),this.setupPositionProbePattern(this.moduleCount-7,0),this.setupPositionProbePattern(0,this.moduleCount-7),this.setupPositionAdjustPattern(),this.setupTimingPattern(),this.setupTypeInfo(a,c),this.typeNumber>=7&&this.setupTypeNumber(a),null==this.dataCache&&(this.dataCache=b.createData(this.typeNumber,this.errorCorrectLevel,this.dataList)),this.mapData(this.dataCache,c)},setupPositionProbePattern:function(a,b){for(var c=-1;7>=c;c++)if(!(-1>=a+c||this.moduleCount<=a+c))for(var d=-1;7>=d;d++)-1>=b+d||this.moduleCount<=b+d||(this.modules[a+c][b+d]=c>=0&&6>=c&&(0==d||6==d)||d>=0&&6>=d&&(0==c||6==c)||c>=2&&4>=c&&d>=2&&4>=d?!0:!1)},getBestMaskPattern:function(){for(var a=0,b=0,c=0;8>c;c++){this.makeImpl(!0,c);var d=f.getLostPoint(this);(0==c||a>d)&&(a=d,b=c)}return b},createMovieClip:function(a,b,c){var d=a.createEmptyMovieClip(b,c),e=1;this.make();for(var f=0;f<this.modules.length;f++)for(var g=f*e,h=0;h<this.modules[f].length;h++){var i=h*e,j=this.modules[f][h];j&&(d.beginFill(0,100),d.moveTo(i,g),d.lineTo(i+e,g),d.lineTo(i+e,g+e),d.lineTo(i,g+e),d.endFill())}return d},setupTimingPattern:function(){for(var a=8;a<this.moduleCount-8;a++)null==this.modules[a][6]&&(this.modules[a][6]=0==a%2);for(var b=8;b<this.moduleCount-8;b++)null==this.modules[6][b]&&(this.modules[6][b]=0==b%2)},setupPositionAdjustPattern:function(){for(var a=f.getPatternPosition(this.typeNumber),b=0;b<a.length;b++)for(var c=0;c<a.length;c++){var d=a[b],e=a[c];if(null==this.modules[d][e])for(var g=-2;2>=g;g++)for(var h=-2;2>=h;h++)this.modules[d+g][e+h]=-2==g||2==g||-2==h||2==h||0==g&&0==h?!0:!1}},setupTypeNumber:function(a){for(var b=f.getBCHTypeNumber(this.typeNumber),c=0;18>c;c++){var d=!a&&1==(1&b>>c);this.modules[Math.floor(c/3)][c%3+this.moduleCount-8-3]=d}for(var c=0;18>c;c++){var d=!a&&1==(1&b>>c);this.modules[c%3+this.moduleCount-8-3][Math.floor(c/3)]=d}},setupTypeInfo:function(a,b){for(var c=this.errorCorrectLevel<<3|b,d=f.getBCHTypeInfo(c),e=0;15>e;e++){var g=!a&&1==(1&d>>e);6>e?this.modules[e][8]=g:8>e?this.modules[e+1][8]=g:this.modules[this.moduleCount-15+e][8]=g}for(var e=0;15>e;e++){var g=!a&&1==(1&d>>e);8>e?this.modules[8][this.moduleCount-e-1]=g:9>e?this.modules[8][15-e-1+1]=g:this.modules[8][15-e-1]=g}this.modules[this.moduleCount-8][8]=!a},mapData:function(a,b){for(var c=-1,d=this.moduleCount-1,e=7,g=0,h=this.moduleCount-1;h>0;h-=2)for(6==h&&h--;;){for(var i=0;2>i;i++)if(null==this.modules[d][h-i]){var j=!1;g<a.length&&(j=1==(1&a[g]>>>e));var k=f.getMask(b,d,h-i);k&&(j=!j),this.modules[d][h-i]=j,e--,-1==e&&(g++,e=7)}if(d+=c,0>d||this.moduleCount<=d){d-=c,c=-c;break}}}},b.PAD0=236,b.PAD1=17,b.createData=function(a,c,d){for(var e=j.getRSBlocks(a,c),g=new k,h=0;h<d.length;h++){var i=d[h];g.put(i.mode,4),g.put(i.getLength(),f.getLengthInBits(i.mode,a)),i.write(g)}for(var l=0,h=0;h<e.length;h++)l+=e[h].dataCount;if(g.getLengthInBits()>8*l)throw new Error("code length overflow. ("+g.getLengthInBits()+">"+8*l+")");for(g.getLengthInBits()+4<=8*l&&g.put(0,4);0!=g.getLengthInBits()%8;)g.putBit(!1);for(;;){if(g.getLengthInBits()>=8*l)break;if(g.put(b.PAD0,8),g.getLengthInBits()>=8*l)break;g.put(b.PAD1,8)}return b.createBytes(g,e)},b.createBytes=function(a,b){for(var c=0,d=0,e=0,g=new Array(b.length),h=new Array(b.length),j=0;j<b.length;j++){var k=b[j].dataCount,l=b[j].totalCount-k;d=Math.max(d,k),e=Math.max(e,l),g[j]=new Array(k);for(var m=0;m<g[j].length;m++)g[j][m]=255&a.buffer[m+c];c+=k;var n=f.getErrorCorrectPolynomial(l),o=new i(g[j],n.getLength()-1),p=o.mod(n);h[j]=new Array(n.getLength()-1);for(var m=0;m<h[j].length;m++){var q=m+p.getLength()-h[j].length;h[j][m]=q>=0?p.get(q):0}}for(var r=0,m=0;m<b.length;m++)r+=b[m].totalCount;for(var s=new Array(r),t=0,m=0;d>m;m++)for(var j=0;j<b.length;j++)m<g[j].length&&(s[t++]=g[j][m]);for(var m=0;e>m;m++)for(var j=0;j<b.length;j++)m<h[j].length&&(s[t++]=h[j][m]);return s};for(var c={MODE_NUMBER:1,MODE_ALPHA_NUM:2,MODE_8BIT_BYTE:4,MODE_KANJI:8},d={L:1,M:0,Q:3,H:2},e={PATTERN000:0,PATTERN001:1,PATTERN010:2,PATTERN011:3,PATTERN100:4,PATTERN101:5,PATTERN110:6,PATTERN111:7},f={PATTERN_POSITION_TABLE:[[],[6,18],[6,22],[6,26],[6,30],[6,34],[6,22,38],[6,24,42],[6,26,46],[6,28,50],[6,30,54],[6,32,58],[6,34,62],[6,26,46,66],[6,26,48,70],[6,26,50,74],[6,30,54,78],[6,30,56,82],[6,30,58,86],[6,34,62,90],[6,28,50,72,94],[6,26,50,74,98],[6,30,54,78,102],[6,28,54,80,106],[6,32,58,84,110],[6,30,58,86,114],[6,34,62,90,118],[6,26,50,74,98,122],[6,30,54,78,102,126],[6,26,52,78,104,130],[6,30,56,82,108,134],[6,34,60,86,112,138],[6,30,58,86,114,142],[6,34,62,90,118,146],[6,30,54,78,102,126,150],[6,24,50,76,102,128,154],[6,28,54,80,106,132,158],[6,32,58,84,110,136,162],[6,26,54,82,110,138,166],[6,30,58,86,114,142,170]],G15:1335,G18:7973,G15_MASK:21522,getBCHTypeInfo:function(a){for(var b=a<<10;f.getBCHDigit(b)-f.getBCHDigit(f.G15)>=0;)b^=f.G15<<f.getBCHDigit(b)-f.getBCHDigit(f.G15);return(a<<10|b)^f.G15_MASK},getBCHTypeNumber:function(a){for(var b=a<<12;f.getBCHDigit(b)-f.getBCHDigit(f.G18)>=0;)b^=f.G18<<f.getBCHDigit(b)-f.getBCHDigit(f.G18);return a<<12|b},getBCHDigit:function(a){for(var b=0;0!=a;)b++,a>>>=1;return b},getPatternPosition:function(a){return f.PATTERN_POSITION_TABLE[a-1]},getMask:function(a,b,c){switch(a){case e.PATTERN000:return 0==(b+c)%2;case e.PATTERN001:return 0==b%2;case e.PATTERN010:return 0==c%3;case e.PATTERN011:return 0==(b+c)%3;case e.PATTERN100:return 0==(Math.floor(b/2)+Math.floor(c/3))%2;case e.PATTERN101:return 0==b*c%2+b*c%3;case e.PATTERN110:return 0==(b*c%2+b*c%3)%2;case e.PATTERN111:return 0==(b*c%3+(b+c)%2)%2;default:throw new Error("bad maskPattern:"+a)}},getErrorCorrectPolynomial:function(a){for(var b=new i([1],0),c=0;a>c;c++)b=b.multiply(new i([1,g.gexp(c)],0));return b},getLengthInBits:function(a,b){if(b>=1&&10>b)switch(a){case c.MODE_NUMBER:return 10;case c.MODE_ALPHA_NUM:return 9;case c.MODE_8BIT_BYTE:return 8;case c.MODE_KANJI:return 8;default:throw new Error("mode:"+a)}else if(27>b)switch(a){case c.MODE_NUMBER:return 12;case c.MODE_ALPHA_NUM:return 11;case c.MODE_8BIT_BYTE:return 16;case c.MODE_KANJI:return 10;default:throw new Error("mode:"+a)}else{if(!(41>b))throw new Error("type:"+b);switch(a){case c.MODE_NUMBER:return 14;case c.MODE_ALPHA_NUM:return 13;case c.MODE_8BIT_BYTE:return 16;case c.MODE_KANJI:return 12;default:throw new Error("mode:"+a)}}},getLostPoint:function(a){for(var b=a.getModuleCount(),c=0,d=0;b>d;d++)for(var e=0;b>e;e++){for(var f=0,g=a.isDark(d,e),h=-1;1>=h;h++)if(!(0>d+h||d+h>=b))for(var i=-1;1>=i;i++)0>e+i||e+i>=b||(0!=h||0!=i)&&g==a.isDark(d+h,e+i)&&f++;f>5&&(c+=3+f-5)}for(var d=0;b-1>d;d++)for(var e=0;b-1>e;e++){var j=0;a.isDark(d,e)&&j++,a.isDark(d+1,e)&&j++,a.isDark(d,e+1)&&j++,a.isDark(d+1,e+1)&&j++,(0==j||4==j)&&(c+=3)}for(var d=0;b>d;d++)for(var e=0;b-6>e;e++)a.isDark(d,e)&&!a.isDark(d,e+1)&&a.isDark(d,e+2)&&a.isDark(d,e+3)&&a.isDark(d,e+4)&&!a.isDark(d,e+5)&&a.isDark(d,e+6)&&(c+=40);for(var e=0;b>e;e++)for(var d=0;b-6>d;d++)a.isDark(d,e)&&!a.isDark(d+1,e)&&a.isDark(d+2,e)&&a.isDark(d+3,e)&&a.isDark(d+4,e)&&!a.isDark(d+5,e)&&a.isDark(d+6,e)&&(c+=40);for(var k=0,e=0;b>e;e++)for(var d=0;b>d;d++)a.isDark(d,e)&&k++;var l=Math.abs(100*k/b/b-50)/5;return c+=10*l}},g={glog:function(a){if(1>a)throw new Error("glog("+a+")");return g.LOG_TABLE[a]},gexp:function(a){for(;0>a;)a+=255;for(;a>=256;)a-=255;return g.EXP_TABLE[a]},EXP_TABLE:new Array(256),LOG_TABLE:new Array(256)},h=0;8>h;h++)g.EXP_TABLE[h]=1<<h;for(var h=8;256>h;h++)g.EXP_TABLE[h]=g.EXP_TABLE[h-4]^g.EXP_TABLE[h-5]^g.EXP_TABLE[h-6]^g.EXP_TABLE[h-8];for(var h=0;255>h;h++)g.LOG_TABLE[g.EXP_TABLE[h]]=h;i.prototype={get:function(a){return this.num[a]},getLength:function(){return this.num.length},multiply:function(a){for(var b=new Array(this.getLength()+a.getLength()-1),c=0;c<this.getLength();c++)for(var d=0;d<a.getLength();d++)b[c+d]^=g.gexp(g.glog(this.get(c))+g.glog(a.get(d)));return new i(b,0)},mod:function(a){if(this.getLength()-a.getLength()<0)return this;for(var b=g.glog(this.get(0))-g.glog(a.get(0)),c=new Array(this.getLength()),d=0;d<this.getLength();d++)c[d]=this.get(d);for(var d=0;d<a.getLength();d++)c[d]^=g.gexp(g.glog(a.get(d))+b);return new i(c,0).mod(a)}},j.RS_BLOCK_TABLE=[[1,26,19],[1,26,16],[1,26,13],[1,26,9],[1,44,34],[1,44,28],[1,44,22],[1,44,16],[1,70,55],[1,70,44],[2,35,17],[2,35,13],[1,100,80],[2,50,32],[2,50,24],[4,25,9],[1,134,108],[2,67,43],[2,33,15,2,34,16],[2,33,11,2,34,12],[2,86,68],[4,43,27],[4,43,19],[4,43,15],[2,98,78],[4,49,31],[2,32,14,4,33,15],[4,39,13,1,40,14],[2,121,97],[2,60,38,2,61,39],[4,40,18,2,41,19],[4,40,14,2,41,15],[2,146,116],[3,58,36,2,59,37],[4,36,16,4,37,17],[4,36,12,4,37,13],[2,86,68,2,87,69],[4,69,43,1,70,44],[6,43,19,2,44,20],[6,43,15,2,44,16],[4,101,81],[1,80,50,4,81,51],[4,50,22,4,51,23],[3,36,12,8,37,13],[2,116,92,2,117,93],[6,58,36,2,59,37],[4,46,20,6,47,21],[7,42,14,4,43,15],[4,133,107],[8,59,37,1,60,38],[8,44,20,4,45,21],[12,33,11,4,34,12],[3,145,115,1,146,116],[4,64,40,5,65,41],[11,36,16,5,37,17],[11,36,12,5,37,13],[5,109,87,1,110,88],[5,65,41,5,66,42],[5,54,24,7,55,25],[11,36,12],[5,122,98,1,123,99],[7,73,45,3,74,46],[15,43,19,2,44,20],[3,45,15,13,46,16],[1,135,107,5,136,108],[10,74,46,1,75,47],[1,50,22,15,51,23],[2,42,14,17,43,15],[5,150,120,1,151,121],[9,69,43,4,70,44],[17,50,22,1,51,23],[2,42,14,19,43,15],[3,141,113,4,142,114],[3,70,44,11,71,45],[17,47,21,4,48,22],[9,39,13,16,40,14],[3,135,107,5,136,108],[3,67,41,13,68,42],[15,54,24,5,55,25],[15,43,15,10,44,16],[4,144,116,4,145,117],[17,68,42],[17,50,22,6,51,23],[19,46,16,6,47,17],[2,139,111,7,140,112],[17,74,46],[7,54,24,16,55,25],[34,37,13],[4,151,121,5,152,122],[4,75,47,14,76,48],[11,54,24,14,55,25],[16,45,15,14,46,16],[6,147,117,4,148,118],[6,73,45,14,74,46],[11,54,24,16,55,25],[30,46,16,2,47,17],[8,132,106,4,133,107],[8,75,47,13,76,48],[7,54,24,22,55,25],[22,45,15,13,46,16],[10,142,114,2,143,115],[19,74,46,4,75,47],[28,50,22,6,51,23],[33,46,16,4,47,17],[8,152,122,4,153,123],[22,73,45,3,74,46],[8,53,23,26,54,24],[12,45,15,28,46,16],[3,147,117,10,148,118],[3,73,45,23,74,46],[4,54,24,31,55,25],[11,45,15,31,46,16],[7,146,116,7,147,117],[21,73,45,7,74,46],[1,53,23,37,54,24],[19,45,15,26,46,16],[5,145,115,10,146,116],[19,75,47,10,76,48],[15,54,24,25,55,25],[23,45,15,25,46,16],[13,145,115,3,146,116],[2,74,46,29,75,47],[42,54,24,1,55,25],[23,45,15,28,46,16],[17,145,115],[10,74,46,23,75,47],[10,54,24,35,55,25],[19,45,15,35,46,16],[17,145,115,1,146,116],[14,74,46,21,75,47],[29,54,24,19,55,25],[11,45,15,46,46,16],[13,145,115,6,146,116],[14,74,46,23,75,47],[44,54,24,7,55,25],[59,46,16,1,47,17],[12,151,121,7,152,122],[12,75,47,26,76,48],[39,54,24,14,55,25],[22,45,15,41,46,16],[6,151,121,14,152,122],[6,75,47,34,76,48],[46,54,24,10,55,25],[2,45,15,64,46,16],[17,152,122,4,153,123],[29,74,46,14,75,47],[49,54,24,10,55,25],[24,45,15,46,46,16],[4,152,122,18,153,123],[13,74,46,32,75,47],[48,54,24,14,55,25],[42,45,15,32,46,16],[20,147,117,4,148,118],[40,75,47,7,76,48],[43,54,24,22,55,25],[10,45,15,67,46,16],[19,148,118,6,149,119],[18,75,47,31,76,48],[34,54,24,34,55,25],[20,45,15,61,46,16]],j.getRSBlocks=function(a,b){var c=j.getRsBlockTable(a,b);if(void 0==c)throw new Error("bad rs block @ typeNumber:"+a+"/errorCorrectLevel:"+b);for(var d=c.length/3,e=[],f=0;d>f;f++)for(var g=c[3*f+0],h=c[3*f+1],i=c[3*f+2],k=0;g>k;k++)e.push(new j(h,i));return e},j.getRsBlockTable=function(a,b){switch(b){case d.L:return j.RS_BLOCK_TABLE[4*(a-1)+0];case d.M:return j.RS_BLOCK_TABLE[4*(a-1)+1];case d.Q:return j.RS_BLOCK_TABLE[4*(a-1)+2];case d.H:return j.RS_BLOCK_TABLE[4*(a-1)+3];default:return void 0}},k.prototype={get:function(a){var b=Math.floor(a/8);return 1==(1&this.buffer[b]>>>7-a%8)},put:function(a,b){for(var c=0;b>c;c++)this.putBit(1==(1&a>>>b-c-1))},getLengthInBits:function(){return this.length},putBit:function(a){var b=Math.floor(this.length/8);this.buffer.length<=b&&this.buffer.push(0),a&&(this.buffer[b]|=128>>>this.length%8),this.length++}};var l=[[17,14,11,7],[32,26,20,14],[53,42,32,24],[78,62,46,34],[106,84,60,44],[134,106,74,58],[154,122,86,64],[192,152,108,84],[230,180,130,98],[271,213,151,119],[321,251,177,137],[367,287,203,155],[425,331,241,177],[458,362,258,194],[520,412,292,220],[586,450,322,250],[644,504,364,280],[718,560,394,310],[792,624,442,338],[858,666,482,382],[929,711,509,403],[1003,779,565,439],[1091,857,611,461],[1171,911,661,511],[1273,997,715,535],[1367,1059,751,593],[1465,1125,805,625],[1528,1190,868,658],[1628,1264,908,698],[1732,1370,982,742],[1840,1452,1030,790],[1952,1538,1112,842],[2068,1628,1168,898],[2188,1722,1228,958],[2303,1809,1283,983],[2431,1911,1351,1051],[2563,1989,1423,1093],[2699,2099,1499,1139],[2809,2213,1579,1219],[2953,2331,1663,1273]],o=function(){var a=function(a,b){this._el=a,this._htOption=b};return a.prototype.draw=function(a){function g(a,b){var c=document.createElementNS("http://www.w3.org/2000/svg",a);for(var d in b)b.hasOwnProperty(d)&&c.setAttribute(d,b[d]);return c}var b=this._htOption,c=this._el,d=a.getModuleCount();Math.floor(b.width/d),Math.floor(b.height/d),this.clear();var h=g("svg",{viewBox:"0 0 "+String(d)+" "+String(d),width:"100%",height:"100%",fill:b.colorLight});h.setAttributeNS("http://www.w3.org/2000/xmlns/","xmlns:xlink","http://www.w3.org/1999/xlink"),c.appendChild(h),h.appendChild(g("rect",{fill:b.colorDark,width:"1",height:"1",id:"template"}));for(var i=0;d>i;i++)for(var j=0;d>j;j++)if(a.isDark(i,j)){var k=g("use",{x:String(i),y:String(j)});k.setAttributeNS("http://www.w3.org/1999/xlink","href","#template"),h.appendChild(k)}},a.prototype.clear=function(){for(;this._el.hasChildNodes();)this._el.removeChild(this._el.lastChild)},a}(),p="svg"===document.documentElement.tagName.toLowerCase(),q=p?o:m()?function(){function a(){this._elImage.src=this._elCanvas.toDataURL("image/png"),this._elImage.style.display="block",this._elCanvas.style.display="none"}function d(a,b){var c=this;if(c._fFail=b,c._fSuccess=a,null===c._bSupportDataURI){var d=document.createElement("img"),e=function(){c._bSupportDataURI=!1,c._fFail&&_fFail.call(c)},f=function(){c._bSupportDataURI=!0,c._fSuccess&&c._fSuccess.call(c)};return d.onabort=e,d.onerror=e,d.onload=f,d.src="data:image/gif;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg==",void 0}c._bSupportDataURI===!0&&c._fSuccess?c._fSuccess.call(c):c._bSupportDataURI===!1&&c._fFail&&c._fFail.call(c)}if(this._android&&this._android<=2.1){var b=1/window.devicePixelRatio,c=CanvasRenderingContext2D.prototype.drawImage;CanvasRenderingContext2D.prototype.drawImage=function(a,d,e,f,g,h,i,j){if("nodeName"in a&&/img/i.test(a.nodeName))for(var l=arguments.length-1;l>=1;l--)arguments[l]=arguments[l]*b;else"undefined"==typeof j&&(arguments[1]*=b,arguments[2]*=b,arguments[3]*=b,arguments[4]*=b);c.apply(this,arguments)}}var e=function(a,b){this._bIsPainted=!1,this._android=n(),this._htOption=b,this._elCanvas=document.createElement("canvas"),this._elCanvas.width=b.width,this._elCanvas.height=b.height,a.appendChild(this._elCanvas),this._el=a,this._oContext=this._elCanvas.getContext("2d"),this._bIsPainted=!1,this._elImage=document.createElement("img"),this._elImage.style.display="none",this._el.appendChild(this._elImage),this._bSupportDataURI=null};return e.prototype.draw=function(a){var b=this._elImage,c=this._oContext,d=this._htOption,e=a.getModuleCount(),f=d.width/e,g=d.height/e,h=Math.round(f),i=Math.round(g);b.style.display="none",this.clear();for(var j=0;e>j;j++)for(var k=0;e>k;k++){var l=a.isDark(j,k),m=k*f,n=j*g;c.strokeStyle=l?d.colorDark:d.colorLight,c.lineWidth=1,c.fillStyle=l?d.colorDark:d.colorLight,c.fillRect(m,n,f,g),c.strokeRect(Math.floor(m)+.5,Math.floor(n)+.5,h,i),c.strokeRect(Math.ceil(m)-.5,Math.ceil(n)-.5,h,i)}this._bIsPainted=!0},e.prototype.makeImage=function(){this._bIsPainted&&d.call(this,a)},e.prototype.isPainted=function(){return this._bIsPainted},e.prototype.clear=function(){this._oContext.clearRect(0,0,this._elCanvas.width,this._elCanvas.height),this._bIsPainted=!1},e.prototype.round=function(a){return a?Math.floor(1e3*a)/1e3:a},e}():function(){var a=function(a,b){this._el=a,this._htOption=b};return a.prototype.draw=function(a){for(var b=this._htOption,c=this._el,d=a.getModuleCount(),e=Math.floor(b.width/d),f=Math.floor(b.height/d),g=['<table style="border:0;border-collapse:collapse;">'],h=0;d>h;h++){g.push("<tr>");for(var i=0;d>i;i++)g.push('<td style="border:0;border-collapse:collapse;padding:0;margin:0;width:'+e+"px;height:"+f+"px;background-color:"+(a.isDark(h,i)?b.colorDark:b.colorLight)+';"></td>');g.push("</tr>")}g.push("</table>"),c.innerHTML=g.join("");var j=c.childNodes[0],k=(b.width-j.offsetWidth)/2,l=(b.height-j.offsetHeight)/2;k>0&&l>0&&(j.style.margin=l+"px "+k+"px")},a.prototype.clear=function(){this._el.innerHTML=""},a}();QRCode=function(a,b){if(this._htOption={width:256,height:256,typeNumber:4,colorDark:"#000000",colorLight:"#ffffff",correctLevel:d.H},"string"==typeof b&&(b={text:b}),b)for(var c in b)this._htOption[c]=b[c];"string"==typeof a&&(a=document.getElementById(a)),this._android=n(),this._el=a,this._oQRCode=null,this._oDrawing=new q(this._el,this._htOption),this._htOption.text&&this.makeCode(this._htOption.text)},QRCode.prototype.makeCode=function(a){this._oQRCode=new b(r(a,this._htOption.correctLevel),this._htOption.correctLevel),this._oQRCode.addData(a),this._oQRCode.make(),this._el.title=a,this._oDrawing.draw(this._oQRCode),this.makeImage()},QRCode.prototype.makeImage=function(){"function"==typeof this._oDrawing.makeImage&&(!this._android||this._android>=3)&&this._oDrawing.makeImage()},QRCode.prototype.clear=function(){this._oDrawing.clear()},QRCode.CorrectLevel=d}();
+</script>
+<script>
+(function(){
+  "use strict";
+  if(window.ShareQR) return;
+
+  var ANCHOR = "_";          // Startbildschirm: Knopf nur sichtbar, solange der zu sehen ist
+  var INLINE = "#huntmeta";          // optional: Leiste, in die der Knopf direkt eingebaut wird
+  var BASE_KEY = "spieleSuite.basis";
+  var BASE_STD = "https://mauthier-bit.github.io/Spiele-Suite/";
+
+  /* ---------------- Adresse bestimmen ---------------- */
+  function basis(){
+    var b=null;
+    try{ b=localStorage.getItem(BASE_KEY); }catch(e){}
+    b=b||BASE_STD;
+    return b.charAt(b.length-1)==="/" ? b : b+"/";
+  }
+  function dateiname(){
+    var p=location.pathname||"";
+    var name=p.substring(p.lastIndexOf("/")+1);
+    try{ name=decodeURIComponent(name); }catch(e){}
+    return /^[\w.%+ -]{1,80}\.html?$/i.test(name) ? name : "index.html";
+  }
+  function adresse(){
+    if(location.protocol==="http:"||location.protocol==="https:") return location.href.split("#")[0];
+    return basis()+encodeURIComponent(dateiname());
+  }
+
+  /* ---------------- QR-Code zeichnen ---------------- */
+  function zeichneCode(host,url){
+    host.innerHTML="";
+    host.style.removeProperty("--sq-w");
+    if(typeof QRCode==="undefined"){
+      host.innerHTML='<div style="padding:18px;color:#8a929c;font-size:.9rem;">QR-Code nicht verfügbar – bitte den Link weitergeben.</div>';
+      return;
+    }
+    try{
+      var q=new QRCode(host,{text:url, width:900, height:900, correctLevel:QRCode.CorrectLevel.M});
+      /* Ruhezone: vier Module weiß ringsum, sonst findet die Kamera den Code nicht */
+      var n=q._oQRCode && q._oQRCode.getModuleCount ? q._oQRCode.getModuleCount() : 0;
+      if(n) host.style.setProperty("--sq-w", (100*n/(n+8)).toFixed(2)+"%");
+    }catch(e){
+      host.innerHTML='<div style="padding:18px;color:#8a929c;font-size:.9rem;">Die Adresse ist zu lang für einen QR-Code – bitte den Link kopieren.</div>';
+    }
+  }
+
+  /* ---------------- Oberfläche ---------------- */
+  var ov=null;
+  function baueOverlay(){
+    ov=document.createElement("div");
+    ov.className="sq-ov";
+    ov.innerHTML='<div class="sq-card">'+
+      '<h2 id="sqTitle">Teilen</h2><p class="sq-sub">Mit der Kamera scannen – das Spiel öffnet sich direkt im Browser.</p>'+
+      '<div class="sq-code" id="sqCode"></div>'+
+      '<div class="sq-url" id="sqUrl"></div>'+
+      '<div class="sq-row">'+
+        '<button class="sq-copy">Link kopieren</button>'+
+        '<button class="sq-alt sq-edit">Adresse ändern</button>'+
+        '<button class="sq-alt sq-close">Schließen</button>'+
+      '</div>'+
+      '<div class="sq-note" id="sqNote"></div>'+
+      '</div>';
+    document.body.appendChild(ov);
+    ov.addEventListener("click",function(e){ if(e.target===ov) zu(); });
+    ov.querySelector(".sq-close").addEventListener("click",zu);
+    ov.querySelector(".sq-copy").addEventListener("click",function(){ kopiereLink(this); });
+    ov.querySelector(".sq-edit").addEventListener("click",function(){
+      var neu=prompt("Internetadresse des Ordners, in dem die Spiele liegen:", basis());
+      if(neu===null) return;
+      neu=neu.trim();
+      try{ if(neu) localStorage.setItem(BASE_KEY,neu); else localStorage.removeItem(BASE_KEY); }catch(e){}
+      fuelle();
+    });
+  }
+  function fuelle(){
+    var url=adresse();
+    var t=(document.title||"").split(/[\u2013\u2014|\u00b7]/)[0].trim();
+    ov.querySelector("#sqTitle").textContent=(t||"Diese Seite")+" teilen";
+    zeichneCode(ov.querySelector("#sqCode"), url);
+    ov.querySelector("#sqUrl").textContent=url;
+    ov.querySelector("#sqNote").innerHTML = (location.protocol==="http:"||location.protocol==="https:")
+      ? "Das ist die Adresse dieser Seite."
+      : "Die Datei liegt lokal auf diesem Gerät. Der Code zeigt deshalb auf die veröffentlichte Fassung – über „Adresse ändern“ anpassbar.";
+  }
+  function kopiereLink(btn){
+    var url=adresse();
+    function melde(ok){
+      btn.textContent = ok ? "Kopiert \u2713" : "Bitte von Hand kopieren";
+      btn.classList.toggle("sq-ok", !!ok);
+      if(!ok){
+        try{
+          var el=ov.querySelector("#sqUrl"), r=document.createRange();
+          r.selectNodeContents(el);
+          var s=window.getSelection(); s.removeAllRanges(); s.addRange(r);
+        }catch(e){}
+      }
+      clearTimeout(btn._t);
+      btn._t=setTimeout(function(){ btn.textContent="Link kopieren"; btn.classList.remove("sq-ok"); },1900);
+    }
+    function altweg(){
+      try{
+        var ta=document.createElement("textarea");
+        ta.value=url; ta.setAttribute("readonly","");
+        ta.style.position="fixed"; ta.style.top="-1000px"; ta.style.opacity="0";
+        document.body.appendChild(ta);
+        ta.select(); ta.setSelectionRange(0,ta.value.length);
+        var ok=document.execCommand("copy");
+        document.body.removeChild(ta);
+        melde(ok);
+      }catch(e){ melde(false); }
+    }
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(url).then(function(){ melde(true); }, altweg);
+    } else altweg();
+  }
+  function auf(){ if(!ov) baueOverlay(); fuelle(); ov.classList.add("on"); }
+  function zu(){ if(ov) ov.classList.remove("on"); }
+
+  var ICON='<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 3h8v8H3V3zm2 2v4h4V5H5zm8-2h8v8h-8V3zm2 2v4h4V5h-4zM3 13h8v8H3v-8zm2 2v4h4v-4H5zm8-2h3v3h-3v-3zm5 0h3v3h-3v-3zm-5 5h3v3h-3v-3zm5 0h3v3h-3v-3z"/></svg>';
+  function knopf(){
+    var inline=INLINE && INLINE.charAt(0)!=="_" ? document.querySelector(INLINE) : null;
+    if(inline){
+      var b=document.createElement("button");
+      b.className=(inline.querySelector("button")? inline.querySelector("button").className : "")+" sq-inline";
+      b.type="button"; b.innerHTML=ICON+"<span>Teilen</span>";
+      b.addEventListener("click",auf);
+      inline.appendChild(b);
+      return;
+    }
+    var f=document.createElement("button");
+    f.className="sq-fab"; f.type="button";
+    f.innerHTML=ICON+"<span>Teilen</span>";
+    f.addEventListener("click",auf);
+    document.body.appendChild(f);
+    var sel = ANCHOR && ANCHOR.charAt(0)!=="_" ? ANCHOR : null;
+    function sichtbar(){
+      if(!sel) return true;
+      var els=document.querySelectorAll(sel);
+      for(var i=0;i<els.length;i++){
+        var cs=getComputedStyle(els[i]);
+        if(cs.display!=="none" && cs.visibility!=="hidden" && els[i].getClientRects().length) return true;
+      }
+      return false;
+    }
+    function pruefe(){ f.classList.toggle("on", sichtbar() && !(ov&&ov.classList.contains("on"))); }
+    pruefe();
+    setInterval(pruefe,400);
+  }
+  function start(){ knopf(); }
+  if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",start);
+  else start();
+
+  window.ShareQR={open:auf, close:zu, url:adresse, basis:basis};
+})();
+</script>
+
+</body>
+</html>
