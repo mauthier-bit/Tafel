@@ -4163,8 +4163,10 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   dieser Stelle** hörbar macht (gemessen: Gangunterschied 0 → 98 %, ½ λ → 7 %, 1 λ → 87 %, 1½ λ → 5 %).
   Der Ton geht nur auf Knopfdruck an und wird beim Reiterwechsel wieder stumm.
   **Quantenobjekte:** „Ein Objekt" schickt eines los, der **Objektstrom** viele – wie viele je Sekunde,
-  sagt die **Intensität**. Das **Ψ-Feld** sieht aus wie das Schallfeld, bedeutet hier aber die
-  Wahrscheinlichkeit: **wo ein Objekt auftrifft, würfelt das Werkzeug nach |Ψ|² am Schirm**. Zwischen
+  sagt die **Intensität**. Das **Ψ-Feld** zeigt **|Ψ|²**, also die Wahrscheinlichkeit, ein Objekt
+  anzutreffen – ein stehendes Bild, dessen helle Streifen Zeile für Zeile zu dem passen, was am
+  Schirm ankommt (eine Momentaufnahme der schwingenden Welle täte das nicht, ihre hellen Streifen
+  wandern ja). Es bedeutet also: **wo ein Objekt auftrifft, würfelt das Werkzeug nach |Ψ|² am Schirm**. Zwischen
   Spalt und Schirm ist nichts zu sehen – nach dem Weg wird nicht gefragt –, am Schirm blitzt der
   Einschlag auf. Mit **Sammeln** bleiben die Treffer ab dem Einschalten stehen: erst einzelne
   Punkte, dann wird aus ihnen das Muster. Ohne Sammeln verblasst jeder Einschlag nach kurzer Zeit

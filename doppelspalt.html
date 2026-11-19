@@ -474,7 +474,7 @@ function ampVoll(x,y){ let a=0;
    erst wenn die Front eines Spalts da ist, zählt sein Beitrag. RA/RB ist der Abstand
    zum jeweiligen Spalt. */
 let GW=0, GH=0, CrA=null, CiA=null, CrB=null, CiB=null, RA=null, RB=null,
-    img=null, off=null, octx=null, feldNorm=1, inkNorm=1, feldAlt='';
+    img=null, off=null, octx=null, feldNorm=1, inkNorm=1, psiNorm=1, feldAlt='';
 function feldSchluessel(){ return [D.d,D.b,LAM(),D.sp,GW,GH,Math.round(cvW),Math.round(cvH),wx0()].join('|'); }
 function feldBauen(){
   GW=Math.max(60,Math.min(440,Math.round(cvW/2))); GH=Math.max(50,Math.min(330,Math.round(cvH/2)));
@@ -509,6 +509,7 @@ function feldBauen(){
       if(wx>40){ const m=cr*cr+ci*ci; if(m>mx) mx=m; if(ink>mi) mi=ink; } } }
   feldNorm=1/Math.max(1e-6,Math.sqrt(mx)*0.62);
   inkNorm=1/Math.max(1e-9,mi*1.05);
+  psiNorm=1/Math.max(1e-9,mx*1.05);
   feldRmax=rmax+LAM(); }
 /* Das Feld wird nicht knallig gemalt: FELD_A ist die Deckkraft (der weiße Hintergrund
    scheint durch), weich() macht den Übergang um die Nulllinie sanft statt hart. */
@@ -516,15 +517,23 @@ let feldKey='';                       /* so war das Bild zuletzt gerechnet */
 function feldZeigen(){ ctx.imageSmoothingEnabled=true;
   const g=ctx.globalAlpha; ctx.globalAlpha=g*(D.fAlpha/100);
   ctx.drawImage(off,0,0,cvW,cvH); ctx.globalAlpha=g; }
-/* Farben wie in der Wellenwanne: Berg hell, Tal dunkelblau */
-function inkMalen(){
+/* ---------- Das Ψ-Bild der Quantenobjekte ----------
+   Hier wird nicht die schwingende Welle gemalt, sondern |Ψ|² – die Wahrscheinlichkeit,
+   ein Objekt anzutreffen. Das Bild steht still und passt deshalb Zeile für Zeile zu dem,
+   was am Schirm ankommt; eine Momentaufnahme der schwingenden Welle täte das nicht
+   (ihre hellen Streifen wandern ja). Mit Messung zählen die beiden Spalte einzeln
+   (|Ψ₁|² + |Ψ₂|²), ohne Messung die Summe der Amplituden – also mit Interferenz. */
+function dichteMalen(koh){
   if(!img) return;
-  const schl='ink|'+feldAlt+'|'+D.fPsi;
+  const schl=(koh?'psi|':'ink|')+feldAlt+'|'+D.fPsi;
   if(schl!==feldKey){ feldKey=schl;
     const d=img.data, P=rgb(D.fPsi), p0=P[0], p1=P[1], p2=P[2], N=GW*GH;
+    const nrm=koh?psiNorm:inkNorm;
     for(let i=0,j=0;i<N;i++,j+=4){
-      const ink=CrA[i]*CrA[i]+CiA[i]*CiA[i]+CrB[i]*CrB[i]+CiB[i]*CiB[i];
-      const t=1-weich(Math.pow(ink*inkNorm,0.8));
+      let v;
+      if(koh){ const cr=CrA[i]+CrB[i], ci=CiA[i]+CiB[i]; v=cr*cr+ci*ci; }
+      else v=CrA[i]*CrA[i]+CiA[i]*CiA[i]+CrB[i]*CrB[i]+CiB[i]*CiB[i];
+      const t=1-weich(Math.pow(v*nrm,0.8));
       d[j]=(p0+t*(255-p0)+0.5)|0; d[j+1]=(p1+t*(255-p1)+0.5)|0; d[j+2]=(p2+t*(255-p2)+0.5)|0; d[j+3]=255; }
     octx.putImageData(img,0,0); }
   feldZeigen(); }
@@ -1044,7 +1053,7 @@ function malen(){
     teilchenMalen();
     info='abgefeuert: '+abgefeuert+' · durch die Spalte: '+durch+' · am Schirm: '+getroffen;
   } else if(a==='q'){
-    if(D.psi){ if(D.mess) inkMalen(); else feldMalen(phase); }
+    if(D.psi) dichteMalen(!D.mess);
     aufbauMalen();
     if(D.mess) messMalen();
     if(D.sammeln&&!D.schirm) histoMalen(qhisto,'#7e22ce');
@@ -1276,7 +1285,9 @@ const HILFE='<ul>'+
  'Die <b>Wellenzüge</b> zeichnen die Welle längs der beiden Strahlen – so sieht man, wie viele Wellenlängen auf jeden Weg passen.</li>'+
  '<li><b>Quantenobjekte:</b> „Ein Objekt" schickt eines los, der <b>Objektstrom</b> viele – '+
  'wie viele je Sekunde, sagt die <b>Intensität</b>. Wo eines auftrifft, entscheidet der Zufall, '+
- 'aber nach der Wahrscheinlichkeit |Ψ|². Jeder Einschlag leuchtet nur kurz auf und verschwindet '+
+ 'aber nach der Wahrscheinlichkeit |Ψ|². Das <b>Ψ-Feld</b> zeigt genau diese Wahrscheinlichkeit: '+
+ 'helle Streifen dort, wo viele Objekte ankommen – es steht still und passt deshalb Zeile für '+
+ 'Zeile zum gesammelten Muster. Jeder Einschlag leuchtet nur kurz auf und verschwindet '+
  'wieder – bei schwachem Strom sieht man deshalb kein Muster, bei starkem schon. '+
  'Mit <b>Sammeln</b> bleiben die Treffer ab dem Einschalten stehen: erst '+
  'Punkt für Punkt, dann wird das Muster auch bei schwachem Strom sichtbar. Das <b>Messgerät</b> schaut nach, durch welchen '+
