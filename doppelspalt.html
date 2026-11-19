@@ -280,6 +280,7 @@
       <button class="btn" id="bMax">Maxima</button>
       <button class="btn" id="bMin">Minima</button>
       <button class="btn" id="bPunkt">Punkt P</button>
+      <button class="btn" id="bZuege">Wellenzüge</button>
       <button class="btn" id="bGang">Gangunterschied</button>
       <button class="btn" id="bDiag">Diagramm</button>
       <button class="btn" id="bMikro">🔊 Mikrofon</button>
@@ -309,7 +310,7 @@ const toast=m=>window.TafelShot&&TafelShot.toast(m);
 /* ---------- Zustand ---------- */
 const STD={ tab:'k', kmod:'t', lmod:'s',
   d:60, b:10, lam:34, tempo:5, lauf:false, dauer:false, histo:true, sp:'b',
-  feld:true, berge:false, taeler:false, imax:false, imin:false, pAn:false, gang:false, diag:false, mikro:false,
+  feld:true, berge:false, taeler:false, imax:false, imin:false, pAn:false, zuege:false, gang:false, diag:false, mikro:false,
   px:170, py:28, fontSize:14, edit:true };
 let D=Object.assign({},STD);
 let ready=false, geteiltesFenster=false;
@@ -468,8 +469,7 @@ function gangMalen(){
   const r1=Math.hypot(D.px,D.py-D.d/2), r2=Math.hypot(D.px,D.py+D.d/2);
   const ds=Math.abs(r1-r2), nl=ds/D.lam;
   const fern=r1>r2?[0,D.d/2]:[0,-D.d/2], nah=r1>r2?[0,-D.d/2]:[0,D.d/2], kurz=Math.min(r1,r2);
-  ctx.save(); ctx.lineWidth=2; ctx.strokeStyle='#ea580c';
-  [fern,nah].forEach(q=>{ ctx.beginPath(); ctx.moveTo(X(q[0]),Y(q[1])); ctx.lineTo(X(D.px),Y(D.py)); ctx.stroke(); });
+  ctx.save();
   const vx=D.px-fern[0], vy=D.py-fern[1], L=Math.hypot(vx,vy)||1;
   const sx=fern[0]+vx*(ds/L), sy=fern[1]+vy*(ds/L);      /* Schnittpunkt des Bogens */
   if(ds>0.01){
@@ -497,6 +497,12 @@ function punktMalen(){
 /* Zum Diagramm an P gehören die beiden Wellenzüge: entlang jedes Strahls vom Spalt zu P
    wird die Welle quer ausgelenkt gezeichnet. So ist zu sehen, wie viele Wellenlängen auf
    jeden Weg passen – und dass auf den längeren eine mehr (oder eine halbe mehr) geht. */
+/* Die beiden Strahlen vom Spalt zu P – sie gehören zu den Wellenzügen wie zum Gangunterschied */
+function strahlenMalen(){
+  ctx.save(); ctx.lineWidth=2; ctx.strokeStyle='#ea580c';
+  [1,-1].forEach(v=>{ if(!spAn(v)) return;
+    ctx.beginPath(); ctx.moveTo(X(0),Y(v*D.d/2)); ctx.lineTo(X(D.px),Y(D.py)); ctx.stroke(); });
+  ctx.restore(); }
 function strahlWellen(ph){
   const k=2*Math.PI/D.lam, amp=Math.max(5,Math.min(12,fs()*0.62))/sc;
   ctx.save(); ctx.lineWidth=1.8; ctx.strokeStyle='rgba(100,116,139,.9)';
@@ -583,9 +589,11 @@ function malen(){
     if((D.imax||D.imin)&&beide()) intfMalen();
     aufbauMalen(); lautsprecherMalen();
     if(D.pAn){
+      if(D.zuege||(D.gang&&beide())) strahlenMalen();
       if(D.gang&&beide()) info=gangMalen();
+      if(D.zuege) strahlWellen(phase);
       punktMalen();
-      if(D.diag){ strahlWellen(phase); diagMalen(phase); }
+      if(D.diag) diagMalen(phase);
       const f=feldAn(D.px,D.py), rel=f.amp/Math.max(1e-6,ampVoll(D.px,D.py));
       info=(info?info+' · ':'')+'Lautstärke '+Math.round(rel*100)+' %';
     }
@@ -654,9 +662,9 @@ function knoepfe(){
   if(!klass) $('bald').innerHTML='<b>'+(D.tab==='q'?'Quantenobjekte':'Licht')+'</b>'+
     'Dieser Reiter ist noch leer – er kommt als Nächstes. Fertig ist bisher der Reiter <b>Klassisch</b> mit Teilchen und Schallwelle.';
   [['bDauer',D.dauer],['bHisto',D.histo],['bFeld',D.feld],['bBerge',D.berge],['bTaeler',D.taeler],['bMax',D.imax],['bMin',D.imin],
-   ['bPunkt',D.pAn],['bGang',D.gang],['bDiag',D.diag],['bMikro',D.mikro]].forEach(([id,an])=>{
+   ['bPunkt',D.pAn],['bZuege',D.zuege],['bGang',D.gang],['bDiag',D.diag],['bMikro',D.mikro]].forEach(([id,an])=>{
     const b=$(id); if(b) b.classList.toggle('on',!!an); });
-  ['bDiag','bMikro'].forEach(id=>{ const b=$(id); if(b) b.disabled=!D.pAn; });
+  ['bDiag','bMikro','bZuege'].forEach(id=>{ const b=$(id); if(b) b.disabled=!D.pAn; });
   $('bGang').disabled=!D.pAn||!beide();
   $('bPlay').textContent=D.lauf?'⏸ Pause':'▶ Start';
   $('grpK').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.km===D.kmod));
@@ -678,7 +686,7 @@ reg('rgV','tempo');
 const um=(id,feld,nach)=>{ const b=$(id); if(!b) return;
   b.onclick=()=>{ D[feld]=!D[feld]; if(nach) nach(); knoepfe(); sync(); }; };
 um('bDauer','dauer'); um('bHisto','histo'); um('bFeld','feld'); um('bBerge','berge'); um('bTaeler','taeler');
-um('bMax','imax'); um('bMin','imin'); um('bGang','gang'); um('bDiag','diag');
+um('bMax','imax'); um('bMin','imin'); um('bZuege','zuege'); um('bGang','gang'); um('bDiag','diag');
 um('bPunkt','pAn',()=>{ if(!D.pAn){ D.mikro=false; tonAus(); } });
 $('bMikro').onclick=()=>{ if(!D.pAn) return;
   D.mikro=!D.mikro;
@@ -709,7 +717,8 @@ const HILFE='<ul>'+
  '<li>Mit <b>beide / oben / unten</b> läuft nur ein Lautsprecher – dann gibt es kein Muster mehr.</li>'+
  '<li><b>Punkt P</b> lässt sich mit dem Finger verschieben. Dazu gibt es den <b>Gangunterschied</b> '+
  '(die beiden Wege; der Kreisbogen um P durch den näheren Spalt schneidet den längeren Weg, das rote Stück am Spalt ist Δs), ein <b>Diagramm</b> mit den beiden Teilschwingungen und ihrer Summe '+
- 'und das <b>Mikrofon</b>, das den Ton mit der Lautstärke an dieser Stelle hörbar macht.</li>'+
+ 'und das <b>Mikrofon</b>, das den Ton mit der Lautstärke an dieser Stelle hörbar macht. '+
+ 'Die <b>Wellenzüge</b> zeichnen die Welle längs der beiden Strahlen – so sieht man, wie viele Wellenlängen auf jeden Weg passen.</li>'+
  '<li>Die Tonhöhe folgt aus der Wellenlänge: 34 cm sind rund 1000 Hz. '+
  'Die Geschwindigkeit ist nicht einstellbar – beim Schall liegt sie mit c = λ·f fest, '+
  'und die Teilchen sind alle gleich schnell. Der Regler <b>Tempo</b> ändert nur, wie schnell die Simulation läuft.</li></ul>';
@@ -743,7 +752,7 @@ function uebernimm(d){ if(!d) return;
   D.b=Math.max(2,Math.min(60,+d.b||s.b));
   D.lam=Math.max(10,Math.min(100,+d.lam||s.lam));
   D.tempo=Math.max(1,Math.min(10,+d.tempo||s.tempo));
-  ['lauf','dauer','histo','feld','berge','taeler','imax','imin','pAn','gang','diag'].forEach(k=>{ D[k]=!!d[k]; });
+  ['lauf','dauer','histo','feld','berge','taeler','imax','imin','pAn','zuege','gang','diag'].forEach(k=>{ D[k]=!!d[k]; });
   D.mikro=false;                                  /* Ton nie ungefragt einschalten */
   D.px=isFinite(+d.px)?+d.px:s.px; D.py=isFinite(+d.py)?+d.py:s.py;
   D.fontSize=Math.max(10,Math.min(22,+d.fontSize||s.fontSize));

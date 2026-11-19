@@ -4124,8 +4124,9 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   Strahlen, der **Kreisbogen um P durch den näheren Spalt** gestrichelt bis zum längeren Weg – das Stück
   zwischen Bogen und fernerem Spalt ist Δs und steht **rot am Spalt**, wo es entsteht (dazu
   „Δs = … cm = … λ · Verstärkung/Auslöschung"). Das **Diagramm** zeigt an P die beiden Teilschwingungen
-  und ihre Summe und zeichnet zugleich die **Wellenzüge längs der beiden Strahlen** – so sieht man, wie
-  viele Wellenlängen auf jeden Weg passen. Und das **Mikrofon**, das den Ton mit der **Lautstärke an
+  und ihre Summe. Die **Wellenzüge** sind ein eigener Knopf: sie zeichnen die Welle längs der beiden
+  Strahlen – immer zusammen mit den Strahlen zu P, so sieht man, wie viele Wellenlängen auf jeden Weg
+  passen und dass auf dem längeren eine halbe mehr liegt. Und das **Mikrofon**, das den Ton mit der **Lautstärke an
   dieser Stelle** hörbar macht (gemessen: Gangunterschied 0 → 98 %, ½ λ → 7 %, 1 λ → 87 %, 1½ λ → 5 %).
   Der Ton geht nur auf Knopfdruck an und wird beim Reiterwechsel wieder stumm.
 - **Lernlandkarte** (Diverses): eine Karte aus **Orten** (Aufgaben, Themen, Stationen), die durch
