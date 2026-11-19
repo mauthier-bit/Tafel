@@ -273,8 +273,10 @@
       <button class="btn on" id="bHisto">Histogramm</button>
     </span>
     <span id="optW" hidden>
+      <span class="seg" id="grpSp" title="Welcher Lautsprecher spielt?"><button data-sp="b" class="on">beide</button><button data-sp="o">oben</button><button data-sp="u">unten</button></span>
       <button class="btn on" id="bFeld">Wellenfeld</button>
-      <button class="btn" id="bLinien">Berge &amp; Täler</button>
+      <button class="btn" id="bBerge">Berge</button>
+      <button class="btn" id="bTaeler">Täler</button>
       <button class="btn" id="bMax">Maxima</button>
       <button class="btn" id="bMin">Minima</button>
       <button class="btn" id="bPunkt">Punkt P</button>
@@ -306,8 +308,8 @@ const toast=m=>window.TafelShot&&TafelShot.toast(m);
 
 /* ---------- Zustand ---------- */
 const STD={ tab:'k', kmod:'t', lmod:'s',
-  d:60, b:10, lam:34, tempo:5, lauf:false, dauer:false, histo:true,
-  feld:true, linien:false, imax:false, imin:false, pAn:false, gang:false, diag:false, mikro:false,
+  d:60, b:10, lam:34, tempo:5, lauf:false, dauer:false, histo:true, sp:'b',
+  feld:true, berge:false, taeler:false, imax:false, imin:false, pAn:false, gang:false, diag:false, mikro:false,
   px:170, py:28, fontSize:14, edit:true };
 let D=Object.assign({},STD);
 let ready=false, geteiltesFenster=false;
@@ -334,9 +336,11 @@ function mass(){
 /* ---------- Quellen (Huygens) ----------
    Ein breiter Spalt ist kein Punkt: er wird in mehrere Elementarwellen zerlegt,
    damit sich die Verbreiterung durch die Spaltbreite von selbst ergibt. */
+const spAn=v=>D.sp==='b'||(D.sp==='o'&&v>0)||(D.sp==='u'&&v<0);
+const beide=()=>D.sp==='b';
 function quellen(){
   const n=Math.max(1,Math.min(4,Math.round(D.b/D.lam*3)+1)), aus=[];
-  [-1,1].forEach(s=>{ const ym=s*D.d/2;
+  [1,-1].forEach(v=>{ if(!spAn(v)) return; const ym=v*D.d/2;
     for(let i=0;i<n;i++){ const t=n===1?0:(i/(n-1)-0.5);
       aus.push({x:0, y:ym+t*D.b, a:1/n}); } });
   return aus; }
@@ -344,13 +348,15 @@ function feldAn(x,y){ const k=2*Math.PI/D.lam; let cr=0, ci=0;
   quellen().forEach(s=>{ const dx=x-s.x, dy=y-s.y, r=Math.hypot(dx,dy)||0.01;
     const a=s.a/Math.sqrt(r); cr+=a*Math.cos(k*r); ci+=a*Math.sin(k*r); });
   return {cr, ci, amp:Math.hypot(cr,ci)}; }
-/* So laut wäre es, wenn sich beide Spalte an dieser Stelle voll verstärken */
-function ampVoll(x,y){ const r1=Math.hypot(x,y-D.d/2)||0.01, r2=Math.hypot(x,y+D.d/2)||0.01;
-  return 1/Math.sqrt(r1)+1/Math.sqrt(r2); }
+/* So laut wäre es, wenn sich alles, was gerade spielt, an dieser Stelle voll verstärkt */
+function ampVoll(x,y){ let a=0;
+  if(spAn(1)) a+=1/Math.sqrt(Math.hypot(x,y-D.d/2)||0.01);
+  if(spAn(-1)) a+=1/Math.sqrt(Math.hypot(x,y+D.d/2)||0.01);
+  return a||1e-6; }
 
 /* ---------- Feldbild ---------- */
 let GW=0, GH=0, Cr=null, Ci=null, img=null, off=null, octx=null, feldNorm=1, feldAlt='';
-function feldSchluessel(){ return [D.d,D.b,D.lam,GW,GH,Math.round(cvW),Math.round(cvH),wx0()].join('|'); }
+function feldSchluessel(){ return [D.d,D.b,D.lam,D.sp,GW,GH,Math.round(cvW),Math.round(cvH),wx0()].join('|'); }
 function feldBauen(){
   GW=Math.max(60,Math.min(440,Math.round(cvW/2))); GH=Math.max(50,Math.min(330,Math.round(cvH/2)));
   const key=feldSchluessel(); if(key===feldAlt&&Cr) return; feldAlt=key;
@@ -424,15 +430,17 @@ function histoMalen(){
 function bogen(c,x0,y0,r){
   const a=Math.acos(Math.max(-1,Math.min(1,0)));
   c.beginPath(); c.arc(X(x0),Y(y0),r*sc,-Math.PI/2,Math.PI/2); c.stroke(); }
+/* Wellenberge und Wellentäler lassen sich einzeln einblenden: Berge als durchgezogene,
+   Täler als gestrichelte Kreislinien um jeden Spalt. */
 function linienMalen(ph){
   const lam=D.lam, versch=lam*((ph/(2*Math.PI))%1);   /* nur innerhalb einer Wellenlänge wandern */
   ctx.save(); ctx.lineWidth=1.3;
-  [-1,1].forEach(s=>{ const ym=s*D.d/2;
+  [-1,1].forEach(v=>{ if(!spAn(v)) return; const ym=v*D.d/2;
     for(let n=0;n<60;n++){
       const rB=n*lam+versch, rT=rB+lam/2;
       if(rB*sc>cvW*1.6) break;
-      if(rB>0){ ctx.strokeStyle='rgba(15,38,86,.55)'; bogen(ctx,0,ym,rB); }
-      if(rT>0){ ctx.strokeStyle='rgba(37,99,235,.42)'; ctx.setLineDash([4,4]); bogen(ctx,0,ym,rT); ctx.setLineDash([]); } } });
+      if(D.berge&&rB>0){ ctx.strokeStyle='rgba(15,38,86,.55)'; ctx.setLineDash([]); bogen(ctx,0,ym,rB); }
+      if(D.taeler&&rT>0){ ctx.strokeStyle='rgba(37,99,235,.42)'; ctx.setLineDash([4,4]); bogen(ctx,0,ym,rT); ctx.setLineDash([]); } } });
   ctx.restore(); }
 /* Linien gleichen Gangunterschieds sind Hyperbeln mit den Spalten als Brennpunkten */
 function hyperbel(a){
@@ -453,17 +461,29 @@ function intfMalen(){
     for(let n=-nMax-1;n<=nMax;n++) hyperbel((n+0.5)*D.lam/2);
     ctx.setLineDash([]); }
   ctx.restore(); }
+/* Der Gangunterschied wird dort gezeigt, wo er entsteht: am Spalt.
+   Der Kreisbogen um P durch den näheren Spalt schneidet den längeren Weg – das Stück
+   zwischen Bogen und fernerem Spalt ist Δs und steht rot da. */
 function gangMalen(){
-  const f=feldAn(D.px,D.py), r1=Math.hypot(D.px,D.py-D.d/2), r2=Math.hypot(D.px,D.py+D.d/2);
+  const r1=Math.hypot(D.px,D.py-D.d/2), r2=Math.hypot(D.px,D.py+D.d/2);
   const ds=Math.abs(r1-r2), nl=ds/D.lam;
+  const fern=r1>r2?[0,D.d/2]:[0,-D.d/2], nah=r1>r2?[0,-D.d/2]:[0,D.d/2], kurz=Math.min(r1,r2);
   ctx.save(); ctx.lineWidth=2; ctx.strokeStyle='#ea580c';
-  [[0,D.d/2],[0,-D.d/2]].forEach(q=>{ ctx.beginPath(); ctx.moveTo(X(q[0]),Y(q[1])); ctx.lineTo(X(D.px),Y(D.py)); ctx.stroke(); });
-  /* das längere Stück dick hervorheben: um so viel ist der eine Weg weiter */
-  const lang=r1>r2?[0,D.d/2]:[0,-D.d/2], kurz=Math.min(r1,r2);
-  const vx=(D.px-lang[0]), vy=(D.py-lang[1]), L=Math.hypot(vx,vy)||1;
-  ctx.lineWidth=5; ctx.strokeStyle='rgba(234,88,12,.55)';
-  ctx.beginPath(); ctx.moveTo(X(lang[0]+vx*kurz/L),Y(lang[1]+vy*kurz/L));
-  ctx.lineTo(X(D.px),Y(D.py)); ctx.stroke();
+  [fern,nah].forEach(q=>{ ctx.beginPath(); ctx.moveTo(X(q[0]),Y(q[1])); ctx.lineTo(X(D.px),Y(D.py)); ctx.stroke(); });
+  const vx=D.px-fern[0], vy=D.py-fern[1], L=Math.hypot(vx,vy)||1;
+  const sx=fern[0]+vx*(ds/L), sy=fern[1]+vy*(ds/L);      /* Schnittpunkt des Bogens */
+  if(ds>0.01){
+    ctx.setLineDash([5,4]); ctx.lineWidth=1.6; ctx.strokeStyle='#b91c1c';
+    const a1=Math.atan2(-(nah[1]-D.py),nah[0]-D.px), a2=Math.atan2(-(sy-D.py),sx-D.px);
+    /* immer den kurzen Weg herum – bei Winkeln um ±180° zieht min/max sonst einen Vollkreis */
+    let dw=a2-a1; while(dw>Math.PI) dw-=2*Math.PI; while(dw<-Math.PI) dw+=2*Math.PI;
+    ctx.beginPath(); ctx.arc(X(D.px),Y(D.py),kurz*sc,a1,a1+dw,dw<0); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.lineWidth=5.5; ctx.strokeStyle='#dc2626';
+    ctx.beginPath(); ctx.moveTo(X(fern[0]),Y(fern[1])); ctx.lineTo(X(sx),Y(sy)); ctx.stroke();
+    ctx.fillStyle='#dc2626'; ctx.font='800 '+Math.max(12,fs())+'px sans-serif';
+    ctx.textAlign='left'; ctx.textBaseline=fern[1]>0?'bottom':'top';
+    ctx.fillText('Δs', X((fern[0]+sx)/2)+8, Y((fern[1]+sy)/2)+(fern[1]>0?-4:4)); }
   ctx.restore();
   const art=Math.abs(nl-Math.round(nl))<0.12?'Verstärkung':(Math.abs(nl-Math.round(nl)-0.5)<0.12||Math.abs(nl-Math.round(nl)+0.5)<0.12?'Auslöschung':'dazwischen');
   return 'Δs = '+zahl(ds)+' cm = '+zahl(nl)+' λ · '+art; }
@@ -473,6 +493,22 @@ function punktMalen(){
   ctx.fillStyle='#fff'; ctx.fill(); ctx.lineWidth=2.6; ctx.strokeStyle='#7e22ce'; ctx.stroke();
   ctx.fillStyle='#7e22ce'; ctx.font='800 '+Math.max(12,fs())+'px sans-serif';
   ctx.textAlign='left'; ctx.textBaseline='bottom'; ctx.fillText('P',px+10,py-6);
+  ctx.restore(); }
+/* Zum Diagramm an P gehören die beiden Wellenzüge: entlang jedes Strahls vom Spalt zu P
+   wird die Welle quer ausgelenkt gezeichnet. So ist zu sehen, wie viele Wellenlängen auf
+   jeden Weg passen – und dass auf den längeren eine mehr (oder eine halbe mehr) geht. */
+function strahlWellen(ph){
+  const k=2*Math.PI/D.lam, amp=Math.max(5,Math.min(12,fs()*0.62))/sc;
+  ctx.save(); ctx.lineWidth=1.8; ctx.strokeStyle='rgba(100,116,139,.9)';
+  [1,-1].forEach(v=>{ if(!spAn(v)) return;
+    const sy=v*D.d/2, dx=D.px-0, dy=D.py-sy, r=Math.hypot(dx,dy)||1;
+    const ux=dx/r, uy=dy/r, nx=-uy, ny=ux;
+    const n=Math.max(40,Math.min(1200,Math.round(r*sc/2)));
+    ctx.beginPath();
+    for(let i=0;i<=n;i++){ const t=r*i/n, a=Math.sin(k*t-ph)*amp;
+      const wx=ux*t+nx*a, wy=sy+uy*t+ny*a;
+      if(i===0) ctx.moveTo(X(wx),Y(wy)); else ctx.lineTo(X(wx),Y(wy)); }
+    ctx.stroke(); });
   ctx.restore(); }
 function diagMalen(ph){
   const w=Math.max(120,fs()*9), h=Math.max(64,fs()*4.6);
@@ -519,8 +555,9 @@ function aufbauMalen(){
    Elementarwellen kommen. */
 function lautsprecherMalen(){
   const h=Math.max(13,Math.min(26,D.b*sc*0.9)), t=h*0.45, xb=X(0);
-  ctx.save(); ctx.lineWidth=1.6; ctx.strokeStyle='#1f2430'; ctx.fillStyle='#e2e8f0';
-  [-1,1].forEach(v=>{ const yc=Y(v*D.d/2);
+  ctx.save(); ctx.lineWidth=1.6;
+  [-1,1].forEach(v=>{ const yc=Y(v*D.d/2), an=spAn(v);
+    ctx.strokeStyle=an?'#1f2430':'#b6bfcc'; ctx.fillStyle=an?'#e2e8f0':'#f6f8fb';
     ctx.beginPath();
     ctx.moveTo(xb-t-t, yc-h*0.30); ctx.lineTo(xb-t, yc-h*0.30);
     ctx.lineTo(xb+t*0.5, yc-h*0.62); ctx.lineTo(xb+t*0.5, yc+h*0.62);
@@ -542,16 +579,17 @@ function malen(){
   let info='';
   if(D.tab==='k'&&D.kmod==='w'){
     if(D.feld) feldMalen(phase);
-    if(D.linien) linienMalen(phase);
-    if(D.imax||D.imin) intfMalen();
+    if(D.berge||D.taeler) linienMalen(phase);
+    if((D.imax||D.imin)&&beide()) intfMalen();
     aufbauMalen(); lautsprecherMalen();
     if(D.pAn){
-      if(D.gang) info=gangMalen();
+      if(D.gang&&beide()) info=gangMalen();
       punktMalen();
-      if(D.diag) diagMalen(phase);
+      if(D.diag){ strahlWellen(phase); diagMalen(phase); }
       const f=feldAn(D.px,D.py), rel=f.amp/Math.max(1e-6,ampVoll(D.px,D.py));
       info=(info?info+' · ':'')+'Lautstärke '+Math.round(rel*100)+' %';
     }
+    if(!beide()) info=(info?info+' · ':'')+'nur ein Lautsprecher – keine Interferenz';
     info=(info?info+' · ':'')+'λ = '+D.lam+' cm · f = '+Math.round(CSCHALL/D.lam)+' Hz';
   } else if(D.tab==='k'){
     aufbauMalen();
@@ -615,13 +653,16 @@ function knoepfe(){
   $('bald').hidden=klass;
   if(!klass) $('bald').innerHTML='<b>'+(D.tab==='q'?'Quantenobjekte':'Licht')+'</b>'+
     'Dieser Reiter ist noch leer – er kommt als Nächstes. Fertig ist bisher der Reiter <b>Klassisch</b> mit Teilchen und Schallwelle.';
-  [['bDauer',D.dauer],['bHisto',D.histo],['bFeld',D.feld],['bLinien',D.linien],['bMax',D.imax],['bMin',D.imin],
+  [['bDauer',D.dauer],['bHisto',D.histo],['bFeld',D.feld],['bBerge',D.berge],['bTaeler',D.taeler],['bMax',D.imax],['bMin',D.imin],
    ['bPunkt',D.pAn],['bGang',D.gang],['bDiag',D.diag],['bMikro',D.mikro]].forEach(([id,an])=>{
     const b=$(id); if(b) b.classList.toggle('on',!!an); });
-  ['bGang','bDiag','bMikro'].forEach(id=>{ const b=$(id); if(b) b.disabled=!D.pAn; });
+  ['bDiag','bMikro'].forEach(id=>{ const b=$(id); if(b) b.disabled=!D.pAn; });
+  $('bGang').disabled=!D.pAn||!beide();
   $('bPlay').textContent=D.lauf?'⏸ Pause':'▶ Start';
   $('grpK').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.km===D.kmod));
   $('grpL').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.lm===D.lmod));
+  $('grpSp').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.sp===D.sp));
+  ['bMax','bMin'].forEach(id=>{ $(id).disabled=!beide(); });
   $('rgD').value=D.d; $('vD').textContent=D.d+' cm';
   $('rgB').value=D.b; $('vB').textContent=D.b+' cm';
   $('rgL').value=D.lam; $('vL').textContent=D.lam+' cm';
@@ -636,7 +677,7 @@ reg('rgL','lam',()=>{ feldAlt=''; feldBauen(); });
 reg('rgV','tempo');
 const um=(id,feld,nach)=>{ const b=$(id); if(!b) return;
   b.onclick=()=>{ D[feld]=!D[feld]; if(nach) nach(); knoepfe(); sync(); }; };
-um('bDauer','dauer'); um('bHisto','histo'); um('bFeld','feld'); um('bLinien','linien');
+um('bDauer','dauer'); um('bHisto','histo'); um('bFeld','feld'); um('bBerge','berge'); um('bTaeler','taeler');
 um('bMax','imax'); um('bMin','imin'); um('bGang','gang'); um('bDiag','diag');
 um('bPunkt','pAn',()=>{ if(!D.pAn){ D.mikro=false; tonAus(); } });
 $('bMikro').onclick=()=>{ if(!D.pAn) return;
@@ -649,6 +690,7 @@ $('bPlay').onclick=()=>{ D.lauf=!D.lauf; knoepfe(); sync(); };
 $('bReset').onclick=()=>{ neuStart(); D.lauf=false; knoepfe(); sync(); };
 $('grpK').querySelectorAll('button').forEach(b=>{ b.onclick=()=>{ D.kmod=b.dataset.km; neuStart(); knoepfe(); resize(); sync(); }; });
 $('grpL').querySelectorAll('button').forEach(b=>{ b.onclick=()=>{ D.lmod=b.dataset.lm; knoepfe(); sync(); }; });
+$('grpSp').querySelectorAll('button').forEach(b=>{ b.onclick=()=>{ D.sp=b.dataset.sp; feldAlt=''; feldBauen(); knoepfe(); sync(); }; });
 [['rK','k'],['rQ','q'],['rL','l']].forEach(([id,t])=>{ $(id).onclick=()=>{ D.tab=t;
   if(t!=='k'){ tonAus(); } knoepfe(); sync(); }; });
 $('fnM').onclick=()=>setFs((D.fontSize||14)-1);
@@ -662,10 +704,11 @@ const HILFE='<ul>'+
  'Wer einen Spalt trifft, fliegt geradeaus weiter – sonst wird er geschluckt. Das Histogramm sammelt, wo die Teilchen ankommen: '+
  'zwei Streifen, kein Muster.</li>'+
  '<li><b>Klassisch · Welle:</b> Hinter den Spalten laufen zwei Elementarwellen los (Schall, 343 m/s). '+
- 'Einblenden lassen sich das Wellenfeld, Berge und Täler als Linien '+
+ 'Einblenden lassen sich das Wellenfeld, <b>Berge</b> und <b>Täler</b> als Kreislinien '+
  'sowie die Linien gleichen Gangunterschieds einzeln als <b>Maxima</b> (grün) und <b>Minima</b> (rot gestrichelt).</li>'+
+ '<li>Mit <b>beide / oben / unten</b> läuft nur ein Lautsprecher – dann gibt es kein Muster mehr.</li>'+
  '<li><b>Punkt P</b> lässt sich mit dem Finger verschieben. Dazu gibt es den <b>Gangunterschied</b> '+
- '(die beiden Wege und das überzählige Stück), ein <b>Diagramm</b> mit den beiden Teilschwingungen und ihrer Summe '+
+ '(die beiden Wege; der Kreisbogen um P durch den näheren Spalt schneidet den längeren Weg, das rote Stück am Spalt ist Δs), ein <b>Diagramm</b> mit den beiden Teilschwingungen und ihrer Summe '+
  'und das <b>Mikrofon</b>, das den Ton mit der Lautstärke an dieser Stelle hörbar macht.</li>'+
  '<li>Die Tonhöhe folgt aus der Wellenlänge: 34 cm sind rund 1000 Hz. '+
  'Die Geschwindigkeit ist nicht einstellbar – beim Schall liegt sie mit c = λ·f fest, '+
@@ -695,11 +738,12 @@ function uebernimm(d){ if(!d) return;
   const s=STD;
   D.tab=['k','q','l'].includes(d.tab)?d.tab:s.tab;
   D.kmod=d.kmod==='w'?'w':'t'; D.lmod=['s','w','p'].includes(d.lmod)?d.lmod:'s';
+  D.sp=['b','o','u'].includes(d.sp)?d.sp:'b';
   D.d=Math.max(20,Math.min(150,+d.d||s.d));
   D.b=Math.max(2,Math.min(60,+d.b||s.b));
   D.lam=Math.max(10,Math.min(100,+d.lam||s.lam));
   D.tempo=Math.max(1,Math.min(10,+d.tempo||s.tempo));
-  ['lauf','dauer','histo','feld','linien','imax','imin','pAn','gang','diag'].forEach(k=>{ D[k]=!!d[k]; });
+  ['lauf','dauer','histo','feld','berge','taeler','imax','imin','pAn','gang','diag'].forEach(k=>{ D[k]=!!d[k]; });
   D.mikro=false;                                  /* Ton nie ungefragt einschalten */
   D.px=isFinite(+d.px)?+d.px:s.px; D.py=isFinite(+d.py)?+d.py:s.py;
   D.fontSize=Math.max(10,Math.min(22,+d.fontSize||s.fontSize));
@@ -714,7 +758,7 @@ addEventListener('message',e=>{
   uebernimm(e.data.data); ready=true;
   if(window.TafelModus) TafelModus.refresh(); });
 if(window.TafelTeilen&&!TafelTeilen.istGeteilt())
-  TafelTeilen.knopf($('barR'),'doppelspalt.html',()=>({w:'dspalt', d:zustand()}));
+  TafelTeilen.knopf($('barR'),'doppelspalt.html',()=>({w:'dspalt', d:zustand()}),{cls:'btn'});
 addEventListener('resize',resize);
 
 window.addEventListener('load',()=>{
