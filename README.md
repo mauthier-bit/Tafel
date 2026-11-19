@@ -4103,9 +4103,12 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   Die Längen tragen die Einheit, die zum Reiter passt: **cm** bei Schall, **nm** bei Quantenobjekten,
   **µm** beim Licht. Gerechnet wird mit denselben Zahlen – es kommt ja nur auf das Verhältnis von
   Wellenlänge und Spaltabstand an.
-  Die Bedienung steht in zwei Zeilen: **oben** alles, was am Spalt eingestellt wird (Spaltabstand,
-  Spaltbreite, Schirmabstand, welche Spalte offen sind) und alles, was **angezeigt** wird;
-  **unten** das Modell, die Regler dazu und der Ablauf. Der **Schirmabstand e** lässt sich auch am
+  Die Bedienung steht in zwei Zeilen: **oben** das Modell, die Regler dazu und der Ablauf,
+  **darunter** zwei Klapplisten – **Spalt** (Spaltabstand, Spaltbreite, Schirmabstand, welche Spalte
+  offen sind, Messgerät) und **Anzeigen** (alles, was eingeblendet werden kann). Die Knöpfe sagen,
+  was dahintersteckt: „Anzeigen · 3" heißt drei eingeblendete Sachen, „Spalt · nur oben" heißt,
+  dass ein Spalt zu ist. Eine Liste schließt sich, sobald man daneben tippt.
+  Der **Schirmabstand e** lässt sich auch am
   **Griff auf dem Schirm** ziehen, der **Spaltabstand** an einem Spalt, **P** überall im Feld.
   Hinter dem **⚙** neben dem „?" stehen die **Farben** von Wellenfeld, Bergen, Tälern, Maxima,
   Minima und Strahlen, ihre **Strichstärken** und die **Deckkraft** des Feldes; die Einstellung
