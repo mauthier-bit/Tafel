@@ -4127,7 +4127,8 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   **Klassisch · Teilchen:** „Ein Teilchen" schießt einzeln, „Dauerfeuer" fortlaufend. Die Quelle liegt
   weit links außerhalb des Bildes (sonst träfen die Teilchen die Spalte zu steil); zu sehen ist nur das
   letzte Stück des Anflugs – gerade genug, um zu erkennen, dass ein Teil an der Blende **abgefangen**
-  wird. Wer einen Spalt trifft, fliegt **geradeaus** weiter. Wie dicht die Teilchen kommen, sagt der
+  wird. Wer einen **offenen** Spalt trifft, fliegt **geradeaus** weiter; ein geschlossener Spalt
+  ist zugemauert und hält die Teilchen auf (mit **beide Spalte / nur oben / nur unten**). Wie dicht die Teilchen kommen, sagt der
   Regler **Intensität** (1 bis 20 je Sekunde) – denselben gibt es beim Objektstrom. **Sammeln** hält die Treffer am Schirm fest – es entstehen
   **zwei Streifen**, kein Muster. Die Zählung (abgefeuert · durch die Spalte · am Schirm) steht unten.
   **Klassisch · Welle:** Hinter den Spalten laufen Elementarwellen los (**Schall**, 343 m/s; aus der
