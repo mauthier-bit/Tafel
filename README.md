@@ -4180,9 +4180,9 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   die Blende ist dort zugemauert. Damit das Muster wirklich entsteht, ist die Wellenlänge hier eigens
   einstellbar (Standard 12 nm bei 60 nm Spaltabstand); bei zu großer Wellenlänge liegt nur das mittlere
   Maximum im Bild und es sieht nach „kein Muster" aus.
-  **Licht:** vier Modelle nebeneinander – **Strahlen**, **Photonen** (klassisch, wie die Teilchen im
-  Reiter Klassisch), **Welle** (klassisch, wie die Schallwelle) und **Quantenobjekt** (wie die
-  Quantenobjekte); der ganze Name steht jeweils unten in der Hinweiszeile.
+  **Licht:** vier Modelle nebeneinander – **Strahlen**, **Teilchen** (klassisch, wie im Reiter
+  Klassisch), **Welle** (klassisch, wie die Schallwelle) und **Photonen** (Licht als Quantenobjekte);
+  der ganze Name steht jeweils unten in der Hinweiszeile.
   Neu ist das **Strahlenmodell**: Licht läuft geradeaus, was durch die Spalte kommt, beleuchtet den
   Schirm, dazwischen bleibt Schatten. Eine **punktförmige Quelle** wirft scharfe Schatten; mit dem Regler
   **Quelle breit** wird sie ausgedehnt, es entsteht ein **Halbschatten**, und ab einer gewissen Breite
