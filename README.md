@@ -4115,7 +4115,11 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   gehört zum Bild und wird mitgespeichert und mitgeteilt.
   Für alle Reiter gleich eingestellt werden **Spaltabstand** und **Spaltbreite**, dazu **Start/Pause**,
   **Zurücksetzen** und der Knopf **Schirm**, der den Schirm **von vorn** als Fenster neben die
-  Seitenansicht stellt (Einschläge als Punkte, bei der Schallwelle als Helligkeit). Den **Spaltabstand**
+  Seitenansicht stellt (Einschläge als Punkte, bei der Schallwelle als Helligkeit). Dort leuchtet
+  jeder Einschlag nur **kurz auf und verschwindet wieder** – zu sehen ist also immer nur, was
+  gerade eintrifft: bei schwachem Strom ein Flackern ohne Muster, bei starkem Strom das Muster.
+  Erst **Sammeln** (bei den Teilchen **Histogramm**) hält die Treffer fest, und zwar ab dem
+  Einschalten – dann wächst das Muster auch bei schwachem Strom langsam heran. Den **Spaltabstand**
   ändert man auch, indem man **an einem Spalt zieht** – in jedem Reiter. Die **Geschwindigkeit ist nicht einstellbar** – beim Schall liegt sie mit
   c = λ·f fest, und die Teilchen sind alle gleich schnell; der Regler **Tempo** ändert nur, wie
   schnell die Simulation läuft.
@@ -4160,8 +4164,9 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   sagt die **Intensität**. Das **Ψ-Feld** sieht aus wie das Schallfeld, bedeutet hier aber die
   Wahrscheinlichkeit: **wo ein Objekt auftrifft, würfelt das Werkzeug nach |Ψ|² am Schirm**. Zwischen
   Spalt und Schirm ist nichts zu sehen – nach dem Weg wird nicht gefragt –, am Schirm blitzt der
-  Einschlag auf. Mit **Sammeln** bleiben alle Treffer stehen: erst einzelne Punkte, dann wird aus
-  ihnen das Muster. Das **Messgerät** an den Spalten macht den Weg bekannt: dann fliegt jedes Objekt
+  Einschlag auf. Mit **Sammeln** bleiben die Treffer ab dem Einschalten stehen: erst einzelne
+  Punkte, dann wird aus ihnen das Muster. Ohne Sammeln verblasst jeder Einschlag nach kurzer Zeit
+  wieder. Das **Messgerät** an den Spalten macht den Weg bekannt: dann fliegt jedes Objekt
   sichtbar von „seinem" Spalt weiter, gerechnet wird mit |Ψ₁|² + |Ψ₂|², und die **Streifen
   verschwinden** – übrig bleibt die Summe der beiden Einzelbilder (bei großer Wellenlänge läuft die
   zu einem breiten Berg zusammen, erst bei kleiner Wellenlänge werden daraus zwei getrennte Streifen).

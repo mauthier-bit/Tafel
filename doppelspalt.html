@@ -577,7 +577,7 @@ function zieheAus(c){ if(!c) return 0;
   const sp=(c[lo+1]-c[lo])||1, t=(lo+(r-c[lo])/sp)/(QN-1);
   return (t-0.5)*2*yHalb; }
 let qobj=[], qhisto=new Int32Array(121), qtreff=[], qAb=0, qAn=0, qstromT=0;
-function qNeu(){ qobj=[]; qhisto=new Int32Array(qhisto.length); qtreff=[]; qAb=0; qAn=0; qstromT=0; qpunkte=[]; }
+function qNeu(){ qobj=[]; qhisto=new Int32Array(qhisto.length); qtreff=[]; qAb=0; qAn=0; qstromT=0; qpunkte=[]; qsamm=[]; }
 function qSchuss(){ qobj.push({ph:0, x:XSTART, y:0, ziel:0, sl:0, s:0, L:1}); qAb++; }
 function qEntscheiden(o){
   vertBauen();
@@ -592,10 +592,10 @@ function qTick(dt){
     if(o.ph===0){ o.x+=w; if(o.x>=0) qEntscheiden(o); continue; }
     o.s+=w;
     if(o.s>=o.L){ qAn++;
-      const k=Math.round((o.ziel/yHalb*0.5+0.5)*(qhisto.length-1));
-      if(k>=0&&k<qhisto.length) qhisto[k]++;
+      if(D.sammeln){ const k=Math.round((o.ziel/yHalb*0.5+0.5)*(qhisto.length-1));
+        if(k>=0&&k<qhisto.length) qhisto[k]++; }
       qtreff.push({y:o.ziel, t:0}); if(qtreff.length>60) qtreff.shift();
-      punkteAuf(qpunkte,o.ziel);
+      punkteAuf(qpunkte,qsamm,o.ziel,D.sammeln);
       qobj.splice(i,1); } }
   qtreff.forEach(q=>{ q.t+=dt; });
   while(qtreff.length&&qtreff[0].t>1.6) qtreff.shift(); }
@@ -636,14 +636,23 @@ function teilSchritt(dt){
       durch++; }
     if(Math.abs(p.y)>yHalb+10){ teil.splice(i,1); continue; }
     if(p.x>=D.e){ getroffen++;
-      const k=Math.round((p.y/yHalb*0.5+0.5)*(histo.length-1));
-      if(k>=0&&k<histo.length) histo[k]++;
-      punkteAuf(trefferP,p.y);
+      if(D.histo){ const k=Math.round((p.y/yHalb*0.5+0.5)*(histo.length-1));
+        if(k>=0&&k<histo.length) histo[k]++; }
+      punkteAuf(trefferP,tsamm,p.y,D.histo);
       teil.splice(i,1); } } }
-/* Fuer die Ansicht des Schirms von vorn bekommt jeder Treffer eine zufaellige Querlage –
-   quer zur Spaltrichtung ist ja nichts ausgezeichnet. */
-let trefferP=[], qpunkte=[];
-function punkteAuf(liste,y){ liste.push({y, z:Math.random()}); if(liste.length>4000) liste.shift(); }
+/* Für die Ansicht des Schirms von vorn bekommt jeder Treffer eine zufällige Querlage –
+   quer zur Spaltrichtung ist ja nichts ausgezeichnet.
+   Ein Einschlag leuchtet nur kurz auf und verschwindet wieder (LEBEN). Was man sieht, ist
+   also immer nur, was gerade eintrifft: bei schwachem Strom ein Flackern ohne Muster, bei
+   starkem Strom das Muster. Erst „Sammeln" (bzw. „Histogramm") hält alle Treffer fest –
+   dann wächst das Muster auch bei schwachem Strom langsam heran. */
+const LEBEN=2.5;
+let simT=0;                                  /* Uhr der Simulation, läuft mit dem Tempo */
+let trefferP=[], qpunkte=[], tsamm=[], qsamm=[];
+function punkteAuf(liste,samm,y,sammeln){
+  liste.push({y, z:Math.random(), t:simT}); if(liste.length>2000) liste.shift();
+  if(sammeln){ samm.push({y, z:Math.random()}); if(samm.length>4000) samm.shift(); } }
+function punkteAlt(liste){ while(liste.length&&simT-liste[0].t>LEBEN) liste.shift(); }
 function histoMalen(h,col){
   h=h||histo; let mx=1; for(let i=0;i<h.length;i++) if(h[i]>mx) mx=h[i];
   const breit=(WX1-D.e-6)*sc, hb=cvH/h.length;
@@ -942,10 +951,13 @@ function schirmMalen(){
       ctx.fillStyle='rgb('+Math.round(15+t*240)+','+Math.round(38+t*217)+','+Math.round(86+t*169)+')';
       ctx.fillRect(x0, y0+h*i/n-0.5, w, h/n+1); }
   } else {
-    const liste=a==='q'?qpunkte:trefferP, col=a==='q'?'rgba(126,34,206,.85)':'rgba(37,99,235,.85)';
-    ctx.fillStyle=col;
-    liste.forEach(q=>{ const py=yz(q.y); if(py<y0-2||py>y0+h+2) return;
-      ctx.beginPath(); ctx.arc(x0+6+q.z*(w-12), py, 1.9, 0, 7); ctx.fill(); });
+    const quant=a==='q', col=quant?'126,34,206':'37,99,235';
+    const samm=quant?(D.sammeln?qsamm:null):(D.histo?tsamm:null);
+    const punkt=(q,r)=>{ const py=yz(q.y); if(py<y0-2||py>y0+h+2) return;
+      ctx.beginPath(); ctx.arc(x0+6+q.z*(w-12), py, r, 0, 7); ctx.fill(); };
+    if(samm){ ctx.fillStyle='rgba('+col+',.45)'; samm.forEach(q=>punkt(q,1.7)); }
+    (quant?qpunkte:trefferP).forEach(q=>{ const al=1-(simT-q.t)/LEBEN; if(al<=0) return;
+      ctx.fillStyle='rgba('+col+','+(0.25+0.75*al).toFixed(3)+')'; punkt(q,1.9+1.1*al); });
   }
   ctx.restore();
   ctx.fillStyle='#475569'; ctx.font='700 '+Math.max(11,fs()*0.85)+'px sans-serif';
@@ -1068,7 +1080,8 @@ let letztT=0;
 function loop(ts){
   const dt=Math.min(0.05,(ts-letztT)/1000||0); letztT=ts;
   if(D.lauf){
-    const st=dt*tempoF(), a=art();
+    const st=dt*tempoF(), a=art(); simT+=st;
+    punkteAlt(qpunkte); punkteAlt(trefferP);
     if(a==='q'){
       qTick(st); phase+=st*2*Math.PI*0.45; if(phase>1e6) phase=0;
       if(D.strom){ qstromT+=st; const ab=1/(D.inten*0.9);
@@ -1180,7 +1193,7 @@ function einstUI(){
   E_REG.forEach(([id,k,vid,eh])=>{ const e=$(id); if(!e) return;
     if(document.activeElement!==e) e.value=D[k];
     $(vid).textContent=eh?D[k]+eh:zahl(D[k]); }); }
-function neuStart(){ teil=[]; histo=new Int32Array(histo.length); getroffen=0; durch=0; abgefeuert=0; phase=0; frontR=0; dauerT=0; trefferP=[]; qNeu(); }
+function neuStart(){ teil=[]; histo=new Int32Array(histo.length); getroffen=0; durch=0; abgefeuert=0; phase=0; frontR=0; dauerT=0; trefferP=[]; tsamm=[]; qNeu(); }
 
 const reg=(id,feld,nach)=>{ const el=$(id); if(!el) return;
   el.addEventListener('input',()=>{ D[feld]=+el.value; if(nach) nach(); knoepfe(); sync(); }); };
@@ -1211,9 +1224,10 @@ $('einstZu').onclick=()=>{ $('einst').hidden=true; };
 $('einstStd').onclick=()=>{ STIL.forEach(k=>{ D[k]=STD[k]; }); feldKey=''; einstUI(); knoepfe(); sync(); };
 const um=(id,feld,nach)=>{ const b=$(id); if(!b) return;
   b.onclick=()=>{ D[feld]=!D[feld]; if(nach) nach(); knoepfe(); sync(); }; };
-um('bDauer','dauer'); um('bHisto','histo'); um('bFeld','feld'); um('bBerge','berge'); um('bTaeler','taeler');
+/* Beim Umschalten faengt das Sammeln von vorn an */
+um('bDauer','dauer'); um('bHisto','histo',()=>{ histo=new Int32Array(histo.length); tsamm=[]; }); um('bFeld','feld'); um('bBerge','berge'); um('bTaeler','taeler');
 um('bMax','imax'); um('bMin','imin'); um('bZuege','zuege'); um('bGang','gang'); um('bDiag','diag'); um('bGeo','geo');
-um('bPsi','psi'); um('bSammeln','sammeln'); um('bQstrom','strom'); um('bSchirm','schirm');
+um('bPsi','psi'); um('bSammeln','sammeln',()=>{ qhisto=new Int32Array(qhisto.length); qsamm=[]; }); um('bQstrom','strom'); um('bSchirm','schirm');
 um('bMess','mess',()=>{ vertAlt=''; vertBauen(); });
 $('bQein').onclick=()=>{ qSchuss(); if(!D.lauf){ D.lauf=true; knoepfe(); sync(); } };
 reg('rgI','inten');
@@ -1240,8 +1254,9 @@ $('bHilfe').onclick=()=>{ popZu(); $('hilfeText').innerHTML=HILFE; $('hilfe').hi
 $('hilfeZu').onclick=()=>{ $('hilfe').hidden=true; };
 const HILFE='<ul>'+
  '<li><b>Klassisch · Teilchen:</b> „Ein Teilchen" schießt eines ab, „Dauerfeuer" feuert fortlaufend. '+
- 'Wer einen Spalt trifft, fliegt geradeaus weiter – sonst wird er geschluckt. Das Histogramm sammelt, wo die Teilchen ankommen: '+
- 'zwei Streifen, kein Muster.</li>'+
+ 'Wer einen Spalt trifft, fliegt geradeaus weiter – sonst wird er geschluckt. Am Schirm leuchtet '+
+ 'jeder Einschlag nur kurz auf; das <b>Histogramm</b> sammelt ab dem Einschalten, wo die Teilchen '+
+ 'ankommen: zwei Streifen, kein Muster.</li>'+
  '<li><b>Klassisch · Welle:</b> Hinter den Spalten laufen zwei Elementarwellen los (Schall, 343 m/s). '+
  'Einblenden lassen sich das Wellenfeld, <b>Berge</b> und <b>Täler</b> als Kreislinien '+
  'sowie die Linien gleichen Gangunterschieds einzeln als <b>Maxima</b> (grün) und <b>Minima</b> (rot gestrichelt).</li>'+
@@ -1252,8 +1267,10 @@ const HILFE='<ul>'+
  'Die <b>Wellenzüge</b> zeichnen die Welle längs der beiden Strahlen – so sieht man, wie viele Wellenlängen auf jeden Weg passen.</li>'+
  '<li><b>Quantenobjekte:</b> „Ein Objekt" schickt eines los, der <b>Objektstrom</b> viele – '+
  'wie viele je Sekunde, sagt die <b>Intensität</b>. Wo eines auftrifft, entscheidet der Zufall, '+
- 'aber nach der Wahrscheinlichkeit |Ψ|². Mit <b>Sammeln</b> bleiben alle Treffer stehen: erst '+
- 'Punkt für Punkt, dann wird das Muster sichtbar. Das <b>Messgerät</b> schaut nach, durch welchen '+
+ 'aber nach der Wahrscheinlichkeit |Ψ|². Jeder Einschlag leuchtet nur kurz auf und verschwindet '+
+ 'wieder – bei schwachem Strom sieht man deshalb kein Muster, bei starkem schon. '+
+ 'Mit <b>Sammeln</b> bleiben die Treffer ab dem Einschalten stehen: erst '+
+ 'Punkt für Punkt, dann wird das Muster auch bei schwachem Strom sichtbar. Das <b>Messgerät</b> schaut nach, durch welchen '+
  'Spalt jedes Objekt geht – dann ist der Weg bekannt, das Objekt fliegt sichtbar weiter, und die '+
  'Streifen verschwinden: übrig bleibt die Summe der beiden Einzelbilder. Auch <b>einzelne Spalte</b> lassen sich schließen.</li>'+
  '<li><b>Geometrie</b> legt die beiden ähnlichen Dreiecke übereinander: das kleine an den Spalten '+
