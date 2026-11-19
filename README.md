@@ -4103,7 +4103,8 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   Die Längen tragen die Einheit, die zum Reiter passt: **cm** bei Schall, **nm** bei Quantenobjekten,
   **µm** beim Licht. Gerechnet wird mit denselben Zahlen – es kommt ja nur auf das Verhältnis von
   Wellenlänge und Spaltabstand an.
-  Die Bedienung steht in zwei Zeilen: **oben** das Modell, die Regler dazu und der Ablauf,
+  Die Leisten rollen nicht seitwärts, sondern **brechen um**, wenn der Platz nicht reicht – versteckt
+  ist also nie etwas. Die Bedienung steht in zwei Zeilen: **oben** das Modell, die Regler dazu und der Ablauf,
   **darunter** zwei Klapplisten – **Spalt** (Spaltabstand, Spaltbreite, Schirmabstand, welche Spalte
   offen sind, Messgerät) und **Anzeigen** (alles, was eingeblendet werden kann). Die Knöpfe sagen,
   was dahintersteckt: „Anzeigen · 3" heißt drei eingeblendete Sachen, „Spalt · nur oben" heißt,
@@ -4179,8 +4180,9 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   die Blende ist dort zugemauert. Damit das Muster wirklich entsteht, ist die Wellenlänge hier eigens
   einstellbar (Standard 12 nm bei 60 nm Spaltabstand); bei zu großer Wellenlänge liegt nur das mittlere
   Maximum im Bild und es sieht nach „kein Muster" aus.
-  **Licht:** vier Modelle nebeneinander – **Strahlen**, **klassische Photonen** (wie die Teilchen im Reiter
-  Klassisch), **klassische Welle** (wie die Schallwelle) und **Quantenobjekt** (wie die Quantenobjekte).
+  **Licht:** vier Modelle nebeneinander – **Strahlen**, **Photonen** (klassisch, wie die Teilchen im
+  Reiter Klassisch), **Welle** (klassisch, wie die Schallwelle) und **Quantenobjekt** (wie die
+  Quantenobjekte); der ganze Name steht jeweils unten in der Hinweiszeile.
   Neu ist das **Strahlenmodell**: Licht läuft geradeaus, was durch die Spalte kommt, beleuchtet den
   Schirm, dazwischen bleibt Schatten. Eine **punktförmige Quelle** wirft scharfe Schatten; mit dem Regler
   **Quelle breit** wird sie ausgedehnt, es entsteht ein **Halbschatten**, und ab einer gewissen Breite

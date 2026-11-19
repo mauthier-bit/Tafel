@@ -17,9 +17,9 @@
   /* Die drei Reiter stehen als eine Gruppe zusammen – sie schließen einander aus */
   .seg.gross{flex:none;border-radius:10px;}
   .seg.gross button{padding:9px 14px;font-weight:700;font-size:1em;}
-  #bar2,#bar3{display:flex;gap:6px;padding:5px 8px;border-bottom:1px solid #e2e7ef;align-items:center;flex-wrap:nowrap;flex:none;min-height:44px;font-size:.92em;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:thin;}
+  /* Die Leisten rollen nicht seitwaerts, sondern brechen um – nichts soll versteckt sein */
+  #bar2,#bar3{display:flex;gap:6px 7px;padding:5px 8px;border-bottom:1px solid #e2e7ef;align-items:center;flex-wrap:wrap;flex:none;min-height:44px;font-size:.92em;}
   #bar2>*,#bar3>*{flex:0 0 auto;}
-  #bar2::-webkit-scrollbar,#bar3::-webkit-scrollbar{height:4px;} #bar2::-webkit-scrollbar-thumb,#bar3::-webkit-scrollbar-thumb{background:#cfd6e0;border-radius:2px;}
   .lbl{color:#64748b;font-weight:600;white-space:nowrap;}
   .btn{border:1px solid #cfd6e0;background:#fff;border-radius:9px;padding:6px 11px;font:inherit;font-weight:600;color:#1f2430;cursor:pointer;white-space:nowrap;}
   .btn.on{background:#2563eb;border-color:#2563eb;color:#fff;}
@@ -276,11 +276,11 @@
   <!-- Erste Zeile: Modell, Regler und der Ablauf -->
   <div id="bar3">
     <span id="grpK" class="seg"><button data-km="t" class="on">Teilchen</button><button data-km="w">Welle</button></span>
-    <span id="grpL" class="seg" hidden><button data-lm="s" class="on">Strahlen</button><button data-lm="p">klassische Photonen</button><button data-lm="w">klassische Welle</button><button data-lm="q">Quantenobjekt</button></span>
+    <span id="grpL" class="seg" hidden><button data-lm="s" class="on" title="Strahlenmodell: Licht läuft geradeaus">Strahlen</button><button data-lm="p" title="klassische Photonen: Licht als Strom von Teilchen">Photonen</button><button data-lm="w" title="klassische Lichtwelle">Welle</button><button data-lm="q" title="Quantenobjekt (Photon)">Quantenobjekt</button></span>
     <span class="sep" id="sep3"></span>
-    <span class="reg" id="boxLam"><span class="lbl">Wellenlänge</span>
+    <span class="reg" id="boxLam"><span class="lbl" title="Wellenlänge">λ</span>
       <input type="range" id="rgL" min="10" max="100" step="1"><span class="v" id="vL"></span></span>
-    <span class="reg" id="boxQuell"><span class="lbl">Quelle breit</span>
+    <span class="reg" id="boxQuell"><span class="lbl" title="Ausdehnung der Lichtquelle">Quelle</span>
       <input type="range" id="rgQ" min="0" max="200" step="2"><span class="v" id="vQ"></span></span>
     <span class="sep" id="sep4"></span>
     <button class="btn" id="bSchuss">Ein Teilchen</button>
@@ -1017,12 +1017,17 @@ function lichtstrahlenMalen(){
     :'zwei getrennte Lichtflecke – dazwischen Schatten');
 }
 /* ---------- Gesamtbild ---------- */
+/* Im Lichtreiter heißen die Knöpfe kurz – der ganze Name steht unten im Hinweis */
+const LMOD={s:'Strahlenmodell', p:'klassische Photonen', w:'klassische Lichtwelle', q:'Quantenobjekt (Photon)'};
 let phase=0;
 const fs=()=>D.fontSize||14;
 const zahl=v=>{ const r=Math.round(v*10)/10; return String(r).replace('.',','); };
 function malen(){
   ctx.setTransform(dpr,0,0,dpr,0,0);
   ctx.fillStyle='#fff'; ctx.fillRect(0,0,cvW,cvH);
+  /* Das Feldbild darf nie veralten – feldBauen() merkt selbst, ob sich etwas geändert hat
+     (Reiterwechsel ändert zum Beispiel die Wellenlänge). */
+  feldBauen();
   let info=''; const a=art();
   if(a==='s'){
     aufbauMalen();
@@ -1068,6 +1073,7 @@ function malen(){
       :(beide()?'ohne Messung – jedes Objekt trifft nach |Ψ|² ein'
                :'nur ein Spalt offen – kein Interferenzmuster'));
   }
+  if(D.tab==='l') info=LMOD[D.lmod]+(info?' · '+info:'');
   if(D.schirm) schirmMalen();
   $('hint').textContent=info; }
 
@@ -1262,7 +1268,9 @@ $('grpL').querySelectorAll('button').forEach(b=>{ b.onclick=()=>{ D.lmod=b.datas
 const spWahl=b=>{ D.sp=b.dataset.sp; neuFeld(); knoepfe(); sync(); };
 $('grpSp').querySelectorAll('button').forEach(b=>{ b.onclick=()=>spWahl(b); });
 [['rK','k'],['rQ','q'],['rL','l']].forEach(([id,t])=>{ $(id).onclick=()=>{ D.tab=t;
-  if(t!=='k'){ tonAus(); } knoepfe(); sync(); }; });
+  if(t!=='k'){ tonAus(); }
+  neuFeld();                       /* andere Wellenlänge, anderes Feld */
+  knoepfe(); sync(); }; });
 $('fnM').onclick=()=>setFs((D.fontSize||14)-1);
 $('fnP').onclick=()=>setFs((D.fontSize||14)+1);
 function setFs(v){ D.fontSize=Math.max(10,Math.min(22,v));
