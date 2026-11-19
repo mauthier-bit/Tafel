@@ -4103,6 +4103,13 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   Die Längen tragen die Einheit, die zum Reiter passt: **cm** bei Schall, **nm** bei Quantenobjekten,
   **µm** beim Licht. Gerechnet wird mit denselben Zahlen – es kommt ja nur auf das Verhältnis von
   Wellenlänge und Spaltabstand an.
+  Die Bedienung steht in zwei Zeilen: **oben** alles, was am Spalt eingestellt wird (Spaltabstand,
+  Spaltbreite, Schirmabstand, welche Spalte offen sind) und alles, was **angezeigt** wird;
+  **unten** das Modell, die Regler dazu und der Ablauf. Der **Schirmabstand e** lässt sich auch am
+  **Griff auf dem Schirm** ziehen, der **Spaltabstand** an einem Spalt, **P** überall im Feld.
+  Hinter dem **⚙** neben dem „?" stehen die **Farben** von Wellenfeld, Bergen, Tälern, Maxima,
+  Minima und Strahlen, ihre **Strichstärken** und die **Deckkraft** des Feldes; die Einstellung
+  gehört zum Bild und wird mitgespeichert und mitgeteilt.
   Für alle Reiter gleich eingestellt werden **Spaltabstand** und **Spaltbreite**, dazu **Start/Pause**,
   **Zurücksetzen** und der Knopf **Schirm**, der den Schirm **von vorn** als Fenster neben die
   Seitenansicht stellt (Einschläge als Punkte, bei der Schallwelle als Helligkeit). Den **Spaltabstand**
@@ -4132,6 +4139,11 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   Brennpunkten. Mit **beide / oben / unten** läuft nur ein Lautsprecher: dann bleibt eine einzelne
   Kreiswelle übrig, das Muster verschwindet, und Maxima, Minima und Gangunterschied sind ausgegraut
   („nur ein Lautsprecher – keine Interferenz").
+  **Geometrie** zeigt die beiden ähnlichen Dreiecke mit demselben Winkel α: das kleine an den Spalten
+  (Spaltabstand d als Hypotenuse, Gangunterschied Δs als Gegenkathete → **sin α = Δs/d**) und das große
+  von der Spaltmitte zu P (**tan α = y/L**, y Abstand von der Mittellinie, L Abstand zur Spaltebene).
+  Liegt P auf dem Schirm, ist L der Schirmabstand e. Punkt P, Gangunterschied und Geometrie gibt es
+  auch bei den **Quantenobjekten**.
   **Punkt P** lässt sich frei im Feld verschieben. Dazu gibt es den **Gangunterschied**: beide Wege als
   Strahlen, der **Kreisbogen um P durch den näheren Spalt** gestrichelt bis zum längeren Weg – das Stück
   zwischen Bogen und fernerem Spalt ist Δs und steht **rot am Spalt**, wo es entsteht (dazu
