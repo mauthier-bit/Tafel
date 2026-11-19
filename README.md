@@ -4100,9 +4100,11 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     Flachwasser und an schräger Grenze. Damit die Bäuche bei solchen Resonanzen nicht übersteuern, regelt
     sich die Helligkeit der Darstellung automatisch nach.
 - **Doppelspalt** (Mathe & Physik): drei Reiter – **Klassisch**, **Quantenobjekte** und **Licht**.
-  Fertig ist bisher **Klassisch**, die beiden anderen Reiter sagen das auch; sie kommen als Nächstes.
-  Für alle Reiter gleich eingestellt werden **Spaltabstand** und **Spaltbreite**, dazu **Start/Pause**
-  und **Zurücksetzen**. Die **Geschwindigkeit ist nicht einstellbar** – beim Schall liegt sie mit
+  Fertig sind **Klassisch** und **Quantenobjekte**, der Reiter **Licht** sagt, dass er noch kommt.
+  Für alle Reiter gleich eingestellt werden **Spaltabstand** und **Spaltbreite**, dazu **Start/Pause**,
+  **Zurücksetzen** und der Knopf **Schirm**, der den Schirm **von vorn** als Fenster neben die
+  Seitenansicht stellt (Einschläge als Punkte, bei der Schallwelle als Helligkeit). Den **Spaltabstand**
+  ändert man auch, indem man **an einem Spalt zieht** – in jedem Reiter. Die **Geschwindigkeit ist nicht einstellbar** – beim Schall liegt sie mit
   c = λ·f fest, und die Teilchen sind alle gleich schnell; der Regler **Tempo** ändert nur, wie
   schnell die Simulation läuft.
   **Klassisch · Teilchen:** „Ein Teilchen" schießt einzeln, „Dauerfeuer" fortlaufend. Die Quelle liegt
@@ -4129,6 +4131,17 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   passen und dass auf dem längeren eine halbe mehr liegt. Und das **Mikrofon**, das den Ton mit der **Lautstärke an
   dieser Stelle** hörbar macht (gemessen: Gangunterschied 0 → 98 %, ½ λ → 7 %, 1 λ → 87 %, 1½ λ → 5 %).
   Der Ton geht nur auf Knopfdruck an und wird beim Reiterwechsel wieder stumm.
+  **Quantenobjekte:** „Ein Objekt" schickt eines los, der **Objektstrom** viele – wie viele je Sekunde,
+  sagt die **Intensität**. Das **Ψ-Feld** sieht aus wie das Schallfeld, bedeutet hier aber die
+  Wahrscheinlichkeit: **wo ein Objekt auftrifft, würfelt das Werkzeug nach |Ψ|² am Schirm**. Zwischen
+  Spalt und Schirm ist nichts zu sehen – nach dem Weg wird nicht gefragt –, am Schirm blitzt der
+  Einschlag auf. Mit **Sammeln** bleiben alle Treffer stehen: erst einzelne Punkte, dann wird aus
+  ihnen das Muster. Das **Messgerät** an den Spalten macht den Weg bekannt: dann fliegt jedes Objekt
+  sichtbar von „seinem" Spalt weiter, gerechnet wird mit |Ψ₁|² + |Ψ₂|², und die **Streifen
+  verschwinden** – übrig bleibt die Summe der beiden Einzelbilder (bei großer Wellenlänge läuft die
+  zu einem breiten Berg zusammen, erst bei kleiner Wellenlänge werden daraus zwei getrennte Streifen).
+  Das Ψ-Bild zeigt dann eine ruhige Wolke ohne Streifen. Auch **einzelne Spalte**
+  lassen sich schließen (beide · nur oben · nur unten).
 - **Lernlandkarte** (Diverses): eine Karte aus **Orten** (Aufgaben, Themen, Stationen), die durch
   **Wege** verbunden sind – der Fortschritt schaltet nach und nach neue Orte frei.
   - **Arbeiten mit der Karte:** Ein Ort wird durch Antippen als **erledigt** markiert (grüner Haken);

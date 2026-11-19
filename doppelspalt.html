@@ -260,6 +260,7 @@
       <input type="range" id="rgV" min="1" max="10" step="1"><span class="v" id="vV"></span></span>
     <span class="sep"></span>
     <button class="btn pri" id="bPlay">▶ Start</button>
+    <button class="btn" id="bSchirm" title="Den Schirm von vorn ansehen">Schirm</button>
     <button class="btn" id="bReset">Zurücksetzen</button>
   </div>
 
@@ -271,6 +272,16 @@
       <button class="btn" id="bSchuss">Ein Teilchen</button>
       <button class="btn" id="bDauer">Dauerfeuer</button>
       <button class="btn on" id="bHisto">Histogramm</button>
+    </span>
+    <span id="optQ" hidden>
+      <span class="seg" id="grpSpQ" title="Welche Spalte sind offen?"><button data-sp="b" class="on">beide Spalte</button><button data-sp="o">nur oben</button><button data-sp="u">nur unten</button></span>
+      <button class="btn" id="bMess">Messgerät</button>
+      <button class="btn on" id="bPsi">Ψ-Feld</button>
+      <button class="btn" id="bQein">Ein Objekt</button>
+      <button class="btn" id="bQstrom">Objektstrom</button>
+      <span class="reg"><span class="lbl">Intensität</span>
+        <input type="range" id="rgI" min="1" max="20" step="1"><span class="v" id="vI"></span></span>
+      <button class="btn on" id="bSammeln">Sammeln</button>
     </span>
     <span id="optW" hidden>
       <span class="seg" id="grpSp" title="Welcher Lautsprecher spielt?"><button data-sp="b" class="on">beide</button><button data-sp="o">oben</button><button data-sp="u">unten</button></span>
@@ -311,6 +322,7 @@ const toast=m=>window.TafelShot&&TafelShot.toast(m);
 const STD={ tab:'k', kmod:'t', lmod:'s',
   d:60, b:10, lam:34, tempo:5, lauf:false, dauer:false, histo:true, sp:'b',
   feld:true, berge:false, taeler:false, imax:false, imin:false, pAn:false, zuege:false, gang:false, diag:false, mikro:false,
+  mess:false, psi:true, strom:false, inten:6, sammeln:true, schirm:false,
   px:170, py:28, fontSize:14, edit:true };
 let D=Object.assign({},STD);
 let ready=false, geteiltesFenster=false;
@@ -339,12 +351,18 @@ function mass(){
    damit sich die Verbreiterung durch die Spaltbreite von selbst ergibt. */
 const spAn=v=>D.sp==='b'||(D.sp==='o'&&v>0)||(D.sp==='u'&&v<0);
 const beide=()=>D.sp==='b';
-function quellen(){
+function quellen(nur){
   const n=Math.max(1,Math.min(4,Math.round(D.b/D.lam*3)+1)), aus=[];
-  [1,-1].forEach(v=>{ if(!spAn(v)) return; const ym=v*D.d/2;
+  [1,-1].forEach(v=>{ if(nur!==undefined?v!==nur:!spAn(v)) return; const ym=v*D.d/2;
     for(let i=0;i<n;i++){ const t=n===1?0:(i/(n-1)-0.5);
       aus.push({x:0, y:ym+t*D.b, a:1/n}); } });
   return aus; }
+/* Amplitude nur aus einem Spalt – daraus wird die Verteilung bei „mit Messung“ und
+   bei nur einem offenen Spalt. */
+function feldAn1(x,y,v){ const k=2*Math.PI/D.lam; let cr=0, ci=0;
+  quellen(v).forEach(s=>{ const dx=x-s.x, dy=y-s.y, r=Math.hypot(dx,dy)||0.01;
+    const a=s.a/Math.sqrt(r); cr+=a*Math.cos(k*r); ci+=a*Math.sin(k*r); });
+  return Math.hypot(cr,ci); }
 function feldAn(x,y){ const k=2*Math.PI/D.lam; let cr=0, ci=0;
   quellen().forEach(s=>{ const dx=x-s.x, dy=y-s.y, r=Math.hypot(dx,dy)||0.01;
     const a=s.a/Math.sqrt(r); cr+=a*Math.cos(k*r); ci+=a*Math.sin(k*r); });
@@ -356,31 +374,43 @@ function ampVoll(x,y){ let a=0;
   return a||1e-6; }
 
 /* ---------- Feldbild ---------- */
-let GW=0, GH=0, Cr=null, Ci=null, img=null, off=null, octx=null, feldNorm=1, feldAlt='';
+let GW=0, GH=0, Cr=null, Ci=null, Ink=null, img=null, off=null, octx=null, feldNorm=1, inkNorm=1, feldAlt='';
 function feldSchluessel(){ return [D.d,D.b,D.lam,D.sp,GW,GH,Math.round(cvW),Math.round(cvH),wx0()].join('|'); }
 function feldBauen(){
   GW=Math.max(60,Math.min(440,Math.round(cvW/2))); GH=Math.max(50,Math.min(330,Math.round(cvH/2)));
   const key=feldSchluessel(); if(key===feldAlt&&Cr) return; feldAlt=key;
   off=document.createElement('canvas'); off.width=GW; off.height=GH; octx=off.getContext('2d');
   img=octx.createImageData(GW,GH);
-  Cr=new Float32Array(GW*GH); Ci=new Float32Array(GW*GH);
-  const k=2*Math.PI/D.lam, q=quellen();
-  let mx=0;
+  Cr=new Float32Array(GW*GH); Ci=new Float32Array(GW*GH); Ink=new Float32Array(GW*GH);
+  const k=2*Math.PI/D.lam, q=quellen(), qo=quellen(1), qu=quellen(-1);
+  const teilAn=[spAn(1)?qo:[], spAn(-1)?qu:[]];
+  let mx=0, mi=0;
   for(let j=0;j<GH;j++){
     const wy=yW((j+0.5)*cvH/GH);
     for(let i=0;i<GW;i++){
       const wx=xW((i+0.5)*cvW/GW), idx=j*GW+i;
-      if(wx<1){ Cr[idx]=0; Ci[idx]=0; continue; }
-      let cr=0, ci=0;
-      for(let s=0;s<q.length;s++){ const dx=wx-q[s].x, dy=wy-q[s].y;
-        const r=Math.sqrt(dx*dx+dy*dy)||0.01, a=q[s].a/Math.sqrt(r), ph=k*r;
-        cr+=a*Math.cos(ph); ci+=a*Math.sin(ph); }
-      Cr[idx]=cr; Ci[idx]=ci;
+      if(wx<1){ Cr[idx]=0; Ci[idx]=0; Ink[idx]=0; continue; }
+      let cr=0, ci=0, ink=0;
+      for(let t=0;t<2;t++){ const qt=teilAn[t]; if(!qt.length) continue;
+        let ar=0, ai=0;
+        for(let s=0;s<qt.length;s++){ const dx=wx-qt[s].x, dy=wy-qt[s].y;
+          const r=Math.sqrt(dx*dx+dy*dy)||0.01, a=qt[s].a/Math.sqrt(r), ph=k*r;
+          ar+=a*Math.cos(ph); ai+=a*Math.sin(ph); }
+        cr+=ar; ci+=ai; ink+=ar*ar+ai*ai; }   /* ohne Interferenz zaehlen die Betraege einzeln */
+      Cr[idx]=cr; Ci[idx]=ci; Ink[idx]=ink;
       /* Dicht an den Spalten wird die Amplitude beliebig groß (1/√r). Würde man danach
          normieren, bliebe das ganze Feld dahinter blass – deshalb zählt erst ab 40 cm. */
-      if(wx>40){ const m=cr*cr+ci*ci; if(m>mx) mx=m; } } }
-  feldNorm=1/Math.max(1e-6,Math.sqrt(mx)*0.62); }
+      if(wx>40){ const m=cr*cr+ci*ci; if(m>mx) mx=m; if(ink>mi) mi=ink; } } }
+  feldNorm=1/Math.max(1e-6,Math.sqrt(mx)*0.62);
+  inkNorm=1/Math.max(1e-9,mi*1.05); }
 /* Farben wie in der Wellenwanne: Berg hell, Tal dunkelblau */
+function inkMalen(){
+  if(!img) return; const d=img.data;
+  for(let i=0,j=0;i<GW*GH;i++,j+=4){
+    const t=1-Math.min(1,Math.pow(Ink[i]*inkNorm,0.62));
+    d[j]=Math.round(15+t*240); d[j+1]=Math.round(38+t*217); d[j+2]=Math.round(86+t*169); d[j+3]=255; }
+  octx.putImageData(img,0,0);
+  ctx.imageSmoothingEnabled=true; ctx.drawImage(off,0,0,cvW,cvH); }
 function feldMalen(ph){
   if(!img) return; const d=img.data, c=Math.cos(ph), s=Math.sin(ph);
   for(let i=0,j=0;i<GW*GH;i++,j+=4){
@@ -390,6 +420,62 @@ function feldMalen(ph){
     d[j]=Math.round(15+t*223); d[j+1]=Math.round(38+t*208); d[j+2]=Math.round(86+t*169); d[j+3]=255; }
   octx.putImageData(img,0,0);
   ctx.imageSmoothingEnabled=true; ctx.drawImage(off,0,0,cvW,cvH); }
+
+/* ---------- Quantenobjekte ----------
+   Wo ein Objekt auftrifft, entscheidet der Zufall – aber nach der Wahrscheinlichkeit
+   |Ψ|² am Schirm. Ohne Messung zählt die Summe der beiden Amplituden (Interferenz),
+   mit Messung die Summe der Betragsquadrate (zwei Streifen). */
+const QN=241;
+let vertAlt='', vertB=null, vertO=null, vertU=null;
+function kumAus(fn){ const c=new Float64Array(QN+1);
+  for(let i=0;i<QN;i++){ const y=(i/(QN-1)-0.5)*2*yHalb; c[i+1]=c[i]+Math.max(0,fn(y)); }
+  const g=c[QN]||1; for(let i=0;i<=QN;i++) c[i]/=g; return c; }
+function vertBauen(){
+  const key=[D.d,D.b,D.lam,D.sp,Math.round(yHalb*10)].join('|');
+  if(key===vertAlt&&vertB) return; vertAlt=key;
+  vertB=kumAus(y=>{ const f=feldAn(SCHIRM,y); return f.amp*f.amp; });
+  vertO=spAn(1)?kumAus(y=>{ const a=feldAn1(SCHIRM,y,1); return a*a; }):null;
+  vertU=spAn(-1)?kumAus(y=>{ const a=feldAn1(SCHIRM,y,-1); return a*a; }):null; }
+function zieheAus(c){ if(!c) return 0;
+  const r=Math.random(); let lo=0, hi=QN;
+  while(hi-lo>1){ const m=(lo+hi)>>1; if(c[m]<=r) lo=m; else hi=m; }
+  const sp=(c[lo+1]-c[lo])||1, t=(lo+(r-c[lo])/sp)/(QN-1);
+  return (t-0.5)*2*yHalb; }
+let qobj=[], qhisto=new Int32Array(121), qtreff=[], qAb=0, qAn=0, qstromT=0;
+function qNeu(){ qobj=[]; qhisto=new Int32Array(qhisto.length); qtreff=[]; qAb=0; qAn=0; qstromT=0; qpunkte=[]; }
+function qSchuss(){ qobj.push({ph:0, x:XSTART, y:0, ziel:0, sl:0, s:0, L:1}); qAb++; }
+function qEntscheiden(o){
+  vertBauen();
+  if(D.mess&&spAn(1)&&spAn(-1)){ o.sl=Math.random()<0.5?1:-1;
+    o.ziel=zieheAus(o.sl>0?vertO:vertU); }
+  else if(D.mess){ o.sl=spAn(1)?1:-1; o.ziel=zieheAus(o.sl>0?vertO:vertU); }
+  else { o.sl=0; o.ziel=zieheAus(vertB); }
+  o.L=Math.hypot(SCHIRM-0,o.ziel-(o.sl?o.sl*D.d/2:0)); o.s=0; o.ph=1; }
+function qTick(dt){
+  const w=VTEIL*dt;
+  for(let i=qobj.length-1;i>=0;i--){ const o=qobj[i];
+    if(o.ph===0){ o.x+=w; if(o.x>=0) qEntscheiden(o); continue; }
+    o.s+=w;
+    if(o.s>=o.L){ qAn++;
+      const k=Math.round((o.ziel/yHalb*0.5+0.5)*(qhisto.length-1));
+      if(k>=0&&k<qhisto.length) qhisto[k]++;
+      qtreff.push({y:o.ziel, t:0}); if(qtreff.length>60) qtreff.shift();
+      punkteAuf(qpunkte,o.ziel);
+      qobj.splice(i,1); } }
+  qtreff.forEach(q=>{ q.t+=dt; });
+  while(qtreff.length&&qtreff[0].t>1.6) qtreff.shift(); }
+function qMalen(){
+  ctx.save();
+  qobj.forEach(o=>{
+    if(o.ph===0){ ctx.fillStyle='#7e22ce'; ctx.beginPath(); ctx.arc(X(o.x),Y(0),3.6,0,7); ctx.fill(); return; }
+    if(!o.sl) return;                       /* ohne Messung ist der Weg unbestimmt */
+    const y0=o.sl*D.d/2, t=o.s/o.L;
+    ctx.fillStyle='rgba(126,34,206,.85)';
+    ctx.beginPath(); ctx.arc(X(0+(SCHIRM-0)*t),Y(y0+(o.ziel-y0)*t),3.6,0,7); ctx.fill(); });
+  qtreff.forEach(q=>{ const a=Math.max(0,1-q.t/1.6);
+    ctx.fillStyle='rgba(126,34,206,'+(0.25+0.75*a).toFixed(3)+')';
+    ctx.beginPath(); ctx.arc(X(SCHIRM),Y(q.y),2.6+3.4*a,0,7); ctx.fill(); });
+  ctx.restore(); }
 
 /* ---------- Teilchen ---------- */
 let teil=[], histo=new Int32Array(61), getroffen=0, durch=0, abgefeuert=0, dauerT=0;
@@ -417,13 +503,18 @@ function teilSchritt(dt){
     if(p.x>=SCHIRM){ getroffen++;
       const k=Math.round((p.y/yHalb*0.5+0.5)*(histo.length-1));
       if(k>=0&&k<histo.length) histo[k]++;
+      punkteAuf(trefferP,p.y);
       teil.splice(i,1); } } }
-function histoMalen(){
-  let mx=1; for(let i=0;i<histo.length;i++) if(histo[i]>mx) mx=histo[i];
-  const breit=(WX1-SCHIRM-6)*sc, hb=cvH/histo.length;
-  ctx.save(); ctx.fillStyle='#2563eb';
-  for(let i=0;i<histo.length;i++){ if(!histo[i]) continue;
-    const l=breit*histo[i]/mx, py=Y((i/(histo.length-1)-0.5)*2*yHalb);
+/* Fuer die Ansicht des Schirms von vorn bekommt jeder Treffer eine zufaellige Querlage –
+   quer zur Spaltrichtung ist ja nichts ausgezeichnet. */
+let trefferP=[], qpunkte=[];
+function punkteAuf(liste,y){ liste.push({y, z:Math.random()}); if(liste.length>4000) liste.shift(); }
+function histoMalen(h,col){
+  h=h||histo; let mx=1; for(let i=0;i<h.length;i++) if(h[i]>mx) mx=h[i];
+  const breit=(WX1-SCHIRM-6)*sc, hb=cvH/h.length;
+  ctx.save(); ctx.fillStyle=col||'#2563eb';
+  for(let i=0;i<h.length;i++){ if(!h[i]) continue;
+    const l=breit*h[i]/mx, py=Y((i/(h.length-1)-0.5)*2*yHalb);
     ctx.fillRect(X(SCHIRM)+3, py-hb*0.42, l, hb*0.84); }
   ctx.restore(); }
 
@@ -575,6 +666,43 @@ function teilchenMalen(){
   teil.forEach(p=>{ ctx.beginPath(); ctx.arc(X(p.x),Y(p.y),3.4,0,7); ctx.fill(); });
   ctx.restore(); }
 
+/* Das Messgerät schaut, durch welchen Spalt das Objekt geht – und zerstört damit das
+   Interferenzbild. Es sitzt als kleiner Kasten mit Auge an jedem offenen Spalt. */
+function messMalen(){
+  const h=Math.max(12,Math.min(24,D.b*sc*0.8)), xb=X(0);
+  ctx.save();
+  [1,-1].forEach(v=>{ if(!spAn(v)) return; const yc=Y(v*D.d/2);
+    ctx.fillStyle='#fee2e2'; ctx.strokeStyle='#dc2626'; ctx.lineWidth=1.8;
+    ctx.beginPath(); ctx.rect(xb+h*0.35, yc-h*0.62, h*1.25, h*1.25); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.arc(xb+h*0.97, yc, h*0.3, 0, 7); ctx.stroke(); });
+  ctx.restore(); }
+/* Der Schirm von vorn: quer zur Spaltrichtung ändert sich nichts, also werden die Streifen
+   waagrecht – bei Teilchen und Quantenobjekten als einzelne Einschläge, bei der Welle als
+   Helligkeit (dort ist es die Lautstärke). Die Höhe passt zur Seitenansicht daneben. */
+function schirmMalen(){
+  const w=Math.max(74,Math.min(190,cvW*0.19)), h=cvH*0.84;
+  const x0=cvW-w-12, y0=(cvH-h)/2, yz=yy=>y0+h*(0.5-yy/(2*yHalb));
+  ctx.save();
+  ctx.fillStyle='#fff'; ctx.strokeStyle='#94a3b8'; ctx.lineWidth=1.4;
+  ctx.beginPath(); ctx.rect(x0,y0,w,h); ctx.fill(); ctx.stroke();
+  ctx.save(); ctx.beginPath(); ctx.rect(x0,y0,w,h); ctx.clip();
+  if(D.tab==='k'&&D.kmod==='w'){
+    const n=Math.max(40,Math.round(h/2)); let mx=1e-9, I=[];
+    for(let i=0;i<n;i++){ const yy=(0.5-i/(n-1))*2*yHalb, f=feldAn(SCHIRM,yy), v=f.amp*f.amp;
+      I.push(v); if(v>mx) mx=v; }
+    for(let i=0;i<n;i++){ const t=1-Math.min(1,Math.pow(I[i]/mx,0.6));
+      ctx.fillStyle='rgb('+Math.round(15+t*240)+','+Math.round(38+t*217)+','+Math.round(86+t*169)+')';
+      ctx.fillRect(x0, y0+h*i/n-0.5, w, h/n+1); }
+  } else {
+    const liste=D.tab==='q'?qpunkte:trefferP, col=D.tab==='q'?'rgba(126,34,206,.85)':'rgba(37,99,235,.85)';
+    ctx.fillStyle=col;
+    liste.forEach(q=>{ const py=yz(q.y); if(py<y0-2||py>y0+h+2) return;
+      ctx.beginPath(); ctx.arc(x0+6+q.z*(w-12), py, 1.9, 0, 7); ctx.fill(); });
+  }
+  ctx.restore();
+  ctx.fillStyle='#475569'; ctx.font='700 '+Math.max(11,fs()*0.85)+'px sans-serif';
+  ctx.textAlign='center'; ctx.textBaseline='bottom'; ctx.fillText('Schirm von vorn', x0+w/2, y0-4);
+  ctx.restore(); }
 /* ---------- Gesamtbild ---------- */
 let phase=0;
 const fs=()=>D.fontSize||14;
@@ -601,10 +729,21 @@ function malen(){
     info=(info?info+' · ':'')+'λ = '+D.lam+' cm · f = '+Math.round(CSCHALL/D.lam)+' Hz';
   } else if(D.tab==='k'){
     aufbauMalen();
-    if(D.histo) histoMalen();
+    if(D.histo&&!D.schirm) histoMalen();   /* das Fenster zeigt dasselbe besser */
     teilchenMalen();
     info='abgefeuert: '+abgefeuert+' · durch die Spalte: '+durch+' · am Schirm: '+getroffen;
+  } else if(D.tab==='q'){
+    if(D.psi){ if(D.mess) inkMalen(); else feldMalen(phase); }
+    aufbauMalen();
+    if(D.mess) messMalen();
+    if(D.sammeln&&!D.schirm) histoMalen(qhisto,'#7e22ce');
+    qMalen();
+    info='Objekte: '+qAb+' · am Schirm: '+qAn;
+    info+=' · '+(D.mess?'mit Messung – der Weg ist bekannt: die Streifen verschwinden, übrig bleibt die Summe der beiden Einzelbilder'
+      :(beide()?'ohne Messung – jedes Objekt trifft nach |Ψ|² ein'
+               :'nur ein Spalt offen – kein Interferenzmuster'));
   }
+  if(D.schirm&&D.tab!=='l') schirmMalen();
   $('hint').textContent=info; }
 
 /* ---------- Mikrofon ---------- */
@@ -631,7 +770,11 @@ function loop(ts){
   const dt=Math.min(0.05,(ts-letztT)/1000||0); letztT=ts;
   if(D.lauf){
     const st=dt*tempoF();
-    if(D.tab==='k'&&D.kmod==='t'){
+    if(D.tab==='q'){
+      qTick(st); phase+=st*2*Math.PI*0.45; if(phase>1e6) phase=0;
+      if(D.strom){ qstromT+=st; const ab=1/(D.inten*0.9);
+        while(qstromT>ab){ qstromT-=ab; qSchuss(); } }
+    } else if(D.tab==='k'&&D.kmod==='t'){
       teilSchritt(st);
       if(D.dauer){ dauerT+=st; const ab=1/3.2;
         while(dauerT>ab){ dauerT-=ab; schuss(); } }
@@ -652,16 +795,17 @@ function knoepfe(){
   $('rK').classList.toggle('on',D.tab==='k');
   $('rQ').classList.toggle('on',D.tab==='q');
   $('rL').classList.toggle('on',D.tab==='l');
-  const klass=D.tab==='k', welle=klass&&D.kmod==='w';
+  const klass=D.tab==='k', welle=klass&&D.kmod==='w', quant=D.tab==='q';
   $('grpK').hidden=!klass; $('grpL').hidden=D.tab!=='l';
-  $('optT').hidden=!(klass&&D.kmod==='t'); $('optW').hidden=!welle;
+  $('optT').hidden=!(klass&&D.kmod==='t'); $('optW').hidden=!welle; $('optQ').hidden=!quant;
   $('sep3').hidden=!klass;
-  $('bar3').hidden=!klass;
-  $('boxLam').hidden=!welle;
-  $('bald').hidden=klass;
-  if(!klass) $('bald').innerHTML='<b>'+(D.tab==='q'?'Quantenobjekte':'Licht')+'</b>'+
-    'Dieser Reiter ist noch leer – er kommt als Nächstes. Fertig ist bisher der Reiter <b>Klassisch</b> mit Teilchen und Schallwelle.';
-  [['bDauer',D.dauer],['bHisto',D.histo],['bFeld',D.feld],['bBerge',D.berge],['bTaeler',D.taeler],['bMax',D.imax],['bMin',D.imin],
+  $('bar3').hidden=!(klass||quant);
+  $('boxLam').hidden=!(welle||quant);
+  $('bald').hidden=klass||quant;
+  if(D.tab==='l') $('bald').innerHTML='<b>Licht</b>'+
+    'Dieser Reiter ist noch leer – er kommt als Nächstes. Fertig sind bisher <b>Klassisch</b> und <b>Quantenobjekte</b>.';
+  [['bMess',D.mess],['bPsi',D.psi],['bQstrom',D.strom],['bSammeln',D.sammeln],['bSchirm',D.schirm],
+   ['bDauer',D.dauer],['bHisto',D.histo],['bFeld',D.feld],['bBerge',D.berge],['bTaeler',D.taeler],['bMax',D.imax],['bMin',D.imin],
    ['bPunkt',D.pAn],['bZuege',D.zuege],['bGang',D.gang],['bDiag',D.diag],['bMikro',D.mikro]].forEach(([id,an])=>{
     const b=$(id); if(b) b.classList.toggle('on',!!an); });
   ['bDiag','bMikro','bZuege'].forEach(id=>{ const b=$(id); if(b) b.disabled=!D.pAn; });
@@ -670,23 +814,30 @@ function knoepfe(){
   $('grpK').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.km===D.kmod));
   $('grpL').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.lm===D.lmod));
   $('grpSp').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.sp===D.sp));
+  $('grpSpQ').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.sp===D.sp));
   ['bMax','bMin'].forEach(id=>{ $(id).disabled=!beide(); });
   $('rgD').value=D.d; $('vD').textContent=D.d+' cm';
   $('rgB').value=D.b; $('vB').textContent=D.b+' cm';
   $('rgL').value=D.lam; $('vL').textContent=D.lam+' cm';
-  $('rgV').value=D.tempo; $('vV').textContent=zahl(D.tempo/5)+' \u00d7'; }
-function neuStart(){ teil=[]; histo=new Int32Array(histo.length); getroffen=0; durch=0; abgefeuert=0; phase=0; dauerT=0; }
+  $('rgV').value=D.tempo; $('vV').textContent=zahl(D.tempo/5)+' ×';
+  $('rgI').value=D.inten; $('vI').textContent=D.inten+'/s'; }
+function neuStart(){ teil=[]; histo=new Int32Array(histo.length); getroffen=0; durch=0; abgefeuert=0; phase=0; dauerT=0; trefferP=[]; qNeu(); }
 
 const reg=(id,feld,nach)=>{ const el=$(id); if(!el) return;
   el.addEventListener('input',()=>{ D[feld]=+el.value; if(nach) nach(); knoepfe(); sync(); }); };
-reg('rgD','d',()=>{ feldAlt=''; feldBauen(); });
-reg('rgB','b',()=>{ feldAlt=''; feldBauen(); });
-reg('rgL','lam',()=>{ feldAlt=''; feldBauen(); });
+const neuFeld=()=>{ feldAlt=''; feldBauen(); vertAlt=''; };
+reg('rgD','d',neuFeld);
+reg('rgB','b',neuFeld);
+reg('rgL','lam',neuFeld);
 reg('rgV','tempo');
 const um=(id,feld,nach)=>{ const b=$(id); if(!b) return;
   b.onclick=()=>{ D[feld]=!D[feld]; if(nach) nach(); knoepfe(); sync(); }; };
 um('bDauer','dauer'); um('bHisto','histo'); um('bFeld','feld'); um('bBerge','berge'); um('bTaeler','taeler');
 um('bMax','imax'); um('bMin','imin'); um('bZuege','zuege'); um('bGang','gang'); um('bDiag','diag');
+um('bPsi','psi'); um('bSammeln','sammeln'); um('bQstrom','strom'); um('bSchirm','schirm');
+um('bMess','mess',()=>{ vertAlt=''; vertBauen(); });
+$('bQein').onclick=()=>{ qSchuss(); if(!D.lauf){ D.lauf=true; knoepfe(); sync(); } };
+reg('rgI','inten');
 um('bPunkt','pAn',()=>{ if(!D.pAn){ D.mikro=false; tonAus(); } });
 $('bMikro').onclick=()=>{ if(!D.pAn) return;
   D.mikro=!D.mikro;
@@ -698,7 +849,9 @@ $('bPlay').onclick=()=>{ D.lauf=!D.lauf; knoepfe(); sync(); };
 $('bReset').onclick=()=>{ neuStart(); D.lauf=false; knoepfe(); sync(); };
 $('grpK').querySelectorAll('button').forEach(b=>{ b.onclick=()=>{ D.kmod=b.dataset.km; neuStart(); knoepfe(); resize(); sync(); }; });
 $('grpL').querySelectorAll('button').forEach(b=>{ b.onclick=()=>{ D.lmod=b.dataset.lm; knoepfe(); sync(); }; });
-$('grpSp').querySelectorAll('button').forEach(b=>{ b.onclick=()=>{ D.sp=b.dataset.sp; feldAlt=''; feldBauen(); knoepfe(); sync(); }; });
+const spWahl=b=>{ D.sp=b.dataset.sp; feldAlt=''; feldBauen(); vertAlt=''; knoepfe(); sync(); };
+$('grpSp').querySelectorAll('button').forEach(b=>{ b.onclick=()=>spWahl(b); });
+$('grpSpQ').querySelectorAll('button').forEach(b=>{ b.onclick=()=>spWahl(b); });
 [['rK','k'],['rQ','q'],['rL','l']].forEach(([id,t])=>{ $(id).onclick=()=>{ D.tab=t;
   if(t!=='k'){ tonAus(); } knoepfe(); sync(); }; });
 $('fnM').onclick=()=>setFs((D.fontSize||14)-1);
@@ -719,23 +872,40 @@ const HILFE='<ul>'+
  '(die beiden Wege; der Kreisbogen um P durch den näheren Spalt schneidet den längeren Weg, das rote Stück am Spalt ist Δs), ein <b>Diagramm</b> mit den beiden Teilschwingungen und ihrer Summe '+
  'und das <b>Mikrofon</b>, das den Ton mit der Lautstärke an dieser Stelle hörbar macht. '+
  'Die <b>Wellenzüge</b> zeichnen die Welle längs der beiden Strahlen – so sieht man, wie viele Wellenlängen auf jeden Weg passen.</li>'+
+ '<li><b>Quantenobjekte:</b> „Ein Objekt" schickt eines los, der <b>Objektstrom</b> viele – '+
+ 'wie viele je Sekunde, sagt die <b>Intensität</b>. Wo eines auftrifft, entscheidet der Zufall, '+
+ 'aber nach der Wahrscheinlichkeit |Ψ|². Mit <b>Sammeln</b> bleiben alle Treffer stehen: erst '+
+ 'Punkt für Punkt, dann wird das Muster sichtbar. Das <b>Messgerät</b> schaut nach, durch welchen '+
+ 'Spalt jedes Objekt geht – dann ist der Weg bekannt, das Objekt fliegt sichtbar weiter, und die '+
+ 'Streifen verschwinden: übrig bleibt die Summe der beiden Einzelbilder. Auch <b>einzelne Spalte</b> lassen sich schließen.</li>'+
+ '<li>Der Knopf <b>Schirm</b> zeigt den Schirm von vorn – als Fenster neben der Seitenansicht.</li>'+
+ '<li>Den <b>Spaltabstand</b> ändert man auch, indem man an einem Spalt zieht.</li>'+
  '<li>Die Tonhöhe folgt aus der Wellenlänge: 34 cm sind rund 1000 Hz. '+
  'Die Geschwindigkeit ist nicht einstellbar – beim Schall liegt sie mit c = λ·f fest, '+
  'und die Teilchen sind alle gleich schnell. Der Regler <b>Tempo</b> ändert nur, wie schnell die Simulation läuft.</li></ul>';
 
 /* Punkt P ziehen */
-let zieht=false;
+/* P verschieben – und in jedem Reiter den Spaltabstand durch Ziehen an einem Spalt */
+let zieht='';
 cv.addEventListener('pointerdown',e=>{
-  if(!(D.tab==='k'&&D.kmod==='w'&&D.pAn)) return;
+  if(D.tab==='l') return;
   const r=cv.getBoundingClientRect(), mx=e.clientX-r.left, my=e.clientY-r.top;
-  if(Math.hypot(mx-X(D.px),my-Y(D.py))>Math.max(22,fs()*1.8)) return;
-  zieht=true; e.preventDefault(); },{passive:false});
+  if(D.tab==='k'&&D.kmod==='w'&&D.pAn&&Math.hypot(mx-X(D.px),my-Y(D.py))<=Math.max(22,fs()*1.8)){
+    zieht='p'; e.preventDefault(); return; }
+  const nah=Math.min(Math.abs(my-Y(D.d/2)),Math.abs(my-Y(-D.d/2)));
+  if(Math.abs(mx-X(0))<Math.max(18,fs()*1.4)&&nah<Math.max(20,fs()*1.6)){
+    zieht='spalt'; e.preventDefault(); } },{passive:false});
 addEventListener('pointermove',e=>{ if(!zieht) return;
   const r=cv.getBoundingClientRect();
-  D.px=Math.max(4,Math.min(SCHIRM-2,xW(e.clientX-r.left)));
-  D.py=Math.max(-yHalb+4,Math.min(yHalb-4,yW(e.clientY-r.top)));
+  if(zieht==='p'){
+    D.px=Math.max(4,Math.min(SCHIRM-2,xW(e.clientX-r.left)));
+    D.py=Math.max(-yHalb+4,Math.min(yHalb-4,yW(e.clientY-r.top)));
+  } else {
+    const neu=Math.round(2*Math.abs(yW(e.clientY-r.top)));
+    const w=Math.max(20,Math.min(150,neu));
+    if(w!==D.d){ D.d=w; feldAlt=''; feldBauen(); vertAlt=''; knoepfe(); } }
   e.preventDefault(); },{passive:false});
-addEventListener('pointerup',()=>{ if(zieht){ zieht=false; sync(); } });
+addEventListener('pointerup',()=>{ if(zieht){ zieht=''; sync(); } });
 
 /* ---------- Tafel und Teilen ---------- */
 let syncTO=null;
@@ -752,7 +922,9 @@ function uebernimm(d){ if(!d) return;
   D.b=Math.max(2,Math.min(60,+d.b||s.b));
   D.lam=Math.max(10,Math.min(100,+d.lam||s.lam));
   D.tempo=Math.max(1,Math.min(10,+d.tempo||s.tempo));
-  ['lauf','dauer','histo','feld','berge','taeler','imax','imin','pAn','zuege','gang','diag'].forEach(k=>{ D[k]=!!d[k]; });
+  ['lauf','dauer','histo','feld','berge','taeler','imax','imin','pAn','zuege','gang','diag',
+   'mess','psi','strom','sammeln','schirm'].forEach(k=>{ D[k]=!!d[k]; });
+  D.inten=Math.max(1,Math.min(20,+d.inten||6));
   D.mikro=false;                                  /* Ton nie ungefragt einschalten */
   D.px=isFinite(+d.px)?+d.px:s.px; D.py=isFinite(+d.py)?+d.py:s.py;
   D.fontSize=Math.max(10,Math.min(22,+d.fontSize||s.fontSize));
