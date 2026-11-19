@@ -377,6 +377,19 @@ function quellen(nur){
     for(let i=0;i<n;i++){ const t=n===1?0:(i/(n-1)-0.5);
       aus.push({x:0, y:ym+t*D.b, a:1/n}); } });
   return aus; }
+/* ---------- Die einlaufende Welle ----------
+   Die Schallwelle (und die klassische Lichtwelle) füllt das Bild nicht sofort aus: sie
+   startet an den Spalten und läuft mit ihrer eigenen Geschwindigkeit c = λ·f ins leere
+   Feld hinein – also genau so schnell, wie die Wellenberge wandern. frontR ist der
+   Radius der Wellenfront um die Spalte, feldRmax die Strecke bis in die weiteste Ecke.
+   Das Ψ-Feld der Quantenobjekte bleibt wie gehabt sofort da. */
+let frontR=0, feldRmax=1e9;
+function weich(a){ const t=Math.min(1,Math.max(0,a)); return t*t*(3-2*t); }
+const einlauf=()=>art()==='w'&&frontR<feldRmax;
+/* Am Rand der Front setzt die Welle nicht schlagartig ein, sondern über eine knappe
+   Wellenlänge hinweg – sonst flackert die Kante. */
+function frontG(r){ return einlauf()?weich((frontR-r)/(LAM()*0.8)):1; }
+
 /* Amplitude nur aus einem Spalt – daraus wird die Verteilung bei „mit Messung“ und
    bei nur einem offenen Spalt. */
 function feldAn1(x,y,v){ const k=2*Math.PI/LAM(); let cr=0, ci=0;
@@ -384,8 +397,10 @@ function feldAn1(x,y,v){ const k=2*Math.PI/LAM(); let cr=0, ci=0;
     const a=s.a/Math.sqrt(r); cr+=a*Math.cos(k*r); ci+=a*Math.sin(k*r); });
   return Math.hypot(cr,ci); }
 function feldAn(x,y){ const k=2*Math.PI/LAM(); let cr=0, ci=0;
-  quellen().forEach(s=>{ const dx=x-s.x, dy=y-s.y, r=Math.hypot(dx,dy)||0.01;
-    const a=s.a/Math.sqrt(r); cr+=a*Math.cos(k*r); ci+=a*Math.sin(k*r); });
+  [1,-1].forEach(v=>{ if(!spAn(v)) return;
+    const g=frontG(Math.hypot(x,y-v*D.d/2)); if(g<=0) return;
+    quellen(v).forEach(s=>{ const dx=x-s.x, dy=y-s.y, r=Math.hypot(dx,dy)||0.01;
+      const a=g*s.a/Math.sqrt(r); cr+=a*Math.cos(k*r); ci+=a*Math.sin(k*r); }); });
   return {cr, ci, amp:Math.hypot(cr,ci)}; }
 /* So laut wäre es, wenn sich alles, was gerade spielt, an dieser Stelle voll verstärkt */
 function ampVoll(x,y){ let a=0;
@@ -394,59 +409,79 @@ function ampVoll(x,y){ let a=0;
   return a||1e-6; }
 
 /* ---------- Feldbild ---------- */
-let GW=0, GH=0, Cr=null, Ci=null, Ink=null, img=null, off=null, octx=null, feldNorm=1, inkNorm=1, feldAlt='';
+/* Für die einlaufende Welle wird je Spalt getrennt gerechnet (A = oben, B = unten):
+   erst wenn die Front eines Spalts da ist, zählt sein Beitrag. RA/RB ist der Abstand
+   zum jeweiligen Spalt. */
+let GW=0, GH=0, CrA=null, CiA=null, CrB=null, CiB=null, RA=null, RB=null,
+    img=null, off=null, octx=null, feldNorm=1, inkNorm=1, feldAlt='';
 function feldSchluessel(){ return [D.d,D.b,LAM(),D.sp,GW,GH,Math.round(cvW),Math.round(cvH),wx0()].join('|'); }
 function feldBauen(){
   GW=Math.max(60,Math.min(440,Math.round(cvW/2))); GH=Math.max(50,Math.min(330,Math.round(cvH/2)));
-  const key=feldSchluessel(); if(key===feldAlt&&Cr) return; feldAlt=key;
+  const key=feldSchluessel(); if(key===feldAlt&&CrA) return; feldAlt=key;
   off=document.createElement('canvas'); off.width=GW; off.height=GH; octx=off.getContext('2d');
   img=octx.createImageData(GW,GH);
-  Cr=new Float32Array(GW*GH); Ci=new Float32Array(GW*GH); Ink=new Float32Array(GW*GH);
-  const k=2*Math.PI/LAM(), q=quellen(), qo=quellen(1), qu=quellen(-1);
+  const N=GW*GH;
+  CrA=new Float32Array(N); CiA=new Float32Array(N); CrB=new Float32Array(N); CiB=new Float32Array(N);
+  RA=new Float32Array(N); RB=new Float32Array(N);
+  const k=2*Math.PI/LAM(), qo=quellen(1), qu=quellen(-1);
   const teilAn=[spAn(1)?qo:[], spAn(-1)?qu:[]];
-  let mx=0, mi=0;
+  const crT=[CrA,CrB], ciT=[CiA,CiB], rT=[RA,RB];
+  let mx=0, mi=0, rmax=0;
   for(let j=0;j<GH;j++){
     const wy=yW((j+0.5)*cvH/GH);
     for(let i=0;i<GW;i++){
       const wx=xW((i+0.5)*cvW/GW), idx=j*GW+i;
-      if(wx<1){ Cr[idx]=0; Ci[idx]=0; Ink[idx]=0; continue; }
+      RA[idx]=1e9; RB[idx]=1e9;
+      if(wx<1) continue;                        /* vor der Blende bleibt es leer */
       let cr=0, ci=0, ink=0;
       for(let t=0;t<2;t++){ const qt=teilAn[t]; if(!qt.length) continue;
         let ar=0, ai=0;
         for(let s=0;s<qt.length;s++){ const dx=wx-qt[s].x, dy=wy-qt[s].y;
           const r=Math.sqrt(dx*dx+dy*dy)||0.01, a=qt[s].a/Math.sqrt(r), ph=k*r;
           ar+=a*Math.cos(ph); ai+=a*Math.sin(ph); }
+        crT[t][idx]=ar; ciT[t][idx]=ai;
+        const ym=(t===0?1:-1)*D.d/2, rm=Math.hypot(wx,wy-ym);
+        rT[t][idx]=rm; if(rm>rmax) rmax=rm;
         cr+=ar; ci+=ai; ink+=ar*ar+ai*ai; }   /* ohne Interferenz zaehlen die Betraege einzeln */
-      Cr[idx]=cr; Ci[idx]=ci; Ink[idx]=ink;
       /* Dicht an den Spalten wird die Amplitude beliebig groß (1/√r). Würde man danach
          normieren, bliebe das ganze Feld dahinter blass – deshalb zählt erst ab 40 cm. */
       if(wx>40){ const m=cr*cr+ci*ci; if(m>mx) mx=m; if(ink>mi) mi=ink; } } }
   feldNorm=1/Math.max(1e-6,Math.sqrt(mx)*0.62);
-  inkNorm=1/Math.max(1e-9,mi*1.05); }
+  inkNorm=1/Math.max(1e-9,mi*1.05);
+  feldRmax=rmax+LAM(); }
+/* Das Feld wird nicht knallig gemalt: FELD_A ist die Deckkraft (der weiße Hintergrund
+   scheint durch), weich() macht den Übergang um die Nulllinie sanft statt hart. */
+const FELD_A=0.72;
+function feldZeigen(){ ctx.imageSmoothingEnabled=true;
+  const g=ctx.globalAlpha; ctx.globalAlpha=g*FELD_A;
+  ctx.drawImage(off,0,0,cvW,cvH); ctx.globalAlpha=g; }
 /* Farben wie in der Wellenwanne: Berg hell, Tal dunkelblau */
 function inkMalen(){
   if(!img) return; const d=img.data;
   for(let i=0,j=0;i<GW*GH;i++,j+=4){
-    const t=1-Math.min(1,Math.pow(Ink[i]*inkNorm,0.62));
+    const ink=CrA[i]*CrA[i]+CiA[i]*CiA[i]+CrB[i]*CrB[i]+CiB[i]*CiB[i];
+    const t=1-weich(Math.pow(ink*inkNorm,0.8));
     d[j]=Math.round(15+t*240); d[j+1]=Math.round(38+t*217); d[j+2]=Math.round(86+t*169); d[j+3]=255; }
-  octx.putImageData(img,0,0);
-  ctx.imageSmoothingEnabled=true; ctx.drawImage(off,0,0,cvW,cvH); }
+  octx.putImageData(img,0,0); feldZeigen(); }
 /* Beim Schall sind Berge Verdichtungen und Täler Verdünnungen – deshalb dort rot und blau
    um Weiß herum. Das Ψ-Feld der Quantenobjekte bleibt in Blautönen. */
 function feldMalen(ph,rotblau){
   if(!img) return; const d=img.data, c=Math.cos(ph), s=Math.sin(ph);
+  const lauf=rotblau&&einlauf(), bw=LAM()*0.8;
   for(let i=0,j=0;i<GW*GH;i++,j+=4){
-    const v=(Ci[i]*c-Cr[i]*s)*feldNorm;
-    if(v===0&&Cr[i]===0&&Ci[i]===0){ d[j]=255; d[j+1]=255; d[j+2]=255; d[j+3]=255; continue; }
-    const av=Math.min(1,Math.abs(v)*1.1), w=Math.pow(av,0.65);
+    let ga=1, gb=1;
+    if(lauf){ ga=weich((frontR-RA[i])/bw); gb=weich((frontR-RB[i])/bw); }
+    const cr=ga*CrA[i]+gb*CrB[i], ci=ga*CiA[i]+gb*CiB[i];
+    const v=(ci*c-cr*s)*feldNorm;
+    if(v===0&&cr===0&&ci===0){ d[j]=255; d[j+1]=255; d[j+2]=255; d[j+3]=255; continue; }
+    const w=weich(Math.abs(v));
     if(rotblau){
       if(v>=0){ d[j]=Math.round(255-65*w); d[j+1]=Math.round(255-225*w); d[j+2]=Math.round(255-210*w); }
       else    { d[j]=Math.round(255-225*w); d[j+1]=Math.round(255-185*w); d[j+2]=Math.round(255-75*w); }
       d[j+3]=255; continue; }
     const t=0.5+0.5*Math.sign(v)*w;
     d[j]=Math.round(15+t*223); d[j+1]=Math.round(38+t*208); d[j+2]=Math.round(86+t*169); d[j+3]=255; }
-  octx.putImageData(img,0,0);
-  ctx.imageSmoothingEnabled=true; ctx.drawImage(off,0,0,cvW,cvH); }
+  octx.putImageData(img,0,0); feldZeigen(); }
 
 /* ---------- Quantenobjekte ----------
    Wo ein Objekt auftrifft, entscheidet der Zufall – aber nach der Wahrscheinlichkeit
@@ -561,8 +596,9 @@ function linienMalen(ph){
     for(let n=0;n<60;n++){
       const rB=n*lam+versch, rT=rB+lam/2;
       if(rB*sc>cvW*1.6) break;
+      if(einlauf()&&rB>frontR) break;                 /* vor der Front ist noch nichts */
       if(D.berge&&rB>0){ ctx.strokeStyle='#7f1d1d'; ctx.setLineDash([]); bogen(ctx,0,ym,rB); }
-      if(D.taeler&&rT>0){ ctx.strokeStyle='#1e3a8a'; ctx.setLineDash([4,4]); bogen(ctx,0,ym,rT); ctx.setLineDash([]); } } });
+      if(D.taeler&&rT>0&&!(einlauf()&&rT>frontR)){ ctx.strokeStyle='#1e3a8a'; ctx.setLineDash([4,4]); bogen(ctx,0,ym,rT); ctx.setLineDash([]); } } });
   ctx.restore(); }
 /* Linien gleichen Gangunterschieds sind Hyperbeln mit den Spalten als Brennpunkten */
 function hyperbel(a){
@@ -628,8 +664,9 @@ function strahlWellen(ph){
   const k=2*Math.PI/LAM(), amp=Math.max(5,Math.min(12,fs()*0.62))/sc;
   ctx.save(); ctx.lineWidth=1.8; ctx.strokeStyle='rgba(100,116,139,.9)';
   [1,-1].forEach(v=>{ if(!spAn(v)) return;
-    const sy=v*D.d/2, dx=D.px-0, dy=D.py-sy, r=Math.hypot(dx,dy)||1;
-    const ux=dx/r, uy=dy/r, nx=-uy, ny=ux;
+    const sy=v*D.d/2, dx=D.px-0, dy=D.py-sy, r0=Math.hypot(dx,dy)||1;
+    const r=einlauf()?Math.min(r0,frontR):r0; if(r<=0) return;   /* nur bis zur Front */
+    const ux=dx/r0, uy=dy/r0, nx=-uy, ny=ux;
     const n=Math.max(40,Math.min(1200,Math.round(r*sc/2)));
     ctx.beginPath();
     for(let i=0;i<=n;i++){ const t=r*i/n, a=Math.sin(k*t-ph)*amp;
@@ -643,8 +680,10 @@ function diagMalen(ph){
   if(x0+w>cvW-6) x0=X(D.px)-w-16; if(x0<6) x0=6;
   if(y0<6) y0=Y(D.py)+16; if(y0+h>cvH-6) y0=cvH-h-6;
   const r1=Math.hypot(D.px,D.py-D.d/2), r2=Math.hypot(D.px,D.py+D.d/2);
-  const k=2*Math.PI/LAM(), a1=1/Math.sqrt(r1||0.01), a2=1/Math.sqrt(r2||0.01);
+  const k=2*Math.PI/LAM();
+  let a1=1/Math.sqrt(r1||0.01), a2=1/Math.sqrt(r2||0.01);
   const mx=a1+a2;
+  a1*=frontG(r1)*(spAn(1)?1:0); a2*=frontG(r2)*(spAn(-1)?1:0);
   ctx.save(); ctx.fillStyle='rgba(255,255,255,.93)'; ctx.strokeStyle='#cfd6e0'; ctx.lineWidth=1;
   ctx.beginPath(); ctx.rect(x0,y0,w,h); ctx.fill(); ctx.stroke();
   ctx.beginPath(); ctx.moveTo(x0+4,y0+h/2); ctx.lineTo(x0+w-4,y0+h/2); ctx.strokeStyle='#cbd5e1'; ctx.stroke();
@@ -760,7 +799,7 @@ function lichtHell(y){ let su=0;
     if(y<=t.a||y>=t.b) return;
     su+=D.quell<=0?1:Math.max(0,Math.min(1,Math.min((y-t.a)/t.hw,(t.b-y)/t.hw))); });
   return su; }
-function strahlenMalen(){
+function lichtstrahlenMalen(){
   const m=VERG(), x0=wx0();
   ctx.save();
   [1,-1].forEach(v=>{ if(!spAn(v)) return;
@@ -795,7 +834,7 @@ function malen(){
   let info=''; const a=art();
   if(a==='s'){
     aufbauMalen();
-    info=strahlenMalen();
+    info=lichtstrahlenMalen();
   } else if(a==='w'){
     if(D.feld) feldMalen(phase,true);
     if(D.berge||D.taeler) linienMalen(phase);
@@ -810,6 +849,7 @@ function malen(){
       const f=feldAn(D.px,D.py), rel=f.amp/Math.max(1e-6,ampVoll(D.px,D.py));
       info=(info?info+' · ':'')+'Lautstärke '+Math.round(rel*100)+' %';
     }
+    if(!D.lauf&&einlauf()) info=(info?info+' · ':'')+'▶ Start: die Welle läuft von den Spalten aus ein';
     if(!beide()) info=(info?info+' · ':'')+'nur eine Quelle – keine Interferenz';
     info=(info?info+' · ':'')+(D.tab==='k'
       ? 'λ = '+D.lam+' cm · f = '+Math.round(CSCHALL/D.lam)+' Hz'
@@ -865,7 +905,9 @@ function loop(ts){
       teilSchritt(st);
       if(D.dauer){ dauerT+=st; const ab=1/(D.inten*0.9);
         while(dauerT>ab){ dauerT-=ab; schuss(); } }
-    } else { phase+=st*2*Math.PI*0.45; if(phase>1e6) phase=0; }
+    } else { phase+=st*2*Math.PI*0.45; if(phase>1e6) phase=0;
+      /* Je Schwingung kommt die Welle eine Wellenlänge weiter */
+      if(frontR<feldRmax) frontR=Math.min(feldRmax,frontR+st*0.45*LAM()); }
   }
   tonStellen();
   malen();
@@ -914,7 +956,7 @@ function knoepfe(){
   $('rgV').value=D.tempo; $('vV').textContent=zahl(D.tempo/5)+' ×';
   $('rgI').value=D.inten; $('vI').textContent=D.inten+'/s';
   $('rgIT').value=D.inten; $('vIT').textContent=D.inten+'/s'; }
-function neuStart(){ teil=[]; histo=new Int32Array(histo.length); getroffen=0; durch=0; abgefeuert=0; phase=0; dauerT=0; trefferP=[]; qNeu(); }
+function neuStart(){ teil=[]; histo=new Int32Array(histo.length); getroffen=0; durch=0; abgefeuert=0; phase=0; frontR=0; dauerT=0; trefferP=[]; qNeu(); }
 
 const reg=(id,feld,nach)=>{ const el=$(id); if(!el) return;
   el.addEventListener('input',()=>{ D[feld]=+el.value; if(nach) nach(); knoepfe(); sync(); }); };
@@ -944,8 +986,8 @@ $('bMikro').onclick=()=>{ if(!D.pAn) return;
 $('bSchuss').onclick=()=>{ schuss(); if(!D.lauf){ D.lauf=true; knoepfe(); sync(); } };
 $('bPlay').onclick=()=>{ D.lauf=!D.lauf; knoepfe(); sync(); };
 $('bReset').onclick=()=>{ neuStart(); D.lauf=false; knoepfe(); sync(); };
-$('grpK').querySelectorAll('button').forEach(b=>{ b.onclick=()=>{ D.kmod=b.dataset.km; neuStart(); knoepfe(); resize(); sync(); }; });
-$('grpL').querySelectorAll('button').forEach(b=>{ b.onclick=()=>{ D.lmod=b.dataset.lm; neuStart(); neuFeld(); knoepfe(); sync(); }; });
+$('grpK').querySelectorAll('button').forEach(b=>{ b.onclick=()=>{ D.kmod=b.dataset.km; neuStart(); if(D.kmod==='w') D.lauf=true; knoepfe(); resize(); sync(); }; });
+$('grpL').querySelectorAll('button').forEach(b=>{ b.onclick=()=>{ D.lmod=b.dataset.lm; neuStart(); neuFeld(); if(D.lmod==='w') D.lauf=true; knoepfe(); sync(); }; });
 const spWahl=b=>{ D.sp=b.dataset.sp; feldAlt=''; feldBauen(); vertAlt=''; knoepfe(); sync(); };
 $('grpSp').querySelectorAll('button').forEach(b=>{ b.onclick=()=>spWahl(b); });
 $('grpSpQ').querySelectorAll('button').forEach(b=>{ b.onclick=()=>spWahl(b); });

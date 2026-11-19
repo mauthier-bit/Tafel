@@ -4118,8 +4118,14 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   **Klassisch · Welle:** Hinter den Spalten laufen Elementarwellen los (**Schall**, 343 m/s; aus der
   **Wellenlänge** folgt die Tonhöhe, 34 cm sind rund 1000 Hz); in jedem Spalt steht dazu ein
   **Lautsprecher**. Ein breiter Spalt wird dabei in mehrere
-  Elementarwellen zerlegt, die Verbreiterung ergibt sich also von selbst. Einzeln einblendbar sind
-  **Wellenfeld** (Verdichtungen **rot**, Verdünnungen **blau**, dazwischen weiß), **Berge** (durchgezogen dunkelrot) und
+  Elementarwellen zerlegt, die Verbreiterung ergibt sich also von selbst. Das Feld ist nicht von
+  Anfang an da: die Welle **läuft von den Spalten aus ins leere Feld hinein**, und zwar genau so
+  schnell, wie die Wellenberge wandern (c = λ·f). Erst wenn beide Kreiswellen an einer Stelle
+  angekommen sind, kann es dort überhaupt Interferenz geben; vor der Wellenfront bleibt es still –
+  auch das Mikrofon an P schweigt, bis der Schall dort ist. **Zurücksetzen** schickt die Welle neu
+  los. Das Ψ-Feld der Quantenobjekte ist dagegen sofort vollständig da. Einzeln einblendbar sind
+  **Wellenfeld** (Verdichtungen **rot**, Verdünnungen **blau**, dazwischen weiß; die Farben sind
+  durchscheinend und gehen weich ineinander über), **Berge** (durchgezogen dunkelrot) und
   **Täler** (gestrichelt dunkelblau) als Kreislinien einzeln – sie liegen genau auf dem Kamm bzw. im Tal
   der Elementarwelle, also eine Viertel Wellenlänge neben dem Nulldurchgang, und die Linien gleichen Gangunterschieds getrennt als
   **Maxima** (grün) und **Minima** (rot gestrichelt) – das sind Hyperbeln mit den beiden Spalten als
