@@ -4116,7 +4116,7 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   **Wellenlänge** folgt die Tonhöhe, 34 cm sind rund 1000 Hz); in jedem Spalt steht dazu ein
   **Lautsprecher**. Ein breiter Spalt wird dabei in mehrere
   Elementarwellen zerlegt, die Verbreiterung ergibt sich also von selbst. Einzeln einblendbar sind
-  **Wellenfeld** (Berg hell, Tal dunkelblau wie in der Wellenwanne), **Berge** (durchgezogene) und
+  **Wellenfeld** (Verdichtungen **rot**, Verdünnungen **blau**, dazwischen weiß), **Berge** (durchgezogene) und
   **Täler** (gestrichelte Kreislinien) einzeln, und die Linien gleichen Gangunterschieds getrennt als
   **Maxima** (grün) und **Minima** (rot gestrichelt) – das sind Hyperbeln mit den beiden Spalten als
   Brennpunkten. Mit **beide / oben / unten** läuft nur ein Lautsprecher: dann bleibt eine einzelne
@@ -4140,7 +4140,7 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   sichtbar von „seinem" Spalt weiter, gerechnet wird mit |Ψ₁|² + |Ψ₂|², und die **Streifen
   verschwinden** – übrig bleibt die Summe der beiden Einzelbilder (bei großer Wellenlänge läuft die
   zu einem breiten Berg zusammen, erst bei kleiner Wellenlänge werden daraus zwei getrennte Streifen).
-  Das Ψ-Bild zeigt dann eine ruhige Wolke ohne Streifen. Auch **einzelne Spalte**
+  Das Ψ-Bild steht in Blautönen (es ist keine Verdichtung) und zeigt mit Messung eine ruhige Wolke ohne Streifen. Auch **einzelne Spalte**
   lassen sich schließen (beide · nur oben · nur unten).
 - **Lernlandkarte** (Diverses): eine Karte aus **Orten** (Aufgaben, Themen, Stationen), die durch
   **Wege** verbunden sind – der Fortschritt schaltet nach und nach neue Orte frei.
