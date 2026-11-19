@@ -4100,7 +4100,9 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     Flachwasser und an schräger Grenze. Damit die Bäuche bei solchen Resonanzen nicht übersteuern, regelt
     sich die Helligkeit der Darstellung automatisch nach.
 - **Doppelspalt** (Mathe & Physik): drei Reiter – **Klassisch**, **Quantenobjekte** und **Licht**.
-  Fertig sind **Klassisch** und **Quantenobjekte**, der Reiter **Licht** sagt, dass er noch kommt.
+  Die Längen tragen die Einheit, die zum Reiter passt: **cm** bei Schall, **nm** bei Quantenobjekten,
+  **µm** beim Licht. Gerechnet wird mit denselben Zahlen – es kommt ja nur auf das Verhältnis von
+  Wellenlänge und Spaltabstand an.
   Für alle Reiter gleich eingestellt werden **Spaltabstand** und **Spaltbreite**, dazu **Start/Pause**,
   **Zurücksetzen** und der Knopf **Schirm**, der den Schirm **von vorn** als Fenster neben die
   Seitenansicht stellt (Einschläge als Punkte, bei der Schallwelle als Helligkeit). Den **Spaltabstand**
@@ -4110,7 +4112,8 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   **Klassisch · Teilchen:** „Ein Teilchen" schießt einzeln, „Dauerfeuer" fortlaufend. Die Quelle liegt
   weit links außerhalb des Bildes (sonst träfen die Teilchen die Spalte zu steil); zu sehen ist nur das
   letzte Stück des Anflugs – gerade genug, um zu erkennen, dass ein Teil an der Blende **abgefangen**
-  wird. Wer einen Spalt trifft, fliegt **geradeaus** weiter. Das **Histogramm** am Schirm sammelt die Treffer auf – es entstehen
+  wird. Wer einen Spalt trifft, fliegt **geradeaus** weiter. Wie dicht die Teilchen kommen, sagt der
+  Regler **Intensität** (1 bis 20 je Sekunde) – denselben gibt es beim Objektstrom. Das **Histogramm** am Schirm sammelt die Treffer auf – es entstehen
   **zwei Streifen**, kein Muster. Die Zählung (abgefeuert · durch die Spalte · am Schirm) steht unten.
   **Klassisch · Welle:** Hinter den Spalten laufen Elementarwellen los (**Schall**, 343 m/s; aus der
   **Wellenlänge** folgt die Tonhöhe, 34 cm sind rund 1000 Hz); in jedem Spalt steht dazu ein
@@ -4142,7 +4145,17 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   verschwinden** – übrig bleibt die Summe der beiden Einzelbilder (bei großer Wellenlänge läuft die
   zu einem breiten Berg zusammen, erst bei kleiner Wellenlänge werden daraus zwei getrennte Streifen).
   Das Ψ-Bild steht in Blautönen (es ist keine Verdichtung) und zeigt mit Messung eine ruhige Wolke ohne Streifen. Auch **einzelne Spalte**
-  lassen sich schließen (beide · nur oben · nur unten).
+  lassen sich schließen (beide · nur oben · nur unten) – der geschlossene Spalt ist dann auch **zu sehen**,
+  die Blende ist dort zugemauert. Damit das Muster wirklich entsteht, ist die Wellenlänge hier eigens
+  einstellbar (Standard 12 nm bei 60 nm Spaltabstand); bei zu großer Wellenlänge liegt nur das mittlere
+  Maximum im Bild und es sieht nach „kein Muster" aus.
+  **Licht:** vier Modelle nebeneinander – **Strahlen**, **klassische Photonen** (wie die Teilchen im Reiter
+  Klassisch), **klassische Welle** (wie die Schallwelle) und **Quantenobjekt** (wie die Quantenobjekte).
+  Neu ist das **Strahlenmodell**: Licht läuft geradeaus, was durch die Spalte kommt, beleuchtet den
+  Schirm, dazwischen bleibt Schatten. Eine **punktförmige Quelle** wirft scharfe Schatten; mit dem Regler
+  **Quelle breit** wird sie ausgedehnt, es entsteht ein **Halbschatten**, und ab einer gewissen Breite
+  **überlappen sich die beiden Lichtflecke** (unten steht, was gerade gilt). Von Beugung weiß dieses
+  Modell nichts – genau das ist der Vergleich mit den anderen drei.
 - **Lernlandkarte** (Diverses): eine Karte aus **Orten** (Aufgaben, Themen, Stationen), die durch
   **Wege** verbunden sind – der Fortschritt schaltet nach und nach neue Orte frei.
   - **Arbeiten mit der Karte:** Ein Ort wird durch Antippen als **erledigt** markiert (grüner Haken);
