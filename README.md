@@ -2195,7 +2195,9 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     Polynomdivision – auch die **schiefe Asymptote** (z. B. y = x bei (x²+1)/x), jeweils **mit Gleichung**.
   - **Knopf „|x| groß"**: Zeigt, wie sich der Term für große Beträge von x verhält – da zählen
     nur die **größten Potenzen** von Zähler und Nenner. Der gekürzte Vergleichsterm hängt sich
-    mit einem **≈** gleich **an den Term an** (`f(x) = (2x² + 3x − 7)/(x + 2) ≈ 2x`, der Anhang in
+    mit einem **≈** gleich **an den Term an**, und im Term selbst stehen die **kleineren Potenzen
+    blass** – genauso wie beim angetippten Rand x → ±∞ (ist ein Rand gewählt, gilt dessen eigene
+    Hervorhebung) (`f(x) = (2x² + 3x − 7)/(x + 2) ≈ 2x`, der Anhang in
     Petrol), darunter steht nur noch der Satz „für große |x| zählen nur die größten Potenzen:
     2x²/x" – steht dort dasselbe wie oben (`x³`, `1/x²`), bleibt der Satz allein stehen.
     Der Graph **zoomt weit hinaus** (bis die

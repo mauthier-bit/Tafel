@@ -3117,7 +3117,9 @@ function lmAnalyse(){
   if(rat){
     const z=pTrim(rat.z), nn=pTrim(rat.n), gz=pGrad(z), gn=pGrad(nn);
     const gebrochen=gn>0;
-    e.vergleich=lmVergleichBau(z,nn,gebrochen);     /* Verhalten für große |x| */
+    /* Verhalten für große |x| – dazu auch der Term mit kräftiger größter Potenz,
+       genau wie beim Rand x → ±∞: alles Kleinere steht blass daneben. */
+    e.vergleich=lmVergleichBau(z,nn,gebrochen);
     e.art=gebrochen?'rational':'ganz';
     /* --- Definitionslücken --- */
     if(gebrochen) lmEinfach(pNull(nn)).forEach(x0=>{
@@ -3195,6 +3197,9 @@ function lmAnalyse(){
               (q<0?' und der negative Faktor dreht das Vorzeichen um':'')+': f(x) → '+(vz>0?'+∞':'−∞')+'.';
         if(e.schief) grund+=' Die Polynomdivision ergibt '+lmGerade(e.schief)+' plus einen Rest, der für große |x| gegen 0 geht – das ist die <b>schiefe Asymptote</b>.'; }
       e.termHtml=mitOrig(gebrochen?lmBruchHtml(lmPolyHtml(z,null),lmPolyHtml(nn,null)):lmPolyHtml(z,null),
+        gebrochen?lmTermVgl(lmPolyHtml(z,null),lmPolyHtml(nn,null)):lmTermVgl(lmPolyHtml(z,null)));
+      if(e.vergleich&&!e.vergleich.termHtml) e.vergleich.termHtml=mitOrig(
+        gebrochen?lmBruchHtml(lmPolyHtml(z,gz),lmPolyHtml(nn,gn)):lmPolyHtml(z,gz),
         gebrochen?lmTermVgl(lmPolyHtml(z,null),lmPolyHtml(nn,null)):lmTermVgl(lmPolyHtml(z,null)));
       /* über dem Zähler und unter dem Nenner steht, wohin der jeweilige Teil geht;
          unterstrichen, wer das Ergebnis bestimmt (der höhere Grad) */
@@ -3312,8 +3317,12 @@ function lmText(){ const o=$('lmOut'), gr=$('lmTermGross'); if(!o) return; const
   const k=e.karten[lmSel];
   /* Im großen Term steht hervorgehoben, worauf es beim gewählten Rand ankommt */
   if(gr){ let th=(k&&k.termHtml)||e.termHtml||'';
-    /* „|x| groß“ hängt den gekürzten Vergleichsterm gleich an den Term an: … ≈ 2x */
-    if(lm.gross&&e.vergleich) th+=' <span class="lmVglAn">≈ '+e.vergleich.kurz+'</span>';
+    /* „|x| groß“ hängt den gekürzten Vergleichsterm gleich an den Term an: … ≈ 2x –
+       und setzt die kleineren Potenzen blass, solange kein Rand gewählt ist (der bringt
+       seine eigene Hervorhebung mit). */
+    if(lm.gross&&e.vergleich){
+      if(!k&&e.vergleich.termHtml) th=e.vergleich.termHtml;
+      th+=' <span class="lmVglAn">≈ '+e.vergleich.kurz+'</span>'; }
     gr.innerHTML=th; gr.classList.toggle('mitAnn', th.indexOf('lmAnn')>=0);
     /* lange Ketten kleiner setzen, damit sie ganz hineinpassen */
     gr.style.fontSize='';
