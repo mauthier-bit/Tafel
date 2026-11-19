@@ -4118,8 +4118,9 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   Seitenansicht stellt (Einschläge als Punkte, bei der Schallwelle als Helligkeit). Dort leuchtet
   jeder Einschlag nur **kurz auf und verschwindet wieder** – zu sehen ist also immer nur, was
   gerade eintrifft: bei schwachem Strom ein Flackern ohne Muster, bei starkem Strom das Muster.
-  Erst **Sammeln** (bei den Teilchen **Histogramm**) hält die Treffer fest, und zwar ab dem
-  Einschalten – dann wächst das Muster auch bei schwachem Strom langsam heran. Den **Spaltabstand**
+  Erst **Sammeln** hält die Treffer fest, und zwar ab dem Einschalten – dann wächst das Muster
+  auch bei schwachem Strom langsam heran. Der Knopf steht in der oberen Zeile gleich hinter
+  „Dauerfeuer" bzw. „Objektstrom", also bei dem, was er betrifft. Den **Spaltabstand**
   ändert man auch, indem man **an einem Spalt zieht** – in jedem Reiter. Die **Geschwindigkeit ist nicht einstellbar** – beim Schall liegt sie mit
   c = λ·f fest, und die Teilchen sind alle gleich schnell; der Regler **Tempo** ändert nur, wie
   schnell die Simulation läuft.
@@ -4127,7 +4128,7 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   weit links außerhalb des Bildes (sonst träfen die Teilchen die Spalte zu steil); zu sehen ist nur das
   letzte Stück des Anflugs – gerade genug, um zu erkennen, dass ein Teil an der Blende **abgefangen**
   wird. Wer einen Spalt trifft, fliegt **geradeaus** weiter. Wie dicht die Teilchen kommen, sagt der
-  Regler **Intensität** (1 bis 20 je Sekunde) – denselben gibt es beim Objektstrom. Das **Histogramm** am Schirm sammelt die Treffer auf – es entstehen
+  Regler **Intensität** (1 bis 20 je Sekunde) – denselben gibt es beim Objektstrom. **Sammeln** hält die Treffer am Schirm fest – es entstehen
   **zwei Streifen**, kein Muster. Die Zählung (abgefeuert · durch die Spalte · am Schirm) steht unten.
   **Klassisch · Welle:** Hinter den Spalten laufen Elementarwellen los (**Schall**, 343 m/s; aus der
   **Wellenlänge** folgt die Tonhöhe, 34 cm sind rund 1000 Hz); in jedem Spalt steht dazu ein
