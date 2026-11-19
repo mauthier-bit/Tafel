@@ -2193,6 +2193,20 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     wieder zwischen −1 und 1"); der Wert selbst wird durch Einsetzen bestimmt – das sieht man den Karten an.
   - **Asymptoten** blendet ein Knopf ein: **waagrechte** (y = …), **senkrechte** (x = …) und – über
     Polynomdivision – auch die **schiefe Asymptote** (z. B. y = x bei (x²+1)/x), jeweils **mit Gleichung**.
+  - **Knopf „|x| groß"**: Zeigt, wie sich der Term für große Beträge von x verhält – da zählen
+    nur die **größten Potenzen** von Zähler und Nenner. Unter dem Term steht dann
+    „**für große |x|: f(x) ≈ 2x²/x = 2x**", und der Graph **zoomt weit hinaus** (bis die
+    Definitionslücken dicht beieinander liegen) und zeichnet den Vergleichsterm **gestrichelt in
+    Petrol** dazu, beschriftet mit „y ≈ 2x". Weit draußen liegen beide Kurven aufeinander, in der
+    Nähe der Lücke laufen sie sichtbar auseinander – genau das ist der Punkt.
+    **Das ist nicht die Asymptote:** Bei `(2x²+3x−7)/(x+2)` ist der Vergleichsterm `2x`, die schiefe
+    Asymptote dagegen `y = 2x − 1`. Der Unterschied bleibt beschränkt, fällt neben Werten in der
+    Größenordnung von 2x aber nicht mehr ins Gewicht; deshalb steht dort ein **≈** und eine eigene
+    Farbe, nicht das Lila der Asymptoten. Sind beide Knopfe an, sieht man beide Geraden samt
+    ihren Gleichungen nebeneinander. Der Knopf ist **ausgegraut**, solange sich der Vergleichsterm
+    nicht am Term ablesen lässt – er arbeitet nur bei **ganz- und gebrochen-rationalen** Termen
+    (bei `sin(x)/x`, `ln(x)` oder `x²−e^x` bleibt er aus). Die Auswahlliste **„Beispiele"** daneben
+    ist wie die Knöpfe gestaltet und schmal gehalten; die langen Terme stehen in der aufgeklappten Liste.
     **Farben:** **senkrechte** Asymptoten **orange**, **waagrechte und schiefe** **lila**.
     Der Grenzwert selbst steht in der Farbe seines Vorzeichens: **+∞ grün**, **−∞ rot**, ebenso
     endliche Werte (**−1 rot**, **2 grün**); die **0** ist vorzeichenlos und bleibt **dunkelgrau** –

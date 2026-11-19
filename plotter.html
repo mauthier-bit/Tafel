@@ -116,6 +116,12 @@
   .trSeg{border:1px solid #cfd6e0;background:#f4f6fa;border-radius:8px;padding:calc(var(--k) * 5px) 9px;
          font:700 calc(var(--k) * 12.5px) inherit;color:#53617a;cursor:pointer;white-space:nowrap;}
   .trSeg.on{background:#2563eb;border-color:#2563eb;color:#fff;}
+  .trSeg[disabled]{opacity:.42;cursor:default;}
+  /* Die Beispielliste sieht aus wie die Knöpfe daneben und bleibt schmal – die langen
+     Termnamen stehen ja erst in der aufgeklappten Liste. */
+  #lmBsp{border:1px solid #cfd6e0;background:#f4f6fa;border-radius:8px;
+    padding:calc(var(--k) * 4px) 6px;font:700 calc(var(--k) * 12.5px) inherit;color:#53617a;line-height:normal;
+    cursor:pointer;width:calc(var(--k) * 96px);flex:0 0 auto;}
   .trWahl{gap:4px;}
   /* Die vier Parameter stehen immer untereinander – egal, wie breit das Werkzeug ist */
   #trSl{display:grid;grid-template-columns:1fr;gap:calc(var(--k) * 9px);
@@ -165,6 +171,11 @@
     padding:calc(var(--k) * 2px) 4px;min-height:1.5em;overflow:hidden;white-space:nowrap;}
   /* Platz für die schwebenden Werte über und unter den Teiltermen */
   #lmTermGross.mitAnn{padding-top:1.15em;padding-bottom:1.15em;}
+  /* Vergleichsterm für große |x| – eigene Zeile unter dem Term, damit der Term groß bleibt */
+  #lmVgl{margin-top:4px;text-align:center;font-size:calc(var(--k) * 15px);color:#0f766e;}
+  #lmVgl b{font-weight:800;}
+  #lmVgl i{font-style:normal;color:#64748b;font-size:.85em;}
+  #lmVgl[hidden]{display:none;}
   /* rechts die Ränder: antippen öffnet das Ergebnis */
   .lmRand{border:1px solid #e6ebf3;border-left-width:5px;border-left-color:#cbd5e1;border-radius:10px;
        padding:calc(var(--k) * 6px) calc(var(--k) * 8px);margin-bottom:calc(var(--k) * 6px);cursor:pointer;background:#fff;}
@@ -570,6 +581,7 @@
           <input id="lmTerm" class="trIn on" spellcheck="false" autocomplete="off">
           <select id="lmBsp" title="Beispielfunktion"></select>
           <button type="button" id="lmAs" class="trSeg" title="Asymptoten mit Gleichung einblenden">Asymptoten</button>
+          <button type="button" id="lmGross" class="trSeg" title="Verhalten für große Beträge von x: nur die größten Potenzen zählen">|x| groß</button>
           <button type="button" id="lmFit" class="trSeg" title="Ansicht einpassen">Ansicht</button>
           <button type="button" id="lmZm" class="trSeg" title="kleiner">−</button>
           <button type="button" id="lmZp" class="trSeg" title="größer">+</button>
@@ -578,6 +590,7 @@
       <div id="lmMain">
         <div id="lmLinks">
           <div id="lmTermGross"></div>
+          <div id="lmVgl" hidden></div>
           <div id="lmPlotWrap"><canvas id="plotL"></canvas></div>
         </div>
         <aside id="lmSide"><div id="lmOut"></div></aside>
@@ -2633,7 +2646,7 @@ function mdUi(){ ['p','e','t','n','w'].forEach(k=>$('mdT'+k).classList.toggle('o
    Zähler/Nenner gebracht (Koeffizientenlisten), bei e-Funktion, ln, Wurzel und sin/cos kommen
    die typischen Begründungen dazu. Gerechnet wird mit den aktuellen Werten von a, b und c. */
 /* Der Reiter steht für sich: eigener Term, unabhängig von Graph/Tabelle/Maschine. */
-let lm={term:'(x^2+1)/(x^2−4)', asym:false, p:{a:1,b:0,c:0}};   /* eigene a, b, c – unabhängig von den vorderen Reitern */
+let lm={term:'(x^2+1)/(x^2−4)', asym:false, gross:false, p:{a:1,b:0,c:0}};   /* eigene a, b, c – unabhängig von den vorderen Reitern */
 let lmView={ux:40,uy:40,ox:0,oy:0}, lmW=0, lmH=0, lmSel=0, lmErg=null;
 
 /* ---- Term als Baum (gleiche Vorrangregeln wie evalAt) ---- */
@@ -2835,6 +2848,23 @@ function lmScan(f){ const A=-40,B=40,N=8000,h=(B-A)/N; let out=[];
 
 /* ---- Texthilfen ---- */
 const lmNorm=p=>Math.max.apply(null,p.map(Math.abs).concat([1]));
+/* Verhalten für große |x|: Es zählen nur die größten Potenzen von Zähler und Nenner.
+   (2x² + 3x − 7)/(x + 2) verhält sich wie 2x²/x = 2x. ACHTUNG, das ist NICHT die Asymptote
+   (die liegt hier bei y = 2x − 1): der Unterschied bleibt beschränkt, fällt aber neben Werten
+   in der Größenordnung von 2x nicht mehr ins Gewicht. Deshalb steht am Term ein ≈ und im
+   Graphen eine eigene Farbe – nicht das Lila der Asymptoten. */
+function lmVergleichBau(z,nn,gebrochen){
+  z=pTrim(z); nn=pTrim(nn);
+  const gz=pGrad(z), gn=pGrad(nn), lz=z[gz], ln=nn[gn];
+  if(!isFinite(lz)||!isFinite(ln)||Math.abs(ln)<1e-12||Math.abs(lz)<1e-12) return null;
+  if(gz===0&&gn===0) return null;                   /* ohne x gibt es nichts zu vergleichen */
+  const c=lz/ln, d=gz-gn;
+  const quot=gebrochen? lmBruchHtml(lmPot(lz,gz), lmPot(ln,gn)) : lmPot(lz,gz);
+  const kurz=d>=0 ? lmPot(c,d)
+    : lmBruchHtml((Math.abs(Math.abs(c)-1)<1e-12?(c<0?'−1':'1'):zahl(c)), 'x'+(d<-1?hoch(-d):''));
+  return {c, d, quot, kurz, gleich:ohneTags(quot)===ohneTags(kurz),
+          f:x=>c*Math.pow(x,d), txt:ohneTags(kurz)}; }
+const ohneTags=h=>String(h).replace(/<[^>]+>/g,'').replace(/\s+/g,' ').trim();
 function lmPot(c,g){ const vz=c<0?'−':'', z=Math.abs(c);
   const zs=(Math.abs(z-1)<1e-12&&g>0)?'':zahl(z);
   return vz+zs+(g>0?('x'+(g>1?hoch(g):'')):''); }
@@ -2889,6 +2919,7 @@ const lmWCol=w=>(!w?'#64748b':(w.art==='inf'?'#15803d':(w.art==='ninf'?'#b91c1c'
   :(w.v<0?'#b91c1c':'#15803d'))))));
 const LM_SENK='#ea580c';      /* senkrechte Asymptoten (Polstellen): orange */
 const LM_WAAG='#7e22ce';      /* waagrechte und schiefe Asymptoten: lila */
+const LM_VGL='#0f766e';       /* Vergleichsterm für große |x|: petrol */
 const lmX=x=>lmZ(x);
 const lmVZ=v=>v>0?'positiv':'negativ';
 /* Einen Teilbaum wieder als Term schreiben – so lässt er sich einzeln auswerten und anzeigen */
@@ -3059,7 +3090,7 @@ function lmAnalyse(){
   const toks=tokenize(lm.term||'');
   const f=x=>evalAt(x,toks,lm.p);
   const e={term:lm.term||'', farbe:'#2563eb', toks, f,
-           karten:[], pole:[], loecher:[], raender:[], asym:[], schief:null, ok:false, kopf:'', hinweis:''};
+           karten:[], pole:[], loecher:[], raender:[], asym:[], schief:null, vergleich:null, ok:false, kopf:'', hinweis:''};
   if(!toks.length){ e.hinweis='Oben einen Term eintragen – dann stehen hier die Grenzwerte.'; return e; }
   if(stueckeVon(toks)){ e.hinweis='Abschnittsweise Terme (mit „;“) untersucht dieser Reiter nicht – zeichnen lassen sie sich im Reiter Graph.'; return e; }
   let gut=0; for(let i=0;i<=200;i++){ const x=-20+i*0.2; if(isFinite(f(x))) gut++; }
@@ -3085,6 +3116,7 @@ function lmAnalyse(){
   if(rat){
     const z=pTrim(rat.z), nn=pTrim(rat.n), gz=pGrad(z), gn=pGrad(nn);
     const gebrochen=gn>0;
+    e.vergleich=lmVergleichBau(z,nn,gebrochen);     /* Verhalten für große |x| */
     e.art=gebrochen?'rational':'ganz';
     /* --- Definitionslücken --- */
     if(gebrochen) lmEinfach(pNull(nn)).forEach(x0=>{
@@ -3266,7 +3298,14 @@ function lmKopf0(e,art){
   return t+'. Unten steht zu jedem Rand, wie man den Grenzwert am Term sieht.'; }
 
 /* ---- Spalte mit den Karten ---- */
+/* „für große |x|: f(x) ≈ 2x²/x = 2x“ – eine eigene Zeile unter dem Term */
+function lmVglZeile(){ const d=$('lmVgl'); if(!d) return;
+  const v=lmErg&&lmErg.vergleich;
+  if(!v||!lm.gross){ d.hidden=true; d.innerHTML=''; return; }
+  d.hidden=false;
+  d.innerHTML='<i>für große |x|:</i> f(x) ≈ '+v.quot+(v.gleich?'':' = <b>'+v.kurz+'</b>'); }
 function lmText(){ const o=$('lmOut'), gr=$('lmTermGross'); if(!o) return; const e=lmErg;
+  lmGrossUI(); lmVglZeile();   /* erst hier steht lmErg zum neuen Term */
   if(!e||!e.ok){ o.innerHTML='<div class="lmHead">'+((e&&e.hinweis)||'')+'</div>'; if(gr) gr.innerHTML=''; return; }
   const k=e.karten[lmSel];
   /* Im großen Term steht hervorgehoben, worauf es beim gewählten Rand ankommt */
@@ -3396,6 +3435,14 @@ function lmDraw(){ if(tab!=='l'||!lmW) return; const e=lmErg;
     const yR=m*(xmax-1.2)+b0; c.fillText(lmGerade(e.schief), lmW-8, Math.max(14,Math.min(lmH-6,Y(yR)-4)));
     c.restore(); }
   }
+  /* Vergleichsterm für große |x| – unter der Kurve, damit f oben liegt */
+  if(lm.gross&&e.vergleich){ const v=e.vergleich;
+    c.save(); c.setLineDash([9,6]); lmKurve(c,v.f,LM_VGL,2.4); c.restore();
+    c.save(); c.fillStyle=LM_VGL; c.font='800 '+Math.max(12,fontSize)+'px sans-serif';
+    c.textAlign='right'; c.textBaseline='top';
+    const xl=xmin+(xmax-xmin)*0.88, yl=Y(v.f(xl));
+    c.fillText('y ≈ '+v.txt, lmW-8, Math.max(4,Math.min(lmH-20,yl+7)));
+    c.restore(); }
   /* Kurve */
   lmKurve(c,e.f,e.farbe,2.6);
   /* hebbare Lücken als offener Kreis */
@@ -3443,14 +3490,33 @@ const LMBSP=[
   ['e-Funktion',              ['e^x/x','x*e^(−x)','x^2*e^(−x)','e^(−x^2)','1/(1+e^(−x))','(e^x−1)/(e^x+1)']],
   ['Logarithmus und Wurzel',  ['ln(x)','ln(x)/x','x*ln(x)','ln(x−1)','sqrt(x−1)','sqrt(4−x^2)','sqrt(x^2+1)−x']],
   ['Sinus und Kosinus',       ['sin(x)','sin(x)/x','tan(x)','1/sin(x)','sin(x)*e^(−x)']]];
+/* Der Knopf steht nur bereit, wenn sich der Vergleichsterm am Term ablesen lässt –
+   also bei ganz- und gebrochen-rationalen Termen. Sonst bleibt er ausgegraut. */
+function lmGrossUI(){ const b=$('lmGross'); if(!b) return;
+  const v=lmErg&&lmErg.vergleich;
+  b.disabled=!v;
+  b.classList.toggle('on',!!v&&!!lm.gross);
+  b.title=v?'Verhalten für große Beträge von x: nur die größten Potenzen zählen'
+           :'Nur bei ganz- und gebrochen-rationalen Termen: dort lassen sich die größten Potenzen ablesen'; }
+/* Weit hinauszoomen, bis alle Lücken klein beieinander liegen – dann fallen f und
+   der Vergleichsterm im Bild zusammen. */
+function lmGrossBlick(){ const e=lmErg; if(!e||!e.vergleich||!lmW) return;
+  const xs=e.pole.concat(e.loecher.map(o=>o.x), e.raender.map(r=>r.x)).filter(isFinite).map(Math.abs);
+  const m=xs.length?Math.max.apply(null,xs):0;
+  const xg=Math.max(40,Math.ceil((m+5)*4));
+  lmBereich(-xg,xg); }
 let lmTO=null, lmLetzt='';
 function lmNeu(sofort){
   const t=lm.term||'';
   const inp=$('lmTerm'); if(inp&&document.activeElement!==inp&&inp.value!==t) inp.value=t;
   const as=$('lmAs'); if(as) as.classList.toggle('on',!!lm.asym);
+  lmGrossUI();
   const rechne=()=>{ if(t!==lmLetzt) lmSel=-1;
     lmErg=lmAnalyse(); if(lmSel>=lmErg.karten.length) lmSel=-1;
-    if(t!==lmLetzt){ lmLetzt=t; updateSliders(); lmText(); lmFit(); } else { lmText(); lmDraw(); } };
+    if(t!==lmLetzt){ lmLetzt=t; updateSliders(); lmText();
+      /* ist „|x| groß“ an, bleibt auch beim neuen Term der weite Blick */
+      if(lm.gross&&lmErg.vergleich) lmGrossBlick(); else lmFit(); }
+    else { lmText(); lmDraw(); } };
   clearTimeout(lmTO);
   if(sofort===false) lmTO=setTimeout(rechne,260); else rechne(); }
 (function lmUi(){
@@ -3462,6 +3528,10 @@ function lmNeu(sofort){
   if(inp){ inp.addEventListener('input',()=>{ lm.term=inp.value; lmNeu(false); sync(); });
     inp.addEventListener('focus',()=>{ lastInp=inp; if(keysOn) kpTarget(); }); }
   const as=$('lmAs'); if(as) as.onclick=()=>{ lm.asym=!lm.asym; as.classList.toggle('on',lm.asym); lmDraw(); sync(); };
+  const gr=$('lmGross'); if(gr) gr.onclick=()=>{ if(gr.disabled) return;
+    lm.gross=!lm.gross; lmGrossUI(); lmText();
+    if(lm.gross) lmGrossBlick(); else lmDraw();
+    sync(); };
   const fit=$('lmFit'); if(fit) fit.onclick=()=>{ lmFit(); sync(); };
   const zm=$('lmZm'), zp=$('lmZp');
   /* zoomt x und y gleichermaßen */
@@ -3503,7 +3573,7 @@ function zustand(){ return {funcs:funcs.map(f=>({term:f.term,color:f.color,width
       zTerm:!!md.zTerm, col:mdKurve(), zAbw:!!md.zAbw, zWert:!!md.zWert,
       setz:!!md.setz, linie:!!md.linie, bild:md.bild?Object.assign({},md.bild):null, bildAn:!!md.bildAn, bmod:md.bmod||'',
       p:md.p.map(r=>[r[0],r[1],r[2]||'']), view:Object.assign({},md.view)},
-  lm:{term:lm.term, asym:!!lm.asym, p:Object.assign({},lm.p), sel:lmSel, view:Object.assign({},lmView)}}; }
+  lm:{term:lm.term, asym:!!lm.asym, gross:!!lm.gross, p:Object.assign({},lm.p), sel:lmSel, view:Object.assign({},lmView)}}; }
 function sync(){ if(window.parent===window) return; /* allein geöffnet: nicht an sich selbst senden */ try{ parent.postMessage({type:'embed-data',data:zustand()},'*'); }catch(e){} }
 addEventListener('message',e=>{ if(e.source!==window&&(window.parent===window||e.source!==window.parent)) return;   // eigene Nachrichten ignorieren
   if(!(e.data&&e.data.type==='embed-data'&&e.data.data))return; const d=e.data.data;
@@ -3556,7 +3626,7 @@ addEventListener('message',e=>{ if(e.source!==window&&(window.parent===window||e
   if(strukturNeu){ buildRows(); buildTable(); buildMachines(); }
   updateSliders();
   if(d.lm){ if(typeof d.lm.term==='string'){ lm.term=d.lm.term; lmLetzt=''; }
-    lm.asym=!!d.lm.asym;
+    lm.asym=!!d.lm.asym; lm.gross=!!d.lm.gross;
     if(d.lm.p) lm.p=Object.assign({a:1,b:0,c:0},d.lm.p);
     if(typeof d.lm.sel==='number') lmSel=d.lm.sel;
     if(d.lm.view&&(d.lm.view.ux||d.lm.view.unit)){ const v=d.lm.view;
