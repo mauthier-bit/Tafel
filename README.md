@@ -2194,8 +2194,11 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   - **Asymptoten** blendet ein Knopf ein: **waagrechte** (y = …), **senkrechte** (x = …) und – über
     Polynomdivision – auch die **schiefe Asymptote** (z. B. y = x bei (x²+1)/x), jeweils **mit Gleichung**.
   - **Knopf „|x| groß"**: Zeigt, wie sich der Term für große Beträge von x verhält – da zählen
-    nur die **größten Potenzen** von Zähler und Nenner. Unter dem Term steht dann
-    „**für große |x|: f(x) ≈ 2x²/x = 2x**", und der Graph **zoomt weit hinaus** (bis die
+    nur die **größten Potenzen** von Zähler und Nenner. Der gekürzte Vergleichsterm hängt sich
+    mit einem **≈** gleich **an den Term an** (`f(x) = (2x² + 3x − 7)/(x + 2) ≈ 2x`, der Anhang in
+    Petrol), darunter steht nur noch der Satz „für große |x| zählen nur die größten Potenzen:
+    2x²/x" – steht dort dasselbe wie oben (`x³`, `1/x²`), bleibt der Satz allein stehen.
+    Der Graph **zoomt weit hinaus** (bis die
     Definitionslücken dicht beieinander liegen) und zeichnet den Vergleichsterm **gestrichelt in
     Petrol** dazu, beschriftet mit „y ≈ 2x". Weit draußen liegen beide Kurven aufeinander, in der
     Nähe der Lücke laufen sie sichtbar auseinander – genau das ist der Punkt.
