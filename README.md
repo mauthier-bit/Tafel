@@ -4140,9 +4140,15 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   **µm** beim Licht. Gerechnet wird mit denselben Zahlen – es kommt ja nur auf das Verhältnis von
   Wellenlänge und Spaltabstand an.
   Die Leisten rollen nicht seitwärts, sondern **brechen um**, wenn der Platz nicht reicht – versteckt
-  ist also nie etwas. Die Bedienung steht in zwei Zeilen: **oben** das Modell, die Regler dazu und der Ablauf,
-  **darunter** zwei Klapplisten – **Spalt** (Spaltabstand, Spaltbreite, Schirmabstand, welche Spalte
-  offen sind, Messgerät) und **Anzeigen** (alles, was eingeblendet werden kann). Die Knöpfe sagen,
+  ist also nie etwas. Die Bedienung steht in zwei Zeilen: **oben** das Modell, die Wellenlänge und der
+  Ablauf (Start/Pause, Zurücksetzen, Sammeln), **darunter** die Klappliste **Spalt** (Spaltabstand,
+  Spaltbreite, Schirmabstand, welche Spalte offen sind, Messgerät), die **Anzeigen** und daneben
+  **Intensität** und **Tempo** als **−/+** statt als Regler: Das spart so viel Platz, dass auf dem
+  iPad jede Zeile einzeilig bleibt (gemessen: die längste Zeile braucht 981 statt 1324 px).
+  Die **Anzeigen** richten sich nach ihrer Zahl: Sind es **höchstens drei** (Strahlen- und
+  Teilchenmodell), stehen sie **gleich in der Leiste** – für zwei Knöpfe lohnt kein Menü. Sind es
+  **mehr** (Welle, Quantenobjekte), klappt der Knopf **Anzeigen** eine **eigene Zeile** auf, die
+  **offen stehen bleibt**, bis man sie wieder zuklappt; am Knopf steht, wie viele gerade an sind. Die Knöpfe sagen,
   was dahintersteckt: „Anzeigen · 3" heißt drei eingeblendete Sachen, „Spalt · nur oben" heißt,
   dass ein Spalt zu ist. Eine Liste schließt sich, sobald man daneben tippt.
   Der **Schirmabstand e** lässt sich auch am
@@ -4172,14 +4178,15 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   bei schwachem Strom ein Flackern ohne Muster, bei starkem Strom das Muster.
   **Zurücksetzen** fängt neu an. Den **Spaltabstand**
   ändert man auch, indem man **an einem Spalt zieht** – in jedem Reiter. Die **Geschwindigkeit ist nicht einstellbar** – beim Schall liegt sie mit
-  c = λ·f fest, und die Teilchen sind alle gleich schnell; der Regler **Tempo** ändert nur, wie
+  c = λ·f fest, und die Teilchen sind alle gleich schnell; **Tempo** ändert nur, wie
   schnell die Simulation läuft.
   **Klassisch · Teilchen:** „Ein Teilchen" schießt einzeln, „Dauerfeuer" fortlaufend. Die Quelle liegt
   weit links außerhalb des Bildes (sonst träfen die Teilchen die Spalte zu steil); zu sehen ist nur das
   letzte Stück des Anflugs – gerade genug, um zu erkennen, dass ein Teil an der Blende **abgefangen**
   wird. Wer einen **offenen** Spalt trifft, fliegt **geradeaus** weiter; ein geschlossener Spalt
-  ist zugemauert und hält die Teilchen auf (mit **beide Spalte / nur oben / nur unten**). Wie dicht die Teilchen kommen, sagt der
-  Regler **Intensität** (1 bis 20 je Sekunde) – denselben gibt es beim Objektstrom. Mit **Sammeln**
+  ist zugemauert und hält die Teilchen auf (mit **beide Spalte / nur oben / nur unten**). Wie dicht die Teilchen kommen, sagt
+  **Intensität** (1 bis 100 je Sekunde, in gröber werdenden Stufen) – dasselbe gilt für den
+  Objektstrom. Mit **Sammeln**
   hält das **Histogramm** rechts neben dem Schirm die Treffer fest – es entstehen **zwei Streifen**,
   kein Muster. Die Zählung (abgefeuert · durch die Spalte · am Schirm) steht unten.
   **Klassisch · Welle:** Hinter den Spalten laufen Elementarwellen los (**Schall**, 343 m/s; aus der
