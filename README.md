@@ -704,7 +704,7 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   Klassenzimmer ist auch im Gespräch leiser, als man denkt, deshalb ist die Grundverstärkung
   kräftig; gemessen wird in Fließkommazahlen, damit bei Ruhe nicht das eigene Rauschen der
   Messung als Pegel erscheint), **Schwelle**, beide **Zeiten** und
-  die **Höchstzahl** der Tiere. Mit **🖼 Tafel** landet das Bild als Momentaufnahme auf der Seite.
+  die **Höchstzahl** der Tiere.
   Das Mikrofon
   läuft nur, solange der Knopf auf **Stopp** steht – aufgenommen oder gespeichert wird nichts.
   Geht es nicht an, **sagt das Bild warum** (nicht erlaubt, kein Mikrofon, kein https), statt stumm
