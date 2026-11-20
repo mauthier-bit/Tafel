@@ -4156,12 +4156,17 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   Die Längen tragen die Einheit, die zum Reiter passt: **cm** bei Schall, **nm** bei Quantenobjekten,
   **µm** beim Licht. Gerechnet wird mit denselben Zahlen – es kommt ja nur auf das Verhältnis von
   Wellenlänge und Spaltabstand an.
-  Die Leisten rollen nicht seitwärts, sondern **brechen um**, wenn der Platz nicht reicht – versteckt
-  ist also nie etwas. Die Bedienung steht in zwei Zeilen: **oben** das Modell, die Wellenlänge und der
-  Ablauf (Start/Pause, Zurücksetzen, Sammeln), **darunter** die Klappliste **Spalt** (Spaltabstand,
-  Spaltbreite, Schirmabstand, welche Spalte offen sind, Messgerät), die **Anzeigen** und daneben
-  **Intensität** und **Tempo** als **−/+** statt als Regler: Das spart so viel Platz, dass auf dem
-  iPad jede Zeile einzeilig bleibt (gemessen: die längste Zeile braucht 981 statt 1324 px).
+  **Alles zum Bedienen steht in einer einzigen Zeile**, in der Reihenfolge, in der man es braucht:
+  links der **Modell-Umschalter**, gleich dahinter der **Ablauf** – **Einzeln**, **Strom**,
+  **Sammeln**, **▶** (im Lauf **⏸**) und **↺** zum Zurücksetzen, beide nur als Zeichen mit
+  Tooltipp –, und danach, was eingestellt wird: **Wellenlänge**, die Klappliste **Spalt**
+  (Spaltabstand, Spaltbreite, Schirmabstand, welche Spalte offen sind, Messgerät), die
+  **Anzeigen** sowie **Intensität** und **Tempo** als **−/+** (ohne Zahl – die steht im Tooltipp
+  der Beschriftung). Reicht die Breite knapp nicht, **rückt die Zeile enger zusammen** (kleinere
+  Schrift, schmalere Knopfränder); reicht auch das nicht – etwa in einem schmalen Tafelobjekt –,
+  lässt sie sich **seitwärts schieben**, statt umzubrechen. Gemessen auf dem iPad (1180 px):
+  alle sieben Modelle passen in eine Zeile (656 bis 1257 px), nur Licht · Photonen braucht dazu
+  den engeren Satz.
   Die **Anzeigen** richten sich nach ihrer Zahl: Sind es **höchstens drei** (Strahlen- und
   Teilchenmodell), stehen sie **gleich in der Leiste** – für zwei Knöpfe lohnt kein Menü. Sind es
   **mehr** (Welle, Quantenobjekte), klappt der Knopf **Anzeigen** eine **eigene Zeile** auf, die
@@ -4172,8 +4177,9 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   **Griff auf dem Schirm** ziehen, der **Spaltabstand** an einem Spalt, **P** überall im Feld.
   **Hinter dem Schirm ist Schluss:** Wellenfeld, Ψ-Feld, Berge, Täler, Maxima und Minima hören am
   Schirm auf – dort wird das Licht bzw. der Schall ja aufgefangen. Der Platz rechts davon gehört
-  dem **Histogramm** bzw. der **Verteilung**; der Doppelspalt selbst sitzt dadurch etwas weiter
-  links, das Feld dahinter hat mehr Raum.
+  dem **Histogramm** bzw. der **Verteilung**: Der Aufbau rückt so weit nach links, dass links nur
+  ein schmaler Rand von 10 px bleibt (das sind rund 1 cm mehr als zuvor), und alles, was übrig
+  bleibt, liegt hinter dem Schirm.
   Hinter dem **⚙** neben dem „?" stehen die **Farben** von Wellenfeld, Bergen, Tälern, Maxima,
   Minima und Strahlen, ihre **Strichstärken** und die **Deckkraft** des Feldes; die Einstellung
   gehört zum Bild und wird mitgespeichert und mitgeteilt.
@@ -4186,8 +4192,7 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   dieselbe Stelle im Bild, dieselbe Aussage: wo kommt viel an, wo nichts), **Schirm** stellt den
   Schirm **von vorn** als Fenster daneben (Einschläge als Punkte, bei der Schallwelle als
   Helligkeit); der Aufbau rückt dafür zur Seite, damit beides nebeneinander Platz hat.
-  Was beide zeigen, entscheidet der Knopf **Sammeln** in der oberen Zeile (gleich hinter
-  „Dauerfeuer" bzw. „Objektstrom"): **eingeschaltet** wird **ab dem Einschalten** alles
+  Was beide zeigen, entscheidet der Knopf **Sammeln** (gleich hinter **Strom**): **eingeschaltet** wird **ab dem Einschalten** alles
   aufsummiert – im Schirmfenster bleiben die Treffer blass stehen, im Histogramm wachsen die
   Balken, und das Muster entsteht auch bei schwachem Strom. **Ausgeschaltet** ist nur zu sehen,
   was **gerade** eintrifft: Jeder Einschlag leuchtet hell auf und **verblasst** wieder, und
@@ -4197,7 +4202,7 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   ändert man auch, indem man **an einem Spalt zieht** – in jedem Reiter. Die **Geschwindigkeit ist nicht einstellbar** – beim Schall liegt sie mit
   c = λ·f fest, und die Teilchen sind alle gleich schnell; **Tempo** ändert nur, wie
   schnell die Simulation läuft.
-  **Klassisch · Teilchen:** „Ein Teilchen" schießt einzeln, „Dauerfeuer" fortlaufend. Die Quelle liegt
+  **Klassisch · Teilchen:** **Einzeln** schießt ein Teilchen, **Strom** fortlaufend. Die Quelle liegt
   weit links außerhalb des Bildes (sonst träfen die Teilchen die Spalte zu steil); zu sehen ist nur das
   letzte Stück des Anflugs – gerade genug, um zu erkennen, dass ein Teil an der Blende **abgefangen**
   wird. Wer einen **offenen** Spalt trifft, fliegt **geradeaus** weiter; ein geschlossener Spalt
@@ -4221,14 +4226,15 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   der Elementarwelle, also eine Viertel Wellenlänge neben dem Nulldurchgang, und die Linien gleichen Gangunterschieds getrennt als
   **Maxima** (grün) und **Minima** (rot gestrichelt) – das sind Hyperbeln mit den beiden Spalten als
   Brennpunkten. Mit **beide / oben / unten** läuft nur ein Lautsprecher: dann bleibt eine einzelne
-  Kreiswelle übrig, das Muster verschwindet, und Maxima, Minima und Gangunterschied sind ausgegraut
+  Kreiswelle übrig, das Muster verschwindet, und Maxima, Minima und Δs sind ausgegraut
   („nur ein Lautsprecher – keine Interferenz").
   **Geometrie** zeigt die beiden ähnlichen Dreiecke mit demselben Winkel α: das kleine an den Spalten
   (Spaltabstand d als Hypotenuse, Gangunterschied Δs als Gegenkathete → **sin α = Δs/d**) und das große
   von der Spaltmitte zu P (**tan α = y/L**, y Abstand von der Mittellinie, L Abstand zur Spaltebene).
   Liegt P auf dem Schirm, ist L der Schirmabstand e. Punkt P, Gangunterschied und Geometrie gibt es
   auch bei den **Quantenobjekten**.
-  **Punkt P** lässt sich frei im Feld verschieben. Dazu gibt es den **Gangunterschied**: beide Wege als
+  **Punkt P** lässt sich frei im Feld verschieben. Dazu gibt es den **Gangunterschied** (in der
+  Anzeigen-Zeile kurz **Δs**): beide Wege als
   Strahlen, der **Kreisbogen um P durch den näheren Spalt** gestrichelt bis zum längeren Weg – das Stück
   zwischen Bogen und fernerem Spalt ist Δs und steht **rot am Spalt**, wo es entsteht (dazu
   „Δs = … cm = … λ · Verstärkung/Auslöschung"). Das **Diagramm** zeigt an P die beiden Teilschwingungen
@@ -4237,7 +4243,7 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   passen und dass auf dem längeren eine halbe mehr liegt. Und das **Mikrofon**, das den Ton mit der **Lautstärke an
   dieser Stelle** hörbar macht (gemessen: Gangunterschied 0 → 98 %, ½ λ → 7 %, 1 λ → 87 %, 1½ λ → 5 %).
   Der Ton geht nur auf Knopfdruck an und wird beim Reiterwechsel wieder stumm.
-  **Quantenobjekte:** „Ein Objekt" schickt eines los, der **Objektstrom** viele – wie viele je Sekunde,
+  **Quantenobjekte:** **Einzeln** schickt eines los, **Strom** viele – wie viele je Sekunde,
   sagt die **Intensität**. Das **Ψ-Feld** zeigt **|Ψ|²**, also die Wahrscheinlichkeit, ein Objekt
   anzutreffen – ein stehendes Bild, dessen helle Streifen Zeile für Zeile zu dem passen, was am
   Schirm ankommt (eine Momentaufnahme der schwingenden Welle täte das nicht, ihre hellen Streifen
