@@ -246,7 +246,7 @@
         <span class="seg" id="grpME"><button data-m="wald" class="on">Wald</button><button data-m="savanne">Savanne</button><button data-m="meer">Meer</button></span>
       </div>
       <div class="ez"><b>Empfindlichkeit</b>
-        <input type="range" id="rgSens" min="1" max="10" step="1"><span class="v" id="vSens"></span>
+        <input type="range" id="rgSens" min="1" max="16" step="1"><span class="v" id="vSens"></span>
       </div>
       <div class="ez"><b>Ruhe-Schwelle</b>
         <input type="range" id="rgSchw" min="10" max="90" step="5"><span class="v" id="vSchw"></span>
@@ -281,7 +281,11 @@ const toast=m=>window.TafelShot&&TafelShot.toast(m);
    Der Silent Zoo belohnt Ruhe: bleibt es leise, kommen Tiere ins Bild; wird es laut,
    gehen sie wieder. Gespeichert werden nur die Einstellungen – die Tiere selbst sind
    Tagesgeschäft, und das Mikrofon geht nie von allein an. */
-const STD={ motiv:'wald', sens:5, schwelle:35, ruhe:10, geduld:4, maxT:24 };
+const STD={ motiv:'wald', sens:6, schwelle:35, ruhe:10, geduld:4, maxT:24 };
+/* Grundverstärkung des Mikrofons. Ein Klassenzimmer ist auch im Gespräch leiser, als man
+   denkt: ohne kräftige Verstärkung schlägt der Balken erst bei richtigem Lärm aus.
+   Der Regler Empfindlichkeit (1 bis 16) vervielfacht diesen Wert. */
+const EMPF=6;
 let D=Object.assign({},STD);
 let ready=false;
 
@@ -542,7 +546,9 @@ async function micStart(){
     analyse=ac.createAnalyser(); analyse.fftSize=512; quelle.connect(analyse);
     /* Safari rechnet nur an Zweigen, die irgendwo enden – ein stummer Ausgang genügt */
     stumm=ac.createGain(); stumm.gain.value=0; analyse.connect(stumm); stumm.connect(ac.destination);
-    daten=new Uint8Array(analyse.fftSize);
+    /* Lieber in Fließkommazahlen lesen: die 8-Bit-Werte haben eine eigene Rauschschwelle,
+       und die fällt bei hoher Empfindlichkeit als Ständig-ein-bisschen-Pegel auf. */
+    daten=analyse.getFloatTimeDomainData?new Float32Array(analyse.fftSize):new Uint8Array(analyse.fftSize);
   }catch(e){ micFehler='Tonauswertung nicht möglich ('+((e&&e.name)||'Fehler')+').'; micAus(); return false; }
   micAn=true; schlafSeit=0; wachkuessen(); return true; }
 /* Fehlgeschlagen: vielleicht kann die Tafel messen */
@@ -568,7 +574,7 @@ function eigenesAus(){
 function pegelMessen(){
   if(vonTafel){                                   /* die Tafel misst und schickt den Pegel */
     if(performance.now()-tafelZeit>2500){ micAus(); micFehler='Die Tafel schickt keinen Pegel mehr.'; knoepfe(); return; }
-    const roh=Math.min(1,tafelRoh*D.sens*2.2);
+    const roh=Math.min(1,tafelRoh*D.sens*EMPF);
     pegel=pegel*0.6+roh*0.4; return; }
   if(!micAn||!analyse){ pegel=0; return; }
   if(ac&&ac.state!=='running'){ wachkuessen(); pegel=0;
@@ -577,9 +583,12 @@ function pegelMessen(){
     else if(performance.now()-schlafSeit>2500) ersatzWeg();
     return; }
   schlafSeit=0;
-  analyse.getByteTimeDomainData(daten);
-  let s=0; for(let i=0;i<daten.length;i++){ const v=(daten[i]-128)/128; s+=v*v; }
-  const roh=Math.min(1,Math.sqrt(s/daten.length)*D.sens*2.2);
+  let s=0;
+  if(daten instanceof Float32Array){ analyse.getFloatTimeDomainData(daten);
+    for(let i=0;i<daten.length;i++) s+=daten[i]*daten[i]; }
+  else { analyse.getByteTimeDomainData(daten);
+    for(let i=0;i<daten.length;i++){ const v=(daten[i]-128)/128; s+=v*v; } }
+  const roh=Math.min(1,Math.sqrt(s/daten.length)*D.sens*EMPF);
   pegel=pegel*0.6+roh*0.4; }
 
 /* ---------- Anzeige im Bild ---------- */
@@ -711,7 +720,8 @@ const HILFE='<ul>'+
  'Balken darunter, wie weit die Uhr schon gelaufen ist.</li>'+
  '<li>Die <b>Landschaft</b> (Wald, Savanne, Meer) lässt sich oben oder im <b>⚙</b> umstellen – '+
  'die Tiere passen sich an.</li>'+
- '<li>Im <b>⚙</b> stehen außerdem <b>Empfindlichkeit</b> des Mikrofons, <b>Schwelle</b>, die beiden '+
+ '<li>Im <b>⚙</b> stehen außerdem <b>Empfindlichkeit</b> des Mikrofons (1 bis 16: höher heißt, '+
+ 'dass der Balken schon bei leiseren Geräuschen ausschlägt), <b>Schwelle</b>, die beiden '+
  'Zeiten und die Höchstzahl der Tiere.</li>'+
  '<li>Das Mikrofon läuft nur, solange der Knopf auf <b>Stopp</b> steht. Es wird nichts aufgenommen '+
  'und nichts gespeichert – gemessen wird allein die Lautstärke.</li>'+
@@ -729,7 +739,7 @@ function uebernimm(d){ if(!d) return;
   const s=STD;
   const m=MOTIVE.includes(d.motiv)?d.motiv:s.motiv;
   if(m!==D.motiv){ D.motiv=m; tiere=[]; ruheT=0; lautT=0; gekommen=0; landKey=''; }
-  D.sens=Math.max(1,Math.min(10,+d.sens||s.sens));
+  D.sens=Math.max(1,Math.min(16,+d.sens||s.sens));
   D.schwelle=Math.max(10,Math.min(90,+d.schwelle||s.schwelle));
   D.ruhe=Math.max(3,Math.min(60,+d.ruhe||s.ruhe));
   D.geduld=Math.max(1,Math.min(30,+d.geduld||s.geduld));

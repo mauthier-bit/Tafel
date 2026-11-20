@@ -700,7 +700,10 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   ins Bild – und so weiter, je länger die Ruhe hält, desto voller wird die Landschaft. Wird es zu
   laut, läuft die zweite Uhr: hält der Lärm an, geht jedes Mal ein Tier wieder weg, bis es wieder
   leise wird. Oben links zeigt ein Kasten die **Lautstärke**, die **Schwelle** als Strich und den
-  Stand der laufenden Uhr. Im **⚙** stehen **Empfindlichkeit**, **Schwelle**, beide **Zeiten** und
+  Stand der laufenden Uhr. Im **⚙** stehen **Empfindlichkeit** (1 bis 16, Standard 6 – ein
+  Klassenzimmer ist auch im Gespräch leiser, als man denkt, deshalb ist die Grundverstärkung
+  kräftig; gemessen wird in Fließkommazahlen, damit bei Ruhe nicht das eigene Rauschen der
+  Messung als Pegel erscheint), **Schwelle**, beide **Zeiten** und
   die **Höchstzahl** der Tiere. Mit **🖼 Tafel** landet das Bild als Momentaufnahme auf der Seite.
   Das Mikrofon
   läuft nur, solange der Knopf auf **Stopp** steht – aufgenommen oder gespeichert wird nichts.

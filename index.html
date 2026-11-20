@@ -8170,7 +8170,7 @@ async function zooMicAn(){
     const AC=window.AudioContext||window.webkitAudioContext;
     zooAC=new AC(); zooSrc=zooAC.createMediaStreamSource(st);
     zooAn=zooAC.createAnalyser(); zooAn.fftSize=512; zooSrc.connect(zooAn);
-    zooDat=new Uint8Array(zooAn.fftSize);
+    zooDat=zooAn.getFloatTimeDomainData?new Float32Array(zooAn.fftSize):new Uint8Array(zooAn.fftSize);
     if(zooAC.state==='suspended') zooAC.resume().catch(()=>{});
   }catch(err){ zooMicAus(); zooSagt({type:'zoo-mic-aus',grund:'ton'}); return; }
   /* Schläft die Tonauswertung (iPadOS lässt sie ohne Fingerdruck schlafen), käme ständig
@@ -8182,8 +8182,11 @@ async function zooMicAn(){
       else if(Date.now()-zooSchlaeft>2000){ zooMicAus(); zooSagt({type:'zoo-mic-aus',grund:'ton'}); }
       return; }
     zooSchlaeft=0;
-    zooAn.getByteTimeDomainData(zooDat);
-    let su=0; for(let i=0;i<zooDat.length;i++){ const v=(zooDat[i]-128)/128; su+=v*v; }
+    let su=0;
+    if(zooDat instanceof Float32Array){ zooAn.getFloatTimeDomainData(zooDat);
+      for(let i=0;i<zooDat.length;i++) su+=zooDat[i]*zooDat[i]; }
+    else { zooAn.getByteTimeDomainData(zooDat);
+      for(let i=0;i<zooDat.length;i++){ const v=(zooDat[i]-128)/128; su+=v*v; } }
     zooSagt({type:'zoo-pegel',roh:Math.sqrt(su/zooDat.length)}); },100);
 }
 function zooMicAus(){
