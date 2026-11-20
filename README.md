@@ -4160,10 +4160,14 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   dieselbe Stelle im Bild, dieselbe Aussage: wo kommt viel an, wo nichts), **Schirm** stellt den
   Schirm **von vorn** als Fenster daneben (Einschläge als Punkte, bei der Schallwelle als
   Helligkeit); der Aufbau rückt dafür zur Seite, damit beides nebeneinander Platz hat.
-  Gezählt wird **immer** – ob und wo es zu sehen ist, entscheidet allein die Anzeige, und
-  **Zurücksetzen** fängt die Zählung neu an. Im Schirmfenster leuchtet jeder frische Einschlag
-  **hell auf und verblasst wieder**, die schon gesammelten bleiben blass stehen: zu sehen ist also
-  beides – was gerade eintrifft und das Muster, das daraus wächst. Den **Spaltabstand**
+  Was beide zeigen, entscheidet der Knopf **Sammeln** in der oberen Zeile (gleich hinter
+  „Dauerfeuer" bzw. „Objektstrom"): **eingeschaltet** wird **ab dem Einschalten** alles
+  aufsummiert – im Schirmfenster bleiben die Treffer blass stehen, im Histogramm wachsen die
+  Balken, und das Muster entsteht auch bei schwachem Strom. **Ausgeschaltet** ist nur zu sehen,
+  was **gerade** eintrifft: Jeder Einschlag leuchtet hell auf und **verblasst** wieder, und
+  genauso sinkt sein Balken im Histogramm nach wenigen Sekunden von selbst wieder zusammen –
+  bei schwachem Strom ein Flackern ohne Muster, bei starkem Strom das Muster.
+  **Zurücksetzen** fängt neu an. Den **Spaltabstand**
   ändert man auch, indem man **an einem Spalt zieht** – in jedem Reiter. Die **Geschwindigkeit ist nicht einstellbar** – beim Schall liegt sie mit
   c = λ·f fest, und die Teilchen sind alle gleich schnell; der Regler **Tempo** ändert nur, wie
   schnell die Simulation läuft.
@@ -4172,8 +4176,9 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   letzte Stück des Anflugs – gerade genug, um zu erkennen, dass ein Teil an der Blende **abgefangen**
   wird. Wer einen **offenen** Spalt trifft, fliegt **geradeaus** weiter; ein geschlossener Spalt
   ist zugemauert und hält die Teilchen auf (mit **beide Spalte / nur oben / nur unten**). Wie dicht die Teilchen kommen, sagt der
-  Regler **Intensität** (1 bis 20 je Sekunde) – denselben gibt es beim Objektstrom. Das **Histogramm**
-  rechts neben dem Schirm sammelt die Treffer – es entstehen **zwei Streifen**, kein Muster. Die Zählung (abgefeuert · durch die Spalte · am Schirm) steht unten.
+  Regler **Intensität** (1 bis 20 je Sekunde) – denselben gibt es beim Objektstrom. Mit **Sammeln**
+  hält das **Histogramm** rechts neben dem Schirm die Treffer fest – es entstehen **zwei Streifen**,
+  kein Muster. Die Zählung (abgefeuert · durch die Spalte · am Schirm) steht unten.
   **Klassisch · Welle:** Hinter den Spalten laufen Elementarwellen los (**Schall**, 343 m/s; aus der
   **Wellenlänge** folgt die Tonhöhe, 34 cm sind rund 1000 Hz); in jedem Spalt steht dazu ein
   **Lautsprecher**. Ein breiter Spalt wird dabei in mehrere
@@ -4211,9 +4216,9 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   Schirm ankommt (eine Momentaufnahme der schwingenden Welle täte das nicht, ihre hellen Streifen
   wandern ja). Es bedeutet also: **wo ein Objekt auftrifft, würfelt das Werkzeug nach |Ψ|² am Schirm**. Zwischen
   Spalt und Schirm ist nichts zu sehen – nach dem Weg wird nicht gefragt –, am Schirm blitzt der
-  Einschlag auf. Im **Histogramm** (und im Schirmfenster) bleiben die Treffer stehen: erst einzelne
-  Punkte, dann wird aus ihnen das Muster – die **Balkengruppen liegen genau unter den hellen
-  Streifen des Ψ-Feldes**. Das **Messgerät** an den Spalten macht den Weg bekannt: dann fliegt jedes Objekt
+  Einschlag auf. Mit **Sammeln** bleiben die Treffer im **Histogramm** und im Schirmfenster stehen:
+  erst einzelne Punkte, dann wird aus ihnen das Muster – die **Balkengruppen liegen genau unter den
+  hellen Streifen des Ψ-Feldes**. Das **Messgerät** an den Spalten macht den Weg bekannt: dann fliegt jedes Objekt
   sichtbar von „seinem" Spalt weiter, gerechnet wird mit |Ψ₁|² + |Ψ₂|², und die **Streifen
   verschwinden** – übrig bleibt die Summe der beiden Einzelbilder (bei großer Wellenlänge läuft die
   zu einem breiten Berg zusammen, erst bei kleiner Wellenlänge werden daraus zwei getrennte Streifen).
