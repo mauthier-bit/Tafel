@@ -287,8 +287,6 @@
     <button class="btn" id="bDauer">Dauerfeuer</button>
     <button class="btn" id="bQein">Ein Objekt</button>
     <button class="btn" id="bQstrom">Objektstrom</button>
-    <button class="btn on" id="bHisto" title="Die Treffer am Schirm festhalten und als Verteilung zeigen">Sammeln</button>
-    <button class="btn on" id="bSammeln" title="Die Treffer am Schirm festhalten und als Verteilung zeigen">Sammeln</button>
     <button class="btn pri" id="bPlay">▶ Start</button>
     <button class="btn" id="bReset">Zurücksetzen</button>
     <span class="sep" id="sep5"></span>
@@ -328,6 +326,9 @@
     <button class="btn" id="bGeo">Geometrie</button>
     <button class="btn" id="bDiag">Diagramm</button>
     <button class="btn" id="bMikro">🔊 Mikrofon</button>
+    <button class="btn on" id="bHisto" title="Wie viele Teilchen sind wo eingeschlagen?">Histogramm</button>
+    <button class="btn on" id="bSammeln" title="Wie viele Objekte sind wo eingeschlagen?">Histogramm</button>
+    <button class="btn on" id="bIvert" title="Wie laut bzw. wie hell ist es am Schirm wo?">Intensität</button>
     <button class="btn" id="bSchirm" title="Den Schirm von vorn ansehen">Schirm</button>
   </div>
 
@@ -378,7 +379,7 @@ const toast=m=>window.TafelShot&&TafelShot.toast(m);
 const STD={ tab:'k', kmod:'t', lmod:'s',
   d:60, b:10, e:260, lam:34, lamQ:12, lamL:12, quell:0, tempo:5, lauf:false, dauer:false, histo:true, sp:'b',
   feld:true, berge:false, taeler:false, imax:false, imin:false, pAn:false, zuege:false, gang:false, diag:false, mikro:false,
-  mess:false, psi:true, strom:false, inten:6, sammeln:true, schirm:false, geo:false,
+  mess:false, psi:true, strom:false, inten:6, sammeln:true, schirm:false, geo:false, ivert:true,
   /* Farben und Strichstärken (⚙): fVerd/fVerdn sind Verdichtung und Verdünnung im
      Wellenfeld, fPsi die dunkle Seite des Ψ-Feldes, fAlpha seine Deckkraft in Prozent. */
   fVerd:'#be1e2d', fVerdn:'#1e46b4', fPsi:'#0f2656', fAlpha:72,
@@ -401,7 +402,7 @@ let ready=false, geteiltesFenster=false;
 /* Die Quelle steht weit links (QUELLX), damit die Teilchen die Spalte flach genug treffen
    und dahinter zwei saubere Streifen entstehen – zu sehen ist davon aber nur das letzte
    Stück ab XSTART: dort tauchen die Teilchen auf und fliegen auf die Blende zu. */
-const WX0=-60, WX1=325, QUELLX=-400, XSTART=-55, CSCHALL=34300;
+const WX0=-46, WX1=325, QUELLX=-400, XSTART=-42, CSCHALL=34300;
 /* Der Abstand der Spalte vom Schirm steht in D.e und lässt sich am Griff auf dem Schirm
    ziehen. In der Geometrie heißt er e – L ist dagegen der Abstand von der Spaltebene bis
    zu P; nur wenn P auf dem Schirm liegt, sind beide gleich. */
@@ -412,10 +413,16 @@ const xW=px=>(px-oxp)/sc, yW=py=>(oyp-py)/sc;
 let yHalb=130;
 
 const wx0=()=>WX0;
+/* Das Fenster „Schirm von vorn“ steht rechts neben dem Aufbau und bekommt seinen eigenen
+   Platz – so passen Histogramm bzw. Verteilung und das Fenster nebeneinander. */
+const schirmFensterB=()=>Math.max(74,Math.min(190,cvW*0.19));
+const schirmPlatz=()=>D.schirm?schirmFensterB()+20:0;
 function mass(){
-  const x0=wx0();
-  sc=Math.min(cvW/(WX1-x0), cvH/260);
-  oxp=(cvW-(WX1-x0)*sc)/2-x0*sc; oyp=cvH/2;
+  const x0=wx0(), nutz=Math.max(120,cvW-schirmPlatz());
+  sc=Math.min(nutz/(WX1-x0), cvH/260);
+  /* Bleibt Platz übrig, bekommt die rechte Seite den größeren Teil: der Doppelspalt rückt
+     nach links, und hinter dem Schirm ist Raum für Histogramm und Verteilung. */
+  oxp=(nutz-(WX1-x0)*sc)*0.33-x0*sc; oyp=cvH/2;
   yHalb=cvH/(2*sc); }
 
 /* ---------- Quellen (Huygens) ----------
@@ -475,7 +482,7 @@ function ampVoll(x,y){ let a=0;
    zum jeweiligen Spalt. */
 let GW=0, GH=0, CrA=null, CiA=null, CrB=null, CiB=null, RA=null, RB=null,
     img=null, off=null, octx=null, feldNorm=1, inkNorm=1, psiNorm=1, feldAlt='';
-function feldSchluessel(){ return [D.d,D.b,LAM(),D.sp,GW,GH,Math.round(cvW),Math.round(cvH),wx0()].join('|'); }
+function feldSchluessel(){ return [D.d,D.b,LAM(),D.sp,GW,GH,Math.round(cvW),Math.round(cvH),wx0(),Math.round(sc*1000)].join('|'); }
 function feldBauen(){
   GW=Math.max(60,Math.min(440,Math.round(cvW/2))); GH=Math.max(50,Math.min(330,Math.round(cvH/2)));
   const key=feldSchluessel(); if(key===feldAlt&&CrA) return; feldAlt=key;
@@ -516,7 +523,11 @@ function feldBauen(){
 let feldKey='';                       /* so war das Bild zuletzt gerechnet */
 function feldZeigen(){ ctx.imageSmoothingEnabled=true;
   const g=ctx.globalAlpha; ctx.globalAlpha=g*(D.fAlpha/100);
-  ctx.drawImage(off,0,0,cvW,cvH); ctx.globalAlpha=g; }
+  ctx.save(); amSchirmAus(); ctx.drawImage(off,0,0,cvW,cvH); ctx.restore(); ctx.globalAlpha=g; }
+/* Hinter dem Schirm geht es nicht weiter – dort wird das Licht bzw. der Schall ja
+   aufgefangen. Alles, was das Feld zeigt, wird deshalb am Schirm abgeschnitten. */
+function amSchirmAus(){ ctx.beginPath();
+  ctx.rect(0,0,Math.max(0,Math.min(cvW,X(D.e)+1)),cvH); ctx.clip(); }
 /* ---------- Das Ψ-Bild der Quantenobjekte ----------
    Hier wird nicht die schwingende Welle gemalt, sondern |Ψ|² – die Wahrscheinlichkeit,
    ein Objekt anzutreffen. Das Bild steht still und passt deshalb Zeile für Zeile zu dem,
@@ -602,10 +613,10 @@ function qTick(dt){
     if(o.ph===0){ o.x+=w; if(o.x>=0) qEntscheiden(o); continue; }
     o.s+=w;
     if(o.s>=o.L){ qAn++;
-      if(D.sammeln){ const k=Math.round((o.ziel/yHalb*0.5+0.5)*(qhisto.length-1));
+      { const k=Math.round((o.ziel/yHalb*0.5+0.5)*(qhisto.length-1));
         if(k>=0&&k<qhisto.length) qhisto[k]++; }
       qtreff.push({y:o.ziel, t:0}); if(qtreff.length>60) qtreff.shift();
-      punkteAuf(qpunkte,qsamm,o.ziel,D.sammeln);
+      punkteAuf(qpunkte,qsamm,o.ziel,true);
       qobj.splice(i,1); } }
   qtreff.forEach(q=>{ q.t+=dt; });
   while(qtreff.length&&qtreff[0].t>1.6) qtreff.shift(); }
@@ -648,16 +659,17 @@ function teilSchritt(dt){
       durch++; }
     if(Math.abs(p.y)>yHalb+10){ teil.splice(i,1); continue; }
     if(p.x>=D.e){ getroffen++;
-      if(D.histo){ const k=Math.round((p.y/yHalb*0.5+0.5)*(histo.length-1));
+      /* Gezählt wird immer – ob Histogramm und Schirm die Treffer zeigen, ist eine
+         Frage der Anzeige und lässt sich einzeln ein- und ausschalten. */
+      { const k=Math.round((p.y/yHalb*0.5+0.5)*(histo.length-1));
         if(k>=0&&k<histo.length) histo[k]++; }
-      punkteAuf(trefferP,tsamm,p.y,D.histo);
+      punkteAuf(trefferP,tsamm,p.y,true);
       teil.splice(i,1); } } }
 /* Für die Ansicht des Schirms von vorn bekommt jeder Treffer eine zufällige Querlage –
    quer zur Spaltrichtung ist ja nichts ausgezeichnet.
-   Ein Einschlag leuchtet nur kurz auf und verschwindet wieder (LEBEN). Was man sieht, ist
-   also immer nur, was gerade eintrifft: bei schwachem Strom ein Flackern ohne Muster, bei
-   starkem Strom das Muster. Erst „Sammeln" hält alle Treffer fest –
-   dann wächst das Muster auch bei schwachem Strom langsam heran. */
+   Ein frischer Einschlag leuchtet hell auf und verblasst wieder (LEBEN); die gesammelten
+   bleiben blass stehen. So ist beides zu sehen: was gerade eintrifft und das Muster, das
+   daraus wächst. Gesammelt wird immer – „Zurücksetzen" fängt neu an. */
 const LEBEN=2.5;
 let simT=0;                                  /* Uhr der Simulation, läuft mit dem Tempo */
 let trefferP=[], qpunkte=[], tsamm=[], qsamm=[];
@@ -665,13 +677,49 @@ function punkteAuf(liste,samm,y,sammeln){
   liste.push({y, z:Math.random(), t:simT}); if(liste.length>2000) liste.shift();
   if(sammeln){ samm.push({y, z:Math.random()}); if(samm.length>4000) samm.shift(); } }
 function punkteAlt(liste){ while(liste.length&&simT-liste[0].t>LEBEN) liste.shift(); }
+/* Wie viel Platz ist rechts vom Schirm frei? Steht dort das Fenster „Schirm von vorn“,
+   bleibt das Histogramm davor stehen – beide sind einzeln an- und abschaltbar. */
+function rechtsFrei(){
+  return D.schirm ? Math.max(X(D.e)+10, cvW-schirmPlatz()+2) : cvW-4; }
 function histoMalen(h,col){
   h=h||histo; let mx=1; for(let i=0;i<h.length;i++) if(h[i]>mx) mx=h[i];
-  const breit=(WX1-D.e-6)*sc, hb=cvH/h.length;
+  const breit=rechtsFrei()-X(D.e)-3, hb=cvH/h.length;
+  if(breit<10) return;
   ctx.save(); ctx.fillStyle=col||'#2563eb';
   for(let i=0;i<h.length;i++){ if(!h[i]) continue;
     const l=breit*h[i]/mx, py=Y((i/(h.length-1)-0.5)*2*yHalb);
     ctx.fillRect(X(D.e)+3, py-hb*0.42, l, hb*0.84); }
+  ctx.restore(); }
+
+/* ---------- Intensitätsverteilung am Schirm ----------
+   Was bei den Teilchen das Histogramm ist, ist bei der Welle die Verteilung der
+   Intensität (beim Schall: der Lautstärke) längs des Schirms – dieselbe Stelle im Bild,
+   dieselbe Aussage: wo kommt viel an, wo nichts. Gerechnet wird |Amplitude|² am Schirm. */
+let ivAlt='', ivI=null, ivMax=1;
+function ivBauen(){
+  const n=Math.max(40,Math.min(300,Math.round(cvH/2)));
+  /* Solange die Welle erst einläuft, wächst die Verteilung mit ihr mit – deshalb
+     gehört die Front mit in den Schlüssel. */
+  const key=[D.d,D.b,D.e,LAM(),D.sp,Math.round(yHalb*10),n,einlauf()?Math.round(frontR):'v'].join('|');
+  if(key===ivAlt&&ivI) return; ivAlt=key;
+  ivI=new Float64Array(n); ivMax=1e-12;
+  for(let i=0;i<n;i++){ const y=(0.5-i/(n-1))*2*yHalb, f=feldAn(D.e,y), v=f.amp*f.amp;
+    ivI[i]=v; if(v>ivMax) ivMax=v; } }
+function ivertMalen(){
+  ivBauen();
+  const x0=X(D.e)+3, br=rechtsFrei()-x0; if(br<12) return;
+  const n=ivI.length, px=i=>x0+br*Math.min(1,ivI[i]/ivMax), py=i=>i/(n-1)*cvH;
+  ctx.save();
+  ctx.beginPath(); ctx.moveTo(x0,0);
+  for(let i=0;i<n;i++) ctx.lineTo(px(i),py(i));
+  ctx.lineTo(x0,cvH); ctx.closePath();
+  ctx.fillStyle='rgba(37,99,235,.13)'; ctx.fill();
+  ctx.beginPath();
+  for(let i=0;i<n;i++){ if(i===0) ctx.moveTo(px(i),py(i)); else ctx.lineTo(px(i),py(i)); }
+  ctx.strokeStyle='#1d4ed8'; ctx.lineWidth=2; ctx.stroke();
+  ctx.fillStyle='#1d4ed8'; ctx.font='700 '+Math.max(10,fs()*0.8)+'px sans-serif';
+  ctx.textAlign='left'; ctx.textBaseline='top';
+  ctx.fillText(D.tab==='k'?'Lautstärke':'Intensität', x0+4, 4);
   ctx.restore(); }
 
 /* ---------- Linien und Punkt P ---------- */
@@ -908,7 +956,14 @@ function aufbauMalen(){
   ctx.save(); ctx.strokeStyle='#64748b'; ctx.fillStyle='#64748b'; ctx.lineWidth=1.4;
   const xm=xb-14; ctx.beginPath(); ctx.moveTo(xm,Y(D.d/2)); ctx.lineTo(xm,Y(-D.d/2)); ctx.stroke();
   ctx.font='700 '+Math.max(11,fs()*0.85)+'px sans-serif'; ctx.textAlign='right'; ctx.textBaseline='middle';
-  ctx.fillText('d = '+D.d+' '+EH(), xm-4, Y(0));
+  /* Wird es links eng, rückt die Beschriftung an den Rand – dann bekommt sie einen
+     weißen Rücken, damit sie auf dem Maßpfeil lesbar bleibt. */
+  const dtxt='d = '+D.d+' '+EH(), tw=ctx.measureText(dtxt).width;
+  let lx=xm-4;
+  if(lx-tw<2){ lx=Math.min(xm-1, tw+2);
+    ctx.save(); ctx.fillStyle='rgba(255,255,255,.88)';
+    ctx.fillRect(lx-tw-3, Y(0)-fs()*0.75, tw+6, fs()*1.5); ctx.restore(); }
+  ctx.fillText(dtxt, lx, Y(0));
   ctx.restore(); }
 /* Beim Schall sitzt in jedem Spalt ein Lautsprecher – so ist zu sehen, woher die beiden
    Elementarwellen kommen. */
@@ -942,7 +997,7 @@ function messMalen(){
    waagrecht – bei Teilchen und Quantenobjekten als einzelne Einschläge, bei der Welle als
    Helligkeit (dort ist es die Lautstärke). Die Höhe passt zur Seitenansicht daneben. */
 function schirmMalen(){
-  const w=Math.max(74,Math.min(190,cvW*0.19)), h=cvH*0.84;
+  const w=schirmFensterB(), h=cvH*0.84;
   const x0=cvW-w-12, y0=(cvH-h)/2, yz=yy=>y0+h*(0.5-yy/(2*yHalb));
   ctx.save();
   ctx.fillStyle='#fff'; ctx.strokeStyle='#94a3b8'; ctx.lineWidth=1.4;
@@ -966,7 +1021,7 @@ function schirmMalen(){
       ctx.fillRect(x0, y0+h*i/n-0.5, w, h/n+1); }
   } else {
     const quant=a==='q', col=quant?'126,34,206':'37,99,235';
-    const samm=quant?(D.sammeln?qsamm:null):(D.histo?tsamm:null);
+    const samm=quant?qsamm:tsamm;
     const punkt=(q,r)=>{ const py=yz(q.y); if(py<y0-2||py>y0+h+2) return;
       ctx.beginPath(); ctx.arc(x0+6+q.z*(w-12), py, r, 0, 7); ctx.fill(); };
     if(samm){ ctx.fillStyle='rgba('+col+',.45)'; samm.forEach(q=>punkt(q,1.7)); }
@@ -1034,8 +1089,12 @@ function malen(){
     info=lichtstrahlenMalen();
   } else if(a==='w'){
     if(D.feld) feldMalen(phase,true);
-    if(D.berge||D.taeler) linienMalen(phase);
-    if((D.imax||D.imin)&&beide()) intfMalen();
+    if(D.berge||D.taeler||((D.imax||D.imin)&&beide())){
+      ctx.save(); amSchirmAus();
+      if(D.berge||D.taeler) linienMalen(phase);
+      if((D.imax||D.imin)&&beide()) intfMalen();
+      ctx.restore(); }
+    if(D.ivert) ivertMalen();
     aufbauMalen(); if(D.tab==='k') lautsprecherMalen();
     if(D.pAn){
       if(D.zuege||(D.gang&&beide())) strahlenMalen();
@@ -1054,14 +1113,14 @@ function malen(){
       : 'λ = '+LAM()+' '+EH());
   } else if(a==='t'){
     aufbauMalen();
-    if(D.histo&&!D.schirm) histoMalen();   /* das Fenster zeigt dasselbe besser */
+    if(D.histo) histoMalen();
     teilchenMalen();
     info='abgefeuert: '+abgefeuert+' · durch die Spalte: '+durch+' · am Schirm: '+getroffen;
   } else if(a==='q'){
     if(D.psi) dichteMalen(!D.mess);
     aufbauMalen();
     if(D.mess) messMalen();
-    if(D.sammeln&&!D.schirm) histoMalen(qhisto,'#7e22ce');
+    if(D.sammeln) histoMalen(qhisto,'#7e22ce');
     qMalen();
     info='Objekte: '+qAb+' · am Schirm: '+qAn;
     if(D.pAn){ let g='';
@@ -1134,7 +1193,7 @@ function knoepfe(){
   $('grpK').hidden=!klass; $('grpL').hidden=!licht;
   $('bald').hidden=true;
   /* Erste Zeile: am Spalt einstellen – und was angezeigt wird */
-  zeig('bMess',a==='q'); zeig('bHisto',a==='t');
+  zeig('bMess',a==='q'); zeig('bHisto',a==='t'); zeig('bIvert',a==='w');
   ['bFeld','bBerge','bTaeler','bMax','bMin','bZuege','bDiag'].forEach(id=>zeig(id,a==='w'));
   /* Punkt P, Gangunterschied und Geometrie gibt es auch bei den Quantenobjekten */
   ['bPunkt','bGang','bGeo'].forEach(id=>zeig(id,a==='w'||a==='q'));
@@ -1156,13 +1215,16 @@ function knoepfe(){
   zeig('sep3',klass||licht);        /* im Quantenreiter steht links kein Umschalter */
   zeig('sep5',a!=='s');
   [['bMess',D.mess],['bPsi',D.psi],['bQstrom',D.strom],['bSammeln',D.sammeln],['bSchirm',D.schirm],
-   ['bDauer',D.dauer],['bHisto',D.histo],['bFeld',D.feld],['bBerge',D.berge],['bTaeler',D.taeler],['bMax',D.imax],['bMin',D.imin],
+   ['bDauer',D.dauer],['bHisto',D.histo],['bIvert',D.ivert],['bFeld',D.feld],['bBerge',D.berge],['bTaeler',D.taeler],['bMax',D.imax],['bMin',D.imin],
    ['bPunkt',D.pAn],['bZuege',D.zuege],['bGang',D.gang],['bGeo',D.geo],['bDiag',D.diag],['bMikro',D.mikro]].forEach(([id,an])=>{
     const b=$(id); if(b) b.classList.toggle('on',!!an); });
   ['bDiag','bMikro','bZuege'].forEach(id=>{ const b=$(id); if(b) b.disabled=!D.pAn; });
   $('bGang').disabled=!D.pAn||!beide();
   $('bGeo').disabled=!D.pAn||!beide();
   $('bPlay').textContent=D.lauf?'⏸ Pause':'▶ Start';
+  /* Beim Schall heißt die Intensität Lautstärke */
+  { const bi=$('bIvert'), t=D.tab==='k'?'Lautstärke':'Intensität';
+    if(bi&&bi.textContent!==t) bi.textContent=t; }
   $('grpK').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.km===D.kmod));
   $('grpL').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.lm===D.lmod));
   ['bMax','bMin'].forEach(id=>{ $(id).disabled=!beide(); });
@@ -1185,7 +1247,7 @@ function knoepfe(){
   if(!$('popAnz').hidden) popStelle($('bAnz'),$('popAnz'));
   if(!$('popSpalt').hidden) popStelle($('bSpalt'),$('popSpalt')); }
 const ANZEIGEN=['bFeld','bBerge','bTaeler','bMax','bMin','bPsi','bPunkt',
-  'bZuege','bGang','bGeo','bDiag','bMikro','bSchirm'];
+  'bZuege','bGang','bGeo','bDiag','bMikro','bHisto','bSammeln','bIvert','bSchirm'];
 function beschrifte(id,t){ const b=$(id), neu=t+' <span class="pf">▾</span>';
   if(b.innerHTML!==neu) b.innerHTML=neu; }
 /* ---------- Klapplisten ----------
@@ -1220,7 +1282,7 @@ function neuStart(){ teil=[]; histo=new Int32Array(histo.length); getroffen=0; d
 
 const reg=(id,feld,nach)=>{ const el=$(id); if(!el) return;
   el.addEventListener('input',()=>{ D[feld]=+el.value; if(nach) nach(); knoepfe(); sync(); }); };
-const neuFeld=()=>{ feldAlt=''; feldKey=''; feldBauen(); vertAlt=''; };
+const neuFeld=()=>{ feldAlt=''; feldKey=''; feldBauen(); vertAlt=''; ivAlt=''; };
 reg('rgD','d',neuFeld);
 reg('rgE','e',neuFeld);
 reg('rgB','b',neuFeld);
@@ -1247,10 +1309,12 @@ $('einstZu').onclick=()=>{ $('einst').hidden=true; };
 $('einstStd').onclick=()=>{ STIL.forEach(k=>{ D[k]=STD[k]; }); feldKey=''; einstUI(); knoepfe(); sync(); };
 const um=(id,feld,nach)=>{ const b=$(id); if(!b) return;
   b.onclick=()=>{ D[feld]=!D[feld]; if(nach) nach(); knoepfe(); sync(); }; };
-/* Beim Umschalten faengt das Sammeln von vorn an */
-um('bDauer','dauer'); um('bHisto','histo',()=>{ histo=new Int32Array(histo.length); tsamm=[]; }); um('bFeld','feld'); um('bBerge','berge'); um('bTaeler','taeler');
+/* Die Anzeigen schalten nur um, was zu sehen ist – gezählt wird unabhängig davon weiter */
+um('bDauer','dauer'); um('bHisto','histo'); um('bIvert','ivert'); um('bFeld','feld'); um('bBerge','berge'); um('bTaeler','taeler');
 um('bMax','imax'); um('bMin','imin'); um('bZuege','zuege'); um('bGang','gang'); um('bDiag','diag'); um('bGeo','geo');
-um('bPsi','psi'); um('bSammeln','sammeln',()=>{ qhisto=new Int32Array(qhisto.length); qsamm=[]; }); um('bQstrom','strom'); um('bSchirm','schirm');
+um('bPsi','psi'); um('bSammeln','sammeln');
+/* Das Schirmfenster nimmt Platz weg – der Aufbau rückt daneben */
+um('bQstrom','strom'); um('bSchirm','schirm',()=>{ mass(); feldAlt=''; feldKey=''; feldBauen(); vertAlt=''; ivAlt=''; });
 um('bMess','mess',()=>{ vertAlt=''; vertBauen(); });
 $('bQein').onclick=()=>{ qSchuss(); if(!D.lauf){ D.lauf=true; knoepfe(); sync(); } };
 reg('rgI','inten');
@@ -1281,8 +1345,8 @@ const HILFE='<ul>'+
  '<li><b>Klassisch · Teilchen:</b> „Ein Teilchen" schießt eines ab, „Dauerfeuer" feuert fortlaufend. '+
  'Wer einen offenen Spalt trifft, fliegt geradeaus weiter – sonst wird er geschluckt; '+
  'ein geschlossener Spalt ist zugemauert. Am Schirm leuchtet '+
- 'jeder Einschlag nur kurz auf; <b>Sammeln</b> hält ab dem Einschalten fest, wo die Teilchen '+
- 'ankommen, und zeigt die Verteilung: zwei Streifen, kein Muster.</li>'+
+ 'jeder frische Einschlag hell auf und verblasst wieder; das <b>Histogramm</b> rechts neben dem '+
+ 'Schirm sammelt alle Treffer und zeigt die Verteilung: zwei Streifen, kein Muster.</li>'+
  '<li><b>Klassisch · Welle:</b> Hinter den Spalten laufen zwei Elementarwellen los (Schall, 343 m/s). '+
  'Einblenden lassen sich das Wellenfeld, <b>Berge</b> und <b>Täler</b> als Kreislinien '+
  'sowie die Linien gleichen Gangunterschieds einzeln als <b>Maxima</b> (grün) und <b>Minima</b> (rot gestrichelt).</li>'+
@@ -1296,16 +1360,18 @@ const HILFE='<ul>'+
  'aber nach der Wahrscheinlichkeit |Ψ|². Das <b>Ψ-Feld</b> zeigt genau diese Wahrscheinlichkeit: '+
  'helle Streifen dort, wo viele Objekte ankommen – es steht still und passt deshalb Zeile für '+
  'Zeile zum gesammelten Muster. Jeder Einschlag leuchtet nur kurz auf und verschwindet '+
- 'wieder – bei schwachem Strom sieht man deshalb kein Muster, bei starkem schon. '+
- 'Mit <b>Sammeln</b> bleiben die Treffer ab dem Einschalten stehen: erst '+
- 'Punkt für Punkt, dann wird das Muster auch bei schwachem Strom sichtbar. Das <b>Messgerät</b> schaut nach, durch welchen '+
+ 'wieder – gesammelt bleiben sie aber stehen: erst Punkt für Punkt, dann wird auch bei '+
+ 'schwachem Strom das Muster sichtbar. Das <b>Messgerät</b> schaut nach, durch welchen '+
  'Spalt jedes Objekt geht – dann ist der Weg bekannt, das Objekt fliegt sichtbar weiter, und die '+
  'Streifen verschwinden: übrig bleibt die Summe der beiden Einzelbilder. Auch <b>einzelne Spalte</b> lassen sich schließen.</li>'+
  '<li><b>Geometrie</b> legt die beiden ähnlichen Dreiecke übereinander: das kleine an den Spalten '+
  'mit dem Gangunterschied (Hypotenuse ist der Spaltabstand d, also <b>sin α = Δs/d</b>) und das große '+
  'von der Spaltmitte zu P (<b>tan α = y/L</b>, y der Abstand von der Mittellinie, L der Abstand zur '+
  'Spaltebene). Beide haben denselben Winkel α. Liegt P auf dem Schirm, ist L der Schirmabstand e.</li>'+
- '<li>Der Knopf <b>Schirm</b> zeigt den Schirm von vorn – als Fenster neben der Seitenansicht.</li>'+
+ '<li>Was am Schirm ankommt, zeigen zwei Anzeigen, jede für sich ein- und ausschaltbar: '+
+ '<b>Histogramm</b> legt die Treffer als Balken rechts neben den Schirm (bei der Welle steht dort '+
+ 'die <b>Intensitätsverteilung</b>, beim Schall die Lautstärke), <b>Schirm</b> zeigt den Schirm '+
+ 'von vorn als Fenster daneben. Gezählt wird immer; <b>Zurücksetzen</b> fängt neu an.</li>'+
  '<li>Gezogen werden können: <b>Punkt P</b>, ein <b>Spalt</b> (ändert den Spaltabstand) und der '+
  '<b>Griff am Schirm</b> (ändert den Schirmabstand e) – dasselbe geht mit den Reglern oben.</li>'+
  '<li>Die beiden Klapplisten <b>Spalt</b> und <b>Anzeigen</b> fassen zusammen, was am Spalt '+
@@ -1366,8 +1432,10 @@ function uebernimm(d){ if(!d) return;
   D.lamL=Math.max(2,Math.min(40,+d.lamL||s.lamL));
   D.quell=Math.max(0,Math.min(200,+d.quell||0));
   D.tempo=Math.max(1,Math.min(25,+d.tempo||s.tempo));
+  /* Was gar nicht mitgeschickt wird (neu eingefügtes Objekt, älterer Stand), bekommt den
+     Standard – sonst stünde ein frisches Werkzeug ganz ohne Anzeigen da. */
   ['lauf','dauer','histo','feld','berge','taeler','imax','imin','pAn','zuege','gang','diag',
-   'mess','psi','strom','sammeln','schirm','geo'].forEach(k=>{ D[k]=!!d[k]; });
+   'mess','psi','strom','sammeln','schirm','geo','ivert'].forEach(k=>{ D[k]=(k in d)?!!d[k]:!!s[k]; });
   D.inten=Math.max(1,Math.min(100,+d.inten||6));
   STIL.forEach(k=>{ const v=d[k];
     D[k]= k[0]==='f'&&k!=='fAlpha' ? (istFarbe(v)?v:s[k])

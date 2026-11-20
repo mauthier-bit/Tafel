@@ -704,6 +704,13 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   die **Höchstzahl** der Tiere. Mit **🖼 Tafel** landet das Bild als Momentaufnahme auf der Seite.
   Das Mikrofon
   läuft nur, solange der Knopf auf **Stopp** steht – aufgenommen oder gespeichert wird nichts.
+  Geht es nicht an, **sagt das Bild warum** (nicht erlaubt, kein Mikrofon, kein https), statt stumm
+  zu bleiben; eine von iPadOS schlafen gelegte Tonauswertung weckt ein **Tippen ins Bild**.
+  Weil iPadOS das Mikrofon einem **Fenster-Rahmen** nicht immer freigibt, gibt es einen
+  **Ersatzweg**: Kommt der Zoo selbst nicht heran, **misst die Tafel** – an derselben Stelle wie die
+  Lärmampel – und schickt den Pegel herüber; läuft die Lärmampel schon, ist das Mikrofon ohnehin
+  offen und es wird niemand noch einmal gefragt. Beide können gleichzeitig laufen, und das
+  Abschalten des einen nimmt dem anderen das Mikrofon nicht weg.
 - **Lärmampel: drei Ansichten.** Über die Schalter **Ampel · Zeiger · Balken** lässt sich die
   Darstellung wechseln – in **beiden** Fenstern hinter dem **⚙** (siehe unten), und die Wahl gilt
   für das eigene Fenster und die Sozialform gemeinsam. Voreingestellt ist der **Zeiger**.
@@ -1538,8 +1545,11 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     Solange beschriftet wird, liegt ein **roter Rahmen** um den Bildschirm; der rote Knopf
     „Beschriften beenden" bleibt im Vollbild weg, er stünde im Bild. Beendet wird über das ☰-Menü.
     Beim **Blättern** bleibt jede Notiz bei ihrer Seite. Ist die Seite höher als der Bildschirm,
-    **scrollt der Finger** weiter und der **Stift schreibt** (bei „Mit dem Finger schreiben" nimmt die
-    Zeichenfläche jede Berührung an – dann erst das Beschriften beenden, um zu scrollen).
+    **schiebt der Finger** die Seite weiter und der **Stift schreibt** (bei „Mit dem Finger schreiben"
+    nimmt die Zeichenfläche jede Berührung an – dann erst das Beschriften beenden, um zu schieben).
+    Die Zeichenfläche nimmt jede Berührung **selbst** an und schiebt die Seite beim Finger selbst
+    weiter (mit Nachlauf). So kann der **Apple Pencil die Seite nicht mehr versehentlich verschieben**,
+    statt zu schreiben – vorher brach die Spur dabei immer wieder ab.
     **Videos** lassen sich im Vollbild nicht beschriften – der Stift käme nicht an das Bild heran;
     der Knopf beendet dort das Vollbild und schaltet in der normalen Ansicht aufs Beschriften um.
 - **Kopieren / Ausschneiden / Einfügen:** im Kontext-Panel **Kopieren**/**Ausschneiden** (oder
@@ -4134,17 +4144,26 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   dass ein Spalt zu ist. Eine Liste schließt sich, sobald man daneben tippt.
   Der **Schirmabstand e** lässt sich auch am
   **Griff auf dem Schirm** ziehen, der **Spaltabstand** an einem Spalt, **P** überall im Feld.
+  **Hinter dem Schirm ist Schluss:** Wellenfeld, Ψ-Feld, Berge, Täler, Maxima und Minima hören am
+  Schirm auf – dort wird das Licht bzw. der Schall ja aufgefangen. Der Platz rechts davon gehört
+  dem **Histogramm** bzw. der **Verteilung**; der Doppelspalt selbst sitzt dadurch etwas weiter
+  links, das Feld dahinter hat mehr Raum.
   Hinter dem **⚙** neben dem „?" stehen die **Farben** von Wellenfeld, Bergen, Tälern, Maxima,
   Minima und Strahlen, ihre **Strichstärken** und die **Deckkraft** des Feldes; die Einstellung
   gehört zum Bild und wird mitgespeichert und mitgeteilt.
-  Für alle Reiter gleich eingestellt werden **Spaltabstand** und **Spaltbreite**, dazu **Start/Pause**,
-  **Zurücksetzen** und der Knopf **Schirm**, der den Schirm **von vorn** als Fenster neben die
-  Seitenansicht stellt (Einschläge als Punkte, bei der Schallwelle als Helligkeit). Dort leuchtet
-  jeder Einschlag nur **kurz auf und verschwindet wieder** – zu sehen ist also immer nur, was
-  gerade eintrifft: bei schwachem Strom ein Flackern ohne Muster, bei starkem Strom das Muster.
-  Erst **Sammeln** hält die Treffer fest, und zwar ab dem Einschalten – dann wächst das Muster
-  auch bei schwachem Strom langsam heran. Der Knopf steht in der oberen Zeile gleich hinter
-  „Dauerfeuer" bzw. „Objektstrom", also bei dem, was er betrifft. Den **Spaltabstand**
+  Für alle Reiter gleich eingestellt werden **Spaltabstand** und **Spaltbreite**, dazu **Start/Pause**
+  und **Zurücksetzen**.
+  **Was am Schirm ankommt, zeigen zwei Anzeigen – jede für sich ein- und ausschaltbar** (beide,
+  eine davon oder keine), beide stehen in der Liste **Anzeigen** nebeneinander:
+  **Histogramm** legt die Treffer als Balken rechts neben den Schirm (bei der **Welle** steht dort
+  statt dessen die **Intensitätsverteilung** längs des Schirms, beim Schall **Lautstärke** genannt –
+  dieselbe Stelle im Bild, dieselbe Aussage: wo kommt viel an, wo nichts), **Schirm** stellt den
+  Schirm **von vorn** als Fenster daneben (Einschläge als Punkte, bei der Schallwelle als
+  Helligkeit); der Aufbau rückt dafür zur Seite, damit beides nebeneinander Platz hat.
+  Gezählt wird **immer** – ob und wo es zu sehen ist, entscheidet allein die Anzeige, und
+  **Zurücksetzen** fängt die Zählung neu an. Im Schirmfenster leuchtet jeder frische Einschlag
+  **hell auf und verblasst wieder**, die schon gesammelten bleiben blass stehen: zu sehen ist also
+  beides – was gerade eintrifft und das Muster, das daraus wächst. Den **Spaltabstand**
   ändert man auch, indem man **an einem Spalt zieht** – in jedem Reiter. Die **Geschwindigkeit ist nicht einstellbar** – beim Schall liegt sie mit
   c = λ·f fest, und die Teilchen sind alle gleich schnell; der Regler **Tempo** ändert nur, wie
   schnell die Simulation läuft.
@@ -4153,8 +4172,8 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   letzte Stück des Anflugs – gerade genug, um zu erkennen, dass ein Teil an der Blende **abgefangen**
   wird. Wer einen **offenen** Spalt trifft, fliegt **geradeaus** weiter; ein geschlossener Spalt
   ist zugemauert und hält die Teilchen auf (mit **beide Spalte / nur oben / nur unten**). Wie dicht die Teilchen kommen, sagt der
-  Regler **Intensität** (1 bis 20 je Sekunde) – denselben gibt es beim Objektstrom. **Sammeln** hält die Treffer am Schirm fest – es entstehen
-  **zwei Streifen**, kein Muster. Die Zählung (abgefeuert · durch die Spalte · am Schirm) steht unten.
+  Regler **Intensität** (1 bis 20 je Sekunde) – denselben gibt es beim Objektstrom. Das **Histogramm**
+  rechts neben dem Schirm sammelt die Treffer – es entstehen **zwei Streifen**, kein Muster. Die Zählung (abgefeuert · durch die Spalte · am Schirm) steht unten.
   **Klassisch · Welle:** Hinter den Spalten laufen Elementarwellen los (**Schall**, 343 m/s; aus der
   **Wellenlänge** folgt die Tonhöhe, 34 cm sind rund 1000 Hz); in jedem Spalt steht dazu ein
   **Lautsprecher**. Ein breiter Spalt wird dabei in mehrere
@@ -4192,9 +4211,9 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   Schirm ankommt (eine Momentaufnahme der schwingenden Welle täte das nicht, ihre hellen Streifen
   wandern ja). Es bedeutet also: **wo ein Objekt auftrifft, würfelt das Werkzeug nach |Ψ|² am Schirm**. Zwischen
   Spalt und Schirm ist nichts zu sehen – nach dem Weg wird nicht gefragt –, am Schirm blitzt der
-  Einschlag auf. Mit **Sammeln** bleiben die Treffer ab dem Einschalten stehen: erst einzelne
-  Punkte, dann wird aus ihnen das Muster. Ohne Sammeln verblasst jeder Einschlag nach kurzer Zeit
-  wieder. Das **Messgerät** an den Spalten macht den Weg bekannt: dann fliegt jedes Objekt
+  Einschlag auf. Im **Histogramm** (und im Schirmfenster) bleiben die Treffer stehen: erst einzelne
+  Punkte, dann wird aus ihnen das Muster – die **Balkengruppen liegen genau unter den hellen
+  Streifen des Ψ-Feldes**. Das **Messgerät** an den Spalten macht den Weg bekannt: dann fliegt jedes Objekt
   sichtbar von „seinem" Spalt weiter, gerechnet wird mit |Ψ₁|² + |Ψ₂|², und die **Streifen
   verschwinden** – übrig bleibt die Summe der beiden Einzelbilder (bei großer Wellenlänge läuft die
   zu einem breiten Berg zusammen, erst bei kleiner Wellenlänge werden daraus zwei getrennte Streifen).

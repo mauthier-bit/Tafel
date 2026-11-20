@@ -4322,9 +4322,11 @@ function fsMalFlaeche(halten){
   $('fsDoc').classList.toggle('mal',an||!!halten);
   document.body.classList.toggle('fsSchreibt',an);
   cvm.style.pointerEvents=an?'auto':'none';
-  /* „Nur Stift": der Finger darf weiter blättern und schieben. Schreibt auch der Finger,
-     muss die Fläche jede Berührung annehmen – dann ist das Scrollen so lange aus. */
-  cvm.style.touchAction=(an&&!doc.settings.penOnly)?'none':'pan-y';
+  /* Beim Beschriften nimmt die Fläche jede Berührung selbst an (touch-action:none).
+     Sonst schiebt der Apple Pencil in Safari die Seite, statt zu schreiben – mitten im
+     Strich bricht die Spur dann ab. Das Schieben mit dem Finger macht die Fläche selbst
+     (siehe unten), damit „Nur mit Stift schreiben" weiter wie gewohnt funktioniert. */
+  cvm.style.touchAction=an?'none':'pan-y';
   if(!an) return;
   const w=im.offsetWidth||im.clientWidth, h=im.offsetHeight||im.clientHeight;
   if(!w||!h) return;                                  /* Bild noch nicht geladen */
@@ -4351,6 +4353,23 @@ function fsMalRender(){
 (function(){
   const cvm=$('fsMalCv'); let malId=null, radiert=false;
   const aktiv=()=>!!fsDocO&&docNote===fsDocO&&$('fsDoc').classList.contains('mal');
+  /* Hier gilt dieselbe Regel wie auf der Tafel: Stift und Maus schreiben immer, der
+     Finger nur, wenn „Nur mit Stift schreiben" aus ist. Sonst schiebt er die Seite. */
+  const malErlaubt=e=>(e.pointerType==='pen'||e.pointerType==='mouse')||!doc.settings.penOnly;
+  /* Schieben mit dem Finger: die Fläche nimmt die Berührung an, also rollt sie selbst
+     (mit Nachlauf, damit es sich wie gewohnt anfühlt). */
+  let schiebId=null, schiebY=0, schiebTop=0, schiebV=0, schiebT=0, schiebRAF=0;
+  const schwung=()=>{ const el=$('fsDoc');
+    if(Math.abs(schiebV)<0.03||!aktiv()){ schiebRAF=0; return; }
+    el.scrollTop-=schiebV*16; schiebV*=0.93; schiebRAF=requestAnimationFrame(schwung); };
+  const schiebStart=e=>{ if(schiebId!==null) return;
+    schiebId=e.pointerId; schiebY=e.clientY; schiebTop=$('fsDoc').scrollTop;
+    schiebV=0; schiebT=e.timeStamp||performance.now();
+    if(schiebRAF){ cancelAnimationFrame(schiebRAF); schiebRAF=0; } };
+  const schiebZug=e=>{ const el=$('fsDoc'), jetzt=e.timeStamp||performance.now();
+    const dy=e.clientY-schiebY, dt=Math.max(1,jetzt-schiebT);
+    const vorher=el.scrollTop; el.scrollTop=schiebTop-dy;
+    schiebV=schiebV*0.6+((el.scrollTop-vorher)/dt)*-0.4; schiebT=jetzt; };
   /* Punkt auf der Zeichenfläche → Weltpunkt im Dokument (bei gedrehtem Objekt mitgedreht) */
   const welt=e=>{ const o=fsDocO, r=cvm.getBoundingClientRect();
     const fx=(e.clientX-r.left)/Math.max(1,r.width), fy=(e.clientY-r.top)/Math.max(1,r.height);
@@ -4358,9 +4377,10 @@ function fsMalRender(){
     return o.rot?localToWorld(px,py,o.x+o.w/2,o.y+o.h/2,o.rot):{x:px,y:py}; };
   const druck=e=>(doc.settings.usePressure&&e.pointerType==='pen'&&e.pressure>0)?e.pressure:.5;
   cvm.addEventListener('pointerdown',e=>{
-    if(!aktiv()||malId!==null) return;
+    if(!aktiv()) return;
     if(e.pointerType==='mouse'&&e.button!==0) return;
-    if(!isDraw(e)) return;                            /* Finger scrollt, Stift schreibt */
+    if(!malErlaubt(e)){ if(e.pointerType==='touch') schiebStart(e); return; }   /* Finger schiebt, Stift schreibt */
+    if(malId!==null) return;
     if(e.cancelable) e.preventDefault();
     malId=e.pointerId;                                /* kein setPointerCapture: Safari verschluckt sonst den naechsten Stiftkontakt */
     const w=welt(e);
@@ -4370,12 +4390,18 @@ function fsMalRender(){
       width:(tool==='marker'?markerWidth:penWidth)/z,points:[{x:w.x,y:w.y,p:druck(e)}],
       varw:(tool!=='marker'&&doc.settings.usePressure),rot:0,groupId:null};
     fsMalRender(); },{passive:false});
-  addEventListener('pointermove',e=>{ if(malId===null||e.pointerId!==malId) return;
+  addEventListener('pointermove',e=>{
+    if(schiebId!==null&&e.pointerId===schiebId){ if(e.cancelable) e.preventDefault(); schiebZug(e); return; }
+    if(malId===null||e.pointerId!==malId) return;
     if(e.cancelable) e.preventDefault();
     const w=welt(e);
     if(radiert){ eraserPos=w; docNotizRadieren(w.x,w.y,fsZoom()); fsMalRender(); return; }
     if(cur){ cur.points.push({x:w.x,y:w.y,p:druck(e)}); fsMalRender(); } },{passive:false});
-  const ende=e=>{ if(malId===null||e.pointerId!==malId) return;
+  const ende=e=>{
+    if(schiebId!==null&&e.pointerId===schiebId){ schiebId=null;
+      if(e.type==='pointerup'&&Math.abs(schiebV)>0.05&&!schiebRAF) schiebRAF=requestAnimationFrame(schwung);
+      return; }
+    if(malId===null||e.pointerId!==malId) return;
     malId=null;
     if(radiert){ radiert=false; eraserPos=null; }
     else if(cur){ if(cur.points.length) commit(cur); cur=null; }
@@ -4974,6 +5000,7 @@ addEventListener('message',e=>{ if(!e.data)return;
     if(e.data.type==='embed-ready'){ let d=null; try{ d=JSON.parse(localStorage.getItem(ZOO_KEY)||'null'); }catch(err){}
       if(d) e.source.postMessage({type:'embed-data',data:d},'*'); }
     else if(e.data.type==='embed-data'){ try{ localStorage.setItem(ZOO_KEY,JSON.stringify(e.data.data)); }catch(err){} }
+    else if(e.data.type==='zoo-mic'){ if(e.data.an) zooMicAn(); else zooMicAus(); }
     else if(e.data.type==='embed-image'&&typeof e.data.url==='string'&&/^data:image\/(png|jpeg);/.test(e.data.url)){
       const im=new Image();                            /* „🖼 Tafel“ legt das Bild auf die Seite */
       im.onload=()=>{ const k=Math.min(1,(W*0.8/scale)/(e.data.w||im.width),(H*0.8/scale)/(e.data.h||im.height));
@@ -5738,7 +5765,8 @@ function stopMic(){ if(!micOn) return; micOn=false; warnRun=0;
   try{ if(micAC && micAC.state!=='closed') micAC.close(); }catch(e){}
   micAC=null; micSrc=null; analyser=null; micData=null;
   const nimmt=(typeof mediaRec!=='undefined'&&mediaRec&&mediaRec.state==='recording');
-  if(!nimmt && sharedMic){ sharedMic.getTracks().forEach(t=>t.stop()); sharedMic=null; }   // sonst braucht die Aufnahme das Mikro noch
+  const zoo=(typeof zooTakt!=='undefined'&&zooTakt);                                       // der Silent Zoo misst gerade mit
+  if(!nimmt && !zoo && sharedMic){ sharedMic.getTracks().forEach(t=>t.stop()); sharedMic=null; }   // sonst braucht die Aufnahme das Mikro noch
   noiseAnzeige(0); micUI(); }
 function micUI(){ ['noiseStart','sNoiseStart'].forEach(id=>{ const b=$(id); if(!b) return;
     b.textContent=micOn?'⏹ Mikrofon aus':'Mikrofon starten'; b.disabled=false;
@@ -8128,6 +8156,45 @@ $('w-dspalt').onclick=()=>addEmbedObject('dspalt','doppelspalt.html','Doppelspal
 $('w-zoo').onclick=()=>{ const f=$('zooFrame');
   if(!f.getAttribute('src')) f.setAttribute('src','silentzoo.html');
   toggleWin('win-zoo'); };
+/* Ersatzweg fürs Mikrofon: iPadOS gibt es einem Rahmen nicht immer frei. Kommt der Zoo
+   selbst nicht heran, misst die Tafel – dieselbe Stelle, an der auch die Lärmampel misst –
+   und schickt den rohen Pegel hinüber. Läuft die Lärmampel schon, ist das Mikrofon sogar
+   bereits offen und niemand wird noch einmal gefragt. */
+let zooAC=null, zooSrc=null, zooAn=null, zooDat=null, zooTakt=0;
+const zooSagt=o=>{ const f=$('zooFrame'); if(f&&f.contentWindow) f.contentWindow.postMessage(o,'*'); };
+async function zooMicAn(){
+  if(zooTakt) return;
+  let st=null;
+  try{ st=await getMic(); }catch(err){ zooSagt({type:'zoo-mic-aus',grund:'erlaubnis'}); return; }
+  try{
+    const AC=window.AudioContext||window.webkitAudioContext;
+    zooAC=new AC(); zooSrc=zooAC.createMediaStreamSource(st);
+    zooAn=zooAC.createAnalyser(); zooAn.fftSize=512; zooSrc.connect(zooAn);
+    zooDat=new Uint8Array(zooAn.fftSize);
+    if(zooAC.state==='suspended') zooAC.resume().catch(()=>{});
+  }catch(err){ zooMicAus(); zooSagt({type:'zoo-mic-aus',grund:'ton'}); return; }
+  /* Schläft die Tonauswertung (iPadOS lässt sie ohne Fingerdruck schlafen), käme ständig
+     „still“ heraus – das wäre eine Scheinmessung. Dann lieber ehrlich abbrechen. */
+  let zooSchlaeft=0;
+  zooTakt=setInterval(()=>{ if(!zooAn) return;
+    if(zooAC&&zooAC.state!=='running'){ zooAC.resume().catch(()=>{});
+      if(!zooSchlaeft) zooSchlaeft=Date.now();
+      else if(Date.now()-zooSchlaeft>2000){ zooMicAus(); zooSagt({type:'zoo-mic-aus',grund:'ton'}); }
+      return; }
+    zooSchlaeft=0;
+    zooAn.getByteTimeDomainData(zooDat);
+    let su=0; for(let i=0;i<zooDat.length;i++){ const v=(zooDat[i]-128)/128; su+=v*v; }
+    zooSagt({type:'zoo-pegel',roh:Math.sqrt(su/zooDat.length)}); },100);
+}
+function zooMicAus(){
+  if(zooTakt){ clearInterval(zooTakt); zooTakt=0; }
+  try{ if(zooSrc) zooSrc.disconnect(); }catch(err){}
+  try{ if(zooAC&&zooAC.state!=='closed') zooAC.close(); }catch(err){}
+  zooAC=null; zooSrc=null; zooAn=null; zooDat=null;
+  /* Das Mikrofon selbst gehört allen: es geht nur aus, wenn es sonst niemand braucht */
+  const nimmt=(typeof mediaRec!=='undefined'&&mediaRec&&mediaRec.state==='recording');
+  if(!nimmt&&!micOn&&sharedMic){ sharedMic.getTracks().forEach(t=>t.stop()); sharedMic=null; }
+}
 $('w-astro').onclick=()=>addEmbedObject('astro','astronomie.html','Astronomie',undefined,false);
 $('w-energie').onclick=()=>askInsert('energie','energie.html','Energieumwandlung');
 $('w-waerme').onclick=()=>askInsert('waerme','waerme.html','Wärme und Teilchen');

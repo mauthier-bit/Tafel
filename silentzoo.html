@@ -491,25 +491,92 @@ function tiereMalen(){
 /* ---------- Mikrofon ----------
    Es geht nur auf Knopfdruck an, läuft nur im Bild (nichts wird aufgenommen oder
    gespeichert) und lässt sich mit demselben Knopf wieder ausschalten. */
-let ac=null, quelle=null, analyse=null, daten=null, strom=null, micAn=false;
+let ac=null, quelle=null, analyse=null, stumm=null, daten=null, strom=null, micAn=false;
+let micFehler='';                     /* was schiefging – das sagt das Bild, statt es zu verschweigen */
+/* Die Tonmaschine muss noch während der Fingerberührung entstehen und aufwachen:
+   nach dem Warten auf das Mikrofon ist die Geste vorbei, und iPadOS lässt sie dann
+   schlafen – der Pegel bliebe für immer 0. Also erst der AudioContext, dann das Mikrofon. */
+/* Ersatzweg: Im Tafel-Fenster darf die Tafel messen und den Pegel herüberschicken –
+   iPadOS gibt das Mikrofon einem Rahmen nämlich nicht immer frei. Läuft die Lärmampel
+   schon, ist es ohnehin offen. */
+let vonTafel=false, tafelZeit=0, tafelRoh=0, tafelGrund='', fragtTafel=false, schlafSeit=0;
+function tafelFragen(){
+  if(window.parent===window) return Promise.resolve(false);
+  tafelGrund=''; tafelZeit=0;
+  try{ parent.postMessage({type:'zoo-mic',an:true},'*'); }catch(e){ return Promise.resolve(false); }
+  return new Promise(fertig=>{ const t0=performance.now();
+    const schauen=()=>{
+      if(tafelZeit>0) return fertig(true);
+      if(tafelGrund) return fertig(false);
+      if(performance.now()-t0>1800) return fertig(false);
+      setTimeout(schauen,80); };
+    setTimeout(schauen,80); }); }
+async function ersatzWeg(){
+  if(fragtTafel||vonTafel||window.parent===window) return false;
+  fragtTafel=true;
+  const gut=await tafelFragen();
+  fragtTafel=false;
+  if(!gut) return false;
+  eigenesAus(); vonTafel=true; micAn=true; micFehler=''; knoepfe(); return true; }
+function wachkuessen(){ if(!ac) return;
+  if(ac.state==='suspended'){ try{ const p=ac.resume(); if(p&&p.catch) p.catch(()=>{}); }catch(e){} } }
+const micSchlaeft=()=>micAn&&!vonTafel&&!!ac&&ac.state!=='running';
 async function micStart(){
+  micFehler='';
+  const AC=window.AudioContext||window.webkitAudioContext;
+  if(!AC){ micFehler='Dieser Browser kann keinen Ton auswerten.'; return false; }
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){
+    micFehler='Kein Mikrofon-Zugriff – die Seite muss über https laufen.'; return false; }
+  try{ ac=new AC(); }catch(e){ micFehler='Tonauswertung nicht möglich ('+((e&&e.name)||'Fehler')+').'; return false; }
+  wachkuessen();
   try{
     strom=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
-    const AC=window.AudioContext||window.webkitAudioContext; if(!AC) return false;
-    ac=new AC(); quelle=ac.createMediaStreamSource(strom);
+  }catch(e){
+    const n=(e&&e.name)||'Fehler';
+    micFehler = n==='NotAllowedError' ? 'Das Mikrofon ist für diese Seite nicht erlaubt.'
+      : n==='NotFoundError' ? 'Dieses Gerät hat kein Mikrofon.'
+      : 'Mikrofon nicht verfügbar ('+n+').';
+    micAus(); return false; }
+  try{
+    quelle=ac.createMediaStreamSource(strom);
     analyse=ac.createAnalyser(); analyse.fftSize=512; quelle.connect(analyse);
+    /* Safari rechnet nur an Zweigen, die irgendwo enden – ein stummer Ausgang genügt */
+    stumm=ac.createGain(); stumm.gain.value=0; analyse.connect(stumm); stumm.connect(ac.destination);
     daten=new Uint8Array(analyse.fftSize);
-    if(ac.state==='suspended') await ac.resume();
-    micAn=true; return true;
-  }catch(e){ micAus(); return false; } }
+  }catch(e){ micFehler='Tonauswertung nicht möglich ('+((e&&e.name)||'Fehler')+').'; micAus(); return false; }
+  micAn=true; schlafSeit=0; wachkuessen(); return true; }
+/* Fehlgeschlagen: vielleicht kann die Tafel messen */
+async function micStartMitErsatz(){
+  if(await micStart()) return true;
+  const eigen=micFehler;
+  if(await ersatzWeg()) return true;
+  micFehler = eigen + (window.parent===window ? '' :
+    (tafelGrund==='erlaubnis'
+      ? ' Auch die Tafel kam nicht heran – bitte zuerst in der Lärmampel das Mikrofon einschalten.'
+      : ' Die Tafel konnte auch nicht messen.'));
+  return false; }
 function micAus(){
-  micAn=false; pegel=0;
+  if(vonTafel){ try{ parent.postMessage({type:'zoo-mic',an:false},'*'); }catch(e){} vonTafel=false; }
+  micAn=false; pegel=0; schlafSeit=0;
+  eigenesAus(); }
+function eigenesAus(){
   try{ if(quelle) quelle.disconnect(); }catch(e){}
+  try{ if(stumm) stumm.disconnect(); }catch(e){}
   try{ if(ac&&ac.state!=='closed') ac.close(); }catch(e){}
   try{ if(strom) strom.getTracks().forEach(t=>t.stop()); }catch(e){}
-  ac=null; quelle=null; analyse=null; daten=null; strom=null; }
+  ac=null; quelle=null; analyse=null; stumm=null; daten=null; strom=null; }
 function pegelMessen(){
+  if(vonTafel){                                   /* die Tafel misst und schickt den Pegel */
+    if(performance.now()-tafelZeit>2500){ micAus(); micFehler='Die Tafel schickt keinen Pegel mehr.'; knoepfe(); return; }
+    const roh=Math.min(1,tafelRoh*D.sens*2.2);
+    pegel=pegel*0.6+roh*0.4; return; }
   if(!micAn||!analyse){ pegel=0; return; }
+  if(ac&&ac.state!=='running'){ wachkuessen(); pegel=0;
+    /* Bleibt die Tonauswertung schlafen, übernimmt nach kurzer Zeit die Tafel */
+    if(!schlafSeit) schlafSeit=performance.now();
+    else if(performance.now()-schlafSeit>2500) ersatzWeg();
+    return; }
+  schlafSeit=0;
   analyse.getByteTimeDomainData(daten);
   let s=0; for(let i=0;i<daten.length;i++){ const v=(daten[i]-128)/128; s+=v*v; }
   const roh=Math.min(1,Math.sqrt(s/daten.length)*D.sens*2.2);
@@ -545,6 +612,7 @@ function anzeigeMalen(){
   ctx.textAlign='left'; ctx.textBaseline='top';
   ctx.fillStyle=micAn?(leise?'#15803d':'#b91c1c'):'#64748b';
   const txt=!micAn?'Mikrofon aus'
+    :micSchlaeft()?'Mikrofon wartet – Bild antippen'
     :(leise?'leise – noch '+zahl(Math.max(0,D.ruhe-ruheT))+' s':'zu laut – noch '+zahl(Math.max(0,D.geduld-lautT))+' s');
   ctx.fillText(txt,bx,py+ph+fs*0.45);
   ctx.textAlign='right'; ctx.fillStyle='#334155';
@@ -555,7 +623,8 @@ function anzeigeMalen(){
     const gf=Math.max(16,Math.min(cvH*0.07,cvW*0.045));
     ctx.save(); ctx.textAlign='center'; ctx.textBaseline='middle';
     ctx.font='800 '+Math.round(gf)+'px -apple-system,sans-serif';
-    const t1='Mit ▶ Start geht es los', t2='Wenn es leise bleibt, kommen die Tiere.';
+    const t1=micFehler?'Mikrofon geht nicht':'Mit ▶ Start geht es los';
+    const t2=micFehler||'Wenn es leise bleibt, kommen die Tiere.';
     const bw2=Math.max(ctx.measureText(t1).width,ctx.measureText(t2).width*0.72)+gf*1.6;
     ctx.fillStyle='rgba(255,255,255,.86)'; ctx.strokeStyle='rgba(148,163,184,.8)'; ctx.lineWidth=1.2;
     kasten(ctx,cvW/2-bw2/2,cvH*0.5-gf*1.5,bw2,gf*3,gf*0.5); ctx.fill(); ctx.stroke();
@@ -618,9 +687,9 @@ document.querySelectorAll('#grpM button,#grpME button').forEach(b=>{ b.onclick=(
 $('bStart').onclick=async()=>{
   if(micAn){ micAus(); knoepfe(); return; }
   $('bStart').disabled=true;
-  const ok=await micStart();
+  const ok=await micStartMitErsatz();
   $('bStart').disabled=false;
-  if(!ok) toast('Kein Mikrofon – die Seite muss über https laufen und das Mikrofon erlauben.');
+  if(!ok) toast(micFehler||'Kein Mikrofon – die Seite muss über https laufen und das Mikrofon erlauben.');
   else { ruheT=0; lautT=0; }
   knoepfe(); };
 $('bReset').onclick=()=>{ tiere=[]; ruheT=0; lautT=0; gekommen=0; knoepfe(); };
@@ -645,7 +714,10 @@ const HILFE='<ul>'+
  '<li>Im <b>⚙</b> stehen außerdem <b>Empfindlichkeit</b> des Mikrofons, <b>Schwelle</b>, die beiden '+
  'Zeiten und die Höchstzahl der Tiere.</li>'+
  '<li>Das Mikrofon läuft nur, solange der Knopf auf <b>Stopp</b> steht. Es wird nichts aufgenommen '+
- 'und nichts gespeichert – gemessen wird allein die Lautstärke.</li></ul>';
+ 'und nichts gespeichert – gemessen wird allein die Lautstärke.</li>'+
+ '<li>Im Tafel-Fenster gibt iPadOS das Mikrofon nicht immer frei. Dann misst die <b>Tafel</b> selbst '+
+ 'und schickt den Pegel herüber – geht auch das nicht, hilft es, zuerst in der <b>Lärmampel</b> '+
+ 'das Mikrofon einzuschalten und hier dann <b>▶ Start</b> zu drücken.</li></ul>';
 
 /* ---------- Tafel ---------- */
 let syncTO=0;
@@ -667,10 +739,21 @@ function bild(){ if(!window.TafelShot) return null;
   return TafelShot.rasterize($('cvbox'),{scale:2,bg:'#fff',exclude:'#hilfe,#einst,#hint'}); }
 addEventListener('message',e=>{
   if(e.source!==window&&(window.parent===window||e.source!==window.parent)) return;
-  if(!(e.data&&e.data.type==='embed-data'&&e.data.data)) return;
+  if(!e.data) return;
+  if(e.data.type==='zoo-pegel'){ tafelRoh=+e.data.roh||0; tafelZeit=performance.now(); return; }
+  if(e.data.type==='zoo-mic-aus'){ tafelGrund=e.data.grund||'aus';
+    if(vonTafel){ micAus();
+      micFehler=tafelGrund==='ton'?'Die Tafel konnte nicht messen – bitte in der Tafel kurz etwas antippen und neu starten.'
+        :'Die Tafel konnte das Mikrofon nicht öffnen.';
+      knoepfe(); }
+    return; }
+  if(!(e.data.type==='embed-data'&&e.data.data)) return;
   uebernimm(e.data.data); ready=true; });
 addEventListener('resize',resize);
 addEventListener('pagehide',micAus);
+/* Jede Berührung ist eine Geste: eine schlafende Tonmaschine darf dann aufwachen */
+['pointerdown','touchstart'].forEach(t=>addEventListener(t,()=>{ if(micAn) wachkuessen(); },{passive:true}));
+addEventListener('visibilitychange',()=>{ if(!document.hidden&&micAn) wachkuessen(); });
 
 window.addEventListener('load',()=>{
   if(window.TafelShot) TafelShot.buttons($('shotBtns'),bild,'btn');
