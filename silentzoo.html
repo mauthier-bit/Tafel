@@ -503,7 +503,7 @@ let micFehler='';                     /* was schiefging – das sagt das Bild, s
 /* Ersatzweg: Im Tafel-Fenster darf die Tafel messen und den Pegel herüberschicken –
    iPadOS gibt das Mikrofon einem Rahmen nämlich nicht immer frei. Läuft die Lärmampel
    schon, ist es ohnehin offen. */
-let vonTafel=false, tafelZeit=0, tafelRoh=0, tafelGrund='', fragtTafel=false, schlafSeit=0;
+let vonTafel=false, tafelZeit=0, tafelRoh=0, tafelGrund='', fragtTafel=false, schlafSeit=0, messZuletzt=0;
 function tafelFragen(){
   if(window.parent===window) return Promise.resolve(false);
   tafelGrund=''; tafelZeit=0;
@@ -551,14 +551,17 @@ async function micStart(){
     daten=analyse.getFloatTimeDomainData?new Float32Array(analyse.fftSize):new Uint8Array(analyse.fftSize);
   }catch(e){ micFehler='Tonauswertung nicht möglich ('+((e&&e.name)||'Fehler')+').'; micAus(); return false; }
   micAn=true; schlafSeit=0; wachkuessen(); return true; }
-/* Fehlgeschlagen: vielleicht kann die Tafel messen */
+/* Im Tafel-Fenster misst immer die Tafel: ein eigener Zugriff auf das Mikrofon würde
+   ihren Strom abbrechen – iPadOS lässt nur einen zu, und dann stände die Lärmampel still.
+   Allein im Browser (oder wenn die Tafel nicht herankommt) misst der Zoo selbst. */
 async function micStartMitErsatz(){
+  if(window.parent!==window && await ersatzWeg()) return true;
+  const vorher=tafelGrund;
   if(await micStart()) return true;
   const eigen=micFehler;
-  if(await ersatzWeg()) return true;
   micFehler = eigen + (window.parent===window ? '' :
-    (tafelGrund==='erlaubnis'
-      ? ' Auch die Tafel kam nicht heran – bitte zuerst in der Lärmampel das Mikrofon einschalten.'
+    (vorher==='erlaubnis'
+      ? ' Auch die Tafel kam nicht heran – bitte das Mikrofon für die Tafel erlauben.'
       : ' Die Tafel konnte auch nicht messen.'));
   return false; }
 function micAus(){
@@ -573,7 +576,12 @@ function eigenesAus(){
   ac=null; quelle=null; analyse=null; stumm=null; daten=null; strom=null; }
 function pegelMessen(){
   if(vonTafel){                                   /* die Tafel misst und schickt den Pegel */
-    if(performance.now()-tafelZeit>2500){ micAus(); micFehler='Die Tafel schickt keinen Pegel mehr.'; knoepfe(); return; }
+    const jetzt=performance.now();
+    /* War der Rahmen unsichtbar (Fenster zu, andere Ansicht), stand auch diese Schleife.
+       Die Lücke ist dann kein Fehler – also neu anlaufen lassen statt abzubrechen. */
+    const pause=messZuletzt&&jetzt-messZuletzt>1200; messZuletzt=jetzt;
+    if(pause) tafelZeit=jetzt;
+    else if(jetzt-tafelZeit>2500){ micAus(); micFehler='Die Tafel schickt keinen Pegel mehr.'; knoepfe(); return; }
     const roh=Math.min(1,tafelRoh*D.sens*EMPF);
     pegel=pegel*0.6+roh*0.4; return; }
   if(!micAn||!analyse){ pegel=0; return; }
@@ -725,9 +733,9 @@ const HILFE='<ul>'+
  'Zeiten und die Höchstzahl der Tiere.</li>'+
  '<li>Das Mikrofon läuft nur, solange der Knopf auf <b>Stopp</b> steht. Es wird nichts aufgenommen '+
  'und nichts gespeichert – gemessen wird allein die Lautstärke.</li>'+
- '<li>Im Tafel-Fenster gibt iPadOS das Mikrofon nicht immer frei. Dann misst die <b>Tafel</b> selbst '+
- 'und schickt den Pegel herüber – geht auch das nicht, hilft es, zuerst in der <b>Lärmampel</b> '+
- 'das Mikrofon einzuschalten und hier dann <b>▶ Start</b> zu drücken.</li></ul>';
+ '<li>Im Tafel-Fenster misst die <b>Tafel</b> selbst und schickt den Pegel herüber. So kommen sich '+
+ '<b>Lärmampel</b> und Silent Zoo nicht in die Quere: iPadOS gibt das Mikrofon nur einem von beiden, '+
+ 'und beide hören nun auf dieselbe Messung.</li></ul>';
 
 /* ---------- Tafel ---------- */
 let syncTO=0;
@@ -751,6 +759,9 @@ addEventListener('message',e=>{
   if(e.source!==window&&(window.parent===window||e.source!==window.parent)) return;
   if(!e.data) return;
   if(e.data.type==='zoo-pegel'){ tafelRoh=+e.data.roh||0; tafelZeit=performance.now(); return; }
+  if(e.data.type==='zoo-stopp'){                  /* andere Ansicht gewählt oder Fenster zu */
+    if(micAn){ micAus(); micFehler=''; knoepfe(); }
+    return; }
   if(e.data.type==='zoo-mic-aus'){ tafelGrund=e.data.grund||'aus';
     if(vonTafel){ micAus();
       micFehler=tafelGrund==='ton'?'Die Tafel konnte nicht messen – bitte in der Tafel kurz etwas antippen und neu starten.'

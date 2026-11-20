@@ -647,7 +647,7 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   **−** und einem **+**, die die Zeit **minutenweise** ändern (0 bis 180), daneben ausgeschrieben
   **„Minuten"** auf gleicher Höhe wie das Feld. Beides gibt es ebenso in der Sozialform, und beide
   Fenster halten denselben Wert.
-- **Einstellungen bei der Lärmampel.** Auch das eigene Lärmampel-Fenster hat neben „Mikrofon starten"
+- **Einstellungen bei der Lärmampel.** Auch im Ruhe-Fenster hat die Lärmampel neben „Mikrofon starten"
   ein **⚙**, hervorgehoben, solange es offen ist. Dahinter liegen die **Anzeige** (Ampel · Zeiger ·
   Balken) und der **Warnton** samt Schwelle. Im Fenster stehen dadurch nur noch die Anzeige, der
   Mikrofon-Knopf und die Empfindlichkeit – wie in der Sozialform-Ansicht.
@@ -709,14 +709,29 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   läuft nur, solange der Knopf auf **Stopp** steht – aufgenommen oder gespeichert wird nichts.
   Geht es nicht an, **sagt das Bild warum** (nicht erlaubt, kein Mikrofon, kein https), statt stumm
   zu bleiben; eine von iPadOS schlafen gelegte Tonauswertung weckt ein **Tippen ins Bild**.
-  Weil iPadOS das Mikrofon einem **Fenster-Rahmen** nicht immer freigibt, gibt es einen
-  **Ersatzweg**: Kommt der Zoo selbst nicht heran, **misst die Tafel** – an derselben Stelle wie die
-  Lärmampel – und schickt den Pegel herüber; läuft die Lärmampel schon, ist das Mikrofon ohnehin
-  offen und es wird niemand noch einmal gefragt. Beide können gleichzeitig laufen, und das
-  Abschalten des einen nimmt dem anderen das Mikrofon nicht weg.
+  **In der Tafel misst immer die Tafel selbst** und schickt den Pegel herüber (allein im Browser
+  geöffnet, misst der Zoo wie bisher selbst). Das ist kein Notbehelf, sondern der Normalweg:
+  iPadOS gibt das Mikrofon nur **einem** zur Zeit, ein zweiter Zugriff bricht den ersten ab –
+  vorher haben sich Lärmampel und Silent Zoo deshalb gegenseitig abgeschaltet.
+- **Ruhe: ein Fenster für Lärmampel und Silent Zoo.** Beide wohnen zusammen in **einem Fenster**
+  mit dem Namen **Ruhe** und dem **Katzen-Symbol**; den eigenen Knopf für die Lärmampel in der
+  Gruppe *Diverses* gibt es nicht mehr (ein Favorit darauf wandert von selbst mit). Oben im Fenster
+  stehen die beiden Schalter **🔊 Lärmampel · 🐾 Silent Zoo**; das Fenster wird für die Ampel
+  schmal und für den Zoo breit. **Dieselbe Wahl gibt es in der Sozialform**, deren Ruhe-Karte nun
+  ebenfalls beides anbietet – die Wahl gilt für beide Stellen gemeinsam und wird geräteweit gemerkt.
+  - **Ein Mikrofon, eine Messung.** Die Tafel öffnet den Tonstrom **einmal**, rechnet den Pegel
+    **einmal** und schickt ihn an jeden, der ihn gerade braucht (Lärmampel, Zoo im Fenster, Zoo in
+    der Sozialform – auch gleichzeitig). Zu sehen ist immer nur **eine** der beiden Anzeigen, darum
+    schaltet das Umschalten die andere ab; wird das Fenster geschlossen oder minimiert, die
+    Sozialform verlassen oder die Ruhe-Karte zugeklappt, **gibt der Zoo das Mikrofon frei**. Aus ist
+    es, sobald es niemand mehr braucht – eine laufende Aufnahme behält es.
+  - Gemessen wird in **Fließkommazahlen** mit stummem Ausgang (Safari rechnet sonst an einem Zweig
+    gar nicht, der nirgends endet), und die Tonmaschine entsteht noch **in der Fingerberührung**,
+    damit iPadOS sie nicht schlafen legt. Schläft sie doch, sagt das die Anzeige, statt still
+    **0 %** zu zeigen.
 - **Lärmampel: drei Ansichten.** Über die Schalter **Ampel · Zeiger · Balken** lässt sich die
-  Darstellung wechseln – in **beiden** Fenstern hinter dem **⚙** (siehe unten), und die Wahl gilt
-  für das eigene Fenster und die Sozialform gemeinsam. Voreingestellt ist der **Zeiger**.
+  Darstellung wechseln – im **Ruhe-Fenster** und in der **Sozialform** hinter dem **⚙** (siehe unten),
+  und die Wahl gilt für beide gemeinsam. Voreingestellt ist der **Zeiger**.
   - **Ampel** – die bisherigen drei Leuchten rot/gelb/grün, von denen jeweils eine an ist.
   - **Zeiger** – ein **Zeigerinstrument**: ein Zeiger schlägt über eine Skala aus, die mit
     zunehmender Lautstärke von **grün über orange nach rot** läuft. Die Bewegung ist weich
@@ -750,7 +765,8 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   veröffentlichte Fassung; über **„Adresse ändern"** lässt sich eine eigene Adresse hinterlegen.
   Die 30 Werkzeuge mit `teilen.js` behalten ihren bisherigen Knopf, der zusätzlich die **eingestellte
   Aufgabe** mitgibt.
-- **Aufgeräumte Sozialform:** In der Sozialform zeigt die Lärmampel nur noch **Anzeige, Mikrofon-Knopf
+- **Aufgeräumte Sozialform:** In der Sozialform steht oben die Wahl **Lärmampel · Silent Zoo**; die
+  Lärmampel zeigt darunter nur noch **Anzeige, Mikrofon-Knopf
   und Empfindlichkeit**. Ansicht, Warnton samt Schwelle und der Ruhe-Sticker stecken hinter einem
   **⚙**-Knopf, der **neben „Mikrofon starten"** sitzt (beim Timer entsprechend neben „Start" und
   „Reset"); solange die Einstellungen offen sind, ist er hervorgehoben. Durch den gewonnenen Platz
@@ -805,7 +821,7 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   und Safari lud sie dabei neu – ein laufendes Video sprang an den Anfang zurück. Jetzt läuft es
   weiter, auch wenn man es nach vorne holt.
 - **Eigene Fenster nach vorne:** Auch bei den Fenstern, die kein Tafelobjekt sind (Taschenrechner,
-  Stoppuhr, Timer, Umfrage, Lärmampel, QR-Code, Lehrer-Stundenplan …), kommt das angetippte nach
+  Stoppuhr, Timer, Umfrage, Ruhe, QR-Code, Lehrer-Stundenplan …), kommt das angetippte nach
   vorne, wenn zwei übereinanderliegen. Menüs, Meldungen und das Kontextmenü bleiben darüber.
 - **Text:** Textfelder anlegen; **Doppeltipp** auf einen Text zum Nachbearbeiten. Bei ausgewähltem
   Text bietet das **Kontextmenü** zusätzlich **Fett, Kursiv, Aufzählung (Liste)** und eine
@@ -1722,7 +1738,7 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     nicht, wird das Menü scrollbar statt verdeckt.
     Passen nicht alle Symbole nebeneinander, lässt sich die Leiste seitlich schieben. Minimierte
     Objekte lassen sich auch nicht mehr versehentlich mit **Rahmen- oder Lasso-Auswahl** erwischen.
-  - **Auch die Werkzeugfenster** (Lärmampel, Stoppuhr, Timer, Umfrage, QR-Code, Punktestand,
+  - **Auch die Werkzeugfenster** (Ruhe, Stoppuhr, Timer, Umfrage, QR-Code, Punktestand,
     Gruppen, Taschenrechner, Klasse, Lehrer-Stundenplan) haben in ihrer Titelzeile jetzt ein
     **„–"** neben dem **„×"**: Sie legen sich genauso als Symbol an den unteren Rand und kommen mit
     einem Tipp zurück. Die Leiste bleibt auch sichtbar, wenn „Objekt
@@ -1794,7 +1810,8 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     **📋 Kopieren** und **🖨 Drucken** (öffnet das fertige Blatt als Druckvorschau); Umlaute bleiben erhalten,
     ß wird zu SS.
 - In der Gruppe **„Diverses"** stehen in der **ersten Zeile** die vier oft gebrauchten Helfer:
-  **Lärmampel**, **Taschenrechner**, **Lehrer-Stundenplan** und **QR-Code-Generator**; darunter
+  **Ruhe** (Lärmampel und Silent Zoo, Katzen-Symbol), **Taschenrechner**, **Lehrer-Stundenplan**
+  und **QR-Code-Generator**; darunter
   folgen die übrigen Werkzeuge (Mindmap, Begriffsnetz, Pinnwand, Galgenmännchen, Kreuzworträtsel,
   Zeitleiste, Wortwolke, Zuordnen, Lückentext, Tabelle, Lernlandkarte, Glossar, Reihenfolge,
   Buchstabengitter).
@@ -2633,7 +2650,7 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
 - **Vollbild-Button** (oben links in der Einstellungs-Leiste; wird beim **Minimieren** der Leiste
   mit ausgeblendet)
 - **Speichern/Laden** als `.tafel`-Datei + automatische Sicherung im Browser
-- **Widgets:** Lärmampel (Mikrofon; als Ampel, Zeiger oder Balkenkette), Stoppuhr, Timer, **Sozialform** (Auswahl-Bildschirm: Stillarbeit /
+- **Widgets:** Ruhe (ein Fenster für Lärmampel – Ampel, Zeiger oder Balkenkette – und Silent Zoo), Stoppuhr, Timer, **Sozialform** (Auswahl-Bildschirm: Stillarbeit /
   Partnerarbeit / Gruppenarbeit antippen → große Anzeige mit gut erkennbaren Symbolen; in der Anzeige
   lassen sich **optional ein Timer** für die Dauer **und die Lärmampel** einblenden; auf Wunsch als
   verschiebbares kleines Fenster über der Tafel), Umfrage
@@ -2648,7 +2665,7 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
    Schreiben nicht versehentlich etwas auslöst). Oben **untereinander** vier immer sichtbare Buttons –
    die **Schwunglinie** = Schreiben (Stiftwerkzeuge), der **Auswahl-Cursor** = Auswählen &
    Werkzeuge (Objekte auswählen/verschieben, **Lasso-Auswahl** + Zeit, Klasse & Interaktion,
-   Diverses mit Lärmampel, Taschenrechner, QR …, Mathe & Physik, Screenshot, Aufnahme, Kamera,
+   Diverses mit Ruhe (Lärmampel/Silent Zoo), Taschenrechner, QR …, Mathe & Physik, Screenshot, Aufnahme, Kamera,
    Einfügen), der **Laserpointer** und der **Scheinwerfer**.
    Ein **Trennstrich** trennt diese Buttons vom jeweiligen Werkzeugmenü (das bei Bedarf **scrollt**).
    Die Leiste beginnt **unter der oberen Einstellungs-Leiste** und
