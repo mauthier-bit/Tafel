@@ -650,7 +650,7 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
 - **Einstellungen bei der Lärmampel.** Auch im Ruhe-Fenster hat die Lärmampel neben „Mikrofon starten"
   ein **⚙**, hervorgehoben, solange es offen ist. Dahinter liegen die **Anzeige** (Ampel · Zeiger ·
   Balken) und der **Warnton** samt Schwelle. Im Fenster stehen dadurch nur noch die Anzeige, der
-  Mikrofon-Knopf und die Empfindlichkeit – wie in der Sozialform-Ansicht.
+  Mikrofon-Knopf und die Empfindlichkeit.
 - **Einstellungen bei Stoppuhr und Timer.** Beide Fenster haben – wie die Lärmampel – einen
   Einstellungen-Knopf, hinter dem alles steckt, was nicht ständig gebraucht wird: ein **⚙** direkt
   neben „Start" und „Reset" (bei der Stoppuhr hinter „Runde"), hervorgehoben, solange er offen ist.
@@ -658,12 +658,12 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   Dahinter liegen: bei der
   **Stoppuhr** der Schalter für den Rundenknopf, beim **Timer** die Erinnerung vor Schluss samt
   Restzeit, und bei beiden die **Schriftgröße** der Zeitanzeige (−/+, 30 bis 130 px in Achterschritten,
-  je Uhr getrennt und **gemerkt**). Auch der **Timer in der Sozialform** hat hinter seinem ⚙ eine
+  je Uhr getrennt und **gemerkt**). Auch der **Timer in der Sozialform** hat in seinen Einstellungen eine
   **Schriftgröße** (5 bis 18, Standard 10): Sie zählt in Anteilen der Bildschirmgröße, die Anzeige
   wächst also auf jedem Gerät mit. Im **verkleinerten** Fenster bleibt sie davon unberührt und
   kompakt.
 - **Timer: Erinnerung vor Schluss.** Der Schalter **„🔔 Erinnerung vor Schluss"** (im Timer-Fenster
-  unter „⚙ Einstellungen", in der Sozialform hinter dem **⚙**-Knopf neben „Start" und „Reset") mit der Auswahl **30 Sek · 1 · 2 · 3 · 5 Min Restzeit**. Ist er an,
+  unter „⚙ Einstellungen", in der Sozialform im Timer-Kasten) mit der Auswahl **30 Sek · 1 · 2 · 3 · 5 Min Restzeit**. Ist er an,
   erklingen bei der eingestellten Restzeit **zwei weiche Schläge** – leiser als der Schlusston, damit
   beides auseinanderzuhalten ist – und eine kurze Einblendung sagt „Noch 1 Min". Der Ton kommt pro
   Durchlauf **genau einmal**; ist die eingestellte Laufzeit kürzer als die Vorwarnzeit, bleibt er aus.
@@ -672,13 +672,13 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
 - **Größere Zeitanzeigen:** Timer und Stoppuhr starten im Fenster mit **58 px** statt 44 px (und
   lassen sich dort bis 130 px stellen), in der Sozialform mit **10 vmin** statt 8 vmin – aus der
   letzten Reihe deutlich besser zu lesen.
-- **Sozialform verkleinern.** Ist eine Sozialform gewählt, steht unten der Knopf **„⤡ Verkleinern"**.
+- **Sozialform verkleinern.** In der laufenden Anzeige sitzt oben rechts das Zeichen **⤡**.
   Damit wird aus der bildschirmfüllenden Anzeige ein **kleines Fenster**, das **Sozialform, Timer und
   Lärmampel** weiter zeigt – die **Tafel bleibt daneben sichtbar und bedienbar**, man kann also
   weiterschreiben, während der Arbeitsauftrag an der Tafel steht. Das Fenster lässt sich am **Balken
   oben** an jede Stelle **verschieben** und bleibt dabei immer ganz im Bild (auch wenn sich der
-  Bildschirm dreht). **„⤢ Vergrößern"** stellt die große Anzeige wieder her; „Andere Form" und das
-  Öffnen über das Werkzeug tun das ebenfalls. Im kleinen Fenster bleibt die **Lärmanzeige gut
+  Bildschirm dreht). **⤢** stellt die große Anzeige wieder her; das ⚙ und das Öffnen über das
+  Werkzeug tun das ebenfalls. Im kleinen Fenster bleibt die **Lärmanzeige gut
   ablesbar**: Zeiger 190 × 112, Balken 190 × 80 und Lampen 44 px – also nur wenig kleiner als in
   der großen Ansicht.
 - **Spiele-Suite** (Diverses, Knopf **Galgenmännchen**): der Knopf öffnet nicht mehr nur ein Spiel,
@@ -717,21 +717,21 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   mit dem Namen **Ruhe** und dem **Katzen-Symbol**; den eigenen Knopf für die Lärmampel in der
   Gruppe *Diverses* gibt es nicht mehr (ein Favorit darauf wandert von selbst mit). Oben im Fenster
   stehen die beiden Schalter **🔊 Lärmampel · 🐾 Silent Zoo**; das Fenster wird für die Ampel
-  schmal und für den Zoo breit. **Dieselbe Wahl gibt es in der Sozialform**, deren Ruhe-Karte nun
-  ebenfalls beides anbietet – die Wahl gilt für beide Stellen gemeinsam und wird geräteweit gemerkt.
+  schmal und für den Zoo breit. **Dieselbe Wahl gibt es in der Sozialform**, die sie aber für sich
+  trifft: Fenster und Sozialform können Verschiedenes zeigen, ohne sich zu stören.
   - **Ein Mikrofon, eine Messung.** Die Tafel öffnet den Tonstrom **einmal**, rechnet den Pegel
     **einmal** und schickt ihn an jeden, der ihn gerade braucht (Lärmampel, Zoo im Fenster, Zoo in
-    der Sozialform – auch gleichzeitig). Zu sehen ist immer nur **eine** der beiden Anzeigen, darum
-    schaltet das Umschalten die andere ab; wird das Fenster geschlossen oder minimiert, die
-    Sozialform verlassen oder die Ruhe-Karte zugeklappt, **gibt der Zoo das Mikrofon frei**. Aus ist
-    es, sobald es niemand mehr braucht – eine laufende Aufnahme behält es.
+    der Sozialform – auch gleichzeitig). Im **Ruhe-Fenster** ist immer nur eine der beiden Anzeigen
+    zu sehen, darum schaltet das Umschalten dort die andere ab; wird das Fenster geschlossen oder
+    minimiert oder die Sozialform verlassen, **gibt der Zoo das Mikrofon frei**. Aus ist es, sobald
+    es niemand mehr braucht – eine laufende Aufnahme behält es.
   - Gemessen wird in **Fließkommazahlen** mit stummem Ausgang (Safari rechnet sonst an einem Zweig
     gar nicht, der nirgends endet), und die Tonmaschine entsteht noch **in der Fingerberührung**,
     damit iPadOS sie nicht schlafen legt. Schläft sie doch, sagt das die Anzeige, statt still
     **0 %** zu zeigen.
 - **Lärmampel: drei Ansichten.** Über die Schalter **Ampel · Zeiger · Balken** lässt sich die
-  Darstellung wechseln – im **Ruhe-Fenster** und in der **Sozialform** hinter dem **⚙** (siehe unten),
-  und die Wahl gilt für beide gemeinsam. Voreingestellt ist der **Zeiger**.
+  Darstellung wechseln – im **Ruhe-Fenster** hinter dem **⚙** und in den **Sozialform-Einstellungen**;
+  die Wahl gilt für beide gemeinsam. Voreingestellt ist der **Zeiger**.
   - **Ampel** – die bisherigen drei Leuchten rot/gelb/grün, von denen jeweils eine an ist.
   - **Zeiger** – ein **Zeigerinstrument**: ein Zeiger schlägt über eine Skala aus, die mit
     zunehmender Lautstärke von **grün über orange nach rot** läuft. Die Bewegung ist weich
@@ -743,7 +743,7 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   Rot-Erkennung laufen in jeder Ansicht weiter. Die gewählte Ansicht wird **gemerkt** und ist beim
   nächsten Start wieder da.
 - **Warnton** (Schalter **„🔔 Warnton bei Überschreiten"** samt Regler **Schwelle**, im Fenster und in
-  der Sozialform): Bleibt es lauter als die eingestellte Schwelle (25 % bis 95 %, Standard 70 %),
+  der Sozialform-Einstellungen): Bleibt es lauter als die eingestellte Schwelle (25 % bis 95 %, Standard 70 %),
   ertönt ein kurzer, freundlicher **Zweiklang**. Er kommt erst, wenn die Schwelle **drei Messungen
   hintereinander** überschritten ist – ein einzelnes Husten oder ein fallendes Mäppchen löst ihn
   also nicht aus – und danach frühestens **nach 5 Sekunden** wieder. Beim Einschalten erklingt er
@@ -765,20 +765,31 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   veröffentlichte Fassung; über **„Adresse ändern"** lässt sich eine eigene Adresse hinterlegen.
   Die 30 Werkzeuge mit `teilen.js` behalten ihren bisherigen Knopf, der zusätzlich die **eingestellte
   Aufgabe** mitgibt.
-- **Aufgeräumte Sozialform:** In der Sozialform steht oben die Wahl **Lärmampel · Silent Zoo**; die
-  Lärmampel zeigt darunter nur noch **Anzeige, Mikrofon-Knopf
-  und Empfindlichkeit**. Ansicht, Warnton samt Schwelle und der Ruhe-Sticker stecken hinter einem
-  **⚙**-Knopf, der **neben „Mikrofon starten"** sitzt (beim Timer entsprechend neben „Start" und
-  „Reset"); solange die Einstellungen offen sind, ist er hervorgehoben. Durch den gewonnenen Platz
-  ist die **Anzeige größer** geworden: Zeiger und Balken rund **25 %**, die Ampellampen von 46 auf
-  56 px. Sind Timer oder Lärmampel aufgeklappt, wird das große Sozialform-Symbol
-  **kleiner**, damit alles samt Knopfreihe auf den Bildschirm passt.
-- **Sticker bei Ruhe (Sozialform):** In der Sozialform-Ansicht gibt es bei der **Lärmampel** den
-  Schalter **„⭐ Sticker für die Klasse, wenn die Ampel bis zum Timer-Ende nicht rot wird"**. Sind Timer und
-  Lärmampel beide aufgeklappt, sind ihre Bereiche **gleich hoch**. Laufen **Timer und Lärmampel** zusammen und
-  leuchtet die Ampel bis zum Ablauf des Timers **nicht rot** (kurze Ausreißer unter ⅓ Sekunde zählen
-  nicht), bekommt die aktive Klasse automatisch einen ⭐ – mit großer Einblendung. War sie rot, gibt es
-  einen kurzen Hinweis. Der Schalter ist derselbe wie „Automatisch bei Ruhe" im Sticker-Fenster.
+- **Sozialform: erst einrichten, dann anzeigen.** Die Sozialform bringt ihre **eigenen
+  Einstellungen** mit und hängt nicht mehr an den Werkzeugfenstern. Der Knopf öffnet zuerst ein
+  **Einrichtungs-Fenster**, in dem alles der Reihe nach gewählt wird:
+  - **Stillarbeit · Partnerarbeit · Gruppenarbeit** als große Karten (die gewählte ist blau umrandet).
+  - **Gruppen** (nur bei Partner- und Gruppenarbeit): Auf Wunsch teilt die Tafel die **Klassenliste**
+    ein – bei Partnerarbeit zu zweit, sonst in Gruppen der eingestellten Größe (2 bis 8).
+    **↻ Neu mischen** würfelt neu; die Einteilung steht gleich als Vorschau darunter und ist
+    dieselbe wie im Fenster **Gruppen bilden**.
+  - **Timer**: an oder aus, Vorgaben 5 · 10 · 15 · 20 · 45 Minuten oder minutenweise −/+,
+    **Erinnerung** vor Schluss und die **Schriftgröße** der Zeitanzeige.
+  - **Ruhe-Anzeige**: **ohne**, **🔊 Lärmampel** (Ansicht, Empfindlichkeit, Warnton) oder
+    **🐾 Silent Zoo** (Landschaft Wald · Savanne · Meer), dazu der **⭐ Sticker**:
+    bei der Ampel, *wenn sie bis zum Timer-Ende nicht rot wird*, beim Zoo, *wenn bis zum Timer-Ende
+    kein Tier wieder weggeht*.
+  - **▶ Starten** schaltet um auf die **Anzeige**: großes Symbol der Sozialform, die **Zeit** groß,
+    darunter die gewählte Ruhe-Anzeige und – falls eingeteilt – die **Gruppen**. Beim Silent Zoo
+    laufen die **Ziffern vor der Landschaft**, und der Zoo zeigt dort **nur das Bild**: seine eigene
+    Leiste ist ausgeblendet, gestartet und zurückgesetzt wird er von der Tafel. Störende Knöpfe gibt
+    es nicht mehr – nur oben rechts drei kleine Zeichen: **⚙** zurück zu den Einstellungen (hält
+    dabei Timer und Mikrofon an), **⤡** verkleinern und **×** schließen.
+  - **Verkleinert** wird daraus ein **verschiebbares Fenster** über der Tafel, das alles weiterlaufen
+    lässt: Zeit, Ruhe-Anzeige und Gruppen bleiben zu sehen, die Tafel daneben bedienbar. Am **Balken
+    oben** lässt es sich an jede Stelle ziehen und bleibt ganz im Bild.
+  - Die Wahl (Form, Gruppengröße, Timer, Ruhe) wird **geräteweit gemerkt** (`tafel_soz`), beim
+    nächsten Öffnen steht alles wieder so da.
 - **Stift-Testseite** `pentest.html` (im selben Ordner, direkt aufrufbar): kleine, von der Tafel
   unabhängige Seite zum Prüfen der Stifteingabe – zählt Pointer- und Touch-Ereignisse gegen die
   tatsächlich gezeichneten Striche und lässt `preventDefault`, `PointerCapture` und die Eingabeart
@@ -2650,10 +2661,10 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
 - **Vollbild-Button** (oben links in der Einstellungs-Leiste; wird beim **Minimieren** der Leiste
   mit ausgeblendet)
 - **Speichern/Laden** als `.tafel`-Datei + automatische Sicherung im Browser
-- **Widgets:** Ruhe (ein Fenster für Lärmampel – Ampel, Zeiger oder Balkenkette – und Silent Zoo), Stoppuhr, Timer, **Sozialform** (Auswahl-Bildschirm: Stillarbeit /
-  Partnerarbeit / Gruppenarbeit antippen → große Anzeige mit gut erkennbaren Symbolen; in der Anzeige
-  lassen sich **optional ein Timer** für die Dauer **und die Lärmampel** einblenden; auf Wunsch als
-  verschiebbares kleines Fenster über der Tafel), Umfrage
+- **Widgets:** Ruhe (ein Fenster für Lärmampel – Ampel, Zeiger oder Balkenkette – und Silent Zoo), Stoppuhr, Timer,
+  **Sozialform** (einrichten: Stillarbeit / Partnerarbeit / Gruppenarbeit, auf Wunsch Gruppen aus der
+  Klassenliste, Timer und Ruhe-Anzeige → anzeigen: Symbol, große Zeit, Lärmampel oder Silent Zoo und
+  die Gruppen; auf Wunsch als verschiebbares kleines Fenster über der Tafel), Umfrage
 - **Hintergrund:** Weiß / Karo / Linien / Punkte / Notenlinien / Dreiecke (Einstellungen)
 
 ## Leisten (Bedienung)

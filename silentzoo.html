@@ -10,6 +10,8 @@
   #wrap{position:absolute;inset:0;display:flex;flex-direction:column;}
   /* Wird es eng, rutschen die rechten Knöpfe in eine zweite Zeile */
   #bar{display:flex;gap:6px;padding:6px 8px;border-bottom:1px solid #e2e7ef;align-items:center;flex:none;flex-wrap:wrap;}
+  /* In der Sozialform zeigt der Zoo nur die Landschaft – bedient wird er von der Tafel */
+  body.pur #bar{display:none;}
   #barR{display:flex;gap:6px;align-items:center;margin-left:auto;flex-wrap:wrap;}
   .btn{border:1px solid #cfd6e0;background:#fff;border-radius:9px;padding:7px 11px;font:inherit;font-weight:600;
     color:#2b3445;cursor:pointer;white-space:nowrap;}
@@ -303,7 +305,7 @@ const HORIZ={wald:0.55, savanne:0.50, meer:0.42};
 const cv=$('cv'), ctx=cv.getContext('2d');
 let cvW=300, cvH=200, dpr=1;
 let land=null, landKey='';
-let tiere=[], ruheT=0, lautT=0, pegel=0, gekommen=0;
+let tiere=[], ruheT=0, lautT=0, pegel=0, gekommen=0, weggegangen=0;
 
 /* Immer derselbe Zufall für die Landschaft, damit nichts flimmert */
 function festerZufall(start){ let x=start>>>0||1;
@@ -457,11 +459,15 @@ function tierKommt(){
   const p=platzSuchen(), links=Math.random()<0.5;
   tiere.push({e, x:links?-0.08:1.08, y:p.y, zx:p.x, zu:'kommt',
     ph:Math.random()*6.3, sp:0.10+Math.random()*0.08, blick:links?1:-1});
-  gekommen++; return true; }
+  gekommen++; standMelden(); return true; }
 function tierGeht(){
   const da=tiere.filter(t=>t.zu!=='geht'); if(!da.length) return false;
   const t=da[Math.floor(Math.random()*da.length)];
-  t.zu='geht'; t.zx=(t.x<0.5?-0.14:1.14); return true; }
+  t.zu='geht'; t.zx=(t.x<0.5?-0.14:1.14); weggegangen++; standMelden(); return true; }
+/* Die Tafel braucht für den Sticker nur zwei Zahlen: wie viele Tiere da sind und
+   wie viele wieder weggegangen sind. */
+function standMelden(){ if(window.parent===window) return;
+  try{ parent.postMessage({type:'zoo-stand', tiere:tiere.filter(t=>t.zu!=='geht').length, weg:weggegangen},'*'); }catch(e){} }
 function tierSchritt(dt){
   for(let i=tiere.length-1;i>=0;i--){ const t=tiere[i];
     t.ph+=dt*(2+t.sp*6);
@@ -698,7 +704,7 @@ function einstUI(){ REG.forEach(([id,k,vid,eh])=>{ const e=$(id); if(!e) return;
   $(vid).textContent=D[k]+eh; }); }
 REG.forEach(([id,k])=>{ $(id).addEventListener('input',()=>{ D[k]=+$(id).value; knoepfe(); sync(); }); });
 function motivSetzen(m){ if(!MOTIVE.includes(m)||m===D.motiv) return;
-  D.motiv=m; tiere=[]; ruheT=0; lautT=0; gekommen=0; landKey=''; knoepfe(); sync(); }
+  D.motiv=m; tiere=[]; ruheT=0; lautT=0; gekommen=0; weggegangen=0; landKey=''; standMelden(); knoepfe(); sync(); }
 document.querySelectorAll('#grpM button,#grpME button').forEach(b=>{ b.onclick=()=>motivSetzen(b.dataset.m); });
 $('bStart').onclick=async()=>{
   if(micAn){ micAus(); knoepfe(); return; }
@@ -708,7 +714,8 @@ $('bStart').onclick=async()=>{
   if(!ok) toast(micFehler||'Kein Mikrofon – die Seite muss über https laufen und das Mikrofon erlauben.');
   else { ruheT=0; lautT=0; }
   knoepfe(); };
-$('bReset').onclick=()=>{ tiere=[]; ruheT=0; lautT=0; gekommen=0; knoepfe(); };
+function zooZuruecksetzen(){ tiere=[]; ruheT=0; lautT=0; gekommen=0; weggegangen=0; standMelden(); knoepfe(); }
+$('bReset').onclick=zooZuruecksetzen;
 $('bEinst').onclick=()=>{ const w=$('einst'); w.hidden=!w.hidden; if(!w.hidden){ $('hilfe').hidden=true; einstUI(); } };
 $('einstZu').onclick=()=>{ $('einst').hidden=true; };
 $('einstStd').onclick=()=>{ ['sens','schwelle','ruhe','geduld','maxT'].forEach(k=>{ D[k]=STD[k]; });
@@ -745,7 +752,7 @@ function zustand(){ return Object.assign({},D); }
 function uebernimm(d){ if(!d) return;
   const s=STD;
   const m=MOTIVE.includes(d.motiv)?d.motiv:s.motiv;
-  if(m!==D.motiv){ D.motiv=m; tiere=[]; ruheT=0; lautT=0; gekommen=0; landKey=''; }
+  if(m!==D.motiv){ D.motiv=m; tiere=[]; ruheT=0; lautT=0; gekommen=0; weggegangen=0; landKey=''; }
   D.sens=Math.max(1,Math.min(16,+d.sens||s.sens));
   D.schwelle=Math.max(10,Math.min(90,+d.schwelle||s.schwelle));
   D.ruhe=Math.max(3,Math.min(60,+d.ruhe||s.ruhe));
@@ -758,6 +765,12 @@ addEventListener('message',e=>{
   if(e.data.type==='zoo-pegel'){ tafelRoh=+e.data.roh||0; tafelZeit=performance.now(); return; }
   if(e.data.type==='zoo-stopp'){                  /* andere Ansicht gewählt oder Fenster zu */
     if(micAn){ micAus(); micFehler=''; knoepfe(); }
+    return; }
+  if(e.data.type==='zoo-pur'){                    /* Sozialform: ohne eigene Leiste */
+    document.body.classList.toggle('pur',!!e.data.an); resize(); return; }
+  if(e.data.type==='zoo-reset'){ zooZuruecksetzen(); return; }
+  if(e.data.type==='zoo-start'){                  /* die Tafel drückt auf Start */
+    if(!micAn) micStartMitErsatz().then(ok=>{ if(ok){ ruheT=0; lautT=0; } knoepfe(); });
     return; }
   if(e.data.type==='zoo-mic-aus'){ tafelGrund=e.data.grund||'aus';
     if(vonTafel){ micAus();
