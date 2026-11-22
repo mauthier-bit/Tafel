@@ -2319,6 +2319,41 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     sich der Stelle nähern, und ein Pfeil in die Richtung des Grenzwerts. Hebbare Lücken erscheinen als
     **offener Kreis**. Nachgerechnet wurden unter anderem 1/(x−2), (x²−1)/(x−1), (3x²−12)/(x²−4x+4),
     e^x/x, x·e^(−x), ln(x), √(x−1), √(4−x²), sin(x)/x, tan(x) und 1/sin(x).
+  **Umkehrfunktion:** Der vierte eigenständige Reiter, wie lim mit **eigenem Term und eigenen
+  Reglern** für a, b und c. Links der Graph, rechts die Bereiche, in denen f **streng monoton** und
+  damit umkehrbar ist; x- und y-Achse haben hier **denselben Maßstab**, sonst stimmte die Spiegelung
+  an y = x im Bild nicht.
+  - **Knopf „M"** blendet die **Monotoniebereiche** als farbige Bänder ein: **steigend grün (↗)**,
+    **fallend orange (↘)**. Gesucht werden sie **numerisch** zwischen **−20 und 20** (Raster mit 6000
+    Schritten): getrennt wird an **Definitionslücken**, **Polstellen** und **Extremstellen**, die
+    danach genauer eingekreist werden. Was über den untersuchten Bereich hinausgeht, steht als **„…"**.
+    Eine **konstante** Funktion liefert gar keinen Bereich – sie lässt sich nicht umkehren, und das
+    steht dann auch da.
+  - **Einen Bereich antippen** (im Band oder in der Liste rechts) wählt ihn aus: f wird dort **kräftig**
+    gezeichnet, außerhalb blass. Dazu stehen **D** und **W** als Intervalle da, mit **offenen Grenzen**
+    (`]0; 4]`) an Lücken, Polstellen und am Rand des untersuchten Bereichs; ±∞ wird durch Herantasten
+    von innen bestimmt (ln(x) für x → 0 ergibt −∞, nicht den Wert dicht daneben).
+  - **Knopf „f⁻¹"** zeichnet die **Umkehrfunktion** zu diesem Bereich in **Violett**. Gezeichnet wird
+    nicht gerechnet: zu jedem x wird der Punkt **(f(x) | x)** gesetzt – das Spiegelbild an **y = x**,
+    die als gestrichelte Gerade mit im Bild steht.
+  - **Knopf „Punkt"** setzt einen **Punkt P auf den Graphen von f** und sein **Spiegelbild P′**, beide
+    mit Koordinaten beschriftet und durch eine gestrichelte Strecke verbunden. Der Punkt lässt sich
+    **mit dem Finger am Graphen entlangziehen** (auf zwei Stellen gerundet); daneben bleibt Schieben
+    und Zoomen wie gewohnt.
+  - **Der Term der Umkehrfunktion** steht rechts, **wenn er sich angeben lässt**: über die
+    **Scheitelform** bei quadratischen Termen (`x²−4x+3` auf [2; …[ ergibt 2 + √(x+1)), über die
+    Formel für `(ax+b)/(cx+d)`, und sonst durch **Rückwärtsgehen der Rechenkette**, solange x nur
+    **einmal** vorkommt (√, Potenzen, e-Funktion, ln, Sinus/Kosinus/Tangens). Der Zweig richtet sich
+    nach dem gewählten Bereich: auf `]…; 0]` steht −√x, auf `[0; …[` steht √x.
+    **Jeder Vorschlag wird geprüft:** nur wenn f⁻¹(f(x)) = x an 24 Stellen des Bereichs stimmt, wird
+    er gezeigt. Sonst steht dort ehrlich, dass der Term sich nicht auflösen lässt – der **Graph**
+    entsteht trotzdem, denn gespiegelt wird immer.
+  - **Knopf „Tabelle"** blendet unter dem Graphen eine **Wertetabelle** zum sichtbaren Teil des
+    Bereichs ein, und darunter **dieselbe Tabelle andersherum gelesen**: aus (x | f(x)) wird
+    (f(x) | x) – die Wertetabelle der Umkehrfunktion.
+  - Geprüft wurden x², x³, x²−4x+3, x⁴−2x², 2x+3, 1/x, (2x+1)/(x−3), e^x, ln(x), √(x−1), √(4−x²),
+    |x|, sin(x), tan(x) und die konstante Funktion.
+
   **Transformationen:** Dieser Reiter steht **für sich** – er hat seine **eigene Funktion** und
   seine eigene Zeichenfläche, die Funktionen der drei anderen Reiter bleiben unberührt. Das zeigt auch
   die Reiterleiste: **Graph, Tabelle und Maschine** sitzen als **eine Gruppe** in einem gemeinsamen
