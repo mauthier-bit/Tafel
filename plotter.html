@@ -71,7 +71,8 @@
   #tabs .tgrp button{flex:1 1 0;border:none;border-right:1px solid #cfd6e0;border-radius:0;background:transparent;}
   #tabs .tgrp button:last-child{border-right:none;}
   #tabs .tgrp button.on{background:#2563eb;}
-  #tabR{flex:1 1 150px;} #tabD{flex:1 1 110px;} #tabL{flex:0 1 70px;} #tabU{flex:1 1 125px;}
+  #tabR{flex:1 1 150px;} #tabD{flex:1 1 110px;} #tabL{flex:0 1 70px;} #tabU{flex:0 1 70px;}
+  #tabU sup{font-size:.7em;}
   body:not(.t-g) #funcs,body:not(.t-g) #add,body:not(.t-g) #fit,body:not(.t-g) #btnX,body:not(.t-g) #btnY{display:none;}
   body.kp-open #app{height:calc(100% - var(--kph,230px));}
   #keypad{position:fixed;left:0;right:0;bottom:0;z-index:12;background:#eef1f6;border-top:1px solid #cfd6e0;padding:6px;display:none;flex-direction:column;gap:5px;touch-action:manipulation;}
@@ -119,7 +120,7 @@
   .trSeg[disabled]{opacity:.42;cursor:default;}
   /* Die Beispielliste sieht aus wie die Knöpfe daneben und bleibt schmal – die langen
      Termnamen stehen ja erst in der aufgeklappten Liste. */
-  #lmBsp{border:1px solid #cfd6e0;background:#f4f6fa;border-radius:8px;
+  #lmBsp,#ukBsp{border:1px solid #cfd6e0;background:#f4f6fa;border-radius:8px;
     padding:calc(var(--k) * 4px) 6px;font:700 calc(var(--k) * 12.5px) inherit;color:#53617a;line-height:normal;
     cursor:pointer;width:calc(var(--k) * 96px);flex:0 0 auto;}
   .trWahl{gap:4px;}
@@ -278,7 +279,8 @@
           font-weight:800;color:#2563eb;white-space:nowrap;}
   .ukT td{border:1px solid #e6ebf3;padding:calc(var(--k) * 3px) 8px;text-align:right;
           font-variant-numeric:tabular-nums;white-space:nowrap;}
-  .ukT.inv th{color:#7c3aed;}
+  .ukT tr.inv th{color:#7c3aed;}
+  .ukT tr.trenn th,.ukT tr.trenn td{border-top:3px solid #ddd6fe;}
   .ukTabHin{font-size:calc(var(--k) * 11.5px);color:#64748b;margin-top:2px;}
   .ukLeer{font-size:calc(var(--k) * 12.5px);color:#64748b;}
   /* rechts die Monotoniebereiche: antippen wählt den Bereich zum Umkehren */
@@ -583,7 +585,7 @@
 <body>
 <div id="app">
   <div id="top">
-    <div id="tabs"><div class="tgrp"><button type="button" id="tabG" class="on">Graph</button><button type="button" id="tabT">Tabelle</button><button type="button" id="tabM">Maschine</button></div><button type="button" id="tabR">Transformationen</button><button type="button" id="tabL" title="Grenzwerte an den Rändern des Definitionsbereichs">lim</button><button type="button" id="tabD">Modellieren</button><button type="button" id="tabU" title="Umkehrfunktion: Monotoniebereiche und Spiegelung an y = x">Umkehrfunktion</button></div>
+    <div id="tabs"><div class="tgrp"><button type="button" id="tabG" class="on">Graph</button><button type="button" id="tabT">Tabelle</button><button type="button" id="tabM">Maschine</button></div><button type="button" id="tabR">Transformationen</button><button type="button" id="tabL" title="Grenzwerte an den Rändern des Definitionsbereichs">lim</button><button type="button" id="tabU" title="Umkehrfunktion: Monotoniebereiche und Spiegelung an y = x">f<sup>−1</sup></button><button type="button" id="tabD">Modellieren</button></div>
     <div id="funcs"></div>
     <div class="frow" id="fbtns"><button id="add" title="Weitere Funktion hinzufügen">＋ Funktion</button><button id="fit">Ansicht</button><button class="fsb" id="btnN" title="Nullstellen am Graphen anzeigen">Nullstellen</button><button class="fsb" id="btnY0" title="Schnittpunkt mit der y-Achse anzeigen">f(0)</button><button class="fsb" id="btnX" title="Beweglicher Punkt auf der x-Achse"><i>x</i></button><button class="fsb" id="btnY" title="Beweglicher Punkt auf der y-Achse"><i>y</i></button><button class="fsb" id="btnKeys" title="Formel-Tastatur ein-/ausblenden">⌨ Formeln</button><button class="fsb tafelEdit" id="fsM" title="Schrift kleiner">A−</button><button class="fsb tafelEdit" id="fsP" title="Schrift größer">A+</button><span id="teilenBtn" style="display:inline-flex"></span><span id="shotBtns" style="display:inline-flex;gap:6px"></span></div>
     <div id="sliders"></div>
@@ -4096,11 +4098,14 @@ function ukTabelle(){ const host=$('ukTab'); if(!host) return;
   for(let i=0;i<=N;i++){ const x=a+(b-a)*i/N, y=e.f(x);
     if(!isFinite(y)) continue; xs.push(x); ys.push(y); }
   if(!xs.length){ host.innerHTML='<div class="ukLeer">Zu diesem Bereich gibt es keine Werte.</div>'; return; }
-  const zeile=(k,w,cls)=>'<tr class="'+(cls||'')+'"><th>'+k+'</th>'+w.map(v=>'<td>'+zahl(v)+'</td>').join('')+'</tr>';
+  const zeile=(k,w,cls)=>'<tr'+(cls?(' class="'+cls+'"'):'')+'><th>'+k+'</th>'+w.map(v=>'<td>'+zahl(v)+'</td>').join('')+'</tr>';
+  /* Beide Tabellen stecken in einer einzigen: so stehen die Spalten genau untereinander
+     und schieben sich gemeinsam zur Seite. */
   host.innerHTML='<div class="ukTabWrap"><table class="ukT">'+
-    zeile('x',xs)+zeile('f(x)',ys)+'</table></div>'+
-    (ber?('<div class="ukTabWrap"><table class="ukT inv">'+zeile('x',ys)+zeile('f<sup>−1</sup>(x)',xs)+'</table></div>'+
-      '<div class="ukTabHin">Dieselbe Tabelle, nur andersherum gelesen: aus jedem Paar (x | f(x)) wird (f(x) | x).</div>'):''); }
+    zeile('x',xs)+zeile('f(x)',ys)+
+    (ber?(zeile('x',ys,'inv trenn')+zeile('f<sup>−1</sup>(x)',xs,'inv')):'')+
+    '</table></div>'+
+    (ber?'<div class="ukTabHin">Die unteren beiden Zeilen sind dieselbe Tabelle, nur andersherum gelesen: aus jedem Paar (x | f(x)) wird (f(x) | x).</div>':''); }
 
 /* ---- Spalte rechts ---- */
 function ukSeite(){ const o=$('ukOut'), gr=$('ukTermGross'); if(!o) return; const e=ukErg;

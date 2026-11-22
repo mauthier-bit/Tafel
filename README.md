@@ -2319,8 +2319,8 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     sich der Stelle nähern, und ein Pfeil in die Richtung des Grenzwerts. Hebbare Lücken erscheinen als
     **offener Kreis**. Nachgerechnet wurden unter anderem 1/(x−2), (x²−1)/(x−1), (3x²−12)/(x²−4x+4),
     e^x/x, x·e^(−x), ln(x), √(x−1), √(4−x²), sin(x)/x, tan(x) und 1/sin(x).
-  **Umkehrfunktion:** Der vierte eigenständige Reiter, wie lim mit **eigenem Term und eigenen
-  Reglern** für a, b und c. Links der Graph, rechts die Bereiche, in denen f **streng monoton** und
+  **Umkehrfunktion** (in der Reiterleiste kurz **f⁻¹**, zwischen lim und Modellieren)**:** Der vierte
+  eigenständige Reiter, wie lim mit **eigenem Term und eigenen Reglern** für a, b und c. Links der Graph, rechts die Bereiche, in denen f **streng monoton** und
   damit umkehrbar ist; x- und y-Achse haben hier **denselben Maßstab**, sonst stimmte die Spiegelung
   an y = x im Bild nicht.
   - **Knopf „M"** blendet die **Monotoniebereiche** als farbige Bänder ein: **steigend grün (↗)**,
@@ -2349,8 +2349,10 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     er gezeigt. Sonst steht dort ehrlich, dass der Term sich nicht auflösen lässt – der **Graph**
     entsteht trotzdem, denn gespiegelt wird immer.
   - **Knopf „Tabelle"** blendet unter dem Graphen eine **Wertetabelle** zum sichtbaren Teil des
-    Bereichs ein, und darunter **dieselbe Tabelle andersherum gelesen**: aus (x | f(x)) wird
-    (f(x) | x) – die Wertetabelle der Umkehrfunktion.
+    Bereichs ein; die **unteren beiden Zeilen** sind **dieselbe Tabelle andersherum gelesen**: aus
+    (x | f(x)) wird (f(x) | x) – die Wertetabelle der Umkehrfunktion. Alle vier Zeilen stehen in
+    **einer** Tabelle, damit die Spalten genau untereinander stehen und **gemeinsam** zur Seite
+    geschoben werden.
   - Geprüft wurden x², x³, x²−4x+3, x⁴−2x², 2x+3, 1/x, (2x+1)/(x−3), e^x, ln(x), √(x−1), √(4−x²),
     |x|, sin(x), tan(x) und die konstante Funktion.
 
