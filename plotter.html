@@ -4151,40 +4151,67 @@ function ukFit(){ if(!ukW) return; const e=ukErg;
     if(a0!==null&&b0!==null){ const m=(a0+b0)/2, w=Math.max(2,Math.min(14,(b0-a0)*0.9)); x0=m-w; x1=m+w; }
     else if(a0!==null){ x0=a0-4; x1=a0+10; }
     else if(b0!==null){ x0=b0-10; x1=b0+4; } }
+  /* Der Ausschnitt muss beides enthalten: den Bereich auf der x-Achse (da liegt f) und
+     die Werte von f (da liegt die Umkehrfunktion, denn die Achsen tauschen). */
   let lo=x0, hi=x1;
   if(e&&e.ok){ const a=b?Math.max(b.a,x0):x0, bb=b?Math.min(b.b,x1):x1;
     if(bb>a) for(let i=0;i<=60;i++){ const y=e.f(a+(bb-a)*i/60);
       if(isFinite(y)){ if(y<lo) lo=y; if(y>hi) hi=y; } } }
-  /* Ausreißer kappen: mehr als eine halbe Fensterbreite nach oben oder unten muss nicht sein */
-  const w0=x1-x0;
-  lo=Math.max(lo,x0-0.5*w0); hi=Math.min(hi,x1+0.5*w0);
+  /* Steigt f sehr steil (x², e^x), wird der Ausschnitt sonst riesig: dann bekommt jede
+     Seite nur so viel, wie ihr vom Rest zusteht – der Bereich selbst bleibt immer ganz drin. */
+  const w0=Math.max(1e-6,x1-x0), rest=Math.max(0,4*w0-w0);
+  const unten=Math.max(0,x0-lo), oben=Math.max(0,hi-x1), zus=unten+oben;
+  if(zus>rest&&zus>0){ lo=x0-rest*unten/zus; hi=x1+rest*oben/zus; }
   const u0=Math.min(x0,lo), u1=Math.max(x1,hi), spanne=Math.max(1,(u1-u0)*1.08);
   const u=Math.max(2,Math.min(400,Math.min(ukW,ukH)/spanne));
   ukView.ux=u; ukView.uy=u;
   ukView.ox=ukW/2-((u0+u1)/2)*u;
   ukView.oy=ukH/2+((u0+u1)/2)*u;
   ukDraw(); }
+/* Eine Strecke auf einen Kasten um die Zeichenfläche zuschneiden (Liang–Barsky).
+   Nötig, weil Safari einen Pfad gar nicht mehr zeichnet, sobald er Punkte weit außerhalb
+   enthält: beim Spiegelbild von e^x liegen die schnell bei 10¹⁰ Pixeln, und dann fehlte
+   auf dem iPad die ganze Kurve. */
+function ukClip(x1,y1,x2,y2,m){
+  if(!isFinite(x1)||!isFinite(y1)||!isFinite(x2)||!isFinite(y2)) return null;
+  const dx=x2-x1, dy=y2-y1, lo=-m, hiX=ukW+m, hiY=ukH+m;
+  const p=[-dx,dx,-dy,dy], q=[x1-lo, hiX-x1, y1-lo, hiY-y1];
+  let t0=0, t1=1;
+  for(let i=0;i<4;i++){
+    if(Math.abs(p[i])<1e-12){ if(q[i]<0) return null; continue; }
+    const r=q[i]/p[i];
+    if(p[i]<0){ if(r>t1) return null; if(r>t0) t0=r; }
+    else { if(r<t0) return null; if(r<t1) t1=r; } }
+  return [x1+t0*dx, y1+t0*dy, x1+t1*dx, y1+t1*dy]; }
+/* Linienzug zeichnen – jede Strecke einzeln zugeschnitten */
+function ukZug(c,punkte){
+  c.beginPath();
+  for(let i=1;i<punkte.length;i++){
+    const a=punkte[i-1], b=punkte[i];
+    if(!a||!b) continue;
+    const t=ukClip(a[0],a[1],b[0],b[1],40);
+    if(!t) continue;
+    c.moveTo(t[0],t[1]); c.lineTo(t[2],t[3]); }
+  c.stroke(); }
 function ukKurve(c,f,col,w,a,b,dash){
-  c.save(); c.strokeStyle=col; c.lineWidth=w; c.lineJoin='round';
+  c.save(); c.strokeStyle=col; c.lineWidth=w; c.lineJoin='round'; c.lineCap='round';
   if(dash) c.setLineDash(dash);
-  c.beginPath(); let prev=null;
   const px0=a===undefined?0:Math.max(0,Math.floor(ukView.ox+a*ukView.ux));
   const px1=b===undefined?ukW:Math.min(ukW,Math.ceil(ukView.ox+b*ukView.ux));
+  const pkt=[]; let prev=null;
   for(let px=px0;px<=px1;px++){ const x=(px-ukView.ox)/ukView.ux, y=f(x), py=ukView.oy-y*ukView.uy;
-    if(!isFinite(py)){ prev=null; continue; }
-    if(prev===null||Math.abs(py-prev)>ukH*2) c.moveTo(px,py); else c.lineTo(px,py);
-    prev=py; }
-  c.stroke(); c.restore(); }
+    if(!isFinite(py)){ pkt.push(null); prev=null; continue; }
+    if(prev!==null&&Math.abs(py-prev)>ukH*2) pkt.push(null);   /* Sprung: nicht verbinden */
+    pkt.push([px,py]); prev=py; }
+  ukZug(c,pkt); c.restore(); }
 /* die Umkehrfunktion wird nicht gerechnet, sondern gespiegelt: zu jedem x der Punkt (f(x), x) */
 function ukSpiegelKurve(c,f,a,b,col,w){
-  c.save(); c.strokeStyle=col; c.lineWidth=w; c.lineJoin='round'; c.beginPath();
-  let prev=null; const N=900;
+  c.save(); c.strokeStyle=col; c.lineWidth=w; c.lineJoin='round'; c.lineCap='round';
+  const N=1400, pkt=[];
   for(let i=0;i<=N;i++){ const x=a+(b-a)*i/N, y=f(x);
-    if(!isFinite(y)){ prev=null; continue; }
-    const px=ukView.ox+y*ukView.ux, py=ukView.oy-x*ukView.uy;
-    if(prev===null||Math.hypot(px-prev[0],py-prev[1])>ukH) c.moveTo(px,py); else c.lineTo(px,py);
-    prev=[px,py]; }
-  c.stroke(); c.restore(); }
+    if(!isFinite(y)){ pkt.push(null); continue; }
+    pkt.push([ukView.ox+y*ukView.ux, ukView.oy-x*ukView.uy]); }
+  ukZug(c,pkt); c.restore(); }
 /* Punkt mit Beschriftung; „oben" setzt den Text über den Punkt, „links" davor */
 function ukPunkt(c,px,py,col,txt,oben,links){
   c.save(); c.fillStyle=col; c.beginPath(); c.arc(px,py,5.5,0,7); c.fill();
@@ -4232,7 +4259,11 @@ function ukDraw(){ if(tab!=='u'||!ukW) return; const e=ukErg;
     const an=(i===uk.sel), col=b.steigend?UK_STEIG:UK_FALL;
     c.save(); c.fillStyle=col; c.globalAlpha=an?0.13:0.05; c.fillRect(pa,0,pb-pa,ukH);
     c.globalAlpha=1; c.strokeStyle=col; c.lineWidth=an?2.4:1.2; c.setLineDash(an?[]:[4,4]);
-    c.beginPath(); c.moveTo(pa,0); c.lineTo(pa,ukH); c.moveTo(pb,0); c.lineTo(pb,ukH); c.stroke();
+    c.beginPath();
+    /* Am Rand des untersuchten Bereichs gibt es keine echte Grenze – dort keine Linie */
+    if(b.artA!=='rand'){ c.moveTo(pa,0); c.lineTo(pa,ukH); }
+    if(b.artB!=='rand'){ c.moveTo(pb,0); c.lineTo(pb,ukH); }
+    c.stroke();
     c.setLineDash([]); c.fillStyle=col; c.font='800 '+Math.max(12,fontSize)+'px sans-serif';
     c.textAlign='center'; c.textBaseline='top';
     const mid=(Math.max(pa,0)+Math.min(pb,ukW))/2;
@@ -4282,7 +4313,9 @@ function ukDraw(){ if(tab!=='u'||!ukW) return; const e=ukErg;
     c.restore(); }
   /* Beschriftung der Umkehrkurve */
   if(ber&&uk.inv){ const xm=(ber.a+ber.b)/2, ym=e.f(xm);
-    if(isFinite(ym)){ c.save(); c.fillStyle=UK_INV; c.font='800 '+Math.max(12,fontSize)+'px sans-serif';
+    /* Nur beschriften, wenn das Spiegelbild an dieser Stelle auch im Bild liegt */
+    if(isFinite(ym)&&X(ym)>-20&&X(ym)<ukW+20&&Y(xm)>-20&&Y(xm)<ukH+20){
+      c.save(); c.fillStyle=UK_INV; c.font='800 '+Math.max(12,fontSize)+'px sans-serif';
       c.textAlign='left'; c.textBaseline='top';
       const tx=Math.min(ukW-110,Math.max(6,X(ym)+10)), ty=Math.min(ukH-22,Math.max(4,Y(xm)+10));
       c.fillStyle='rgba(255,255,255,.88)'; c.fillRect(tx-3,ty-2,c.measureText('Umkehrfunktion').width+6,Math.max(12,fontSize)+5);
@@ -4389,7 +4422,17 @@ function ukSeite(){ const o=$('ukOut'), gr=$('ukTermGross'); if(!o) return; cons
     h+='</div>'; }
   o.innerHTML=h;
   o.querySelectorAll('.ukBer').forEach(el=>{ el.onclick=()=>{ const i=+el.dataset.i;
-    uk.sel=(uk.sel===i)?-1:i; uk.x0=null; ukSeite(); ukDraw(); sync(); }; });
+    /* Gibt es nur einen Bereich, bleibt er gewählt – sonst stünde man nach einem Tipp
+       ohne Umkehrfunktion da, obwohl es nichts auszusuchen gibt. */
+    uk.sel=(uk.sel===i&&e.bereiche.length>1)?-1:i; uk.x0=null;
+    /* Liegt der gewählte Bereich gar nicht im Bild (bei sin(x) etwa der Ast ganz links),
+       wird die Ansicht nachgezogen – sonst tippt man und sieht nichts. */
+    const b=e.bereiche[uk.sel];
+    if(b){ const sicht=ukSichtbar();
+      const lo=Math.max(b.a,sicht[0]), hi=Math.min(b.b,sicht[1]);
+      const teil=(hi-lo)/Math.min(sicht[1]-sicht[0], b.b-b.a);
+      if(!(teil>0.3)) ukFit(); }
+    ukSeite(); ukDraw(); sync(); }; });
   const weg=$('ukWegBtn'); if(weg) weg.onclick=()=>{ uk.schritt=!uk.schritt; ukSeite(); sync(); };
   ukUI();   /* erst jetzt steht fest, ob es Asymptoten gibt */
   ukTabelle(); }

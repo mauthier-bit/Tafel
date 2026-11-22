@@ -2348,7 +2348,14 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     auf etwa 1e−8 heran, und damit wäre π/2 nicht als π/2 zu erkennen.
   - **Knopf „f⁻¹"** zeichnet die **Umkehrfunktion** zu diesem Bereich in **Violett**. Gezeichnet wird
     nicht gerechnet: zu jedem x wird der Punkt **(f(x) | x)** gesetzt – das Spiegelbild an **y = x**,
-    die als gestrichelte Gerade mit im Bild steht.
+    die als gestrichelte Gerade mit im Bild steht. Jede Strecke wird dabei **am Bildrand
+    abgeschnitten**: bei e^x liegt das Spiegelbild sonst bei Koordinaten um 10¹⁰, und **Safari
+    zeichnet einen Pfad mit solchen Punkten gar nicht mehr** – auf dem iPad fehlte dann die
+    ganze Kurve, während am Rechner alles zu sehen war.
+  - **Liegt der angetippte Bereich nicht im Bild** (bei sin(x) etwa der Ast ganz links), zieht die
+    Ansicht nach. Sie enthält immer **beides**: den Bereich auf der x-Achse und die Werte von f –
+    denn dort liegt die Umkehrfunktion, die Achsen tauschen ja. Steigt f sehr steil, bekommt jede
+    Seite nur ihren Anteil, damit der Ausschnitt nicht ins Uferlose wächst.
   - **Knopf „Punkt"** setzt einen **Punkt P auf den Graphen von f** und sein **Spiegelbild P′**, beide
     mit Koordinaten beschriftet und durch eine gestrichelte Strecke verbunden. Der Punkt lässt sich
     **mit dem Finger am Graphen entlangziehen** (auf zwei Stellen gerundet); daneben bleibt Schieben
