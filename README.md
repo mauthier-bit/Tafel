@@ -781,7 +781,10 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     kein Tier wieder weggeht*.
   - **▶ Starten** schaltet um auf die **Anzeige**: großes Symbol der Sozialform, die **Zeit** groß,
     darunter die gewählte Ruhe-Anzeige und – falls eingeteilt – die **Gruppen**. Beim Silent Zoo
-    laufen die **Ziffern vor der Landschaft**, und der Zoo zeigt dort **nur das Bild**: seine eigene
+    füllt die **Landschaft fast das ganze Fenster**; **Symbol, Beschriftung und Zeit liegen oben
+    darauf** – ohne Kasten, nur mit einem weichen hellen Schein, damit sie auf jedem Hintergrund
+    lesbar bleiben (im kleinen Fenster rücken sie nach rechts, damit sie nicht auf dem Pegelkasten
+    des Zoos liegen). Der Zoo zeigt dort **nur das Bild**: seine eigene
     Leiste ist ausgeblendet, gestartet und zurückgesetzt wird er von der Tafel. Störende Knöpfe gibt
     es nicht mehr – nur oben rechts drei kleine Zeichen: **⚙** zurück zu den Einstellungen (hält
     dabei Timer und Mikrofon an), **⤡** verkleinern und **×** schließen.
