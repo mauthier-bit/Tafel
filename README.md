@@ -2288,6 +2288,15 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     nicht am Term ablesen lässt – er arbeitet nur bei **ganz- und gebrochen-rationalen** Termen
     (bei `sin(x)/x`, `ln(x)` oder `x²−e^x` bleibt er aus). Die Auswahlliste **„Beispiele"** daneben
     ist wie die Knöpfe gestaltet und schmal gehalten; die langen Terme stehen in der aufgeklappten Liste.
+  - **Knopf „1/f"**: Blendet die **Kehrwertfunktion** ein – **Term und Graph**. Unter dem großen
+    Term steht dafür eine eigene Zeile in Rosa: `1/f(x) = …`, bei einem Bruch mit **vertauschtem
+    Zähler und Nenner** (aus `(x²+1)/(x²−4)` wird `(x²−4)/(x²+1)`, aus `1/x` schlicht `x`), sonst
+    mit der **1 über dem Term** (`1/sin(x)`). Dahinter der Merksatz: **Nullstellen von f werden zu
+    Polstellen**, und wo f eine **Polstelle** hat, läuft 1/f gegen 0 – dort ist 1/f aber ebenso
+    wenig definiert wie f, also steht da ein **Loch auf der x-Achse** (gezeichnet als offener
+    Kreis), stetig ergänzt eine Nullstelle. Der Graph von 1/f liegt **rosa unter dem Graphen von
+    f** und ist mit „y = 1/f(x)" beschriftet. Für den zusätzlichen Knopf ist das **Eingabefeld
+    etwas kürzer** geworden, damit die Leiste in einer Zeile bleibt.
     **Farben:** **senkrechte** Asymptoten **orange**, **waagrechte und schiefe** **lila**.
     Der Grenzwert selbst steht in der Farbe seines Vorzeichens: **+∞ grün**, **−∞ rot**, ebenso
     endliche Werte (**−1 rot**, **2 grün**); die **0** ist vorzeichenlos und bleibt **dunkelgrau** –

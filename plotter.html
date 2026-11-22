@@ -177,6 +177,13 @@
   #lmVgl b{font-weight:800;}
   #lmVgl i{font-style:normal;color:#64748b;font-size:.85em;}
   #lmVgl[hidden]{display:none;}
+  /* ein Knopf mehr in der Leiste – dafür darf das Eingabefeld kürzer werden */
+  #lmTop .trIn{flex:1 1 90px;min-width:70px;}
+  /* Kehrwertfunktion – eigene Zeile unter dem Term, in der Farbe ihres Graphen */
+  #lmKehrZ{margin-top:4px;text-align:center;font-size:calc(var(--k) * 15px);color:#be185d;}
+  #lmKehrZ b{font-weight:800;}
+  #lmKehrZ i{font-style:normal;color:#64748b;font-size:.85em;}
+  #lmKehrZ[hidden]{display:none;}
   /* rechts die Ränder: antippen öffnet das Ergebnis */
   .lmRand{border:1px solid #e6ebf3;border-left-width:5px;border-left-color:#cbd5e1;border-radius:10px;
        padding:calc(var(--k) * 6px) calc(var(--k) * 8px);margin-bottom:calc(var(--k) * 6px);cursor:pointer;background:#fff;}
@@ -583,6 +590,7 @@
           <select id="lmBsp" title="Beispielfunktion"></select>
           <button type="button" id="lmAs" class="trSeg" title="Asymptoten mit Gleichung einblenden">Asymptoten</button>
           <button type="button" id="lmGross" class="trSeg" title="Verhalten für große Beträge von x: nur die größten Potenzen zählen">|x| groß</button>
+          <button type="button" id="lmKehr" class="trSeg" title="Kehrwertfunktion 1/f mit Term und Graph einblenden">1/f</button>
           <button type="button" id="lmFit" class="trSeg" title="Ansicht einpassen">Ansicht</button>
           <button type="button" id="lmZm" class="trSeg" title="kleiner">−</button>
           <button type="button" id="lmZp" class="trSeg" title="größer">+</button>
@@ -592,6 +600,7 @@
         <div id="lmLinks">
           <div id="lmTermGross"></div>
           <div id="lmVgl" hidden></div>
+          <div id="lmKehrZ" hidden></div>
           <div id="lmPlotWrap"><canvas id="plotL"></canvas></div>
         </div>
         <aside id="lmSide"><div id="lmOut"></div></aside>
@@ -2647,7 +2656,7 @@ function mdUi(){ ['p','e','t','n','w'].forEach(k=>$('mdT'+k).classList.toggle('o
    Zähler/Nenner gebracht (Koeffizientenlisten), bei e-Funktion, ln, Wurzel und sin/cos kommen
    die typischen Begründungen dazu. Gerechnet wird mit den aktuellen Werten von a, b und c. */
 /* Der Reiter steht für sich: eigener Term, unabhängig von Graph/Tabelle/Maschine. */
-let lm={term:'(x^2+1)/(x^2−4)', asym:false, gross:false, p:{a:1,b:0,c:0}};   /* eigene a, b, c – unabhängig von den vorderen Reitern */
+let lm={term:'(x^2+1)/(x^2−4)', asym:false, gross:false, kehr:false, p:{a:1,b:0,c:0}};   /* eigene a, b, c – unabhängig von den vorderen Reitern */
 let lmView={ux:40,uy:40,ox:0,oy:0}, lmW=0, lmH=0, lmSel=0, lmErg=null;
 
 /* ---- Term als Baum (gleiche Vorrangregeln wie evalAt) ---- */
@@ -2921,6 +2930,7 @@ const lmWCol=w=>(!w?'#64748b':(w.art==='inf'?'#15803d':(w.art==='ninf'?'#b91c1c'
 const LM_SENK='#ea580c';      /* senkrechte Asymptoten (Polstellen): orange */
 const LM_WAAG='#7e22ce';      /* waagrechte und schiefe Asymptoten: lila */
 const LM_VGL='#0f766e';       /* Vergleichsterm für große |x|: petrol */
+const LM_KEHR='#db2777';      /* Kehrwertfunktion 1/f: rosa */
 const lmX=x=>lmZ(x);
 const lmVZ=v=>v>0?'positiv':'negativ';
 /* Einen Teilbaum wieder als Term schreiben – so lässt er sich einzeln auswerten und anzeigen */
@@ -3100,6 +3110,7 @@ function lmAnalyse(){
   const ast=lmAst(toks), rat=ast?lmRat(ast):null, F=lmFlags(ast);
   const origT=termText(toks);                                  /* der Term, wie er eingegeben wurde */
   const origHtml=lmOrigHtml(ast,toks);                         /* derselbe Term, Quotienten als Bruch */
+  e.ast=ast; e.origHtml=origHtml;                              /* für die Kehrwertfunktion 1/f */
   /* Vergleichsform: ohne Leerzeichen und Malpunkte, und ein reines Faktorenprodukt
      wird sortiert – (x−2)(x+3) und (x+3)(x−2) sind derselbe Term. */
   const ohneLeer=t=>String(t).replace(/[\s·]/g,'').split('/').map(q=>{
@@ -3120,6 +3131,7 @@ function lmAnalyse(){
     /* Verhalten für große |x| – dazu auch der Term mit kräftiger größter Potenz,
        genau wie beim Rand x → ±∞: alles Kleinere steht blass daneben. */
     e.vergleich=lmVergleichBau(z,nn,gebrochen);
+    e.rz=z; e.rn=nn;                                 /* Zähler und Nenner – für die Kehrwertfunktion */
     e.art=gebrochen?'rational':'ganz';
     /* --- Definitionslücken --- */
     if(gebrochen) lmEinfach(pNull(nn)).forEach(x0=>{
@@ -3311,8 +3323,32 @@ function lmVglZeile(){ const d=$('lmVgl'); if(!d) return;
   d.hidden=false;
   /* Steht unten derselbe Term wie oben hinter dem ≈, reicht der Satz allein */
   d.innerHTML='<i>für große |x| zählen nur die größten Potenzen'+(v.gleich?'.</i>':':</i> '+v.quot); }
+/* ---- Kehrwertfunktion 1/f ----
+   Angezeigt wird der Term: ein Bruch wird dazu umgedreht (aus z/n wird n/z), sonst steht
+   die 1 über dem ganzen Term. Didaktisch wichtig ist der Tausch: wo f eine Nullstelle hat,
+   hat 1/f eine Polstelle. Umgekehrt ist 1/f an einer Polstelle von f nicht definiert (f ist es ja
+   auch nicht): der Graph läuft gegen 0, hat dort aber ein Loch – stetig ergänzt eine Nullstelle. */
+/* steht unten eine 1, reicht der Zähler allein: aus 1/x wird x, nicht x/1 */
+const lmKehrBruch=(zh,nh)=>(ohneTags(nh)==='1'?String(zh):lmBruchHtml(zh,nh));
+function lmKehrHtml(e){
+  /* ganz- und gebrochen-rational: Zähler und Nenner tauschen, geschrieben wie im Term oben */
+  if(e&&e.rz){ const un=lmPolyHtml(e.rz,null),
+    ob=(pGrad(e.rn)>0||Math.abs(e.rn[0]-1)>1e-12)?lmPolyHtml(e.rn,null):'1';
+    return lmKehrBruch(ob,un); }
+  const ast=e&&e.ast;
+  if(ast&&ast.k==='/'){ const zt=lmAstHtml(ast.l), nt=lmAstHtml(ast.r);
+    if(zt&&nt) return lmKehrBruch(nt,zt); }
+  return lmKehrBruch('1', (e&&e.origHtml)||'f(x)'); }
+function lmKehrZeile(){ const d=$('lmKehrZ'); if(!d) return;
+  const e=lmErg;
+  if(!lm.kehr||!e||!e.ok){ d.hidden=true; d.innerHTML=''; return; }
+  d.hidden=false;
+  d.innerHTML=lmBruchHtml('1','f(x)')+' = '+lmKehrHtml(e)+
+    ' <i>· Nullstellen von f werden zu Polstellen'+
+    (e.pole.length?', Polstellen zu Nullstellen – genauer: zu Löchern bei y = 0, denn dort ist auch 1/f nicht definiert':'')+'</i>'; }
+function lmKehrUI(){ const b=$('lmKehr'); if(b) b.classList.toggle('on',!!lm.kehr); }
 function lmText(){ const o=$('lmOut'), gr=$('lmTermGross'); if(!o) return; const e=lmErg;
-  lmGrossUI(); lmVglZeile();   /* erst hier steht lmErg zum neuen Term */
+  lmGrossUI(); lmVglZeile(); lmKehrZeile();   /* erst hier steht lmErg zum neuen Term */
   if(!e||!e.ok){ o.innerHTML='<div class="lmHead">'+((e&&e.hinweis)||'')+'</div>'; if(gr) gr.innerHTML=''; return; }
   const k=e.karten[lmSel];
   /* Im großen Term steht hervorgehoben, worauf es beim gewählten Rand ankommt */
@@ -3456,6 +3492,23 @@ function lmDraw(){ if(tab!=='l'||!lmW) return; const e=lmErg;
     const xl=xmin+(xmax-xmin)*0.88, yl=Y(v.f(xl));
     c.fillText('y ≈ '+v.txt, lmW-8, Math.max(4,Math.min(lmH-20,yl+7)));
     c.restore(); }
+  /* Kehrwertfunktion – unter der Kurve, damit f oben liegt */
+  if(lm.kehr){ const g=x=>1/e.f(x);
+    lmKurve(c,g,LM_KEHR,2.2);
+    /* an den Polstellen von f ist 1/f nicht definiert: offener Kreis auf der x-Achse */
+    lmEinfach(e.pole).forEach(p=>{ const px=X(p), py=Y(0);
+      if(px<-10||px>lmW+10||py<-10||py>lmH+10) return;
+      c.save(); c.fillStyle='#fff'; c.strokeStyle=LM_KEHR; c.lineWidth=2.2;
+      c.beginPath(); c.arc(px,py,5,0,7); c.fill(); c.stroke(); c.restore(); });
+    c.save(); c.fillStyle=LM_KEHR; c.font='800 '+Math.max(12,fontSize)+'px sans-serif';
+    c.textAlign='left'; c.textBaseline='top';
+    const xl=xmin+(xmax-xmin)*0.08, yk=g(xl), yl=isFinite(yk)?Y(yk):lmH*0.5;
+    const ty=Math.max(4,Math.min(lmH-20,yl+7)), tx=8, txt='y = 1/f(x)';
+    /* weißer Grund darunter – die Kurve liegt oft dicht an der x-Achse mit ihren Zahlen */
+    c.save(); c.fillStyle='rgba(255,255,255,.88)';
+    c.fillRect(tx-3,ty-2,c.measureText(txt).width+6,Math.max(12,fontSize)+5); c.restore();
+    c.fillText(txt, tx, ty);
+    c.restore(); }
   /* Kurve */
   lmKurve(c,e.f,e.farbe,2.6);
   /* hebbare Lücken als offener Kreis */
@@ -3523,7 +3576,7 @@ function lmNeu(sofort){
   const t=lm.term||'';
   const inp=$('lmTerm'); if(inp&&document.activeElement!==inp&&inp.value!==t) inp.value=t;
   const as=$('lmAs'); if(as) as.classList.toggle('on',!!lm.asym);
-  lmGrossUI();
+  lmGrossUI(); lmKehrUI();
   const rechne=()=>{ if(t!==lmLetzt) lmSel=-1;
     lmErg=lmAnalyse(); if(lmSel>=lmErg.karten.length) lmSel=-1;
     if(t!==lmLetzt){ lmLetzt=t; updateSliders(); lmText();
@@ -3545,6 +3598,8 @@ function lmNeu(sofort){
     lm.gross=!lm.gross; lmGrossUI(); lmText();
     if(lm.gross) lmGrossBlick(); else lmDraw();
     sync(); };
+  const kw=$('lmKehr'); if(kw) kw.onclick=()=>{ lm.kehr=!lm.kehr;
+    lmKehrUI(); lmKehrZeile(); lmDraw(); sync(); };
   const fit=$('lmFit'); if(fit) fit.onclick=()=>{ lmFit(); sync(); };
   const zm=$('lmZm'), zp=$('lmZp');
   /* zoomt x und y gleichermaßen */
@@ -3586,7 +3641,7 @@ function zustand(){ return {funcs:funcs.map(f=>({term:f.term,color:f.color,width
       zTerm:!!md.zTerm, col:mdKurve(), zAbw:!!md.zAbw, zWert:!!md.zWert,
       setz:!!md.setz, linie:!!md.linie, bild:md.bild?Object.assign({},md.bild):null, bildAn:!!md.bildAn, bmod:md.bmod||'',
       p:md.p.map(r=>[r[0],r[1],r[2]||'']), view:Object.assign({},md.view)},
-  lm:{term:lm.term, asym:!!lm.asym, gross:!!lm.gross, p:Object.assign({},lm.p), sel:lmSel, view:Object.assign({},lmView)}}; }
+  lm:{term:lm.term, asym:!!lm.asym, gross:!!lm.gross, kehr:!!lm.kehr, p:Object.assign({},lm.p), sel:lmSel, view:Object.assign({},lmView)}}; }
 function sync(){ if(window.parent===window) return; /* allein geöffnet: nicht an sich selbst senden */ try{ parent.postMessage({type:'embed-data',data:zustand()},'*'); }catch(e){} }
 addEventListener('message',e=>{ if(e.source!==window&&(window.parent===window||e.source!==window.parent)) return;   // eigene Nachrichten ignorieren
   if(!(e.data&&e.data.type==='embed-data'&&e.data.data))return; const d=e.data.data;
@@ -3639,7 +3694,7 @@ addEventListener('message',e=>{ if(e.source!==window&&(window.parent===window||e
   if(strukturNeu){ buildRows(); buildTable(); buildMachines(); }
   updateSliders();
   if(d.lm){ if(typeof d.lm.term==='string'){ lm.term=d.lm.term; lmLetzt=''; }
-    lm.asym=!!d.lm.asym; lm.gross=!!d.lm.gross;
+    lm.asym=!!d.lm.asym; lm.gross=!!d.lm.gross; lm.kehr=!!d.lm.kehr;
     if(d.lm.p) lm.p=Object.assign({a:1,b:0,c:0},d.lm.p);
     if(typeof d.lm.sel==='number') lmSel=d.lm.sel;
     if(d.lm.view&&(d.lm.view.ux||d.lm.view.unit)){ const v=d.lm.view;
