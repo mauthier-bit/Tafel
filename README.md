@@ -2328,13 +2328,18 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   - **Knopf „M"** blendet die **Monotoniebereiche** als farbige Bänder ein: **steigend grün (↗)**,
     **fallend orange (↘)**. Gesucht werden sie **numerisch** zwischen **−20 und 20** (Raster mit 6000
     Schritten): getrennt wird an **Definitionslücken**, **Polstellen** und **Extremstellen**, die
-    danach genauer eingekreist werden. Was über den untersuchten Bereich hinausgeht, steht als **„…"**.
+    danach genauer eingekreist werden. Am Rand des untersuchten Bereichs wird **weiter draußen
+    nachgesehen** (x = ±50 bis ±10⁶) und aus den Werten der **Grenzwert hochgerechnet**: läuft f
+    gegen eine Zahl, steht sie da; wächst es über alle Grenzen, steht **±∞**; nur wenn sich das
+    nicht entscheiden lässt (Sinus schwankt einfach weiter), bleibt es bei **„…"**.
     Eine **konstante** Funktion liefert gar keinen Bereich – sie lässt sich nicht umkehren, und das
     steht dann auch da.
   - **Gibt es nur einen Bereich**, ist er gleich gewählt – bei `2·e^x+1` oder `ln(x)` gibt es ja
     nichts auszusuchen. **Einen Bereich antippen** (im Band oder in der Liste rechts) wählt ihn aus: f wird dort **kräftig**
     gezeichnet, außerhalb blass. Dazu stehen **D** und **W** als Intervalle da, mit **offenen Grenzen**
-    (`]0; 4]`) an Lücken, Polstellen und am Rand des untersuchten Bereichs; ±∞ wird durch Herantasten
+    (`]0; 4]`) an Polstellen und dort, wo f am Rand keinen Wert mehr hat – `√(x−1)` ergibt
+    **[1; +∞[**, `ln(x)` dagegen **]0; +∞[**. **∞ ist immer ausgenommen**, und `]−∞; +∞[` wird zu
+    **ℝ** zusammengezogen: `2·e^x+1` hat **D = ℝ** und **W = ]1; +∞[**. ±∞ wird durch Herantasten
     von innen bestimmt (ln(x) für x → 0 ergibt −∞, nicht den Wert dicht daneben).
     **Zahlen stehen exakt da, wo es geht:** bei `sin(x)` heißt der mittlere Bereich **[−π/2; π/2]**,
     nicht [−1,5708; 1,5708]; ebenso erscheinen Brüche und Quadratwurzeln (√2/2) – dieselbe

@@ -4030,12 +4030,8 @@ function ukAsym(e,ber){
   if(!e||!e.ok||!ber) return A;
   [[ber.a,ber.artA,1],[ber.b,ber.artB,-1]].forEach(([x,art,rein])=>{
     if(art==='rand'){
-      const s=-rein, w=[50,200,800,3200].map(d=>e.f(s*d));
-      if(w.every(v=>isFinite(v))
-         &&Math.abs(w[3]-w[2])<1e-7*(1+Math.abs(w[3]))
-         &&Math.abs(w[2]-w[1])<1e-4*(1+Math.abs(w[2]))){
-        const v=w[3], r=(Math.abs(v-Math.round(v))<1e-6)?Math.round(v):v;
-        if(!A.waag.some(q=>Math.abs(q-r)<1e-9)) A.waag.push(r); }
+      const w=ukWeiter(e.f,-rein);
+      if(w.art==='zahl'&&!A.waag.some(q=>Math.abs(q-w.v)<1e-9)) A.waag.push(w.v);
       return; }
     const r=ukRandWert(e.f,x,rein,art);
     if((r.art==='inf'||r.art==='ninf')&&!A.senk.some(q=>Math.abs(q-x)<1e-9)) A.senk.push(x); });
@@ -4054,11 +4050,37 @@ function ukAnalyse(){
   e.origHtml=lmOrigHtml(e.ast,toks);
   e.bereiche=ukBereiche(f,e.ast);
   return e; }
+/* Wie geht es außerhalb des untersuchten Bereichs weiter? Nachgesehen wird bei
+   x = ±50, ±200, ±800 und ±3200: läuft f gegen eine Zahl, wächst es über alle Grenzen,
+   oder ist nichts zu entscheiden (Sinus zum Beispiel schwankt einfach weiter)? */
+const ukRunde=v=>(Math.abs(v-Math.round(v))<1e-5)?Math.round(v):v;
+function ukWeiter(f,richtung){
+  const ds=[50,1e3,1e4,1e5,1e6], w=[];
+  for(const d of ds){ const y=f(richtung*d); if(!isFinite(y)) break; w.push(y); }
+  if(!w.length) return {art:'?', da:false};
+  if(w.length<ds.length){                       /* irgendwann nicht mehr zu rechnen */
+    const letzt=w[w.length-1];
+    /* über alle Grenzen gewachsen (e^x sprengt schon bei x = 1000 die Zahlen) */
+    if(Math.abs(letzt)>1e6) return {art:letzt>0?'inf':'ninf', da:true};
+    return {art:'?', da:false}; }
+  const w1=w[2], w2=w[3], w3=w[4], d1=w2-w1, d2=w3-w2;
+  if(Math.abs(d2)<1e-12||Math.abs(d1)<1e-12) return {art:'zahl', v:ukRunde(w3), da:true};
+  const r=d2/d1;
+  if(r>0&&r<0.85){
+    /* Die Schritte werden immer kleiner und gehen in dieselbe Richtung: der Grenzwert
+       lässt sich aus ihnen hochrechnen. Zur Sicherheit muss ein Zwischenwert dazwischen
+       liegen – sonst schwankt die Funktion bloß (Sinus). */
+    const zw=f(richtung*3e5);
+    if(isFinite(zw)&&(zw-w2)*(w3-zw)>=0) return {art:'zahl', v:ukRunde(w3+d2*r/(1-r)), da:true};
+    return {art:'?', da:true}; }
+  if(r>=0.85) return {art:d2>0?'inf':'ninf', da:true};
+  return {art:'?', da:true}; }
 /* Randwert eines Bereichs. An einer Extremstelle ist es schlicht der Funktionswert.
    An einer Lücke oder Polstelle wird von innen herangetastet (1/10 bis 1/10⁹): wächst der
    Betrag dabei immer weiter, ist es ±∞ – bei ln(x) für x → 0 genauso wie bei 1/x.
    Der Wert am Rand selbst taugt dort nicht: die Grenze liegt ja nur dicht daneben. */
 function ukRandWert(f,x,nachInnen,art){
+  if(art==='rand') return ukWeiter(f,-nachInnen);      /* dort hört nur der untersuchte Bereich auf */
   const y0=f(x);
   if(art==='extrem'&&isFinite(y0)) return {v:y0, art:'zahl'};
   const w=[];
@@ -4070,21 +4092,40 @@ function ukRandWert(f,x,nachInnen,art){
   if(isFinite(y0)) return {v:y0, art:'zahl'};
   return w.length?{v:w[w.length-1], art:'zahl'}:{v:NaN, art:'?'}; }
 /* Grenze der Wertemenge als Text – am Rand des untersuchten Bereichs steht „…" */
-function ukWText(w,offen){
-  if(offen) return '…';
+function ukWText(w){
   if(!w||w.art==='?') return '…';
   if(w.art==='inf') return '+∞'; if(w.art==='ninf') return '−∞';
   return lmZ(w.v); }
-/* lmZ schreibt 1,5708 als π/2 und 0,7071 als √2/2 – sonst steht die gerundete Zahl da */
-function ukGrenzText(ber,seite){
+/* lmZ schreibt 1,5708 als π/2 und 0,7071 als √2/2 – sonst steht die gerundete Zahl da.
+   Am Rand des untersuchten Bereichs steht ±∞, wenn f dort draußen noch definiert ist;
+   lässt sich das nicht entscheiden, bleibt es bei „…". */
+function ukGrenzText(ber,seite,f){
   const x=seite<0?ber.a:ber.b, art=seite<0?ber.artA:ber.artB;
-  return art==='rand'?'…':lmZ(x); }
-/* Nur an einer Extremstelle gehört der Rand dazu; an einer Lücke, einer Polstelle und am
-   Rand des untersuchten Bereichs ist das Intervall offen – ]0; 4] statt [0; 4]. */
+  if(art!=='rand') return lmZ(x);
+  const w=f?ukWeiter(f,seite<0?-1:1):null;
+  return (w&&w.da)?(seite<0?'−∞':'+∞'):'…'; }
+/* Gehört der Rand zum Bereich? An einer Extremstelle immer. An einer Definitionslücke nur,
+   wenn f dort noch einen Wert hat – √(x−1) hört bei 1 auf, 1 gehört aber dazu ([1; …[),
+   während ln(x) bei 0 keinen Wert mehr hat (]0; …[). An Polstellen und am Rand des
+   untersuchten Bereichs ist es immer offen. */
+function ukDabei(ber,seite,f){
+  const art=seite<0?ber.artA:ber.artB, x=seite<0?ber.a:ber.b;
+  if(art==='extrem') return true;
+  if(art==='lücke'&&f){
+    /* Der gespeicherte Rand liegt ein Haar INNERHALB des Bereichs – dort ist f natürlich
+       definiert. Gefragt ist der Rand selbst: liegt er dicht an einer runden Zahl, wird
+       dort nachgerechnet (√(x−1) hat bei 1 den Wert 0, ln(x) bei 0 keinen). */
+    const r=(Math.abs(x-Math.round(x))<1e-6)?Math.round(x):x;
+    if(isFinite(f(r))) return true; }
+  return false; }
 const ukOffen=art=>art!=='extrem';
-const ukIntervall=(lo,hi,loOffen,hiOffen)=>(loOffen?']':'[')+lo+'; '+hi+(hiOffen?'[':']');
-function ukBerText(ber){ return ukIntervall(ukGrenzText(ber,-1),ukGrenzText(ber,1),
-  ukOffen(ber.artA),ukOffen(ber.artB)); }
+/* ±∞ und „…" sind nie Teil der Menge – dort steht immer die offene Klammer */
+const ukIntervall=(lo,hi,loOffen,hiOffen)=>{
+  const auf=t=>(t==='−∞'||t==='+∞'||t==='…');
+  if(lo==='−∞'&&hi==='+∞') return 'ℝ';
+  return ((loOffen||auf(lo))?']':'[')+lo+'; '+hi+((hiOffen||auf(hi))?'[':']'); };
+function ukBerText(ber,f){ return ukIntervall(ukGrenzText(ber,-1,f),ukGrenzText(ber,1,f),
+  !ukDabei(ber,-1,f),!ukDabei(ber,1,f)); }
 
 /* ---- Zeichnen ---- */
 const ukSichtbar=()=>ukW?[(0-ukView.ox)/ukView.ux,(ukW-ukView.ox)/ukView.ux]:[-6,6];
@@ -4280,19 +4321,21 @@ function ukSeite(){ const o=$('ukOut'), gr=$('ukTermGross'); if(!o) return; cons
       'zwischen −20 und 20 jedenfalls nicht. Eine konstante Funktion lässt sich nicht umkehren, '+
       'denn sie nimmt denselben Wert an vielen Stellen an.</div>'; ukTabelle(); return; }
   let h='<div class="lmHead">'+e.bereiche.length+' Bereich'+(e.bereiche.length===1?'':'e')+
-        ', in denen f streng monoton und damit <b>umkehrbar</b> ist – untersucht von −20 bis 20 '+
-        '(„…" heißt: es geht weiter).</div>'+
+        ', in denen f streng monoton und damit <b>umkehrbar</b> ist – untersucht von −20 bis 20. '+
+        'Weiter draußen wird nachgesehen, wohin f läuft; nur wenn sich das nicht entscheiden '+
+        'lässt, steht „…".</div>'+
         '<div class="lmHinw">Bereich antippen – dann wird f dort umgekehrt.</div>';
   e.bereiche.forEach((b,i)=>{ const an=i===uk.sel;
     const wa=ukRandWert(e.f,b.a,1,b.artA), wb=ukRandWert(e.f,b.b,-1,b.artB);
     /* streng monoton: die Randwerte sind die Grenzen der Wertemenge, bei fallendem f vertauscht */
     const unten=b.steigend?wa:wb, oben=b.steigend?wb:wa;
     const uArt=b.steigend?b.artA:b.artB, oArt=b.steigend?b.artB:b.artA;
+    const uZu=ukDabei(b,b.steigend?-1:1,e.f), oZu=ukDabei(b,b.steigend?1:-1,e.f);
     h+='<div class="ukBer'+(an?' on':'')+'" data-i="'+i+'" style="border-left-color:'+(b.steigend?UK_STEIG:UK_FALL)+'">'+
-       '<div class="ukBK"><b>'+ukBerText(b)+'</b><span class="ukPfeil" style="color:'+(b.steigend?UK_STEIG:UK_FALL)+'">'+
+       '<div class="ukBK"><b>'+ukBerText(b,e.f)+'</b><span class="ukPfeil" style="color:'+(b.steigend?UK_STEIG:UK_FALL)+'">'+
        (b.steigend?'↗ streng monoton steigend':'↘ streng monoton fallend')+'</span></div>'+
        (an?('<div class="ukG">Auf diesem Bereich nimmt f jeden Wert <b>genau einmal</b> an – deshalb lässt sich f hier umkehren. '+
-            'Definitionsmenge <b>D = '+ukBerText(b)+'</b>, Wertemenge <b>W = '+ukIntervall(ukWText(unten,uArt==='rand'),ukWText(oben,oArt==='rand'),ukOffen(uArt),ukOffen(oArt))+'</b>. '+
+            'Definitionsmenge <b>D = '+ukBerText(b,e.f)+'</b>, Wertemenge <b>W = '+ukIntervall(ukWText(unten),ukWText(oben),!uZu,!oZu)+'</b>. '+
             'Bei f<sup>−1</sup> tauschen die beiden ihre Rollen.</div>'):'')+
        '</div>'; });
   const um=ber?ukUmkehrTerm(e,ber):null;
@@ -4302,9 +4345,9 @@ function ukSeite(){ const o=$('ukOut'), gr=$('ukTermGross'); if(!o) return; cons
   if(ber&&uk.dw){
     const wa=ukRandWert(e.f,ber.a,1,ber.artA), wb=ukRandWert(e.f,ber.b,-1,ber.artB);
     const unten=ber.steigend?wa:wb, oben=ber.steigend?wb:wa;
-    const uArt=ber.steigend?ber.artA:ber.artB, oArt=ber.steigend?ber.artB:ber.artA;
-    const dT=ukBerText(ber);
-    const wT=ukIntervall(ukWText(unten,uArt==='rand'),ukWText(oben,oArt==='rand'),ukOffen(uArt),ukOffen(oArt));
+    const dT=ukBerText(ber,e.f);
+    const wT=ukIntervall(ukWText(unten),ukWText(oben),
+      !ukDabei(ber,ber.steigend?-1:1,e.f),!ukDabei(ber,ber.steigend?1:-1,e.f));
     /* Die Zeilen stehen einzeln im Gitter, damit die Pfeile genau in den Zeilen von
        D und W sitzen und nicht mittig über alle drei. */
     h+='<div class="ukDWK">'+
