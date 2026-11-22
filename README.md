@@ -2321,18 +2321,26 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     e^x/x, x·e^(−x), ln(x), √(x−1), √(4−x²), sin(x)/x, tan(x) und 1/sin(x).
   **Umkehrfunktion** (in der Reiterleiste kurz **f⁻¹**, zwischen lim und Modellieren)**:** Der vierte
   eigenständige Reiter, wie lim mit **eigenem Term und eigenen Reglern** für a, b und c. Links der Graph, rechts die Bereiche, in denen f **streng monoton** und
-  damit umkehrbar ist; x- und y-Achse haben hier **denselben Maßstab**, sonst stimmte die Spiegelung
-  an y = x im Bild nicht.
+  damit umkehrbar ist. **Ansicht** stellt für x und y **denselben Maßstab** her – nur dann sieht die
+  Spiegelung an y = x im Bild auch wie eine Spiegelung aus. Gezoomt wird trotzdem **frei in x und y**
+  (zwei Finger waagrecht nur x, senkrecht nur y, schräg beides; am Rechner Mausrad, mit Umschalt nur
+  x, mit Alt nur y); sind die Maßstäbe verschieden, steht ein **Hinweis** unten im Bild.
   - **Knopf „M"** blendet die **Monotoniebereiche** als farbige Bänder ein: **steigend grün (↗)**,
     **fallend orange (↘)**. Gesucht werden sie **numerisch** zwischen **−20 und 20** (Raster mit 6000
     Schritten): getrennt wird an **Definitionslücken**, **Polstellen** und **Extremstellen**, die
     danach genauer eingekreist werden. Was über den untersuchten Bereich hinausgeht, steht als **„…"**.
     Eine **konstante** Funktion liefert gar keinen Bereich – sie lässt sich nicht umkehren, und das
     steht dann auch da.
-  - **Einen Bereich antippen** (im Band oder in der Liste rechts) wählt ihn aus: f wird dort **kräftig**
+  - **Gibt es nur einen Bereich**, ist er gleich gewählt – bei `2·e^x+1` oder `ln(x)` gibt es ja
+    nichts auszusuchen. **Einen Bereich antippen** (im Band oder in der Liste rechts) wählt ihn aus: f wird dort **kräftig**
     gezeichnet, außerhalb blass. Dazu stehen **D** und **W** als Intervalle da, mit **offenen Grenzen**
     (`]0; 4]`) an Lücken, Polstellen und am Rand des untersuchten Bereichs; ±∞ wird durch Herantasten
     von innen bestimmt (ln(x) für x → 0 ergibt −∞, nicht den Wert dicht daneben).
+    **Zahlen stehen exakt da, wo es geht:** bei `sin(x)` heißt der mittlere Bereich **[−π/2; π/2]**,
+    nicht [−1,5708; 1,5708]; ebenso erscheinen Brüche und Quadratwurzeln (√2/2) – dieselbe
+    Schreibweise wie im Reiter lim. Dafür werden die Extremstellen nicht nur eingekreist, sondern
+    anschließend über die **Nullstelle der Steigung** halbiert; die ternäre Suche allein kommt nur
+    auf etwa 1e−8 heran, und damit wäre π/2 nicht als π/2 zu erkennen.
   - **Knopf „f⁻¹"** zeichnet die **Umkehrfunktion** zu diesem Bereich in **Violett**. Gezeichnet wird
     nicht gerechnet: zu jedem x wird der Punkt **(f(x) | x)** gesetzt – das Spiegelbild an **y = x**,
     die als gestrichelte Gerade mit im Bild steht.
@@ -2347,7 +2355,21 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     nach dem gewählten Bereich: auf `]…; 0]` steht −√x, auf `[0; …[` steht √x.
     **Jeder Vorschlag wird geprüft:** nur wenn f⁻¹(f(x)) = x an 24 Stellen des Bereichs stimmt, wird
     er gezeigt. Sonst steht dort ehrlich, dass der Term sich nicht auflösen lässt – der **Graph**
-    entsteht trotzdem, denn gespiegelt wird immer.
+    entsteht trotzdem, denn gespiegelt wird immer (bei `x·e^x` etwa, oder bei einem Sinus-Ast
+    außerhalb von [−π/2; π/2]).
+  - **„Rechenweg zeigen"** im Term-Kasten klappt die **Rechnung Schritt für Schritt** auf – wie im
+    Heft, mit dem Rechenschritt am Rand: `y = 2·e^x + 1`, `x = 2·e^y + 1` (x und y vertauschen),
+    `x − 1 = 2·e^y` (| − 1), `(x − 1)/2 = e^y` (| : 2), `y = ln((x−1)/2)` (| ln anwenden). Bei
+    quadratischen Termen läuft es über die **Scheitelform**, beim Bruch `(ax+b)/(cx+d)` über
+    Ausmultiplizieren, Sortieren und Ausklammern. Wo eine **Wurzel zwei Vorzeichen** hat, steht das
+    da – und dazu, welches im gewählten Bereich gilt.
+  - **Knopf „D/W"** zeigt **Definitions- und Wertemenge** als Kasten: links die von f, rechts die
+    von f⁻¹, dazwischen **gekreuzte Pfeile** – beim Umkehren tauschen die beiden die Rollen.
+    Gibt es Asymptoten, steht darunter, dass auch sie die Richtung tauschen (aus x = 1 wird y = 1).
+  - **Knopf „Asymptoten"** zeichnet sie ein: die von **f gestrichelt blau**, die **vertauschten von
+    f⁻¹ violett**. Der Knopf ist **ausgegraut**, solange es im gewählten Bereich keine gibt.
+    Senkrechte findet er dort, wo f am Rand über alle Grenzen wächst, waagrechte durch Nachsehen
+    weit draußen (x = ±50 bis ±3200).
   - **Knopf „Tabelle"** blendet unter dem Graphen eine **Wertetabelle** zum sichtbaren Teil des
     Bereichs ein; die **unteren beiden Zeilen** sind **dieselbe Tabelle andersherum gelesen**: aus
     (x | f(x)) wird (f(x) | x) – die Wertetabelle der Umkehrfunktion. Alle vier Zeilen stehen in
