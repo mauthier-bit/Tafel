@@ -2264,6 +2264,11 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     Werte**: zieht man dort an a, bleibt a in den vorderen drei Reitern, wie es war – und umgekehrt. Zieht man den Regler, ändern sich Grenzwerte, Lücken und Begründungen
     sofort mit – bei `a/(x−2)` kippen mit dem Vorzeichen von a auch die beiden Seiten der Polstelle.
     Eine **symbolische Fallunterscheidung** (a > 0 / a < 0) macht der Reiter nicht.
+    Im Reiter lim stehen die drei Regler **nebeneinander in einer Zeile** und teilen sich die
+    ganze Breite: je breiter das Fenster, desto länger die Regler (bei iPad-Breite gut 9 cm je
+    Regler, in einem halbbreiten Fenster rund 5 cm). Erst **unter 560 px** bekommt wieder
+    **jeder seine eigene Zeile** – entweder alle drei nebeneinander oder alle drei untereinander,
+    nichts dazwischen. In den anderen Reitern bleibt es wie bisher bei drei Zeilen.
   - Bei **e-Funktion, Logarithmus, Wurzel und Sinus** steht die passende Begründung dabei („die e-Funktion
     wächst schneller als jede Potenz", „der ln wächst langsamer, aber unbeschränkt", „Sinus schwankt immer
     wieder zwischen −1 und 1"); der Wert selbst wird durch Einsetzen bestimmt – das sieht man den Karten an.
