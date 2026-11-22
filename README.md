@@ -773,12 +773,20 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     ein – bei Partnerarbeit zu zweit, sonst in Gruppen der eingestellten Größe (2 bis 8).
     **↻ Neu mischen** würfelt neu; die Einteilung steht gleich als Vorschau darunter und ist
     dieselbe wie im Fenster **Gruppen bilden**.
-  - **Timer**: an oder aus, Vorgaben 5 · 10 · 15 · 20 · 45 Minuten oder minutenweise −/+,
-    **Erinnerung** vor Schluss und die **Schriftgröße** der Zeitanzeige.
-  - **Ruhe-Anzeige**: **ohne**, **🔊 Lärmampel** (Ansicht, Empfindlichkeit, Warnton) oder
-    **🐾 Silent Zoo** (Landschaft Wald · Savanne · Meer), dazu der **⭐ Sticker**:
-    bei der Ampel, *wenn sie bis zum Timer-Ende nicht rot wird*, beim Zoo, *wenn bis zum Timer-Ende
-    kein Tier wieder weggeht*.
+  - **Timer**: an oder aus. In **einer Zeile** stehen die Vorgaben 5 · 10 · 15 · 20 · 45 Minuten und
+    daneben das Feld mit −/+ für jede andere Zeit; in der zweiten Zeile die **Erinnerung** vor
+    Schluss und die **Schriftgröße** der Zeitanzeige.
+  - **Ruhe-Anzeige**: **ohne**, **🔊 Lärmampel** oder **🐾 Silent Zoo**. Darunter stehen die
+    Einstellungen des Gewählten, je zwei Angaben nebeneinander:
+    - **Lärmampel**: *Anzeige* (Ampel · Zeiger · Balken) und *Empfindlichkeit*, darunter *Warnton*
+      mit seiner *Schwelle*.
+    - **Silent Zoo**: *Landschaft* (Wald · Savanne · Meer) und *Empfindlichkeit*, darunter *Schwelle*
+      und die *Höchstzahl* der Tiere sowie **leise → ein Tier kommt nach** und
+      **laut → ein Tier geht nach** (Sekunden, mit −/+). Diese Werte liegen dort, wo der Zoo sie
+      auch selbst speichert – sie gelten also ebenso im Ruhe-Fenster und wandern sofort in jeden
+      offenen Zoo.
+    Dazu der **⭐ Sticker**: bei der Ampel, *wenn sie bis zum Timer-Ende nicht rot wird*, beim Zoo,
+    *wenn bis zum Timer-Ende kein Tier wieder weggeht*.
   - **▶ Starten** schaltet um auf die **Anzeige**: großes Symbol der Sozialform, die **Zeit** groß,
     darunter die gewählte Ruhe-Anzeige und – falls eingeteilt – die **Gruppen**. Beim Silent Zoo
     füllt die **Landschaft fast das ganze Fenster**; **Symbol, Beschriftung und Zeit liegen oben
@@ -792,7 +800,8 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     lässt: Zeit, Ruhe-Anzeige und Gruppen bleiben zu sehen, die Tafel daneben bedienbar. Am **Balken
     oben** lässt es sich an jede Stelle ziehen und bleibt ganz im Bild.
   - Die Wahl (Form, Gruppengröße, Timer, Ruhe) wird **geräteweit gemerkt** (`tafel_soz`), beim
-    nächsten Öffnen steht alles wieder so da.
+    nächsten Öffnen steht alles wieder so da – samt einer frischen Gruppeneinteilung. Reicht die
+    Höhe nicht, **rollen die Einstellungen**, und die Zeile mit **▶ Starten** bleibt unten stehen.
 - **Stift-Testseite** `pentest.html` (im selben Ordner, direkt aufrufbar): kleine, von der Tafel
   unabhängige Seite zum Prüfen der Stifteingabe – zählt Pointer- und Touch-Ereignisse gegen die
   tatsächlich gezeichneten Striche und lässt `preventDefault`, `PointerCapture` und die Eingabeart
