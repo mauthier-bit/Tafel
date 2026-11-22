@@ -2292,9 +2292,9 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     Term steht dafür eine eigene Zeile in Rosa: `1/f(x) = …`, bei einem Bruch mit **vertauschtem
     Zähler und Nenner** (aus `(x²+1)/(x²−4)` wird `(x²−4)/(x²+1)`, aus `1/x` schlicht `x`), sonst
     mit der **1 über dem Term** (`1/sin(x)`). Dahinter der Merksatz: **Nullstellen von f werden zu
-    Polstellen**, und wo f eine **Polstelle** hat, läuft 1/f gegen 0 – dort ist 1/f aber ebenso
-    wenig definiert wie f, also steht da ein **Loch auf der x-Achse** (gezeichnet als offener
-    Kreis), stetig ergänzt eine Nullstelle. Der Graph von 1/f liegt **rosa unter dem Graphen von
+    Polstellen, Polstellen zu Nullstellen.** Betrachtet wird dabei – wie immer – der **maximale
+    Definitionsbereich des neuen Terms**, und der ist ein anderer als bei f: aus `1/(x−2)` wird
+    `x − 2`, und das ist bei x = 2 schlicht 0. Der Graph von 1/f liegt **rosa unter dem Graphen von
     f** und ist mit „y = 1/f(x)" beschriftet. Für den zusätzlichen Knopf ist das **Eingabefeld
     etwas kürzer** geworden, damit die Leiste in einer Zeile bleibt.
     **Farben:** **senkrechte** Asymptoten **orange**, **waagrechte und schiefe** **lila**.
