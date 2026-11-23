@@ -4298,9 +4298,16 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   dem **Histogramm** bzw. der **Verteilung**: Der Aufbau rückt so weit nach links, dass links nur
   ein schmaler Rand von 10 px bleibt (das sind rund 1 cm mehr als zuvor), und alles, was übrig
   bleibt, liegt hinter dem Schirm.
+  **Gestrichelt wird selbst gerechnet:** Jeder Strich eines Kreisbogens wird als kurze Sehne
+  gezeichnet, statt `setLineDash` auf den ganzen Bogen loszulassen – **Safari auf dem iPad zieht
+  lange gestrichelte Bögen sonst durch** (am Mac nicht). Die Zahl der Striche ist gedeckelt, damit
+  ein Riesenkreis das Bild nicht ausbremst.
   Hinter dem **⚙** neben dem „?" stehen die **Farben** von Wellenfeld, Bergen, Tälern, Maxima,
-  Minima und Strahlen, ihre **Strichstärken** und die **Deckkraft** des Feldes; die Einstellung
-  gehört zum Bild und wird mitgespeichert und mitgeteilt.
+  Minima und Strahlen, ihre **Strichstärken**, je Linie die **Linienart** (durchgezogen oder
+  gestrichelt – voreingestellt sind Berge und Maxima durchgezogen, Täler und Minima gestrichelt)
+  und die **Deckkraft** des Feldes; die Einstellung gehört zum Bild und wird mitgespeichert und
+  mitgeteilt. Beim **Wellenfeld** heißen die beiden Farben **Berge** und **Täler** – „Verdichtung"
+  und „Verdünnung" stimmen nur beim Schall, nicht beim Licht.
   Für alle Reiter gleich eingestellt werden **Spaltabstand** und **Spaltbreite**, dazu **Start/Pause**
   und **Zurücksetzen**.
   **Was am Schirm ankommt, zeigen zwei Anzeigen – jede für sich ein- und ausschaltbar** (beide,

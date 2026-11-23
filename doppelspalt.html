@@ -357,20 +357,25 @@
       <button class="btn" id="einstZu">×</button>
       <h3>Farben und Linien</h3>
       <div class="ez"><b>Wellenfeld</b>
-        <label>Verdichtung <input type="color" id="cVerd"></label>
-        <label>Verdünnung <input type="color" id="cVerdn"></label>
+        <label>Berge <input type="color" id="cVerd"></label>
+        <label>Täler <input type="color" id="cVerdn"></label>
         <label>Ψ-Feld <input type="color" id="cPsi"></label>
         <label class="reg">Deckkraft <input type="range" id="rgA" min="20" max="100" step="5"><span class="v" id="vA"></span></label>
       </div>
       <div class="ez"><b>Berge</b><label>Farbe <input type="color" id="cBerg"></label>
+        <label>Linie <select id="aBerg"><option value="v">durchgezogen</option><option value="s">gestrichelt</option></select></label>
         <label class="reg">Strich <input type="range" id="rgSBerg" min="1" max="6" step="0.5"><span class="v" id="vSBerg"></span></label></div>
       <div class="ez"><b>Täler</b><label>Farbe <input type="color" id="cTal"></label>
+        <label>Linie <select id="aTal"><option value="v">durchgezogen</option><option value="s">gestrichelt</option></select></label>
         <label class="reg">Strich <input type="range" id="rgSTal" min="1" max="6" step="0.5"><span class="v" id="vSTal"></span></label></div>
       <div class="ez"><b>Maxima</b><label>Farbe <input type="color" id="cMax"></label>
+        <label>Linie <select id="aMax"><option value="v">durchgezogen</option><option value="s">gestrichelt</option></select></label>
         <label class="reg">Strich <input type="range" id="rgSMax" min="1" max="6" step="0.5"><span class="v" id="vSMax"></span></label></div>
       <div class="ez"><b>Minima</b><label>Farbe <input type="color" id="cMin"></label>
+        <label>Linie <select id="aMin"><option value="v">durchgezogen</option><option value="s">gestrichelt</option></select></label>
         <label class="reg">Strich <input type="range" id="rgSMin" min="1" max="6" step="0.5"><span class="v" id="vSMin"></span></label></div>
       <div class="ez"><b>Strahlen zu P</b><label>Farbe <input type="color" id="cStr"></label>
+        <label>Linie <select id="aStr"><option value="v">durchgezogen</option><option value="s">gestrichelt</option></select></label>
         <label class="reg">Strich <input type="range" id="rgSStr" min="1" max="6" step="0.5"><span class="v" id="vSStr"></span></label></div>
       <p class="ehint">Die Einstellung gehört zum Bild: sie wird mit der Tafel gespeichert und mit dem
         Teilen-Link weitergegeben.</p>
@@ -398,14 +403,19 @@ const STD={ tab:'k', kmod:'t', lmod:'s',
   feld:true, berge:false, taeler:false, imax:false, imin:false, pAn:false, zuege:false, gang:false, diag:false, mikro:false,
   mess:false, psi:true, strom:false, inten:6, sammeln:true, schirm:false, geo:false, ivert:true, samm:true,
   anzAuf:false,                        /* steht die Anzeigen-Zeile offen? */
-  /* Farben und Strichstärken (⚙): fVerd/fVerdn sind Verdichtung und Verdünnung im
-     Wellenfeld, fPsi die dunkle Seite des Ψ-Feldes, fAlpha seine Deckkraft in Prozent. */
+  /* Farben und Strichstärken (⚙): fVerd/fVerdn sind die beiden Seiten des Wellenfeldes –
+     Berge und Täler (beim Schall Verdichtung und Verdünnung, daher die Namen im Code;
+     in den Einstellungen steht „Berge" und „Täler", weil das für jede Welle stimmt),
+     fPsi die dunkle Seite des Ψ-Feldes, fAlpha seine Deckkraft in Prozent. */
   fVerd:'#be1e2d', fVerdn:'#1e46b4', fPsi:'#0f2656', fAlpha:72,
   fBerg:'#7f1d1d', fTal:'#1e3a8a', fMax:'#15803d', fMin:'#b91c1c', fStr:'#ea580c',
   sBerg:2.2, sTal:2.2, sMax:2, sMin:2, sStr:2,
+  /* Linienart: 'v' durchgezogen, 's' gestrichelt */
+  aBerg:'v', aTal:'s', aMax:'v', aMin:'s', aStr:'v',
   px:170, py:28, fontSize:14, edit:true };
 const STIL=['fVerd','fVerdn','fPsi','fAlpha','fBerg','fTal','fMax','fMin','fStr',
-            'sBerg','sTal','sMax','sMin','sStr'];
+            'sBerg','sTal','sMax','sMin','sStr',
+            'aBerg','aTal','aMax','aMin','aStr'];
 const istFarbe=v=>/^#[0-9a-f]{6}$/i.test(v||'');
 /* Hexfarbe in drei Zahlen – gemerkt, weil das Feld die Farbe für jedes Pixel braucht */
 const rgbAlt={};
@@ -761,18 +771,31 @@ function ivertMalen(){
    wird hier GERECHNET und nicht dem Clip überlassen: Safari hält sich bei großen
    Kreisbögen nicht an einen Rechteck-Clip (gemessen, am Mac wie auf dem iPad), und
    dann liefen die Berglinien über den Schirm hinaus. */
-function bogen(c,x0,y0,r,rechts){
+function bogen(c,x0,y0,r,rechts,strich){
   const cx=X(x0), cy=Y(y0), R=r*sc; if(R<=0) return;
   const kl=v=>Math.max(-1,Math.min(1,v));
   const a1=Math.asin(kl(-cy/R)), a2=Math.asin(kl((cvH-cy)/R));
   if(a2-a1<1e-4) return;                       /* liegt ganz über oder unter dem Bild */
   const xr=(rechts===undefined?cvW:rechts)-cx; /* rechte Grenze */
   const tx=xr>=R?0:(xr<=-R?Math.PI:Math.acos(kl(xr/R)));
-  const stueck=(u,v)=>{ if(v-u>1e-4){ c.beginPath(); c.arc(cx,cy,R,u,v); c.stroke(); } };
+  /* Gestrichelt wird hier SELBST: Safari auf dem iPad zeichnet einen langen Bogen mit
+     setLineDash durchgezogen. Jeder Strich ist kurz, deshalb genügt für ihn eine Sehne.
+     Die Zahl der Striche ist nach oben gedeckelt, damit ein Riesenkreis nicht bremst. */
+  const stueck=(u,v)=>{ if(v-u<=1e-4) return;
+    if(!strich){ c.beginPath(); c.arc(cx,cy,R,u,v); c.stroke(); return; }
+    let dw=strich/R;
+    const n=(v-u)/(2*dw);
+    if(n>1500) dw=(v-u)/3000;
+    c.beginPath();
+    for(let a=u;a<v;a+=2*dw){ const b=Math.min(v,a+dw);
+      c.moveTo(cx+R*Math.cos(a), cy+R*Math.sin(a));
+      c.lineTo(cx+R*Math.cos(b), cy+R*Math.sin(b)); }
+    c.stroke(); };
   if(tx<=0) stueck(a1,a2);
   else { stueck(a1,Math.min(a2,-tx)); stueck(Math.max(a1,tx),a2); } }
-/* Wellenberge und Wellentäler lassen sich einzeln einblenden: Berge als durchgezogene,
-   Täler als gestrichelte Kreislinien um jeden Spalt. */
+/* Wellenberge und Wellentäler lassen sich einzeln einblenden – als Kreislinien um jeden
+   Spalt. Ob sie durchgezogen oder gestrichelt sind, steht in den Einstellungen (⚙);
+   voreingestellt sind Berge durchgezogen und Täler gestrichelt. */
 function linienMalen(ph){
   /* Die Welle ist sin(k·r − ωt): ein Berg liegt bei k·r − ωt = π/2, also eine Viertel
      Wellenlänge hinter der wandernden Nullstelle. Ohne dieses λ/4 lägen die Linien genau
@@ -785,9 +808,10 @@ function linienMalen(ph){
       const rB=n*lam+versch, rT=rB+lam/2;
       if(rB*sc>cvW*1.6) break;
       if(einlauf()&&rB>frontR) break;                 /* vor der Front ist noch nichts */
-      if(D.berge&&rB>0){ ctx.strokeStyle=D.fBerg; ctx.lineWidth=D.sBerg; ctx.setLineDash([]); bogen(ctx,0,ym,rB,xSchirm); }
+      if(D.berge&&rB>0){ ctx.strokeStyle=D.fBerg; ctx.lineWidth=D.sBerg;
+        bogen(ctx,0,ym,rB,xSchirm,D.aBerg==='s'?5:0); }
       if(D.taeler&&rT>0&&!(einlauf()&&rT>frontR)){ ctx.strokeStyle=D.fTal; ctx.lineWidth=D.sTal;
-        ctx.setLineDash([5,5]); bogen(ctx,0,ym,rT,xSchirm); ctx.setLineDash([]); } } });
+        bogen(ctx,0,ym,rT,xSchirm,D.aTal==='s'?5:0); } } });
   ctx.restore(); }
 /* Linien gleichen Gangunterschieds sind Hyperbeln mit den Spalten als Brennpunkten */
 function hyperbel(a){
@@ -803,8 +827,11 @@ function intfMalen(){
   const nMax=Math.floor(D.d/LAM());
   ctx.save();
   if(D.imax){ ctx.strokeStyle=D.fMax; ctx.lineWidth=D.sMax;
-    for(let n=-nMax;n<=nMax;n++) hyperbel(n*LAM()/2); }
-  if(D.imin){ ctx.strokeStyle=D.fMin; ctx.lineWidth=D.sMin; ctx.setLineDash([7,5]);
+    ctx.setLineDash(D.aMax==='s'?[7,5]:[]);
+    for(let n=-nMax;n<=nMax;n++) hyperbel(n*LAM()/2);
+    ctx.setLineDash([]); }
+  if(D.imin){ ctx.strokeStyle=D.fMin; ctx.lineWidth=D.sMin;
+    ctx.setLineDash(D.aMin==='s'?[7,5]:[]);
     for(let n=-nMax-1;n<=nMax;n++) hyperbel((n+0.5)*LAM()/2);
     ctx.setLineDash([]); }
   ctx.restore(); }
@@ -914,6 +941,7 @@ function punktMalen(){
 /* Die beiden Strahlen vom Spalt zu P – sie gehören zu den Wellenzügen wie zum Gangunterschied */
 function strahlenMalen(){
   ctx.save(); ctx.lineWidth=D.sStr; ctx.strokeStyle=D.fStr;
+  ctx.setLineDash(D.aStr==='s'?[7,5]:[]);
   [1,-1].forEach(v=>{ if(!spAn(v)) return;
     ctx.beginPath(); ctx.moveTo(X(0),Y(v*D.d/2)); ctx.lineTo(X(D.px),Y(D.py)); ctx.stroke(); });
   ctx.restore(); }
@@ -1336,12 +1364,14 @@ const E_FARB=[['cVerd','fVerd'],['cVerdn','fVerdn'],['cPsi','fPsi'],['cBerg','fB
   ['cTal','fTal'],['cMax','fMax'],['cMin','fMin'],['cStr','fStr']];
 const E_REG=[['rgA','fAlpha','vA','%'],['rgSBerg','sBerg','vSBerg',''],['rgSTal','sTal','vSTal',''],
   ['rgSMax','sMax','vSMax',''],['rgSMin','sMin','vSMin',''],['rgSStr','sStr','vSStr','']];
+const E_ART=['aBerg','aTal','aMax','aMin','aStr'];
 function einstUI(){
   E_FARB.forEach(([id,k])=>{ const e=$(id);
     if(e&&e.value!==D[k]&&document.activeElement!==e) e.value=D[k]; });
   E_REG.forEach(([id,k,vid,eh])=>{ const e=$(id); if(!e) return;
     if(document.activeElement!==e) e.value=D[k];
-    $(vid).textContent=eh?D[k]+eh:zahl(D[k]); }); }
+    $(vid).textContent=eh?D[k]+eh:zahl(D[k]); });
+  E_ART.forEach(k=>{ const e=$(k); if(e&&document.activeElement!==e) e.value=D[k]||'v'; }); }
 function neuStart(){ teil=[]; histo=new Int32Array(histo.length); getroffen=0; durch=0; abgefeuert=0; phase=0; frontR=0; dauerT=0; trefferP=[]; tsamm=[]; qNeu(); }
 
 const reg=(id,feld,nach)=>{ const el=$(id); if(!el) return;
@@ -1368,6 +1398,8 @@ E_FARB.forEach(([id,k])=>{ const e=$(id); if(!e) return;
   e.addEventListener('input',()=>{ D[k]=e.value; feldKey=''; knoepfe(); sync(); }); });
 E_REG.forEach(([id,k])=>{ const e=$(id); if(!e) return;
   e.addEventListener('input',()=>{ D[k]=+e.value; feldKey=''; knoepfe(); sync(); }); });
+E_ART.forEach(k=>{ const e=$(k); if(!e) return;
+  e.addEventListener('change',()=>{ D[k]=e.value==='s'?'s':'v'; knoepfe(); sync(); }); });
 $('bSpalt').onclick=()=>popAuf('bSpalt','popSpalt');
 $('bAnz').onclick=()=>{ D.anzAuf=!D.anzAuf; knoepfe(); sync(); };
 addEventListener('pointerdown',e=>{
@@ -1425,7 +1457,8 @@ const HILFE='<ul>'+
  'kein Muster.</li>'+
  '<li><b>Klassisch · Welle:</b> Hinter den Spalten laufen zwei Elementarwellen los (Schall, 343 m/s). '+
  'Einblenden lassen sich das Wellenfeld, <b>Berge</b> und <b>Täler</b> als Kreislinien '+
- 'sowie die Linien gleichen Gangunterschieds einzeln als <b>Maxima</b> (grün) und <b>Minima</b> (rot gestrichelt).</li>'+
+ 'sowie die Linien gleichen Gangunterschieds einzeln als <b>Maxima</b> (grün) und <b>Minima</b> (rot gestrichelt). '+
+ 'Farbe, Strichstärke und Linienart (durchgezogen oder gestrichelt) stehen für jede Linie im <b>⚙</b>.</li>'+
  '<li>Mit <b>beide / oben / unten</b> läuft nur ein Lautsprecher – dann gibt es kein Muster mehr.</li>'+
  '<li><b>Punkt P</b> lässt sich mit dem Finger verschieben. Dazu gibt es den <b>Gangunterschied</b> '+
  '(die beiden Wege; der Kreisbogen um P durch den näheren Spalt schneidet den längeren Weg, das rote Stück am Spalt ist Δs), ein <b>Diagramm</b> mit den beiden Teilschwingungen und ihrer Summe '+
