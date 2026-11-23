@@ -756,13 +756,17 @@ function ivertMalen(){
 /* ---------- Linien und Punkt P ---------- */
 /* Ein Kreisbogen um einen Spalt. Weit außen ist von dem Kreis nur noch ein schmales
    Stück im Bild – und ein ganzer (womöglich gestrichelter) Riesenkreis kostet viel Zeit.
-   Deshalb wird vorher ausgerechnet, welcher Winkelbereich überhaupt zu sehen ist. */
-function bogen(c,x0,y0,r){
+   Deshalb wird vorher ausgerechnet, welcher Winkelbereich überhaupt zu sehen ist.
+   „rechts" ist die rechte Grenze in Bildpunkten; ohne Angabe der Bildrand. Die Grenze
+   wird hier GERECHNET und nicht dem Clip überlassen: Safari hält sich bei großen
+   Kreisbögen nicht an einen Rechteck-Clip (gemessen, am Mac wie auf dem iPad), und
+   dann liefen die Berglinien über den Schirm hinaus. */
+function bogen(c,x0,y0,r,rechts){
   const cx=X(x0), cy=Y(y0), R=r*sc; if(R<=0) return;
   const kl=v=>Math.max(-1,Math.min(1,v));
   const a1=Math.asin(kl(-cy/R)), a2=Math.asin(kl((cvH-cy)/R));
   if(a2-a1<1e-4) return;                       /* liegt ganz über oder unter dem Bild */
-  const xr=cvW-cx;                             /* rechter Bildrand */
+  const xr=(rechts===undefined?cvW:rechts)-cx; /* rechte Grenze */
   const tx=xr>=R?0:(xr<=-R?Math.PI:Math.acos(kl(xr/R)));
   const stueck=(u,v)=>{ if(v-u>1e-4){ c.beginPath(); c.arc(cx,cy,R,u,v); c.stroke(); } };
   if(tx<=0) stueck(a1,a2);
@@ -774,15 +778,16 @@ function linienMalen(ph){
      Wellenlänge hinter der wandernden Nullstelle. Ohne dieses λ/4 lägen die Linien genau
      auf der Grenze zwischen Verdichtung und Verdünnung (rot/blau). */
   const lam=LAM(), versch=lam*((ph/(2*Math.PI))%1)+lam/4;
+  const xSchirm=Math.max(0,Math.min(cvW,X(D.e)+1));   /* hinter dem Schirm geht es nicht weiter */
   ctx.save();
   [-1,1].forEach(v=>{ if(!spAn(v)) return; const ym=v*D.d/2;
     for(let n=0;n<60;n++){
       const rB=n*lam+versch, rT=rB+lam/2;
       if(rB*sc>cvW*1.6) break;
       if(einlauf()&&rB>frontR) break;                 /* vor der Front ist noch nichts */
-      if(D.berge&&rB>0){ ctx.strokeStyle=D.fBerg; ctx.lineWidth=D.sBerg; ctx.setLineDash([]); bogen(ctx,0,ym,rB); }
+      if(D.berge&&rB>0){ ctx.strokeStyle=D.fBerg; ctx.lineWidth=D.sBerg; ctx.setLineDash([]); bogen(ctx,0,ym,rB,xSchirm); }
       if(D.taeler&&rT>0&&!(einlauf()&&rT>frontR)){ ctx.strokeStyle=D.fTal; ctx.lineWidth=D.sTal;
-        ctx.setLineDash([5,5]); bogen(ctx,0,ym,rT); ctx.setLineDash([]); } } });
+        ctx.setLineDash([5,5]); bogen(ctx,0,ym,rT,xSchirm); ctx.setLineDash([]); } } });
   ctx.restore(); }
 /* Linien gleichen Gangunterschieds sind Hyperbeln mit den Spalten als Brennpunkten */
 function hyperbel(a){

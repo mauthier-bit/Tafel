@@ -4289,7 +4289,12 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   Der **Schirmabstand e** lässt sich auch am
   **Griff auf dem Schirm** ziehen, der **Spaltabstand** an einem Spalt, **P** überall im Feld.
   **Hinter dem Schirm ist Schluss:** Wellenfeld, Ψ-Feld, Berge, Täler, Maxima und Minima hören am
-  Schirm auf – dort wird das Licht bzw. der Schall ja aufgefangen. Der Platz rechts davon gehört
+  Schirm auf – dort wird das Licht bzw. der Schall ja aufgefangen. Bei den **Kreislinien** wird
+  die Grenze **gerechnet** (der sichtbare Winkelbereich endet am Schirm) und nicht dem Clip
+  überlassen: **Safari hält sich bei großen Kreisbögen nicht an einen Rechteck-Clip** – am Mac
+  liefen dadurch die durchgezogenen Berglinien über den Schirm hinaus, auf dem iPad auch die
+  gestrichelten Täler. Nachgemessen: ohne Rechnung reichten sie bis an den Bildrand, mit Rechnung
+  enden sie am Schirm. Der Platz rechts davon gehört
   dem **Histogramm** bzw. der **Verteilung**: Der Aufbau rückt so weit nach links, dass links nur
   ein schmaler Rand von 10 px bleibt (das sind rund 1 cm mehr als zuvor), und alles, was übrig
   bleibt, liegt hinter dem Schirm.
