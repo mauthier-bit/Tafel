@@ -4303,9 +4303,11 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   lange gestrichelte Bögen sonst durch** (am Mac nicht). Die Zahl der Striche ist gedeckelt, damit
   ein Riesenkreis das Bild nicht ausbremst.
   Hinter dem **⚙** neben dem „?" stehen die **Farben** von Wellenfeld, Bergen, Tälern, Maxima,
-  Minima und Strahlen, ihre **Strichstärken**, je Linie die **Linienart** (durchgezogen oder
-  gestrichelt – voreingestellt sind Berge und Maxima durchgezogen, Täler und Minima gestrichelt)
-  und die **Deckkraft** des Feldes; die Einstellung gehört zum Bild und wird mitgespeichert und
+  Minima und Strahlen, ihre **Strichstärken**, je Linie die **Linienart** – ein **Umschalter, der
+  die Linie selbst zeigt** (durchgezogen oder gestrichelt, in ihrer eigenen Farbe); voreingestellt
+  sind Berge und Maxima durchgezogen, Täler und Minima gestrichelt –
+  und die **Deckkraft** des Feldes. Das Fenster ist **680 px breit**, damit Farbe, Linienart und
+  Strichstärke je Linie **in einer Zeile** stehen. Die Einstellung gehört zum Bild und wird mitgespeichert und
   mitgeteilt. Beim **Wellenfeld** heißen die beiden Farben **Berge** und **Täler** – „Verdichtung"
   und „Verdünnung" stimmen nur beim Schall, nicht beim Licht.
   Für alle Reiter gleich eingestellt werden **Spaltabstand** und **Spaltbreite**, dazu **Start/Pause**
