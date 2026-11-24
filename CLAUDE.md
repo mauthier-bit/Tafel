@@ -22,6 +22,11 @@ Allgemeine Regeln für alle Projekte stehen in `~/git/CLAUDE.md`.
     `buttons(host, make, cls, style)` für „Bild → Tafel“/„Kopieren“, `toast`.
   - `modus.js` → `TafelModus` (Benutzen/Bearbeiten): `init({get,set,after})` bzw. `anTafel(opt)`, `refresh()`.
     Klasse `tafelEdit` = im Benutzen-Modus ausblenden; `body.nurBenutzen`.
+  - `druck.js` → `TafelDruck`: Drucken, das auch in der Homebildschirm-App klappt (iPadOS zeigt dort
+    keinen Druckdialog, `window.print()` bleibt wirkungslos). In den Druckfunktionen steht statt
+    `window.open(…)` jetzt `TafelDruck.oeffnen(url,ziel,eigenschaften,{datei,exclude,quer})`; für Seiten,
+    die sich selbst drucken, `TafelDruck.seite(datei,{vor,nach})`, für fertiges HTML `TafelDruck.dokument(html,datei)`.
+    Außerhalb der Homebildschirm-App ändert sich nichts. jsPDF und shot.js werden bei Bedarf nachgeladen.
   - `teilen.js` → `TafelTeilen` (Zustand als Link/QR, `#t=…` deflate+base64url). Braucht **immer** zusätzlich
     `vendor/qrcode.min.js`. Link zeigt fest auf `https://mauthier-bit.github.io/Tafel/<datei>` (Groß-/Kleinschreibung zählt).
   - `lehrplan.js` → `TafelLehrplan.oeffnen(…)` (gemeinsames Auswahlfenster für Bibliotheksaufgaben, sortiert nach Titel).
@@ -36,7 +41,11 @@ Allgemeine Regeln für alle Projekte stehen in `~/git/CLAUDE.md`.
   Eine neue Fassung also **nicht blind drüberkopieren** – Anpassung nachziehen. Die Kopien unter
   `Documents/Schule` verteilt `~/git/verteile-motiontracker.sh` (die Handy-Fassung bleibt dabei außen vor).
 - Fremde Werkzeuge des Nutzers (videophysik, singmyfunction, versuchsprotokoll, geschichte) liegen
-  **unverändert** im Repo, damit eine neue Fassung einfach drüberkopiert werden kann. Werkzeuge, die aus anderen
+  **fast** unverändert im Repo, damit eine neue Fassung einfach drüberkopiert werden kann.
+  **Ausnahme seit 11/2026:** in videophysik, singmyfunction, versuchsprotokoll, messwert, motiontracker
+  und spiele/motiontrace ist der Druckweg auf `druck.js` umgestellt (eine Zeile je Druckfunktion plus
+  `<script src="druck.js">`). Beim Überschreiben mit einer neuen Fassung diese Anpassung nachziehen.
+- Werkzeuge, die aus anderen
   Projekten in `/git/` stammen und für die Tafel angepasst wurden (terme-rechner, figuren-koerper), **nicht** blind
   überschreiben – Anpassungen nachziehen.
 

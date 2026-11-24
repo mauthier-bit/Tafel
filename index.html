@@ -1841,6 +1841,7 @@
 <script src="vendor/jspdf.umd.min.js"></script>
 <script src="vendor/qrcode.min.js"></script>
 <script src="shot.js"></script>
+<script src="druck.js"></script>
 <script src="pptx.js?v=190"></script>
 <script src="speech.js?v=190"></script>
 <script src="h5p.js?v=252"></script>
@@ -7003,48 +7004,15 @@ $('seatClear').onclick=()=>{ if(!confirm('Sitzplan dieser Klasse leeren?'))retur
 /* iPadOS kennt in einer Homebildschirm-App keinen Druckdialog: window.print() bleibt dort ohne
    Wirkung (in Safari selbst geht es, am Mac auch). Deshalb wird dort dieselbe Druckvorlage als
    PDF ausgegeben und über das Teilen-Blatt weitergegeben – darin steht „Drucken". */
-const homeApp=()=>navigator.standalone===true;
+const homeApp=()=>!!(window.TafelDruck&&TafelDruck.homeApp());
 function druckAlsPdf(){ const pa=$('printArea'), h1=pa.querySelector('h1');
   const datei=pdfName(h1?h1.textContent:'Druck')+'.pdf';
-  showBusy(true,'PDF wird erstellt…');
-  setTimeout(()=>{ let pdf=null;
-    try{
-      pa.classList.remove('quer'); pa.classList.add('pdfmodus');
-      if(pa.scrollWidth>pa.clientWidth+2) pa.classList.add('quer');   /* breite Vorlagen (Sitzplan) ins Querformat */
-      const quer=pa.classList.contains('quer'), bMm=quer?267:180, hMm=quer?180:267;
-      const r0=pa.getBoundingClientRect(), mmPx=pa.clientWidth/bMm;   /* CSS-Pixel je Millimeter */
-      const S=Math.max(1.2,Math.min(2.1,Math.sqrt(30e6/Math.max(1,r0.width*r0.height))));  /* ~200 dpi, Fläche begrenzt */
-      const im=TafelShot.rasterize(pa,{scale:S,bg:'#fff'});
-      const oben=r0.top, gesamt=r0.height, seiteH=hMm*mmPx;
-      const marken=[];                                                /* saubere Trennstellen: Zeilen- und Absatzkanten */
-      pa.querySelectorAll('tr,.prow,h1,h2,.pmeta,.pfront').forEach(el=>{ const r=el.getBoundingClientRect();
-        if(r.height>0) marken.push(r.bottom-oben); });
-      marken.push(gesamt); marken.sort((a,b)=>a-b);
-      const tabs=[...pa.querySelectorAll('table')].map(t=>{ const r=t.getBoundingClientRect(), th=t.querySelector('thead');
-        const k=th?th.getBoundingClientRect():null;
-        return {a:r.top-oben, b:r.bottom-oben, ka:k?(k.top-oben):0, kb:k?(k.bottom-oben):0}; });
-      const {jsPDF}=window.jspdf; pdf=new jsPDF({orientation:quer?'l':'p',unit:'mm',format:'a4'});
-      let y=0, erste=true;
-      while(y<gesamt-0.5){
-        const tb=tabs.find(t=>t.kb>0&&y>t.kb+0.5&&y<t.b-0.5);         /* Tabelle läuft weiter → Kopfzeile wiederholen */
-        const kopfH=tb?(tb.kb-tb.ka):0, platz=Math.max(10,seiteH-kopfH);
-        let ende=Math.min(gesamt,y+platz);
-        if(ende<gesamt-0.5){ const pass=marken.filter(m=>m>y+platz*0.25&&m<=ende);
-          if(pass.length) ende=pass[pass.length-1]; }
-        if(ende<=y+1) ende=Math.min(gesamt,y+platz);
-        const kPx=Math.round(kopfH*S), iPx=Math.round((ende-y)*S);
-        const c=document.createElement('canvas'); c.width=im.canvas.width; c.height=Math.max(1,kPx+iPx);
-        const g=c.getContext('2d'); g.fillStyle='#fff'; g.fillRect(0,0,c.width,c.height);
-        if(kPx>0) g.drawImage(im.canvas,0,Math.round(tb.ka*S),c.width,kPx,0,0,c.width,kPx);
-        g.drawImage(im.canvas,0,Math.round(y*S),c.width,iPx,0,kPx,c.width,iPx);
-        if(!erste) pdf.addPage('a4',quer?'l':'p'); erste=false;
-        pdf.addImage(c.toDataURL('image/png'),'PNG',15,15,c.width/S/mmPx,c.height/S/mmPx,undefined,'FAST');   /* ohne Kompression wird das PDF riesig */
-        y=ende; }
-    }catch(err){ pdf=null; toast('PDF-Fehler: '+err.message); }
-    pa.classList.remove('pdfmodus','quer'); showBusy(false);
-    if(pdf) pdfAusgeben(pdf,datei,'Als PDF – im Teilen-Blatt steht „Drucken“'); },40); }
+  pa.classList.remove('quer'); pa.classList.add('pdfmodus');
+  if(pa.scrollWidth>pa.clientWidth+2) pa.classList.add('quer');            /* breite Vorlagen (Sitzplan) ins Querformat */
+  const quer=pa.classList.contains('quer'), fertig=()=>pa.classList.remove('pdfmodus','quer');
+  Promise.resolve(TafelDruck.element(pa,{datei:datei,quer:quer})).then(fertig,fertig); }
 function doPrint(html,alsPdf){ $('printArea').innerHTML=html; closeMarkMenu(); closeGradeDlg();
-  if(alsPdf||homeApp()){ if(window.jspdf&&window.TafelShot) druckAlsPdf();
+  if(alsPdf||homeApp()){ if(window.TafelDruck&&window.TafelShot) druckAlsPdf();
     else toast(alsPdf?'PDF-Bibliothek fehlt':'Im Homebildschirm-Programm nicht möglich – die Tafel dafür in Safari öffnen'); return; }
   if(typeof window.print!=='function'){ toast('Drucken wird hier nicht unterstützt'); return; }
   setTimeout(()=>window.print(),60); }

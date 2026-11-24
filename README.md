@@ -567,7 +567,7 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
       bleibt in einer Homebildschirm-App wirkungslos (in Safari und am Mac geht es). Die Tafel
       erkennt diesen Fall (`navigator.standalone`) und gibt bei **🖨 Drucken** automatisch dasselbe
       PDF aus; im Teilen-Blatt steht „Drucken". Gilt für Klassenliste, Stundenplan, Sitzplan und
-      Dienstpläne.
+      Dienstpläne – und über `druck.js` für **alle Werkzeuge mit Druckknopf** (siehe unten).
     - Alle Ausdrucke (Klassenliste, Sitzplan, Dienstpläne) tragen im Kopf das **aktuelle Schuljahr**
       (z. B. „Schuljahr 2026/27"), ermittelt aus dem Ferienkalender: ab Beginn der Sommerferien gilt
       schon das neue Schuljahr.
@@ -5014,6 +5014,7 @@ zeitleiste.html       ← Zeitleiste / Timeline
 h5p.js                ← H5P-Player für lokale .h5p-Dateien (offline)
 pptx.js               ← einfacher PPTX-Renderer (Folien → Bilder, offline)
 shot.js               ← Werkzeug als Bild: auf die Tafel legen / in die Zwischenablage kopieren
+druck.js              ← Drucken im Homebildschirm-Programm (iPadOS): dieselbe Vorlage als PDF
 modus.js              ← Umschalter „Benutzen ↔ Bearbeiten" für die Lernwerkzeuge
 manifest.webmanifest  ← PWA-Manifest
 sw.js                 ← Service Worker (Offline-Cache)
@@ -5037,6 +5038,36 @@ Seite ab, dort war also vorher kein Symbol zu sehen. Die runden Ecken macht iPad
 PNG sind deshalb randfüllend. Für Browser und Android bleiben die SVG-Fassungen (`icon.svg`
 abgerundet, `icon-maskable.svg` randfüllend mit Sicherheitszone); die PNG sind aus
 `icon-apple.svg` gerendert.
+
+## Drucken (und warum am iPad ein PDF daraus wird)
+
+In einer **Homebildschirm-App** blendet iPadOS **keinen Druckdialog** ein: `window.print()`
+läuft dort wirkungslos ins Leere, ohne Fehlermeldung. In Safari selbst und am Mac wird ganz
+normal gedruckt. Damit das Drucken trotzdem überall klappt, gibt es den gemeinsamen Baustein
+**`druck.js`** (`window.TafelDruck`):
+
+- `TafelDruck.homeApp()` – läuft die Seite als Homebildschirm-App (`navigator.standalone`)?
+- `TafelDruck.oeffnen(url,ziel,eigenschaften,{datei,exclude,quer})` – **Ersatz für `window.open`**
+  in den Druckfunktionen: außerhalb der Homebildschirm-App ganz normales `window.open`, darin
+  wird die geschriebene Seite gesammelt und beim `document.close()` als PDF ausgegeben.
+- `TafelDruck.dokument(html,datei)` – eine fertige HTML-Seite als PDF.
+- `TafelDruck.seite(datei,{vor,nach})` – die **eigene** Seite als PDF; dafür werden ihre
+  `@media print`-Regeln kurz regulär angewandt, damit das PDF wie der Ausdruck aussieht
+  (`vor`/`nach` für Werkzeuge, die ihre Zeichenflächen im Druck-Layout neu zeichnen müssen).
+- `TafelDruck.element(el,{datei,quer})` und `TafelDruck.bild(canvasOderUrl,datei)`.
+
+Technisch: `TafelShot.rasterize` macht ein Bild der Vorlage (bei einer reinen Bildvorlage wird
+das Bild direkt genommen), das an Zeilenkanten (`tr`, `.prow`, Absätze …) auf **A4**-Seiten
+geschnitten wird – läuft eine Tabelle weiter, kommt ihre Kopfzeile auf jede Folgeseite. Breite
+Vorlagen landen im **Querformat**. Ausgegeben wird über das **Teilen-Blatt** (darin steht
+„Drucken", dazu AirDrop, Mail, „In Dateien sichern"), sonst als Download. jsPDF und `shot.js`
+lädt `druck.js` erst, wenn wirklich ein PDF gebraucht wird. Wichtig beim Einbauen: `addImage`
+braucht `'FAST'` als Kompression, sonst wird das PDF zehnmal so groß.
+
+Umgestellt sind damit: Tafel (Klassenliste, Stundenplan, Sitzplan, Dienstpläne), Lückentext,
+Zuordnen, Reihenfolge, Glossar, Kreuzworträtsel, Buchstabengitter, Wortwolke, Zeitleiste,
+Diagramm, Periodensystem, Nuklidkarte, Term-Umformer, Ableitungen, Messwerte,
+Versuchsprotokoll, Videophysik, Audio Physik und MotionTrace.
 
 ## Offline
 
