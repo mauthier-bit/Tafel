@@ -517,7 +517,8 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     Audiodatei geladen.
     „Sticker entfernen" lässt einzelne Sticker per Tipp wieder wegnehmen, „Alle entfernen" leert die
     Sammlung. Schalter **„Automatisch bei Ruhe"**: siehe Lärmampel.
-  - **Suchfeld** rechts neben „Drucken“ (bricht auf schmalen Bildschirmen in die nächste Zeile um): filtert die Tabelle beim Tippen (Groß-/Kleinschreibung und Umlaute egal, „weiss“ findet „Weiß“), × leert die Suche. Die Tabelle passt ihre Höhe an das Fenster an (auch bei eingeblendeten Kategorien), sodass immer bis zur letzten Zeile gescrollt werden kann. Kompakte Knöpfe und Reiter; lange Kategorienamen in der Kopfzeile brechen um, damit die Tabelle auch im schmalen Fenster (680 px) ohne seitliches Scrollen passt. Vor den Namen steht eine **Nummernspalte** (fortlaufend in der aktuellen Sortierung; beim Suchen behält jeder Name seine Nummer; bleibt wie der Name beim seitlichen Scrollen stehen). Auch der Ausdruck hat die Spalte „Nr.“ (Kästchenliste jetzt mit 24 Spalten, damit sie auf A4 passt).
+  - **Knopfleiste** über der Tabelle: **＋ Name**, 👁 Anzeigen, Kategorien, 🧹 (Zurücksetzen, nur Symbol), 🖨 Drucken, 📄 PDF und das Suchfeld, das den Rest der Zeile ausfüllt. **＋ Name** ergänzt einzelne Namen (mehrere mit Semikolon getrennt) in **derselben** Klassenliste wie das Feld unter „Projekt & Klasse"; schon vorhandene Namen werden nicht doppelt aufgenommen.
+  - **Suchfeld** am Ende derselben Zeile (bricht auf schmalen Bildschirmen in die nächste Zeile um): filtert die Tabelle beim Tippen (Groß-/Kleinschreibung und Umlaute egal, „weiss“ findet „Weiß“), × leert die Suche. Die Tabelle passt ihre Höhe an das Fenster an (auch bei eingeblendeten Kategorien), sodass immer bis zur letzten Zeile gescrollt werden kann. Kompakte Knöpfe und Reiter; lange Kategorienamen in der Kopfzeile brechen um, damit die Tabelle auch im schmalen Fenster (680 px) ohne seitliches Scrollen passt. Vor den Namen steht eine **Nummernspalte** (fortlaufend in der aktuellen Sortierung; beim Suchen behält jeder Name seine Nummer; bleibt wie der Name beim seitlichen Scrollen stehen). Auch der Ausdruck hat die Spalte „Nr.“ (Kästchenliste jetzt mit 24 Spalten, damit sie auf A4 passt).
   - **Klassenliste:** die Namen der aktiven Klasse **alphabetisch** in einer **scrollbaren Tabelle**
     (Kopfzeile und Namensspalte bleiben beim Scrollen stehen); dahinter je **Kategorie eine Spalte**.
     Die Tabelle nutzt bis zu **86 % der Bildschirmhöhe**, damit möglichst viele Namen auf einmal
@@ -558,6 +559,15 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
       Sortierung, mit Klassenname und Datum (Noten mit Art und Datum). Bei verborgener Klassenliste
       wird nur die Namensliste gedruckt – wahlweise **nur mit Zeilen** oder mit Zeilen **und ca. 5 mm
       breiten Kästchenspalten** (26 Spalten, zum Abhaken).
+    - **📄 PDF:** dieselbe Vorlage als PDF-Datei – auf dem iPad über das **Teilen-Blatt** (AirDrop,
+      Mail, „In Dateien sichern", **Drucken**), sonst als Download. A4, bei breiten Vorlagen
+      (Sitzplan) automatisch Querformat; Tabellen werden an Zeilenkanten umbrochen und die
+      Kopfzeile auf jeder Seite wiederholt.
+    - **Homebildschirm-Programm (iPadOS):** dort gibt es **keinen Druckdialog** – `window.print()`
+      bleibt in einer Homebildschirm-App wirkungslos (in Safari und am Mac geht es). Die Tafel
+      erkennt diesen Fall (`navigator.standalone`) und gibt bei **🖨 Drucken** automatisch dasselbe
+      PDF aus; im Teilen-Blatt steht „Drucken". Gilt für Klassenliste, Stundenplan, Sitzplan und
+      Dienstpläne.
     - Alle Ausdrucke (Klassenliste, Sitzplan, Dienstpläne) tragen im Kopf das **aktuelle Schuljahr**
       (z. B. „Schuljahr 2026/27"), ermittelt aus dem Ferienkalender: ab Beginn der Sommerferien gilt
       schon das neue Schuljahr.
