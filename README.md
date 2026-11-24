@@ -5064,6 +5064,12 @@ Vorlagen landen im **Querformat**. Ausgegeben wird über das **Teilen-Blatt** (d
 lädt `druck.js` erst, wenn wirklich ein PDF gebraucht wird. Wichtig beim Einbauen: `addImage`
 braucht `'FAST'` als Kompression, sonst wird das PDF zehnmal so groß.
 
+Nebenbei behoben: In Kreuzworträtsel, Wortwolke, Periodensystem, Zeitleiste, Buchstabengitter
+und Nuklidkarte landete bisher nicht das aufbereitete Bild im Ausdruck – `TafelShot.rasterize`
+liefert `{canvas,w,h}`, der Code nahm aber das Objekt selbst. Die Nuklidkarte druckte dadurch
+`[object Object]` statt der Karte, die anderen fielen still auf die nackte Zeichenfläche in
+Bildschirmauflösung zurück. Jetzt kommt überall das rasterisierte Bild (2,5-fach) aufs Blatt.
+
 Umgestellt sind damit: Tafel (Klassenliste, Stundenplan, Sitzplan, Dienstpläne), Lückentext,
 Zuordnen, Reihenfolge, Glossar, Kreuzworträtsel, Buchstabengitter, Wortwolke, Zeitleiste,
 Diagramm, Periodensystem, Nuklidkarte, Term-Umformer, Ableitungen, Messwerte,
