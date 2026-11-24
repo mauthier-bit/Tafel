@@ -5058,8 +5058,15 @@ normal gedruckt. Damit das Drucken trotzdem überall klappt, gibt es den gemeins
 
 Technisch: `TafelShot.rasterize` macht ein Bild der Vorlage (bei einer reinen Bildvorlage wird
 das Bild direkt genommen), das an Zeilenkanten (`tr`, `.prow`, Absätze …) auf **A4**-Seiten
-geschnitten wird – läuft eine Tabelle weiter, kommt ihre Kopfzeile auf jede Folgeseite. Breite
-Vorlagen landen im **Querformat**. Ausgegeben wird über das **Teilen-Blatt** (darin steht
+geschnitten wird – läuft eine Tabelle weiter, kommt ihre Kopfzeile auf jede Folgeseite.
+**Ausrichtung und Rand kommen aus der `@page`-Regel der Vorlage** (`size: A4 landscape`,
+`margin: 10mm` …): die Vorlage wird genau so breit gerendert, wie die Seite Platz hat, und
+genau so ins PDF gesetzt. Dadurch bleiben **Millimeter Millimeter** – wichtig für maßstäbliche
+Ausdrucke wie das Stroboskopbild der Videophysik (Bildbreite in mm, 5-cm-Kontrollbalken).
+Gemessen im fertigen PDF: Kontrollbalken 49,9 mm statt 50 mm, Bild 199,8 × 119,9 mm statt
+200 × 120 mm (0,2 % aus der Pixelrundung, Seitenverhältnis unverändert). Ist eine Vorlage
+breiter als die Seite, wird sie als Ganzes gleichmäßig verkleinert – nie abgeschnitten.
+Ohne `@page` gilt Hochformat mit 15 mm Rand, breite Vorlagen kommen ins **Querformat**. Ausgegeben wird über das **Teilen-Blatt** (darin steht
 „Drucken", dazu AirDrop, Mail, „In Dateien sichern"), sonst als Download. jsPDF und `shot.js`
 lädt `druck.js` erst, wenn wirklich ein PDF gebraucht wird. Wichtig beim Einbauen: `addImage`
 braucht `'FAST'` als Kompression, sonst wird das PDF zehnmal so groß.
@@ -5073,13 +5080,7 @@ Bildschirmauflösung zurück. Jetzt kommt überall das rasterisierte Bild (2,5-f
 Umgestellt sind damit: Tafel (Klassenliste, Stundenplan, Sitzplan, Dienstpläne), Lückentext,
 Zuordnen, Reihenfolge, Glossar, Kreuzworträtsel, Buchstabengitter, Wortwolke, Zeitleiste,
 Diagramm, Periodensystem, Nuklidkarte, Term-Umformer, Ableitungen, Messwerte,
-Versuchsprotokoll, Audio Physik und MotionTrace.
-
-**Nicht** umgestellt ist **Videophysik**: dessen Druckfenster ist bewusst maßstäblich gebaut
-(Bildbreite in Millimetern, 5-cm-Kontrollbalken, A4 quer mit 277 mm Inhaltsbreite). Der obige
-Weg hat die Vorlage auf 180 mm gerendert und damit das Bild abgeschnitten – dort bleibt es
-vorerst beim normalen Druckfenster, das in der Homebildschirm-App nicht erscheint (dafür die
-Seite in Safari öffnen).
+Versuchsprotokoll, Videophysik, Audio Physik und MotionTrace.
 
 ## Offline
 

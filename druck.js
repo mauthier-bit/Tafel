@@ -21,6 +21,11 @@ async function werkzeuge(){ if(!window.TafelShot) await skript(BASIS+'shot.js');
   if(!window.jspdf) await skript(BASIS+'vendor/jspdf.umd.min.js'); }
 function sagen(t){ try{ if(window.TafelShot&&TafelShot.toast){ TafelShot.toast(t); return; } }catch(e){}
   try{ if(window.parent!==window) return; }catch(e){} }
+/* Auf das nächste Bild warten – mit Zeitgrenze, damit der Weg nicht stehenbleibt,
+   wenn das Fenster im Hintergrund liegt (dort liefert requestAnimationFrame nichts). */
+function naechstesBild(){ return new Promise(r=>{ let fertig=false;
+  const ok=()=>{ if(!fertig){ fertig=true; r(); } };
+  requestAnimationFrame(()=>requestAnimationFrame(ok)); setTimeout(ok,150); }); }
 function warten(an,text){ let el=document.getElementById('tafelDruckWarte');
   if(an){ if(!el){ el=document.createElement('div'); el.id='tafelDruckWarte';
       el.style.cssText='position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.72);font:600 15px -apple-system,BlinkMacSystemFont,sans-serif;color:#1f2430;';
@@ -47,8 +52,20 @@ async function ausgeben(pdf,datei){
   catch(e){ if(e&&e.name==='AbortError') return; }
   pdf.save(datei); sagen('Als PDF gesichert'); }
 
+/* ---- Seitenmaß: Ausrichtung und Rand kommen, wenn vorhanden, aus der @page-Regel der Vorlage.
+       Nur so bleiben Millimeter der Vorlage auch im PDF Millimeter (Maßstab, Kontrollbalken). ---- */
+function seitenMass(html,opt){ opt=opt||{};
+  let quer=!!opt.quer, rand=(opt.rand!==undefined)?opt.rand:15, ausPage=false;
+  const m=/@page[^{]*\{([^}]*)\}/i.exec(html||'');
+  if(m){ const t=m[1];
+    if(/landscape/i.test(t)){ quer=true; ausPage=true; } else if(/portrait/i.test(t)){ quer=false; ausPage=true; }
+    const r=/margin\s*:\s*([\d.]+)\s*mm/i.exec(t);
+    if(r){ rand=parseFloat(r[1]); ausPage=true; } }
+  return {quer:quer, rand:rand, bMm:(quer?297:210)-2*rand, hMm:(quer?210:297)-2*rand, ausPage:ausPage}; }
+
 /* ---- Bild der Vorlage in A4-Seiten schneiden: an Zeilenkanten, Tabellenkopf wiederholen ---- */
-function bauen(im,wurzel,r0,S,mmPx,seiteH,quer){
+function bauen(im,wurzel,r0,S,mmPx,sm){
+  const quer=sm.quer, seiteH=sm.hMm*mmPx;
   const oben=r0.top, gesamt=r0.height;
   const marken=[];
   wurzel.querySelectorAll('tr,.prow,h1,h2,h3,p,li,.pmeta,.pfront,figure,img,table').forEach(el=>{
@@ -72,7 +89,7 @@ function bauen(im,wurzel,r0,S,mmPx,seiteH,quer){
     if(kPx>0) g.drawImage(im.canvas,0,Math.round(tb.ka*S),c.width,kPx,0,0,c.width,kPx);
     g.drawImage(im.canvas,0,Math.round(y*S),c.width,iPx,0,kPx,c.width,iPx);
     if(!erste) pdf.addPage('a4',quer?'l':'p'); erste=false;
-    pdf.addImage(c.toDataURL('image/png'),'PNG',15,15,c.width/S/mmPx,c.height/S/mmPx,undefined,'FAST');  /* ohne Kompression wird das PDF riesig */
+    pdf.addImage(c.toDataURL('image/png'),'PNG',sm.rand,sm.rand,c.width/S/mmPx,c.height/S/mmPx,undefined,'FAST');  /* ohne Kompression wird das PDF riesig */
     y=ende; }
   return pdf; }
 
@@ -83,12 +100,12 @@ async function element(el,opt){ opt=opt||{};
   try{ await werkzeuge();
     const r0=el.getBoundingClientRect();
     if(r0.width<2||r0.height<2) throw new Error('nichts zu drucken');
-    const quer=(opt.quer!==undefined)?opt.quer:(r0.width>r0.height);
-    const bMm=quer?267:180, hMm=quer?180:267, mmPx=r0.width/bMm;
+    const sm=opt.sm||seitenMass('',{quer:(opt.quer!==undefined)?opt.quer:(r0.width>r0.height)});
+    const mmPx=r0.width/sm.bMm;
     const S=Math.max(1,Math.min(2.1,Math.sqrt(30e6/Math.max(1,r0.width*r0.height))));
     const aus='#tafelDruckWarte'+(opt.exclude?(','+opt.exclude):'');      /* der Warte-Hinweis gehört nicht aufs Blatt */
     const im=TafelShot.rasterize(el,{scale:S,bg:opt.bg||'#fff',exclude:aus});
-    const pdf=bauen(im,el,r0,S,mmPx,hMm*mmPx,quer);
+    const pdf=bauen(im,el,r0,S,mmPx,sm);
     warten(false);
     await ausgeben(pdf,datei); return true; }
   catch(e){ warten(false); sagen('PDF nicht möglich: '+(e&&e.message||e)); return false; } }
@@ -100,20 +117,20 @@ async function bild(quelle,datei,opt){ opt=opt||{}; warten(true);
     const src=(typeof q==='string')?q:q.toDataURL('image/png');
     const b=new Image(); b.src=src;
     await (b.decode?b.decode():new Promise(r=>{ b.onload=r; b.onerror=r; }));
-    const quer=(opt.quer!==undefined)?opt.quer:(b.naturalWidth>b.naturalHeight);
-    const bMm=quer?267:180, hMm=quer?180:267;
-    const f=Math.min(bMm/b.naturalWidth,hMm/b.naturalHeight), w=b.naturalWidth*f, h=b.naturalHeight*f;
-    const {jsPDF}=window.jspdf, pdf=new jsPDF({orientation:quer?'l':'p',unit:'mm',format:'a4'});
-    pdf.addImage(src,/image\/jpe?g/.test(src.slice(0,30))?'JPEG':'PNG',15+(bMm-w)/2,15+(hMm-h)/2,w,h,undefined,'FAST');
+    const sm=opt.sm||seitenMass('',{quer:(opt.quer!==undefined)?opt.quer:(b.naturalWidth>b.naturalHeight)});
+    const f=Math.min(sm.bMm/b.naturalWidth,sm.hMm/b.naturalHeight), w=b.naturalWidth*f, h=b.naturalHeight*f;
+    const {jsPDF}=window.jspdf, pdf=new jsPDF({orientation:sm.quer?'l':'p',unit:'mm',format:'a4'});
+    pdf.addImage(src,/image\/jpe?g/.test(src.slice(0,30))?'JPEG':'PNG',sm.rand+(sm.bMm-w)/2,sm.rand+(sm.hMm-h)/2,w,h,undefined,'FAST');
     warten(false); await ausgeben(pdf,datei||'druck.pdf'); return true; }
   catch(e){ warten(false); sagen('PDF nicht möglich: '+(e&&e.message||e)); return false; } }
 
 /* ---- Eine fertige HTML-Seite (bisher window.open(…)) als PDF ---- */
 async function dokument(html,datei,opt){ opt=opt||{};
   warten(true);
+  const sm=seitenMass(html,opt);                                     /* Ausrichtung und Rand wie in der Vorlage */
   const rahmen=document.createElement('iframe');
   rahmen.setAttribute('aria-hidden','true');
-  rahmen.style.cssText='position:fixed;left:-30000px;top:0;border:0;background:#fff;z-index:-1;width:'+(opt.quer?267:180)+'mm;height:400px;';
+  rahmen.style.cssText='position:fixed;left:-30000px;top:0;border:0;background:#fff;z-index:-1;width:'+sm.bMm+'mm;height:400px;';
   document.body.appendChild(rahmen);
   try{ await werkzeuge();
     const d=rahmen.contentDocument; d.open(); d.write(html); d.close();
@@ -122,19 +139,23 @@ async function dokument(html,datei,opt){ opt=opt||{};
     const bilder=[...d.images].map(b=>b.complete?null:new Promise(r=>{ b.addEventListener('load',r,{once:true}); b.addEventListener('error',r,{once:true}); setTimeout(r,2500); })).filter(Boolean);
     if(bilder.length) await Promise.all(bilder);
     regelnAn(d,druckRegeln(d));                                     /* Druckknöpfe u. Ä. der Vorlage ausblenden */
-    await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+    await naechstesBild();
     /* Besteht die Vorlage nur aus einem Bild, kommt es in voller Auflösung ins PDF */
     const nur=[...d.body.children].filter(e=>e.tagName!=='STYLE'&&e.tagName!=='SCRIPT'&&getComputedStyle(e).display!=='none');
     if(nur.length===1&&nur[0].tagName==='IMG'&&nur[0].src){ const q=nur[0].src; rahmen.remove(); warten(false);
-      return await bild(q,datei||'druck.pdf',{quer:opt.quer}); }
+      return await bild(q,datei||'druck.pdf',{sm:sm}); }
+    /* Ist die Vorlage breiter als die Seite, wird sie als Ganzes verkleinert – nie abgeschnitten */
+    const breit=Math.max(d.documentElement.scrollWidth, d.body?d.body.scrollWidth:0);
+    if(breit>rahmen.clientWidth+2){ rahmen.style.width=breit+'px';
+      await naechstesBild(); }
     rahmen.style.height=Math.max(400,d.documentElement.scrollHeight+40)+'px';
-    await new Promise(r=>requestAnimationFrame(r));
+    await naechstesBild();
     const ziel=d.body;
     const r0=ziel.getBoundingClientRect();
-    const bMm=opt.quer?267:180, hMm=opt.quer?180:267, mmPx=r0.width/bMm;
+    const mmPx=r0.width/sm.bMm;                                      /* Millimeter der Vorlage bleiben Millimeter */
     const S=Math.max(1,Math.min(2.1,Math.sqrt(30e6/Math.max(1,r0.width*r0.height))));
     const im=TafelShot.rasterize(ziel,{scale:S,bg:'#fff',exclude:opt.exclude||null});
-    const pdf=bauen(im,ziel,r0,S,mmPx,hMm*mmPx,!!opt.quer);
+    const pdf=bauen(im,ziel,r0,S,mmPx,sm);
     rahmen.remove(); warten(false);
     await ausgeben(pdf,datei||'druck.pdf'); return true; }
   catch(e){ rahmen.remove(); warten(false); sagen('PDF nicht möglich: '+(e&&e.message||e)); return false; } }
@@ -144,8 +165,8 @@ async function dokument(html,datei,opt){ opt=opt||{};
 async function seite(datei,opt){ opt=opt||{};
   const st=regelnAn(document,druckRegeln(document));
   const el=(opt.el&&document.querySelector(opt.el))||document.body;
-  await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
-  if(opt.vor){ try{ opt.vor(); }catch(e){} await new Promise(r=>requestAnimationFrame(r)); }
+  await naechstesBild();
+  if(opt.vor){ try{ opt.vor(); }catch(e){} await naechstesBild(); }
   let ok=false;
   try{ ok=await element(el,{datei:datei||'druck.pdf',quer:opt.quer,bg:opt.bg,exclude:opt.exclude}); }
   finally{ st.remove(); if(opt.nach){ try{ opt.nach(); }catch(e){} } }
