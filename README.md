@@ -5073,7 +5073,13 @@ Bildschirmauflösung zurück. Jetzt kommt überall das rasterisierte Bild (2,5-f
 Umgestellt sind damit: Tafel (Klassenliste, Stundenplan, Sitzplan, Dienstpläne), Lückentext,
 Zuordnen, Reihenfolge, Glossar, Kreuzworträtsel, Buchstabengitter, Wortwolke, Zeitleiste,
 Diagramm, Periodensystem, Nuklidkarte, Term-Umformer, Ableitungen, Messwerte,
-Versuchsprotokoll, Videophysik, Audio Physik und MotionTrace.
+Versuchsprotokoll, Audio Physik und MotionTrace.
+
+**Nicht** umgestellt ist **Videophysik**: dessen Druckfenster ist bewusst maßstäblich gebaut
+(Bildbreite in Millimetern, 5-cm-Kontrollbalken, A4 quer mit 277 mm Inhaltsbreite). Der obige
+Weg hat die Vorlage auf 180 mm gerendert und damit das Bild abgeschnitten – dort bleibt es
+vorerst beim normalen Druckfenster, das in der Homebildschirm-App nicht erscheint (dafür die
+Seite in Safari öffnen).
 
 ## Offline
 
