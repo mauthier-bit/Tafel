@@ -54,6 +54,11 @@ async function ausgeben(pdf,datei){
 
 /* ---- Seitenmaß: Ausrichtung und Rand kommen, wenn vorhanden, aus der @page-Regel der Vorlage.
        Nur so bleiben Millimeter der Vorlage auch im PDF Millimeter (Maßstab, Kontrollbalken). ---- */
+function pageRegel(d){ let t='';                                    /* @page-Regeln eines Dokuments – auch die in @media print */
+  const durch=rs=>{ if(!rs) return;
+    for(const r of [...rs]){ if(r.type===6||/^@page/i.test(r.cssText||'')) t+=r.cssText+'\n'; else if(r.cssRules) durch(r.cssRules); } };
+  for(const ss of [...d.styleSheets]){ let rs=null; try{ rs=ss.cssRules; }catch(e){ continue; } durch(rs); }
+  return t; }
 function seitenMass(html,opt){ opt=opt||{};
   let quer=!!opt.quer, rand=(opt.rand!==undefined)?opt.rand:15, ausPage=false;
   const m=/@page[^{]*\{([^}]*)\}/i.exec(html||'');
@@ -100,7 +105,7 @@ async function element(el,opt){ opt=opt||{};
   try{ await werkzeuge();
     const r0=el.getBoundingClientRect();
     if(r0.width<2||r0.height<2) throw new Error('nichts zu drucken');
-    const sm=opt.sm||seitenMass('',{quer:(opt.quer!==undefined)?opt.quer:(r0.width>r0.height)});
+    const sm=opt.sm||seitenMass(pageRegel(el.ownerDocument||document),{quer:(opt.quer!==undefined)?opt.quer:(r0.width>r0.height)});
     const mmPx=r0.width/sm.bMm;
     const S=Math.max(1,Math.min(2.1,Math.sqrt(30e6/Math.max(1,r0.width*r0.height))));
     const aus='#tafelDruckWarte'+(opt.exclude?(','+opt.exclude):'');      /* der Warte-Hinweis gehört nicht aufs Blatt */
@@ -167,8 +172,10 @@ async function seite(datei,opt){ opt=opt||{};
   const el=(opt.el&&document.querySelector(opt.el))||document.body;
   await naechstesBild();
   if(opt.vor){ try{ opt.vor(); }catch(e){} await naechstesBild(); }
+  const r=el.getBoundingClientRect();
+  const sm=seitenMass(pageRegel(document),{quer:(opt.quer!==undefined)?opt.quer:(r.width>r.height)});
   let ok=false;
-  try{ ok=await element(el,{datei:datei||'druck.pdf',quer:opt.quer,bg:opt.bg,exclude:opt.exclude}); }
+  try{ ok=await element(el,{datei:datei||'druck.pdf',sm:sm,bg:opt.bg,exclude:opt.exclude}); }
   finally{ st.remove(); if(opt.nach){ try{ opt.nach(); }catch(e){} } }
   return ok; }
 

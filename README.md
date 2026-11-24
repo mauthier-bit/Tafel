@@ -5060,8 +5060,9 @@ Technisch: `TafelShot.rasterize` macht ein Bild der Vorlage (bei einer reinen Bi
 das Bild direkt genommen), das an Zeilenkanten (`tr`, `.prow`, Absätze …) auf **A4**-Seiten
 geschnitten wird – läuft eine Tabelle weiter, kommt ihre Kopfzeile auf jede Folgeseite.
 **Ausrichtung und Rand kommen aus der `@page`-Regel der Vorlage** (`size: A4 landscape`,
-`margin: 10mm` …): die Vorlage wird genau so breit gerendert, wie die Seite Platz hat, und
-genau so ins PDF gesetzt. Dadurch bleiben **Millimeter Millimeter** – wichtig für maßstäbliche
+`margin: 10mm` …) – bei Werkzeugen, die ihre eigene Seite drucken, aus deren `@page`-Regel
+(auch wenn sie in `@media print` steckt): die Vorlage wird genau so breit gerendert, wie die
+Seite Platz hat, und genau so ins PDF gesetzt. Dadurch bleiben **Millimeter Millimeter** – wichtig für maßstäbliche
 Ausdrucke wie das Stroboskopbild der Videophysik (Bildbreite in mm, 5-cm-Kontrollbalken).
 Gemessen im fertigen PDF: Kontrollbalken 49,9 mm statt 50 mm, Bild 199,8 × 119,9 mm statt
 200 × 120 mm (0,2 % aus der Pixelrundung, Seitenverhältnis unverändert). Ist eine Vorlage

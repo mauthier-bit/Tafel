@@ -50,7 +50,10 @@ Allgemeine Regeln für alle Projekte stehen in `~/git/CLAUDE.md`.
   **Maßstab beachten:** das Druckfenster der Videophysik rechnet in Millimetern (Bildbreite,
   5-cm-Kontrollbalken, `@page size:A4 landscape; margin:10mm`, 277 mm Inhalt). `druck.js` liest
   deshalb `@page` aus der Vorlage und rendert genau in dieser Breite – wer daran etwas ändert,
-  muss den Kontrollbalken im PDF nachmessen (Soll 50 mm).
+  muss den Kontrollbalken im PDF nachmessen (Soll 50 mm). Dasselbe gilt für Seiten, die sich
+  selbst drucken (`TafelDruck.seite`, `TafelDruck.element`): dort kommt das Seitenmaß aus der
+  `@page`-Regel des Dokuments, auch wenn sie in `@media print` steht (index.html: 14 mm,
+  ableitungen.html: 8 mm, A4 hoch). Der Druckbereich `#printArea` ist deshalb 182 mm breit.
 - Werkzeuge, die aus anderen
   Projekten in `/git/` stammen und für die Tafel angepasst wurden (terme-rechner, figuren-koerper), **nicht** blind
   überschreiben – Anpassungen nachziehen.
