@@ -42,11 +42,12 @@ Allgemeine Regeln für alle Projekte stehen in `~/git/CLAUDE.md`.
   `Documents/Schule` verteilt `~/git/verteile-motiontracker.sh` (die Handy-Fassung bleibt dabei außen vor).
 - Fremde Werkzeuge des Nutzers (videophysik, singmyfunction, versuchsprotokoll, geschichte) liegen
   **fast** unverändert im Repo, damit eine neue Fassung einfach drüberkopiert werden kann.
-  **Ausnahme seit 11/2026:** in videophysik, singmyfunction, versuchsprotokoll, messwert, motiontracker
+  **Ausnahme seit 11/2026:** in singmyfunction, versuchsprotokoll, messwert, motiontracker
   und spiele/motiontrace ist der Druckweg auf `druck.js` umgestellt (eine Zeile je Druckfunktion plus
   `<script src="druck.js">`). Beim Überschreiben mit einer neuen Fassung diese Anpassung nachziehen.
-  Dieselbe Anpassung steckt im eigenen Repo `mauthier-bit/Videophysik` (dort heißt die Datei
-  `VideoPhysik.html`, dazu liegen `druck.js`, `shot.js` und `vendor/jspdf.umd.min.js` im Repo).
+  **videophysik ist bewusst unverändert**: sein Druckfenster ist maßstäblich (Bildbreite in mm,
+  5-cm-Kontrollbalken, A4 quer, 277 mm Inhalt); der PDF-Weg hat auf 180 mm gerendert und das Bild
+  abgeschnitten. Erst wieder umstellen, wenn `druck.js` die Millimeter der Vorlage (`@page`) erhält.
 - Werkzeuge, die aus anderen
   Projekten in `/git/` stammen und für die Tafel angepasst wurden (terme-rechner, figuren-koerper), **nicht** blind
   überschreiben – Anpassungen nachziehen.
