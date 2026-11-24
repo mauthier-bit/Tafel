@@ -45,6 +45,8 @@ Allgemeine Regeln für alle Projekte stehen in `~/git/CLAUDE.md`.
   **Ausnahme seit 11/2026:** in videophysik, singmyfunction, versuchsprotokoll, messwert, motiontracker
   und spiele/motiontrace ist der Druckweg auf `druck.js` umgestellt (eine Zeile je Druckfunktion plus
   `<script src="druck.js">`). Beim Überschreiben mit einer neuen Fassung diese Anpassung nachziehen.
+  Dieselbe Anpassung steckt im eigenen Repo `mauthier-bit/Videophysik` (dort heißt die Datei
+  `VideoPhysik.html`, dazu liegen `druck.js`, `shot.js` und `vendor/jspdf.umd.min.js` im Repo).
 - Werkzeuge, die aus anderen
   Projekten in `/git/` stammen und für die Tafel angepasst wurden (terme-rechner, figuren-koerper), **nicht** blind
   überschreiben – Anpassungen nachziehen.
