@@ -14,6 +14,47 @@ const CS=el=>((el.ownerDocument&&el.ownerDocument.defaultView)||window).getCompu
 const fontOf=cs=>(cs.fontStyle||'normal')+' '+(cs.fontWeight||'400')+' '+cs.fontSize+' '+(cs.fontFamily||'sans-serif');
 function hasOverline(el){ for(let k=0;el&&k<3;k++,el=el.parentElement){ const d=CS(el).textDecorationLine||CS(el).textDecoration||''; if(/overline/.test(d)) return true; } return false; }
 
+/* Einfache lineare Verlaeufe als Hintergrund (auch wiederholend) – damit z. B. der
+   zentimeterweise gestreifte Kontrollbalken der Videophysik im Bild erhalten bleibt.
+   Alles, was nicht sicher erkannt wird, bleibt wie bisher ungezeichnet. */
+function verlauf(g,cs,r,rad,rrect){
+  try{
+    const bi=(cs.backgroundImage||'').trim();
+    const m=/^(repeating-)?linear-gradient\((.*)\)$/is.exec(bi);
+    if(!m) return false;
+    const wied=!!m[1], teile=[]; let tiefe=0, akt='';
+    for(const ch of m[2]){ if(ch==='(') tiefe++; else if(ch===')') tiefe--;
+      if(ch===','&&tiefe===0){ teile.push(akt.trim()); akt=''; } else akt+=ch; }
+    teile.push(akt.trim());
+    let richtung='to bottom';
+    if(/^(to\s|[-\d.]+(deg|turn|rad))/i.test(teile[0])) richtung=teile.shift().toLowerCase();
+    const waag=/to (right|left)/.test(richtung)||/\b(90|270)deg/.test(richtung);
+    const laenge=Math.max(1, waag?r.width:r.height);
+    /* Positionen kommen auch in mm/cm/pt/% – getComputedStyle rechnet sie hier nicht in px um */
+    const inPx=(wert,einheit)=>{ const v=parseFloat(wert), u=(einheit||'px').toLowerCase();
+      if(u==='px') return v; if(u==='mm') return v*96/25.4; if(u==='cm') return v*96/2.54;
+      if(u==='in') return v*96; if(u==='pt') return v*96/72; if(u==='pc') return v*16;
+      if(u==='q') return v*96/101.6; if(u==='%') return v/100*laenge; return v; };
+    const stops=[];
+    teile.forEach(t=>{ const c=/^(rgba?\([^)]*\)|#[0-9a-f]{3,8}|[a-z]+)/i.exec(t); if(!c) return;
+      const pos=[...t.slice(c[0].length).matchAll(/(-?[\d.]+)(px|mm|cm|in|pt|pc|q|%)/gi)].map(x=>inPx(x[1],x[2]));
+      if(pos.length) pos.forEach(pp=>stops.push({c:c[0],p:pp})); else stops.push({c:c[0],p:null}); });
+    if(stops.length<2) return false;
+    const letzte=stops[stops.length-1].p;
+    const spanne=wied?Math.max(1,(letzte!=null?letzte:laenge)):laenge;
+    const rueck=/to (left|top)/.test(richtung)||/\b(270deg|180deg)/.test(richtung);
+    const gr=waag?(rueck?g.createLinearGradient(r.right,r.top,r.left,r.top):g.createLinearGradient(r.left,r.top,r.right,r.top))
+                 :(rueck?g.createLinearGradient(r.left,r.bottom,r.left,r.top):g.createLinearGradient(r.left,r.top,r.left,r.bottom));
+    const runden=wied?Math.min(400,Math.ceil(laenge/spanne)+1):1;
+    for(let k=0;k<runden;k++){
+      for(let i=0;i<stops.length;i++){ const st=stops[i];
+        const pos=(st.p!=null)?st.p:(i/(stops.length-1))*spanne;
+        let f=(k*spanne+pos)/laenge; if(f<0) f=0; if(f>1) f=1;
+        gr.addColorStop(f, st.c); } }
+    g.fillStyle=gr; rrect(g,r.left,r.top,r.width,r.height,rad); g.fill();
+    return true;
+  }catch(e){ return false; } }
+
 function rasterize(root,opt){ opt=opt||{}; const S=opt.scale||2, pad=opt.pad||0;
   const rr=root.getBoundingClientRect(), W=Math.ceil(rr.width)+2*pad, H=Math.ceil(rr.height)+2*pad;
   const c=document.createElement('canvas'); c.width=W*S; c.height=H*S; const g=c.getContext('2d');
@@ -37,6 +78,7 @@ function rasterize(root,opt){ opt=opt||{}; const S=opt.scale||2, pad=opt.pad||0;
     if(el.tagName==='SVG'||el.tagName==='svg') return;
     const rad=parseFloat(cs.borderTopLeftRadius)||0;
     if(!transparent(cs.backgroundColor)){ g.fillStyle=cs.backgroundColor; rrect(g,r.left,r.top,r.width,r.height,rad); g.fill(); }
+    if(r.width>0&&r.height>0) verlauf(g,cs,r,rad,rrect);
     const bw=['Top','Right','Bottom','Left'].map(sd=>({w:parseFloat(cs['border'+sd+'Width'])||0,c:cs['border'+sd+'Color'],s:cs['border'+sd+'Style']}));
     if(bw.every(b=>b.w>0&&b.s!=='none'&&b.c===bw[0].c&&b.w===bw[0].w)&&!transparent(bw[0].c)){ g.strokeStyle=bw[0].c; g.lineWidth=bw[0].w; rrect(g,r.left+bw[0].w/2,r.top+bw[0].w/2,r.width-bw[0].w,r.height-bw[0].w,rad); g.stroke(); }
     else bw.forEach((b,i)=>{ if(b.w<=0||b.s==='none'||transparent(b.c)) return; g.fillStyle=b.c;

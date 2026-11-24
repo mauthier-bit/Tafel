@@ -5056,6 +5056,10 @@ normal gedruckt. Damit das Drucken trotzdem überall klappt, gibt es den gemeins
   (`vor`/`nach` für Werkzeuge, die ihre Zeichenflächen im Druck-Layout neu zeichnen müssen).
 - `TafelDruck.element(el,{datei,quer})` und `TafelDruck.bild(canvasOderUrl,datei)`.
 
+`shot.js` zeichnet seit v828 auch **lineare Verläufe als Hintergrund** (auch wiederholende,
+mit Stopps in mm, cm, pt oder %) – sonst fehlt z. B. der zentimeterweise gestreifte
+5-cm-Kontrollbalken der Videophysik im Bild. Gemessen: fünf Streifen à 10 mm.
+
 Technisch: `TafelShot.rasterize` macht ein Bild der Vorlage (bei einer reinen Bildvorlage wird
 das Bild direkt genommen), das an Zeilenkanten (`tr`, `.prow`, Absätze …) auf **A4**-Seiten
 geschnitten wird – läuft eine Tabelle weiter, kommt ihre Kopfzeile auf jede Folgeseite.
