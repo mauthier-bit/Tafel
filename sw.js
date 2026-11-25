@@ -1,5 +1,5 @@
 /* Service Worker – macht die Tafel offline-fähig (App-Shell + Bibliotheken cachen). */
-const CACHE = 'tafel-v829';
+const CACHE = 'tafel-v830';
 const H5P_CACHE = 'tafel-h5p';   // entpackte .h5p-Inhalte (bleiben über App-Updates hinweg erhalten)
 /* Die Spiele-Suite ist gross (rund 4 MB) und aendert sich selten: sie bekommt einen eigenen
    Vorrat, der ein Tafel-Update ueberlebt. Erst wenn SPIELE_V hochgezaehlt wird (also wenn neue

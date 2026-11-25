@@ -342,6 +342,17 @@ input[type=number], input[type=text] {
 }
 input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); }
 .inp-unit { font-size: 12px; color: var(--text3); font-family:var(--font-mono); white-space: nowrap; }
+/* Darstellung: Beschriftung links, Bedienelement rechts – zwei Spalten, kompakt */
+.dst-reihe { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; margin-bottom: 8px; }
+.dst-reihe > span { font-size: 11px; color: var(--text2); line-height: 1.3; }
+.dst-reihe input[type=color] {
+  width: 44px; height: 28px; padding: 0; border: 1px solid var(--border);
+  border-radius: 6px; background: var(--bg); cursor: pointer;
+}
+.dst-reihe input[type=number] { width: 78px; padding: 6px 8px; font-size: 13px; }
+.dst-reihe select { padding: 6px 8px; font-size: 13px; }
+.dst-reihe input[type=range] { width: 110px; }
+.dst-wert { font-family: var(--font-mono); font-size: 11px; color: var(--text3); min-width: 30px; text-align: right; }
 select {
   background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
   color: var(--text); font-family:var(--font-mono); font-size: 14px;
@@ -2021,8 +2032,44 @@ function dismissQLBanner() {
       <div id="uncVizBar"></div>
     </div>
 
+    <div class="inp-label">Farben und Linien im Bild</div>
+    <div style="font-size:11px;color:var(--text3);margin-bottom:8px;line-height:1.5;">
+      Für Maßstabslinie, Achsen und Gitter – im Bild, im Video und im Ausdruck.
+      Auf hellem Sand ist Gelb unsichtbar, auf dunklem Asphalt Blau.
+    </div>
+    <div class="dst-reihe"><span>Maßstabslinie</span>
+      <input type="color" id="dstFarbeMass" oninput="setDarst('massFarbe', this.value)"></div>
+    <div class="dst-reihe"><span>x-Achse</span>
+      <input type="color" id="dstFarbeX" oninput="setDarst('xFarbe', this.value)"></div>
+    <div class="dst-reihe"><span>y-Achse</span>
+      <input type="color" id="dstFarbeY" oninput="setDarst('yFarbe', this.value)"></div>
+    <div class="dst-reihe"><span title="Die Linien, die in x-Richtung weiterzählen – sie laufen parallel zur y-Achse">Gitter in x-Richtung</span>
+      <input type="color" id="dstFarbeGX" oninput="setDarst('gitterX', this.value)"></div>
+    <div class="dst-reihe"><span title="Die Linien, die in y-Richtung weiterzählen – sie laufen parallel zur x-Achse">Gitter in y-Richtung</span>
+      <input type="color" id="dstFarbeGY" oninput="setDarst('gitterY', this.value)"></div>
+    <div class="dst-reihe"><span>Gitterweite</span>
+      <span style="display:flex;gap:6px;align-items:center;">
+        <input type="number" id="dstGitterWeite" min="0.01" step="0.1"
+          oninput="setDarst('gitterWeite', +this.value)">
+        <span class="inp-unit" id="dstGitterEinheit">cm</span>
+      </span></div>
+    <div class="dst-reihe"><span>Linienart des Gitters</span>
+      <select id="dstGitterArt" onchange="setDarst('gitterArt', this.value)">
+        <option value="voll">durchgezogen</option>
+        <option value="gestrichelt">gestrichelt</option>
+        <option value="gepunktet">gepunktet</option>
+        <option value="strichpunkt">Strich-Punkt</option>
+      </select></div>
+    <div class="dst-reihe" style="margin-bottom:12px;"><span>Liniendicke des Gitters</span>
+      <span style="display:flex;gap:6px;align-items:center;">
+        <input type="range" id="dstGitterDicke" min="0.4" max="4" step="0.2"
+          oninput="setDarst('gitterDicke', +this.value)">
+        <span class="dst-wert" id="dstGitterDickeV">1,2</span>
+      </span></div>
+
     <div class="modal-btns" style="margin-top:20px;">
-      <button class="btn accent" onclick="closeSettings()" style="flex:1;">Schließen</button>
+      <button class="btn" onclick="darstZuruecksetzen()" style="flex:1 1 0;min-width:0;">↺ Standardfarben</button>
+      <button class="btn accent" onclick="closeSettings()" style="flex:1 1 0;min-width:0;">Schließen</button>
     </div>
   </div>
 </div>
@@ -2073,6 +2120,59 @@ let drawingP1 = null;     // first tap point
 
 let scalePx = null;
 let scaleShowOn = false;   // Maßstabslinie zusätzlich in Bild und Video einblenden
+
+// ── Darstellung von Maßstabslinie, Achsen und Gitter ──────────────────────
+// Farben und Linien sind einstellbar, damit sie auf jedem Videobild zu sehen
+// sind: auf hellem Sand ist ein helles Gelb unsichtbar, auf dunklem Asphalt
+// ein dunkles Blau. Die Wahl gilt geräteweit und wird im Projekt mitgespeichert.
+const DARST_STD = {
+  massFarbe: '#ffab00',   // Maßstabslinie samt Querstrichen und Beschriftung
+  xFarbe:    '#2979ff',   // x-Achse
+  yFarbe:    '#00c97a',   // y-Achse
+  gitterX:   '#2979ff',   // Gitterlinien, die in x-Richtung weiterzählen
+  gitterY:   '#00c97a',   // Gitterlinien, die in y-Richtung weiterzählen
+  gitterWeite: 1,         // Abstand der Linien in Maßstabseinheiten
+  gitterArt: 'gestrichelt',
+  gitterDicke: 1.2        // SVG-px; die Linien durch den Ursprung werden doppelt so dick
+};
+const GITTER_ART = { voll: '', gestrichelt: '6,5', gepunktet: '1,4', strichpunkt: '10,4,2,4' };
+let darst = Object.assign({}, DARST_STD);
+try {
+  const d = JSON.parse(localStorage.getItem('vpDarstellung') || 'null');
+  if (d && typeof d === 'object') darst = Object.assign(darst, d);
+} catch (e) {}
+
+function darstSichern() {
+  try { localStorage.setItem('vpDarstellung', JSON.stringify(darst)); } catch (e) {}
+}
+// Eine Einstellung ändern: sichern, Anzeige nachführen, alles neu zeichnen
+function setDarst(k, v) {
+  if (k === 'gitterWeite') v = Math.max(0.01, Math.min(1000, +v || 1));
+  if (k === 'gitterDicke') v = Math.max(0.4, Math.min(4, +v || 1.2));
+  darst[k] = v;
+  darstSichern(); darstUI(); darstZeichnen();
+}
+function darstZuruecksetzen() {
+  darst = Object.assign({}, DARST_STD);
+  darstSichern(); darstUI(); darstZeichnen();
+}
+// Alles neu malen, was von der Darstellung abhängt
+function darstZeichnen() {
+  if (scaleLineP1 && scaleLineP2 && typeof drawScaleLine === 'function') drawScaleLine(scaleLineP1, scaleLineP2);
+  if (typeof drawCoordSystem === 'function') drawCoordSystem();
+  if (typeof coordGridOn !== 'undefined' && coordGridOn && typeof drawCoordGrid === 'function') drawCoordGrid();
+}
+// Bedienelemente auf den aktuellen Stand setzen
+function darstUI() {
+  const setz = (id, wert) => { const e = $(id); if (e && document.activeElement !== e) e.value = wert; };
+  setz('dstFarbeMass', darst.massFarbe); setz('dstFarbeX', darst.xFarbe); setz('dstFarbeY', darst.yFarbe);
+  setz('dstFarbeGX', darst.gitterX);     setz('dstFarbeGY', darst.gitterY);
+  setz('dstGitterWeite', darst.gitterWeite);
+  setz('dstGitterArt', darst.gitterArt);
+  setz('dstGitterDicke', darst.gitterDicke);
+  const v = $('dstGitterDickeV'); if (v) v.textContent = String(darst.gitterDicke).replace('.', ',');
+  const eh = $('dstGitterEinheit'); if (eh) eh.textContent = pxPerUnit ? scaleUnit : '(Einheit)';
+}
 let pxPerUnit = null;
 let scaleUnit = 'cm';
 
@@ -2126,6 +2226,7 @@ window.addEventListener('load', () => {
   offCtx       = offscreen.getContext('2d', { willReadFrequently: true });
 
   videoEl.addEventListener('loadedmetadata', onVideoLoaded);
+  darstUI();            // Farben und Gitterwerte in die Bedienelemente
 
   // Sync scrubber with video playback
   videoEl.addEventListener('timeupdate', () => {
@@ -2491,6 +2592,7 @@ async function saveProject() {
     fps, startTime, endTime, blendMode,
     pxPerUnit, scaleUnit, scalePx, scaleLineP1, scaleLineP2,
     coordOrigin, coordXDir, coordYDir, coordPxPerUnit, coordGridOn, coordAxesOn,
+    darst,
     numBodies, activeBody, bodyVisible,
     bodyColors, bodyDashes, bodyWidths, bodyHeads, bodyMasses, bodyStore,
     showSumPa, showSumPe,
@@ -2543,6 +2645,8 @@ function applyProjectState(s) {
   scaleLineP1 = s.scaleLineP1 || null; scaleLineP2 = s.scaleLineP2 || null;
   coordOrigin = s.coordOrigin || null; coordXDir = s.coordXDir || null; coordYDir = s.coordYDir || null;
   coordPxPerUnit = s.coordPxPerUnit || 1; coordGridOn = !!s.coordGridOn; coordAxesOn = (s.coordAxesOn !== false);
+  darst = Object.assign({}, DARST_STD, (s.darst && typeof s.darst === 'object') ? s.darst : {});
+  darstSichern(); darstUI();
   numBodies = Math.max(1, Math.min(3, s.numBodies || 1)); activeBody = Math.min(s.activeBody || 0, numBodies - 1);
   bodyVisible = s.bodyVisible || [true, true, true];
   bodyColors = s.bodyColors || BODY_COLORS.slice();
@@ -4240,6 +4344,8 @@ function recalcScale() {
     redrawMeasLines();
     if (accelPoints.length >= 3) computeAccel();
     if (velPoints.length >= 2) computeVel();
+    if (typeof darstUI === 'function') darstUI();            // Einheit hinter der Gitterweite
+    if (coordGridOn && typeof drawCoordGrid === 'function') drawCoordGrid();
   }
 }
 
@@ -4253,8 +4359,9 @@ function drawScaleLine(p1, p2) {
   const dx = b.sx - a.sx, dy = b.sy - a.sy;
   const len = Math.hypot(dx, dy) || 1;
   const nx = -dy / len * 9, ny = dx / len * 9;   // Normale, halbe Strichlänge 9 px
+  const col = darst.massFarbe;
   const quer = (p) => `<line x1="${p.sx - nx}" y1="${p.sy - ny}" x2="${p.sx + nx}" y2="${p.sy + ny}"
-        stroke="#ffab00" stroke-width="3" stroke-linecap="butt"/>`;
+        stroke="${col}" stroke-width="3" stroke-linecap="butt"/>`;
   // Label: show confirmed real length if scale is set, otherwise placeholder
   const realVal = +$('scaleRealLen').value;
   const unit = $('scaleUnit').value;
@@ -4265,13 +4372,13 @@ function drawScaleLine(p1, p2) {
   $('svgScale').innerHTML += `
     <g id="scale-line">
       <line x1="${a.sx}" y1="${a.sy}" x2="${b.sx}" y2="${b.sy}"
-        stroke="#ffab00" stroke-width="3" opacity=".95"/>
+        stroke="${col}" stroke-width="3" opacity=".95"/>
       ${quer(a)}
       ${quer(b)}
       <rect x="${mx-70}" y="${my-28}" width="140" height="24" rx="4"
         fill="rgba(13,15,20,.9)"/>
       <text x="${mx}" y="${my-12}"
-        fill="#ffab00" font-size="13" font-family="ui-monospace,monospace" text-anchor="middle">
+        fill="${col}" font-size="13" font-family="ui-monospace,monospace" text-anchor="middle">
         ${labelTxt}</text>
     </g>`;
   if (typeof syncScaleChip === 'function') syncScaleChip();
@@ -5771,9 +5878,12 @@ function drawCoordGrid() {
   const o = svgPos(coordOrigin);
   const ox = o.sx, oy = o.sy;
 
-  // Grid spacing = 1 real unit in canvas CSS px
-  const gridSpacing = pxPerUnit / displayScale; // pxPerUnit is in canvas-logical-px, convert to CSS-px
-  if (gridSpacing < 4) { g.innerHTML=''; return; } // too dense, skip
+  // Abstand der Gitterlinien: die eingestellte Weite in Maßstabseinheiten, in CSS-px
+  const weite = Math.max(0.01, +darst.gitterWeite || 1);
+  const gridSpacing = pxPerUnit * weite / displayScale; // pxPerUnit ist in Canvas-px
+  if (gridSpacing < 4) { g.innerHTML=''; return; } // zu dicht – dann lieber nichts
+  const strich = GITTER_ART[darst.gitterArt] || '';
+  const dick = Math.max(0.4, +darst.gitterDicke || 1.2);
 
   const nLines = Math.ceil(Math.max(W, H) / gridSpacing) + 2;
   let lines = '';
@@ -5788,8 +5898,8 @@ function drawCoordGrid() {
     const x2a = cx + coordYDir.x * nLines * gridSpacing;
     const y2a = cy + coordYDir.y * nLines * gridSpacing;
     lines += `<line x1="${x1a.toFixed(1)}" y1="${y1a.toFixed(1)}" x2="${x2a.toFixed(1)}" y2="${y2a.toFixed(1)}"
-      stroke="#2979ff" stroke-width="${isAxis?2.5:1.2}" opacity="${isAxis?0.8:0.35}"
-      stroke-dasharray="${isAxis?'':'6,5'}"/>`;
+      stroke="${darst.gitterX}" stroke-width="${isAxis?dick*2:dick}" opacity="${isAxis?0.8:0.35}"
+      stroke-dasharray="${isAxis?'':strich}"/>`;
 
     // Lines parallel to x-axis (step along y-direction)
     const cx2 = ox + coordYDir.x * i * gridSpacing;
@@ -5799,8 +5909,8 @@ function drawCoordGrid() {
     const x2b = cx2 + coordXDir.x * nLines * gridSpacing;
     const y2b = cy2 + coordXDir.y * nLines * gridSpacing;
     lines += `<line x1="${x1b.toFixed(1)}" y1="${y1b.toFixed(1)}" x2="${x2b.toFixed(1)}" y2="${y2b.toFixed(1)}"
-      stroke="#00c97a" stroke-width="${isAxis?2.5:1.2}" opacity="${isAxis?0.8:0.35}"
-      stroke-dasharray="${isAxis?'':'6,5'}"/>`;
+      stroke="${darst.gitterY}" stroke-width="${isAxis?dick*2:dick}" opacity="${isAxis?0.8:0.35}"
+      stroke-dasharray="${isAxis?'':strich}"/>`;
   }
   g.innerHTML = lines;
 }
@@ -5845,21 +5955,32 @@ function drawCoordSystem() {
 
   const unit = pxPerUnit ? scaleUnit : 'px';
 
+  // Eigene Pfeilspitzen: die fertigen Marker haben feste Farben, die sich nicht
+  // mitfärben lassen. Form und Größe bleiben dieselben wie bei arrB/arrG.
+  const cx = darst.xFarbe, cy = darst.yFarbe, co = darst.massFarbe;
   g.innerHTML = `
-    <!-- x-axis -->
+    <defs>
+      <marker id="arrAchseX" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+        <path d="M1,1 L7,4 L1,7 Z" fill="${cx}"/>
+      </marker>
+      <marker id="arrAchseY" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+        <path d="M1,1 L7,4 L1,7 Z" fill="${cy}"/>
+      </marker>
+    </defs>
+    <!-- x-Achse -->
     <line x1="${ox}" y1="${oy}" x2="${ox+xdx}" y2="${oy+xdy}"
-      stroke="#2979ff" stroke-width="2.5" marker-end="url(#arrB)" opacity=".95"/>
+      stroke="${cx}" stroke-width="2.5" marker-end="url(#arrAchseX)" opacity=".95"/>
     <text x="${ox+xdx+8}" y="${oy+xdy+4}"
-      fill="#2979ff" font-size="13" font-family="ui-monospace,monospace" font-weight="700">x</text>
-    <!-- y-axis -->
+      fill="${cx}" font-size="13" font-family="ui-monospace,monospace" font-weight="700">x</text>
+    <!-- y-Achse -->
     <line x1="${ox}" y1="${oy}" x2="${ox+ydx}" y2="${oy+ydy}"
-      stroke="#00c97a" stroke-width="2.5" marker-end="url(#arrG)" opacity=".95"/>
+      stroke="${cy}" stroke-width="2.5" marker-end="url(#arrAchseY)" opacity=".95"/>
     <text x="${ox+ydx+8}" y="${oy+ydy-4}"
-      fill="#00c97a" font-size="13" font-family="ui-monospace,monospace" font-weight="700">y</text>
-    <!-- origin dot -->
-    <circle cx="${ox}" cy="${oy}" r="7" fill="#ffab00" opacity=".95"/>
+      fill="${cy}" font-size="13" font-family="ui-monospace,monospace" font-weight="700">y</text>
+    <!-- Ursprung -->
+    <circle cx="${ox}" cy="${oy}" r="7" fill="${co}" opacity=".95"/>
     <text x="${ox+10}" y="${oy-8}"
-      fill="#ffab00" font-size="10" font-family="ui-monospace,monospace">O (${unit})</text>`;
+      fill="${co}" font-size="10" font-family="ui-monospace,monospace">O (${unit})</text>`;
 }
 
 // Add a tracked point
@@ -7713,7 +7834,7 @@ function showImpressum()  { $('impressumModal').classList.add('show'); }
 function closeImpressum() { $('impressumModal').classList.remove('show'); }
 
 // ── Globale Einstellungen (Zahnrad-Fenster) ──
-function showSettings()  { updateSettingsUI(); $('settingsModal').classList.add('show'); }
+function showSettings()  { updateSettingsUI(); darstUI(); $('settingsModal').classList.add('show'); }
 function closeSettings() { $('settingsModal').classList.remove('show'); }
 function setSigDigits(n) {
   sigDigits = Math.max(1, Math.min(4, n | 0));
@@ -8409,7 +8530,7 @@ if (!localStorage.getItem('vpHelpSeen')) { window.addEventListener('load', () =>
       <div style="font-family:ui-monospace,monospace;font-size:9px;letter-spacing:2.5px;text-transform:uppercase;color:var(--accent);margin-bottom:10px;display:flex;align-items:center;gap:8px;">Ansichten und Funktionen<div style="flex:1;height:1px;background:#2a2f3e;"></div></div>
       <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px;">
         <div style="font-size:12px;color:var(--text2);line-height:1.5;padding:8px 10px;border-left:2px solid var(--border);background:var(--surface2);border-radius:0 6px 6px 0;">
-          🖼 <b style="color:var(--text);">Bild / Video:</b> Umschalten über die Toolbar oben. Zoom mit zwei Fingern. Gitter und Achsen ein-/ausblenden.
+          🖼 <b style="color:var(--text);">Bild / Video:</b> Umschalten über die Toolbar oben. Zoom mit zwei Fingern. <b style="color:var(--text);">Gitter</b>, <b style="color:var(--text);">Achsen</b> und <b style="color:var(--text);">Maßstab</b> ein-/ausblenden. Farben, Gitterweite, Linienart und Liniendicke stehen im <b style="color:var(--text);">⚙ Einstellungen</b> oben rechts unter <b style="color:var(--text);">Farben und Linien im Bild</b> – wichtig, damit die Linien auf hellem wie auf dunklem Videobild zu sehen sind.
         </div>
         <div style="font-size:12px;color:var(--text2);line-height:1.5;padding:8px 10px;border-left:2px solid var(--border);background:var(--surface2);border-radius:0 6px 6px 0;">
           📊 <b style="color:var(--text);">Auswertung (nur im Tab Tracking):</b> Diagramme der Tracking-Daten (t–x, t–y, x–y, t–|v|, t–|a| u.&nbsp;a.), einzeln oder als Split-Ansicht mit zwei Diagrammen. Der aktive Körper wird immer gezeigt, weitere sichtbare Körper (Schalter „Körper: 1 2 3") als farbige Linien.<br>

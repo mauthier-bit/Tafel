@@ -2711,6 +2711,16 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
 - **Video-Physik** (Mathe & Physik, `videophysik.html`): **Stroboskopbilder und Bewegungsanalyse** aus
   einem Video – Punkte Bild für Bild verfolgen und daraus Weg, Geschwindigkeit und Beschleunigung
   gewinnen. Braucht die Kamera bzw. eine Videodatei. Symbol: Videobild mit einer Punktbahn.
+  Neben **Gitter** und **Achsen** steht in der Toolbar ein Schalter **Maßstab**: Er blendet die
+  gesetzte Strecke samt Länge auch im Bild und im Video ein (im Ausdruck war sie immer dabei).
+  Ihre Enden sind **kurze Querstriche** genau auf den gesetzten Punkten – ein gefüllter Kreis
+  verdeckt die Stelle, die man ablesen will.
+  Im **⚙ Einstellungen** oben rechts stellt **Farben und Linien im Bild** ein, wie Maßstabslinie,
+  Achsen und Gitter aussehen: **Farben** für Maßstab, x-Achse, y-Achse und die Gitterlinien beider Richtungen,
+  dazu **Gitterweite** (in Maßstabseinheiten, nicht mehr fest 1), **Linienart** (durchgezogen,
+  gestrichelt, gepunktet, Strich-Punkt) und **Liniendicke**. Das ist kein Schmuck: Auf hellem
+  Sand ist das Standardgelb unsichtbar, auf dunklem Asphalt das Standardblau. Die Wahl gilt
+  geräteweit (`vpDarstellung`), wandert mit ins **Projekt** (`.vphys`) und in den **Ausdruck**.
 - **Audio-Physik** (Mathe & Physik, `singmyfunction.html`): **Töne aufnehmen und analysieren** –
   Frequenz, Obertöne und Klangspektrum, dazu Synthese. Braucht das Mikrofon. Symbol: Mikrofon mit einer
   **Sinuswelle darunter**.
