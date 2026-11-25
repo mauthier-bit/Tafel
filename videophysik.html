@@ -1674,6 +1674,9 @@ function dismissQLBanner() {
         title="Koordinatengitter ein/aus" style="display:none;">Gitter</button>
       <button class="tbar-chip" id="btnToolbarAxes" onclick="toolbarToggleAxes()"
         title="Koordinatenachsen ein/aus" style="display:none;">Achsen</button>
+      <button class="tbar-chip" id="btnToolbarScale" onclick="toolbarToggleScale()"
+        title="Den gesetzten Maßstab (gemessene Strecke mit Länge) im Bild bzw. Video ein/aus"
+        style="display:none;">Maßstab</button>
       <!-- Körper-Sichtbarkeit (nur bei ≥2 Körpern) -->
       <div id="bodyVisRow" style="display:none;align-items:center;gap:3px;flex-shrink:0;margin-left:4px;">
         <span class="tbar-label" style="margin:0;">Körper:</span>
@@ -2069,6 +2072,7 @@ let currentTool = null;   // 'scale'|'dist'|'vel'|'accel'
 let drawingP1 = null;     // first tap point
 
 let scalePx = null;
+let scaleShowOn = false;   // Maßstabslinie zusätzlich in Bild und Video einblenden
 let pxPerUnit = null;
 let scaleUnit = 'cm';
 
@@ -2654,6 +2658,8 @@ function resetSettings() {
   const old = document.getElementById('scale-line');
   if (old) old.remove();
   scalePx = null; pxPerUnit = null; scaleLineP1 = null; scaleLineP2 = null;
+  scaleShowOn = false;
+  if (typeof syncScaleChip === 'function') syncScaleChip();
   if ($('scaleStep1'))        $('scaleStep1').style.display = 'block';
   if ($('scalePxLen'))        $('scalePxLen').textContent = '—';
   setDot('M',''); if ($('stM')) $('stM').textContent = 'Kein Maßstab';
@@ -3461,6 +3467,7 @@ function switchView(v) {
   if (btnA) btnA.style.display = svgVisible ? '' : 'none';
   // Aktiv-Zustand der Chips an den echten Zustand anpassen, sobald sie sichtbar werden
   if (svgVisible) syncCoordToolbarButtons();
+  if (typeof syncScaleChip === 'function') syncScaleChip();
 
   const av = $('analysisView');
   av.style.display = v==='analysis' ? 'flex' : 'none';
@@ -4207,6 +4214,8 @@ function resetScaleLine() {
   const old = document.getElementById('scale-line');
   if (old) old.remove();
   scalePx = null; pxPerUnit = null; scaleLineP1 = null; scaleLineP2 = null;
+  scaleShowOn = false;
+  if (typeof syncScaleChip === 'function') syncScaleChip();
   $('scaleStep1').style.display = 'block';
   setDot('M',''); $('stM').textContent = 'Kein Maßstab';
   setTool('scale');
@@ -4239,6 +4248,13 @@ function drawScaleLine(p1, p2) {
   const a = svgPos(p1), b = svgPos(p2);
   const mx = (a.sx + b.sx) / 2;
   const my = (a.sy + b.sy) / 2;
+  // Enden: kurze Querstriche quer zur Linie, Mitte genau auf dem gesetzten Punkt
+  // (ein gefüllter Kreis verdeckt die Stelle, die man ablesen will).
+  const dx = b.sx - a.sx, dy = b.sy - a.sy;
+  const len = Math.hypot(dx, dy) || 1;
+  const nx = -dy / len * 9, ny = dx / len * 9;   // Normale, halbe Strichlänge 9 px
+  const quer = (p) => `<line x1="${p.sx - nx}" y1="${p.sy - ny}" x2="${p.sx + nx}" y2="${p.sy + ny}"
+        stroke="#ffab00" stroke-width="3" stroke-linecap="butt"/>`;
   // Label: show confirmed real length if scale is set, otherwise placeholder
   const realVal = +$('scaleRealLen').value;
   const unit = $('scaleUnit').value;
@@ -4250,14 +4266,15 @@ function drawScaleLine(p1, p2) {
     <g id="scale-line">
       <line x1="${a.sx}" y1="${a.sy}" x2="${b.sx}" y2="${b.sy}"
         stroke="#ffab00" stroke-width="3" opacity=".95"/>
-      <circle cx="${a.sx}" cy="${a.sy}" r="8" fill="#ffab00"/>
-      <circle cx="${b.sx}" cy="${b.sy}" r="8" fill="#ffab00"/>
+      ${quer(a)}
+      ${quer(b)}
       <rect x="${mx-70}" y="${my-28}" width="140" height="24" rx="4"
         fill="rgba(13,15,20,.9)"/>
       <text x="${mx}" y="${my-12}"
         fill="#ffab00" font-size="13" font-family="ui-monospace,monospace" text-anchor="middle">
         ${labelTxt}</text>
     </g>`;
+  if (typeof syncScaleChip === 'function') syncScaleChip();
 }
 
 // ══════════════════════════════════════════════════
@@ -5629,6 +5646,23 @@ let coordYUp     = true;   // y points upward (physics)
 let coordXFlip   = false;  // x-axis direction flipped
 let coordGridOn  = false;  // coordinate grid visible
 let coordAxesOn  = true;   // coordinate axes visible (default on)
+
+// Chip „Maßstab": blendet die im Tab Settings gesetzte Strecke überall ein.
+function toolbarToggleScale() {
+  scaleShowOn = !scaleShowOn;
+  const btn = $('btnToolbarScale');
+  if (btn) btn.classList.toggle('active', scaleShowOn);
+  if (typeof updateOverlayVisibility === 'function') updateOverlayVisibility();
+}
+// Der Chip erscheint erst, wenn eine Strecke gesetzt ist – vorher gäbe es nichts zu zeigen.
+function syncScaleChip() {
+  const btn = $('btnToolbarScale');
+  if (!btn) return;
+  const sichtbar = !!(scaleLineP1 && scaleLineP2) &&
+    ($('measureSvg') && $('measureSvg').style.display !== 'none');
+  btn.style.display = sichtbar ? '' : 'none';
+  btn.classList.toggle('active', scaleShowOn);
+}
 
 function toolbarToggleGrid() {
   coordGridOn = !coordGridOn;
@@ -7987,7 +8021,8 @@ function updateOverlayVisibility() {
   ['svgMeas','svgVel','svgAccelPts','svgVecAdd'].forEach(id=>{ const g=$(id); if(g) g.style.display = (ctx==='meas') ? '' : 'none'; });
   // Maßstabs-Linie nur im Tab Settings einblenden (in anderen Tabs ausgeblendet; beim Drucken trotzdem enthalten)
   const onScale = $('panel-scale') && $('panel-scale').classList.contains('active');
-  const sc = $('svgScale'); if (sc) sc.style.display = onScale ? '' : 'none';
+  const sc = $('svgScale'); if (sc) sc.style.display = (onScale || scaleShowOn) ? '' : 'none';
+  if (typeof syncScaleChip === 'function') syncScaleChip();
   if (typeof drawGhostBodies === 'function') drawGhostBodies();
 }
 

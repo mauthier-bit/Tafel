@@ -228,7 +228,7 @@
   <div id="bar">
     <span class="seg" id="grpM"><button data-m="wald" class="on">Wald</button><button data-m="savanne">Savanne</button><button data-m="meer">Meer</button></span>
     <span class="sep"></span>
-    <button class="btn pri" id="bStart">▶ Start</button>
+    <button class="btn pri" id="bStart" title="Pause hält nur das Mikrofon an – die Tiere bleiben im Bild">▶ Start</button>
     <button class="btn" id="bReset" title="Alle Tiere gehen, die Zeit fängt von vorn an">Zurücksetzen</button>
     <span id="barR">
       <span class="sep"></span>
@@ -253,7 +253,7 @@
         <input type="range" id="rgSchw" min="10" max="90" step="5"><span class="v" id="vSchw"></span>
       </div>
       <div class="ez"><b>Ruhe für ein Tier</b>
-        <input type="range" id="rgRuhe" min="3" max="60" step="1"><span class="v" id="vRuhe"></span>
+        <input type="range" id="rgRuhe" min="3" max="300" step="1"><span class="v" id="vRuhe"></span>
       </div>
       <div class="ez"><b>Lärm bis eines geht</b>
         <input type="range" id="rgGeduld" min="1" max="30" step="1"><span class="v" id="vGeduld"></span>
@@ -287,6 +287,9 @@ const STD={ motiv:'wald', sens:6, schwelle:35, ruhe:10, geduld:4, maxT:24 };
    denkt: ohne kräftige Verstärkung schlägt der Balken erst bei richtigem Lärm aus.
    Der Regler Empfindlichkeit (1 bis 16) vervielfacht diesen Wert. */
 const EMPF=6;
+/* Sekunden lesbar: unter einer Minute in Sekunden, ab einer Minute als m:ss */
+const sek=s=>{ s=Math.max(0,Math.round(s));
+  return s<60 ? s+' s' : Math.floor(s/60)+':'+String(s%60).padStart(2,'0')+' min'; };
 let D=Object.assign({},STD);
 let ready=false;
 
@@ -635,7 +638,7 @@ function anzeigeMalen(){
   ctx.fillStyle=micAn?(leise?'#15803d':'#b91c1c'):'#64748b';
   const txt=!micAn?'Mikrofon aus'
     :micSchlaeft()?'Mikrofon wartet – Bild antippen'
-    :(leise?'leise – noch '+zahl(Math.max(0,D.ruhe-ruheT))+' s':'zu laut – noch '+zahl(Math.max(0,D.geduld-lautT))+' s');
+    :(leise?'leise – noch '+sek(Math.max(0,D.ruhe-ruheT)):'zu laut – noch '+zahl(Math.max(0,D.geduld-lautT))+' s');
   ctx.fillText(txt,bx,py+ph+fs*0.45);
   ctx.textAlign='right'; ctx.fillStyle='#334155';
   ctx.fillText(daZahl()+(daZahl()===1?' Tier':' Tiere'),bx+bw,py+ph+fs*0.45);
@@ -664,7 +667,7 @@ function malen(){
   anzeigeMalen();
   const leise=pegel*100<=D.schwelle;
   $('hint').textContent = !micAn
-    ? 'Mikrofon aus · Schwelle '+D.schwelle+' % · '+D.ruhe+' s Ruhe bringen ein Tier · '+NAME[D.motiv]
+    ? 'Mikrofon aus · Schwelle '+D.schwelle+' % · '+sek(D.ruhe)+' Ruhe bringen ein Tier · '+NAME[D.motiv]
     : (leise?'leise':'zu laut')+' · Pegel '+Math.round(pegel*100)+' % · Schwelle '+D.schwelle
       +' % · '+NAME[D.motiv]+' · '+gekommen+' Tiere gekommen'; }
 
@@ -693,7 +696,7 @@ function resize(){
   landKey=''; landBauen(); }
 function knoepfe(){
   document.querySelectorAll('#grpM button,#grpME button').forEach(b=>b.classList.toggle('on',b.dataset.m===D.motiv));
-  $('bStart').textContent=micAn?'⏹ Stopp':'▶ Start';
+  $('bStart').textContent=micAn?'⏸ Pause':'▶ Start';
   $('bStart').classList.toggle('pri',!micAn);
   $('bStart').classList.toggle('dang',micAn);
   if(!$('einst').hidden) einstUI(); }
@@ -701,7 +704,7 @@ const REG=[['rgSens','sens','vSens',''],['rgSchw','schwelle','vSchw',' %'],
   ['rgRuhe','ruhe','vRuhe',' s'],['rgGeduld','geduld','vGeduld',' s'],['rgMax','maxT','vMax','']];
 function einstUI(){ REG.forEach(([id,k,vid,eh])=>{ const e=$(id); if(!e) return;
   if(document.activeElement!==e) e.value=D[k];
-  $(vid).textContent=D[k]+eh; }); }
+  $(vid).textContent=(k==='ruhe')?sek(D[k]):D[k]+eh; }); }
 REG.forEach(([id,k])=>{ $(id).addEventListener('input',()=>{ D[k]=+$(id).value; knoepfe(); sync(); }); });
 function motivSetzen(m){ if(!MOTIVE.includes(m)||m===D.motiv) return;
   D.motiv=m; tiere=[]; ruheT=0; lautT=0; gekommen=0; weggegangen=0; landKey=''; standMelden(); knoepfe(); sync(); }
@@ -737,7 +740,9 @@ const HILFE='<ul>'+
  '<li>Im <b>⚙</b> stehen außerdem <b>Empfindlichkeit</b> des Mikrofons (1 bis 16: höher heißt, '+
  'dass der Balken schon bei leiseren Geräuschen ausschlägt), <b>Schwelle</b>, die beiden '+
  'Zeiten und die Höchstzahl der Tiere.</li>'+
- '<li>Das Mikrofon läuft nur, solange der Knopf auf <b>Stopp</b> steht. Es wird nichts aufgenommen '+
+ '<li><b>⏸ Pause</b> hält nur das Mikrofon an – die Tiere bleiben im Bild, und <b>▶ Start</b> macht weiter. '+
+ '<b>Zurücksetzen</b> schickt die Tiere weg und lässt die Zeit von vorn laufen.</li>'+
+ '<li>Das Mikrofon läuft nur, solange der Knopf auf <b>⏸ Pause</b> steht. Es wird nichts aufgenommen '+
  'und nichts gespeichert – gemessen wird allein die Lautstärke.</li>'+
  '<li>Im Tafel-Fenster misst die <b>Tafel</b> selbst und schickt den Pegel herüber. So kommen sich '+
  '<b>Lärmampel</b> und Silent Zoo nicht in die Quere: iPadOS gibt das Mikrofon nur einem von beiden, '+
@@ -755,7 +760,7 @@ function uebernimm(d){ if(!d) return;
   if(m!==D.motiv){ D.motiv=m; tiere=[]; ruheT=0; lautT=0; gekommen=0; weggegangen=0; landKey=''; }
   D.sens=Math.max(1,Math.min(16,+d.sens||s.sens));
   D.schwelle=Math.max(10,Math.min(90,+d.schwelle||s.schwelle));
-  D.ruhe=Math.max(3,Math.min(60,+d.ruhe||s.ruhe));
+  D.ruhe=Math.max(3,Math.min(300,+d.ruhe||s.ruhe));
   D.geduld=Math.max(1,Math.min(30,+d.geduld||s.geduld));
   D.maxT=Math.max(4,Math.min(40,+d.maxT||s.maxT));
   knoepfe(); resize(); }

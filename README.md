@@ -719,9 +719,12 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   Klassenzimmer ist auch im Gespräch leiser, als man denkt, deshalb ist die Grundverstärkung
   kräftig; gemessen wird in Fließkommazahlen, damit bei Ruhe nicht das eigene Rauschen der
   Messung als Pegel erscheint), **Schwelle**, beide **Zeiten** und
-  die **Höchstzahl** der Tiere.
+  die **Höchstzahl** der Tiere. Die Ruhezeit reicht von **3 Sekunden bis 5 Minuten** – ab einer
+  Minute steht sie als **m:ss** da (z. B. `2:30 min`), damit sie ablesbar bleibt.
+  Der Knopf heißt im Betrieb **⏸ Pause**, denn genau das ist er: er hält nur das Mikrofon an,
+  **die Tiere bleiben im Bild** und **▶ Start** macht weiter. Weg sind sie erst mit **Zurücksetzen**.
   Das Mikrofon
-  läuft nur, solange der Knopf auf **Stopp** steht – aufgenommen oder gespeichert wird nichts.
+  läuft nur, solange der Knopf auf **⏸ Pause** steht – aufgenommen oder gespeichert wird nichts.
   Geht es nicht an, **sagt das Bild warum** (nicht erlaubt, kein Mikrofon, kein https), statt stumm
   zu bleiben; eine von iPadOS schlafen gelegte Tonauswertung weckt ein **Tippen ins Bild**.
   **In der Tafel misst immer die Tafel selbst** und schickt den Pegel herüber (allein im Browser
@@ -787,7 +790,9 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   - **Gruppen** (nur bei Partner- und Gruppenarbeit): Auf Wunsch teilt die Tafel die **Klassenliste**
     ein – bei Partnerarbeit zu zweit, sonst in Gruppen der eingestellten Größe (2 bis 8).
     **↻ Neu mischen** würfelt neu; die Einteilung steht gleich als Vorschau darunter und ist
-    dieselbe wie im Fenster **Gruppen bilden**.
+    dieselbe wie im Fenster **Gruppen bilden**. Sie gehört zu **dieser Klasse**: Beim Wechsel des
+    Projekts wird sie verworfen (sonst stünden dort die Namen der vorigen Klasse), und die nächste
+    Einteilung wird aus der Liste der neuen Klasse gewürfelt.
   - **Timer**: an oder aus. In **einer Zeile** stehen die Vorgaben 5 · 10 · 15 · 20 · 45 Minuten und
     daneben das Feld mit −/+ für jede andere Zeit; in der zweiten Zeile die **Erinnerung** vor
     Schluss und die **Schriftgröße** der Zeitanzeige.
@@ -797,9 +802,11 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
       mit seiner *Schwelle*.
     - **Silent Zoo**: *Landschaft* (Wald · Savanne · Meer) und *Empfindlichkeit*, darunter *Schwelle*
       und die *Höchstzahl* der Tiere sowie **leise → ein Tier kommt nach** und
-      **laut → ein Tier geht nach** (Sekunden, mit −/+). Diese Werte liegen dort, wo der Zoo sie
+      **laut → ein Tier geht nach** (mit −/+; die Ruhezeit geht bis **5 Minuten** und springt
+      unten in Sekunden-, oben in größeren Schritten). Diese Werte liegen dort, wo der Zoo sie
       auch selbst speichert – sie gelten also ebenso im Ruhe-Fenster und wandern sofort in jeden
-      offenen Zoo.
+      offenen Zoo. Jeder Reglerschubs **wird sofort gesichert**, nicht erst beim Loslassen – sonst
+      wäre der Wert verloren, wenn Safari am Finger kein `change` meldet.
     Dazu der **⭐ Sticker**: bei der Ampel, *wenn sie bis zum Timer-Ende nicht rot wird*, beim Zoo,
     *wenn bis zum Timer-Ende kein Tier wieder weggeht*.
   - **▶ Starten** schaltet um auf die **Anzeige**: großes Symbol der Sozialform, die **Zeit** groß,
@@ -809,8 +816,14 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     lesbar bleiben (im kleinen Fenster rücken sie nach rechts, damit sie nicht auf dem Pegelkasten
     des Zoos liegen). Der Zoo zeigt dort **nur das Bild**: seine eigene
     Leiste ist ausgeblendet, gestartet und zurückgesetzt wird er von der Tafel. Störende Knöpfe gibt
-    es nicht mehr – nur oben rechts drei kleine Zeichen: **⚙** zurück zu den Einstellungen (hält
-    dabei Timer und Mikrofon an), **⤡** verkleinern und **×** schließen.
+    es nicht mehr – nur oben rechts drei kleine Zeichen: **⏸** Pause, **⤡** verkleinern und
+    **×** schließen.
+  - **⏸ Pause** geht **zurück in die Einstellungen, ohne etwas zu verlieren**: Der Timer bleibt
+    mit seiner **Restzeit** stehen, die **Tiere bleiben im Bild**, Mikrofon frei. Oben steht
+    *Pause – Einstellungen ändern*, der große Knopf heißt **▶ Weiter**. So lassen sich
+    Empfindlichkeit, Schwelle, Ruhezeit oder auch die Sozialform mitten in der Arbeitsphase
+    ändern. **▶ Weiter** setzt fort; nur wenn die **Minuten** verstellt wurden, beginnt der Timer
+    neu. **×** beendet dagegen alles und setzt den Timer zurück.
   - **Verkleinert** wird daraus ein **verschiebbares Fenster** über der Tafel, das alles weiterlaufen
     lässt: Zeit, Ruhe-Anzeige und Gruppen bleiben zu sehen, die Tafel daneben bedienbar. Am **Balken
     oben** lässt es sich an jede Stelle ziehen und bleibt ganz im Bild.

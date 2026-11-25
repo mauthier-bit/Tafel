@@ -1340,7 +1340,7 @@
 <!-- Sozialform: erst einrichten, dann anzeigen -->
 <div id="social">
   <div id="socialSetup">
-    <div class="sTitle">Sozialform einrichten</div>
+    <div class="sTitle" id="sTitel">Sozialform einrichten</div>
     <div class="sCards" id="sCards"></div>
 
     <div class="sOpt" id="sOptGrp">
@@ -1387,7 +1387,7 @@
           <span class="sTeiler"></span>
           <span class="sLbl">höchstens</span><button id="sZooMaxM" title="weniger Tiere">−</button><b id="sZooMaxV" style="min-width:26px;text-align:center">24</b><button id="sZooMaxP" title="mehr Tiere">+</button><span>Tiere</span></div>
         <div class="sRow"><span class="sLbl">leise → ein Tier kommt nach</span>
-          <button id="sZooRuheM" title="kürzere Ruhezeit">−</button><b id="sZooRuheV" style="min-width:34px;text-align:center">10 s</b><button id="sZooRuheP" title="längere Ruhezeit">+</button>
+          <button id="sZooRuheM" title="kürzere Ruhezeit">−</button><b id="sZooRuheV" style="min-width:58px;text-align:center">10 s</b><button id="sZooRuheP" title="längere Ruhezeit">+</button>
           <span class="sTeiler"></span>
           <span class="sLbl">laut → ein Tier geht nach</span>
           <button id="sZooGedM" title="weniger Geduld">−</button><b id="sZooGedV" style="min-width:34px;text-align:center">4 s</b><button id="sZooGedP" title="mehr Geduld">+</button></div>
@@ -1401,7 +1401,7 @@
   <div id="socialRun">
     <div class="sGrip" id="socialGrip" title="Fenster verschieben"><span></span></div>
     <div id="runBtns">
-      <button id="runSetup" title="Zurück zu den Einstellungen">⚙</button>
+      <button id="runSetup" title="Pause – zurück zu den Einstellungen (Timer und Tiere bleiben)">⏸</button>
       <button id="runMini" title="Verkleinern">⤡</button>
       <button id="runZu" title="Schließen">×</button>
     </div>
@@ -5979,6 +5979,7 @@ try{ const d=JSON.parse(localStorage.getItem('tafel_soz')||'null');
     soz.ruhe=['aus','ampel','zoo'].indexOf(d.ruhe)>=0?d.ruhe:'aus'; } }catch(e){}
 function sozSpeichern(){ try{ localStorage.setItem('tafel_soz',JSON.stringify(soz)); }catch(e){} }
 function sozLaeuft(){ const el=$('social'); return el.classList.contains('show')&&el.classList.contains('laeuft'); }
+let sozPausiert=false;                     /* ⏸ gedrückt: Einstellungen offen, Timer und Tiere warten */
 let zooStand={tiere:0,weg:0};              /* was der Silent Zoo zuletzt gemeldet hat */
 
 function buildSocialCards(){ const host=$('sCards'); host.innerHTML='';
@@ -6005,13 +6006,21 @@ function sozGruppen(){ lastGroups=gruppenBilden(soz.form==='partner'?2:soz.grpN)
 /* ---- Der Silent Zoo wird gleich hier eingestellt: Landschaft, Mikrofon und Zeiten.
        Gespeichert wird alles dort, wo auch der Zoo selbst seine Einstellungen ablegt. ---- */
 const ZOO_STD={motiv:'wald',sens:6,schwelle:35,ruhe:10,geduld:4,maxT:24};
-const ZOO_GR={sens:[1,16],schwelle:[10,90],ruhe:[3,60],geduld:[1,30],maxT:[4,40]};
+const ZOO_GR={sens:[1,16],schwelle:[10,90],ruhe:[3,300],geduld:[1,30],maxT:[4,40]};
+/* Sekunden lesbar: unter einer Minute in Sekunden, ab einer Minute als m:ss */
+const zooZeitText=s=>{ s=Math.max(0,Math.round(s));
+  return s<60 ? s+' s' : Math.floor(s/60)+':'+String(s%60).padStart(2,'0')+' min'; };
 function zooDaten(){ let d=null; try{ d=JSON.parse(localStorage.getItem(ZOO_KEY)||'null'); }catch(e){}
   return Object.assign({},ZOO_STD,(d&&typeof d==='object')?d:{}); }
-function zooSetzen(k,v){ const gr=ZOO_GR[k];
+/* Nur sichern – ohne den Zoo zu benachrichtigen und ohne die Anzeige neu zu setzen.
+   Jeder Reglerschubs schreibt damit sofort mit; sonst wäre der Wert verloren, wenn
+   Safari am Finger das change-Ereignis nicht liefert. */
+function zooMerken(k,v){ const gr=ZOO_GR[k];
   if(gr) v=Math.max(gr[0],Math.min(gr[1],v));
   const d=zooDaten(); d[k]=v;
   try{ localStorage.setItem(ZOO_KEY,JSON.stringify(d)); }catch(e){}
+  return d; }
+function zooSetzen(k,v){ const d=zooMerken(k,v);
   zooFrames().forEach(f=>zooSagt(f,{type:'embed-data',data:d})); zooUI(); }
 function zooUI(){ let d=ZOO_STD; try{ d=zooDaten(); }catch(e){}
   document.querySelectorAll('#sZooMotiv button').forEach(b=>b.classList.toggle('active',b.dataset.m===d.motiv));
@@ -6019,7 +6028,7 @@ function zooUI(){ let d=ZOO_STD; try{ d=zooDaten(); }catch(e){}
   const txt=(id,t)=>{ const e=$(id); if(e) e.textContent=t; };
   schieb('sZooSens',d.sens); schieb('sZooSchw',d.schwelle);
   txt('sZooSensV',d.sens); txt('sZooSchwV',d.schwelle+' %');
-  txt('sZooRuheV',d.ruhe+' s'); txt('sZooGedV',d.geduld+' s'); txt('sZooMaxV',d.maxT); }
+  txt('sZooRuheV',zooZeitText(d.ruhe)); txt('sZooGedV',d.geduld+' s'); txt('sZooMaxV',d.maxT); }
 
 function sozUI(){
   $('sOptGrp').hidden=(soz.form==='einzel');
@@ -6036,12 +6045,17 @@ function sozUI(){
     ? '⭐ Sticker für die Klasse, wenn bis zum Timer-Ende kein Tier wieder weggeht'
     : '⭐ Sticker für die Klasse, wenn die Ampel bis zum Timer-Ende nicht rot wird';
   $('sStkAuto').checked=!!doc.settings.stickerAuto;
+  $('sTitel').textContent=sozPausiert?'Pause – Einstellungen ändern':'Sozialform einrichten';
+  $('sStart').textContent=sozPausiert?'▶ Weiter':'▶ Starten';
   zooUI(); }
 
-/* ---- Starten: Anzeige aufbauen, Ruhe und Timer in Gang setzen ---- */
+/* ---- Starten: Anzeige aufbauen, Ruhe und Timer in Gang setzen ----
+   Nach einer Pause wird fortgesetzt: Restzeit und Tiere bleiben, wie sie waren. */
 function sozStart(){
   const ss=socialIcons[soz.form]||socialIcons.einzel, el=$('social');
-  soz.min=Math.max(0,Math.min(180,+$('sTimerMin').value||0)); sozSpeichern();
+  const weiter=sozPausiert, neuMin=Math.max(0,Math.min(180,+$('sTimerMin').value||0));
+  const zeitNeu=(!weiter||neuMin!==soz.min);          /* in der Pause andere Zeit gewählt */
+  soz.min=neuMin; sozSpeichern(); sozPausiert=false; sozUI();   /* Titel und „Starten" zurückstellen */
   $('social-icon').innerHTML=ss.svg; $('social-label').textContent=ss.label;
   el.classList.add('laeuft');
   el.classList.toggle('zoo',soz.ruhe==='zoo');
@@ -6049,19 +6063,21 @@ function sozStart(){
   el.classList.toggle('ohneZeit',!soz.timer);
   if(soz.grp&&soz.form!=='einzel'){ if(!lastGroups.length) sozGruppen(); gruppenMalen($('runGruppen'),lastGroups); }
   else $('runGruppen').innerHTML='';
-  sozRuheStart();
-  if(soz.timer){ timerSetMin(soz.min); timerToggle(); }
+  sozRuheStart(weiter);
+  if(soz.timer){ if(zeitNeu) timerSetMin(soz.min); if(!timerRun) timerToggle(); }
   if(noiseView==='balken') requestAnimationFrame(()=>nzBalkenMalen($('sNzBars'),nzPegel)); }
-/* Das Mikrofon entsteht noch in diesem Fingerdruck – sonst legt iPadOS die Tonauswertung schlafen */
-async function sozRuheStart(){
+/* Das Mikrofon entsteht noch in diesem Fingerdruck – sonst legt iPadOS die Tonauswertung schlafen.
+   weiter = nach einer Pause: die Tiere im Bild bleiben stehen. */
+async function sozRuheStart(weiter){
   if(soz.ruhe==='aus') return;
   const grund=await messStart();
   if(grund){ toast(grund==='erlaubnis'?'Kein Mikrofon-Zugriff – nur über https und mit Erlaubnis.'
       :'Die Tonauswertung ließ sich nicht starten.'); return; }
   if(soz.ruhe==='ampel'){ micOn=true; micUI(); return; }
-  const f=$('sZooFrame'); zooStand={tiere:0,weg:0};
+  const f=$('sZooFrame'); if(!weiter) zooStand={tiere:0,weg:0};
   zooTun(f,()=>{ zooLaden(f); zooSagt(f,{type:'zoo-pur',an:true});
-    zooSagt(f,{type:'zoo-reset'}); zooSagt(f,{type:'zoo-start'}); }); }
+    if(!weiter) zooSagt(f,{type:'zoo-reset'});
+    zooSagt(f,{type:'zoo-start'}); }); }
 /* Der Rahmen lädt erst beim ersten Mal – dann warten, bis er da ist */
 function zooTun(f,fn){ if(!f) return;
   const fertig=()=>{ try{ fn(); }catch(e){} };
@@ -6069,16 +6085,22 @@ function zooTun(f,fn){ if(!f) return;
   const d=f.contentDocument;
   if(d&&d.readyState==='complete'&&d.getElementById('bStart')) fertig();
   else f.addEventListener('load',fertig,{once:true}); }
-/* Zurück zu den Einstellungen oder zu: alles anhalten, das Mikrofon freigeben */
-function sozStop(){ const el=$('social');
+/* Mikrofon freigeben und die Anzeige verlassen – gemeinsamer Teil von Pause und Schließen */
+function sozAnhalten(){ const el=$('social');
   el.classList.remove('laeuft','zoo','ampel','ohneZeit');
-  zooStopp($('sZooFrame'));
-  if(micOn&&!(ruheView==='ampel'&&$('win-zoo').classList.contains('show'))) stopMic();
-  timerReset(); }
+  zooStopp($('sZooFrame'));                     /* gibt das Mikrofon frei, die Tiere bleiben */
+  if(micOn&&!(ruheView==='ampel'&&$('win-zoo').classList.contains('show'))) stopMic(); }
+/* Zu: alles anhalten und zurücksetzen */
+function sozStop(){ sozAnhalten(); sozPausiert=false; timerReset(); }
+/* ⏸ Pause: zurück zu den Einstellungen, ohne etwas zu verlieren. Der Timer bleibt
+   stehen (keine Rücksetzung), die Tiere bleiben im Bild, alle Einstellungen bleiben. */
+function sozPauseAn(){ sozAnhalten();
+  if(timerRun) timerToggle();                   /* nur anhalten – die Restzeit bleibt */
+  sozPausiert=true; socialMini(false); buildSocialCards(); sozUI(); }
 function sozSchliessen(){ sozStop(); socialMini(false); $('social').classList.remove('show'); }
 
 $('w-social').onclick=()=>{ const el=$('social');
-  socialMini(false); el.classList.remove('laeuft','zoo','ampel','ohneZeit');
+  socialMini(false); el.classList.remove('laeuft','zoo','ampel','ohneZeit'); sozPausiert=false;
   buildSocialCards(); sozUI();
   if(soz.grp&&soz.form!=='einzel'&&!lastGroups.length) sozGruppen();   /* gleich eine Einteilung zeigen */
   else if(soz.grp&&lastGroups.length) gruppenMalen($('sGrpVor'),lastGroups);
@@ -6086,7 +6108,7 @@ $('w-social').onclick=()=>{ const el=$('social');
 $('sStart').onclick=ev=>{ ev.stopPropagation(); sozStart(); };
 $('sSetupZu').onclick=ev=>{ ev.stopPropagation(); sozSchliessen(); };
 $('runZu').onclick=ev=>{ ev.stopPropagation(); sozSchliessen(); };
-$('runSetup').onclick=ev=>{ ev.stopPropagation(); socialMini(false); sozStop(); buildSocialCards(); sozUI(); };
+$('runSetup').onclick=ev=>{ ev.stopPropagation(); sozPauseAn(); };
 $('social').onclick=ev=>{ if($('social').classList.contains('mini')) return;
   if(ev.target===$('social')) sozSchliessen(); };        /* daneben tippen schließt ebenfalls */
 $('sGrpAn').onchange=function(){ soz.grp=this.checked; sozSpeichern(); sozUI(); if(soz.grp&&!lastGroups.length) sozGruppen(); };
@@ -6096,13 +6118,17 @@ $('sGrpMake').onclick=()=>sozGruppen();
 $('sTimerAn').onchange=function(){ soz.timer=this.checked; sozSpeichern(); sozUI(); };
 document.querySelectorAll('#sRuheWahl button').forEach(b=>b.onclick=()=>{ soz.ruhe=b.dataset.rw; sozSpeichern(); sozUI(); });
 document.querySelectorAll('#sZooMotiv button').forEach(b=>b.onclick=()=>zooSetzen('motiv',b.dataset.m));
-/* Die Regler melden sich erst beim Loslassen beim Zoo – sonst baut er das Bild bei jedem Pixel neu */
+/* Die Regler sichern ihren Wert sofort, melden sich aber erst beim Loslassen beim Zoo –
+   sonst baut er das Bild bei jedem Pixel neu */
 const zooSchieb=(id,k,eh)=>{ const e=$(id); if(!e) return;
-  e.oninput=()=>{ const v=$(id+'V'); if(v) v.textContent=e.value+eh; };
+  e.oninput=()=>{ const v=$(id+'V'); if(v) v.textContent=e.value+eh; zooMerken(k,+e.value); };
   e.onchange=()=>zooSetzen(k,+e.value); };
 zooSchieb('sZooSens','sens',''); zooSchieb('sZooSchw','schwelle',' %');
 const zooStufe=(id,k,dl)=>{ const b=$(id); if(b) b.onclick=()=>zooSetzen(k,zooDaten()[k]+dl); };
-zooStufe('sZooRuheM','ruhe',-1); zooStufe('sZooRuheP','ruhe',1);
+/* Ruhezeit reicht bis 5 Minuten: unten feine, oben große Sprünge – sonst wären es sehr viele Tipper */
+const ruheSchritt=(v,dir)=>v+dir*(dir>0?(v<20?1:v<60?5:30):(v<=20?1:v<=60?5:30));
+$('sZooRuheM').onclick=()=>zooSetzen('ruhe',ruheSchritt(zooDaten().ruhe,-1));
+$('sZooRuheP').onclick=()=>zooSetzen('ruhe',ruheSchritt(zooDaten().ruhe,1));
 zooStufe('sZooGedM','geduld',-1); zooStufe('sZooGedP','geduld',1);
 zooStufe('sZooMaxM','maxT',-2); zooStufe('sZooMaxP','maxT',2);
 
@@ -8422,6 +8448,11 @@ renderScore();
 
 /* ---- Gruppenmanager ---- */
 let lastGroups=[];
+/* Die Einteilung gehört zu einer Klasse. Wird das Projekt gewechselt, passen die Namen
+   nicht mehr – also Einteilung und alle Anzeigen davon leeren (Gruppenfenster,
+   Vorschau in der Sozialform und die Liste in der laufenden Anzeige). */
+function gruppenVergessen(){ lastGroups=[];
+  ['grpResult','sGrpVor','runGruppen'].forEach(id=>{ const e=$(id); if(e) e.innerHTML=''; }); }
 $('w-groups').onclick=()=>toggleWin('win-groups');
 $('grpMake').onclick=()=>{ const st=(doc.students||[]).slice(); if(!st.length){ $('grpResult').innerHTML='Keine Klassenliste – bitte in den Einstellungen Namen eingeben.'; lastGroups=[]; return; }
   for(let i=st.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [st[i],st[j]]=[st[j],st[i]]; }   // mischen
@@ -8665,14 +8696,14 @@ function renderStudentsInfo(){ const n=(doc.students||[]).length; $('classInfo')
   if(document.activeElement!==$('classText')) $('classText').value=(doc.students||[]).join('\n'); }
 $('classText').addEventListener('input',()=>{ doc.students=$('classText').value.split('\n').map(s=>s.trim()).filter(Boolean); refreshClassWin(); nameUsed=new Set(); const n=doc.students.length; $('classInfo').textContent=n?(n+' Namen in „'+curProjName()+'"'):('Keine Namen in „'+curProjName()+'".'); scheduleAutosave(); });
 function renderProjects(){ [ 'projectSelect','barProject' ].forEach(id=>{ const sel=$(id); if(!sel)return; sel.innerHTML=''; projects.forEach(p=>{const o=document.createElement('option');o.value=p.id;o.textContent=p.name;sel.appendChild(o);}); sel.value=activeId; }); renderStudentsInfo(); refreshClassWin(); }
-function blankDoc(name){ doc.pages=[newPage()]; doc.cur=0; doc.settings=DEFSET(); doc.students=[]; doc.notes=''; doc.duties=null; doc.seating=null; doc.stickers=[]; doc.marks={cats:MARK_DEF(),counts:{},grades:{},texts:{},v:4}; doc.name=name; nameUsed=new Set(); applySettingsUI(); }
+function blankDoc(name){ doc.pages=[newPage()]; doc.cur=0; doc.settings=DEFSET(); doc.students=[]; doc.notes=''; doc.duties=null; doc.seating=null; doc.stickers=[]; doc.marks={cats:MARK_DEF(),counts:{},grades:{},texts:{},v:4}; doc.name=name; nameUsed=new Set(); gruppenVergessen(); applySettingsUI(); }
 /* Beim Wechsel der Klasse fällige Termine/Erinnerungen dieser Klasse nachholen */
 async function loadProject(id){ projLoading=true;
   let s=projCache.get(id); if(s==null){ try{ s=await PDB.get(id); }catch(e){} }
   if(s==null){ try{ s=localStorage.getItem(projKey(id)); }catch(e){} }                 // ältere Versionen: noch im localStorage
   activeId=id; projLoading=false; setTimeout(checkEvents,600);
   if(s){ try{ deserialize(s); }catch(e){ blankDoc((projects.find(p=>p.id===id)||{}).name||'Projekt'); } } else { blankDoc((projects.find(p=>p.id===id)||{}).name||'Projekt'); }
-  nameUsed=new Set(); }
+  nameUsed=new Set(); gruppenVergessen(); }
 async function switchProject(id){ if(id===activeId)return; saveCurrentProject(); await loadProject(id); goPage(0); saveIndex(); renderProjects(); }
 function newProject(){ const inp=prompt('Name des neuen Projekts (z. B. Mathe 6a):',''); if(inp===null)return; const nm=(inp.trim()||('Projekt '+(projects.length+1)));
   saveCurrentProject(); const id=uid(); projects.push({id,name:nm}); activeId=id; blankDoc(nm); goPage(0); saveCurrentProject(); saveIndex(); renderProjects(); toast('Projekt „'+nm+'" angelegt'); }
