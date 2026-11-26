@@ -2268,6 +2268,11 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   **lim (Grenzwerte):** Dieser Reiter steht wie „Transformationen" **für sich** – eigener Term, eigene
   Zeichenfläche und eigene Parameter; die **Beispiele** sind nach
   Art gegliedert (ganzrational, gebrochen-rational, e-Funktion, Logarithmus und Wurzel, Sinus und Kosinus).
+  Zwei davon sind für den Unterricht besonders ergiebig: `(2x²−4x−6)/(x²−4)` hat **zwei Polstellen**
+  (±2) mit jeweils wechselndem Vorzeichen und die waagrechte Asymptote `y = 2` – an ihm lässt sich
+  das Ablesen der Vorzeichen viermal üben. `(x²−3x+2)·e^x` zeigt, dass die **e-Funktion jede Potenz
+  schlägt**: für `x → −∞` steht `+∞` über dem Polynom und `0` über `e^x`, und das Ergebnis ist 0
+  (waagrechte Asymptote `y = 0`); für `x → +∞` wächst es über alle Grenzen.
   **Ablauf:** Term eintippen oder ein Beispiel wählen – dann stehen **Term und Graph groß** da (der Term als
   echter Bruch über der Zeichenfläche), und rechts erscheinen die **Ränder des Definitionsbereichs** zum
   **Exakte Stellen statt gerundeter Dezimalzahlen:** Definitionslücken, Ränder und Nullstellen stehen,
