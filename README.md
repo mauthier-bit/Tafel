@@ -4833,7 +4833,10 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   klappt auf und wieder zu (▸ / ▾); so passen Plan und Aufgabe zusammen auf einen Bildschirm und
   man holt sich nur hervor, was gerade gebraucht wird. Der **Ein/Aus-Schalter** des Geräts bleibt
   auch im zugeklappten Kasten in der Kopfzeile erreichbar, und die Überschrift nennt weiterhin das
-  gewählte Gerät. Die Knöpfe neben der Überschrift (etwa das **?**) klappen nichts um.
+  gewählte Gerät. Die Knöpfe neben der Überschrift klappen nichts um – **Überschrift und Hilfe
+  sind getrennt**: Die Überschrift klappt nur auf und zu und schließt dabei einen offenen
+  Hilfetext mit, und das **?** zeigt die Hilfe immer, indem es den Kasten gleich mit aufklappt
+  (sonst tippte man darauf und sähe nichts).
   **Der Plan lässt sich zoomen:** mit **zwei Fingern** spreizen und schieben (am Rechner mit dem
   Mausrad), bis zu achtfach. Ein Finger bleibt fürs **Antippen** von Steckplätzen, FI-Schalter und
   Sicherung frei. Der Knopf **Ansicht** unten rechts in der Grafik holt den ganzen Plan zurück –
