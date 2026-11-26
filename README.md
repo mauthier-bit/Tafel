@@ -4841,6 +4841,15 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   Mausrad), bis zu achtfach. Ein Finger bleibt fürs **Antippen** von Steckplätzen, FI-Schalter und
   Sicherung frei. Der Knopf **Ansicht** unten rechts in der Grafik holt den ganzen Plan zurück –
   er erscheint nur, solange ein Ausschnitt gewählt ist.
+  **Die drei Leitungen lassen sich einzeln ausblenden:** Die Knöpfe **L**, **N** und **PE** stehen
+  unten rechts im Plan links neben *Ansicht*, jeder mit dem Farbfleck seiner Ader. Ein Tipp nimmt
+  die Ader samt ihrem gelben Strompfad aus dem Bild (der Knopf steht dann durchgestrichen da), ein
+  zweiter holt sie zurück – so verfolgt man einen Leiter allein durch das ganze Haus, etwa den
+  Schutzleiter von der Steckdose bis zum Fundamenterder. Die Rechnung ändert sich dabei **nicht**:
+  Ströme, Sicherung und FI verhalten sich genau wie vorher, nur die Darstellung ist aufgeräumt.
+  Auf der PEN-Strecke vom Trafo zum Hausanschluss bleibt der Neutralleiter stehen, wenn das PE
+  ausgeblendet ist. Welche Leitungen zu sehen sind, geht **mit dem Projekt und mit dem QR-Code**
+  mit.
 - **Ableitungen** (Mathe & Physik): die Lernumgebung „Zusammenhänge von F · f · f′ · f″" als Werkzeug.
   Beim Einfügen fragt die Tafel „eigene Seite oder bewegliches Objekt" (im Kontextmenü auch später
   „Als eigene Seite anzeigen"). Bedienen über „Objekt bedienen": Ausgangsfunktion (F, f, f′, f″),
