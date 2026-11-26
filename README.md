@@ -1820,19 +1820,32 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     schreibt der Stift weiterhin nicht auf das Objekt, und Auswählen und Lasso greifen wie bisher
     ins Werkzeug durch.
   - **Auch im Vollbild**, und genau dort am nötigsten: Im Menü der Pille (**☰**) stehen über
-    „Beschriften" die beiden Knöpfe **🔴 Laserpointer** und **🔦 Scheinwerfer**. Nötig sind sie
-    dort, weil im Vollbild die Leisten ausgeblendet sind und sich auch nicht über die Randgriffe
-    zurückholen lassen (`body.fs-mode .edgezone{display:none}`). Solange einer von beiden läuft,
-    **rückt die Tafel über das Objekt** (`body.fs-mode.zeigerVor #board{z-index:6}` gegenüber der
-    Objektebene mit 5) – sonst läge die Leuchtspur dahinter. Sie zeichnet dann **nur** die Spur,
-    nicht die übrige Seite. Beendet wird über denselben Knopf („✓ Laserpointer beenden"), danach
-    rutscht die Tafel wieder unter das Objekt und es ist sofort wieder bedienbar.
+    „Beschriften" die beiden Knöpfe **🔴 Laserpointer** und **🔦 Scheinwerfer** – über einem
+    **Werkzeug** ebenso wie über **Bild, Dokument und Video**. Nötig sind sie dort, weil im
+    Vollbild die Leisten ausgeblendet sind und sich auch nicht über die Randgriffe zurückholen
+    lassen (`body.fs-mode .edgezone{display:none}`). Solange einer von beiden läuft, **rückt die
+    Tafel über den Inhalt** (`body.fs-mode.zeigerVor #board{z-index:45}`) – über das Werkzeug
+    (Objektebene 5) wie über die Seite eines Dokuments (`#fsDoc`, 44); sonst läge die Leuchtspur
+    dahinter. Sie zeichnet dann **nur** die Spur, nicht die übrige Seite. Darüber bleiben die
+    Blätterpfeile (46), der Schleier des Scheinwerfers (im Vollbild 47) und die Pille (48), so dass
+    man immer abschalten kann. Beendet wird über denselben Knopf („✓ Laserpointer beenden"), danach
+    rutscht die Tafel wieder unter den Inhalt und er ist sofort wieder bedienbar.
     **Zeigen und Beschriften schließen sich aus** – beide wollen denselben Zeiger; wer das eine
-    startet, beendet das andere.
-    Bei **Dokument und Bild** im Vollbild gibt es die beiden Knöpfe **nicht**: Deren Seite liegt in
-    einer eigenen, höheren Ebene (`#fsDoc`, z-index 44), über die weder Leuchtspur noch Lichtfleck
-    kämen. Dort ist das **Beschriften** der Weg. Ist beim Öffnen eines Dokuments gerade ein Zeiger
-    aktiv, wird er deshalb beendet.
+    startet, beendet das andere. Zwei Dinge, die dabei bewusst so sind: Ein **Dokument lässt sich
+    nicht rollen**, solange gezeigt wird (die Tafel liegt ja darüber) – dafür gibt es den
+    Rollstreifen am rechten Rand und die Blätterpfeile. Und die **Lupe** des Scheinwerfers bleibt
+    im Vollbild aus: Sie zeichnet die Tafelseite neu, nicht den Bildschirm, und würde dort den
+    leeren Hintergrund hinter dem Objekt zeigen.
+- **Die Pille im Vollbild** ist nur noch **zweigeteilt**: links ein **×** (Vollbild beenden),
+  ein Trennstrich, rechts **☰** (Menü). Beide Felder sind 46 × 46 px groß, die ganze Pille also
+  92 px breit statt der früheren Leiste mit „⤢ Vollbild beenden". Sie **endet nur beim Antippen**;
+  **Ziehen verschiebt** sie, und der Tipp beim Ablegen zählt nicht als Klick. Die Stelle wird
+  gemerkt (`tafel_fsbtn`) und beim Laden, beim Öffnen des Vollbilds und beim Drehen des iPads
+  **in den Bildrand geholt** – sonst läge sie nach einem Gerätewechsel oder einer Drehung
+  außerhalb und wäre nicht mehr erreichbar.
+  Ihre **Deckkraft** steht in den Einstellungen unter **Werkzeugleisten → Vollbild-Pille**
+  (30 % bis 100 %, voreingestellt **85 %**, geräteweit gemerkt). **Beim Berühren wird sie immer
+  voll sichtbar**, damit man trifft, was man drückt.
 - Der Knopf **„Objekt bedienen" / „Bedienen beenden"** oben in der Mitte sitzt **bündig mit der
   Unterkante der oberen Leisten** – auf dem iPad genau wie am Rechner. Die Leisten stehen selbst
   schon unterhalb der Statusleiste; ein zusätzlicher Sicherheitsabstand hätte den Knopf auf dem
