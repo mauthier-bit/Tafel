@@ -4805,11 +4805,33 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     Kondensators, Einschaltverzögerung der Spule oder die Gleichrichtung an der Diode.
   - **Datei:** **Neu** (leere Schaltung), **Speichern** (als `.json`-Datei, Name wählbar – auf dem iPad z. B. in
     „Dateien“), **Laden** (gespeicherte Datei öffnen). Bei nicht gespeicherten Änderungen wird nachgefragt.
+  - **Knopf „Hausinstallation"** am Ende der Bauteilleiste: Er öffnet das eigene Werkzeug
+    **Elektrische Hausinstallation** (`hausinstallation.html`) als **eigenes Objekt neben dem
+    Stromkreis** – mit eigener Kopfleiste, eigenem **Teilen-Knopf** und allem, was ein Werkzeug
+    der Tafel hat. Allein im Browser geöffnet (oder geteilt) öffnet derselbe Knopf es in einem
+    **neuen Tab**. Zum Werkzeug selbst siehe **Elektrische Hausinstallation** weiter unten.
   - **Eigenständig nutzbar:** `stromkreis.html` direkt im Browser öffnen (…/tafel/stromkreis.html). Dann gibt es
     zusätzlich **Schließen**, und die zuletzt bearbeitete Schaltung wird im Browser gemerkt und beim nächsten
     Öffnen wiederhergestellt („Auf die Tafel“ entfällt, Kopieren bleibt).
   - **🖼 Bild → Tafel** (rechts in der zweiten Zeile, immer sichtbar – auch wenn ein Bauteil ausgewählt ist) legt die Schaltung als Bild neben das Werkzeug; **📋 Kopieren** kopiert sie als
     Bild in die Zwischenablage.
+- **Elektrische Hausinstallation** (`hausinstallation.html`, Physik 8): ein aufgeschnittenes Haus
+  vom **Ortsnetz-Trafo** über Hausanschluss, Zähler und Sicherungskasten bis zur
+  **Mehrfachsteckdose** – mit echten Aderfarben (braun L, blau N, grün-gelb PE) und sichtbaren
+  Strompfaden. Acht **Szenarien** (Normalbetrieb, Überlastung, Kurzschluss, Körperschluss, ohne
+  Schutzleiter, Föhn in der Badewanne, Grenzen des FI, freies Experimentieren) mit Aufgabentext;
+  Geräte lassen sich einstecken, Fehler auslösen und **Schmelzsicherung, FI-Schalter und
+  Schutzleiter einzeln abschalten**. Der Ablauf läuft in Zeitlupe bzw. Zeitraffer, daneben stehen
+  die Messwerte (I in L und N, Differenzstrom, Körperstrom).
+  Erreichbar über den Knopf **Hausinstallation** in der Bauteilleiste des **Stromkreises** – von
+  dort kommt es als eigenes Objekt auf die Tafel. Es hat einen eigenen **Teilen-Knopf** (⇪ oben
+  neben **!** und **?**): Der QR-Code gibt **den eingestellten Aufbau** weiter – Szenario,
+  eingesteckte Geräte, Schutzeinrichtungen und die Person; der Ablauf startet auf dem
+  Schülergerät neu. Derselbe Aufbau wird auch **mit dem Projekt gespeichert**.
+  **Der Plan lässt sich zoomen:** mit **zwei Fingern** spreizen und schieben (am Rechner mit dem
+  Mausrad), bis zu achtfach. Ein Finger bleibt fürs **Antippen** von Steckplätzen, FI-Schalter und
+  Sicherung frei. Der Knopf **Ansicht** unten rechts in der Grafik holt den ganzen Plan zurück –
+  er erscheint nur, solange ein Ausschnitt gewählt ist.
 - **Ableitungen** (Mathe & Physik): die Lernumgebung „Zusammenhänge von F · f · f′ · f″" als Werkzeug.
   Beim Einfügen fragt die Tafel „eigene Seite oder bewegliches Objekt" (im Kontextmenü auch später
   „Als eigene Seite anzeigen"). Bedienen über „Objekt bedienen": Ausgangsfunktion (F, f, f′, f″),
@@ -5095,6 +5117,7 @@ beschriften-vorlagen.js ← Vorlagen dafür (Auge, Ohr, Zahlbereiche, Fadenstrah
 video-interaktiv.html ← Interaktives Video (Fragen und Hinweise an Zeitmarken)
 motiontracker.html    ← Motion-Tracker (Bewegung und Abstand per Kamera-KI; braucht Kamera, Mikrofon und Internet)
 stromkreis.html       ← Stromkreis-Editor mit Simulation (U, I, R, C, L, Ladungsfluss, Bild-Export)
+hausinstallation.html ← Elektrische Hausinstallation (Schutzmaßnahmen; Knopf in der Bauteilleiste des Stromkreises)
 optik.html            ← Optiklabor (Strahlenoptik, Schatten, Mondphasen und Finsternisse)
 wellen.html           ← Wellenwanne (Reflexion, Brechung, Beugung, Interferenz, Huygens)
 astronomie.html       ← Astronomie (Sonnensystem in 3D, Erdumfang, Erde–Mond, Erde–Sonne, Sternparallaxe)

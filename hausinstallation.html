@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Elektrische Hausinstallation</title>
+<style>
+/* VOICE: sachlich-handwerklich, wie ein Installationsplan im Physikraum
+   IDEA: aufgeschnittenes Haus – vom Ortsnetz-Trafo bis zur Mehrfachsteckdose
+   PICTURE: großer Schaltplan mit echten Aderfarben (braun L, blau N, grün-gelb PE), Strompfade laufen sichtbar
+   COLOUR and TYPE: Wandgrau + Erdbraun, Aderfarben als Akzente, Rot nur für Gefahr; Systemschrift
+   LAYOUT: Bild links groß, Szenario/Messwerte rechts; Bedienung kompakt darunter; unter 900 px gestapelt */
+:root{color-scheme:light dark;
+--bg:light-dark(#eef0ec,#121518);--panel:light-dark(#ffffff,#1b1f23);--ink:light-dark(#15191c,#e6e9ec);
+--mute:light-dark(#5a636b,#9aa4ad);--line:light-dark(#d5d9d2,#2c3238);--wall:light-dark(#f7f6f2,#191d21);
+--street:light-dark(#dfe3dc,#15181b);--earth:light-dark(#b89572,#4a3a2b);
+--L:light-dark(#8a5a2b,#c48a52);--N:light-dark(#2563c9,#5f93f2);--PE:#3f9b3a;--PEy:#e8c91a;
+--box:light-dark(#e6e9e3,#262b30);--box2:light-dark(#cfd4cc,#353b42);
+--danger:light-dark(#d1281b,#ff5a4c);--ok:light-dark(#18794e,#3fcf8e);--warn:light-dark(#b45309,#f5a524);
+--accent:light-dark(#1f4fd1,#7aa2ff)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow-x:clip;-webkit-tap-highlight-color:transparent}
+header{padding:16px max(3vw,14px) 4px;display:flex;flex-wrap:wrap;gap:10px 20px;align-items:flex-end;justify-content:space-between}
+h1{font-size:clamp(22px,2.8vw,32px);line-height:1.1;margin:0 0 4px;text-wrap:balance}
+header p{margin:0;color:var(--mute);max-width:70ch;font-size:15px}
+.ttl{display:flex;align-items:center;gap:12px}
+.info{flex:none;width:40px;height:40px;border-radius:50%;border:2px solid var(--accent);background:var(--panel);color:var(--accent);font:800 22px/1 system-ui,sans-serif;cursor:pointer;display:grid;place-items:center}
+.info:hover{background:var(--accent);color:#fff}
+.info.mini{width:28px;height:28px;font-size:16px;border-width:1.5px}
+.pop{font-size:14px;color:var(--ink);background:var(--box);border-radius:10px;padding:8px 10px;margin:0 0 8px}
+.pop[hidden]{display:none}
+.leg{display:grid;grid-template-columns:58px minmax(0,1fr);gap:8px 10px;align-items:center;font-size:15px}
+.leg i{display:block;height:7px;border-radius:4px}
+@media(min-width:901px){aside.stage{position:sticky;top:8px;max-height:calc(100vh - 16px);overflow-y:auto;overscroll-behavior:contain;padding-right:2px;scrollbar-width:thin}}
+.seg{display:flex;border:1.5px solid var(--line);border-radius:10px;overflow:hidden;background:var(--box)}
+.seg button{font-size:13.5px;flex:1 1 0;min-height:40px;line-height:1.15;hyphens:manual;border:0;border-left:1.5px solid var(--line);background:transparent;color:var(--ink);font:inherit;font-size:14px;cursor:pointer;padding:4px 3px}
+.seg button:first-child{border-left:0}
+.seg button[aria-pressed=true]{background:var(--accent);color:#fff;font-weight:600}
+.seg button:disabled{opacity:.45;cursor:default}
+.hd{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px}
+.hd h2{margin:0}
+.scen{display:flex;gap:8px;overflow-x:auto;padding:10px max(3vw,14px);scrollbar-width:thin}
+.chip{flex:none;min-height:44px;padding:8px 14px;border-radius:22px;border:1.5px solid var(--line);background:var(--panel);color:var(--ink);font:inherit;font-size:15px;cursor:pointer}
+.chip[aria-pressed=true]{border-color:var(--accent);background:var(--accent);color:#fff}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 296px;gap:12px;padding:2px max(3vw,14px) 20px;align-items:start}
+@media(max-width:900px){.grid{grid-template-columns:minmax(0,1fr)}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+.stage{display:flex;flex-direction:column;gap:10px}
+#svgBox{position:relative}
+/* touch-action:none – sonst zoomt und scrollt die Seite mit, statt den Plan zu bewegen */
+#svg{width:100%;height:auto;display:block;border-radius:14px;border:1px solid var(--line);background:var(--wall);touch-action:none;user-select:none;-webkit-user-select:none}
+#bView{position:absolute;right:8px;bottom:8px;z-index:2;min-height:34px;padding:5px 10px;font-size:13px;
+  background:color-mix(in srgb,var(--panel) 88%,transparent);backdrop-filter:blur(3px);opacity:.85}
+#bView:hover{opacity:1}
+#bView[hidden]{display:none}
+h2{font-size:16px;margin:0 0 6px}
+h3{font-size:13px;margin:8px 0 4px;color:var(--mute);font-weight:600}
+.row{display:flex;flex-wrap:wrap;gap:6px}
+button.b{min-height:44px;padding:8px 12px;border-radius:10px;border:1.5px solid var(--line);background:var(--box);color:var(--ink);font:inherit;font-size:15px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+button.sm{min-height:40px;padding:6px 10px;font-size:14px;border-radius:9px}
+button.b:disabled{opacity:.42;cursor:default}
+button.b.on{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 16%,var(--panel))}
+button.b.bad{border-color:var(--danger);background:color-mix(in srgb,var(--danger) 14%,var(--panel))}
+button.b.go{border-color:var(--ok);background:var(--ok);color:#fff;font-weight:600}
+button.b.go.pz{background:var(--warn);border-color:var(--warn)}
+button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.b svg{width:18px;height:18px;fill:currentColor}
+.pal{display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x proximity;padding-bottom:4px;scrollbar-width:thin}
+.pal button{flex:none;width:112px;scroll-snap-align:start;flex-direction:column;justify-content:center;gap:0;padding:6px 4px;min-height:78px;font-size:14px;line-height:1.25}
+.pal svg{width:32px;height:32px;color:var(--ink);fill:none}
+.pal small{color:var(--mute);font-size:12px}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
+@media(max-width:700px){.two{grid-template-columns:minmax(0,1fr)}}
+.note{font-size:13px;color:var(--mute);margin:0 0 6px}
+.tog{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid var(--line)}
+.tog span{font-size:15px}.tog small{display:block;color:var(--mute);font-size:13px}
+.sw{flex:none;width:58px;height:34px;border-radius:17px;border:0;background:var(--box2);position:relative;cursor:pointer}
+.sw::after{content:"";position:absolute;top:4px;left:4px;width:26px;height:26px;border-radius:50%;background:#fff;box-shadow:0 1px 3px #0004;transition:left .15s}
+.sw[aria-checked=true]{background:var(--ok)}.sw[aria-checked=true]::after{left:28px}
+details.card>summary{cursor:pointer;font-weight:700;font-size:16px;min-height:30px;display:flex;align-items:center;justify-content:space-between;list-style:none}
+details.card>summary::-webkit-details-marker{display:none}
+details.card>summary::after{content:"";width:9px;height:9px;border-right:2px solid var(--mute);border-bottom:2px solid var(--mute);transform:rotate(45deg);margin:0 6px 4px}
+details.card[open]>summary::after{transform:rotate(-135deg);margin-bottom:-4px}
+summary .cnt{font-weight:500;color:var(--mute);font-size:14px;margin-left:auto;margin-right:10px}
+table.m{width:100%;border-collapse:collapse;font-size:15px;margin-top:6px}
+table.m td{padding:5px 0;border-bottom:1px solid var(--line)}
+table.m td:last-child{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:600}
+.bar{height:8px;border-radius:4px;background:var(--box2);overflow:hidden;margin-top:4px}
+.bar i{display:block;height:100%;width:0;background:var(--warn)}
+.task{font-size:15px}
+.task b{display:block;font-size:16px;margin-bottom:4px}
+.status{font-size:15px;padding:9px 12px;border-radius:10px;background:var(--box);margin-top:10px}
+.status.bad{background:color-mix(in srgb,var(--danger) 15%,var(--panel))}
+.status.warn{background:color-mix(in srgb,var(--warn) 16%,var(--panel))}
+.log{list-style:none;margin:6px 0 0;padding:0;font-size:14px;max-height:320px;overflow-y:auto}
+.log li{padding:7px 0;border-bottom:1px solid var(--line)}
+.log li em{font-style:normal;font-weight:700;font-variant-numeric:tabular-nums}
+.log li.bad em{color:var(--danger)}.log li.ok em{color:var(--ok)}
+.clock{display:flex;justify-content:space-between;white-space:nowrap;gap:8px;font-size:14px;color:var(--mute);margin-top:6px}
+/* Wissensfenster */
+.modal{position:fixed;inset:0;z-index:20;background:#0008;display:flex;align-items:center;justify-content:center;padding:16px}
+.modal[hidden]{display:none}
+.win{background:var(--bg);color:var(--ink);border-radius:16px;width:min(1000px,100%);max-height:calc(100vh - 32px);display:flex;flex-direction:column;box-shadow:0 20px 60px #0006}
+.win>header{padding:12px 16px;border-bottom:1px solid var(--line);align-items:center}
+.win h2{font-size:20px;margin:0}
+.wbody{overflow-y:auto;padding:14px 16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,290px),1fr));gap:12px}
+.wbody section{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.wbody h3{font-size:16px;color:var(--ink);margin:0 0 6px}
+.wbody p,.wbody li{font-size:15px;margin:0 0 8px}
+.wbody ul{padding-left:20px;margin:0}
+table.k{width:100%;border-collapse:collapse;font-size:14px}table.k td{padding:4px 6px 4px 0;border-bottom:1px solid var(--line);vertical-align:top}
+table.k td:first-child{white-space:nowrap;font-variant-numeric:tabular-nums}
+/* SVG */
+.wL{stroke:var(--L)}.wN{stroke:var(--N)}.wPE{stroke:var(--PE)}.wPEy{stroke:var(--PEy)}
+.lbl{fill:var(--mute);font-size:12px}.lbl2{fill:var(--ink);font-size:13px;font-weight:600}
+.flow{fill:none;stroke-linecap:round;stroke-dasharray:3 14;animation:run 0.8s linear infinite;opacity:0;pointer-events:none}
+.paused .flow{animation-play-state:paused}
+@keyframes run{to{stroke-dashoffset:-17}}
+@media(prefers-reduced-motion:reduce){.flow{animation:none;stroke-dasharray:none}}
+.hot,.dev{cursor:pointer}
+.dev rect.hous{fill:var(--box);stroke:var(--box2);stroke-width:2}
+.dev.sel rect.hous{stroke:var(--accent);stroke-width:3}
+.dev.onn rect.hous{fill:color-mix(in srgb,#f5c542 22%,var(--box))}
+.dev.live rect.hous{stroke:var(--danger);stroke-width:3;stroke-dasharray:6 4}
+.zap .pb{stroke:var(--danger);fill:var(--danger)}
+.zap{filter:drop-shadow(0 0 6px var(--danger))}
+.dead .pb{stroke:var(--danger);fill:var(--danger)}
+</style>
+</head>
+<body>
+<header>
+<div><div class="ttl"><h1>Elektrische Hausinstallation: Schutzmaßnahmen erkunden</h1><button class="info" id="bWiss" aria-label="Schutzgeräte und Merksätze" title="Schutzgeräte &amp; Merksätze">!</button><button class="info" id="bHelp" aria-label="Hilfe" title="Hilfe">?</button><span id="teilenBtn"></span></div></div>
+</header>
+<nav class="scen" id="scen" aria-label="Szenarien"></nav>
+<main class="grid">
+<section class="stage">
+<div id="svgBox">
+<button class="b sm" id="bView" type="button" title="Ausschnitt zurücksetzen – wieder der ganze Plan">Ansicht</button>
+<svg id="svg" viewBox="0 0 1000 600" role="img" aria-label="Schaltplan der Hausinstallation">
+<defs>
+<symbol id="ic-kocher" viewBox="0 0 60 60"><path d="M16 50h28l-3-30H19z M19 20c0-6 22-6 22 0 M41 26c8 0 9 14 2 16" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/><path d="M14 54h32" stroke="currentColor" stroke-width="3"/></symbol>
+<symbol id="ic-heizer" viewBox="0 0 60 60"><rect x="8" y="12" width="44" height="34" rx="5" fill="none" stroke="currentColor" stroke-width="3"/><path d="M15 20h30M15 26h30M15 32h30M15 38h30" stroke="currentColor" stroke-width="2"/><path d="M14 46v6M46 46v6" stroke="currentColor" stroke-width="3"/></symbol>
+<symbol id="ic-wm" viewBox="0 0 60 60"><rect x="10" y="6" width="40" height="48" rx="4" fill="none" stroke="currentColor" stroke-width="3"/><circle cx="30" cy="34" r="12" fill="none" stroke="currentColor" stroke-width="3"/><path d="M14 14h12" stroke="currentColor" stroke-width="3"/><circle cx="42" cy="14" r="2.5" fill="currentColor"/></symbol>
+<symbol id="ic-toaster" viewBox="0 0 60 60"><rect x="8" y="22" width="44" height="28" rx="8" fill="none" stroke="currentColor" stroke-width="3"/><path d="M20 22v-9M34 22v-9" stroke="currentColor" stroke-width="3"/><path d="M52 32h4" stroke="currentColor" stroke-width="3"/></symbol>
+<symbol id="ic-foen" viewBox="0 0 60 60"><path d="M10 14h26a10 10 0 0 1 0 20H24l-4 18h-8l4-18h-6z" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/><path d="M46 20l8-3M46 24h9M46 28l8 3" stroke="currentColor" stroke-width="2.5"/></symbol>
+<symbol id="ic-lampe" viewBox="0 0 60 60"><path d="M30 8a14 14 0 0 0-8 25c2 2 3 4 3 7h10c0-3 1-5 3-7a14 14 0 0 0-8-25z" fill="none" stroke="currentColor" stroke-width="3"/><path d="M25 45h10M26 50h8" stroke="currentColor" stroke-width="3"/></symbol>
+<symbol id="ic-tv" viewBox="0 0 60 60"><rect x="6" y="10" width="48" height="32" rx="3" fill="none" stroke="currentColor" stroke-width="3"/><path d="M22 52h16M30 42v10" stroke="currentColor" stroke-width="3"/></symbol>
+<symbol id="ic-laptop" viewBox="0 0 60 60"><rect x="12" y="14" width="36" height="24" rx="2" fill="none" stroke="currentColor" stroke-width="3"/><path d="M6 44h48l-4 6H10z" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/></symbol>
+<symbol id="earth" viewBox="0 0 30 16"><path d="M2 2h26M7 8h16M12 14h6" stroke="currentColor" stroke-width="2.5"/></symbol>
+<pattern id="tiles" width="16" height="16" patternUnits="userSpaceOnUse"><rect width="16" height="16" fill="#cfe3ee"/><path d="M0 0h16v16" fill="none" stroke="#9db8c7" stroke-width="1.5"/></pattern>
+</defs>
+<!-- Umgebung -->
+<rect x="0" y="0" width="150" height="540" fill="var(--street)"/>
+<rect x="150" y="20" width="850" height="520" fill="var(--wall)"/>
+<rect x="0" y="540" width="1000" height="60" fill="var(--earth)"/>
+<text x="10" y="592" class="lbl" fill="var(--ink)">Erdreich</text>
+<text x="20" y="40" class="lbl2">Ortsnetz</text>
+<text x="160" y="40" class="lbl2">Haus</text>
+<!-- Trafo -->
+<rect x="20" y="58" width="90" height="90" rx="8" fill="var(--box)" stroke="var(--box2)" stroke-width="2"/>
+<circle cx="52" cy="108" r="18" fill="none" stroke="var(--mute)" stroke-width="2.5"/><circle cx="74" cy="108" r="18" fill="none" stroke="var(--mute)" stroke-width="2.5"/>
+<text x="65" y="76" class="lbl" text-anchor="middle">Trafo</text>
+<path d="M65 148V575" stroke="var(--mute)" stroke-width="2.5"/>
+<use href="#earth" x="50" y="572" width="30" height="16" style="color:var(--ink)"/>
+<text x="72" y="528" class="lbl" fill="var(--ink)">Betriebs-</text><text x="72" y="543" class="lbl" fill="var(--ink)">erder</text>
+<text x="118" y="119" class="lbl" font-size="11">PEN</text>
+<!-- Mehrfachsteckdose (Körper) -->
+<rect x="645" y="76" width="350" height="136" rx="12" fill="var(--panel)" stroke="var(--box2)" stroke-width="2"/>
+<!-- Leitungen: alle waagrecht -->
+<path d="M110 100H985" fill="none" class="wL" stroke-width="5"/>
+<path d="M235 125H985" fill="none" class="wN" stroke-width="5"/>
+<path d="M235 125V150H985" fill="none" class="wPE" stroke-width="5"/>
+<path d="M235 125V150H985" fill="none" class="wPEy" stroke-width="5" stroke-dasharray="8 8"/>
+<path d="M110 125H235" fill="none" stroke="var(--PE)" stroke-width="5"/><path d="M110 125H235" fill="none" stroke="var(--N)" stroke-width="2"/>
+<path id="wL" d="M551 100H985" fill="none" stroke="transparent" stroke-width="5"/>
+<!-- Haupterdungsschiene + Fundamenterder -->
+<path d="M235 150V560H560" fill="none" class="wPE" stroke-width="4"/>
+<path d="M235 150V560H560" fill="none" class="wPEy" stroke-width="4" stroke-dasharray="8 8"/>
+<rect x="222" y="250" width="26" height="70" rx="3" fill="var(--box2)"/>
+<text x="254" y="271" class="lbl">Haupterdungs-</text><text x="254" y="286" class="lbl">schiene</text><text x="254" y="301" class="lbl">(Potentialausgleich)</text>
+<text x="330" y="580" class="lbl" fill="var(--ink)">Fundamenterder im Betonfundament</text>
+<!-- HAK -->
+<rect x="165" y="70" width="95" height="120" rx="6" fill="none" stroke="var(--box2)" stroke-width="2.5"/>
+<text x="212" y="62" class="lbl" text-anchor="middle">Hausanschluss</text>
+<rect x="180" y="91" width="40" height="18" rx="3" fill="var(--box)" stroke="var(--mute)" stroke-width="2"/><path id="hakWire" d="M184 100H216" stroke="var(--mute)" stroke-width="2"/>
+<text x="200" y="85" class="lbl" text-anchor="middle" font-size="11">63 A</text>
+<circle cx="235" cy="125" r="5" fill="var(--ink)"/>
+<text x="212" y="180" class="lbl" font-size="10" text-anchor="middle">PEN → N + PE</text>
+<!-- Zähler -->
+<rect x="282" y="80" width="66" height="60" rx="6" fill="var(--box)" stroke="var(--box2)" stroke-width="2"/>
+<text x="315" y="72" class="lbl" text-anchor="middle">Zähler</text>
+<rect x="288" y="88" width="54" height="22" rx="3" fill="#0f1a12"/>
+<text id="kw" x="315" y="104" text-anchor="middle" font-size="12" fill="#7cff9a" font-family="ui-monospace,monospace">0,00 kW</text>
+<!-- Sicherungskasten -->
+<rect x="370" y="48" width="200" height="158" rx="8" fill="none" stroke="var(--box2)" stroke-width="2.5"/>
+<text x="470" y="40" class="lbl" text-anchor="middle">Sicherungskasten</text>
+<g id="fi" class="hot" data-act="fi">
+<rect x="385" y="58" width="88" height="86" rx="6" fill="var(--box)" fill-opacity=".4" stroke="var(--mute)" stroke-width="2"/>
+<text x="428" y="73" class="lbl2" text-anchor="middle" font-size="12">FI 30 mA</text>
+<ellipse cx="424" cy="112" rx="15" ry="25" fill="none" stroke="var(--mute)" stroke-width="6" opacity=".55"/>
+<rect x="450" y="86" width="14" height="46" rx="4" fill="var(--box2)"/>
+<rect id="fiKnob" x="446" y="86" width="22" height="13" rx="3" fill="var(--ok)"/>
+<text id="fiTxt" x="457" y="141" text-anchor="middle" font-size="9" fill="var(--mute)">EIN</text>
+</g>
+<g class="hot" data-act="test"><circle cx="399" cy="131" r="9" fill="var(--panel)" stroke="var(--mute)" stroke-width="2"/><text x="399" y="135" text-anchor="middle" font-size="10" font-weight="700" fill="var(--ink)">T</text></g>
+<g id="fuse" class="hot" data-act="fuse">
+<rect x="486" y="62" width="74" height="60" fill="transparent"/>
+<text x="523" y="80" class="lbl2" text-anchor="middle" font-size="11">Sicherung 16 A</text>
+<rect x="495" y="90" width="56" height="20" rx="5" fill="var(--box)" stroke="var(--mute)" stroke-width="2"/>
+<path id="fuseWire" d="M500 100H546" stroke="var(--mute)" stroke-width="2"/>
+<path id="fuseBy" d="M488 100C495 68 551 68 558 100" fill="none" stroke="#9aa0a6" stroke-width="3" opacity="0"/>
+</g>
+<text x="390" y="167" class="lbl" font-size="10">PE-Schiene</text>
+<text x="575" y="232" class="lbl" font-size="11" text-anchor="end">Wandleitung 1,5 mm² Kupfer</text>
+<!-- Wandsteckdose -->
+<rect x="583" y="84" width="44" height="84" rx="8" fill="var(--box)" stroke="var(--box2)" stroke-width="2" opacity=".55"/>
+<text x="605" y="76" class="lbl" font-size="11" text-anchor="middle">Steckdose</text>
+<g id="peBreak" opacity="0"><rect x="652" y="143" width="18" height="14" fill="var(--panel)"/><path d="M654 141l14 18M668 141l-14 18" stroke="var(--danger)" stroke-width="3"/></g>
+<text x="660" y="91" class="lbl" font-size="11">Mehrfachsteckdose mit Schutzkontakt (max. 16 A)</text>
+<g id="sockets"></g>
+<!-- Strompfade -->
+<path id="fL" class="flow" d="M110 100H985" stroke="#ffd23f"/>
+<path id="fN" class="flow" d="M985 125H110" stroke="#ffd23f"/>
+<path id="fPE" class="flow" d="" stroke="#ffd23f"/>
+<path id="fE" class="flow" d="" stroke="#ffd23f"/>
+<g id="dyn"></g>
+<g id="pers"></g>
+</svg>
+</div>
+<div class="card"><div class="hd" style="justify-content:flex-start"><h2>Geräte einstecken</h2><button class="info mini" id="bPalHelp" aria-label="Hilfe zur Geräteauswahl" aria-expanded="false">?</button></div><p class="pop" id="palHelp" hidden>Tippe ein Gerät an: Es kommt in den gewählten Steckplatz oder, wenn dieser belegt ist, in den nächsten freien. Seitlich wischen zeigt weitere Geräte. Einen Steckplatz oder ein Gerät wählst du direkt in der Grafik aus. SK I = Metallgehäuse mit Schutzleiter, SK II = schutzisoliert.</p><div class="pal" id="pal"></div></div>
+<div class="two"><div class="card" id="selCard"></div><div class="card" id="persCard"></div></div>
+</section>
+<aside class="stage">
+<div class="card task" id="task"></div>
+<div class="card">
+<h2>Schutzeinrichtungen</h2>
+<div class="tog"><span>Schmelzsicherung 16 A<small id="fuseSt">eingesetzt</small></span><button class="sw" id="swFuse" role="switch" aria-checked="true" aria-label="Schmelzsicherung"></button></div>
+<div class="tog"><span>FI-Schutzschalter 30 mA<small id="rcdSt">eingebaut</small></span><button class="sw" id="swRcd" role="switch" aria-checked="true" aria-label="FI-Schalter"></button></div>
+<div class="tog" style="border-bottom:0"><span>Schutzleiter in der Leiste<small id="peSt">angeschlossen</small></span><button class="sw" id="swPe" role="switch" aria-checked="true" aria-label="Schutzleiter"></button></div>
+<div class="row" style="margin-top:6px;flex-wrap:nowrap">
+<button class="b sm" id="bTest" title="Prüftaste am FI">Test T</button>
+<button class="b sm" id="bRcd" title="FI wieder einschalten">FI rein</button>
+<button class="b sm" id="bFuse" title="Sicherung ersetzen">Sicherung neu</button>
+</div>
+</div>
+<details class="card" open><summary>Messwerte</summary>
+<table class="m">
+<tr><td>Strom im Außenleiter L</td><td id="mIL">0 A</td></tr>
+<tr><td>Strom im Neutralleiter N</td><td id="mIN">0 A</td></tr>
+<tr><td>Differenzstrom (misst der FI)</td><td id="mDI">0 A</td></tr>
+<tr><td>Strom im Schutzleiter PE</td><td id="mPE">0 A</td></tr>
+<tr><td>Körperstrom</td><td id="mIB">0 A</td></tr>
+<tr><td>Temperatur Wandleitung</td><td id="mT">25 °C</td></tr>
+</table>
+<div class="note" style="margin:8px 0 0">Erwärmung der Schmelzsicherung</div><div class="bar"><i id="barF"></i></div>
+<div class="clock"><span id="clk">t = 0 ms</span><span id="spd">Echtzeit</span></div>
+</details>
+<details class="card" open><summary>Protokoll<span class="cnt" id="logCnt"></span></summary><ul class="log" id="log"></ul></details>
+</aside>
+</main>
+
+<div class="modal" id="hilfe" hidden role="dialog" aria-modal="true" aria-labelledby="hilfeT">
+<div class="win">
+<header><h2 id="hilfeT">Hilfe</h2><button class="b sm" data-close="hilfe">Schließen</button></header>
+<div class="wbody">
+<section><h3>Worum geht es?</h3><p>Die Grafik zeigt ein aufgeschnittenes Haus: vom Trafo im Ortsnetz über Hausanschluss, Zähler und Sicherungskasten bis zur Mehrfachsteckdose. Stecke Geräte ein, löse Fehler aus und beobachte, was Schmelzsicherung, FI-Schalter, Schutzleiter und Erdung bewirken.</p></section>
+<section><h3>Die Leiter und ihre Farben</h3><div class="leg">
+<i style="background:var(--L)"></i><span><b>L – Außenleiter</b> (braun, auch „Phase“): führt 230 V gegenüber der Erde. Gefährlich bei Berührung.</span>
+<i style="background:var(--N)"></i><span><b>N – Neutralleiter</b> (blau): Rückleiter zum Trafo, liegt etwa auf Erdpotential.</span>
+<i style="background:repeating-linear-gradient(90deg,var(--PE) 0 10px,var(--PEy) 10px 20px)"></i><span><b>PE – Schutzleiter</b> (grün-gelb): verbindet Metallgehäuse mit der Erdung. Führt im Normalfall keinen Strom.</span>
+<i style="background:linear-gradient(var(--PE) 0 30%,var(--N) 30% 70%,var(--PE) 70%)"></i><span><b>PEN</b>: kombinierter Leiter im Ortsnetz. Im Hausanschluss wird er in N und PE aufgeteilt.</span>
+<i style="background:repeating-linear-gradient(90deg,#ffd23f 0 4px,transparent 4px 14px)"></i><span><b>Gelbe Striche</b>: zeigen, wo gerade Strom fließt. Je dicker und schneller, desto größer der Strom.</span>
+</div></section>
+<section><h3>So bedienst du es</h3><ul><li>Oben ein <b>Szenario</b> wählen, Aufgabe lesen, dann <b>Start</b>. Pause hält die Zeit an.</li><li>Schnelle Vorgänge laufen in Zeitlupe, langsame im Zeitraffer – rechts unter den Messwerten steht der Maßstab.</li><li>Unter <b>Gerät</b> schaltest du das gewählte Gerät ein/aus und löst Fehler aus.</li><li>Unter <b>Person</b> bestimmst du, was sie am gewählten Gerät berührt und worauf sie steht.</li><li>Mit den Schaltern rechts entfernst du Schutzeinrichtungen. „FI rein“ und „Sicherung neu“ setzen ausgelöste Schutzorgane zurück.</li><li>Tippen auf FI-Schalter oder Sicherung in der Grafik geht auch; „T“ ist die Prüftaste.</li></ul></section>
+<section><h3>Symbole</h3><ul><li>Doppeltes Quadrat am Gerät: Schutzklasse II (schutzisoliert)</li><li>Roter Blitz am Gerät: Körperschluss</li><li>Rot gestrichelter Rahmen: Gehäuse steht unter Spannung</li><li>Rotes Kreuz im Schutzleiter: Schutzleiter unterbrochen</li><li>Bogen über der Sicherung: Sicherung überbrückt („geflickt“)</li><li>Person rot: Strom fließt durch den Körper</li></ul></section>
+</div></div></div>
+<div class="modal" id="wiss" hidden role="dialog" aria-modal="true" aria-labelledby="wissT">
+<div class="win">
+<header><h2 id="wissT">Schutzgeräte &amp; Merksätze</h2><button class="b sm" data-close="wiss">Schließen</button></header>
+<div class="wbody">
+<section><h3>Schmelzsicherung</h3><p>Im Porzellankörper steckt ein dünner Schmelzdraht. Fließt mehr als der Nennstrom (hier 16 A), erwärmt er sich so stark (P = I²·R), dass er schmilzt. Je größer der Überstrom, desto schneller: bei einem Kurzschluss in Millisekunden, bei leichter Überlast erst nach Minuten. Sie schützt die <b>Leitung</b> vor Überhitzung, nicht den Menschen.</p><p>Eine „geflickte“ Sicherung (mit Draht überbrückt) ist lebensgefährlich: Die Isolierung der Leitung kann schmelzen, und es kann brennen.</p></section>
+<section><h3>FI-Schutzschalter (RCD)</h3><p>Außen- und Neutralleiter laufen gemeinsam durch einen Eisenring (Summenstromwandler). Sind Hin- und Rückstrom gleich groß, heben sich ihre Magnetfelder auf. Fließt ein Teil des Stroms auf einem anderen Weg zurück (über den Schutzleiter, über einen Menschen oder durch Wasser zur Erde), entsteht ein Differenzstrom. Ab spätestens 30 mA schaltet der FI in etwa 25–40 ms ab.</p><p>Grenze: Berührt man L und N gleichzeitig, fließt kein Differenzstrom. Der FI merkt nichts.</p></section>
+<section><h3>Schutzleiter und Schutzkontakt</h3><p>Geräte mit Metallgehäuse (Schutzklasse I) haben einen Schuko-Stecker. Der grün-gelbe Schutzleiter verbindet das Gehäuse mit der Erdung. Berührt der Außenleiter innen das Gehäuse (Körperschluss), fließt ein sehr großer Strom über den Schutzleiter, und die Sicherung bzw. der FI schaltet sofort ab.</p><p>Schutzisolierte Geräte (Schutzklasse II, Symbol: doppeltes Quadrat) haben ein Kunststoffgehäuse und brauchen keinen Schutzleiter.</p></section>
+<section><h3>Erdung und Potentialausgleich</h3><p>Im Hausanschlusskasten wird der PEN-Leiter des Netzes in Neutralleiter N und Schutzleiter PE aufgeteilt. An der Haupterdungsschiene ist der Schutzleiter mit dem Fundamenterder sowie mit Wasser-, Heizungsrohren und Badewanne verbunden (Potentialausgleich). So entstehen zwischen berührbaren Metallteilen keine gefährlichen Spannungen, und Fehlerströme finden einen niederohmigen Weg zurück zum Trafo.</p></section>
+<section><h3>Wirkung von Wechselstrom auf den Körper</h3><table class="k">
+<tr><td>unter 0,5 mA</td><td>nicht spürbar</td></tr>
+<tr><td>0,5 – 10 mA</td><td>spürbar bis schmerzhaft, Loslassen möglich</td></tr>
+<tr><td>10 – 30 mA</td><td>Muskelverkrampfung, Loslassen oft unmöglich, Atemnot</td></tr>
+<tr><td>ab ca. 50 mA</td><td>je nach Dauer Herzkammerflimmern – lebensgefährlich</td></tr></table></section>
+<section><h3>Merksätze</h3><ul><li>Die Sicherung schützt Leitungen vor Überlastung und Kurzschluss.</li><li>Der FI-Schalter schützt Menschen, wenn Strom auf falschem Weg zur Erde fließt.</li><li>Der Schutzleiter macht einen Körperschluss ungefährlich, weil er den Fehler sofort zur Abschaltung bringt.</li><li>Vor Arbeiten an der Installation: freischalten, gegen Wiedereinschalten sichern, Spannungsfreiheit feststellen.</li></ul></section>
+<section><h3>Modellannahmen</h3><p class="note" style="font-size:14px">Körperwiderstand Hand–Fuß ≈ 1000 Ω, Hand–Hand ≈ 1000 Ω, Fehlerschleife 0,6 Ω, Wasserweg in der Wanne ≈ 80 Ω. Kennlinie einer 16-A-Sicherung (gG) und Gefährdungsgrenze vereinfacht nach IEC 60479. Die animierten Strompfade zeigen den Weg des Stroms; bei Wechselstrom wechselt die Richtung 100-mal pro Sekunde.</p></section>
+</div></div></div>
+
+<script src="vendor/qrcode.min.js"></script>
+<script src="teilen.js"></script>
+<script>
+{
+const U=230,R_LOOP=0.6,R_BODY=1000,R_HH=1000,R_WATER=80,TAU=600,T_AMB=25,T_FIRE=120,FI_DELAY=0.025;
+const SX=[705,785,865,945],DY=320;
+const DEV={
+ kocher:{name:'Wasserkocher',P:2200,sk:1},heizer:{name:'Heizlüfter',P:2000,sk:1},wm:{name:'Waschmaschine',P:2100,sk:1},
+ toaster:{name:'Toaster',P:900,sk:1},foen:{name:'Föhn',P:1800,sk:2},lampe:{name:'Stehlampe',P:60,sk:2},
+ tv:{name:'Fernseher',P:120,sk:2},laptop:{name:'Laptop-Netzteil',P:65,sk:2}};
+const STAND={fliesen:{t:'nasse Fliesen',R:100},schuhe:{t:'Hausschuhe',R:3000},matte:{t:'Gummimatte',R:1e6}};
+const FT=[[1.3,1e5],[1.45,3600],[1.6,900],[2,40],[2.5,8],[3,2.5],[4,0.5],[5,0.15],[7,0.03],[10,0.008],[20,0.002],[30,0.001]];
+const IC_PLAY='<svg viewBox="0 0 24 24"><path d="M7 4l13 8-13 8z"/></svg>',IC_PAUSE='<svg viewBox="0 0 24 24"><path d="M6 4h4v16H6zM14 4h4v16h-4z"/></svg>';
+const $=id=>document.getElementById(id);
+const nf=(x,d)=>x.toLocaleString('de-DE',{minimumFractionDigits:d,maximumFractionDigits:d});
+const fI=I=>I<1e-4?'0 A':I<1?nf(I*1000,I<0.01?1:0)+' mA':I<100?nf(I,1)+' A':nf(I,0)+' A';
+const fT=t=>t<1?nf(t*1000,t<0.01?1:0)+' ms':t<60?nf(t,t<10?2:1)+' s':Math.floor(t/60)+' min '+Math.round(t%60)+' s';
+let slots,prot,st,person,sim,log,sel,scen,paused=true,dirty=true;
+const tMelt=r=>{if(r<1.3)return Infinity;if(r>=30)return 0.001*(30/r)**2;
+ for(let i=1;i<FT.length;i++){if(r<=FT[i][0]){const[a,ta]=FT[i-1],[b,tb]=FT[i];const f=Math.log(r/a)/Math.log(b/a);return Math.exp(Math.log(ta)+f*Math.log(tb/ta))}}return 0.001};
+const tCrit=I=>I<0.03?Infinity:Math.max(0.005,0.8*(0.05/I)**2);
+const wanneSlot=()=>slots.findIndex(s=>s&&s.fault==='wanne');
+
+function fresh(){prot={fuse:'ok',rcd:true,pe:true};st={fuseBlown:false,rcdTripped:false,hakBlown:false,fire:false,harm:false};
+ person={act:'none',slot:0,stand:'fliesen'};slots=[null,null,null,null];sel=0;log=[];newSim()}
+function newSim(){sim={t:0,dF:0,dH:0,rcdT:0,T:T_AMB,exp:0,maxIb:0,speed:1,test:false}}
+const mk=(id,on=true,fault='none')=>({id,on,fault});
+
+const SCEN=[
+{id:'normal',t:'Normalbetrieb',set(){slots=[mk('lampe'),mk('tv'),mk('laptop'),null]},
+ x:'Lampe, Fernseher und Laptop sind eingeschaltet. Vergleiche die Ströme in L und N. Welchen Wert misst der FI-Schalter? Drücke anschließend die Prüftaste T.'},
+{id:'ueberlast',t:'Überlastung',set(){slots=[mk('kocher'),mk('heizer'),mk('foen'),mk('toaster')]},
+ x:'Wasserkocher, Heizlüfter, Föhn und Toaster hängen an einer Mehrfachsteckdose. Berechne den Gesamtstrom mit I = P/U und beobachte Leitungstemperatur und Sicherung. Überbrücke danach die Sicherung („geflickt“) und starte neu: Was schützt jetzt die Leitung?'},
+{id:'kurz',t:'Kurzschluss',set(){slots=[mk('lampe'),mk('toaster',true,'kurz'),null,null];sel=1},
+ x:'Das Kabel des Toasters ist beschädigt: Außen- und Neutralleiter berühren sich. Der Ablauf läuft in Zeitlupe. Wie groß wird der Strom? Warum reagiert der FI-Schalter nicht?'},
+{id:'koerper',t:'Körperschluss',set(){slots=[mk('wm',true,'koerper'),mk('lampe'),null,null];sel=0},
+ x:'In der Waschmaschine berührt der Außenleiter das Metallgehäuse. Der Schutzleiter ist angeschlossen. Welchen Weg nimmt der Fehlerstrom, und was schaltet ab?'},
+{id:'ohnepe',t:'Ohne Schutzleiter',set(){slots=[mk('wm',true,'koerper'),mk('lampe'),null,null];sel=0;prot.pe=false;person={act:'gehaeuse',slot:0,stand:'fliesen'}},
+ x:'Gleicher Defekt, aber der Schutzleiter in der Leiste ist unterbrochen. Eine Person fasst die Waschmaschine an und steht barfuß auf nassen Fliesen. Starte danach ohne FI-Schalter neu.'},
+{id:'wanne',t:'Föhn in der Badewanne',set(){slots=[mk('foen',true,'wanne'),mk('lampe'),null,null];sel=0},
+ x:'Der eingeschaltete Föhn fällt in die Badewanne. Das Wasser leitet, und die Wanne ist über den Potentialausgleich geerdet. Warum hilft die 16-A-Sicherung hier nicht? Teste auch ohne FI und mit ausgeschaltetem Föhn.'},
+{id:'grenze',t:'Grenzen des FI',set(){slots=[mk('lampe'),mk('tv'),null,null];person={act:'LN',slot:0,stand:'matte'}},
+ x:'Jemand repariert das Kabel der Stehlampe unter Spannung und berührt mit beiden Händen Außen- und Neutralleiter. Er steht auf einer Gummimatte. Warum löst der FI nicht aus? Was hätte man vorher tun müssen?'},
+{id:'frei',t:'Freies Experimentieren',set(){slots=[mk('lampe'),null,null,null]},
+ x:'Stecke Geräte ein, löse Fehler aus und schalte Schutzeinrichtungen ab und an. Unter „Person“ kannst du Gehäuse oder beschädigte Kabel berühren lassen.'}];
+
+function startScen(id){scen=id;fresh();SCEN.find(s=>s.id===id).set();paused=id!=='frei';changed(true)}
+function restart(){const keep={...prot},p={...person};fresh();SCEN.find(s=>s.id===scen).set();prot=keep;
+ if(scen!=='ohnepe'&&scen!=='grenze')person=p;paused=scen!=='frei';changed(true)}
+
+function currents(){
+ const c={IL:0,IN:0,IPE:0,IE:0,Ib:0,dI:0,dev:[0,0,0,0],house:[0,0,0,0],pe:-1,earth:null,body:null};
+ c.on=!st.hakBlown&&!st.fire&&!(prot.rcd&&st.rcdTripped)&&!(prot.fuse==='ok'&&st.fuseBlown);
+ if(!c.on)return c;
+ slots.forEach((s,i)=>{if(!s)return;const d=DEV[s.id];
+  if(s.fault==='kurz'){const I=U/R_LOOP;c.IL+=I;c.IN+=I;c.dev[i]=I;return}
+  if(s.on){const I=d.P/U;c.IL+=I;c.IN+=I;c.dev[i]=I}
+  if(s.fault==='koerper'){if(prot.pe){const I=U/R_LOOP;c.IPE+=I;c.pe=i;c.house[i]=U/2}else c.house[i]=U}
+  if(s.fault==='wanne'){c.IE+=U/R_WATER;c.Ib=0.2;c.earth='wanne';c.body='wanne'}});
+ const Rs=STAND[person.stand].R,ps=slots[person.slot];
+ if(c.body!=='wanne'&&ps){
+  if(person.act==='gehaeuse'&&c.house[person.slot]>0){c.Ib=c.house[person.slot]/(R_BODY+Rs);c.IE+=c.Ib;c.earth='person';c.body='gehaeuse'}
+  else if(person.act==='L'){c.Ib=U/(R_BODY+Rs);c.IE+=c.Ib;c.earth='person';c.body='L'}
+  else if(person.act==='LN'){c.Ib=U/R_HH;c.IL+=c.Ib;c.IN+=c.Ib;c.body='LN'}}
+ c.IL+=c.IPE+c.IE;c.dI=c.IPE+c.IE+(sim.test&&prot.rcd?0.045:0);
+ return c}
+
+function nextEv(c){let best={t:Infinity,k:null};const tr=(t,k)=>{if(t<best.t)best={t:Math.max(t,0),k}};
+ if(!c.on)return best;
+ if(prot.fuse==='ok'&&!st.fuseBlown)tr((1-sim.dF)*tMelt(c.IL/16),'fuse');
+ tr((1-sim.dH)*tMelt(c.IL/63),'hak');
+ if(prot.rcd&&!st.rcdTripped&&c.dI>0.03)tr(FI_DELAY-sim.rcdT,'rcd');
+ if(c.Ib>=0.03&&!st.harm)tr(tCrit(c.Ib)-sim.exp,'harm');
+ const Tss=T_AMB+40*(c.IL/16)**2;if(Tss>T_FIRE&&sim.T<T_FIRE)tr(-TAU*Math.log((Tss-T_FIRE)/(Tss-sim.T)),'fire');
+ return best}
+
+function advance(c,h){sim.t+=h;if(!c.on){sim.rcdT=0;sim.T+=(T_AMB-sim.T)*(1-Math.exp(-h/TAU));return}
+ const tf=tMelt(c.IL/16);if(prot.fuse==='ok'&&!st.fuseBlown){if(isFinite(tf))sim.dF+=h/tf;else sim.dF*=Math.exp(-h/120)}
+ const th=tMelt(c.IL/63);if(isFinite(th))sim.dH+=h/th;else sim.dH*=Math.exp(-h/120);
+ sim.rcdT=c.dI>0.03?sim.rcdT+h:0;
+ if(c.Ib>0){sim.exp+=h;sim.maxIb=Math.max(sim.maxIb,c.Ib)}
+ const Tss=T_AMB+40*(c.IL/16)**2;sim.T+=(Tss-sim.T)*(1-Math.exp(-h/TAU))}
+
+function wayText(c){if(c.IPE>0.03&&c.IE<0.03)return 'über den Schutzleiter';if(c.earth==='wanne')return 'durch das Wasser und den Potentialausgleich der Wanne zur Erde';if(c.earth==='person')return 'durch den Körper der Person zur Erde';return 'über den Schutzleiter und die Erde'}
+function survived(c){if(c.Ib>0&&!st.harm){const who=c.body==='wanne'?'Die badende Person':'Die Person';
+ if(c.Ib>=0.03)addLog(`${who} bekam ${fI(c.Ib)} für ${fT(sim.exp)}: ein heftiger Schlag, aber Herzkammerflimmern droht erst nach etwa ${fT(tCrit(c.Ib))}. Die Abschaltung kam rechtzeitig.`,'ok');
+ else addLog(`${who} spürte ${fI(c.Ib)} für ${fT(sim.exp)}: unangenehm, aber ungefährlich.`,'ok')}}
+function event(k,c){
+ if(k==='fuse'){st.fuseBlown=true;let m=`Die Schmelzsicherung brennt durch: ${fI(c.IL)} sind mehr als der Nennstrom von 16 A. Der Schmelzdraht wird so heiß (P = I²·R), dass er schmilzt, und der Stromkreis ist unterbrochen.`;
+  if(c.IL>200)m+=' Bei diesem riesigen Strom geschieht das in wenigen Millisekunden.';
+  if(prot.rcd&&c.dI>0.03)m+=' Auch der FI hätte abgeschaltet, aber die Sicherung war schneller.';addLog(m,'bad');survived(c)}
+ else if(k==='hak'){st.hakBlown=true;addLog(`Die Hausanschlusssicherung (63 A) brennt durch, weil ${fI(c.IL)} fließen. Jetzt ist das ganze Haus ohne Strom. Diese Sicherung ist verplombt; nur der Netzbetreiber darf sie ersetzen.`,'bad');survived(c)}
+ else if(k==='rcd'){st.rcdTripped=true;
+  if(sim.test&&c.dI-0.045<0.03)addLog('Prüftaste: Ein kleiner Prüfstrom wird am Summenstromwandler vorbeigeführt. Der FI erkennt den Differenzstrom und schaltet ab. Er funktioniert.','ok');
+  else addLog(`Der FI-Schalter löst aus: Durch L fließen ${fI(c.IL)}, durch N kommen nur ${fI(c.IN)} zurück. Der Differenzstrom von ${fI(c.dI)} fließt ${wayText(c)}. Das ist mehr als 30 mA, also schaltet der FI nach etwa 25 ms ab.`,'ok');
+  sim.test=false;survived(c)}
+ else if(k==='harm'){st.harm=true;let m=`Lebensgefahr: ${fI(c.Ib)} fließen ${fT(sim.exp)} lang durch den Körper. Es droht Herzkammerflimmern.`;
+  if(c.body==='LN')m+=' Der FI-Schalter kann hier nicht helfen: Der Strom fließt über L in den Körper und über N zurück, deshalb gibt es keinen Differenzstrom. Und für die Sicherung ist der Strom viel zu klein. Deshalb gilt: vor dem Arbeiten freischalten!';
+  else{m+=` Für die 16-A-Sicherung ist der Strom von ${fI(c.IL)} viel zu klein.`;if(!prot.rcd)m+=' Ein FI-Schalter hätte nach etwa 25 ms abgeschaltet.'}
+  addLog(m,'bad')}
+ else if(k==='fire'){st.fire=true;addLog(`Die Wandleitung ist über ${T_FIRE} °C heiß: Die Isolierung schmilzt, es kommt zum Kabelbrand. Bei ${fI(c.IL)} hätte eine intakte 16-A-Sicherung längst abgeschaltet.`,'bad')}
+ dirty=true;retime()}
+
+function step(dt){let left=dt;for(let n=0;n<30&&left>1e-12;n++){const c=currents(),ev=nextEv(c);const h=Math.min(left,ev.t);advance(c,h);left-=h;if(ev.t<=h+1e-12&&ev.k)event(ev.k,c)}}
+function retime(){const c=currents(),ev=nextEv(c);
+ if(isFinite(ev.t)&&ev.t>0)sim.speed=Math.min(3600,Math.max(1/2000,ev.t/3));
+ else{const Tss=c.on?T_AMB+40*(c.IL/16)**2:T_AMB;sim.speed=Math.abs(Tss-sim.T)>2?120:1}}
+function addLog(m,cls){log.unshift({t:sim.t,m,cls});renderLog()}
+function changed(reset){if(reset)log=[];const T=sim.T,dF=sim.dF;newSim();if(!reset){sim.T=T;sim.dF=dF}dirty=true;retime();renderAll();tafelSync()}
+
+/* ---------- Darstellung ---------- */
+function renderScen(){$('scen').innerHTML=SCEN.map(s=>`<button class="chip" data-s="${s.id}" aria-pressed="${s.id===scen}">${s.t}</button>`).join('')}
+function renderTask(){const s=SCEN.find(x=>x.id===scen);$('task').innerHTML=`<b>${s.t}</b>${s.x}
+ <div class="row" style="margin-top:10px"><button class="b go ${paused?'':'pz'}" id="bPlay">${paused?IC_PLAY+'Start':IC_PAUSE+'Pause'}</button><button class="b" id="bRestart">Neu starten</button></div><div class="status" id="status"></div>`;stT=0}
+function renderPlay(){const b=$('bPlay');if(!b)return;b.innerHTML=paused?IC_PLAY+(sim.t>0?'Weiter':'Start'):IC_PAUSE+'Pause';b.classList.toggle('pz',!paused);$('svg').classList.toggle('paused',paused)}
+function renderPal(){$('pal').innerHTML=Object.entries(DEV).map(([k,d])=>`<button class="b" data-dev="${k}"><svg viewBox="0 0 60 60"><use href="#ic-${k}"/></svg>${d.name}<small>${nf(d.P,0)} W · SK ${d.sk===1?'I':'II'}</small></button>`).join('')}
+function renderSel(){const s=slots[sel],el=$('selCard');
+ if(!s){el.innerHTML=`<h2>Platz ${sel+1}: frei</h2><p class="note">Oben ein Gerät antippen.</p>`;return}
+ const d=DEV[s.id],f=s.fault;
+ el.innerHTML=`<div class="hd"><h2>${d.name}</h2><button class="sw" data-x="on" role="switch" aria-checked="${s.on}" aria-label="Gerät ein/aus" title="${s.on?'an':'aus'}"></button></div>
+ <p class="note">Platz ${sel+1} · ${nf(d.P,0)} W · ${fI(d.P/U)} · SK ${d.sk===1?'I':'II'}</p>
+ <h3>Fehler</h3><div class="seg">
+ <button data-f="none" aria-pressed="${f==='none'}">keiner</button>
+ <button data-f="kurz" aria-pressed="${f==='kurz'}" title="Kurzschluss im Kabel">Kabel&shy;kurz&shy;schluss</button>
+ ${d.sk===1?`<button data-f="koerper" aria-pressed="${f==='koerper'}">Körper&shy;schluss</button>`:''}
+ ${s.id==='foen'?`<button data-f="wanne" aria-pressed="${f==='wanne'}" title="Fällt in die Badewanne">in Wanne</button>`:''}</div>
+ <div class="row" style="margin-top:8px"><button class="b sm" data-x="out">Ausstecken</button></div>`}
+function renderPers(){const el=$('persCard'),w=wanneSlot()>=0,ps=slots[person.slot],s=slots[sel];
+ const A=[['none','nichts'],['gehaeuse','Gehäuse'],['L','Leiter L'],['LN','L + N']];
+ el.innerHTML=`<h2>Person</h2><p class="note">${w?'Eine Person liegt in der Badewanne.':person.act!=='none'&&ps?'berührt beim Gerät: '+DEV[ps.id].name:'Berührt beim gewählten Gerät …'}</p>
+ <div class="seg">${A.map(([k,t])=>`<button data-p="${k}" aria-pressed="${person.act===k}" ${w||(k!=='none'&&!s)?'disabled':''}>${t}</button>`).join('')}</div>
+ <h3>Standort</h3><div class="seg">${Object.entries(STAND).map(([k,v])=>`<button data-st="${k}" aria-pressed="${person.stand===k}" ${w?'disabled':''}>${v.t}</button>`).join('')}</div>`}
+function renderLog(){$('log').innerHTML=log.length?log.map(l=>`<li class="${l.cls||''}"><em>t = ${fT(l.t)}:</em> ${l.m}</li>`).join(''):'<li class="note">Noch keine Ereignisse.</li>';$('logCnt').textContent=log.length?log.length+' Einträge':''}
+function renderTog(){const set=(id,v)=>$(id).setAttribute('aria-checked',v);
+ set('swFuse',prot.fuse==='ok');set('swRcd',prot.rcd);set('swPe',prot.pe);
+ $('fuseSt').textContent=prot.fuse==='ok'?(st.fuseBlown?'durchgebrannt':'eingesetzt'):'überbrückt – gefährlich!';
+ $('rcdSt').textContent=prot.rcd?(st.rcdTripped?'ausgelöst':'eingebaut'):'nicht vorhanden';
+ $('peSt').textContent=prot.pe?'angeschlossen':'unterbrochen';
+ $('bTest').disabled=!prot.rcd||st.rcdTripped;$('bRcd').disabled=!(prot.rcd&&st.rcdTripped);$('bFuse').disabled=!(st.fuseBlown||st.hakBlown||st.fire)}
+function renderAll(){renderScen();renderTask();renderPlay();renderSel();renderPers();renderLog();renderTog();renderSockets();dirty=true}
+
+function renderSockets(){$('sockets').innerHTML=SX.map((x,i)=>`<g class="hot" data-slot="${i}"><rect x="${x-36}" y="160" width="72" height="50" fill="transparent"/>
+ <path d="M${x-6} 100V172" stroke-width="2" class="wL"/><path d="M${x} 125V172" stroke-width="2" class="wN"/><path d="M${x+6} 150V172" stroke-width="2" class="wPE"/>
+ <circle cx="${x}" cy="186" r="15" fill="var(--box)" stroke="${i===sel?'var(--accent)':'var(--box2)'}" stroke-width="${i===sel?3:2}"/>
+ <circle cx="${x-5}" cy="186" r="2.6" fill="var(--ink)"/><circle cx="${x+5}" cy="186" r="2.6" fill="var(--ink)"/>
+ <text x="${x}" y="164" text-anchor="middle" font-size="10" fill="var(--mute)"></text></g>`).join('')}
+
+function devSVG(c){let o='';const w=wanneSlot();
+ if(w>=0)o+=`<g><path d="M330 450h240v8c0 40-20 72-60 72H390c-40 0-60-32-60-72z" fill="var(--box)" stroke="var(--box2)" stroke-width="3"/>
+  <path d="M340 462h220c-2 30-18 58-50 58H390c-32 0-48-28-50-58z" fill="#7cc4e8" opacity=".75"/>
+  <path d="M540 520V545H248" fill="none" stroke="var(--PE)" stroke-width="3"/><path d="M540 520V545H248" fill="none" stroke="var(--PEy)" stroke-width="3" stroke-dasharray="6 6"/>
+  <text x="330" y="428" class="lbl" font-size="11">Badewanne, über Potentialausgleich geerdet</text>
+  <g id="bather"><circle cx="370" cy="452" r="13" class="pb" fill="var(--mute)"/><path d="M380 466c20 -6 60 -6 90 0" class="pb" stroke="var(--mute)" stroke-width="10" fill="none" stroke-linecap="round"/></g></g>`;
+ slots.forEach((s,i)=>{const x=SX[i];if(!s)return;const d=DEV[s.id];
+  const live=c.on&&c.house[i]>30,onn=c.on&&s.on&&s.fault!=='kurz';
+  if(s.fault==='wanne'){o+=`<path d="M${x} 201C${x} 320 620 330 520 462" fill="none" stroke="var(--ink)" stroke-width="3"/>
+   <g class="dev" data-slot="${i}" transform="translate(490 445) rotate(25)"><use href="#ic-foen" width="46" height="46" style="color:var(--ink)"/></g>
+   <text x="${x+8}" y="250" class="lbl" font-size="11">Föhn in der Wanne</text>`;return}
+  o+=`<path d="M${x-6} 201V${DY}" stroke-width="2.5" class="wL"/><path d="M${x} 201V${DY}" stroke-width="2.5" class="wN"/>${d.sk===1?`<path d="M${x+6} 201V${DY}" stroke-width="2.5" class="wPE"/><path d="M${x+6} 201V${DY}" stroke-width="2.5" class="wPEy" stroke-dasharray="4 4"/>`:''}`;
+  if(s.fault==='kurz')o+=`<path d="M${x-6} 255H${x}" stroke="var(--danger)" stroke-width="4"/><path d="M${x-16} 244l8 6-6 2 10 8" fill="none" stroke="${c.on?'#ffd23f':'var(--danger)'}" stroke-width="3"/>`;
+  o+=`<g class="dev ${i===sel?'sel':''} ${onn?'onn':''} ${live?'live':''}" data-slot="${i}"><rect class="hous" x="${x-35}" y="${DY}" width="70" height="87" rx="8"/>
+   <use href="#ic-${s.id}" x="${x-23}" y="${DY+5}" width="46" height="46" style="color:var(--ink)"/>
+   <text x="${x}" y="${DY+66}" text-anchor="middle" font-size="11" fill="var(--ink)">${d.name.split('-')[0]}</text>
+   <text x="${x}" y="${DY+79}" text-anchor="middle" font-size="10" fill="var(--mute)">${nf(d.P,0)} W ${s.on?'· an':'· aus'}</text>
+   ${d.sk===2?`<rect x="${x+20}" y="${DY+6}" width="11" height="11" fill="none" stroke="var(--mute)" stroke-width="1.5"/><rect x="${x+23}" y="${DY+9}" width="5" height="5" fill="none" stroke="var(--mute)" stroke-width="1.2"/>`:''}
+   ${s.fault==='koerper'?`<path d="M${x-30} ${DY+8}h7l-4 8h6l-9 12" fill="none" stroke="var(--danger)" stroke-width="2.5"/>`:''}</g>`;
+  o+=live?`<text x="${x}" y="${DY+103}" text-anchor="middle" font-size="12" font-weight="700" fill="var(--danger)">Gehäuse ${nf(c.house[i],0)} V!</text>`
+   :`<text x="${x}" y="${DY+102}" text-anchor="middle" font-size="11" fill="var(--mute)">${fI(c.dev[i])}</text>`});
+ return o}
+
+function persSVG(){if(wanneSlot()>=0||person.act==='none')return '';
+ const x=SX[person.slot],has=!!slots[person.slot];let px,hands=[];
+ if(person.act==='gehaeuse'){px=x-62;if(has)hands=[[x-34,DY+72]]}
+ else{px=x-54;if(has)hands=person.act==='L'?[[x-6,DY-22]]:[[x-6,DY-22],[x,DY-18]]}
+ const fl=person.stand==='fliesen'?'url(#tiles)':person.stand==='matte'?'#222':'#b07a45';
+ let o=`<rect x="${px-34}" y="532" width="68" height="9" rx="2" fill="${fl}" stroke="var(--box2)"/>`;
+ if((person.act==='L'||person.act==='LN')&&has)o+=`<rect x="${x-13}" y="${DY-34}" width="26" height="24" rx="4" fill="none" stroke="var(--danger)" stroke-width="2" stroke-dasharray="4 3"/><text x="${x-16}" y="${DY-38}" class="lbl" font-size="10" text-anchor="end">Isolierung defekt</text>`;
+ o+=`<g id="person"><circle class="pb" cx="${px}" cy="372" r="15" fill="var(--mute)"/>
+  <path class="pb" d="M${px} 388V466M${px} 466L${px-16} 532M${px} 466L${px+16} 532" stroke="var(--mute)" stroke-width="9" stroke-linecap="round" fill="none"/>`;
+ const arm=(a,b)=>`<path class="pb" d="M${px} 402L${a} ${b}" stroke="var(--mute)" stroke-width="7" stroke-linecap="round" fill="none"/>`;
+ if(hands.length===0)o+=arm(px-24,450)+arm(px+24,450);
+ else{hands.forEach(h=>o+=arm(h[0],h[1]));if(hands.length===1)o+=arm(px-22,450)}
+ return o+'</g>'}
+
+function setFlow(el,I){if(I<1e-4){el.style.opacity=0;return}el.style.opacity=.95;
+ const lg=Math.log10(1+I*1000);el.style.strokeWidth=(2+lg*0.9).toFixed(1);el.style.animationDuration=Math.max(0.12,1.6-lg*0.25).toFixed(2)+'s'}
+
+function draw(){const c=currents();
+ if(dirty){$('dyn').innerHTML=devSVG(c);$('pers').innerHTML=persSVG();renderTog();dirty=false}
+ setFlow($('fL'),c.IL);setFlow($('fN'),c.IN);
+ const fpe=$('fPE');if(c.pe>=0&&c.IPE>0){fpe.setAttribute('d',`M${SX[c.pe]+6} ${DY}V150H235V125H110`);setFlow(fpe,c.IPE)}else setFlow(fpe,0);
+ const fe=$('fE');if(c.earth==='wanne'){fe.setAttribute('d','M540 520V545H235V125H110');setFlow(fe,c.IE)}
+ else if(c.earth==='person'){const px=SX[person.slot]-(person.act==='gehaeuse'?62:54);fe.setAttribute('d',`M${px} 540V562H235V125H110`);setFlow(fe,c.IE)}else setFlow(fe,0);
+ const p=$('person')||$('bather');if(p){p.classList.toggle('zap',c.Ib>0.0005);p.classList.toggle('dead',st.harm)}
+ const tripped=prot.rcd&&st.rcdTripped;$('fi').style.opacity=prot.rcd?1:.28;
+ $('fiKnob').setAttribute('y',tripped?119:86);$('fiKnob').setAttribute('fill',tripped?'var(--danger)':'var(--ok)');
+ $('fiTxt').textContent=prot.rcd?(tripped?'AUS':'EIN'):'fehlt';
+ const fw=$('fuseWire');fw.setAttribute('d',st.fuseBlown?'M500 100H517M529 100H546':'M500 100H546');
+ const heat=Math.min(1,sim.dF);fw.setAttribute('stroke',st.fuseBlown?'var(--danger)':heat>0.02?`hsl(${40-40*heat} 100% ${45+10*heat}%)`:'var(--mute)');fw.setAttribute('stroke-width',st.fuseBlown?2:2+heat*2);
+ $('fuseBy').setAttribute('opacity',prot.fuse==='ok'?0:1);
+ $('hakWire').setAttribute('d',st.hakBlown?'M184 100H196M204 100H216':'M184 100H216');$('hakWire').setAttribute('stroke',st.hakBlown?'var(--danger)':'var(--mute)');
+ $('peBreak').setAttribute('opacity',prot.pe?0:1);
+ const T=sim.T,wl=$('wL');if(T>45){const f=Math.min(1,(T-45)/75);wl.style.stroke=`hsl(${28-28*f} ${60+40*f}% ${35+15*f}%)`;wl.style.filter=f>0.4?'drop-shadow(0 0 4px #ff5a2a)':''}else{wl.style.stroke='transparent';wl.style.filter=''}
+ $('kw').textContent=nf(c.on?Math.min(U*c.IL/1000,999):0,2)+' kW';
+ $('mIL').textContent=fI(c.IL);$('mIN').textContent=fI(c.IN);$('mDI').textContent=fI(c.dI);$('mPE').textContent=fI(c.IPE);
+ $('mIB').textContent=fI(c.Ib);$('mIB').style.color=c.Ib>=0.03?'var(--danger)':'';$('mDI').style.color=c.dI>0.03?'var(--warn)':'';
+ $('mT').textContent=nf(T,0)+' °C';$('mT').style.color=T>70?'var(--danger)':'';
+ $('barF').style.width=(prot.fuse==='ok'?Math.min(100,(st.fuseBlown?1:sim.dF)*100):0)+'%';
+ $('clk').textContent='t = '+fT(sim.t);$('clk').title='Zeit seit der letzten Änderung';
+ $('spd').textContent=paused?'angehalten':sim.speed<0.9?'Zeitlupe 1 : '+nf(1/sim.speed,0):sim.speed>1.1?'Zeitraffer '+nf(sim.speed,0)+' ×':'Echtzeit';
+ status(c)}
+
+let stT=0;
+function status(c){const now=performance.now();if(now-stT<200)return;stT=now;let m='',cls='';
+ if(st.fire){m='Kabelbrand! Die überlastete Leitung hat ihre Isolierung zerstört. Ersetze die Sicherung, um neu zu beginnen.';cls='bad'}
+ else if(st.harm&&c.Ib>0){m=`Stromunfall: Durch die Person fließen weiterhin ${fI(c.Ib)}. Nichts schaltet ab.`;cls='bad'}
+ else if(!c.on){m=st.hakBlown?'Das ganze Haus ist stromlos (Hausanschlusssicherung).':prot.rcd&&st.rcdTripped?'Der FI-Schalter hat abgeschaltet. Fehler beseitigen, dann wieder einschalten.':'Die Sicherung ist durchgebrannt. Fehler beseitigen, dann Sicherung ersetzen.';cls='warn'}
+ else{const hv=c.house.findIndex((v,i)=>v>30&&!(person.act==='gehaeuse'&&person.slot===i));
+  if(hv>=0&&c.IPE===0){m=`Versteckte Gefahr: Das Gehäuse des Geräts „${DEV[slots[hv].id].name}“ steht unter ${nf(c.house[hv],0)} V. Es fließt kein Strom, also löst nichts aus. Wer es berührt, wird selbst zum Erdungsweg.`;cls='bad'}
+  else if(c.IL>16&&prot.fuse==='ok'){m=`Überstrom: ${fI(c.IL)} > 16 A. Leitung und Schmelzdraht erwärmen sich.`;cls='warn'}
+  else if(c.IL>16){m=`Überstrom ${fI(c.IL)}, aber die Sicherung ist überbrückt: Nichts begrenzt mehr die Erwärmung der Leitung.`;cls='bad'}
+  else if(c.Ib>0.0005){m=`Durch die Person fließen ${fI(c.Ib)}.`;cls=c.Ib>=0.03?'bad':'warn'}
+  else if(c.IL<1e-4){m='Kein Gerät eingeschaltet, es fließt kein Strom.'}
+  else m=`Alles in Ordnung: Hinstrom in L = Rückstrom in N = ${fI(c.IN)}, Differenzstrom 0, Schutzleiter stromlos.`;
+  if(sim.T>70&&!st.fire)m+=` Die Leitung ist ${nf(sim.T,0)} °C heiß (zulässig: 70 °C).`;
+  const P=slots.reduce((a,s)=>a+(s&&s.on&&s.fault==='none'?DEV[s.id].P:0),0);if(P>3680)m+=` Die Leiste ist mit ${nf(P,0)} W überlastet (max. 3680 W).`}
+ if(paused)m=(sim.t===0&&!log.length?'Bereit (Momentaufnahme bei t = 0) – drücke Start. ':'Angehalten. ')+m;
+ const el=$('status');if(el){el.textContent=m;el.className='status '+cls}}
+
+/* ---------- Bedienung ---------- */
+function place(k){const i=slots[sel]?slots.findIndex(s=>!s):sel;if(i<0){addLog('Alle vier Steckplätze sind belegt. Stecke zuerst ein Gerät aus.','');return}slots[i]=mk(k,true);sel=i;changed()}
+function openM(id){const m=$(id);m.hidden=false;m.querySelector('[data-close]').focus()}
+const closeM=()=>document.querySelectorAll('.modal').forEach(m=>m.hidden=true);
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeM()});
+document.addEventListener('click',e=>{
+ if(e.target.classList.contains('modal')||e.target.closest('[data-close]')){closeM();return}
+ const t=e.target.closest('[data-s],[data-dev],[data-x],[data-f],[data-p],[data-st],[data-slot],[data-act],button[id]');if(!t)return;
+ const d=t.dataset,id=t.id;
+ if(id==='bWiss'){openM('wiss');return}if(id==='bHelp'){openM('hilfe');return}
+ if(id==='bPalHelp'){const h=$('palHelp');h.hidden=!h.hidden;t.setAttribute('aria-expanded',!h.hidden);return}
+ if(d.s){startScen(d.s);return}
+ if(id==='bRestart'){restart();return}
+ if(id==='bPlay'){paused=!paused;last=performance.now();renderPlay();stT=0;return}
+ if(d.dev){place(d.dev);return}
+ if(d.slot!==undefined){sel=+d.slot;if(person.act!=='none'&&slots[sel]){person.slot=sel;changed();return}renderSel();renderPers();renderSockets();dirty=true;return}
+ const s=slots[sel];
+ if(d.x==='on'&&s){s.on=!s.on;changed();return}
+ if(d.x==='out'&&s){slots[sel]=null;if(person.slot===sel)person.act='none';changed();return}
+ if(d.f&&s){s.fault=d.f;if(d.f==='wanne')person.act='none';changed();return}
+ if(d.p){person.act=d.p;if(d.p!=='none')person.slot=sel;if(d.p==='LN')person.stand='matte';changed();return}
+ if(d.st){person.stand=d.st;changed();return}
+ if(id==='swFuse'){prot.fuse=prot.fuse==='ok'?'bypass':'ok';if(prot.fuse==='bypass')addLog('Sicherung überbrückt: Ein Draht ersetzt den Schmelzeinsatz. Das ist verboten und lebensgefährlich!','bad');changed();return}
+ if(id==='swRcd'){prot.rcd=!prot.rcd;changed();return}
+ if(id==='swPe'){prot.pe=!prot.pe;changed();return}
+ if(id==='bTest'||d.act==='test'){if(prot.rcd&&!st.rcdTripped){sim.test=true;retime();if(paused){paused=false;renderPlay()}}return}
+ if(id==='bRcd'||d.act==='fi'){if(prot.rcd&&st.rcdTripped){st.rcdTripped=false;addLog('FI-Schalter wieder eingeschaltet.','');changed()}return}
+ if(id==='bFuse'||d.act==='fuse'){if(st.fuseBlown||st.hakBlown||st.fire){const w=st.fire;st.fuseBlown=st.hakBlown=st.fire=false;sim.dF=0;sim.T=T_AMB;addLog(w?'Neue Leitung verlegt und Sicherungen ersetzt.':'Sicherung ersetzt.','');changed()}return}
+});
+
+/* ---- Ausschnitt: mit zwei Fingern zoomen und schieben ----
+   Ein Finger bleibt fürs Antippen von Steckplätzen und Schaltern frei; gezoomt wird mit zwei
+   Fingern, am Rechner mit dem Mausrad (Strg/Cmd oder einfach rollen). „Ansicht" holt den
+   ganzen Plan zurück. */
+const SVG_W=1000, SVG_H=600, ZOOM_MAX=8;
+let vb={x:0,y:0,w:SVG_W,h:SVG_H};
+const svgEl=$('svg');
+function vbSetzen(){ svgEl.setAttribute('viewBox',vb.x.toFixed(2)+' '+vb.y.toFixed(2)+' '+vb.w.toFixed(2)+' '+vb.h.toFixed(2));
+  const ganz=vb.w>=SVG_W-0.5&&vb.h>=SVG_H-0.5&&Math.abs(vb.x)<0.5&&Math.abs(vb.y)<0.5;
+  $('bView').hidden=ganz; }
+function vbHalten(){ vb.w=Math.min(SVG_W,Math.max(SVG_W/ZOOM_MAX,vb.w));
+  vb.h=vb.w*SVG_H/SVG_W;
+  vb.x=Math.max(0,Math.min(SVG_W-vb.w,vb.x)); vb.y=Math.max(0,Math.min(SVG_H-vb.h,vb.y)); }
+function vbZurueck(){ vb={x:0,y:0,w:SVG_W,h:SVG_H}; vbSetzen(); }
+/* Bildschirmpunkt → Punkt im Plan (in den Einheiten der viewBox) */
+function imPlan(cx,cy){ const r=svgEl.getBoundingClientRect();
+  return {x:vb.x+(cx-r.left)/r.width*vb.w, y:vb.y+(cy-r.top)/r.height*vb.h}; }
+function zoomUm(cx,cy,f){ const p=imPlan(cx,cy), alt=vb.w;
+  vb.w=Math.min(SVG_W,Math.max(SVG_W/ZOOM_MAX,vb.w*f)); vb.h=vb.w*SVG_H/SVG_W;
+  const k=vb.w/alt;                                   /* der Punkt unter den Fingern bleibt stehen */
+  vb.x=p.x-(p.x-vb.x)*k; vb.y=p.y-(p.y-vb.y)*k; vbHalten(); vbSetzen(); }
+$('bView').onclick=vbZurueck;
+svgEl.addEventListener('wheel',e=>{ e.preventDefault();
+  zoomUm(e.clientX,e.clientY,Math.exp(e.deltaY*0.0018)); },{passive:false});
+(function(){
+  const zeiger=new Map(); let start=null;
+  const mitte=a=>({x:(a[0].x+a[1].x)/2, y:(a[0].y+a[1].y)/2});
+  const weite=a=>Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y)||1;
+  svgEl.addEventListener('pointerdown',e=>{ zeiger.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(zeiger.size===2){ const a=[...zeiger.values()];
+      start={d:weite(a), m:mitte(a), p:imPlan(mitte(a).x,mitte(a).y), w:vb.w};
+      try{ svgEl.setPointerCapture(e.pointerId); }catch(_){}
+    } });
+  svgEl.addEventListener('pointermove',e=>{ if(!zeiger.has(e.pointerId)) return;
+    zeiger.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(zeiger.size!==2||!start) return;
+    e.preventDefault();
+    const a=[...zeiger.values()], m=mitte(a);
+    vb.w=Math.min(SVG_W,Math.max(SVG_W/ZOOM_MAX,start.w*start.d/weite(a))); vb.h=vb.w*SVG_H/SVG_W;
+    const r=svgEl.getBoundingClientRect();            /* der Punkt zwischen den Fingern wandert mit */
+    vb.x=start.p.x-(m.x-r.left)/r.width*vb.w;
+    vb.y=start.p.y-(m.y-r.top)/r.height*vb.h;
+    vbHalten(); vbSetzen(); });
+  const weg=e=>{ zeiger.delete(e.pointerId); if(zeiger.size<2) start=null; };
+  ['pointerup','pointercancel','pointerleave'].forEach(t=>svgEl.addEventListener(t,weg));
+})();
+
+let last=performance.now();
+function loop(now){const dt=Math.min(0.1,(now-last)/1000);last=now;if(!paused)step(dt*sim.speed);draw();requestAnimationFrame(loop)}
+/* ---- Teilen per QR-Code (Digitale Tafel) ----
+   Weitergegeben wird der Aufbau: Szenario, eingesteckte Geraete, Schutzeinrichtungen
+   und die Person. Der Ablauf selbst laeuft auf dem Schuelergeraet neu los. */
+function stand(){ return {v:1, scen, slots, prot, person, sel}; }
+function standEin(p){ if(!p||typeof p!=='object') return;
+  startScen(SCEN.some(s=>s.id===p.scen)?p.scen:'frei');
+  if(Array.isArray(p.slots)) slots=p.slots.slice(0,4).map(s=>s&&DEV[s.id]?mk(s.id,s.on!==false,s.fault||'none'):null);
+  while(slots.length<4) slots.push(null);
+  if(p.prot&&typeof p.prot==='object') prot={fuse:p.prot.fuse==='bypass'?'bypass':'ok',
+    rcd:p.prot.rcd!==false, pe:p.prot.pe!==false};
+  if(p.person&&typeof p.person==='object') person={act:p.person.act||'none',
+    slot:Math.max(0,Math.min(3,p.person.slot|0)), stand:STAND[p.person.stand]?p.person.stand:'fliesen'};
+  if(typeof p.sel==='number') sel=Math.max(0,Math.min(3,p.sel));
+  paused=true; changed(true); }
+/* ---- Digitale Tafel: den Aufbau mit dem Projekt speichern ----
+   Geschickt wird derselbe Stand wie beim Teilen. Kommt er zurueck, wird er nur
+   uebernommen, wenn er sich wirklich unterscheidet – sonst liefen beide Seiten im Kreis. */
+var tafelLetzt='';          /* var: changed() laeuft schon, bevor dieser Abschnitt an der Reihe ist */
+var tafelBereit=(window.parent===window);
+/* Erst senden, wenn die Tafel ihren gespeicherten Stand geschickt hat – sonst ueberschriebe
+   der Startaufbau („Normalbetrieb") gleich beim Laden das, was im Projekt steht. */
+function tafelSync(){ if(window.parent===window||!tafelBereit) return;
+  const d=stand(), t=JSON.stringify(d); if(t===tafelLetzt) return; tafelLetzt=t;
+  try{ parent.postMessage({type:'embed-data',data:d},'*'); }catch(e){} }
+addEventListener('message',e=>{
+  if(e.source!==window&&(window.parent===window||e.source!==window.parent)) return;
+  if(!(e.data&&e.data.type==='embed-data')) return;
+  tafelBereit=true;
+  const d=e.data.data; if(!d||!d.v) return;
+  const t=JSON.stringify(d); if(t===JSON.stringify(stand())) return;
+  tafelLetzt=t; standEin(d); });
+if(window.parent!==window){ try{ parent.postMessage({type:'embed-ready'},'*'); }catch(e){}
+  setTimeout(()=>{ tafelBereit=true; },800); }   /* keine Antwort: dann doch selbst melden */
+
+if(window.TafelTeilen){
+  if(TafelTeilen.istGeteilt()){
+    TafelTeilen.empfangen().then(p=>{ if(p&&p.v) standEin(p); }).catch(()=>{});
+  } else {
+    TafelTeilen.knopf($('teilenBtn'),'hausinstallation.html',stand,
+      {cls:'info', html:'\u21ea', title:'Diesen Aufbau per QR-Code an die Klasse geben'});
+  }
+}
+
+vbSetzen();
+newSim();renderPal();startScen('normal');requestAnimationFrame(loop);
+
+}
+</script>
+</body>
+</html>
