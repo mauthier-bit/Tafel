@@ -1808,6 +1808,18 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     Objekt", voreingestellt **an**); die Kopfleiste bleibt in jedem Fall. Zum Verkleinern von oben
     her zieht man das Fenster einfach an der Kopfleiste an eine andere Stelle und dann von unten
     auf die gewünschte Größe.
+  - **Laserpointer und Scheinwerfer gehen vor.** Beide zeigen nur und hinterlassen nichts – deshalb
+    bekommt die Tafel die Berührung, sobald eines von beiden aktiv ist, **auch wenn „Objekt
+    bedienen" an ist**. So lässt sich **in einer laufenden App** etwas zeigen oder hervorheben,
+    ohne sie zu verstellen: kein versehentliches Antippen von Knöpfen, kein Verschieben des
+    Fensters an seiner Kopfleiste oder an den Griffen. Das Bedienen bleibt dabei **eingeschaltet**
+    (der Knopf heißt weiter „Bedienen beenden", das Objekt bleibt farbig) und gilt **sofort wieder**,
+    sobald der Laserpointer bzw. der Scheinwerfer aus ist – erneut auf seinen Knopf tippen oder ein
+    anderes Werkzeug wählen. Beim Einschalten sagt eine kurze Meldung, was gerade gilt.
+    Alle anderen Werkzeuge verhalten sich unverändert: Mit eingeschaltetem „Objekt bedienen"
+    schreibt der Stift weiterhin nicht auf das Objekt, und Auswählen und Lasso greifen wie bisher
+    ins Werkzeug durch. Geht ein Objekt **ins Vollbild**, wird ein aktiver Laserpointer zuerst
+    beendet – dort sind die Leisten ausgeblendet, man käme sonst nicht mehr ans Werkzeug.
 - Der Knopf **„Objekt bedienen" / „Bedienen beenden"** oben in der Mitte sitzt **bündig mit der
   Unterkante der oberen Leisten** – auf dem iPad genau wie am Rechner. Die Leisten stehen selbst
   schon unterhalb der Statusleiste; ein zusätzlicher Sicherheitsabstand hätte den Knopf auf dem

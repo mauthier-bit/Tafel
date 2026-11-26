@@ -106,6 +106,9 @@
   body.fs-mode #annoToggle,body.fs-mode #propsBtn{display:none!important;}
   #embedLayer video{background:#000;object-fit:contain;}
   #embedBarLayer{position:fixed;inset:0;z-index:14;pointer-events:none;overflow:hidden;display:none;}
+  /* Laserpointer/Scheinwerfer aktiv: Kopfleisten und Griffe der Objekte nehmen keine Berührung
+     mehr an, sonst würde der Zeigestrich sie verschieben statt zu zeigen. */
+  body.zeigerVor #embedBarLayer, body.zeigerVor #embedBarLayer *{pointer-events:none;}
   .embedCard{position:absolute;left:0;top:0;transform-origin:0 0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:#f4f6fa;color:#5b6472;text-align:center;padding:14px;overflow:hidden;}
   .embedCard .ec-ico{font-size:42px;line-height:1;}
   .embedCard .ec-host{font-size:18px;font-weight:700;color:#2b3444;word-break:break-all;}
@@ -3503,6 +3506,13 @@ const anchLast=id=>popAnchors[id]||$(id);
 function placePopovers(){ if($('shapepop').classList.contains('show')) place($('shapepop'),anchLast('t-shape'));
   if($('penpop').classList.contains('show')){ place($('penpop'),anchLast('t-color')); avoidOverlap($('penpop'),$('shapepop')); }
   ['timepop','classpop','mathpop','divpop'].forEach(p=>{ if($(p).classList.contains('show')){ const a={timepop:'w-grp-time',classpop:'w-grp-class',mathpop:'w-grp-math',divpop:'w-grp-div'}[p]; place($(p),anchLast(a)); } }); }
+/* Laserpointer und Scheinwerfer zeigen nur, sie hinterlassen nichts. Darum gehen sie beim
+   „Objekt bedienen" vor: Solange eines von beiden aktiv ist, bekommt die Tafel die Berührung
+   und nicht das Werkzeug im Rahmen – man kann also in einer laufenden App etwas zeigen, ohne
+   sie zu verstellen. Das Bedienen bleibt dabei eingeschaltet und gilt wieder, sobald der
+   Laserpointer bzw. der Scheinwerfer aus ist (siehe applyEmbedMode). */
+const zeigerTool=()=>tool==='laser'||tool==='spot';
+let zeigerVorher=null;   /* zuletzt gemeldetes Zeiger-Werkzeug – der Hinweis kommt nur beim Einschalten */
 function setTool(t){ if(streck) streckAbbrechen();   // anderes Werkzeug gewählt → Strecken beenden
   if(t!=='shape') polyDraft=null; tool=t; commitText(); closeLassoMenu(); applyToolColor();
   document.querySelectorAll('#writeTools .tbtn, #shapepop .tbtn, #t-lasso').forEach(b=>b.classList.remove('active')); $('t-laser').classList.remove('active'); $('t-spot').classList.remove('active'); $('t-'+t)?.classList.add('active');
@@ -3515,7 +3525,13 @@ function setTool(t){ if(streck) streckAbbrechen();   // anderes Werkzeug gewähl
   if(t==='spot'){ const r=Math.round((spotRX+spotRY)/2); spotRX=spotRY=r; moveSpot(spotMid.x||W/2,spotMid.y||H/2); }   // beim Einschalten wieder rund
   $('t-ruler').classList.toggle('active',rulerVisible); $('t-geo').classList.toggle('active',geoVisible); // Lineal/Geodreieck bleiben sichtbar
   if(t!=='arc'){ arcState=null; hideMeasure(); }
-  if(t!=='select'){ selection=[]; refreshProps(); } cv.style.cursor=(t==='select')?'default':'crosshair'; syncFavState(); markDirty(); }
+  if(t!=='select'){ selection=[]; refreshProps(); } cv.style.cursor=(t==='select')?'default':'crosshair'; syncFavState(); markDirty();
+  /* Laser und Scheinwerfer gehen vor: die Berührungen müssen jetzt (bzw. wieder nicht) zur Tafel */
+  if(typeof applyEmbedMode==='function'&&pageHasEmbeds()) applyEmbedMode();
+  if(embedInteract&&zeigerTool()&&t!==zeigerVorher){ zeigerVorher=t;
+    toast(t==='laser'?'Laserpointer geht vor – das Objekt wird so lange nicht bedient'
+                     :'Scheinwerfer geht vor – das Objekt wird so lange nicht bedient'); }
+  if(!zeigerTool()) zeigerVorher=null; }
 ['pen','marker','shape','text','dict','eraser','circle','gerade','arc'].forEach(t=>$('t-'+t).onclick=()=>setTool(t));
 ['laser','spot','lasso'].forEach(t=>$('t-'+t).onclick=()=>{ if(tool===t) endPointerTool(); else setTool(t); });   // erneut antippen = ausschalten
 /* Erneutes Tippen auf „Formen" klappt die Auswahl wieder zu (das Werkzeug bleibt aktiv) */
@@ -4591,6 +4607,7 @@ function vollbildAn(o){
     $('fsDoc').scrollTop=0; fsMenuZu(); fsDocZeigen(); fsUiZeigen(); return;
   }
   if(o.type!=='embed') return;
+  if(zeigerTool()) endPointerTool();          /* im Vollbild sind die Leisten weg: erst den Zeiger beenden */
   fsId=o.id; fsScroll=0; fsBarsVorher=barsHidden;
   if(!barsHidden) hideBars();
   propsOpen=false; $('props').classList.remove('show'); $('propsBtn').classList.remove('show');
@@ -4696,16 +4713,19 @@ const OPEN_TOOLS=new Set(['gleichung.html','plotter.html','ableitungen.html','ei
   'mindmap.html','begriffsnetz.html','galgen.html','pinnwand.html']);            // Werkzeuge, die ein Objekt selbst öffnen darf
 const pageHasEmbeds=()=>page().objects.some(o=>o.type==='embed'&&!o.min);   /* minimierte zaehlen nicht: es gibt nichts zu bedienen */
 function refreshEmbedUI(){ const has=pageHasEmbeds(); $('annoToggle').classList.toggle('show',has); if(!has) embedInteract=false; applyEmbedMode(); }
+const embedDurch=()=>embedInteract&&!zeigerTool();   /* Berührung an das Werkzeug im Rahmen? */
 function applyEmbedMode(){
   /* Beim Bedienen gibt es keine Auswahl: der gestrichelte Rahmen und der Kontextmenue-Knopf
      wuerden nur stoeren, bedient wird ueber das Werkzeug selbst und seine Kopfleiste. */
   let auswahlWeg=false;
   if(embedInteract&&selection.length){ selection=[]; propsOpen=false; auswahlWeg=true; }
-  cv.style.pointerEvents=embedInteract?'none':'auto'; $('annoToggle').classList.toggle('on',embedInteract);
+  const durch=embedDurch();
+  cv.style.pointerEvents=durch?'none':'auto'; $('annoToggle').classList.toggle('on',embedInteract);
   document.body.classList.toggle('embedAn',embedInteract);        /* steuert den Grauschleier */
+  document.body.classList.toggle('zeigerVor',embedInteract&&zeigerTool());   /* Leisten der Objekte stilllegen */
   $('annoToggle').textContent=embedInteract?'Bedienen beenden':'Objekt bedienen';
   $('embedBarLayer').style.display=embedInteract?'block':'none';
-  for(const[,fr] of embedEls) fr.style.pointerEvents=embedInteract?'auto':'none';
+  for(const[,fr] of embedEls) fr.style.pointerEvents=durch?'auto':'none';
   markDirty();   /* Fensterrahmen und das freie Feld fuer die Kopfleiste sofort mitziehen */
   positionAnnoToggle(); if(typeof refreshProps==='function'&&(auswahlWeg||selection.length)) refreshProps(); }
 /* Oben mittig, wenn Leisten minimiert; rutscht in die Lücke, wenn sie ausgeklappt sind; passt es nicht, knapp unter die Leisten. Immer ganz sichtbar. */
@@ -5011,7 +5031,7 @@ function syncEmbeds(){ const p=page(), wanted=new Set();
                    :'Clips werden nicht mitgespeichert – nach dem Neuladen ist die Aufnahme weg.')+'</div>'; }
       } else { fr=document.createElement('iframe'); fr.setAttribute('allow','autoplay; fullscreen; clipboard-write; microphone'+(['motion','vphysik','aphysik','protokoll'].includes(o.etype)?'; camera':'')); fr.allowFullscreen=true;
         if(o.etype==='htmlfile') fr.srcdoc=o.html||'<p style="font:15px sans-serif;padding:14px">Diese HTML-Seite ist leer.</p>'; else fr.src=o.src; fr.style.background=(o.etype==='html')?'transparent':'#fff'; }
-      fr.dataset.oid=o.id; fr.style.pointerEvents=embedInteract?'auto':'none'; embedLayer.appendChild(fr); embedEls.set(o.id,fr);
+      fr.dataset.oid=o.id; fr.style.pointerEvents=embedDurch()?'auto':'none'; embedLayer.appendChild(fr); embedEls.set(o.id,fr);
       if(o.etype==='html') buildWebExtras(o,fr); }
     const cx=o.x+o.w/2, cy=o.y+o.h/2, s=toScreen(cx,cy);
     const tf='translate('+s.x+'px,'+s.y+'px) rotate('+(o.rot||0)+'rad) scale('+scale+') translate('+(-o.w/2)+'px,'+(-o.h/2)+'px)';
