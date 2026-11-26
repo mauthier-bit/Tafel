@@ -4697,17 +4697,24 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
       Sekundärspule 250 – die Lampe leuchtet mit der halben Spannung. Der Trafo startet **ideal**;
       schaltet man das ab, sieht man den Spannungsabfall am Draht.
     - **Energietransport ohne Trafo / mit Hochspannung** (nach dem Arbeitsblatt „Energieübertragung
-      durch Hochspannungsleitungen“): Generator – Fernleitung mit ½R_L = 5 Ω in **jedem** Leiter –
-      drei **zuschaltbare** Lampen als Verbraucher. Gleiche Leitung, gleiche Lampen, einmal direkt und
-      einmal über zwei **ideale** Transformatoren (100 : 1000 hinauf, 1000 : 100 herunter, also
-      Û = 12 V → 120 V → 12 V) – „verlustfreie Transformation“ wie auf dem Arbeitsblatt, so dass der
-      übrige Verlust nur aus der Leitung kommt.
-      Gemessen bei 1 / 2 / 3 zugeschalteten Lampen – **ohne Trafo:** Lampenspannung (effektiv)
-      4,6 / 3,2 / 2,4 V, Leitungsverlust 1,5 / 2,8 / 3,6 W, Wirkungsgrad 55 / 38 / 29 %;
-      **mit Hochspannung:** 8,4 / 8,3 / 8,2 V, Leitungsverlust 0,05 / 0,19 / 0,42 W,
-      Wirkungsgrad 99 / 98 / 97 %.
-      Die Lampen werden also nur ohne Transformation sichtbar dunkler, je mehr Verbraucher dazukommen.
-      Beide Vorlagen starten mit **Effektivwerten**, damit die Werte ruhig stehen.
+      durch Hochspannungsleitungen“): Generator (Û = 12 V, 2 Hz) – Fernleitung mit **20 Ω in jedem
+      Leiter** – **fünf zuschaltbare** Lampen zu je 12 Ω als Verbraucher („Dorf am Ende der
+      Leitung“). Zu Beginn ist nur der erste Schalter zu, die weiteren kommen im Unterricht dazu.
+      Gleiche Quelle, gleiche Leitung, gleiche Lampen; der einzige Unterschied sind die zwei
+      **idealen** Transformatoren (100 : 1000 hinauf, 1000 : 100 herunter, also 12 V → 120 V → 12 V) –
+      „verlustfreie Transformation“ wie auf dem Arbeitsblatt, so dass der übrige Verlust allein
+      aus der Leitung kommt.
+      Gemessen bei 1 / 2 / 3 / 4 / 5 zugeschalteten Lampen – **ohne Trafo:** Lampenspannung
+      (effektiv) 1,96 / 1,11 / 0,77 / 0,59 / 0,48 V, Wirkungsgrad 23 / 13 / 9 / 7 / 6 %;
+      **mit Hochspannung:** 8,17 / 7,88 / 7,61 / 7,36 / 7,12 V, Wirkungsgrad 97 / 94 / 91 / 88 / 86 %.
+      Ohne Transformation **glimmt schon die erste Lampe nur**, ab der dritten bleibt das Dorf
+      praktisch dunkel – die Leitung ist in derselben Größenordnung wie die Lampen und verheizt
+      fast alles. Mit Hochspannung ist derselbe Verbraucher auf der Leitung **hundertmal**
+      hochohmiger, der Strom zehnmal kleiner, der Verlust hundertmal – alle fünf Lampen bleiben
+      hell. Beide Vorlagen starten mit **Effektivwerten**, damit die Werte ruhig stehen.
+      Damit die breiten Vorlagen ganz auf den Bildschirm passen, lässt „Einpassen“ jetzt rechts
+      einen Streifen für die **Messwerte** frei: Die Schrift ist in Pixeln fest und wächst nicht
+      mit, deshalb wurden die Werte des letzten Bauteils vorher abgeschnitten.
     - **Wechselschaltung** (Flur, Treppenhaus): zwei **Wechselschalter**, dazwischen die beiden
       **korrespondierenden Leitungen**. Jeder der beiden schaltet das Licht um, egal wie der andere
       gerade steht – die Lampe brennt, wenn die Schalter **verschieden** stehen (gemessen

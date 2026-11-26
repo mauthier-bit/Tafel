@@ -558,9 +558,14 @@ function resize(){ DPR=window.devicePixelRatio||1; W=cv.clientWidth||300; H=cv.c
 function bbox(){ let x0=Infinity,y0=Infinity,x1=-Infinity,y1=-Infinity; const add=(x,y)=>{ x0=Math.min(x0,x); y0=Math.min(y0,y); x1=Math.max(x1,x); y1=Math.max(y1,y); };
   data.wires.forEach(k=>edgeEnds(k).forEach(p=>add(...p))); data.parts.forEach(p=>terminals(p).forEach(t=>add(...t)));
   return x0===Infinity?null:{x0,y0,x1,y1}; }
+/* Rechts neben dem letzten Bauteil stehen seine Messwerte. Die Schrift ist in Pixeln fest,
+   wächst also nicht mit – bei breiten Schaltungen braucht sie eigenen Platz, sonst schneidet
+   der Rand sie ab. Darum bleibt rechts ein Streifen frei. */
+const FIT_RAND=()=>Math.min(90,W*0.12);
 function fitView(){ const b=bbox(); if(!b){ data.zoom=1; data.ox=W/2-8*36; data.oy=H/2-4*36; return; }
-  const bw=b.x1-b.x0+3, bh=b.y1-b.y0+3; data.zoom=Math.max(0.4,Math.min(2.2,Math.min(W/(bw*36),H/(bh*36))));
-  data.ox=W/2-(b.x0+b.x1)/2*cellPx(); data.oy=H/2-(b.y0+b.y1)/2*cellPx(); }
+  const rand=FIT_RAND(), nutz=Math.max(100,W-rand);
+  const bw=b.x1-b.x0+3, bh=b.y1-b.y0+3; data.zoom=Math.max(0.4,Math.min(2.2,Math.min(nutz/(bw*36),H/(bh*36))));
+  data.ox=nutz/2-(b.x0+b.x1)/2*cellPx(); data.oy=H/2-(b.y0+b.y1)/2*cellPx(); }
 
 /* ================= Zeichnen ================= */
 let rafId=null, lastT=0, flowPos=new Map(), motorAng=new Map(), ghost=null;
@@ -842,21 +847,29 @@ const TEMPLATES={
     build([...hline(3,6,2),...hline(3,6,4),...hline(8,11,2),...hline(8,11,4)],
       [['ac',3,2,1,{val:12,val2:2}],['trafo',6,2,0,{val:500,val2:250,ideal:true}],['lamp',11,2,1,{val:12}]]); },
   /* Energietransport (nach dem Arbeitsblatt „Energieübertragung durch Hochspannungsleitungen“):
-     Generator – Fernleitung mit ½R_L = 5 Ω in jedem Leiter – zuschaltbare Verbraucher.
-     Ohne Trafo werden die Lampen mit jedem zugeschalteten Verbraucher deutlich dunkler,
-     mit Hochspannung bleiben sie hell. */
+     Dieselbe Quelle (12 V) und dieselbe Fernleitung (20 Ω in jedem Leiter, zusammen 40 Ω),
+     dazu fünf Verbraucher mit je 12 Ω, die sich einzeln zuschalten lassen. Anfangs ist nur
+     der erste Schalter zu.
+       Ohne Trafo liegt die Leitung in derselben Größenordnung wie die Lampen: Schon die
+     erste glimmt nur, und mit jeder weiteren wird es dunkler – ab der dritten bleibt das
+     Dorf praktisch dunkel. Fast die ganze Energie bleibt als Wärme in der Leitung.
+       Mit Hochspannung (1:10 hinauf, 10:1 herunter) ist derselbe Verbraucher auf der
+     Leitung hundertmal so hochohmig wie vorher. Der Strom ist zehnmal kleiner, der Verlust
+     hundertmal – alle fünf Lampen bleiben hell.
+     Die Zahlen: ohne Trafo bei fünf Lampen rund 0,7 V an jeder Lampe, mit Hochspannung
+     rund 10 V. Beide Vorlagen zeigen Effektivwerte. */
   'Energietransport ohne Trafo':()=>{
-    const w=[...vline(2,0,1),...vline(2,3,4),...hline(2,5,0),...hline(7,16,0),...hline(2,5,4),...hline(7,16,4)];
-    const p=[['ac',2,1,1,{val:12,val2:2}],['res',5,0,0,{val:5}],['res',5,4,0,{val:5}]];
-    [10,13,16].forEach((x,i)=>{ p.push(['sw',x,0,1,{on:i===0}]); p.push(['lamp',x,2,1,{val:12}]); });
+    const w=[...vline(2,0,1),...vline(2,3,4),...hline(2,4,0),...hline(6,20,0),...hline(2,4,4),...hline(6,20,4)];
+    const p=[['ac',2,1,1,{val:12,val2:2}],['res',4,0,0,{val:20}],['res',4,4,0,{val:20}]];
+    [8,11,14,17,20].forEach((x,i)=>{ p.push(['sw',x,0,1,{on:i===0}]); p.push(['lamp',x,2,1,{val:12}]); });
     data.ws='eff'; build(w,p); },
   'Energietransport mit Hochspannung':()=>{
-    const w=[...hline(2,5,0),...hline(2,5,2),                       // Niederspannung: Generator → Trafo
-      ...hline(7,9,0),...hline(11,14,0),...hline(7,9,2),...hline(11,14,2),   // Hochspannungs-Fernleitung
-      ...hline(16,24,0),...vline(16,2,4),...hline(16,24,4)];         // Niederspannung: Trafo → Verbraucher
-    const p=[['ac',2,0,1,{val:12,val2:2}],['trafo',5,0,0,{val:100,val2:1000,ideal:true}],
-      ['res',9,0,0,{val:5}],['res',9,2,0,{val:5}],['trafo',14,0,0,{val:1000,val2:100,ideal:true}]];
-    [18,21,24].forEach((x,i)=>{ p.push(['sw',x,0,1,{on:i===0}]); p.push(['lamp',x,2,1,{val:12}]); });
+    const w=[...hline(2,4,0),...hline(2,4,2),                       // Niederspannung: Generator → Trafo
+      ...hline(6,8,0),...hline(10,12,0),...hline(6,8,2),...hline(10,12,2),   // Hochspannungs-Fernleitung
+      ...hline(14,28,0),...vline(14,2,4),...hline(14,28,4)];         // Niederspannung: Trafo → Verbraucher
+    const p=[['ac',2,0,1,{val:12,val2:2}],['trafo',4,0,0,{val:100,val2:1000,ideal:true}],
+      ['res',8,0,0,{val:20}],['res',8,2,0,{val:20}],['trafo',12,0,0,{val:1000,val2:100,ideal:true}]];
+    [16,19,22,25,28].forEach((x,i)=>{ p.push(['sw',x,0,1,{on:i===0}]); p.push(['lamp',x,2,1,{val:12}]); });
     data.ws='eff'; build(w,p); },
   'Transistor als Schalter':()=>build([...hline(2,9,1),...vline(2,1,9),...hline(2,9,9),...vline(9,1,4),...vline(9,6,9),...hline(4,7,5),...vline(4,1,5)],
     [['bat',2,4,1,{val:9}],['lamp',9,1,1,{val:12}],['res',5,5,0,{val:1000}],['sw',4,2,1,{on:false}],['npn',7,5,0]]),
