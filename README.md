@@ -2206,9 +2206,21 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   reagiert dann nicht. Das kleine **⚙ im Zifferblatt** (zwischen Mitte und 12) öffnet ihr Menü mit
   **Größe**, **Schulstunden**, **Digitalanzeige**, **„Wieder als Objekt auf die Seite"** (legt sie mit
   gleicher Größe und Position zurück auf die aktuelle Seite) und **„Uhr ausblenden"**.
-- **Funktionsplotter** (Werkzeug) – **sechs Reiter: Graph, Tabelle, Maschine, Transformationen, lim, Modellieren.** Der Funktionsterm lässt
-  sich **in den ersten drei Reitern** eingeben und gilt sofort in allen dreien; „＋“ legt überall eine weitere Funktion an
-  (im Graph eine Eingabezeile, in der Tabelle eine Zeile, bei der Maschine eine weitere Maschine).
+- **Funktionsplotter** (Werkzeug) – **sechs Reiter: Graph, Maschine, Transformationen, lim, f⁻¹, Modellieren.**
+  Der Funktionsterm lässt sich im **Graph** und an der **Maschine** eingeben und gilt sofort überall; „＋“ legt eine
+  weitere Funktion an (im Graph eine Eingabezeile, sonst eine weitere Maschine).
+  **Jede Maschine hat ihre eigene Wertetabelle** – im selben Kasten, gleich unter dem Rechenweg, mit
+  eigenen „＋ x-Wert / − x-Wert". Die x-Werte gehören damit **zur Funktion** und nicht mehr allen
+  gemeinsam: An der einen Maschine lassen sich ganz andere Stellen betrachten als an der nächsten.
+  Auch der **Haken „Tabelle zeigen"** gehört zur einzelnen Maschine: Er steht gleich über ihrer Tabelle
+  und blendet **nur diese** aus – an der einen Maschine kann die Tabelle also offen sein und an der
+  nächsten zu. In der Tabellenzeile stehen nur Name und „→ Graph" – den **Term bearbeitet man oben an
+  der Maschine**, eine eigene Eingabe braucht die Tabelle nicht mehr. Alles davon (x-Werte und Haken)
+  wird **je Funktion mit dem Projekt gespeichert**; ältere Projekte mit **einer gemeinsamen Tabelle**
+  bekommen deren x-Werte und deren Haken für jede Funktion.
+  Dadurch wird oben Platz frei: **„⌨ Formeln" und „Teilen" stehen jetzt in der Reiterzeile** und gelten
+  für jeden Reiter. In der zweiten Zeile bleiben außerhalb des Graphen nur **A−/A+, 🖼 Tafel und 📋 Kopieren** –
+  und weil die im Modus **Benutzen** ohnehin wegfallen, verschwindet die Zeile dort ganz.
   **Zoomen je Achse (Graph und Modellieren):** Zwei Finger zoomen – und zwar **so, wie sie stehen**:
   liegen sie **waagrecht** nebeneinander, ändert sich nur die **x-Achse**, stehen sie **senkrecht**
   übereinander, nur die **y-Achse**, **schräg** zoomt wie bisher **beides gleichermaßen**. Entschieden
@@ -2245,6 +2257,12 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   nicht zum Definitionsbereich („x²−1 für x>1“), bleibt dort nur der offene Kreis und keine
   Nullstelle; mit „x≥1“ steht sie da.
   Verdeckte Funktionen bleiben außen vor, damit Rätselaufgaben nicht verraten werden.
+  **Von der Maschine in die Tabelle:** Neben dem y-Wert steht außer „→ Graph" der Knopf **„→ Tabelle"**.
+  Er trägt das gerade eingestellte **Wertepaar als neue Spalte** in die Tabelle **dieser** Maschine ein –
+  dieselbe Wirkung wie „＋ x-Wert", nur mit dem x der Maschine. Steht die Spalte schon da, ist der Knopf **grün** und ein
+  zweiter Tipp nimmt sie wieder weg. Ist die Tabelle ausgeblendet, **holt der erste Tipp sie nur hervor** –
+  er nimmt keine Spalte weg, die man gar nicht sehen konnte.
+  So füllt sich die Tabelle Punkt für Punkt, während man mit dem Schieberegler durch die x-Werte fährt.
   **Punktweise zum Graphen:** In **Tabelle** und **Maschine** steht bei jeder Funktion der Knopf
   **„→ Graph"** (in der Maschine gleich neben dem y-Wert). In der Tabelle zeichnet er **alle
   Wertepaare dieser Zeile** als Punkte
@@ -2256,8 +2274,9 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   **Punkt für Punkt aus der Wertetabelle aufbauen** und dann als Kurve darüberlegen. Die Punkte liegen
   immer **über** der Kurve, bleiben also sichtbar; sie folgen dem Term, wenn er sich ändert.
   **Tabelle:** in der Kopfzeile stehen die **x-Werte zum Eintippen** („＋ x-Wert“ hängt eine Spalte an und
-  setzt den bisherigen Schritt fort, „− x-Wert“ nimmt die letzte weg); darunter für **jede Funktion eine
-  Zeile** mit den berechneten y-Werten in der Farbe der Funktion.
+  setzt den bisherigen Schritt fort, „− x-Wert“ nimmt die letzte weg); darunter die berechneten y-Werte
+  in der Farbe der Funktion. Ist ein Term mit dem **Auge verdeckt**, stehen die Werte trotzdem da –
+  das ist ja der Sinn der Rätselaufgabe.
   **Maschine:** oben der x-Wert, der durch einen Trichter in die Maschine (Zahnräder, darin die
   Funktionsvorschrift) fällt, darunter der **Rechenweg mit eingesetztem x** (`f₁(−1,5) = 2·(−1,5)² + (−3)·(−1,5) + 1`;
   negative Werte werden nur geklammert, wo es nötig ist) und unten der ausgeworfene y-Wert.
