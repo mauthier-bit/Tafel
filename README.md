@@ -2209,12 +2209,12 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
 - **Funktionsplotter** (Werkzeug) – **sechs Reiter: Graph, Maschine, Transformationen, lim, f⁻¹, Modellieren.**
   Der Funktionsterm lässt sich im **Graph** und an der **Maschine** eingeben und gilt sofort überall; „＋“ legt eine
   weitere Funktion an (im Graph eine Eingabezeile, sonst eine weitere Maschine).
-  **Jede Maschine hat ihre eigene Wertetabelle** – im selben Kasten, gleich unter dem Rechenweg, mit
-  eigenen „＋ x-Wert / − x-Wert". Die x-Werte gehören damit **zur Funktion** und nicht mehr allen
-  gemeinsam: An der einen Maschine lassen sich ganz andere Stellen betrachten als an der nächsten.
-  Auch der **Haken „Tabelle zeigen"** gehört zur einzelnen Maschine: Er steht gleich über ihrer Tabelle
-  und blendet **nur diese** aus – an der einen Maschine kann die Tabelle also offen sein und an der
-  nächsten zu. In der Tabellenzeile stehen nur Name und „→ Graph" – den **Term bearbeitet man oben an
+  **Jede Maschine hat ihre eigene Wertetabelle** – im selben Kasten, gleich unter dem Rechenweg. Die
+  x-Werte gehören damit **zur Funktion** und nicht mehr allen gemeinsam: An der einen Maschine lassen
+  sich ganz andere Stellen betrachten als an der nächsten. Auch der **Haken „Tabelle"** gehört zur
+  einzelnen Maschine und blendet **nur deren** Tabelle aus – an der einen kann sie offen sein und an
+  der nächsten zu. Haken und **＋ x / − x** stehen **links in der y-Zeile**, in der ohnehin Platz war;
+  das spart zwei Zeilen je Funktion. Ist die Tabelle zu, verschwinden auch ＋ x und − x. In der Tabellenzeile stehen nur Name und „→ Graph" – den **Term bearbeitet man oben an
   der Maschine**, eine eigene Eingabe braucht die Tabelle nicht mehr. Alles davon (x-Werte und Haken)
   wird **je Funktion mit dem Projekt gespeichert**; ältere Projekte mit **einer gemeinsamen Tabelle**
   bekommen deren x-Werte und deren Haken für jede Funktion.

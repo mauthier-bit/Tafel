@@ -54,8 +54,16 @@
                                                   rutscht die x-Pille aus der Mitte */
   .mxrow>.mxs{grid-column:3;justify-self:start;width:100%;min-width:0;
     max-width:calc(var(--k) * 130px);touch-action:none;}
+  /* Die beiden Aussenspalten duerfen schrumpfen – auf schmalen Geraeten brechen die Knoepfe
+     darin um, statt den ganzen Kasten breiter zu machen als das Fenster. */
+  .mfuss{grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);}
   .mfuss>.maus{grid-column:2;}
-  .mfuss>.mkn{grid-column:3;justify-self:start;display:flex;align-items:center;
+  /* Haken und ＋/− stehen in derselben Zeile ganz links – das spart zwei Zeilen je Funktion */
+  .mfuss>.mtk{grid-column:1;justify-self:start;display:flex;align-items:center;flex-wrap:wrap;
+    gap:calc(var(--k) * 6px);padding-right:calc(var(--k) * 8px);}
+  .mtk .plus{padding:calc(var(--k) * 5px) calc(var(--k) * 9px);font-size:calc(var(--k) * 12px);}
+  .masch:not(.tabAn) .mtk .plus{display:none;}
+  .mfuss>.mkn{grid-column:3;justify-self:start;display:flex;align-items:center;flex-wrap:wrap;
     gap:calc(var(--k) * 6px);padding-left:calc(var(--k) * 8px);}
   .verdeckt{flex:1;min-width:0;padding:calc(var(--k) * 7px) 8px;border:1px dashed #cfd6e0;border-radius:8px;
     font-size:calc(var(--k) * 15px);color:#94a3b8;letter-spacing:4px;background:#f8fafc;white-space:nowrap;overflow:hidden;}
@@ -109,10 +117,11 @@
   .tmHaken{display:inline-flex;align-items:center;gap:7px;font-size:calc(var(--k) * 14px);font-weight:700;color:#1f2430;cursor:pointer;margin-left:4px;}
   .tmHaken input{width:calc(var(--k) * 17px);height:calc(var(--k) * 17px);accent-color:#2563eb;}
   /* Jede Maschine hat ihre eigene Tabelle – im selben Kasten, unter dem Rechenweg */
-  .mtab{margin-top:10px;border-top:1px solid #e3e8ef;padding-top:9px;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  /* align-self:stretch – sonst waere die Tabelle so breit wie ihr Inhalt und ragte aus dem
+     Kasten heraus (die Maschinenspalte zentriert ihre Teile). So rollt sie in sich. */
+  .mtab{margin-top:10px;border-top:1px solid #e3e8ef;padding-top:9px;align-self:stretch;max-width:100%;
+    overflow-x:auto;-webkit-overflow-scrolling:touch;}
   .masch:not(.tabAn) .mtab{display:none;}
-  .mtabZeile{margin-top:9px;border-top:1px solid #e3e8ef;padding-top:8px;}
-  .masch.tabAn .mtab{margin-top:8px;border-top:0;padding-top:0;}
   /* Reiter „Transformationen": Bedienteil oben, Zeichenfläche darunter */
   #pR,#pL{display:none;flex-direction:column;overflow:hidden;}
   #pR.on,#pL.on{display:flex;}
@@ -425,7 +434,6 @@
   .fzin .fterm,.fzin .verdeckt{flex:0 0 auto;width:calc(var(--k) * 150px);padding:calc(var(--k) * 5px) 7px;font-size:calc(var(--k) * 14px);}
   .xin{width:calc(var(--k) * 62px);text-align:center;border:1px solid #cfd6e0;border-radius:7px;padding:calc(var(--k) * 5px) 2px;font-size:calc(var(--k) * 14px);font-family:inherit;-webkit-user-select:text;user-select:text;}
   .yv{font-variant-numeric:tabular-nums;font-weight:700;}
-  .tbtns{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;}
   .plus{border:none;border-radius:8px;background:#e7ebf1;padding:calc(var(--k) * 7px) 12px;font-size:calc(var(--k) * 13px);cursor:pointer;font-weight:700;color:#2563eb;white-space:nowrap;}
   /* eingeschaltet: blau hinterlegt mit blauem Rand - so sieht man, dass die Flaeche
      gerade auf eine Freihandlinie wartet (ebenso beim offenen Importfeld). Der Rand
@@ -1118,14 +1126,6 @@ function mtabBauen(d,i){ const host=d.querySelector('.mtab'); if(!host) return; 
   td.appendChild(box); tr.appendChild(td);
   X.forEach(()=>{ const c=document.createElement('td'); c.className='yv'; tr.appendChild(c); });
   t.appendChild(tr); host.appendChild(t);
-  const btns=document.createElement('div'); btns.className='tbtns';
-  const bx=document.createElement('button'); bx.className='plus'; bx.textContent='＋ x-Wert'; bx.title='Weitere Spalte';
-  bx.onclick=()=>{ const Y=fXs(funcs[i]), l=pz(Y[Y.length-1]), v=pz(Y[Y.length-2]);
-    const sch=(isFinite(l)&&isFinite(v))?(l-v):1; Y.push(isFinite(l)?zahl(l+(sch||1)):'0');
-    mtabBauen(d,i); refreshMachine(d,i,true); draw(); sync(); };
-  const bm=document.createElement('button'); bm.className='plus minus'; bm.textContent='− x-Wert'; bm.title='Letzte Spalte entfernen';
-  bm.onclick=()=>{ const Y=fXs(funcs[i]); if(Y.length>1){ Y.pop(); mtabBauen(d,i); refreshMachine(d,i,true); draw(); sync(); } };
-  btns.appendChild(bx); btns.appendChild(bm); host.appendChild(btns);
   mtabWerte(d,i); }
 /* Schalter „Ins Koordinatensystem" in der Tabellenzeile */
 function tabKosy(box,f){ const b=box.querySelector('.ftpk'); if(!b) return;
@@ -1159,11 +1159,14 @@ function buildMachines(){ const host=$('tmMasch'); if(!host) return; host.innerH
       +'<div class="mbody"><span class="zahn z1">⚙</span><span class="mterm"></span><span class="zahn z2">⚙</span></div>'
       +'<div class="mch"></div>'
       +'<div class="mweg"></div>'
-      +'<div class="mfuss"><div class="maus"><span class="mlab">y</span>=<span class="mval">—</span></div>'
+      +'<div class="mfuss">'
+      +'<div class="mtk"><label class="tmHaken"><input type="checkbox" class="xtabAn"> Tabelle</label>'
+      +'<button class="plus xplus" type="button" title="Weitere Spalte in der Wertetabelle">＋ x</button>'
+      +'<button class="plus minus xminus" type="button" title="Letzte Spalte der Wertetabelle entfernen">− x</button></div>'
+      +'<div class="maus"><span class="mlab">y</span>=<span class="mval">—</span></div>'
       +'<div class="mkn"><button class="fkosy" type="button">→ Graph</button>'
       +'<button class="ftab" type="button">→ Tabelle</button>'
       +'<button class="fkosyX" type="button" title="Alle eingezeichneten Punkte dieser Funktion entfernen">×</button></div></div>'
-      +'<div class="mtabZeile"><label class="tmHaken"><input type="checkbox" class="xtabAn"> Tabelle zeigen</label></div>'
       +'<div class="mtab"></div>'
       +'</div>';
     const dot=d.querySelector('.fcol'); dot.style.background=f.color; dot.title='Farbe dieser Funktion wählen';
@@ -1205,6 +1208,11 @@ function buildMachines(){ const host=$('tmMasch'); if(!host) return; host.innerH
       mtabBauen(d,i); refreshMachine(d,i,true); draw(); sync(); };
     const hk=d.querySelector('.xtabAn');
     hk.onchange=()=>{ funcs[i].tabAn=hk.checked; mtabAn(d,funcs[i]); if(hk.checked) mtabBauen(d,i); draw(); sync(); };
+    d.querySelector('.xplus').onclick=()=>{ const Y=fXs(funcs[i]), l=pz(Y[Y.length-1]), v=pz(Y[Y.length-2]);
+      const sch=(isFinite(l)&&isFinite(v))?(l-v):1; Y.push(isFinite(l)?zahl(l+(sch||1)):'0');
+      mtabBauen(d,i); refreshMachine(d,i,true); draw(); sync(); };
+    d.querySelector('.xminus').onclick=()=>{ const Y=fXs(funcs[i]); if(Y.length>1){ Y.pop();
+      mtabBauen(d,i); refreshMachine(d,i,true); draw(); sync(); } };
     mtabBauen(d,i);
     list.appendChild(d); });
   host.appendChild(list);
