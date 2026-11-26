@@ -3169,6 +3169,27 @@ function lmTeilText(ast,x0,seite){
     return (q.nenner?'im Nenner ':'')+lmAstHtml(q.nd)+' '+beschr; });
   return 'Die einzelnen Teile: '+stk.join(', ')+'. '; }
 
+/* Der Term, wie er eingegeben wurde – also auch unfaktorisiert –, mit Vorzeichen-Marken an
+   Zähler und Nenner: grün, wo der Teil neben der Stelle positiv ist, rot, wo er negativ ist.
+   Darüber bzw. darunter steht sein Wert; was an der Stelle 0 wird, steht als „+0“ oder „−0“,
+   je nachdem, von welcher Seite man kommt. Genau das ist der Grund für +∞ oder −∞.
+   zNull sagt, ob auch der Zähler an der Stelle 0 wird – das weiß die Analyse schon. */
+function lmOrigVZ(ast,x0,seite,zNull){
+  if(!ast||ast.k!=='/'||!isFinite(x0)) return null;
+  const xp=x0+(seite||0)*1e-6;
+  const teil=(nd,istNull,unten)=>{
+    const roh=lmAstHtml(nd); if(!roh) return null;
+    const tk=tokenize(lmAstText(nd));
+    const v0=evalAt(x0,tk,lm.p), vp=evalAt(xp,tk,lm.p);
+    if(!isFinite(vp)) return null;
+    const a=istNull?{txt:(vp<0?'−0':'+0'), vz:vp<0?-1:1}
+                   :(isFinite(v0)?{txt:zahl(v0), vz:v0>0?1:(v0<0?-1:0)}:null);
+    if(!a) return null;
+    const cls=vp>0?'lmPlus':(vp<0?'lmMinus':'');
+    return lmAnnHtml('<span class="'+(istNull?'lmStark ':'')+cls+'">'+roh+'</span>',a.txt,a.vz,istNull,unten); };
+  const z=teil(ast.l,!!zNull,false), n=teil(ast.r,true,true);
+  return (z&&n)?lmBruchHtml(z,n):null; }
+
 /* Ein Polynom als Produkt schreiben, soweit es in Linearfaktoren aufgeht – so hat jeder
    Teil neben einer Stelle ein eigenes Vorzeichen. Gleiche Faktoren werden zu einer Potenz
    zusammengefasst; das Produkt aller Teile ist wieder das Polynom. */
@@ -3237,7 +3258,8 @@ function lmAnalyse(){
     const st=r.match(/\([^()]*\)/g);
     return (st&&st.join('')===r)?st.slice().sort().join(''):r; }).join('/');
   /* steht links dasselbe wie rechts, wird nur einmal geschrieben */
-  const mitOrig=(h,vgl)=>(ohneLeer(vgl)===ohneLeer(origT))?('f(x) = '+h):('f(x) = '+origHtml+' = '+h);
+  /* oh: der Originalterm mit eigenen Marken (an einer Definitionslücke) – sonst schlicht */
+  const mitOrig=(h,vgl,oh)=>(ohneLeer(vgl)===ohneLeer(origT))?('f(x) = '+h):('f(x) = '+(oh||origHtml)+' = '+h);
   const randKarte=(x0,seite,wert,grund,proben)=>({ziel:'x → '+lmKlam(lmX(x0))+(seite<0?'⁻':'⁺'), wert, grund, proben, x:x0, seite});
 
   /* ===== gebrochen-rationale und ganzrationale Terme: alles am Term ablesbar ===== */
@@ -3259,7 +3281,6 @@ function lmAnalyse(){
       const klammerRein=p=>(pGrad(p)>0?'('+lmPolyHtml(p,-1)+')':lmPolyHtml(p,-1));
       const nFakt='<span class="lmStark">'+lmKlammer(x0,kn)+'</span>'+((pGrad(nk)>0||Math.abs(nk[0]-1)>1e-12)?(' · '+klammerRein(nk)):'');
       const zFakt=kz?('<span class="lmStark">'+lmKlammer(x0,kz)+'</span> · '+klammerRein(zz)):lmPolyHtml(z,-1);
-      const tHtmlPol=mitOrig(lmBruchHtml(zFakt,nFakt), lmTermVgl(zFakt,nFakt));
       if(kn>kz){                                                   /* Polstelle */
         e.pole.push(x0);
         const zV=pWert(zz,x0), ord=kn-kz;
@@ -3286,18 +3307,22 @@ function lmAnalyse(){
             'Der Bruch wird also betragsmäßig immer größer und ist '+lmVZ(zN*nN)+'.'+
             (ord>1?' (Der Faktor, der 0 wird, steht in gerader Potenz – deshalb auf beiden Seiten dasselbe Vorzeichen.)':'');
           const kt=randKarte(x0,seite,wert,grund,pr.slice(1,4));
-          kt.termHtml=mitOrig(lmBruchHtml(zH,nH), lmTermVgl(zP,nP));
+          kt.termHtml=mitOrig(lmBruchHtml(zH,nH), lmTermVgl(zP,nP), lmOrigVZ(ast,x0,seite,kz>0));
           e.karten.push(kt); }); }
       else {                                                       /* hebbare Lücke */
         const w=(kz>kn)?0:pWert(zz,x0)/pWert(nk,x0);
         e.loecher.push({x:x0,y:w});
         const gek=(pGrad(nk)===0&&Math.abs(nk[0]-1)<1e-12)?lmPolyHtml(zz,null):lmBruchHtml(lmPolyHtml(zz,null),lmPolyHtml(nk,null));
-        const tHtmlLoch=tHtmlPol+' = '+gek+' <span class="lmFuer">für x ≠ '+lmX(x0)+'</span>';
+        /* Auch hier bekommt der Originalterm seine Marken – Zähler und Nenner werden beide 0 */
+        const lochHtml=seite=>mitOrig(lmBruchHtml(zFakt,nFakt), lmTermVgl(zFakt,nFakt), lmOrigVZ(ast,x0,seite,true))
+          +' = '+gek+' <span class="lmFuer">für x ≠ '+lmX(x0)+'</span>';
         /* auch hier beide Seiten einzeln – dass links und rechts dasselbe herauskommt, ist ja der Grund,
            warum die Lücke hebbar ist */
         [-1,1].forEach(seite=>{ const pr=lmProben(f,x0,seite);
-          e.karten.push({ziel:'x → '+lmKlam(lmX(x0))+(seite<0?'⁻':'⁺'), wert:{art:'zahl',v:w}, x:x0, seite, loch:true, termHtml:tHtmlLoch,
-            grund:'Zähler und Nenner werden beide 0. Der Faktor '+klT+(kz>1?hoch(kz):'')+' kürzt sich weg; übrig bleibt '+
+          e.karten.push({ziel:'x → '+lmKlam(lmX(x0))+(seite<0?'⁻':'⁺'), wert:{art:'zahl',v:w}, x:x0, seite, loch:true, termHtml:lochHtml(seite),
+            grund:'Zähler und Nenner werden beide 0 – die Marken am Term zeigen, von welcher Seite: '+
+              '<span class="lmPlus">grün</span> für positiv, <span class="lmMinus">rot</span> für negativ. '+
+              'Der Faktor '+klT+(kz>1?hoch(kz):'')+' kürzt sich weg; übrig bleibt '+
               (pGrad(nk)===0&&Math.abs(nk[0]-1)<1e-12?('der Term '+lmPolyHtml(zz,null)):'der gekürzte Bruch')+
               ', und der hat an der Stelle den Wert '+zahl(w)+'. '+
               (seite<0?'Von links':'Von rechts')+' nähern sich die Werte also '+zahl(w)+

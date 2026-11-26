@@ -2294,6 +2294,15 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   die Farbe, und damit kippt das Gesamtvorzeichen. Mehrfache Faktoren stehen als Potenz (`(x−1)²`, auf
   beiden Seiten grün), der Faktor, der 0 wird, bleibt zusätzlich **fett**. Die Begründung daneben nennt
   dieselben Vorzeichen noch einmal in Worten.
+  **Auch der Term, wie er eingegeben wurde**, bekommt diese Marken – er steht ja links neben der
+  zerlegten Form (`f(x) = … = …`). Zähler und Nenner werden dort als Ganzes eingefärbt und bekommen
+  ihren Wert darüber bzw. darunter; der Nenner steht an einer Lücke als **`+0`** oder **`−0`**, je
+  nachdem, von welcher Seite man kommt. Bei `(x²−1)/(x−2)` und `x → 2⁻` also `3` über `x² − 1` (grün)
+  und `−0` unter `x − 2` (rot), von rechts `+0` (grün) – man sieht den Grund für `−∞` bzw. `+∞` schon
+  am unfaktorisierten Term, noch bevor man zerlegt. Das gilt auch bei einer **hebbaren Lücke**, wo
+  beide 0 werden, und bei einem Nenner wie `2 − x`, der von links `+0` ist. Nur wenn der Term kein
+  Bruch ist (z. B. `1/(x−1) + 1/(x+1)`), bleibt er ohne Marken – dort gibt es keinen Zähler und
+  Nenner zum Einfärben, und die zerlegte Form daneben zeigt es.
   **Werte über und unter den Teiltermen:** Über jedem Teil des Zählers und unter jedem Teil des Nenners
   steht, welchen Wert er an der untersuchten Stelle annimmt – bei `(x−5)/((x−2)(x+3))` und `x → 2⁻`
   also `−3` über dem Zähler sowie `5` und `−0` unter den beiden Nennerfaktoren (von rechts `+0`).
