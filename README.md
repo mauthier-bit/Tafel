@@ -4828,6 +4828,12 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   neben **!** und **?**): Der QR-Code gibt **den eingestellten Aufbau** weiter – Szenario,
   eingesteckte Geräte, Schutzeinrichtungen und die Person; der Ablauf startet auf dem
   Schülergerät neu. Derselbe Aufbau wird auch **mit dem Projekt gespeichert**.
+  **Vier Kästen sind aufklappbar** und stehen **anfangs zu**: *Geräte einstecken*, der Kasten zum
+  gewählten **Gerät**, der zur **Person** und *Schutzeinrichtungen*. Ein Tipp auf die Überschrift
+  klappt auf und wieder zu (▸ / ▾); so passen Plan und Aufgabe zusammen auf einen Bildschirm und
+  man holt sich nur hervor, was gerade gebraucht wird. Der **Ein/Aus-Schalter** des Geräts bleibt
+  auch im zugeklappten Kasten in der Kopfzeile erreichbar, und die Überschrift nennt weiterhin das
+  gewählte Gerät. Die Knöpfe neben der Überschrift (etwa das **?**) klappen nichts um.
   **Der Plan lässt sich zoomen:** mit **zwei Fingern** spreizen und schieben (am Rechner mit dem
   Mausrad), bis zu achtfach. Ein Finger bleibt fürs **Antippen** von Steckplätzen, FI-Schalter und
   Sicherung frei. Der Knopf **Ansicht** unten rechts in der Grafik holt den ganzen Plan zurück –
