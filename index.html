@@ -102,6 +102,9 @@
   body.fsSchreibt #fsUi::after{content:'';position:absolute;inset:0;border:4px solid #ef4444;pointer-events:none;}
   body.fs-mode #noteChip,body.fs-mode #noteZeitChip{display:none!important;}
   body.fs-mode #embedLayer{z-index:5;}       /* über dem Tafelblatt – sonst liegt das Karo über dem Objekt */
+  /* Laserpointer/Scheinwerfer im Vollbild: die Tafel rückt über das Objekt, sonst läge die
+     Leuchtspur dahinter. Sie zeichnet dann nur noch den Zeigestrich (siehe redraw). */
+  body.fs-mode.zeigerVor #board{z-index:6;}
   body.fs-mode .edgezone{display:none!important;}
   body.fs-mode #annoToggle,body.fs-mode #propsBtn{display:none!important;}
   #embedLayer video{background:#000;object-fit:contain;}
@@ -1430,6 +1433,8 @@
   <div id="fsPill" title="Ziehen: Pille verschieben"><button id="fsClose" type="button"><span class="griff">⠿</span>⤢ Vollbild beenden</button><button id="fsMenuBtn" type="button" title="Menü für dieses Objekt">☰</button></div>
   <div id="fsMenu">
     <div class="fsTitel" id="fsmTitel">Objekt</div>
+    <button id="fsm-laser" title="Laserpointer: im Objekt zeigen, ohne es zu bedienen">🔴 Laserpointer</button>
+    <button id="fsm-spot" title="Scheinwerfer: eine Stelle im Objekt hervorheben">🔦 Scheinwerfer</button>
     <button id="fsm-note" title="Mit dem Stift auf das Dokument schreiben – die Notizen bleiben an der Seite">✎ Beschriften</button>
     <div class="fsrow" id="fsm-stiftRow">
       <button id="fsm-pen" title="Stift"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
@@ -2569,6 +2574,11 @@ function objBounds(o){ return geomBounds(o); }
 const invalidateSnap=()=>{};   // (früher Zwischen-Canvas; wieder entfernt, es wird immer vollständig gezeichnet)
 function redraw(){
   ctx.setTransform(1,0,0,1,0,0); ctx.clearRect(0,0,cv.width,cv.height);   // Canvas transparent; Farbe liegt im #bgLayer
+  /* Vollbild mit Laserpointer/Scheinwerfer: Die Tafel liegt jetzt über dem Objekt. Gezeigt wird
+     darum nur die Leuchtspur – die übrige Seite gehört nicht über das Vollbild. */
+  if(fsId&&zeigerTool()){ drawLaser();
+    if(typeof lupeNachziehen==='function') lupeNachziehen();   /* Lupe am Scheinwerfer läuft weiter */
+    drawPinClock(); syncEmbeds(); dirty=false; return; }
   ctx.setTransform(scale*dpr,0,0,scale*dpr,ox*dpr,oy*dpr);
   drawBackground(); if(page()._img){try{ctx.drawImage(page()._img,page().bgX||0,page().bgY||0);}catch(e){}}
   for(const o of page().objects) drawObject(o);
@@ -3512,6 +3522,9 @@ function placePopovers(){ if($('shapepop').classList.contains('show')) place($('
    sie zu verstellen. Das Bedienen bleibt dabei eingeschaltet und gilt wieder, sobald der
    Laserpointer bzw. der Scheinwerfer aus ist (siehe applyEmbedMode). */
 const zeigerTool=()=>tool==='laser'||tool==='spot';
+/* Steuert zweierlei: die Leisten der Objekte nehmen nichts an, und im Vollbild rückt die
+   Tafel über das Objekt. Ist „Objekt bedienen" aus, sind die Leisten ohnehin ausgeblendet. */
+function zeigerKlasse(){ document.body.classList.toggle('zeigerVor',zeigerTool()); }
 let zeigerVorher=null;   /* zuletzt gemeldetes Zeiger-Werkzeug – der Hinweis kommt nur beim Einschalten */
 function setTool(t){ if(streck) streckAbbrechen();   // anderes Werkzeug gewählt → Strecken beenden
   if(t!=='shape') polyDraft=null; tool=t; commitText(); closeLassoMenu(); applyToolColor();
@@ -3527,8 +3540,10 @@ function setTool(t){ if(streck) streckAbbrechen();   // anderes Werkzeug gewähl
   if(t!=='arc'){ arcState=null; hideMeasure(); }
   if(t!=='select'){ selection=[]; refreshProps(); } cv.style.cursor=(t==='select')?'default':'crosshair'; syncFavState(); markDirty();
   /* Laser und Scheinwerfer gehen vor: die Berührungen müssen jetzt (bzw. wieder nicht) zur Tafel */
+  zeigerKlasse();
   if(typeof applyEmbedMode==='function'&&pageHasEmbeds()) applyEmbedMode();
-  if(embedInteract&&zeigerTool()&&t!==zeigerVorher){ zeigerVorher=t;
+  if(typeof fsMenuBauen==='function'&&fsId) fsMenuBauen();
+  if(embedInteract&&zeigerTool()&&t!==zeigerVorher&&!fsId){ zeigerVorher=t;   /* im Vollbild sagt es das Menü selbst */
     toast(t==='laser'?'Laserpointer geht vor – das Objekt wird so lange nicht bedient'
                      :'Scheinwerfer geht vor – das Objekt wird so lange nicht bedient'); }
   if(!zeigerTool()) zeigerVorher=null; }
@@ -4542,6 +4557,15 @@ function fsMenuBauen(){
   const zeig=(id,an)=>{ const el=$(id); if(el) el.style.display=an?'':'none'; };
   const dok=(o.type==='doc'), bld=(o.type==='image'), notiz=notizFaehig(o), malt=(docNote===o);
   $('fsmTitel').textContent=o.label||(dok?'Dokument':(bld?'Bild':'Objekt'));
+  /* Zeigen geht im Vollbild nur über einem Werkzeug: Dokument und Bild liegen in einer eigenen,
+     höheren Ebene, dort käme die Leuchtspur nicht darüber. Sie haben dafür das Beschriften. */
+  const zeigbar=(o.type==='embed');
+  zeig('fsm-laser',zeigbar); zeig('fsm-spot',zeigbar);
+  if(zeigbar){
+    $('fsm-laser').textContent=(tool==='laser')?'✓ Laserpointer beenden':'🔴 Laserpointer';
+    $('fsm-spot').textContent =(tool==='spot') ?'✓ Scheinwerfer beenden':'🔦 Scheinwerfer';
+    $('fsm-laser').classList.toggle('an',tool==='laser');
+    $('fsm-spot').classList.toggle('an',tool==='spot'); }
   zeig('fsm-note',notiz);
   $('fsm-note').textContent=malt?'✓ Beschriften beenden':'✎ Beschriften';
   $('fsm-note').classList.toggle('an',malt);
@@ -4577,12 +4601,21 @@ function fsDickeStep(d){
   else { penWidth=w; textSize=Math.round(14+w*4); }
   markWidth(); saveUI(); fsMenuBauen(); fsMalRender(); markDirty(); }
 $('fsm-note').onclick=()=>{ const o=fsObj(); if(!notizFaehig(o)) return;
+  if(zeigerTool()) endPointerTool();                  /* Zeigen und Beschriften gehen nicht zugleich */
   if(docNote===o){ docNotizAn(o,false); fsMenuBauen(); return; }
   if(!fsDocO){                                        /* Video: der Stift kommt im Vollbild nicht an das Bild */
     vollbildAus(); docNotizAn(o,true);
     toast('Beschriften am Video geht nur in der normalen Ansicht – Vollbild beendet'); return; }
   docNotizAn(o,true); fsMenuBauen();
   toast('Beschriften: auf die Seite schreiben \u2013 der rote Rahmen zeigt es an. Beenden \u00fcber \u2630 in der Pille'); };
+/* Laserpointer und Scheinwerfer im Vollbild: dasselbe Werkzeug wie auf der Tafel, nur von hier
+   aus geschaltet. Beschriften und Zeigen schließen sich aus – beide wollen den Stift. */
+['laser','spot'].forEach(t=>$('fsm-'+t).onclick=()=>{
+  if(tool===t){ endPointerTool(); fsMenuBauen(); return; }
+  const o=fsObj(); if(o&&docNote===o) docNotizAn(o,false);
+  setTool(t); fsMenuBauen();
+  toast(t==='laser'?'Laserpointer: zeigen, ohne zu bedienen – beenden über ☰ in der Pille'
+                   :'Scheinwerfer: Lichtfleck ziehen – beenden über ☰ in der Pille'); });
 ['pen','marker','eraser'].forEach(t=>$('fsm-'+t).onclick=()=>{ setTool(t); fsMenuBauen(); fsMalRender(); });
 $('fsm-undo').onclick=()=>{ if(!undoStep()) toast('Nichts zum Rückgängigmachen'); fsMenuBauen(); };
 $('fsm-dickM').onclick=()=>fsDickeStep(-1); $('fsm-dickP').onclick=()=>fsDickeStep(1);
@@ -4599,6 +4632,10 @@ addRainbow($('fsmColors'),c=>{ pickColor(c); fsMenuBauen(); fsMalRender(); });
 function fsDocBlaettern(d){ if(!fsDocO||fsDocO.type!=='doc') return; docTurn(fsDocO,d); $('fsDoc').scrollTop=0; fsDocZeigen(); }
 function vollbildAn(o){
   if(!o) return;
+  /* Zeigen geht im Vollbild nur über einem Werkzeug: Dokument und Bild bekommen eine eigene,
+     höhere Ebene, über die weder Leuchtspur noch Lichtfleck kämen – und im Menü stünde kein
+     Knopf zum Abschalten. Darum dort vorher beenden. */
+  if(zeigerTool()&&(o.type==='doc'||o.type==='image')) endPointerTool();
   if(o.type==='doc'||o.type==='image'){                       /* Seitenbild statt Rahmen */
     fsDocO=o; fsId=null; fsBarsVorher=barsHidden; if(!barsHidden) hideBars();
     propsOpen=false; $('props').classList.remove('show'); $('propsBtn').classList.remove('show');
@@ -4607,7 +4644,6 @@ function vollbildAn(o){
     $('fsDoc').scrollTop=0; fsMenuZu(); fsDocZeigen(); fsUiZeigen(); return;
   }
   if(o.type!=='embed') return;
-  if(zeigerTool()) endPointerTool();          /* im Vollbild sind die Leisten weg: erst den Zeiger beenden */
   fsId=o.id; fsScroll=0; fsBarsVorher=barsHidden;
   if(!barsHidden) hideBars();
   propsOpen=false; $('props').classList.remove('show'); $('propsBtn').classList.remove('show');
@@ -4722,7 +4758,7 @@ function applyEmbedMode(){
   const durch=embedDurch();
   cv.style.pointerEvents=durch?'none':'auto'; $('annoToggle').classList.toggle('on',embedInteract);
   document.body.classList.toggle('embedAn',embedInteract);        /* steuert den Grauschleier */
-  document.body.classList.toggle('zeigerVor',embedInteract&&zeigerTool());   /* Leisten der Objekte stilllegen */
+  zeigerKlasse();
   $('annoToggle').textContent=embedInteract?'Bedienen beenden':'Objekt bedienen';
   $('embedBarLayer').style.display=embedInteract?'block':'none';
   for(const[,fr] of embedEls) fr.style.pointerEvents=durch?'auto':'none';
@@ -5061,7 +5097,7 @@ function syncEmbeds(){ const p=page(), wanted=new Set();
         fsMax=Math.max(0,hh-H); if(fsScroll>fsMax) fsScroll=fsMax;
         fr.style.display=''; fr.style.width=W+'px'; fr.style.height=hh+'px';
         fr.style.transform='translate(0px,'+(FSTOP-fsScroll)+'px)';
-        fr.style.zIndex='3000'; fr.style.pointerEvents='auto'; fr.style.boxShadow='none';
+        fr.style.zIndex='3000'; fr.style.pointerEvents=embedDurch()?'auto':'none'; fr.style.boxShadow='none';
         andere.forEach(e=>e.style.display='none');
         fsBalken();
         const nf=notizFlaechen.get(o.id);

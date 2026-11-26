@@ -1818,8 +1818,21 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
     anderes Werkzeug wählen. Beim Einschalten sagt eine kurze Meldung, was gerade gilt.
     Alle anderen Werkzeuge verhalten sich unverändert: Mit eingeschaltetem „Objekt bedienen"
     schreibt der Stift weiterhin nicht auf das Objekt, und Auswählen und Lasso greifen wie bisher
-    ins Werkzeug durch. Geht ein Objekt **ins Vollbild**, wird ein aktiver Laserpointer zuerst
-    beendet – dort sind die Leisten ausgeblendet, man käme sonst nicht mehr ans Werkzeug.
+    ins Werkzeug durch.
+  - **Auch im Vollbild**, und genau dort am nötigsten: Im Menü der Pille (**☰**) stehen über
+    „Beschriften" die beiden Knöpfe **🔴 Laserpointer** und **🔦 Scheinwerfer**. Nötig sind sie
+    dort, weil im Vollbild die Leisten ausgeblendet sind und sich auch nicht über die Randgriffe
+    zurückholen lassen (`body.fs-mode .edgezone{display:none}`). Solange einer von beiden läuft,
+    **rückt die Tafel über das Objekt** (`body.fs-mode.zeigerVor #board{z-index:6}` gegenüber der
+    Objektebene mit 5) – sonst läge die Leuchtspur dahinter. Sie zeichnet dann **nur** die Spur,
+    nicht die übrige Seite. Beendet wird über denselben Knopf („✓ Laserpointer beenden"), danach
+    rutscht die Tafel wieder unter das Objekt und es ist sofort wieder bedienbar.
+    **Zeigen und Beschriften schließen sich aus** – beide wollen denselben Zeiger; wer das eine
+    startet, beendet das andere.
+    Bei **Dokument und Bild** im Vollbild gibt es die beiden Knöpfe **nicht**: Deren Seite liegt in
+    einer eigenen, höheren Ebene (`#fsDoc`, z-index 44), über die weder Leuchtspur noch Lichtfleck
+    kämen. Dort ist das **Beschriften** der Weg. Ist beim Öffnen eines Dokuments gerade ein Zeiger
+    aktiv, wird er deshalb beendet.
 - Der Knopf **„Objekt bedienen" / „Bedienen beenden"** oben in der Mitte sitzt **bündig mit der
   Unterkante der oberen Leisten** – auf dem iPad genau wie am Rechner. Die Leisten stehen selbst
   schon unterhalb der Statusleiste; ein zusätzlicher Sicherheitsabstand hätte den Knopf auf dem
