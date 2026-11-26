@@ -2294,6 +2294,12 @@ funktioniert nach dem ersten Laden auch **offline** (PWA) und braucht keinen Ser
   die Farbe, und damit kippt das Gesamtvorzeichen. Mehrfache Faktoren stehen als Potenz (`(x−1)²`, auf
   beiden Seiten grün), der Faktor, der 0 wird, bleibt zusätzlich **fett**. Die Begründung daneben nennt
   dieselben Vorzeichen noch einmal in Worten.
+  Diese zerlegte Form steht hinter dem Knopf **„Faktor"** und ist **voreingestellt aus**: Zuerst
+  sieht man nur den eingegebenen Bruch, und erst auf Wunsch kommt `= (x + 1) · (x − 1) ⁄ (x − 2)`
+  dazu. Die Begründung wechselt mit: ohne Faktoren spricht sie von Zähler und Nenner, mit Faktoren
+  nennt sie jeden einzelnen. Der Knopf ist **grau**, wo das Zerlegen nichts bringt – wenn der Term
+  schon als Produkt eingegeben wurde, wenn es keine Definitionslücke gibt oder wenn der Term gar
+  kein Bruch ist. Die Wahl wird **mit dem Projekt gespeichert**.
   **Auch der Term, wie er eingegeben wurde**, bekommt diese Marken – er steht ja links neben der
   zerlegten Form (`f(x) = … = …`). Zähler und Nenner werden dort als Ganzes eingefärbt und bekommen
   ihren Wert darüber bzw. darunter; der Nenner steht an einer Lücke als **`+0`** oder **`−0`**, je
