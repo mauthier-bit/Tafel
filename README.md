@@ -3003,7 +3003,8 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     Der Zufall wird sehr oft befragt, und **neben der Schätzung steht immer der exakte Wert**
     (grün gestrichelt). Gesteuert wird mit **▶ Start/Pause** (Tempo 1, 10, 100 oder 1000 Versuche je Bild)
     und mit den Knöpfen **+1 · +10 · +100 · +1.000 · +10.000**, die eine feste Zahl Versuche auf einen
-    Schlag dazunehmen; **↺** setzt die Zählung zurück. **„log. Achse"** zeichnet die Versuchsachse
+    Schlag dazunehmen; **↺** setzt die Zählung zurück. Alles steht **in einer Zeile** – erst wenn das
+    Fenster zu schmal wird, rutscht *Start* in eine eigene Zeile darüber. **„log. Achse"** zeichnet die Versuchsachse
     logarithmisch – dann sieht man die wilden ersten Versuche und die späte Ruhe **auf einem Bild**.
     Unter jeder Simulation lässt sich ein **Kasten „Hintergrund und Theorie"** aufklappen (anfangs zu)
     mit Herleitung, Formeln, dem typischen Denkfehler und dem Lehrplanbezug.
