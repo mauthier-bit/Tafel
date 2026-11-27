@@ -15,6 +15,11 @@
   #tabs::-webkit-scrollbar{display:none;}
   .tab{flex:0 0 auto;font:700 13px inherit;padding:7px 11px;border:none;border-radius:11px 11px 0 0;background:#eef2f7;color:#53617a;cursor:pointer;white-space:nowrap;}
   .tab.on{background:#3b82f6;color:#fff;}
+  /* Teilen-Knopf ganz rechts in der Reiterzeile */
+  #tabLuft{flex:1 1 auto;min-width:4px;}
+  #teilenBtn{flex:0 0 auto;display:flex;align-items:center;}
+  #teilenBtn button{font:700 15px inherit;line-height:1;padding:7px 11px;border:1px solid #cfd6e0;border-radius:11px;
+    background:#f8fafc;color:#334155;cursor:pointer;}
   .panel{display:none;flex:1;min-height:0;flex-direction:column;padding:8px;gap:7px;}
   .panel.on{display:flex;}
   /* ---- Bedienzeile ---- */
@@ -48,6 +53,18 @@
   .die.num{display:flex;align-items:center;justify-content:center;font-weight:800;}
   .die>span{display:flex;align-items:center;justify-content:center;}
   .pip{width:82%;aspect-ratio:1;border-radius:50%;background:#1f2430;}
+  /* ---- Monte Carlo ---- */
+  #cCv{flex:1;min-height:0;width:100%;}
+  /* Aufklappbarer Theoriekasten: zugeklappt bleibt nur die Zeile mit dem Dreieck stehen. */
+  .klappK{flex:none;text-align:left;font:700 13px inherit;color:#334155;background:#f4f7fb;border:1px solid #e2e8f0;
+    border-radius:10px;padding:7px 10px;cursor:pointer;}
+  .klappK[aria-expanded="true"]{border-bottom-left-radius:0;border-bottom-right-radius:0;border-bottom-color:#f4f7fb;}
+  #cTheo{border-top-left-radius:0;border-top-right-radius:0;max-height:52%;}
+  #cTheo h5{margin:0 0 4px;font-size:13px;color:#1d4ed8;}
+  #cTheo p{margin:0 0 6px;}
+  #cTheo .form{background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:4px 7px;display:inline-block;
+    font-weight:700;margin:1px 0;}
+  #cPlus button{flex:1 1 0;min-width:0;font-size:14px;padding:9px 2px;}
   /* ---- Glücksrad ---- */
   #rCv{flex:1;min-height:0;width:100%;}
   #rRes{text-align:center;font-size:18px;font-weight:800;min-height:24px;color:#2563eb;}
@@ -274,6 +291,8 @@
     <button class="tab" data-t="rad">Glücksrad</button>
     <button class="tab" data-t="urne">Urne</button>
     <button class="tab" data-t="vert">Ziehen &amp; Verteilen</button>
+    <button class="tab" data-t="mc">Monte Carlo</button>
+    <span id="tabLuft"></span><span id="teilenBtn"></span>
   </div>
 
   <!-- ================= Münze ================= -->
@@ -352,7 +371,58 @@
       <button class="go ghost" id="vReset">↺</button>
     </div>
   </div>
+
+  <!-- ================= Monte Carlo ================= -->
+  <div class="panel" id="p-mc">
+    <div class="ctrl">
+      <label>Versuch <select id="cSim">
+        <option value="pi">π bestimmen</option>
+        <option value="lgz">Gesetz der großen Zahlen</option>
+        <option value="geb">Geburtstagsproblem</option>
+        <option value="zieg">Ziegenproblem</option>
+      </select></label>
+      <label id="cErWrap">Ereignis <select id="cEr">
+        <option value="kopf">Münze: Kopf</option>
+        <option value="sechs">Würfel: Sechs</option>
+        <option value="gerade">Würfel: gerade Augenzahl</option>
+        <option value="sieben">Zwei Würfel: Summe 7</option>
+      </select></label>
+      <label id="cKWrap">Personen <button class="step" id="cKm">−</button><span class="val" id="cKv">23</span><button class="step" id="cKp">+</button></label>
+      <label id="cTWrap">Türen <button class="step" id="cTm">−</button><span class="val" id="cTv">3</span><button class="step" id="cTp">+</button></label>
+      <label>Tempo <select id="cTempo">
+        <option value="1">einzeln</option>
+        <option value="10">10</option>
+        <option value="100" selected>100</option>
+        <option value="1000">1000</option>
+      </select></label>
+      <button class="sw" id="cLog" title="Die Achse der Versuche logarithmisch zeichnen – so sieht man die ersten und die späten Versuche zugleich">log. Achse</button>
+      <button class="sw" id="cSelbst" title="Selbst eine Runde spielen: Tür wählen, bleiben oder wechseln, auflösen – das Ergebnis zählt in die Statistik">👆 selbst spielen</button>
+    </div>
+    <canvas id="cCv"></canvas>
+    <div id="cErg" class="info"></div>
+    <div id="cHin" class="info" style="font-size:13px;color:#64748b;font-weight:600"></div>
+    <button class="klappK" id="cTheoSw" type="button" aria-expanded="false">▸ Hintergrund und Theorie</button>
+    <div class="rech" id="cTheo"></div>
+    <div class="zeile" id="cSpielZ" hidden>
+      <button class="go ghost" id="cBleib">Bleiben</button>
+      <button class="go ghost" id="cWechs">Wechseln</button>
+      <button class="go" id="cNaechste">Nächste Runde</button>
+    </div>
+    <div class="zeile" id="cPlus" title="So viele Versuche auf einen Schlag dazunehmen">
+      <button class="go ghost" data-plus="1">+1</button>
+      <button class="go ghost" data-plus="10">+10</button>
+      <button class="go ghost" data-plus="100">+100</button>
+      <button class="go ghost" data-plus="1000">+1.000</button>
+      <button class="go ghost" data-plus="10000">+10.000</button>
+    </div>
+    <div class="zeile">
+      <button class="go" id="cGo" style="flex:1">▶ Start</button>
+      <button class="go ghost" id="cReset" title="Zählung zurücksetzen">↺</button>
+    </div>
+  </div>
 </div>
+<script src="vendor/qrcode.min.js"></script>
+<script src="teilen.js"></script>
 <script>
 "use strict";
 const $=id=>document.getElementById(id);
@@ -367,7 +437,9 @@ let data={ tab:'wuerfel',
   n:1, sides:6, colors:[0],
   sectors:[],
   urne:{ anzahl:6, zuege:2, zurueck:false, ordnung:true, nummern:true, schema:1, farben:[] },
-  vert:{ a:9, b:5 } };
+  vert:{ a:9, b:5 },
+  mc:{ sim:'pi', ereignis:'kopf', k:23, tueren:3, tempo:100, log:false, selbst:false,
+       n:0, treffer:0, treffer2:0, nB:0, nW:0, verlauf:[], zaehl:[] } };
 
 /* ============================ Münze ============================ */
 const M=()=>data.muenze;
@@ -718,8 +790,399 @@ $('vGo').onclick=vSchritt;
 $('vAll').onclick=()=>{ if(vBelegt.length>=vSchritte()) vBelegt=[]; let n=0; const iv=setInterval(()=>{ vSchritt(); if(vBelegt.length>=vSchritte()||++n>20) clearInterval(iv); },260); };
 $('vReset').onclick=()=>{ vBelegt=[]; vRender(); };
 
+/* ============================ Monte Carlo ============================ */
+/* Vier Simulationen in einem Reiter. Gemeinsam ist allen: sehr viele Zufallsversuche
+   liefern eine Schaetzung, daneben steht der exakte Wert zum Vergleich. Gezeichnet
+   wird auf ein Canvas, damit das Bild auch auf der Tafel landet. */
+const C=()=>data.mc;
+const cCv=$('cCv'), cCtx=cCv.getContext('2d');
+const cZ=(v,n)=>Number(v).toFixed(n).replace('.',',');
+const cPZ=v=>cZ(v*100,1)+' %';
+/* Jedes Ereignis kennt alle moeglichen Ergebnisse (werte), ihre Wahrscheinlichkeiten (pw)
+   und welche davon zum Ereignis gehoeren (treff). Daraus ergibt sich p von selbst, und das
+   Histogramm kann jedes einzelne Ergebnis zeigen. wurf() liefert den Platz im Feld werte. */
+const EREIG={
+  kopf:   {t:'Münze: Kopf', pt:'1/2',
+           werte:['Kopf','Zahl'], pw:[1/2,1/2], treff:[0],
+           wurf:()=>Math.random()<0.5?0:1},
+  sechs:  {t:'Würfel: Sechs', pt:'1/6',
+           werte:['1','2','3','4','5','6'], pw:[1/6,1/6,1/6,1/6,1/6,1/6], treff:[5],
+           wurf:()=>Math.floor(Math.random()*6)},
+  gerade: {t:'Würfel: gerade Augenzahl', pt:'3/6 = 1/2',
+           werte:['1','2','3','4','5','6'], pw:[1/6,1/6,1/6,1/6,1/6,1/6], treff:[1,3,5],
+           wurf:()=>Math.floor(Math.random()*6)},
+  sieben: {t:'Zwei Würfel: Summe 7', pt:'6/36 = 1/6',
+           werte:['2','3','4','5','6','7','8','9','10','11','12'],
+           pw:[1,2,3,4,5,6,5,4,3,2,1].map(z=>z/36), treff:[5],
+           wurf:()=>Math.floor(Math.random()*6)+Math.floor(Math.random()*6)}
+};
+Object.keys(EREIG).forEach(k=>{ const e=EREIG[k];
+  e.p=e.treff.reduce((a,i)=>a+e.pw[i],0); e.tr=new Set(e.treff); });
+const cEreig=()=>EREIG[C().ereignis]||EREIG.kopf;
+/* Geburtstagsproblem: Gegenereignis "alle verschieden" ausmultipliziert */
+function pGeburtstag(k){ let q=1; for(let i=0;i<k;i++) q*=(365-i)/365; return 1-q; }
+
+let cPkt=[], cPi=0;          /* Punktwolke fuer pi (Ringpuffer, damit es fluessig bleibt) */
+let cGruppe=null;            /* zuletzt gezogene Geburtstagsgruppe */
+let cSpiel=null;             /* zuletzt gespielte Runde beim Ziegenproblem */
+let cLaeuft=false, cAnim=null;
+
+function cPruefen(){ const c=C();
+  if(!['pi','lgz','geb','zieg'].includes(c.sim)) c.sim='pi';
+  if(!EREIG[c.ereignis]) c.ereignis='kopf';
+  c.k=Math.max(2,Math.min(80,c.k|0||23));
+  c.tueren=Math.max(3,Math.min(12,c.tueren|0||3));
+  c.tempo=[1,10,100,1000].includes(+c.tempo)?+c.tempo:100;
+  c.n=Math.max(0,c.n|0); c.treffer=Math.max(0,c.treffer|0); c.treffer2=Math.max(0,c.treffer2|0);
+  c.nB=Math.max(0,c.nB|0); c.nW=Math.max(0,c.nW|0);
+  if(!Array.isArray(c.verlauf)) c.verlauf=[];
+  const anz=cEreig().werte.length;
+  if(!Array.isArray(c.zaehl)||c.zaehl.length!==anz) c.zaehl=new Array(anz).fill(0); }
+function cLeeren(){ const c=C(); c.n=0; c.treffer=0; c.treffer2=0; c.nB=0; c.nW=0; c.verlauf=[]; vMarke=1;
+  c.zaehl=cEreig().werte.map(()=>0);
+  cPkt=[]; cPi=0; cGruppe=null; cSpiel=null; cPhase='aus';
+  if(c.sim==='zieg'&&c.selbst) selbstNeu(); }
+/* Der Verlauf wird mitgespeichert. Aufgezeichnet wird nicht jeder Versuch, sondern
+   mit wachsendem Abstand (jeweils 15 % mehr): So bleibt der unruhige Anfang erhalten,
+   auch wenn pro Bild 1000 Versuche laufen, und die Liste bleibt kurz. */
+let vMarke=1;
+function vPush(n,w){ const V=C().verlauf; V.push([n,+w.toFixed(5)]);
+  if(V.length>200) for(let i=V.length-2;i>=0;i-=2) V.splice(i,1); }
+function vPruef(n,w){ if(n<vMarke) return; vPush(n,w); vMarke=Math.max(n+1,Math.ceil(n*1.15)); }
+function vMarkeSetzen(){ const V=C().verlauf, n=V.length?V[V.length-1][0]:0;
+  vMarke=n?Math.max(n+1,Math.ceil(n*1.15)):1; }
+
+/* ---- ein Versuch je Simulation ---- */
+function gebZiehen(k){ const tage=[], zaehl={}, doppelt={};
+  for(let i=0;i<k;i++){ const t=Math.floor(Math.random()*365); tage.push(t);
+    zaehl[t]=(zaehl[t]||0)+1; if(zaehl[t]>1) doppelt[t]=true; }
+  return {tage, doppelt, hat:Object.keys(doppelt).length>0}; }
+/* Der Moderator kennt das Auto und oeffnet alle Ziegentueren bis auf eine. */
+function ziegSpiel(t){ const auto=Math.floor(Math.random()*t), wahl=Math.floor(Math.random()*t);
+  let rest;
+  if(wahl===auto){ do{ rest=Math.floor(Math.random()*t); }while(rest===wahl); }
+  else rest=auto;
+  return {t, auto, wahl, rest, bleiben:wahl===auto}; }
+
+function cSchritt(anz){ const c=C();
+  if(c.sim==='pi'){
+    for(let i=0;i<anz;i++){ const x=Math.random(), y=Math.random(), drin=x*x+y*y<=1;
+      if(drin) c.treffer++;
+      if(cPkt.length<4000) cPkt.push([x,y,drin]); else { cPkt[cPi]=[x,y,drin]; cPi=(cPi+1)%4000; }
+      c.n++; vPruef(c.n,4*c.treffer/c.n); } }
+  else if(c.sim==='lgz'){ const e=cEreig();
+    for(let i=0;i<anz;i++){ const v=e.wurf(); c.zaehl[v]=(c.zaehl[v]||0)+1;
+      if(e.tr.has(v)) c.treffer++; c.n++; vPruef(c.n,c.treffer/c.n); } }
+  else if(c.sim==='geb'){
+    for(let i=0;i<anz;i++){ cGruppe=gebZiehen(c.k); if(cGruppe.hat) c.treffer++;
+      c.n++; vPruef(c.n,c.treffer/c.n); } }
+  else { for(let i=0;i<anz;i++){ cSpiel=ziegSpiel(c.tueren);
+      /* Jede Runde wird fuer beide Strategien ausgewertet: dieselbe Spielsituation,
+         einmal geblieben, einmal gewechselt. Genau eine der beiden gewinnt. */
+      c.nB++; c.nW++; if(cSpiel.bleiben) c.treffer++; else c.treffer2++; c.n++; }
+    cPhase='aus'; } }
+
+/* ---- Selbst spielen (Ziegenproblem) ----
+   Ablauf: Tuer antippen → der Moderator oeffnet die Ziegentueren → bleiben oder
+   wechseln → Aufloesung. Das Ergebnis zaehlt in dieselbe Statistik wie der
+   Automatiklauf, aber nur fuer die Strategie, die wirklich gespielt wurde. */
+let cPhase='aus';            /* aus | wahl | frage | ende */
+function selbstNeu(){ const t=C().tueren;
+  cSpiel={t, auto:Math.floor(Math.random()*t), wahl:-1, rest:-1, selbst:true, ende:false};
+  cPhase='wahl'; }
+function selbstWahl(i){ if(cPhase!=='wahl') return; const sp=cSpiel;
+  if(i<0||i>=sp.t) return;
+  sp.wahl=i;
+  if(i===sp.auto){ do{ sp.rest=Math.floor(Math.random()*sp.t); }while(sp.rest===i); }
+  else sp.rest=sp.auto;
+  cPhase='frage'; cRenderKnoepfe(); cDraw(); }
+function selbstEnde(wechseln){ if(cPhase!=='frage') return; const c=C(), sp=cSpiel;
+  sp.gewechselt=wechseln; sp.tuer=wechseln?sp.rest:sp.wahl; sp.gewonnen=sp.tuer===sp.auto;
+  sp.ende=true; c.n++;
+  if(wechseln){ c.nW++; if(sp.gewonnen) c.treffer2++; } else { c.nB++; if(sp.gewonnen) c.treffer++; }
+  cPhase='ende'; cRenderKnoepfe(); cTexte(); cDraw(); sync(); }
+
+/* ---- Zeichnen ---- */
+function cResize(){ const dpr=window.devicePixelRatio||1, w=cCv.clientWidth||300, h=cCv.clientHeight||220;
+  cCv.width=Math.round(w*dpr); cCv.height=Math.round(h*dpr); cCtx.setTransform(dpr,0,0,dpr,0,0); cDraw(); }
+function cSchrift(px){ cCtx.font=px+'px -apple-system,BlinkMacSystemFont,sans-serif'; }
+/* Kasten mit dem Verlauf der Schaetzung: gestrichelt der exakte Wert, durchgezogen die Schaetzung. */
+function cKurve(x0,y0,bw,bh,yMin,yMax,exakt,exTxt,farbe,nk){
+  const c=C(), V=c.verlauf;
+  cCtx.fillStyle='#fff'; cCtx.fillRect(x0,y0,bw,bh);
+  cCtx.strokeStyle='#dbe2ea'; cCtx.lineWidth=1; cCtx.strokeRect(x0,y0,bw,bh);
+  const yv=v=>y0+bh*(1-(Math.min(yMax,Math.max(yMin,v))-yMin)/(yMax-yMin));
+  const nMax=Math.max(10,c.n);
+  const xv=n=>c.log? x0+bw*Math.log10(Math.max(1,n))/Math.log10(Math.max(10,nMax))
+                   : x0+bw*Math.min(1,n/nMax);
+  cSchrift(10); cCtx.textAlign='right';
+  [yMin,(yMin+yMax)/2,yMax].forEach(v=>{ const y=yv(v);
+    cCtx.strokeStyle='#eef2f7'; cCtx.beginPath(); cCtx.moveTo(x0,y); cCtx.lineTo(x0+bw,y); cCtx.stroke();
+    cCtx.fillStyle='#93a0b4'; cCtx.fillText(cZ(v,nk),x0-3,y+3); });
+  if(isFinite(exakt)){ const y=yv(exakt);
+    cCtx.strokeStyle='#16a34a'; cCtx.lineWidth=1.5; cCtx.setLineDash([5,4]);
+    cCtx.beginPath(); cCtx.moveTo(x0,y); cCtx.lineTo(x0+bw,y); cCtx.stroke(); cCtx.setLineDash([]);
+    cCtx.fillStyle='#16a34a'; cCtx.textAlign='left'; cCtx.fillText(exTxt,x0+4,y-5); }
+  if(V.length>1){ cCtx.strokeStyle=farbe; cCtx.lineWidth=2; cCtx.lineJoin='round'; cCtx.beginPath();
+    V.forEach(([n,v],i)=>{ const x=xv(n), y=yv(v); i?cCtx.lineTo(x,y):cCtx.moveTo(x,y); }); cCtx.stroke(); }
+  cCtx.fillStyle='#93a0b4'; cCtx.textAlign='center';
+  const was=c.sim==='pi'?'Punkte':(c.sim==='geb'?'Gruppen':'Versuche');
+  cCtx.fillText('insgesamt '+ZAHL(c.n)+' '+was+(c.log?' · Achse logarithmisch':''),x0+bw/2,y0+bh+13); }
+
+function cDrawPi(w,h){ const c=C(), quer=w>h*1.25;
+  const S=Math.max(60,Math.min(quer?h-30:h*0.52-24, quer?w*0.44:w-40));
+  const x0=quer?10:(w-S)/2, y0=12;
+  cCtx.fillStyle='#fff'; cCtx.fillRect(x0,y0,S,S);
+  cCtx.strokeStyle='#cfd6e0'; cCtx.lineWidth=1.5; cCtx.strokeRect(x0,y0,S,S);
+  cCtx.strokeStyle='rgba(22,163,74,.85)'; cCtx.lineWidth=2;
+  cCtx.beginPath(); cCtx.arc(x0,y0+S,S,-Math.PI/2,0); cCtx.stroke();   /* Viertelkreis um die linke untere Ecke */
+  cPkt.forEach(([x,y,drin])=>{ cCtx.fillStyle=drin?'rgba(22,163,74,.55)':'rgba(239,68,68,.5)';
+    cCtx.fillRect(x0+x*S-1,y0+S-y*S-1,2,2); });
+  cSchrift(10); cCtx.fillStyle='#93a0b4'; cCtx.textAlign='center';
+  cCtx.fillText('Treffer im Viertelkreis',x0+S/2,y0+S+13);
+  const gx=quer?x0+S+40:40, gy=quer?12:y0+S+26, gw=(quer?w-gx-12:w-gx-12), gh=quer?h-30:h-gy-22;
+  if(gw>60&&gh>50) cKurve(gx,gy,gw,gh,2.4,4,Math.PI,'π = 3,14159…','#3b82f6',2); }
+
+/* Histogramm der Ergebnisse: Balken = relative Haeufigkeit bis jetzt,
+   gruener Strich = Wahrscheinlichkeit. Blau sind die Ergebnisse, die zum Ereignis gehoeren. */
+function cHisto(x0,y0,bw,bh,e){ const c=C(), z=c.zaehl||[], N=e.werte.length;
+  cCtx.fillStyle='#fff'; cCtx.fillRect(x0,y0,bw,bh);
+  cCtx.strokeStyle='#dbe2ea'; cCtx.lineWidth=1; cCtx.strokeRect(x0,y0,bw,bh);
+  const hs=e.werte.map((_,i)=>c.n?(z[i]||0)/c.n:0);
+  const yMax=Math.max(0.08,Math.max(Math.max.apply(null,e.pw),Math.max.apply(null,hs))*1.3);
+  const basis=y0+bh-30, hoch=bh-46;
+  const yv=v=>basis-hoch*Math.min(1,v/yMax);
+  cSchrift(9); cCtx.textAlign='right';
+  for(let k=0;k<=2;k++){ const v=yMax*k/2, y=yv(v);
+    cCtx.strokeStyle='#eef2f7'; cCtx.beginPath(); cCtx.moveTo(x0,y); cCtx.lineTo(x0+bw,y); cCtx.stroke();
+    cCtx.fillStyle='#93a0b4'; cCtx.fillText(cZ(v,2),x0-3,y+3); }
+  const g=Math.max(2,Math.min(8,bw/(N*4.5))), bb=(bw-g*(N+1))/N;
+  e.werte.forEach((lab,i)=>{ const x=x0+g+i*(bb+g), y=yv(hs[i]);
+    cCtx.fillStyle=e.tr.has(i)?'#3b82f6':'#cbd5e1'; cCtx.fillRect(x,y,bb,basis-y);
+    const ye=yv(e.pw[i]);
+    cCtx.strokeStyle='#16a34a'; cCtx.lineWidth=2;
+    cCtx.beginPath(); cCtx.moveTo(x-1,ye); cCtx.lineTo(x+bb+1,ye); cCtx.stroke();
+    cSchrift(Math.max(8,Math.min(11,bb*0.55))); cCtx.textAlign='center';
+    cCtx.fillStyle=e.tr.has(i)?'#1d4ed8':'#64748b'; cCtx.fillText(lab,x+bb/2,basis+13);
+    if(bb>=22&&c.n){ cSchrift(9); cCtx.fillStyle='#64748b';          /* Prozentzahl ueber Balken und Strich */
+      cCtx.fillText(cZ(hs[i]*100,1),x+bb/2,Math.max(y0+9,Math.min(y,ye)-5)); } });
+  cSchrift(10); cCtx.fillStyle='#93a0b4'; cCtx.textAlign='center';
+  cCtx.fillText('relative Häufigkeit je Ergebnis · Strich = Wahrscheinlichkeit',x0+bw/2,y0+bh-4); }
+
+function cDrawLgz(w,h){ const e=cEreig(), quer=w>h*1.1;
+  if(quer){ const kb=Math.round((w-30)*0.56);
+    cKurve(40,12,kb-40,h-34,0,1,e.p,'p = '+e.pt,'#3b82f6',2);
+    cHisto(kb+34,12,w-kb-46,h-34,e); }
+  else { const kh=Math.round((h-24)*0.54);
+    cKurve(40,12,w-52,kh-16,0,1,e.p,'p = '+e.pt,'#3b82f6',2);
+    cHisto(40,kh+16,w-52,h-kh-30,e); } }
+
+function cDrawGeb(w,h){ const c=C(), quer=w>h*1.25;
+  const S=Math.max(60,Math.min(quer?h-30:h*0.5-20, quer?w*0.42:w-40));
+  const cx=(quer?10:(w-S)/2)+S/2, cy=12+S/2, R=S/2-14;
+  cCtx.strokeStyle='#dbe2ea'; cCtx.lineWidth=1;
+  cCtx.beginPath(); cCtx.arc(cx,cy,R,0,7); cCtx.stroke();
+  const wi=t=>t/365*2*Math.PI-Math.PI/2;
+  for(let m=0;m<12;m++){ const a=wi(m*365/12);          /* Monatsmarken */
+    cCtx.beginPath(); cCtx.moveTo(cx+Math.cos(a)*(R-4),cy+Math.sin(a)*(R-4));
+    cCtx.lineTo(cx+Math.cos(a)*(R+4),cy+Math.sin(a)*(R+4)); cCtx.stroke(); }
+  if(cGruppe) cGruppe.tage.forEach(t=>{ const a=wi(t), dop=!!cGruppe.doppelt[t];
+    cCtx.beginPath(); cCtx.arc(cx+Math.cos(a)*R,cy+Math.sin(a)*R,dop?6:4,0,7);
+    cCtx.fillStyle=dop?'#ef4444':'#3b82f6'; cCtx.fill();
+    if(dop){ cCtx.strokeStyle='#991b1b'; cCtx.lineWidth=1.5; cCtx.stroke(); } });
+  cSchrift(11); cCtx.textAlign='center'; cCtx.fillStyle=cGruppe&&cGruppe.hat?'#dc2626':'#64748b';
+  cCtx.fillText(cGruppe?(cGruppe.hat?'gleicher Geburtstag!':'alle verschieden'):'Jahr mit 365 Tagen',cx,cy+4);
+  cSchrift(10); cCtx.fillStyle='#93a0b4';
+  cCtx.fillText('letzte Gruppe: '+C().k+' Personen',cx,12+S+11);
+  const gx=quer?cx+S/2+40:40, gy=quer?12:12+S+24, gw=w-gx-12, gh=quer?h-30:h-gy-22;
+  if(gw>60&&gh>50) cKurve(gx,gy,gw,gh,0,1,pGeburtstag(C().k),'exakt '+cPZ(pGeburtstag(C().k)),'#3b82f6',2); }
+
+let cTuer=[];                /* Platz der Tueren im Bild, fuers Antippen */
+function cDrawZieg(w,h){ const c=C(), t=c.tueren, sp=cSpiel, selbst=!!(sp&&sp.selbst);
+  /* Oben die Tueren, darunter die beiden Balken - beides nutzt die Hoehe aus. */
+  const lu=Math.max(5,Math.min(10,(w-20)/(t*8)));
+  const dw=Math.min(110,(w-24-lu*(t-1))/t), dh=Math.min(h*0.44-26,dw*1.45);
+  const x0=(w-(dw*t+lu*(t-1)))/2, y0=10;
+  cTuer=[];
+  for(let i=0;i<t;i++){ const x=x0+i*(dw+lu);
+    /* Zu bleibt im Spielmodus alles, bis gewaehlt ist; danach die eigene und die letzte Tuer. */
+    const zu=!sp?true:((selbst&&cPhase==='wahl')?true:(i===sp.wahl||i===sp.rest));
+    const zeigen=sp&&(!zu||sp.ende||!selbst);
+    cTuer.push({x,y:y0,b:dw,h:dh});
+    cCtx.fillStyle=zu?'#fde8c8':'#f1f5f9';
+    cCtx.strokeStyle=sp&&i===sp.wahl?'#3b82f6':(sp&&i===sp.rest&&(!selbst||cPhase!=='wahl')?'#16a34a':'#cbd5e1');
+    cCtx.lineWidth=sp&&(i===sp.wahl||i===sp.rest)&&!(selbst&&cPhase==='wahl')?3:1.5;
+    cCtx.beginPath(); cCtx.rect(x,y0,dw,dh); cCtx.fill(); cCtx.stroke();
+    cSchrift(Math.max(14,dw*0.5)); cCtx.textAlign='center'; cCtx.textBaseline='middle';
+    if(zeigen) cCtx.fillText(i===sp.auto?'🚗':'🐐',x+dw/2,y0+dh/2);
+    else { cCtx.fillStyle='#b08968'; cCtx.fillText(selbst&&cPhase==='wahl'?String(i+1):'?',x+dw/2,y0+dh/2); }
+    cCtx.textBaseline='alphabetic';
+    if(sp&&!(selbst&&cPhase==='wahl')&&(i===sp.wahl||i===sp.rest)){
+      cSchrift(Math.max(10,Math.min(13,dw*0.19)));
+      cCtx.fillStyle=i===sp.wahl?'#2563eb':'#16a34a'; cCtx.textAlign='center';
+      cCtx.fillText(i===sp.wahl?'deine Wahl':'letzte Tür',x+dw/2,y0+dh+14); } }
+  /* Ansage im Spielmodus */
+  let ansage='', farbeA='#334155';
+  if(selbst){
+    if(cPhase==='wahl') ansage='Tippe eine Tür an.';
+    else if(cPhase==='frage') ansage='Der Moderator hat geöffnet – bleiben oder wechseln?';
+    else { ansage=(sp.gewonnen?'Gewonnen! 🚗':'Leider eine Ziege. 🐐')+
+             '  ('+(sp.gewechselt?'gewechselt':'geblieben')+')';
+           farbeA=sp.gewonnen?'#16a34a':'#dc2626'; } }
+  if(ansage){ cSchrift(Math.max(13,Math.min(17,w*0.022))); cCtx.textAlign='center';
+    cCtx.fillStyle=farbeA; cCtx.fillText(ansage,w/2,y0+dh+36); }
+  /* zwei Balken: bleiben und wechseln, mit dem exakten Wert als Strich */
+  const by=y0+dh+(ansage?52:30), rest=Math.max(56,h-by-8);
+  const bh2=Math.max(20,Math.min(54,rest*0.28)), luft=Math.max(18,rest*0.14);
+  const oben=by+Math.max(0,(rest-(2*bh2+luft))/2);
+  const bx=Math.min(120,Math.max(76,w*0.13)), bb=w-bx-66;
+  [['bleiben',c.treffer,c.nB,1/t,'#f59e0b'],['wechseln',c.treffer2,c.nW,(t-1)/t,'#16a34a']]
+  .forEach(([txt,k,nn,ex,farbe],i)=>{ const y=oben+i*(bh2+luft), q=nn?k/nn:0;
+    cCtx.fillStyle='#f1f5f9'; cCtx.fillRect(bx,y,bb,bh2);
+    cCtx.fillStyle=farbe; cCtx.fillRect(bx,y,bb*q,bh2);
+    cCtx.strokeStyle='#1f2430'; cCtx.lineWidth=2; cCtx.setLineDash([3,3]);
+    cCtx.beginPath(); cCtx.moveTo(bx+bb*ex,y-4); cCtx.lineTo(bx+bb*ex,y+bh2+4); cCtx.stroke(); cCtx.setLineDash([]);
+    cSchrift(14); cCtx.textAlign='right'; cCtx.fillStyle='#334155';
+    cCtx.fillText(txt,bx-8,y+bh2/2+1);
+    cSchrift(10); cCtx.fillStyle='#93a0b4';
+    cCtx.fillText(nn?(ZAHL(k)+' von '+ZAHL(nn)):'noch nichts',bx-8,y+bh2/2+14);
+    cCtx.textAlign='left'; cCtx.fillStyle='#1f2430'; cSchrift(15);
+    cCtx.fillText(nn?cPZ(q):'–',bx+bb+8,y+bh2/2+5);
+    cSchrift(10); cCtx.fillStyle='#64748b'; cCtx.textAlign='center';
+    cCtx.fillText('exakt '+cPZ(ex),bx+bb*ex,y-8); }); }
+
+function cDraw(){ const w=cCv.clientWidth, h=cCv.clientHeight; if(!w||!h) return;
+  /* die ganze Bildflaeche leeren, nicht nur den sichtbaren Teil: Wird der Kasten
+     kleiner (etwa weil die Textzeile darunter umbricht), bliebe sonst das Alte stehen. */
+  cCtx.save(); cCtx.setTransform(1,0,0,1,0,0); cCtx.clearRect(0,0,cCv.width,cCv.height); cCtx.restore();
+  cCtx.textAlign='left'; cCtx.textBaseline='alphabetic';
+  const c=C();
+  if(c.sim==='pi') cDrawPi(w,h);
+  else if(c.sim==='lgz') cDrawLgz(w,h);
+  else if(c.sim==='geb') cDrawGeb(w,h);
+  else cDrawZieg(w,h); }
+
+/* ---- Texte ---- */
+function cTexte(){ const c=C(); let e='', hin='';
+  if(c.sim==='pi'){ const s=c.n?4*c.treffer/c.n:0;
+    e=c.n?('π ≈ 4 · '+ZAHL(c.treffer)+'/'+ZAHL(c.n)+' = '+cZ(s,4)):'Noch kein Punkt geworfen';
+    hin=c.n?('Abweichung '+cZ(Math.abs(s-Math.PI),4)+' · zu erwarten wären bei '+ZAHL(c.n)+' Punkten rund ±'+cZ(1.64/Math.sqrt(c.n),4))
+           :'Zufällige Punkte im Quadrat: Der Anteil im Viertelkreis nähert sich π/4.'; }
+  else if(c.sim==='lgz'){ const ev=cEreig(), s=c.n?c.treffer/c.n:0;
+    e=c.n?(ev.t+': '+ZAHL(c.treffer)+' von '+ZAHL(c.n)+' → h = '+cZ(s,4)):('Ereignis: '+ev.t);
+    hin=c.n?('p = '+ev.pt+' = '+cZ(ev.p,4)+' · relative Abweichung '+cZ(Math.abs(s-ev.p),4)+
+             ' · absolute Abweichung |Treffer − n·p| = '+cZ(Math.abs(c.treffer-c.n*ev.p),1))
+           :('Wahrscheinlichkeit p = '+ev.pt+' = '+cZ(ev.p,4)); }
+  else if(c.sim==='geb'){ const ex=pGeburtstag(c.k), s=c.n?c.treffer/c.n:0;
+    e=c.n?(ZAHL(c.treffer)+' von '+ZAHL(c.n)+' Gruppen mit gleichem Geburtstag → '+cPZ(s)):(c.k+' Personen je Gruppe');
+    hin='exakt '+cPZ(ex)+' bei '+c.k+' Personen · '+ZAHL(c.k*(c.k-1)/2)+' Paare, die zusammenpassen könnten'; }
+  else { const ex1=1/c.tueren, ex2=(c.tueren-1)/c.tueren;
+    e=c.n?('Bleiben: '+ZAHL(c.treffer)+' von '+ZAHL(c.nB)+(c.nB?' = '+cPZ(c.treffer/c.nB):'')+
+           '  ·  Wechseln: '+ZAHL(c.treffer2)+' von '+ZAHL(c.nW)+(c.nW?' = '+cPZ(c.treffer2/c.nW):'')):
+          (c.tueren+' Türen, ein Auto');
+    hin='exakt: bleiben '+cPZ(ex1)+' (1/'+c.tueren+'), wechseln '+cPZ(ex2)+' ('+(c.tueren-1)+'/'+c.tueren+')'+
+        (c.selbst?' · selbst gespielte Runden zählen nur für die gewählte Strategie':''); }
+  $('cErg').textContent=e; $('cHin').textContent=hin; }
+
+const THEORIE={
+pi:`<h5>Warum das π liefert</h5>
+<p>Jeder Punkt fällt zufällig und gleichmäßig verteilt in ein Quadrat mit der Seitenlänge 1. Der Viertelkreis darin hat den Radius 1, also den Flächeninhalt ¼ · π · 1² = π/4; das Quadrat hat den Flächeninhalt 1. Weil die Trefferwahrscheinlichkeit dem Flächenverhältnis entspricht, gilt</p>
+<span class="form">P(Punkt im Viertelkreis) = π/4 ≈ 0,7854</span>
+<p>Die relative Häufigkeit h = Treffer/n nähert sich dieser Wahrscheinlichkeit, also ist <b>π ≈ 4 · h</b>. Ob ein Punkt innen liegt, entscheidet der Satz des Pythagoras: x² + y² ≤ 1.</p>
+<h5>Wie genau wird es?</h5>
+<p>Der Fehler fällt nur mit 1/√n. Für eine weitere sichere Ziffer braucht es <b>hundertmal</b> so viele Punkte: 100 Punkte liefern etwa eine, 10 000 Punkte etwa zwei verlässliche Nachkommastellen. Monte Carlo ist also kein guter Weg zu π – aber ein sehr guter Weg, das Verfahren zu verstehen.</p>
+<h5>Woher es kommt</h5>
+<p>Stanislaw Ulam und John von Neumann rechneten 1946 in Los Alamos Neutronenbahnen durch, die sich nicht geschlossen lösen ließen, und würfelten sie stattdessen aus. Der Name stammt vom Spielkasino in Monte Carlo. Heute rechnet man so in der Teilchenphysik, bei der Wettervorhersage und in der Finanzmathematik.</p>
+<p class="hinweis">Lehrplan: Monte-Carlo-Methode und Simulation, Mathematik 10 (Zufallsexperimente); die Kreisfläche kommt aus Jgst. 8.</p>`,
+lgz:`<h5>Empirisches Gesetz der großen Zahlen</h5>
+<p>Die relative Häufigkeit h<sub>n</sub>(E) = k/n eines Ereignisses nähert sich mit wachsender Versuchszahl der Wahrscheinlichkeit P(E).</p>
+<span class="form">h<sub>n</sub>(E) = k/n → P(E) für große n</span>
+<p>Rechts daneben steht das <b>Histogramm</b>: Jeder Balken ist die relative Häufigkeit eines einzelnen Ergebnisses, der grüne Strich darüber seine Wahrscheinlichkeit. Blau sind die Ergebnisse, die zum gesuchten Ereignis gehören – bei „gerade Augenzahl" also drei der sechs Balken, bei „Summe 7" einer von elf. Man sieht beides zugleich: wie sich jeder einzelne Balken seinem Strich nähert und wie ungleich die Summen zweier Würfel verteilt sind.</p>
+<p>Darum darf man umgekehrt eine unbekannte Wahrscheinlichkeit durch viele Versuche schätzen – genau davon lebt jede Monte-Carlo-Simulation. Die Kurve zeigt zugleich, wie unruhig der Anfang ist: Die ersten Versuche schwanken stark, erst nach vielen Hundert beruhigt sich die Linie. Mit „log. Achse" sieht man beides auf einmal.</p>
+<h5>Der häufigste Irrtum</h5>
+<p>Die <b>relative</b> Häufigkeit nähert sich p – die <b>absolute</b> Abweichung |k − n·p| wird dabei im Mittel sogar größer; sie wächst etwa wie √n. Beide Zahlen stehen über der Zeichnung nebeneinander. Die Münze „gleicht also nichts aus": Nach fünfmal Kopf ist die Wahrscheinlichkeit für Kopf weiterhin genau 0,5.</p>
+<p class="hinweis">Lehrplan: Gesetz der großen Zahlen, Mathematik 8 (Laplace-Experimente).</p>`,
+geb:`<h5>Die Rechnung</h5>
+<p>Gefragt wird über das Gegenereignis: Alle k Personen haben an <i>verschiedenen</i> Tagen Geburtstag. Die erste Person darf jeden Tag haben, der zweiten bleiben 364 von 365, der dritten 363 von 365 und so weiter:</p>
+<span class="form">P(alle verschieden) = 365/365 · 364/365 · … · (365 − k + 1)/365</span>
+<span class="form">P(mindestens zwei gleich) = 1 − P(alle verschieden)</span>
+<p>Für k = 23 sind das 50,7 %, für k = 41 schon 90,3 %, für k = 60 über 99 %. Ab 366 Personen ist es sicher (Schubfachprinzip).</p>
+<h5>Warum das so überrascht</h5>
+<p>Man denkt unwillkürlich an die Frage „hat jemand am selben Tag Geburtstag wie <i>ich</i>?" – das ist etwas ganz anderes und bei 23 Personen nur rund 6 %. Verglichen werden aber <b>alle Paare</b>, und davon gibt es bei 23 Personen bereits 23 · 22 : 2 = 253.</p>
+<p class="hinweis">Gerechnet mit 365 gleich wahrscheinlichen Tagen, ohne 29. Februar. In Wirklichkeit sind Geburtstage etwas ungleich über das Jahr verteilt – das erhöht die Wahrscheinlichkeit sogar noch ein wenig.<br>Lehrplan: mehrstufiges Zufallsexperiment, Pfadregel und Gegenereignis, Mathematik 10.</p>`,
+zieg:`<h5>Der Ablauf</h5>
+<p>Hinter einer von t Türen steht das Auto, hinter allen anderen Ziegen. Du wählst eine Tür. Der Moderator <b>weiß, wo das Auto steht</b>, und öffnet alle übrigen Ziegentüren bis auf eine. Dann darfst du bei deiner Tür bleiben oder zur letzten geschlossenen wechseln. Bei drei Türen ist das die bekannte Fassung aus der Fernsehshow.</p>
+<h5>Warum Wechseln gewinnt</h5>
+<p>Deine erste Wahl trifft das Auto mit der Wahrscheinlichkeit 1/t. Mit (t − 1)/t liegst du daneben – und dann hat der Moderator alle anderen Nieten weggeräumt, das Auto steht also hinter der letzten geschlossenen Tür. Gewinnen heißt beim Wechseln: beim ersten Mal danebengreifen.</p>
+<span class="form">P(Gewinn beim Bleiben) = 1/t</span>
+<span class="form">P(Gewinn beim Wechseln) = (t − 1)/t</span>
+<p>Bei drei Türen also 1/3 gegen 2/3. Entscheidend ist, dass der Moderator nicht zufällig öffnet: Er bringt sein Wissen ins Spiel, und unter dieser Bedingung ändern sich die Wahrscheinlichkeiten. Öffnete er blind und erwischte zufällig Ziegen, wäre es 1/2 zu 1/2.</p>
+<h5>Selbst spielen</h5>
+<p>Mit „👆 selbst spielen" läuft eine einzelne Runde von Hand: Tür antippen, der Moderator öffnet, dann <b>Bleiben</b> oder <b>Wechseln</b> und die Auflösung. Jede so gespielte Runde zählt in die Statistik – aber nur für die Strategie, die wirklich gespielt wurde. Darum stehen bei den Balken zwei verschiedene Rundenzahlen, sobald von Hand gespielt wurde. Im Automatiklauf wird dagegen jede Runde doppelt ausgewertet: dieselbe Situation einmal geblieben und einmal gewechselt.</p>
+<p class="hinweis">Mit mehr Türen wird es offensichtlich: Stell die Türenzahl auf 12 und frage, wer dann noch bleiben möchte.<br>Lehrplan: bedingte Wahrscheinlichkeit, Mathematik 11; als Einstieg schon ab Jgst. 10.</p>`};
+function cTheorie(){ const box=$('cTheo'), auf=box.classList.contains('on');
+  $('cTheoSw').setAttribute('aria-expanded',auf?'true':'false');
+  $('cTheoSw').textContent=(auf?'▾ ':'▸ ')+'Hintergrund und Theorie';
+  if(auf) box.innerHTML=THEORIE[C().sim]||''; }
+
+function cRenderKnoepfe(){ const c=C(), an=c.sim==='zieg'&&!!c.selbst;
+  $('cSelbst').style.display=c.sim==='zieg'?'inline-block':'none';
+  $('cSelbst').classList.toggle('on',!!c.selbst);
+  $('cSpielZ').hidden=!an;
+  $('cBleib').disabled=$('cWechs').disabled=!(an&&cPhase==='frage');
+  $('cNaechste').disabled=!(an&&cPhase!=='frage');
+  cCv.style.cursor=(an&&cPhase==='wahl')?'pointer':'default'; }
+
+function cRender(){ cPruefen(); const c=C();
+  $('cSim').value=c.sim;
+  $('cErWrap').style.display=c.sim==='lgz'?'flex':'none';
+  $('cKWrap').style.display=c.sim==='geb'?'flex':'none';
+  $('cTWrap').style.display=c.sim==='zieg'?'flex':'none';
+  $('cLog').style.display=c.sim==='zieg'?'none':'inline-block';
+  $('cEr').value=c.ereignis; $('cKv').textContent=c.k; $('cTv').textContent=c.tueren;
+  $('cTempo').value=String(c.tempo); $('cLog').classList.toggle('on',!!c.log);
+  $('cGo').textContent=cLaeuft?'❚❚ Pause':'▶ Start';
+  if(c.sim==='zieg'&&c.selbst&&!cSpiel) selbstNeu();
+  cRenderKnoepfe(); cTexte(); cTheorie(); cDraw(); }
+
+function cStop(){ cLaeuft=false; if(cAnim) cancelAnimationFrame(cAnim); cAnim=null;
+  $('cGo').textContent='▶ Start'; }
+function cStart(){ if(cLaeuft){ cStop(); sync(); return; }
+  cLaeuft=true; $('cGo').textContent='❚❚ Pause';
+  (function lauf(){ if(!cLaeuft) return;
+    cSchritt(C().tempo); cTexte(); cDraw(); cAnim=requestAnimationFrame(lauf); })(); }
+function cNeu(){ cStop(); cLeeren(); cRender(); sync(); }
+
+$('cSim').onchange=()=>{ C().sim=$('cSim').value; cNeu(); };
+$('cEr').onchange=()=>{ C().ereignis=$('cEr').value; cNeu(); };
+$('cKm').onclick=()=>{ C().k--; cNeu(); };
+$('cKp').onclick=()=>{ C().k++; cNeu(); };
+$('cTm').onclick=()=>{ C().tueren--; cNeu(); };
+$('cTp').onclick=()=>{ C().tueren++; cNeu(); };
+$('cTempo').onchange=()=>{ C().tempo=+$('cTempo').value; cPruefen(); sync(); };
+$('cLog').onclick=()=>{ C().log=!C().log; cRender(); sync(); };
+$('cTheoSw').onclick=()=>{ $('cTheo').classList.toggle('on'); cTheorie(); };
+$('cGo').onclick=cStart;
+$('cSelbst').onclick=()=>{ const c=C(); c.selbst=!c.selbst;
+  if(c.selbst) selbstNeu(); else { cPhase='aus'; cSpiel=null; }
+  cRender(); sync(); };
+$('cBleib').onclick=()=>selbstEnde(false);
+$('cWechs').onclick=()=>selbstEnde(true);
+$('cNaechste').onclick=()=>{ selbstNeu(); cRenderKnoepfe(); cTexte(); cDraw(); };
+/* Tuer antippen: nur im Spielmodus und nur, solange noch nicht gewaehlt ist */
+cCv.addEventListener('pointerdown',e=>{ const c=C();
+  if(c.sim!=='zieg'||!c.selbst||cPhase!=='wahl') return;
+  const r=cCv.getBoundingClientRect(), x=e.clientX-r.left, y=e.clientY-r.top;
+  const i=cTuer.findIndex(t=>x>=t.x&&x<=t.x+t.b&&y>=t.y&&y<=t.y+t.h);
+  if(i>=0){ e.preventDefault(); selbstWahl(i); } });
+/* Die +-Knöpfe nehmen eine feste Zahl Versuche auf einen Schlag dazu; ein laufender
+   Versuch hält dafür an, damit man die Zahl darunter in Ruhe ablesen kann. */
+$('cPlus').onclick=e=>{ const b=e.target.closest('[data-plus]'); if(!b) return;
+  cStop(); cSchritt(+b.dataset.plus); cTexte(); cDraw(); sync(); };
+$('cReset').onclick=cNeu;
+
 /* ============================ Reiter ============================ */
-function setTab(t,still){ data.tab=t;
+function setTab(t,still){ data.tab=t; if(typeof cStop==='function') cStop();   /* ein laufender Versuch haelt an */
   document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('on',b.dataset.t===t));
   document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('on',p.id==='p-'+t));
   if(t==='muenze') requestAnimationFrame(mRender);
@@ -727,6 +1190,7 @@ function setTab(t,still){ data.tab=t;
   if(t==='rad') requestAnimationFrame(rResize);              // erst jetzt hat das Canvas eine Größe
   if(t==='urne') uRender();
   if(t==='vert') vRender();
+  if(t==='mc'){ cRender(); requestAnimationFrame(cResize); }   // erst jetzt hat das Canvas eine Größe
   if(!still) sync(); }
 document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>setTab(b.dataset.t));
 
@@ -734,7 +1198,7 @@ document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>setTab(b.dataset.t));
 function sync(){ if(window.parent===window) return;   /* allein geöffnet: nicht an sich selbst senden */
   try{ parent.postMessage({type:'embed-data',data},'*'); }catch(e){} }
 function uebernehmen(d){
-  data.tab=['muenze','wuerfel','rad','urne','vert'].includes(d.tab)?d.tab:(Array.isArray(d.sectors)&&d.sectors.length?'rad':'wuerfel');
+  data.tab=['muenze','wuerfel','rad','urne','vert','mc'].includes(d.tab)?d.tab:(Array.isArray(d.sectors)&&d.sectors.length?'rad':'wuerfel');
   const mz=(d.muenze&&typeof d.muenze==='object')?d.muenze:{};
   data.muenze={ anzahl:mz.anzahl||1, gezinkt:!!mz.gezinkt, p:mz.p||0.7, gesamtK:mz.gesamtK||0, gesamtN:mz.gesamtN||0 };
   data.n=Math.max(1,Math.min(6,d.n||1)); data.sides=Math.max(2,d.sides||6);
@@ -745,16 +1209,38 @@ function uebernehmen(d){
     nummern:u.nummern!==false, schema:(u.schema|0)%4, farben:Array.isArray(u.farben)?u.farben.slice():[] };
   const v=(d.vert&&typeof d.vert==='object')?d.vert:{};
   data.vert={ a:v.a||9, b:v.b||5 };
+  const c=(d.mc&&typeof d.mc==='object')?d.mc:{};
+  data.mc={ sim:c.sim||'pi', ereignis:c.ereignis||'kopf', k:c.k||23, tueren:c.tueren||3,
+    tempo:c.tempo||100, log:!!c.log, selbst:!!c.selbst,
+    n:c.n||0, treffer:c.treffer||0, treffer2:c.treffer2||0, nB:c.nB||0, nW:c.nW||0,
+    verlauf:Array.isArray(c.verlauf)?c.verlauf.slice():[],
+    zaehl:Array.isArray(c.zaehl)?c.zaehl.slice():[] };
+  cPkt=[]; cPi=0; cGruppe=null; cSpiel=null; cPruefen(); vMarkeSetzen();
   uZug=[]; vBelegt=[]; mWurf=[]; wColors(); uPruefen(); mPruefen(); wVals=Array.from({length:data.n},()=>1);
   $('wN').value=data.n; $('wS').value=data.sides; $('rRes').textContent='–';
   setTab(data.tab,true); }
 addEventListener('message',e=>{ if(window.parent===window||e.source!==window.parent) return;   // eigene Nachrichten ignorieren
   if(e.data&&e.data.type==='embed-data'&&e.data.data) uebernehmen(e.data.data); });
-window.addEventListener('resize',()=>{ if(data.tab==='muenze') mRender(); if(data.tab==='wuerfel') wRender(wVals); if(data.tab==='rad') rResize(); if(data.tab==='urne') uRender(); if(data.tab==='vert') vRender(); });
+window.addEventListener('resize',()=>{ if(data.tab==='muenze') mRender(); if(data.tab==='wuerfel') wRender(wVals); if(data.tab==='rad') rResize(); if(data.tab==='urne') uRender(); if(data.tab==='vert') vRender(); if(data.tab==='mc') cResize(); });
+/* ---- Teilen per QR-Code ----
+   Weitergegeben wird der Aufbau, nicht das Ergebnis: Auf dem Schuelergeraet stehen
+   dieselben Wuerfel, dasselbe Rad, dieselbe Urne und derselbe Monte-Carlo-Versuch
+   bereit, gezaehlt wird dort aber von vorne. */
+function teilenStand(){ const d=JSON.parse(JSON.stringify(data));
+  d.muenze.gesamtK=0; d.muenze.gesamtN=0;
+  Object.assign(d.mc,{n:0,treffer:0,treffer2:0,nB:0,nW:0,verlauf:[],zaehl:[]});
+  return d; }
+
 window.addEventListener('load',()=>{
   if(!data.sectors.length) data.sectors=radDef();
-  uPruefen(); mPruefen(); setTab(data.tab,true); wRender([1]);
-  if(window.ResizeObserver){ new ResizeObserver(()=>{ if(data.tab==='wuerfel') wRender(wVals); }).observe($('wBox')); }
+  uPruefen(); mPruefen(); cPruefen(); setTab(data.tab,true); wRender([1]);
+  if(window.ResizeObserver){ new ResizeObserver(()=>{ if(data.tab==='wuerfel') wRender(wVals); }).observe($('wBox'));
+    new ResizeObserver(()=>{ if(data.tab==='mc') cResize(); }).observe($('cCv')); }
+  if(window.TafelTeilen){
+    if(TafelTeilen.istGeteilt()) TafelTeilen.empfangen().then(d=>{ if(d&&typeof d==='object') uebernehmen(d); }).catch(()=>{});
+    else TafelTeilen.knopf($('teilenBtn'),'zufall.html',teilenStand,
+      {cls:'', html:'\u21ea', title:'Diesen Aufbau per QR-Code an die Klasse geben'});
+  }
   try{ parent.postMessage({type:'embed-ready'},'*'); }catch(e){} });
 </script>
 </body>

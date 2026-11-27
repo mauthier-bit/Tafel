@@ -2945,9 +2945,13 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
   - **Beim Benutzen** bleibt die **ganze Bedienzeile** stehen (gleiche Seite, 3. Strahl,
     3. Parallele, V F X Z, Berechnen, Leeren) – nur **A−/A+**, **🖼 Tafel** und **📋 Kopieren**
     verschwinden. Der **Teilen-Knopf** bleibt ebenfalls.
-- **Zufall** (Mathe & Physik, Würfel-Symbol mit fünf Augen): ein Werkzeug mit **fünf Reitern**.
+- **Zufall** (Mathe & Physik, Würfel-Symbol mit fünf Augen): ein Werkzeug mit **sechs Reitern**.
   Die früheren Einzelwerkzeuge „Würfel" und „Glücksrad" stecken darin; **alte Tafelseiten werden beim
   Laden automatisch umgestellt** und öffnen gleich im passenden Reiter.
+  Rechts oben in der Reiterzeile sitzt der **Teilen-Knopf** (⇪): Der QR-Code gibt den **Aufbau**
+  weiter – Reiter, Würfel, Rad, Urne und der eingestellte Monte-Carlo-Versuch. **Gezählt wird auf dem
+  Schülergerät von vorne**, die eigenen Ergebnisse der Lehrkraft gehen also nicht mit. Der Aufbau samt
+  Zählständen wird wie bisher **mit dem Projekt gespeichert**.
   - **Münze:** **1 bis 100 Würfe** auf einmal – die Anzahl lässt sich mit **−/+** ändern oder **direkt
     eintippen** – die Münzen erscheinen als goldenes **K** (Kopf) und
     silbernes **Z** (Zahl) und passen ihre Größe an die Anzahl an. Ein Knopf schaltet zwischen
@@ -2989,6 +2993,35 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     Schritt durch (der Faktor jedes Schritts wächst im Produkt mit), „Rechnung" schreibt beide
     Sichtweisen untereinander. Merksatz im Fenster: gezogen wird immer aus der **größeren** Menge,
     die **kleinere** liefert die Plätze.
+  - **Monte Carlo** (Mathe 8–11): vier Simulationen in einer Auswahlliste. Gemeinsam ist allen:
+    Der Zufall wird sehr oft befragt, und **neben der Schätzung steht immer der exakte Wert**
+    (grün gestrichelt). Gesteuert wird mit **▶ Start/Pause** (Tempo 1, 10, 100 oder 1000 Versuche je Bild)
+    und mit den Knöpfen **+1 · +10 · +100 · +1.000 · +10.000**, die eine feste Zahl Versuche auf einen
+    Schlag dazunehmen; **↺** setzt die Zählung zurück. **„log. Achse"** zeichnet die Versuchsachse
+    logarithmisch – dann sieht man die wilden ersten Versuche und die späte Ruhe **auf einem Bild**.
+    Unter jeder Simulation lässt sich ein **Kasten „Hintergrund und Theorie"** aufklappen (anfangs zu)
+    mit Herleitung, Formeln, dem typischen Denkfehler und dem Lehrplanbezug.
+    - **π bestimmen** (Jgst. 10): zufällige Punkte im Einheitsquadrat, grün im Viertelkreis, rot außerhalb.
+      Der Anteil nähert sich π/4, also ist π ≈ 4 · Treffer/n. Daneben läuft die Schätzkurve mit.
+      Angezeigt wird auch die **Abweichung** und die typische Streuung 1,64/√n – damit wird greifbar,
+      dass der Fehler nur mit **1/√n** fällt (hundertmal so viele Punkte für eine weitere Ziffer).
+    - **Gesetz der großen Zahlen** (Jgst. 8): Münze (Kopf), Würfel (Sechs bzw. gerade Augenzahl) oder
+      zwei Würfel (Summe 7). Links die Kurve der relativen Häufigkeit gegen p, **rechts das Histogramm
+      aller Ergebnisse** – jeder Balken ist eine relative Häufigkeit, der grüne Strich darüber die
+      Wahrscheinlichkeit; blau sind die Ergebnisse, die zum Ereignis gehören. Unter dem Bild stehen
+      **relative und absolute Abweichung** nebeneinander: Die relative wird kleiner, die absolute
+      |Treffer − n·p| wächst – der häufigste Irrtum beim Gesetz der großen Zahlen.
+    - **Geburtstagsproblem** (Jgst. 10): 2 bis 80 Personen je Gruppe. Die letzte Gruppe steht als
+      Punkte auf einem **Jahresring**, Doppelbelegungen rot. Die Kurve vergleicht den Anteil der
+      Gruppen mit gleichem Geburtstag mit dem exakten Wert (bei 23 Personen 50,7 %); dazu die Zahl
+      der **Paare**, die den Effekt erklärt (23 Personen → 253 Paare).
+    - **Ziegenproblem** (Jgst. 11, als Einstieg ab 10): **3 bis 12 Türen**. Der Moderator kennt das Auto
+      und öffnet alle Ziegentüren bis auf eine. Im Automatiklauf wird **jede Runde doppelt ausgewertet**
+      – dieselbe Situation einmal geblieben, einmal gewechselt –, die beiden Balken laufen gegen
+      1/t und (t−1)/t. Mit **„👆 selbst spielen"** spielt man eine Runde von Hand: Tür antippen,
+      der Moderator öffnet, dann **Bleiben** oder **Wechseln** und die Auflösung mit 🚗 oder 🐐.
+      Jede selbst gespielte Runde **zählt in dieselbe Statistik**, aber nur für die wirklich gespielte
+      Strategie – darum stehen bei den Balken dann zwei verschiedene Rundenzahlen.
 - **Bruch** (Mathe & Physik): acht Reiter, jeweils als **Kreis oder Rechteck** (Knopf „◯ Kreis / ▭ Rechteck“),
   wahlweise **einfarbig, 🍕 Pizza** (Sauce, Käse, Peperoni, Kruste), **🍰 Kuchen** (Torte mit schmalem Guss-Rand,
   Sahnehäubchen mit Kirsche, Blechkuchen mit Guss und verteilten Früchten) **oder 🍫 Schokolade**
