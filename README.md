@@ -3026,6 +3026,13 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
       Wahrscheinlichkeit; blau sind die Ergebnisse, die zum Ereignis gehören. Unter dem Bild stehen
       **relative und absolute Abweichung** nebeneinander: Die relative wird kleiner, die absolute
       |Treffer − n·p| wächst – der häufigste Irrtum beim Gesetz der großen Zahlen.
+      **Die Verlaufskurve lässt sich senkrecht heranholen** (zwei Finger spreizen, am Rechner
+      Mausrad; ein Finger verschiebt): Liegt die Linie nach vielen Tausend Versuchen scheinbar
+      glatt auf p, zeigt der Ausschnitt, dass sie weiter schwankt – nur in einem immer schmaleren
+      Band. Die Achsenbeschriftung bekommt dabei automatisch mehr Nachkommastellen. **„Ansicht"**
+      (erscheint oben rechts im Diagramm, sobald ein Ausschnitt gewählt ist) oder ein **Doppeltipp**
+      holt die ganze Höhe zurück. Das geht genauso bei den Kurven von π und Geburtstagsproblem;
+      waagrecht stehen immer alle Versuche im Bild – dafür ist die logarithmische Achse da.
     - **Geburtstagsproblem** (Jgst. 10): 2 bis 80 Personen je Gruppe. Die letzte Gruppe steht als
       Punkte auf einem **Jahresring**, Doppelbelegungen rot. Die Kurve vergleicht den Anteil der
       Gruppen mit gleichem Geburtstag mit dem exakten Wert (bei 23 Personen 50,7 %); dazu die Zahl

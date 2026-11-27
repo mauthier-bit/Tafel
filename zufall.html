@@ -67,6 +67,8 @@
   #cSpielZ{position:absolute;left:0;right:0;justify-content:center;pointer-events:none;}
   #cSpielZ[hidden]{display:none;}
   #cSpielZ button{pointer-events:auto;box-shadow:0 2px 8px rgba(15,23,42,.18);}
+  #cView{position:absolute;z-index:2;background:rgba(255,255,255,.9);backdrop-filter:blur(3px);}
+  #cView[hidden]{display:none;}
   /* Aufklappbarer Theoriekasten: zugeklappt bleibt nur die Zeile mit dem Dreieck stehen. */
   .klappK{flex:none;text-align:left;font-weight:700;font-size:calc(var(--fs) - 2px);font-family:inherit;color:#334155;background:#f4f7fb;border:1px solid #e2e8f0;
     border-radius:10px;padding:7px 10px;cursor:pointer;}
@@ -416,6 +418,7 @@
     </div>
     <div id="cBuehne">
       <canvas id="cCv"></canvas>
+      <button class="zb" id="cView" type="button" hidden title="Ausschnitt zurücksetzen – wieder die ganze Höhe">Ansicht</button>
       <div class="zeile" id="cSpielZ" hidden>
         <button class="go ghost" id="cBleib">Bleiben</button>
         <button class="go ghost" id="cWechs">Wechseln</button>
@@ -879,7 +882,7 @@ function cPruefen(){ const c=C();
   if(!Array.isArray(c.zaehl)||c.zaehl.length!==anz) c.zaehl=new Array(anz).fill(0); }
 function cLeeren(){ const c=C(); c.n=0; c.treffer=0; c.treffer2=0; c.nB=0; c.nW=0; c.verlauf=[]; vMarke=1;
   c.zaehl=cEreig().werte.map(()=>0);
-  cPkt=[]; cPi=0; cGruppe=null; cSpiel=null; cPhase='aus';
+  cPkt=[]; cPi=0; cGruppe=null; cSpiel=null; cPhase='aus'; cZoom[c.sim]=null;
   if(c.sim==='zieg'&&c.selbst) selbstNeu(); }
 /* Der Verlauf wird mitgespeichert. Aufgezeichnet wird nicht jeder Versuch, sondern
    mit wachsendem Abstand (jeweils 15 % mehr): So bleibt der unruhige Anfang erhalten,
@@ -946,27 +949,62 @@ function cResize(){ const dpr=window.devicePixelRatio||1, w=cCv.clientWidth||300
   cCv.width=Math.round(w*dpr); cCv.height=Math.round(h*dpr); cCtx.setTransform(dpr,0,0,dpr,0,0); cDraw(); }
 function cSchrift(px){ cCtx.font=Math.round(px*KS())+'px -apple-system,BlinkMacSystemFont,sans-serif'; }
 /* Kasten mit dem Verlauf der Schaetzung: gestrichelt der exakte Wert, durchgezogen die Schaetzung. */
+/* Ausschnitt der Verlaufskurve: senkrecht lässt sie sich heranholen (Finger, Mausrad),
+   waagrecht stehen immer alle Versuche im Bild - dafür gibt es die logarithmische Achse.
+   Je Versuch ein eigener Ausschnitt, cBox merkt sich die zuletzt gezeichnete Lage. */
+let cBox=null, cZoom={};
 function cKurve(x0,y0,bw,bh,yMin,yMax,exakt,exTxt,farbe,nk){
   const c=C(), V=c.verlauf;
+  const z=cZoom[c.sim];
+  const yA=z?z.a:yMin, yB=z?z.b:yMax;
+  cBox={x0,y0,bw,bh,yA,yB,yMin,yMax};
   cCtx.fillStyle='#fff'; cCtx.fillRect(x0,y0,bw,bh);
   cCtx.strokeStyle='#dbe2ea'; cCtx.lineWidth=1; cCtx.strokeRect(x0,y0,bw,bh);
-  const yv=v=>y0+bh*(1-(Math.min(yMax,Math.max(yMin,v))-yMin)/(yMax-yMin));
+  const yv=v=>y0+bh*(1-(v-yA)/(yB-yA));
   const nMax=Math.max(10,c.n);
   const xv=n=>c.log? x0+bw*Math.log10(Math.max(1,n))/Math.log10(Math.max(10,nMax))
                    : x0+bw*Math.min(1,n/nMax);
+  /* beim Heranholen mehr Nachkommastellen, sonst stünde dreimal dasselbe da */
+  const nk2=Math.max(nk,Math.min(6,Math.ceil(-Math.log10(Math.max(1e-9,(yB-yA)/3)))+1));
   cSchrift(10); cCtx.textAlign='right';
-  [yMin,(yMin+yMax)/2,yMax].forEach(v=>{ const y=yv(v);
+  [yA,(yA+yB)/2,yB].forEach(v=>{ const y=yv(v);
     cCtx.strokeStyle='#eef2f7'; cCtx.beginPath(); cCtx.moveTo(x0,y); cCtx.lineTo(x0+bw,y); cCtx.stroke();
-    cCtx.fillStyle='#93a0b4'; cCtx.fillText(cZ(v,nk),x0-3,y+3); });
+    cCtx.fillStyle='#93a0b4'; cCtx.fillText(cZ(v,nk2),x0-3,y+3); });
+  cCtx.save(); cCtx.beginPath(); cCtx.rect(x0,y0,bw,bh); cCtx.clip();   /* nichts über den Rand malen */
   if(isFinite(exakt)){ const y=yv(exakt);
     cCtx.strokeStyle='#16a34a'; cCtx.lineWidth=1.5; cCtx.setLineDash([5,4]);
     cCtx.beginPath(); cCtx.moveTo(x0,y); cCtx.lineTo(x0+bw,y); cCtx.stroke(); cCtx.setLineDash([]);
-    cCtx.fillStyle='#16a34a'; cCtx.textAlign='left'; cCtx.fillText(exTxt,x0+4,y-5); }
+    cCtx.fillStyle='#16a34a'; cCtx.textAlign='left'; cSchrift(10); cCtx.fillText(exTxt,x0+4,y-5); }
   if(V.length>1){ cCtx.strokeStyle=farbe; cCtx.lineWidth=2; cCtx.lineJoin='round'; cCtx.beginPath();
     V.forEach(([n,v],i)=>{ const x=xv(n), y=yv(v); i?cCtx.lineTo(x,y):cCtx.moveTo(x,y); }); cCtx.stroke(); }
-  cCtx.fillStyle='#93a0b4'; cCtx.textAlign='center';
+  cCtx.restore();
+  cCtx.fillStyle='#93a0b4'; cCtx.textAlign='center'; cSchrift(10);
   const was=c.sim==='pi'?'Punkte':(c.sim==='geb'?'Gruppen':'Versuche');
-  cCtx.fillText('insgesamt '+ZAHL(c.n)+' '+was+(c.log?' · Achse logarithmisch':''),x0+bw/2,y0+bh+cM(13)); }
+  cCtx.fillText('insgesamt '+ZAHL(c.n)+' '+was+(c.log?' · Achse logarithmisch':'')+
+    (z?' · Ausschnitt':''),x0+bw/2,y0+bh+cM(13)); }
+
+/* ---- Ausschnitt bedienen ---- */
+const cKurveSim=()=>['pi','lgz','geb'].includes(C().sim);
+function cImKasten(x,y){ const b=cBox;
+  return !!(b&&x>=b.x0-26&&x<=b.x0+b.bw&&y>=b.y0&&y<=b.y0+b.bh); }
+function cSetzeZoom(a,b2){ const b=cBox; if(!b) return;
+  const spanne=b.yMax-b.yMin, min=spanne/400;
+  if(b2-a<min){ const m=(a+b2)/2; a=m-min/2; b2=m+min/2; }
+  if(b2-a>spanne){ a=b.yMin; b2=b.yMax; }
+  if(a<b.yMin){ b2+=b.yMin-a; a=b.yMin; }
+  if(b2>b.yMax){ a-=b2-b.yMax; b2=b.yMax; if(a<b.yMin) a=b.yMin; }
+  cZoom[C().sim]=(a<=b.yMin+1e-12&&b2>=b.yMax-1e-12)?null:{a,b:b2};
+  cDraw(); cViewKnopf(); }
+function cZoomUm(py,f){ const b=cBox; if(!b) return;
+  const mitte=b.yB-(py-b.y0)/b.bh*(b.yB-b.yA);       /* Wert unter dem Finger bleibt stehen */
+  cSetzeZoom(mitte-(mitte-b.yA)*f, mitte+(b.yB-mitte)*f); }
+function cSchieb(dy){ const b=cBox; if(!b||!cZoom[C().sim]) return;
+  const d=dy/b.bh*(b.yB-b.yA); cSetzeZoom(b.yA+d,b.yB+d); }
+function cViewKnopf(){ const k=$('cView'); if(!k) return;
+  const an=!!cZoom[C().sim]&&cKurveSim();
+  k.hidden=!an;
+  if(an&&cBox) k.style.top=Math.round(cBox.y0+6)+'px';
+  if(an&&cBox) k.style.left=Math.round(cBox.x0+cBox.bw-k.offsetWidth-8)+'px'; }
 
 function cDrawPi(w,h){ const c=C(), quer=w>h*1.25;
   const S=Math.max(60,Math.min(quer?h-30:h*0.52-24, quer?w*0.44:w-40));
@@ -1159,6 +1197,7 @@ lgz:`<h5>Empirisches Gesetz der großen Zahlen</h5>
 <span class="form">h<sub>n</sub>(E) = k/n → P(E) für große n</span>
 <p>Rechts daneben steht das <b>Histogramm</b>: Jeder Balken ist die relative Häufigkeit eines einzelnen Ergebnisses, der grüne Strich darüber seine Wahrscheinlichkeit. Blau sind die Ergebnisse, die zum gesuchten Ereignis gehören – bei „gerade Augenzahl" also drei der sechs Balken, bei „Summe 7" einer von elf. Man sieht beides zugleich: wie sich jeder einzelne Balken seinem Strich nähert und wie ungleich die Summen zweier Würfel verteilt sind.</p>
 <p>Darum darf man umgekehrt eine unbekannte Wahrscheinlichkeit durch viele Versuche schätzen – genau davon lebt jede Monte-Carlo-Simulation. Die Kurve zeigt zugleich, wie unruhig der Anfang ist: Die ersten Versuche schwanken stark, erst nach vielen Hundert beruhigt sich die Linie. Mit „log. Achse" sieht man beides auf einmal.</p>
+<p>Liegt die Linie am Ende scheinbar glatt auf p, lässt sie sich <b>heranholen</b>: mit zwei Fingern spreizen (am Rechner Mausrad), mit einem Finger verschieben. Dann wird sichtbar, dass sie weiter schwankt – nur eben in einem immer schmaleren Band. „Ansicht" oder ein Doppeltipp holt die ganze Höhe zurück.</p>
 <h5>Der häufigste Irrtum</h5>
 <p>Die <b>relative</b> Häufigkeit nähert sich p – die <b>absolute</b> Abweichung |k − n·p| wird dabei im Mittel sogar größer; sie wächst etwa wie √n. Beide Zahlen stehen über der Zeichnung nebeneinander. Die Münze „gleicht also nichts aus": Nach fünfmal Kopf ist die Wahrscheinlichkeit für Kopf weiterhin genau 0,5.</p>
 <p class="hinweis">Lehrplan: Gesetz der großen Zahlen, Mathematik 8 (Laplace-Experimente).</p>`,
@@ -1212,7 +1251,7 @@ function cRender(){ cPruefen(); const c=C();
   $('cExakt').classList.toggle('on',exAn());
   $('cGo').textContent=cLaeuft?'❚❚ Pause':'▶ Start';
   if(c.sim==='zieg'&&c.selbst&&!cSpiel) selbstNeu();
-  cRenderKnoepfe(); cTexte(); cTheorie(); cDraw(); }
+  cRenderKnoepfe(); cTexte(); cTheorie(); cDraw(); cViewKnopf(); }
 
 function cStop(){ cLaeuft=false; if(cAnim) cancelAnimationFrame(cAnim); cAnim=null;
   $('cGo').textContent='▶ Start'; }
@@ -1251,6 +1290,44 @@ $('cSelbst').onclick=()=>{ const c=C(); c.selbst=!c.selbst;
 $('cBleib').onclick=()=>selbstEnde(false);
 $('cWechs').onclick=()=>selbstEnde(true);
 $('cNaechste').onclick=()=>{ selbstNeu(); cRenderKnoepfe(); cTexte(); cDraw(); };
+$('cView').onclick=()=>{ cZoom[C().sim]=null; cDraw(); cViewKnopf(); };
+/* Verlaufskurve heranholen: Mausrad, zwei Finger oder Ziehen; Doppeltipp holt alles zurück */
+cCv.addEventListener('wheel',e=>{ if(!cKurveSim()) return;
+  const r=cCv.getBoundingClientRect(), x=e.clientX-r.left, y=e.clientY-r.top;
+  if(!cImKasten(x,y)) return;
+  e.preventDefault(); cZoomUm(y,Math.exp(e.deltaY*0.0022)); },{passive:false});
+cCv.addEventListener('dblclick',e=>{ if(!cKurveSim()||!cZoom[C().sim]) return;
+  const r=cCv.getBoundingClientRect();
+  if(!cImKasten(e.clientX-r.left,e.clientY-r.top)) return;
+  cZoom[C().sim]=null; cDraw(); cViewKnopf(); });
+(function(){ const zeiger=new Map(); let start=null, letztes=0;
+  const mitte=a=>(a[0]+a[1])/2, weite=a=>Math.abs(a[0]-a[1])||1;
+  cCv.addEventListener('pointerdown',e=>{ if(!cKurveSim()) return;
+    const r=cCv.getBoundingClientRect(), y=e.clientY-r.top;
+    if(!cImKasten(e.clientX-r.left,y)&&zeiger.size===0) return;
+    zeiger.set(e.pointerId,y);
+    if(zeiger.size===2){ const a=[...zeiger.values()], b=cBox;
+      start={d:weite(a), m:mitte(a), yA:b.yA, yB:b.yB}; }
+    else { letztes=y; } });
+  cCv.addEventListener('pointermove',e=>{ if(!zeiger.has(e.pointerId)) return;
+    const r=cCv.getBoundingClientRect(), y=e.clientY-r.top;
+    zeiger.set(e.pointerId,y);
+    const a=[...zeiger.values()];
+    if(zeiger.size===2&&start){ e.preventDefault();
+      const b=cBox; if(!b) return;
+      const f=start.d/weite(a);                      /* auseinander = kleinerer Ausschnitt */
+      const spanne=(start.yB-start.yA)*f;
+      const wert=start.yB-(start.m-b.y0)/b.bh*(start.yB-start.yA);
+      const neuM=mitte(a);                           /* der Wert bleibt zwischen den Fingern */
+      const nA=wert-spanne*(1-(neuM-b.y0)/b.bh);
+      cSetzeZoom(nA,nA+spanne); }
+    else if(zeiger.size===1&&cZoom[C().sim]){ e.preventDefault();
+      cSchieb(letztes-y); letztes=y; } });
+  const weg=e=>{ zeiger.delete(e.pointerId); if(zeiger.size<2) start=null;
+    if(zeiger.size===1) letztes=[...zeiger.values()][0]; };
+  ['pointerup','pointercancel','pointerleave'].forEach(t=>cCv.addEventListener(t,weg));
+})();
+
 /* Tuer antippen: nur im Spielmodus und nur, solange noch nicht gewaehlt ist */
 cCv.addEventListener('pointerdown',e=>{ const c=C();
   if(c.sim!=='zieg'||!c.selbst||cPhase!=='wahl') return;
