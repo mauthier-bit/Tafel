@@ -2948,10 +2948,16 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
 - **Zufall** (Mathe & Physik, Würfel-Symbol mit fünf Augen): ein Werkzeug mit **sechs Reitern**.
   Die früheren Einzelwerkzeuge „Würfel" und „Glücksrad" stecken darin; **alte Tafelseiten werden beim
   Laden automatisch umgestellt** und öffnen gleich im passenden Reiter.
-  Rechts oben in der Reiterzeile sitzt der **Teilen-Knopf** (⇪): Der QR-Code gibt den **Aufbau**
-  weiter – Reiter, Würfel, Rad, Urne und der eingestellte Monte-Carlo-Versuch. **Gezählt wird auf dem
-  Schülergerät von vorne**, die eigenen Ergebnisse der Lehrkraft gehen also nicht mit. Der Aufbau samt
-  Zählständen wird wie bisher **mit dem Projekt gespeichert**.
+  Rechts oben in der Reiterzeile sitzen **Teilen (⇪), 🖼 Tafel, 📋 Kopieren und A− / A+**.
+  Der QR-Code gibt den **Aufbau** weiter – Reiter, Würfel, Rad, Urne und der eingestellte
+  Monte-Carlo-Versuch. **Gezählt wird auf dem Schülergerät von vorne**, die eigenen Ergebnisse der
+  Lehrkraft gehen also nicht mit. **🖼 Tafel / 📋 Kopieren** legen den **offenen Reiter ohne die
+  Bedienzeilen** als Bild daneben bzw. in die Zwischenablage. **A− / A+** ändern die Schriftgröße
+  (9–30 px, wirkt auch auf die Beschriftung in den Zeichnungen); dieselbe Zeile steht im
+  **Kontextmenü der Tafel** (mit Fett und Kursiv), und das Werkzeug hat jetzt den Umschalter
+  **Benutzen / Bearbeiten** – im Benutzen-Modus bleiben nur die Reiter, die Bedienung und der
+  Teilen-Knopf stehen, die vier Knöpfe rechts verschwinden. Der Aufbau samt Zählständen wird wie
+  bisher **mit dem Projekt gespeichert**.
   - **Münze:** **1 bis 100 Würfe** auf einmal – die Anzahl lässt sich mit **−/+** ändern oder **direkt
     eintippen** – die Münzen erscheinen als goldenes **K** (Kopf) und
     silbernes **Z** (Zahl) und passen ihre Größe an die Anzahl an. Ein Knopf schaltet zwischen
@@ -3001,10 +3007,19 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     logarithmisch – dann sieht man die wilden ersten Versuche und die späte Ruhe **auf einem Bild**.
     Unter jeder Simulation lässt sich ein **Kasten „Hintergrund und Theorie"** aufklappen (anfangs zu)
     mit Herleitung, Formeln, dem typischen Denkfehler und dem Lehrplanbezug.
+    **„exakter Wert"** blendet den grünen Strich und die exakten Zahlen ein oder aus – bei **π** und
+    beim **Gesetz der großen Zahlen** steht er von Anfang an da (er ist dort bekannt und der
+    Vergleichspunkt), beim **Geburtstags-** und beim **Ziegenproblem** bleibt er zunächst verdeckt,
+    damit die Klasse erst schätzt. Die Einstellung merkt sich jeder Versuch für sich.
     - **π bestimmen** (Jgst. 10): zufällige Punkte im Einheitsquadrat, grün im Viertelkreis, rot außerhalb.
       Der Anteil nähert sich π/4, also ist π ≈ 4 · Treffer/n. Daneben läuft die Schätzkurve mit.
       Angezeigt wird auch die **Abweichung** und die typische Streuung 1,64/√n – damit wird greifbar,
       dass der Fehler nur mit **1/√n** fällt (hundertmal so viele Punkte für eine weitere Ziffer).
+      Im Theoriekasten steht dazu eine **Aufgabe**: Wie entscheidet man aus den beiden Zufallszahlen
+      x und y, ob der Punkt grün oder rot zählt? Über den Satz des Pythagoras ist d = √(x² + y²),
+      der Punkt zählt bei x² + y² ≤ 1 (die Wurzel darf entfallen, weil beide Seiten nicht negativ
+      sind). Drei Punkte sind zum Rechnen angegeben – darunter einer, der **genau** auf dem Kreis
+      liegt –, die **Lösung steht hinter einem Knopf**.
     - **Gesetz der großen Zahlen** (Jgst. 8): Münze (Kopf), Würfel (Sechs bzw. gerade Augenzahl) oder
       zwei Würfel (Summe 7). Links die Kurve der relativen Häufigkeit gegen p, **rechts das Histogramm
       aller Ergebnisse** – jeder Balken ist eine relative Häufigkeit, der grüne Strich darüber die
@@ -3020,6 +3035,7 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
       – dieselbe Situation einmal geblieben, einmal gewechselt –, die beiden Balken laufen gegen
       1/t und (t−1)/t. Mit **„👆 selbst spielen"** spielt man eine Runde von Hand: Tür antippen,
       der Moderator öffnet, dann **Bleiben** oder **Wechseln** und die Auflösung mit 🚗 oder 🐐.
+      Die drei Knöpfe liegen dabei **im Bild direkt unter den Türen**, nicht unten am Rand.
       Jede selbst gespielte Runde **zählt in dieselbe Statistik**, aber nur für die wirklich gespielte
       Strategie – darum stehen bei den Balken dann zwei verschiedene Rundenzahlen.
 - **Bruch** (Mathe & Physik): acht Reiter, jeweils als **Kreis oder Rechteck** (Knopf „◯ Kreis / ▭ Rechteck“),
