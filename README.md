@@ -2999,7 +2999,7 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
     Schritt durch (der Faktor jedes Schritts wächst im Produkt mit), „Rechnung" schreibt beide
     Sichtweisen untereinander. Merksatz im Fenster: gezogen wird immer aus der **größeren** Menge,
     die **kleinere** liefert die Plätze.
-  - **Monte Carlo** (Mathe 8–11): vier Simulationen in einer Auswahlliste. Gemeinsam ist allen:
+  - **Monte Carlo** (Mathe 8–11): fünf Simulationen in einer Auswahlliste. Gemeinsam ist allen:
     Der Zufall wird sehr oft befragt, und **neben der Schätzung steht immer der exakte Wert**
     (grün gestrichelt). Gesteuert wird mit **▶ Start/Pause** (Tempo 1, 10, 100 oder 1000 Versuche je Bild)
     und mit den Knöpfen **+1 · +10 · +100 · +1.000 · +10.000**, die eine feste Zahl Versuche auf einen
@@ -3045,6 +3045,23 @@ Es gibt drei feste Leisten, jede lässt sich über ihren **Pfeil-Knopf minimiere
       Die drei Knöpfe liegen dabei **im Bild direkt unter den Türen**, nicht unten am Rand.
       Jede selbst gespielte Runde **zählt in dieselbe Statistik**, aber nur für die wirklich gespielte
       Strategie – darum stehen bei den Balken dann zwei verschiedene Rundenzahlen.
+    - **Buffonsches Nadelproblem** (Vertiefung zu Jgst. 10): Nadeln der Länge l fallen auf Linien im
+      Abstand d = 1 (l : d von 0,2 bis 1,0 einstellbar); grün sind die Nadeln, die eine Linie kreuzen.
+      Daneben steht der **Ergebnisraum**: ein Rechteck, waagrecht die Winkelangabe, senkrecht der
+      Abstand des Nadelmittelpunkts zur nächsten Linie (0 bis d/2). Jeder Wurf ist dort ein Punkt,
+      die Treffer liegen **unter der Randkurve** x = (l/2)·sin φ – die Wahrscheinlichkeit ist also
+      schlicht der Flächenanteil.
+      Der eigentliche Zweck ist der Knopf **Modell**: Dieselbe Frage, aber drei verschiedene
+      Annahmen darüber, was „zufällig" heißt (Bertrandsches Paradoxon). Weil immer
+      P = (l/d)·E(sin φ) gilt, hängt alles am Mittelwert von sin φ:
+      **φ gleichverteilt** → 2/π, Randkurve ist eine Sinuskurve, π ≈ 2·l·n/(d·k);
+      **cos φ gleichverteilt** → π/4, Randkurve ist ein **Viertelkreis** (dieselbe Fläche wie in der
+      π-Simulation), π ≈ 4·d·k/(l·n);
+      **sin φ gleichverteilt** → ½, Randkurve ist eine Gerade, das Dreieck hat den Anteil ½ – **hier
+      kommt π gar nicht mehr vor**. Gemessen mit je 100 000 Nadeln bei l = d: 0,6382 / 0,7846 / 0,5009
+      gegen die exakten 0,6366 / 0,7854 / 0,5000. Physikalisch richtig ist für eine fallende Nadel
+      das erste Modell (keine Richtung ist bevorzugt); die anderen sind nicht falsch gerechnet,
+      sondern beschreiben einen anderen Zufall. Der Theoriekasten führt das aus.
 - **Bruch** (Mathe & Physik): acht Reiter, jeweils als **Kreis oder Rechteck** (Knopf „◯ Kreis / ▭ Rechteck“),
   wahlweise **einfarbig, 🍕 Pizza** (Sauce, Käse, Peperoni, Kruste), **🍰 Kuchen** (Torte mit schmalem Guss-Rand,
   Sahnehäubchen mit Kirsche, Blechkuchen mit Guss und verteilten Früchten) **oder 🍫 Schokolade**

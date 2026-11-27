@@ -397,7 +397,14 @@
         <option value="lgz">Gesetz der großen Zahlen</option>
         <option value="geb">Geburtstagsproblem</option>
         <option value="zieg">Ziegenproblem</option>
+        <option value="buff">Buffonsches Nadelproblem</option>
       </select></label>
+      <label id="cMWrap">Modell <select id="cModell">
+        <option value="winkel">Winkel φ gleichverteilt</option>
+        <option value="cos">cos φ gleichverteilt</option>
+        <option value="sin">sin φ gleichverteilt</option>
+      </select></label>
+      <label id="cLWrap">Nadel l : d <button class="step" id="cLm">−</button><span class="val" id="cLv">1,0</span><button class="step" id="cLp">+</button></label>
       <label id="cErWrap">Ereignis <select id="cEr">
         <option value="kopf">Münze: Kopf</option>
         <option value="sechs">Würfel: Sechs</option>
@@ -466,7 +473,8 @@ let data={ tab:'wuerfel',
        /* Der exakte Wert ist bei π und beim Gesetz der großen Zahlen von Anfang an sichtbar
           (er ist dort bekannt und der Vergleichspunkt); beim Geburtstags- und beim
           Ziegenproblem ist er die Pointe und bleibt zunächst verdeckt. */
-       exakt:{pi:true, lgz:true, geb:false, zieg:false},
+       exakt:{pi:true, lgz:true, geb:false, zieg:false, buff:true},
+       modell:'winkel', lnd:10,
        n:0, treffer:0, treffer2:0, nB:0, nW:0, verlauf:[], zaehl:[] } };
 
 /* ---- Schriftgröße (A−/A+ und Kontextmenü der Tafel) ----
@@ -864,12 +872,41 @@ const exAn=()=>!!(C().exakt&&C().exakt[C().sim]);
 function pGeburtstag(k){ let q=1; for(let i=0;i<k;i++) q*=(365-i)/365; return 1-q; }
 
 let cPkt=[], cPi=0;          /* Punktwolke fuer pi (Ringpuffer, damit es fluessig bleibt) */
+let cNadeln=[], cNi=0;       /* zuletzt geworfene Nadeln (Buffon) */
+/* Buffon: Der Linienabstand ist 1, die Nadel ist lnd/10 lang. Die drei Modelle unterscheiden
+   sich nur darin, WAS als gleichverteilt angenommen wird - der Ergebnisraum also. Daraus
+   folgen verschiedene Trefferwahrscheinlichkeiten, obwohl die Frage dieselbe ist. */
+const MODELL={
+  winkel:{t:'Winkel φ gleichverteilt', achse:'φ', eSin:2/Math.PI,
+          ziehe:()=>Math.random()*Math.PI/2, abs:phi=>phi/(Math.PI/2),
+          rand:a=>Math.sin(a*Math.PI/2),
+          pTxt:'2·l/(π·d)', piTxt:'π ≈ 2·l·n/(d·k)'},
+  cos:   {t:'cos φ gleichverteilt', achse:'cos φ', eSin:Math.PI/4,
+          ziehe:()=>Math.acos(Math.random()), abs:phi=>Math.cos(phi),
+          rand:a=>Math.sqrt(Math.max(0,1-a*a)),
+          pTxt:'π·l/(4·d)', piTxt:'π ≈ 4·d·k/(l·n)'},
+  sin:   {t:'sin φ gleichverteilt', achse:'sin φ', eSin:0.5,
+          ziehe:()=>Math.asin(Math.random()), abs:phi=>Math.sin(phi),
+          rand:a=>a,
+          pTxt:'l/(2·d)', piTxt:'hier steckt kein π'}
+};
+const cMod=()=>MODELL[C().modell]||MODELL.winkel;
+const cL=()=>C().lnd/10;                    /* Nadellänge, Linienabstand d = 1 */
+/* P = (l/d) · E(sin φ) - die Modelle unterscheiden sich nur im Erwartungswert von sin φ */
+const pBuffon=()=>cL()*cMod().eSin;
+function buffWurf(){ const l=cL(), m=cMod();
+  const ym=Math.random()*5, phi=m.ziehe();       /* Mittelpunkt im Bildstreifen, Winkel nach Modell */
+  const r=ym%1, dist=Math.min(r,1-r);            /* Abstand zur nächsten Linie, 0 … 0,5 */
+  return {ym, phi, dist, a:m.abs(phi), x:Math.random(), vz:Math.random()<0.5?-1:1,
+          treff:dist<=l/2*Math.sin(phi)}; }
 let cGruppe=null;            /* zuletzt gezogene Geburtstagsgruppe */
 let cSpiel=null;             /* zuletzt gespielte Runde beim Ziegenproblem */
 let cLaeuft=false, cAnim=null;
 
 function cPruefen(){ const c=C();
-  if(!['pi','lgz','geb','zieg'].includes(c.sim)) c.sim='pi';
+  if(!['pi','lgz','geb','zieg','buff'].includes(c.sim)) c.sim='pi';
+  if(!['winkel','cos','sin'].includes(c.modell)) c.modell='winkel';
+  c.lnd=Math.max(2,Math.min(10,c.lnd|0||10));          /* Nadellänge in Zehnteln des Linienabstands */
   if(!EREIG[c.ereignis]) c.ereignis='kopf';
   if(!c.exakt||typeof c.exakt!=='object') c.exakt={pi:true,lgz:true,geb:false,zieg:false};
   c.k=Math.max(2,Math.min(80,c.k|0||23));
@@ -882,7 +919,7 @@ function cPruefen(){ const c=C();
   if(!Array.isArray(c.zaehl)||c.zaehl.length!==anz) c.zaehl=new Array(anz).fill(0); }
 function cLeeren(){ const c=C(); c.n=0; c.treffer=0; c.treffer2=0; c.nB=0; c.nW=0; c.verlauf=[]; vMarke=1;
   c.zaehl=cEreig().werte.map(()=>0);
-  cPkt=[]; cPi=0; cGruppe=null; cSpiel=null; cPhase='aus'; cZoom[c.sim]=null;
+  cPkt=[]; cPi=0; cGruppe=null; cSpiel=null; cPhase='aus'; cZoom[c.sim]=null; cNadeln=[]; cNi=0;
   if(c.sim==='zieg'&&c.selbst) selbstNeu(); }
 /* Der Verlauf wird mitgespeichert. Aufgezeichnet wird nicht jeder Versuch, sondern
    mit wachsendem Abstand (jeweils 15 % mehr): So bleibt der unruhige Anfang erhalten,
@@ -918,6 +955,11 @@ function cSchritt(anz){ const c=C();
   else if(c.sim==='geb'){
     for(let i=0;i<anz;i++){ cGruppe=gebZiehen(c.k); if(cGruppe.hat) c.treffer++;
       c.n++; vPruef(c.n,c.treffer/c.n); } }
+  else if(c.sim==='buff'){
+    for(let i=0;i<anz;i++){ const w=buffWurf(); if(w.treff) c.treffer++;
+      if(cNadeln.length<300) cNadeln.push(w); else { cNadeln[cNi]=w; cNi=(cNi+1)%300; }
+      c.n++; }
+    cPhase='aus'; }
   else { for(let i=0;i<anz;i++){ cSpiel=ziegSpiel(c.tueren);
       /* Jede Runde wird fuer beide Strategien ausgewertet: dieselbe Spielsituation,
          einmal geblieben, einmal gewechselt. Genau eine der beiden gewinnt. */
@@ -1139,6 +1181,54 @@ function cDrawZieg(w,h){ const c=C(), t=c.tueren, sp=cSpiel, selbst=!!(sp&&sp.se
     if(exAn()){ cSchrift(10); cCtx.fillStyle='#64748b'; cCtx.textAlign='center';
       cCtx.fillText('exakt '+cPZ(ex),bx+bb*ex,y-8); } }); }
 
+/* Links der Nadelwurf, rechts der Ergebnisraum des gewählten Modells: ein Rechteck,
+   in dem die Punkte gleichverteilt liegen. Die Trefferfläche darunter ist die Antwort. */
+function cDrawBuff(w,h){ const c=C(), l=cL(), m=cMod(), quer=w>h*1.1;
+  const lu=10;
+  const bw1=quer?Math.round((w-3*lu)*0.52):w-2*lu, bh1=quer?h-30:Math.round((h-40)*0.5);
+  const x1=lu, y1=12;
+  const x2=quer?x1+bw1+2*lu+cM(16):lu+cM(26), y2=quer?12:y1+bh1+26;
+  const bw2=w-x2-lu, bh2=(quer?h-12:h-y2)-cM(44);   /* unten Platz für drei Zeilen Beschriftung */
+  /* --- Nadelwurf --- */
+  cCtx.fillStyle='#fff'; cCtx.fillRect(x1,y1,bw1,bh1);
+  cCtx.strokeStyle='#dbe2ea'; cCtx.lineWidth=1; cCtx.strokeRect(x1,y1,bw1,bh1);
+  const spalten=5, dpx=bh1/spalten;                  /* fünf Linienabstände sind im Bild */
+  cCtx.strokeStyle='#94a3b8'; cCtx.lineWidth=1.5;
+  for(let i=0;i<=spalten;i++){ const y=y1+i*dpx;
+    cCtx.beginPath(); cCtx.moveTo(x1,y); cCtx.lineTo(x1+bw1,y); cCtx.stroke(); }
+  cCtx.save(); cCtx.beginPath(); cCtx.rect(x1,y1,bw1,bh1); cCtx.clip();
+  cCtx.lineWidth=2; cCtx.lineCap='round';
+  cNadeln.forEach(n=>{ const ym=y1+n.ym*dpx, xm=x1+8+n.x*(bw1-16);
+    const dx=Math.cos(n.phi)*l*dpx/2*n.vz, dy=Math.sin(n.phi)*l*dpx/2;
+    cCtx.strokeStyle=n.treff?'rgba(22,163,74,.75)':'rgba(239,68,68,.6)';
+    cCtx.beginPath(); cCtx.moveTo(xm-dx,ym-dy); cCtx.lineTo(xm+dx,ym+dy); cCtx.stroke(); });
+  cCtx.restore(); cCtx.lineCap='butt';
+  cSchrift(10); cCtx.fillStyle='#93a0b4'; cCtx.textAlign='center';
+  cCtx.fillText('Linienabstand d = 1, Nadel l = '+cZ(l,1)+'  ·  grün = Linie getroffen',x1+bw1/2,y1+bh1+cM(13));
+  /* --- Ergebnisraum --- */
+  if(bw2<70||bh2<60) return;
+  cCtx.fillStyle='#fff'; cCtx.fillRect(x2,y2,bw2,bh2);
+  cCtx.strokeStyle='#dbe2ea'; cCtx.lineWidth=1; cCtx.strokeRect(x2,y2,bw2,bh2);
+  const px=a=>x2+a*bw2, py=v=>y2+bh2*(1-v);          /* a: Modellachse 0…1, v: Abstand 0…d/2 in Anteilen */
+  /* Trefferbereich unter der Randkurve */
+  cCtx.fillStyle='rgba(22,163,74,.10)'; cCtx.beginPath(); cCtx.moveTo(px(0),py(0));
+  for(let i=0;i<=120;i++){ const a=i/120; cCtx.lineTo(px(a),py(Math.min(1,l*m.rand(a)))); }
+  cCtx.lineTo(px(1),py(0)); cCtx.closePath(); cCtx.fill();
+  cCtx.strokeStyle='#16a34a'; cCtx.lineWidth=2; cCtx.beginPath();
+  for(let i=0;i<=120;i++){ const a=i/120, y=py(Math.min(1,l*m.rand(a)));
+    i?cCtx.lineTo(px(a),y):cCtx.moveTo(px(a),y); }
+  cCtx.stroke();
+  cNadeln.forEach(n=>{ cCtx.fillStyle=n.treff?'rgba(22,163,74,.6)':'rgba(239,68,68,.5)';
+    cCtx.fillRect(px(n.a)-1.5,py(n.dist*2)-1.5,3,3); });
+  cSchrift(10); cCtx.textAlign='right'; cCtx.fillStyle='#93a0b4';
+  cCtx.fillText('d/2',x2-3,py(1)+8); cCtx.fillText('0',x2-3,py(0));
+  cCtx.textAlign='center';
+  cCtx.fillText('0',px(0),y2+bh2+cM(12));
+  cCtx.fillText(C().modell==='winkel'?'π/2':'1',px(1),y2+bh2+cM(12));
+  cCtx.fillText('Ergebnisraum: '+m.achse+' waagrecht, Abstand zur Linie senkrecht',x2+bw2/2,y2+bh2+cM(25));
+  cCtx.fillStyle='#16a34a';
+  cCtx.fillText('grün unterlegt: Treffer, also Abstand ≤ (l/2)·sin φ',x2+bw2/2,y2+bh2+cM(38)); }
+
 function cDraw(){ const w=cCv.clientWidth, h=cCv.clientHeight; if(!w||!h) return;
   /* die ganze Bildflaeche leeren, nicht nur den sichtbaren Teil: Wird der Kasten
      kleiner (etwa weil die Textzeile darunter umbricht), bliebe sonst das Alte stehen. */
@@ -1148,6 +1238,7 @@ function cDraw(){ const w=cCv.clientWidth, h=cCv.clientHeight; if(!w||!h) return
   if(c.sim==='pi') cDrawPi(w,h);
   else if(c.sim==='lgz') cDrawLgz(w,h);
   else if(c.sim==='geb') cDrawGeb(w,h);
+  else if(c.sim==='buff') cDrawBuff(w,h);
   else cDrawZieg(w,h); }
 
 /* ---- Texte ---- */
@@ -1167,6 +1258,14 @@ function cTexte(){ const c=C(); let e='', hin='';
     e=c.n?(ZAHL(c.treffer)+' von '+ZAHL(c.n)+' Gruppen mit gleichem Geburtstag → '+cPZ(s)):(c.k+' Personen je Gruppe');
     hin=(exAn()?('exakt '+cPZ(ex)+' bei '+c.k+' Personen · '):'')+
         ZAHL(c.k*(c.k-1)/2)+' Paare, die zusammenpassen könnten'; }
+  else if(c.sim==='buff'){ const m=cMod(), l=cL(), p=pBuffon(), h=c.n?c.treffer/c.n:0;
+    if(!c.n) e='Nadel l = '+cZ(l,1)+' bei Linienabstand d = 1 · '+m.t;
+    else if(c.modell==='sin') e='Treffer: '+ZAHL(c.treffer)+' von '+ZAHL(c.n)+' → '+cZ(h,4);
+    else { const pi=c.modell==='winkel' ? (c.treffer?2*l*c.n/c.treffer:NaN) : 4*c.treffer/(l*c.n);
+      e='π ≈ '+(isFinite(pi)?cZ(pi,4):'–')+'   ('+ZAHL(c.treffer)+' von '+ZAHL(c.n)+' Nadeln auf einer Linie)'; }
+    hin=(exAn()?('exakt P = '+m.pTxt+' = '+cZ(p,4)+' · '):'')+
+        (c.modell==='sin'?'in diesem Modell kürzt sich π heraus – die Nadel schätzt nur noch l/(2d)'
+                         :m.piTxt); }
   else { const ex1=1/c.tueren, ex2=(c.tueren-1)/c.tueren;
     e=c.n?('Bleiben: '+ZAHL(c.treffer)+' von '+ZAHL(c.nB)+(c.nB?' = '+cPZ(c.treffer/c.nB):'')+
            '  ·  Wechseln: '+ZAHL(c.treffer2)+' von '+ZAHL(c.nW)+(c.nW?' = '+cPZ(c.treffer2/c.nW):'')):
@@ -1209,6 +1308,18 @@ geb:`<h5>Die Rechnung</h5>
 <h5>Warum das so überrascht</h5>
 <p>Man denkt unwillkürlich an die Frage „hat jemand am selben Tag Geburtstag wie <i>ich</i>?" – das ist etwas ganz anderes und bei 23 Personen nur rund 6 %. Verglichen werden aber <b>alle Paare</b>, und davon gibt es bei 23 Personen bereits 23 · 22 : 2 = 253.</p>
 <p class="hinweis">Gerechnet mit 365 gleich wahrscheinlichen Tagen, ohne 29. Februar. In Wirklichkeit sind Geburtstage etwas ungleich über das Jahr verteilt – das erhöht die Wahrscheinlichkeit sogar noch ein wenig.<br>Lehrplan: mehrstufiges Zufallsexperiment, Pfadregel und Gegenereignis, Mathematik 10.</p>`,
+buff:`<h5>Der Versuch</h5>
+<p>Auf dem Boden liegen parallele Linien im Abstand d. Eine Nadel der Länge l (hier l ≤ d) fällt zufällig herunter – wie groß ist die Wahrscheinlichkeit, dass sie eine Linie kreuzt? Ihre Lage steckt in zwei Zahlen: dem Abstand x des Nadelmittelpunkts zur nächsten Linie (0 ≤ x ≤ d/2) und dem Winkel φ zwischen Nadel und Linien. Der senkrechte „Schatten" der halben Nadel ist (l/2)·sin φ, also kreuzt sie genau dann, wenn</p>
+<span class="form">x ≤ (l/2) · sin φ</span>
+<h5>Drei Ergebnisräume, drei Antworten</h5>
+<p>Der Abstand x ist in allen drei Modellen gleichverteilt. Verschieden ist nur, <b>was beim Winkel als gleichverteilt angenommen wird</b>. Weil P = (l/d) · E(sin φ) gilt, hängt alles am Mittelwert von sin φ:</p>
+<span class="form">φ gleichverteilt → E(sin φ) = 2/π → P = 2l/(πd)</span>
+<span class="form">cos φ gleichverteilt → E(sin φ) = π/4 → P = πl/(4d)</span>
+<span class="form">sin φ gleichverteilt → E(sin φ) = ½ → P = l/(2d)</span>
+<p>Im rechten Bild sieht man es ohne Rechnung: Der Ergebnisraum ist jedes Mal ein <b>Rechteck</b>, in dem die Punkte gleichmäßig liegen, und die Antwort ist der <b>Flächenanteil unter der Randkurve</b>. Bei φ ist das eine Sinuskurve (Anteil 2/π), bei cos φ ein <b>Viertelkreis</b> (Anteil π/4 – dieselbe Fläche wie in der π-Simulation), bei sin φ eine Gerade, also ein Dreieck mit dem Anteil ½. Im letzten Fall ist π vollständig verschwunden.</p>
+<h5>Welches Modell stimmt denn nun?</h5>
+<p>Für eine wirklich fallende Nadel das erste: Keine Richtung ist bevorzugt, der Winkel ist gleichverteilt. Die anderen beiden sind nicht falsch gerechnet – sie beschreiben einen <i>anderen</i> Zufall. Wer die Nadel so wirft, misst auch diese Werte. Das ist der Kern des <b>Bertrandschen Paradoxons</b>: „Zufällig" ist keine Angabe. Eine Aufgabe ist erst dann eindeutig, wenn der Ergebnisraum festgelegt ist.</p>
+<p class="hinweis">Georges-Louis Leclerc de Buffon stellte die Frage 1777 – die erste Monte-Carlo-Methode der Geschichte, lange vor jedem Rechner. Mit l = d braucht man im ersten Modell rund 100 000 Nadeln für zwei sichere Nachkommastellen von π.<br>Lehrplan: Vertiefung zur Monte-Carlo-Methode (Mathematik 10); Ergebnisraum und Ereignis kommen aus Jgst. 8.</p>`,
 zieg:`<h5>Der Ablauf</h5>
 <p>Hinter einer von t Türen steht das Auto, hinter allen anderen Ziegen. Du wählst eine Tür. Der Moderator <b>weiß, wo das Auto steht</b>, und öffnet alle übrigen Ziegentüren bis auf eine. Dann darfst du bei deiner Tür bleiben oder zur letzten geschlossenen wechseln. Bei drei Türen ist das die bekannte Fassung aus der Fernsehshow.</p>
 <h5>Warum Wechseln gewinnt</h5>
@@ -1243,9 +1354,12 @@ function cRenderKnoepfe(){ const c=C(), an=c.sim==='zieg'&&!!c.selbst;
 function cRender(){ cPruefen(); const c=C();
   $('cSim').value=c.sim;
   $('cErWrap').style.display=c.sim==='lgz'?'flex':'none';
+  $('cMWrap').style.display=c.sim==='buff'?'flex':'none';
+  $('cLWrap').style.display=c.sim==='buff'?'flex':'none';
+  $('cModell').value=c.modell; $('cLv').textContent=cZ(cL(),1);
   $('cKWrap').style.display=c.sim==='geb'?'flex':'none';
   $('cTWrap').style.display=c.sim==='zieg'?'flex':'none';
-  $('cLog').style.display=c.sim==='zieg'?'none':'inline-block';
+  $('cLog').style.display=(c.sim==='zieg'||c.sim==='buff')?'none':'inline-block';
   $('cEr').value=c.ereignis; $('cKv').textContent=c.k; $('cTv').textContent=c.tueren;
   $('cTempo').value=String(c.tempo); $('cLog').classList.toggle('on',!!c.log);
   $('cExakt').classList.toggle('on',exAn());
@@ -1267,6 +1381,9 @@ $('cKm').onclick=()=>{ C().k--; cNeu(); };
 $('cKp').onclick=()=>{ C().k++; cNeu(); };
 $('cTm').onclick=()=>{ C().tueren--; cNeu(); };
 $('cTp').onclick=()=>{ C().tueren++; cNeu(); };
+$('cModell').onchange=()=>{ C().modell=$('cModell').value; cNeu(); };
+$('cLm').onclick=()=>{ C().lnd--; cNeu(); };
+$('cLp').onclick=()=>{ C().lnd++; cNeu(); };
 $('cTempo').onchange=()=>{ C().tempo=+$('cTempo').value; cPruefen(); sync(); };
 $('cLog').onclick=()=>{ C().log=!C().log; cRender(); sync(); };
 $('cExakt').onclick=()=>{ const c=C(); c.exakt[c.sim]=!c.exakt[c.sim]; cRender(); sync(); };
@@ -1373,7 +1490,8 @@ function uebernehmen(d){
   const c=(d.mc&&typeof d.mc==='object')?d.mc:{};
   data.mc={ sim:c.sim||'pi', ereignis:c.ereignis||'kopf', k:c.k||23, tueren:c.tueren||3,
     tempo:c.tempo||100, log:!!c.log, selbst:!!c.selbst,
-    exakt:Object.assign({pi:true,lgz:true,geb:false,zieg:false},(c.exakt&&typeof c.exakt==='object')?c.exakt:{}),
+    exakt:Object.assign({pi:true,lgz:true,geb:false,zieg:false,buff:true},(c.exakt&&typeof c.exakt==='object')?c.exakt:{}),
+    modell:['winkel','cos','sin'].includes(c.modell)?c.modell:'winkel', lnd:c.lnd||10,
     n:c.n||0, treffer:c.treffer||0, treffer2:c.treffer2||0, nB:c.nB||0, nW:c.nW||0,
     verlauf:Array.isArray(c.verlauf)?c.verlauf.slice():[],
     zaehl:Array.isArray(c.zaehl)?c.zaehl.slice():[] };
